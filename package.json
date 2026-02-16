@@ -9,9 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "better-sqlite3": "^11.7.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.561.0",
+    "lunar-japanese": "^0.1.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
