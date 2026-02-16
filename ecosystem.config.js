@@ -6,7 +6,7 @@ module.exports = {
       script: 'node_modules/next/dist/bin/next',
       args: 'start',
       cwd: '/home/life-kline-next',
-      instances: 'max',
+      instances: 1,
       exec_mode: 'fork',
       env: {
         NODE_ENV: 'production',
