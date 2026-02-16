@@ -13,11 +13,12 @@ export const calculateFourPillars = (
   const utcDate = new Date(birthDate.getTime() + timezone * 3600000);
 
   // 使用lunar精确计算
+  const lunar = Lunar.fromYmd(
     utcDate.getFullYear(),
     utcDate.getMonth() + 1,
     utcDate.getDate()
   );
-  
+
   // 精确计算时柱
   const [hour, minute] = birthTime.split(':').map(Number);
   const hourPillar = calculateHourPillar(lunar, hour, minute);
