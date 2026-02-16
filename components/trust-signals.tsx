@@ -1,3 +1,5 @@
+'use client';
+
 // 信任信号组件 - 入口页核心组件
 import { useState } from 'react';
 import Link from 'next/link';
