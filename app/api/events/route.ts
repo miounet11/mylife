@@ -125,7 +125,7 @@ export async function DELETE(
 }
 
 // 获取用户的所有事件
-export async function getAll(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const userId = searchParams.get('userId');
