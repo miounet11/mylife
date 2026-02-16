@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 
-export async function POST(request: NextRequest) {(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const userId = searchParams.get('userId');
@@ -114,7 +114,7 @@ export async function GET(request: NextRequest) {(request: NextRequest) {
 }
 
 // 删除提醒
-export async function DELETE(request: NextRequest) {(request: NextRequest) {
+export async function DELETE(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const reminderId = searchParams.get('id');

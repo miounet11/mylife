@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 // 模拟数据库（实际应该用SQLite）
 const fortuneDatabase = new Map();
 
-export async function GET(request: NextRequest) {(
+export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {(
   }
 }
 
-export async function POST(request: NextRequest) {(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     const reportId = data.reportId;

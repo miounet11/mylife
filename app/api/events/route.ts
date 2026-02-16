@@ -3,10 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 
-export async function POST(request: NextRequest) {(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    
+
     // 验证数据
     if (!data.userId || !data.type || !data.title || !data.date) {
       return NextResponse.json(
@@ -51,81 +51,8 @@ export async function POST(request: NextRequest) {(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const event = eventOperations.getById(params.id);
-
-    if (!event) {
-      return NextResponse.json(
-        { success: false, error: '未找到事件' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: event,
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[API] 获取事件失败:', error);
-    return NextResponse.json(
-      { success: false, error: '获取失败' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function PUT(request: NextRequest) {(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const updates = await request.json();
-
-    // 更新事件
-    const result = eventOperations.update(params.id, updates);
-
-    return NextResponse.json({
-      success: true,
-      message: '事件更新成功',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[API] 更新事件失败:', error);
-    return NextResponse.json(
-      { success: false, error: '更新失败，请稍后重试' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request: NextRequest) {(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const result = eventOperations.delete(params.id);
-
-    return NextResponse.json({
-      success: true,
-      message: '事件删除成功',
-      timestamp: new Date().toISOString(),
-    });
-  } catch (error) {
-    console.error('[API] 删除事件失败:', error);
-    return NextResponse.json(
-      { success: false, error: '删除失败，请稍后重试' },
-      { status: 500 }
-    );
-  }
-}
-
 // 获取用户的所有事件
-export async function GET(request: NextRequest) {(request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const userId = searchParams.get('userId');
