@@ -4,11 +4,11 @@ import dynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
 // 动态导入以减少首屏加载
-const TrustReport = dynamic(() => import('@/components/trust-report'), {
+const TrustReport = dynamic(() => import('@/components/trust-signals'), {
   loading: () => <ReportSkeleton />,
 });
 
-const FortuneChart = dynamic(() => import('@/components/fortune-chart'), {
+const FortuneChart = dynamic(() => import('@/components/fortune-kline-chart'), {
   loading: () => <ChartSkeleton />,
 });
 
