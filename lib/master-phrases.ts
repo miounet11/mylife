@@ -492,7 +492,7 @@ export const generatePersonalizedPhrase = (
 };
 
 // 辅助函数
-function describeMonth(pillar: string): string {
+export function describeMonth(pillar: string): string {
   const descriptions = {
     '寅': '春季，万物复苏',
     '卯': '春季，生机盎然',
