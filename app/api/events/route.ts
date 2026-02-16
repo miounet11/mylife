@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest) {(request: NextRequest) {
   try {
     const data = await request.json();
     
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(
+export async function GET(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -79,7 +79,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PUT(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -103,7 +103,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+export async function DELETE(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -125,7 +125,7 @@ export async function DELETE(
 }
 
 // 获取用户的所有事件
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const userId = searchParams.get('userId');

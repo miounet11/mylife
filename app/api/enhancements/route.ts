@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateId } from '@/lib/utils';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest) {(request: NextRequest) {
   try {
     const data = await request.json();
     
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest) {(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const userId = searchParams.get('userId');
@@ -241,7 +241,7 @@ export async function GET(request: NextRequest) {
 }
 
 // 更新增运使用记录
-export async function PUT(request: NextRequest) {
+export async function PUT(request: NextRequest) {(request: NextRequest) {
   try {
     const data = await request.json();
     const { enhancementId, userId } = data;
@@ -275,7 +275,7 @@ export async function PUT(request: NextRequest) {
 }
 
 // 删除增运
-export async function DELETE(request: NextRequest) {
+export async function DELETE(request: NextRequest) {(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url!);
     const enhancementId = searchParams.get('id');

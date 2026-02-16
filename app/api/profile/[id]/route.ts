@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { userOperations } from '@/lib/database';
 import { generateId, formatDate } from '@/lib/utils';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest) {(request: NextRequest) {
   try {
     const data = await request.json();
     
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET(
+export async function GET(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -83,7 +83,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
+export async function PUT(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -107,7 +107,7 @@ export async function PUT(
   }
 }
 
-export async function DELETE(
+export async function DELETE(request: NextRequest) {(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
