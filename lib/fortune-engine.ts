@@ -1,5 +1,5 @@
 // 命理分析引擎 - 类似真正的大师
-import { Lunar } from 'lunar';
+import { Lunar } from 'lunar';';
 import { UserFortuneProfile, FortuneAnalysisResult, Pillar, FiveElements, TenGods, Pattern, CareerAdvice, WealthAdvice, MarriageAdvice, HealthAdvice, DataStatistics } from './user-types';
 import { MasterPhrases, selectBestPhrase, generatePersonalizedPhrase, describeMonth } from './master-phrases';
 
