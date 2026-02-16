@@ -224,25 +224,25 @@ export default function HomePage() {
           <TestimonialCard
             name="张先生"
             role="企业管理者"
-            content: "人生K线的分析太准了！去年告诉我3月有事业机遇，我果然在3月15日升职了。大师话术让我觉得很可信。"
+            content="人生K线的分析太准了！去年告诉我3月有事业机遇，我果然在3月15日升职了。大师话术让我觉得很可信。"
             rating={5}
           />
           <TestimonialCard
             name="李女士"
             role="自媒体"
-            content: "AI助手太方便了，每天都有运势提醒，化灾预警也很准。现在每天早上8点都会想起它。"
+            content="AI助手太方便了，每天都有运势提醒，化灾预警也很准。现在每天早上8点都会想起它。"
             rating={5}
           />
           <TestimonialCard
             name="王先生"
             role="创业者"
-            content: "从一次性工具变成了AI助手，每天都来问问题，越用越精准，越来越依赖。"
+            content="从一次性工具变成了AI助手，每天都来问问题，越用越精准，越来越依赖。"
             rating={5}
           />
           <TestimonialCard
             name="赵女士"
             role="学生"
-            content: "八字分析很详细，建议也很实用。按照建议穿红色衣服，果然感觉运势好多了。"
+            content="八字分析很详细，建议也很实用。按照建议穿红色衣服，果然感觉运势好多了。"
             rating={5}
           />
         </div>

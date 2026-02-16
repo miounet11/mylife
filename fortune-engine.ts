@@ -1,5 +1,5 @@
 // 命理分析引擎 - 类似真正的大师
-import { Lunar } from 'lunar-japanese';
+import { Lunar } from 'lunar';
 import { UserFortuneProfile, FortuneAnalysisResult, Pillar, FiveElements, TenGods, Pattern, CareerAdvice, WealthAdvice, MarriageAdvice, HealthAdvice, DataStatistics } from './user-types';
 import { MasterPhrases, selectBestPhrase, generatePersonalizedPhrase, describeMonth } from './master-phrases';
 
@@ -11,8 +11,8 @@ export const calculateFourPillars = (
 ): Pillar[] => {
   // 转换为标准时间
   const utcDate = new Date(birthDate.getTime() + timezone * 3600000);
-  
-  // 使用lunar-japanese精确计算
+
+  // 使用lunar精确计算
   const lunar = Lunar.fromYmd(
     utcDate.getFullYear(),
     utcDate.getMonth() + 1,
