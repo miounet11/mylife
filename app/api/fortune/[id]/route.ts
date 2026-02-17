@@ -6,10 +6,11 @@ const fortuneDatabase = new Map();
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<Record<string, string>> }
 ) {
   try {
-    const reportId = params.id;
+    const resolvedParams = await params;
+    const reportId = resolvedParams.id;
     const fortuneData = fortuneDatabase.get(reportId);
 
     if (!fortuneData) {
