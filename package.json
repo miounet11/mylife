@@ -13,7 +13,7 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.561.0",
-    "lunar": "^2.0.0",
+    "lunar-javascript": "^1.6.12",
     "tailwind-merge": "^2.5.0",
     "next": "^15.0.0",
     "react": "^19.0.0",
