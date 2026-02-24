@@ -12,7 +12,7 @@ interface FortuneData {
 }
 
 interface KLineChartProps {
-  data: FortuneData[];
+  data?: FortuneData[];
   showLegend?: boolean;
   height?: number;
 }

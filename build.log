@@ -1,0 +1,37 @@
+   ▲ Next.js 15.5.12
+   - Environments: .env
+   - Experiments (use with caution):
+     · cpus: 1
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully in 5.7s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+   Generating static pages (0/11) ...
+   Generating static pages (2/11) 
+   Generating static pages (5/11) 
+   Generating static pages (8/11) 
+
+<--- Last few GCs --->
+
+[1194946:0x1f5b22c0]   189657 ms: Mark-Compact 3979.8 (4139.5) -> 3967.3 (4143.0) MB, 4029.43 / 0.00 ms  (average mu = 0.104, current mu = 0.027) allocation failure; scavenge might not succeed
+[1194946:0x1f5b22c0]   196038 ms: Mark-Compact 3984.2 (4143.0) -> 3970.9 (4146.0) MB, 6160.75 / 0.00 ms  (average mu = 0.063, current mu = 0.035) allocation failure; scavenge might not succeed
+
+
+<--- JS stacktrace --->
+
+FATAL ERROR: Reached heap limit Allocation failed - JavaScript heap out of memory
+----- Native stack trace -----
+
+ 1: 0xb76db1 node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 2: 0xee62f0 v8::Utils::ReportOOMFailure(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 3: 0xee65d7 v8::internal::V8::FatalProcessOutOfMemory(v8::internal::Isolate*, char const*, v8::OOMDetails const&) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 4: 0x10f82d5  [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 5: 0x1110158 v8::internal::Heap::CollectGarbage(v8::internal::AllocationSpace, v8::internal::GarbageCollectionReason, v8::GCCallbackFlags) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 6: 0x10e6271 v8::internal::HeapAllocator::AllocateRawWithLightRetrySlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 7: 0x10e7405 v8::internal::HeapAllocator::AllocateRawWithRetryOrFailSlowPath(int, v8::internal::AllocationType, v8::internal::AllocationOrigin, v8::internal::AllocationAlignment) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 8: 0x10c4a56 v8::internal::Factory::NewFillerObject(int, v8::internal::AllocationAlignment, v8::internal::AllocationType, v8::internal::AllocationOrigin) [/root/.nvm/versions/node/v20.20.0/bin/node]
+ 9: 0x1520596 v8::internal::Runtime_AllocateInYoungGeneration(int, unsigned long*, v8::internal::Isolate*) [/root/.nvm/versions/node/v20.20.0/bin/node]
+10: 0x7b7d43ed9ef6 
+ ⨯ Next.js build worker exited with code: null and signal: SIGABRT

@@ -24,14 +24,14 @@ interface Event {
 }
 
 interface ImportantEventsProps {
-  events: Event[];
+  events?: Event[];
   onAdd?: () => void;
   onEdit?: (event: Event) => void;
   onDelete?: (eventId: string) => void;
   onToggleReminder?: (eventId: string) => void;
 }
 
-export default function ImportantEvents({ events, onAdd, onEdit, onDelete, onToggleReminder }: ImportantEventsProps) {
+export default function ImportantEvents({ events = [], onAdd, onEdit, onDelete, onToggleReminder }: ImportantEventsProps) {
   const [selectedType, setSelectedType] = useState<string>('all');
 
   const typeIcons = {

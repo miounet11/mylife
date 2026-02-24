@@ -1,11 +1,13 @@
 // 命理分析页面
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
 import { Suspense } from 'react';
-import dynamic from 'next/dynamic';
+import NextDynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
 // 动态导入以减少首屏加载
-const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
+const FortuneForm = NextDynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
 });
 
@@ -142,8 +144,8 @@ export default function AnalyzePage() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               需要帮助？
-              <Link href="/contact" className="text-purple-600 hover:underline ml-2">
-                联系我们
+              <Link href="/chat" className="text-purple-600 hover:underline ml-2">
+                AI 助手
               </Link>
             </p>
             <p className="text-xs text-gray-500 mt-2">

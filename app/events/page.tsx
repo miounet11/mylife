@@ -3,7 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowLeft, Plus, Filter, Search, Calendar, Grid } from 'lucide-react';
+import { ArrowLeft, Plus, Filter, Search, Calendar, Grid, Clock, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
 // 动态导入
@@ -268,7 +268,7 @@ function EventCard({ event }: { event: any }) {
   };
 
   return (
-    <div className={`border-2 ${impactColors[event.impact]} rounded-lg p-4 hover:shadow-lg transition transform hover:scale-[1.02]`}>
+    <div className={`border-2 ${impactColors[event.impact as keyof typeof impactColors] ?? 'border-gray-400 bg-gray-50'} rounded-lg p-4 hover:shadow-lg transition transform hover:scale-[1.02]`}>
       <div className="flex items-start space-x-4">
         <div className="flex-shrink-0 text-3xl">{event.icon}</div>
         <div className="flex-1">
@@ -307,7 +307,7 @@ function WarningCard({ warning }: { warning: any }) {
   };
 
   return (
-    <div className={`border-2 ${severityColors[warning.severity || 'medium']} rounded-lg p-4`}>
+    <div className={`border-2 ${severityColors[(warning.severity || 'medium') as keyof typeof severityColors] ?? 'border-orange-400 bg-orange-50'} rounded-lg p-4`}>
       <div className="flex items-start space-x-4">
         <div className="flex-shrink-0">
           <AlertTriangle className="w-6 h-6 text-orange-600" />
