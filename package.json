@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node --max-old-space-size=4096 node_modules/.bin/next build",
     "start": "next start",
     "lint": "next lint"
   },
@@ -13,20 +13,22 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.561.0",
-    "lunar-javascript": "^1.6.12",
-    "tailwind-merge": "^2.5.0",
+    "lunar-javascript": "^1.7.7",
     "next": "^15.0.0",
+    "openai": "^6.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "recharts": "^3.7.0"
+    "recharts": "^3.7.0",
+    "tailwind-merge": "^2.5.0"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^20.19.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.24",
     "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^3.4.19",
     "typescript": "^5"
   }
 }

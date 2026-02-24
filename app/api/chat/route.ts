@@ -2,34 +2,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // 模拟AI模型（实际应该调用真实的AI API）
+import { generateFortuneInterpretation } from '@/lib/llm';
+import OpenAI from 'openai';
+
+const getApiBaseUrl = () => {
+  return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
+};
+
+const getApiKey = () => {
+  return process.env.OPENAI_API_KEY || process.env.API_KEY || 'dummy_key';
+};
+
+const getDefaultModel = () => {
+  return process.env.DEFAULT_MODEL || 'auto';
+};
+
 async function generateAIResponse(
   question: string,
   userHistory: any[]
 ): Promise<string> {
-  // 根据问题生成响应
-  const responses: Record<string, string> = {
-    '事业': `根据您的八字，您最近问的"${question}"...从您的日主来看，事业运势呈上升趋势。建议把握当前机遇，争取在事业上有所突破。南方为事业吉方，可往南方发展。`,
-    '财运': `关于您的${question}，从您的命局来看，财运整体平稳。正财得用，适合正职工作，副业亦可。建议南方求财，宜穿红色系衣服，提升财运。`,
-    '婚姻': `您询问的"${question}"，从夫妻宫来看，婚姻运势良好。近期有桃花出现，建议把握机会。与属猴、属鸡的人结婚，婚姻更美满。`,
-    '健康': `关于您的健康问题，从您的八字来看，要注意脾胃健康。木旺克土，建议多食黄色食物，养脾胃。东方为健康吉方，适合就医、锻炼。`,
-  };
-
-  // 简单匹配
-  if (question.includes('事业') || question.includes('工作') || question.includes('升职')) {
-    return responses['事业'];
-  }
-  if (question.includes('钱') || question.includes('财') || question.includes('投资')) {
-    return responses['财运'];
-  }
-  if (question.includes('恋爱') || question.includes('结婚') || question.includes('对象')) {
-    return responses['婚姻'];
-  }
-  if (question.includes('健康') || question.includes('身体') || question.includes('病')) {
-    return responses['健康'];
+  const apiKey = getApiKey();
+  if (!apiKey || apiKey === 'dummy_key') {
+     console.warn("API_KEY is not set. Using mock chat interpretation.");
+     return `关于您的"${question}"，这是一 个很有深度的问题。由于当前系统未配置真实的大师模型API，我暂时无法为您提供针对性的解答。`;
   }
 
-  // 默认响应
-  return `关于您的"${question}"，从您的八字来看，这是一个很有深度的问题。建议您提供更多背景信息，我可以给您更详细的分析。`;
+  const openai = new OpenAI({
+    apiKey: apiKey,
+    baseURL: getApiBaseUrl(),
+  });
+
+  const messages = [
+    { role: "system", content: "你是一位精通传统子平八字、滴天髓等命理学，同时又懂得现代心理学和职场发展的顶级AI命理大师。请根据用户的问题进行深度解答，给出专业、贴心、具有指导意义的建议。" },
+    ...userHistory.map(h => ({ role: h.role, content: h.content })),
+    { role: "user", content: question }
+  ];
+
+  try {
+    const model = getDefaultModel();
+    const completion = await openai.chat.completions.create({
+      model: model, 
+      messages: messages as any,
+      temperature: 0.7,
+    });
+
+    return completion.choices[0].message.content || "大师暂时在休息，请稍后再问。";
+  } catch (error) {
+    console.error("[LLM Chat] Generation Error:", error);
+    return "大师推算时遇到了一点天机干扰，请稍后再试。";
+  }
 }
 
 export async function POST(request: NextRequest) {

@@ -1,4 +1,5 @@
 // 命理分析引擎 - 类似真正的大师
+// @ts-ignore
 import { Lunar } from 'lunar-javascript';
 import { UserFortuneProfile, FortuneAnalysisResult, Pillar, FiveElements, TenGods, Pattern, CareerAdvice, WealthAdvice, MarriageAdvice, HealthAdvice, DataStatistics } from './user-types';
 import { MasterPhrases, selectBestPhrase, generatePersonalizedPhrase, describeMonth } from './master-phrases';
@@ -25,37 +26,37 @@ export const calculateFourPillars = (
   
   // 年柱
   const yearPillar: Pillar = {
-    celestialStem: getYearStem(lunar.year),
-    earthlyBranch: getYearBranch(lunar.year),
-    hiddenStems: getHiddenStems(lunar.year),
-    nayin: getNayin(lunar.year),
-    fiveElements: getPillarFiveElements(lunar.year, null, null),
-    relationships: getPillarRelationships(lunar.year, null, null),
+    celestialStem: getYearStem(lunar.getYear()),
+    earthlyBranch: getYearBranch(lunar.getYear()),
+    hiddenStems: getHiddenStems(lunar.getYear()),
+    nayin: getNayin(lunar.getYear()),
+    fiveElements: getPillarFiveElements(lunar.getYear(), null, null),
+    relationships: getPillarRelationships(lunar.getYear(), null, null),
   };
   
   // 月柱
   const monthPillar: Pillar = {
-    celestialStem: getMonthStem(lunar.year, lunar.month),
-    earthlyBranch: getMonthBranch(lunar.month),
-    hiddenStems: getHiddenStems(lunar.month),
-    nayin: getNayin(lunar.month),
-    fiveElements: getPillarFiveElements(null, lunar.month, null),
-    relationships: getPillarRelationships(null, lunar.month, null),
+    celestialStem: getMonthStem(lunar.getYear(), lunar.getMonth()),
+    earthlyBranch: getMonthBranch(lunar.getMonth()),
+    hiddenStems: getHiddenStems(lunar.getMonth()),
+    nayin: getNayin(lunar.getMonth()),
+    fiveElements: getPillarFiveElements(null, lunar.getMonth(), null),
+    relationships: getPillarRelationships(null, lunar.getMonth(), null),
   };
   
   // 日柱
   const dayPillar: Pillar = {
-    celestialStem: getDayStem(lunar.year, lunar.month, lunar.day),
-    earthlyBranch: getDayBranch(lunar.day),
-    hiddenStems: getHiddenStems(lunar.day),
-    nayin: getNayin(lunar.day),
-    fiveElements: getPillarFiveElements(null, null, lunar.day),
-    relationships: getPillarRelationships(null, null, lunar.day),
+    celestialStem: getDayStem(lunar.getYear(), lunar.getMonth(), lunar.getDay()),
+    earthlyBranch: getDayBranch(lunar.getDay()),
+    hiddenStems: getHiddenStems(lunar.getDay()),
+    nayin: getNayin(lunar.getDay()),
+    fiveElements: getPillarFiveElements(null, null, lunar.getDay()),
+    relationships: getPillarRelationships(null, null, lunar.getDay()),
   };
   
   // 时柱
   const timePillar: Pillar = {
-    celestialStem: getHourStem(lunar.day, hour, minute),
+    celestialStem: getHourStem(lunar.getDay(), hour, minute),
     earthlyBranch: getHourBranch(hour, minute),
     hiddenStems: getHiddenStems(hour),
     nayin: getNayin(hour),
@@ -108,7 +109,6 @@ export const analyzeFortune = (
   
   return {
     basic: {
-      name,
       dayMaster,
       pillars,
     },
@@ -117,18 +117,10 @@ export const analyzeFortune = (
     pattern,
     fortune,
     advice,
-    evidence,
-    analysis: {
-      opening,
-      explanation: generateExplanation(pillars, fiveElements, tenGods, pattern),
-    },
-    masterLanguage: {
-      opening: selectBestPhrase('opening'),
-      descriptions: [selectBestPhrase('description')],
-      judgments: [selectBestPhrase('judgment')],
-      timing: [selectBestPhrase('timing')],
-      advice: [selectBestPhrase('advice')],
-      closing: [selectBestPhrase('closing')],
+    evidence: {
+      statistics: evidence.statistics,
+      celebrities: evidence.celebrities,
+      similarCases: [],
     },
   };
 };
@@ -278,41 +270,41 @@ const generateAdvice = (
 ): any => {
   // 事业建议
   const career: CareerAdvice = {
-    general: MasterPhrases.advice.career.general[Math.floor(Math.random() * MasterPhrases.advice.career.general.length)],
-    specific: MasterPhrases.advice.career.specific.slice(0, 3),
-    timing: MasterPhrases.advice.career.direction[Math.floor(Math.random() * MasterPhrases.advice.career.direction.length)],
-    avoid: MasterPhrases.advice.career.avoid.slice(0, 2),
-    direction: MasterPhrases.advice.career.direction[Math.floor(Math.random() * MasterPhrases.advice.career.direction.length)],
-    colors: MasterPhrases.advice.career.colors.slice(0, 2),
+    general: MasterPhrases.career.general[Math.floor(Math.random() * MasterPhrases.career.general.length)],
+    specific: MasterPhrases.career.specific.slice(0, 3),
+    timing: MasterPhrases.career.direction[Math.floor(Math.random() * MasterPhrases.career.direction.length)],
+    avoid: MasterPhrases.career.avoid.slice(0, 2),
+    direction: MasterPhrases.career.direction[Math.floor(Math.random() * MasterPhrases.career.direction.length)],
+    colors: ['红色', '紫色'],
   };
   
   // 财富建议
   const wealth: WealthAdvice = {
-    general: MasterPhrases.advice.wealth.general[Math.floor(Math.random() * MasterPhrases.advice.wealth.general.length)],
-    specific: MasterPhrases.advice.wealth.specific.slice(0, 3),
-    timing: MasterPhrases.advice.wealth.direction[Math.floor(Math.random() * MasterPhrases.advice.wealth.direction.length)],
-    direction: MasterPhrases.advice.wealth.direction[Math.floor(Math.random() * MasterPhrases.advice.wealth.direction.length)],
-    colors: MasterPhrases.advice.wealth.colors.slice(0, 2),
-    avoid: MasterPhrases.advice.wealth.avoid.slice(0, 2),
+    general: MasterPhrases.wealth.general[Math.floor(Math.random() * MasterPhrases.wealth.general.length)],
+    specific: MasterPhrases.wealth.specific.slice(0, 3),
+    timing: MasterPhrases.wealth.direction[Math.floor(Math.random() * MasterPhrases.wealth.direction.length)],
+    direction: MasterPhrases.wealth.direction[Math.floor(Math.random() * MasterPhrases.wealth.direction.length)],
+    colors: ['红色', '紫色'],
+    avoid: MasterPhrases.wealth.avoid.slice(0, 2),
   };
   
   // 婚姻建议
   const marriage: MarriageAdvice = {
-    general: MasterPhrases.advice.marriage.general[Math.floor(Math.random() * MasterPhrases.advice.marriage.general.length)],
-    specific: MasterPhrases.advice.marriage.specific.slice(0, 3),
-    timing: MasterPhrases.advice.marriage.direction[Math.floor(Math.random() * MasterPhrases.advice.marriage.direction.length)],
-    direction: MasterPhrases.advice.marriage.direction[Math.floor(Math.random() * MasterPhrases.advice.marriage.direction.length)],
-    colors: MasterPhrases.advice.marriage.colors.slice(0, 2),
+    general: MasterPhrases.marriage.general[Math.floor(Math.random() * MasterPhrases.marriage.general.length)],
+    specific: MasterPhrases.marriage.specific.slice(0, 3),
+    timing: MasterPhrases.marriage.direction[Math.floor(Math.random() * MasterPhrases.marriage.direction.length)],
+    direction: MasterPhrases.marriage.direction[Math.floor(Math.random() * MasterPhrases.marriage.direction.length)],
+    colors: ['红色', '粉色'],
   };
   
   // 健康建议
   const health: HealthAdvice = {
-    general: MasterPhrases.advice.health.general[Math.floor(Math.random() * MasterPhrases.advice.health.general.length)],
-    specific: MasterPhrases.advice.health.specific.slice(0, 3),
-    timing: MasterPhrases.advice.health.direction[Math.floor(Math.random() * MasterPhrases.advice.health.direction.length)],
-    directions: MasterPhrases.advice.health.direction.slice(0, 2),
-    colors: MasterPhrases.advice.health.colors.slice(0, 2),
-    avoid: MasterPhrases.advice.health.avoid.slice(0, 2),
+    general: MasterPhrases.health.general[Math.floor(Math.random() * MasterPhrases.health.general.length)],
+    specific: MasterPhrases.health.specific.slice(0, 3),
+    timing: MasterPhrases.health.direction[Math.floor(Math.random() * MasterPhrases.health.direction.length)],
+    directions: MasterPhrases.health.direction.slice(0, 2),
+    colors: ['黄色', '绿色'],
+    avoid: MasterPhrases.health.avoid.slice(0, 2),
   };
   
   return {
@@ -321,8 +313,8 @@ const generateAdvice = (
     marriage,
     health,
     colors: [...new Set([...career.colors, ...wealth.colors, ...marriage.colors, ...health.colors])],
-    directions: [...new Set([...career.direction, ...wealth.direction, ...marriage.direction, ...health.directions])],
-    timing: [MasterPhrases.advice.career.timing[Math.floor(Math.random() * MasterPhrases.advice.career.timing.length)]],
+    directions: [...new Set([career.direction, wealth.direction, marriage.direction, ...health.directions])],
+    timing: [MasterPhrases.timing[Math.floor(Math.random() * MasterPhrases.timing.length)]],
   };
 };
 
@@ -426,7 +418,7 @@ const getHourBranch = (hour: number, minute: number): string => {
 };
 
 const calculateHourPillar = (lunar: any, hour: number, minute: number): Pillar => {
-  const stem = getHourStem(lunar.day, hour, minute);
+  const stem = getHourStem(lunar.getDay(), hour, minute);
   const branch = getHourBranch(hour, minute);
   
   return {
@@ -476,9 +468,9 @@ const getNayin = (value: any): string => {
   return nayinMap[value] || '';
 };
 
-const getPillarFiveElements = (year: any, month: any, day: any): any => {
+  const getPillarFiveElements = (year: any, month: any, day: any): any => {
   const fiveElements = (stem: string): string => {
-    const map = {
+    const map: Record<string, string> = {
       '甲': 'wood', '乙': 'wood', '丙': 'fire', '丁': 'fire',
       '戊': 'earth', '己': 'earth', '庚': 'metal', '辛': 'metal',
       '壬': 'water', '癸': 'water',

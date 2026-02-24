@@ -437,27 +437,25 @@ export const MasterPhrases = {
 };
 
 // 智能选择最佳话术
+const typeMap: Record<string, string> = {
+  opening: 'openings',
+  description: 'descriptions',
+  judgment: 'judgments',
+  timing: 'timing',
+  advice: 'advice',
+  closing: 'closing',
+};
+
 export const selectBestPhrase = (
   type: 'opening' | 'description' | 'judgment' | 'timing' | 'advice' | 'closing',
   context?: any
 ): string => {
-  const phrases = MasterPhrases[type] as string[];
+  const key = typeMap[type] || type;
+  const phrases = (MasterPhrases as any)[key] as string[];
   
   // 如果是建议类型，根据上下文选择
   if (type === 'advice' && context) {
     if (context.category === 'career') {
-      const careerAdvice = MasterPhrases.advice.career;
-      if (context.specific) {
-        return careerAdvice.specific[Math.floor(Math.random() * careerAdvice.specific.length)];
-      }
-      return careerAdvice.general[Math.floor(Math.random() * careerAdvice.general.length)];
-    }
-    if (context.category === 'wealth') {
-      const wealthAdvice = MasterPhrases.advice.wealth;
-      if (context.specific) {
-        return wealthAdvice.specific[Math.floor(Math.random() * wealthAdvice.specific.length)];
-      }
-      return wealthAdvice.general[Math.floor(Math.random() * wealthAdvice.general.length)];
     }
   }
   
@@ -492,21 +490,21 @@ export const generatePersonalizedPhrase = (
 };
 
 // 辅助函数
-export function describeMonth(pillar: string): string {
-  const descriptions = {
-    '寅': '春季，万物复苏',
-    '卯': '春季，生机盎然',
-    '辰': '春季末尾，蓄势待发',
-    '巳': '夏季初头，活力四射',
-    '午': '夏季，热情奔放',
-    '未': '夏季末尾，收获在即',
-    '申': '秋季，清凉爽朗',
-    '酉': '秋季，丰收喜悦',
-    '戌': '秋季末尾，准备入冬',
-    '亥': '冬季，蓄势待发',
-    '子': '冬季初头，阴极阳生',
-    '丑': '冬季，寒冷寂静',
+export const describeMonth = (pillar: string): string => {
+  const descriptions: Record<string, string> = {
+    '寅': '孟春，万物复苏',
+    '卯': '仲春，生机盎然',
+    '辰': '季春，阳气生发',
+    '巳': '孟夏，万物并秀',
+    '午': '仲夏，阳气极盛',
+    '未': '季夏，物极必反',
+    '申': '孟秋，金气始肃',
+    '酉': '仲秋，万物收敛',
+    '戌': '季秋，阳气渐收',
+    '亥': '孟冬，万物闭藏',
+    '子': '仲冬，一阳始生',
+    '丑': '季冬，阴极阳生',
   };
   
-  return descriptions[pillar as any] || '平月';
-}
+  return descriptions[pillar] || '平月';
+};

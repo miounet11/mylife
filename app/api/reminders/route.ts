@@ -83,13 +83,12 @@ export async function GET(request: NextRequest) {
         id: '3',
         userId,
         eventId: 'event_3',
-        type: 'app',
+        type: 'warning',
         title: '⚠️ 健康化灾预警',
         datetime: new Date(Date.now() + 259200000).toISOString(), // 3天后
         advanceDays: 4320,
         message: '未来7天（农历二月初一至初七）注意脾胃健康，宜清淡饮食',
         severity: 'medium',
-        type: 'warning',
       },
     ];
 

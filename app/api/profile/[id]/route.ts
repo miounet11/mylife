@@ -47,10 +47,11 @@ export async function POST(request: NextRequest) {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = userOperations.getById(params.id);
+    const { id } = await params;
+    const user = userOperations.getById(id);
 
     if (!user) {
       return NextResponse.json(
@@ -60,10 +61,10 @@ export async function GET(
     }
 
     // 获取用户的命理数据
-    const fortunes = []; // 这里应该调用fortunes查询
+    const fortunes: unknown[] = []; // 这里应该调用fortunes查询
 
     // 获取用户的事件
-    const events = []; // 这里应该调用events查询
+    const events: unknown[] = []; // 这里应该调用events查询
 
     return NextResponse.json({
       success: true,
@@ -85,13 +86,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const updates = await request.json();
 
     // 更新用户
-    const result = userOperations.update(params.id, updates);
+    const result = userOperations.update(id, updates);
 
     return NextResponse.json({
       success: true,
@@ -109,11 +111,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     // 删除用户
-    const result = userOperations.delete(params.id);
+    const result = userOperations.delete(id);
 
     return NextResponse.json({
       success: true,

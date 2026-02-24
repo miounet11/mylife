@@ -47,6 +47,7 @@ export function initializeDatabase() {
       fortune JSON NOT NULL,
       advice JSON NOT NULL,
       evidence JSON NOT NULL,
+      analysis JSON,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -193,7 +194,7 @@ export const userOperations = {
 export const fortuneOperations = {
   create: (fortune: any) => {
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
@@ -211,7 +212,8 @@ export const fortuneOperations = {
       JSON.stringify(fortune.pattern),
       JSON.stringify(fortune.fortune),
       JSON.stringify(fortune.advice),
-      JSON.stringify(fortune.evidence)
+      JSON.stringify(fortune.evidence),
+      JSON.stringify(fortune.analysis)
     );
   },
 
@@ -229,6 +231,7 @@ export const fortuneOperations = {
         fortune: JSON.parse(row.fortune),
         advice: JSON.parse(row.advice),
         evidence: JSON.parse(row.evidence),
+        analysis: row.analysis ? JSON.parse(row.analysis) : null,
       };
     }
     return null;
@@ -246,19 +249,20 @@ export const fortuneOperations = {
       fortune: JSON.parse(row.fortune),
       advice: JSON.parse(row.advice),
       evidence: JSON.parse(row.evidence),
+        analysis: row.analysis ? JSON.parse(row.analysis) : null,
     }));
   },
 
   update: (id: string, updates: any) => {
     const setClause = Object.keys(updates).map(key => {
-      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence'].includes(key)) {
+      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis'].includes(key)) {
         return `${key} = ?`;
       }
       return `${key} = ?`;
     }).join(', ');
     
     const values = Object.entries(updates).map(([key, value]) => {
-      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence'].includes(key)) {
+      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis'].includes(key)) {
         return JSON.stringify(value);
       }
       return value;

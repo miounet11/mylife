@@ -1,11 +1,14 @@
-import dynamic from 'next/dynamic';
+export const fetchCache = 'force-no-store';
+export const revalidate = 0;
+import NextDynamic from 'next/dynamic';
+import Link from 'next/link';
 
 // 动态导入以减少首屏加载
-const TrustSignals = dynamic(() => import('@/components/trust-signals'), {
+const TrustSignals = NextDynamic(() => import('@/components/trust-signals'), {
   loading: () => <TrustSignalsSkeleton />,
 });
 
-const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
+const FortuneForm = NextDynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
 });
 
@@ -53,11 +56,11 @@ export default function HomePage() {
               <Link href="/chat" className="text-gray-700 hover:text-purple-600 transition">
                 AI助手
               </Link>
-              <Link href="/examples" className="text-gray-700 hover:text-purple-600 transition">
-                案例展示
+              <Link href="/events" className="text-gray-700 hover:text-purple-600 transition">
+                事件日历
               </Link>
-              <Link href="/pricing" className="text-gray-700 hover:text-purple-600 transition">
-                价格
+              <Link href="/profile" className="text-gray-700 hover:text-purple-600 transition">
+                个人档案
               </Link>
             </div>
 
@@ -119,17 +122,17 @@ export default function HomePage() {
           
           <div className="grid grid-cols-2 gap-4">
             <Link
-              href="/examples"
+              href="/events"
               className="bg-white text-purple-600 border-2 border-purple-600 py-4 px-6 rounded-xl font-semibold hover:bg-purple-50 transition flex items-center justify-center space-x-2"
             >
-              查看案例
+              事件日历
               <span>→</span>
             </Link>
             <Link
-              href="/about"
+              href="/chat"
               className="bg-white text-gray-700 border-2 border-gray-300 py-4 px-6 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center space-x-2"
             >
-              了解更多
+              AI 助手
               <span>→</span>
             </Link>
           </div>
@@ -158,7 +161,7 @@ export default function HomePage() {
             icon="📊"
             title="查看我的运势"
             description="年运 + 月运 + 流年 + 命盘"
-            href="/fortune"
+            href="/profile"
           />
           <QuickLinkCard
             icon="📅"
@@ -282,28 +285,18 @@ export default function HomePage() {
             <div>
               <h3 className="text-lg font-bold mb-4">快速链接</h3>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/about" className="hover:text-white transition">关于我们</Link></li>
-                <li><Link href="/contact" className="hover:text-white transition">联系我们</Link></li>
-                <li><Link href="/privacy" className="hover:text-white transition">隐私政策</Link></li>
-                <li><Link href="/terms" className="hover:text-white transition">使用条款</Link></li>
+                <li><Link href="/analyze" className="hover:text-white transition">命理分析</Link></li>
+                <li><Link href="/chat" className="hover:text-white transition">AI 助手</Link></li>
+                <li><Link href="/events" className="hover:text-white transition">事件日历</Link></li>
+                <li><Link href="/profile" className="hover:text-white transition">个人档案</Link></li>
               </ul>
             </div>
             <div>
               <h3 className="text-lg font-bold mb-4">社交媒体</h3>
               <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white transition">
+                <a href="#" className="text-gray-400 hover:text-white transition" aria-label="微信">
                   <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h-3.308l-7.227 8.168 7.227 8.168 2.15 0 3.966-1.923 2.15-8.168 7.227-8.168 2.15 0 3.966-1.923 2.15 8.168-7.227 8.168-2.15 0-3.966-1.923-2.15-8.168-7.227-8.168 2.15 0-3.966 1.923-2.15-8.168-7.227-8.168 2.15 0-3.966 1.923-2.15 8.168 7.227-8.168 2.15 0 3.966 1.923 2.15 8.168 7.227z" />
-                  </svg>
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19.59 6.69a4.92 4.92 0 0 0-3.52-1.5l-2.73 2.73a4.92 4.92 0 0 0-1.5-3.52 4.92 4.92 0 0 0 1.5-3.52 4.92 4.92 0 0 0 3.52-1.5l2.73-2.73a4.92 4.92 0 0 0 1.5 3.52 4.92 4.92 0 0 0-1.5 3.52L12 5.64l-2.73 2.73a4.92 4.92 0 0 0-1.5 3.52 4.92 4.92 0 0 0-3.52-1.5 4.92 4.92 0 0 0-1.5-3.52l-2.73-2.73a4.92 4.92 0 0 0 1.5-3.52 4.92 4.92 0 0 0-3.52-1.5 4.92 4.92 0 0 0 3.52 1.5l2.73 2.73z" />
-                  </svg>
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white transition">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.737-2.03-.737-1.954 0-3.019 1.408-1.954-2.03-.737-2.023-.297-1.758.737-2.03-2.03-1.954 0-3.019 1.408-1.954 2.03-.737 2.023.297 1.758.737 2.03 2.03 1.954 0 3.019-1.408 1.954-2.03.737-2.023.149 1.758-.737 2.03-2.03 1.954 0 3.019-1.408 1.954-2.03.737-2.023zM12 2.25a2.25 2.25 0 0 1 4.5 4.5 2.25 2.25 0 0 1-4.5-4.5 2.25 2.25 0 0 1-4.5-4.5z" />
+                    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM12 11.467a.688.688 0 0 1 0-1.375.688.688 0 0 1 0 1.375zm3.75 0a.688.688 0 0 1 0-1.375.688.688 0 0 1 0 1.375z" />
                   </svg>
                 </a>
               </div>
@@ -320,8 +313,8 @@ export default function HomePage() {
           <div className="border-t border-gray-800 pt-8 mt-8 text-center">
             <p className="text-sm text-gray-500">
               © 2024 人生K线. All rights reserved. |
-              <Link href="/privacy" className="hover:text-gray-400 transition">隐私政策</Link> |
-              <Link href="/terms" className="hover:text-gray-400 transition">使用条款</Link>
+              <span className="text-gray-500">隐私政策</span> |
+              <span className="text-gray-500">使用条款</span>
             </p>
           </div>
         </div>
