@@ -6,7 +6,7 @@ import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
 
 // 动态导入以减少首屏加载
-const TrustReport = NextDynamic(() => import('@/components/trust-signals'), {
+const TrustReport = NextDynamic(() => import('@/components/trust-report'), {
   loading: () => <ReportSkeleton />,
 });
 

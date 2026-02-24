@@ -127,20 +127,17 @@ JSON结构必须完全符合以下定义：
     if (!responseText) return null;
     
     // Clean up response if it contains markdown JSON blocks
+    
     let cleanedText = responseText.trim();
-    if (cleanedText.startsWith('\`\`\`json')) {
-      cleanedText = cleanedText.substring(7);
-      if (cleanedText.endsWith('\`\`\`')) {
-        cleanedText = cleanedText.substring(0, cleanedText.length - 3);
-      }
-    } else if (cleanedText.startsWith('\`\`\`')) {
-      cleanedText = cleanedText.substring(3);
-      if (cleanedText.endsWith('\`\`\`')) {
-        cleanedText = cleanedText.substring(0, cleanedText.length - 3);
-      }
+    
+    // Attempt to extract JSON if it's wrapped in markdown or other text
+    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      cleanedText = jsonMatch[0];
     }
     
     return JSON.parse(cleanedText);
+
   } catch (error) {
     console.error("[LLM] Generation Error:", error);
     return null;
