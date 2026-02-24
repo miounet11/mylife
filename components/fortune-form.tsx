@@ -2,6 +2,7 @@
 'use client';
 
 import { useState } from 'react';
+import FortuneProgress from './fortune-progress';
 
 interface FortuneFormData {
   name: string;
