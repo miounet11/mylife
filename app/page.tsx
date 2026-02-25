@@ -3,319 +3,210 @@ export const revalidate = 0;
 import NextDynamic from 'next/dynamic';
 import Link from 'next/link';
 
-// 动态导入以减少首屏加载
-const TrustSignals = NextDynamic(() => import('@/components/trust-signals'), {
-  loading: () => <TrustSignalsSkeleton />,
-});
-
 const FortuneForm = NextDynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
 });
 
+const primaryNavItems = [
+  { href: '/analyze', label: '命理排盘' },
+  { href: '/chat', label: 'AI 咨询' },
+  { href: '/events', label: '日历择吉' },
+];
+
+const trustSignals = [
+  { title: '真太阳时', subtitle: '经度与均时差双重修正' },
+  { title: '分钟级', subtitle: '节气交接边界精准判定' },
+  { title: '五行生克', subtitle: '核心引擎确定性计算' },
+  { title: 'AI 赋能', subtitle: '深度解析与定制化建议' },
+];
+
 export const metadata = {
-  title: '人生K线 | AI驱动的八字命理分析',
-  description: 'AI驱动的八字命理分析，像真正的大师一样精准可信。10万+案例分析，95%+准确率。',
-  keywords: ['八字', '命理', '算命', '紫微斗数', '运势', 'AI命理'],
-  openGraph: {
-    title: '人生K线 | AI驱动的八字命理分析',
-    description: 'AI驱动的八字命理分析，像真正的大师一样精准可信',
-    url: 'https://life-kline.com',
-    siteName: '人生K线',
-    images: [
-      {
-        url: '/og-image.png',
-        width: 1200,
-        height: 630,
-      },
-    ],
-  },
+  title: '人生K线 | 权威八字命理分析引擎',
+  description: '基于天文历法与传统命理学，提供精准的命运轨迹与决策参考。高考、升学、事业关键节点决策辅助工具。',
+  keywords: ['八字', '命理', '高考测算', '学业决策', '运势分析', 'AI命理'],
 };
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-900">
       {/* 导航栏 */}
-      <nav className="bg-white shadow-md sticky top-0 z-50">
+      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white font-bold">
+              <div className="w-8 h-8 rounded bg-indigo-700 flex items-center justify-center text-white font-serif font-bold tracking-tighter">
                 K
               </div>
-              <div className="text-xl font-bold text-gray-900">
+              <div className="text-xl font-bold tracking-tight text-slate-900">
                 人生K线
               </div>
             </Link>
 
-            {/* 导航链接 */}
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/analyze" className="text-gray-700 hover:text-purple-600 transition">
-                命理分析
-              </Link>
-              <Link href="/chat" className="text-gray-700 hover:text-purple-600 transition">
-                AI助手
-              </Link>
-              <Link href="/events" className="text-gray-700 hover:text-purple-600 transition">
-                事件日历
-              </Link>
-              <Link href="/profile" className="text-gray-700 hover:text-purple-600 transition">
-                个人档案
-              </Link>
+            <div className="hidden md:flex items-center space-x-8 text-sm font-medium">
+              {primaryNavItems.map((item) => (
+                <Link key={item.href} href={item.href} className="text-slate-600 hover:text-indigo-600 transition-colors">
+                  {item.label}
+                </Link>
+              ))}
             </div>
 
-            {/* CTA */}
             <Link
               href="/analyze"
-              className="hidden md:block bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:shadow-lg transition"
+              className="hidden md:flex items-center justify-center bg-indigo-600 text-white px-5 py-2 rounded font-medium text-sm hover:bg-indigo-700 transition-colors shadow-sm"
             >
-              开始分析
+              新建测算
             </Link>
+
+            <Link
+              href="#form-section"
+              className="md:hidden inline-flex items-center justify-center rounded bg-indigo-600 text-white px-3 py-1.5 text-xs font-medium"
+            >
+              立即测算
+            </Link>
+          </div>
+
+          <div className="md:hidden pb-3">
+            <div className="grid grid-cols-3 gap-2">
+              {primaryNavItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="rounded border border-slate-200 bg-white px-2 py-2 text-center text-xs font-medium text-slate-600 hover:border-indigo-200 hover:text-indigo-600 transition"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-16 md:py-24 text-center">
-        {/* 信任信号 */}
-        <div className="mb-12">
-          <TrustSignals />
-        </div>
-
-        {/* 主标题 */}
-        <h1 className="mb-6 text-4xl md:text-6xl font-bold bg-gradient-to-r from-purple-600 via-blue-600 to-purple-600 bg-clip-text text-transparent leading-tight">
-          人生K线
-        </h1>
-
-        {/* 副标题 */}
-        <p className="mb-8 text-xl md:text-3xl text-gray-700 leading-relaxed max-w-4xl mx-auto">
-          AI驱动的八字命理分析<br />
-          <span className="text-purple-600 font-semibold text-2xl md:text-3xl">
-            像真正的大师一样精准可信
-          </span>
-        </p>
-
-        {/* 社会证明 */}
-        <div className="grid grid-cols-3 gap-6 mb-12">
-          <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105">
-            <div className="text-4xl font-bold text-purple-600 mb-2">10万+</div>
-            <div className="text-sm text-gray-600">命理分析</div>
+      <section className="pt-16 pb-14 md:pt-24 md:pb-20 border-b border-slate-200">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-indigo-100/50 border border-indigo-200 text-indigo-700 text-xs font-semibold tracking-wide uppercase mb-6">
+            专业级命理分析引擎 V2.0
           </div>
-          <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105">
-            <div className="text-4xl font-bold text-purple-600 mb-2">4.9/5</div>
-            <div className="text-sm text-gray-600">用户满意度</div>
-          </div>
-          <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105">
-            <div className="text-4xl font-bold text-purple-600 mb-2">95%</div>
-            <div className="text-sm text-gray-600">准确率</div>
-          </div>
-        </div>
+          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-6 font-serif">
+            洞悉命理轨迹 <br className="hidden md:block" />
+            <span className="text-indigo-600">成就关键决策</span>
+          </h1>
+          <p className="mt-4 text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
+            基于精准天文历法（真太阳时修正）与传统子平八字理论。为升学（高考）、事业、婚姻等人生关键节点提供权威、客观的决策数据参考。
+          </p>
 
-        {/* CTA按钮 */}
-        <div className="space-y-4 max-w-2xl mx-auto">
-          <Link
-            href="/analyze"
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white text-xl font-bold py-5 px-8 rounded-2xl shadow-lg hover:shadow-2xl hover:scale-105 transition"
-          >
-            开始我的命理分析
-          </Link>
-          
-          <div className="grid grid-cols-2 gap-4">
+          <div className="mt-10 flex flex-col sm:flex-row justify-center items-center space-y-4 sm:space-y-0 sm:space-x-4">
             <Link
-              href="/events"
-              className="bg-white text-purple-600 border-2 border-purple-600 py-4 px-6 rounded-xl font-semibold hover:bg-purple-50 transition flex items-center justify-center space-x-2"
+              href="#form-section"
+              className="w-full sm:w-auto px-8 py-3.5 border border-transparent text-base font-medium rounded shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
             >
-              事件日历
-              <span>→</span>
+              立即开启精准排盘
             </Link>
             <Link
-              href="/chat"
-              className="bg-white text-gray-700 border-2 border-gray-300 py-4 px-6 rounded-xl font-semibold hover:bg-gray-50 transition flex items-center justify-center space-x-2"
+              href="/analyze"
+              className="w-full sm:w-auto px-8 py-3.5 border border-slate-300 text-base font-medium rounded text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all"
             >
-              AI 助手
-              <span>→</span>
+              查看示例报告
             </Link>
           </div>
         </div>
       </section>
 
-      {/* 快速入口 */}
-      <section className="container mx-auto px-4 py-16 bg-white">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            快速入口
-          </h2>
-          <p className="text-gray-600">
-            点击即可开始您的命理之旅
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <QuickLinkCard
-            icon="🔮"
-            title="查看我的八字"
-            description="四柱排盘 + 五行分析 + 十神配置"
-            href="/analyze"
-          />
-          <QuickLinkCard
-            icon="📊"
-            title="查看我的运势"
-            description="年运 + 月运 + 流年 + 命盘"
-            href="/profile"
-          />
-          <QuickLinkCard
-            icon="📅"
-            title="查看我的事件"
-            description="重要节点 + 化灾预警 + 增运提醒"
-            href="/events"
-          />
+      {/* Trust & Data Signals */}
+      <section className="bg-white border-y border-slate-200 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {trustSignals.map((signal) => (
+              <div
+                key={signal.title}
+                className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center hover:border-indigo-200 hover:bg-indigo-50/40 transition"
+              >
+                <div className="text-2xl font-bold text-indigo-600 mb-1">{signal.title}</div>
+                <div className="text-sm text-slate-500 font-medium">{signal.subtitle}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* 特性展示 */}
-      <section className="container mx-auto px-4 py-16 bg-gradient-to-b from-white to-purple-50">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            为什么选择人生K线？
-          </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            不仅仅是工具，而是您的专属AI命理助手
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <FeatureCard
-            icon="✨"
-            title="AI命理分析"
-            description="像真正的大师一样精准，基于10万+案例分析"
-          />
-          <FeatureCard
-            icon="👥"
-            title="大师级解读"
-            description="600+条大师话术，古籍引用，数据支撑"
-          />
-          <FeatureCard
-            icon="📊"
-            title="数据可视化"
-            description="图表化展示，清晰易懂，一目了然"
-          />
-          <FeatureCard
-            icon="🤖"
-            title="持续AI助手"
-            description="24小时在线，随时回答问题，长期记忆"
-          />
-          <FeatureCard
-            icon="⚠️"
-            title="化灾预警"
-            description="提前预警，防护措施，避免风险"
-          />
+      {/* Main Form Section */}
+      <section id="form-section" className="py-16 md:py-24 bg-slate-50">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-10">
+            <h2 className="text-3xl font-bold text-slate-900 font-serif">严谨的排盘输入</h2>
+            <p className="mt-3 text-slate-600">请尽可能提供精确到分钟的出生时间及出生城市，以确保真太阳时计算的准确性。</p>
+          </div>
+          <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-2 sm:p-6 md:p-8">
+            <FortuneForm />
+          </div>
         </div>
       </section>
 
-      {/* 用户见证 */}
-      <section className="container mx-auto px-4 py-16 bg-white">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            用户见证
-          </h2>
-          <p className="text-gray-600">
-            真实用户的真实反馈
-          </p>
-        </div>
+      {/* Features Grid */}
+      <section className="py-16 md:py-24 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl font-bold text-slate-900 font-serif">专业级功能模块</h2>
+            <p className="mt-4 text-slate-600 max-w-2xl mx-auto">以严谨的逻辑和清晰的交互，为您呈现命理学核心数据，摒弃迷信与模糊，提供具参考价值的决策支持。</p>
+          </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <TestimonialCard
-            name="张先生"
-            role="企业管理者"
-            content="人生K线的分析太准了！去年告诉我3月有事业机遇，我果然在3月15日升职了。大师话术让我觉得很可信。"
-            rating={5}
-          />
-          <TestimonialCard
-            name="李女士"
-            role="自媒体"
-            content="AI助手太方便了，每天都有运势提醒，化灾预警也很准。现在每天早上8点都会想起它。"
-            rating={5}
-          />
-          <TestimonialCard
-            name="王先生"
-            role="创业者"
-            content="从一次性工具变成了AI助手，每天都来问问题，越用越精准，越来越依赖。"
-            rating={5}
-          />
-          <TestimonialCard
-            name="赵女士"
-            role="学生"
-            content="八字分析很详细，建议也很实用。按照建议穿红色衣服，果然感觉运势好多了。"
-            rating={5}
-          />
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <div className="max-w-2xl mx-auto bg-gradient-to-r from-purple-600 to-blue-600 rounded-3xl p-12 text-white shadow-2xl">
-          <h2 className="text-4xl font-bold mb-4">
-            准备好开始您的命理之旅了吗？
-          </h2>
-          <p className="text-xl mb-8 opacity-90">
-            像真正的大师一样，获得精准的命理分析和专业的指导建议
-          </p>
-          <Link
-            href="/analyze"
-            className="inline-block bg-white text-purple-600 text-xl font-bold py-4 px-8 rounded-xl font-semibold hover:bg-purple-50 transition transform hover:scale-105"
-          >
-            开始我的命理分析 →
-          </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <FeatureCard
+              icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>}
+              title="权威排盘与五行分析"
+              description="展示标准的四柱八字排盘、藏干、纳音，以及精确的五行力量对比图表，直观呈现命局五行旺衰。"
+            />
+            <FeatureCard
+              icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>}
+              title="用神与特殊格局"
+              description="引擎自动检测从财、从杀、专旺等特殊格局，并根据调候、通关、强弱平衡四步法精确提取用神忌神。"
+            />
+            <FeatureCard
+              icon={<svg className="w-6 h-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-3.582 8-8 8a8.000 8.000 0 01-4.659-1.509L3 19l2.09-2.09A8.000 8.000 0 013 12c0-4.418 3.582-8 8-8s8 3.582 8 8z" /></svg>}
+              title="AI 深度命理咨询"
+              description="结合排盘数据与大语言模型，提供如专家面谈般的解读体验，针对学业、事业、财富提供定制化建议。"
+            />
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">人生K线</h3>
-              <p className="text-sm text-gray-400 mb-2">
-                AI驱动的八字命理分析平台
-              </p>
-              <p className="text-sm text-gray-400">
-                像真正的大师一样精准可信
+      <footer className="bg-slate-900 text-slate-300 py-12 border-t border-slate-800">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="col-span-1 lg:col-span-2">
+              <div className="flex items-center space-x-2 mb-4">
+                <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center text-white font-serif font-bold text-xs">
+                  K
+                </div>
+                <span className="text-lg font-bold text-white tracking-tight">人生K线</span>
+              </div>
+              <p className="text-sm text-slate-400 max-w-sm leading-relaxed">
+                致力于将传统命理学与现代算法及人工智能相结合，为用户提供客观、专业、具参考价值的人生决策辅助工具。
               </p>
             </div>
+            
             <div>
-              <h3 className="text-lg font-bold mb-4">快速链接</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link href="/analyze" className="hover:text-white transition">命理分析</Link></li>
-                <li><Link href="/chat" className="hover:text-white transition">AI 助手</Link></li>
-                <li><Link href="/events" className="hover:text-white transition">事件日历</Link></li>
-                <li><Link href="/profile" className="hover:text-white transition">个人档案</Link></li>
+              <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">核心功能</h3>
+              <ul className="space-y-3 text-sm">
+                <li><Link href="/analyze" className="hover:text-indigo-400 transition-colors">精准排盘</Link></li>
+                <li><Link href="/chat" className="hover:text-indigo-400 transition-colors">AI 咨询</Link></li>
+                <li><Link href="/events" className="hover:text-indigo-400 transition-colors">日历择吉</Link></li>
               </ul>
             </div>
+
             <div>
-              <h3 className="text-lg font-bold mb-4">社交媒体</h3>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white transition" aria-label="微信">
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M8.691 2.188C3.891 2.188 0 5.476 0 9.53c0 2.212 1.17 4.203 3.002 5.55a.59.59 0 0 1 .213.665l-.39 1.48c-.019.07-.048.141-.048.213 0 .163.13.295.29.295a.326.326 0 0 0 .167-.054l1.903-1.114a.864.864 0 0 1 .717-.098 10.16 10.16 0 0 0 2.837.403c.276 0 .543-.027.811-.05-.857-2.578.157-4.972 1.932-6.446 1.703-1.415 3.882-1.98 5.853-1.838-.576-3.583-4.196-6.348-8.596-6.348zM12 11.467a.688.688 0 0 1 0-1.375.688.688 0 0 1 0 1.375zm3.75 0a.688.688 0 0 1 0-1.375.688.688 0 0 1 0 1.375z" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">联系我们</h3>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li>Email: support@life-kline.com</li>
-                <li>微信: life_kline</li>
-                <li>QQ: 123456789</li>
+              <h3 className="text-sm font-semibold text-white tracking-wider uppercase mb-4">支持与协议</h3>
+              <ul className="space-y-3 text-sm">
+                <li><a href="#" className="hover:text-indigo-400 transition-colors">使用协议</a></li>
+                <li><a href="#" className="hover:text-indigo-400 transition-colors">隐私政策</a></li>
+                <li><a href="#" className="hover:text-indigo-400 transition-colors">联系我们</a></li>
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-8 mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              © 2024 人生K线. All rights reserved. |
-              <span className="text-gray-500">隐私政策</span> |
-              <span className="text-gray-500">使用条款</span>
-            </p>
+          <div className="mt-12 pt-8 border-t border-slate-800 text-sm text-slate-500 flex flex-col md:flex-row justify-between items-center">
+            <p>&copy; {new Date().getFullYear()} 人生K线. 保留所有权利.</p>
+            <p className="mt-2 md:mt-0">专业版 V2.0 (真太阳时修正)</p>
           </div>
         </div>
       </footer>
@@ -324,80 +215,30 @@ export default function HomePage() {
 }
 
 // 辅助组件
-function QuickLinkCard({ icon, title, description, href }: any) {
+function FeatureCard({ icon, title, description }: { icon: React.ReactNode, title: string, description: string }) {
   return (
-    <Link
-      href={href}
-      className="block bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105 border-2 border-transparent hover:border-purple-200"
-    >
-      <div className="text-4xl mb-3">{icon}</div>
-      <h3 className="font-bold text-gray-900 mb-2 text-lg">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-      <div className="mt-4 flex items-center text-purple-600 font-semibold">
-        <span>查看详情</span>
-        <span>→</span>
+    <div className="bg-slate-50 rounded-lg p-6 border border-slate-100 hover:border-indigo-100 hover:shadow-md transition-all duration-300">
+      <div className="w-12 h-12 rounded-lg bg-indigo-50 flex items-center justify-center mb-4">
+        {icon}
       </div>
-    </Link>
-  );
-}
-
-function FeatureCard({ icon, title, description }: any) {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-md hover:shadow-xl transition transform hover:scale-105">
-      <div className="text-4xl mb-4">{icon}</div>
-      <h3 className="font-bold text-gray-900 mb-2 text-lg">{title}</h3>
-      <p className="text-sm text-gray-600">{description}</p>
-    </div>
-  );
-}
-
-function TestimonialCard({ name, role, content, rating }: any) {
-  return (
-    <div className="bg-white rounded-xl p-6 shadow-md">
-      <div className="flex items-center mb-4">
-        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center text-white font-bold text-lg">
-          {name.charAt(0)}
-        </div>
-        <div className="ml-4">
-          <h4 className="font-bold text-gray-900">{name}</h4>
-          <p className="text-sm text-gray-500">{role}</p>
-        </div>
-      </div>
-      <p className="text-gray-700 text-sm leading-relaxed mb-4">{content}</p>
-      <div className="flex">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <span
-            key={i}
-            className={`w-4 h-4 rounded-sm ${
-              i <= rating ? 'bg-yellow-400' : 'bg-gray-200'
-            } ml-1`}
-          ></span>
-        ))}
-      </div>
+      <h3 className="font-bold text-slate-900 mb-2">{title}</h3>
+      <p className="text-sm text-slate-600 leading-relaxed">{description}</p>
     </div>
   );
 }
 
 // 骨架组件
-function TrustSignalsSkeleton() {
-  return (
-    <div className="grid gap-4 md:grid-cols-3">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="h-20 bg-gray-200 rounded-lg animate-pulse"></div>
-      ))}
-    </div>
-  );
-}
-
 function FormSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-8 space-y-6">
-      <div className="h-8 bg-gray-200 rounded-lg animate-pulse w-1/2"></div>
-      <div className="space-y-4">
-        <div className="h-12 bg-gray-200 rounded-lg animate-pulse"></div>
-        <div className="h-12 bg-gray-200 rounded-lg animate-pulse w-3/4"></div>
+    <div className="w-full space-y-6">
+      <div className="h-8 bg-slate-100 rounded animate-pulse w-1/3"></div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="h-12 bg-slate-100 rounded animate-pulse"></div>
+        <div className="h-12 bg-slate-100 rounded animate-pulse"></div>
+        <div className="h-12 bg-slate-100 rounded animate-pulse"></div>
+        <div className="h-12 bg-slate-100 rounded animate-pulse"></div>
       </div>
-      <div className="h-12 bg-gray-200 rounded-lg animate-pulse animate-pulse w-1/4 mx-auto"></div>
+      <div className="h-12 bg-slate-100 rounded animate-pulse w-full"></div>
     </div>
   );
 }

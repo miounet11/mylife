@@ -26,12 +26,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ref
 ) => {
     const variantStyles = {
-      default: 'bg-white text-gray-900 border-2 border-gray-300 hover:bg-gray-50',
-      primary: 'bg-purple-600 text-white border-2 border-purple-600 hover:bg-purple-700',
-      secondary: 'bg-blue-600 text-white border-2 border-blue-600 hover:bg-blue-700',
-      outline: 'bg-white text-gray-700 border-2 border-purple-600 hover:bg-purple-50',
-      ghost: 'bg-transparent text-gray-700 hover:bg-gray-100',
-      gradient: 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-0 hover:shadow-lg',
+      default: 'bg-white text-slate-900 border border-slate-300 hover:bg-slate-50',
+      primary: 'bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700',
+      secondary: 'bg-slate-700 text-white border border-slate-700 hover:bg-slate-800',
+      outline: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
+      ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
+      gradient: 'bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700',
     };
 
     const sizeStyles = {
@@ -43,13 +43,13 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 
     const disabledStyles = disabled || loading
       ? 'opacity-50 cursor-not-allowed'
-      : 'cursor-pointer hover:scale-105 active:scale-95 transition-all';
+      : 'cursor-pointer transition-colors';
 
     return (
       <button
         ref={ref}
         className={cn(
-          'rounded-lg font-semibold flex items-center justify-center transition-all',
+          'rounded-lg font-semibold flex items-center justify-center',
           variantStyles[variant],
           sizeStyles[size],
           disabledStyles,

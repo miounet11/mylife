@@ -9,18 +9,18 @@ interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
     const variantStyles = {
-      default: 'bg-white border-2 border-gray-200',
-      purple: 'bg-purple-50 border-2 border-purple-200',
-      blue: 'bg-blue-50 border-2 border-blue-200',
-      green: 'bg-green-50 border-2 border-green-200',
-      gradient: 'bg-gradient-to-r from-purple-600 to-blue-600 border-0',
+      default: 'bg-white border border-slate-200',
+      purple: 'bg-indigo-50 border border-indigo-200',
+      blue: 'bg-sky-50 border border-sky-200',
+      green: 'bg-emerald-50 border border-emerald-200',
+      gradient: 'bg-indigo-600 text-white border border-indigo-600',
     };
 
     return (
       <div
         ref={ref}
         className={cn(
-          'rounded-xl shadow-lg p-6 transition-all hover:shadow-xl',
+          'rounded-xl p-6',
           variantStyles[variant],
           className
         )}
@@ -51,7 +51,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref as any}
-    className={cn('text-xl font-bold text-gray-900', className)}
+    className={cn('text-xl font-bold text-slate-900', className)}
     {...props}
   />
 ));
@@ -75,7 +75,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('mt-6 pt-6 border-t-2 border-gray-100', className)}
+    className={cn('mt-6 pt-6 border-t border-slate-200', className)}
     {...props}
   />
 ));
