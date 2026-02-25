@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "node --max-old-space-size=4096 node_modules/.bin/next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "jest",
+    "test:watch": "jest --watch"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",
@@ -23,12 +25,15 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "^20.19.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.24",
+    "jest": "^30.2.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.19",
+    "ts-jest": "^29.4.6",
     "typescript": "^5"
   }
 }

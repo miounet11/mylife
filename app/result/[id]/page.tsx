@@ -71,7 +71,9 @@ async function getResult(reportId: string) {
       analysis: fortuneData.analysis || {
         opening: '细观您的八字，命理之象，历历在目。',
         explanation: '（加载中或模型未生成深度解析）'
-      }
+      },
+      klineData: fortuneData.klineData || null,
+      llmUsed: fortuneData.analysis?.llmUsed ?? false,
     };
   } catch(e) {
     console.error("Error fetching report:", e);
@@ -129,10 +131,34 @@ export default async function ResultPage({ params }: PageProps) {
 
       {/* 主内容 */}
       <main className="container mx-auto px-4 py-8">
+        {/* LLM 状态提示 */}
+        <div className="max-w-5xl mx-auto mb-4 flex justify-end">
+          {result.llmUsed ? (
+            <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              AI 深度解析
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 border border-slate-200 px-3 py-1 rounded-full">
+              <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+              基础引擎解析
+            </span>
+          )}
+        </div>
+
         {/* 可信报告 */}
         <Suspense fallback={<ReportSkeleton />}>
           <TrustReport result={result} />
         </Suspense>
+
+        {/* 人生K线图 */}
+        {result.klineData && result.klineData.length > 0 && (
+          <div className="mt-12">
+            <Suspense fallback={<ChartSkeleton />}>
+              <FortuneChart data={result.klineData} />
+            </Suspense>
+          </div>
+        )}
 
         {/* NextStep引导 */}
         <div className="mt-16">

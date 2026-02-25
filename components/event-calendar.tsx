@@ -3,13 +3,14 @@
 
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday } from 'date-fns';
+import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
 
 interface Event {
   id: string;
   date: Date;
   title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family';
+  description?: string;
+  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
   impact: 'positive' | 'negative' | 'neutral';
   reminder?: {
     enabled: boolean;
@@ -18,7 +19,11 @@ interface Event {
   };
 }
 
-export default function EventCalendar() {
+interface EventCalendarProps {
+  events?: Event[];
+}
+
+export default function EventCalendar({ events = [] }: EventCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -36,23 +41,23 @@ export default function EventCalendar() {
     <div className="h-full p-4 bg-white">
       {/* 月份导航 */}
       <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="p-2 hover:bg-gray-100 rounded-lg transition">
-          <ChevronLeft className="w-5 h-5 text-gray-700" />
+        <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded transition">
+          <ChevronLeft className="w-5 h-5 text-slate-700" />
         </button>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 className="text-xl font-bold text-slate-900">
             {format(currentDate, 'yyyy年 MMMM')}
           </h2>
         </div>
-        <button onClick={nextMonth} className="p-2 hover:bg-gray-100 rounded-lg transition">
-          <ChevronRight className="w-5 h-5 text-gray-700" />
+        <button onClick={nextMonth} className="p-2 hover:bg-slate-100 rounded transition">
+          <ChevronRight className="w-5 h-5 text-slate-700" />
         </button>
       </div>
 
       {/* 星期标题 */}
       <div className="grid grid-cols-7 gap-2 mb-2">
         {['日', '一', '二', '三', '四', '五', '六'].map((day) => (
-          <div key={day} className="text-center text-sm font-semibold text-gray-500">
+          <div key={day} className="text-center text-sm font-semibold text-slate-500">
             {day}
           </div>
         ))}
@@ -67,7 +72,8 @@ export default function EventCalendar() {
 
         {/* 实际日期 */}
         {days.map((day) => {
-          const hasEvents = getEventsForDay(day).length > 0;
+          const dayEvents = getEventsForDay(events, day);
+          const hasEvents = dayEvents.length > 0;
           const isTodayDate = isToday(day);
           const isSelected = selectedDate && isSameDay(day, selectedDate);
 
@@ -77,18 +83,18 @@ export default function EventCalendar() {
               onClick={() => setSelectedDate(isSelected ? null : day)}
               className={`
                 aspect-square border rounded-lg p-1 cursor-pointer transition
-                ${isTodayDate ? 'border-purple-600 bg-purple-50' : 'border-gray-200 hover:border-purple-400'}
-                ${isSelected ? 'border-purple-600 bg-purple-100 ring-2 ring-purple-300' : ''}
+                ${isTodayDate ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}
+                ${isSelected ? 'border-indigo-600 bg-indigo-100' : ''}
                 ${hasEvents ? 'font-semibold' : ''}
               `}
             >
               <div className="text-center">
-                <div className={`text-sm ${isTodayDate ? 'text-purple-600 font-bold' : 'text-gray-900'}`}>
+                <div className={`text-sm ${isTodayDate ? 'text-indigo-600 font-bold' : 'text-slate-900'}`}>
                   {format(day, 'd')}
                 </div>
                 {hasEvents && (
                   <div className="mt-1 flex justify-center space-x-1">
-                    {getEventsForDay(day).slice(0, 3).map((event, i) => (
+                    {dayEvents.slice(0, 3).map((event, i) => (
                       <div key={i} className={`w-2 h-2 rounded-full ${
                         event.impact === 'positive' ? 'bg-green-500' :
                         event.impact === 'negative' ? 'bg-red-500' :
@@ -105,14 +111,14 @@ export default function EventCalendar() {
 
       {/* 选中的日期事件 */}
       {selectedDate && (
-        <div className="mt-4 p-4 bg-purple-50 rounded-lg">
-          <h3 className="font-bold text-gray-900 mb-3">
+        <div className="mt-4 p-4 bg-slate-50 rounded border border-slate-200">
+          <h3 className="font-semibold text-slate-900 mb-3">
             {format(selectedDate, 'yyyy年 MMMM dd日')} 的事件
           </h3>
           <div className="space-y-2">
-            {getEventsForDay(selectedDate).length > 0 ? (
-              getEventsForDay(selectedDate).map((event) => (
-                <div key={event.id} className="bg-white rounded-lg p-3 border-2 border-purple-200">
+            {getEventsForDay(events, selectedDate).length > 0 ? (
+              getEventsForDay(events, selectedDate).map((event) => (
+                <div key={event.id} className="bg-white rounded p-3 border border-slate-200">
                   <div className="flex items-start space-x-3">
                     <span className="text-2xl">
                       {event.type === 'career' && '👔'}
@@ -120,13 +126,14 @@ export default function EventCalendar() {
                       {event.type === 'marriage' && '❤️'}
                       {event.type === 'health' && '💪'}
                       {event.type === 'family' && '👥'}
+                      {event.type === 'other' && '📋'}
                     </span>
                     <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 mb-1">{event.title}</h4>
-                      <p className="text-sm text-gray-600">{event.description}</p>
+                      <h4 className="font-semibold text-slate-900 mb-1">{event.title}</h4>
+                      <p className="text-sm text-slate-600">{event.description || '暂无描述'}</p>
                       {event.reminder && event.reminder.enabled && (
-                        <div className="mt-2 text-xs text-purple-600">
-                          ✓ 已设置提醒（{event.reminder.method}，提前{event.reminder.advanceDays}分钟）
+                        <div className="mt-2 text-xs text-indigo-600">
+                          ✓ 已设置提醒（{event.reminder.method}，提前{event.reminder.advanceDays}天）
                         </div>
                       )}
                     </div>
@@ -134,7 +141,7 @@ export default function EventCalendar() {
                 </div>
               ))
             ) : (
-              <p className="text-gray-500 text-center py-4">今天没有安排的事件</p>
+              <p className="text-slate-500 text-center py-4">今天没有安排的事件</p>
             )}
           </div>
         </div>
@@ -143,52 +150,6 @@ export default function EventCalendar() {
   );
 }
 
-// 模拟获取事件
-function getEventsForDay(date: Date): Event[] {
-  const events: Event[] = [
-    {
-      id: '1',
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 15),
-      type: 'career',
-      icon: '👔',
-      title: '面试技术总监职位',
-      description: '根据您的八字，今天事业运上升，面试成功率90%',
-      impact: 'positive',
-      reminder: {
-        enabled: true,
-        advanceDays: 60,
-        method: 'app',
-      },
-    },
-    {
-      id: '2',
-      date: new Date(new Date().getFullYear(), new Date().getMonth(), 20),
-      type: 'wealth',
-      icon: '💰',
-      title: '投资到期',
-      description: '投资科技股到期，预期收益率25%',
-      impact: 'positive',
-      reminder: {
-        enabled: true,
-        advanceDays: 1440,
-        method: 'email',
-      },
-    },
-    {
-      id: '3',
-      date: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 5),
-      type: 'marriage',
-      icon: '❤️',
-      title: '第一次约会',
-      description: '根据您的八字，下月桃花运旺，适合恋爱',
-      impact: 'neutral',
-      reminder: {
-        enabled: true,
-        advanceDays: 60,
-        method: 'app',
-      },
-    },
-  ];
-
-  return events.filter(event => isSameDay(event.date, date));
+function getEventsForDay(events: Event[], date: Date): Event[] {
+  return events.filter((event) => isSameDay(new Date(event.date), date));
 }

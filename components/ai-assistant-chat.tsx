@@ -2,23 +2,33 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, MoreHorizontal } from 'lucide-react';
+import { Send, Bot } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  llmUsed?: boolean;
   analysis?: {
     fortuneContext: string;
     personalized: boolean;
   };
 }
 
+interface QuickQuestionBtnProps {
+  icon: string;
+  question: string;
+  onClick: () => void;
+  disabled?: boolean;
+}
+
 export default function AIAssistantChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [error, setError] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -29,140 +39,163 @@ export default function AIAssistantChat() {
     scrollToBottom();
   }, [messages]);
 
-  // 模拟AI回复
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        setError('');
+        setLoadingHistory(true);
+        const res = await fetch('/api/chat', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          setError(data.error || '加载聊天历史失败');
+          return;
+        }
+
+        const mapped: ChatMessage[] = (data.history || []).map((item: any) => ({
+          id: item.id,
+          role: item.role,
+          content: item.content || '',
+          timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
+          llmUsed: item.role === 'assistant' ? !!item.llmUsed : undefined,
+          analysis: item.role === 'assistant'
+            ? {
+                fortuneContext: item.llmUsed ? '基于实时LLM推演' : '当前使用兜底回复',
+                personalized: !!item.llmUsed,
+              }
+            : undefined,
+        }));
+
+        setMessages(mapped);
+      } catch {
+        setError('网络异常，加载聊天历史失败');
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+
+    loadHistory();
+  }, []);
+
+  const sendQuestion = async (rawQuestion: string) => {
+    if (isTyping || loadingHistory) return;
+
+    const question = rawQuestion.trim();
+    if (!question) return;
 
     const userMessage: ChatMessage = {
       id: Date.now().toString(),
       role: 'user',
-      content: input,
+      content: question,
       timestamp: new Date(),
     };
 
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput('');
     setIsTyping(true);
+    setError('');
 
-    // 模拟AI分析延迟
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        setError(data.error || 'AI回复失败，请稍后重试');
+        return;
+      }
 
-    const aiMessage: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      role: 'assistant',
-      content: await generateAIResponse(input, messages),
-      timestamp: new Date(),
-      analysis: {
-        fortuneContext: '基于您的八字分析',
-        personalized: true,
-      },
-    };
+      const llmUsed = !!data.llmUsed;
+      const aiMessage: ChatMessage = {
+        id: `${Date.now()}_assistant`,
+        role: 'assistant',
+        content: data.answer || '大师暂时在休息，请稍后再问。',
+        timestamp: new Date(),
+        llmUsed,
+        analysis: {
+          fortuneContext: llmUsed ? '基于实时LLM推演' : '当前使用兜底回复',
+          personalized: llmUsed,
+        },
+      };
 
-    setMessages(prev => [...prev, aiMessage]);
-    setIsTyping(false);
+      setMessages((prev) => [...prev, aiMessage]);
+      if (!llmUsed) {
+        setError('当前回答由兜底策略生成，LLM暂不可用。');
+      }
+    } catch {
+      setError('网络异常，AI回复失败');
+    } finally {
+      setIsTyping(false);
+    }
   };
 
-  const generateAIResponse = async (question: string, history: ChatMessage[]): Promise<string> => {
-    // 这里应该调用实际的AI API
-    // 暂时返回模拟响应
-    const responses = [
-      `根据您的八字，您最近问的"${question}"...从您的日主来看，${generateFortuneAnalysis()}。`,
-      `关于"${question}"的问题，从您的命局来看，${generateSpecificAdvice()}。`,
-      `您关心的${question}，从您的运势来看，${generateTimingAdvice()}。`,
-    ];
-
-    return responses[Math.floor(Math.random() * responses.length)];
+  const handleSend = async () => {
+    await sendQuestion(input);
   };
 
-  const generateFortuneAnalysis = (): string => {
-    const phrases = [
-      '日主得令而旺，事业运势良好',
-      '五行相生有情，财运亨通',
-      '格局清奇，主事业有成',
-      '印星得用，得贵人相助',
-    ];
-    return phrases[Math.floor(Math.random() * phrases.length)];
-  };
-
-  const generateSpecificAdvice = (): string => {
-    const phrases = [
-      '近期运势上升，宜把握机遇',
-      '目前处于平稳期，宜稳中求进',
-      '建议南方发展，有利于事业',
-      '宜穿红色系衣服，提升运势',
-    ];
-    return phrases[Math.floor(Math.random() * phrases.length)];
-  };
-
-  const generateTimingAdvice = (): string => {
-    const phrases = [
-      '下月是您的黄金期，宜积极进取',
-      '未来三个月运势平稳，按部就班',
-      '今年下半年会有重大机遇，把握时机',
-      '明年大运转换，宜做好规划',
-    ];
-    return phrases[Math.floor(Math.random() * phrases.length)];
-  };
-
-  const handleQuickQuestion = (question: string) => {
-    setInput(question);
-    handleSend();
+  const handleQuickQuestion = async (question: string) => {
+    await sendQuestion(question);
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-b from-white to-purple-50">
+    <div className="flex flex-col h-full bg-slate-50">
       {/* 对话标题栏 */}
-      <div className="flex items-center justify-between border-b-2 border-purple-200 bg-white p-4">
+      <div className="flex items-center border-b border-slate-200 bg-white p-4">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white">
-            <Bot className="w-6 h-6" />
+          <div className="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center text-white">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="font-bold text-gray-900">AI命理助手</h3>
-            <p className="text-xs text-gray-500">24小时在线 · 专业解读</p>
+            <h3 className="font-semibold text-slate-900">AI命理助手</h3>
+            <p className="text-xs text-slate-500">连续对话 · 已接入历史上下文</p>
           </div>
         </div>
-        <button className="p-2 hover:bg-purple-50 rounded-lg transition">
-          <MoreHorizontal className="w-5 h-5 text-gray-500" />
-        </button>
       </div>
 
       {/* 对话区域 */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {error && (
+          <div className="bg-amber-50 border border-amber-200 text-amber-800 px-3 py-2 rounded text-sm">
+            {error}
+          </div>
+        )}
+
+        {loadingHistory && (
+          <div className="text-center text-sm text-slate-500 py-8">正在加载历史对话...</div>
+        )}
+
         {/* 欢迎消息 */}
-        {messages.length === 0 && (
-          <div className="text-center py-12 animate-fade-in">
-            <div className="inline-flex items-center space-x-3 bg-purple-50 rounded-full px-6 py-3 mb-4">
-              <span className="text-2xl">🤖</span>
-              <span className="text-sm text-purple-700 font-medium">AI命理助手</span>
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
-              我是您的专属命理AI
-            </h2>
-            <p className="text-gray-600 mb-6 leading-relaxed">
-              24小时在线，随时回答您的命理问题。<br />
-              基于您的八字，提供精准的个性化建议。
+        {messages.length === 0 && !loadingHistory && (
+          <div className="text-center py-10">
+            <h2 className="text-xl font-semibold text-slate-900 mb-2">开始一次命理问答</h2>
+            <p className="text-slate-600 mb-6 leading-relaxed">
+              你可以直接提问，或使用下面的常见问题快速开始。
             </p>
             <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
               <QuickQuestionBtn
                 icon="👔"
                 question="我最近事业运如何？"
                 onClick={() => handleQuickQuestion('我最近事业运如何？')}
+                disabled={isTyping || loadingHistory}
               />
               <QuickQuestionBtn
                 icon="💰"
                 question="本月财运怎么样？"
                 onClick={() => handleQuickQuestion('本月财运怎么样？')}
+                disabled={isTyping || loadingHistory}
               />
               <QuickQuestionBtn
                 icon="❤️"
                 question="我什么时候结婚？"
                 onClick={() => handleQuickQuestion('我什么时候结婚？')}
+                disabled={isTyping || loadingHistory}
               />
               <QuickQuestionBtn
                 icon="🧘"
                 question="我最近健康怎么样？"
                 onClick={() => handleQuickQuestion('我最近健康怎么样？')}
+                disabled={isTyping || loadingHistory}
               />
             </div>
           </div>
@@ -176,15 +209,8 @@ export default function AIAssistantChat() {
         {/* 正在输入 */}
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-purple-100 rounded-lg px-4 py-3 max-w-md">
-              <div className="flex items-center space-x-2">
-                <div className="flex space-x-1">
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                  <div className="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-                </div>
-                <span className="text-sm text-purple-700">AI正在思考...</span>
-              </div>
+            <div className="bg-slate-100 rounded px-4 py-2 max-w-md text-sm text-slate-600">
+              AI正在思考...
             </div>
           </div>
         )}
@@ -193,20 +219,20 @@ export default function AIAssistantChat() {
       </div>
 
       {/* 输入区域 */}
-      <div className="border-t border-purple-200 bg-white p-4">
+      <div className="border-t border-slate-200 bg-white p-4">
         <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="flex space-x-3">
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="问我任何命理问题..."
-            className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-purple-500 focus:ring-purple-500 transition"
+            className="flex-1 px-4 py-3 border border-slate-300 rounded focus:outline-none focus:border-indigo-500"
             disabled={isTyping}
           />
           <button
             type="submit"
             disabled={!input.trim() || isTyping}
-            className="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-indigo-600 text-white px-5 py-3 rounded font-medium hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -219,10 +245,10 @@ export default function AIAssistantChat() {
 function MessageBubble({ message }: { message: ChatMessage }) {
   if (message.role === 'user') {
     return (
-      <div className="flex justify-end mb-4 animate-fade-in">
-        <div className="bg-blue-600 text-white rounded-lg px-4 py-3 max-w-md">
+      <div className="flex justify-end mb-4">
+        <div className="bg-indigo-600 text-white rounded px-4 py-3 max-w-md">
           <p className="text-sm">{message.content}</p>
-          <p className="text-xs text-blue-200 mt-1">
+          <p className="text-xs text-indigo-100 mt-1">
             {new Date(message.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
           </p>
         </div>
@@ -231,47 +257,26 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   }
 
   return (
-    <div className="flex justify-start mb-4 animate-fade-in">
-      <div className="bg-white border-2 border-purple-200 rounded-lg p-4 max-w-2xl shadow-md">
-        {/* 个性化开头 */}
-        <div className="mb-3 pb-3 border-b border-purple-100">
-          <p className="text-purple-900 font-semibold mb-1">
-            {message.analysis?.personalized && (
-              <span className="inline-flex items-center space-x-2 mr-2">
-                <span className="w-5 h-5 rounded-full bg-purple-100 text-purple-600 text-xs flex items-center justify-center">✓</span>
-              </span>
-            )}
-            {message.content.split('\n')[0]}
+    <div className="flex justify-start mb-4">
+      <div className="bg-white border border-slate-200 rounded p-4 max-w-2xl">
+        <div className="mb-2 flex items-center gap-2">
+          <span className="text-sm font-medium text-slate-800">命理回复</span>
+          {message.llmUsed === false && (
+            <span className="text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-700">兜底</span>
+          )}
+        </div>
+
+        <div className="bg-slate-50 rounded p-3 mb-3">
+          <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{message.content}</p>
+        </div>
+
+        <div className="bg-slate-50 rounded p-2 mt-3">
+          <p className="text-xs text-slate-500">
+            {message.llmUsed ? '基于实时LLM推演' : '当前使用兜底回复'}
           </p>
         </div>
 
-        {/* 命理分析 */}
-        <div className="bg-purple-50 rounded-lg p-3 mb-3">
-          <p className="text-sm text-gray-700 leading-relaxed">
-            {message.content.split('\n').slice(1).join('\n')}
-          </p>
-        </div>
-
-        {/* 具体建议 */}
-        <div className="space-y-2">
-          {message.content.split('\n').slice(2).map((line, i) => (
-            line && (
-              <div key={i} className="flex items-start">
-                <span className="text-green-600 mr-2 mt-0.5">✓</span>
-                <span className="text-sm text-gray-600">{line}</span>
-              </div>
-            )
-          ))}
-        </div>
-
-        {/* 数据支撑 */}
-        <div className="bg-gray-50 rounded-lg p-3 mt-3">
-          <p className="text-xs text-gray-500">
-            数据支撑：根据您的八字分析，{message.analysis?.fortuneContext}
-          </p>
-        </div>
-
-        <p className="text-xs text-gray-400 mt-2">
+        <p className="text-xs text-slate-400 mt-2">
           {new Date(message.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
         </p>
       </div>
@@ -279,14 +284,16 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   );
 }
 
-function QuickQuestionBtn({ icon, question, onClick }: any) {
+function QuickQuestionBtn({ icon, question, onClick, disabled = false }: QuickQuestionBtnProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="w-full bg-white border-2 border-purple-200 rounded-lg p-3 hover:border-purple-400 hover:shadow-md transition text-left"
+      disabled={disabled}
+      className="w-full bg-white border border-slate-200 rounded p-3 hover:border-indigo-300 transition text-left disabled:opacity-60 disabled:cursor-not-allowed"
     >
       <span className="text-xl mr-2">{icon}</span>
-      <span className="text-sm text-gray-700">{question}</span>
+      <span className="text-sm text-slate-700">{question}</span>
     </button>
   );
 }

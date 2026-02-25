@@ -1,0 +1,220 @@
+{
+  "projectName": "life-kline-next",
+  "description": "人生K线图 - AI 命理分析平台",
+  "version": "1.0.0",
+  "lastScanned": "2026-02-24T22:18:52.000Z",
+  "scanCoverage": {
+    "totalFiles": 45,
+    "scannedFiles": 45,
+    "coveragePercentage": 100,
+    "ignoredFiles": 0
+  },
+  "modules": [
+    {
+      "name": "app",
+      "path": "/home/life-kline-next/app",
+      "type": "pages",
+      "description": "Next.js 应用路由模块",
+      "entryPoints": [
+        "layout.tsx",
+        "page.tsx"
+      ],
+      "keyFiles": [
+        "page.tsx",
+        "layout.tsx",
+        "analyze/page.tsx",
+        "result/[id]/page.tsx",
+        "chat/page.tsx",
+        "events/page.tsx",
+        "profile/page.tsx",
+        "history/page.tsx"
+      ],
+      "coverage": {
+        "hasEntryPoint": true,
+        "hasInterfaces": true,
+        "hasTests": false,
+        "hasDataModels": true
+      },
+      "documentation": "app/CLAUDE.md"
+    },
+    {
+      "name": "app/api",
+      "path": "/home/life-kline-next/app/api",
+      "type": "api",
+      "description": "RESTful API 接口模块",
+      "entryPoints": [
+        "analyze/route.ts",
+        "chat/route.ts"
+      ],
+      "keyFiles": [
+        "analyze/route.ts",
+        "fortune/[id]/route.ts",
+        "chat/route.ts",
+        "profile/[id]/route.ts",
+        "events/route.ts",
+        "history/route.ts",
+        "reminders/route.ts",
+        "enhancements/route.ts"
+      ],
+      "coverage": {
+        "hasEntryPoint": true,
+        "hasInterfaces": true,
+        "hasTests": false,
+        "hasDataModels": true
+      },
+      "documentation": "app/api/CLAUDE.md"
+    },
+    {
+      "name": "components",
+      "path": "/home/life-kline-next/components",
+      "type": "ui",
+      "description": "React UI 组件模块",
+      "entryPoints": [
+        "fortune-form.tsx",
+        "ai-assistant-chat.tsx"
+      ],
+      "keyFiles": [
+        "fortune-form.tsx",
+        "city-selector.tsx",
+        "fortune-progress.tsx",
+        "fortune-kline-chart.tsx",
+        "four-pillars-chart.tsx",
+        "five-elements-chart.tsx",
+        "ten-gods-chart.tsx",
+        "ai-assistant-chat.tsx",
+        "trust-report.tsx",
+        "user-profile.tsx",
+        "event-calendar.tsx",
+        "important-events.tsx",
+        "ui/button.tsx",
+        "ui/card.tsx",
+        "ui/input.tsx"
+      ],
+      "coverage": {
+        "hasEntryPoint": true,
+        "hasInterfaces": true,
+        "hasTests": false,
+        "hasDataModels": true
+      },
+      "documentation": "components/CLAUDE.md"
+    },
+    {
+      "name": "lib",
+      "path": "/home/life-kline-next/lib",
+      "type": "core",
+      "description": "核心业务逻辑库",
+      "entryPoints": [
+        "fortune-engine.ts",
+        "database.ts"
+      ],
+      "keyFiles": [
+        "fortune-engine.ts",
+        "bazi-analyzer.ts",
+        "bazi-constants.ts",
+        "database.ts",
+        "llm.ts",
+        "solar-time.ts",
+        "cities.ts",
+        "master-phrases.ts",
+        "user-types.ts",
+        "user-utils.ts",
+        "utils.ts"
+      ],
+      "coverage": {
+        "hasEntryPoint": true,
+        "hasInterfaces": true,
+        "hasTests": false,
+        "hasDataModels": true
+      },
+      "documentation": "lib/CLAUDE.md"
+    },
+    {
+      "name": "data",
+      "path": "/home/life-kline-next/data",
+      "type": "database",
+      "description": "SQLite 数据库文件",
+      "entryPoints": [
+        "lifekline.db"
+      ],
+      "keyFiles": [
+        "lifekline.db",
+        "lifekline.db-wal",
+        "lifekline.db-shm"
+      ],
+      "coverage": {
+        "hasEntryPoint": true,
+        "hasInterfaces": false,
+        "hasTests": false,
+        "hasDataModels": true
+      },
+      "documentation": null
+    }
+  ],
+  "technologies": {
+    "framework": "Next.js 15.0.0",
+    "runtime": "React 19.0.0",
+    "language": "TypeScript 5",
+    "database": "SQLite (better-sqlite3)",
+    "styling": "Tailwind CSS 3.4",
+    "ai": "OpenAI SDK",
+    "charts": "Recharts 3.7"
+  },
+  "fileTypes": {
+    "typescript": 32,
+    "javascript": 3,
+    "json": 2,
+    "markdown": 8,
+    "css": 1,
+    "database": 3
+  },
+  "gaps": {
+    "missingTests": [
+      "app/",
+      "components/",
+      "lib/"
+    ],
+    "missingDocumentation": [],
+    "missingInterfaces": [],
+    "missingDataModels": []
+  },
+  "recommendations": [
+    "实现单元测试覆盖（优先级：高）",
+    "添加 API 文档（Swagger/OpenAPI）",
+    "实现 E2E 测试",
+    "优化数据库查询性能（添加更多索引）",
+    "实现缓存机制（Redis）",
+    "添加日志系统（Winston/Pino）",
+    "实现用户认证系统（JWT）",
+    "添加请求频率限制（Rate Limiting）"
+  ],
+  "ignoreRules": [
+    "node_modules/**",
+    ".git/**",
+    ".github/**",
+    "dist/**",
+    "build/**",
+    ".next/**",
+    "__pycache__/**",
+    "*.lock",
+    "*.log",
+    "*.bin",
+    "*.pdf",
+    "*.png",
+    "*.jpg",
+    "*.jpeg",
+    "*.gif",
+    "*.mp4",
+    "*.zip",
+    "*.tar",
+    "*.gz"
+  ],
+  "truncated": false,
+  "truncationReason": null,
+  "nextSteps": [
+    "补充单元测试（lib/fortune-engine.test.ts）",
+    "补充集成测试（app/api/analyze.test.ts）",
+    "优化 SEO 元数据",
+    "实现性能监控",
+    "添加错误追踪（Sentry）"
+  ]
+}
