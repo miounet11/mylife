@@ -376,6 +376,18 @@ export interface FortuneAnalysisResult {
   // 格局判断
   pattern: Pattern;
   
+  // 体型与职业推算
+  physique?: {
+    bodyType: string;
+    description: string;
+  };
+  careerSuggestion?: {
+    primary: string[];
+    secondary: string[];
+    avoid: string[];
+    reason: string;
+  };
+
   // 运势分析
   fortune: {
     currentDaYun: string;
@@ -401,6 +413,27 @@ export interface FortuneAnalysisResult {
     celebrities: Celebrity[];
     similarCases: SimilarCase[];
   };
+
+  // 综合解析（LLM生成或基础引擎生成）
+  analysis: {
+    opening: string;
+    explanation: string;
+  };
+
+  // 人生K线数据（新增）
+  klineData?: Array<{
+    year: number;
+    career: number;
+    wealth: number;
+    marriage: number;
+    health: number;
+  }>;
+
+  // 大运详细数据
+  dayun?: import('./dayun-calculator').DayunResult;
+
+  // 神煞
+  shenSha?: import('./shensha-calculator').ShenShaResult;
 }
 
 export interface CareerAdvice {
@@ -458,4 +491,92 @@ export interface SimilarCase {
   income: string;
   success: boolean;
   lesson: string;
+}
+
+// 命理建议完整结构
+export interface FortuneAdvice {
+  career: CareerAdvice;
+  wealth: WealthAdvice;
+  marriage: MarriageAdvice;
+  health: HealthAdvice;
+  colors: string[];
+  directions: string[];
+  numbers: number[];
+  timing: string[];
+  yongShen: string[];
+  jiShen: string[];
+  xiShen: string[];
+}
+
+// 证据结构
+export interface FortuneEvidence {
+  statistics: DataStatistics;
+  celebrities: Celebrity[];
+}
+
+// 幸运元素
+export interface LuckyElements {
+  colors: string[];
+  directions: string[];
+  numbers: number[];
+}
+
+// 数据库用户记录
+export interface UserRecord {
+  id: string;
+  name: string;
+  email?: string | null;
+  gender: 'male' | 'female';
+  birthDate: string;
+  birthTime: string;
+  birthPlace?: string;
+  timezone: number;
+}
+
+// 数据库命理记录
+export interface FortuneRecord {
+  id: string;
+  userId: string;
+  name: string;
+  birthDate: string;
+  birthTime: string;
+  birthPlace?: string;
+  timezone: number;
+  gender: 'male' | 'female';
+  bazi: FortuneAnalysisResult['basic'];
+  fiveElements: FiveElements;
+  tenGods: TenGods;
+  pattern: Pattern;
+  fortune: FortuneAnalysisResult['fortune'];
+  advice: FortuneAdvice;
+  evidence: FortuneEvidence;
+  analysis?: FortuneAnalysisResult['analysis'];
+  klineData?: FortuneAnalysisResult['klineData'];
+}
+
+// 数据库事件记录
+export interface EventRecord {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  date: string;
+  time?: string;
+  description?: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  fortuneAnalysis?: Record<string, unknown>;
+  userFeedback?: Record<string, unknown>;
+  followUpAdvice?: Record<string, unknown>;
+  reminderEnabled?: boolean;
+  reminderAdvanceDays?: number;
+  reminderMethod?: string;
+}
+
+// 数据库问题记录
+export interface QuestionRecord {
+  id: string;
+  userId: string;
+  question: string;
+  category: string;
+  analysis?: Record<string, unknown>;
 }

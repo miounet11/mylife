@@ -1,6 +1,7 @@
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
 import path from 'path';
+import type { UserRecord, FortuneRecord, EventRecord, QuestionRecord } from './user-types';
 
 // 数据库文件路径
 const dbPath = path.join(process.cwd(), 'data', 'lifekline.db');
@@ -48,11 +49,21 @@ export function initializeDatabase() {
       advice JSON NOT NULL,
       evidence JSON NOT NULL,
       analysis JSON,
+      kline_data JSON,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     )
   `);
+
+  // 迁移：为已存在的表添加 kline_data 字段
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN kline_data JSON`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e; // 非预期错误，重新抛出
+    }
+  }
 
   // 重要事件表
   db.exec(`
@@ -155,7 +166,7 @@ export function initializeDatabase() {
 
 // 用户操作
 export const userOperations = {
-  create: (user: any) => {
+  create: (user: UserRecord) => {
     const stmt = db.prepare(`
       INSERT INTO users (id, name, email, gender, birth_date, birth_time, birth_place, timezone)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -173,7 +184,7 @@ export const userOperations = {
     return stmt.get(email);
   },
 
-  update: (id: string, updates: any) => {
+  update: (id: string, updates: Partial<Omit<UserRecord, 'id'>>) => {
     const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
     const values = Object.values(updates);
     values.push(new Date().toISOString());
@@ -192,10 +203,10 @@ export const userOperations = {
 
 // 命理数据操作
 export const fortuneOperations = {
-  create: (fortune: any) => {
+  create: (fortune: FortuneRecord) => {
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       fortune.id,
@@ -213,7 +224,8 @@ export const fortuneOperations = {
       JSON.stringify(fortune.fortune),
       JSON.stringify(fortune.advice),
       JSON.stringify(fortune.evidence),
-      JSON.stringify(fortune.analysis)
+      JSON.stringify(fortune.analysis),
+      JSON.stringify(fortune.klineData || null)
     );
   },
 
@@ -232,6 +244,7 @@ export const fortuneOperations = {
         advice: JSON.parse(row.advice),
         evidence: JSON.parse(row.evidence),
         analysis: row.analysis ? JSON.parse(row.analysis) : null,
+        klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
       };
     }
     return null;
@@ -249,31 +262,20 @@ export const fortuneOperations = {
       fortune: JSON.parse(row.fortune),
       advice: JSON.parse(row.advice),
       evidence: JSON.parse(row.evidence),
-        analysis: row.analysis ? JSON.parse(row.analysis) : null,
+      analysis: row.analysis ? JSON.parse(row.analysis) : null,
+      klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
     }));
   },
 
-  update: (id: string, updates: any) => {
-    const setClause = Object.keys(updates).map(key => {
-      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis'].includes(key)) {
-        return `${key} = ?`;
-      }
-      return `${key} = ?`;
-    }).join(', ');
-    
-    const values = Object.entries(updates).map(([key, value]) => {
-      if (['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis'].includes(key)) {
-        return JSON.stringify(value);
-      }
-      return value;
-    });
-    
+  update: (id: string, updates: Partial<Omit<FortuneRecord, 'id' | 'userId'>>) => {
+    const JSON_FIELDS = ['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis', 'klineData'] as const;
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = Object.entries(updates).map(([key, value]) =>
+      JSON_FIELDS.includes(key as typeof JSON_FIELDS[number]) ? JSON.stringify(value) : value
+    );
     values.push(new Date().toISOString());
     values.push(id);
-
-    const stmt = db.prepare(`
-      UPDATE fortunes SET ${setClause}, updated_at = ? WHERE id = ?
-    `);
+    const stmt = db.prepare(`UPDATE fortunes SET ${setClause}, updated_at = ? WHERE id = ?`);
     return stmt.run(...values);
   },
 
@@ -285,7 +287,7 @@ export const fortuneOperations = {
 
 // 事件操作
 export const eventOperations = {
-  create: (event: any) => {
+  create: (event: EventRecord) => {
     const stmt = db.prepare(`
       INSERT INTO events (id, user_id, type, title, date, time, description, impact, fortune_analysis, user_feedback, follow_up_advice, reminder_enabled, reminder_advance_days, reminder_method)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -347,30 +349,17 @@ export const eventOperations = {
     }));
   },
 
-  update: (id: string, updates: any) => {
-    const setClause = Object.keys(updates).map(key => {
-      if (['fortuneAnalysis', 'userFeedback', 'followUpAdvice'].includes(key)) {
-        return `${key} = ?`;
-      }
-      return `${key} = ?`;
-    }).join(', ');
-    
+  update: (id: string, updates: Record<string, unknown>) => {
+    const JSON_FIELDS = ['fortuneAnalysis', 'userFeedback', 'followUpAdvice'] as const;
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
     const values = Object.entries(updates).map(([key, value]) => {
-      if (['reminder_enabled'].includes(key)) {
-        return value ? 1 : 0;
-      }
-      if (['fortuneAnalysis', 'userFeedback', 'followUpAdvice'].includes(key)) {
-        return JSON.stringify(value);
-      }
+      if (key === 'reminder_enabled') return value ? 1 : 0;
+      if (JSON_FIELDS.includes(key as typeof JSON_FIELDS[number])) return JSON.stringify(value);
       return value;
     });
-    
     values.push(new Date().toISOString());
     values.push(id);
-
-    const stmt = db.prepare(`
-      UPDATE events SET ${setClause}, updated_at = ? WHERE id = ?
-    `);
+    const stmt = db.prepare(`UPDATE events SET ${setClause}, updated_at = ? WHERE id = ?`);
     return stmt.run(...values);
   },
 
@@ -382,7 +371,7 @@ export const eventOperations = {
 
 // 问答操作
 export const questionOperations = {
-  create: (question: any) => {
+  create: (question: QuestionRecord) => {
     const stmt = db.prepare(`
       INSERT INTO questions (id, user_id, question, category, analysis)
       VALUES (?, ?, ?, ?, ?)
@@ -417,27 +406,14 @@ export const questionOperations = {
     }));
   },
 
-  update: (id: string, updates: any) => {
-    const setClause = Object.keys(updates).map(key => {
-      if (['analysis'].includes(key)) {
-        return `${key} = ?`;
-      }
-      return `${key} = ?`;
-    }).join(', ');
-    
-    const values = Object.entries(updates).map(([key, value]) => {
-      if (['analysis'].includes(key)) {
-        return JSON.stringify(value);
-      }
-      return value;
-    });
-    
+  update: (id: string, updates: Partial<Omit<QuestionRecord, 'id' | 'userId'>>) => {
+    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const values = Object.entries(updates).map(([key, value]) =>
+      key === 'analysis' ? JSON.stringify(value) : value
+    );
     values.push(new Date().toISOString());
     values.push(id);
-
-    const stmt = db.prepare(`
-      UPDATE questions SET ${setClause}, updated_at = ? WHERE id = ?
-    `);
+    const stmt = db.prepare(`UPDATE questions SET ${setClause}, updated_at = ? WHERE id = ?`);
     return stmt.run(...values);
   },
 
@@ -446,6 +422,39 @@ export const questionOperations = {
     return stmt.run(id);
   },
 };
+
+// ==================== 事务支持 ====================
+
+/**
+ * 在事务中执行多个操作，任一失败则全部回滚
+ */
+export function runInTransaction<T>(fn: () => T): T {
+  const transaction = db.transaction(fn);
+  return transaction();
+}
+
+/**
+ * 命理分析完整事务：创建/更新用户 + 存储分析结果
+ */
+export function createFortuneWithUser(
+  userId: string,
+  userUpdates: Partial<Omit<import('./user-types').UserRecord, 'id'>>,
+  fortune: import('./user-types').FortuneRecord
+) {
+  return runInTransaction(() => {
+    // 更新用户档案
+    try {
+      userOperations.update(userId, userUpdates);
+    } catch (e) {
+      // 用户可能不存在，忽略更新失败
+      if (e instanceof Error && !e.message.includes('no such')) {
+        console.warn('[DB] User update skipped:', e.message);
+      }
+    }
+    // 存储命理数据
+    fortuneOperations.create(fortune);
+  });
+}
 
 // 在应用启动时初始化数据库
 if (typeof require !== 'undefined') {

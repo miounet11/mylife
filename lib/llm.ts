@@ -4,18 +4,28 @@ const getApiBaseUrl = () => {
   return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
 };
 
+const normalizeApiKey = (value?: string | null) => {
+  const key = (value || '').trim();
+  if (!key || key === 'dummy_key') return null;
+  return key;
+};
+
 const getApiKey = () => {
-  return process.env.OPENAI_API_KEY || process.env.API_KEY || 'sk-gDrieN8NMWlZPmr00uZrFSs7VvvAv2TOUiIiUr5zOKUhrY5E';
+  return (
+    normalizeApiKey(process.env.OPENAI_API_KEY) ||
+    normalizeApiKey(process.env.API_KEY) ||
+    'sk-xIeEQPnwggytALqDumo8Ef1KZWbgefs2HAuxL85kvAHX7Kvf'
+  );
 };
 
 const getDefaultModel = () => {
   return process.env.DEFAULT_MODEL || 'auto';
 };
 
-export async function generateFortuneInterpretation(baziData: any) {
+export async function generateFortuneInterpretation(baziData: Record<string, unknown>) {
   const apiKey = getApiKey();
-  if (!apiKey || apiKey === 'dummy_key') {
-     console.warn("API_KEY is not set. Using mock interpretation.");
+  if (!apiKey) {
+     console.warn("API_KEY is not set. Skip LLM interpretation.");
      return null;
   }
   
@@ -30,6 +40,14 @@ export async function generateFortuneInterpretation(baziData: any) {
 
 【用户排盘数据】
 ${JSON.stringify(baziData, null, 2)}
+
+${(baziData as Record<string, unknown>).shenSha ? `【神煞信息】
+${JSON.stringify((baziData as Record<string, unknown>).shenSha, null, 2)}
+神煞是命局中的特殊星曜，请在解析中结合神煞信息给出更精准的判断。` : ''}
+
+${(baziData as Record<string, unknown>).dayun ? `【大运信息】
+${JSON.stringify((baziData as Record<string, unknown>).dayun, null, 2)}
+请结合大运走势，对当前运程和未来趋势给出精准预测。` : ''}
 
 请严格以JSON格式输出，不要包含任何markdown标记（如 \`\`\`json ），直接输出合法的JSON对象。
 JSON结构必须完全符合以下定义：
@@ -48,10 +66,13 @@ JSON结构必须完全符合以下定义：
     // { "description": "对该五行在命局中作用的专业且易懂的解析", "strength": 数字, "quality": "good/medium/bad/weak/strong" }
   },
   "fortune": {
-    "currentDaYun": "当前大运名称及简析",
+    "currentDaYun": "当前大运天干地支及详细解析（结合大运信息中的具体数据）",
+    "currentDaYunAge": "当前大运起止年龄",
     "currentLiuNian": "当前流年名称及简析",
-    "interaction": "大运与流年的互动关系简析",
-    "nextYear": "明年运势预测"
+    "interaction": "大运与流年的互动关系，是否有刑冲合害，对运势的具体影响",
+    "nextYear": "明年运势预测，结合流年天干地支与命局的关系",
+    "shenShaInfluence": "神煞对当前运程的具体影响（如有天乙贵人、文昌等吉神，或羊刃、劫煞等凶神，请具体说明）",
+    "trend": "未来3-5年运势走向总结"
   },
   "advice": {
     "career": {
@@ -117,7 +138,7 @@ JSON结构必须完全符合以下定义：
     const completion = await openai.chat.completions.create({
       model: model, 
       messages: [
-        { role: "system", content: "你是一个专业的命理学API，只输出合法的JSON。" },
+        { role: "system", content: "你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。你必须充分利用提供的神煞信息和大运数据进行精准解析，不得忽略任何神煞的吉凶影响。只输出合法的JSON，不含任何markdown标记。" },
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
