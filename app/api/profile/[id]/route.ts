@@ -1,6 +1,6 @@
 // 用户档案API
 import { NextRequest, NextResponse } from 'next/server';
-import { userOperations } from '@/lib/database';
+import { eventOperations, fortuneOperations, userOperations } from '@/lib/database';
 import { generateId, formatDate } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
@@ -61,10 +61,9 @@ export async function GET(
     }
 
     // 获取用户的命理数据
-    const fortunes: unknown[] = []; // 这里应该调用fortunes查询
-
+    const fortunes = fortuneOperations.getByUserId(id);
     // 获取用户的事件
-    const events: unknown[] = []; // 这里应该调用events查询
+    const events = eventOperations.getByUserId(id);
 
     return NextResponse.json({
       success: true,

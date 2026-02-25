@@ -1,8 +1,6 @@
 // 命理数据API
 import { NextRequest, NextResponse } from 'next/server';
-
-// 模拟数据库（实际应该用SQLite）
-const fortuneDatabase = new Map();
+import { fortuneOperations } from '@/lib/database';
 
 export async function GET(
   request: NextRequest,
@@ -11,7 +9,7 @@ export async function GET(
   try {
     const resolvedParams = await params;
     const reportId = resolvedParams.id;
-    const fortuneData = fortuneDatabase.get(reportId);
+    const fortuneData = fortuneOperations.getById(reportId);
 
     if (!fortuneData) {
       return NextResponse.json(
@@ -39,12 +37,25 @@ export async function POST(request: NextRequest) {
     const reportId = data.reportId;
     const fortuneData = data.result;
 
-    // 保存到数据库
-    fortuneDatabase.set(reportId, fortuneData);
+    if (!reportId || !fortuneData) {
+      return NextResponse.json(
+        { success: false, error: '缺少必要参数' },
+        { status: 400 }
+      );
+    }
+
+    // 注意：主流程由 /api/analyze 写库，这里仅作为兼容接口保留
+    const existing = fortuneOperations.getById(reportId);
+    if (!existing) {
+      return NextResponse.json(
+        { success: false, error: '请通过分析接口创建报告' },
+        { status: 400 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
-      message: '命理数据已保存',
+      message: '命理数据已存在',
       reportId,
     });
   } catch (error) {
