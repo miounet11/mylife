@@ -1,16 +1,33 @@
 // AI聊天API
 import { NextRequest, NextResponse } from 'next/server';
-
-// 模拟AI模型（实际应该调用真实的AI API）
-import { generateFortuneInterpretation } from '@/lib/llm';
 import OpenAI from 'openai';
+import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import { questionOperations } from '@/lib/database';
+import { generateId } from '@/lib/utils';
+import { validateQuestion } from '@/lib/validators';
+import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
+
+type HistoryMessage = {
+  role: 'user' | 'assistant';
+  content: string;
+};
 
 const getApiBaseUrl = () => {
   return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
 };
 
+const normalizeApiKey = (value?: string | null) => {
+  const key = (value || '').trim();
+  if (!key || key === 'dummy_key') return null;
+  return key;
+};
+
 const getApiKey = () => {
-  return process.env.OPENAI_API_KEY || process.env.API_KEY || 'dummy_key';
+  return (
+    normalizeApiKey(process.env.OPENAI_API_KEY) ||
+    normalizeApiKey(process.env.API_KEY) ||
+    'sk-xIeEQPnwggytALqDumo8Ef1KZWbgefs2HAuxL85kvAHX7Kvf'
+  );
 };
 
 const getDefaultModel = () => {
@@ -19,12 +36,15 @@ const getDefaultModel = () => {
 
 async function generateAIResponse(
   question: string,
-  userHistory: any[]
-): Promise<string> {
+  userHistory: HistoryMessage[]
+): Promise<{ answer: string; llmUsed: boolean }> {
   const apiKey = getApiKey();
-  if (!apiKey || apiKey === 'dummy_key') {
-     console.warn("API_KEY is not set. Using mock chat interpretation.");
-     return `关于您的"${question}"，这是一 个很有深度的问题。由于当前系统未配置真实的大师模型API，我暂时无法为您提供针对性的解答。`;
+  if (!apiKey) {
+     console.warn("[LLM Chat] API_KEY is not set.");
+     return {
+      answer: '系统暂未配置AI模型，请联系管理员。',
+      llmUsed: false,
+    };
   }
 
   const openai = new OpenAI({
@@ -42,36 +62,116 @@ async function generateAIResponse(
     const model = getDefaultModel();
     const completion = await openai.chat.completions.create({
       model: model, 
-      messages: messages as any,
+      messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
       temperature: 0.7,
     });
 
-    return completion.choices[0].message.content || "大师暂时在休息，请稍后再问。";
+    const content = completion.choices[0].message.content?.trim();
+    if (!content) {
+      return {
+        answer: '大师暂时在休息，请稍后再问。',
+        llmUsed: false,
+      };
+    }
+
+    return {
+      answer: content,
+      llmUsed: true,
+    };
   } catch (error) {
     console.error("[LLM Chat] Generation Error:", error);
-    return "大师推算时遇到了一点天机干扰，请稍后再试。";
+    return {
+      answer: '大师推算时遇到了一点天机干扰，请稍后再试。',
+      llmUsed: false,
+    };
   }
+}
+
+interface QuestionRow {
+  id: string;
+  category: string;
+  question: string;
+  analysis?: { answer?: string; llmUsed?: boolean; source?: string };
+  created_at: string;
+}
+
+function buildHistoryFromRows(rows: QuestionRow[]): HistoryMessage[] {
+  const chatRows = rows
+    .filter((row) => row.category === 'chat_user' || row.category === 'chat_assistant')
+    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+  return chatRows.map((row) => {
+    if (row.category === 'chat_assistant') {
+      return {
+        role: 'assistant',
+        content: row.analysis?.answer || row.question || '',
+      } as HistoryMessage;
+    }
+
+    return {
+      role: 'user',
+      content: row.question || '',
+    } as HistoryMessage;
+  }).filter((m) => !!m.content);
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const data = await request.json();
-    const { question, userId, sessionId } = data;
-
-    if (!question || !userId) {
+    // 速率限制
+    const clientKey = getClientKey(request);
+    const rateLimit = checkRateLimit(`chat:${clientKey}`, RATE_LIMITS.chat);
+    if (!rateLimit.allowed) {
       return NextResponse.json(
-        { success: false, error: '缺少必要参数' },
+        { success: false, error: '消息发送过于频繁，请稍后再试' },
+        { status: 429, headers: { 'Retry-After': String(Math.ceil((rateLimit.resetAt - Date.now()) / 1000)) } }
+      );
+    }
+
+    const data = await request.json();
+    const question = (data?.question || '').trim();
+    const userId = await getOrCreateGuestUserId();
+
+    const questionErr = validateQuestion(question);
+    if (questionErr) {
+      return NextResponse.json(
+        { success: false, error: questionErr.message },
         { status: 400 }
       );
     }
 
+    const previousRows = questionOperations.getByUserId(userId, 30) || [];
+    const userHistory = buildHistoryFromRows(previousRows).slice(-12);
+
     // 生成AI响应
-    const answer = await generateAIResponse(question, []);
+    const { answer, llmUsed } = await generateAIResponse(question, userHistory);
+
+    // 持久化本轮问答
+    questionOperations.create({
+      id: generateId(),
+      userId,
+      question,
+      category: 'chat_user',
+      analysis: { source: 'chat_api' },
+    });
+
+    questionOperations.create({
+      id: generateId(),
+      userId,
+      question: answer,
+      category: 'chat_assistant',
+      analysis: {
+        source: llmUsed ? 'llm' : 'fallback',
+        answer,
+        llmUsed,
+      },
+    });
 
     // 返回响应
     return NextResponse.json({
       success: true,
       answer,
+      llmUsed,
+      userId,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -85,36 +185,31 @@ export async function POST(request: NextRequest) {
 
 // GET方法 - 聊天历史
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url!);
-  const userId = searchParams.get('userId');
-  const sessionId = searchParams.get('sessionId');
+  try {
+    const userId = await getOrCreateGuestUserId();
+    const rows = questionOperations.getByUserId(userId, 100) || [];
+    const history = rows
+      .filter((row) => row.category === 'chat_user' || row.category === 'chat_assistant')
+      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map((row) => ({
+        id: row.id,
+        role: row.category === 'chat_assistant' ? 'assistant' : 'user',
+        content: row.category === 'chat_assistant' ? (row.analysis?.answer || row.question) : row.question,
+        llmUsed: row.category === 'chat_assistant' ? !!row.analysis?.llmUsed : undefined,
+        timestamp: row.created_at,
+      }));
 
-  if (!userId) {
+    return NextResponse.json({
+      success: true,
+      userId,
+      history,
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    console.error('[API] 获取聊天历史失败:', error);
     return NextResponse.json(
-      { success: false, error: '缺少用户ID' },
-      { status: 400 }
+      { success: false, error: '获取聊天历史失败' },
+      { status: 500 }
     );
   }
-
-  // 模拟获取历史
-  const chatHistory = [
-    {
-      id: '1',
-      role: 'user',
-      content: '我最近事业运如何？',
-      timestamp: new Date(Date.now() - 3600000).toISOString(),
-    },
-    {
-      id: '2',
-      role: 'assistant',
-      content: '根据您的八字，您最近的事业运势呈上升趋势...',
-      timestamp: new Date(Date.now() - 3500000).toISOString(),
-    },
-  ];
-
-  return NextResponse.json({
-    success: true,
-    history: chatHistory,
-    timestamp: new Date().toISOString(),
-  });
 }
