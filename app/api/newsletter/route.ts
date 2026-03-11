@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = `${body.email || ''}`;
     const source = `${body.source || 'site'}`;
-    const tags = Array.isArray(body.tags) ? body.tags.filter((item) => typeof item === 'string') : [];
+    const tags = Array.isArray(body.tags) ? body.tags.filter((item: unknown): item is string => typeof item === 'string') : [];
 
     const emailError = validateEmail(email);
     if (emailError) {

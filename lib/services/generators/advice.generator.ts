@@ -1,5 +1,5 @@
 // 建议生成器 - 单一职责：生成命理建议
-import type { FortuneAdvice, LuckyElements } from '../types';
+import type { LuckyElements } from '../types';
 import type { YongShenResult } from '../../bazi-analyzer';
 import { WUXING_COLOR, WUXING_DIRECTION, WUXING_NUMBER } from '../../bazi-constants';
 
@@ -15,7 +15,7 @@ export class AdviceGenerator {
   generate(
     yongShenResult: YongShenResult | null,
     luckyElements: LuckyElements | null
-  ): FortuneAdvice {
+  ): any {
     if (!yongShenResult || !luckyElements) {
       return this.getDefaultAdvice();
     }
@@ -27,7 +27,10 @@ export class AdviceGenerator {
       wealth: this.generateWealthAdvice(yongShen, xiShen),
       marriage: this.generateMarriageAdvice(yongShen),
       health: this.generateHealthAdvice(jiShen),
-      lucky: this.generateLuckyAdvice(luckyElements),
+      ...this.generateLuckyAdvice(luckyElements),
+      yongShen,
+      xiShen,
+      jiShen,
     };
   }
 
@@ -57,8 +60,10 @@ export class AdviceGenerator {
     });
 
     return {
-      suggestions: [...new Set(suggestions)],
-      industries: [...new Set(industries)],
+      primary: [...new Set(suggestions)],
+      secondary: [...new Set(industries)],
+      avoid: [],
+      reason: '优先选择与用神、喜神对应的职业环境',
       timing: '选择用神五行旺的时间段发展事业',
     };
   }
@@ -119,10 +124,9 @@ export class AdviceGenerator {
   private generateLuckyAdvice(luckyElements: LuckyElements): any {
     const colors: string[] = [];
     const directions: string[] = [];
-    const numbers: string[] = [];
+    const numbers: number[] = [];
 
     luckyElements.elements.forEach(element => {
-      const enElement = WX_CN_EN[element];
       if (WUXING_COLOR[element]) {
         colors.push(...WUXING_COLOR[element]);
       }
@@ -130,7 +134,7 @@ export class AdviceGenerator {
         directions.push(...WUXING_DIRECTION[element]);
       }
       if (WUXING_NUMBER[element]) {
-        numbers.push(...WUXING_NUMBER[element].map(String));
+        numbers.push(...WUXING_NUMBER[element]);
       }
     });
 
@@ -142,12 +146,13 @@ export class AdviceGenerator {
     };
   }
 
-  private getDefaultAdvice(): FortuneAdvice {
+  private getDefaultAdvice(): any {
     return {
       career: {
-        suggestions: ['根据自身兴趣和能力选择职业'],
-        industries: ['多元化发展'],
-        timing: '把握机遇',
+        primary: ['根据自身兴趣和能力选择职业'],
+        secondary: ['多元化发展'],
+        avoid: [],
+        reason: '先以现实能力与稳定成长为主',
       },
       wealth: {
         suggestions: ['稳健理财', '量入为出'],
@@ -164,12 +169,12 @@ export class AdviceGenerator {
         concerns: ['定期体检'],
         prevention: '预防为主',
       },
-      lucky: {
-        colors: ['根据个人喜好'],
-        directions: ['各方位均可'],
-        numbers: ['吉祥数字'],
-        elements: [],
-      },
+      colors: ['根据个人喜好'],
+      directions: ['各方位均可'],
+      numbers: [6, 8],
+      yongShen: [],
+      xiShen: [],
+      jiShen: [],
     };
   }
 }

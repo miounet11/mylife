@@ -69,7 +69,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const existing = eventOperations.getById(eventId);
-    if (!existing || existing.user_id !== userId) {
+    if (!existing || existing.userId !== userId) {
       return NextResponse.json(
         { success: false, error: '事件不存在' },
         { status: 404 }
@@ -126,7 +126,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     const existing = eventOperations.getById(eventId);
-    if (!existing || existing.user_id !== userId) {
+    if (!existing || existing.userId !== userId) {
       return NextResponse.json(
         { success: false, error: '事件不存在' },
         { status: 404 }

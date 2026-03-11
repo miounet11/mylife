@@ -5,7 +5,7 @@ import type { DayunResult } from '../../dayun-calculator';
 
 export class FortuneTrendAnalyzer {
   analyze(
-    baziStr: string[],
+    _baziStr: string[],
     birthDate: Date,
     gender: 'male' | 'female',
     yongShenResult: YongShenResult | null,
@@ -15,12 +15,11 @@ export class FortuneTrendAnalyzer {
     const currentDayun = this.findCurrentDayun(dayunResult, currentAge);
 
     return {
+      currentDaYun: currentDayun?.ganZhi || '待进入大运',
+      currentLiuNian: `${new Date().getFullYear()}流年`,
+      interaction: this.analyzeInteraction(currentDayun, yongShenResult),
+      nextYear: this.analyzeNextYear(dayunResult, currentAge),
       overall: this.analyzeOverall(yongShenResult, currentDayun),
-      career: this.analyzeCareer(currentDayun),
-      wealth: this.analyzeWealth(currentDayun),
-      relationship: this.analyzeRelationship(currentDayun, gender),
-      health: this.analyzeHealth(currentDayun),
-      nextDecade: this.analyzeNextDecade(dayunResult, currentAge),
     };
   }
 
@@ -35,9 +34,9 @@ export class FortuneTrendAnalyzer {
   }
 
   private findCurrentDayun(dayunResult: DayunResult, currentAge: number) {
-    return dayunResult.dayunPeriods.find(
-      period => currentAge >= period.startAge && currentAge <= period.endAge
-    );
+    return dayunResult.currentDayun || dayunResult.dayuns.find(
+      (period) => currentAge >= period.startAge && currentAge <= period.endAge
+    ) || null;
   }
 
   private analyzeOverall(
@@ -48,7 +47,7 @@ export class FortuneTrendAnalyzer {
       return '运势平稳，需把握机会';
     }
 
-    const { riZhuQiangRuo } = yongShenResult;
+    const riZhuQiangRuo = this.mapStrength(yongShenResult.strength);
 
     if (riZhuQiangRuo === '中和') {
       return '八字中和，运势平稳，适合稳健发展';
@@ -59,97 +58,49 @@ export class FortuneTrendAnalyzer {
     }
   }
 
-  private analyzeCareer(currentDayun: any): string {
+  private analyzeInteraction(currentDayun: DayunResult['currentDayun'], yongShenResult: YongShenResult | null): string {
     if (!currentDayun) {
-      return '事业运势平稳，需持续努力';
+      return '当前尚未进入明确大运阶段，整体以积累为主';
     }
 
-    const score = currentDayun.score || 50;
-
-    if (score >= 80) {
-      return '事业运势极佳，适合大展拳脚，把握机遇';
-    } else if (score >= 60) {
-      return '事业运势良好，稳步发展，可适当进取';
-    } else if (score >= 40) {
-      return '事业运势平稳，需脚踏实地，积累经验';
-    } else {
-      return '事业运势欠佳，宜守不宜攻，等待时机';
+    if (!yongShenResult) {
+      return `当前大运为${currentDayun.ganZhi}，宜结合现实机会稳步推进`;
     }
+
+    const favorable = [...yongShenResult.yongShen, ...yongShenResult.xiShen];
+    const hasSupport = favorable.includes(currentDayun.ganWuxing) || favorable.includes(currentDayun.zhiWuxing);
+    if (hasSupport) {
+      return `${currentDayun.ganZhi}与用神方向较协调，适合主动争取关键机会`;
+    }
+    return `${currentDayun.ganZhi}与命局存在拉扯，宜控制节奏，避免过度消耗`;
   }
 
-  private analyzeWealth(currentDayun: any): string {
-    if (!currentDayun) {
-      return '财运平稳，量入为出';
-    }
-
-    const score = currentDayun.score || 50;
-
-    if (score >= 80) {
-      return '财运亨通，投资有利，但需谨慎理财';
-    } else if (score >= 60) {
-      return '财运良好，正财稳定，可适当投资';
-    } else if (score >= 40) {
-      return '财运平稳，收入稳定，不宜冒险';
-    } else {
-      return '财运欠佳，需节制开支，避免投资';
-    }
-  }
-
-  private analyzeRelationship(currentDayun: any, gender: 'male' | 'female'): string {
-    if (!currentDayun) {
-      return '感情运势平稳，需用心经营';
-    }
-
-    const score = currentDayun.score || 50;
-
-    if (score >= 80) {
-      return '感情运势极佳，桃花旺盛，易遇良缘';
-    } else if (score >= 60) {
-      return '感情运势良好，关系和谐，可考虑进展';
-    } else if (score >= 40) {
-      return '感情运势平稳，需用心维护，避免争执';
-    } else {
-      return '感情运势欠佳，需多沟通理解，避免冲突';
-    }
-  }
-
-  private analyzeHealth(currentDayun: any): string {
-    if (!currentDayun) {
-      return '健康运势平稳，注意养生';
-    }
-
-    const score = currentDayun.score || 50;
-
-    if (score >= 80) {
-      return '健康运势极佳，精力充沛，但仍需注意休息';
-    } else if (score >= 60) {
-      return '健康运势良好，身体状况稳定，保持锻炼';
-    } else if (score >= 40) {
-      return '健康运势平稳，需注意作息，预防疾病';
-    } else {
-      return '健康运势欠佳，需加强养生，定期体检';
-    }
-  }
-
-  private analyzeNextDecade(dayunResult: DayunResult, currentAge: number): string {
-    const nextDayun = dayunResult.dayunPeriods.find(
-      period => period.startAge > currentAge
+  private analyzeNextYear(dayunResult: DayunResult, currentAge: number): string {
+    const nextDayun = dayunResult.dayuns.find(
+      (period) => period.startAge > currentAge
     );
 
     if (!nextDayun) {
-      return '未来十年运势平稳，需持续努力';
+      return '下一年延续当前节奏，重在稳住既有基础';
     }
 
-    const score = nextDayun.score || 50;
+    return `${nextDayun.startAge}岁起转入${nextDayun.ganZhi}大运，宜提前布局下一阶段重心`;
+  }
 
-    if (score >= 80) {
-      return `${nextDayun.startAge}岁起进入大运旺期，宜把握机遇，大展宏图`;
-    } else if (score >= 60) {
-      return `${nextDayun.startAge}岁起运势转好，可积极进取`;
-    } else if (score >= 40) {
-      return `${nextDayun.startAge}岁起运势平稳，宜稳健发展`;
-    } else {
-      return `${nextDayun.startAge}岁起需谨慎行事，积蓄力量`;
+  private mapStrength(strength: YongShenResult['strength']): string {
+    switch (strength) {
+      case 'very_strong':
+        return '太强';
+      case 'strong':
+        return '偏强';
+      case 'neutral':
+        return '中和';
+      case 'weak':
+        return '偏弱';
+      case 'very_weak':
+        return '太弱';
+      default:
+        return '中和';
     }
   }
 }

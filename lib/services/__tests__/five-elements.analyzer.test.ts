@@ -1,7 +1,7 @@
 // 单元测试 - 五行分析器
 import { describe, it, expect } from '@jest/globals';
 import { FiveElementsAnalyzer } from '../analyzers/five-elements.analyzer';
-import type { Pillar } from '@/lib/user-types';
+import type { Pillar } from '../types';
 
 describe('FiveElementsAnalyzer', () => {
   const analyzer = new FiveElementsAnalyzer();

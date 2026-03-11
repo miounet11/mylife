@@ -1,7 +1,6 @@
 // 五行分析器 - 单一职责：分析五行力量
 import type { FiveElements, Pillar } from '../types';
 import { calculateWuxingStrength } from '../../bazi-analyzer';
-import { WUXING_COLOR, WUXING_DIRECTION, WUXING_NUMBER } from '../../bazi-constants';
 
 const WX_CN_EN: Record<string, string> = {
   '木': 'wood',
@@ -12,8 +11,14 @@ const WX_CN_EN: Record<string, string> = {
 };
 
 export class FiveElementsAnalyzer {
-  analyze(baziStr: string[], pillars: Pillar[]): FiveElements {
-    const strengthMap = calculateWuxingStrength(baziStr);
+  analyze(baziStr: string[], _pillars: Pillar[]): FiveElements {
+    const strengthMap: Record<string, number> = {
+      '木': calculateWuxingStrength(baziStr, '木'),
+      '火': calculateWuxingStrength(baziStr, '火'),
+      '土': calculateWuxingStrength(baziStr, '土'),
+      '金': calculateWuxingStrength(baziStr, '金'),
+      '水': calculateWuxingStrength(baziStr, '水'),
+    };
 
     const wood = strengthMap['木'] || 0;
     const fire = strengthMap['火'] || 0;

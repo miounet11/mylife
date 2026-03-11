@@ -95,13 +95,13 @@ interface QuestionRow {
   category: string;
   question: string;
   analysis?: { answer?: string; llmUsed?: boolean; source?: string };
-  created_at: string;
+  created_at?: string;
 }
 
 function buildHistoryFromRows(rows: QuestionRow[]): HistoryMessage[] {
   const chatRows = rows
     .filter((row) => row.category === 'chat_user' || row.category === 'chat_assistant')
-    .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+    .sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
   return chatRows.map((row) => {
     if (row.category === 'chat_assistant') {

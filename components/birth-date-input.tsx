@@ -109,7 +109,7 @@ export default function BirthDateInput({
     setMonthText(formatPart(value.month));
     setDayText(formatPart(value.day));
     setSmartInput(formatDateValue(value));
-  }, [value.day, value.month, value.year]);
+  }, [value, value.day, value.month, value.year]);
 
   const commitDate = (nextValue: BirthDateValue, nextError: string = '') => {
     if (!isValidDate(nextValue.year, nextValue.month, nextValue.day)) {

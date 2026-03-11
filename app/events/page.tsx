@@ -3,7 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import { Plus, Filter, Search, Calendar, Grid, Sparkles } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 
@@ -106,7 +106,7 @@ export default function EventsPage() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
-  const loadEvents = async () => {
+  const loadEvents = useCallback(async () => {
     try {
       setError('');
       const res = await fetch('/api/events', { cache: 'no-store' });
@@ -142,7 +142,7 @@ export default function EventsPage() {
     } catch {
       showError('网络异常，无法加载事件');
     }
-  };
+  }, []);
 
   useEffect(() => {
     const init = async () => {
@@ -152,7 +152,7 @@ export default function EventsPage() {
     };
 
     init();
-  }, []);
+  }, [loadEvents]);
 
   const filteredEvents = useMemo(() => {
     const keywordLower = keyword.trim().toLowerCase();

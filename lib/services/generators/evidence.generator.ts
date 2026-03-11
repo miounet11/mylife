@@ -15,12 +15,9 @@ export class EvidenceGenerator {
     const monthBranch = pillars[1].earthlyBranch;
 
     return {
-      sampleSize: 10000,
+      totalUsers: 10000,
+      similarPatterns: this.getCareerDistribution(monthBranch)['管理'] + this.getCareerDistribution(monthBranch)['技术'],
       successRate: this.calculateSuccessRate(dayMaster),
-      averageIncome: this.calculateAverageIncome(dayMaster),
-      careerDistribution: this.getCareerDistribution(monthBranch),
-      marriageRate: this.calculateMarriageRate(pillars),
-      healthIndex: this.calculateHealthIndex(pillars),
     };
   }
 
@@ -34,16 +31,6 @@ export class EvidenceGenerator {
     return rates[dayMaster] || 70;
   }
 
-  private calculateAverageIncome(dayMaster: string): number {
-    // 基于日主的模拟平均收入（万元/年）
-    const incomes: Record<string, number> = {
-      '甲': 25, '乙': 22, '丙': 28, '丁': 24,
-      '戊': 20, '己': 19, '庚': 32, '辛': 30,
-      '壬': 35, '癸': 27,
-    };
-    return incomes[dayMaster] || 25;
-  }
-
   private getCareerDistribution(monthBranch: string): Record<string, number> {
     // 基于月支的职业分布
     return {
@@ -53,16 +40,6 @@ export class EvidenceGenerator {
       '教育': 15,
       '其他': 10,
     };
-  }
-
-  private calculateMarriageRate(pillars: Pillar[]): number {
-    // 模拟婚姻率
-    return 78;
-  }
-
-  private calculateHealthIndex(pillars: Pillar[]): number {
-    // 模拟健康指数
-    return 82;
   }
 
   private generateCelebrities(pillars: Pillar[]): any[] {

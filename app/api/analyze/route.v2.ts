@@ -1,7 +1,7 @@
 // 重构版 API - 使用 Repository + Service 模式
 import { NextRequest, NextResponse } from 'next/server';
 import { FortuneAnalyzerService } from '@/lib/services';
-import { FortuneRepository, UserRepository } from '@/lib/repositories';
+import { getFortuneRepository, getUserRepository } from '@/lib/repositories';
 import { generateFortuneInterpretation } from '@/lib/llm';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
@@ -189,16 +189,13 @@ async function saveAnalysisResult(params: {
 }) {
   const { reportId, userId, data, result } = params;
 
-  const userRepo = new UserRepository();
-  const fortuneRepo = new FortuneRepository();
+  const userRepo = getUserRepository();
+  const fortuneRepo = getFortuneRepository();
 
   // 更新用户档案
   userRepo.updateProfile(userId, {
     name: data.name,
-    gender: data.gender || 'male',
-    birth_date: data.birthDate,
-    birth_time: data.birthTime,
-    birth_place: data.birthPlace || '北京',
+    birthPlace: data.birthPlace || '北京',
     timezone: data.timezone || 8,
   });
 

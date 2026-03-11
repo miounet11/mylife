@@ -1,6 +1,4 @@
 // 体质分析器 - 单一职责：根据日主分析体质
-import type { FortuneAnalysisResult } from '../types';
-
 const STEM_ELEMENT: Record<string, string> = {
   '甲': 'wood', '乙': 'wood', '丙': 'fire', '丁': 'fire',
   '戊': 'earth', '己': 'earth', '庚': 'metal', '辛': 'metal',
@@ -8,7 +6,7 @@ const STEM_ELEMENT: Record<string, string> = {
 };
 
 export class PhysiqueAnalyzer {
-  analyze(dayMaster: string): FortuneAnalysisResult['physique'] {
+  analyze(dayMaster: string): { bodyType: string; description: string } {
     const element = STEM_ELEMENT[dayMaster];
 
     const physiqueMap: Record<string, { bodyType: string; description: string }> = {

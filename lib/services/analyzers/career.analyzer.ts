@@ -11,15 +11,15 @@ export class CareerAnalyzer {
   analyze(
     tenGods: TenGods,
     dayMaster: string
-  ): FortuneAnalysisResult['careerSuggestion'] {
+  ): FortuneAnalysisResult['advice']['career'] {
     const primary: string[] = [];
     const secondary: string[] = [];
     const avoid: string[] = [];
     const reasons: string[] = [];
 
     // 月柱十神为主，时柱为辅
-    const mainGod = tenGods.month?.stem ?? '';
-    const timeGod = tenGods.hour?.stem ?? '';
+    const mainGod = tenGods.month?.name ?? '';
+    const timeGod = tenGods.hour?.name ?? '';
 
     const careerMap: Record<string, string[]> = {
       '正官': ['政府机关', '管理层', '法律', '军警'],
@@ -74,7 +74,7 @@ export class CareerAnalyzer {
       primary: [...new Set(primary)],
       secondary: [...new Set(secondary)],
       avoid: [...new Set(avoid)],
-      reasons,
+      reason: reasons.join('；') || '结合十神结构与日主五行给出职业建议',
     };
   }
 }

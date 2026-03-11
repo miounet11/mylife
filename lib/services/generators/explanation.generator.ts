@@ -1,13 +1,13 @@
 // 解释生成器 - 单一职责：生成个性化解释文本
 import type { Pillar } from '../types';
-import type { YongShenResult, PillarShiShen } from '../../bazi-analyzer';
+import type { YongShenResult } from '../../bazi-analyzer';
 import { generatePersonalizedPhrase } from '../../master-phrases';
 
 export class ExplanationGenerator {
   generate(
     pillars: Pillar[],
     yongShenResult: YongShenResult | null,
-    shiShenAnalysis: PillarShiShen[] | null,
+    shiShenAnalysis: Array<{ meaning?: string | null }> | null,
     user: any
   ): { opening: string; explanation: string } {
     const opening = generatePersonalizedPhrase(user, 'opening');
@@ -19,7 +19,7 @@ export class ExplanationGenerator {
   private buildExplanation(
     pillars: Pillar[],
     yongShenResult: YongShenResult | null,
-    shiShenAnalysis: PillarShiShen[] | null
+    shiShenAnalysis: Array<{ meaning?: string | null }> | null
   ): string {
     const parts: string[] = [];
 
@@ -45,7 +45,9 @@ export class ExplanationGenerator {
   }
 
   private explainYongShen(yongShenResult: YongShenResult): string {
-    const { yongShen, xiShen, jiShen, riZhuQiangRuo, geJu } = yongShenResult;
+    const { yongShen, xiShen, jiShen } = yongShenResult;
+    const riZhuQiangRuo = this.mapStrength(yongShenResult.strength);
+    const geJu = yongShenResult.pattern?.pattern;
 
     const parts: string[] = [];
 
@@ -66,7 +68,7 @@ export class ExplanationGenerator {
     return parts.join('');
   }
 
-  private explainShiShen(shiShenAnalysis: PillarShiShen[]): string {
+  private explainShiShen(shiShenAnalysis: Array<{ meaning?: string | null }>): string {
     const parts: string[] = [];
 
     shiShenAnalysis.forEach((pillar, index) => {
@@ -77,5 +79,22 @@ export class ExplanationGenerator {
     });
 
     return parts.length > 0 ? parts.join('；') : '';
+  }
+
+  private mapStrength(strength: YongShenResult['strength']): string {
+    switch (strength) {
+      case 'very_strong':
+        return '太强';
+      case 'strong':
+        return '偏强';
+      case 'neutral':
+        return '中和';
+      case 'weak':
+        return '偏弱';
+      case 'very_weak':
+        return '太弱';
+      default:
+        return '中和';
+    }
   }
 }

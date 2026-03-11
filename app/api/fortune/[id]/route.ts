@@ -20,7 +20,7 @@ export async function GET(
       );
     }
 
-    if (fortuneData.isPublic === false && fortuneData.user_id !== currentUserId) {
+    if (fortuneData.isPublic === false && fortuneData.userId !== currentUserId) {
       return NextResponse.json(
         { success: false, error: '该结果已隐藏' },
         { status: 404 }
@@ -64,7 +64,7 @@ export async function PATCH(
       );
     }
 
-    if (fortuneData.user_id !== currentUserId) {
+    if (fortuneData.userId !== currentUserId) {
       return NextResponse.json(
         { success: false, error: '无权修改此结果' },
         { status: 403 }

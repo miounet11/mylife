@@ -3,6 +3,17 @@ import type Database from 'better-sqlite3';
 import { BaseRepository } from './base.repository';
 import type { UserRecord } from '../user-types';
 
+interface UserRow {
+  id: string;
+  name: string;
+  email?: string | null;
+  gender: 'male' | 'female';
+  birth_date: string;
+  birth_time: string;
+  birth_place?: string | null;
+  timezone: number;
+}
+
 interface CreateUserInput {
   id: string;
   name: string;
@@ -24,6 +35,19 @@ interface UpdateUserInput {
 export class UserRepository extends BaseRepository<UserRecord> {
   protected get tableName(): string {
     return 'users';
+  }
+
+  private mapRow(row: UserRow): UserRecord {
+    return {
+      id: row.id,
+      name: row.name,
+      email: row.email || null,
+      gender: row.gender,
+      birthDate: row.birth_date,
+      birthTime: row.birth_time,
+      birthPlace: row.birth_place || undefined,
+      timezone: row.timezone,
+    };
   }
 
   create(input: CreateUserInput): UserRecord {
@@ -99,17 +123,26 @@ export class UserRepository extends BaseRepository<UserRecord> {
   }
 
   findByEmail(email: string): UserRecord | null {
-    return this.queryOne<UserRecord>(
+    const row = this.queryOne<UserRow>(
       'SELECT * FROM users WHERE email = ?',
       [email]
     );
+    return row ? this.mapRow(row) : null;
   }
 
   findAll(limit = 100, offset = 0): UserRecord[] {
-    return this.queryAll<UserRecord>(
+    return this.queryAll<UserRow>(
       'SELECT * FROM users ORDER BY created_at DESC LIMIT ? OFFSET ?',
       [limit, offset]
+    ).map((row) => this.mapRow(row));
+  }
+
+  findById(id: string): UserRecord | null {
+    const row = this.queryOne<UserRow>(
+      'SELECT * FROM users WHERE id = ?',
+      [id]
     );
+    return row ? this.mapRow(row) : null;
   }
 
   exists(id: string): boolean {
