@@ -145,6 +145,49 @@ const africaCities: CityData[] = [
   { name: '卡萨布兰卡', nameEn: 'Casablanca', country: '摩洛哥', countryEn: 'Morocco', lng: -7.589, lat: 33.573, tz: 1 },
 ];
 
+const FEATURED_CITY_NAMES = [
+  '北京',
+  '上海',
+  '广州',
+  '深圳',
+  '杭州',
+  '成都',
+  '香港',
+  '台北',
+  '东京',
+  '首尔',
+  '新加坡',
+  '纽约',
+];
+
+const CITY_ALIASES: Record<string, string[]> = {
+  北京: ['beijing', 'bj', 'peking'],
+  上海: ['shanghai', 'sh'],
+  广州: ['guangzhou', 'gz', 'canton'],
+  深圳: ['shenzhen', 'sz'],
+  杭州: ['hangzhou', 'hz'],
+  成都: ['chengdu', 'cd'],
+  重庆: ['chongqing', 'cq'],
+  武汉: ['wuhan', 'wh'],
+  西安: ['xian', "xi'an"],
+  香港: ['hongkong', 'hong kong', 'hk'],
+  澳门: ['macau', 'macao'],
+  台北: ['taipei', 'tp'],
+  东京: ['tokyo'],
+  首尔: ['seoul'],
+  新加坡: ['singapore', 'sg'],
+  吉隆坡: ['kuala lumpur', 'kl'],
+  纽约: ['new york', 'nyc'],
+  洛杉矶: ['los angeles', 'la'],
+  旧金山: ['san francisco', 'sf'],
+  华盛顿: ['washington', 'dc', 'washington dc'],
+  温哥华: ['vancouver'],
+  多伦多: ['toronto'],
+  伦敦: ['london'],
+  巴黎: ['paris'],
+  悉尼: ['sydney'],
+};
+
 // 合并所有城市
 export const ALL_CITIES: CityData[] = [
   ...chinaCities,
@@ -156,27 +199,61 @@ export const ALL_CITIES: CityData[] = [
   ...africaCities,
 ];
 
+export const FEATURED_CITIES: CityData[] = FEATURED_CITY_NAMES.map((name) => findCity(name)).filter(Boolean) as CityData[];
+
+function normalizeSearchText(value: string) {
+  return value.toLowerCase().replace(/\s+/g, '');
+}
+
+function getCityAliases(city: CityData): string[] {
+  return CITY_ALIASES[city.name] || [];
+}
+
+function getCitySearchScore(city: CityData, query: string): number {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return 0;
+
+  const exactFields = [city.name, city.nameEn, city.country, city.countryEn, city.province || '', ...getCityAliases(city)]
+    .map(normalizeSearchText);
+
+  if (exactFields.includes(normalizedQuery)) return 120;
+  if (normalizeSearchText(city.name).startsWith(normalizedQuery)) return 100;
+  if (normalizeSearchText(city.nameEn).startsWith(normalizedQuery)) return 95;
+  if (getCityAliases(city).some((alias) => normalizeSearchText(alias).startsWith(normalizedQuery))) return 90;
+  if (normalizeSearchText(city.name).includes(normalizedQuery)) return 80;
+  if (normalizeSearchText(city.nameEn).includes(normalizedQuery)) return 75;
+  if (city.province && normalizeSearchText(city.province).includes(normalizedQuery)) return 55;
+  if (normalizeSearchText(city.country).includes(normalizedQuery) || normalizeSearchText(city.countryEn).includes(normalizedQuery)) return 45;
+  if (getCityAliases(city).some((alias) => normalizeSearchText(alias).includes(normalizedQuery))) return 65;
+
+  return 0;
+}
+
 // 搜索城市 - 支持中文名、英文名、拼音首字母
 export function searchCities(query: string, limit: number = 20): CityData[] {
   if (!query || query.trim().length === 0) {
-    // 默认返回中国热门城市
-    return chinaCities.slice(0, limit);
+    return FEATURED_CITIES.slice(0, limit);
   }
 
-  const q = query.toLowerCase().trim();
-
-  return ALL_CITIES.filter(city => {
-    return (
-      city.name.includes(q) ||
-      city.nameEn.toLowerCase().includes(q) ||
-      (city.province && city.province.includes(q)) ||
-      city.country.includes(q) ||
-      city.countryEn.toLowerCase().includes(q)
-    );
-  }).slice(0, limit);
+  return ALL_CITIES
+    .map((city) => ({ city, score: getCitySearchScore(city, query) }))
+    .filter((item) => item.score > 0)
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      return Math.abs(left.city.tz - 8) - Math.abs(right.city.tz - 8);
+    })
+    .slice(0, limit)
+    .map((item) => item.city);
 }
 
 // 根据城市名精确查找
 export function findCity(name: string): CityData | undefined {
-  return ALL_CITIES.find(c => c.name === name || c.nameEn.toLowerCase() === name.toLowerCase());
+  return ALL_CITIES.find((city) => {
+    const normalized = normalizeSearchText(name);
+    return (
+      city.name === name ||
+      normalizeSearchText(city.nameEn) === normalized ||
+      getCityAliases(city).some((alias) => normalizeSearchText(alias) === normalized)
+    );
+  });
 }

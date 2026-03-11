@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: '*',
       allow: '/',
-      disallow: ['/api/', '/result/'], // We disallow indexing individual private results
+      disallow: ['/api/'],
     },
     sitemap: 'https://life-kline.com/sitemap.xml',
   };

@@ -7,6 +7,9 @@ import { generateId } from '@/lib/utils';
 import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 
+// 设置 API 路由超时为 30 秒
+export const maxDuration = 30;
+
 type HistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
@@ -189,9 +192,9 @@ export async function GET(request: NextRequest) {
     const userId = await getOrCreateGuestUserId();
     const rows = questionOperations.getByUserId(userId, 100) || [];
     const history = rows
-      .filter((row) => row.category === 'chat_user' || row.category === 'chat_assistant')
-      .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-      .map((row) => ({
+      .filter((row: any) => row.category === 'chat_user' || row.category === 'chat_assistant')
+      .sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      .map((row: any) => ({
         id: row.id,
         role: row.category === 'chat_assistant' ? 'assistant' : 'user',
         content: row.category === 'chat_assistant' ? (row.analysis?.answer || row.question) : row.question,

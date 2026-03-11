@@ -2,9 +2,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { ArrowLeft, Plus, Filter, Search, Calendar, Grid } from 'lucide-react';
+import { Plus, Filter, Search, Calendar, Grid, Sparkles } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 
 // 动态导入
 const EventCalendar = dynamic(() => import('@/components/event-calendar'), {
@@ -26,7 +27,7 @@ interface UIEvent {
   time?: string;
   description: string;
   impact: ImpactType;
-  reminder: {
+  reminder?: {
     enabled: boolean;
     advanceDays: number;
     method: 'app' | 'email' | 'sms';
@@ -262,7 +263,7 @@ export default function EventsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: eventId,
-          reminderEnabled: !target.reminder.enabled,
+          reminderEnabled: !target.reminder?.enabled,
         }),
       });
       const data = await res.json();
@@ -270,7 +271,7 @@ export default function EventsPage() {
         showError(data.error || '更新提醒失败');
         return;
       }
-      showSuccess(target.reminder.enabled ? '提醒已关闭' : '提醒已开启');
+      showSuccess(target.reminder?.enabled ? '提醒已关闭' : '提醒已开启');
       await loadEvents();
     } catch {
       showError('网络异常，提醒更新失败');
@@ -278,91 +279,96 @@ export default function EventsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* 导航栏 */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo和标题 */}
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded bg-indigo-700 flex items-center justify-center text-white font-bold font-serif">
-                K
-              </div>
-              <div className="text-xl font-bold text-slate-900 tracking-tight">
-                人生K线
-              </div>
-            </Link>
+    <div className="page-shell">
+      <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
 
-            {/* 标题 */}
-            <h1 className="hidden md:block text-xl font-bold text-slate-900 font-serif">
-              命理事件
+      <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
+        <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="space-y-5">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              结果后的复访场景
+            </div>
+            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
+              把关键节点存下来，
+              <span className="font-serif text-[color:var(--accent-strong)]">用户才有回来的理由。</span>
             </h1>
-
-            {/* 返回按钮 */}
-            <Link
-              href="/"
-              className="flex items-center space-x-2 text-slate-600 hover:text-indigo-600 transition"
-            >
-              <ArrowLeft className="w-5 h-5" />
-              <span className="font-semibold">返回首页</span>
-            </Link>
+            <p className="text-base leading-8 text-[color:var(--muted)]">
+              事件页承担的是长期复用。用户可以把报告中的窗口期、现实中的重要事项和提醒机制放到同一处管理。
+            </p>
           </div>
-        </div>
-      </nav>
 
-      {/* 主内容 */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">这个页面承接的典型动作</div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {['记录重要考试与面试', '跟踪感情与家庭节点', '设置提醒避免错过窗口期', '回到报告或 AI 继续追问'].map((item) => (
+                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
         {/* 工具栏 */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="glass-panel rounded-[1.75rem] p-5">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center space-x-3">
-            <h2 className="text-2xl font-bold text-slate-900">
+            <h2 className="text-2xl font-black text-[color:var(--ink)]">
               {view === 'calendar' ? '事件日历' : '事件列表'}
             </h2>
-            <div className="flex items-center border border-slate-200 rounded px-3 py-1">
-              <span className="text-sm text-slate-600">{filteredEvents.length}个事件</span>
+            <div className="flex items-center rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5">
+              <span className="text-sm text-[color:var(--muted)]">{filteredEvents.length} 个事件</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex bg-white rounded-lg border border-slate-200 p-1">
+            <div className="flex rounded-full border border-[color:var(--line)] bg-white p-1">
               <button
                 onClick={() => setView('calendar')}
-                className={`p-2 rounded-md transition ${view === 'calendar' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-slate-100'}`}
               >
-                <Calendar className="w-5 h-5" />
+                <span className="inline-flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  日历
+                </span>
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`p-2 rounded-md transition ${view === 'list' ? 'bg-indigo-100 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'list' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-slate-100'}`}
               >
-                <Grid className="w-5 h-5" />
+                <span className="inline-flex items-center gap-2">
+                  <Grid className="h-4 w-4" />
+                  列表
+                </span>
               </button>
             </div>
 
             <button
               onClick={openCreateForm}
-              className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-indigo-700 transition"
+              className="inline-flex items-center space-x-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(15,118,110,0.22)]"
             >
               <Plus className="w-4 h-4" />
-              <span className="hidden md:inline">添加事件</span>
+              <span>添加事件</span>
             </button>
           </div>
         </div>
+        </div>
 
         {/* 筛选和搜索 */}
-        <div className="flex flex-col md:flex-row md:items-center gap-4 bg-white rounded-lg p-4 border border-slate-200">
+        <div className="soft-card flex flex-col gap-4 rounded-[1.75rem] p-4 md:flex-row md:items-center">
           <div className="flex items-center space-x-2">
-            <Filter className="w-5 h-5 text-slate-500" />
+            <Filter className="w-5 h-5 text-[color:var(--muted)]" />
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as 'all' | EventType)}
-              className="text-sm text-slate-700 border border-slate-200 rounded-lg px-3 py-2"
+              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
             >
               <option value="all">全部类型</option>
               <option value="career">事业</option>
@@ -374,13 +380,13 @@ export default function EventsPage() {
             </select>
           </div>
           <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="搜索事件标题或描述..."
-              className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+              className="w-full rounded-full border border-[color:var(--line)] bg-white py-3 pl-11 pr-4 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
             />
           </div>
         </div>
@@ -413,24 +419,26 @@ export default function EventsPage() {
         )}
       </main>
 
+      <SiteFooter />
+
       {showForm && (
-        <div
-          className="fixed inset-0 z-50 bg-slate-900/40 p-4 flex items-center justify-center"
-          onClick={closeForm}
-        >
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm" onClick={closeForm}>
           <div
-            className="w-full max-w-3xl max-h-[90vh] overflow-y-auto bg-white border border-slate-200 rounded-lg"
+            className="glass-panel w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]"
             onClick={(e) => e.stopPropagation()}
           >
-            <form onSubmit={handleSubmitForm} className="p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2 flex items-center justify-between">
-                <h3 className="text-lg font-bold text-slate-900">
+            <form onSubmit={handleSubmitForm} className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 md:p-6">
+              <div className="md:col-span-2 flex items-center justify-between border-b border-white/60 pb-3">
+                <div>
+                  <h3 className="text-xl font-black text-[color:var(--ink)]">
                   {editingEventId ? '编辑事件' : '添加事件'}
-                </h3>
+                  </h3>
+                  <p className="mt-1 text-sm text-[color:var(--muted)]">把报告中的关键窗口期或现实中的重要节点存下来。</p>
+                </div>
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="text-sm text-slate-500 hover:text-slate-800"
+                  className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--muted)]"
                 >
                   取消
                 </button>
@@ -440,12 +448,12 @@ export default function EventsPage() {
                 value={form.title}
                 onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="事件标题"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value as EventType }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="career">事业</option>
                 <option value="wealth">财富</option>
@@ -458,18 +466,18 @@ export default function EventsPage() {
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <input
                 type="time"
                 value={form.time}
                 onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.impact}
                 onChange={(e) => setForm((prev) => ({ ...prev, impact: e.target.value as ImpactType }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="positive">积极</option>
                 <option value="neutral">中性</option>
@@ -481,13 +489,13 @@ export default function EventsPage() {
                 value={form.reminderAdvanceDays}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderAdvanceDays: Number(e.target.value) || 0 }))}
                 placeholder="提前天数"
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               />
               <select
                 value={form.reminderMethod}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderMethod: e.target.value as 'app' | 'email' | 'sms' }))}
-                className="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500"
+                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               >
                 <option value="app">应用通知</option>
@@ -495,12 +503,12 @@ export default function EventsPage() {
                 <option value="sms">短信通知</option>
               </select>
 
-              <label className="md:col-span-2 flex items-center gap-2 text-sm text-slate-700">
+              <label className="md:col-span-2 flex items-center gap-3 rounded-[1.25rem] bg-white/70 px-4 py-3 text-sm text-[color:var(--ink)]">
                 <input
                   type="checkbox"
                   checked={form.reminderEnabled}
                   onChange={(e) => setForm((prev) => ({ ...prev, reminderEnabled: e.target.checked }))}
-                  className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="h-4 w-4 rounded border-slate-300 text-[color:var(--accent)] focus:ring-[color:var(--accent)]"
                 />
                 保存并启用提醒
               </label>
@@ -509,13 +517,13 @@ export default function EventsPage() {
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="事件说明"
-                className="md:col-span-2 w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-indigo-500 min-h-[110px]"
+                className="md:col-span-2 min-h-[130px] w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
-              <div className="md:col-span-2 flex justify-end">
+              <div className="md:col-span-2 flex justify-end border-t border-white/60 pt-2">
                 <button
                   type="submit"
                   disabled={submitting || !form.title.trim()}
-                  className="bg-indigo-600 text-white px-5 py-2 rounded-lg font-semibold hover:bg-indigo-700 disabled:opacity-60"
+                  className="rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
                 >
                   {submitting ? '提交中...' : editingEventId ? '保存修改' : '保存事件'}
                 </button>
@@ -527,7 +535,7 @@ export default function EventsPage() {
 
       {toast && (
         <div
-          className={`fixed right-4 top-20 z-[60] px-4 py-3 rounded border text-sm font-medium ${
+          className={`fixed right-4 top-20 z-[60] rounded-full px-4 py-3 text-sm font-medium shadow-[0_16px_34px_rgba(23,32,51,0.12)] ${
             toast.type === 'success'
               ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
               : 'bg-rose-50 border border-rose-200 text-rose-700'

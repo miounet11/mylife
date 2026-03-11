@@ -1,6 +1,7 @@
 // 命理数据API
 import { NextRequest, NextResponse } from 'next/server';
 import { fortuneOperations } from '@/lib/database';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 export async function GET(
   request: NextRequest,
@@ -10,10 +11,18 @@ export async function GET(
     const resolvedParams = await params;
     const reportId = resolvedParams.id;
     const fortuneData = fortuneOperations.getById(reportId);
+    const currentUserId = await getCurrentUserId();
 
     if (!fortuneData) {
       return NextResponse.json(
         { success: false, error: '未找到命理数据' },
+        { status: 404 }
+      );
+    }
+
+    if (fortuneData.isPublic === false && fortuneData.user_id !== currentUserId) {
+      return NextResponse.json(
+        { success: false, error: '该结果已隐藏' },
         { status: 404 }
       );
     }
@@ -26,6 +35,63 @@ export async function GET(
     console.error('[API] 获取命理数据失败:', error);
     return NextResponse.json(
       { success: false, error: '获取失败' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<Record<string, string>> }
+) {
+  try {
+    const currentUserId = await getCurrentUserId();
+    if (!currentUserId) {
+      return NextResponse.json(
+        { success: false, error: '未登录或会话失效' },
+        { status: 401 }
+      );
+    }
+
+    const resolvedParams = await params;
+    const reportId = resolvedParams.id;
+    const fortuneData = fortuneOperations.getById(reportId);
+
+    if (!fortuneData) {
+      return NextResponse.json(
+        { success: false, error: '未找到命理数据' },
+        { status: 404 }
+      );
+    }
+
+    if (fortuneData.user_id !== currentUserId) {
+      return NextResponse.json(
+        { success: false, error: '无权修改此结果' },
+        { status: 403 }
+      );
+    }
+
+    const body = await request.json();
+    if (typeof body.isPublic !== 'boolean') {
+      return NextResponse.json(
+        { success: false, error: '缺少 isPublic 参数' },
+        { status: 400 }
+      );
+    }
+
+    fortuneOperations.update(reportId, { isPublic: body.isPublic });
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        id: reportId,
+        isPublic: body.isPublic,
+      },
+    });
+  } catch (error) {
+    console.error('[API] 更新公开状态失败:', error);
+    return NextResponse.json(
+      { success: false, error: '更新失败' },
       { status: 500 }
     );
   }

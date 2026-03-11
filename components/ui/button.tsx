@@ -24,14 +24,14 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ...props
   },
   ref
-) => {
+  ) => {
     const variantStyles = {
-      default: 'bg-white text-slate-900 border border-slate-300 hover:bg-slate-50',
-      primary: 'bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700',
+      default: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
+      primary: 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(15,118,110,0.22)]',
       secondary: 'bg-slate-700 text-white border border-slate-700 hover:bg-slate-800',
-      outline: 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50',
-      ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
-      gradient: 'bg-indigo-600 text-white border border-indigo-600 hover:bg-indigo-700',
+      outline: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
+      ghost: 'bg-transparent text-[color:var(--ink)] hover:bg-white/70',
+      gradient: 'bg-[linear-gradient(135deg,var(--ink),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(23,32,51,0.18)]',
     };
 
     const sizeStyles = {
@@ -49,7 +49,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         ref={ref}
         className={cn(
-          'rounded-lg font-semibold flex items-center justify-center',
+          'flex items-center justify-center rounded-full font-semibold',
           variantStyles[variant],
           sizeStyles[size],
           disabledStyles,

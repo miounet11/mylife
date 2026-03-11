@@ -4,6 +4,9 @@
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { ArrowRight, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
+import SiteFooter from '@/components/site-footer';
+import SiteHeader from '@/components/site-header';
 
 // 动态导入
 const UserProfile = dynamic(() => import('@/components/user-profile'), {
@@ -109,51 +112,103 @@ export default function ProfilePage() {
     return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
   }, [fortunes]);
 
+  const latestFortune = fortunes[0] as any;
+  const latestResultId = latestFortune?.id;
+  const hasProfileData = fortunes.length > 0 || mappedEvents.length > 0 || !!user;
+
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* 导航栏 */}
-      <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-3">
-              <div className="w-9 h-9 rounded bg-indigo-700 flex items-center justify-center text-white font-bold font-serif">
-                K
-              </div>
-              <div className="text-xl font-bold text-slate-900 tracking-tight">
-                人生K线
-              </div>
-            </Link>
+    <div className="page-shell">
+      <SiteHeader ctaHref="/chat" ctaLabel="继续咨询" />
 
-            <h1 className="hidden md:block text-xl font-bold text-slate-900 font-serif">
-              我的命理档案
+      <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
+        <section className="mb-8 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="space-y-5">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              用户沉淀页
+            </div>
+            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
+              档案页的目标不是展示数据，
+              <span className="font-serif text-[color:var(--accent-strong)]">而是让用户留下来。</span>
             </h1>
+            <p className="text-base leading-8 text-[color:var(--muted)]">
+              在这里，用户会看到自己过往的分析、关键事件和阶段趋势，逐步形成长期使用而不是一次性消费。
+            </p>
+          </div>
 
-            <div className="flex items-center gap-4 text-sm">
-              <Link href="/chat" className="text-slate-600 hover:text-indigo-600">AI咨询</Link>
-              <Link href="/events" className="text-slate-600 hover:text-indigo-600">事件</Link>
-              <Link href="/history" className="text-slate-600 hover:text-indigo-600">历史</Link>
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">当前档案能承接的动作</div>
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {['查看阶段趋势图', '回顾最近分析结果', '继续进入 AI 咨询', '把节点落到事件管理'].map((item) => (
+                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                  {item}
+                </div>
+              ))}
             </div>
           </div>
-        </div>
-      </nav>
+        </section>
 
-      {/* 主内容 */}
-      <main className="container mx-auto px-4 py-8">
-        <div className="max-w-7xl mx-auto space-y-8">
+        <div className="space-y-8">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          {/* 命理K线图 */}
-          <section className="mb-8">
-            <Suspense fallback={<ChartSkeleton />}>
-              <FortuneKLineChart data={chartData} />
-            </Suspense>
+          <section className="grid gap-4 md:grid-cols-4">
+            {[
+              { label: '累计分析', value: `${fortunes.length}`, helper: '已沉淀的命理结果' },
+              { label: '关键事件', value: `${mappedEvents.length}`, helper: '可回访的节点记录' },
+              { label: '趋势年份', value: `${chartData.length || 0}`, helper: '可查看阶段波动' },
+              { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, helper: '最近一次分析结果' },
+            ].map((item) => (
+              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">{item.helper}</div>
+              </div>
+            ))}
           </section>
 
+          <section className="glass-panel rounded-[1.75rem] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-lg font-bold text-[color:var(--ink)]">继续操作</div>
+                <div className="mt-1 text-sm text-[color:var(--muted)]">把档案页变成下一步动作的中枢，而不是终点。</div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                <ProfileAction href="/chat" label="继续咨询" icon={Bot} />
+                <ProfileAction href="/events" label="管理事件" icon={CalendarClock} />
+                <ProfileAction href="/history" label="查看历史" icon={History} />
+                <ProfileAction href={user?.email ? '/updates' : '/login'} label={user?.email ? '管理订阅' : '绑定邮箱'} icon={Sparkles} />
+                <ProfileAction href={latestResultId ? `/result/${latestResultId}` : '/analyze'} label={latestResultId ? '查看最新报告' : '开始分析'} icon={ArrowRight} />
+              </div>
+            </div>
+          </section>
+
+          {!loading && !hasProfileData && (
+            <section className="glass-panel rounded-[2rem] p-8 text-center">
+              <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
+              <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[color:var(--muted)]">
+                先完成一次命理分析，结果页、趋势图、事件管理和 AI 咨询才会逐步沉淀成长期档案。
+              </p>
+              <Link href="/analyze" className="action-primary mt-6">
+                开始第一次分析
+              </Link>
+            </section>
+          )}
+
+          {/* 命理K线图 */}
+          {hasProfileData && (
+            <section className="mb-8">
+              <Suspense fallback={<ChartSkeleton />}>
+                <FortuneKLineChart data={chartData} />
+              </Suspense>
+            </section>
+          )}
+
           {/* 用户档案和重要事件 */}
+          {hasProfileData && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* 左侧：用户档案 */}
             <div className="lg:col-span-2">
@@ -173,8 +228,11 @@ export default function ProfilePage() {
               </Suspense>
             </div>
           </div>
+          )}
         </div>
       </main>
+
+      <SiteFooter />
     </div>
   );
 }
@@ -205,5 +263,25 @@ function ChartSkeleton() {
       <div className="h-6 bg-slate-200 rounded-lg animate-pulse mb-4"></div>
       <div className="h-64 bg-slate-200 rounded-lg animate-pulse"></div>
     </div>
+  );
+}
+
+function ProfileAction({
+  href,
+  label,
+  icon: Icon,
+}: {
+  href: string;
+  label: string;
+  icon: typeof Bot;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)]"
+    >
+      <Icon className="h-4 w-4" />
+      {label}
+    </Link>
   );
 }

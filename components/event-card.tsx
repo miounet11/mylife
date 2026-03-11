@@ -3,7 +3,7 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bell, Check, X, Calendar, Clock, AlertTriangle, TrendingUp, Heart, Users } from 'lucide-react';
+import { Bell, Check, X, Calendar, Clock, AlertTriangle, TrendingUp, Heart, Users, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils';
 
@@ -194,7 +194,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
                 </span>
               </div>
               <button
-                onClick={() => onToggleReminder(event.id)}
+                onClick={() => onToggleReminder?.(event.id)}
                 className="text-purple-600 hover:text-purple-700 font-medium"
               >
                 关闭
@@ -209,7 +209,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
 
 // 化灾预警卡片
 export function DisasterWarningCard({ warning }: { warning: any }) {
-  const severityColors = {
+  const severityColors: Record<string, string> = {
     low: 'border-yellow-400 bg-yellow-50',
     medium: 'border-orange-400 bg-orange-50',
     high: 'border-red-400 bg-red-50',
@@ -273,7 +273,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
               <span className="ml-2">立即采取的措施</span>
             </h5>
             <ul className="space-y-1">
-              {warning.protectionMeasures.immediate.map((measure, i) => (
+              {warning.protectionMeasures.immediate.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
                   <span className="text-green-600 mr-2 mt-1">✓</span>
                   <span className="text-sm text-red-900">{measure}</span>
@@ -289,7 +289,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
               <span className="ml-2">短期措施</span>
             </h5>
             <ul className="space-y-1">
-              {warning.protectionMeasures.shortTerm.map((measure, i) => (
+              {warning.protectionMeasures.shortTerm.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
                   <span className="text-orange-600 mr-2 mt-1">✓</span>
                   <span className="text-sm text-orange-900">{measure}</span>
@@ -305,7 +305,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
               <span className="ml-2">长期措施</span>
             </h5>
             <ul className="space-y-1">
-              {warning.protectionMeasures.longTerm.map((measure, i) => (
+              {warning.protectionMeasures.longTerm.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
                   <span className="text-yellow-600 mr-2 mt-1">✓</span>
                   <span className="text-sm text-yellow-900">{measure}</span>
@@ -328,7 +328,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
                   <div className="flex-1">
                     <span className="text-sm font-medium text-purple-900">仪式</span>
                     <div className="mt-1 space-x-1">
-                      {warning.protectionMeasures.fortuneEnhancements.rituals.map((ritual, i) => (
+                      {warning.protectionMeasures.fortuneEnhancements.rituals.map((ritual: string, i: number) => (
                         <span key={i} className="text-xs text-purple-700">· {ritual}</span>
                       ))}
                     </div>
@@ -343,7 +343,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
                   <div className="flex-1">
                     <span className="text-sm font-medium text-purple-900">护身符</span>
                     <div className="mt-1 space-x-1">
-                      {warning.protectionMeasures.fortuneEnhancements.amulets.map((amulet, i) => (
+                      {warning.protectionMeasures.fortuneEnhancements.amulets.map((amulet: string, i: number) => (
                         <span key={i} className="text-xs text-purple-700">· {amulet}</span>
                       ))}
                     </div>
@@ -358,7 +358,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
                   <div className="flex-1">
                     <span className="text-sm font-medium text-purple-900">颜色</span>
                     <div className="mt-1 space-x-1">
-                      {warning.protectionMeasures.fortuneEnhancements.colors.map((color, i) => (
+                      {warning.protectionMeasures.fortuneEnhancements.colors.map((color: string, i: number) => (
                         <span key={i} className="text-xs text-purple-700">· 宜穿{color}系衣物</span>
                       ))}
                     </div>
@@ -373,7 +373,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
                   <div className="flex-1">
                     <span className="text-sm font-medium text-purple-900">方位</span>
                     <div className="mt-1 space-x-1">
-                      {warning.protectionMeasures.fortuneEnhancements.directions.map((direction, i) => (
+                      {warning.protectionMeasures.fortuneEnhancements.directions.map((direction: string, i: number) => (
                         <span key={i} className="text-xs text-purple-700">· 宜往{direction}发展</span>
                       ))}
                     </div>
@@ -388,7 +388,7 @@ export function DisasterWarningCard({ warning }: { warning: any }) {
                   <div className="flex-1">
                     <span className="text-sm font-medium text-purple-900">吉日</span>
                     <div className="mt-1 space-x-1">
-                      {warning.protectionMeasures.fortuneEnhancements.dates.map((date, i) => (
+                      {warning.protectionMeasures.fortuneEnhancements.dates.map((date: Date, i: number) => (
                         <span key={i} className="text-xs text-purple-700">· {formatDateTime(date)}</span>
                       ))}
                     </div>

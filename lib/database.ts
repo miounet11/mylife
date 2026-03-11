@@ -20,6 +20,8 @@ export function initializeDatabase() {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT UNIQUE,
+      role TEXT DEFAULT 'guest',
+      email_verified INTEGER DEFAULT 0,
       gender TEXT NOT NULL,
       birth_date TEXT NOT NULL,
       birth_time TEXT NOT NULL,
@@ -29,6 +31,22 @@ export function initializeDatabase() {
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'guest'`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
 
   // 命理数据表
   db.exec(`
@@ -50,6 +68,7 @@ export function initializeDatabase() {
       evidence JSON NOT NULL,
       analysis JSON,
       kline_data JSON,
+      is_public INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -62,6 +81,14 @@ export function initializeDatabase() {
   } catch (e) {
     if (e instanceof Error && !e.message.includes('duplicate column')) {
       throw e; // 非预期错误，重新抛出
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN is_public INTEGER DEFAULT 1`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
     }
   }
 
@@ -153,14 +180,68 @@ export function initializeDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS email_subscriptions (
+      id TEXT PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      status TEXT DEFAULT 'active',
+      source TEXT DEFAULT 'site',
+      tags JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS auth_codes (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      code TEXT NOT NULL,
+      purpose TEXT DEFAULT 'login',
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS content_entries (
+      id TEXT PRIMARY KEY,
+      content_type TEXT NOT NULL,
+      subtype TEXT,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      name TEXT,
+      excerpt TEXT NOT NULL,
+      category TEXT,
+      read_time TEXT,
+      tags JSON,
+      featured INTEGER DEFAULT 0,
+      seo_title TEXT NOT NULL,
+      seo_description TEXT NOT NULL,
+      sections JSON NOT NULL,
+      status TEXT DEFAULT 'published',
+      source TEXT DEFAULT 'cms',
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // 索引
   db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
     CREATE INDEX IF NOT EXISTS idx_fortunes_user_id ON fortunes(user_id);
     CREATE INDEX IF NOT EXISTS idx_events_user_id ON events(user_id);
     CREATE INDEX IF NOT EXISTS idx_events_date ON events(date);
     CREATE INDEX IF NOT EXISTS idx_questions_user_id ON questions(user_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_enhancements_user_id ON enhancements(user_id);
+    CREATE INDEX IF NOT EXISTS idx_email_subscriptions_email ON email_subscriptions(email);
+    CREATE INDEX IF NOT EXISTS idx_auth_codes_email ON auth_codes(email);
+    CREATE INDEX IF NOT EXISTS idx_content_entries_type_status ON content_entries(content_type, status);
+    CREATE INDEX IF NOT EXISTS idx_content_entries_slug ON content_entries(slug);
   `);
 }
 
@@ -168,10 +249,21 @@ export function initializeDatabase() {
 export const userOperations = {
   create: (user: UserRecord) => {
     const stmt = db.prepare(`
-      INSERT INTO users (id, name, email, gender, birth_date, birth_time, birth_place, timezone)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO users (id, name, email, role, email_verified, gender, birth_date, birth_time, birth_place, timezone)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
-    return stmt.run(user.id, user.name, user.email, user.gender, user.birthDate, user.birthTime, user.birthPlace, user.timezone);
+    return stmt.run(
+      user.id,
+      user.name,
+      user.email ? user.email.trim().toLowerCase() : null,
+      user.role || 'guest',
+      user.emailVerified ? 1 : 0,
+      user.gender,
+      user.birthDate,
+      user.birthTime,
+      user.birthPlace,
+      user.timezone
+    );
   },
 
   getById: (id: string) => {
@@ -181,12 +273,22 @@ export const userOperations = {
 
   getByEmail: (email: string) => {
     const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
-    return stmt.get(email);
+    return stmt.get(email.trim().toLowerCase());
   },
 
   update: (id: string, updates: Partial<Omit<UserRecord, 'id'>>) => {
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
-    const values = Object.values(updates);
+    const COLUMN_MAP: Record<string, string> = {
+      birthDate: 'birth_date',
+      birthTime: 'birth_time',
+      birthPlace: 'birth_place',
+      emailVerified: 'email_verified',
+    };
+    const setClause = Object.keys(updates).map((key) => `${COLUMN_MAP[key] || key} = ?`).join(', ');
+    const values = Object.entries(updates).map(([key, value]) => {
+      if (key === 'email') return typeof value === 'string' ? value.trim().toLowerCase() : value;
+      if (key === 'emailVerified') return value ? 1 : 0;
+      return value;
+    });
     values.push(new Date().toISOString());
 
     const stmt = db.prepare(`
@@ -205,8 +307,8 @@ export const userOperations = {
 export const fortuneOperations = {
   create: (fortune: FortuneRecord) => {
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       fortune.id,
@@ -225,7 +327,8 @@ export const fortuneOperations = {
       JSON.stringify(fortune.advice),
       JSON.stringify(fortune.evidence),
       JSON.stringify(fortune.analysis),
-      JSON.stringify(fortune.klineData || null)
+      JSON.stringify(fortune.klineData || null),
+      fortune.isPublic === false ? 0 : 1
     );
   },
 
@@ -245,6 +348,7 @@ export const fortuneOperations = {
         evidence: JSON.parse(row.evidence),
         analysis: row.analysis ? JSON.parse(row.analysis) : null,
         klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
+        isPublic: row.is_public !== 0,
       };
     }
     return null;
@@ -253,7 +357,7 @@ export const fortuneOperations = {
   getByUserId: (userId: string) => {
     const stmt = db.prepare('SELECT * FROM fortunes WHERE user_id = ? ORDER BY created_at DESC');
     const rows = stmt.all(userId);
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       ...row,
       bazi: JSON.parse(row.bazi),
       fiveElements: JSON.parse(row.five_elements),
@@ -264,12 +368,25 @@ export const fortuneOperations = {
       evidence: JSON.parse(row.evidence),
       analysis: row.analysis ? JSON.parse(row.analysis) : null,
       klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
+      isPublic: row.is_public !== 0,
     }));
   },
 
   update: (id: string, updates: Partial<Omit<FortuneRecord, 'id' | 'userId'>>) => {
     const JSON_FIELDS = ['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis', 'klineData'] as const;
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const COLUMN_MAP: Record<string, string> = {
+      fiveElements: 'five_elements',
+      tenGods: 'ten_gods',
+      klineData: 'kline_data',
+      isPublic: 'is_public',
+      birthDate: 'birth_date',
+      birthTime: 'birth_time',
+      birthPlace: 'birth_place',
+      userId: 'user_id',
+    };
+    const setClause = Object.keys(updates)
+      .map((key) => `${COLUMN_MAP[key] || key} = ?`)
+      .join(', ');
     const values = Object.entries(updates).map(([key, value]) =>
       JSON_FIELDS.includes(key as typeof JSON_FIELDS[number]) ? JSON.stringify(value) : value
     );
@@ -328,7 +445,7 @@ export const eventOperations = {
   getByUserId: (userId: string) => {
     const stmt = db.prepare('SELECT * FROM events WHERE user_id = ? ORDER BY date DESC');
     const rows = stmt.all(userId);
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       ...row,
       reminder_enabled: row.reminder_enabled === 1,
       fortune_analysis: JSON.parse(row.fortune_analysis),
@@ -340,7 +457,7 @@ export const eventOperations = {
   getByDateRange: (userId: string, startDate: string, endDate: string) => {
     const stmt = db.prepare('SELECT * FROM events WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC');
     const rows = stmt.all(userId, startDate, endDate);
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       ...row,
       reminder_enabled: row.reminder_enabled === 1,
       fortune_analysis: JSON.parse(row.fortune_analysis),
@@ -400,7 +517,7 @@ export const questionOperations = {
   getByUserId: (userId: string, limit = 50) => {
     const stmt = db.prepare(`SELECT * FROM questions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`);
     const rows = stmt.all(userId, limit);
-    return rows.map((row) => ({
+    return rows.map((row: any) => ({
       ...row,
       analysis: JSON.parse(row.analysis),
     }));
@@ -420,6 +537,41 @@ export const questionOperations = {
   delete: (id: string) => {
     const stmt = db.prepare('DELETE FROM questions WHERE id = ?');
     return stmt.run(id);
+  },
+};
+
+export const emailSubscriptionOperations = {
+  upsert: (email: string, source = 'site', tags: string[] = []) => {
+    const stmt = db.prepare(`
+      INSERT INTO email_subscriptions (id, email, status, source, tags)
+      VALUES (?, ?, 'active', ?, ?)
+      ON CONFLICT(email) DO UPDATE SET
+        status = 'active',
+        source = excluded.source,
+        tags = excluded.tags,
+        updated_at = datetime('now')
+    `);
+    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return stmt.run(id, email.trim().toLowerCase(), source, JSON.stringify(tags));
+  },
+
+  getByEmail: (email: string) => {
+    const stmt = db.prepare('SELECT * FROM email_subscriptions WHERE email = ?');
+    const row = stmt.get(email.trim().toLowerCase()) as any;
+    if (!row) return null;
+    return {
+      ...row,
+      tags: row.tags ? JSON.parse(row.tags) : [],
+    };
+  },
+
+  unsubscribe: (email: string) => {
+    const stmt = db.prepare(`
+      UPDATE email_subscriptions
+      SET status = 'unsubscribed', updated_at = datetime('now')
+      WHERE email = ?
+    `);
+    return stmt.run(email.trim().toLowerCase());
   },
 };
 

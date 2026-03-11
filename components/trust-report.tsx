@@ -1,7 +1,26 @@
-// 可信报告组件 - 建立信任的核心组件
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Activity,
+  ArrowRightLeft,
+  Compass,
+  Flame,
+  Gem,
+  Leaf,
+  ShieldCheck,
+  Waves,
+} from 'lucide-react';
+
+type ElementKey = 'wood' | 'fire' | 'earth' | 'metal' | 'water';
+
+const elementMeta: Record<ElementKey, { label: string; color: string; icon: typeof Leaf }> = {
+  wood: { label: '木', color: 'from-emerald-500 to-emerald-400', icon: Leaf },
+  fire: { label: '火', color: 'from-rose-500 to-orange-400', icon: Flame },
+  earth: { label: '土', color: 'from-amber-500 to-yellow-400', icon: Compass },
+  metal: { label: '金', color: 'from-slate-500 to-slate-300', icon: Gem },
+  water: { label: '水', color: 'from-sky-500 to-cyan-400', icon: Waves },
+};
 
 export default function TrustReport({ result }: any) {
   if (!result) return null;
@@ -10,128 +29,97 @@ export default function TrustReport({ result }: any) {
   const basic = result.basic || { dayMaster: '', pillars: [] };
   const pillars = basic.pillars || [];
   const fiveElements = result.fiveElements || {};
-  const tenGods = result.tenGods || { self: '未知', output: [], input: [], control: [], controlled: [] };
   const pattern = result.pattern || { type: '未知', quality: '', strength: '', description: '' };
   const fortune = result.fortune || { currentDaYun: '', currentLiuNian: '', interaction: '', nextYear: '' };
   const advice = result.advice || { career: {}, wealth: {}, marriage: {}, health: {} };
-  const evidence = result.evidence || { statistics: {}, celebrities: [] };
+
+  const elementEntries = (Object.entries(fiveElements) as [ElementKey, any][])
+    .filter(([key]) => key in elementMeta)
+    .sort((a, b) => (b[1]?.strength || 0) - (a[1]?.strength || 0));
+
+  const strongestElement = elementEntries[0];
+  const weakestElement = elementEntries[elementEntries.length - 1];
+
+  const quickStats = [
+    { label: '日主', value: basic.dayMaster || '未知' },
+    { label: '格局', value: pattern.type || '未知' },
+    { label: '当前大运', value: fortune.currentDaYun || '待补充' },
+    { label: '流年提示', value: fortune.currentLiuNian || '待补充' },
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto space-y-8 pb-12">
-      {/* 卷首语 - 权威感 */}
-      <Card className="bg-slate-900 text-white border-0 shadow-xl overflow-hidden">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -translate-y-1/2 translate-x-1/2"></div>
+    <div className="mx-auto max-w-6xl space-y-8 pb-12">
+      <Card id="overview" variant="gradient" className="relative overflow-hidden scroll-mt-28">
+        <div className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
+
         <CardHeader className="relative z-10 pb-2">
-          <div className="inline-flex items-center space-x-2 mb-4">
-            <span className="px-2.5 py-1 rounded bg-indigo-500/30 text-indigo-200 text-xs font-bold tracking-wider uppercase border border-indigo-400/20">
-              权威命理报告 V2.0
-            </span>
-            <span className="text-slate-400 text-sm">真太阳时精确校准</span>
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white/80">
+            <ShieldCheck className="h-3.5 w-3.5" />
+            TRUSTED REPORT
           </div>
-          <CardTitle className="text-3xl md:text-4xl font-serif font-bold text-white tracking-tight">
-            先天命局深度解析
+          <CardTitle className="mt-4 max-w-4xl text-3xl font-black text-white md:text-5xl">
+            这份结果不只是告诉用户“是什么命”，
+            <span className="font-serif">更要说清为什么、现在如何、下一步做什么。</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="relative z-10 pt-4">
-          <blockquote className="border-l-2 border-indigo-500 pl-6 text-slate-300 text-lg leading-relaxed font-serif">
-            {analysis.opening || '察天地之理，究阴阳之变。本报告基于严谨的天文历法与子平命理引擎生成。'}
-          </blockquote>
+
+        <CardContent className="relative z-10 space-y-6 pt-2">
+          <p className="max-w-4xl whitespace-pre-wrap text-base leading-8 text-white/82">
+            {analysis.opening || '察天地之理，究阴阳之变。本报告基于真太阳时修正、四柱排盘与结构化建议生成。'}
+          </p>
+
+          <div className="grid gap-4 md:grid-cols-4">
+            {quickStats.map((item) => (
+              <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/10 px-4 py-4">
+                <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
+                <div className="mt-2 text-lg font-bold text-white">{item.value}</div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
-      {/* 核心命盘 - 四柱八字 */}
-      <Card className="border-slate-200 shadow-sm overflow-hidden">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
-          <CardTitle className="text-lg font-bold text-slate-800 flex items-center">
-            <div className="w-1.5 h-5 bg-indigo-600 rounded-full mr-3"></div>
-            命盘排演 (四柱八字)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-6">
-          <div className="grid grid-cols-4 gap-4 md:gap-6 text-center">
-            {['年柱 (祖上/早年)', '月柱 (父母/青年)', '日柱 (自己/中年)', '时柱 (子女/晚年)'].map((label, idx) => {
-              const pillar = pillars[idx] || { celestialStem: '-', earthlyBranch: '-', nayin: '-', hiddenStems: [] };
-              const isDayMaster = idx === 2;
-              return (
-                <div key={idx} className={`relative flex flex-col p-4 rounded-xl border ${isDayMaster ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-500/20' : 'bg-white border-slate-100 shadow-sm'}`}>
-                  {isDayMaster && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-0.5 rounded-full shadow-sm whitespace-nowrap">
-                      日主 (元神)
-                    </div>
-                  )}
-                  <div className="text-xs font-medium text-slate-500 mb-4 tracking-wide">{label}</div>
-                  <div className="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-2">{pillar.celestialStem}</div>
-                  <div className="text-4xl md:text-5xl font-serif font-bold text-slate-900 mb-4">{pillar.earthlyBranch}</div>
-                  
-                  <div className="mt-auto space-y-2 pt-4 border-t border-slate-100">
-                    <div className="text-xs text-slate-500 flex justify-between px-1">
-                      <span>纳音:</span>
-                      <span className="font-semibold text-slate-700">{pillar.nayin}</span>
-                    </div>
-                    <div className="text-xs text-slate-500 flex justify-between px-1">
-                      <span>藏干:</span>
-                      <span className="font-semibold text-slate-700">{pillar.hiddenStems?.join(' ')}</span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* 核心用神提示 */}
-          {(advice.yongShen?.length > 0 || pattern.type) && (
-            <div className="mt-8 bg-slate-50 rounded-lg p-5 border border-slate-200 flex flex-col md:flex-row gap-6 items-center">
-              <div className="flex-1">
-                <div className="text-sm font-bold text-slate-800 mb-1">本命格局</div>
-                <div className="text-xl text-indigo-700 font-bold">{pattern.type}</div>
-                <p className="text-sm text-slate-600 mt-2">{pattern.description}</p>
-              </div>
-              <div className="hidden md:block w-px h-16 bg-slate-200"></div>
-              <div className="flex-1 grid grid-cols-2 gap-4 w-full">
-                <div className="bg-white p-3 rounded border border-slate-100 shadow-sm text-center">
-                  <div className="text-xs text-slate-500 mb-1 font-bold">核心用神 (大吉)</div>
-                  <div className="text-lg font-bold text-emerald-600">{advice.yongShen?.join('、') || '-'}</div>
-                </div>
-                <div className="bg-white p-3 rounded border border-slate-100 shadow-sm text-center">
-                  <div className="text-xs text-slate-500 mb-1 font-bold">核心忌神 (大凶)</div>
-                  <div className="text-lg font-bold text-red-600">{advice.jiShen?.join('、') || '-'}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* 五行力量 */}
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
-            <CardTitle className="text-lg font-bold text-slate-800 flex items-center">
-              <div className="w-1.5 h-5 bg-indigo-600 rounded-full mr-3"></div>
-              五行力量分布
+      <div id="pillars" className="grid scroll-mt-28 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+        <Card>
+          <CardHeader className="border-b border-[color:var(--line)] pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <Activity className="h-5 w-5 text-[color:var(--accent-strong)]" />
+              核心命盘结构
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              {Object.entries(fiveElements).map(([key, value]: [string, any]) => {
-                const colorMap: any = {
-                  wood: 'bg-emerald-500',
-                  fire: 'bg-rose-500',
-                  earth: 'bg-amber-600',
-                  metal: 'bg-slate-400',
-                  water: 'bg-blue-500'
-                };
-                const cnMap: any = { wood: '木', fire: '火', earth: '土', metal: '金', water: '水' };
+          <CardContent className="pt-6">
+            <div className="grid gap-4 md:grid-cols-4">
+              {['年柱', '月柱', '日柱', '时柱'].map((label, index) => {
+                const pillar = pillars[index] || { celestialStem: '-', earthlyBranch: '-', nayin: '-', hiddenStems: [] };
+                const isDayMaster = index === 2;
                 return (
-                  <div key={key} className="flex items-center">
-                    <div className="w-10 text-sm font-bold text-slate-700">{cnMap[key]}</div>
-                    <div className="flex-1 h-3 bg-slate-100 rounded-full overflow-hidden mx-3">
-                      <div 
-                        className={`h-full ${colorMap[key] || 'bg-indigo-500'} transition-all duration-1000`} 
-                        style={{ width: `${value.strength}%` }}
-                      ></div>
+                  <div
+                    key={label}
+                    className={`relative rounded-[1.5rem] border p-4 text-center ${
+                      isDayMaster
+                        ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+                        : 'border-[color:var(--line)] bg-slate-50'
+                    }`}
+                  >
+                    {isDayMaster && (
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--accent-strong)] px-3 py-1 text-[11px] font-semibold text-white">
+                        日主
+                      </div>
+                    )}
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
+                    <div className="mt-4 font-serif text-5xl font-black text-[color:var(--ink)]">{pillar.celestialStem}</div>
+                    <div className="mt-2 font-serif text-5xl font-black text-[color:var(--ink)]">{pillar.earthlyBranch}</div>
+                    <div className="mt-5 space-y-2 border-t border-white/60 pt-4 text-left text-xs text-[color:var(--muted)]">
+                      <div className="flex items-start justify-between gap-3">
+                        <span>纳音</span>
+                        <span className="font-semibold text-[color:var(--ink)]">{pillar.nayin || '-'}</span>
+                      </div>
+                      <div className="flex items-start justify-between gap-3">
+                        <span>藏干</span>
+                        <span className="font-semibold text-[color:var(--ink)]">{pillar.hiddenStems?.join(' ') || '-'}</span>
+                      </div>
                     </div>
-                    <div className="w-16 text-right text-sm font-mono text-slate-600">{value.strength.toFixed(1)}%</div>
                   </div>
                 );
               })}
@@ -139,111 +127,170 @@ export default function TrustReport({ result }: any) {
           </CardContent>
         </Card>
 
-        {/* 幸运元素 */}
-        <Card className="border-slate-200 shadow-sm">
-          <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
-            <CardTitle className="text-lg font-bold text-slate-800 flex items-center">
-              <div className="w-1.5 h-5 bg-indigo-600 rounded-full mr-3"></div>
-              专属开运指南
+        <Card>
+          <CardHeader className="border-b border-[color:var(--line)] pb-4">
+            <CardTitle className="flex items-center gap-3 text-lg">
+              <ArrowRightLeft className="h-5 w-5 text-[color:var(--warm)]" />
+              结构结论
             </CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
-                <div className="text-xs font-bold text-slate-500 mb-2">有利方位</div>
-                <div className="text-lg font-bold text-slate-800">{advice.directions?.join('、') || '无'}</div>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center">
-                <div className="text-xs font-bold text-slate-500 mb-2">幸运颜色</div>
-                <div className="text-lg font-bold text-slate-800">{advice.colors?.join('、') || '无'}</div>
-              </div>
-              <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 text-center col-span-2">
-                <div className="text-xs font-bold text-slate-500 mb-2">幸运数字</div>
-                <div className="text-lg font-bold text-slate-800">{advice.numbers?.join('、') || '无'}</div>
-              </div>
+          <CardContent className="space-y-4 pt-6">
+            <MetricTile label="命局格局" value={pattern.type || '未知'} emphasis />
+            <MetricTile label="用神" value={advice.yongShen?.join('、') || '待补充'} />
+            <MetricTile label="忌神" value={advice.jiShen?.join('、') || '待补充'} />
+            <MetricTile label="当前运势交互" value={fortune.interaction || '待补充'} />
+            <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
+              {pattern.description || '当前报告未返回更详细的格局说明。'}
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* AI深度解析建议 */}
-      <Card className="border-slate-200 shadow-sm">
-        <CardHeader className="bg-slate-50 border-b border-slate-100 py-4">
-          <CardTitle className="text-lg font-bold text-slate-800 flex items-center">
-            <div className="w-1.5 h-5 bg-indigo-600 rounded-full mr-3"></div>
-            AI 深度解析与决策建议
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y divide-slate-100">
-            {/* 综合解析 */}
-            <div className="p-6 md:p-8 bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                <span className="text-indigo-600 mr-2">✦</span> 命局总评
-              </h3>
-              <p className="text-slate-700 leading-relaxed whitespace-pre-wrap">{analysis.explanation}</p>
-            </div>
-
-            {/* 事业建议 */}
-            <div className="p-6 md:p-8 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                <span className="text-indigo-600 mr-2">✦</span> 学业与事业发展
-              </h3>
-              <div className="space-y-4">
-                <p className="text-slate-700 font-medium">{advice.career?.general}</p>
-                <ul className="space-y-2">
-                  {(advice.career?.specific || []).map((item: string, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-indigo-600 mr-2 mt-0.5">•</span>
-                      <span className="text-slate-600">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 bg-indigo-50/50 p-4 rounded border border-indigo-100 text-sm">
-                  <span className="font-bold text-indigo-900">时机把握：</span>
-                  <span className="text-indigo-800 ml-2">{advice.career?.timing}</span>
+      <div id="elements" className="grid scroll-mt-28 gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <Card>
+          <CardHeader className="border-b border-[color:var(--line)] pb-4">
+            <CardTitle className="text-lg">五行力量分布</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-6">
+            {elementEntries.map(([key, value]) => {
+              const meta = elementMeta[key];
+              const Icon = meta.icon;
+              return (
+                <div key={key}>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br ${meta.color} text-white`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[color:var(--ink)]">{meta.label}</div>
+                        <div className="text-xs text-[color:var(--muted)]">{value?.state || '结构值'}</div>
+                      </div>
+                    </div>
+                    <div className="text-sm font-bold text-[color:var(--ink)]">{Number(value?.strength || 0).toFixed(1)}%</div>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className={`h-full rounded-full bg-gradient-to-r ${meta.color}`}
+                      style={{ width: `${value?.strength || 0}%` }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
+          </CardContent>
+        </Card>
 
-            {/* 财富建议 */}
-            <div className="p-6 md:p-8 bg-white">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                <span className="text-indigo-600 mr-2">✦</span> 财富与资产配置
-              </h3>
-              <div className="space-y-4">
-                <p className="text-slate-700 font-medium">{advice.wealth?.general}</p>
-                <ul className="space-y-2">
-                  {(advice.wealth?.specific || []).map((item: string, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-indigo-600 mr-2 mt-0.5">•</span>
-                      <span className="text-slate-600">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
+        <Card>
+          <CardHeader className="border-b border-[color:var(--line)] pb-4">
+            <CardTitle className="text-lg">一眼看懂的结论</CardTitle>
+          </CardHeader>
+          <CardContent className="grid gap-4 pt-6 sm:grid-cols-2">
+            <InsightCard
+              label="最强元素"
+              value={strongestElement ? `${elementMeta[strongestElement[0]].label} ${Number(strongestElement[1]?.strength || 0).toFixed(1)}%` : '暂无'}
+            />
+            <InsightCard
+              label="最弱元素"
+              value={weakestElement ? `${elementMeta[weakestElement[0]].label} ${Number(weakestElement[1]?.strength || 0).toFixed(1)}%` : '暂无'}
+            />
+            <InsightCard label="有利方向" value={advice.directions?.join('、') || '待补充'} />
+            <InsightCard label="幸运颜色" value={advice.colors?.join('、') || '待补充'} />
+            <InsightCard label="幸运数字" value={advice.numbers?.join('、') || '待补充'} />
+            <InsightCard label="下一年提醒" value={fortune.nextYear || '待补充'} />
+          </CardContent>
+        </Card>
+      </div>
 
-            {/* 婚姻建议 */}
-            <div className="p-6 md:p-8 bg-slate-50">
-              <h3 className="text-lg font-bold text-slate-900 mb-4 flex items-center">
-                <span className="text-indigo-600 mr-2">✦</span> 婚恋与人际关系
-              </h3>
-              <div className="space-y-4">
-                <p className="text-slate-700 font-medium">{advice.marriage?.general}</p>
-                <ul className="space-y-2">
-                  {(advice.marriage?.specific || []).map((item: string, i: number) => (
-                    <li key={i} className="flex items-start">
-                      <span className="text-indigo-600 mr-2 mt-0.5">•</span>
-                      <span className="text-slate-600">{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
+      <Card id="advice" className="scroll-mt-28">
+        <CardHeader className="border-b border-[color:var(--line)] pb-4">
+          <CardTitle className="text-lg">AI 深度建议</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 pt-6">
+          <AdviceSection
+            title="命局总评"
+            accent="bg-[color:var(--accent)]"
+            summary={analysis.explanation || '当前报告未提供更多 AI 总评。'}
+          />
+          <AdviceSection
+            title="学业与事业"
+            accent="bg-sky-500"
+            summary={advice.career?.general || '当前未返回事业建议。'}
+            points={advice.career?.specific || []}
+            extra={advice.career?.timing ? `时机把握：${advice.career.timing}` : ''}
+          />
+          <AdviceSection
+            title="财富与配置"
+            accent="bg-emerald-500"
+            summary={advice.wealth?.general || '当前未返回财富建议。'}
+            points={advice.wealth?.specific || []}
+          />
+          <AdviceSection
+            title="婚恋与关系"
+            accent="bg-rose-500"
+            summary={advice.marriage?.general || '当前未返回婚恋建议。'}
+            points={advice.marriage?.specific || []}
+          />
+          <AdviceSection
+            title="健康与节奏"
+            accent="bg-amber-500"
+            summary={advice.health?.general || '当前未返回健康建议。'}
+            points={advice.health?.specific || []}
+          />
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function MetricTile({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
+  return (
+    <div className={`rounded-[1.5rem] border px-4 py-4 ${emphasis ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]' : 'border-[color:var(--line)] bg-white'}`}>
+      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
+      <div className={`mt-2 ${emphasis ? 'text-xl' : 'text-base'} font-bold text-[color:var(--ink)]`}>{value}</div>
+    </div>
+  );
+}
+
+function InsightCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
+      <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
+    </div>
+  );
+}
+
+function AdviceSection({
+  title,
+  accent,
+  summary,
+  points = [],
+  extra = '',
+}: {
+  title: string;
+  accent: string;
+  summary: string;
+  points?: string[];
+  extra?: string;
+}) {
+  return (
+    <section className="rounded-[1.75rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 md:p-6">
+      <div className="flex items-center gap-3">
+        <span className={`h-3 w-3 rounded-full ${accent}`} />
+        <h3 className="text-lg font-bold text-[color:var(--ink)]">{title}</h3>
+      </div>
+      <p className="mt-4 whitespace-pre-wrap text-sm leading-8 text-[color:var(--ink)]">{summary}</p>
+      {points.length > 0 && (
+        <div className="mt-4 grid gap-3">
+          {points.map((item, index) => (
+            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+              {item}
+            </div>
+          ))}
+        </div>
+      )}
+      {extra && <div className="mt-4 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-sm font-medium text-[color:var(--accent-strong)]">{extra}</div>}
+    </section>
   );
 }

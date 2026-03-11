@@ -142,7 +142,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
           <div className="p-2 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 mb-2">藏干</div>
             <div className="flex flex-wrap gap-2">
-              {pillar.hiddenStems.map((stem, i) => {
+              {pillar.hiddenStems.map((stem: string, i: number) => {
                 const hiddenWuxing = getWuxing(stem);
                 const hiddenWuxingIcon = getWuxingIcon(hiddenWuxing);
                 return (

@@ -2,6 +2,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { generateId } from '@/lib/utils';
 
+// 设置 API 路由超时为 30 秒
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();

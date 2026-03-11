@@ -22,17 +22,20 @@ const getDefaultModel = () => {
   return process.env.DEFAULT_MODEL || 'auto';
 };
 
-export async function generateFortuneInterpretation(baziData: Record<string, unknown>) {
+export async function generateFortuneInterpretation(baziData: Record<string, unknown>, timeoutMs: number = 25000) {
   const apiKey = getApiKey();
   if (!apiKey) {
      console.warn("API_KEY is not set. Skip LLM interpretation.");
      return null;
   }
-  
+
   const openai = new OpenAI({
     apiKey: apiKey,
     baseURL: getApiBaseUrl(),
+    timeout: timeoutMs,
   });
+
+  console.log(`[LLM] Starting interpretation with ${timeoutMs}ms timeout...`);
   
   const prompt = `
 你是一位精通传统子平八字、滴天髓等命理学，同时又懂得现代心理学和职场发展的顶级AI命理大师。
@@ -160,7 +163,15 @@ JSON结构必须完全符合以下定义：
     return JSON.parse(cleanedText);
 
   } catch (error) {
-    console.error("[LLM] Generation Error:", error);
+    if (error instanceof Error) {
+      if (error.message.includes('timeout') || error.message.includes('timed out')) {
+        console.error("[LLM] Request timeout - API took too long to respond");
+      } else {
+        console.error("[LLM] Generation Error:", error.message);
+      }
+    } else {
+      console.error("[LLM] Generation Error:", error);
+    }
     return null;
   }
 }

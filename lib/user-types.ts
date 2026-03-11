@@ -526,6 +526,8 @@ export interface UserRecord {
   id: string;
   name: string;
   email?: string | null;
+  role?: 'guest' | 'user' | 'admin';
+  emailVerified?: boolean;
   gender: 'male' | 'female';
   birthDate: string;
   birthTime: string;
@@ -552,6 +554,7 @@ export interface FortuneRecord {
   evidence: FortuneEvidence;
   analysis?: FortuneAnalysisResult['analysis'];
   klineData?: FortuneAnalysisResult['klineData'];
+  isPublic?: boolean;
 }
 
 // 数据库事件记录
