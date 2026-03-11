@@ -112,6 +112,21 @@ export function validateQuestion(question: string): ValidationError | null {
   return null;
 }
 
+export function validateEmail(email: string): ValidationError | null {
+  if (!email || typeof email !== 'string') {
+    return { field: 'email', message: '邮箱不能为空' };
+  }
+  const normalized = email.trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(normalized)) {
+    return { field: 'email', message: '请输入有效的邮箱地址' };
+  }
+  if (normalized.length > 160) {
+    return { field: 'email', message: '邮箱长度不能超过160个字符' };
+  }
+  return null;
+}
+
 // 验证事件类型
 const VALID_EVENT_TYPES = ['career', 'wealth', 'marriage', 'health', 'family', 'other'] as const;
 export type EventType = typeof VALID_EVENT_TYPES[number];

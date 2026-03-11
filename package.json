@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "node --max-old-space-size=4096 node_modules/.bin/next build",
+    "build": "node scripts/build-with-static-retention.js",
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.2.0",
+    "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.0",
     "@types/react": "^19.0.0",

@@ -135,7 +135,7 @@ export const analyzeFortune = (
     tenGods,
     pattern,
     physique: buildPhysique(dayMaster),
-    careerSuggestion: buildCareerSuggestion(tenGods, dayMaster),
+    careerSuggestion: buildCareerSuggestion(tenGods, dayMaster, shiShenAnalysis),
     fortune: buildFortuneTrend(baziStr, birthDate, gender, yongShenResult, dayunResult),
     advice,
     evidence: { statistics: evidence.statistics, celebrities: evidence.celebrities, similarCases: [] },
@@ -162,15 +162,15 @@ const buildPhysique = (dayMaster: string): FortuneAnalysisResult['physique'] => 
 
 // ==================== 职业推算 ====================
 
-const buildCareerSuggestion = (tenGods: TenGods, dayMaster: string): FortuneAnalysisResult['careerSuggestion'] => {
+const buildCareerSuggestion = (tenGods: TenGods, dayMaster: string, shiShen: ReturnType<typeof generateBaziShiShenAnalysis>): FortuneAnalysisResult['careerSuggestion'] => {
   const primary: string[] = [];
   const secondary: string[] = [];
   const avoid: string[] = [];
   const reasons: string[] = [];
 
   // 取月柱十神为主，时柱为辅
-  const mainGod = tenGods.month?.stem ?? '';
-  const timeGod = tenGods.hour?.stem ?? '';
+  const mainGod = shiShen?.pillarsAnalysis?.[1]?.tianGanShiShen ?? '';
+  const timeGod = shiShen?.pillarsAnalysis?.[3]?.tianGanShiShen ?? '';
 
   const careerMap: Record<string, string[]> = {
     '正官': ['政府机关', '管理层', '法律', '军警'],
@@ -236,7 +236,7 @@ const buildFiveElements = (bazi: string[], pillars: Pillar[]): FiveElements => {
 
   const result: Partial<FiveElements> = {};
   cnElements.forEach((cn, i) => {
-    const en = enElements[i];
+    const en = enElements[i] as keyof FiveElements;
     const pct = (strengths[cn] / total) * 100;
     let quality: string;
     let description: string;
@@ -252,7 +252,7 @@ const buildFiveElements = (bazi: string[], pillars: Pillar[]): FiveElements => {
     }
     result[en] = { strength: Math.round(pct * 10) / 10, quality, description };
   });
-  return result;
+  return result as FiveElements;
 };
 
 // ==================== 权威十神 ====================

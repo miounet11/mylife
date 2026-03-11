@@ -1,9 +1,8 @@
-// 事件日历组件
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { format, addMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isToday } from 'date-fns';
+import { addMonths, eachDayOfInterval, endOfMonth, format, isSameDay, isToday, startOfMonth } from 'date-fns';
 
 interface Event {
   id: string;
@@ -23,6 +22,21 @@ interface EventCalendarProps {
   events?: Event[];
 }
 
+const typeMeta = {
+  career: '👔',
+  wealth: '💰',
+  marriage: '❤️',
+  health: '💪',
+  family: '👥',
+  other: '📌',
+};
+
+const impactClass = {
+  positive: 'bg-emerald-500',
+  negative: 'bg-rose-500',
+  neutral: 'bg-amber-500',
+};
+
 export default function EventCalendar({ events = [] }: EventCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -30,122 +44,115 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const paddingDays = new Date(monthStart).getDay();
 
-  const prevMonth = () => setCurrentDate(addMonths(currentDate, -1));
-  const nextMonth = () => setCurrentDate(addMonths(currentDate, 1));
-
-  const firstDayOfMonth = new Date(monthStart);
-  const paddingDays = firstDayOfMonth.getDay();
+  const selectedEvents = useMemo(() => {
+    if (!selectedDate) return [];
+    return getEventsForDay(events, selectedDate);
+  }, [events, selectedDate]);
 
   return (
-    <div className="h-full p-4 bg-white">
-      {/* 月份导航 */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={prevMonth} className="p-2 hover:bg-slate-100 rounded transition">
-          <ChevronLeft className="w-5 h-5 text-slate-700" />
+    <div className="soft-card h-full rounded-[2rem] p-5 md:p-6">
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setCurrentDate(addMonths(currentDate, -1))}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+        >
+          <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-center">
-          <h2 className="text-xl font-bold text-slate-900">
-            {format(currentDate, 'yyyy年 MMMM')}
-          </h2>
+          <h2 className="text-2xl font-black text-[color:var(--ink)]">{format(currentDate, 'yyyy年 M月')}</h2>
+          <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
         </div>
-        <button onClick={nextMonth} className="p-2 hover:bg-slate-100 rounded transition">
-          <ChevronRight className="w-5 h-5 text-slate-700" />
+        <button
+          onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+        >
+          <ChevronRight className="h-4 w-4" />
         </button>
       </div>
 
-      {/* 星期标题 */}
-      <div className="grid grid-cols-7 gap-2 mb-2">
+      <div className="mt-6 grid grid-cols-7 gap-2 text-center text-xs font-semibold tracking-[0.18em] text-[color:var(--muted)]">
         {['日', '一', '二', '三', '四', '五', '六'].map((day) => (
-          <div key={day} className="text-center text-sm font-semibold text-slate-500">
-            {day}
-          </div>
+          <div key={day}>{day}</div>
         ))}
       </div>
 
-      {/* 日历格子 */}
-      <div className="grid grid-cols-7 gap-2">
-        {/* 填充日期 */}
-        {Array.from({ length: paddingDays }).map((_, i) => (
-          <div key={i} className="aspect-square"></div>
+      <div className="mt-3 grid grid-cols-7 gap-2">
+        {Array.from({ length: paddingDays }).map((_, index) => (
+          <div key={`empty-${index}`} className="aspect-square" />
         ))}
 
-        {/* 实际日期 */}
         {days.map((day) => {
           const dayEvents = getEventsForDay(events, day);
-          const hasEvents = dayEvents.length > 0;
-          const isTodayDate = isToday(day);
-          const isSelected = selectedDate && isSameDay(day, selectedDate);
+          const isCurrent = isToday(day);
+          const isSelected = !!selectedDate && isSameDay(day, selectedDate);
 
           return (
-            <div
+            <button
               key={day.toISOString()}
+              type="button"
               onClick={() => setSelectedDate(isSelected ? null : day)}
-              className={`
-                aspect-square border rounded-lg p-1 cursor-pointer transition
-                ${isTodayDate ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}
-                ${isSelected ? 'border-indigo-600 bg-indigo-100' : ''}
-                ${hasEvents ? 'font-semibold' : ''}
-              `}
+              className={`aspect-square rounded-[1.1rem] border p-1.5 text-left transition ${
+                isSelected
+                  ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+                  : isCurrent
+                    ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.08)]'
+                    : 'border-[color:var(--line)] bg-white hover:border-[color:var(--accent)]'
+              }`}
             >
-              <div className="text-center">
-                <div className={`text-sm ${isTodayDate ? 'text-indigo-600 font-bold' : 'text-slate-900'}`}>
+              <div className="flex h-full flex-col justify-between">
+                <div className={`text-sm font-semibold ${isSelected || isCurrent ? 'text-[color:var(--ink)]' : 'text-slate-700'}`}>
                   {format(day, 'd')}
                 </div>
-                {hasEvents && (
-                  <div className="mt-1 flex justify-center space-x-1">
-                    {dayEvents.slice(0, 3).map((event, i) => (
-                      <div key={i} className={`w-2 h-2 rounded-full ${
-                        event.impact === 'positive' ? 'bg-green-500' :
-                        event.impact === 'negative' ? 'bg-red-500' :
-                        'bg-yellow-500'
-                      }`} />
+                {dayEvents.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {dayEvents.slice(0, 3).map((event) => (
+                      <span key={event.id} className={`h-2 w-2 rounded-full ${impactClass[event.impact]}`} />
                     ))}
                   </div>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* 选中的日期事件 */}
-      {selectedDate && (
-        <div className="mt-4 p-4 bg-slate-50 rounded border border-slate-200">
-          <h3 className="font-semibold text-slate-900 mb-3">
-            {format(selectedDate, 'yyyy年 MMMM dd日')} 的事件
-          </h3>
-          <div className="space-y-2">
-            {getEventsForDay(events, selectedDate).length > 0 ? (
-              getEventsForDay(events, selectedDate).map((event) => (
-                <div key={event.id} className="bg-white rounded p-3 border border-slate-200">
-                  <div className="flex items-start space-x-3">
-                    <span className="text-2xl">
-                      {event.type === 'career' && '👔'}
-                      {event.type === 'wealth' && '💰'}
-                      {event.type === 'marriage' && '❤️'}
-                      {event.type === 'health' && '💪'}
-                      {event.type === 'family' && '👥'}
-                      {event.type === 'other' && '📋'}
-                    </span>
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-slate-900 mb-1">{event.title}</h4>
-                      <p className="text-sm text-slate-600">{event.description || '暂无描述'}</p>
-                      {event.reminder && event.reminder.enabled && (
-                        <div className="mt-2 text-xs text-indigo-600">
-                          ✓ 已设置提醒（{event.reminder.method}，提前{event.reminder.advanceDays}天）
+      <div className="mt-6 rounded-[1.5rem] bg-slate-50 p-4">
+        <div className="text-sm font-semibold text-[color:var(--ink)]">
+          {selectedDate ? `${format(selectedDate, 'M月d日')} 的事件` : '选择一个日期查看详情'}
+        </div>
+
+        {selectedDate ? (
+          selectedEvents.length > 0 ? (
+            <div className="mt-4 space-y-3">
+              {selectedEvents.map((event) => (
+                <div key={event.id} className="rounded-[1.25rem] bg-white px-4 py-3">
+                  <div className="flex items-start gap-3">
+                    <span className="text-xl">{typeMeta[event.type]}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-[color:var(--ink)]">{event.title}</div>
+                        <span className={`h-2 w-2 rounded-full ${impactClass[event.impact]}`} />
+                      </div>
+                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{event.description || '暂无说明'}</div>
+                      {event.reminder?.enabled && (
+                        <div className="mt-2 text-xs font-medium text-[color:var(--accent-strong)]">
+                          已开启提醒 · 提前{event.reminder.advanceDays}天
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-slate-500 text-center py-4">今天没有安排的事件</p>
-            )}
-          </div>
-        </div>
-      )}
+              ))}
+            </div>
+          ) : (
+            <div className="mt-4 text-sm text-[color:var(--muted)]">这一天还没有安排事件。</div>
+          )
+        ) : (
+          <div className="mt-4 text-sm text-[color:var(--muted)]">点击日历中的日期，查看当天事件和提醒状态。</div>
+        )}
+      </div>
     </div>
   );
 }

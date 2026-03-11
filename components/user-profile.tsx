@@ -1,4 +1,3 @@
-// 用户档案组件
 'use client';
 
 interface UserProfileProps {
@@ -9,13 +8,15 @@ interface UserProfileProps {
 
 const calculateAge = (birthDate?: string): string => {
   if (!birthDate) return '--';
-  const b = new Date(birthDate);
-  if (Number.isNaN(b.getTime())) return '--';
+  const parsed = new Date(birthDate);
+  if (Number.isNaN(parsed.getTime())) return '--';
 
   const now = new Date();
-  let age = now.getFullYear() - b.getFullYear();
-  const m = now.getMonth() - b.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < b.getDate())) age -= 1;
+  let age = now.getFullYear() - parsed.getFullYear();
+  const monthDiff = now.getMonth() - parsed.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < parsed.getDate())) {
+    age -= 1;
+  }
   return `${age}`;
 };
 
@@ -31,85 +32,88 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
   const displayPlace = user?.birth_place || latest?.birth_place || '--';
   const displayBirthDate = user?.birth_date || latest?.birth_date || '--';
   const displayBirthTime = user?.birth_time || latest?.birth_time || '--';
+  const accountLabel = user?.email && user?.email_verified === 1 ? '邮箱账户' : '匿名会话档案';
+  const accountValue = user?.email || '未绑定';
 
   const createdAt = user?.created_at ? new Date(user.created_at) : null;
-  const usageDays = createdAt && !Number.isNaN(createdAt.getTime())
-    ? Math.max(1, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)))
-    : 1;
+  const usageDays =
+    createdAt && !Number.isNaN(createdAt.getTime())
+      ? Math.max(1, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)))
+      : 1;
 
   return (
-    <div className="bg-white rounded-xl overflow-hidden border border-slate-200">
-      <div className="p-6 border-b border-slate-200 bg-slate-50">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg">
+    <div className="soft-card overflow-hidden rounded-[2rem]">
+      <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(15,118,110,0.10),rgba(201,125,58,0.10))] p-6 md:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-4">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-2xl font-bold text-white shadow-[0_16px_30px_rgba(15,118,110,0.25)]">
               {displayName?.charAt(0) || '用'}
             </div>
             <div>
-              <h2 className="text-xl font-bold text-slate-900">{displayName}</h2>
-              <p className="text-slate-600 text-sm">{displayGender} · {displayAge}岁 · {displayPlace}</p>
+              <h2 className="text-2xl font-black text-[color:var(--ink)]">{displayName}</h2>
+              <p className="mt-1 text-sm text-[color:var(--muted)]">
+                {displayGender} · {displayAge}岁 · {displayPlace}
+              </p>
             </div>
           </div>
-          <span className="text-xs px-2.5 py-1 rounded border border-slate-300 text-slate-600 bg-white">
-            匿名会话档案
+          <span className="inline-flex rounded-full border border-[color:var(--line)] bg-white/80 px-4 py-2 text-xs font-semibold text-[color:var(--muted)]">
+            {accountLabel}
           </span>
         </div>
       </div>
 
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-lg p-4 border border-slate-200">
-            <h3 className="font-semibold text-slate-700 mb-2 text-sm">日主</h3>
-            <p className="text-xl font-bold text-slate-900">{dayMaster}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-slate-200">
-            <h3 className="font-semibold text-slate-700 mb-2 text-sm">格局</h3>
-            <p className="text-base font-semibold text-slate-900">{pattern}</p>
-          </div>
-          <div className="bg-white rounded-lg p-4 border border-slate-200">
-            <h3 className="font-semibold text-slate-700 mb-2 text-sm">大运提示</h3>
-            <p className="text-sm font-semibold text-slate-900 line-clamp-2">{dayun}</p>
-          </div>
+      <div className="p-6 md:p-8">
+        <div className="grid gap-4 md:grid-cols-3">
+          <MetricCard label="日主" value={dayMaster} />
+          <MetricCard label="格局" value={pattern} />
+          <MetricCard label="当前大运" value={dayun} />
         </div>
 
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <h3 className="font-bold text-slate-900 mb-2">出生信息</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">出生日期</span>
-                <span className="font-semibold text-slate-900">{displayBirthDate}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">出生时间</span>
-                <span className="font-semibold text-slate-900">{displayBirthTime}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">出生地</span>
-                <span className="font-semibold text-slate-900">{displayPlace}</span>
-              </div>
-            </div>
-          </div>
-          <div>
-            <h3 className="font-bold text-slate-900 mb-2">统计信息</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">使用天数</span>
-                <span className="font-semibold text-slate-900">{usageDays}天</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">分析次数</span>
-                <span className="font-semibold text-slate-900">{fortunes.length}次</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-500">保存事件</span>
-                <span className="font-semibold text-slate-900">{eventCount}个</span>
-              </div>
-            </div>
-          </div>
+        <div className="mt-6 grid gap-5 md:grid-cols-2">
+          <InfoCard
+            title="出生信息"
+            rows={[
+              ['出生日期', displayBirthDate],
+              ['出生时间', displayBirthTime],
+              ['出生地点', displayPlace],
+            ]}
+          />
+          <InfoCard
+            title="使用数据"
+            rows={[
+              ['账号状态', accountValue],
+              ['使用天数', `${usageDays}天`],
+              ['分析次数', `${fortunes.length}次`],
+              ['保存事件', `${eventCount}个`],
+            ]}
+          />
         </div>
       </div>
     </div>
   );
 }
 
+function MetricCard({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-5">
+      <div className="text-sm font-semibold text-[color:var(--muted)]">{label}</div>
+      <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{value}</div>
+    </div>
+  );
+}
+
+function InfoCard({ title, rows }: { title: string; rows: [string, string][] }) {
+  return (
+    <div className="rounded-[1.5rem] bg-slate-50 p-5">
+      <div className="font-semibold text-[color:var(--ink)]">{title}</div>
+      <div className="mt-4 space-y-3">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-center justify-between gap-4 text-sm">
+            <span className="text-[color:var(--muted)]">{label}</span>
+            <span className="font-semibold text-[color:var(--ink)]">{value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

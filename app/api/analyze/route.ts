@@ -7,6 +7,9 @@ import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { validateAnalyzeRequest } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 
+// 设置 API 路由超时为 30 秒（Vercel/Next.js）
+export const maxDuration = 30;
+
 export async function POST(request: NextRequest) {
   try {
     // 速率限制
@@ -71,9 +74,13 @@ export async function POST(request: NextRequest) {
       data.gender || 'male'
     );
 
-    // 尝试调用 LLM 生成深度解析
-    const llmInterpretation = await generateFortuneInterpretation(baseResult);
+    // 尝试调用 LLM 生成深度解析（25秒超时）
+    console.log('[API] Starting LLM interpretation...');
+    const llmStartTime = Date.now();
+    const llmInterpretation = await generateFortuneInterpretation(baseResult as unknown as Record<string, unknown>, 25000);
     const llmUsed = !!llmInterpretation;
+    const llmDuration = Date.now() - llmStartTime;
+    console.log(`[API] LLM interpretation ${llmUsed ? 'succeeded' : 'failed'} in ${llmDuration}ms`);
     
     // 合并结果: 如果 LLM 成功返回，则用 LLM 的结果覆盖基础结果的部分字段
     // 保留基础排盘的 basic 盘面和 evidence 统计等静态数据，覆盖解析性的文字
@@ -123,9 +130,9 @@ export async function POST(request: NextRequest) {
       {
         name: data.name as string,
         gender: (data.gender as 'male' | 'female') || 'male',
-        birth_date: data.birthDate as string,
-        birth_time: data.birthTime as string,
-        birth_place: (data.birthPlace as string) || '北京',
+        birthDate: data.birthDate as string,
+        birthTime: data.birthTime as string,
+        birthPlace: (data.birthPlace as string) || '北京',
         timezone: (data.timezone as number) || 8,
       },
       {
@@ -146,6 +153,7 @@ export async function POST(request: NextRequest) {
         evidence: finalResult.evidence,
         analysis: finalResult.analysis,
         klineData: finalResult.klineData,
+        isPublic: true,
       }
     );
 
