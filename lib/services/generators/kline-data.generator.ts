@@ -4,13 +4,11 @@ import type { YongShenResult } from '../../bazi-analyzer';
 import type { DayunResult } from '../../dayun-calculator';
 
 interface KlineDataPoint {
-  date: string;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-  label?: string;
+  year: number;
+  career: number;
+  wealth: number;
+  marriage: number;
+  health: number;
 }
 
 export class KlineDataGenerator {
@@ -30,7 +28,7 @@ export class KlineDataGenerator {
     for (let age = 0; age <= currentAge + 10; age++) {
       const year = birthYear + age;
       const dayun = this.findDayunForAge(dayunResult, age);
-      const score = dayun?.score || 50;
+      const score = this.getDayunScore(dayun);
 
       // 基于大运分数生成K线数据
       const baseValue = score;
@@ -42,13 +40,11 @@ export class KlineDataGenerator {
       const low = Math.min(open, close) - Math.abs(this.randomOffset(volatility / 2));
 
       data.push({
-        date: `${year}`,
-        open: Math.max(0, Math.min(100, open)),
-        high: Math.max(0, Math.min(100, high)),
-        low: Math.max(0, Math.min(100, low)),
-        close: Math.max(0, Math.min(100, close)),
-        volume: Math.floor(Math.random() * 1000) + 500,
-        label: age === currentAge ? '当前' : dayun?.label,
+        year,
+        career: Math.max(0, Math.min(100, close)),
+        wealth: Math.max(0, Math.min(100, high)),
+        marriage: Math.max(0, Math.min(100, open)),
+        health: Math.max(0, Math.min(100, low)),
       });
     }
 
@@ -56,9 +52,28 @@ export class KlineDataGenerator {
   }
 
   private findDayunForAge(dayunResult: DayunResult, age: number) {
-    return dayunResult.dayunPeriods.find(
-      period => age >= period.startAge && age <= period.endAge
+    return dayunResult.dayuns.find(
+      (period) => age >= period.startAge && age <= period.endAge
     );
+  }
+
+  private getDayunScore(dayun: DayunResult['currentDayun'] | DayunResult['dayuns'][number] | undefined): number {
+    if (!dayun) return 50;
+
+    switch (dayun.quality) {
+      case 'excellent':
+        return 88;
+      case 'good':
+        return 72;
+      case 'neutral':
+        return 56;
+      case 'bad':
+        return 42;
+      case 'poor':
+        return 28;
+      default:
+        return 50;
+    }
   }
 
   private randomOffset(range: number): number {

@@ -95,7 +95,7 @@ export default function BirthTimeInput({
   useEffect(() => {
     setSmartInput(formatClockValue(value));
     setSecondText(formatPart(value.second));
-  }, [value.hour, value.minute, value.second]);
+  }, [value, value.hour, value.minute, value.second]);
 
   const currentShichen = useMemo(() => getShichenOption(value.hour), [value.hour]);
 

@@ -1,14 +1,13 @@
 // 十神分析器 - 单一职责：分析十神关系
-import type { TenGods, Pillar } from '../types';
-import type { PillarShiShen } from '../../bazi-analyzer';
+import type { Pillar } from '../types';
 import { calculateShiShen } from '../../bazi-constants';
 
 export class TenGodsAnalyzer {
   analyze(
     pillars: Pillar[],
     dayMaster: string,
-    shiShenAnalysis: PillarShiShen[] | null
-  ): TenGods {
+    shiShenAnalysis: Array<{ name?: string | null; meaning?: string | null; influence?: string | null }> | null
+  ): any {
     const [year, month, day, hour] = pillars;
 
     return {
@@ -24,14 +23,15 @@ export class TenGodsAnalyzer {
   private analyzePillar(
     pillar: Pillar,
     dayMaster: string,
-    analysis?: PillarShiShen
-  ): TenGods['year'] {
-    const stemGod = calculateShiShen(dayMaster, pillar.celestialStem);
-    const branchGod = calculateShiShen(dayMaster, pillar.earthlyBranch);
+    analysis?: { name?: string | null; meaning?: string | null; influence?: string | null }
+  ): any {
+    const stemGod = calculateShiShen(dayMaster, pillar.celestialStem) || '比肩';
+    const branchGod = calculateShiShen(dayMaster, pillar.earthlyBranch) || stemGod;
 
     return {
       stem: stemGod,
       branch: branchGod,
+      name: analysis?.name || stemGod,
       meaning: analysis?.meaning || this.getGodMeaning(stemGod),
       influence: analysis?.influence || this.getGodInfluence(stemGod),
     };
@@ -44,8 +44,8 @@ export class TenGodsAnalyzer {
     const distribution: Record<string, number> = {};
 
     pillars.forEach(pillar => {
-      const stemGod = calculateShiShen(dayMaster, pillar.celestialStem);
-      const branchGod = calculateShiShen(dayMaster, pillar.earthlyBranch);
+      const stemGod = calculateShiShen(dayMaster, pillar.celestialStem) || '比肩';
+      const branchGod = calculateShiShen(dayMaster, pillar.earthlyBranch) || stemGod;
 
       distribution[stemGod] = (distribution[stemGod] || 0) + 1;
       if (branchGod !== stemGod) {

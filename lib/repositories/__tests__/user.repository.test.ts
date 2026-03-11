@@ -9,6 +9,16 @@ describe('UserRepository', () => {
   let repo: UserRepository;
   const testDbPath = path.join(__dirname, 'test.db');
 
+  const createUserInput = (id: string) => ({
+    id,
+    name: '测试用户',
+    gender: 'male' as const,
+    birthDate: '1990-01-01',
+    birthTime: '12:00',
+    birthPlace: '北京',
+    timezone: 8,
+  });
+
   beforeEach(() => {
     // 使用测试数据库
     if (fs.existsSync(testDbPath)) {
@@ -21,6 +31,7 @@ describe('UserRepository', () => {
       CREATE TABLE IF NOT EXISTS users (
         id TEXT PRIMARY KEY,
         name TEXT,
+        email TEXT,
         gender TEXT,
         birth_date TEXT,
         birth_time TEXT,
@@ -43,18 +54,18 @@ describe('UserRepository', () => {
   describe('create', () => {
     it('should create a new user', () => {
       const userId = 'test_user_1';
-      repo.create(userId);
+      repo.create(createUserInput(userId));
 
       const user = repo.findById(userId);
       expect(user).toBeDefined();
       expect(user?.id).toBe(userId);
     });
 
-    it('should not throw on duplicate create', () => {
+    it('should throw on duplicate create', () => {
       const userId = 'test_user_1';
-      repo.create(userId);
+      repo.create(createUserInput(userId));
 
-      expect(() => repo.create(userId)).not.toThrow();
+      expect(() => repo.create(createUserInput(userId))).toThrow();
     });
   });
 
@@ -66,7 +77,7 @@ describe('UserRepository', () => {
 
     it('should return user if exists', () => {
       const userId = 'test_user_1';
-      repo.create(userId);
+      repo.create(createUserInput(userId));
 
       const user = repo.findById(userId);
       expect(user).toBeDefined();
@@ -77,26 +88,23 @@ describe('UserRepository', () => {
   describe('updateProfile', () => {
     it('should update user profile', () => {
       const userId = 'test_user_1';
-      repo.create(userId);
+      repo.create(createUserInput(userId));
 
       repo.updateProfile(userId, {
         name: '张三',
-        gender: 'male',
-        birth_date: '1990-01-01',
-        birth_time: '12:00',
-        birth_place: '北京',
+        birthPlace: '上海',
         timezone: 8,
       });
 
       const user = repo.findById(userId);
       expect(user?.name).toBe('张三');
       expect(user?.gender).toBe('male');
-      expect(user?.birth_date).toBe('1990-01-01');
+      expect(user?.birthPlace).toBe('上海');
     });
 
     it('should handle partial updates', () => {
       const userId = 'test_user_1';
-      repo.create(userId);
+      repo.create(createUserInput(userId));
 
       repo.updateProfile(userId, { name: '李四' });
 

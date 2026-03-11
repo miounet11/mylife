@@ -15,6 +15,7 @@ import { KlineDataGenerator } from './generators/kline-data.generator';
 import { PhysiqueAnalyzer } from './analyzers/physique.analyzer';
 import { CareerAnalyzer } from './analyzers/career.analyzer';
 import { FortuneTrendAnalyzer } from './analyzers/fortune-trend.analyzer';
+import type { Pillar as ServicePillar } from './types';
 
 export interface FortuneAnalysisInput {
   name: string;
@@ -68,16 +69,22 @@ export class FortuneAnalyzerService {
     const shiShenAnalysis = generateBaziShiShenAnalysis(baziStr);
 
     // 4. 幸运元素
-    const luckyElements = yongShenResult ? getLuckyElements(yongShenResult) : null;
+    const luckyElements = yongShenResult
+      ? ({
+          elements: [...(yongShenResult.yongShen || []), ...(yongShenResult.xiShen || [])],
+          ...getLuckyElements(yongShenResult),
+        } as any)
+      : null;
 
     // 5. 神煞分析
     const shenShaResult = analyzeShenSha(baziStr);
 
     // 6. 五行分析
-    const fiveElements = this.fiveElementsAnalyzer.analyze(baziStr, pillars);
+    const servicePillars = pillars as unknown as ServicePillar[];
+    const fiveElements = this.fiveElementsAnalyzer.analyze(baziStr, servicePillars);
 
     // 7. 十神分析
-    const tenGods = this.tenGodsAnalyzer.analyze(pillars, dayMaster, shiShenAnalysis);
+    const tenGods = this.tenGodsAnalyzer.analyze(servicePillars, dayMaster, shiShenAnalysis as any);
 
     // 8. 格局分析
     const pattern = this.patternAnalyzer.analyze(yongShenResult);
@@ -112,7 +119,7 @@ export class FortuneAnalyzerService {
     const advice = this.adviceGenerator.generate(yongShenResult, luckyElements);
 
     // 14. 证据生成
-    const evidence = this.evidenceGenerator.generate(pillars);
+    const evidence = this.evidenceGenerator.generate(servicePillars);
 
     // 15. 解释生成
     const user = {
@@ -121,9 +128,9 @@ export class FortuneAnalyzerService {
       bazi: { pillars, fiveElements, tenGods, pattern, dayMaster },
     };
     const explanation = this.explanationGenerator.generate(
-      pillars,
+      servicePillars,
       yongShenResult,
-      shiShenAnalysis,
+      shiShenAnalysis as any,
       user
     );
 
@@ -131,7 +138,7 @@ export class FortuneAnalyzerService {
     const klineData = this.klineDataGenerator.generate(
       birthDate,
       gender,
-      pillars,
+      servicePillars,
       yongShenResult,
       dayunResult
     );
@@ -140,18 +147,22 @@ export class FortuneAnalyzerService {
       basic: { dayMaster, pillars },
       fiveElements,
       tenGods,
-      pattern,
+      pattern: {
+        ...pattern,
+        strength: pattern.strength || 'medium',
+        quality: pattern.quality || 'medium',
+      },
       physique,
       careerSuggestion,
       fortune,
-      advice,
+      advice: advice as any,
       evidence: {
-        statistics: evidence.statistics,
+        statistics: evidence.statistics as any,
         celebrities: evidence.celebrities,
         similarCases: [],
       },
       analysis: explanation,
-      klineData,
+      klineData: klineData as any,
       dayun: dayunResult,
       shenSha: shenShaResult ?? undefined,
     };

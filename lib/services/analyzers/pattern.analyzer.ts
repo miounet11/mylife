@@ -14,7 +14,8 @@ export class PatternAnalyzer {
       };
     }
 
-    const { geJu, riZhuQiangRuo } = yongShenResult;
+    const geJu = yongShenResult.pattern?.pattern;
+    const riZhuQiangRuo = this.mapStrength(yongShenResult.strength);
 
     return {
       type: geJu || '普通格局',
@@ -26,7 +27,8 @@ export class PatternAnalyzer {
   }
 
   private determineQuality(yongShenResult: YongShenResult): 'high' | 'medium' | 'low' {
-    const { geJu, riZhuQiangRuo } = yongShenResult;
+    const geJu = yongShenResult.pattern?.pattern;
+    const riZhuQiangRuo = this.mapStrength(yongShenResult.strength);
 
     // 特殊格局为高品质
     const specialPatterns = ['从强格', '从弱格', '化气格', '专旺格'];
@@ -46,6 +48,23 @@ export class PatternAnalyzer {
 
     // 太强或太弱为低品质
     return 'low';
+  }
+
+  private mapStrength(strength: YongShenResult['strength']): string {
+    switch (strength) {
+      case 'very_strong':
+        return '太强';
+      case 'strong':
+        return '偏强';
+      case 'neutral':
+        return '中和';
+      case 'weak':
+        return '偏弱';
+      case 'very_weak':
+        return '太弱';
+      default:
+        return '中和';
+    }
   }
 
   private getPatternDescription(geJu: string | undefined, strength: string): string {

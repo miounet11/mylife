@@ -65,7 +65,7 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
             {elements.map((element) => {
               if (element.strength >= 25) {
                 return (
-                  <div className="flex items-start space-x-2">
+                  <div key={element.key} className="flex items-start space-x-2">
                     <span className="text-green-600">✓</span>
                     <span>
                       <strong>{element.name}旺</strong> - {element.description}

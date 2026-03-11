@@ -225,9 +225,9 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
           className="relative mb-6 p-5 rounded-xl backdrop-blur-sm"
           style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderLeft: `4px solid ${typeInfo.color}` }}
         >
-          <p className="text-xl md:text-2xl text-white/95 font-medium italic leading-relaxed">
-            "{typeInfo.quote}"
-          </p>
+	          <p className="text-xl md:text-2xl text-white/95 font-medium italic leading-relaxed">
+	            &ldquo;{typeInfo.quote}&rdquo;
+	          </p>
           <p className="mt-3 text-white/60 text-sm">{typeInfo.description}</p>
         </blockquote>
 
@@ -248,9 +248,9 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
                 <Calendar className="w-4 h-4" style={{ color: typeInfo.lightColor }} />
                 <span className="text-white font-bold text-lg">人生拐点</span>
               </div>
-              <p className="text-white/70 text-sm">
-                在此之前是"积累命"，之后进入"收成命"阶段
-              </p>
+	              <p className="text-white/70 text-sm">
+	                在此之前是&ldquo;积累命&rdquo;，之后进入&ldquo;收成命&rdquo;阶段
+	              </p>
             </div>
           </div>
         )}

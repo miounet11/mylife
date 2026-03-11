@@ -3,6 +3,113 @@ import Database from 'better-sqlite3';
 import path from 'path';
 import type { UserRecord, FortuneRecord, EventRecord, QuestionRecord } from './user-types';
 
+interface RawFortuneRow {
+  id: string;
+  user_id: string;
+  name: string;
+  birth_date: string;
+  birth_time: string;
+  birth_place?: string | null;
+  timezone: number;
+  gender: 'male' | 'female';
+  bazi: string;
+  five_elements: string;
+  ten_gods: string;
+  pattern: string;
+  fortune: string;
+  advice: string;
+  evidence: string;
+  analysis?: string | null;
+  kline_data?: string | null;
+  is_public: number;
+}
+
+interface RawEventRow {
+  id: string;
+  user_id: string;
+  type: string;
+  title: string;
+  date: string;
+  time?: string | null;
+  description?: string | null;
+  impact: 'positive' | 'negative' | 'neutral';
+  fortune_analysis?: string | null;
+  user_feedback?: string | null;
+  follow_up_advice?: string | null;
+  reminder_enabled: number;
+  reminder_advance_days?: number | null;
+  reminder_method?: string | null;
+}
+
+interface RawQuestionRow {
+  id: string;
+  user_id: string;
+  question: string;
+  category: string;
+  analysis?: string | null;
+}
+
+function parseJson<T>(value: string | null | undefined, fallback: T): T {
+  if (!value) return fallback;
+  try {
+    return JSON.parse(value) as T;
+  } catch {
+    return fallback;
+  }
+}
+
+function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name,
+    birthDate: row.birth_date,
+    birthTime: row.birth_time,
+    birthPlace: row.birth_place || undefined,
+    timezone: row.timezone,
+    gender: row.gender,
+    bazi: parseJson(row.bazi, {}),
+    fiveElements: parseJson(row.five_elements, {}),
+    tenGods: parseJson(row.ten_gods, {}),
+    pattern: parseJson(row.pattern, {}),
+    fortune: parseJson(row.fortune, {}),
+    advice: parseJson(row.advice, {}),
+    evidence: parseJson(row.evidence, {}),
+    analysis: parseJson(row.analysis, null) || undefined,
+    klineData: parseJson(row.kline_data, null) || undefined,
+    isPublic: row.is_public !== 0,
+  } as FortuneRecord;
+}
+
+function mapEventRow(row: RawEventRow): EventRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    type: row.type,
+    title: row.title,
+    date: row.date,
+    time: row.time || undefined,
+    description: row.description || undefined,
+    impact: row.impact,
+    fortuneAnalysis: parseJson(row.fortune_analysis, {}),
+    userFeedback: parseJson(row.user_feedback, {}),
+    followUpAdvice: parseJson(row.follow_up_advice, {}),
+    reminderEnabled: row.reminder_enabled === 1,
+    reminderAdvanceDays: row.reminder_advance_days || undefined,
+    reminderMethod: row.reminder_method || undefined,
+  };
+}
+
+function mapQuestionRow(row: RawQuestionRow): QuestionRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    question: row.question,
+    category: row.category,
+    analysis: parseJson(row.analysis, {}),
+  };
+}
+
 // 数据库文件路径
 const dbPath = path.join(process.cwd(), 'data', 'lifekline.db');
 
@@ -334,42 +441,17 @@ export const fortuneOperations = {
 
   getById: (id: string) => {
     const stmt = db.prepare('SELECT * FROM fortunes WHERE id = ?');
-    const row = stmt.get(id);
+    const row = stmt.get(id) as RawFortuneRow | undefined;
     if (row) {
-      // 解析JSON字段
-      return {
-        ...row,
-        bazi: JSON.parse(row.bazi),
-        fiveElements: JSON.parse(row.five_elements),
-        tenGods: JSON.parse(row.ten_gods),
-        pattern: JSON.parse(row.pattern),
-        fortune: JSON.parse(row.fortune),
-        advice: JSON.parse(row.advice),
-        evidence: JSON.parse(row.evidence),
-        analysis: row.analysis ? JSON.parse(row.analysis) : null,
-        klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
-        isPublic: row.is_public !== 0,
-      };
+      return mapFortuneRow(row);
     }
     return null;
   },
 
   getByUserId: (userId: string) => {
     const stmt = db.prepare('SELECT * FROM fortunes WHERE user_id = ? ORDER BY created_at DESC');
-    const rows = stmt.all(userId);
-    return rows.map((row: any) => ({
-      ...row,
-      bazi: JSON.parse(row.bazi),
-      fiveElements: JSON.parse(row.five_elements),
-      tenGods: JSON.parse(row.ten_gods),
-      pattern: JSON.parse(row.pattern),
-      fortune: JSON.parse(row.fortune),
-      advice: JSON.parse(row.advice),
-      evidence: JSON.parse(row.evidence),
-      analysis: row.analysis ? JSON.parse(row.analysis) : null,
-      klineData: row.kline_data ? JSON.parse(row.kline_data) : null,
-      isPublic: row.is_public !== 0,
-    }));
+    const rows = stmt.all(userId) as RawFortuneRow[];
+    return rows.map(mapFortuneRow);
   },
 
   update: (id: string, updates: Partial<Omit<FortuneRecord, 'id' | 'userId'>>) => {
@@ -429,41 +511,23 @@ export const eventOperations = {
 
   getById: (id: string) => {
     const stmt = db.prepare('SELECT * FROM events WHERE id = ?');
-    const row = stmt.get(id);
+    const row = stmt.get(id) as RawEventRow | undefined;
     if (row) {
-      return {
-        ...row,
-        reminder_enabled: row.reminder_enabled === 1,
-        fortune_analysis: JSON.parse(row.fortune_analysis),
-        user_feedback: JSON.parse(row.user_feedback),
-        follow_up_advice: JSON.parse(row.follow_up_advice),
-      };
+      return mapEventRow(row);
     }
     return null;
   },
 
   getByUserId: (userId: string) => {
     const stmt = db.prepare('SELECT * FROM events WHERE user_id = ? ORDER BY date DESC');
-    const rows = stmt.all(userId);
-    return rows.map((row: any) => ({
-      ...row,
-      reminder_enabled: row.reminder_enabled === 1,
-      fortune_analysis: JSON.parse(row.fortune_analysis),
-      user_feedback: JSON.parse(row.user_feedback),
-      follow_up_advice: JSON.parse(row.follow_up_advice),
-    }));
+    const rows = stmt.all(userId) as RawEventRow[];
+    return rows.map(mapEventRow);
   },
 
   getByDateRange: (userId: string, startDate: string, endDate: string) => {
     const stmt = db.prepare('SELECT * FROM events WHERE user_id = ? AND date BETWEEN ? AND ? ORDER BY date DESC');
-    const rows = stmt.all(userId, startDate, endDate);
-    return rows.map((row: any) => ({
-      ...row,
-      reminder_enabled: row.reminder_enabled === 1,
-      fortune_analysis: JSON.parse(row.fortune_analysis),
-      user_feedback: JSON.parse(row.user_feedback),
-      follow_up_advice: JSON.parse(row.follow_up_advice),
-    }));
+    const rows = stmt.all(userId, startDate, endDate) as RawEventRow[];
+    return rows.map(mapEventRow);
   },
 
   update: (id: string, updates: Record<string, unknown>) => {
@@ -504,23 +568,17 @@ export const questionOperations = {
 
   getById: (id: string) => {
     const stmt = db.prepare('SELECT * FROM questions WHERE id = ?');
-    const row = stmt.get(id);
+    const row = stmt.get(id) as RawQuestionRow | undefined;
     if (row) {
-      return {
-        ...row,
-        analysis: JSON.parse(row.analysis),
-      };
+      return mapQuestionRow(row);
     }
     return null;
   },
 
   getByUserId: (userId: string, limit = 50) => {
     const stmt = db.prepare(`SELECT * FROM questions WHERE user_id = ? ORDER BY created_at DESC LIMIT ?`);
-    const rows = stmt.all(userId, limit);
-    return rows.map((row: any) => ({
-      ...row,
-      analysis: JSON.parse(row.analysis),
-    }));
+    const rows = stmt.all(userId, limit) as RawQuestionRow[];
+    return rows.map(mapQuestionRow);
   },
 
   update: (id: string, updates: Partial<Omit<QuestionRecord, 'id' | 'userId'>>) => {

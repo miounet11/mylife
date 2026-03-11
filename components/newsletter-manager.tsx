@@ -117,7 +117,9 @@ export default function NewsletterManager() {
           </div>
           <button
             type="button"
-            onClick={loadSubscription}
+            onClick={() => {
+              void loadSubscription();
+            }}
             disabled={loading || !normalizedEmail}
             className="inline-flex items-center justify-center rounded-full bg-[color:var(--ink)] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >

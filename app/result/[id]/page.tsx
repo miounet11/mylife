@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: PageProps) {
     if (fortuneData) {
       const publicName = getPublicDisplayName(fortuneData.name);
       const currentUserId = await getCurrentUserId();
-      const isOwner = !!currentUserId && fortuneData.user_id === currentUserId;
+      const isOwner = !!currentUserId && fortuneData.userId === currentUserId;
       const isPublic = fortuneData.isPublic !== false;
       return {
         title: `${publicName}的命理分析报告 | 人生K线`,
@@ -94,14 +94,23 @@ async function getResult(reportId: string) {
   try {
     const fortuneData = fortuneOperations.getById(reportId);
     if (!fortuneData) return null;
+    const analysis = (fortuneData.analysis ?? {
+      opening: '细观您的八字，命理之象，历历在目。',
+      explanation: '（加载中或模型未生成深度解析）',
+    }) as {
+      opening?: string;
+      explanation?: string;
+      llmUsed?: boolean;
+      [key: string]: unknown;
+    };
 
     // Transform database format to match frontend expectations
     return {
       basic: {
+        ...fortuneData.bazi,
         name: fortuneData.name || '测算者',
         dayMaster: fortuneData.bazi?.dayMaster || '未知',
-        userId: fortuneData.user_id,
-        ...fortuneData.bazi
+        userId: fortuneData.userId,
       },
       fiveElements: fortuneData.fiveElements,
       tenGods: fortuneData.tenGods,
@@ -109,12 +118,9 @@ async function getResult(reportId: string) {
       fortune: fortuneData.fortune,
       advice: fortuneData.advice,
       evidence: fortuneData.evidence,
-      analysis: fortuneData.analysis || {
-        opening: '细观您的八字，命理之象，历历在目。',
-        explanation: '（加载中或模型未生成深度解析）'
-      },
+      analysis,
       klineData: fortuneData.klineData || null,
-      llmUsed: fortuneData.analysis?.llmUsed ?? false,
+      llmUsed: analysis.llmUsed ?? false,
       isPublic: fortuneData.isPublic !== false,
     };
   } catch(e) {
