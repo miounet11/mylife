@@ -94,15 +94,18 @@ export default function FortuneForm() {
   const reviewSummary = solarTime
     ? `${correctedDate} ${correctedTime} · ${correctedShichen.label}`
     : '待生成真太阳时预览';
+  const isBasicExpanded = focusedStep === 1 || !basicReady;
+  const isBirthExpanded = focusedStep === 2 || (basicReady && !birthReady);
+  const isReviewExpanded = focusedStep === 3 || canSubmit;
 
   useEffect(() => {
     setFocusedStep((prev) => (prev < currentStep ? currentStep : prev));
   }, [currentStep]);
 
   const stepButtons = [
-    { step: 1, label: '基本信息', status: basicReady ? '已完成' : currentStep === 1 ? '进行中' : '待填写', ref: basicRef },
-    { step: 2, label: '出生信息', status: birthReady ? '已完成' : currentStep === 2 ? '进行中' : '待填写', ref: birthRef },
-    { step: 3, label: '核对测算', status: canSubmit ? '可提交' : currentStep === 3 ? '进行中' : '待填写', ref: reviewRef },
+    { step: 1, label: '基本信息', status: basicReady ? '已完成' : currentStep === 1 ? '进行中' : '待填写' },
+    { step: 2, label: '出生信息', status: birthReady ? '已完成' : currentStep === 2 ? '进行中' : '待填写' },
+    { step: 3, label: '核对测算', status: canSubmit ? '可提交' : currentStep === 3 ? '进行中' : '待填写' },
   ] as const;
 
   const scrollToStep = (step: number) => {
@@ -177,7 +180,7 @@ export default function FortuneForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="hidden md:block">
-        <div className="glass-panel rounded-[1.5rem] p-3">
+        <div className="product-panel p-3">
           <div className="grid gap-2 md:grid-cols-3">
             {stepButtons.map((item) => (
               <button
@@ -201,7 +204,7 @@ export default function FortuneForm() {
         </div>
       </div>
 
-      <div className="soft-card rounded-[1.75rem] p-5">
+      <div className="product-panel-strong p-5">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--muted)]">填写完成度</div>
@@ -246,10 +249,12 @@ export default function FortuneForm() {
 
       <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.12fr)_22rem] 2xl:items-start">
         <div className="space-y-5">
-          <section ref={basicRef} className="soft-card rounded-[1.75rem] p-5 md:p-6">
+          <section ref={basicRef} className="product-panel p-5 md:p-6">
             <button
               type="button"
               onClick={() => setFocusedStep(1)}
+              aria-expanded={isBasicExpanded}
+              aria-controls="fortune-step-basic"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div className="flex items-center gap-3">
@@ -264,7 +269,7 @@ export default function FortuneForm() {
               </div>
               <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
                 <div className="truncate text-sm text-[color:var(--muted)]">{basicSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${focusedStep === 1 ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isBasicExpanded ? 'rotate-90' : ''}`} />
               </div>
             </button>
 
@@ -272,54 +277,65 @@ export default function FortuneForm() {
               {basicSummary}
             </div>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-2">
-              <label className="block md:col-span-2">
-                <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">姓名或昵称</span>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder="例如：李明、Mia"
-                  className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
-                />
-              </label>
+            <div
+              id="fortune-step-basic"
+              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
+                isBasicExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div className="grid gap-5 md:grid-cols-2">
+                  <label className="block md:col-span-2">
+                    <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">姓名或昵称</span>
+                    <input
+                      type="text"
+                      value={name}
+                      onChange={(event) => setName(event.target.value)}
+                      placeholder="例如：李明、Mia"
+                      className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+                    />
+                  </label>
 
-              <div className="md:col-span-2">
-                <div className="mb-2 text-sm font-semibold text-[color:var(--ink)]">性别</div>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <button
-                    type="button"
-                    onClick={() => setGender('male')}
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      gender === 'male'
-                        ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                        : 'border-[color:var(--line)] bg-white'
-                    }`}
-                  >
-                    <div className="font-semibold text-[color:var(--ink)]">乾造</div>
-                    <div className="mt-1 text-sm text-[color:var(--muted)]">男性排盘路径</div>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setGender('female')}
-                    className={`rounded-2xl border px-4 py-4 text-left transition ${
-                      gender === 'female'
-                        ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                        : 'border-[color:var(--line)] bg-white'
-                    }`}
-                  >
-                    <div className="font-semibold text-[color:var(--ink)]">坤造</div>
-                    <div className="mt-1 text-sm text-[color:var(--muted)]">女性排盘路径</div>
-                  </button>
+                  <div className="md:col-span-2">
+                    <div className="mb-2 text-sm font-semibold text-[color:var(--ink)]">性别</div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setGender('male')}
+                        className={`rounded-2xl border px-4 py-4 text-left transition ${
+                          gender === 'male'
+                            ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+                            : 'border-[color:var(--line)] bg-white'
+                        }`}
+                      >
+                        <div className="font-semibold text-[color:var(--ink)]">乾造</div>
+                        <div className="mt-1 text-sm text-[color:var(--muted)]">男性排盘路径</div>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setGender('female')}
+                        className={`rounded-2xl border px-4 py-4 text-left transition ${
+                          gender === 'female'
+                            ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+                            : 'border-[color:var(--line)] bg-white'
+                        }`}
+                      >
+                        <div className="font-semibold text-[color:var(--ink)]">坤造</div>
+                        <div className="mt-1 text-sm text-[color:var(--muted)]">女性排盘路径</div>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </section>
 
-          <section ref={birthRef} className="soft-card rounded-[1.75rem] p-5 md:p-6">
+          <section ref={birthRef} className="product-panel p-5 md:p-6">
             <button
               type="button"
               onClick={() => setFocusedStep(2)}
+              aria-expanded={isBirthExpanded}
+              aria-controls="fortune-step-birth"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div className="flex items-center gap-3">
@@ -334,7 +350,7 @@ export default function FortuneForm() {
               </div>
               <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
                 <div className="truncate text-sm text-[color:var(--muted)]">{birthSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${focusedStep === 2 ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isBirthExpanded ? 'rotate-90' : ''}`} />
               </div>
             </button>
 
@@ -342,48 +358,59 @@ export default function FortuneForm() {
               {birthSummary}
             </div>
 
-            <div className="mt-6 space-y-5">
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生地点</span>
-                <CitySelector value={city} onSelect={setCity} />
-              </label>
+            <div
+              id="fortune-step-birth"
+              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
+                isBirthExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              }`}
+            >
+              <div className="overflow-hidden">
+                <div className="space-y-5">
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生地点</span>
+                    <CitySelector value={city} onSelect={setCity} />
+                  </label>
 
-              <div className="grid gap-5 2xl:grid-cols-2">
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生日期</span>
-                  <BirthDateInput
-                    value={{ year, month, day }}
-                    onChange={(nextValue) => {
-                      setYear(nextValue.year);
-                      setMonth(nextValue.month);
-                      setDay(nextValue.day);
-                    }}
-                    onValidityChange={setIsDateValid}
-                  />
-                </label>
+                  <div className="grid gap-5 2xl:grid-cols-2">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生日期</span>
+                      <BirthDateInput
+                        value={{ year, month, day }}
+                        onChange={(nextValue) => {
+                          setYear(nextValue.year);
+                          setMonth(nextValue.month);
+                          setDay(nextValue.day);
+                        }}
+                        onValidityChange={setIsDateValid}
+                      />
+                    </label>
 
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">钟表时间</span>
-                  <BirthTimeInput
-                    value={{ hour, minute, second }}
-                    onChange={(nextValue) => {
-                      setHour(nextValue.hour);
-                      setMinute(nextValue.minute);
-                      setSecond(nextValue.second);
-                    }}
-                    onValidityChange={setIsTimeValid}
-                  />
-                </label>
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">钟表时间</span>
+                      <BirthTimeInput
+                        value={{ hour, minute, second }}
+                        onChange={(nextValue) => {
+                          setHour(nextValue.hour);
+                          setMinute(nextValue.minute);
+                          setSecond(nextValue.second);
+                        }}
+                        onValidityChange={setIsTimeValid}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
         </div>
 
         <div className="space-y-5">
-          <section ref={reviewRef} className="glass-panel rounded-[1.75rem] p-5 md:p-6">
+          <section ref={reviewRef} className="product-panel-strong p-5 md:p-6">
             <button
               type="button"
               onClick={() => setFocusedStep(3)}
+              aria-expanded={isReviewExpanded}
+              aria-controls="fortune-step-review"
               className="flex w-full items-center justify-between gap-4 text-left"
             >
               <div className="flex items-center gap-3">
@@ -398,7 +425,7 @@ export default function FortuneForm() {
               </div>
               <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
                 <div className="truncate text-sm text-[color:var(--muted)]">{reviewSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${focusedStep === 3 ? 'rotate-90' : ''}`} />
+                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isReviewExpanded ? 'rotate-90' : ''}`} />
               </div>
             </button>
 
@@ -406,70 +433,77 @@ export default function FortuneForm() {
               {reviewSummary}
             </div>
 
-            {city && solarTime ? (
-              <div className="mt-6 space-y-4">
-                <div className="rounded-[1.5rem] bg-white/85 p-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{city.displayName}</div>
-                  <div className="mt-1 text-xs text-[color:var(--muted)]">
-                    {city.fullName}
+            <div
+              id="fortune-step-review"
+              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
+                isReviewExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
+              }`}
+            >
+              <div className="overflow-hidden">
+                {city && solarTime ? (
+                  <div className="space-y-4">
+                    <div className="rounded-[1.5rem] bg-white/85 p-4">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{city.displayName}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">{city.fullName}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">
+                        {city.nameEn || city.displayName} · {city.country}
+                        {city.province ? ` · ${city.province}` : ''} · 经度 {city.lng.toFixed(2)}° · UTC
+                        {city.tz >= 0 ? '+' : ''}
+                        {city.tz}
+                      </div>
+                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
+                        <MetricBadge label="总修正" value={formatSignedMinutes(solarTime.correctionMinutes)} />
+                        <MetricBadge label="经度修正" value={formatSignedMinutes(solarTime.longitudeOffset)} />
+                        <MetricBadge label="均时差" value={formatSignedMinutes(solarTime.equationOfTime)} />
+                        <MetricBadge label="时柱判断" value={shichenChanged ? '发生变化' : '保持不变'} highlight={shichenChanged} />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3">
+                      <DataRow icon={CalendarDays} label="你输入的日期" value={inputDate} />
+                      <DataRow icon={Clock3} label="你输入的时间" value={inputTime} />
+                      <DataRow icon={Sparkles} label="系统校正后日期" value={correctedDate} strong />
+                      <DataRow icon={CheckCircle2} label="系统校正后时间" value={correctedTime} strong />
+                    </div>
+
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <InsightCard
+                        title="校正前时辰"
+                        value={`${clockShichen.label} · ${clockShichen.alias}`}
+                        description={clockShichen.range}
+                      />
+                      <InsightCard
+                        title="校正后时辰"
+                        value={`${correctedShichen.label} · ${correctedShichen.alias}`}
+                        description={correctedShichen.range}
+                        emphasize={shichenChanged}
+                      />
+                    </div>
+
+                    <div className="rounded-[1.5rem] bg-[color:var(--accent-soft)] px-4 py-4 text-sm leading-7 text-[color:var(--accent-strong)]">
+                      {solarTime.description}。系统最终将按 <strong>{correctedShichen.label}</strong> 排时柱。
+                      {shichenChanged ? ' 这次修正已跨时辰，结果会和单纯按钟表时间排盘不同。' : ' 这次修正未跨时辰，但仍会作为最终排盘依据。'}
+                      {dateChanged ? ' 同时修正后日期发生变化，跨日信息也已自动处理。' : ''}
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={!canSubmit}
+                      className="inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-4 text-base font-semibold text-white shadow-[0_16px_40px_rgba(15,118,110,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      信息已核对，开始真正测算
+                    </button>
                   </div>
-                  <div className="mt-1 text-xs text-[color:var(--muted)]">
-                    {city.nameEn || city.displayName} · {city.country}
-                    {city.province ? ` · ${city.province}` : ''} · 经度 {city.lng.toFixed(2)}° · UTC
-                    {city.tz >= 0 ? '+' : ''}
-                    {city.tz}
+                ) : (
+                  <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-white/70 px-5 py-6 text-sm leading-7 text-[color:var(--muted)]">
+                    先选出生城市并确认日期、时间。系统会立刻告诉用户修正了多少分钟、是否跨时辰、最终采用哪一个时柱。
                   </div>
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-                    <MetricBadge label="总修正" value={formatSignedMinutes(solarTime.correctionMinutes)} />
-                    <MetricBadge label="经度修正" value={formatSignedMinutes(solarTime.longitudeOffset)} />
-                    <MetricBadge label="均时差" value={formatSignedMinutes(solarTime.equationOfTime)} />
-                    <MetricBadge label="时柱判断" value={shichenChanged ? '发生变化' : '保持不变'} highlight={shichenChanged} />
-                  </div>
-                </div>
-
-                <div className="grid gap-3">
-                  <DataRow icon={CalendarDays} label="你输入的日期" value={inputDate} />
-                  <DataRow icon={Clock3} label="你输入的时间" value={inputTime} />
-                  <DataRow icon={Sparkles} label="系统校正后日期" value={correctedDate} strong />
-                  <DataRow icon={CheckCircle2} label="系统校正后时间" value={correctedTime} strong />
-                </div>
-
-                <div className="grid gap-3 md:grid-cols-2">
-                  <InsightCard
-                    title="校正前时辰"
-                    value={`${clockShichen.label} · ${clockShichen.alias}`}
-                    description={clockShichen.range}
-                  />
-                  <InsightCard
-                    title="校正后时辰"
-                    value={`${correctedShichen.label} · ${correctedShichen.alias}`}
-                    description={correctedShichen.range}
-                    emphasize={shichenChanged}
-                  />
-                </div>
-
-                <div className="rounded-[1.5rem] bg-[color:var(--accent-soft)] px-4 py-4 text-sm leading-7 text-[color:var(--accent-strong)]">
-                  {solarTime.description}。系统最终将按 <strong>{correctedShichen.label}</strong> 排时柱。
-                  {shichenChanged ? ' 这次修正已跨时辰，结果会和单纯按钟表时间排盘不同。' : ' 这次修正未跨时辰，但仍会作为最终排盘依据。'}
-                  {dateChanged ? ' 同时修正后日期发生变化，跨日信息也已自动处理。' : ''}
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={!canSubmit}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-4 text-base font-semibold text-white shadow-[0_16px_40px_rgba(15,118,110,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  信息已核对，开始真正测算
-                </button>
+                )}
               </div>
-            ) : (
-              <div className="mt-6 rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-white/70 px-5 py-6 text-sm leading-7 text-[color:var(--muted)]">
-                先选出生城市并确认日期、时间。系统会立刻告诉用户修正了多少分钟、是否跨时辰、最终采用哪一个时柱。
-              </div>
-            )}
+            </div>
           </section>
 
-          <section className="soft-card rounded-[1.75rem] p-5 md:p-6">
+          <section className="product-panel p-5 md:p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(14,165,233,0.14)] text-sky-700">
                 <ShieldCheck className="h-5 w-5" />
@@ -509,7 +543,7 @@ export default function FortuneForm() {
       </div>
 
       <div className="sticky bottom-3 z-20 md:hidden">
-        <div className="glass-panel rounded-[1.5rem] border border-white/60 px-4 py-3 shadow-[0_20px_50px_rgba(23,32,51,0.16)]">
+        <div className="product-panel-strong border border-white/60 px-4 py-3 shadow-[0_20px_50px_rgba(23,32,51,0.16)]">
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">当前状态</div>
@@ -554,7 +588,7 @@ function SummaryChip({
   value: string;
 }) {
   return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1.5">
+    <div className="product-chip">
       <span className="font-semibold text-[color:var(--muted)]">{label}</span>
       <span className="max-w-[12rem] truncate text-[color:var(--ink)]">{value}</span>
     </div>
