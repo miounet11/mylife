@@ -33,7 +33,11 @@ export async function generateFortuneInterpretation(baziData: Record<string, unk
     apiKey: apiKey,
     baseURL: getApiBaseUrl(),
     timeout: timeoutMs,
+    maxRetries: 0,
   });
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   console.log(`[LLM] Starting interpretation with ${timeoutMs}ms timeout...`);
   
@@ -145,6 +149,10 @@ JSON结构必须完全符合以下定义：
         { role: "user", content: prompt }
       ],
       temperature: 0.7,
+    }, {
+      signal: controller.signal,
+      timeout: timeoutMs,
+      maxRetries: 0,
     });
 
     const responseText = completion.choices[0].message.content;
@@ -164,7 +172,11 @@ JSON结构必须完全符合以下定义：
 
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message.includes('timeout') || error.message.includes('timed out')) {
+      if (
+        error.name === 'AbortError' ||
+        error.message.includes('timeout') ||
+        error.message.includes('timed out')
+      ) {
         console.error("[LLM] Request timeout - API took too long to respond");
       } else {
         console.error("[LLM] Generation Error:", error.message);
@@ -173,5 +185,7 @@ JSON结构必须完全符合以下定义：
       console.error("[LLM] Generation Error:", error);
     }
     return null;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
