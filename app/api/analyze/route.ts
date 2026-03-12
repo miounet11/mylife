@@ -153,7 +153,7 @@ export async function POST(request: NextRequest) {
         evidence: finalResult.evidence,
         analysis: finalResult.analysis,
         klineData: finalResult.klineData,
-        isPublic: true,
+        isPublic: false,
       }
     );
 

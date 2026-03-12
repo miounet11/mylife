@@ -218,6 +218,7 @@ async function saveAnalysisResult(params: {
     evidence: result.evidence,
     analysis: result.analysis,
     klineData: result.klineData,
+    isPublic: false,
   });
 }
 

@@ -32,6 +32,7 @@ export default function ResultPublicControls({
   };
 
   const handleShare = async () => {
+    if (!isPublic) return;
     if (navigator.share) {
       try {
         await navigator.share({
@@ -73,19 +74,21 @@ export default function ResultPublicControls({
       <button
         type="button"
         onClick={() => void handleShare()}
+        disabled={!isPublic}
         className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
       >
         <Share2 className="h-4 w-4" />
-        分享结果页
+        {isPublic ? '分享结果页' : '先公开后再分享'}
       </button>
 
       <button
         type="button"
         onClick={() => void handleCopy()}
+        disabled={!isPublic}
         className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
       >
         <Copy className="h-4 w-4" />
-        {copied ? '已复制链接' : '复制链接'}
+        {isPublic ? (copied ? '已复制链接' : '复制链接') : '当前为私密报告'}
       </button>
 
       {canManage && (
@@ -96,7 +99,7 @@ export default function ResultPublicControls({
           className="sm:col-span-2 inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
         >
           {isPublic ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-          {loading ? '更新中...' : isPublic ? '当前公开，点击设为隐藏' : '当前隐藏，点击重新公开'}
+          {loading ? '更新中...' : isPublic ? '当前公开，点击设为私密' : '当前私密，点击创建分享页'}
         </button>
       )}
     </div>
