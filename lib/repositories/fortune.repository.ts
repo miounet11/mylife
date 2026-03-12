@@ -21,6 +21,7 @@ interface CreateFortuneInput {
   evidence: any;
   analysis?: any;
   klineData?: any;
+  isPublic?: boolean;
 }
 
 export class FortuneRepository extends BaseRepository<FortuneRecord> {
@@ -35,8 +36,8 @@ export class FortuneRepository extends BaseRepository<FortuneRecord> {
       `INSERT INTO fortunes (
         id, user_id, name, birth_date, birth_time, birth_place, timezone, gender,
         bazi, five_elements, ten_gods, pattern, fortune, advice, evidence,
-        analysis, kline_data, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        analysis, kline_data, is_public, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.userId,
@@ -55,6 +56,7 @@ export class FortuneRepository extends BaseRepository<FortuneRecord> {
         JSON.stringify(input.evidence),
         input.analysis ? JSON.stringify(input.analysis) : null,
         input.klineData ? JSON.stringify(input.klineData) : null,
+        input.isPublic === false ? 0 : 1,
         now,
         now,
       ]

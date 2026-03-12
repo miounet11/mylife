@@ -32,6 +32,15 @@ function formatDateString(year: number, month: number, day: number) {
   return `${year}-${formatPart(month)}-${formatPart(day)}`;
 }
 
+const approximateTimeSlots = [
+  { label: '凌晨', helper: '03:30 左右', hour: 3, minute: 30 },
+  { label: '清晨', helper: '06:30 左右', hour: 6, minute: 30 },
+  { label: '上午', helper: '09:30 左右', hour: 9, minute: 30 },
+  { label: '中午', helper: '12:30 左右', hour: 12, minute: 30 },
+  { label: '傍晚', helper: '18:30 左右', hour: 18, minute: 30 },
+  { label: '夜间', helper: '21:30 左右', hour: 21, minute: 30 },
+] as const;
+
 export default function FortuneForm() {
   const router = useRouter();
   const [name, setName] = useState('');
@@ -385,20 +394,45 @@ export default function FortuneForm() {
                       />
                     </label>
 
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">钟表时间</span>
-                      <BirthTimeInput
+                <label className="block">
+                  <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">钟表时间</span>
+                  <BirthTimeInput
                         value={{ hour, minute, second }}
                         onChange={(nextValue) => {
                           setHour(nextValue.hour);
                           setMinute(nextValue.minute);
                           setSecond(nextValue.second);
-                        }}
-                        onValidityChange={setIsTimeValid}
-                      />
-                    </label>
+                    }}
+                    onValidityChange={setIsTimeValid}
+                  />
+                  <div className="mt-3">
+                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                      记不清精确时间？
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {approximateTimeSlots.map((slot) => (
+                        <button
+                          key={slot.label}
+                          type="button"
+                          onClick={() => {
+                            setHour(slot.hour);
+                            setMinute(slot.minute);
+                            setSecond(0);
+                            setIsTimeValid(true);
+                          }}
+                          className="rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
+                        >
+                          {slot.label} · {slot.helper}
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      可以先用大致时段拿到预分析。后续如果补全更精确的时间，系统会重新修正真太阳时并更新结果。
+                    </div>
                   </div>
-                </div>
+                </label>
+              </div>
+            </div>
               </div>
             </div>
           </section>
@@ -518,7 +552,7 @@ export default function FortuneForm() {
               {[
                 '生成四柱、五行、十神与格局判断。',
                 '用当前大运与流年解释近期关键趋势。',
-                '自动跳转到报告页，并可继续进入 AI 咨询。',
+                '自动跳转到默认私密的报告页，并可继续进入 AI 咨询。',
               ].map((item) => (
                 <div key={item} className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3">
                   <CheckCircle2 className="mt-0.5 h-4 w-4 text-[color:var(--accent)]" />
@@ -536,7 +570,7 @@ export default function FortuneForm() {
             </button>
 
             <div className="mt-3 text-center text-xs leading-6 text-[color:var(--muted)]">
-              结果页默认可公开查看，可在生成后切换隐藏。提交数据仅用于本次分析与历史记录保存。
+              结果页默认仅自己可见，可在生成后手动创建公开分享版本。提交数据仅用于本次分析与历史记录保存。
             </div>
           </section>
         </div>

@@ -31,39 +31,60 @@ const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
 });
 
 const proofItems = [
-  { label: '真太阳时修正', value: '经纬度 + 均时差' },
-  { label: '结果交付速度', value: '3 分钟内出报告' },
-  { label: '结果页形态', value: '公开可浏览 / 可分享' },
+  { label: '更准确', value: '真太阳时修正' },
+  { label: '更易懂', value: '结构 + 趋势 + 建议' },
+  { label: '更安心', value: '默认私密，可选分享' },
 ];
 
 const journeySteps = [
   {
-    title: '先理解你是谁',
-    description: '先给出命局结构、格局、五行强弱，让用户知道系统在算什么。',
+    title: '先看命局结构',
+    description: '先交代五行、格局和日主状态，让用户知道自己到底是什么结构。',
     icon: Compass,
   },
   {
-    title: '再解释当下为何发生',
-    description: '把当前大运、流年与关键事件的因果逻辑解释清楚，降低神秘感。',
+    title: '再看当前阶段',
+    description: '把大运、流年和最近节奏解释清楚，回答为什么这段时间会这样。',
     icon: LineChart,
   },
   {
-    title: '最后给出可执行建议',
-    description: '不是泛泛而谈，而是明确说清什么时候适合推进、规避和复盘。',
+    title: '最后给出行动建议',
+    description: '不是一句吉凶，而是明确告诉你什么时候适合推进、等待、复盘。',
     icon: CalendarClock,
   },
 ];
 
 const scenarioCards = [
-  '命盘结构',
-  '五行强弱',
-  '阶段趋势',
-  '行动建议',
+  '命局结构总览',
+  '当前阶段判断',
+  '现实问题建议',
+  '后续继续追问',
+];
+
+const trustItems = [
+  {
+    title: '为什么结果更可靠',
+    description: '出生地点会参与真太阳时修正，不只按钟表时间硬排时柱。',
+  },
+  {
+    title: '为什么普通人也能看懂',
+    description: '结果按结构、趋势、建议三层输出，不要求你先懂命理术语。',
+  },
+  {
+    title: '为什么更适合第一次尝试',
+    description: '报告默认仅自己可见，确认有价值后再决定是否生成分享页。',
+  },
+];
+
+const quickEntryItems = [
+  '记不清精确出生时间，也可以先用大致时段开始。',
+  '先拿到预分析结构，再决定是否补全地点与分钟级时间。',
+  '适合第一次尝试、还不确定要不要完整投入的人。',
 ];
 
 export const metadata = {
-  title: '人生K线 | 公开可分享的命理分析结果页',
-  description: '首页专注获客，结果页专注公开传播与承接转化。用户输入信息后，可获得可浏览、可分享的结构化命理报告。',
+  title: '人生K线 | 看清命局结构、当前阶段和下一步行动建议',
+  description: '基于真太阳时修正的命理分析产品，用结构、趋势、建议三层输出，帮助用户看清当下阶段与下一步动作。',
   keywords: ['八字', '命理', 'AI 命理', '真太阳时', '人生决策', '事业分析'],
 };
 
@@ -87,21 +108,22 @@ export default function HomePage() {
 
               <div className="space-y-5">
                 <h1 className="max-w-4xl text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
-                  首页负责吸引进入，
-                  <span className="font-serif text-[color:var(--accent-strong)]">结果页负责公开传播与转化。</span>
+                  看清你的命局结构、
+                  <span className="font-serif text-[color:var(--accent-strong)]">当前阶段</span>
+                  和下一步行动建议。
                 </h1>
                 <p className="max-w-2xl text-lg leading-8 text-[color:var(--muted)]">
-                  我们把关键结构、趋势结论和细节建议留在结果页展开。首页只展示价值、可信度和入口，避免在首屏提前透出太多核心内容。
+                  不是一句吉凶，也不是玄学安慰。我们用真太阳时修正、结构化解释和可执行建议，帮你判断现在该怎么看、怎么做。
                 </p>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Link href="#analysis-form" className="action-primary">
-                  开始生成专属报告
+                  立即开始分析
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
-                <Link href="/chat" className="action-secondary">
-                  先体验 AI 咨询
+                <Link href="/cases" className="action-secondary">
+                  先看报告样例
                 </Link>
               </div>
 
@@ -122,19 +144,19 @@ export default function HomePage() {
               <div className="relative space-y-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <div className="text-sm font-semibold text-[color:var(--muted)]">报告预览</div>
-                    <div className="mt-1 text-2xl font-bold text-[color:var(--ink)]">关键内容在结果页解锁</div>
+                    <div className="text-sm font-semibold text-[color:var(--muted)]">你会拿到什么</div>
+                    <div className="mt-1 text-2xl font-bold text-[color:var(--ink)]">一份能看懂、能继续用的命理报告</div>
                   </div>
                   <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                    Hidden on Home
+                    3 分钟内完成
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   {[
-                    ['01', '命盘结构', '首页只展示框架，不直接展开具体柱象与命局判断'],
-                    ['02', '趋势结论', '阶段波动和关键时间窗口在结果页完整呈现'],
-                    ['03', '行动建议', '事业、关系、财富等细节建议集中放到可分享报告页'],
+                    ['01', '结构结论', '先告诉你命局重点、五行强弱和当前真正的主轴问题。'],
+                    ['02', '阶段判断', '解释最近为什么卡住、该冲还是等、什么时候容易转折。'],
+                    ['03', '行动建议', '把事业、关系、财富等建议写成人话，不堆术语。'],
                   ].map(([index, title, description]) => (
                     <div key={index} className="soft-card rounded-[1.5rem] p-5">
                       <div className="flex items-start gap-4">
@@ -192,27 +214,35 @@ export default function HomePage() {
             <div className="space-y-5">
               <div className="section-label">
                 <ShieldCheck className="h-3.5 w-3.5" />
-                低阻力转化入口
+                先体验，再补全
               </div>
               <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-5xl">
-                把第一次输入，做成
-                <span className="font-serif text-[color:var(--warm)]">一场有反馈的对话</span>
+                不确定出生时间，
+                <span className="font-serif text-[color:var(--warm)]">也可以先开始</span>
               </h2>
               <p className="text-base leading-8 text-[color:var(--muted)]">
-                首页只负责把用户顺利带入分析，不提前展开完整命理结论。详细结构将在生成后的公开结果页中呈现。
+                先拿到一个足够有用的结构判断，再逐步补全地点和更精确的时间。报告默认私密，确认有价值后再决定是否分享。
               </p>
 
               <div className="space-y-3">
-                {[
-                  '即时显示真太阳时修正结果，建立专业信任。',
-                  '用完成度、提示文案和风险说明降低填写焦虑。',
-                  '提交后展示分析进度，不再让用户在空白页等待。',
-                ].map((item) => (
+                {quickEntryItems.map((item) => (
                   <div key={item} className="flex items-start gap-3 rounded-2xl bg-white/70 px-4 py-3">
                     <CheckCircle2 className="mt-0.5 h-5 w-5 text-[color:var(--accent)]" />
                     <span className="text-sm leading-6 text-[color:var(--ink)]">{item}</span>
                   </div>
                 ))}
+              </div>
+
+              <div className="product-subtle p-5">
+                <div className="product-kicker">为什么值得信</div>
+                <div className="mt-3 space-y-3">
+                  {trustItems.map((item) => (
+                    <div key={item.title} className="rounded-[1.2rem] bg-white/80 px-4 py-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{item.description}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -258,14 +288,14 @@ export default function HomePage() {
             <div className="space-y-5">
               <div className="section-label">
                 <BookOpen className="h-3.5 w-3.5" />
-                内容资产层
+                先看真实案例
               </div>
               <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-5xl">
-                一个长期稳定的站点，
-                <span className="font-serif text-[color:var(--accent-strong)]">不能只有工具，还要有内容。</span>
+                如果你还没准备立刻填写，
+                <span className="font-serif text-[color:var(--accent-strong)]">先看别人如何使用这份报告。</span>
               </h2>
               <p className="text-base leading-8 text-[color:var(--muted)]">
-                我们开始把知识文章、公开案例和结果页串成同一条内容链，让搜索、传播、转化和复访形成闭环。
+                真实案例、知识文章和洞察页会先帮你建立判断，再决定是否进入完整测算。这比一上来就要求你投入输入成本更友好。
               </p>
             </div>
 
@@ -301,14 +331,14 @@ export default function HomePage() {
             <div className="space-y-5">
               <div className="section-label">
                 <Compass className="h-3.5 w-3.5" />
-                SEO 实体入口
+                按场景继续探索
               </div>
               <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-5xl">
-                除了知识和案例，
-                <span className="font-serif text-[color:var(--accent-strong)]">我们还要做行业、城市、组织节奏页。</span>
+                如果你关心的是城市、行业和环境，
+                <span className="font-serif text-[color:var(--accent-strong)]">可以先从洞察页进入。</span>
               </h2>
               <p className="text-base leading-8 text-[color:var(--muted)]">
-                这类页面承接更具体的搜索意图，也能把结果页里出现的职业、城市和环境话题扩展成长期内容资产。
+                这类页面更适合已经有明确问题的人，比如换城市、换行业、换合作环境之前，先看对应主题的节奏与案例。
               </p>
               <Link href="/insights" className="action-secondary">
                 进入洞察中心

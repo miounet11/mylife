@@ -32,12 +32,12 @@ const highlights = [
 const outcomes = [
   '4 个关键字段',
   '实时真太阳时预览',
-  '默认公开的结果页',
+  '默认私密的结果页',
 ];
 
 export const metadata = {
   title: '开始您的命理分析 | 人生K线',
-  description: '更轻、更清晰的输入流程，用更高信任感把用户顺利带进分析与结果页。',
+  description: '更轻、更清晰的输入流程，让用户先看到结构价值，再决定是否补全精确信息与分享结果。',
 };
 
 export default function AnalyzePage() {
@@ -62,7 +62,7 @@ export default function AnalyzePage() {
                     ，系统再开始测算。
                   </h1>
                   <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)]">
-                    首页只保留核心输入。出生地、日期、时间填写完成后，用户会先看到真太阳时修正，再直接进入结果页。
+                    这里只保留真正影响排盘的字段。出生地、日期、时间填写完成后，用户会先看到真太阳时修正，再进入默认私密的结果页。
                   </p>
                 </div>
 

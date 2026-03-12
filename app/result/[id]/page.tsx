@@ -61,7 +61,7 @@ export async function generateMetadata({ params }: PageProps) {
       const isPublic = fortuneData.isPublic !== false;
       return {
         title: `${publicName}的命理分析报告 | 人生K线`,
-        description: `${publicName}的公开命理分析报告，基于真太阳时修正与结构化解读，适合公开浏览与分享。`,
+        description: `${publicName}的命理分析报告，基于真太阳时修正与结构化解读，默认私密，可按需创建分享页。`,
         alternates: {
           canonical: `https://life-kline.com/result/${id}`,
         },
@@ -71,8 +71,8 @@ export async function generateMetadata({ params }: PageProps) {
         },
         openGraph: {
           url: `https://life-kline.com/result/${id}`,
-          title: `${publicName}的公开命理分析 | 人生K线`,
-          description: '公开可分享的命理分析结果页，展示结构、趋势与建议。',
+          title: `${publicName}的命理分析 | 人生K线`,
+          description: '结构化命理分析结果页，展示结构、趋势与建议，可按需分享。',
         },
       };
     }
@@ -166,8 +166,8 @@ export default async function ResultPage({ params }: PageProps) {
     {
       title: result.isPublic ? '这份报告可直接分享' : '这份报告目前为隐藏模式',
       description: result.isPublic
-        ? '默认匿名展示，适合分享到朋友、客户或社群，作为公开承接页使用。'
-        : '当前仅你可见，切换为公开后才适合做外部分享和传播。',
+        ? '你已经主动开启了分享模式，外部用户可通过匿名链接查看这份报告。'
+        : '报告默认仅你可见。确认内容适合外部浏览后，再手动创建公开分享页。',
       icon: Share2,
     },
     {
@@ -217,17 +217,17 @@ export default async function ResultPage({ params }: PageProps) {
                   {result.llmUsed ? 'AI 深度解析' : '基础引擎解析'}
                 </span>
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {result.isPublic ? '默认公开可分享' : '当前隐藏'}
+                  {result.isPublic ? '已开启分享模式' : '默认私密'}
                 </span>
               </div>
 
               <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
                 {publicName}的这份命理报告，
-                <span className="font-serif text-[color:var(--accent-strong)]">现在已经具备公开浏览与传播价值。</span>
+                <span className="font-serif text-[color:var(--accent-strong)]">先服务本人，再决定是否分享给别人。</span>
               </h1>
 
               <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)]">
-                这不是只给本人看的内部结果，而是一张可以承接分享、建立信任、继续转化的公开页面。关键信息集中展示，姓名默认匿名化，拥有者可随时切换隐藏。
+                报告默认私密，避免用户在第一次分析时承受额外隐私压力。若你确认内容适合外部浏览，可以随时切换为公开分享模式，姓名仍会保持匿名化展示。
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -240,14 +240,14 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
 
               <div className="mt-6 grid gap-3 md:grid-cols-[1.08fr_0.92fr]">
-                <div className="rounded-[1.5rem] bg-[rgba(15,118,110,0.08)] px-4 py-4">
+              <div className="rounded-[1.5rem] bg-[rgba(15,118,110,0.08)] px-4 py-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">首屏结论</div>
                   <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
                     {result.pattern?.type || '命局结构'}是当前核心判断，
                     {result.fortune?.currentDaYun ? ` 当前行运落在 ${result.fortune.currentDaYun}` : ' 当前行运信息已写入报告正文'}。
                   </div>
                   <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                    继续往下可以看到完整命盘、五行分布、AI 建议和趋势图。看完后最适合继续分享、深问 AI，或再次测算对比。
+                    继续往下可以看到完整命盘、五行分布、AI 建议和趋势图。看完后最适合继续深问 AI、再次测算对比，或在确认内容后再创建分享页。
                   </div>
                 </div>
 
@@ -278,7 +278,7 @@ export default async function ResultPage({ params }: PageProps) {
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="font-semibold text-[color:var(--ink)]">分享与可见性</div>
               <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                默认公开，拥有者可随时切换为隐藏。结果页本身就是分享页，不需要额外包装。
+                报告默认私密。只有拥有者主动开启后，外部用户才可以通过链接查看这份匿名化结果页。
               </p>
               <div className="mt-4">
                 <ResultPublicControls
