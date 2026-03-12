@@ -10,6 +10,8 @@ import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import type { FortuneAnalysisInput } from '@/lib/services';
 
 export const maxDuration = 30;
+const ANALYZE_LLM_TIMEOUT_MS = 3500;
+const ANALYZE_LLM_BUDGET_MS = 4000;
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 3. 解析日期时间
-    const { effectiveDate, effectiveTime, solarTimeInfo } = parseDateTime(data);
+    const { effectiveDate, effectiveTime } = parseDateTime(data);
 
     // 4. 执行命理分析 (使用新的 Service 层)
     const analyzerService = new FortuneAnalyzerService();
@@ -136,16 +138,30 @@ function parseDateTime(data: any) {
 }
 
 async function enhanceWithLLM(baseResult: any) {
+  let routeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
   try {
-    console.log('[API] Starting LLM interpretation...');
+    console.log(`[API] Starting LLM interpretation with ${ANALYZE_LLM_TIMEOUT_MS}ms timeout...`);
     const llmStartTime = Date.now();
-    const llmInterpretation = await generateFortuneInterpretation(baseResult, 25000);
+    const llmInterpretation = await Promise.race([
+      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS),
+      new Promise<null>((resolve) => {
+        routeTimeoutId = setTimeout(() => {
+          console.warn(`[API] LLM exceeded route budget after ${ANALYZE_LLM_BUDGET_MS}ms`);
+          resolve(null);
+        }, ANALYZE_LLM_BUDGET_MS);
+      }),
+    ]);
     const llmDuration = Date.now() - llmStartTime;
-    console.log(`[API] LLM interpretation ${llmInterpretation ? 'succeeded' : 'failed'} in ${llmDuration}ms`);
+    console.log(`[API] LLM interpretation ${llmInterpretation ? 'succeeded' : 'fell back to engine'} in ${llmDuration}ms`);
     return llmInterpretation;
   } catch (error) {
     console.error('[API] LLM enhancement failed:', error);
     return null;
+  } finally {
+    if (routeTimeoutId) {
+      clearTimeout(routeTimeoutId);
+    }
   }
 }
 

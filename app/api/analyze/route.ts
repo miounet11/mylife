@@ -9,6 +9,8 @@ import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 
 // 设置 API 路由超时为 30 秒（Vercel/Next.js）
 export const maxDuration = 30;
+const ANALYZE_LLM_TIMEOUT_MS = 3500;
+const ANALYZE_LLM_BUDGET_MS = 4000;
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,10 +41,7 @@ export async function POST(request: NextRequest) {
     const second = (data.birthSecond as number) || 0;
     const longitude = (data.longitude as number) || 116.407;
     const timezone = (data.timezone as number) || 8;
-    const birthDate = new Date(year, month - 1, day);
-
     // 计算真太阳时
-    let solarTimeInfo = null;
     let effectiveYear = year;
     let effectiveMonth = month;
     let effectiveDay = day;
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
     let effectiveSecond = second;
 
     if (data.useSolarTime && longitude !== undefined) {
-      solarTimeInfo = calculateTrueSolarTime(year, month, day, hour, minute, second, longitude, timezone);
+      const solarTimeInfo = calculateTrueSolarTime(year, month, day, hour, minute, second, longitude, timezone);
       effectiveYear = solarTimeInfo.year;
       effectiveMonth = solarTimeInfo.month;
       effectiveDay = solarTimeInfo.day;
@@ -74,13 +73,9 @@ export async function POST(request: NextRequest) {
       data.gender || 'male'
     );
 
-    // 尝试调用 LLM 生成深度解析（25秒超时）
-    console.log('[API] Starting LLM interpretation...');
-    const llmStartTime = Date.now();
-    const llmInterpretation = await generateFortuneInterpretation(baseResult as unknown as Record<string, unknown>, 25000);
-    const llmUsed = !!llmInterpretation;
-    const llmDuration = Date.now() - llmStartTime;
-    console.log(`[API] LLM interpretation ${llmUsed ? 'succeeded' : 'failed'} in ${llmDuration}ms`);
+    const { llmInterpretation, llmUsed } = await enhanceWithLLM(
+      baseResult as unknown as Record<string, unknown>
+    );
     
     // 合并结果: 如果 LLM 成功返回，则用 LLM 的结果覆盖基础结果的部分字段
     // 保留基础排盘的 basic 盘面和 evidence 统计等静态数据，覆盖解析性的文字
@@ -189,4 +184,36 @@ export async function GET(request: NextRequest) {
 // 生成报告ID
 function generateReportId(): string {
   return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
+
+async function enhanceWithLLM(baseResult: Record<string, unknown>) {
+  console.log(`[API] Starting LLM interpretation with ${ANALYZE_LLM_TIMEOUT_MS}ms timeout...`);
+  const llmStartTime = Date.now();
+  let routeTimeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  try {
+    const llmInterpretation = await Promise.race([
+      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS),
+      new Promise<null>((resolve) => {
+        routeTimeoutId = setTimeout(() => {
+          console.warn(`[API] LLM exceeded route budget after ${ANALYZE_LLM_BUDGET_MS}ms`);
+          resolve(null);
+        }, ANALYZE_LLM_BUDGET_MS);
+      }),
+    ]);
+
+    const llmUsed = !!llmInterpretation;
+    console.log(
+      `[API] LLM interpretation ${llmUsed ? 'succeeded' : 'fell back to engine'} in ${Date.now() - llmStartTime}ms`
+    );
+
+    return { llmInterpretation, llmUsed };
+  } catch (error) {
+    console.error('[API] LLM interpretation failed:', error);
+    return { llmInterpretation: null, llmUsed: false };
+  } finally {
+    if (routeTimeoutId) {
+      clearTimeout(routeTimeoutId);
+    }
+  }
 }
