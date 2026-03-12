@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Clock3, MapPin, Search, Sparkles, X } from 'lucide-react';
 import {
   buildChinaLocation,
@@ -41,6 +41,17 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   const provinces = useMemo(() => getChinaProvinces(), []);
   const cities = useMemo(() => getChinaCities(provinceName), [provinceName]);
   const districts = useMemo(() => getChinaDistricts(provinceName, cityName), [provinceName, cityName]);
+  const pendingChinaLocation = useMemo(
+    () => buildChinaLocation(provinceName, cityName, districtName || undefined),
+    [cityName, districtName, provinceName]
+  );
+
+  const syncChinaSelectors = useCallback((location: LocationOption) => {
+    if (location.scope !== 'china' || !location.province) return;
+    setProvinceName(location.province);
+    setCityName(location.city || location.province);
+    setDistrictName(location.district || '');
+  }, []);
 
   useEffect(() => {
     try {
@@ -71,6 +82,11 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
     }
   }, [districtName, districts]);
 
+  useEffect(() => {
+    if (!value || value.scope !== 'china') return;
+    syncChinaSelectors(value);
+  }, [syncChinaSelectors, value]);
+
   const searchResults = useMemo(() => searchLocations(query, 12), [query]);
   const quickLocations = useMemo(
     () => dedupeLocations([...(value ? [value] : []), ...recentLocations, ...featuredLocations]),
@@ -100,6 +116,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   };
 
   const handleSelect = (location: LocationOption) => {
+    syncChinaSelectors(location);
     onSelect(location);
     persistRecentLocation(location);
     setQuery('');
@@ -294,15 +311,25 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
                 <button
                   type="button"
                   onClick={() => {
-                    const location = buildChinaLocation(provinceName, cityName, districtName || undefined);
-                    if (location) {
-                      handleSelect(location);
-                    }
+                    if (!pendingChinaLocation) return;
+                    handleSelect(pendingChinaLocation);
                   }}
+                  disabled={!pendingChinaLocation}
                   className="mt-4 inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-2.5 text-sm font-semibold text-white"
                 >
                   使用这个出生地点
                 </button>
+
+                {pendingChinaLocation ? (
+                  <div className="mt-3 rounded-2xl bg-[rgba(15,118,110,0.06)] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+                    当前将使用：<span className="font-semibold text-[color:var(--ink)]">{pendingChinaLocation.fullName}</span>
+                    {' '}· 经度 {pendingChinaLocation.lng.toFixed(2)}° · {getTimezoneDisplay(pendingChinaLocation)}
+                  </div>
+                ) : (
+                  <div className="mt-3 rounded-2xl bg-[rgba(201,125,58,0.08)] px-4 py-3 text-xs leading-6 text-[color:var(--warm)]">
+                    当前省市区组合未能定位到有效地点，请重新选择。
+                  </div>
+                )}
               </div>
 
               <div className="space-y-2">
