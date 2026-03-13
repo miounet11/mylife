@@ -27,7 +27,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ) => {
     const variantStyles = {
       default: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
-      primary: 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(15,118,110,0.22)]',
+      primary: 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(178,149,93,0.24)]',
       secondary: 'bg-slate-700 text-white border border-slate-700 hover:bg-slate-800',
       outline: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
       ghost: 'bg-transparent text-[color:var(--ink)] hover:bg-white/70',

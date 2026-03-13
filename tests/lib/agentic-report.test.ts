@@ -198,6 +198,25 @@ describe('agentic-report pipeline helpers', () => {
     expect(context.spatialFactors.favorableDirections.length).toBeGreaterThan(0);
   });
 
+  it('sanitizes placeholder geo labels from context signals', () => {
+    const engine = buildEngineGroundTruth({ birthDate, report });
+    const context = buildContextSignals({
+      birthDate,
+      birthPlace: '未知地 北京时间 --',
+      currentPlace: '未知地 北京时间 --',
+      industries: ['科技'],
+      engine,
+      report: {
+        advice: report.advice,
+        fortune: report.fortune,
+      },
+      now: new Date(Date.UTC(2026, 2, 12)),
+    });
+
+    expect(context.geoClimate.birthPlace).toBeUndefined();
+    expect(context.geoClimate.currentPlace).toBeUndefined();
+  });
+
   it('builds deterministic fallback agent results and passes review/verify', () => {
     const engine = buildEngineGroundTruth({ birthDate, report });
     const context = buildContextSignals({
@@ -261,6 +280,28 @@ describe('agentic-report pipeline helpers', () => {
       agentResults: {
         strategy_advisor: {
           summary: '围绕 2027-2029 排序动作',
+        },
+      },
+      contextSignals: {
+        temporal: {
+          currentSolarTerm: '惊蛰',
+        },
+      },
+    });
+
+    expect(mode).toBe('deterministic-expert');
+  });
+
+  it('downgrades pseudo parallel mode when all agent calls failed', () => {
+    const mode = deriveReportReasoningMode({
+      reasoningMode: 'parallel-agents',
+      orchestrationMode: 'parallel-agents',
+      orchestrationSuccessRate: 0,
+      successfulAgents: [],
+      agenticUsed: false,
+      agentResults: {
+        strategy_advisor: {
+          summary: '由 deterministic 专家层填充的结果',
         },
       },
       contextSignals: {

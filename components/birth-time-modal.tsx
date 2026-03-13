@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { Lunar, LunarYear, Solar } from 'lunar-javascript';
 import PickerWheelColumn, { type PickerWheelOption } from './picker-wheel-column';
@@ -199,11 +199,32 @@ export default function BirthTimeModal({
   const [popoverMode, setPopoverMode] = useState<PopoverMode>(null);
   const [pillarIndex, setPillarIndex] = useState(0);
   const [dateList, setDateList] = useState<string[]>([]);
+  const wasOpenRef = useRef(false);
+  const syncSnapshotRef = useRef({
+    birthday,
+    tabIndex,
+  });
 
   useEffect(() => {
     if (!isOpen) {
+      wasOpenRef.current = false;
       return;
     }
+
+    const openedNow = !wasOpenRef.current;
+    const sourceChanged =
+      syncSnapshotRef.current.birthday !== birthday ||
+      syncSnapshotRef.current.tabIndex !== tabIndex;
+
+    if (!openedNow && !sourceChanged) {
+      return;
+    }
+
+    wasOpenRef.current = true;
+    syncSnapshotRef.current = {
+      birthday,
+      tabIndex,
+    };
 
     setActiveTab(tabIndex);
     setSearchValue('');
@@ -559,22 +580,22 @@ export default function BirthTimeModal({
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[20px] bg-white p-[17px] text-[#101010]"
+          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="relative mb-[15px] flex items-center justify-center">
-            <button type="button" onClick={onClose} className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[#7b7b7b]">
+            <button type="button" onClick={onClose} className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[color:var(--muted)]">
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex overflow-hidden rounded-full border border-[rgba(221,221,221,1)] text-[15px]">
+            <div className="flex overflow-hidden rounded-full border border-[color:var(--line)] bg-white/80 text-[15px]">
               {TABS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => handleTabChange(item.id)}
                   className={`h-[34px] w-[75px] ${
-                    activeTab === item.id ? 'bg-[#b2955d] text-white' : 'text-[#444444]'
+                    activeTab === item.id ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--ink)]'
                   }`}
                 >
                   {item.label}
@@ -586,7 +607,7 @@ export default function BirthTimeModal({
               <button
                 type="button"
                 onClick={handleToday}
-                className="absolute left-0 top-1/2 flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-full border border-[rgba(187,187,187,0.5)] text-[14px] text-[#666666]"
+                className="absolute left-0 top-1/2 flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--line)] bg-white/78 text-[14px] text-[color:var(--muted)]"
               >
                 今
               </button>
@@ -599,13 +620,13 @@ export default function BirthTimeModal({
                 value={searchValue}
                 onChange={(event) => setSearchValue(event.target.value)}
                 placeholder="输入出生年月日时分(格式199303270255)"
-                className="h-[36px] flex-1 rounded-full border border-[rgba(187,187,187,0.5)] px-4 text-[14px] outline-none placeholder:text-[#9e9e9e]"
+                className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-white/86 px-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
               />
               <button
                 type="button"
                 onClick={handleSearch}
                 className={`h-[36px] rounded-full px-4 text-[14px] ${
-                  searchValue ? 'bg-[#b2955d] text-white' : 'bg-[#ededed] text-[#9e9e9e]'
+                  searchValue ? 'bg-[color:var(--accent)] text-white' : 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]'
                 }`}
               >
                 确定
@@ -614,7 +635,7 @@ export default function BirthTimeModal({
           ) : null}
 
           <div className="mt-[13px] w-full">
-            <div className="flex h-[40px] items-center justify-around border-t border-[rgba(233,233,233,0.6)] text-[14px] text-[#666666]">
+            <div className="flex h-[40px] items-center justify-around border-t border-[color:var(--line)] text-[14px] text-[color:var(--muted)]">
               {(activeTab === 2 ? ['年柱', '月柱', '日柱', '时柱'] : ['年', '月', '日', '时', '分']).map((item) => (
                 <div key={item}>{item}</div>
               ))}
@@ -632,7 +653,7 @@ export default function BirthTimeModal({
                         setPopoverMode('tg');
                       }}
                       className={`flex h-[64px] items-center justify-center rounded-full text-[28px] ${
-                        item === UNKNOWN ? 'bg-[#f1f1f1] text-[#8d8d8d]' : 'bg-[#b2955d] text-white'
+                        item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--accent)] text-white'
                       }`}
                     >
                       {item}
@@ -649,14 +670,14 @@ export default function BirthTimeModal({
                         setPopoverMode('dz');
                       }}
                       className={`flex h-[64px] items-center justify-center rounded-full text-[28px] ${
-                        item === UNKNOWN ? 'bg-[#f1f1f1] text-[#8d8d8d]' : 'bg-[#d1b786] text-white'
+                        item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--warm)] text-white'
                       }`}
                     >
                       {item}
                     </button>
                   ))}
                 </div>
-                <div className="mt-4 text-center text-[12px] text-[#8d8d8d]">查找范围：1801-2099年</div>
+                <div className="mt-4 text-center text-[12px] text-[color:var(--muted)]">查找范围：1801-2099年</div>
               </div>
             ) : (
               <div className="grid grid-cols-5 gap-1">
@@ -715,8 +736,8 @@ export default function BirthTimeModal({
             )}
           </div>
 
-          <div className="mt-4 rounded-[10px] bg-[rgba(245,245,245,0.72)] px-4 py-3 text-[13px] text-[#666666]">
-            当前预览：<span className="font-medium text-[#101010]">{currentPreview}</span>
+          <div className="mt-4 rounded-[14px] bg-[color:var(--accent-soft)] px-4 py-3 text-[13px] text-[color:var(--muted)]">
+            当前预览：<span className="font-medium text-[color:var(--ink)]">{currentPreview}</span>
           </div>
 
           {error ? (
@@ -728,13 +749,13 @@ export default function BirthTimeModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="mt-[18px] flex h-[54px] w-full items-center justify-center rounded-full bg-[#101010] font-serif text-[18px] font-bold text-[#f7d3a1]"
+            className="mt-[18px] flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
           >
             确定
           </button>
 
           {popoverMode ? (
-            <div className="absolute inset-x-4 bottom-[82px] z-20 rounded-[16px] border border-[rgba(178,149,93,0.18)] bg-white p-4 shadow-[0_18px_40px_rgba(16,16,16,0.12)]">
+            <div className="absolute inset-x-4 bottom-[82px] z-20 rounded-[16px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 shadow-[0_18px_40px_rgba(34,26,18,0.14)]">
               {popoverMode === 'date' ? (
                 <div className="max-h-[220px] space-y-2 overflow-y-auto">
                   {dateList.map((item) => (

@@ -3,19 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f6f1e8;
-  --surface: rgba(255, 252, 247, 0.8);
-  --surface-strong: #fffdf9;
-  --ink: #172033;
-  --muted: #60708c;
-  --line: rgba(96, 112, 140, 0.16);
-  --accent: #0f766e;
-  --accent-strong: #0b5e58;
-  --accent-soft: rgba(15, 118, 110, 0.12);
-  --warm: #c97d3a;
-  --shadow-soft: 0 20px 50px rgba(23, 32, 51, 0.08);
-  --font-sans: 'Avenir Next', 'Manrope', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-  --font-serif: 'Iowan Old Style', 'Source Han Serif SC', 'Songti SC', 'Noto Serif CJK SC', serif;
+  --bg: #f5ecde;
+  --surface: rgba(255, 250, 242, 0.86);
+  --surface-strong: #fffdf8;
+  --ink: #221a12;
+  --muted: #7d6b59;
+  --line: rgba(122, 95, 58, 0.16);
+  --accent: #b2955d;
+  --accent-strong: #8b7346;
+  --accent-soft: rgba(178, 149, 93, 0.16);
+  --warm: #d0a06a;
+  --shadow-soft: 0 20px 50px rgba(47, 32, 14, 0.08);
+  --font-sans: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
+  --font-serif: 'Baskerville', 'Times New Roman', 'Source Han Serif SC', 'Songti SC', serif;
 }
 
 html {
@@ -25,9 +25,9 @@ html {
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(15, 118, 110, 0.08), transparent 28%),
-    radial-gradient(circle at top right, rgba(201, 125, 58, 0.12), transparent 24%),
-    linear-gradient(180deg, #f8f3ea 0%, #f6f1e8 48%, #f3ede4 100%);
+    radial-gradient(circle at top left, rgba(178, 149, 93, 0.16), transparent 26%),
+    radial-gradient(circle at top right, rgba(31, 23, 15, 0.05), transparent 24%),
+    linear-gradient(180deg, #fbf5ea 0%, #f5ecde 45%, #f0e4d4 100%);
   color: var(--ink);
 }
 
@@ -76,7 +76,7 @@ body::before {
 
   .glass-panel {
     background: var(--surface);
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(255, 249, 240, 0.82);
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(18px);
   }
@@ -89,29 +89,29 @@ body::before {
 
   .product-panel {
     @apply rounded-[1.5rem] border;
-    background: rgba(255, 255, 255, 0.88);
-    border-color: rgba(96, 112, 140, 0.14);
-    box-shadow: 0 18px 42px rgba(23, 32, 51, 0.08);
+    background: rgba(255, 252, 246, 0.9);
+    border-color: rgba(139, 115, 70, 0.14);
+    box-shadow: 0 18px 42px rgba(47, 32, 14, 0.08);
   }
 
   .product-panel-strong {
     @apply rounded-[1.6rem] border;
-    background: rgba(255, 255, 255, 0.95);
-    border-color: rgba(23, 32, 51, 0.08);
-    box-shadow: 0 20px 48px rgba(23, 32, 51, 0.1);
+    background: rgba(255, 253, 248, 0.96);
+    border-color: rgba(139, 115, 70, 0.12);
+    box-shadow: 0 20px 48px rgba(47, 32, 14, 0.1);
   }
 
   .product-subtle {
     @apply rounded-[1.2rem] border;
-    background: rgba(246, 248, 251, 0.92);
-    border-color: rgba(96, 112, 140, 0.12);
+    background: rgba(247, 240, 228, 0.9);
+    border-color: rgba(139, 115, 70, 0.12);
   }
 
   .product-chip {
     @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold;
-    background: rgba(246, 248, 251, 0.96);
+    background: rgba(250, 245, 237, 0.98);
     color: var(--ink);
-    border: 1px solid rgba(96, 112, 140, 0.12);
+    border: 1px solid rgba(139, 115, 70, 0.12);
   }
 
   .product-kicker {
@@ -120,27 +120,27 @@ body::before {
   }
 
   .product-divider {
-    border-color: rgba(96, 112, 140, 0.12);
+    border-color: rgba(139, 115, 70, 0.12);
   }
 
   .section-label {
     @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em];
-    background: rgba(255, 255, 255, 0.72);
+    background: rgba(255, 250, 243, 0.8);
     color: var(--accent-strong);
-    border: 1px solid rgba(15, 118, 110, 0.12);
+    border: 1px solid rgba(178, 149, 93, 0.16);
   }
 
   .hero-stat {
     @apply rounded-3xl px-5 py-4;
-    background: rgba(255, 255, 255, 0.72);
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    box-shadow: 0 14px 32px rgba(23, 32, 51, 0.06);
+    background: rgba(255, 250, 243, 0.76);
+    border: 1px solid rgba(255, 249, 240, 0.84);
+    box-shadow: 0 14px 32px rgba(47, 32, 14, 0.06);
   }
 
   .action-primary {
     @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white transition;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    box-shadow: 0 16px 36px rgba(15, 118, 110, 0.24);
+    box-shadow: 0 16px 36px rgba(178, 149, 93, 0.28);
   }
 
   .action-primary:hover {

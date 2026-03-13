@@ -40,6 +40,7 @@ export default async function AdminAnalyticsPage() {
     analyzeOptionBreakdown,
     reasoningModeBreakdown,
     chatActionBreakdown,
+    modelHealthBreakdown = [],
   } = overview;
   const validatedTotal = totals.validation_accurate + totals.validation_drift;
   const validationAccuracyRate = validatedTotal > 0 ? Math.round((totals.validation_accurate / validatedTotal) * 100) : 0;
@@ -295,6 +296,39 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">模型健康与熔断</div>
+            <div className="mt-5 grid gap-3">
+              {modelHealthBreakdown.length > 0 ? modelHealthBreakdown.map((item) => (
+                <div key={item.model} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{item.model}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">
+                        {Object.keys(item.scopes || {}).length > 0
+                          ? Object.entries(item.scopes).map(([scope, count]) => `${scope} ${count}`).join(' / ')
+                          : '当前无请求范围数据'}
+                      </div>
+                    </div>
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapModelStateTone(item.currentState)}`}>
+                      {mapModelStateLabel(item.currentState)}
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                    <div>请求 {item.attempts}</div>
+                    <div>成功率 {item.successRate}%</div>
+                    <div>平均延迟 {item.avgLatencyMs}ms</div>
+                    <div>{item.reopenAt ? `重试时间 ${item.reopenAt}` : '当前可正常调度'}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有模型健康数据，等模型调用累积后这里会显示成功率、延迟和熔断状态。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
             <div className="text-sm font-semibold text-[color:var(--muted)]">聊天动作结构</div>
             <div className="mt-5 grid gap-3">
               {chatActionBreakdown.length > 0 ? chatActionBreakdown.map((item) => (
@@ -453,6 +487,14 @@ function mapAnalyticsEventLabel(eventName: string) {
     analyze_page_viewed: '分析页访问',
     chat_page_viewed: '聊天页访问',
     events_page_viewed: '事件页访问',
+    knowledge_page_viewed: '知识库访问',
+    knowledge_article_viewed: '知识文章访问',
+    cases_page_viewed: '案例库访问',
+    case_article_viewed: '案例文章访问',
+    insights_page_viewed: '洞察中心访问',
+    insight_article_viewed: '洞察文章访问',
+    content_card_clicked: '内容卡片点击',
+    content_quick_analyze_started: '内容页发起测算',
     analyze_submitted: '提交测算',
     report_generated: '生成报告',
     report_viewed: '打开结果页',
@@ -470,6 +512,8 @@ function mapAnalyticsEventLabel(eventName: string) {
     event_feedback_recorded: '记录验证反馈',
     event_updated: '更新事件',
     event_deleted: '删除事件',
+    llm_model_attempt: '模型请求',
+    llm_model_circuit_changed: '模型熔断状态变化',
   };
   return labels[eventName] || eventName;
 }
@@ -479,6 +523,12 @@ function mapPageLabel(page: string) {
   if (page === '/analyze') return '分析页';
   if (page === '/chat') return '聊天页';
   if (page === '/events') return '事件页';
+  if (page === '/knowledge') return '知识库';
+  if (page === '/cases') return '案例库';
+  if (page === '/insights') return '洞察中心';
+  if (page.startsWith('/knowledge/')) return '知识文章';
+  if (page.startsWith('/cases/')) return '案例文章';
+  if (page.startsWith('/insights/')) return '洞察文章';
   if (page.startsWith('/result/')) return '结果页';
   return page;
 }
@@ -488,6 +538,20 @@ function mapReasoningModeLabel(mode: string) {
   if (mode === 'deterministic-expert') return 'Deterministic 专家层';
   if (mode === 'engine') return '基础引擎';
   return mode;
+}
+
+function mapModelStateLabel(state: string) {
+  if (state === 'open') return '熔断中';
+  if (state === 'half-open') return '半开探测';
+  if (state === 'degraded') return '降级排序';
+  return '正常';
+}
+
+function mapModelStateTone(state: string) {
+  if (state === 'open') return 'bg-rose-50 text-rose-700';
+  if (state === 'half-open') return 'bg-amber-50 text-amber-700';
+  if (state === 'degraded') return 'bg-sky-50 text-sky-700';
+  return 'bg-emerald-50 text-emerald-700';
 }
 
 function QueueMetric({ label, value, tone }: { label: string; value: number; tone: string }) {

@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -29,9 +31,47 @@ export default async function CaseDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const item = getCaseStudyBySlug(slug);
   if (!item) notFound();
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: item.seoTitle,
+    description: item.seoDescription,
+    articleSection: item.scenario,
+    keywords: item.tags.join(', '),
+    mainEntityOfPage: `https://www.life-kline.com/cases/${item.slug}`,
+    url: `https://www.life-kline.com/cases/${item.slug}`,
+    author: {
+      '@type': 'Organization',
+      name: '人生K线',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '人生K线',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.life-kline.com/icon.svg',
+      },
+    },
+  };
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView
+        eventName="case_article_viewed"
+        page={`/cases/${item.slug}`}
+        meta={{
+          surfaceKey: `case_article:${item.slug}`,
+          contentType: 'case',
+          slug: item.slug,
+          title: item.title,
+          category: item.scenario,
+          tags: item.tags,
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -66,6 +106,21 @@ export default async function CaseDetailPage({ params }: PageProps) {
           </article>
 
           <div className="space-y-5">
+            <ContentQuickAnalyzePanel
+              sourceLabel="案例页就近测算"
+              sourceKey={`case_article:${item.slug}`}
+              contentMeta={{
+                contentType: 'case',
+                surfaceKey: `case_article:${item.slug}`,
+                slug: item.slug,
+                title: item.title,
+                category: item.scenario,
+                tags: item.tags,
+              }}
+              title="案例和你之间，只差把生日带进去"
+              description="案例证明产品能解决具体问题。现在直接填自己的生日与时间，下一步继续补出生地，就能看你的个人结构和当前阶段。"
+            />
+
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">这类案例的价值</div>
               <div className="mt-4 space-y-3 text-sm leading-7 text-[color:var(--ink)]">

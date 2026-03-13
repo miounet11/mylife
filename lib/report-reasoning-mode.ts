@@ -4,20 +4,36 @@ export function deriveReportReasoningMode(params: {
   reasoningMode?: string;
   agenticUsed?: boolean;
   orchestrationMode?: string;
+  orchestrationSuccessRate?: number;
+  successfulAgents?: string[];
   agentResults?: Record<string, unknown>;
   contextSignals?: Record<string, unknown>;
   verifyVerdict?: 'PASS' | 'WARN' | 'FAIL';
   enhancementNotes?: string[];
 }): ReportReasoningMode {
-  if (params.reasoningMode === 'engine' || params.reasoningMode === 'deterministic-expert' || params.reasoningMode === 'parallel-agents') {
+  const hasSuccessfulParallelEvidence = Boolean(
+    params.agenticUsed ||
+    (typeof params.orchestrationSuccessRate === 'number' && params.orchestrationSuccessRate > 0) ||
+    (params.successfulAgents || []).length
+  );
+
+  if (params.reasoningMode === 'engine' || params.reasoningMode === 'deterministic-expert') {
     return params.reasoningMode;
   }
 
-  if (params.agenticUsed || params.orchestrationMode === 'parallel-agents') {
+  if (params.reasoningMode === 'parallel-agents') {
+    return hasSuccessfulParallelEvidence ? 'parallel-agents' : 'deterministic-expert';
+  }
+
+  if (hasSuccessfulParallelEvidence) {
     return 'parallel-agents';
   }
 
-  if (params.orchestrationMode === 'deterministic-expert' || params.orchestrationMode === 'single-llm') {
+  if (
+    params.orchestrationMode === 'parallel-agents' ||
+    params.orchestrationMode === 'deterministic-expert' ||
+    params.orchestrationMode === 'single-llm'
+  ) {
     return 'deterministic-expert';
   }
 

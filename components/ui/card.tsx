@@ -10,7 +10,7 @@ const Card = React.forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
     const variantStyles = {
       default: 'bg-[color:var(--surface-strong)] border border-[color:var(--line)] shadow-[var(--shadow-soft)]',
-      purple: 'bg-[color:var(--accent-soft)] border border-[rgba(15,118,110,0.18)]',
+      purple: 'bg-[color:var(--accent-soft)] border border-[rgba(178,149,93,0.18)]',
       blue: 'bg-sky-50 border border-sky-100',
       green: 'bg-emerald-50 border border-emerald-100',
       gradient: 'bg-[linear-gradient(135deg,var(--ink),var(--accent-strong))] text-white border border-[rgba(255,255,255,0.08)] shadow-[0_24px_50px_rgba(23,32,51,0.18)]',

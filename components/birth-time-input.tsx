@@ -225,7 +225,7 @@ export default function BirthTimeInput({
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                 value.minute === minuteValue
                   ? 'bg-[color:var(--accent)] text-white'
-                  : 'bg-[rgba(15,118,110,0.08)] text-[color:var(--accent-strong)] hover:bg-[rgba(15,118,110,0.14)]'
+                  : 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)] hover:opacity-85'
               }`}
             >
               {formatPart(minuteValue)} 分

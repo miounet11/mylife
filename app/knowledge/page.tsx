@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import { ArrowRight, BookOpen, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -16,6 +18,7 @@ export default function KnowledgePage() {
   const knowledgeArticles = getKnowledgeArticles();
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="knowledge_page_viewed" page="/knowledge" meta={{ surfaceKey: 'knowledge_page', contentType: 'knowledge' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -45,7 +48,20 @@ export default function KnowledgePage() {
 
         <section className="mt-10 grid gap-4 md:grid-cols-2">
           {knowledgeArticles.map((article) => (
-            <Link key={article.slug} href={`/knowledge/${article.slug}`} className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5">
+            <ContentCardLink
+              key={article.slug}
+              href={`/knowledge/${article.slug}`}
+              page="/knowledge"
+              meta={{
+                surfaceKey: 'knowledge_page',
+                contentType: 'knowledge',
+                slug: article.slug,
+                title: article.title,
+                category: article.category,
+                tags: article.tags,
+              }}
+              className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            >
               <div className="flex items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                 <BookOpen className="h-3.5 w-3.5" />
                 {article.category}
@@ -56,8 +72,18 @@ export default function KnowledgePage() {
                 阅读全文
                 <ArrowRight className="h-4 w-4" />
               </div>
-            </Link>
+            </ContentCardLink>
           ))}
+        </section>
+
+        <section className="mt-12">
+          <ContentQuickAnalyzePanel
+            sourceLabel="知识内容转化"
+            sourceKey="knowledge_page"
+            contentMeta={{ contentType: 'knowledge', surfaceKey: 'knowledge_page' }}
+            title="读到这里，直接把生日带入个人测算"
+            description="知识页负责让用户看懂原理，真正的转化要发生在用户产生兴趣的当下。先填生日和时间，下一步补出生地即可开始完整分析。"
+          />
         </section>
 
         <section className="mt-12">

@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -22,6 +24,7 @@ export default function InsightsPage() {
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="insights_page_viewed" page="/insights" meta={{ surfaceKey: 'insights_page', contentType: 'insight' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -59,6 +62,16 @@ export default function InsightsPage() {
         </section>
 
         <section className="mt-12">
+          <ContentQuickAnalyzePanel
+            sourceLabel="洞察页转化"
+            sourceKey="insights_page"
+            contentMeta={{ contentType: 'insight', surfaceKey: 'insights_page' }}
+            title="看完行业或城市节奏，直接测自己的时间窗口"
+            description="公开洞察解决的是群体层理解，生日测算解决的是个人层决策。这里直接带入生日，下一步完成完整排盘。"
+          />
+        </section>
+
+        <section className="mt-12">
           <NewsletterSignup
             source="insights_page"
             title="订阅行业与城市洞察"
@@ -87,9 +100,20 @@ function TypeSection({ type }: { type: EntityInsightType }) {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
-          <Link
+          <ContentCardLink
             key={item.slug}
             href={`/insights/${item.type}/${item.slug}`}
+            page="/insights"
+            meta={{
+              surfaceKey: 'insights_page',
+              contentType: 'insight',
+              subtype: item.type,
+              slug: item.slug,
+              title: item.title,
+              name: item.name,
+              category: entityTypeLabels[type],
+              tags: item.tags,
+            }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
@@ -99,7 +123,7 @@ function TypeSection({ type }: { type: EntityInsightType }) {
               查看洞察
               <ArrowRight className="h-4 w-4" />
             </div>
-          </Link>
+          </ContentCardLink>
         ))}
       </div>
     </section>

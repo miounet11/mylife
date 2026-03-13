@@ -34,6 +34,7 @@ export interface ManagedContentEntry {
   sections: ContentSection[];
   status: ContentStatus;
   source: string;
+  meta?: Record<string, unknown>;
   createdBy: string | null;
   updatedBy: string | null;
   createdAt: string;
@@ -58,6 +59,7 @@ function mapRow(row: any): ManagedContentEntry {
     sections: row.sections ? JSON.parse(row.sections) : [],
     status: row.status || 'published',
     source: row.source || 'cms',
+    meta: row.meta ? JSON.parse(row.meta) : {},
     createdBy: row.created_by || null,
     updatedBy: row.updated_by || null,
     createdAt: row.created_at,
@@ -263,6 +265,7 @@ export function saveManagedContentEntry(
     ...input,
     id: input.id || `content_${generateId()}`,
     source: input.source || 'cms',
+    meta: input.meta || {},
   };
 
   const existing = db.prepare(`SELECT id FROM content_entries WHERE id = ?`).get(payload.id) as { id: string } | undefined;
@@ -272,7 +275,7 @@ export function saveManagedContentEntry(
       UPDATE content_entries
       SET content_type = ?, subtype = ?, slug = ?, title = ?, name = ?, excerpt = ?, category = ?,
           read_time = ?, tags = ?, featured = ?, seo_title = ?, seo_description = ?, sections = ?,
-          status = ?, updated_by = ?, updated_at = datetime('now')
+          status = ?, source = ?, meta = ?, updated_by = ?, updated_at = datetime('now')
       WHERE id = ?
     `).run(
       payload.contentType,
@@ -289,6 +292,8 @@ export function saveManagedContentEntry(
       payload.seoDescription,
       JSON.stringify(payload.sections),
       payload.status,
+      payload.source,
+      JSON.stringify(payload.meta),
       userId,
       payload.id
     );
@@ -296,8 +301,8 @@ export function saveManagedContentEntry(
     db.prepare(`
       INSERT INTO content_entries (
         id, content_type, subtype, slug, title, name, excerpt, category, read_time,
-        tags, featured, seo_title, seo_description, sections, status, source, created_by, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        tags, featured, seo_title, seo_description, sections, status, source, meta, created_by, updated_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       payload.id,
       payload.contentType,
@@ -315,6 +320,7 @@ export function saveManagedContentEntry(
       JSON.stringify(payload.sections),
       payload.status,
       payload.source,
+      JSON.stringify(payload.meta),
       userId,
       userId
     );

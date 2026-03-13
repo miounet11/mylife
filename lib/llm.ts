@@ -1,4 +1,11 @@
 import OpenAI from 'openai';
+import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
+import {
+  computeAttemptTimeouts,
+  getDynamicModelExecutionPlan,
+  recordModelAttempt,
+  summarizeModelExecutionPlan,
+} from '@/lib/llm-provider-health';
 
 const getApiBaseUrl = () => {
   return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
@@ -13,8 +20,7 @@ const normalizeApiKey = (value?: string | null) => {
 const getApiKey = () => {
   return (
     normalizeApiKey(process.env.OPENAI_API_KEY) ||
-    normalizeApiKey(process.env.API_KEY) ||
-    'sk-xIeEQPnwggytALqDumo8Ef1KZWbgefs2HAuxL85kvAHX7Kvf'
+    normalizeApiKey(process.env.API_KEY)
   );
 };
 
@@ -139,36 +145,96 @@ JSON结构必须完全符合以下定义：
 `;
 
   try {
-    const model = getDefaultModel();
-    console.log(`[LLM] Calling API at ${getApiBaseUrl()} with model ${model}`);
-    
-    const completion = await openai.chat.completions.create({
-      model: model, 
-      messages: [
-        { role: "system", content: "你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。你必须充分利用提供的神煞信息和大运数据进行精准解析，不得忽略任何神煞的吉凶影响。只输出合法的JSON，不含任何markdown标记。" },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.7,
-    }, {
-      signal: controller.signal,
-      timeout: timeoutMs,
-      maxRetries: 0,
-    });
+    const baseChain = getModelFallbackChain(getDefaultModel());
+    const plan = getDynamicModelExecutionPlan(baseChain, 'report');
+    const modelCandidates = plan.orderedModels;
+    const planSummary = summarizeModelExecutionPlan(plan);
+    const attemptTimeouts = computeAttemptTimeouts(timeoutMs, modelCandidates.length);
+    const deadlineAt = Date.now() + timeoutMs;
+    console.log(
+      `[LLM] Calling API at ${getApiBaseUrl()} with planner ${planSummary.label} ` +
+      `(base=${formatModelAttemptLabel(baseChain)})`
+    );
 
-    const responseText = completion.choices[0].message.content;
-    if (!responseText) return null;
-    
-    // Clean up response if it contains markdown JSON blocks
-    
-    let cleanedText = responseText.trim();
-    
-    // Attempt to extract JSON if it's wrapped in markdown or other text
-    const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      cleanedText = jsonMatch[0];
+    let lastError: unknown = null;
+
+    for (const [index, model] of modelCandidates.entries()) {
+      const remainingBudget = deadlineAt - Date.now();
+      if (remainingBudget < 900) {
+        break;
+      }
+
+      const attemptController = new AbortController();
+      const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
+      const attemptTimeoutId = setTimeout(() => attemptController.abort(), attemptTimeoutMs);
+      const startedAt = Date.now();
+      try {
+        const completion = await openai.chat.completions.create({
+          model,
+          messages: [
+            { role: 'system', content: '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。你必须充分利用提供的神煞信息和大运数据进行精准解析，不得忽略任何神煞的吉凶影响。只输出合法的JSON，不含任何markdown标记。' },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+        }, {
+          signal: attemptController.signal,
+          timeout: attemptTimeoutMs,
+          maxRetries: 0,
+        });
+
+        const responseText = completion.choices[0].message.content;
+        if (!responseText) {
+          lastError = new Error(`EMPTY_CONTENT:${model}`);
+          console.error(`[LLM] Model ${model} returned empty content`);
+          recordModelAttempt({
+            model,
+            scope: 'report',
+            success: false,
+            latencyMs: Date.now() - startedAt,
+            errorType: 'empty',
+            traceLabel: 'report:main',
+          });
+          continue;
+        }
+
+        let cleanedText = responseText.trim();
+        const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          cleanedText = jsonMatch[0];
+        }
+
+        const parsed = JSON.parse(cleanedText);
+        recordModelAttempt({
+          model,
+          scope: 'report',
+          success: true,
+          latencyMs: Date.now() - startedAt,
+          traceLabel: 'report:main',
+        });
+        if (model !== modelCandidates[0]) {
+          console.warn(`[LLM] Model fallback succeeded with ${model}`);
+        }
+        return parsed;
+      } catch (error) {
+        lastError = error;
+        const message = error instanceof Error ? error.message : String(error);
+        recordModelAttempt({
+          model,
+          scope: 'report',
+          success: false,
+          latencyMs: Date.now() - startedAt,
+          errorType: error instanceof Error ? error.name || 'error' : 'error',
+          traceLabel: 'report:main',
+        });
+        console.error(`[LLM] Model ${model} failed: ${message}`);
+      } finally {
+        clearTimeout(attemptTimeoutId);
+      }
     }
-    
-    return JSON.parse(cleanedText);
+
+    console.error(`[LLM] All model attempts failed: ${formatModelAttemptLabel(modelCandidates)}`);
+    if (lastError) return null;
+    return null;
 
   } catch (error) {
     if (error instanceof Error) {

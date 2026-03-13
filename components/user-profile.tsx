@@ -43,10 +43,10 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
 
   return (
     <div className="soft-card overflow-hidden rounded-[2rem]">
-      <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(15,118,110,0.10),rgba(201,125,58,0.10))] p-6 md:p-8">
+      <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(178,149,93,0.12),rgba(208,160,106,0.12))] p-6 md:p-8">
         <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-2xl font-bold text-white shadow-[0_16px_30px_rgba(15,118,110,0.25)]">
+            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-2xl font-bold text-white shadow-[0_16px_30px_rgba(178,149,93,0.26)]">
               {displayName?.charAt(0) || '用'}
             </div>
             <div>

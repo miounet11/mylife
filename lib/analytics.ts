@@ -7,6 +7,14 @@ export type AnalyticsEventName =
   | 'analyze_page_viewed'
   | 'chat_page_viewed'
   | 'events_page_viewed'
+  | 'knowledge_page_viewed'
+  | 'knowledge_article_viewed'
+  | 'cases_page_viewed'
+  | 'case_article_viewed'
+  | 'insights_page_viewed'
+  | 'insight_article_viewed'
+  | 'content_card_clicked'
+  | 'content_quick_analyze_started'
   | 'analyze_submitted'
   | 'report_generated'
   | 'report_viewed'
@@ -23,7 +31,9 @@ export type AnalyticsEventName =
   | 'report_event_saved_from_result'
   | 'event_feedback_recorded'
   | 'event_updated'
-  | 'event_deleted';
+  | 'event_deleted'
+  | 'llm_model_attempt'
+  | 'llm_model_circuit_changed';
 
 interface TrackEventInput {
   userId?: string | null;

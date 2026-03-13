@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowRight, CalendarClock, Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {
@@ -178,34 +179,71 @@ export default function HomePage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               {featuredCases.map((item) => (
-                <Link key={item.slug} href={`/cases/${item.slug}`} className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+                <ContentCardLink
+                  key={item.slug}
+                  href={`/cases/${item.slug}`}
+                  page="/"
+                  meta={{
+                    surfaceKey: 'home_featured_content',
+                    contentType: 'case',
+                    slug: item.slug,
+                    title: item.title,
+                    category: item.scenario,
+                    tags: item.tags,
+                  }}
+                  className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
+                >
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                   <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
                   <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</p>
-                </Link>
+                </ContentCardLink>
               ))}
 
               {featuredArticles.map((item) => (
-                <Link key={item.slug} href={`/knowledge/${item.slug}`} className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+                <ContentCardLink
+                  key={item.slug}
+                  href={`/knowledge/${item.slug}`}
+                  page="/"
+                  meta={{
+                    surfaceKey: 'home_featured_content',
+                    contentType: 'knowledge',
+                    slug: item.slug,
+                    title: item.title,
+                    category: item.category,
+                    tags: item.tags,
+                  }}
+                  className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
+                >
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
                   <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
                   <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</p>
-                </Link>
+                </ContentCardLink>
               ))}
             </div>
           </div>
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {featuredInsights.map((item) => (
-              <Link
+              <ContentCardLink
                 key={`${item.type}-${item.slug}`}
                 href={`/insights/${item.type}/${item.slug}`}
+                page="/"
+                meta={{
+                  surfaceKey: 'home_featured_content',
+                  contentType: 'insight',
+                  subtype: item.type,
+                  slug: item.slug,
+                  title: item.title,
+                  name: item.name,
+                  category: getEntityTypeLabel(item.type),
+                  tags: item.tags,
+                }}
                 className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{getEntityTypeLabel(item.type)}</div>
                 <div className="mt-3 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
                 <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</p>
-              </Link>
+              </ContentCardLink>
             ))}
           </div>
         </section>

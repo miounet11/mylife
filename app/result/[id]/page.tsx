@@ -136,6 +136,12 @@ async function getResult(reportId: string) {
       };
       orchestration?: {
         mode?: 'single-llm' | 'deterministic-expert' | 'parallel-agents';
+        totalLlmCalls?: number;
+        successRate?: number;
+        succeeded?: string[];
+        failed?: string[];
+        errors?: Array<{ key: string; error: string }>;
+        agentSources?: Record<string, 'llm' | 'fallback'>;
       };
       verify?: {
         consistencyScore?: number;
@@ -193,6 +199,8 @@ async function getResult(reportId: string) {
         reasoningMode: analysis.reasoningMode,
         agenticUsed: analysis.agenticUsed ?? false,
         orchestrationMode: analysis.orchestration?.mode,
+        orchestrationSuccessRate: analysis.orchestration?.successRate,
+        successfulAgents: analysis.orchestration?.succeeded,
         agentResults: analysis.agentResults,
         contextSignals: analysis.contextSignals,
         verifyVerdict: analysis.verify?.verdict,
@@ -203,6 +211,7 @@ async function getResult(reportId: string) {
         report: fortuneData.reportVersion || 'v1',
       },
       verify: analysis.verify,
+      orchestration: analysis.orchestration,
       loop: analysis.loop as Record<string, unknown> | undefined,
       contextSignals: analysis.contextSignals,
       agentResults: analysis.agentResults,
@@ -363,7 +372,7 @@ export default async function ResultPage({ params }: PageProps) {
         <section className="mb-10 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
           <div className="glass-panel relative overflow-hidden rounded-[2.25rem] p-6 md:p-8">
             <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,var(--accent),var(--warm),#d97706)]" />
-            <div className="absolute -right-12 top-8 h-44 w-44 rounded-full bg-[rgba(15,118,110,0.12)] blur-3xl" />
+            <div className="absolute -right-12 top-8 h-44 w-44 rounded-full bg-[rgba(178,149,93,0.16)] blur-3xl" />
             <div className="absolute left-8 top-24 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.16)] blur-3xl" />
 
             <div className="relative">
@@ -403,7 +412,7 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
 
               <div className="mt-6 grid gap-3 md:grid-cols-[1.08fr_0.92fr]">
-              <div className="rounded-[1.5rem] bg-[rgba(15,118,110,0.08)] px-4 py-4">
+              <div className="rounded-[1.5rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">首屏结论</div>
                   <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
                     {result.pattern?.type || '命局结构'}是当前核心判断，
@@ -466,6 +475,7 @@ export default async function ResultPage({ params }: PageProps) {
               upgradedFromVersion={result.upgradedFromVersion}
               engineBuilds={result.engineBuilds || ENGINE_BUILD_VERSIONS}
               enhancementNotes={result.enhancementNotes || []}
+              orchestration={result.orchestration}
             />
 
             {reportActions.map((item) => {

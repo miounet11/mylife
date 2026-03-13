@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -37,9 +40,49 @@ export default async function InsightDetailPage({ params }: PageProps) {
   const related = getEntityInsightsByType(insight.type as EntityInsightType)
     .filter((item) => item.slug !== insight.slug)
     .slice(0, 2);
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: insight.seoTitle,
+    description: insight.seoDescription,
+    articleSection: entityTypeLabels[insight.type],
+    keywords: insight.tags.join(', '),
+    mainEntityOfPage: `https://www.life-kline.com/insights/${insight.type}/${insight.slug}`,
+    url: `https://www.life-kline.com/insights/${insight.type}/${insight.slug}`,
+    author: {
+      '@type': 'Organization',
+      name: '人生K线',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '人生K线',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.life-kline.com/icon.svg',
+      },
+    },
+  };
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView
+        eventName="insight_article_viewed"
+        page={`/insights/${insight.type}/${insight.slug}`}
+        meta={{
+          surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+          contentType: 'insight',
+          subtype: insight.type,
+          slug: insight.slug,
+          title: insight.title,
+          name: insight.name,
+          category: entityTypeLabels[insight.type],
+          tags: insight.tags,
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -75,19 +118,48 @@ export default async function InsightDetailPage({ params }: PageProps) {
           </article>
 
           <div className="space-y-5">
+            <ContentQuickAnalyzePanel
+              sourceLabel="洞察页就近测算"
+              sourceKey={`insight_article:${insight.type}:${insight.slug}`}
+              contentMeta={{
+                contentType: 'insight',
+                subtype: insight.type,
+                surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                slug: insight.slug,
+                title: insight.title,
+                name: insight.name,
+                category: entityTypeLabels[insight.type],
+                tags: insight.tags,
+              }}
+              title="群体洞察看完，直接看你自己的时间点"
+              description="行业、城市、组织节奏只是外部环境层。把生日带入分析页，才能看到个人命局和当前窗口怎样与这些外部周期叠加。"
+            />
+
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">继续阅读</div>
               <div className="mt-4 space-y-4">
                 {related.length > 0 ? (
                   related.map((item) => (
-                    <Link
+                    <ContentCardLink
                       key={item.slug}
                       href={`/insights/${item.type}/${item.slug}`}
+                      page={`/insights/${insight.type}/${insight.slug}`}
+                      meta={{
+                        surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                        targetSurfaceKey: `insight_article:${item.type}:${item.slug}`,
+                        contentType: 'insight',
+                        subtype: item.type,
+                        slug: item.slug,
+                        title: item.title,
+                        name: item.name,
+                        category: entityTypeLabels[item.type],
+                        tags: item.tags,
+                      }}
                       className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</div>
-                    </Link>
+                    </ContentCardLink>
                   ))
                 ) : (
                   <p className="text-sm leading-7 text-[color:var(--muted)]">

@@ -237,7 +237,7 @@ export default function BirthDateInput({
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] bg-[rgba(15,118,110,0.08)] px-4 py-3">
+      <div className="rounded-[1.5rem] bg-[color:var(--accent-soft)] px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
           <CheckCircle2 className="h-4 w-4" />
           已识别日期

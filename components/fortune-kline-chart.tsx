@@ -37,7 +37,7 @@ const defaultData: FortuneData[] = [
 ];
 
 const series = [
-  { key: 'career', label: '事业', color: '#0f766e' },
+  { key: 'career', label: '事业', color: '#b2955d' },
   { key: 'wealth', label: '财富', color: '#0284c7' },
   { key: 'marriage', label: '关系', color: '#e11d48' },
   { key: 'health', label: '健康', color: '#d97706' },

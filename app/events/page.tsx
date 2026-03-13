@@ -602,7 +602,7 @@ export default function EventsPage() {
 
             <button
               onClick={openCreateForm}
-              className="inline-flex items-center space-x-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(15,118,110,0.22)]"
+              className="inline-flex items-center space-x-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(178,149,93,0.24)]"
             >
               <Plus className="w-4 h-4" />
               <span>添加事件</span>

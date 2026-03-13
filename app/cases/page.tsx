@@ -1,5 +1,7 @@
-import Link from 'next/link';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { getCaseStudies } from '@/lib/content-store';
@@ -15,6 +17,7 @@ export default function CasesPage() {
   const caseStudies = getCaseStudies();
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="cases_page_viewed" page="/cases" meta={{ surfaceKey: 'cases_page', contentType: 'case' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -44,7 +47,20 @@ export default function CasesPage() {
 
         <section className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {caseStudies.map((item) => (
-            <Link key={item.slug} href={`/cases/${item.slug}`} className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5">
+            <ContentCardLink
+              key={item.slug}
+              href={`/cases/${item.slug}`}
+              page="/cases"
+              meta={{
+                surfaceKey: 'cases_page',
+                contentType: 'case',
+                slug: item.slug,
+                title: item.title,
+                category: item.scenario,
+                tags: item.tags,
+              }}
+              className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
               <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
               <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</p>
@@ -52,8 +68,18 @@ export default function CasesPage() {
                 查看案例
                 <ArrowRight className="h-4 w-4" />
               </div>
-            </Link>
+            </ContentCardLink>
           ))}
+        </section>
+
+        <section className="mt-12">
+          <ContentQuickAnalyzePanel
+            sourceLabel="案例页转化"
+            sourceKey="cases_page"
+            contentMeta={{ contentType: 'case', surfaceKey: 'cases_page' }}
+            title="案例看完，马上测自己的命盘和阶段"
+            description="案例负责证明产品能解决真实问题，真正的用户转化不该再绕回首页。这里就可以直接带着生日进入分析。"
+          />
         </section>
       </main>
 
