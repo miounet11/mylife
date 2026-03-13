@@ -137,6 +137,7 @@ export async function POST(request: NextRequest) {
         reportId,
         llmUsed,
         reportVersion: CURRENT_REPORT_VERSION,
+        reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
         useSolarTime: !!data.useSolarTime,
         useDaylightSaving: !!data.useDaylightSaving,
         useSeparateZiHour: !!data.useSeparateZiHour,
@@ -152,6 +153,7 @@ export async function POST(request: NextRequest) {
         reportId,
         llmUsed,
         reportVersion: CURRENT_REPORT_VERSION,
+        reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
         pattern: finalResult.pattern?.type || '',
       },
     });

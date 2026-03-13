@@ -3,9 +3,15 @@ import type { AnalyticsEventRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
 export type AnalyticsEventName =
+  | 'home_page_viewed'
+  | 'analyze_page_viewed'
+  | 'chat_page_viewed'
+  | 'events_page_viewed'
   | 'analyze_submitted'
   | 'report_generated'
   | 'report_viewed'
+  | 'report_upgrade_requested'
+  | 'result_cta_clicked'
   | 'auth_code_requested'
   | 'auth_verified'
   | 'newsletter_subscribed'

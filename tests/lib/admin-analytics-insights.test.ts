@@ -30,6 +30,20 @@ const snapshot = {
     { version: 'v2', count: 80, share: 67 },
     { version: 'v1', count: 40, share: 33 },
   ],
+  journeyFunnel: [
+    { key: 'report_viewed', label: '打开结果页', count: 20 },
+    { key: 'chat_message_sent', label: '发送聊天消息', count: 5 },
+    { key: 'report_event_saved_from_result', label: '结果页沉淀事件', count: 1 },
+  ],
+  reasoningModeBreakdown: [
+    { mode: 'deterministic-expert', count: 60, share: 50 },
+    { mode: 'parallel-agents', count: 40, share: 33 },
+    { mode: 'engine', count: 20, share: 17 },
+  ],
+  chatActionBreakdown: [
+    { action: 'ask', label: '直接提问', count: 40, share: 80 },
+    { action: 'regenerate', label: '重生成回答', count: 10, share: 20 },
+  ],
 };
 
 describe('admin analytics insights', () => {
@@ -38,6 +52,7 @@ describe('admin analytics insights', () => {
 
     expect(insight.headline).toContain('验证结果回收');
     expect(insight.summary).toContain('命中率');
+    expect(insight.summary).toContain('主力推理层');
     expect(insight.priorities.length).toBeGreaterThan(1);
     expect(insight.risks[0]).toContain('偏差事件');
   });

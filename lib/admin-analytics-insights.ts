@@ -30,6 +30,22 @@ export interface AdminAnalyticsSnapshot {
     count: number;
     share: number;
   }>;
+  journeyFunnel?: Array<{
+    key: string;
+    label: string;
+    count: number;
+  }>;
+  reasoningModeBreakdown?: Array<{
+    mode: string;
+    count: number;
+    share: number;
+  }>;
+  chatActionBreakdown?: Array<{
+    action: string;
+    label: string;
+    count: number;
+    share: number;
+  }>;
 }
 
 export interface AdminOperatingInsight {
@@ -53,6 +69,13 @@ export function buildAdminOperatingInsight(snapshot: AdminAnalyticsSnapshot): Ad
     : 0;
   const topDriftReason = snapshot.driftReasonBreakdown[0];
   const topVersion = snapshot.reportVersionBreakdown[0];
+  const resultViews = snapshot.journeyFunnel?.find((item) => item.key === 'report_viewed')?.count || 0;
+  const chatTurns = snapshot.journeyFunnel?.find((item) => item.key === 'chat_message_sent')?.count || 0;
+  const resultEventSaves = snapshot.journeyFunnel?.find((item) => item.key === 'report_event_saved_from_result')?.count || 0;
+  const topReasoningMode = snapshot.reasoningModeBreakdown?.[0];
+  const topChatAction = snapshot.chatActionBreakdown?.[0];
+  const viewToChatRate = resultViews > 0 ? Math.round((chatTurns / resultViews) * 100) : 0;
+  const chatToEventRate = chatTurns > 0 ? Math.round((resultEventSaves / chatTurns) * 100) : 0;
 
   let headline = '当前经营状态以继续验证样本、扩大闭环为主。';
   if (snapshot.pendingValidationBuckets.overdue >= 5) {
@@ -61,6 +84,8 @@ export function buildAdminOperatingInsight(snapshot: AdminAnalyticsSnapshot): Ad
     headline = '当前已经积累出足够的偏差样本，应该优先把纠偏链路做深。';
   } else if (accuracyRate >= 70 && snapshot.totals.result_report_linked_events >= 10) {
     headline = '当前闭环健康度不错，可以继续放大报告到事件的转化。';
+  } else if (resultViews >= 10 && viewToChatRate < 35) {
+    headline = '结果页被看到了，但用户还没有足够顺滑地继续进入聊天或事件闭环。';
   }
 
   return {
@@ -69,6 +94,8 @@ export function buildAdminOperatingInsight(snapshot: AdminAnalyticsSnapshot): Ad
       validatedTotal > 0 ? `已回收验证结果 ${validatedTotal} 个，当前命中率 ${accuracyRate}%。` : '当前还没有足够多的验证样本。',
       topDriftReason ? `最常见偏差原因是“${topDriftReason.label}”。` : '',
       topVersion ? `目前主力报告版本为 ${topVersion.version}。` : '',
+      topReasoningMode ? `当前主力推理层为 ${mapReasoningModeLabel(topReasoningMode.mode)}。` : '',
+      topChatAction ? `聊天里最常见的动作是“${topChatAction.label}”。` : '',
     ].filter(Boolean).join(' '),
     priorities: [
       snapshot.pendingValidationBuckets.overdue > 0 ? `先回收 ${snapshot.pendingValidationBuckets.overdue} 个已过期待验证事件。` : '',
@@ -79,13 +106,27 @@ export function buildAdminOperatingInsight(snapshot: AdminAnalyticsSnapshot): Ad
       snapshot.totals.chat_sourced_events < Math.max(5, Math.round(snapshot.totals.total_events * 0.2))
         ? '继续提高聊天结论存事件的比例，让 AI 真正进入闭环。'
         : '',
+      resultViews > 0 && viewToChatRate < 35
+        ? `结果页到聊天的转化仅 ${viewToChatRate}%，需要继续压缩用户从看报告到继续深问的阻力。`
+        : '',
+      chatTurns > 0 && chatToEventRate < 15
+        ? `聊天到事件沉淀的转化仅 ${chatToEventRate}%，需要继续强化“存为事件”和验证引导。`
+        : '',
     ].filter(Boolean).slice(0, 4),
     risks: [
       snapshot.pendingValidationBuckets.driftNeedsNotes > 0 ? `${snapshot.pendingValidationBuckets.driftNeedsNotes} 个偏差事件还没备注原因，后续很难做结构化纠偏。` : '',
       topDriftReason && topDriftReason.share >= 40 ? `偏差高度集中在“${topDriftReason.label}”，说明当前引擎或引导在这个环节还有系统性短板。` : '',
       topVersion && topVersion.version === 'v1' && topVersion.share >= 30 ? '仍有较多旧版报告在流通，会影响用户体验一致性。' : '',
+      topReasoningMode && topReasoningMode.mode === 'engine' && topReasoningMode.share >= 30 ? '仍有较多报告停留在基础引擎层，专家层覆盖度还不够。' : '',
     ].filter(Boolean).slice(0, 3),
   };
+}
+
+function mapReasoningModeLabel(mode: string) {
+  if (mode === 'parallel-agents') return '并发 Agent';
+  if (mode === 'deterministic-expert') return 'Deterministic 专家层';
+  if (mode === 'engine') return '基础引擎';
+  return mode;
 }
 
 export function buildAdminActionItems(snapshot: AdminAnalyticsSnapshot): AdminActionItem[] {

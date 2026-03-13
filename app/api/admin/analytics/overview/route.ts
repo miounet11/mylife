@@ -22,12 +22,18 @@ export async function GET() {
         pendingValidationBuckets: overview.pendingValidationBuckets,
         driftReasonBreakdown: overview.driftReasonBreakdown,
         reportVersionBreakdown: overview.reportVersionBreakdown,
+        journeyFunnel: overview.journeyFunnel,
+        reasoningModeBreakdown: overview.reasoningModeBreakdown,
+        chatActionBreakdown: overview.chatActionBreakdown,
       }),
       actionItems: buildAdminActionItems({
         totals: overview.totals,
         pendingValidationBuckets: overview.pendingValidationBuckets,
         driftReasonBreakdown: overview.driftReasonBreakdown,
         reportVersionBreakdown: overview.reportVersionBreakdown,
+        journeyFunnel: overview.journeyFunnel,
+        reasoningModeBreakdown: overview.reasoningModeBreakdown,
+        chatActionBreakdown: overview.chatActionBreakdown,
       }),
     };
 

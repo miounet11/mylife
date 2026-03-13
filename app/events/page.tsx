@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, Clock3, Filter, Grid, Plus, Search, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 
@@ -379,6 +380,7 @@ export default function EventsPage() {
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="events_page_viewed" page="/events" meta={{ focusedReportId: focusedReportId || null }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
 
       <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">

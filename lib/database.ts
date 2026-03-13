@@ -672,6 +672,10 @@ export const analyticsOperations = {
       analyses_last_7d: number;
       tracked_events_last_7d: number;
     };
+    const analyticsRows = db.prepare(`
+      SELECT * FROM analytics_events
+      ORDER BY created_at DESC
+    `).all() as RawAnalyticsEventRow[];
 
     const eventRows = db.prepare(`
       SELECT id, type, title, date, time, fortune_analysis, user_feedback
@@ -700,6 +704,29 @@ export const analyticsOperations = {
     const nowTime = Date.now();
     const sourceBuckets: Record<string, { source: string; total: number; accurate: number; drift: number; pending: number }> = {};
     const driftReasonBuckets: Record<string, { key: DriftReasonKey; label: string; count: number; examples: string[] }> = {};
+    const pageViewBuckets: Record<string, { page: string; count: number }> = {};
+    const ctaBuckets: Record<string, { key: string; label: string; count: number }> = {};
+    const chatActionBuckets: Record<string, { action: string; label: string; count: number }> = {};
+    const analyzeOptionBuckets: Record<string, { key: string; label: string; count: number }> = {
+      useSolarTime: { key: 'useSolarTime', label: '启用真太阳时', count: 0 },
+      useDaylightSaving: { key: 'useDaylightSaving', label: '启用夏令时修正', count: 0 },
+      useSeparateZiHour: { key: 'useSeparateZiHour', label: '启用子时分日', count: 0 },
+      defaultClock: { key: 'defaultClock', label: '默认钟表时入口', count: 0 },
+    };
+    const reasoningModeBuckets: Record<string, { mode: string; count: number }> = {};
+    const journeyCounts: Record<string, { key: string; label: string; count: number }> = {
+      home_page_viewed: { key: 'home_page_viewed', label: '首页访问', count: 0 },
+      analyze_page_viewed: { key: 'analyze_page_viewed', label: '分析页访问', count: 0 },
+      analyze_submitted: { key: 'analyze_submitted', label: '提交测算', count: 0 },
+      report_generated: { key: 'report_generated', label: '生成报告', count: 0 },
+      report_viewed: { key: 'report_viewed', label: '打开结果页', count: 0 },
+      chat_page_viewed: { key: 'chat_page_viewed', label: '聊天页访问', count: 0 },
+      chat_message_sent: { key: 'chat_message_sent', label: '发送聊天消息', count: 0 },
+      report_event_saved_from_result: { key: 'report_event_saved_from_result', label: '结果页沉淀事件', count: 0 },
+      event_feedback_recorded: { key: 'event_feedback_recorded', label: '回填验证结果', count: 0 },
+      newsletter_subscribed: { key: 'newsletter_subscribed', label: '邮件订阅', count: 0 },
+      auth_verified: { key: 'auth_verified', label: '完成邮箱验证', count: 0 },
+    };
     const pendingValidationBuckets = {
       overdue: 0,
       upcoming: 0,
@@ -797,10 +824,102 @@ export const analyticsOperations = {
       }
     }
 
+    for (const row of analyticsRows) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const eventName = row.event_name;
+
+      if (journeyCounts[eventName]) {
+        journeyCounts[eventName].count += 1;
+      }
+
+      if (eventName.endsWith('_page_viewed') || eventName === 'report_viewed') {
+        const pageKey = row.page || eventName;
+        if (!pageViewBuckets[pageKey]) {
+          pageViewBuckets[pageKey] = {
+            page: pageKey,
+            count: 0,
+          };
+        }
+        pageViewBuckets[pageKey].count += 1;
+      }
+
+      if (eventName === 'result_cta_clicked' || eventName === 'chat_followup_clicked' || eventName === 'report_upgrade_requested') {
+        const rawTarget = typeof meta.target === 'string' ? meta.target : eventName === 'chat_followup_clicked' ? 'chat_followup' : eventName;
+        const label = rawTarget === 'chat'
+          ? '结果页进入聊天'
+          : rawTarget === 'events'
+            ? '结果页进入事件中心'
+            : rawTarget === 'chat_followup'
+              ? '聊天追问按钮'
+              : '报告升级重算';
+        if (!ctaBuckets[rawTarget]) {
+          ctaBuckets[rawTarget] = {
+            key: rawTarget,
+            label,
+            count: 0,
+          };
+        }
+        ctaBuckets[rawTarget].count += 1;
+      }
+
+      if (eventName === 'chat_message_sent') {
+        const action = typeof meta.action === 'string' ? meta.action : 'ask';
+        const label = action === 'edit'
+          ? '编辑后重提'
+          : action === 'regenerate'
+            ? '重生成回答'
+            : action === 'delete'
+              ? '删除消息'
+              : '直接提问';
+        if (!chatActionBuckets[action]) {
+          chatActionBuckets[action] = {
+            action,
+            label,
+            count: 0,
+          };
+        }
+        chatActionBuckets[action].count += 1;
+      }
+
+      if (eventName === 'analyze_submitted') {
+        const useSolarTime = meta.useSolarTime === true;
+        const useDaylightSaving = meta.useDaylightSaving === true;
+        const useSeparateZiHour = meta.useSeparateZiHour === true;
+        if (useSolarTime) {
+          analyzeOptionBuckets.useSolarTime.count += 1;
+        } else {
+          analyzeOptionBuckets.defaultClock.count += 1;
+        }
+        if (useDaylightSaving) {
+          analyzeOptionBuckets.useDaylightSaving.count += 1;
+        }
+        if (useSeparateZiHour) {
+          analyzeOptionBuckets.useSeparateZiHour.count += 1;
+        }
+      }
+
+      if (eventName === 'report_generated' || eventName === 'report_viewed' || eventName === 'report_upgrade_requested') {
+        const mode = typeof meta.reasoningMode === 'string' ? meta.reasoningMode : '';
+        if (mode) {
+          if (!reasoningModeBuckets[mode]) {
+            reasoningModeBuckets[mode] = {
+              mode,
+              count: 0,
+            };
+          }
+          reasoningModeBuckets[mode].count += 1;
+        }
+      }
+    }
+
     const eventsLast7d = analyticsOperations.countByEventNameSinceDays(7).map((item) => ({
       eventName: item.event_name,
       count: item.count,
     }));
+    const totalPageViews = Object.values(pageViewBuckets).reduce((sum, item) => sum + item.count, 0);
+    const totalAnalyzeSubmissions = journeyCounts.analyze_submitted.count || 0;
+    const totalChatActions = Object.values(chatActionBuckets).reduce((sum, item) => sum + item.count, 0);
+    const totalReasoningModeCount = Object.values(reasoningModeBuckets).reduce((sum, item) => sum + item.count, 0);
 
     return {
       totals: {
@@ -833,6 +952,33 @@ export const analyticsOperations = {
         count: item.count,
         share: totals.total_analyses > 0 ? Math.round((item.count / totals.total_analyses) * 100) : 0,
       })),
+      pageViewBreakdown: Object.values(pageViewBuckets)
+        .map((item) => ({
+          ...item,
+          share: totalPageViews > 0 ? Math.round((item.count / totalPageViews) * 100) : 0,
+        }))
+        .sort((left, right) => right.count - left.count),
+      ctaBreakdown: Object.values(ctaBuckets)
+        .sort((left, right) => right.count - left.count),
+      chatActionBreakdown: Object.values(chatActionBuckets)
+        .map((item) => ({
+          ...item,
+          share: totalChatActions > 0 ? Math.round((item.count / totalChatActions) * 100) : 0,
+        }))
+        .sort((left, right) => right.count - left.count),
+      analyzeOptionBreakdown: Object.values(analyzeOptionBuckets)
+        .map((item) => ({
+          ...item,
+          share: totalAnalyzeSubmissions > 0 ? Math.round((item.count / totalAnalyzeSubmissions) * 100) : 0,
+        }))
+        .sort((left, right) => right.count - left.count),
+      reasoningModeBreakdown: Object.values(reasoningModeBuckets)
+        .map((item) => ({
+          ...item,
+          share: totalReasoningModeCount > 0 ? Math.round((item.count / totalReasoningModeCount) * 100) : 0,
+        }))
+        .sort((left, right) => right.count - left.count),
+      journeyFunnel: Object.values(journeyCounts),
       eventsLast7d,
       recentEvents: analyticsOperations.listRecent(12),
     };

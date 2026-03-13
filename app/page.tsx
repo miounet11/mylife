@@ -4,6 +4,7 @@ export const revalidate = 0;
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { ArrowRight, CalendarClock, Compass, ShieldCheck, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {
@@ -54,6 +55,7 @@ export default function HomePage() {
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="home_page_viewed" page="/" meta={{ surface: 'landing' }} />
       <SiteHeader ctaHref="#analysis-form" ctaLabel="立即测算" />
 
       <main>

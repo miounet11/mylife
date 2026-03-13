@@ -34,6 +34,12 @@ export default async function AdminAnalyticsPage() {
     pendingValidationBuckets,
     followupQueue,
     reportVersionBreakdown,
+    journeyFunnel,
+    pageViewBreakdown,
+    ctaBreakdown,
+    analyzeOptionBreakdown,
+    reasoningModeBreakdown,
+    chatActionBreakdown,
   } = overview;
   const validatedTotal = totals.validation_accurate + totals.validation_drift;
   const validationAccuracyRate = validatedTotal > 0 ? Math.round((totals.validation_accurate / validatedTotal) * 100) : 0;
@@ -43,12 +49,18 @@ export default async function AdminAnalyticsPage() {
     pendingValidationBuckets,
     driftReasonBreakdown,
     reportVersionBreakdown,
+    journeyFunnel,
+    reasoningModeBreakdown,
+    chatActionBreakdown,
   });
   const actionItems = buildAdminActionItems({
     totals,
     pendingValidationBuckets,
     driftReasonBreakdown,
     reportVersionBreakdown,
+    journeyFunnel,
+    reasoningModeBreakdown,
+    chatActionBreakdown,
   });
 
   return (
@@ -160,18 +172,78 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">核心漏斗</div>
+            <div className="mt-5 grid gap-3">
+              {journeyFunnel.length > 0 ? journeyFunnel.map((item) => (
+                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                    <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有漏斗数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
             <div className="text-sm font-semibold text-[color:var(--muted)]">近 7 日关键行为</div>
             <div className="mt-5 grid gap-3">
               {eventsLast7d.length > 0 ? eventsLast7d.map((item) => (
                 <div key={item.eventName} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.eventName}</div>
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
                   </div>
                 </div>
               )) : (
                 <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
                   当前还没有近 7 日埋点数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">页面访问结构</div>
+            <div className="mt-5 grid gap-3">
+              {pageViewBreakdown.length > 0 ? pageViewBreakdown.map((item) => (
+                <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{mapPageLabel(item.page)}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                      <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有页面访问数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">分析入口偏好</div>
+            <div className="mt-5 grid gap-3">
+              {analyzeOptionBreakdown.length > 0 ? analyzeOptionBreakdown.map((item) => (
+                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                      <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有分析入口偏好数据。
                 </div>
               )}
             </div>
@@ -196,6 +268,66 @@ export default async function AdminAnalyticsPage() {
               )) : (
                 <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
                   当前还没有事件来源验证数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">推理层覆盖</div>
+            <div className="mt-5 grid gap-3">
+              {reasoningModeBreakdown.length > 0 ? reasoningModeBreakdown.map((item) => (
+                <div key={item.mode} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReasoningModeLabel(item.mode)}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                      <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有推理层覆盖数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">聊天动作结构</div>
+            <div className="mt-5 grid gap-3">
+              {chatActionBreakdown.length > 0 ? chatActionBreakdown.map((item) => (
+                <div key={item.action} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                    <div className="text-right">
+                      <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                      <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
+                    </div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有聊天动作结构数据。
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="text-sm font-semibold text-[color:var(--muted)]">结果页 CTA 表现</div>
+            <div className="mt-5 grid gap-3">
+              {ctaBreakdown.length > 0 ? ctaBreakdown.map((item) => (
+                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                    <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                  </div>
+                </div>
+              )) : (
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  当前还没有结果页 CTA 数据。
                 </div>
               )}
             </div>
@@ -289,7 +421,7 @@ export default async function AdminAnalyticsPage() {
               {recentEvents.length > 0 ? recentEvents.map((item) => (
                 <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.eventName}</div>
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
                     <div className="text-xs text-[color:var(--muted)]">{item.createdAt || '-'}</div>
                   </div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">{item.page || '未记录页面'}</div>
@@ -313,6 +445,49 @@ function mapSourceLabel(source: string) {
   if (source === 'result_report') return '结果页沉淀';
   if (source === 'chat_message') return '聊天沉淀';
   return '手动创建';
+}
+
+function mapAnalyticsEventLabel(eventName: string) {
+  const labels: Record<string, string> = {
+    home_page_viewed: '首页访问',
+    analyze_page_viewed: '分析页访问',
+    chat_page_viewed: '聊天页访问',
+    events_page_viewed: '事件页访问',
+    analyze_submitted: '提交测算',
+    report_generated: '生成报告',
+    report_viewed: '打开结果页',
+    report_upgrade_requested: '升级重算',
+    result_cta_clicked: '结果页 CTA',
+    auth_code_requested: '请求验证码',
+    auth_verified: '完成邮箱验证',
+    newsletter_subscribed: '邮件订阅',
+    chat_message_sent: '聊天动作',
+    chat_context_loaded: '加载聊天上下文',
+    chat_followup_clicked: '点击追问',
+    chat_event_saved: '聊天转事件',
+    event_created: '创建事件',
+    report_event_saved_from_result: '结果页转事件',
+    event_feedback_recorded: '记录验证反馈',
+    event_updated: '更新事件',
+    event_deleted: '删除事件',
+  };
+  return labels[eventName] || eventName;
+}
+
+function mapPageLabel(page: string) {
+  if (page === '/') return '首页';
+  if (page === '/analyze') return '分析页';
+  if (page === '/chat') return '聊天页';
+  if (page === '/events') return '事件页';
+  if (page.startsWith('/result/')) return '结果页';
+  return page;
+}
+
+function mapReasoningModeLabel(mode: string) {
+  if (mode === 'parallel-agents') return '并发 Agent';
+  if (mode === 'deterministic-expert') return 'Deterministic 专家层';
+  if (mode === 'engine') return '基础引擎';
+  return mode;
 }
 
 function QueueMetric({ label, value, tone }: { label: string; value: number; tone: string }) {

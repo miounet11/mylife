@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
         reportId,
         llmUsed: !!llmResult,
         reportVersion: REPORT_VERSION,
+        reasoningMode: 'engine',
       },
     });
 
@@ -96,6 +97,7 @@ export async function POST(request: NextRequest) {
         reportId,
         llmUsed: !!llmResult,
         reportVersion: REPORT_VERSION,
+        reasoningMode: 'engine',
         pattern: finalResult.pattern?.type || '',
       },
     });

@@ -1,35 +1,26 @@
 'use client';
 
 import { useEffect } from 'react';
+import type { AnalyticsEventName } from '@/lib/analytics';
+import { trackClientEvent } from '@/lib/analytics-client';
 
 interface AnalyticsPageViewProps {
-  eventName: 'report_viewed';
+  eventName: AnalyticsEventName;
   page: string;
   meta?: Record<string, unknown>;
 }
 
 export default function AnalyticsPageView({ eventName, page, meta = {} }: AnalyticsPageViewProps) {
+  const metaKey = JSON.stringify(meta);
+
   useEffect(() => {
-    const controller = new AbortController();
-
-    fetch('/api/analytics/track', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        eventName,
-        page,
-        meta,
-      }),
-      signal: controller.signal,
-      keepalive: true,
-    }).catch(() => {
-      // Page view analytics should never interrupt the page.
+    const parsedMeta = JSON.parse(metaKey) as Record<string, unknown>;
+    void trackClientEvent({
+      eventName,
+      page,
+      meta: parsedMeta,
     });
-
-    return () => controller.abort();
-  }, [eventName, page, meta]);
+  }, [eventName, page, metaKey]);
 
   return null;
 }
