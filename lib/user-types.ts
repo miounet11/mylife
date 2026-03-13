@@ -440,6 +440,13 @@ export interface FortuneAnalysisResult {
       totalLlmCalls?: number;
       durationMs?: number;
       successRate?: number;
+      succeeded?: string[];
+      failed?: string[];
+      errors?: Array<{
+        key: string;
+        error: string;
+      }>;
+      agentSources?: Record<string, 'llm' | 'fallback'>;
     };
     verify?: {
       consistencyScore?: number;
@@ -606,6 +613,46 @@ export interface AnalyticsEventRecord {
   sessionId?: string;
   eventName: string;
   page?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface ContentSignalRecord {
+  id: string;
+  sourceId: string;
+  sourceLabel: string;
+  platform: string;
+  title: string;
+  url: string;
+  author?: string;
+  summary?: string;
+  publishedAt?: string;
+  matchedKeywords?: string[];
+  score?: number;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface ContentRadarRunRecord {
+  id: string;
+  sourceId: string;
+  sourceLabel: string;
+  platform: string;
+  status: 'success' | 'error';
+  fetchedCount?: number;
+  savedCount?: number;
+  error?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface ContentSchedulerRunRecord {
+  id: string;
+  trigger: 'cron' | 'manual';
+  status: 'success' | 'skipped' | 'error';
+  reason?: string;
+  generatedCount?: number;
+  publishedCount?: number;
   meta?: Record<string, unknown>;
   createdAt?: string;
 }

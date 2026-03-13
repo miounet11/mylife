@@ -146,6 +146,14 @@ type ReportResult = {
     verdict?: 'PASS' | 'WARN' | 'FAIL';
     failedRules?: string[];
   };
+  orchestration?: {
+    totalLlmCalls?: number;
+    successRate?: number;
+    succeeded?: string[];
+    failed?: string[];
+    errors?: Array<{ key: string; error: string }>;
+    agentSources?: Record<string, 'llm' | 'fallback'>;
+  };
   loop?: {
     review?: {
       conflicts?: Array<{ id?: string; type?: string; severity?: string; explanation?: string }>;
@@ -525,6 +533,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <AgenticInsightPanel
             agenticUsed={result.agenticUsed || analysis.agenticUsed}
             reasoningMode={reasoningMode}
+            orchestration={result.orchestration}
             verify={result.verify}
             loop={result.loop}
             agentResults={result.agentResults}

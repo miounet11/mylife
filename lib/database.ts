@@ -1,7 +1,16 @@
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
 import path from 'path';
-import type { UserRecord, FortuneRecord, EventRecord, QuestionRecord, AnalyticsEventRecord } from './user-types';
+import type {
+  UserRecord,
+  FortuneRecord,
+  EventRecord,
+  QuestionRecord,
+  AnalyticsEventRecord,
+  ContentSignalRecord,
+  ContentRadarRunRecord,
+  ContentSchedulerRunRecord,
+} from './user-types';
 
 interface RawFortuneRow {
   id: string;
@@ -33,6 +42,46 @@ interface RawAnalyticsEventRow {
   session_id?: string | null;
   event_name: string;
   page?: string | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
+interface RawContentSignalRow {
+  id: string;
+  source_id: string;
+  source_label: string;
+  platform: string;
+  title: string;
+  url: string;
+  author?: string | null;
+  summary?: string | null;
+  published_at?: string | null;
+  matched_keywords?: string | null;
+  score?: number | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
+interface RawContentRadarRunRow {
+  id: string;
+  source_id: string;
+  source_label: string;
+  platform: string;
+  status: 'success' | 'error';
+  fetched_count?: number | null;
+  saved_count?: number | null;
+  error?: string | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
+interface RawContentSchedulerRunRow {
+  id: string;
+  trigger: 'cron' | 'manual';
+  status: 'success' | 'skipped' | 'error';
+  reason?: string | null;
+  generated_count?: number | null;
+  published_count?: number | null;
   meta?: string | null;
   created_at?: string;
 }
@@ -157,6 +206,52 @@ function mapAnalyticsEventRow(row: RawAnalyticsEventRow): AnalyticsEventRecord {
     sessionId: row.session_id || undefined,
     eventName: row.event_name,
     page: row.page || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapContentSignalRow(row: RawContentSignalRow): ContentSignalRecord {
+  return {
+    id: row.id,
+    sourceId: row.source_id,
+    sourceLabel: row.source_label,
+    platform: row.platform,
+    title: row.title,
+    url: row.url,
+    author: row.author || undefined,
+    summary: row.summary || undefined,
+    publishedAt: row.published_at || undefined,
+    matchedKeywords: parseJson(row.matched_keywords, []),
+    score: row.score || 0,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapContentRadarRunRow(row: RawContentRadarRunRow): ContentRadarRunRecord {
+  return {
+    id: row.id,
+    sourceId: row.source_id,
+    sourceLabel: row.source_label,
+    platform: row.platform,
+    status: row.status,
+    fetchedCount: row.fetched_count || 0,
+    savedCount: row.saved_count || 0,
+    error: row.error || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapContentSchedulerRunRow(row: RawContentSchedulerRunRow): ContentSchedulerRunRecord {
+  return {
+    id: row.id,
+    trigger: row.trigger,
+    status: row.status,
+    reason: row.reason || undefined,
+    generatedCount: row.generated_count || 0,
+    publishedCount: row.published_count || 0,
     meta: parseJson(row.meta, {}),
     createdAt: row.created_at,
   };
@@ -438,12 +533,18 @@ export function initializeDatabase() {
       sections JSON NOT NULL,
       status TEXT DEFAULT 'published',
       source TEXT DEFAULT 'cms',
+      meta JSON,
       created_by TEXT,
       updated_by TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  const contentEntryColumns = db.prepare(`PRAGMA table_info(content_entries)`).all() as Array<{ name: string }>;
+  if (!contentEntryColumns.some((column) => column.name === 'meta')) {
+    db.exec(`ALTER TABLE content_entries ADD COLUMN meta JSON`);
+  }
 
   db.exec(`
     CREATE TABLE IF NOT EXISTS analytics_events (
@@ -452,6 +553,53 @@ export function initializeDatabase() {
       session_id TEXT,
       event_name TEXT NOT NULL,
       page TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS content_signals (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL,
+      source_label TEXT NOT NULL,
+      platform TEXT NOT NULL,
+      title TEXT NOT NULL,
+      url TEXT NOT NULL,
+      author TEXT,
+      summary TEXT,
+      published_at TEXT,
+      matched_keywords JSON,
+      score INTEGER DEFAULT 0,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(source_id, url)
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS content_radar_runs (
+      id TEXT PRIMARY KEY,
+      source_id TEXT NOT NULL,
+      source_label TEXT NOT NULL,
+      platform TEXT NOT NULL,
+      status TEXT NOT NULL,
+      fetched_count INTEGER DEFAULT 0,
+      saved_count INTEGER DEFAULT 0,
+      error TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS content_scheduler_runs (
+      id TEXT PRIMARY KEY,
+      trigger TEXT NOT NULL,
+      status TEXT NOT NULL,
+      reason TEXT,
+      generated_count INTEGER DEFAULT 0,
+      published_count INTEGER DEFAULT 0,
       meta JSON,
       created_at TEXT DEFAULT (datetime('now'))
     )
@@ -473,6 +621,11 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(event_name);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+    CREATE INDEX IF NOT EXISTS idx_content_signals_source_id ON content_signals(source_id);
+    CREATE INDEX IF NOT EXISTS idx_content_signals_created_at ON content_signals(created_at);
+    CREATE INDEX IF NOT EXISTS idx_content_radar_runs_source_id ON content_radar_runs(source_id);
+    CREATE INDEX IF NOT EXISTS idx_content_radar_runs_created_at ON content_radar_runs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_content_scheduler_runs_created_at ON content_scheduler_runs(created_at);
   `);
 }
 
@@ -651,6 +804,11 @@ export const analyticsOperations = {
     return stmt.all(`-${days} days`) as Array<{ event_name: string; count: number }>;
   },
 
+  rawQuery: (sql: string, params: Array<string | number | null> = []) => {
+    const stmt = db.prepare(sql);
+    return stmt.all(...params);
+  },
+
   getOverview: () => {
     const totals = db.prepare(`
       SELECT
@@ -714,6 +872,16 @@ export const analyticsOperations = {
       defaultClock: { key: 'defaultClock', label: '默认钟表时入口', count: 0 },
     };
     const reasoningModeBuckets: Record<string, { mode: string; count: number }> = {};
+    const llmModelBuckets: Record<string, {
+      model: string;
+      attempts: number;
+      successes: number;
+      failures: number;
+      totalLatencyMs: number;
+      currentState: string;
+      reopenAt?: string;
+      scopes: Record<string, number>;
+    }> = {};
     const journeyCounts: Record<string, { key: string; label: string; count: number }> = {
       home_page_viewed: { key: 'home_page_viewed', label: '首页访问', count: 0 },
       analyze_page_viewed: { key: 'analyze_page_viewed', label: '分析页访问', count: 0 },
@@ -910,6 +1078,51 @@ export const analyticsOperations = {
           reasoningModeBuckets[mode].count += 1;
         }
       }
+
+      if (eventName === 'llm_model_attempt') {
+        const model = typeof meta.model === 'string' ? meta.model : '';
+        if (model) {
+          if (!llmModelBuckets[model]) {
+            llmModelBuckets[model] = {
+              model,
+              attempts: 0,
+              successes: 0,
+              failures: 0,
+              totalLatencyMs: 0,
+              currentState: 'closed',
+              scopes: {},
+            };
+          }
+          const scope = typeof meta.scope === 'string' ? meta.scope : 'unknown';
+          llmModelBuckets[model].attempts += 1;
+          llmModelBuckets[model].totalLatencyMs += typeof meta.latencyMs === 'number' ? meta.latencyMs : 0;
+          llmModelBuckets[model].scopes[scope] = (llmModelBuckets[model].scopes[scope] || 0) + 1;
+          if (meta.success === true) {
+            llmModelBuckets[model].successes += 1;
+          } else {
+            llmModelBuckets[model].failures += 1;
+          }
+        }
+      }
+
+      if (eventName === 'llm_model_circuit_changed') {
+        const model = typeof meta.model === 'string' ? meta.model : '';
+        if (model) {
+          if (!llmModelBuckets[model]) {
+            llmModelBuckets[model] = {
+              model,
+              attempts: 0,
+              successes: 0,
+              failures: 0,
+              totalLatencyMs: 0,
+              currentState: 'closed',
+              scopes: {},
+            };
+          }
+          llmModelBuckets[model].currentState = typeof meta.state === 'string' ? meta.state : llmModelBuckets[model].currentState;
+          llmModelBuckets[model].reopenAt = typeof meta.reopenAt === 'string' ? meta.reopenAt : llmModelBuckets[model].reopenAt;
+        }
+      }
     }
 
     const eventsLast7d = analyticsOperations.countByEventNameSinceDays(7).map((item) => ({
@@ -978,10 +1191,150 @@ export const analyticsOperations = {
           share: totalReasoningModeCount > 0 ? Math.round((item.count / totalReasoningModeCount) * 100) : 0,
         }))
         .sort((left, right) => right.count - left.count),
+      modelHealthBreakdown: Object.values(llmModelBuckets)
+        .map((item) => ({
+          model: item.model,
+          attempts: item.attempts,
+          successes: item.successes,
+          failures: item.failures,
+          successRate: item.attempts > 0 ? Math.round((item.successes / item.attempts) * 100) : 0,
+          avgLatencyMs: item.attempts > 0 ? Math.round(item.totalLatencyMs / item.attempts) : 0,
+          currentState: item.currentState,
+          reopenAt: item.reopenAt,
+          scopes: item.scopes,
+        }))
+        .sort((left, right) => right.attempts - left.attempts),
       journeyFunnel: Object.values(journeyCounts),
       eventsLast7d,
       recentEvents: analyticsOperations.listRecent(12),
     };
+  },
+};
+
+export const contentSignalOperations = {
+  upsert: (signal: ContentSignalRecord) => {
+    const existing = db.prepare(`
+      SELECT id FROM content_signals WHERE source_id = ? AND url = ? LIMIT 1
+    `).get(signal.sourceId, signal.url) as { id: string } | undefined;
+
+    if (existing) {
+      return db.prepare(`
+        UPDATE content_signals
+        SET source_label = ?, platform = ?, title = ?, author = ?, summary = ?, published_at = ?,
+            matched_keywords = ?, score = ?, meta = ?, created_at = datetime('now')
+        WHERE source_id = ? AND url = ?
+      `).run(
+        signal.sourceLabel,
+        signal.platform,
+        signal.title,
+        signal.author || null,
+        signal.summary || null,
+        signal.publishedAt || null,
+        JSON.stringify(signal.matchedKeywords || []),
+        signal.score || 0,
+        JSON.stringify(signal.meta || {}),
+        signal.sourceId,
+        signal.url
+      );
+    }
+
+    return db.prepare(`
+      INSERT INTO content_signals (
+        id, source_id, source_label, platform, title, url, author, summary,
+        published_at, matched_keywords, score, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      signal.id,
+      signal.sourceId,
+      signal.sourceLabel,
+      signal.platform,
+      signal.title,
+      signal.url,
+      signal.author || null,
+      signal.summary || null,
+      signal.publishedAt || null,
+      JSON.stringify(signal.matchedKeywords || []),
+      signal.score || 0,
+      JSON.stringify(signal.meta || {})
+    );
+  },
+
+  listRecent: (limit = 50) => {
+    const rows = db.prepare(`
+      SELECT * FROM content_signals
+      ORDER BY datetime(created_at) DESC, score DESC
+      LIMIT ?
+    `).all(limit) as RawContentSignalRow[];
+
+    return rows.map(mapContentSignalRow);
+  },
+
+  getById: (id: string) => {
+    const row = db.prepare(`
+      SELECT * FROM content_signals
+      WHERE id = ?
+      LIMIT 1
+    `).get(id) as RawContentSignalRow | undefined;
+
+    return row ? mapContentSignalRow(row) : null;
+  },
+};
+
+export const contentRadarRunOperations = {
+  create: (run: ContentRadarRunRecord) => {
+    return db.prepare(`
+      INSERT INTO content_radar_runs (
+        id, source_id, source_label, platform, status, fetched_count, saved_count, error, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      run.id,
+      run.sourceId,
+      run.sourceLabel,
+      run.platform,
+      run.status,
+      run.fetchedCount || 0,
+      run.savedCount || 0,
+      run.error || null,
+      JSON.stringify(run.meta || {})
+    );
+  },
+
+  listRecent: (limit = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM content_radar_runs
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(limit) as RawContentRadarRunRow[];
+
+    return rows.map(mapContentRadarRunRow);
+  },
+};
+
+export const contentSchedulerRunOperations = {
+  create: (run: ContentSchedulerRunRecord) => {
+    return db.prepare(`
+      INSERT INTO content_scheduler_runs (
+        id, trigger, status, reason, generated_count, published_count, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      run.id,
+      run.trigger,
+      run.status,
+      run.reason || null,
+      run.generatedCount || 0,
+      run.publishedCount || 0,
+      JSON.stringify(run.meta || {})
+    );
+  },
+
+  listRecent: (limit = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM content_scheduler_runs
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(limit) as RawContentSchedulerRunRow[];
+
+    return rows.map(mapContentSchedulerRunRow);
   },
 };
 

@@ -4,9 +4,9 @@ import { generateFortuneInterpretation } from '@/lib/llm';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 
-const ANALYZE_LLM_TIMEOUT_MS = 3500;
-const ANALYZE_LLM_BUDGET_MS = 4000;
-const ENABLE_AGENTIC_PIPELINE = process.env.ENABLE_AGENTIC_PIPELINE === '1';
+const ANALYZE_LLM_TIMEOUT_MS = 9000;
+const ANALYZE_LLM_BUDGET_MS = 9500;
+const ENABLE_AGENTIC_PIPELINE = process.env.ENABLE_AGENTIC_PIPELINE !== '0';
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {
@@ -41,25 +41,26 @@ export async function generateVersionedReport(params: {
     { sect: params.sect || 2 }
   );
 
-  const { llmInterpretation, llmUsed } = await enhanceWithLLM(
-    baseResult as unknown as Record<string, unknown>
-  );
-  const agentic = await runAgenticPipeline({
-    enabled: ENABLE_AGENTIC_PIPELINE,
-    groundTruth: {
-      birthDate: params.birthDate,
-      report: baseResult,
-    },
-    context: {
-      birthDate: params.birthDate,
-      birthPlace: params.birthPlace,
-      currentPlace: params.birthPlace,
-      report: {
-        advice: baseResult.advice,
-        fortune: baseResult.fortune,
+  const [llmEnhancement, agentic] = await Promise.all([
+    enhanceWithLLM(baseResult as unknown as Record<string, unknown>),
+    runAgenticPipeline({
+      enabled: ENABLE_AGENTIC_PIPELINE,
+      groundTruth: {
+        birthDate: params.birthDate,
+        report: baseResult,
       },
-    },
-  });
+      context: {
+        birthDate: params.birthDate,
+        birthPlace: params.birthPlace,
+        currentPlace: params.birthPlace,
+        report: {
+          advice: baseResult.advice,
+          fortune: baseResult.fortune,
+        },
+      },
+    }),
+  ]);
+  const { llmInterpretation, llmUsed } = llmEnhancement;
 
   const merged = mergeLLMResult(baseResult, llmInterpretation, {
     llmUsed,
@@ -142,9 +143,15 @@ function mergeLLMResult(
   const temporalAgent = readAgentData(agentResults, 'temporal_spatial_advisor');
   const klineAgent = readAgentData(agentResults, 'kline_narrative');
   const coreAgent = readAgentData(agentResults, 'core_constitution');
+  const agenticUsed = meta.agentic.used || ((meta.agentic.orchestration.successRate || 0) > 0);
+  const agentSuccessCount = meta.agentic.orchestration.succeeded?.length || 0;
+  const agentFailureCount = meta.agentic.orchestration.failed?.length || 0;
   const reasoningMode = deriveReportReasoningMode({
-    agenticUsed: meta.agentic.enabled,
+    reasoningMode: meta.agentic.orchestration.mode,
+    agenticUsed,
     orchestrationMode: meta.agentic.orchestration.mode,
+    orchestrationSuccessRate: meta.agentic.orchestration.successRate,
+    successfulAgents: meta.agentic.orchestration.succeeded,
     agentResults: meta.agentic.agentResults as Record<string, unknown>,
     contextSignals: meta.agentic.context.context as unknown as Record<string, unknown>,
     verifyVerdict: meta.agentic.verify.verdict,
@@ -198,7 +205,7 @@ function mergeLLMResult(
   merged.analysis = {
     ...merged.analysis,
     llmUsed: meta.llmUsed,
-    agenticUsed: meta.agentic.enabled,
+    agenticUsed,
     reasoningMode,
     pipelineVersion: CURRENT_REPORT_VERSION,
     generatedFrom: meta.source,
@@ -227,8 +234,10 @@ function mergeLLMResult(
         ? `解析文本已由 ${ENGINE_BUILD_VERSIONS.llm} 做深度增强。`
         : '本次未获取到 LLM 深度增强，当前由结构化引擎与 deterministic 专家层共同生成正文。',
       `人生 K 线与趋势判断按 ${ENGINE_BUILD_VERSIONS.kline} 版本生成。`,
-      meta.agentic.enabled
-        ? `已启用并发 Agent 与 ${ENGINE_BUILD_VERSIONS.reviewer} 一致性校验。`
+      meta.agentic.enabled && agenticUsed
+        ? `并发 Agent 已实际参与主报告生成，成功 ${agentSuccessCount} 个，失败 ${agentFailureCount} 个，并经过 ${ENGINE_BUILD_VERSIONS.reviewer} 一致性校验。`
+        : meta.agentic.enabled
+        ? `本次已尝试并发 Agent，但上游模型未在时限内稳定返回，当前正文未采用 Agent 的实时 LLM 输出，仅保留 deterministic 专家层与一致性校验结果。`
         : '当前采用 deterministic 专家层、天地人上下文补强与一致性校验闭环。',
     ],
   };

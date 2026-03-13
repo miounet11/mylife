@@ -2,6 +2,9 @@
 
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
+import ContentAutomationPanel from '@/components/content-automation-panel';
+import ContentGenerationPanel from '@/components/content-generation-panel';
+import ContentRadarPanel from '@/components/content-radar-panel';
 
 type ContentType = 'knowledge' | 'case' | 'insight';
 type ContentStatus = 'draft' | 'published';
@@ -207,79 +210,107 @@ export default function ContentAdminConsole() {
     }
   };
 
-  return (
-    <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-      <div className="space-y-5">
-        <div className="glass-panel rounded-[2rem] p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="text-sm font-semibold text-[color:var(--muted)]">内容列表</div>
-              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">{entries.length} 条</div>
-            </div>
-            <select
-              value={filter}
-              onChange={(event) => setFilter(event.target.value as 'all' | ContentType)}
-              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
-            >
-              <option value="all">全部类型</option>
-              <option value="knowledge">知识库</option>
-              <option value="case">案例库</option>
-              <option value="insight">洞察中心</option>
-            </select>
-          </div>
-        </div>
+  const handleGenerated = async (generatedEntries: ContentEntry[], summary: string) => {
+    setError('');
+    setMessage(summary);
+    if (generatedEntries[0]) {
+      setForm(toForm(generatedEntries[0]));
+    }
+    await loadEntries();
+  };
 
-        <div className="space-y-3">
-          {loading ? (
-            <div className="soft-card rounded-[1.75rem] p-6 text-sm text-[color:var(--muted)]">内容加载中...</div>
-          ) : (
-            filteredEntries.map((entry) => (
-              <div key={entry.id} className="soft-card rounded-[1.75rem] p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
-                      {entry.contentType} · {entry.status} · {entry.source}
+  return (
+    <div className="space-y-6">
+      <ContentRadarPanel onAutomationCompleted={async (summary) => {
+        setMessage(summary);
+        setError('');
+        await loadEntries();
+      }} onContentGenerated={async (summary) => {
+        setMessage(summary);
+        setError('');
+        await loadEntries();
+      }} />
+
+      <ContentAutomationPanel onCompleted={async (summary) => {
+        setMessage(summary);
+        setError('');
+        await loadEntries();
+      }} />
+
+      <ContentGenerationPanel onGenerated={handleGenerated} />
+
+      <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
+        <div className="space-y-5">
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">内容列表</div>
+                <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">{entries.length} 条</div>
+              </div>
+              <select
+                value={filter}
+                onChange={(event) => setFilter(event.target.value as 'all' | ContentType)}
+                className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
+              >
+                <option value="all">全部类型</option>
+                <option value="knowledge">知识库</option>
+                <option value="case">案例库</option>
+                <option value="insight">洞察中心</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {loading ? (
+              <div className="soft-card rounded-[1.75rem] p-6 text-sm text-[color:var(--muted)]">内容加载中...</div>
+            ) : (
+              filteredEntries.map((entry) => (
+                <div key={entry.id} className="soft-card rounded-[1.75rem] p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
+                        {entry.contentType} · {entry.status} · {entry.source}
+                      </div>
+                      <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{entry.title}</div>
+                      <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">{entry.slug}</div>
                     </div>
-                    <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{entry.title}</div>
-                    <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">{entry.slug}</div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setForm(toForm(entry))}
-                      className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--ink)]"
-                    >
-                      编辑
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => remove(entry.id)}
-                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700"
-                    >
-                      删除
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setForm(toForm(entry))}
+                        className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-semibold text-[color:var(--ink)]"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(entry.id)}
+                        className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700"
+                      >
+                        删除
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
-      <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="text-sm font-semibold text-[color:var(--muted)]">编辑器</div>
-            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">{form.id ? '编辑内容' : '新建内容'}</div>
+              ))
+            )}
           </div>
-          <button
-            type="button"
-            onClick={() => setForm(emptyForm)}
-            className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
-          >
-            新建
-          </button>
         </div>
+
+        <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">编辑器</div>
+              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">{form.id ? '编辑内容' : '新建内容'}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(emptyForm)}
+              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+            >
+              新建
+            </button>
+          </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <Field label="内容类型">
@@ -382,6 +413,7 @@ export default function ContentAdminConsole() {
         >
           {saving ? '保存中...' : form.id ? '更新内容' : '创建内容'}
         </button>
+        </div>
       </div>
     </div>
   );

@@ -184,7 +184,7 @@ function EventRow({
           {(event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {event.fortuneAnalysis?.reason && (
-                <div className="rounded-2xl bg-[rgba(15,118,110,0.05)] px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div className="rounded-2xl bg-[rgba(178,149,93,0.08)] px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
                   {event.fortuneAnalysis.reason}
                 </div>
               )}

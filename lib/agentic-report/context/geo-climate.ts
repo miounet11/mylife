@@ -14,16 +14,19 @@ export function getGeoClimateSignals(params: {
   favoredElements?: string[];
   avoidedElements?: string[];
 }): GeoClimateSignals {
+  const birthPlace = normalizePlaceName(params.birthPlace);
+  const currentPlace = normalizePlaceName(params.currentPlace);
+  const targetPlaces = (params.targetPlaces || []).map((place) => normalizePlaceName(place)).filter(Boolean) as string[];
   const tags = [
-    ...inferPlaceTags(params.birthPlace),
-    ...inferPlaceTags(params.currentPlace),
-    ...(params.targetPlaces || []).flatMap((place) => inferPlaceTags(place)),
+    ...inferPlaceTags(birthPlace),
+    ...inferPlaceTags(currentPlace),
+    ...targetPlaces.flatMap((place) => inferPlaceTags(place)),
   ];
 
   return {
-    birthPlace: params.birthPlace,
-    currentPlace: params.currentPlace,
-    targetPlaces: params.targetPlaces || [],
+    birthPlace,
+    currentPlace,
+    targetPlaces,
     climateBias: inferClimateBias(params.favoredElements || [], params.avoidedElements || []),
     geographyPreference: inferGeographyPreference(params.favoredElements || []),
     cityEnergyTags: [...new Set(tags)],
@@ -68,4 +71,25 @@ function inferPlaceTags(place?: string) {
   if (/(青岛|大连|天津)/.test(place)) tags.push('北方沿海', '制造与港口属性');
 
   return tags.length ? tags : ['城市标签待补充'];
+}
+
+function normalizePlaceName(place?: string) {
+  const cleaned = `${place || ''}`
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned || cleaned === '--') {
+    return undefined;
+  }
+
+  const parts = cleaned
+    .split(' ')
+    .map((item) => item.trim())
+    .filter((item) => item && item !== '--' && item !== '北京时间' && item !== '未知地');
+
+  if (parts.length === 0) {
+    return undefined;
+  }
+
+  return [...new Set(parts)].join(' ');
 }

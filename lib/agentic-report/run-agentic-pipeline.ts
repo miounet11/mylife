@@ -21,7 +21,7 @@ export async function runAgenticPipeline(params: {
     context: params.context,
   });
 
-  if (!params.enabled) {
+  if (params.enabled === false) {
     const fallbackResults = buildFallbackAgentResults(context, [...(params.agentKeys || CORE_AGENT_KEYS)]);
     const review = runReview(context, fallbackResults);
     const repair = runRepair(fallbackResults, review);
@@ -29,6 +29,7 @@ export async function runAgenticPipeline(params: {
 
     return {
       enabled: false,
+      used: false,
       context,
       agentResults: repair.repairedResults,
       review,
@@ -41,6 +42,10 @@ export async function runAgenticPipeline(params: {
         totalLlmCalls: 0,
         durationMs: 0,
         successRate: 1,
+        succeeded: [],
+        failed: [],
+        errors: [],
+        agentSources: Object.fromEntries(Object.keys(fallbackResults).map((key) => [key, 'fallback'])),
       },
     };
   }
@@ -51,7 +56,7 @@ export async function runAgenticPipeline(params: {
   const tasks = keys.map((key) => ({
     key,
     input: context,
-    timeoutMs: 2500,
+    timeoutMs: 7000,
     execute: async () => {
       const prompt = buildAgentPrompt(key, context);
       llmCalls += 1;
@@ -59,7 +64,9 @@ export async function runAgenticPipeline(params: {
         system: prompt.system,
         user: prompt.user,
         temperature: prompt.temperature,
-        timeoutMs: 2200,
+        timeoutMs: 6500,
+        traceLabel: `agent:${key}`,
+        scope: 'agent',
       });
       if (!result) {
         throw new Error(`AGENT_EMPTY_RESULT:${key}`);
@@ -75,13 +82,18 @@ export async function runAgenticPipeline(params: {
     ...fallbackResults,
     ...merged.merged,
   };
+  const agentSources = Object.fromEntries(
+    keys.map((key) => [key, run.results[key]?.ok ? 'llm' : 'fallback'])
+  ) as Record<string, 'llm' | 'fallback'>;
   const review = runReview(context, hydratedResults);
   const repair = runRepair(hydratedResults, review);
   const verify = runVerify(context, repair.repairedResults);
   const durationMs = Date.now() - startedAt;
+  const used = merged.successRate > 0;
 
   return {
     enabled: true,
+    used,
     context,
     agentResults: repair.repairedResults,
     review,
@@ -94,6 +106,10 @@ export async function runAgenticPipeline(params: {
       totalLlmCalls: llmCalls,
       durationMs,
       successRate: merged.successRate,
+      succeeded: run.succeeded,
+      failed: run.failed,
+      errors: merged.errors,
+      agentSources,
     },
   };
 }

@@ -90,6 +90,25 @@ export function padPart(value: number | string) {
   return String(value).padStart(2, '0');
 }
 
+function compactAddressSegments(addressData: string[]) {
+  const result: string[] = [];
+
+  for (const rawSegment of addressData) {
+    const segment = `${rawSegment || ''}`.trim();
+    if (!segment || segment === '--') {
+      continue;
+    }
+
+    if (result[result.length - 1] === segment) {
+      continue;
+    }
+
+    result.push(segment);
+  }
+
+  return result;
+}
+
 export function toDateTimeString(year: number, month: number, day: number, hour: number, minute: number) {
   return `${year}-${padPart(month)}-${padPart(day)} ${padPart(hour)}:${padPart(minute)}`;
 }
@@ -135,9 +154,25 @@ export function formatBirthLabel(info: Pick<PaipanInfoData, 'birthday' | 'lunarA
 }
 
 export function formatAddressLabel(addressData: string[]) {
-  if (addressData.length === 2 && addressData[0] === addressData[1]) {
-    return addressData[0];
+  const segments = compactAddressSegments(addressData);
+
+  if (!segments.length) {
+    return '未知地';
   }
 
-  return addressData.join(' ');
+  if (segments.length === 2 && segments[0] === segments[1]) {
+    return segments[0];
+  }
+
+  return segments.join(' ');
+}
+
+export function normalizeBirthPlaceLabel(addressData: string[]) {
+  const cleaned = compactAddressSegments(addressData).filter((item) => item !== '北京时间');
+
+  if (cleaned.length === 0 || cleaned[0] === '未知地') {
+    return '北京';
+  }
+
+  return [...new Set(cleaned)].join(' ');
 }

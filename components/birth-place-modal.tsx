@@ -65,12 +65,43 @@ const TABS: Array<{ id: 0 | 1; label: string }> = [
   { id: 1, label: '海外' },
 ];
 
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function highlightText(text: string, keyword: string) {
   if (!keyword) {
     return text;
   }
 
-  return text.replace(new RegExp(keyword, 'gi'), (match) => `<span style="color:#b2955d">${match}</span>`);
+  return text.replace(new RegExp(escapeRegExp(keyword), 'gi'), (match) => `<span style="color:#b2955d">${match}</span>`);
+}
+
+function compactPath(parts: Array<string | undefined>) {
+  const result: string[] = [];
+
+  for (const rawPart of parts) {
+    const part = `${rawPart || ''}`.trim();
+    if (!part || part === '--') {
+      continue;
+    }
+
+    if (result[result.length - 1] === part) {
+      continue;
+    }
+
+    result.push(part);
+  }
+
+  return result;
+}
+
+function formatDomesticSearchLabel(province: string, city: string, district: string) {
+  return compactPath([province, city, district]).join(' - ');
+}
+
+function formatDomesticCityLabel(province: string, city: string) {
+  return city === province ? '全市' : city;
 }
 
 function buildDomesticTree(): DomesticProvince[] {
@@ -207,8 +238,8 @@ export default function BirthPlaceModal({
     [domesticTree]
   );
   const domesticCityOptions = useMemo<PickerWheelOption[]>(
-    () => domesticCities.map((item) => ({ value: item.text, label: item.text })),
-    [domesticCities]
+    () => domesticCities.map((item) => ({ value: item.text, label: formatDomesticCityLabel(domesticProvince.text, item.text) })),
+    [domesticCities, domesticProvince.text]
   );
   const domesticDistrictOptions = useMemo<PickerWheelOption[]>(
     () => domesticDistricts.map((item) => ({ value: item.text, label: item.text })),
@@ -246,7 +277,7 @@ export default function BirthPlaceModal({
             if (!matched) {
               return;
             }
-            const text = `${province.text} - ${city.text} - ${district.text}`;
+            const text = formatDomesticSearchLabel(province.text, city.text, district.text);
             nextResults.push({
               text,
               htmlText: highlightText(text, keyword),
@@ -352,15 +383,15 @@ export default function BirthPlaceModal({
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[20px] bg-white p-[17px] text-[#101010]"
+          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="relative flex h-[53px] items-center justify-center">
-            <button type="button" onClick={onClose} className="absolute right-0 p-1 text-[#7b7b7b]">
+            <button type="button" onClick={onClose} className="absolute right-0 p-1 text-[color:var(--muted)]">
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex rounded-full border border-[rgba(221,221,221,1)] text-[13px]">
+            <div className="flex rounded-full border border-[color:var(--line)] bg-white/80 text-[13px]">
               {TABS.map((item) => (
                 <button
                   key={item.id}
@@ -371,7 +402,7 @@ export default function BirthPlaceModal({
                     onTabChange(item.id);
                   }}
                   className={`flex h-[29px] w-[87px] items-center justify-center rounded-full ${
-                    activeTab === item.id ? 'bg-[#b2955d] text-white' : 'text-[#444444]'
+                    activeTab === item.id ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--ink)]'
                   }`}
                 >
                   {item.label}
@@ -381,32 +412,32 @@ export default function BirthPlaceModal({
           </div>
 
           <div className="relative flex items-center">
-            <Search className="pointer-events-none absolute left-3 z-10 h-4 w-4 text-[#9e9e9e]" />
+            <Search className="pointer-events-none absolute left-3 z-10 h-4 w-4 text-[color:var(--muted)] opacity-70" />
             <input
               value={searchValue}
               onChange={(event) => setSearchValue(event.target.value)}
               onFocus={() => setShowSearchPopover(true)}
               placeholder="搜索全国城市及地区"
-              className="h-[36px] flex-1 rounded-full border border-[rgba(187,187,187,0.5)] pl-9 pr-4 text-[14px] outline-none placeholder:text-[#9e9e9e]"
+              className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-white/86 pl-9 pr-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
             />
             {showSearchPopover ? (
               <button
                 type="button"
                 onClick={() => setShowSearchPopover(false)}
-                className="ml-3 whitespace-nowrap text-[14px] text-[#666666]"
+                className="ml-3 whitespace-nowrap text-[14px] text-[color:var(--muted)]"
               >
                 取消
               </button>
             ) : null}
 
             {showSearchPopover ? (
-              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto bg-white py-1 shadow-[0_18px_40px_rgba(16,16,16,0.08)]">
+              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto rounded-[14px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] py-1 shadow-[0_18px_40px_rgba(34,26,18,0.12)]">
                 {searchResults.map((item, index) => (
                   <button
                     key={`${item.text}-${index}`}
                     type="button"
                     onClick={() => handleSelectSearch(item)}
-                    className="block w-full px-4 py-3 text-left text-[15px] text-[#444444]"
+                    className="block w-full px-4 py-3 text-left text-[15px] text-[color:var(--ink)]"
                     disabled={item.disabled}
                     dangerouslySetInnerHTML={{ __html: item.htmlText }}
                   />
@@ -416,7 +447,7 @@ export default function BirthPlaceModal({
           </div>
 
           <div className="mt-[13px] w-full">
-            <div className="flex h-[40px] items-center justify-around border-t border-[rgba(233,233,233,0.6)] text-[14px] text-[#666666]">
+            <div className="flex h-[40px] items-center justify-around border-t border-[color:var(--line)] text-[14px] text-[color:var(--muted)]">
               {(activeTab === 0 ? ['省份', '城市', '区县'] : ['国家', '地区']).map((item) => (
                 <div key={item}>{item}</div>
               ))}
@@ -478,14 +509,14 @@ export default function BirthPlaceModal({
 
           <div className="relative z-10 mt-3 min-h-[30px] bg-white">
             {activeTab === 1 ? (
-              <div className="flex items-center justify-end gap-2 text-[14px] text-[#444444]">
+              <div className="flex items-center justify-end gap-2 text-[14px] text-[color:var(--ink)]">
                 <span>换算北京时间</span>
-                <span className="text-[10px] text-[#797979]">(默认关闭)</span>
+                <span className="text-[10px] text-[color:var(--muted)]">(默认关闭)</span>
                 <button
                   type="button"
                   onClick={() => setIsBeijingTime((current) => !current)}
                   className={`relative h-[24px] w-[46px] rounded-full transition ${
-                    isBeijingTime ? 'bg-[#b2955d]' : 'bg-[#d6d6d6]'
+                    isBeijingTime ? 'bg-[color:var(--accent)]' : 'bg-[color:var(--accent-soft)]'
                   }`}
                 >
                   <span
@@ -501,13 +532,13 @@ export default function BirthPlaceModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="mt-4 flex h-[54px] w-full items-center justify-center rounded-full bg-[#101010] font-serif text-[18px] font-bold text-[#f7d3a1]"
+            className="mt-4 flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
           >
             确定
           </button>
 
           {activeTab === 1 ? (
-            <div className="mt-[10px] text-[12px] text-[#525252]">目前仅支持北半球国家</div>
+            <div className="mt-[10px] text-[12px] text-[color:var(--muted)]">目前仅支持北半球国家</div>
           ) : null}
         </div>
       </div>

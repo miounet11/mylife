@@ -8,6 +8,13 @@ import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
 import { buildChatExperienceContext } from '@/lib/chat-context';
+import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
+import {
+  computeAttemptTimeouts,
+  getDynamicModelExecutionPlan,
+  recordModelAttempt,
+  summarizeModelExecutionPlan,
+} from '@/lib/llm-provider-health';
 
 // 设置 API 路由超时为 30 秒
 export const maxDuration = 30;
@@ -54,8 +61,7 @@ const normalizeApiKey = (value?: string | null) => {
 const getApiKey = () => {
   return (
     normalizeApiKey(process.env.OPENAI_API_KEY) ||
-    normalizeApiKey(process.env.API_KEY) ||
-    'sk-xIeEQPnwggytALqDumo8Ef1KZWbgefs2HAuxL85kvAHX7Kvf'
+    normalizeApiKey(process.env.API_KEY)
   );
 };
 
@@ -98,23 +104,85 @@ async function generateAIResponse(
   ];
 
   try {
-    const completion = await openai.chat.completions.create({
-      model: getDefaultModel(),
-      messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
-      temperature: 0.7,
-    });
+    const baseChain = getModelFallbackChain(getDefaultModel());
+    const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
+    const modelCandidates = plan.orderedModels;
+    const planSummary = summarizeModelExecutionPlan(plan);
+    const attemptTimeouts = computeAttemptTimeouts(9000, modelCandidates.length);
+    const deadlineAt = Date.now() + 9000;
+    console.log(
+      `[LLM Chat] planner ${planSummary.label} ` +
+      `(base=${formatModelAttemptLabel(baseChain)})`
+    );
 
-    const content = completion.choices[0].message.content?.trim();
-    if (!content) {
-      return {
-        answer: '当前回复生成不完整，请稍后重试，或围绕更具体的报告板块继续追问。',
-        llmUsed: false,
-      };
+    for (const [index, model] of modelCandidates.entries()) {
+      const remainingBudget = deadlineAt - Date.now();
+      if (remainingBudget < 900) {
+        break;
+      }
+
+      const controller = new AbortController();
+      const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
+      const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
+      const startedAt = Date.now();
+      try {
+        const completion = await openai.chat.completions.create({
+          model,
+          messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+          temperature: 0.7,
+        }, {
+          signal: controller.signal,
+          timeout: attemptTimeoutMs,
+          maxRetries: 0,
+        });
+
+        const content = completion.choices[0].message.content?.trim();
+        if (!content) {
+          console.error(`[LLM Chat] Model ${model} returned empty content`);
+          recordModelAttempt({
+            model,
+            scope: 'chat',
+            success: false,
+            latencyMs: Date.now() - startedAt,
+            errorType: 'empty',
+            traceLabel: 'chat:main',
+          });
+          continue;
+        }
+
+        recordModelAttempt({
+          model,
+          scope: 'chat',
+          success: true,
+          latencyMs: Date.now() - startedAt,
+          traceLabel: 'chat:main',
+        });
+        if (model !== modelCandidates[0]) {
+          console.warn(`[LLM Chat] Model fallback succeeded with ${model}`);
+        }
+
+        return {
+          answer: content,
+          llmUsed: true,
+        };
+      } catch (error) {
+        recordModelAttempt({
+          model,
+          scope: 'chat',
+          success: false,
+          latencyMs: Date.now() - startedAt,
+          errorType: error instanceof Error ? error.name || 'error' : 'error',
+          traceLabel: 'chat:main',
+        });
+        console.error(`[LLM Chat] Model ${model} failed:`, error);
+      } finally {
+        clearTimeout(timeoutId);
+      }
     }
 
     return {
-      answer: content,
-      llmUsed: true,
+      answer: '当前回复生成不完整，请稍后重试，或围绕更具体的报告板块继续追问。',
+      llmUsed: false,
     };
   } catch (error) {
     console.error('[LLM Chat] Generation Error:', error);

@@ -21,7 +21,7 @@ export default async function AdminContentPage() {
               <span className="font-serif text-[color:var(--accent-strong)]">取决于你能不能持续运营内容库。</span>
             </h1>
             <p className="text-base leading-8 text-[color:var(--muted)]">
-              这里统一维护知识文章、案例内容和行业/城市/组织洞察。所有公开页面都会优先读取数据库内容，不再依赖手工改代码发版。
+              这里统一维护知识文章、案例内容和行业/城市/组织洞察。现在也支持直接调用现有 LLM 生成草稿、按内容行为判断下一轮缺口，并对合格内容自动发布。
             </p>
           </div>
 

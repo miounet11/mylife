@@ -1,6 +1,9 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Clock3, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentCardLink from '@/components/content-card-link';
+import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -33,9 +36,47 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
   if (!article) notFound();
 
   const related = getFeaturedKnowledgeArticles(3).filter((item) => item.slug !== article.slug).slice(0, 2);
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: article.seoTitle,
+    description: article.seoDescription,
+    articleSection: article.category,
+    keywords: article.tags.join(', '),
+    mainEntityOfPage: `https://www.life-kline.com/knowledge/${article.slug}`,
+    url: `https://www.life-kline.com/knowledge/${article.slug}`,
+    author: {
+      '@type': 'Organization',
+      name: '人生K线',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: '人生K线',
+      logo: {
+        '@type': 'ImageObject',
+        url: 'https://www.life-kline.com/icon.svg',
+      },
+    },
+  };
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView
+        eventName="knowledge_article_viewed"
+        page={`/knowledge/${article.slug}`}
+        meta={{
+          surfaceKey: `knowledge_article:${article.slug}`,
+          contentType: 'knowledge',
+          slug: article.slug,
+          title: article.title,
+          category: article.category,
+          tags: article.tags,
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -75,14 +116,43 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
           </article>
 
           <div className="space-y-5">
+            <ContentQuickAnalyzePanel
+              sourceLabel="文章页就近测算"
+              sourceKey={`knowledge_article:${article.slug}`}
+              contentMeta={{
+                contentType: 'knowledge',
+                surfaceKey: `knowledge_article:${article.slug}`,
+                slug: article.slug,
+                title: article.title,
+                category: article.category,
+                tags: article.tags,
+              }}
+              title="看懂原理之后，直接测自己的生日"
+              description="文章负责解释方法，下一步应该立刻回到你自己的命盘。这里填生日和时间，分析页会自动带入。"
+            />
+
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">相关文章</div>
               <div className="mt-4 space-y-4">
                 {related.map((item) => (
-                  <Link key={item.slug} href={`/knowledge/${item.slug}`} className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white">
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/knowledge/${item.slug}`}
+                    page={`/knowledge/${article.slug}`}
+                    meta={{
+                      surfaceKey: `knowledge_article:${article.slug}`,
+                      targetSurfaceKey: `knowledge_article:${item.slug}`,
+                      contentType: 'knowledge',
+                      slug: item.slug,
+                      title: item.title,
+                      category: item.category,
+                      tags: item.tags,
+                    }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                     <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</div>
-                  </Link>
+                  </ContentCardLink>
                 ))}
               </div>
             </div>

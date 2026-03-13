@@ -672,7 +672,7 @@ function ContextCard({
       )}
 
       {context.suggestedEventDrafts.length > 0 && (
-        <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-[rgba(15,118,110,0.04)] p-4">
+        <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-[rgba(178,149,93,0.08)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">可以顺手记下的提醒</div>
           <div className="mt-3 grid gap-3">
             {context.suggestedEventDrafts.slice(0, 2).map((item) => {
@@ -748,7 +748,7 @@ function MessageBubble({
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-2xl rounded-[1.75rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-4 text-white shadow-[0_14px_32px_rgba(15,118,110,0.18)]">
+        <div className="max-w-2xl rounded-[1.75rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-4 text-white shadow-[0_14px_32px_rgba(178,149,93,0.2)]">
           {isEditing ? (
             <div className="space-y-3">
               <textarea

@@ -32,7 +32,7 @@ export default function SiteHeader({
     <header className="sticky top-0 z-50 border-b border-white/50 bg-[color:var(--surface)]/88 backdrop-blur-xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
         <Link href="/" className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white shadow-[0_14px_30px_rgba(14,116,144,0.28)]">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white shadow-[0_14px_30px_rgba(178,149,93,0.28)]">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>

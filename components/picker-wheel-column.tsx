@@ -23,6 +23,7 @@ export default function PickerWheelColumn({
   onChange,
 }: PickerWheelColumnProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const lastScrollTopRef = useRef<number | null>(null);
 
   useEffect(() => {
     const index = options.findIndex((option) => option.value === value);
@@ -32,14 +33,19 @@ export default function PickerWheelColumn({
 
     const container = containerRef.current;
     const targetTop = Math.max(0, index * ROW_HEIGHT - ROW_HEIGHT * 1.5);
-    container.scrollTo({ top: targetTop, behavior: 'smooth' });
+    if (lastScrollTopRef.current === targetTop) {
+      return;
+    }
+
+    lastScrollTopRef.current = targetTop;
+    container.scrollTop = targetTop;
   }, [options, value]);
 
   return (
     <div className="min-w-0">
-      <div className="mb-3 text-center text-sm text-[#666666]">{label}</div>
+      <div className="mb-3 text-center text-sm text-[color:var(--muted)]">{label}</div>
       <div className="relative h-[210px] overflow-hidden">
-        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-[58px] -translate-y-1/2 rounded-[8px] bg-[#f5f5f5]" />
+        <div className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-[58px] -translate-y-1/2 rounded-[12px] bg-[color:var(--accent-soft)]" />
         <div
           ref={containerRef}
           className="relative h-full overflow-y-auto px-1 pb-[66px] pt-[66px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -54,7 +60,7 @@ export default function PickerWheelColumn({
                   type="button"
                   onClick={() => onChange(option.value)}
                   className={`relative z-20 flex h-[44px] w-full items-center justify-center text-center transition ${
-                    selected ? 'text-[20px] font-bold text-[#101010]' : 'text-[14px] text-[#8b8b8b]'
+                    selected ? 'text-[20px] font-bold text-[color:var(--ink)]' : 'text-[14px] text-[color:var(--muted)] opacity-80'
                   }`}
                 >
                   {option.label}

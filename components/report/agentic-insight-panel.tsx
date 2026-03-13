@@ -10,6 +10,14 @@ import {
 type AgenticInsightPanelProps = {
   agenticUsed?: boolean;
   reasoningMode?: ReportReasoningMode;
+  orchestration?: {
+    totalLlmCalls?: number;
+    successRate?: number;
+    succeeded?: string[];
+    failed?: string[];
+    errors?: Array<{ key: string; error: string }>;
+    agentSources?: Record<string, 'llm' | 'fallback'>;
+  };
   verify?: {
     consistencyScore?: number;
     verdict?: 'PASS' | 'WARN' | 'FAIL';
@@ -40,13 +48,14 @@ const AGENT_LABELS: Record<string, string> = {
 export default function AgenticInsightPanel({
   agenticUsed,
   reasoningMode,
+  orchestration,
   verify,
   loop,
   agentResults,
   contextSignals,
 }: AgenticInsightPanelProps) {
   const entries = Object.entries(agentResults || {})
-    .map(([key, value]) => normalizeAgentEntry(key, value))
+    .map(([key, value]) => normalizeAgentEntry(key, value, orchestration?.agentSources?.[key]))
     .filter((item) => item.summary || item.highlights.length || item.actions.length);
   const temporal = (contextSignals?.temporal || {}) as Record<string, unknown>;
   const macroCycles = (contextSignals?.macroCycles || {}) as Record<string, unknown>;
@@ -54,9 +63,15 @@ export default function AgenticInsightPanel({
   const spatialFactors = (contextSignals?.spatialFactors || {}) as Record<string, unknown>;
   const conflicts = loop?.review?.conflicts || [];
   const repairActions = loop?.review?.repairPlan?.actions || [];
+  const totalAgentCalls = orchestration?.totalLlmCalls || 0;
+  const successfulAgents = orchestration?.succeeded?.length || 0;
+  const failedAgents = orchestration?.failed?.length || 0;
+  const allFallback = totalAgentCalls > 0 && successfulAgents === 0;
   const resolvedReasoningMode = deriveReportReasoningMode({
     reasoningMode,
     agenticUsed,
+    orchestrationSuccessRate: orchestration?.successRate,
+    successfulAgents: orchestration?.succeeded,
     agentResults,
     contextSignals,
     verifyVerdict: verify?.verdict,
@@ -71,12 +86,19 @@ export default function AgenticInsightPanel({
       <section className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-6">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">专家解释层</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
-          {getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。
+          {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
         </div>
         <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
           {getReasoningModeDescription(resolvedReasoningMode)}
+          {allFallback ? ` 本次共尝试 ${totalAgentCalls} 个 Agent，当前全部回退为 deterministic 专家层结果。` : ''}
           {verify?.verdict ? ` 一致性结论 ${verify.verdict}，当前评分 ${verify.consistencyScore ?? '待计算'}。` : ''}
         </div>
+
+        {totalAgentCalls > 0 ? (
+          <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--ink)]">
+            Agent 调度状态：成功 {successfulAgents} 个，失败 {failedAgents} 个。
+          </div>
+        ) : null}
 
         {entries.length > 0 ? (
           <div className="mt-5 grid gap-4">
@@ -84,11 +106,16 @@ export default function AgenticInsightPanel({
               <div key={item.key} className="rounded-[1.5rem] bg-slate-50 p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-semibold text-[color:var(--ink)]">{item.label}</div>
-                  {item.windows.length > 0 ? (
-                    <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                      {item.windows[0].label}
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {item.windows.length > 0 ? (
+                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                        {item.windows[0].label}
+                      </div>
+                    ) : null}
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${item.source === 'llm' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                      {item.source === 'llm' ? 'LLM返回' : '引擎回退'}
                     </div>
-                  ) : null}
+                  </div>
                 </div>
                 {item.summary ? (
                   <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{item.summary}</div>
@@ -112,7 +139,9 @@ export default function AgenticInsightPanel({
           </div>
         ) : (
           <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
-            当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。
+            {allFallback
+              ? '当前并发 Agent 没有返回可用结果，页面内容来自结构化引擎和 deterministic 专家层回退。'
+              : '当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。'}
           </div>
         )}
       </section>
@@ -154,6 +183,12 @@ export default function AgenticInsightPanel({
           </div>
         ) : null}
 
+        {orchestration?.errors && orchestration.errors.length > 0 ? (
+          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+            Agent 失败原因：{orchestration.errors.slice(0, 4).map((item) => `${AGENT_LABELS[item.key] || item.key} ${item.error}`).join('；')}
+          </div>
+        ) : null}
+
         {(conflicts.length > 0 || repairActions.length > 0) ? (
           <div className="mt-5 grid gap-4">
             <div className="rounded-[1.5rem] bg-slate-50 p-4">
@@ -175,7 +210,7 @@ export default function AgenticInsightPanel({
   );
 }
 
-function normalizeAgentEntry(key: string, value: unknown) {
+function normalizeAgentEntry(key: string, value: unknown, source?: 'llm' | 'fallback') {
   const data = (value || {}) as {
     summary?: string;
     highlights?: string[];
@@ -190,6 +225,7 @@ function normalizeAgentEntry(key: string, value: unknown) {
     highlights: data.highlights || [],
     actions: data.actions || [],
     windows: (data.windows || []).map((item) => ({ label: item.label || '关键窗口' })),
+    source: source || 'fallback',
   };
 }
 

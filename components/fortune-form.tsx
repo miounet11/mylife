@@ -8,6 +8,7 @@ import FortuneProgress from './fortune-progress';
 import BirthPlaceModal from './birth-place-modal';
 import BirthTimeModal from './birth-time-modal';
 import InstantPaipanCard from './instant-paipan-card';
+import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
 import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES } from '@/lib/birth-entry';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
@@ -19,6 +20,7 @@ import {
   formatAddressLabel,
   formatBirthLabel,
   getBirthdayParts,
+  normalizeBirthPlaceLabel,
   padPart,
   type CaseTypeOption,
   type FormLocationState,
@@ -112,6 +114,27 @@ export default function FortuneForm() {
     setSetTimeInfo(createSetTimeInfo(midnightValue));
   }, []);
 
+  useEffect(() => {
+    const draft = readAnalyzeDraft();
+    if (!draft) {
+      return;
+    }
+
+    const birthday = `${draft.birthDate} ${draft.birthTime}`;
+    setInfoData((current) => ({
+      ...current,
+      sex: draft.gender === 'male' ? 1 : 0,
+      type: 0,
+      birthday,
+      sunTime: birthday,
+      unknowhour: 0,
+      lunarArr: buildLunarArrFromBirthday(birthday),
+    }));
+    setDatetimeIndex(0);
+    setDatetimeIndexReal(0);
+    clearAnalyzeDraft();
+  }, []);
+
   const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
 
   useEffect(() => {
@@ -144,7 +167,7 @@ export default function FortuneForm() {
           birthDate,
           birthTime,
           birthSecond: 0,
-          birthPlace: payload.address,
+          birthPlace: normalizeBirthPlaceLabel(payloadLocation.addressData),
           timezone: payload.hw && payload.bjtime ? 8 : payloadLocation.timezone,
           longitude: payloadLocation.longitude,
           latitude: payloadLocation.latitude ?? (UNKNOWN_LOCATION.latitude as number),
@@ -469,7 +492,7 @@ export default function FortuneForm() {
           setAddressIndex(tabIndex);
           setInfoData((current) => ({
             ...current,
-            address: nextAddressData.join(' '),
+            address: normalizeBirthPlaceLabel(nextAddressData),
             hw: tabIndex === 1 ? 1 : 0,
             bjtime: tabIndex === 1 && isBJTime ? 1 : 0,
           }));
