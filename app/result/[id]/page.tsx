@@ -353,6 +353,7 @@ export default async function ResultPage({ params }: PageProps) {
           reportId: id,
           isPublic: result.isPublic,
           reportVersion: result.reportVersion || 'v1',
+          reasoningMode: result.reasoningMode || 'engine',
           pattern: result.pattern?.type || '',
         }}
       />

@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowRight, CalendarPlus, CheckCircle2 } from 'lucide-react';
 import type { ReportActionSuggestion } from '@/lib/report-v2';
+import { trackClientEvent } from '@/lib/analytics-client';
 
 interface ReportEventCaptureProps {
   reportId: string;
@@ -112,6 +113,17 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
       <div className="mt-4 flex flex-wrap gap-3">
         <Link
           href={`/chat?reportId=${encodeURIComponent(reportId)}`}
+          onClick={() => {
+            void trackClientEvent({
+              eventName: 'result_cta_clicked',
+              page: `/result/${reportId}`,
+              meta: {
+                reportId,
+                target: 'chat',
+                source: 'report_event_capture',
+              },
+            });
+          }}
           className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
         >
           去 AI 深问这份报告
@@ -119,6 +131,17 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
         </Link>
         <Link
           href={`/events?reportId=${encodeURIComponent(reportId)}`}
+          onClick={() => {
+            void trackClientEvent({
+              eventName: 'result_cta_clicked',
+              page: `/result/${reportId}`,
+              meta: {
+                reportId,
+                target: 'events',
+                source: 'report_event_capture',
+              },
+            });
+          }}
           className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
         >
           查看事件中心

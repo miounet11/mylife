@@ -3,8 +3,14 @@ import { trackServerEvent, type AnalyticsEventName } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/user-utils';
 
 const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
+  'home_page_viewed',
+  'analyze_page_viewed',
+  'chat_page_viewed',
+  'events_page_viewed',
   'report_viewed',
   'chat_followup_clicked',
+  'result_cta_clicked',
+  'report_upgrade_requested',
 ]);
 
 export async function POST(request: NextRequest) {

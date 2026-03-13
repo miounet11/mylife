@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Bot, MessageSquareText, Sparkles } from 'lucide-react';
+import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 
@@ -12,6 +13,7 @@ const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), 
 export default function ChatPage() {
   return (
     <div className="page-shell">
+      <AnalyticsPageView eventName="chat_page_viewed" page="/chat" meta={{ surface: 'assistant' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">

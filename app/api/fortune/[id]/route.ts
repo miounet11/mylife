@@ -1,6 +1,7 @@
 // 命理数据API
 import { NextRequest, NextResponse } from 'next/server';
 import { fortuneOperations } from '@/lib/database';
+import { trackServerEvent } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
 
@@ -91,6 +92,20 @@ export async function PATCH(
         dayun: result.dayun,
         shenSha: result.shenSha,
         reportVersion: CURRENT_REPORT_VERSION,
+      });
+
+      trackServerEvent({
+        userId: currentUserId,
+        sessionId: currentUserId,
+        eventName: 'report_upgrade_requested',
+        page: `/result/${reportId}`,
+        meta: {
+          reportId,
+          upgradedFromVersion: fortuneData.reportVersion || 'v1',
+          targetVersion: CURRENT_REPORT_VERSION,
+          llmUsed,
+          reasoningMode: result.analysis?.reasoningMode || 'engine',
+        },
       });
 
       return NextResponse.json({
