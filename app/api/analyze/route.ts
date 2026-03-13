@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { analyzeFortune } from '@/lib/fortune-engine';
-import { generateFortuneInterpretation } from '@/lib/llm';
 import { createFortuneWithUser } from '@/lib/database';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { validateAnalyzeRequest } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
+import { trackServerEvent } from '@/lib/analytics';
+import { CURRENT_REPORT_VERSION, generateVersionedReport } from '@/lib/report-pipeline';
 
 // 设置 API 路由超时为 30 秒（Vercel/Next.js）
 export const maxDuration = 30;
-const ANALYZE_LLM_TIMEOUT_MS = 3500;
-const ANALYZE_LLM_BUDGET_MS = 4000;
-
 export async function POST(request: NextRequest) {
   try {
     // 速率限制
@@ -41,77 +38,53 @@ export async function POST(request: NextRequest) {
     const second = (data.birthSecond as number) || 0;
     const longitude = (data.longitude as number) || 116.407;
     const timezone = (data.timezone as number) || 8;
+    const useDaylightSaving = Boolean(data.useDaylightSaving);
+    const useSeparateZiHour = Boolean(data.useSeparateZiHour);
+    const normalizedClock = useDaylightSaving
+      ? toStandardClockTime(year, month, day, hour, minute, second)
+      : { year, month, day, hour, minute, second };
+
     // 计算真太阳时
-    let effectiveYear = year;
-    let effectiveMonth = month;
-    let effectiveDay = day;
-    let effectiveHour = hour;
-    let effectiveMinute = minute;
-    let effectiveSecond = second;
+    let effectiveYear = normalizedClock.year;
+    let effectiveMonth = normalizedClock.month;
+    let effectiveDay = normalizedClock.day;
+    let effectiveHour = normalizedClock.hour;
+    let effectiveMinute = normalizedClock.minute;
+    let effectiveSecond = normalizedClock.second;
 
     if (data.useSolarTime && longitude !== undefined) {
-      const solarTimeInfo = calculateTrueSolarTime(year, month, day, hour, minute, second, longitude, timezone);
+      const solarTimeInfo = calculateTrueSolarTime(
+        normalizedClock.year,
+        normalizedClock.month,
+        normalizedClock.day,
+        normalizedClock.hour,
+        normalizedClock.minute,
+        normalizedClock.second,
+        longitude,
+        timezone
+      );
       effectiveYear = solarTimeInfo.year;
       effectiveMonth = solarTimeInfo.month;
       effectiveDay = solarTimeInfo.day;
       effectiveHour = solarTimeInfo.hour;
       effectiveMinute = solarTimeInfo.minute;
       effectiveSecond = solarTimeInfo.second;
-      console.log(`[Solar Time] 钟表时间: ${year}-${month}-${day} ${hour}:${minute}:${second} → 真太阳时: ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond} (修正${solarTimeInfo.correctionMinutes.toFixed(1)}分钟)`);
+      console.log(`[Solar Time] 钟表时间: ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} → 真太阳时: ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond} (修正${solarTimeInfo.correctionMinutes.toFixed(1)}分钟)`);
     }
 
     const effectiveBirthDate = new Date(effectiveYear, effectiveMonth - 1, effectiveDay);
     const effectiveBirthTime = `${String(effectiveHour).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')}`;
 
-    // 基础八字排盘分析 (使用真太阳时)
-    const baseResult = analyzeFortune(
-      data.name,
-      effectiveBirthDate,
-      effectiveBirthTime,
-      data.birthPlace || '北京',
+    const { result: finalResult, llmUsed } = await generateVersionedReport({
+      name: data.name,
+      birthDate: effectiveBirthDate,
+      birthTime: effectiveBirthTime,
+      birthPlace: data.birthPlace || '北京',
       timezone,
-      data.gender || 'male'
-    );
-
-    const { llmInterpretation, llmUsed } = await enhanceWithLLM(
-      baseResult as unknown as Record<string, unknown>
-    );
-    
-    // 合并结果: 如果 LLM 成功返回，则用 LLM 的结果覆盖基础结果的部分字段
-    // 保留基础排盘的 basic 盘面和 evidence 统计等静态数据，覆盖解析性的文字
-    const finalResult = {
-      ...baseResult,
-      basic: {
-        ...baseResult.basic,
-        name: data.name,
-      },
-      pattern: {
-        ...baseResult.pattern,
-        ...(llmInterpretation?.pattern || {}),
-        // 保留引擎的权威格局type，LLM只覆盖description
-        type: baseResult.pattern?.type || llmInterpretation?.pattern?.type || '正格',
-      },
-      fiveElements: llmInterpretation?.fiveElements || baseResult.fiveElements,
-      fortune: llmInterpretation?.fortune || baseResult.fortune,
-      advice: {
-        ...(llmInterpretation?.advice || baseResult.advice),
-        // 保留引擎权威的用神忌神数据，LLM不可覆盖
-        yongShen: (baseResult.advice as any)?.yongShen || [],
-        jiShen: (baseResult.advice as any)?.jiShen || [],
-        xiShen: (baseResult.advice as any)?.xiShen || [],
-        colors: (baseResult.advice as any)?.colors || [],
-        directions: (baseResult.advice as any)?.directions || [],
-        numbers: (baseResult.advice as any)?.numbers || [],
-      },
-      analysis: {
-        ...(llmInterpretation?.analysis || baseResult.analysis),
-        llmUsed, // 记录是否使用了 LLM
-      },
-      evidence: {
-        ...baseResult.evidence,
-        celebrities: llmInterpretation?.evidence?.celebrities || baseResult.evidence.celebrities
-      }
-    };
+      gender: data.gender || 'male',
+      sect: useSeparateZiHour ? 1 : 2,
+      source: 'analyze',
+    });
 
     // 生成报告ID
     const reportId = generateReportId();
@@ -148,9 +121,40 @@ export async function POST(request: NextRequest) {
         evidence: finalResult.evidence,
         analysis: finalResult.analysis,
         klineData: finalResult.klineData,
+        dayun: finalResult.dayun,
+        shenSha: finalResult.shenSha,
+        reportVersion: CURRENT_REPORT_VERSION,
         isPublic: false,
       }
     );
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'analyze_submitted',
+      page: '/analyze',
+      meta: {
+        reportId,
+        llmUsed,
+        reportVersion: CURRENT_REPORT_VERSION,
+        useSolarTime: !!data.useSolarTime,
+        useDaylightSaving: !!data.useDaylightSaving,
+        useSeparateZiHour: !!data.useSeparateZiHour,
+      },
+    });
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'report_generated',
+      page: `/result/${reportId}`,
+      meta: {
+        reportId,
+        llmUsed,
+        reportVersion: CURRENT_REPORT_VERSION,
+        pattern: finalResult.pattern?.type || '',
+      },
+    });
 
     // 返回结果
     return NextResponse.json({
@@ -172,6 +176,27 @@ export async function POST(request: NextRequest) {
   }
 }
 
+function toStandardClockTime(
+  year: number,
+  month: number,
+  day: number,
+  hour: number,
+  minute: number,
+  second: number
+) {
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
+  utcDate.setUTCMinutes(utcDate.getUTCMinutes() - 60);
+
+  return {
+    year: utcDate.getUTCFullYear(),
+    month: utcDate.getUTCMonth() + 1,
+    day: utcDate.getUTCDate(),
+    hour: utcDate.getUTCHours(),
+    minute: utcDate.getUTCMinutes(),
+    second: utcDate.getUTCSeconds(),
+  };
+}
+
 // GET方法 - 获取分析状态
 export async function GET(request: NextRequest) {
   return NextResponse.json({
@@ -184,36 +209,4 @@ export async function GET(request: NextRequest) {
 // 生成报告ID
 function generateReportId(): string {
   return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-async function enhanceWithLLM(baseResult: Record<string, unknown>) {
-  console.log(`[API] Starting LLM interpretation with ${ANALYZE_LLM_TIMEOUT_MS}ms timeout...`);
-  const llmStartTime = Date.now();
-  let routeTimeoutId: ReturnType<typeof setTimeout> | undefined;
-
-  try {
-    const llmInterpretation = await Promise.race([
-      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS),
-      new Promise<null>((resolve) => {
-        routeTimeoutId = setTimeout(() => {
-          console.warn(`[API] LLM exceeded route budget after ${ANALYZE_LLM_BUDGET_MS}ms`);
-          resolve(null);
-        }, ANALYZE_LLM_BUDGET_MS);
-      }),
-    ]);
-
-    const llmUsed = !!llmInterpretation;
-    console.log(
-      `[API] LLM interpretation ${llmUsed ? 'succeeded' : 'fell back to engine'} in ${Date.now() - llmStartTime}ms`
-    );
-
-    return { llmInterpretation, llmUsed };
-  } catch (error) {
-    console.error('[API] LLM interpretation failed:', error);
-    return { llmInterpretation: null, llmUsed: false };
-  } finally {
-    if (routeTimeoutId) {
-      clearTimeout(routeTimeoutId);
-    }
-  }
 }

@@ -1,7 +1,7 @@
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
 import path from 'path';
-import type { UserRecord, FortuneRecord, EventRecord, QuestionRecord } from './user-types';
+import type { UserRecord, FortuneRecord, EventRecord, QuestionRecord, AnalyticsEventRecord } from './user-types';
 
 interface RawFortuneRow {
   id: string;
@@ -21,7 +21,20 @@ interface RawFortuneRow {
   evidence: string;
   analysis?: string | null;
   kline_data?: string | null;
+  dayun?: string | null;
+  shen_sha?: string | null;
+  report_version?: string | null;
   is_public: number;
+}
+
+interface RawAnalyticsEventRow {
+  id: string;
+  user_id?: string | null;
+  session_id?: string | null;
+  event_name: string;
+  page?: string | null;
+  meta?: string | null;
+  created_at?: string;
 }
 
 interface RawEventRow {
@@ -47,6 +60,7 @@ interface RawQuestionRow {
   question: string;
   category: string;
   analysis?: string | null;
+  created_at?: string;
 }
 
 function parseJson<T>(value: string | null | undefined, fallback: T): T {
@@ -56,6 +70,58 @@ function parseJson<T>(value: string | null | undefined, fallback: T): T {
   } catch {
     return fallback;
   }
+}
+
+type DriftReasonKey =
+  | 'timing_window'
+  | 'execution_gap'
+  | 'birth_time_uncertainty'
+  | 'expectation_scope'
+  | 'external_change'
+  | 'information_missing'
+  | 'uncategorized';
+
+const DRIFT_REASON_RULES: Array<{ key: DriftReasonKey; label: string; patterns: RegExp[] }> = [
+  {
+    key: 'timing_window',
+    label: '时机 / 窗口偏差',
+    patterns: [/(时机|窗口|偏早|偏晚|太早|太晚|提前|延后|节奏|节点|排期|窗口判断|时点)/i],
+  },
+  {
+    key: 'execution_gap',
+    label: '执行 / 推进偏差',
+    patterns: [/(执行|推进|落地|行动|跟进|力度|资源不足|没做到|没有执行|推进失败|谈判失败|卡住)/i],
+  },
+  {
+    key: 'birth_time_uncertainty',
+    label: '时辰 / 输入待复核',
+    patterns: [/(时辰|出生时间|生时|时柱|钟点|分娩时间)/i],
+  },
+  {
+    key: 'expectation_scope',
+    label: '判断范围 / 预期偏差',
+    patterns: [/(范围|预期|整体|局部|理解偏差|误判|过度解读|目标变化|不一致)/i],
+  },
+  {
+    key: 'external_change',
+    label: '外部环境变化',
+    patterns: [/(外部|市场|政策|环境|公司变化|对方|家庭变化|突发|黑天鹅|不可控|客观原因)/i],
+  },
+  {
+    key: 'information_missing',
+    label: '信息不足 / 证据缺口',
+    patterns: [/(信息不足|信息缺口|证据|样本|未记录|沟通不足|认知偏差|数据不足|不了解)/i],
+  },
+];
+
+function classifyDriftReason(input: { reason?: string; notes?: string; title?: string; type?: string }) {
+  const text = [input.reason, input.notes, input.title, input.type].filter(Boolean).join(' ');
+  const matched = DRIFT_REASON_RULES.find((rule) => rule.patterns.some((pattern) => pattern.test(text)));
+
+  return matched || {
+    key: 'uncategorized' as DriftReasonKey,
+    label: '待进一步标注',
+  };
 }
 
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
@@ -77,8 +143,23 @@ function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
     evidence: parseJson(row.evidence, {}),
     analysis: parseJson(row.analysis, null) || undefined,
     klineData: parseJson(row.kline_data, null) || undefined,
+    dayun: parseJson(row.dayun, null) || undefined,
+    shenSha: parseJson(row.shen_sha, null) || undefined,
+    reportVersion: row.report_version || undefined,
     isPublic: row.is_public !== 0,
   } as FortuneRecord;
+}
+
+function mapAnalyticsEventRow(row: RawAnalyticsEventRow): AnalyticsEventRecord {
+  return {
+    id: row.id,
+    userId: row.user_id || undefined,
+    sessionId: row.session_id || undefined,
+    eventName: row.event_name,
+    page: row.page || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
 }
 
 function mapEventRow(row: RawEventRow): EventRecord {
@@ -107,6 +188,7 @@ function mapQuestionRow(row: RawQuestionRow): QuestionRecord {
     question: row.question,
     category: row.category,
     analysis: parseJson(row.analysis, {}),
+    createdAt: row.created_at,
   };
 }
 
@@ -175,6 +257,9 @@ export function initializeDatabase() {
       evidence JSON NOT NULL,
       analysis JSON,
       kline_data JSON,
+      dayun JSON,
+      shen_sha JSON,
+      report_version TEXT DEFAULT 'v1',
       is_public INTEGER DEFAULT 1,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
@@ -193,6 +278,30 @@ export function initializeDatabase() {
 
   try {
     db.exec(`ALTER TABLE fortunes ADD COLUMN is_public INTEGER DEFAULT 1`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN dayun JSON`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN shen_sha JSON`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN report_version TEXT DEFAULT 'v1'`);
   } catch (e) {
     if (e instanceof Error && !e.message.includes('duplicate column')) {
       throw e;
@@ -336,6 +445,18 @@ export function initializeDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      session_id TEXT,
+      event_name TEXT NOT NULL,
+      page TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // 索引
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -349,6 +470,9 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_auth_codes_email ON auth_codes(email);
     CREATE INDEX IF NOT EXISTS idx_content_entries_type_status ON content_entries(content_type, status);
     CREATE INDEX IF NOT EXISTS idx_content_entries_slug ON content_entries(slug);
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(event_name);
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at);
+    CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
   `);
 }
 
@@ -414,8 +538,8 @@ export const userOperations = {
 export const fortuneOperations = {
   create: (fortune: FortuneRecord) => {
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, is_public)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, dayun, shen_sha, report_version, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       fortune.id,
@@ -435,6 +559,9 @@ export const fortuneOperations = {
       JSON.stringify(fortune.evidence),
       JSON.stringify(fortune.analysis),
       JSON.stringify(fortune.klineData || null),
+      JSON.stringify(fortune.dayun || null),
+      JSON.stringify(fortune.shenSha || null),
+      fortune.reportVersion || 'v1',
       fortune.isPublic === false ? 0 : 1
     );
   },
@@ -455,16 +582,19 @@ export const fortuneOperations = {
   },
 
   update: (id: string, updates: Partial<Omit<FortuneRecord, 'id' | 'userId'>>) => {
-    const JSON_FIELDS = ['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis', 'klineData'] as const;
+    const JSON_FIELDS = ['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis', 'klineData', 'dayun', 'shenSha'] as const;
     const COLUMN_MAP: Record<string, string> = {
       fiveElements: 'five_elements',
       tenGods: 'ten_gods',
       klineData: 'kline_data',
+      dayun: 'dayun',
+      shenSha: 'shen_sha',
       isPublic: 'is_public',
       birthDate: 'birth_date',
       birthTime: 'birth_time',
       birthPlace: 'birth_place',
       userId: 'user_id',
+      reportVersion: 'report_version',
     };
     const setClause = Object.keys(updates)
       .map((key) => `${COLUMN_MAP[key] || key} = ?`)
@@ -481,6 +611,231 @@ export const fortuneOperations = {
   delete: (id: string) => {
     const stmt = db.prepare('DELETE FROM fortunes WHERE id = ?');
     return stmt.run(id);
+  },
+};
+
+export const analyticsOperations = {
+  create: (event: AnalyticsEventRecord) => {
+    const stmt = db.prepare(`
+      INSERT INTO analytics_events (id, user_id, session_id, event_name, page, meta)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `);
+    return stmt.run(
+      event.id,
+      event.userId || null,
+      event.sessionId || null,
+      event.eventName,
+      event.page || null,
+      JSON.stringify(event.meta || {})
+    );
+  },
+
+  listRecent: (limit = 50) => {
+    const stmt = db.prepare(`
+      SELECT * FROM analytics_events
+      ORDER BY created_at DESC
+      LIMIT ?
+    `);
+    const rows = stmt.all(limit) as RawAnalyticsEventRow[];
+    return rows.map(mapAnalyticsEventRow);
+  },
+
+  countByEventNameSinceDays: (days: number) => {
+    const stmt = db.prepare(`
+      SELECT event_name, COUNT(*) as count
+      FROM analytics_events
+      WHERE datetime(created_at) >= datetime('now', ?)
+      GROUP BY event_name
+      ORDER BY count DESC
+    `);
+    return stmt.all(`-${days} days`) as Array<{ event_name: string; count: number }>;
+  },
+
+  getOverview: () => {
+    const totals = db.prepare(`
+      SELECT
+        (SELECT COUNT(*) FROM fortunes) as total_analyses,
+        (SELECT COUNT(*) FROM fortunes WHERE is_public = 1) as public_reports,
+        (SELECT COUNT(*) FROM questions WHERE category = 'chat_user') as chat_messages,
+        (SELECT COUNT(*) FROM email_subscriptions WHERE status = 'active') as active_subscribers,
+        (SELECT COUNT(*) FROM events) as total_events,
+        (SELECT COUNT(*) FROM analytics_events) as total_tracked_events,
+        (SELECT COUNT(*) FROM fortunes WHERE datetime(created_at) >= datetime('now', '-7 days')) as analyses_last_7d,
+        (SELECT COUNT(*) FROM analytics_events WHERE datetime(created_at) >= datetime('now', '-7 days')) as tracked_events_last_7d
+    `).get() as {
+      total_analyses: number;
+      public_reports: number;
+      chat_messages: number;
+      active_subscribers: number;
+      total_events: number;
+      total_tracked_events: number;
+      analyses_last_7d: number;
+      tracked_events_last_7d: number;
+    };
+
+    const eventRows = db.prepare(`
+      SELECT id, type, title, date, time, fortune_analysis, user_feedback
+      FROM events
+    `).all() as Array<{
+      id: string;
+      type: string;
+      title: string;
+      date: string;
+      time?: string | null;
+      fortune_analysis?: string | null;
+      user_feedback?: string | null;
+    }>;
+    const reportVersionRows = db.prepare(`
+      SELECT COALESCE(report_version, 'v1') as report_version, COUNT(*) as count
+      FROM fortunes
+      GROUP BY COALESCE(report_version, 'v1')
+      ORDER BY count DESC
+    `).all() as Array<{ report_version: string; count: number }>;
+
+    let validationAccurate = 0;
+    let validationDrift = 0;
+    let validationPending = 0;
+    let resultReportLinked = 0;
+    let chatSourcedEvents = 0;
+    const nowTime = Date.now();
+    const sourceBuckets: Record<string, { source: string; total: number; accurate: number; drift: number; pending: number }> = {};
+    const driftReasonBuckets: Record<string, { key: DriftReasonKey; label: string; count: number; examples: string[] }> = {};
+    const pendingValidationBuckets = {
+      overdue: 0,
+      upcoming: 0,
+      driftNeedsNotes: 0,
+      driftReadyForCorrection: 0,
+    };
+    const followupQueue: Array<{
+      id: string;
+      title: string;
+      date: string;
+      status: 'pending' | 'drift';
+      source: string;
+      action: string;
+      reason: string;
+      reportId?: string;
+      priorityScore: number;
+    }> = [];
+
+    for (const row of eventRows) {
+      const feedback = parseJson(row.user_feedback, {}) as { wasAccurate?: boolean; userNotes?: string };
+      const analysis = parseJson(row.fortune_analysis, {}) as { source?: string; reportId?: string; reason?: string };
+      const sourceKey = analysis.source || 'manual';
+      const eventTime = new Date(`${row.date}T${row.time || '00:00:00'}`).getTime();
+      if (!sourceBuckets[sourceKey]) {
+        sourceBuckets[sourceKey] = { source: sourceKey, total: 0, accurate: 0, drift: 0, pending: 0 };
+      }
+      sourceBuckets[sourceKey].total += 1;
+
+      if (feedback.wasAccurate === true) {
+        validationAccurate += 1;
+        sourceBuckets[sourceKey].accurate += 1;
+      } else if (feedback.wasAccurate === false) {
+        validationDrift += 1;
+        sourceBuckets[sourceKey].drift += 1;
+        if (feedback.userNotes) {
+          pendingValidationBuckets.driftReadyForCorrection += 1;
+        } else {
+          pendingValidationBuckets.driftNeedsNotes += 1;
+        }
+        const driftReason = classifyDriftReason({
+          reason: analysis.reason,
+          notes: feedback.userNotes,
+          title: row.title,
+          type: row.type,
+        });
+        if (!driftReasonBuckets[driftReason.key]) {
+          driftReasonBuckets[driftReason.key] = {
+            key: driftReason.key,
+            label: driftReason.label,
+            count: 0,
+            examples: [],
+          };
+        }
+        driftReasonBuckets[driftReason.key].count += 1;
+        if (row.title && !driftReasonBuckets[driftReason.key].examples.includes(row.title) && driftReasonBuckets[driftReason.key].examples.length < 3) {
+          driftReasonBuckets[driftReason.key].examples.push(row.title);
+        }
+        followupQueue.push({
+          id: row.id,
+          title: row.title,
+          date: row.date,
+          status: 'drift',
+          source: sourceKey,
+          action: feedback.userNotes ? '进入纠偏分析' : '补充偏差备注',
+          reason: feedback.userNotes || analysis.reason || driftReason.label,
+          reportId: analysis.reportId,
+          priorityScore: feedback.userNotes ? 100 : 90,
+        });
+      } else {
+        validationPending += 1;
+        sourceBuckets[sourceKey].pending += 1;
+        if (eventTime < nowTime) {
+          pendingValidationBuckets.overdue += 1;
+          followupQueue.push({
+            id: row.id,
+            title: row.title,
+            date: row.date,
+            status: 'pending',
+            source: sourceKey,
+            action: '回收验证结果',
+            reason: '事件日期已过，应该追收用户反馈，判断这次预测是否命中。',
+            reportId: analysis.reportId,
+            priorityScore: 70,
+          });
+        } else {
+          pendingValidationBuckets.upcoming += 1;
+        }
+      }
+
+      if (analysis.reportId) {
+        resultReportLinked += 1;
+      }
+      if (analysis.source === 'chat_message') {
+        chatSourcedEvents += 1;
+      }
+    }
+
+    const eventsLast7d = analyticsOperations.countByEventNameSinceDays(7).map((item) => ({
+      eventName: item.event_name,
+      count: item.count,
+    }));
+
+    return {
+      totals: {
+        ...totals,
+        validation_accurate: validationAccurate,
+        validation_drift: validationDrift,
+        validation_pending: validationPending,
+        result_report_linked_events: resultReportLinked,
+        chat_sourced_events: chatSourcedEvents,
+      },
+      sourceBreakdown: Object.values(sourceBuckets)
+        .map((item) => ({
+          ...item,
+          accuracyRate: item.accurate + item.drift > 0 ? Math.round((item.accurate / (item.accurate + item.drift)) * 100) : 0,
+        }))
+        .sort((left, right) => right.total - left.total),
+      driftReasonBreakdown: Object.values(driftReasonBuckets)
+        .map((item) => ({
+          ...item,
+          share: validationDrift > 0 ? Math.round((item.count / validationDrift) * 100) : 0,
+        }))
+        .sort((left, right) => right.count - left.count),
+      pendingValidationBuckets,
+      followupQueue: followupQueue
+        .sort((left, right) => right.priorityScore - left.priorityScore || left.date.localeCompare(right.date))
+        .slice(0, 8)
+        .map(({ priorityScore, ...item }) => item),
+      reportVersionBreakdown: reportVersionRows.map((item) => ({
+        version: item.report_version || 'v1',
+        count: item.count,
+        share: totals.total_analyses > 0 ? Math.round((item.count / totals.total_analyses) * 100) : 0,
+      })),
+      eventsLast7d,
+      recentEvents: analyticsOperations.listRecent(12),
+    };
   },
 };
 
@@ -532,9 +887,19 @@ export const eventOperations = {
 
   update: (id: string, updates: Record<string, unknown>) => {
     const JSON_FIELDS = ['fortuneAnalysis', 'userFeedback', 'followUpAdvice'] as const;
-    const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
+    const COLUMN_MAP: Record<string, string> = {
+      fortuneAnalysis: 'fortune_analysis',
+      userFeedback: 'user_feedback',
+      followUpAdvice: 'follow_up_advice',
+      reminderEnabled: 'reminder_enabled',
+      reminderAdvanceDays: 'reminder_advance_days',
+      reminderMethod: 'reminder_method',
+    };
+    const setClause = Object.keys(updates)
+      .map((key) => `${COLUMN_MAP[key] || key} = ?`)
+      .join(', ');
     const values = Object.entries(updates).map(([key, value]) => {
-      if (key === 'reminder_enabled') return value ? 1 : 0;
+      if (key === 'reminder_enabled' || key === 'reminderEnabled') return value ? 1 : 0;
       if (JSON_FIELDS.includes(key as typeof JSON_FIELDS[number])) return JSON.stringify(value);
       return value;
     });
@@ -581,6 +946,18 @@ export const questionOperations = {
     return rows.map(mapQuestionRow);
   },
 
+  getChatByUserId: (userId: string, limit = 100) => {
+    const stmt = db.prepare(`
+      SELECT * FROM questions
+      WHERE user_id = ?
+        AND category IN ('chat_user', 'chat_assistant')
+      ORDER BY created_at ASC
+      LIMIT ?
+    `);
+    const rows = stmt.all(userId, limit) as RawQuestionRow[];
+    return rows.map(mapQuestionRow);
+  },
+
   update: (id: string, updates: Partial<Omit<QuestionRecord, 'id' | 'userId'>>) => {
     const setClause = Object.keys(updates).map(key => `${key} = ?`).join(', ');
     const values = Object.entries(updates).map(([key, value]) =>
@@ -595,6 +972,16 @@ export const questionOperations = {
   delete: (id: string) => {
     const stmt = db.prepare('DELETE FROM questions WHERE id = ?');
     return stmt.run(id);
+  },
+
+  deleteMany: (ids: string[]) => {
+    if (!ids.length) {
+      return { changes: 0 };
+    }
+
+    const placeholders = ids.map(() => '?').join(', ');
+    const stmt = db.prepare(`DELETE FROM questions WHERE id IN (${placeholders})`);
+    return stmt.run(...ids);
   },
 };
 

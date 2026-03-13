@@ -13,6 +13,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
   const [error, setError] = useState('');
   const [requesting, setRequesting] = useState(false);
   const [verifying, setVerifying] = useState(false);
+  const [deliveryConfigured, setDeliveryConfigured] = useState(false);
 
   const requestCode = async () => {
     setRequesting(true);
@@ -33,7 +34,8 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
       }
 
       setPreviewCode(data.previewCode || '');
-      setMessage('验证码已生成，请输入后完成登录。');
+      setDeliveryConfigured(Boolean(data.deliveryConfigured));
+      setMessage(data.deliveryConfigured ? '验证码已发送到邮箱，请查收后完成登录。' : '验证码已生成，请输入后完成登录。');
     } catch {
       setError('网络异常，请稍后重试');
     } finally {
@@ -129,6 +131,12 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
           <div className="mt-2 text-2xl font-black tracking-[0.2em] text-[color:var(--ink)]">{previewCode}</div>
         </div>
       )}
+
+      {deliveryConfigured ? (
+        <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
+          邮箱绑定成功后，系统会自动把你加入内容更新订阅，并发送欢迎邮件。
+        </p>
+      ) : null}
     </div>
   );
 }

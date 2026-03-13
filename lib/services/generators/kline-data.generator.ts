@@ -23,6 +23,13 @@ export class KlineDataGenerator {
     const currentYear = new Date().getFullYear();
     const birthYear = birthDate.getFullYear();
     const currentAge = currentYear - birthYear;
+    const seedBase = [
+      birthYear,
+      gender,
+      pillars.map((pillar) => `${pillar.celestialStem}${pillar.earthlyBranch}`).join('|'),
+      (yongShenResult?.yongShen || []).join(','),
+      (yongShenResult?.jiShen || []).join(','),
+    ].join(':');
 
     // 生成从出生到当前年龄的K线数据
     for (let age = 0; age <= currentAge + 10; age++) {
@@ -34,10 +41,10 @@ export class KlineDataGenerator {
       const baseValue = score;
       const volatility = 10; // 波动范围
 
-      const open = baseValue + this.randomOffset(volatility);
-      const close = baseValue + this.randomOffset(volatility);
-      const high = Math.max(open, close) + Math.abs(this.randomOffset(volatility / 2));
-      const low = Math.min(open, close) - Math.abs(this.randomOffset(volatility / 2));
+      const open = baseValue + this.seededOffset(`${seedBase}:${year}:open`, volatility);
+      const close = baseValue + this.seededOffset(`${seedBase}:${year}:close`, volatility);
+      const high = Math.max(open, close) + Math.abs(this.seededOffset(`${seedBase}:${year}:high`, volatility / 2));
+      const low = Math.min(open, close) - Math.abs(this.seededOffset(`${seedBase}:${year}:low`, volatility / 2));
 
       data.push({
         year,
@@ -76,7 +83,16 @@ export class KlineDataGenerator {
     }
   }
 
-  private randomOffset(range: number): number {
-    return (Math.random() - 0.5) * range * 2;
+  private seededOffset(seedSource: string, range: number): number {
+    const normalized = (this.hashString(seedSource) % 1000) / 999;
+    return (normalized - 0.5) * range * 2;
+  }
+
+  private hashString(input: string): number {
+    let hash = 0;
+    for (let index = 0; index < input.length; index++) {
+      hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+    }
+    return hash;
   }
 }

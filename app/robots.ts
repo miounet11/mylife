@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: '/',
       disallow: ['/api/'],
     },
-    sitemap: 'https://life-kline.com/sitemap.xml',
+    sitemap: 'https://www.life-kline.com/sitemap.xml',
   };
 }

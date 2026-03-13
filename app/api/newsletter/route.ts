@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { emailSubscriptionOperations } from '@/lib/database';
+import { isEmailDeliveryConfigured, sendSubscriptionConfirmationEmail } from '@/lib/email';
 import { validateEmail } from '@/lib/validators';
+import { trackServerEvent } from '@/lib/analytics';
 
 export async function GET(request: NextRequest) {
   const email = request.nextUrl.searchParams.get('email') || '';
@@ -45,9 +47,28 @@ export async function POST(request: NextRequest) {
 
     emailSubscriptionOperations.upsert(email, source, tags);
 
+    const emailConfigured = isEmailDeliveryConfigured();
+    if (emailConfigured) {
+      sendSubscriptionConfirmationEmail(email).catch((error) => {
+        console.error('[Newsletter] 发送订阅确认邮件失败:', error);
+      });
+    }
+
+    trackServerEvent({
+      eventName: 'newsletter_subscribed',
+      page: '/updates',
+      meta: {
+        source,
+        emailDomain: email.split('@')[1] || '',
+        deliveryConfigured: emailConfigured,
+        tags,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       message: '订阅已保存',
+      deliveryConfigured: emailConfigured,
     });
   } catch (error) {
     console.error('[API] 订阅邮箱失败:', error);

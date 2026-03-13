@@ -83,6 +83,9 @@ export function initializeDatabase(): void {
       evidence JSON NOT NULL,
       analysis JSON,
       kline_data JSON,
+      dayun JSON,
+      shen_sha JSON,
+      report_version TEXT DEFAULT 'v1',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -97,6 +100,33 @@ export function initializeDatabase(): void {
       throw e;
     }
   }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN dayun JSON`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN shen_sha JSON`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN report_version TEXT DEFAULT 'v1'`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_repo_analytics_events_name ON analytics_events(event_name)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_repo_analytics_events_created_at ON analytics_events(created_at)`);
 
   // 重要事件表
   db.exec(`
@@ -118,6 +148,18 @@ export function initializeDatabase(): void {
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS analytics_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      session_id TEXT,
+      event_name TEXT NOT NULL,
+      page TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now'))
     )
   `);
 

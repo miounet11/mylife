@@ -2,7 +2,10 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { Plus, Filter, Search, Calendar, Grid, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, Clock3, Filter, Grid, Plus, Search, Sparkles } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -31,6 +34,21 @@ interface UIEvent {
     enabled: boolean;
     advanceDays: number;
     method: 'app' | 'email' | 'sms';
+  };
+  fortuneAnalysis?: {
+    source?: string;
+    reportId?: string;
+    suggestionKey?: string;
+    reason?: string;
+    title?: string;
+  };
+  followUpAdvice?: {
+    shortTerm?: string;
+    longTerm?: string;
+  };
+  userFeedback?: {
+    wasAccurate?: boolean;
+    userNotes?: string;
   };
 }
 
@@ -79,6 +97,9 @@ const createDefaultForm = (): EventFormState => ({
 });
 
 export default function EventsPage() {
+  const searchParams = useSearchParams();
+  const focusedReportId = searchParams.get('reportId') || '';
+  const shouldOpenCreate = searchParams.get('create') === '1';
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -87,6 +108,7 @@ export default function EventsPage() {
   const [selectedType, setSelectedType] = useState<'all' | EventType>('all');
   const [keyword, setKeyword] = useState('');
   const [showForm, setShowForm] = useState(false);
+  const [handledCreateIntent, setHandledCreateIntent] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [form, setForm] = useState<EventFormState>(createDefaultForm());
   const [toast, setToast] = useState<ToastState | null>(null);
@@ -109,7 +131,8 @@ export default function EventsPage() {
   const loadEvents = useCallback(async () => {
     try {
       setError('');
-      const res = await fetch('/api/events', { cache: 'no-store' });
+      const query = focusedReportId ? `?reportId=${encodeURIComponent(focusedReportId)}` : '';
+      const res = await fetch(`/api/events${query}`, { cache: 'no-store' });
       const data = await res.json();
       if (!res.ok || !data.success) {
         showError(data.error || '加载事件失败');
@@ -131,10 +154,13 @@ export default function EventsPage() {
           description: item.description || '',
           impact,
           reminder: {
-            enabled: !!item.reminder_enabled,
-            advanceDays: item.reminder_advance_days || 0,
-            method: (item.reminder_method || 'app') as 'app' | 'email' | 'sms',
+            enabled: !!(item.reminderEnabled ?? item.reminder_enabled),
+            advanceDays: item.reminderAdvanceDays ?? item.reminder_advance_days ?? 0,
+            method: (item.reminderMethod || item.reminder_method || 'app') as 'app' | 'email' | 'sms',
           },
+          fortuneAnalysis: item.fortuneAnalysis || undefined,
+          followUpAdvice: item.followUpAdvice || undefined,
+          userFeedback: item.userFeedback || undefined,
         };
       });
 
@@ -142,7 +168,7 @@ export default function EventsPage() {
     } catch {
       showError('网络异常，无法加载事件');
     }
-  }, []);
+  }, [focusedReportId]);
 
   useEffect(() => {
     const init = async () => {
@@ -157,13 +183,45 @@ export default function EventsPage() {
   const filteredEvents = useMemo(() => {
     const keywordLower = keyword.trim().toLowerCase();
     return events.filter((event) => {
+      const reportMatched = focusedReportId ? event.fortuneAnalysis?.reportId === focusedReportId : true;
       const typeMatched = selectedType === 'all' ? true : event.type === selectedType;
       const searchMatched = keywordLower
         ? event.title.toLowerCase().includes(keywordLower) || event.description.toLowerCase().includes(keywordLower)
         : true;
-      return typeMatched && searchMatched;
+      return reportMatched && typeMatched && searchMatched;
     });
-  }, [events, keyword, selectedType]);
+  }, [events, focusedReportId, keyword, selectedType]);
+
+  const workbenchEvents = focusedReportId ? filteredEvents : events;
+
+  useEffect(() => {
+    if (shouldOpenCreate && !handledCreateIntent && !showForm) {
+      setShowForm(true);
+      setHandledCreateIntent(true);
+    }
+  }, [handledCreateIntent, shouldOpenCreate, showForm]);
+
+  const validationWorkbench = useMemo(() => {
+    const now = new Date();
+    const overduePending = workbenchEvents
+      .filter((event) => event.userFeedback?.wasAccurate === undefined && event.date.getTime() < now.getTime())
+      .sort((left, right) => left.date.getTime() - right.date.getTime());
+    const driftEvents = workbenchEvents
+      .filter((event) => event.userFeedback?.wasAccurate === false)
+      .sort((left, right) => right.date.getTime() - left.date.getTime());
+    const upcomingValidation = workbenchEvents
+      .filter((event) => event.userFeedback?.wasAccurate === undefined && event.date.getTime() >= now.getTime())
+      .sort((left, right) => left.date.getTime() - right.date.getTime())
+      .slice(0, 4);
+
+    return {
+      overduePending,
+      driftEvents,
+      upcomingValidation,
+      accurateCount: workbenchEvents.filter((event) => event.userFeedback?.wasAccurate === true).length,
+      pendingCount: workbenchEvents.filter((event) => event.userFeedback?.wasAccurate === undefined).length,
+    };
+  }, [workbenchEvents]);
 
   const openCreateForm = () => {
     setEditingEventId(null);
@@ -211,6 +269,12 @@ export default function EventsPage() {
         reminderEnabled: form.reminderEnabled,
         reminderAdvanceDays: form.reminderAdvanceDays,
         reminderMethod: form.reminderMethod,
+        fortuneAnalysis: focusedReportId
+          ? {
+              source: 'manual',
+              reportId: focusedReportId,
+            }
+          : undefined,
       };
 
       const isEditMode = !!editingEventId;
@@ -278,6 +342,41 @@ export default function EventsPage() {
     }
   };
 
+  const handleMarkAccuracy = async (eventId: string, wasAccurate: boolean) => {
+    const target = events.find((event) => event.id === eventId);
+    if (!target) return;
+
+    const notes = window.prompt(
+      wasAccurate ? '补充一句这次判断为什么准确（可选）' : '补充一句这次判断哪里不准确（可选）',
+      target.userFeedback?.userNotes || ''
+    );
+    if (notes === null) return;
+
+    try {
+      const res = await fetch('/api/events', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: eventId,
+          userFeedback: {
+            ...target.userFeedback,
+            wasAccurate,
+            userNotes: notes.trim(),
+          },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        showError(data.error || '记录验证结果失败');
+        return;
+      }
+      showSuccess(wasAccurate ? '已记录为准确' : '已记录为待修正');
+      await loadEvents();
+    } catch {
+      showError('网络异常，验证结果保存失败');
+    }
+  };
+
   return (
     <div className="page-shell">
       <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
@@ -314,6 +413,155 @@ export default function EventsPage() {
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
+        )}
+
+        {focusedReportId && (
+          <section className="glass-panel rounded-[1.75rem] p-5">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div>
+                <div className="section-label">报告联动模式</div>
+                <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">当前正在处理这份报告关联的事件与验证结果</div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  新建事件会自动绑定当前报告，更适合把结果页里的判断持续沉淀成长期验证样本。
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                <Link
+                  href={`/result/${encodeURIComponent(focusedReportId)}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                >
+                  返回关联报告
+                </Link>
+                <Link
+                  href="/events"
+                  className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold text-[color:var(--muted)]"
+                >
+                  查看全部事件
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {!loading && (
+          <section className="glass-panel rounded-[2rem] p-6">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <div className="section-label">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  验证工作台
+                </div>
+                <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">
+                  不只是记录事件，
+                  <span className="font-serif text-[color:var(--accent-strong)]">而是把该验证的、该纠偏的、该继续追问的全放在一起。</span>
+                </h2>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-4">
+                <WorkbenchStat label="已过期待验证" value={validationWorkbench.overduePending.length} tone="bg-rose-50 text-rose-700" />
+                <WorkbenchStat label="已记录偏差" value={validationWorkbench.driftEvents.length} tone="bg-amber-50 text-amber-700" />
+                <WorkbenchStat label="未来待验证" value={validationWorkbench.upcomingValidation.length} tone="bg-slate-50 text-slate-700" />
+                <WorkbenchStat label="已验证准确" value={validationWorkbench.accurateCount} tone="bg-emerald-50 text-emerald-700" />
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-4 xl:grid-cols-3">
+              <WorkbenchPanel
+                icon={<Clock3 className="h-4 w-4" />}
+                title="优先回收结果"
+                empty="当前没有已过期待验证的事件。"
+                items={validationWorkbench.overduePending.slice(0, 4).map((event) => (
+                  <WorkbenchQueueItem
+                    key={event.id}
+                    event={event}
+                    reason="事件日期已过，现在最重要的是回收用户反馈，判断这次预测到底准不准。"
+                    actionSlot={
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkAccuracy(event.id, true)}
+                          className="rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
+                        >
+                          记为准确
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkAccuracy(event.id, false)}
+                          className="rounded-full bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
+                        >
+                          记录偏差
+                        </button>
+                      </div>
+                    }
+                  />
+                ))}
+              />
+
+              <WorkbenchPanel
+                icon={<AlertTriangle className="h-4 w-4" />}
+                title="偏差纠偏队列"
+                empty="当前没有已标记偏差的事件。"
+                items={validationWorkbench.driftEvents.slice(0, 4).map((event) => (
+                  <WorkbenchQueueItem
+                    key={event.id}
+                    event={event}
+                    reason={event.userFeedback?.userNotes || event.fortuneAnalysis?.reason || '当前最适合回到聊天页，拆开时机、执行和输入偏差。'}
+                    actionSlot={
+                      <div className="flex flex-wrap gap-2">
+                        {event.fortuneAnalysis?.reportId ? (
+                          <Link
+                            href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`}
+                            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]"
+                          >
+                            进入纠偏分析
+                            <ArrowRight className="h-3.5 w-3.5" />
+                          </Link>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => void handleMarkAccuracy(event.id, false)}
+                          className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                        >
+                          补充备注
+                        </button>
+                      </div>
+                    }
+                  />
+                ))}
+              />
+
+              <WorkbenchPanel
+                icon={<Calendar className="h-4 w-4" />}
+                title="即将进入验证期"
+                empty="当前没有即将到来的待验证事件。"
+                items={validationWorkbench.upcomingValidation.map((event) => (
+                  <WorkbenchQueueItem
+                    key={event.id}
+                    event={event}
+                    reason={event.fortuneAnalysis?.reason || '事件即将发生，建议提前看一次报告或聊天，明确这次要验证的是什么。'}
+                    actionSlot={
+                      <div className="flex flex-wrap gap-2">
+                        {event.fortuneAnalysis?.reportId ? (
+                          <Link
+                            href={`/result/${encodeURIComponent(event.fortuneAnalysis.reportId)}`}
+                            className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                          >
+                            查看关联报告
+                          </Link>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={openCreateForm}
+                          className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]"
+                        >
+                          新增配套事件
+                        </button>
+                      </div>
+                    }
+                  />
+                ))}
+              />
+            </div>
+          </section>
         )}
 
         {/* 工具栏 */}
@@ -405,6 +653,7 @@ export default function EventsPage() {
                 onEdit={openEditForm}
                 onDelete={handleDelete}
                 onToggleReminder={handleToggleReminder}
+                onMarkAccuracy={handleMarkAccuracy}
               />
             </div>
           </div>
@@ -415,6 +664,7 @@ export default function EventsPage() {
             onEdit={openEditForm}
             onDelete={handleDelete}
             onToggleReminder={handleToggleReminder}
+            onMarkAccuracy={handleMarkAccuracy}
           />
         )}
       </main>
@@ -566,4 +816,90 @@ function EventsSkeleton() {
       ))}
     </div>
   );
+}
+
+function WorkbenchStat({ label, value, tone }: { label: string; value: number; tone: string }) {
+  return (
+    <div className={`rounded-[1.4rem] px-4 py-4 ${tone}`}>
+      <div className="text-xs tracking-[0.18em]">{label}</div>
+      <div className="mt-2 text-2xl font-black">{value}</div>
+    </div>
+  );
+}
+
+function WorkbenchPanel({
+  icon,
+  title,
+  items,
+  empty,
+}: {
+  icon: ReactNode;
+  title: string;
+  items: ReactNode[];
+  empty: string;
+}) {
+  return (
+    <div className="rounded-[1.75rem] bg-slate-50 p-4">
+      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+        {icon}
+        {title}
+      </div>
+      <div className="mt-4 grid gap-3">
+        {items.length > 0 ? items : (
+          <div className="rounded-[1.25rem] bg-white px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+            {empty}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WorkbenchQueueItem({
+  event,
+  reason,
+  actionSlot,
+}: {
+  event: UIEvent;
+  reason: string;
+  actionSlot: ReactNode;
+}) {
+  return (
+    <div className="rounded-[1.25rem] bg-white px-4 py-4">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
+          <div className="mt-1 text-xs text-[color:var(--muted)]">
+            {formatQueueDate(event.date)} · {mapTypeLabel(event.type)}
+          </div>
+        </div>
+      </div>
+      <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{reason}</div>
+      <div className="mt-3">{actionSlot}</div>
+    </div>
+  );
+}
+
+function formatQueueDate(date: Date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}.${m}.${d}`;
+}
+
+function mapTypeLabel(type: EventType) {
+  switch (type) {
+    case 'career':
+      return '事业';
+    case 'wealth':
+      return '财富';
+    case 'marriage':
+      return '感情';
+    case 'health':
+      return '健康';
+    case 'family':
+      return '家庭';
+    default:
+      return '其他';
+  }
 }

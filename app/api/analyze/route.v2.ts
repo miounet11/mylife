@@ -8,10 +8,13 @@ import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { validateAnalyzeRequest } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import type { FortuneAnalysisInput } from '@/lib/services';
+import { trackServerEvent } from '@/lib/analytics';
+import { CURRENT_REPORT_VERSION } from '@/lib/report-pipeline';
 
 export const maxDuration = 30;
 const ANALYZE_LLM_TIMEOUT_MS = 3500;
 const ANALYZE_LLM_BUDGET_MS = 4000;
+const REPORT_VERSION = CURRENT_REPORT_VERSION;
 
 export async function POST(request: NextRequest) {
   try {
@@ -56,7 +59,10 @@ export async function POST(request: NextRequest) {
 
     // 5. LLM 增强 (可选)
     const llmResult = await enhanceWithLLM(baseResult);
-    const finalResult = mergeLLMResult(baseResult, llmResult);
+    const finalResult = {
+      ...mergeLLMResult(baseResult, llmResult),
+      reportVersion: REPORT_VERSION,
+    };
 
     // 6. 持久化 (使用新的 Repository 层)
     const reportId = generateReportId();
@@ -67,6 +73,31 @@ export async function POST(request: NextRequest) {
       userId,
       data,
       result: finalResult,
+    });
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'analyze_submitted',
+      page: '/analyze',
+      meta: {
+        reportId,
+        llmUsed: !!llmResult,
+        reportVersion: REPORT_VERSION,
+      },
+    });
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'report_generated',
+      page: `/result/${reportId}`,
+      meta: {
+        reportId,
+        llmUsed: !!llmResult,
+        reportVersion: REPORT_VERSION,
+        pattern: finalResult.pattern?.type || '',
+      },
     });
 
     // 7. 返回结果
@@ -234,6 +265,9 @@ async function saveAnalysisResult(params: {
     evidence: result.evidence,
     analysis: result.analysis,
     klineData: result.klineData,
+    dayun: result.dayun,
+    shenSha: result.shenSha,
+    reportVersion: REPORT_VERSION,
     isPublic: false,
   });
 }

@@ -4,11 +4,13 @@ import { eventOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { validateEventRequest } from '@/lib/validators';
+import { trackServerEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     const userId = await getOrCreateGuestUserId();
+    const source = typeof data.source === 'string' ? data.source : 'manual';
 
     // 完整输入验证
     const validation = validateEventRequest(data);
@@ -39,6 +41,49 @@ export async function POST(request: NextRequest) {
       reminderAdvanceDays: data.reminderAdvanceDays || 60,
       reminderMethod: data.reminderMethod || 'app',
     });
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'event_created',
+      page: '/events',
+      meta: {
+        eventId,
+        type: data.type,
+        reminderEnabled: !!data.reminderEnabled,
+        source,
+        reportId: data.fortuneAnalysis?.reportId || null,
+      },
+    });
+
+    if (source === 'result_report') {
+      trackServerEvent({
+        userId,
+        sessionId: userId,
+        eventName: 'report_event_saved_from_result',
+        page: typeof data.page === 'string' ? data.page : '/result',
+        meta: {
+          eventId,
+          type: data.type,
+          reportId: data.fortuneAnalysis?.reportId || null,
+          suggestionKey: data.fortuneAnalysis?.suggestionKey || null,
+        },
+      });
+    }
+
+    if (source === 'chat_message') {
+      trackServerEvent({
+        userId,
+        sessionId: userId,
+        eventName: 'chat_event_saved',
+        page: typeof data.page === 'string' ? data.page : '/chat',
+        meta: {
+          eventId,
+          type: data.type,
+          reportId: data.fortuneAnalysis?.reportId || null,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -84,9 +129,12 @@ export async function PATCH(request: NextRequest) {
     if (data.time !== undefined) updates.time = data.time;
     if (data.description !== undefined) updates.description = data.description;
     if (data.impact !== undefined) updates.impact = data.impact;
-    if (data.reminderEnabled !== undefined) updates.reminder_enabled = !!data.reminderEnabled;
-    if (data.reminderAdvanceDays !== undefined) updates.reminder_advance_days = data.reminderAdvanceDays;
-    if (data.reminderMethod !== undefined) updates.reminder_method = data.reminderMethod;
+    if (data.fortuneAnalysis !== undefined) updates.fortuneAnalysis = data.fortuneAnalysis;
+    if (data.userFeedback !== undefined) updates.userFeedback = data.userFeedback;
+    if (data.followUpAdvice !== undefined) updates.followUpAdvice = data.followUpAdvice;
+    if (data.reminderEnabled !== undefined) updates.reminderEnabled = !!data.reminderEnabled;
+    if (data.reminderAdvanceDays !== undefined) updates.reminderAdvanceDays = data.reminderAdvanceDays;
+    if (data.reminderMethod !== undefined) updates.reminderMethod = data.reminderMethod;
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(
@@ -97,6 +145,30 @@ export async function PATCH(request: NextRequest) {
 
     eventOperations.update(eventId, updates);
     const updated = eventOperations.getById(eventId);
+
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'event_updated',
+      page: '/events',
+      meta: {
+        eventId,
+        updatedFields: Object.keys(updates),
+      },
+    });
+
+    if (data.userFeedback !== undefined) {
+      trackServerEvent({
+        userId,
+        sessionId: userId,
+        eventName: 'event_feedback_recorded',
+        page: '/events',
+        meta: {
+          eventId,
+          wasAccurate: data.userFeedback?.wasAccurate ?? null,
+        },
+      });
+    }
 
     return NextResponse.json({
       success: true,
@@ -135,6 +207,16 @@ export async function DELETE(request: NextRequest) {
 
     eventOperations.delete(eventId);
 
+    trackServerEvent({
+      userId,
+      sessionId: userId,
+      eventName: 'event_deleted',
+      page: '/events',
+      meta: {
+        eventId,
+      },
+    });
+
     return NextResponse.json({
       success: true,
       message: '事件已删除',
@@ -155,6 +237,7 @@ export async function GET(request: NextRequest) {
     const userId = await getOrCreateGuestUserId();
     const { searchParams } = new URL(request.url!);
     const type = searchParams.get('type');
+    const reportId = searchParams.get('reportId');
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
 
@@ -169,6 +252,12 @@ export async function GET(request: NextRequest) {
     // 如果有类型筛选
     if (type && type !== 'all') {
       events = events.filter((event: any) => event.type === type);
+    }
+
+    if (reportId) {
+      events = events.filter(
+        (event: any) => (event.fortuneAnalysis as { reportId?: string } | undefined)?.reportId === reportId
+      );
     }
 
     return NextResponse.json({

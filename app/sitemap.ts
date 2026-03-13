@@ -10,61 +10,61 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const entityInsights = getEntityInsights();
   const staticRoutes: MetadataRoute.Sitemap = [
     {
-      url: 'https://life-kline.com',
+      url: 'https://www.life-kline.com',
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: 'https://life-kline.com/analyze',
+      url: 'https://www.life-kline.com/analyze',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: 'https://life-kline.com/chat',
+      url: 'https://www.life-kline.com/chat',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
     },
     {
-      url: 'https://life-kline.com/knowledge',
+      url: 'https://www.life-kline.com/knowledge',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
     },
     {
-      url: 'https://life-kline.com/cases',
+      url: 'https://www.life-kline.com/cases',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.75,
     },
     {
-      url: 'https://life-kline.com/insights',
+      url: 'https://www.life-kline.com/insights',
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.76,
     },
     {
-      url: 'https://life-kline.com/updates',
+      url: 'https://www.life-kline.com/updates',
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.45,
     },
     ...knowledgeArticles.map((article) => ({
-      url: `https://life-kline.com/knowledge/${article.slug}`,
+      url: `https://www.life-kline.com/knowledge/${article.slug}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.72,
     })),
     ...caseStudies.map((item) => ({
-      url: `https://life-kline.com/cases/${item.slug}`,
+      url: `https://www.life-kline.com/cases/${item.slug}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.7,
     })),
     ...entityInsights.map((item) => ({
-      url: `https://life-kline.com/insights/${item.type}/${item.slug}`,
+      url: `https://www.life-kline.com/insights/${item.type}/${item.slug}`,
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.68,
@@ -79,7 +79,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     return [
       ...staticRoutes,
       ...resultRoutes.map((item) => ({
-        url: `https://life-kline.com/result/${item.id}`,
+        url: `https://www.life-kline.com/result/${item.id}`,
         lastModified: new Date(item.updated_at || item.created_at || Date.now()),
         changeFrequency: 'monthly' as const,
         priority: 0.65,

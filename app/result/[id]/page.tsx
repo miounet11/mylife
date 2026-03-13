@@ -36,12 +36,31 @@ interface PageProps {
   }>;
 }
 
-import { fortuneOperations } from '@/lib/database';
+import { eventOperations, fortuneOperations } from '@/lib/database';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ResultPublicControls from '@/components/result-public-controls';
+import ReportEnginePanel from '@/components/report-engine-panel';
 import RelatedContent from '@/components/related-content';
 import { getCurrentUserId } from '@/lib/user-utils';
+import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
+import { calculateDayun } from '@/lib/dayun-calculator';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import ReportEventCapture from '@/components/report-event-capture';
+import {
+  buildConfidenceAnalysis,
+  buildDecisionPlaybook,
+  buildExpertInterpretation,
+  buildReportCorrectionInsight,
+  buildMonthlyWindows,
+  buildReportActionSuggestions,
+  buildReportValidationInsights,
+  buildScenarioViews,
+  buildYearlyTrendSnapshots,
+  buildYearlyRoadmap,
+} from '@/lib/report-v2';
+import { CURRENT_REPORT_VERSION, ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
+import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
 
 function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -63,14 +82,14 @@ export async function generateMetadata({ params }: PageProps) {
         title: `${publicName}的命理分析报告 | 人生K线`,
         description: `${publicName}的命理分析报告，基于真太阳时修正与结构化解读，默认私密，可按需创建分享页。`,
         alternates: {
-          canonical: `https://life-kline.com/result/${id}`,
+          canonical: `https://www.life-kline.com/result/${id}`,
         },
         robots: {
           index: isPublic,
           follow: isPublic || isOwner,
         },
         openGraph: {
-          url: `https://life-kline.com/result/${id}`,
+          url: `https://www.life-kline.com/result/${id}`,
           title: `${publicName}的命理分析 | 人生K线`,
           description: '结构化命理分析结果页，展示结构、趋势与建议，可按需分享。',
         },
@@ -82,7 +101,7 @@ export async function generateMetadata({ params }: PageProps) {
   
   return {
     title: '您的命理分析报告 | 人生K线',
-    description: 'AI驱动的八字命理分析，像真正的大师一样精准可信',
+    description: '结构化命理分析结果页，围绕命局结构、阶段节奏、行动建议与验证闭环展开。',
     robots: {
       index: true,
       follow: true,
@@ -96,16 +115,61 @@ async function getResult(reportId: string) {
     if (!fortuneData) return null;
     const analysis = (fortuneData.analysis ?? {
       opening: '细观您的八字，命理之象，历历在目。',
-      explanation: '（加载中或模型未生成深度解析）',
+      explanation: '当前结果已由结构化引擎生成，可先查看场景视图、月度窗口和行动建议，再继续进入 AI 深问。',
     }) as {
       opening?: string;
       explanation?: string;
       llmUsed?: boolean;
+      agenticUsed?: boolean;
+      reasoningMode?: ReportReasoningMode;
+      pipelineVersion?: string;
+      generatedFrom?: 'analyze' | 'upgrade';
+      generatedAt?: string;
+      upgradedFromVersion?: string;
+      engineBuilds?: {
+        core: string;
+        llm: string;
+        kline: string;
+        report: string;
+        reviewer?: string;
+        prompts?: string;
+      };
+      orchestration?: {
+        mode?: 'single-llm' | 'deterministic-expert' | 'parallel-agents';
+      };
+      verify?: {
+        consistencyScore?: number;
+        verdict?: 'PASS' | 'WARN' | 'FAIL';
+        failedRules?: string[];
+      };
+      loop?: Record<string, unknown>;
+      contextSignals?: Record<string, unknown>;
+      agentResults?: Record<string, unknown>;
+      enhancementNotes?: string[];
       [key: string]: unknown;
     };
 
-    // Transform database format to match frontend expectations
-    return {
+    const pillars = fortuneData.bazi?.pillars || [];
+    const bazi = pillars
+      .map((pillar) => `${pillar?.celestialStem || ''}${pillar?.earthlyBranch || ''}`)
+      .filter((item) => item.length === 2);
+    const yongShenResult = bazi.length === 4 ? determineYongShen(bazi) : null;
+    const dayun = fortuneData.dayun || (pillars.length >= 2 && fortuneData.birthDate && fortuneData.birthTime
+      ? calculateDayun(
+          new Date(fortuneData.birthDate),
+          fortuneData.birthTime,
+          fortuneData.gender,
+          pillars[0]?.celestialStem || '',
+          {
+            gan: pillars[1]?.celestialStem || '',
+            zhi: pillars[1]?.earthlyBranch || '',
+          },
+          yongShenResult,
+          new Date(fortuneData.birthDate).getFullYear()
+        )
+      : undefined);
+    const shenSha = fortuneData.shenSha || (bazi.length === 4 ? analyzeShenSha(bazi) || undefined : undefined);
+    const baseResult = {
       basic: {
         ...fortuneData.bazi,
         name: fortuneData.name || '测算者',
@@ -120,8 +184,71 @@ async function getResult(reportId: string) {
       evidence: fortuneData.evidence,
       analysis,
       klineData: fortuneData.klineData || null,
+      dayun,
+      shenSha,
+      reportVersion: fortuneData.reportVersion || 'v1',
       llmUsed: analysis.llmUsed ?? false,
+      agenticUsed: analysis.agenticUsed ?? false,
+      reasoningMode: deriveReportReasoningMode({
+        reasoningMode: analysis.reasoningMode,
+        agenticUsed: analysis.agenticUsed ?? false,
+        orchestrationMode: analysis.orchestration?.mode,
+        agentResults: analysis.agentResults,
+        contextSignals: analysis.contextSignals,
+        verifyVerdict: analysis.verify?.verdict,
+        enhancementNotes: analysis.enhancementNotes,
+      }),
+      engineBuilds: analysis.engineBuilds || {
+        ...ENGINE_BUILD_VERSIONS,
+        report: fortuneData.reportVersion || 'v1',
+      },
+      verify: analysis.verify,
+      loop: analysis.loop as Record<string, unknown> | undefined,
+      contextSignals: analysis.contextSignals,
+      agentResults: analysis.agentResults,
+      pipelineVersion: analysis.pipelineVersion || fortuneData.reportVersion || 'v1',
+      generatedFrom: analysis.generatedFrom,
+      upgradedFromVersion: analysis.upgradedFromVersion,
+      enhancementNotes: analysis.enhancementNotes || [],
       isPublic: fortuneData.isPublic !== false,
+    };
+    const scenarioViews = buildScenarioViews(baseResult);
+    const monthlyWindows = buildMonthlyWindows(baseResult);
+    const confidence = buildConfidenceAnalysis(baseResult);
+    const yearlyRoadmap = buildYearlyRoadmap({
+      ...baseResult,
+      scenarioViews,
+      monthlyWindows,
+    });
+    const decisionPlaybook = buildDecisionPlaybook({
+      ...baseResult,
+      scenarioViews,
+      monthlyWindows,
+    });
+    const yearlyTrendSnapshots = buildYearlyTrendSnapshots(baseResult);
+    const expertInterpretation = buildExpertInterpretation({
+      ...baseResult,
+      scenarioViews,
+      monthlyWindows,
+      confidence,
+    });
+    const actionSuggestions = buildReportActionSuggestions({
+      ...baseResult,
+      scenarioViews,
+      monthlyWindows,
+    });
+
+    // Transform database format to match frontend expectations
+    return {
+      ...baseResult,
+      scenarioViews,
+      monthlyWindows,
+      confidence,
+      yearlyRoadmap,
+      decisionPlaybook,
+      yearlyTrendSnapshots,
+      expertInterpretation,
+      actionSuggestions,
     };
   } catch(e) {
     console.error("Error fetching report:", e);
@@ -139,9 +266,28 @@ export default async function ResultPage({ params }: PageProps) {
   }
 
   const canManage = !!currentUserId && result.basic.userId === currentUserId;
+  const reasoningModeLabel = getReasoningModeLabel(result.reasoningMode || 'engine');
   if (result.isPublic === false && !canManage) {
     notFound();
   }
+  const linkedEvents = canManage
+    ? eventOperations
+        .getByUserId(result.basic.userId)
+        .filter((event) => (event.fortuneAnalysis as { reportId?: string } | undefined)?.reportId === id)
+    : [];
+  const validationInsights = buildReportValidationInsights(
+    linkedEvents.map((event) => ({
+      title: event.title,
+      userFeedback: event.userFeedback as { wasAccurate?: boolean; userNotes?: string } | undefined,
+      fortuneAnalysis: event.fortuneAnalysis as { reason?: string } | undefined,
+    }))
+  );
+  const correctionInsight = buildReportCorrectionInsight({
+    validationInsights,
+    confidence: result.confidence,
+    scenarioViews: result.scenarioViews,
+    monthlyWindows: result.monthlyWindows,
+  });
   const publicName = getPublicDisplayName(result.basic.name);
   const fiveElements = result.fiveElements || {};
   const sortedElements = Object.entries(fiveElements).sort(
@@ -159,8 +305,8 @@ export default async function ResultPage({ params }: PageProps) {
   const reportHighlights = [
     { label: '日主', value: result.basic.dayMaster || '未知' },
     { label: '格局', value: result.pattern?.type || '未知' },
-    { label: '最强五行', value: strongestEntry ? elementLabelMap[strongestEntry[0]] || strongestEntry[0] : '待补充' },
-    { label: '最弱五行', value: weakestEntry ? elementLabelMap[weakestEntry[0]] || weakestEntry[0] : '待补充' },
+    { label: '最强五行', value: strongestEntry ? elementLabelMap[strongestEntry[0]] || strongestEntry[0] : '继续结合结构判断' },
+    { label: '最弱五行', value: weakestEntry ? elementLabelMap[weakestEntry[0]] || weakestEntry[0] : '继续结合结构判断' },
   ];
   const reportActions = [
     {
@@ -187,11 +333,11 @@ export default async function ResultPage({ params }: PageProps) {
     '@type': 'Article',
     headline: `${publicName}的命理分析报告`,
     description: `AI驱动的八字命理分析公开结果页。此为${publicName}的公开报告。`,
-    mainEntityOfPage: `https://life-kline.com/result/${id}`,
+    mainEntityOfPage: `https://www.life-kline.com/result/${id}`,
     author: {
       '@type': 'Organization',
       name: '人生K线',
-      url: 'https://life-kline.com'
+      url: 'https://www.life-kline.com'
     }
   };
   return (
@@ -199,6 +345,16 @@ export default async function ResultPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <AnalyticsPageView
+        eventName="report_viewed"
+        page={`/result/${id}`}
+        meta={{
+          reportId: id,
+          isPublic: result.isPublic,
+          reportVersion: result.reportVersion || 'v1',
+          pattern: result.pattern?.type || '',
+        }}
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
 
@@ -214,7 +370,13 @@ export default async function ResultPage({ params }: PageProps) {
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {result.llmUsed ? 'AI 深度解析' : '基础引擎解析'}
+                  {result.llmUsed ? 'LLM 深度增强' : '结构化整合输出'}
+                </span>
+                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                  {reasoningModeLabel}
+                </span>
+                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                  {`报告 ${result.reportVersion || 'v1'}`}
                 </span>
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                   {result.isPublic ? '已开启分享模式' : '默认私密'}
@@ -255,7 +417,7 @@ export default async function ResultPage({ params }: PageProps) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">快速动作</div>
                   <div className="mt-3 flex flex-col gap-3">
                     <Link
-                      href="/chat"
+                      href={`/chat?reportId=${encodeURIComponent(id)}`}
                       className="inline-flex items-center justify-between rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
                     >
                       进入 AI 咨询
@@ -290,6 +452,21 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
             </div>
 
+            <ReportEnginePanel
+              reportId={id}
+              canManage={canManage}
+              reportVersion={result.reportVersion || 'v1'}
+              llmUsed={result.llmUsed}
+              agenticUsed={result.agenticUsed}
+              reasoningMode={result.reasoningMode}
+              consistencyScore={result.verify?.consistencyScore}
+              verifyVerdict={result.verify?.verdict}
+              generatedFrom={result.generatedFrom}
+              upgradedFromVersion={result.upgradedFromVersion}
+              engineBuilds={result.engineBuilds || ENGINE_BUILD_VERSIONS}
+              enhancementNotes={result.enhancementNotes || []}
+            />
+
             {reportActions.map((item) => {
               const Icon = item.icon;
               return (
@@ -322,6 +499,38 @@ export default async function ResultPage({ params }: PageProps) {
                 ))}
               </div>
             </div>
+
+            <ReportEventCapture reportId={id} suggestions={result.actionSuggestions || []} />
+
+            {canManage && (
+              <div className="soft-card rounded-[1.75rem] p-5">
+                <div className="font-semibold text-[color:var(--ink)]">这份报告的验证状态</div>
+                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{validationInsights.summary}</p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {[
+                    { label: '已验证准确', value: validationInsights.accurateCount },
+                    { label: '已记录偏差', value: validationInsights.driftCount },
+                    { label: '待验证', value: validationInsights.pendingCount },
+                  ].map((item) => (
+                    <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                      <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {canManage && validationInsights.totalLinkedEvents > 0 && (
+              <div className="soft-card rounded-[1.75rem] p-5">
+                <div className="font-semibold text-[color:var(--ink)]">纠偏优先级</div>
+                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{correctionInsight.summary}</p>
+                <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">更可能的原因</div>
+                  <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -339,16 +548,37 @@ export default async function ResultPage({ params }: PageProps) {
                 基础引擎解析
               </span>
             )}
+            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+              (result.reportVersion || 'v1') === CURRENT_REPORT_VERSION
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
+                : 'border-amber-200 bg-amber-50 text-amber-700'
+            }`}>
+              <span className={`h-1.5 w-1.5 rounded-full ${
+                (result.reportVersion || 'v1') === CURRENT_REPORT_VERSION ? 'bg-emerald-500' : 'bg-amber-500'
+              }`}></span>
+              {`报告 ${result.reportVersion || 'v1'}`}
+            </span>
           </div>
 
           <div className="scrollbar-none overflow-x-auto">
             <div className="flex min-w-max gap-3">
-              {[
-                { href: '#overview', label: '总览', icon: Sparkles },
-                { href: '#pillars', label: '命盘', icon: Compass },
-                { href: '#elements', label: '五行', icon: LineChart },
-                { href: '#advice', label: '建议', icon: ScrollText },
-                { href: '#trend', label: '趋势', icon: CalendarClock },
+                  {[
+                  { href: '#overview', label: '总览', icon: Sparkles },
+                  { href: '#scenario', label: '场景', icon: ArrowRight },
+                  { href: '#expert', label: '专家', icon: ScrollText },
+                  { href: '#agentic', label: '并发层', icon: Bot },
+                  { href: '#pillars', label: '命盘', icon: Compass },
+                  { href: '#engine', label: '引擎', icon: Bot },
+                  { href: '#elements', label: '五行', icon: LineChart },
+                  { href: '#windows', label: '窗口', icon: CalendarClock },
+                  { href: '#playbook', label: '执行', icon: Bot },
+                  { href: '#roadmap', label: '路线图', icon: Compass },
+                  { href: '#trajectory', label: '三年', icon: LineChart },
+                  { href: '#confidence', label: '可信度', icon: LockKeyhole },
+                  { href: '#validation', label: '验证', icon: LockKeyhole },
+                  { href: '#correction', label: '纠偏', icon: Compass },
+                  { href: '#advice', label: '建议', icon: ScrollText },
+                  { href: '#trend', label: '趋势', icon: CalendarClock },
                 { href: '#next-step', label: '下一步', icon: ArrowRight },
               ].map((item) => {
                 const Icon = item.icon;
@@ -369,7 +599,7 @@ export default async function ResultPage({ params }: PageProps) {
 
         {/* 可信报告 */}
         <Suspense fallback={<ReportSkeleton />}>
-          <TrustReport result={result} />
+          <TrustReport result={{ ...result, validationInsights, correctionInsight }} />
         </Suspense>
 
         {/* 人生K线图 */}
@@ -384,7 +614,11 @@ export default async function ResultPage({ params }: PageProps) {
         {/* NextStep引导 */}
         <div id="next-step" className="mt-16 scroll-mt-28">
           <Suspense fallback={<GuideSkeleton />}>
-            <NextStepGuide />
+            <NextStepGuide
+              reportId={id}
+              hasPendingValidation={validationInsights.pendingCount > 0}
+              hasDrift={validationInsights.driftCount > 0}
+            />
           </Suspense>
         </div>
 

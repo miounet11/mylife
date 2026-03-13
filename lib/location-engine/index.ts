@@ -137,7 +137,7 @@ function formatTimezoneLabel(offset: number) {
   return `UTC${offset >= 0 ? '+' : ''}${offset}`;
 }
 
-function timezoneOffsetFromLabel(timezoneLabel: string) {
+export function timezoneOffsetFromLabel(timezoneLabel: string) {
   const standardLongitude = WORLD_TIMEZONE_STANDARD_LONGITUDES[timezoneLabel] ?? 0;
   return standardLongitude / 15;
 }

@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fortuneOperations } from '@/lib/database';
 import { getCurrentUserId } from '@/lib/user-utils';
+import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
 
 export async function GET(
   request: NextRequest,
@@ -72,9 +73,39 @@ export async function PATCH(
     }
 
     const body = await request.json();
+
+    if (body?.action === 'upgrade') {
+      const { result, llmUsed } = await regenerateReportFromRecord(fortuneData);
+
+      fortuneOperations.update(reportId, {
+        name: fortuneData.name,
+        bazi: result.basic,
+        fiveElements: result.fiveElements,
+        tenGods: result.tenGods || {},
+        pattern: result.pattern,
+        fortune: result.fortune,
+        advice: result.advice,
+        evidence: result.evidence,
+        analysis: result.analysis,
+        klineData: result.klineData,
+        dayun: result.dayun,
+        shenSha: result.shenSha,
+        reportVersion: CURRENT_REPORT_VERSION,
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: reportId,
+          reportVersion: CURRENT_REPORT_VERSION,
+          llmUsed,
+        },
+      });
+    }
+
     if (typeof body.isPublic !== 'boolean') {
       return NextResponse.json(
-        { success: false, error: '缺少 isPublic 参数' },
+        { success: false, error: '缺少 isPublic 参数或升级动作' },
         { status: 400 }
       );
     }

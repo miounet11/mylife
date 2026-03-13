@@ -25,7 +25,10 @@ const WX_CN_EN: Record<string, string> = { '木': 'wood', '火': 'fire', '土': 
 export const calculateFourPillars = (
   birthDate: Date,
   birthTime: string,
-  timezone: number
+  timezone: number,
+  options?: {
+    sect?: 1 | 2;
+  }
 ): Pillar[] => {
   const year = birthDate.getFullYear();
   const month = birthDate.getMonth() + 1;
@@ -35,6 +38,7 @@ export const calculateFourPillars = (
   const solar = Solar.fromYmdHms(year, month, day, hour, minute || 0, 0);
   const lunar = solar.getLunar();
   const ec = lunar.getEightChar();
+  ec.setSect(options?.sect || 2);
 
   const buildPillar = (gan: string, zhi: string, nayin: string): Pillar => {
     const hiddenStems = ZHI_CANG_GAN[zhi] || [];
@@ -74,10 +78,13 @@ export const analyzeFortune = (
   birthTime: string,
   birthPlace: string,
   timezone: number = 8,
-  gender: 'male' | 'female'
+  gender: 'male' | 'female',
+  options?: {
+    sect?: 1 | 2;
+  }
 ): FortuneAnalysisResult => {
   // 1. 计算四柱 (Pillar 对象)
-  const pillars = calculateFourPillars(birthDate, birthTime, timezone);
+  const pillars = calculateFourPillars(birthDate, birthTime, timezone, options);
   const dayMaster = pillars[2].celestialStem;
 
   // 2. 构造权威分析器所需的 bazi 字符串数组
@@ -355,37 +362,38 @@ const buildAdvice = (ys: YongShenResult | null, lucky: LuckyElements | null): Fo
   const yongShenColors = lucky?.colors || ['红色', '紫色'];
   const yongShenDirs = lucky?.directions || ['南方'];
   const yongShenNums = lucky?.numbers || [1, 6];
+  const adviceSeed = buildAdviceSeed(ys);
 
   const career: CareerAdvice = {
-    general: MasterPhrases.career.general[Math.floor(Math.random() * MasterPhrases.career.general.length)],
+    general: pickDeterministic(MasterPhrases.career.general, `${adviceSeed}:career:general`),
     specific: MasterPhrases.career.specific.slice(0, 3),
-    timing: MasterPhrases.career.direction[Math.floor(Math.random() * MasterPhrases.career.direction.length)],
+    timing: pickDeterministic(MasterPhrases.career.direction, `${adviceSeed}:career:timing`),
     avoid: MasterPhrases.career.avoid.slice(0, 2),
     direction: yongShenDirs[0] || '南方',
     colors: yongShenColors.slice(0, 2),
   };
 
   const wealth: WealthAdvice = {
-    general: MasterPhrases.wealth.general[Math.floor(Math.random() * MasterPhrases.wealth.general.length)],
+    general: pickDeterministic(MasterPhrases.wealth.general, `${adviceSeed}:wealth:general`),
     specific: MasterPhrases.wealth.specific.slice(0, 3),
-    timing: MasterPhrases.wealth.direction[Math.floor(Math.random() * MasterPhrases.wealth.direction.length)],
+    timing: pickDeterministic(MasterPhrases.wealth.direction, `${adviceSeed}:wealth:timing`),
     direction: yongShenDirs[1] || yongShenDirs[0] || '南方',
     colors: yongShenColors.slice(0, 2),
     avoid: MasterPhrases.wealth.avoid.slice(0, 2),
   };
 
   const marriage: MarriageAdvice = {
-    general: MasterPhrases.marriage.general[Math.floor(Math.random() * MasterPhrases.marriage.general.length)],
+    general: pickDeterministic(MasterPhrases.marriage.general, `${adviceSeed}:marriage:general`),
     specific: MasterPhrases.marriage.specific.slice(0, 3),
-    timing: MasterPhrases.marriage.direction[Math.floor(Math.random() * MasterPhrases.marriage.direction.length)],
+    timing: pickDeterministic(MasterPhrases.marriage.direction, `${adviceSeed}:marriage:timing`),
     direction: yongShenDirs[0] || '南方',
     colors: yongShenColors.slice(0, 2),
   };
 
   const health: HealthAdvice = {
-    general: MasterPhrases.health.general[Math.floor(Math.random() * MasterPhrases.health.general.length)],
+    general: pickDeterministic(MasterPhrases.health.general, `${adviceSeed}:health:general`),
     specific: MasterPhrases.health.specific.slice(0, 3),
-    timing: MasterPhrases.health.direction[Math.floor(Math.random() * MasterPhrases.health.direction.length)],
+    timing: pickDeterministic(MasterPhrases.health.direction, `${adviceSeed}:health:timing`),
     directions: yongShenDirs.slice(0, 2),
     colors: yongShenColors.slice(0, 2),
     avoid: MasterPhrases.health.avoid.slice(0, 2),
@@ -396,7 +404,7 @@ const buildAdvice = (ys: YongShenResult | null, lucky: LuckyElements | null): Fo
     colors: [...new Set([...career.colors, ...wealth.colors])],
     directions: [...new Set(yongShenDirs)],
     numbers: yongShenNums,
-    timing: [MasterPhrases.timing[Math.floor(Math.random() * MasterPhrases.timing.length)]],
+    timing: [pickDeterministic(MasterPhrases.timing, `${adviceSeed}:overall:timing`)],
     yongShen: ys?.yongShen || [],
     jiShen: ys?.jiShen || [],
     xiShen: ys?.xiShen || [],
@@ -445,6 +453,33 @@ const generateEvidence = (pillars: Pillar[]): FortuneEvidence => {
   ];
 
   return { statistics, celebrities };
+};
+
+const buildAdviceSeed = (ys: YongShenResult | null) => {
+  if (!ys) return 'default';
+  return [
+    ys.dayMaster,
+    ys.dayMasterElement,
+    ys.strength,
+    ys.strengthDesc,
+    (ys.yongShen || []).join(','),
+    (ys.xiShen || []).join(','),
+    (ys.jiShen || []).join(','),
+    ys.pattern?.pattern || '',
+  ].join('|');
+};
+
+const pickDeterministic = (values: string[], seedSource: string) => {
+  if (!values || values.length === 0) return '';
+  return values[hashString(seedSource) % values.length];
+};
+
+const hashString = (input: string) => {
+  let hash = 0;
+  for (let index = 0; index < input.length; index++) {
+    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+  }
+  return hash;
 };
 
 const calculateAge = (birthDate: Date): number => {
