@@ -202,11 +202,11 @@ export async function logoutCurrentSession() {
   cookieStore.delete(SESSION_COOKIE_NAME);
 }
 
-export async function requireAdminUser() {
+export async function requireAdminUser(nextPath = '/admin/content') {
   const session = await getAuthSession();
   if (!session.authenticated || session.user?.role !== 'admin') {
     const { redirect } = await import('next/navigation');
-    redirect('/login?next=/admin/content');
+    redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   }
   return session.user;
 }

@@ -1,176 +1,169 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  CalendarDays,
-  CheckCircle2,
-  ChevronRight,
-  Clock3,
-  MapPin,
-  ShieldCheck,
-  Sparkles,
-  UserRound,
-} from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
+import { Lunar } from 'lunar-javascript';
 import FortuneProgress from './fortune-progress';
-import BirthDateInput from './birth-date-input';
-import BirthTimeInput from './birth-time-input';
-import CitySelector from './city-selector';
+import BirthPlaceModal from './birth-place-modal';
+import BirthTimeModal from './birth-time-modal';
+import InstantPaipanCard from './instant-paipan-card';
+import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES } from '@/lib/birth-entry';
+import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
-import { getShichenOption } from '@/lib/shichen';
-import { calculateTrueSolarTime, formatSolarTime } from '@/lib/solar-time';
+import {
+  DEFAULT_CASE_TYPES,
+  UNKNOWN_LOCATION,
+  buildLunarArrFromBirthday,
+  createDefaultInfoData,
+  formatAddressLabel,
+  formatBirthLabel,
+  getBirthdayParts,
+  padPart,
+  type CaseTypeOption,
+  type FormLocationState,
+  type PaipanInfoData,
+} from '@/lib/paipan-form';
 
-function formatPart(value: number) {
-  return String(value).padStart(2, '0');
+const SETTING_MIDNIGHT_KEY = 'setting_midnight';
+const DEMO_COUNT_KEY = 'demoCount';
+
+function getLunarMonthNumber(label: string) {
+  const normalized = label.replace('闰', '').replace('月', '');
+  const monthIndex = LUNAR_MONTH_NAMES.findIndex((item) => item === normalized);
+  return monthIndex + 1;
 }
 
-function formatSignedMinutes(value: number) {
-  return `${value >= 0 ? '+' : ''}${value.toFixed(1)} 分钟`;
+function getLunarDayNumber(label: string) {
+  return LUNAR_DAY_NAMES.findIndex((item) => item === label) + 1;
 }
 
-function formatDateString(year: number, month: number, day: number) {
-  return `${year}-${formatPart(month)}-${formatPart(day)}`;
+function subtractOneHour(year: number, month: number, day: number, hour: number, minute: number) {
+  const date = new Date(year, month - 1, day, hour, minute, 0);
+  date.setHours(date.getHours() - 1);
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth() + 1,
+    day: date.getDate(),
+    hour: date.getHours(),
+    minute: date.getMinutes(),
+  };
 }
 
-const approximateTimeSlots = [
-  { label: '凌晨', helper: '03:30 左右', hour: 3, minute: 30 },
-  { label: '清晨', helper: '06:30 左右', hour: 6, minute: 30 },
-  { label: '上午', helper: '09:30 左右', hour: 9, minute: 30 },
-  { label: '中午', helper: '12:30 左右', hour: 12, minute: 30 },
-  { label: '傍晚', helper: '18:30 左右', hour: 18, minute: 30 },
-  { label: '夜间', helper: '21:30 左右', hour: 21, minute: 30 },
-] as const;
+function createCaseName() {
+  const current = Number(window.localStorage.getItem(DEMO_COUNT_KEY) || '0') + 1;
+  window.localStorage.setItem(DEMO_COUNT_KEY, String(current));
+  return `案例${current}`;
+}
+
+function computeSunTime(infoData: PaipanInfoData, locationState: FormLocationState) {
+  const { year, month, day, hour, minute } = getBirthdayParts(infoData.birthday);
+
+  if (infoData.unknowhour === 1) {
+    return `${infoData.birthday.split(' ')[0]} 00:00`;
+  }
+
+  if (locationState.addressData[0] === '未知地') {
+    return infoData.birthday;
+  }
+
+  const normalizedClock = infoData.xls
+    ? subtractOneHour(year, month, day, hour, minute)
+    : { year, month, day, hour, minute };
+
+  const solarTime = calculateTrueSolarTime(
+    normalizedClock.year,
+    normalizedClock.month,
+    normalizedClock.day,
+    normalizedClock.hour,
+    normalizedClock.minute,
+    0,
+    locationState.longitude,
+    infoData.hw && infoData.bjtime ? 8 : locationState.timezone
+  );
+
+  return `${solarTime.year}-${padPart(solarTime.month)}-${padPart(solarTime.day)} ${padPart(solarTime.hour)}:${padPart(solarTime.minute)}`;
+}
+
+function createSetTimeInfo(midnightValue: 0 | 1) {
+  return [
+    { name: '夏令时', value: 0 as 0 | 1 },
+    { name: '真太阳时', value: 1 as 0 | 1 },
+    { name: '早晚子时', value: midnightValue },
+  ];
+}
 
 export default function FortuneForm() {
   const router = useRouter();
-  const [name, setName] = useState('');
-  const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [city, setCity] = useState<LocationOption | null>(null);
-  const [year, setYear] = useState<number>(1998);
-  const [month, setMonth] = useState<number>(8);
-  const [day, setDay] = useState<number>(8);
-  const [hour, setHour] = useState<number>(12);
-  const [minute, setMinute] = useState<number>(0);
-  const [second, setSecond] = useState<number>(0);
-  const [isDateValid, setIsDateValid] = useState(true);
-  const [isTimeValid, setIsTimeValid] = useState(true);
+  const [infoData, setInfoData] = useState<PaipanInfoData>(createDefaultInfoData);
+  const [locationState, setLocationState] = useState<FormLocationState>(UNKNOWN_LOCATION);
+  const [caseTypes] = useState<CaseTypeOption[]>(DEFAULT_CASE_TYPES);
+  const [setTimeInfo, setSetTimeInfo] = useState(() => createSetTimeInfo(0));
+  const [datetimeIndex, setDatetimeIndex] = useState<0 | 1 | 2>(0);
+  const [datetimeIndexReal, setDatetimeIndexReal] = useState<0 | 1 | 2>(0);
+  const [addressIndex, setAddressIndex] = useState<0 | 1>(0);
+  const [showDatetime, setShowDatetime] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const basicRef = useRef<HTMLDivElement>(null);
-  const birthRef = useRef<HTMLDivElement>(null);
-  const reviewRef = useRef<HTMLDivElement>(null);
-
-  const solarTime = useMemo(() => {
-    if (!city || !isDateValid || !isTimeValid) return null;
-    return calculateTrueSolarTime(year, month, day, hour, minute, second, city.lng, city.tz);
-  }, [city, day, hour, isDateValid, isTimeValid, minute, month, second, year]);
-
-  const completion = useMemo(() => {
-    const steps = [!!name.trim(), !!gender, !!city, isDateValid, isTimeValid];
-    return steps.filter(Boolean).length;
-  }, [city, gender, isDateValid, isTimeValid, name]);
-
-  const completionPercent = Math.round((completion / 5) * 100);
-  const inputDate = formatDateString(year, month, day);
-  const inputTime = `${formatPart(hour)}:${formatPart(minute)}:${formatPart(second)}`;
-  const correctedDate = solarTime
-    ? formatDateString(solarTime.year, solarTime.month, solarTime.day)
-    : inputDate;
-  const correctedTime = solarTime ? formatSolarTime(solarTime) : inputTime;
-
-  const clockShichen = getShichenOption(hour);
-  const correctedShichen = getShichenOption(solarTime ? solarTime.hour : hour);
-  const shichenChanged = clockShichen.name !== correctedShichen.name;
-  const dateChanged = correctedDate !== inputDate;
-  const canSubmit = !!name.trim() && !!city && isDateValid && isTimeValid;
-  const basicReady = !!name.trim();
-  const birthReady = !!city && isDateValid && isTimeValid;
-  const currentStep = !basicReady ? 1 : !birthReady ? 2 : 3;
-  const [focusedStep, setFocusedStep] = useState<number>(1);
-  const nextAction = !name.trim()
-    ? '先填写姓名或昵称'
-    : !city
-      ? '先选择出生地点'
-      : !isDateValid
-        ? '先确认出生日期'
-        : !isTimeValid
-          ? '先确认出生时间'
-          : '信息已完整，可以开始测算';
-  const basicSummary = name.trim() ? `${name.trim()} · ${gender === 'male' ? '乾造' : '坤造'}` : '待填写姓名';
-  const birthSummary = city
-    ? `${city.displayName} · ${inputDate} · ${inputTime}`
-    : '待填写出生地点与时间';
-  const reviewSummary = solarTime
-    ? `${correctedDate} ${correctedTime} · ${correctedShichen.label}`
-    : '待生成真太阳时预览';
-  const isBasicExpanded = focusedStep === 1 || !basicReady;
-  const isBirthExpanded = focusedStep === 2 || (basicReady && !birthReady);
-  const isReviewExpanded = focusedStep === 3 || canSubmit;
 
   useEffect(() => {
-    setFocusedStep((prev) => (prev < currentStep ? currentStep : prev));
-  }, [currentStep]);
+    const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
+    setSetTimeInfo(createSetTimeInfo(midnightValue));
+  }, []);
 
-  const stepButtons = [
-    { step: 1, label: '基本信息', status: basicReady ? '已完成' : currentStep === 1 ? '进行中' : '待填写' },
-    { step: 2, label: '出生信息', status: birthReady ? '已完成' : currentStep === 2 ? '进行中' : '待填写' },
-    { step: 3, label: '核对测算', status: canSubmit ? '可提交' : currentStep === 3 ? '进行中' : '待填写' },
-  ] as const;
+  const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
 
-  const scrollToStep = (step: number) => {
-    setFocusedStep(step);
-    const target = step === 1 ? basicRef.current : step === 2 ? birthRef.current : reviewRef.current;
-    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-
-    if (!name.trim()) {
-      setError('请先填写姓名或昵称');
+  useEffect(() => {
+    if (infoData.sunTime === computedSunTime) {
       return;
     }
 
-    if (!city) {
-      setError('请先选择出生地点');
-      return;
-    }
+    setInfoData((current) => ({ ...current, sunTime: computedSunTime }));
+  }, [computedSunTime, infoData.sunTime]);
 
-    if (!isDateValid) {
-      setError('请先确认出生日期');
-      return;
-    }
+  const birthLabel = formatBirthLabel(infoData, datetimeIndexReal);
+  const addressLabel = formatAddressLabel(locationState.addressData);
+  const latitudeLabel = locationState.latitude !== undefined ? `北纬${locationState.latitude.toFixed(4)}` : '';
+  const longitudeLabel = `东经${locationState.longitude.toFixed(3)}`;
 
-    if (!isTimeValid) {
-      setError('请先确认出生时间');
-      return;
-    }
-
+  const submitPayload = async (payload: PaipanInfoData, payloadLocation: FormLocationState) => {
     setLoading(true);
     setError('');
+
+    const displayName = payload.username.trim() || createCaseName();
+    const [birthDate, birthTime] = payload.birthday.split(' ');
 
     try {
       const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: name.trim(),
-          gender,
-          birthDate: inputDate,
-          birthTime: `${formatPart(hour)}:${formatPart(minute)}`,
-          birthSecond: second,
-          birthPlace: city.fullName,
-          timezone: city.tz,
-          longitude: city.lng,
-          latitude: city.lat,
-          cityNameEn: city.nameEn || city.city || city.displayName,
-          useSolarTime: true,
+          name: displayName,
+          gender: payload.sex === 1 ? 'male' : 'female',
+          birthDate,
+          birthTime,
+          birthSecond: 0,
+          birthPlace: payload.address,
+          timezone: payload.hw && payload.bjtime ? 8 : payloadLocation.timezone,
+          longitude: payloadLocation.longitude,
+          latitude: payloadLocation.latitude ?? (UNKNOWN_LOCATION.latitude as number),
+          cityNameEn: payloadLocation.option?.nameEn || payloadLocation.option?.city || payloadLocation.addressData[1] || payloadLocation.addressData[0],
+          useDaylightSaving: Boolean(payload.xls),
+          useSolarTime: Boolean(setTimeInfo[1].value),
+          useSeparateZiHour: Boolean(setTimeInfo[2].value),
+          unknowhour: payload.unknowhour,
+          xls: payload.xls,
+          bjtime: payload.bjtime,
+          hw: payload.hw,
+          typeId: payload.typeId,
+          isSave: payload.isSave,
         }),
       });
 
       const result = await response.json();
       if (!result.success) {
-        setError(result.error || '分析请求失败，请重试');
+        setError(result.error || '分析请求失败，请稍后再试');
         setLoading(false);
         return;
       }
@@ -182,522 +175,307 @@ export default function FortuneForm() {
     }
   };
 
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    await submitPayload(infoData, locationState);
+  };
+
+  const handleTimeConfirm = (tab: 0 | 1 | 2, data: string[] | string) => {
+    if (tab === 0 && Array.isArray(data)) {
+      const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
+      const birthday = `${data[0]}-${data[1]}-${data[2]} ${unknowhour ? '00:00' : `${data[3]}:${data[4]}`}`;
+
+      setInfoData((current) => ({
+        ...current,
+        type: 0,
+        birthday,
+        lunarArr: [],
+        unknowhour,
+      }));
+      setDatetimeIndexReal(0);
+      return;
+    }
+
+    if (tab === 1 && Array.isArray(data)) {
+      const year = Number(data[0]);
+      const monthLabel = data[1];
+      const dayLabel = data[2];
+      const isLeap = monthLabel.startsWith('闰');
+      const lunarMonth = getLunarMonthNumber(monthLabel);
+      const lunarDay = getLunarDayNumber(dayLabel);
+      const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
+      const solar = Lunar.fromYmdHms(year, isLeap ? -lunarMonth : lunarMonth, lunarDay, unknowhour ? 0 : Number(data[3]), unknowhour ? 0 : Number(data[4]), 0).getSolar();
+      const birthday = `${solar.getYear()}-${padPart(solar.getMonth())}-${padPart(solar.getDay())} ${unknowhour ? '00:00' : `${padPart(Number(data[3]))}:${padPart(Number(data[4]))}`}`;
+
+      setInfoData((current) => ({
+        ...current,
+        type: 1,
+        birthday,
+        unknowhour,
+        lunarArr: [year, padPart(lunarMonth), padPart(lunarDay), isLeap, { cnm: monthLabel, cnd: dayLabel }],
+      }));
+      setDatetimeIndexReal(1);
+      return;
+    }
+
+    if (tab === 2 && typeof data === 'string') {
+      const unknowhour = data.includes('时辰未知') ? 1 : 0;
+      const birthday = unknowhour ? `${data.split(' ')[0]} 00:00` : data;
+
+      setInfoData((current) => ({
+        ...current,
+        type: 2,
+        birthday,
+        unknowhour,
+        lunarArr: [],
+      }));
+      setDatetimeIndexReal(2);
+    }
+  };
+
   if (loading) {
     return <FortuneProgress isComplete={false} />;
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="hidden md:block">
-        <div className="product-panel p-3">
-          <div className="grid gap-2 md:grid-cols-3">
-            {stepButtons.map((item) => (
-              <button
-                key={item.step}
-                type="button"
-                onClick={() => scrollToStep(item.step)}
-                className={`rounded-[1.2rem] border px-4 py-3 text-left transition ${
-                  focusedStep === item.step
-                    ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                    : 'border-[color:var(--line)] bg-white/75'
-                }`}
-              >
-                <div className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                  Step {item.step}
-                </div>
-                <div className="mt-1 font-semibold text-[color:var(--ink)]">{item.label}</div>
-                <div className="mt-1 text-xs text-[color:var(--muted)]">{item.status}</div>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="product-panel-strong p-5">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div>
-            <div className="text-sm font-semibold text-[color:var(--muted)]">填写完成度</div>
-            <div className="mt-1 text-2xl font-bold text-[color:var(--ink)]">{completionPercent}%</div>
-          </div>
-          <div className="flex-1">
-            <div className="h-3 overflow-hidden rounded-full bg-slate-200">
-              <div
-                className="h-full rounded-full bg-[linear-gradient(90deg,var(--accent),var(--warm))] transition-all duration-300"
-                style={{ width: `${completionPercent}%` }}
+    <>
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[681px]">
+        <div className="rounded-[30px] bg-white px-5 py-7 shadow-[0_18px_50px_rgba(16,16,16,0.08)] md:px-[56px] md:py-[52px]">
+          <div className="space-y-[22px]">
+            <div className="flex items-center gap-[14px]">
+              <span className="shrink-0 whitespace-nowrap text-[16px] text-[#444444]">命主姓名</span>
+              <input
+                value={infoData.username}
+                onChange={(event) => setInfoData((current) => ({ ...current, username: event.target.value }))}
+                placeholder="请输入姓名"
+                maxLength={30}
+                className="h-[40px] w-full rounded-[6px] border border-[#ececec] px-3 text-[16px] outline-none placeholder:text-[#d5d5d5]"
               />
             </div>
-            <div className="mt-2 text-sm text-[color:var(--muted)]">
-              已完成 {completion}/5 个关键项。地点、日期、时间越准确，时柱判断越稳定。
-            </div>
-          </div>
-        </div>
-        <div className="mt-4 grid gap-3 md:grid-cols-[1.2fr_0.8fr]">
-          <div className="rounded-[1.35rem] bg-[rgba(15,118,110,0.08)] px-4 py-3">
-            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">下一步</div>
-            <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">{nextAction}</div>
-          </div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-            <StatusBadge label="姓名" ready={!!name.trim()} />
-            <StatusBadge label="地点" ready={!!city} />
-            <StatusBadge label="时间" ready={isDateValid && isTimeValid} />
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-2 text-xs">
-          <SummaryChip label="昵称" value={name.trim() || '未填'} />
-          <SummaryChip label="地点" value={city?.displayName || '未选'} />
-          <SummaryChip label="日期" value={inputDate} />
-          <SummaryChip label="时间" value={inputTime} />
-        </div>
-      </div>
 
-      {error ? (
-        <div className="rounded-[1.5rem] border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      ) : null}
-
-      <div className="grid gap-5 2xl:grid-cols-[minmax(0,1.12fr)_22rem] 2xl:items-start">
-        <div className="space-y-5">
-          <section ref={basicRef} className="product-panel p-5 md:p-6">
-            <button
-              type="button"
-              onClick={() => setFocusedStep(1)}
-              aria-expanded={isBasicExpanded}
-              aria-controls="fortune-step-basic"
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                  <UserRound className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Step 1</div>
-                  <h2 className="text-lg font-bold text-[color:var(--ink)]">基本信息</h2>
-                  <p className="text-sm text-[color:var(--muted)]">先确定身份和排盘路径，减少后续反复修改。</p>
-                </div>
-              </div>
-              <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-                <div className="truncate text-sm text-[color:var(--muted)]">{basicSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isBasicExpanded ? 'rotate-90' : ''}`} />
-              </div>
-            </button>
-
-            <div className="mt-3 rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--muted)] md:hidden">
-              {basicSummary}
-            </div>
-
-            <div
-              id="fortune-step-basic"
-              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
-                isBasicExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              }`}
-            >
-              <div className="overflow-hidden">
-                <div className="grid gap-5 md:grid-cols-2">
-                  <label className="block md:col-span-2">
-                    <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">姓名或昵称</span>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(event) => setName(event.target.value)}
-                      placeholder="例如：李明、Mia"
-                      className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
-                    />
-                  </label>
-
-                  <div className="md:col-span-2">
-                    <div className="mb-2 text-sm font-semibold text-[color:var(--ink)]">性别</div>
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => setGender('male')}
-                        className={`rounded-2xl border px-4 py-4 text-left transition ${
-                          gender === 'male'
-                            ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                            : 'border-[color:var(--line)] bg-white'
-                        }`}
-                      >
-                        <div className="font-semibold text-[color:var(--ink)]">乾造</div>
-                        <div className="mt-1 text-sm text-[color:var(--muted)]">男性排盘路径</div>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setGender('female')}
-                        className={`rounded-2xl border px-4 py-4 text-left transition ${
-                          gender === 'female'
-                            ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                            : 'border-[color:var(--line)] bg-white'
-                        }`}
-                      >
-                        <div className="font-semibold text-[color:var(--ink)]">坤造</div>
-                        <div className="mt-1 text-sm text-[color:var(--muted)]">女性排盘路径</div>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <section ref={birthRef} className="product-panel p-5 md:p-6">
-            <button
-              type="button"
-              onClick={() => setFocusedStep(2)}
-              aria-expanded={isBirthExpanded}
-              aria-controls="fortune-step-birth"
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(201,125,58,0.14)] text-[color:var(--warm)]">
-                  <MapPin className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Step 2</div>
-                  <h2 className="text-lg font-bold text-[color:var(--ink)]">出生地点与时间</h2>
-                  <p className="text-sm text-[color:var(--muted)]">地点用于真太阳时修正，时间用于定位时柱，这是最关键的一步。</p>
-                </div>
-              </div>
-              <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-                <div className="truncate text-sm text-[color:var(--muted)]">{birthSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isBirthExpanded ? 'rotate-90' : ''}`} />
-              </div>
-            </button>
-
-            <div className="mt-3 rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--muted)] md:hidden">
-              {birthSummary}
-            </div>
-
-            <div
-              id="fortune-step-birth"
-              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
-                isBirthExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              }`}
-            >
-              <div className="overflow-hidden">
-                <div className="space-y-5">
-                  <label className="block">
-                    <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生地点</span>
-                    <CitySelector value={city} onSelect={setCity} />
-                  </label>
-
-                  <div className="grid gap-5 2xl:grid-cols-2">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">出生日期</span>
-                      <BirthDateInput
-                        value={{ year, month, day }}
-                        onChange={(nextValue) => {
-                          setYear(nextValue.year);
-                          setMonth(nextValue.month);
-                          setDay(nextValue.day);
-                        }}
-                        onValidityChange={setIsDateValid}
-                      />
-                    </label>
-
-                <label className="block">
-                  <span className="mb-2 block text-sm font-semibold text-[color:var(--ink)]">钟表时间</span>
-                  <BirthTimeInput
-                        value={{ hour, minute, second }}
-                        onChange={(nextValue) => {
-                          setHour(nextValue.hour);
-                          setMinute(nextValue.minute);
-                          setSecond(nextValue.second);
-                    }}
-                    onValidityChange={setIsTimeValid}
-                  />
-                  <div className="mt-3">
-                    <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                      记不清精确时间？
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {approximateTimeSlots.map((slot) => (
-                        <button
-                          key={slot.label}
-                          type="button"
-                          onClick={() => {
-                            setHour(slot.hour);
-                            setMinute(slot.minute);
-                            setSecond(0);
-                            setIsTimeValid(true);
-                          }}
-                          className="rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
-                        >
-                          {slot.label} · {slot.helper}
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                      可以先用大致时段拿到预分析。后续如果补全更精确的时间，系统会重新修正真太阳时并更新结果。
-                    </div>
-                  </div>
-                </label>
-              </div>
-            </div>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        <div className="space-y-5">
-          <section ref={reviewRef} className="product-panel-strong p-5 md:p-6">
-            <button
-              type="button"
-              onClick={() => setFocusedStep(3)}
-              aria-expanded={isReviewExpanded}
-              aria-controls="fortune-step-review"
-              className="flex w-full items-center justify-between gap-4 text-left"
-            >
-              <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                  <Clock3 className="h-5 w-5" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Step 3</div>
-                  <h2 className="text-lg font-bold text-[color:var(--ink)]">真太阳时预览</h2>
-                  <p className="text-sm text-[color:var(--muted)]">提交前先确认系统最终采用的排盘时间，避免“我以为”和“系统实际”不一致。</p>
-                </div>
-              </div>
-              <div className="hidden min-w-0 flex-1 items-center justify-end gap-3 md:flex">
-                <div className="truncate text-sm text-[color:var(--muted)]">{reviewSummary}</div>
-                <ChevronRight className={`h-4 w-4 text-[color:var(--muted)] transition ${isReviewExpanded ? 'rotate-90' : ''}`} />
-              </div>
-            </button>
-
-            <div className="mt-3 rounded-[1.2rem] bg-white/70 px-4 py-3 text-sm text-[color:var(--muted)] md:hidden">
-              {reviewSummary}
-            </div>
-
-            <div
-              id="fortune-step-review"
-              className={`grid transition-[grid-template-rows,opacity,margin] duration-300 ${
-                isReviewExpanded ? 'mt-6 grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
-              }`}
-            >
-              <div className="overflow-hidden">
-                {city && solarTime ? (
-                  <div className="space-y-4">
-                    <div className="rounded-[1.5rem] bg-white/85 p-4">
-                      <div className="text-sm font-semibold text-[color:var(--ink)]">{city.displayName}</div>
-                      <div className="mt-1 text-xs text-[color:var(--muted)]">{city.fullName}</div>
-                      <div className="mt-1 text-xs text-[color:var(--muted)]">
-                        {city.nameEn || city.displayName} · {city.country}
-                        {city.province ? ` · ${city.province}` : ''} · 经度 {city.lng.toFixed(2)}° · UTC
-                        {city.tz >= 0 ? '+' : ''}
-                        {city.tz}
-                      </div>
-                      <div className="mt-3 grid grid-cols-2 gap-2 text-xs md:grid-cols-4">
-                        <MetricBadge label="总修正" value={formatSignedMinutes(solarTime.correctionMinutes)} />
-                        <MetricBadge label="经度修正" value={formatSignedMinutes(solarTime.longitudeOffset)} />
-                        <MetricBadge label="均时差" value={formatSignedMinutes(solarTime.equationOfTime)} />
-                        <MetricBadge label="时柱判断" value={shichenChanged ? '发生变化' : '保持不变'} highlight={shichenChanged} />
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3">
-                      <DataRow icon={CalendarDays} label="你输入的日期" value={inputDate} />
-                      <DataRow icon={Clock3} label="你输入的时间" value={inputTime} />
-                      <DataRow icon={Sparkles} label="系统校正后日期" value={correctedDate} strong />
-                      <DataRow icon={CheckCircle2} label="系统校正后时间" value={correctedTime} strong />
-                    </div>
-
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <InsightCard
-                        title="校正前时辰"
-                        value={`${clockShichen.label} · ${clockShichen.alias}`}
-                        description={clockShichen.range}
-                      />
-                      <InsightCard
-                        title="校正后时辰"
-                        value={`${correctedShichen.label} · ${correctedShichen.alias}`}
-                        description={correctedShichen.range}
-                        emphasize={shichenChanged}
-                      />
-                    </div>
-
-                    <div className="rounded-[1.5rem] bg-[color:var(--accent-soft)] px-4 py-4 text-sm leading-7 text-[color:var(--accent-strong)]">
-                      {solarTime.description}。系统最终将按 <strong>{correctedShichen.label}</strong> 排时柱。
-                      {shichenChanged ? ' 这次修正已跨时辰，结果会和单纯按钟表时间排盘不同。' : ' 这次修正未跨时辰，但仍会作为最终排盘依据。'}
-                      {dateChanged ? ' 同时修正后日期发生变化，跨日信息也已自动处理。' : ''}
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={!canSubmit}
-                      className="inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-4 text-base font-semibold text-white shadow-[0_16px_40px_rgba(15,118,110,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            <div className="flex items-center justify-between gap-5 text-[16px] text-[#444444]">
+              <div className="flex items-center">
+                {[
+                  { label: '男', value: 1 as 0 | 1 },
+                  { label: '女', value: 0 as 0 | 1 },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => setInfoData((current) => ({ ...current, sex: item.value }))}
+                    className="mr-[31px] flex items-center"
+                  >
+                    <span
+                      className={`mr-[5px] flex h-[18px] w-[18px] items-center justify-center rounded-full border ${
+                        infoData.sex === item.value ? 'border-[#b2955d]' : 'border-[rgba(178,149,93,0.35)]'
+                      }`}
                     >
-                      信息已核对，开始真正测算
-                    </button>
-                  </div>
-                ) : (
-                  <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-white/70 px-5 py-6 text-sm leading-7 text-[color:var(--muted)]">
-                    先选出生城市并确认日期、时间。系统会立刻告诉用户修正了多少分钟、是否跨时辰、最终采用哪一个时柱。
-                  </div>
-                )}
+                      <span className={`h-[10px] w-[10px] rounded-full ${infoData.sex === item.value ? 'bg-[#b2955d]' : 'bg-transparent'}`} />
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex overflow-hidden rounded-[20px] shadow-[0_1px_5px_rgba(0,0,0,0.07)]">
+                {[
+                  { label: '公历', value: 0 as 0 | 1 | 2 },
+                  { label: '农历', value: 1 as 0 | 1 | 2 },
+                  { label: '四柱', value: 2 as 0 | 1 | 2 },
+                ].map((item) => (
+                  <button
+                    key={item.label}
+                    type="button"
+                    onClick={() => {
+                      setDatetimeIndex(item.value);
+                      setShowDatetime(true);
+                    }}
+                    className={`rounded-[20px] px-[30px] py-[6px] ${
+                      datetimeIndex === item.value ? 'bg-[#b2955d] text-white' : 'text-[#444444]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
               </div>
             </div>
-          </section>
 
-          <section className="product-panel p-5 md:p-6">
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(14,165,233,0.14)] text-sky-700">
-                <ShieldCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-[color:var(--ink)]">提交前说明</h2>
-                <p className="text-sm text-[color:var(--muted)]">让用户知道接下来会发生什么。</p>
-              </div>
+            <div className="flex items-center gap-[14px]" onClick={() => {
+              setDatetimeIndex(datetimeIndexReal);
+              setShowDatetime(true);
+            }}>
+              <span className="shrink-0 whitespace-nowrap text-[16px] text-[#444444]">出生时间</span>
+              <button
+                type="button"
+                className="w-full rounded-[6px] border border-[#ececec] px-[13px] py-[9px] text-left text-[16px] text-[#444444]"
+              >
+                {birthLabel}
+              </button>
             </div>
 
-            <div className="mt-5 space-y-3">
-              {[
-                '生成四柱、五行、十神与格局判断。',
-                '用当前大运与流年解释近期关键趋势。',
-                '自动跳转到默认私密的报告页，并可继续进入 AI 咨询。',
-              ].map((item) => (
-                <div key={item} className="flex items-start gap-3 rounded-2xl bg-slate-50 px-4 py-3">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 text-[color:var(--accent)]" />
-                  <span className="text-sm leading-6 text-[color:var(--ink)]">{item}</span>
-                </div>
+            <div className="flex items-center gap-[14px]" onClick={() => setShowAddress(true)}>
+              <span className="shrink-0 whitespace-nowrap text-[16px] text-[#444444]">出生地址</span>
+              <button
+                type="button"
+                className="w-full rounded-[6px] border border-[#ececec] px-[13px] py-[9px] text-left text-[16px] text-[#444444]"
+              >
+                {addressLabel}
+              </button>
+            </div>
+
+            <div className="relative flex flex-wrap items-center gap-x-[31px] gap-y-3">
+              {setTimeInfo.map((item, index) => (
+                <button
+                  key={item.name}
+                  type="button"
+                  onClick={() => {
+                    setSetTimeInfo((current) => {
+                      const next = current.map((entry, itemIndex) =>
+                        itemIndex === index ? { ...entry, value: (entry.value === 1 ? 0 : 1) as 0 | 1 } : entry
+                      );
+
+                      if (index === 0) {
+                        setInfoData((prev) => ({ ...prev, xls: next[0].value as 0 | 1 }));
+                      }
+
+                      if (index === 2) {
+                        window.localStorage.setItem(SETTING_MIDNIGHT_KEY, String(next[2].value));
+                      }
+
+                      return next;
+                    });
+                  }}
+                  className="flex items-center whitespace-nowrap text-[16px] text-[#444444]"
+                >
+                  <span
+                    className={`mr-[5px] flex h-[18px] w-[18px] items-center justify-center rounded-full border ${
+                      item.value === 1 ? 'border-[#b2955d]' : 'border-[rgba(178,149,93,0.35)]'
+                    }`}
+                  >
+                    <span className={`h-[10px] w-[10px] rounded-full ${item.value === 1 ? 'bg-[#b2955d]' : 'bg-transparent'}`} />
+                  </span>
+                  <span>{item.name}</span>
+                </button>
               ))}
+
+              <div className="ml-auto flex items-center gap-3">
+                <span className="text-[16px] text-[#444444]">保存</span>
+                <button
+                  type="button"
+                  onClick={() => setInfoData((current) => ({ ...current, isSave: !current.isSave }))}
+                  className={`relative h-[28px] w-[46px] rounded-full transition ${
+                    infoData.isSave ? 'bg-[#b2955d]' : 'bg-[#d6d6d6]'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-[2px] h-[24px] w-[24px] rounded-full bg-white transition ${
+                      infoData.isSave ? 'left-[20px]' : 'left-[2px]'
+                    }`}
+                  />
+                </button>
+              </div>
             </div>
+
+            <div className="flex flex-wrap items-start gap-x-7 gap-y-2 text-[16px] text-[#7b7b7b]">
+              <span>真太阳时：{infoData.unknowhour === 1 ? '未知（需选时辰）' : infoData.sunTime}</span>
+              <span>
+                地址经纬： {latitudeLabel ? `${latitudeLabel} ` : ''}
+                {longitudeLabel}
+              </span>
+            </div>
+
+            <div className="flex items-start gap-[14px]">
+              <span className="shrink-0 whitespace-nowrap pt-[2px] text-[16px] text-[#7b7b7b]">案例分类</span>
+              <div className="flex flex-1 overflow-x-auto pb-1">
+                {caseTypes.map((item) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setInfoData((current) => ({ ...current, typeId: item.id }))}
+                    className="mr-[31px] flex items-center whitespace-nowrap text-[16px] text-[#444444]"
+                  >
+                    <span
+                      className={`mr-[5px] flex h-[18px] w-[18px] items-center justify-center rounded-full border ${
+                        infoData.typeId === item.id ? 'border-[#b2955d]' : 'border-[rgba(178,149,93,0.35)]'
+                      }`}
+                    >
+                      <span className={`h-[10px] w-[10px] rounded-full ${infoData.typeId === item.id ? 'bg-[#b2955d]' : 'bg-transparent'}`} />
+                    </span>
+                    <span>{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {error ? (
+              <div className="rounded-[12px] border border-[#f1c5c5] bg-[#fff6f6] px-4 py-3 text-[14px] text-[#c24545]">
+                {error}
+              </div>
+            ) : null}
 
             <button
               type="submit"
-              disabled={!canSubmit}
-              className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-4 text-base font-semibold text-white shadow-[0_16px_40px_rgba(15,118,110,0.22)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-[63px] w-full items-center justify-center rounded-full bg-black font-serif text-[18px] font-bold text-[#f7d3a1]"
             >
-              开始生成命理报告
-            </button>
-
-            <div className="mt-3 text-center text-xs leading-6 text-[color:var(--muted)]">
-              结果页默认仅自己可见，可在生成后手动创建公开分享版本。提交数据仅用于本次分析与历史记录保存。
-            </div>
-          </section>
-        </div>
-      </div>
-
-      <div className="sticky bottom-3 z-20 md:hidden">
-        <div className="product-panel-strong border border-white/60 px-4 py-3 shadow-[0_20px_50px_rgba(23,32,51,0.16)]">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">当前状态</div>
-              <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">{nextAction}</div>
-            </div>
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="inline-flex shrink-0 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white disabled:opacity-50"
-            >
-              开始测算
+              开始排盘
             </button>
           </div>
         </div>
-      </div>
-    </form>
-  );
-}
 
-function StatusBadge({
-  label,
-  ready,
-}: {
-  label: string;
-  ready: boolean;
-}) {
-  return (
-    <div className={`rounded-[1.1rem] px-3 py-3 text-center ${ready ? 'bg-[rgba(15,118,110,0.1)]' : 'bg-slate-100'}`}>
-      <div className="text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted)]">{label}</div>
-      <div className={`mt-1 text-sm font-semibold ${ready ? 'text-[color:var(--accent-strong)]' : 'text-[color:var(--ink)]'}`}>
-        {ready ? '已就绪' : '待填写'}
-      </div>
-    </div>
-  );
-}
-
-function SummaryChip({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="product-chip">
-      <span className="font-semibold text-[color:var(--muted)]">{label}</span>
-      <span className="max-w-[12rem] truncate text-[color:var(--ink)]">{value}</span>
-    </div>
-  );
-}
-
-function DataRow({
-  icon: Icon,
-  label,
-  value,
-  strong = false,
-}: {
-  icon: typeof CalendarDays;
-  label: string;
-  value: string;
-  strong?: boolean;
-}) {
-  return (
-    <div className="flex items-center justify-between rounded-[1.25rem] bg-white/80 px-4 py-3">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
-          <Icon className="h-4 w-4" />
+        <div className="mt-4">
+          <InstantPaipanCard
+            sex={infoData.sex}
+            onConfirm={(payload) => {
+              void submitPayload(payload, UNKNOWN_LOCATION);
+            }}
+          />
         </div>
-        <span className="text-sm text-[color:var(--muted)]">{label}</span>
-      </div>
-      <span className={`text-sm ${strong ? 'font-bold text-[color:var(--ink)]' : 'font-medium text-[color:var(--ink)]'}`}>
-        {value}
-      </span>
-    </div>
-  );
-}
 
-function MetricBadge({
-  label,
-  value,
-  highlight = false,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-2xl px-3 py-3 ${
-        highlight ? 'bg-[rgba(201,125,58,0.16)] text-[color:var(--warm)]' : 'bg-[rgba(255,255,255,0.82)] text-[color:var(--ink)]'
-      }`}
-    >
-      <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
-      <div className="mt-1 text-sm font-semibold">{value}</div>
-    </div>
-  );
-}
+        <div className="mt-4 flex h-[42px] items-center justify-center rounded-[20px] bg-white px-4 text-[12px] text-[#c2c2c2] shadow-[0_8px_24px_rgba(16,16,16,0.05)]">
+          <AlertCircle className="mr-[5px] h-[16px] w-[16px]" />
+          <span>平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考</span>
+        </div>
+      </form>
 
-function InsightCard({
-  title,
-  value,
-  description,
-  emphasize = false,
-}: {
-  title: string;
-  value: string;
-  description: string;
-  emphasize?: boolean;
-}) {
-  return (
-    <div
-      className={`rounded-[1.5rem] border px-4 py-4 ${
-        emphasize
-          ? 'border-[rgba(201,125,58,0.28)] bg-[rgba(201,125,58,0.12)]'
-          : 'border-[color:var(--line)] bg-white/80'
-      }`}
-    >
-      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{title}</div>
-      <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{value}</div>
-      <div className="mt-1 text-xs text-[color:var(--muted)]">{description}</div>
-    </div>
+      <BirthTimeModal
+        isOpen={showDatetime}
+        tabIndex={datetimeIndex}
+        birthday={infoData.birthday}
+        unknowhour={infoData.unknowhour}
+        onClose={() => setShowDatetime(false)}
+        onTabChange={setDatetimeIndex}
+        onConfirm={(tab, data) => {
+          handleTimeConfirm(tab, data);
+          setShowDatetime(false);
+        }}
+        onSetUnknowhour={(value) => setInfoData((current) => ({ ...current, unknowhour: value }))}
+      />
+
+      <BirthPlaceModal
+        isOpen={showAddress}
+        tabIndex={addressIndex}
+        addressData={locationState.addressData}
+        isBJTime={Boolean(infoData.bjtime)}
+        onClose={() => setShowAddress(false)}
+        onTabChange={setAddressIndex}
+        onConfirm={({ tabIndex, addressData: nextAddressData, location, isBJTime }) => {
+          setLocationState({
+            option: location,
+            addressData: nextAddressData,
+            longitude: location.lng,
+            latitude: tabIndex === 0 ? location.lat : undefined,
+            timezone: location.tz,
+          });
+          setAddressIndex(tabIndex);
+          setInfoData((current) => ({
+            ...current,
+            address: nextAddressData.join(' '),
+            hw: tabIndex === 1 ? 1 : 0,
+            bjtime: tabIndex === 1 && isBJTime ? 1 : 0,
+          }));
+          setShowAddress(false);
+        }}
+      />
+    </>
   );
 }

@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyLoginCodeAndCreateSession } from '@/lib/auth';
+import { emailSubscriptionOperations } from '@/lib/database';
+import { isEmailDeliveryConfigured, sendWelcomeEmail } from '@/lib/email';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { validateEmail } from '@/lib/validators';
+import { trackServerEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
@@ -37,6 +40,24 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    emailSubscriptionOperations.upsert(email, 'login_auto', ['auth', 'welcome', 'updates']);
+
+    if (isEmailDeliveryConfigured() && result.user?.email) {
+      sendWelcomeEmail(result.user.email, result.user.name || '用户').catch((error) => {
+        console.error('[Auth] 发送欢迎邮件失败:', error);
+      });
+    }
+
+    trackServerEvent({
+      userId: result.user?.id,
+      sessionId: currentUserId || result.user?.id,
+      eventName: 'auth_verified',
+      page: '/login',
+      meta: {
+        emailDomain: email.split('@')[1] || '',
+      },
+    });
 
     return NextResponse.json({
       success: true,

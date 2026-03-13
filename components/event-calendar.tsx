@@ -16,6 +16,14 @@ interface Event {
     advanceDays: number;
     method: 'app' | 'email' | 'sms';
   };
+  fortuneAnalysis?: {
+    source?: string;
+    reportId?: string;
+    reason?: string;
+  };
+  userFeedback?: {
+    wasAccurate?: boolean;
+  };
 }
 
 interface EventCalendarProps {
@@ -135,11 +143,22 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                         <div className="font-semibold text-[color:var(--ink)]">{event.title}</div>
                         <span className={`h-2 w-2 rounded-full ${impactClass[event.impact]}`} />
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{event.description || '暂无说明'}</div>
+                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{event.description || '尚未补充事件说明。'}</div>
+                      {event.fortuneAnalysis?.reason && (
+                        <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+                          {event.fortuneAnalysis.reason}
+                        </div>
+                      )}
                       {event.reminder?.enabled && (
                         <div className="mt-2 text-xs font-medium text-[color:var(--accent-strong)]">
                           已开启提醒 · 提前{event.reminder.advanceDays}天
                         </div>
+                      )}
+                      {event.userFeedback?.wasAccurate === true && (
+                        <div className="mt-2 text-xs font-medium text-emerald-700">已验证准确</div>
+                      )}
+                      {event.userFeedback?.wasAccurate === false && (
+                        <div className="mt-2 text-xs font-medium text-rose-700">已标记偏差</div>
                       )}
                     </div>
                   </div>

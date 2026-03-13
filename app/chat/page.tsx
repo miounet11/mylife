@@ -19,27 +19,27 @@ export default function ChatPage() {
           <div className="space-y-5">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              结果后的高价值承接页
+              看完报告继续问
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              不让用户看完报告就离开，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是继续深问。</span>
+              把你最关心的问题继续问清楚，
+              <span className="font-serif text-[color:var(--accent-strong)]">不要只停在报告第一页。</span>
             </h1>
             <p className="text-base leading-8 text-[color:var(--muted)]">
-              这个页面现在承担“二次留存”角色。报告看完后的犹豫、追问、验证，都应该在这里被接住。
+              适合继续问事业、关系、财富、时间窗口这些具体问题，也可以顺手把关键提醒记下来。
             </p>
 
             <div className="grid gap-4">
               {[
                 {
                   icon: Bot,
-                  title: '连续上下文',
-                  description: '历史问答会保留，用户不必反复解释自己的背景。',
+                  title: '围绕你的报告继续问',
+                  description: '系统会优先带入最近报告里的重点判断，让回答更贴近你的情况。',
                 },
                 {
                   icon: MessageSquareText,
-                  title: '高频问题直达',
-                  description: '预置问题帮助用户快速开启第一次对话，降低空白输入焦虑。',
+                  title: '把提醒顺手记下来',
+                  description: '重要时间点、建议动作和现实结果都可以直接记下，后面更方便回看。',
                 },
               ].map((item) => {
                 const Icon = item.icon;

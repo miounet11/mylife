@@ -19,7 +19,7 @@ export default function ResultPublicControls({
   const [copied, setCopied] = useState(false);
 
   const shareUrl =
-    typeof window !== 'undefined' ? window.location.href : `https://life-kline.com/result/${reportId}`;
+    typeof window !== 'undefined' ? window.location.href : `https://www.life-kline.com/result/${reportId}`;
 
   const handleCopy = async () => {
     try {

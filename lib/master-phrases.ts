@@ -458,9 +458,8 @@ export const selectBestPhrase = (
     if (context.category === 'career') {
     }
   }
-  
-  // 默认随机选择
-  return phrases[Math.floor(Math.random() * phrases.length)];
+
+  return pickDeterministicPhrase(phrases, `${type}:${JSON.stringify(context || {})}`);
 };
 
 // 生成个性化话术
@@ -474,7 +473,10 @@ export const generatePersonalizedPhrase = (
       `${user.name}，从您的八字来看，命局清奇，格局分明，乃富贵之命也。细观您的八字...`,
       `细观您的八字，日主为${user.bazi.dayMaster}，得令而旺，格局清正。从您的命局来看，${user.age}岁的经历与命理相符。`,
     ];
-    return openings[Math.floor(Math.random() * openings.length)];
+    return pickDeterministicPhrase(
+      openings,
+      `${user.name}:${user.age}:${user.bazi.dayMaster}:${user.bazi.pillars?.map((pillar: any) => `${pillar.celestialStem}${pillar.earthlyBranch}`).join('|')}`
+    );
   }
   
   if (type === 'closing') {
@@ -483,7 +485,10 @@ export const generatePersonalizedPhrase = (
       `${user.name}，顺天应命，趋吉避凶，必有大成。望您善用命理优势，把握时机。`,
       `愿您，${user.name}，善用您的命理优势，在${user.age}岁大展宏图。命理虽定，人定胜天，勤勉努力。`,
     ];
-    return closings[Math.floor(Math.random() * closings.length)];
+    return pickDeterministicPhrase(
+      closings,
+      `${user.name}:${user.age}:${user.bazi.dayMaster}:closing`
+    );
   }
   
   return '';
@@ -508,3 +513,17 @@ export const describeMonth = (pillar: string): string => {
   
   return descriptions[pillar] || '平月';
 };
+
+function pickDeterministicPhrase(phrases: string[], seedSource: string): string {
+  if (!phrases || phrases.length === 0) return '';
+  const seed = hashString(seedSource);
+  return phrases[seed % phrases.length];
+}
+
+function hashString(input: string): number {
+  let hash = 0;
+  for (let index = 0; index < input.length; index++) {
+    hash = (hash * 31 + input.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+}

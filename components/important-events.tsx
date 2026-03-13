@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Calendar, Clock, Edit, Plus, Trash2 } from 'lucide-react';
 import { formatDateTime } from '@/lib/utils';
@@ -17,6 +18,21 @@ interface Event {
     advanceDays: number;
     method: 'app' | 'email' | 'sms';
   };
+  fortuneAnalysis?: {
+    source?: string;
+    reportId?: string;
+    suggestionKey?: string;
+    reason?: string;
+    title?: string;
+  };
+  followUpAdvice?: {
+    shortTerm?: string;
+    longTerm?: string;
+  };
+  userFeedback?: {
+    wasAccurate?: boolean;
+    userNotes?: string;
+  };
   predictionAccuracy?: boolean;
   wasAccurate?: boolean;
 }
@@ -27,6 +43,7 @@ interface ImportantEventsProps {
   onEdit?: (event: Event) => void;
   onDelete?: (eventId: string) => void;
   onToggleReminder?: (eventId: string) => void;
+  onMarkAccuracy?: (eventId: string, wasAccurate: boolean) => void;
 }
 
 const typeMeta = {
@@ -50,6 +67,7 @@ export default function ImportantEvents({
   onEdit,
   onDelete,
   onToggleReminder,
+  onMarkAccuracy,
 }: ImportantEventsProps) {
   const sortedEvents = [...events].sort((a, b) => a.date.getTime() - b.date.getTime());
 
@@ -83,6 +101,7 @@ export default function ImportantEvents({
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onToggleReminder={onToggleReminder}
+                onMarkAccuracy={onMarkAccuracy}
               />
             ))}
           </div>
@@ -102,11 +121,13 @@ function EventRow({
   onEdit,
   onDelete,
   onToggleReminder,
+  onMarkAccuracy,
 }: {
   event: Event;
   onEdit?: (event: Event) => void;
   onDelete?: (eventId: string) => void;
   onToggleReminder?: (eventId: string) => void;
+  onMarkAccuracy?: (eventId: string, wasAccurate: boolean) => void;
 }) {
   const type = typeMeta[event.type];
   const impact = impactMeta[event.impact];
@@ -123,6 +144,26 @@ function EventRow({
             {event.reminder?.enabled && (
               <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">提醒已开启</span>
             )}
+            {event.fortuneAnalysis?.source === 'result_report' && (
+              <span className="rounded-full border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                来自命理报告
+              </span>
+            )}
+            {event.fortuneAnalysis?.source === 'chat_message' && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                来自聊天结论
+              </span>
+            )}
+            {event.userFeedback?.wasAccurate === true && (
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                已验证准确
+              </span>
+            )}
+            {event.userFeedback?.wasAccurate === false && (
+              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+                已标记偏差
+              </span>
+            )}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[color:var(--muted)]">
@@ -138,7 +179,50 @@ function EventRow({
             )}
           </div>
 
-          <p className="mt-4 text-sm leading-7 text-[color:var(--ink)]">{event.description || '暂无描述'}</p>
+          <p className="mt-4 text-sm leading-7 text-[color:var(--ink)]">{event.description || '尚未补充这条事件的详细说明。'}</p>
+
+          {(event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm) && (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {event.fortuneAnalysis?.reason && (
+                <div className="rounded-2xl bg-[rgba(15,118,110,0.05)] px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                  {event.fortuneAnalysis.reason}
+                </div>
+              )}
+              {event.followUpAdvice?.shortTerm && (
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+                  {event.followUpAdvice.shortTerm}
+                </div>
+              )}
+            </div>
+          )}
+
+          {event.fortuneAnalysis?.reportId && (
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href={`/result/${event.fortuneAnalysis.reportId}`}
+                className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)]"
+              >
+                查看关联报告
+              </Link>
+              {event.userFeedback?.wasAccurate === false && (
+                <Link
+                  href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`}
+                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700"
+                >
+                  进入纠偏分析
+                </Link>
+              )}
+            </div>
+          )}
+
+          {(event.userFeedback?.wasAccurate !== undefined || event.userFeedback?.userNotes) && (
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+              <span className="font-semibold text-[color:var(--ink)]">验证结果：</span>
+              {event.userFeedback?.wasAccurate === true && '这次判断已被记录为准确。'}
+              {event.userFeedback?.wasAccurate === false && '这次判断已被记录为存在偏差。'}
+              {event.userFeedback?.userNotes ? ` ${event.userFeedback.userNotes}` : ''}
+            </div>
+          )}
 
           {(event.reminder?.enabled || event.predictionAccuracy !== undefined) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -169,6 +253,24 @@ function EventRow({
               title={event.reminder?.enabled ? '关闭提醒' : '开启提醒'}
             >
               <Bell className="h-4 w-4" />
+            </button>
+          )}
+          {onMarkAccuracy && (
+            <button
+              onClick={() => onMarkAccuracy(event.id, true)}
+              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+              title="标记为准确"
+            >
+              准
+            </button>
+          )}
+          {onMarkAccuracy && (
+            <button
+              onClick={() => onMarkAccuracy(event.id, false)}
+              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+              title="标记为存在偏差"
+            >
+              偏
             </button>
           )}
           {onEdit && (

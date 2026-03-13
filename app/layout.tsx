@@ -2,9 +2,12 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://life-kline.com'),
-  title: '人生K线 | 权威八字命理分析引擎',
-  description: '基于天文历法与传统命理学，提供精准的命运轨迹与决策参考。高考、升学、事业关键节点决策辅助工具。',
+  metadataBase: new URL('https://www.life-kline.com'),
+  title: '人生K线 | 看清命局结构、当前阶段与下一步动作',
+  description: '基于真太阳时修正与结构化命理引擎，输出命局结构、阶段节奏、行动建议与验证闭环。',
+  alternates: {
+    canonical: 'https://www.life-kline.com',
+  },
   icons: {
     icon: '/icon.svg',
     apple: '/icon.svg',

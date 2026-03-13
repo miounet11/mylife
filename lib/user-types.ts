@@ -418,6 +418,46 @@ export interface FortuneAnalysisResult {
   analysis: {
     opening: string;
     explanation: string;
+    llmUsed?: boolean;
+    agenticUsed?: boolean;
+    reasoningMode?: 'engine' | 'deterministic-expert' | 'parallel-agents';
+    pipelineVersion?: string;
+    generatedFrom?: 'analyze' | 'upgrade';
+    generatedAt?: string;
+    upgradedFromVersion?: string;
+    engineBuilds?: {
+      core: string;
+      llm: string;
+      kline: string;
+      report: string;
+      reviewer?: string;
+      prompts?: string;
+    };
+    orchestration?: {
+      mode?: 'single-llm' | 'deterministic-expert' | 'parallel-agents';
+      agentsRun?: string[];
+      rerunAgents?: string[];
+      totalLlmCalls?: number;
+      durationMs?: number;
+      successRate?: number;
+    };
+    verify?: {
+      consistencyScore?: number;
+      verdict?: 'PASS' | 'WARN' | 'FAIL';
+      failedRules?: string[];
+    };
+    contextUsed?: {
+      solarTerm?: boolean;
+      lichunBoundary?: boolean;
+      nationalCycle?: boolean;
+      industryCycle?: boolean;
+      geoClimate?: boolean;
+      spatialFactors?: boolean;
+    };
+    contextSignals?: Record<string, unknown>;
+    agentResults?: Record<string, unknown>;
+    loop?: Record<string, unknown>;
+    enhancementNotes?: string[];
   };
 
   // 人生K线数据（新增）
@@ -554,7 +594,20 @@ export interface FortuneRecord {
   evidence: FortuneEvidence;
   analysis?: FortuneAnalysisResult['analysis'];
   klineData?: FortuneAnalysisResult['klineData'];
+  dayun?: FortuneAnalysisResult['dayun'];
+  shenSha?: FortuneAnalysisResult['shenSha'];
+  reportVersion?: string;
   isPublic?: boolean;
+}
+
+export interface AnalyticsEventRecord {
+  id: string;
+  userId?: string;
+  sessionId?: string;
+  eventName: string;
+  page?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
 }
 
 // 数据库事件记录
@@ -582,4 +635,5 @@ export interface QuestionRecord {
   question: string;
   category: string;
   analysis?: Record<string, unknown>;
+  createdAt?: string;
 }

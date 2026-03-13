@@ -1,13 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Clock3, MapPin, Search, Sparkles, X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Clock3, MapPin, Search, X } from 'lucide-react';
 import {
-  buildChinaLocation,
-  getChinaCities,
-  getChinaDistricts,
-  getChinaProvinces,
-  getChinaRegionSummary,
   getFeaturedLocations,
   getTimezoneDisplay,
   searchLocations,
@@ -31,27 +26,15 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(0);
   const [recentLocations, setRecentLocations] = useState<LocationOption[]>([]);
-  const [provinceName, setProvinceName] = useState('北京市');
-  const [cityName, setCityName] = useState('北京市');
-  const [districtName, setDistrictName] = useState('');
   const ref = useRef<HTMLDivElement>(null);
 
-  const featuredLocations = useMemo(() => getFeaturedLocations(), []);
-  const regionSummary = useMemo(() => getChinaRegionSummary(), []);
-  const provinces = useMemo(() => getChinaProvinces(), []);
-  const cities = useMemo(() => getChinaCities(provinceName), [provinceName]);
-  const districts = useMemo(() => getChinaDistricts(provinceName, cityName), [provinceName, cityName]);
-  const pendingChinaLocation = useMemo(
-    () => buildChinaLocation(provinceName, cityName, districtName || undefined),
-    [cityName, districtName, provinceName]
+  const featuredLocations = useMemo(() => getFeaturedLocations().slice(0, 8), []);
+  const searchResults = useMemo(() => searchLocations(query, 10), [query]);
+  const quickLocations = useMemo(
+    () => dedupeLocations([...(value ? [value] : []), ...recentLocations, ...featuredLocations]).slice(0, 10),
+    [featuredLocations, recentLocations, value]
   );
-
-  const syncChinaSelectors = useCallback((location: LocationOption) => {
-    if (location.scope !== 'china' || !location.province) return;
-    setProvinceName(location.province);
-    setCityName(location.city || location.province);
-    setDistrictName(location.district || '');
-  }, []);
+  const keyboardOptions = query.trim() ? searchResults : quickLocations;
 
   useEffect(() => {
     try {
@@ -65,36 +48,6 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   }, []);
 
   useEffect(() => {
-    const currentCity = cities[0]?.name;
-    if (!cities.some((city) => city.name === cityName) && currentCity) {
-      setCityName(currentCity);
-    }
-  }, [cities, cityName]);
-
-  useEffect(() => {
-    if (districts.length === 0) {
-      setDistrictName('');
-      return;
-    }
-
-    if (!districts.some((district) => district.name === districtName)) {
-      setDistrictName(districts[0]?.name || '');
-    }
-  }, [districtName, districts]);
-
-  useEffect(() => {
-    if (!value || value.scope !== 'china') return;
-    syncChinaSelectors(value);
-  }, [syncChinaSelectors, value]);
-
-  const searchResults = useMemo(() => searchLocations(query, 12), [query]);
-  const quickLocations = useMemo(
-    () => dedupeLocations([...(value ? [value] : []), ...recentLocations, ...featuredLocations]),
-    [featuredLocations, recentLocations, value]
-  );
-  const keyboardOptions = query.trim() ? searchResults : quickLocations;
-
-  useEffect(() => {
     setHighlightIndex(0);
   }, [query]);
 
@@ -102,6 +55,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
     const handleClickOutside = (event: MouseEvent) => {
       if (ref.current && !ref.current.contains(event.target as Node)) {
         setIsOpen(false);
+        setQuery('');
       }
     };
 
@@ -115,10 +69,12 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
     window.localStorage.setItem(RECENT_STORAGE_KEY, JSON.stringify(nextRecent));
   };
 
-  const handleSelect = (location: LocationOption) => {
-    syncChinaSelectors(location);
+  const handleSelect = (location: LocationOption | null) => {
+    if (location) {
+      persistRecentLocation(location);
+    }
+
     onSelect(location);
-    persistRecentLocation(location);
     setQuery('');
     setIsOpen(false);
   };
@@ -128,7 +84,6 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
 
     if (event.key === 'ArrowDown') {
       event.preventDefault();
-      setIsOpen(true);
       setHighlightIndex((current) => Math.min(current + 1, keyboardOptions.length - 1));
     }
 
@@ -147,209 +102,118 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
 
     if (event.key === 'Escape') {
       setIsOpen(false);
+      setQuery('');
     }
   };
 
   return (
-    <div ref={ref} className="space-y-4">
-      {value ? (
-        <div className="rounded-[1.5rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)] p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="mt-0.5 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/85 text-[color:var(--accent-strong)]">
-                <MapPin className="h-4 w-4" />
-              </div>
-              <div>
-                <div className="font-semibold text-[color:var(--ink)]">{value.displayName}</div>
-                <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{value.fullName}</div>
-                <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-[color:var(--accent-strong)]">
-                    经度 {value.lng.toFixed(4)}°
-                  </span>
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-[color:var(--accent-strong)]">
-                    {getTimezoneDisplay(value)}
-                  </span>
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-[color:var(--accent-strong)]">
-                    {value.scope === 'china' ? '中国行政区划库' : '海外城市库'}
-                  </span>
-                </div>
-              </div>
-            </div>
+    <div ref={ref} className="relative">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <input
+          type="text"
+          value={isOpen ? query : value?.fullName || ''}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={handleKeyDown}
+          placeholder="未知地 / 北京时间，或搜索市区县"
+          className="w-full rounded-[1.1rem] border border-[color:var(--line)] bg-white px-11 py-3 text-sm text-[color:var(--ink)] outline-none transition focus:border-[color:var(--warm)] focus:ring-4 focus:ring-[rgba(201,125,58,0.12)]"
+        />
 
-            <button
-              type="button"
-              onClick={() => onSelect(null)}
-              className="inline-flex items-center gap-1 rounded-full bg-white/85 px-3 py-1.5 text-xs font-medium text-[color:var(--ink)]"
-            >
-              <X className="h-3 w-3" />
-              清空
-            </button>
-          </div>
-        </div>
-      ) : null}
+        {(query || value) ? (
+          <button
+            type="button"
+            onClick={() => handleSelect(null)}
+            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+            aria-label="清空出生地"
+          >
+            <X className="h-3.5 w-3.5" />
+          </button>
+        ) : null}
+      </div>
 
-      <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-          <Search className="h-4 w-4 text-[color:var(--warm)]" />
-          搜索出生地点
-        </div>
-        <p className="mt-1 text-xs leading-6 text-[color:var(--muted)]">
-          现在不是只有城市表，而是中国省/市/区县库 + 海外城市库。可直接搜区县、城市、英文地名。
-        </p>
-
-        <div className="relative mt-3">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            value={query}
-            onChange={(event) => {
-              setQuery(event.target.value);
-              setIsOpen(true);
-            }}
-            onFocus={() => setIsOpen(true)}
-            onKeyDown={handleKeyDown}
-            placeholder="例如 海淀区 / 朝阳 / 上海浦东 / Tokyo / Los Angeles"
-            className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-11 py-3.5 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
-          />
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {featuredLocations.slice(0, 8).map((location) => (
-            <button
-              key={location.id}
-              type="button"
-              onClick={() => handleSelect(location)}
-              className="rounded-full bg-[rgba(15,118,110,0.08)] px-3 py-1.5 text-xs font-semibold text-[color:var(--accent-strong)] transition hover:bg-[rgba(15,118,110,0.14)]"
-            >
-              {location.displayName}
-            </button>
-          ))}
-        </div>
+      <div className="mt-2 flex flex-wrap gap-2 text-xs text-[color:var(--muted)]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[rgba(201,125,58,0.1)] px-3 py-1 text-[color:var(--warm)]">
+          <MapPin className="h-3.5 w-3.5" />
+          {value ? value.displayName : '未知地'}
+        </span>
+        <span className="rounded-full bg-slate-100 px-3 py-1">
+          {value ? getTimezoneDisplay(value) : '北京时间'}
+        </span>
       </div>
 
       {isOpen ? (
-        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-3 shadow-[0_24px_60px_rgba(23,32,51,0.16)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 rounded-[1.4rem] border border-[color:var(--line)] bg-white p-3 shadow-[0_20px_48px_rgba(23,32,51,0.12)]">
+          <button
+            type="button"
+            onClick={() => handleSelect(null)}
+            className="mb-3 flex w-full items-center justify-between rounded-[1rem] bg-[rgba(246,241,232,0.78)] px-4 py-3 text-left transition hover:bg-[rgba(246,241,232,1)]"
+          >
+            <div>
+              <div className="text-sm font-semibold text-[color:var(--ink)]">不确定出生地，先按北京时间</div>
+              <div className="mt-1 text-xs text-[color:var(--muted)]">先进入结果页，之后再补出生地也可以。</div>
+            </div>
+            <Clock3 className="h-4 w-4 text-[color:var(--warm)]" />
+          </button>
+
           {query.trim() ? (
             searchResults.length > 0 ? (
               <div className="space-y-2">
-                <div className="px-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                  搜索结果
-                </div>
                 {searchResults.map((location, index) => (
                   <LocationResultButton
                     key={location.id}
-                    location={location}
                     active={index === highlightIndex}
-                    onMouseEnter={() => setHighlightIndex(index)}
+                    location={location}
                     onClick={() => handleSelect(location)}
+                    onMouseEnter={() => setHighlightIndex(index)}
                   />
                 ))}
               </div>
             ) : (
-              <div className="rounded-[1.25rem] bg-[rgba(246,241,232,0.72)] px-4 py-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-                  <Sparkles className="h-4 w-4 text-[color:var(--warm)]" />
-                  没找到完全匹配的地点
-                </div>
-                <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  可以尝试更上一级行政区，或改用英文地名搜索。例如 “朝阳区” 改成 “北京市 朝阳区”，海外用 “New York”。
-                </div>
+              <div className="rounded-[1rem] bg-slate-50 px-4 py-5 text-sm text-[color:var(--muted)]">
+                没找到对应地点，试试输入更上一级行政区或英文城市名。
               </div>
             )
           ) : (
             <div className="space-y-4">
               {recentLocations.length > 0 ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
                     <Clock3 className="h-3.5 w-3.5" />
-                    最近选择
+                    最近使用
                   </div>
                   <div className="grid gap-2 md:grid-cols-2">
                     {recentLocations.map((location, index) => (
                       <LocationResultButton
                         key={location.id}
-                        location={location}
                         active={index === highlightIndex}
-                        onMouseEnter={() => setHighlightIndex(index)}
+                        location={location}
                         onClick={() => handleSelect(location)}
+                        onMouseEnter={() => setHighlightIndex(index)}
                       />
                     ))}
                   </div>
                 </div>
               ) : null}
 
-              <div className="rounded-[1.25rem] border border-[color:var(--line)] bg-white p-4">
-                <div className="text-sm font-semibold text-[color:var(--ink)]">中国省市区直选</div>
-                <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">
-                  已接入 {regionSummary.provinceCount} 个省级区域、{regionSummary.cityCount} 个城市、{regionSummary.districtCount} 个区县节点。
-                </div>
-
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  <SelectField
-                    label="省"
-                    value={provinceName}
-                    onChange={(nextValue) => setProvinceName(nextValue)}
-                    options={provinces.map((item) => ({ label: item, value: item }))}
-                  />
-                  <SelectField
-                    label="市"
-                    value={cityName}
-                    onChange={(nextValue) => setCityName(nextValue)}
-                    options={cities.map((item) => ({ label: item.name, value: item.name }))}
-                  />
-                  <SelectField
-                    label="区县"
-                    value={districtName}
-                    onChange={(nextValue) => setDistrictName(nextValue)}
-                    options={[
-                      { label: '不细分区县', value: '' },
-                      ...districts.map((item) => ({ label: item.name, value: item.name })),
-                    ]}
-                  />
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (!pendingChinaLocation) return;
-                    handleSelect(pendingChinaLocation);
-                  }}
-                  disabled={!pendingChinaLocation}
-                  className="mt-4 inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-2.5 text-sm font-semibold text-white"
-                >
-                  使用这个出生地点
-                </button>
-
-                {pendingChinaLocation ? (
-                  <div className="mt-3 rounded-2xl bg-[rgba(15,118,110,0.06)] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-                    当前将使用：<span className="font-semibold text-[color:var(--ink)]">{pendingChinaLocation.fullName}</span>
-                    {' '}· 经度 {pendingChinaLocation.lng.toFixed(2)}° · {getTimezoneDisplay(pendingChinaLocation)}
-                  </div>
-                ) : (
-                  <div className="mt-3 rounded-2xl bg-[rgba(201,125,58,0.08)] px-4 py-3 text-xs leading-6 text-[color:var(--warm)]">
-                    当前省市区组合未能定位到有效地点，请重新选择。
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center gap-2 px-2 text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
-                  <Sparkles className="h-3.5 w-3.5" />
+              <div>
+                <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
                   常用地点
                 </div>
-                <div className="grid gap-2 md:grid-cols-2">
-                  {featuredLocations.map((location, index) => {
-                    const resultIndex = recentLocations.length + index;
-                    return (
-                      <LocationResultButton
-                        key={location.id}
-                        location={location}
-                        active={resultIndex === highlightIndex}
-                        onMouseEnter={() => setHighlightIndex(resultIndex)}
-                        onClick={() => handleSelect(location)}
-                      />
-                    );
-                  })}
+                <div className="flex flex-wrap gap-2">
+                  {featuredLocations.map((location) => (
+                    <button
+                      key={location.id}
+                      type="button"
+                      onClick={() => handleSelect(location)}
+                      className="rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--warm)] hover:bg-[rgba(201,125,58,0.08)]"
+                    >
+                      {location.displayName}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
@@ -360,64 +224,35 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   );
 }
 
-function SelectField({
-  label,
-  value,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options: Array<{ label: string; value: string }>;
-}) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-semibold text-[color:var(--muted)]">{label}</span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-3 py-3 text-sm text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)]"
-      >
-        {options.map((option) => (
-          <option key={`${label}-${option.value}`} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
 function LocationResultButton({
-  location,
   active,
-  onMouseEnter,
+  location,
   onClick,
+  onMouseEnter,
 }: {
-  location: LocationOption;
   active: boolean;
-  onMouseEnter: () => void;
+  location: LocationOption;
   onClick: () => void;
+  onMouseEnter: () => void;
 }) {
   return (
     <button
       type="button"
-      onMouseEnter={onMouseEnter}
       onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left transition ${
+      onMouseEnter={onMouseEnter}
+      className={`flex w-full items-center justify-between rounded-[1rem] border px-4 py-3 text-left transition ${
         active
-          ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+          ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.1)]'
           : 'border-[color:var(--line)] bg-white hover:bg-slate-50'
       }`}
     >
-      <div>
-        <div className="font-medium text-[color:var(--ink)]">{location.displayName}</div>
-        <div className="mt-1 text-xs text-[color:var(--muted)]">{location.fullName}</div>
+      <div className="min-w-0">
+        <div className="truncate text-sm font-semibold text-[color:var(--ink)]">{location.displayName}</div>
+        <div className="truncate text-xs text-[color:var(--muted)]">{location.fullName}</div>
       </div>
-      <div className="text-right text-xs text-[color:var(--accent-strong)]">
+      <div className="ml-3 shrink-0 text-right text-[11px] text-[color:var(--muted)]">
         <div>{getTimezoneDisplay(location)}</div>
-        <div className="mt-1">经度 {location.lng.toFixed(2)}°</div>
+        <div>东经 {location.lng.toFixed(2)}°</div>
       </div>
     </button>
   );

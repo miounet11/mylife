@@ -3,31 +3,41 @@
 import Link from 'next/link';
 import { ArrowRight, Bot, CalendarClock, CheckCircle2, FolderHeart, Sparkles } from 'lucide-react';
 
-const nextActions = [
-  {
-    title: '继续追问这份结果',
-    description: '把报告里最模糊、最关键、最想验证的一条结论，立即带去 AI 咨询深问。',
-    href: '/chat',
-    label: '进入 AI 咨询',
-    icon: Bot,
-  },
-  {
-    title: '把窗口期落到事件里',
-    description: '将今年的关键推进期、风险期、关系节点保存到事件日历，形成后续复访。',
-    href: '/events',
-    label: '打开事件日历',
-    icon: CalendarClock,
-  },
-  {
-    title: '沉淀成长期档案',
-    description: '把历史分析、重要事件和阶段趋势放进同一档案页，减少一次性使用。',
-    href: '/profile',
-    label: '查看我的档案',
-    icon: FolderHeart,
-  },
-];
+interface NextStepGuideProps {
+  reportId?: string;
+  hasPendingValidation?: boolean;
+  hasDrift?: boolean;
+}
 
-export default function NextStepGuide() {
+export default function NextStepGuide({ reportId = '', hasPendingValidation = false, hasDrift = false }: NextStepGuideProps) {
+  const nextActions = [
+    {
+      title: hasDrift ? '继续纠偏这份结果' : '继续追问这份结果',
+      description: hasDrift
+        ? '这份报告已经出现偏差样本，最该做的是回到 AI 咨询，把偏差拆成时机、执行和输入问题。'
+        : '把报告里最模糊、最关键、最想验证的一条结论，立即带去 AI 咨询深问。',
+      href: reportId ? `/chat?reportId=${encodeURIComponent(reportId)}` : '/chat',
+      label: hasDrift ? '进入纠偏咨询' : '进入 AI 咨询',
+      icon: Bot,
+    },
+    {
+      title: hasPendingValidation ? '回收这份报告的验证结果' : '把窗口期落到事件里',
+      description: hasPendingValidation
+        ? '当前这份报告已经进入验证期，去事件中心补回结果，后续判断才会越来越准。'
+        : '将今年的关键推进期、风险期、关系节点保存到事件日历，形成后续复访。',
+      href: reportId ? `/events?reportId=${encodeURIComponent(reportId)}${hasPendingValidation ? '' : '&create=1'}` : '/events',
+      label: hasPendingValidation ? '打开验证工作台' : '为这份报告建事件',
+      icon: CalendarClock,
+    },
+    {
+      title: '沉淀成长期档案',
+      description: '把历史分析、重要事件和阶段趋势放进同一档案页，减少一次性使用。',
+      href: '/profile',
+      label: '查看我的档案',
+      icon: FolderHeart,
+    },
+  ];
+
   return (
     <div className="mx-auto max-w-6xl">
       <div className="glass-panel rounded-[2rem] p-6 md:p-8">

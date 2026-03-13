@@ -1,7 +1,11 @@
 'use client';
 
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Bot, Send, Sparkles } from 'lucide-react';
+import { ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { buildChatEventDraft } from '@/lib/chat-context';
+import ChatMarkdown from '@/components/chat-markdown';
 
 interface ChatMessage {
   id: string;
@@ -11,61 +15,193 @@ interface ChatMessage {
   llmUsed?: boolean;
 }
 
+interface ChatContextReport {
+  id: string;
+  name: string;
+  dayMaster: string;
+  pattern: string;
+  currentDaYun: string;
+  currentLiuNian: string;
+  yongShen: string[];
+  topScenario: string;
+  bestWindow: string;
+  riskWindow: string;
+  confidenceLevel: string;
+}
+
+interface ChatContextEvent {
+  id: string;
+  title: string;
+  date: string;
+  type: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  validationStatus: 'accurate' | 'drift' | 'pending';
+  reportId?: string;
+  reason?: string;
+  notes?: string;
+}
+
+interface ChatCorrectionPrompt {
+  key: string;
+  question: string;
+  helper: string;
+}
+
+interface SuggestedEventDraft {
+  key: string;
+  title: string;
+  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
+  date: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  description: string;
+  reason: string;
+  reminderAdvanceDays: number;
+  source: 'scenario' | 'window';
+}
+
+interface ChatContextState {
+  summary: string;
+  focusAreas: string[];
+  suggestedPrompts: string[];
+  correctionPrompts: ChatCorrectionPrompt[];
+  recentEvents: ChatContextEvent[];
+  suggestedEventDrafts: SuggestedEventDraft[];
+  validationSummary?: {
+    accurateCount: number;
+    driftCount: number;
+    pendingCount: number;
+    headline: string;
+  };
+  focusedEvent?: ChatContextEvent;
+  report?: ChatContextReport;
+}
+
 interface QuickQuestionButtonProps {
   question: string;
   onClick: () => void;
   disabled?: boolean;
 }
 
-const quickQuestions = [
-  '我最近事业运如何？',
-  '接下来三个月财运怎么样？',
-  '我该如何判断一段关系是否值得推进？',
-  '今年最需要规避的风险是什么？',
-];
-
 export default function AIAssistantChat() {
+  const searchParams = useSearchParams();
+  const reportId = searchParams.get('reportId') || '';
+  const eventId = searchParams.get('eventId') || '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [context, setContext] = useState<ChatContextState | null>(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [error, setError] = useState('');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [savingEventKey, setSavingEventKey] = useState<string | null>(null);
+  const [savedEventKeys, setSavedEventKeys] = useState<string[]>([]);
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editingContent, setEditingContent] = useState('');
+  const [messageActionKey, setMessageActionKey] = useState<string | null>(null);
+  const messagesScrollerRef = useRef<HTMLDivElement>(null);
+  const initialScrollDoneRef = useRef(false);
+  const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isTyping]);
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+    const node = messagesScrollerRef.current;
+    if (!node) return;
+    node.scrollTo({ top: node.scrollHeight, behavior });
+  };
 
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
+  const fetchHistory = async (showLoader = false) => {
+    try {
+      if (showLoader) {
         setLoadingHistory(true);
-        setError('');
-        const response = await fetch('/api/chat', { cache: 'no-store' });
-        const data = await response.json();
-        if (!response.ok || !data.success) {
-          setError(data.error || '加载聊天历史失败');
-          return;
-        }
+      }
+      setError('');
+      const queryParams = new URLSearchParams();
+      if (reportId) queryParams.set('reportId', reportId);
+      if (eventId) queryParams.set('eventId', eventId);
+      const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
+      const response = await fetch(`/api/chat${query}`, { cache: 'no-store' });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || '加载聊天历史失败');
+        return false;
+      }
 
-        const mapped = (data.history || []).map((item: any) => ({
-          id: item.id,
-          role: item.role,
-          content: item.content || '',
-          timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
-          llmUsed: item.role === 'assistant' ? !!item.llmUsed : undefined,
-        }));
+      const mapped = (data.history || []).map((item: any) => ({
+        id: item.id,
+        role: item.role,
+        content: item.content || '',
+        timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
+        llmUsed: item.role === 'assistant' ? !!item.llmUsed : undefined,
+      }));
 
-        setMessages(mapped);
-      } catch {
-        setError('网络异常，加载聊天历史失败');
-      } finally {
+      setMessages(mapped);
+      setContext(data.context || null);
+      return true;
+    } catch {
+      setError('网络异常，加载聊天历史失败');
+      return false;
+    } finally {
+      if (showLoader) {
         setLoadingHistory(false);
       }
-    };
+    }
+  };
 
-    loadHistory();
-  }, []);
+  fetchHistoryRef.current = fetchHistory;
+
+  useEffect(() => {
+    initialScrollDoneRef.current = false;
+    void fetchHistoryRef.current(true);
+  }, [reportId, eventId]);
+
+  useEffect(() => {
+    if (loadingHistory) return;
+    const behavior: ScrollBehavior = initialScrollDoneRef.current ? 'smooth' : 'auto';
+    const timer = window.requestAnimationFrame(() => {
+      scrollToBottom(behavior);
+      initialScrollDoneRef.current = true;
+    });
+
+    return () => window.cancelAnimationFrame(timer);
+  }, [messages, isTyping, loadingHistory]);
+
+  const trackFollowupClick = (question: string) => {
+    void fetch('/api/analytics/track', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        eventName: 'chat_followup_clicked',
+        page: '/chat',
+        meta: {
+          question,
+          reportId: context?.report?.id || reportId || null,
+          eventId: context?.focusedEvent?.id || eventId || null,
+        },
+      }),
+    }).catch(() => undefined);
+  };
+
+  const saveEventPayload = async (eventKey: string, payload: Record<string, unknown>) => {
+    if (savingEventKey) return;
+    setSavingEventKey(eventKey);
+    setError('');
+
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || '保存事件失败');
+        return;
+      }
+      setSavedEventKeys((current) => [...current, eventKey]);
+    } catch {
+      setError('网络异常，保存事件失败');
+    } finally {
+      setSavingEventKey(null);
+    }
+  };
 
   const sendQuestion = async (rawQuestion: string) => {
     if (isTyping || loadingHistory) return;
@@ -83,39 +219,211 @@ export default function AIAssistantChat() {
     setInput('');
     setIsTyping(true);
     setError('');
+    setEditingMessageId(null);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({
+          question,
+          reportId: reportId || context?.report?.id || undefined,
+          eventId: eventId || context?.focusedEvent?.id || undefined,
+        }),
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
+        setMessages((current) => current.filter((item) => item.id !== userMessage.id));
         setError(data.error || 'AI 回复失败，请稍后重试');
         return;
       }
 
-      setMessages((current) => [
-        ...current,
-        {
-          id: `${Date.now()}_assistant`,
-          role: 'assistant',
-          content: data.answer || '当前无法生成答案，请稍后重试。',
-          timestamp: new Date(),
-          llmUsed: !!data.llmUsed,
-        },
-      ]);
+      await fetchHistory(false);
 
       if (!data.llmUsed) {
-        setError('当前回答由兜底策略生成，深度模型暂时不可用。');
+        setError('当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。');
       }
     } catch {
+      setMessages((current) => current.filter((item) => item.id !== userMessage.id));
       setError('网络异常，AI 回复失败');
     } finally {
       setIsTyping(false);
     }
   };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    if (isTyping || loadingHistory) return;
+    setMessageActionKey(`delete:${messageId}`);
+    setError('');
+    setEditingMessageId(null);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messageId,
+          reportId: reportId || context?.report?.id || undefined,
+          eventId: eventId || context?.focusedEvent?.id || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || '删除消息失败');
+        return;
+      }
+      await fetchHistory(false);
+    } catch {
+      setError('网络异常，删除消息失败');
+    } finally {
+      setMessageActionKey(null);
+    }
+  };
+
+  const handleRegenerateMessage = async (messageId: string) => {
+    if (isTyping || loadingHistory) return;
+    setMessageActionKey(`regenerate:${messageId}`);
+    setIsTyping(true);
+    setError('');
+    setEditingMessageId(null);
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'regenerate',
+          messageId,
+          reportId: reportId || context?.report?.id || undefined,
+          eventId: eventId || context?.focusedEvent?.id || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || '重新生成失败');
+        return;
+      }
+      await fetchHistory(false);
+      if (!data.llmUsed) {
+        setError('当前为简化回答版本，你可以稍后再试。');
+      }
+    } catch {
+      setError('网络异常，重新生成失败');
+    } finally {
+      setIsTyping(false);
+      setMessageActionKey(null);
+    }
+  };
+
+  const handleStartEdit = (message: ChatMessage) => {
+    setEditingMessageId(message.id);
+    setEditingContent(message.content);
+    setError('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditingContent('');
+  };
+
+  const handleSubmitEdit = async (messageId: string) => {
+    if (isTyping || loadingHistory) return;
+    const content = editingContent.trim();
+    if (!content) {
+      setError('问题内容不能为空');
+      return;
+    }
+
+    setMessageActionKey(`edit:${messageId}`);
+    setIsTyping(true);
+    setError('');
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'edit',
+          messageId,
+          content,
+          reportId: reportId || context?.report?.id || undefined,
+          eventId: eventId || context?.focusedEvent?.id || undefined,
+        }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) {
+        setError(data.error || '修改消息失败');
+        return;
+      }
+      setEditingMessageId(null);
+      setEditingContent('');
+      await fetchHistory(false);
+      if (!data.llmUsed) {
+        setError('当前为简化回答版本，你可以稍后再试。');
+      }
+    } catch {
+      setError('网络异常，修改消息失败');
+    } finally {
+      setIsTyping(false);
+      setMessageActionKey(null);
+    }
+  };
+
+  const handlePromptClick = (question: string) => {
+    trackFollowupClick(question);
+    void sendQuestion(question);
+  };
+
+  const handleSaveSuggestedEvent = (item: SuggestedEventDraft) => {
+    void saveEventPayload(`suggestion:${item.key}`, {
+      type: item.type,
+      title: item.title,
+      date: item.date,
+      description: item.description,
+      impact: item.impact,
+      reminderEnabled: true,
+      reminderAdvanceDays: item.reminderAdvanceDays,
+      reminderMethod: 'app',
+      source: 'chat_message',
+      page: '/chat',
+      fortuneAnalysis: {
+        source: 'chat_message',
+        reportId: context?.report?.id || reportId || undefined,
+        suggestionKey: item.key,
+        reason: item.reason,
+        title: item.title,
+      },
+      followUpAdvice: {
+        shortTerm: item.reason,
+        longTerm: '事件发生后回到聊天页继续复盘，校验这次判断与现实偏差。',
+      },
+    });
+  };
+
+  const handleSaveMessageEvent = (question: string, answer: string, key: string) => {
+    const draft = buildChatEventDraft({
+      question,
+      answer,
+      context,
+    });
+
+    void saveEventPayload(`message:${key}`, {
+      ...draft,
+      reminderEnabled: true,
+      reminderMethod: 'app',
+      source: 'chat_message',
+      page: '/chat',
+    });
+  };
+
+  const quickQuestions = context?.suggestedPrompts?.length
+    ? context.suggestedPrompts
+    : [
+        '我最近事业运如何？',
+        '接下来三个月财运怎么样？',
+        '我该如何判断一段关系是否值得推进？',
+        '今年最需要规避的风险是什么？',
+      ];
 
   return (
     <div className="flex h-full flex-col bg-transparent">
@@ -126,30 +434,41 @@ export default function AIAssistantChat() {
           </div>
           <div>
             <h2 className="font-semibold text-[color:var(--ink)]">AI 命理助手</h2>
-            <p className="text-sm text-[color:var(--muted)]">看完报告后继续追问，把理解变成行动。</p>
+            <p className="text-sm text-[color:var(--muted)]">看完报告后继续问，把重点问题说清楚。</p>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 space-y-4 overflow-y-auto p-5">
+      <div ref={messagesScrollerRef} className="flex-1 space-y-4 overflow-y-auto p-5">
+        {context && (
+          <ContextCard
+            context={context}
+            onPromptClick={handlePromptClick}
+            onSaveSuggestedEvent={handleSaveSuggestedEvent}
+            disabled={isTyping || loadingHistory}
+            savingEventKey={savingEventKey}
+            savedEventKeys={savedEventKeys}
+          />
+        )}
+
         {error && (
           <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
             {error}
           </div>
         )}
 
-        {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入对话历史...</div>}
+        {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
         {!loadingHistory && messages.length === 0 && (
           <div className="space-y-6 rounded-[1.75rem] bg-white/75 p-6">
             <div>
               <div className="section-label">
                 <Sparkles className="h-3.5 w-3.5" />
-                快速开始
+                推荐追问
               </div>
-              <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先问一个具体问题</h3>
+              <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先问一个最具体的问题</h3>
               <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                比如“我应该在什么时间推进跳槽？”、“今年适合投入新关系吗？”这类问题更容易得到有用回答。
+                用报告里的一个板块、一个月份或一个现实事件作为锚点，回答会明显更有用。
               </p>
             </div>
 
@@ -158,7 +477,7 @@ export default function AIAssistantChat() {
                 <QuickQuestionButton
                   key={question}
                   question={question}
-                  onClick={() => sendQuestion(question)}
+                  onClick={() => handlePromptClick(question)}
                   disabled={isTyping || loadingHistory}
                 />
               ))}
@@ -166,17 +485,31 @@ export default function AIAssistantChat() {
           </div>
         )}
 
-        {messages.map((message) => (
-          <MessageBubble key={message.id} message={message} />
+        {messages.map((message, index) => (
+          <MessageBubble
+            key={message.id}
+            message={message}
+            previousUserQuestion={findPreviousUserQuestion(messages, index)}
+            onSaveEvent={handleSaveMessageEvent}
+            onDelete={handleDeleteMessage}
+            onRegenerate={handleRegenerateMessage}
+            onStartEdit={handleStartEdit}
+            onCancelEdit={handleCancelEdit}
+            onSubmitEdit={handleSubmitEdit}
+            isEditing={editingMessageId === message.id}
+            editingContent={editingContent}
+            onEditingContentChange={setEditingContent}
+            isSaving={savingEventKey === `message:${message.id}`}
+            isSaved={savedEventKeys.includes(`message:${message.id}`)}
+            isActing={messageActionKey === `delete:${message.id}` || messageActionKey === `regenerate:${message.id}` || messageActionKey === `edit:${message.id}`}
+          />
         ))}
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="rounded-[1.5rem] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">AI 正在推演，请稍候...</div>
+            <div className="rounded-[1.5rem] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
           </div>
         )}
-
-        <div ref={messagesEndRef} />
       </div>
 
       <div className="border-t border-white/60 bg-white/70 p-5">
@@ -191,7 +524,7 @@ export default function AIAssistantChat() {
             <textarea
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="输入你最关心的一个问题..."
+              placeholder="输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”"
               rows={2}
               className="w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
               disabled={isTyping}
@@ -210,7 +543,203 @@ export default function AIAssistantChat() {
   );
 }
 
-function MessageBubble({ message }: { message: ChatMessage }) {
+function ContextCard({
+  context,
+  onPromptClick,
+  onSaveSuggestedEvent,
+  disabled,
+  savingEventKey,
+  savedEventKeys,
+}: {
+  context: ChatContextState;
+  onPromptClick: (question: string) => void;
+  onSaveSuggestedEvent: (item: SuggestedEventDraft) => void;
+  disabled: boolean;
+  savingEventKey: string | null;
+  savedEventKeys: string[];
+}) {
+  return (
+    <div className="space-y-4 rounded-[1.75rem] border border-[color:var(--line)] bg-white/78 p-5 shadow-[0_18px_36px_rgba(23,32,51,0.06)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="section-label">
+            <Sparkles className="h-3.5 w-3.5" />
+            这次咨询
+          </div>
+          <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">
+            {context.report ? `已锚定报告 ${context.report.pattern} / ${context.report.currentDaYun}` : '当前对话未绑定具体报告'}
+          </h3>
+          <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            {context.report
+              ? `日主 ${context.report.dayMaster}，当前重点是 ${context.report.topScenario}，最近优先窗口 ${context.report.bestWindow}。`
+              : '你可以直接提问，我们会结合最近记录的内容继续回答。'}
+          </p>
+        </div>
+        <Link
+          href={context.report ? `/result/${context.report.id}` : '/events'}
+          className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+        >
+          {context.report ? '返回报告' : '查看事件'}
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+
+      {context.focusAreas.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {context.focusAreas.map((item) => (
+            <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
+              {item}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-[1.04fr_0.96fr]">
+        <div className="rounded-[1.5rem] bg-slate-50 p-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+            <CalendarClock className="h-4 w-4" />
+            最近事件
+          </div>
+          <div className="mt-3 grid gap-3">
+            {context.recentEvents.length > 0 ? (
+              context.recentEvents.map((event) => (
+                <div key={event.id} className="rounded-2xl bg-white px-4 py-3">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
+                  <div className="mt-1 text-xs text-[color:var(--muted)]">
+                    {event.date} · {mapEventTypeLabel(event.type)} · {mapImpactLabel(event.impact)}
+                  </div>
+                  <div className="mt-2 text-xs font-medium text-[color:var(--muted)]">{mapValidationLabel(event.validationStatus)}</div>
+                </div>
+              ))
+            ) : (
+              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[color:var(--muted)]">
+                还没有事件记录。看完聊天建议后，可以把关键节点存成事件持续复盘。
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="rounded-[1.5rem] bg-slate-50 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">推荐追问</div>
+          <div className="mt-3 grid gap-3">
+            {context.suggestedPrompts.slice(0, 3).map((question) => (
+              <QuickQuestionButton
+                key={question}
+                question={question}
+                onClick={() => onPromptClick(question)}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {context.validationSummary?.headline && (
+        <div className="rounded-[1.5rem] bg-slate-50 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最近反馈</div>
+          <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{context.validationSummary.headline}</div>
+        </div>
+      )}
+
+      {context.focusedEvent && (
+        <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">本次重点问题</div>
+          <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{context.focusedEvent.title}</div>
+          <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            {context.focusedEvent.reason || context.focusedEvent.notes || '当前对话应优先围绕这条已出现偏差的事件做纠偏分析。'}
+          </div>
+        </div>
+      )}
+
+      {context.correctionPrompts.length > 0 && (
+        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">建议先问</div>
+          <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            先把问题拆清楚，再继续追问，答案会更有针对性。
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            {context.correctionPrompts.map((item) => (
+              <CorrectionPromptButton
+                key={item.key}
+                question={item.question}
+                helper={item.helper}
+                onClick={() => onPromptClick(item.question)}
+                disabled={disabled}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {context.suggestedEventDrafts.length > 0 && (
+        <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-[rgba(15,118,110,0.04)] p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">可以顺手记下的提醒</div>
+          <div className="mt-3 grid gap-3">
+            {context.suggestedEventDrafts.slice(0, 2).map((item) => {
+              const eventKey = `suggestion:${item.key}`;
+              const isSaved = savedEventKeys.includes(eventKey);
+
+              return (
+                <div key={item.key} className="rounded-2xl bg-white px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">
+                        {item.date} · {mapEventTypeLabel(item.type)} · {mapImpactLabel(item.impact)}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => onSaveSuggestedEvent(item)}
+                      disabled={disabled || isSaved || savingEventKey === eventKey}
+                      className="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
+                      {isSaved ? '已保存' : savingEventKey === eventKey ? '保存中...' : '记下来'}
+                    </button>
+                  </div>
+                  <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.reason}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MessageBubble({
+  message,
+  previousUserQuestion,
+  onSaveEvent,
+  onDelete,
+  onRegenerate,
+  onStartEdit,
+  onCancelEdit,
+  onSubmitEdit,
+  isEditing,
+  editingContent,
+  onEditingContentChange,
+  isSaving,
+  isSaved,
+  isActing,
+}: {
+  message: ChatMessage;
+  previousUserQuestion: string;
+  onSaveEvent: (question: string, answer: string, key: string) => void;
+  onDelete: (messageId: string) => void;
+  onRegenerate: (messageId: string) => void;
+  onStartEdit: (message: ChatMessage) => void;
+  onCancelEdit: () => void;
+  onSubmitEdit: (messageId: string) => void;
+  isEditing: boolean;
+  editingContent: string;
+  onEditingContentChange: (value: string) => void;
+  isSaving: boolean;
+  isSaved: boolean;
+  isActing: boolean;
+}) {
   const time = new Date(message.timestamp).toLocaleTimeString('zh-CN', {
     hour: '2-digit',
     minute: '2-digit',
@@ -220,8 +749,65 @@ function MessageBubble({ message }: { message: ChatMessage }) {
     return (
       <div className="flex justify-end">
         <div className="max-w-2xl rounded-[1.75rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-4 text-white shadow-[0_14px_32px_rgba(15,118,110,0.18)]">
-          <p className="text-sm leading-7">{message.content}</p>
-          <p className="mt-2 text-xs text-white/75">{time}</p>
+          {isEditing ? (
+            <div className="space-y-3">
+              <textarea
+                value={editingContent}
+                onChange={(event) => onEditingContentChange(event.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-2xl border border-white/20 bg-white/12 px-4 py-3 text-sm leading-7 text-white outline-none placeholder:text-white/60"
+                placeholder="修改你的问题"
+              />
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <span className="text-xs text-white/70">修改后会基于这条问题重新生成后续回答。</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onCancelEdit}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/20 px-3 py-2 text-xs font-semibold text-white/88"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onSubmitEdit(message.id)}
+                    disabled={isActing}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    {isActing ? '提交中...' : '重新提交'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm leading-7">{message.content}</p>
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-white/75">
+                <span>{time}</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onStartEdit(message)}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 font-semibold text-white/88"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                    编辑
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(message.id)}
+                    disabled={isActing}
+                    className="inline-flex items-center gap-1 rounded-full border border-white/20 px-3 py-1.5 font-semibold text-white/88 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    {isActing ? '删除中...' : '删除'}
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
@@ -236,10 +822,43 @@ function MessageBubble({ message }: { message: ChatMessage }) {
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">兜底模式</span>
           )}
         </div>
-        <p className="mt-3 whitespace-pre-wrap text-sm leading-7 text-[color:var(--ink)]">{message.content}</p>
-        <div className="mt-4 flex items-center justify-between text-xs text-[color:var(--muted)]">
-          <span>{message.llmUsed ? '基于实时模型与上下文生成' : '当前为兜底回答'}</span>
-          <span>{time}</span>
+        <div className="mt-3">
+          <ChatMarkdown content={message.content} />
+        </div>
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--muted)]">
+          <span>{message.llmUsed ? '结合当前报告与对话内容生成' : '当前为简化回答'}</span>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onRegenerate(message.id)}
+              disabled={isActing}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <RotateCcw className="h-4 w-4" />
+              {isActing ? '处理中...' : '重新生成'}
+            </button>
+            {previousUserQuestion && (
+              <button
+                type="button"
+                onClick={() => onSaveEvent(previousUserQuestion, message.content, message.id)}
+                disabled={isSaving || isSaved}
+                className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
+                {isSaved ? '已记下' : isSaving ? '保存中...' : '记为提醒'}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => onDelete(message.id)}
+              disabled={isActing}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              <Trash2 className="h-4 w-4" />
+              删除
+            </button>
+            <span>{time}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -257,4 +876,77 @@ function QuickQuestionButton({ question, onClick, disabled = false }: QuickQuest
       {question}
     </button>
   );
+}
+
+function CorrectionPromptButton({
+  question,
+  helper,
+  onClick,
+  disabled = false,
+}: {
+  question: string;
+  helper: string;
+  onClick: () => void;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="rounded-[1.5rem] border border-amber-200 bg-white px-4 py-4 text-left transition hover:border-amber-300 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+    >
+      <div className="text-sm font-semibold leading-7 text-[color:var(--ink)]">{question}</div>
+      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{helper}</div>
+    </button>
+  );
+}
+
+function findPreviousUserQuestion(messages: ChatMessage[], currentIndex: number) {
+  for (let index = currentIndex - 1; index >= 0; index--) {
+    if (messages[index]?.role === 'user') {
+      return messages[index].content;
+    }
+  }
+
+  return '';
+}
+
+function mapEventTypeLabel(type: string) {
+  switch (type) {
+    case 'career':
+      return '事业';
+    case 'wealth':
+      return '财富';
+    case 'marriage':
+      return '关系';
+    case 'health':
+      return '健康';
+    case 'family':
+      return '家庭';
+    default:
+      return '其他';
+  }
+}
+
+function mapImpactLabel(impact: ChatContextEvent['impact']) {
+  switch (impact) {
+    case 'positive':
+      return '积极';
+    case 'negative':
+      return '风险';
+    default:
+      return '中性';
+  }
+}
+
+function mapValidationLabel(status: ChatContextEvent['validationStatus']) {
+  switch (status) {
+    case 'accurate':
+      return '已验证准确';
+    case 'drift':
+      return '已记录偏差';
+    default:
+      return '待验证';
+  }
 }

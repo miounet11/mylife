@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLoginCode } from '@/lib/auth';
+import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
 import { validateEmail } from '@/lib/validators';
+import { trackServerEvent } from '@/lib/analytics';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,12 +17,28 @@ export async function POST(request: NextRequest) {
     }
 
     const result = createLoginCode(email);
-    console.log(`[Auth] Login code for ${result.email}: ${result.code}`);
+    const emailConfigured = isEmailDeliveryConfigured();
+
+    if (emailConfigured) {
+      await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
+    } else {
+      console.log(`[Auth] Login code for ${result.email}: ${result.code}`);
+    }
+
+    trackServerEvent({
+      eventName: 'auth_code_requested',
+      page: '/login',
+      meta: {
+        emailDomain: result.email.split('@')[1] || '',
+        deliveryConfigured: emailConfigured,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      message: '验证码已生成',
+      message: emailConfigured ? '验证码已发送至邮箱' : '验证码已生成',
       expiresAt: result.expiresAt,
+      deliveryConfigured: emailConfigured,
       previewCode:
         process.env.NODE_ENV !== 'production' || process.env.AUTH_SHOW_CODE === 'true'
           ? result.code

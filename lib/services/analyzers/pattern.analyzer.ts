@@ -137,6 +137,6 @@ export class PatternAnalyzer {
       }
     }
 
-    return weaknesses.length > 0 ? weaknesses : ['暂无明显弱点'];
+    return weaknesses.length > 0 ? weaknesses : ['当前结构短板不突出'];
   }
 }

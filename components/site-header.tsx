@@ -37,7 +37,7 @@ export default function SiteHeader({
           </div>
           <div>
             <div className="text-base font-semibold tracking-tight text-[color:var(--ink)]">人生K线</div>
-            <div className="text-xs text-[color:var(--muted)]">命理决策引擎</div>
+            <div className="text-xs text-[color:var(--muted)]">真太阳时命理分析</div>
           </div>
         </Link>
 

@@ -1,5 +1,5 @@
 // @ts-nocheck - lunar-javascript 在测试环境中可能需要特殊处理
-import { calculateFourPillars, generateLifeKlineData } from '@/lib/fortune-engine';
+import { analyzeFortune, calculateFourPillars, generateLifeKlineData } from '@/lib/fortune-engine';
 
 describe('calculateFourPillars', () => {
   const birthDate = new Date(1990, 5, 15); // 1990-06-15
@@ -115,5 +115,40 @@ describe('generateLifeKlineData', () => {
   it('works with null yongShen', () => {
     const data = generateLifeKlineData(birthDate, gender, mockPillars, null);
     expect(data.length).toBeGreaterThan(0);
+  });
+});
+
+describe('analyzeFortune determinism', () => {
+  it('returns stable advice and opening for the same input', () => {
+    const input = {
+      name: '张三',
+      birthDate: new Date(1990, 5, 15),
+      birthTime: '14:30',
+      birthPlace: '北京',
+      timezone: 8,
+      gender: 'male' as const,
+    };
+
+    const first = analyzeFortune(
+      input.name,
+      input.birthDate,
+      input.birthTime,
+      input.birthPlace,
+      input.timezone,
+      input.gender
+    );
+    const second = analyzeFortune(
+      input.name,
+      input.birthDate,
+      input.birthTime,
+      input.birthPlace,
+      input.timezone,
+      input.gender
+    );
+
+    expect(first.analysis?.opening).toBe(second.analysis?.opening);
+    expect(first.advice?.career?.general).toBe(second.advice?.career?.general);
+    expect(first.advice?.wealth?.timing).toBe(second.advice?.wealth?.timing);
+    expect(first.advice?.timing?.[0]).toBe(second.advice?.timing?.[0]);
   });
 });

@@ -6,11 +6,11 @@ import { requireAdminUser } from '@/lib/auth';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminContentPage() {
-  await requireAdminUser();
+  await requireAdminUser('/admin/content');
 
   return (
     <div className="page-shell">
-      <SiteHeader ctaHref="/insights" ctaLabel="查看前台" />
+      <SiteHeader ctaHref="/admin/analytics" ctaLabel="经营后台" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.76fr_1.24fr]">

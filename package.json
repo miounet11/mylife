@@ -17,10 +17,14 @@
     "lucide-react": "^0.561.0",
     "lunar-javascript": "^1.7.7",
     "next": "^15.0.0",
+    "nodemailer": "^8.0.2",
     "openai": "^6.23.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
+    "react-markdown": "^10.1.0",
     "recharts": "^3.7.0",
+    "remark-breaks": "^4.0.0",
+    "remark-gfm": "^4.0.1",
     "tailwind-merge": "^2.5.0"
   },
   "devDependencies": {
@@ -28,6 +32,7 @@
     "@types/better-sqlite3": "^7.6.13",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.0",
+    "@types/nodemailer": "^7.0.11",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "autoprefixer": "^10.4.24",
