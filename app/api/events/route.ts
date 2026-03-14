@@ -1,6 +1,7 @@
 // 事件API
 import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations } from '@/lib/database';
+import { syncReportFeedbackLoop } from '@/lib/report-feedback-loop';
 import { generateId } from '@/lib/utils';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { validateEventRequest } from '@/lib/validators';
@@ -85,6 +86,11 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const linkedReportId = data.fortuneAnalysis?.reportId;
+    if (typeof linkedReportId === 'string' && linkedReportId) {
+      syncReportFeedbackLoop(linkedReportId);
+    }
+
     return NextResponse.json({
       success: true,
       eventId,
@@ -145,6 +151,8 @@ export async function PATCH(request: NextRequest) {
 
     eventOperations.update(eventId, updates);
     const updated = eventOperations.getById(eventId);
+    const previousReportId = (existing.fortuneAnalysis as { reportId?: string } | undefined)?.reportId;
+    const nextReportId = (updated?.fortuneAnalysis as { reportId?: string } | undefined)?.reportId;
 
     trackServerEvent({
       userId,
@@ -168,6 +176,13 @@ export async function PATCH(request: NextRequest) {
           wasAccurate: data.userFeedback?.wasAccurate ?? null,
         },
       });
+    }
+
+    if (previousReportId) {
+      syncReportFeedbackLoop(previousReportId);
+    }
+    if (nextReportId && nextReportId !== previousReportId) {
+      syncReportFeedbackLoop(nextReportId);
     }
 
     return NextResponse.json({
@@ -205,6 +220,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
+    const linkedReportId = (existing.fortuneAnalysis as { reportId?: string } | undefined)?.reportId;
     eventOperations.delete(eventId);
 
     trackServerEvent({
@@ -216,6 +232,10 @@ export async function DELETE(request: NextRequest) {
         eventId,
       },
     });
+
+    if (linkedReportId) {
+      syncReportFeedbackLoop(linkedReportId);
+    }
 
     return NextResponse.json({
       success: true,

@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, Clock3, Filter, Grid, Plus, Search, Sparkles } from 'lucide-react';
 import type { ReactNode } from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -98,6 +98,14 @@ const createDefaultForm = (): EventFormState => ({
 });
 
 export default function EventsPage() {
+  return (
+    <Suspense fallback={<EventsPageFallback />}>
+      <EventsPageContent />
+    </Suspense>
+  );
+}
+
+function EventsPageContent() {
   const searchParams = useSearchParams();
   const focusedReportId = searchParams.get('reportId') || '';
   const shouldOpenCreate = searchParams.get('create') === '1';
@@ -796,6 +804,33 @@ export default function EventsPage() {
           {toast.message}
         </div>
       )}
+    </div>
+  );
+}
+
+function EventsPageFallback() {
+  return (
+    <div className="page-shell">
+      <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
+      <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
+        <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+          <div className="space-y-5">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              结果后的复访场景
+            </div>
+            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
+              把关键节点存下来，
+              <span className="font-serif text-[color:var(--accent-strong)]">用户才有回来的理由。</span>
+            </h1>
+          </div>
+          <div className="glass-panel rounded-[2rem] p-6">
+            <EventsSkeleton />
+          </div>
+        </section>
+        <EventsSkeleton />
+      </main>
+      <SiteFooter />
     </div>
   );
 }

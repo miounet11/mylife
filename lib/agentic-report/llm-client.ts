@@ -24,7 +24,7 @@ function getApiKey() {
 }
 
 function getBaseUrl() {
-  return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
+  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
 }
 
 function getModel() {

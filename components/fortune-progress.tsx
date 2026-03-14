@@ -1,83 +1,339 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { CheckCircle2, Clock3, MapPin, Sparkles, Stars, UserRound } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const steps = [
-  { name: '正在初始化排盘引擎与真太阳时参数', duration: 1400 },
-  { name: '根据经纬度与时区修正出生时刻', duration: 2200 },
-  { name: '计算四柱、五行、十神与强弱结构', duration: 2600 },
-  { name: '识别格局并生成多维度趋势建议', duration: 2800 },
-  { name: '整合结果页内容并准备跳转展示', duration: 3200 },
+  {
+    name: '锁定出生信息与排盘上下文',
+    detail: '先冻结用户输入，确认生日、地点、时区与是否启用真太阳时修正。',
+    target: 18,
+  },
+  {
+    name: '修正出生时刻并建立命盘底座',
+    detail: '根据经纬度、时区与节律参数处理出生时刻，准备四柱与基础结构。',
+    target: 40,
+  },
+  {
+    name: '计算四柱、五行、十神与格局关系',
+    detail: '开始识别命局重心、强弱变化与关键结构，不是简单给一个标签。',
+    target: 64,
+  },
+  {
+    name: '合成阶段趋势、重点主题与行动建议',
+    detail: '把命局、运势节奏和现实场景连接起来，形成用户真正能读懂的建议。',
+    target: 86,
+  },
+  {
+    name: '整理结果页并准备打开完整报告',
+    detail: '将结构、趋势、建议和人生 K 线整合成最终展示内容。',
+    target: 100,
+  },
 ];
 
-export default function FortuneProgress({ isComplete = false }: { isComplete?: boolean }) {
+const reassuranceMessages = [
+  '当前阶段属于多模块计算，耗时会比普通表单提交长一些。',
+  '如果模型响应稍慢，系统会继续等待或自动切换备用策略，不需要重复提交。',
+  '正在把命局结构、阶段判断和建议整理成可直接阅读的结果页。',
+  '你不需要停留在空白页，我们会持续反馈当前处理阶段。',
+];
+
+interface FortuneProgressSummary {
+  name: string;
+  birthText: string;
+  birthPlace: string;
+  solarTimeText: string;
+  useSolarTime: boolean;
+  useDaylightSaving: boolean;
+  useSeparateZiHour: boolean;
+}
+
+interface FortuneProgressServerStage {
+  stage: string;
+  progress: number;
+  label: string;
+  detail: string;
+}
+
+interface FortuneProgressCompletionMeta {
+  llmUsed: boolean;
+  deliveryTier?: 'basic' | 'enhanced' | 'expert';
+  grade?: 'S' | 'A' | 'B' | 'C';
+  score?: number;
+  targetAchieved?: boolean;
+  upgradeQueued?: boolean;
+  upgradeStatus?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  upgradeAttempts?: number;
+  upgradeMaxAttempts?: number;
+}
+
+export default function FortuneProgress({
+  isComplete = false,
+  summary,
+  onCancel,
+  serverStage,
+  completionMeta,
+}: {
+  isComplete?: boolean;
+  summary?: FortuneProgressSummary | null;
+  onCancel?: () => void;
+  serverStage?: FortuneProgressServerStage | null;
+  completionMeta?: FortuneProgressCompletionMeta | null;
+}) {
   const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [messageIndex, setMessageIndex] = useState(0);
 
   useEffect(() => {
-    let current = 0;
-    let stepIndex = 0;
-    const totalDuration = steps.reduce((sum, item) => sum + item.duration, 0);
-    const tick = 100;
-    const progressPerTick = 100 / (totalDuration / tick);
-
     const timer = window.setInterval(() => {
-      current += progressPerTick;
-
-      if (current >= 100 || isComplete) {
-        setProgress(100);
-        setCurrentStep(steps.length - 1);
-        window.clearInterval(timer);
-        return;
-      }
-
-      setProgress(current);
-
-      let accumulated = 0;
-      for (let index = 0; index < steps.length; index += 1) {
-        accumulated += (steps[index].duration / totalDuration) * 100;
-        if (current <= accumulated) {
-          stepIndex = index;
-          setCurrentStep(index);
-          break;
+      setProgress((current) => {
+        if (isComplete) {
+          return 100;
         }
-      }
-    }, tick);
+
+        if (current >= 93) {
+          return current;
+        }
+
+        const delta = current < 18
+          ? 1.8
+          : current < 40
+            ? 1.15
+            : current < 64
+              ? 0.82
+              : current < 86
+                ? 0.42
+                : 0.18;
+
+        return Math.min(current + delta, 93);
+      });
+    }, 220);
 
     return () => window.clearInterval(timer);
   }, [isComplete]);
 
+  useEffect(() => {
+    if (isComplete) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setElapsedSeconds((current) => current + 1);
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [isComplete]);
+
+  useEffect(() => {
+    if (isComplete) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setMessageIndex((current) => (current + 1) % reassuranceMessages.length);
+    }, 3200);
+
+    return () => window.clearInterval(timer);
+  }, [isComplete]);
+
+  const estimatedStep = useMemo(() => {
+    const matchedIndex = steps.findIndex((step) => progress <= step.target);
+    return matchedIndex === -1 ? steps.length - 1 : matchedIndex;
+  }, [progress]);
+
+  const currentStep = serverStage
+    ? Math.max(0, steps.findIndex((step) => serverStage.progress <= step.target))
+    : estimatedStep;
+  const nextStep = currentStep < steps.length - 1 ? steps[currentStep + 1] : null;
+  const displayProgress = serverStage ? Math.max(progress, serverStage.progress) : progress;
+  const progressLabel = isComplete ? '100' : String(Math.round(displayProgress));
+  const elapsedLabel = elapsedSeconds < 60
+    ? `${elapsedSeconds} 秒`
+    : `${Math.floor(elapsedSeconds / 60)} 分 ${String(elapsedSeconds % 60).padStart(2, '0')} 秒`;
+  const isSlow = !isComplete && elapsedSeconds >= 12;
+  const slowHint = elapsedSeconds >= 20
+    ? '当前等待时间偏长，通常意味着正在进行更复杂的结果整理，或模型链路正在自动切换备用策略。'
+    : '当前等待时间略长于普通请求，系统仍在继续处理中，不需要重复提交。';
+  const deliveryTierLabel = completionMeta?.deliveryTier === 'expert'
+    ? 'S级专家版'
+    : completionMeta?.deliveryTier === 'enhanced'
+      ? '增强版'
+      : '可读版';
+  const backgroundUpgradeLabel = completionMeta?.upgradeStatus === 'running'
+    ? '后台正在增强到 S级'
+    : completionMeta?.upgradeStatus === 'pending' || completionMeta?.upgradeStatus === 'retry'
+      ? '后台已排队继续增强'
+      : completionMeta?.upgradeStatus === 'completed'
+        ? '后台增强已完成'
+        : completionMeta?.upgradeStatus === 'failed'
+          ? '后台增强暂时受阻'
+          : '';
+  const completionHeading = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
+    ? '专家版报告已完成'
+    : '当前报告已完成';
+  const completionDescription = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
+    ? '这次已经生成达到专家版门槛的完整报告，正在为你打开结果页。'
+    : completionMeta?.upgradeQueued
+      ? `当前先交付${deliveryTierLabel}，后台会继续增强并尝试提升到 S级专家版。`
+      : `当前已生成${deliveryTierLabel}，正在为你打开结果页。`;
+  const finalStatusLabel = isComplete
+    ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
+      ? '已达到专家版'
+      : completionMeta?.upgradeQueued
+        ? '先看当前版，后台继续增强'
+        : '结果页即将打开'
+    : '持续计算中';
+  const finalStageMessage = isComplete
+    ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
+      ? '当前版本已越过 95 分 S级门槛。'
+      : completionMeta?.upgradeQueued
+        ? `当前质量 ${completionMeta?.score || '--'} / ${completionMeta?.grade || 'B'}，结果页打开后系统仍会在后台继续提升。`
+        : '当前结果已经整理完成，正在进入报告页。'
+    : reassuranceMessages[messageIndex];
+
   return (
     <div className="mx-auto w-full max-w-2xl">
       <div className="glass-panel overflow-hidden rounded-[2rem] p-6 md:p-8">
-        <div className="grid gap-8 md:grid-cols-[0.9fr_1.1fr] md:items-center">
-          <div className="space-y-4">
+        <div className="grid gap-8 md:grid-cols-[0.88fr_1.12fr] md:items-start">
+          <div className="space-y-5">
             <div className="section-label">分析进行中</div>
             <div>
-              <h3 className="text-3xl font-black text-[color:var(--ink)]">报告正在生成</h3>
+              <h3 className="text-3xl font-black text-[color:var(--ink)]">
+                {isComplete ? completionHeading : '报告正在生成'}
+              </h3>
               <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
-                我们把计算过程拆成可感知步骤，减少用户对“黑盒等待”的不安。
+                {isComplete ? completionDescription : '我们把处理过程拆成清晰阶段，让用户在等待时始终知道系统正在做什么。'}
               </p>
             </div>
 
             <div className="inline-flex items-end gap-2">
-              <span className="text-5xl font-black text-[color:var(--accent-strong)]">{Math.round(progress)}</span>
+              <span className="text-5xl font-black text-[color:var(--accent-strong)]">{progressLabel}</span>
               <span className="pb-1 text-lg font-semibold text-[color:var(--muted)]">%</span>
             </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-[1.5rem] bg-white/85 p-4">
+                <div className="flex items-center gap-2 text-xs tracking-[0.16em] text-[color:var(--muted)]">
+                  <Clock3 className="h-3.5 w-3.5" />
+                  已等待
+                </div>
+                <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{elapsedLabel}</div>
+              </div>
+              <div className="rounded-[1.5rem] bg-white/85 p-4">
+                <div className="flex items-center gap-2 text-xs tracking-[0.16em] text-[color:var(--muted)]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  当前节奏
+                </div>
+                <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">
+                  {finalStatusLabel}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                disabled={!onCancel || isComplete}
+                onClick={onCancel}
+                className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                返回修改信息
+              </button>
+              <div className="inline-flex items-center rounded-full bg-[color:var(--accent-soft)] px-4 py-2 text-sm font-medium text-[color:var(--accent-strong)]">
+                {isComplete
+                  ? completionMeta?.upgradeQueued
+                    ? '进入结果页后，系统仍会继续在后台增强'
+                    : '结果页即将打开，无需重复操作'
+                  : '提交后系统会自动继续，期间无需重复点击'}
+              </div>
+            </div>
+
+            {summary ? (
+              <div className="rounded-[1.5rem] bg-[rgba(201,125,58,0.1)] p-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
+                  <Stars className="h-4 w-4" />
+                  本次测算已锁定输入
+                </div>
+                <div className="mt-3 space-y-2 text-sm text-[color:var(--ink)]">
+                  <div className="flex items-start gap-2">
+                    <UserRound className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                    <span>{summary.name}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <Clock3 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                    <span>{summary.birthText}</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--muted)]" />
+                    <span>{summary.birthPlace}</span>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                    真太阳时 {summary.useSolarTime ? '开启' : '关闭'}
+                  </span>
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                    夏令时 {summary.useDaylightSaving ? '开启' : '关闭'}
+                  </span>
+                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                    早晚子时 {summary.useSeparateZiHour ? '开启' : '关闭'}
+                  </span>
+                </div>
+                {summary.useSolarTime ? (
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+                    当前会按真太阳时修正后继续分析：{summary.solarTimeText}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
 
           <div className="space-y-5">
             <div className="overflow-hidden rounded-full bg-white/75">
-              <div
-                className="h-4 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--warm))] transition-all duration-200"
-                style={{ width: `${progress}%` }}
+                <div
+                  className="h-4 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--warm))] transition-all duration-200"
+                style={{ width: `${displayProgress}%` }}
               />
             </div>
 
             <div className="rounded-[1.5rem] bg-white/85 p-5">
               <div className="text-sm font-semibold text-[color:var(--ink)]">当前阶段</div>
-              <div className="mt-2 text-base leading-7 text-[color:var(--muted)]">{steps[currentStep].name}</div>
+              <div className="mt-2 text-base font-semibold leading-7 text-[color:var(--ink)]">
+                {serverStage?.label || steps[currentStep].name}
+              </div>
+              <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                {serverStage?.detail || steps[currentStep].detail}
+              </div>
+              {nextStep ? (
+                <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  下一步：{nextStep.name}
+                </div>
+              ) : (
+                <div className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+                  <CheckCircle2 className="h-4 w-4" />
+                  结果已经准备好，正在进入报告页
+                </div>
+              )}
             </div>
+
+            <div className="rounded-[1.5rem] border border-white/60 bg-white/70 p-4 text-sm leading-7 text-[color:var(--muted)]">
+              {finalStageMessage}
+            </div>
+
+            {isSlow ? (
+              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+                {slowHint}
+              </div>
+            ) : null}
+
+            {isComplete && completionMeta?.upgradeQueued ? (
+              <div className="rounded-[1.5rem] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-sm leading-7 text-[color:var(--accent-strong)]">
+                {backgroundUpgradeLabel || '后台增强任务已建立'}
+                {typeof completionMeta.upgradeAttempts === 'number' && typeof completionMeta.upgradeMaxAttempts === 'number'
+                  ? `，当前重试进度 ${completionMeta.upgradeAttempts} / ${completionMeta.upgradeMaxAttempts}。`
+                  : '。'}
+              </div>
+            ) : null}
 
             <div className="space-y-3">
               {steps.map((step, index) => (
@@ -91,7 +347,7 @@ export default function FortuneProgress({ isComplete = false }: { isComplete?: b
                         : 'bg-white/70 text-[color:var(--muted)]'
                   }`}
                 >
-                  {step.name}
+                  <div className="font-semibold">{step.name}</div>
                 </div>
               ))}
             </div>

@@ -221,4 +221,50 @@ describe('chat-context helpers', () => {
     expect(context.correctionPrompts[0]?.question).toContain('跳槽谈判失败');
     expect(context.correctionPrompts[0]?.helper).toContain('窗口判断偏早');
   });
+
+  it('builds intent-aware prompts for event simulation', () => {
+    const context = buildChatExperienceContext({
+      report: report as any,
+      events: [],
+      intent: 'event-simulation',
+      now: new Date(Date.UTC(2026, 2, 12)),
+    });
+
+    expect(context.intent).toBe('event-simulation');
+    expect(context.summary).toContain('事件推演');
+    expect(context.summary).toContain('试探、推进、确认');
+    expect(context.focusAreas[0]).toContain('专项：事件推演');
+    expect(context.suggestedPrompts[0]).toContain('事件推演');
+  });
+
+  it('builds intent-aware prompts for event review without losing drift guidance', () => {
+    const context = buildChatExperienceContext({
+      report: report as any,
+      events: [
+        {
+          id: 'evt_drift_2',
+          userId: 'user_001',
+          type: 'career',
+          title: '合作推进失手',
+          date: '2026-08-01',
+          impact: 'negative',
+          fortuneAnalysis: {
+            reportId: 'report_001',
+            reason: '推进过快',
+          },
+          userFeedback: {
+            wasAccurate: false,
+          },
+        },
+      ],
+      focusEventId: 'evt_drift_2',
+      intent: 'event-review',
+      now: new Date(Date.UTC(2026, 2, 12)),
+    });
+
+    expect(context.intent).toBe('event-review');
+    expect(context.summary).toContain('事件剖析');
+    expect(context.summary).toContain('时机、执行还是信息判断');
+    expect(context.suggestedPrompts.some((item) => item.includes('偏差'))).toBe(true);
+  });
 });

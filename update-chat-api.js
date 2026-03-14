@@ -8,7 +8,7 @@ const replacement = `import { generateFortuneInterpretation } from '@/lib/llm';
 import OpenAI from 'openai';
 
 const getApiBaseUrl = () => {
-  return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
+  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
 };
 
 const getApiKey = () => {

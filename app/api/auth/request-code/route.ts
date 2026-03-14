@@ -20,7 +20,33 @@ export async function POST(request: NextRequest) {
     const emailConfigured = isEmailDeliveryConfigured();
 
     if (emailConfigured) {
-      await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
+      const deliveryResult = await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
+
+      if (!deliveryResult?.success) {
+        trackServerEvent({
+          eventName: 'email_delivery_failed',
+          page: '/login',
+          meta: {
+            channel: 'auth_code',
+            emailDomain: result.email.split('@')[1] || '',
+            reason: deliveryResult?.message || 'unknown',
+          },
+        });
+
+        return NextResponse.json(
+          { success: false, error: '邮件服务暂时不可用，请稍后重试' },
+          { status: 503 }
+        );
+      }
+
+      trackServerEvent({
+        eventName: 'email_delivery_succeeded',
+        page: '/login',
+        meta: {
+          channel: 'auth_code',
+          emailDomain: result.email.split('@')[1] || '',
+        },
+      });
     } else {
       console.log(`[Auth] Login code for ${result.email}: ${result.code}`);
     }

@@ -4,9 +4,10 @@
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
+import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import AnalyticsPageView from '@/components/analytics-page-view';
 
 // 动态导入
 const UserProfile = dynamic(() => import('@/components/user-profile'), {
@@ -35,20 +36,58 @@ type ProfileResponse = {
   error?: string;
 };
 
+type UpdatesSummaryResponse = {
+  success: boolean;
+  authenticated?: boolean;
+  data?: {
+    email?: string | null;
+    subscription?: {
+      email: string;
+      status: string;
+      source?: string;
+      tags?: string[];
+      updatedAt?: string | null;
+    } | null;
+    reportCount?: number;
+    activeUpgradeCount?: number;
+    completedUpgradeCount?: number;
+    latestReport?: {
+      id: string;
+      name?: string | null;
+      reportVersion?: string | null;
+      qualityScore?: number | null;
+      qualityGrade?: string | null;
+    } | null;
+    latestDigest?: {
+      id: string;
+      cycleKey?: string | null;
+      status?: string | null;
+      reason?: string | null;
+      reportId?: string | null;
+      createdAt?: string | null;
+    } | null;
+  } | null;
+};
+
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [fortunes, setFortunes] = useState<Record<string, unknown>[]>([]);
   const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummaryResponse['data'] | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        // 使用 profile API（语义正确），回退到 history API
-        const res = await fetch('/api/history', { cache: 'no-store' });
-        const data: ProfileResponse = await res.json();
-        if (!res.ok || !data.success) {
+        const [historyRes, updatesRes] = await Promise.all([
+          fetch('/api/history', { cache: 'no-store' }),
+          fetch('/api/updates/summary', { cache: 'no-store' }),
+        ]);
+        const data: ProfileResponse = await historyRes.json();
+        const updatesData: UpdatesSummaryResponse = await updatesRes.json();
+
+        if (!historyRes.ok || !data.success) {
           setError(data.error || '加载档案失败');
           return;
         }
@@ -61,6 +100,9 @@ export default function ProfilePage() {
         setUser(userData);
         setFortunes(fortunesData);
         setEvents(eventsData);
+        if (updatesRes.ok && updatesData.success) {
+          setUpdatesSummary(updatesData.data || null);
+        }
       } catch {
         setError('网络异常，无法加载档案');
       } finally {
@@ -118,6 +160,16 @@ export default function ProfilePage() {
 
   return (
     <div className="page-shell">
+      <AnalyticsPageView
+        eventName="profile_page_viewed"
+        page="/profile"
+        meta={{
+          hasProfileData,
+          fortuneCount: fortunes.length,
+          eventCount: mappedEvents.length,
+          hasSubscription: !!updatesSummary?.subscription,
+        }}
+      />
       <SiteHeader ctaHref="/chat" ctaLabel="继续咨询" />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
@@ -184,6 +236,90 @@ export default function ProfilePage() {
                 <ProfileAction href={latestResultId ? `/result/${latestResultId}` : '/analyze'} label={latestResultId ? '查看最新报告' : '开始分析'} icon={ArrowRight} />
               </div>
             </div>
+          </section>
+
+          <section className="glass-panel rounded-[1.75rem] p-5">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div className="flex items-center gap-3">
+                  <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
+                  <div className="text-lg font-bold text-[color:var(--ink)]">我的更新状态</div>
+                </div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  报告升级、月度更新和订阅状态，不应该只停留在邮箱里，这里直接给你看当前状态。
+                </div>
+              </div>
+              <Link
+                href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
+                className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+              >
+                {user?.email ? '进入更新中心' : '登录查看更新'}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+
+            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              <ProfileStatusTile
+                label="订阅状态"
+                value={updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活'}
+                helper={updatesSummary?.email || '尚未绑定邮箱'}
+                tone={updatesSummary?.subscription?.status === 'active' ? 'success' : 'neutral'}
+              />
+              <ProfileStatusTile
+                label="活跃升级任务"
+                value={`${updatesSummary?.activeUpgradeCount || 0}`}
+                helper="后台增强中的报告数量"
+                tone={(updatesSummary?.activeUpgradeCount || 0) > 0 ? 'accent' : 'neutral'}
+              />
+              <ProfileStatusTile
+                label="最近月度更新"
+                value={updatesSummary?.latestDigest?.cycleKey || '暂无'}
+                helper={mapDigestStatus(updatesSummary?.latestDigest?.status)}
+                tone={updatesSummary?.latestDigest?.status === 'sent' ? 'success' : updatesSummary?.latestDigest?.status === 'error' ? 'warning' : 'neutral'}
+              />
+              <ProfileStatusTile
+                label="最新报告"
+                value={updatesSummary?.latestReport?.reportVersion || '待生成'}
+                helper={updatesSummary?.latestReport?.qualityScore
+                  ? `质量 ${updatesSummary.latestReport.qualityScore} / ${updatesSummary.latestReport.qualityGrade || 'B'}`
+                  : '还没有生成可复访的结果'}
+                tone={updatesSummary?.latestReport ? 'accent' : 'neutral'}
+              />
+            </div>
+
+            {(updatesSummary?.latestReport || updatesSummary?.latestDigest) ? (
+              <div className="mt-5 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[1.4rem] bg-white px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
+                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                    {updatesSummary?.latestReport
+                      ? `${updatesSummary.latestReport.name || '我的报告'}，当前版本 ${updatesSummary.latestReport.reportVersion || 'v1'}。`
+                      : '当前还没有最近报告。'}
+                  </div>
+                  {updatesSummary?.latestReport?.id ? (
+                    <Link
+                      href={`/result/${updatesSummary.latestReport.id}`}
+                      className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]"
+                    >
+                      打开最新报告
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : null}
+                </div>
+
+                <div className="rounded-[1.4rem] bg-white px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
+                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                    {updatesSummary?.latestDigest
+                      ? `${updatesSummary.latestDigest.cycleKey || '本周期'}：${mapDigestStatus(updatesSummary.latestDigest.status)}`
+                      : '当前还没有月度更新回执。'}
+                  </div>
+                  <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">
+                    {updatesSummary?.latestDigest?.reason || '后续会在这里显示最近一次发送或跳过原因。'}
+                  </div>
+                </div>
+              </div>
+            ) : null}
           </section>
 
           {!loading && !hasProfileData && (
@@ -284,4 +420,38 @@ function ProfileAction({
       {label}
     </Link>
   );
+}
+
+function ProfileStatusTile({
+  label,
+  value,
+  helper,
+  tone,
+}: {
+  label: string;
+  value: string;
+  helper: string;
+  tone: 'neutral' | 'accent' | 'success' | 'warning';
+}) {
+  return (
+    <div className={`rounded-[1.4rem] px-4 py-5 ${mapProfileStatusTone(tone)}`}>
+      <div className="text-xs tracking-[0.18em]">{label}</div>
+      <div className="mt-2 break-all text-2xl font-black">{value}</div>
+      <div className="mt-2 text-sm leading-7 opacity-85">{helper}</div>
+    </div>
+  );
+}
+
+function mapProfileStatusTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
+  if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
+  if (tone === 'success') return 'bg-emerald-50 text-emerald-700';
+  if (tone === 'warning') return 'bg-amber-50 text-amber-700';
+  return 'bg-white text-[color:var(--ink)]';
+}
+
+function mapDigestStatus(status?: string | null) {
+  if (status === 'sent') return '已发送';
+  if (status === 'error') return '发送失败';
+  if (status === 'skipped') return '本轮跳过';
+  return '暂无记录';
 }

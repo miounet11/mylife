@@ -1,18 +1,87 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createFortuneWithUser } from '@/lib/database';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
-import { calculateTrueSolarTime } from '@/lib/solar-time';
-import { validateAnalyzeRequest } from '@/lib/validators';
-import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
 import { CURRENT_REPORT_VERSION, generateVersionedReport } from '@/lib/report-pipeline';
+import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
+import { withReportVersionLineage } from '@/lib/report-version-lineage';
+import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
+import { calculateTrueSolarTime } from '@/lib/solar-time';
+import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import type { FortuneAdvice } from '@/lib/user-types';
+import { validateAnalyzeRequest } from '@/lib/validators';
 
-// 设置 API 路由超时为 30 秒（Vercel/Next.js）
 export const maxDuration = 30;
+
+type AnalyzeInput = {
+  name: string;
+  gender?: 'male' | 'female';
+  birthDate: string;
+  birthTime: string;
+  birthSecond?: number;
+  birthPlace?: string;
+  timezone?: number;
+  longitude?: number;
+  latitude?: number;
+  useSolarTime?: boolean;
+  useDaylightSaving?: boolean;
+  useSeparateZiHour?: boolean;
+};
+
+type StreamStageEvent = {
+  type: 'stage';
+  stage:
+    | 'received'
+    | 'solar-time'
+    | 'engine'
+    | 'llm'
+    | 'agentic'
+    | 'merge'
+    | 'persist'
+    | 'complete';
+  progress: number;
+  label: string;
+  detail: string;
+};
+
+type StreamCompleteEvent = {
+  type: 'complete';
+  reportId: string;
+  llm: {
+    used: boolean;
+    fallbackToEngine: boolean;
+  };
+  quality?: {
+    score?: number;
+    grade?: 'S' | 'A' | 'B' | 'C';
+    deliveryTier?: 'basic' | 'enhanced' | 'expert';
+    targetAchieved?: boolean;
+  };
+  upgrade?: {
+    queued: boolean;
+    reason?: string;
+    status?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+    attempts?: number;
+    maxAttempts?: number;
+  };
+  timestamp: string;
+};
+
+type StreamErrorEvent = {
+  type: 'error';
+  error: string;
+};
+
+type StreamEvent = StreamStageEvent | StreamCompleteEvent | StreamErrorEvent;
+type AnalyzeStageRef = {
+  current: StreamStageEvent['stage'] | 'failed';
+};
+
 export async function POST(request: NextRequest) {
+  const requestStartedAt = Date.now();
+  const stageRef: AnalyzeStageRef = { current: 'received' };
+  let clientKey = 'unknown';
   try {
-    // 速率限制
-    const clientKey = getClientKey(request);
+    clientKey = getClientKey(request);
     const rateLimit = checkRateLimit(`analyze:${clientKey}`, RATE_LIMITS.analyze);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -21,9 +90,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await request.json();
-
-    // 完整输入验证
+    const data = await request.json() as AnalyzeInput;
     const validation = validateAnalyzeRequest(data);
     if (!validation.valid) {
       return NextResponse.json(
@@ -32,150 +99,476 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 转换日期
-    const [year, month, day] = (data.birthDate as string).split('-').map(Number);
-    const [hour, minute] = (data.birthTime as string).split(':').map(Number);
-    const second = (data.birthSecond as number) || 0;
-    const longitude = (data.longitude as number) || 116.407;
-    const timezone = (data.timezone as number) || 8;
-    const useDaylightSaving = Boolean(data.useDaylightSaving);
-    const useSeparateZiHour = Boolean(data.useSeparateZiHour);
-    const normalizedClock = useDaylightSaving
-      ? toStandardClockTime(year, month, day, hour, minute, second)
-      : { year, month, day, hour, minute, second };
+    const wantsStream = request.headers.get('x-analyze-stream') === '1';
 
-    // 计算真太阳时
-    let effectiveYear = normalizedClock.year;
-    let effectiveMonth = normalizedClock.month;
-    let effectiveDay = normalizedClock.day;
-    let effectiveHour = normalizedClock.hour;
-    let effectiveMinute = normalizedClock.minute;
-    let effectiveSecond = normalizedClock.second;
-
-    if (data.useSolarTime && longitude !== undefined) {
-      const solarTimeInfo = calculateTrueSolarTime(
-        normalizedClock.year,
-        normalizedClock.month,
-        normalizedClock.day,
-        normalizedClock.hour,
-        normalizedClock.minute,
-        normalizedClock.second,
-        longitude,
-        timezone
-      );
-      effectiveYear = solarTimeInfo.year;
-      effectiveMonth = solarTimeInfo.month;
-      effectiveDay = solarTimeInfo.day;
-      effectiveHour = solarTimeInfo.hour;
-      effectiveMinute = solarTimeInfo.minute;
-      effectiveSecond = solarTimeInfo.second;
-      console.log(`[Solar Time] 钟表时间: ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} → 真太阳时: ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond} (修正${solarTimeInfo.correctionMinutes.toFixed(1)}分钟)`);
+    if (wantsStream) {
+      return streamAnalyze(data, {
+        requestStartedAt,
+        clientKey,
+      });
     }
 
-    const effectiveBirthDate = new Date(effectiveYear, effectiveMonth - 1, effectiveDay);
-    const effectiveBirthTime = `${String(effectiveHour).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')}`;
-
-    const { result: finalResult, llmUsed } = await generateVersionedReport({
-      name: data.name,
-      birthDate: effectiveBirthDate,
-      birthTime: effectiveBirthTime,
-      birthPlace: data.birthPlace || '北京',
-      timezone,
-      gender: data.gender || 'male',
-      sect: useSeparateZiHour ? 1 : 2,
-      source: 'analyze',
+    const execution = await executeAnalyze(data, {
+      requestStartedAt,
+      requestMode: 'json',
+      stageRef,
     });
-
-    // 生成报告ID
-    const reportId = generateReportId();
-    
-    // 获取或创建用户 ID (基于Cookie)
-    const userId = await getOrCreateGuestUserId();
-
-    // 事务：更新用户档案 + 存储命理数据（原子操作）
-    createFortuneWithUser(
-      userId,
-      {
-        name: data.name as string,
-        gender: (data.gender as 'male' | 'female') || 'male',
-        birthDate: data.birthDate as string,
-        birthTime: data.birthTime as string,
-        birthPlace: (data.birthPlace as string) || '北京',
-        timezone: (data.timezone as number) || 8,
-      },
-      {
-        id: reportId,
-        userId,
-        name: data.name as string,
-        birthDate: data.birthDate as string,
-        birthTime: data.birthTime as string,
-        birthPlace: (data.birthPlace as string) || '北京',
-        timezone: (data.timezone as number) || 8,
-        gender: (data.gender as 'male' | 'female') || 'male',
-        bazi: finalResult.basic,
-        fiveElements: finalResult.fiveElements,
-        tenGods: finalResult.tenGods || {},
-        pattern: finalResult.pattern,
-        fortune: finalResult.fortune,
-        advice: finalResult.advice as import('@/lib/user-types').FortuneAdvice,
-        evidence: finalResult.evidence,
-        analysis: finalResult.analysis,
-        klineData: finalResult.klineData,
-        dayun: finalResult.dayun,
-        shenSha: finalResult.shenSha,
-        reportVersion: CURRENT_REPORT_VERSION,
-        isPublic: false,
-      }
-    );
-
-    trackServerEvent({
-      userId,
-      sessionId: userId,
-      eventName: 'analyze_submitted',
-      page: '/analyze',
-      meta: {
-        reportId,
-        llmUsed,
-        reportVersion: CURRENT_REPORT_VERSION,
-        reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
-        useSolarTime: !!data.useSolarTime,
-        useDaylightSaving: !!data.useDaylightSaving,
-        useSeparateZiHour: !!data.useSeparateZiHour,
-      },
-    });
-
-    trackServerEvent({
-      userId,
-      sessionId: userId,
-      eventName: 'report_generated',
-      page: `/result/${reportId}`,
-      meta: {
-        reportId,
-        llmUsed,
-        reportVersion: CURRENT_REPORT_VERSION,
-        reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
-        pattern: finalResult.pattern?.type || '',
-      },
-    });
-
-    // 返回结果
     return NextResponse.json({
       success: true,
-      reportId,
-      result: finalResult,
+      reportId: execution.reportId,
+      result: execution.finalResult,
       llm: {
-        used: llmUsed,
-        fallbackToEngine: !llmUsed,
+        used: execution.llmUsed,
+        fallbackToEngine: !execution.llmUsed,
+      },
+      quality: {
+        score: execution.finalResult.analysis?.qualityAudit?.overallScore,
+        grade: execution.finalResult.analysis?.qualityAudit?.grade,
+        deliveryTier: execution.finalResult.analysis?.qualityAudit?.deliveryTier,
+        targetAchieved: execution.finalResult.analysis?.qualityAudit?.targetAchieved,
+      },
+      upgrade: {
+        queued: execution.queuedUpgrade.queued,
+        reason: execution.queuedUpgrade.reason,
+        status: execution.queuedUpgrade.job?.status,
+        attempts: execution.queuedUpgrade.job?.attempts,
+        maxAttempts: execution.queuedUpgrade.job?.maxAttempts,
       },
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
     console.error('[API] 命理分析失败:', error);
+    trackServerEvent({
+      sessionId: clientKey,
+      eventName: 'analyze_failed',
+      page: '/analyze',
+      meta: {
+        stage: stageRef.current,
+        durationMs: Date.now() - requestStartedAt,
+        error: error instanceof Error ? error.message : 'unknown',
+        requestMode: 'json',
+      },
+    });
     return NextResponse.json(
-      { success: false, error: '分析失败，请稍后重试' },
+      { success: false, error: '分析失败，请稍后再试' },
       { status: 500 }
     );
   }
+}
+
+async function streamAnalyze(
+  data: AnalyzeInput,
+  context: {
+    requestStartedAt: number;
+    clientKey: string;
+  }
+) {
+  const encoder = new TextEncoder();
+  const stageRef: AnalyzeStageRef = { current: 'received' };
+
+  const stream = new ReadableStream<Uint8Array>({
+    start: async (controller) => {
+      const send = (event: StreamEvent) => {
+        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+      };
+
+      try {
+        send({
+          type: 'stage',
+          stage: 'received',
+          progress: 4,
+          label: '已接收测算请求',
+          detail: '正在锁定出生信息、地点与计算参数，准备进入正式分析。',
+        });
+
+        const execution = await executeAnalyze(data, {
+          requestStartedAt: context.requestStartedAt,
+          requestMode: 'stream',
+          stageRef,
+          onStage: (event) => send(event),
+        });
+
+        send({
+          type: 'complete',
+          reportId: execution.reportId,
+          llm: {
+            used: execution.llmUsed,
+            fallbackToEngine: !execution.llmUsed,
+          },
+          quality: {
+            score: execution.finalResult.analysis?.qualityAudit?.overallScore,
+            grade: execution.finalResult.analysis?.qualityAudit?.grade,
+            deliveryTier: execution.finalResult.analysis?.qualityAudit?.deliveryTier,
+            targetAchieved: execution.finalResult.analysis?.qualityAudit?.targetAchieved,
+          },
+          upgrade: {
+            queued: execution.queuedUpgrade.queued,
+            reason: execution.queuedUpgrade.reason,
+            status: execution.queuedUpgrade.job?.status,
+            attempts: execution.queuedUpgrade.job?.attempts,
+            maxAttempts: execution.queuedUpgrade.job?.maxAttempts,
+          },
+          timestamp: new Date().toISOString(),
+        });
+        controller.close();
+      } catch (error) {
+        console.error('[API] 流式命理分析失败:', error);
+        trackServerEvent({
+          sessionId: context.clientKey,
+          eventName: 'analyze_failed',
+          page: '/analyze',
+          meta: {
+            stage: stageRef.current,
+            durationMs: Date.now() - context.requestStartedAt,
+            error: error instanceof Error ? error.message : 'unknown',
+            requestMode: 'stream',
+          },
+        });
+        send({
+          type: 'error',
+          error: '分析失败，请稍后再试',
+        });
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+    },
+  });
+}
+
+async function executeAnalyze(
+  data: AnalyzeInput,
+  options?: {
+    requestStartedAt?: number;
+    requestMode?: 'json' | 'stream';
+    stageRef?: AnalyzeStageRef;
+    onStage?: (event: StreamStageEvent) => void;
+  }
+) {
+  const stage = (event: StreamStageEvent) => {
+    if (options?.stageRef) {
+      options.stageRef.current = event.stage;
+    }
+    options?.onStage?.(event);
+  };
+
+  const timing = resolveEffectiveTiming(data);
+  const timezone = (data.timezone as number) || 8;
+  const useSeparateZiHour = Boolean(data.useSeparateZiHour);
+
+  if (timing.usedSolarTime) {
+    stage({
+      type: 'stage',
+      stage: 'solar-time',
+      progress: 12,
+      label: '真太阳时修正已完成',
+      detail: timing.solarTimeDetail,
+    });
+  } else {
+    stage({
+      type: 'stage',
+      stage: 'solar-time',
+      progress: 10,
+      label: '跳过真太阳时修正',
+      detail: '本次沿用钟表时间进入排盘，准备开始命局结构计算。',
+    });
+  }
+
+  const { result: finalResult, llmUsed } = await generateVersionedReport({
+    name: data.name,
+    birthDate: timing.effectiveBirthDate,
+    birthTime: timing.effectiveBirthTime,
+    birthPlace: data.birthPlace || '北京',
+    timezone,
+    gender: data.gender || 'male',
+    sect: useSeparateZiHour ? 1 : 2,
+    source: 'analyze',
+    onProgress: async (progressEvent) => {
+      const mapped = mapPipelineStage(progressEvent);
+      if (mapped) {
+        stage(mapped);
+      }
+    },
+  });
+
+  stage({
+    type: 'stage',
+    stage: 'persist',
+    progress: 94,
+    label: '正在写入报告与用户档案',
+    detail: '命盘结果已经生成，正在保存报告、归档测算记录并准备结果页。',
+  });
+
+  const reportId = generateReportId();
+  const userId = await getOrCreateGuestUserId();
+  finalResult.analysis = withReportVersionLineage({
+    nextAnalysis: finalResult.analysis,
+    nextReportVersion: CURRENT_REPORT_VERSION,
+  });
+
+  createFortuneWithUser(
+    userId,
+    {
+      name: data.name,
+      gender: (data.gender as 'male' | 'female') || 'male',
+      birthDate: data.birthDate,
+      birthTime: data.birthTime,
+      birthPlace: data.birthPlace || '北京',
+      timezone,
+    },
+    {
+      id: reportId,
+      userId,
+      name: data.name,
+      birthDate: data.birthDate,
+      birthTime: data.birthTime,
+      birthPlace: data.birthPlace || '北京',
+      timezone,
+      gender: (data.gender as 'male' | 'female') || 'male',
+      bazi: finalResult.basic,
+      fiveElements: finalResult.fiveElements,
+      tenGods: finalResult.tenGods || {},
+      pattern: finalResult.pattern,
+      fortune: finalResult.fortune,
+      advice: finalResult.advice as FortuneAdvice,
+      evidence: finalResult.evidence,
+      analysis: finalResult.analysis,
+      klineData: finalResult.klineData,
+      dayun: finalResult.dayun,
+      shenSha: finalResult.shenSha,
+      reportVersion: CURRENT_REPORT_VERSION,
+      isPublic: false,
+    }
+  );
+  const savedReport = createSavedReportSnapshot({
+    id: reportId,
+    userId,
+    data,
+    timezone,
+    finalResult,
+  });
+  const queuedUpgrade = enqueueReportUpgrade({
+    report: savedReport,
+    reason: 'analyze_auto_followup',
+  });
+
+  trackServerEvent({
+    userId,
+    sessionId: userId,
+    eventName: 'analyze_submitted',
+    page: '/analyze',
+    meta: {
+      reportId,
+      llmUsed,
+      reportVersion: CURRENT_REPORT_VERSION,
+      reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
+      qualityScore: finalResult.analysis?.qualityAudit?.overallScore || 0,
+      qualityGrade: finalResult.analysis?.qualityAudit?.grade || 'C',
+      deliveryTier: finalResult.analysis?.qualityAudit?.deliveryTier || 'basic',
+      expertTargetAchieved: !!finalResult.analysis?.qualityAudit?.targetAchieved,
+      upgradeQueued: queuedUpgrade.queued,
+      useSolarTime: !!data.useSolarTime,
+      useDaylightSaving: !!data.useDaylightSaving,
+      useSeparateZiHour: !!data.useSeparateZiHour,
+    },
+  });
+
+  trackServerEvent({
+    userId,
+    sessionId: userId,
+    eventName: 'report_generated',
+    page: `/result/${reportId}`,
+    meta: {
+      reportId,
+      llmUsed,
+      reportVersion: CURRENT_REPORT_VERSION,
+      reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
+      pattern: finalResult.pattern?.type || '',
+      qualityScore: finalResult.analysis?.qualityAudit?.overallScore || 0,
+      qualityGrade: finalResult.analysis?.qualityAudit?.grade || 'C',
+      deliveryTier: finalResult.analysis?.qualityAudit?.deliveryTier || 'basic',
+      expertTargetAchieved: !!finalResult.analysis?.qualityAudit?.targetAchieved,
+      upgradeQueued: queuedUpgrade.queued,
+    },
+  });
+  trackServerEvent({
+    userId,
+    sessionId: userId,
+    eventName: 'analyze_completed',
+    page: `/result/${reportId}`,
+    meta: {
+      reportId,
+      llmUsed,
+      fallbackToEngine: !llmUsed,
+      reportVersion: CURRENT_REPORT_VERSION,
+      reasoningMode: finalResult.analysis?.reasoningMode || 'engine',
+      qualityScore: finalResult.analysis?.qualityAudit?.overallScore || 0,
+      qualityGrade: finalResult.analysis?.qualityAudit?.grade || 'C',
+      deliveryTier: finalResult.analysis?.qualityAudit?.deliveryTier || 'basic',
+      expertTargetAchieved: !!finalResult.analysis?.qualityAudit?.targetAchieved,
+      upgradeQueued: queuedUpgrade.queued,
+      durationMs: options?.requestStartedAt ? Date.now() - options.requestStartedAt : undefined,
+      requestMode: options?.requestMode || 'json',
+      finalStage: 'complete',
+      agenticUsed: !!finalResult.analysis?.agenticUsed,
+      agentSuccessCount: Array.isArray(finalResult.analysis?.orchestration?.succeeded)
+        ? finalResult.analysis.orchestration.succeeded.length
+        : 0,
+      agentFailureCount: Array.isArray(finalResult.analysis?.orchestration?.failed)
+        ? finalResult.analysis.orchestration.failed.length
+        : 0,
+    },
+  });
+
+  stage({
+    type: 'stage',
+    stage: 'complete',
+    progress: 100,
+    label: finalResult.analysis?.qualityAudit?.targetAchieved || finalResult.analysis?.qualityAudit?.deliveryTier === 'expert'
+      ? '专家版报告已准备就绪'
+      : '当前可读版报告已准备就绪',
+    detail: finalResult.analysis?.qualityAudit?.targetAchieved || finalResult.analysis?.qualityAudit?.deliveryTier === 'expert'
+      ? '本次结果已经达到专家版标准，正在为你打开完整报告。'
+      : queuedUpgrade.queued
+        ? '当前先打开可读版结果，后台会继续增强并尝试提升到 S 级专家版。'
+        : '结果页已经生成并保存完成，正在为你打开当前报告。',
+  });
+
+  return {
+    reportId,
+    finalResult,
+    llmUsed,
+    queuedUpgrade,
+  };
+}
+
+function createSavedReportSnapshot(params: {
+  id: string;
+  userId: string;
+  data: AnalyzeInput;
+  timezone: number;
+  finalResult: Awaited<ReturnType<typeof generateVersionedReport>>['result'];
+}) {
+  return {
+    id: params.id,
+    userId: params.userId,
+    name: params.data.name,
+    birthDate: params.data.birthDate,
+    birthTime: params.data.birthTime,
+    birthPlace: params.data.birthPlace || '北京',
+    timezone: params.timezone,
+    gender: (params.data.gender as 'male' | 'female') || 'male',
+    bazi: params.finalResult.basic,
+    fiveElements: params.finalResult.fiveElements,
+    tenGods: params.finalResult.tenGods || {},
+    pattern: params.finalResult.pattern,
+    fortune: params.finalResult.fortune,
+    advice: params.finalResult.advice as FortuneAdvice,
+    evidence: params.finalResult.evidence,
+    analysis: params.finalResult.analysis,
+    klineData: params.finalResult.klineData,
+    dayun: params.finalResult.dayun,
+    shenSha: params.finalResult.shenSha,
+    reportVersion: CURRENT_REPORT_VERSION,
+    isPublic: false,
+  };
+}
+
+function mapPipelineStage(progressEvent: {
+  stage: 'engine' | 'llm' | 'agentic' | 'merge';
+  status: 'started' | 'completed';
+  detail: string;
+}): StreamStageEvent | null {
+  const stageMeta = {
+    engine: {
+      started: { progress: 22, label: '命理引擎正在计算结构底座' },
+      completed: { progress: 38, label: '基础命盘结构计算完成' },
+    },
+    llm: {
+      started: { progress: 48, label: '语言模型正在增强解释层' },
+      completed: { progress: 62, label: '语言增强阶段已完成' },
+    },
+    agentic: {
+      started: { progress: 58, label: '并发专家 Agent 正在分析' },
+      completed: { progress: 78, label: '并发专家 Agent 已返回结果' },
+    },
+    merge: {
+      started: { progress: 86, label: '正在整合最终报告' },
+      completed: { progress: 92, label: '最终报告整合完成' },
+    },
+  } as const;
+
+  const meta = stageMeta[progressEvent.stage]?.[progressEvent.status];
+  if (!meta) {
+    return null;
+  }
+
+  return {
+    type: 'stage',
+    stage: progressEvent.stage,
+    progress: meta.progress,
+    label: meta.label,
+    detail: progressEvent.detail,
+  };
+}
+
+function resolveEffectiveTiming(data: AnalyzeInput) {
+  const [year, month, day] = data.birthDate.split('-').map(Number);
+  const [hour, minute] = data.birthTime.split(':').map(Number);
+  const second = (data.birthSecond as number) || 0;
+  const longitude = (data.longitude as number) || 116.407;
+  const timezone = (data.timezone as number) || 8;
+  const useDaylightSaving = Boolean(data.useDaylightSaving);
+  const normalizedClock = useDaylightSaving
+    ? toStandardClockTime(year, month, day, hour, minute, second)
+    : { year, month, day, hour, minute, second };
+
+  let effectiveYear = normalizedClock.year;
+  let effectiveMonth = normalizedClock.month;
+  let effectiveDay = normalizedClock.day;
+  let effectiveHour = normalizedClock.hour;
+  let effectiveMinute = normalizedClock.minute;
+  let effectiveSecond = normalizedClock.second;
+  let solarTimeDetail = '本次未启用真太阳时修正。';
+  let usedSolarTime = false;
+
+  if (data.useSolarTime && longitude !== undefined) {
+    const solarTimeInfo = calculateTrueSolarTime(
+      normalizedClock.year,
+      normalizedClock.month,
+      normalizedClock.day,
+      normalizedClock.hour,
+      normalizedClock.minute,
+      normalizedClock.second,
+      longitude,
+      timezone
+    );
+    effectiveYear = solarTimeInfo.year;
+    effectiveMonth = solarTimeInfo.month;
+    effectiveDay = solarTimeInfo.day;
+    effectiveHour = solarTimeInfo.hour;
+    effectiveMinute = solarTimeInfo.minute;
+    effectiveSecond = solarTimeInfo.second;
+    usedSolarTime = true;
+    solarTimeDetail = `钟表时间 ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} 已修正为真太阳时 ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond}。`;
+    console.log(
+      `[Solar Time] 钟表时间: ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} → 真太阳时: ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond}`
+    );
+  }
+
+  return {
+    usedSolarTime,
+    solarTimeDetail,
+    effectiveBirthDate: new Date(effectiveYear, effectiveMonth - 1, effectiveDay),
+    effectiveBirthTime: `${String(effectiveHour).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')}`,
+    effectiveSecond,
+  };
 }
 
 function toStandardClockTime(
@@ -199,16 +592,14 @@ function toStandardClockTime(
   };
 }
 
-// GET方法 - 获取分析状态
-export async function GET(request: NextRequest) {
+export async function GET() {
   return NextResponse.json({
     status: 'online',
-    version: '1.0.0',
+    version: '1.1.0',
     timestamp: new Date().toISOString(),
   });
 }
 
-// 生成报告ID
 function generateReportId(): string {
-  return `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  return `report_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
 }

@@ -8,13 +8,42 @@ import { runParallelAgents } from '@/lib/agentic-report/run-parallel-agents';
 import { runRepair } from '@/lib/agentic-report/review/run-repair';
 import { runReview } from '@/lib/agentic-report/review/run-review';
 import { runVerify } from '@/lib/agentic-report/review/run-verify';
+import { runAgent } from '@/lib/agentic-report/run-agent';
 import type { BuildContextSignalsInput, BuildGroundTruthInput } from '@/lib/agentic-report/types';
+
+const AGENT_LABELS: Record<CoreAgentKey, string> = {
+  core_constitution: '命局核心结构',
+  kline_narrative: '人生 K 线节奏',
+  career_wealth: '事业与财富',
+  relationship_family: '关系与家庭',
+  health_lifestyle: '健康与生活方式',
+  strategy_advisor: '行动策略',
+  temporal_spatial_advisor: '天时地利人和',
+};
+
+const PRIORITY_RETRY_AGENT_KEYS: CoreAgentKey[] = [
+  'core_constitution',
+  'kline_narrative',
+  'strategy_advisor',
+  'temporal_spatial_advisor',
+];
+
+const RETRYABLE_ERROR_PATTERNS = [
+  'AGENT_EMPTY_RESULT',
+  'AGENT_TIMEOUT',
+  'JSON_PARSE_FAILED',
+] as const;
 
 export async function runAgenticPipeline(params: {
   groundTruth: BuildGroundTruthInput;
   context: Omit<BuildContextSignalsInput, 'engine'>;
   enabled?: boolean;
   agentKeys?: CoreAgentKey[];
+  onProgress?: (event: {
+    type: 'agent-start' | 'agent-success' | 'agent-fallback' | 'agent-retry';
+    agentKey: CoreAgentKey;
+    detail: string;
+  }) => void | Promise<void>;
 }) {
   const context = createAgenticContext({
     groundTruth: params.groundTruth,
@@ -57,33 +86,46 @@ export async function runAgenticPipeline(params: {
     key,
     input: context,
     timeoutMs: 7000,
-    execute: async () => {
-      const prompt = buildAgentPrompt(key, context);
-      llmCalls += 1;
-      const result = await callJsonLLM<Record<string, unknown>>({
-        system: prompt.system,
-        user: prompt.user,
-        temperature: prompt.temperature,
-        timeoutMs: 6500,
-        traceLabel: `agent:${key}`,
-        scope: 'agent',
-      });
-      if (!result) {
-        throw new Error(`AGENT_EMPTY_RESULT:${key}`);
-      }
-      return result;
-    },
+    execute: async () => executeAgentTask({
+      key,
+      context,
+      onProgress: params.onProgress,
+      traceSuffix: 'main',
+      timeoutMs: 6500,
+      onCall: () => {
+        llmCalls += 1;
+      },
+    }),
   }));
 
-  const run = await runParallelAgents(tasks);
-  const merged = mergeAgentResults(run.results);
+  const firstRun = await runParallelAgents(tasks);
+  const retryCandidates = keys.filter((key) => (
+    PRIORITY_RETRY_AGENT_KEYS.includes(key) &&
+    !firstRun.results[key]?.ok &&
+    isRetryableAgentError(firstRun.results[key]?.error)
+  ));
+  const rerunResults = await rerunPriorityAgents({
+    keys: retryCandidates,
+    context,
+    onProgress: params.onProgress,
+    onCall: () => {
+      llmCalls += 1;
+    },
+  });
+  const finalResults = {
+    ...firstRun.results,
+    ...rerunResults.results,
+  };
+  const succeeded = keys.filter((key) => finalResults[key]?.ok);
+  const failed = keys.filter((key) => !finalResults[key]?.ok);
+  const merged = mergeAgentResults(finalResults);
   const fallbackResults = buildFallbackAgentResults(context, [...keys]);
   const hydratedResults = {
     ...fallbackResults,
     ...merged.merged,
   };
   const agentSources = Object.fromEntries(
-    keys.map((key) => [key, run.results[key]?.ok ? 'llm' : 'fallback'])
+    keys.map((key) => [key, finalResults[key]?.ok ? 'llm' : 'fallback'])
   ) as Record<string, 'llm' | 'fallback'>;
   const review = runReview(context, hydratedResults);
   const repair = runRepair(hydratedResults, review);
@@ -102,14 +144,109 @@ export async function runAgenticPipeline(params: {
     orchestration: {
       mode: 'parallel-agents' as const,
       agentsRun: Object.keys(hydratedResults),
-      rerunAgents: [],
+      rerunAgents: rerunResults.rerunAgents,
       totalLlmCalls: llmCalls,
       durationMs,
       successRate: merged.successRate,
-      succeeded: run.succeeded,
-      failed: run.failed,
+      succeeded,
+      failed,
       errors: merged.errors,
       agentSources,
     },
   };
+}
+
+async function executeAgentTask(params: {
+  key: CoreAgentKey;
+  context: ReturnType<typeof createAgenticContext>;
+  timeoutMs: number;
+  traceSuffix: 'main' | 'retry';
+  onCall: () => void;
+  onProgress?: (event: {
+    type: 'agent-start' | 'agent-success' | 'agent-fallback' | 'agent-retry';
+    agentKey: CoreAgentKey;
+    detail: string;
+  }) => void | Promise<void>;
+}) {
+  const agentLabel = AGENT_LABELS[params.key] || params.key;
+  const isRetry = params.traceSuffix === 'retry';
+  await params.onProgress?.({
+    type: isRetry ? 'agent-retry' : 'agent-start',
+    agentKey: params.key,
+    detail: isRetry
+      ? `${agentLabel}分析模块正在进行第二次增强尝试，优先争取专家版结果。`
+      : `${agentLabel}分析模块已启动，正在生成这一维度的判断。`,
+  });
+  const prompt = buildAgentPrompt(params.key, params.context);
+  params.onCall();
+  const result = await callJsonLLM<Record<string, unknown>>({
+    system: prompt.system,
+    user: prompt.user,
+    temperature: isRetry ? Math.min(prompt.temperature, 0.35) : prompt.temperature,
+    timeoutMs: params.timeoutMs,
+    traceLabel: `agent:${params.key}:${params.traceSuffix}`,
+    scope: 'agent',
+  });
+  if (!result) {
+    await params.onProgress?.({
+      type: 'agent-fallback',
+      agentKey: params.key,
+      detail: `${agentLabel}分析模块暂未稳定返回，当前会回退到结构化专家层结果。`,
+    });
+    throw new Error(`AGENT_EMPTY_RESULT:${params.key}`);
+  }
+  await params.onProgress?.({
+    type: 'agent-success',
+    agentKey: params.key,
+    detail: `${agentLabel}分析模块已返回结果，正在参与主报告融合。`,
+  });
+  return result;
+}
+
+async function rerunPriorityAgents(params: {
+  keys: CoreAgentKey[];
+  context: ReturnType<typeof createAgenticContext>;
+  onCall: () => void;
+  onProgress?: (event: {
+    type: 'agent-start' | 'agent-success' | 'agent-fallback' | 'agent-retry';
+    agentKey: CoreAgentKey;
+    detail: string;
+  }) => void | Promise<void>;
+}) {
+  if (params.keys.length === 0) {
+    return {
+      results: {} as Record<string, Awaited<ReturnType<typeof runAgent>>>,
+      rerunAgents: [] as CoreAgentKey[],
+    };
+  }
+
+  const results: Record<string, Awaited<ReturnType<typeof runAgent>>> = {};
+  const rerunAgents: CoreAgentKey[] = [];
+
+  for (const key of params.keys) {
+    rerunAgents.push(key);
+    results[key] = await runAgent({
+      key,
+      input: params.context,
+      timeoutMs: 9200,
+      execute: async () => executeAgentTask({
+        key,
+        context: params.context,
+        timeoutMs: 8800,
+        traceSuffix: 'retry',
+        onCall: params.onCall,
+        onProgress: params.onProgress,
+      }),
+    });
+  }
+
+  return {
+    results,
+    rerunAgents,
+  };
+}
+
+function isRetryableAgentError(error?: string) {
+  if (!error) return false;
+  return RETRYABLE_ERROR_PATTERNS.some((pattern) => error.includes(pattern));
 }

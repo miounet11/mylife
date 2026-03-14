@@ -4,7 +4,7 @@
 
 ## 1. 自动读取的 API 配置
 系统现在会自动从 `.env.local` 或 `.env` 读取您历史版本的 LLM 配置：
-- **API_BASE_URL**: 默认回退为 `https://ttkk.inping.com/v1`
+- **API_BASE_URL**: 默认回退为 `https://ttqq.inping.com/v1`
 - **OPENAI_API_KEY / API_KEY**: 自动获取您的专属 Key。
 - **DEFAULT_MODEL**: 自动获取（默认 `gemini-3-pro-preview-maxthinking`）。
 

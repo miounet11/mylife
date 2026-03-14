@@ -4,6 +4,8 @@ import { fortuneOperations } from '@/lib/database';
 import { trackServerEvent } from '@/lib/analytics';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
+import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
+import { withReportVersionLineage } from '@/lib/report-version-lineage';
 
 export async function GET(
   request: NextRequest,
@@ -76,7 +78,66 @@ export async function PATCH(
     const body = await request.json();
 
     if (body?.action === 'upgrade') {
+      const strategy = typeof body?.strategy === 'string' ? body.strategy : 'immediate';
+
+      if (!['immediate', 'queue', 'defer'].includes(strategy)) {
+        return NextResponse.json(
+          { success: false, error: '不支持的升级策略' },
+          { status: 400 }
+        );
+      }
+
+      if (strategy === 'queue' || strategy === 'defer') {
+        const queuedUpgrade = enqueueReportUpgrade({
+          report: fortuneData,
+          reason: strategy === 'queue' ? 'manual_queue_upgrade' : 'manual_wait_model_recovery',
+          force: strategy === 'defer',
+          nextRunAt: strategy === 'defer'
+            ? new Date(Date.now() + 1000 * 60 * 30).toISOString()
+            : undefined,
+          meta: {
+            strategy,
+            requestedAt: new Date().toISOString(),
+          },
+        });
+
+        trackServerEvent({
+          userId: currentUserId,
+          sessionId: currentUserId,
+          eventName: 'report_upgrade_requested',
+          page: `/result/${reportId}`,
+          meta: {
+            reportId,
+            upgradedFromVersion: fortuneData.reportVersion || 'v1',
+            targetVersion: CURRENT_REPORT_VERSION,
+            strategy,
+            upgradeQueued: queuedUpgrade.queued,
+            queueReason: queuedUpgrade.reason,
+          },
+        });
+
+        return NextResponse.json({
+          success: true,
+          data: {
+            id: reportId,
+            reportVersion: fortuneData.reportVersion || 'v1',
+            strategy,
+            llmUsed: !!fortuneData.analysis?.llmUsed,
+            qualityAudit: fortuneData.analysis?.qualityAudit,
+            upgradeQueued: queuedUpgrade.queued,
+            queueReason: queuedUpgrade.reason,
+            upgradeJob: queuedUpgrade.job,
+          },
+        });
+      }
+
       const { result, llmUsed } = await regenerateReportFromRecord(fortuneData);
+      result.analysis = withReportVersionLineage({
+        previousAnalysis: fortuneData.analysis,
+        previousReportVersion: fortuneData.reportVersion || 'v1',
+        nextAnalysis: result.analysis,
+        nextReportVersion: CURRENT_REPORT_VERSION,
+      });
 
       fortuneOperations.update(reportId, {
         name: fortuneData.name,
@@ -93,6 +154,15 @@ export async function PATCH(
         shenSha: result.shenSha,
         reportVersion: CURRENT_REPORT_VERSION,
       });
+      const refreshed = fortuneOperations.getById(reportId) || fortuneData;
+      const queuedUpgrade = enqueueReportUpgrade({
+        report: refreshed,
+        reason: 'manual_upgrade_followup',
+        meta: {
+          strategy: 'immediate',
+          requestedAt: new Date().toISOString(),
+        },
+      });
 
       trackServerEvent({
         userId: currentUserId,
@@ -105,6 +175,12 @@ export async function PATCH(
           targetVersion: CURRENT_REPORT_VERSION,
           llmUsed,
           reasoningMode: result.analysis?.reasoningMode || 'engine',
+          qualityScore: result.analysis?.qualityAudit?.overallScore || 0,
+          qualityGrade: result.analysis?.qualityAudit?.grade || 'C',
+          deliveryTier: result.analysis?.qualityAudit?.deliveryTier || 'basic',
+          expertTargetAchieved: !!result.analysis?.qualityAudit?.targetAchieved,
+          strategy: 'immediate',
+          upgradeQueued: queuedUpgrade.queued,
         },
       });
 
@@ -113,7 +189,11 @@ export async function PATCH(
         data: {
           id: reportId,
           reportVersion: CURRENT_REPORT_VERSION,
+          strategy: 'immediate',
           llmUsed,
+          qualityAudit: result.analysis?.qualityAudit,
+          upgradeQueued: queuedUpgrade.queued,
+          upgradeJob: queuedUpgrade.job,
         },
       });
     }

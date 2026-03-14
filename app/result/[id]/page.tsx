@@ -36,11 +36,21 @@ interface PageProps {
   }>;
 }
 
-import { eventOperations, fortuneOperations } from '@/lib/database';
+import {
+  eventOperations,
+  fortuneOperations,
+  premiumServiceRequestOperations,
+  reportUpgradeJobOperations,
+  userOperations,
+} from '@/lib/database';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ResultPublicControls from '@/components/result-public-controls';
 import ReportEnginePanel from '@/components/report-engine-panel';
+import ReportPremiumServices from '@/components/report-premium-services';
+import ReportSubscriptionPanel from '@/components/report-subscription-panel';
+import UpdatesStatusPanel from '@/components/updates-status-panel';
+import type { UpdatesStatusSummary } from '@/components/updates-status-panel';
 import RelatedContent from '@/components/related-content';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
@@ -61,6 +71,9 @@ import {
 } from '@/lib/report-v2';
 import { CURRENT_REPORT_VERSION, ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
 import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
+import { buildUpdatesSummary } from '@/lib/updates-summary';
+import { createLineageEntry } from '@/lib/report-version-lineage';
+import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
 
 function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -148,6 +161,70 @@ async function getResult(reportId: string) {
         verdict?: 'PASS' | 'WARN' | 'FAIL';
         failedRules?: string[];
       };
+      qualityAudit?: {
+        overallScore?: number;
+        grade?: 'S' | 'A' | 'B' | 'C';
+        status?: 'ready' | 'watch' | 'retry';
+        deliveryTier?: 'basic' | 'enhanced' | 'expert';
+        targetScore?: number;
+        targetGrade?: 'S' | 'A' | 'B' | 'C';
+        targetAchieved?: boolean;
+        summary?: string;
+        dimensions?: Array<{
+          key?: 'engine' | 'llm' | 'agentic' | 'consistency' | 'completeness';
+          label?: string;
+          score?: number;
+          status?: 'strong' | 'ok' | 'watch' | 'weak';
+          detail?: string;
+        }>;
+        strengths?: string[];
+        concerns?: string[];
+        blockingIssues?: string[];
+        recommendedActions?: string[];
+        nextActionLabel?: string;
+      };
+      feedbackLoop?: {
+        syncedAt?: string;
+        linkedReportId?: string;
+        validationInsights?: {
+          totalLinkedEvents?: number;
+          accurateCount?: number;
+          driftCount?: number;
+          pendingCount?: number;
+          summary?: string;
+          lessons?: string[];
+        };
+        correctionInsight?: {
+          level?: 'healthy' | 'watch' | 'action';
+          summary?: string;
+          likelyCause?: string;
+          fixes?: string[];
+          checkpoints?: string[];
+        };
+      };
+      versionLineage?: Array<{
+        version?: string;
+        generatedAt?: string;
+        generatedFrom?: 'analyze' | 'upgrade';
+        upgradedFromVersion?: string;
+        reasoningMode?: ReportReasoningMode;
+        llmUsed?: boolean;
+        agenticUsed?: boolean;
+        qualityScore?: number;
+        qualityGrade?: 'S' | 'A' | 'B' | 'C';
+        deliveryTier?: 'basic' | 'enhanced' | 'expert';
+        targetAchieved?: boolean;
+        summary?: string;
+      }>;
+      upgradeJob?: {
+        status?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+        attempts?: number;
+        maxAttempts?: number;
+        nextRunAt?: string;
+        bestScore?: number;
+        bestGrade?: 'S' | 'A' | 'B' | 'C';
+        lastError?: string;
+      };
       loop?: Record<string, unknown>;
       contextSignals?: Record<string, unknown>;
       agentResults?: Record<string, unknown>;
@@ -211,6 +288,11 @@ async function getResult(reportId: string) {
         report: fortuneData.reportVersion || 'v1',
       },
       verify: analysis.verify,
+      qualityAudit: analysis.qualityAudit,
+      versionLineage: analysis.versionLineage?.length
+        ? analysis.versionLineage
+        : [createLineageEntry(analysis as any, fortuneData.reportVersion || 'v1')].filter(Boolean),
+      upgradeJob: reportUpgradeJobOperations.getByReportId(reportId) || undefined,
       orchestration: analysis.orchestration,
       loop: analysis.loop as Record<string, unknown> | undefined,
       contextSignals: analysis.contextSignals,
@@ -275,6 +357,18 @@ export default async function ResultPage({ params }: PageProps) {
   }
 
   const canManage = !!currentUserId && result.basic.userId === currentUserId;
+  const currentUserRecord = currentUserId ? userOperations.getById(currentUserId) as {
+    email?: string | null;
+    email_verified?: number;
+  } | null : null;
+  const updatesPanelInitialAuthenticated = !!currentUserRecord?.email && currentUserRecord?.email_verified === 1;
+  const updatesPanelInitialSummary: UpdatesStatusSummary = canManage && updatesPanelInitialAuthenticated
+    ? buildUpdatesSummary({
+        userId: currentUserId!,
+        email: currentUserRecord?.email,
+        requestedReportId: id,
+      })
+    : null;
   const reasoningModeLabel = getReasoningModeLabel(result.reasoningMode || 'engine');
   if (result.isPublic === false && !canManage) {
     notFound();
@@ -297,6 +391,15 @@ export default async function ResultPage({ params }: PageProps) {
     scenarioViews: result.scenarioViews,
     monthlyWindows: result.monthlyWindows,
   });
+  const premiumServiceOffers = buildPremiumServiceOffers({
+    scenarioViews: result.scenarioViews,
+    monthlyWindows: result.monthlyWindows,
+    correctionInsight,
+  });
+  const initialPremiumRequests = canManage
+    ? premiumServiceRequestOperations.listByUserAndReport(currentUserId!, id, 6)
+    : [];
+  const initialPremiumEmail = `${currentUserRecord?.email || ''}`.trim();
   const publicName = getPublicDisplayName(result.basic.name);
   const fiveElements = result.fiveElements || {};
   const sortedElements = Object.entries(fiveElements).sort(
@@ -319,23 +422,62 @@ export default async function ResultPage({ params }: PageProps) {
   ];
   const reportActions = [
     {
-      title: result.isPublic ? '这份报告可直接分享' : '这份报告目前为隐藏模式',
-      description: result.isPublic
-        ? '你已经主动开启了分享模式，外部用户可通过匿名链接查看这份报告。'
-        : '报告默认仅你可见。确认内容适合外部浏览后，再手动创建公开分享页。',
-      icon: Share2,
-    },
-    {
       title: '看完可继续深问 AI',
-      description: '把最关键的一条结论继续追问，用户停留和后续转化会更强。',
+      description: '把最关键的一条结论继续追问，把这份报告变成持续对话，而不是一次性阅读。',
       icon: Bot,
     },
     {
-      title: '可以再次测算对比',
-      description: '适合修正出生时间或地点后重新生成，对比差异。',
-      icon: LockKeyhole,
+      title: '把关键窗口落成事件',
+      description: '把推进期、收缩期和风险节点保存到事件系统，后面才有机会持续验证和复盘。',
+      icon: CalendarClock,
+    },
+    {
+      title: result.isPublic ? '这份报告可直接分享' : '这份报告目前为隐藏模式',
+      description: result.isPublic
+        ? '你已经主动开启了分享模式，外部用户可通过匿名链接查看这份匿名化结果页。'
+        : '报告默认仅你可见。确认内容适合外部浏览后，再手动创建公开分享页。',
+      icon: Share2,
     },
   ];
+  const qualityAudit = result.qualityAudit;
+  const upgradeJob = result.upgradeJob;
+  const deliveryTierLabel = qualityAudit?.deliveryTier === 'expert'
+    ? 'S级专家版'
+    : qualityAudit?.deliveryTier === 'enhanced'
+    ? '增强版'
+    : '基础版';
+  const upgradeStatusLabel = upgradeJob?.status === 'running'
+    ? '后台增强进行中'
+    : upgradeJob?.status === 'retry' || upgradeJob?.status === 'pending'
+    ? '后台排队增强中'
+    : upgradeJob?.status === 'completed'
+    ? '后台增强已完成'
+    : upgradeJob?.status === 'failed'
+    ? '后台增强已暂停'
+    : '';
+  const topMonthlyWindows = (result.monthlyWindows || []).slice(0, 3).map((item) => ({
+    label: item.label,
+    theme: item.theme,
+    status: item.status,
+  }));
+  const currentStageSummary = result.scenarioViews?.[0]?.summary
+    || result.analysis?.opening
+    || result.pattern?.description
+    || '当前结果已经完成结构判断、阶段判断和行动建议的初步整合。';
+  const nextFocusSummary = topMonthlyWindows.length > 0
+    ? `接下来优先关注 ${topMonthlyWindows.map((item) => item.label).join('、')}。`
+    : '接下来应优先结合人生K线、当前大运和场景建议看清阶段主线。';
+  const feedbackLevel = correctionInsight.level || 'healthy';
+  const feedbackHeroTone = feedbackLevel === 'action'
+    ? 'bg-rose-50 text-rose-700 border-rose-200'
+    : feedbackLevel === 'watch'
+      ? 'bg-amber-50 text-amber-800 border-amber-200'
+      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+  const feedbackHeroLabel = feedbackLevel === 'action'
+    ? '需要纠偏'
+    : feedbackLevel === 'watch'
+      ? '持续观察'
+      : '反馈稳定';
   
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -376,7 +518,7 @@ export default async function ResultPage({ params }: PageProps) {
             <div className="absolute left-8 top-24 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.16)] blur-3xl" />
 
             <div className="relative">
-              <div className="section-label">公开结果页</div>
+              <div className="section-label">个人命理总览</div>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
@@ -389,18 +531,72 @@ export default async function ResultPage({ params }: PageProps) {
                   {`报告 ${result.reportVersion || 'v1'}`}
                 </span>
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                  {deliveryTierLabel}
+                </span>
+                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                   {result.isPublic ? '已开启分享模式' : '默认私密'}
                 </span>
               </div>
 
               <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
-                {publicName}的这份命理报告，
-                <span className="font-serif text-[color:var(--accent-strong)]">先服务本人，再决定是否分享给别人。</span>
+                {publicName}当前最重要的，
+                <span className="font-serif text-[color:var(--accent-strong)]">不是再看一句吉凶，而是看清所处阶段和下一步节奏。</span>
               </h1>
 
               <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)]">
-                报告默认私密，避免用户在第一次分析时承受额外隐私压力。若你确认内容适合外部浏览，可以随时切换为公开分享模式，姓名仍会保持匿名化展示。
+                这份报告已经把命局结构、当前阶段、人生K线和行动建议整合到同一页。先把最关键的判断读懂，再决定是否继续深问、记录事件、开启月度更新，或分享给别人查看。
               </p>
+
+              {qualityAudit ? (
+                <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/75 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                      {`质量 ${qualityAudit.overallScore || '--'} / ${qualityAudit.grade || 'B'}`}
+                    </span>
+                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      qualityAudit.targetAchieved ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
+                    }`}>
+                      {qualityAudit.targetAchieved
+                        ? '已达到 95 分 S级目标'
+                        : `距离 ${qualityAudit.targetScore || 95} 分 S级目标仍需增强`}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                    {qualityAudit.summary}
+                  </div>
+                  {upgradeJob?.status ? (
+                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      {`${upgradeStatusLabel}，已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次。`}
+                      {upgradeJob.nextRunAt ? ` 下一次计划时间 ${upgradeJob.nextRunAt}。` : ''}
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {canManage ? (
+                <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/78 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${feedbackHeroTone}`}>
+                      {feedbackHeroLabel}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                      {`关联事件 ${validationInsights.totalLinkedEvents || 0}`}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                      {`待验证 ${validationInsights.pendingCount || 0}`}
+                    </span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                      {`偏差 ${validationInsights.driftCount || 0}`}
+                    </span>
+                  </div>
+                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                    {validationInsights.summary}
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                    {correctionInsight.summary}
+                  </div>
+                </div>
+              ) : null}
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {reportHighlights.map((item) => (
@@ -412,19 +608,22 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
 
               <div className="mt-6 grid gap-3 md:grid-cols-[1.08fr_0.92fr]">
-              <div className="rounded-[1.5rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
+                <div className="rounded-[1.5rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">首屏结论</div>
                   <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
-                    {result.pattern?.type || '命局结构'}是当前核心判断，
-                    {result.fortune?.currentDaYun ? ` 当前行运落在 ${result.fortune.currentDaYun}` : ' 当前行运信息已写入报告正文'}。
+                    {result.pattern?.type || '命局结构'} 是当前的核心结构判断，
+                    {result.fortune?.currentDaYun ? ` 当前行运落在 ${result.fortune.currentDaYun}。` : ' 当前行运信息已写入报告正文。'}
                   </div>
                   <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                    继续往下可以看到完整命盘、五行分布、AI 建议和趋势图。看完后最适合继续深问 AI、再次测算对比，或在确认内容后再创建分享页。
+                    {currentStageSummary}
+                  </div>
+                  <div className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                    {nextFocusSummary}
                   </div>
                 </div>
 
                 <div className="rounded-[1.5rem] bg-white/82 px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">快速动作</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">立即动作</div>
                   <div className="mt-3 flex flex-col gap-3">
                     <Link
                       href={`/chat?reportId=${encodeURIComponent(id)}`}
@@ -434,12 +633,22 @@ export default async function ResultPage({ params }: PageProps) {
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
+                      href="#subscription"
+                      className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                    >
+                      开启月度更新
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                    <Link
                       href="/analyze"
                       className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
                     >
                       再次测算一份
                       <ArrowRight className="h-4 w-4" />
                     </Link>
+                  </div>
+                  <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+                    报告默认私密。确认内容适合外部浏览后，再决定是否开启分享模式，姓名仍会保持匿名化展示。
                   </div>
                 </div>
               </div>
@@ -471,12 +680,27 @@ export default async function ResultPage({ params }: PageProps) {
               reasoningMode={result.reasoningMode}
               consistencyScore={result.verify?.consistencyScore}
               verifyVerdict={result.verify?.verdict}
+              qualityAudit={result.qualityAudit}
+              upgradeJob={result.upgradeJob}
               generatedFrom={result.generatedFrom}
               upgradedFromVersion={result.upgradedFromVersion}
               engineBuilds={result.engineBuilds || ENGINE_BUILD_VERSIONS}
               enhancementNotes={result.enhancementNotes || []}
               orchestration={result.orchestration}
+              feedbackLoop={result.analysis?.feedbackLoop}
+              versionLineage={result.versionLineage}
             />
+
+            {canManage ? (
+              <UpdatesStatusPanel
+                reportId={id}
+                compact
+                title="这份报告的升级与更新"
+                description="你不需要自己记得回来。这里直接显示这份报告的订阅、升级任务和最近月度更新。"
+                initialAuthenticated={updatesPanelInitialAuthenticated}
+                initialSummary={updatesPanelInitialSummary}
+              />
+            ) : null}
 
             {reportActions.map((item) => {
               const Icon = item.icon;
@@ -588,10 +812,12 @@ export default async function ResultPage({ params }: PageProps) {
                   { href: '#confidence', label: '可信度', icon: LockKeyhole },
                   { href: '#validation', label: '验证', icon: LockKeyhole },
                   { href: '#correction', label: '纠偏', icon: Compass },
+                  { href: '#premium', label: '专项', icon: Sparkles },
+                  { href: '#subscription', label: '订阅', icon: Sparkles },
                   { href: '#advice', label: '建议', icon: ScrollText },
                   { href: '#trend', label: '趋势', icon: CalendarClock },
-                { href: '#next-step', label: '下一步', icon: ArrowRight },
-              ].map((item) => {
+                  { href: '#next-step', label: '下一步', icon: ArrowRight },
+                ].map((item) => {
                 const Icon = item.icon;
                 return (
                   <Link
@@ -613,6 +839,29 @@ export default async function ResultPage({ params }: PageProps) {
           <TrustReport result={{ ...result, validationInsights, correctionInsight }} />
         </Suspense>
 
+        <div id="premium" className="mt-16 scroll-mt-28">
+          <ReportPremiumServices
+            reportId={id}
+            canManage={canManage}
+            offers={premiumServiceOffers}
+            initialEmail={initialPremiumEmail}
+            initialRequests={initialPremiumRequests}
+          />
+        </div>
+
+        <div id="subscription" className="mt-16 scroll-mt-28">
+          <ReportSubscriptionPanel
+            reportId={id}
+            canManage={canManage}
+            deliveryTierLabel={deliveryTierLabel}
+            qualityScore={qualityAudit?.overallScore}
+            qualityGrade={qualityAudit?.grade}
+            targetAchieved={qualityAudit?.targetAchieved}
+            upgradeStatusLabel={upgradeStatusLabel}
+            monthlyHighlights={topMonthlyWindows}
+          />
+        </div>
+
         {/* 人生K线图 */}
         {result.klineData && result.klineData.length > 0 && (
           <div id="trend" className="mt-12 scroll-mt-28">
@@ -629,6 +878,7 @@ export default async function ResultPage({ params }: PageProps) {
               reportId={id}
               hasPendingValidation={validationInsights.pendingCount > 0}
               hasDrift={validationInsights.driftCount > 0}
+              canManage={canManage}
             />
           </Suspense>
         </div>

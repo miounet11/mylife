@@ -7,9 +7,15 @@ interface NextStepGuideProps {
   reportId?: string;
   hasPendingValidation?: boolean;
   hasDrift?: boolean;
+  canManage?: boolean;
 }
 
-export default function NextStepGuide({ reportId = '', hasPendingValidation = false, hasDrift = false }: NextStepGuideProps) {
+export default function NextStepGuide({
+  reportId = '',
+  hasPendingValidation = false,
+  hasDrift = false,
+  canManage = false,
+}: NextStepGuideProps) {
   const nextActions = [
     {
       title: hasDrift ? '继续纠偏这份结果' : '继续追问这份结果',
@@ -36,6 +42,15 @@ export default function NextStepGuide({ reportId = '', hasPendingValidation = fa
       label: '查看我的档案',
       icon: FolderHeart,
     },
+    {
+      title: canManage ? '开启月度更新与升级提醒' : '建立你自己的长期节律档案',
+      description: canManage
+        ? '真正的留存不靠你记得回来，而靠系统在窗口变化、报告升级和内容更新时主动提醒你。'
+        : '公开结果只能帮助你理解产品价值，真正适合长期使用的是建立自己的报告、事件和更新体系。',
+      href: canManage ? '/updates' : '/analyze',
+      label: canManage ? '管理订阅与邮件更新' : '开始我的测算',
+      icon: Sparkles,
+    },
   ];
 
   return (
@@ -52,13 +67,14 @@ export default function NextStepGuide({ reportId = '', hasPendingValidation = fa
               <span className="font-serif text-[color:var(--accent-strong)]">关键在报告之后。</span>
             </h2>
             <p className="text-base leading-8 text-[color:var(--muted)]">
-              用户看完报告时最容易离开，所以这里不再让用户自己想下一步，而是直接给出三条高价值动作路径。
+              用户看完报告时最容易离开，所以这里不再让用户自己想下一步，而是直接给出可继续追问、可验证、可复访、可订阅的动作路径。
             </p>
 
             <div className="space-y-3">
               {[
                 '先追问一条最关键的判断。',
                 '再把重要节点落地到事件。',
+                '再建立月度回访与升级提醒。',
                 '最终形成持续复访的个人档案。',
               ].map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">

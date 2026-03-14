@@ -51,6 +51,12 @@ try {
     console.log(`[build] Backed up previous .next/static to ${backupStaticDir}`);
   }
 
+  const nextBuildDir = path.join(projectRoot, '.next');
+  if (fs.existsSync(nextBuildDir)) {
+    fs.rmSync(nextBuildDir, { recursive: true, force: true });
+    console.log('[build] Removed previous .next build directory for a clean rebuild');
+  }
+
   const result = spawnSync(
     'node',
     ['--max-old-space-size=4096', 'node_modules/.bin/next', 'build'],
