@@ -1,5 +1,20 @@
 # Changelog
 
+## v2.0.1 - 2026-03-14
+
+### Added
+- 新增当前版项目文档：
+  - `README.md`
+  - `docs/ARCHITECTURE.md`
+  - `docs/DEVELOPMENT.md`
+  - `docs/OPERATIONS.md`
+
+### Changed
+- 统一当前版本的项目说明、开发说明、运维说明与文档入口。
+
+### Removed
+- 删除一批已失效的旧阶段文档、旧迁移文档、旧进度报告与旧文案草稿，避免继续误导开发与运维。
+
 ## v2.0.0 - 2026-03-13
 
 ### Added
