@@ -49,8 +49,42 @@ export async function POST(request: NextRequest) {
 
     const emailConfigured = isEmailDeliveryConfigured();
     if (emailConfigured) {
-      sendSubscriptionConfirmationEmail(email).catch((error) => {
+      void sendSubscriptionConfirmationEmail(email, { source }).then((deliveryResult) => {
+        if (deliveryResult?.success) {
+          trackServerEvent({
+            eventName: 'email_delivery_succeeded',
+            page: '/updates',
+            meta: {
+              channel: 'newsletter_confirmation',
+              emailDomain: email.split('@')[1] || '',
+              source,
+            },
+          });
+          return;
+        }
+
+        trackServerEvent({
+          eventName: 'email_delivery_failed',
+          page: '/updates',
+          meta: {
+            channel: 'newsletter_confirmation',
+            emailDomain: email.split('@')[1] || '',
+            source,
+            reason: deliveryResult?.message || 'unknown',
+          },
+        });
+      }).catch((error) => {
         console.error('[Newsletter] 发送订阅确认邮件失败:', error);
+        trackServerEvent({
+          eventName: 'email_delivery_failed',
+          page: '/updates',
+          meta: {
+            channel: 'newsletter_confirmation',
+            emailDomain: email.split('@')[1] || '',
+            source,
+            reason: error instanceof Error ? error.message : 'unknown',
+          },
+        });
       });
     }
 

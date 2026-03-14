@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle } from 'lucide-react';
 import { Lunar } from 'lunar-javascript';
@@ -95,8 +95,15 @@ function createSetTimeInfo(midnightValue: 0 | 1) {
   ];
 }
 
+function wait(ms: number) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 export default function FortuneForm() {
   const router = useRouter();
+  const analyzeRequestRef = useRef<AbortController | null>(null);
   const [infoData, setInfoData] = useState<PaipanInfoData>(createDefaultInfoData);
   const [locationState, setLocationState] = useState<FormLocationState>(UNKNOWN_LOCATION);
   const [caseTypes] = useState<CaseTypeOption[]>(DEFAULT_CASE_TYPES);
@@ -107,6 +114,33 @@ export default function FortuneForm() {
   const [showDatetime, setShowDatetime] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [loadingComplete, setLoadingComplete] = useState(false);
+  const [serverStage, setServerStage] = useState<{
+    stage: string;
+    progress: number;
+    label: string;
+    detail: string;
+  } | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState<{
+    name: string;
+    birthText: string;
+    birthPlace: string;
+    solarTimeText: string;
+    useSolarTime: boolean;
+    useDaylightSaving: boolean;
+    useSeparateZiHour: boolean;
+  } | null>(null);
+  const [completionMeta, setCompletionMeta] = useState<{
+    llmUsed: boolean;
+    deliveryTier?: 'basic' | 'enhanced' | 'expert';
+    grade?: 'S' | 'A' | 'B' | 'C';
+    score?: number;
+    targetAchieved?: boolean;
+    upgradeQueued?: boolean;
+    upgradeStatus?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+    upgradeAttempts?: number;
+    upgradeMaxAttempts?: number;
+  } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -152,29 +186,52 @@ export default function FortuneForm() {
 
   const submitPayload = async (payload: PaipanInfoData, payloadLocation: FormLocationState) => {
     setLoading(true);
+    setLoadingComplete(false);
+    setServerStage(null);
+    setCompletionMeta(null);
     setError('');
 
     const displayName = payload.username.trim() || createCaseName();
     const [birthDate, birthTime] = payload.birthday.split(' ');
+    const birthPlace = normalizeBirthPlaceLabel(payloadLocation.addressData);
+    const useSolarTime = Boolean(setTimeInfo[1].value);
+    const useDaylightSaving = Boolean(payload.xls);
+    const useSeparateZiHour = Boolean(setTimeInfo[2].value);
+
+    setLoadingSummary({
+      name: displayName,
+      birthText: formatBirthLabel(payload, payload.type),
+      birthPlace,
+      solarTimeText: computeSunTime(payload, payloadLocation),
+      useSolarTime,
+      useDaylightSaving,
+      useSeparateZiHour,
+    });
 
     try {
+      const controller = new AbortController();
+      analyzeRequestRef.current = controller;
       const response = await fetch('/api/analyze', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-analyze-stream': '1',
+        },
         body: JSON.stringify({
           name: displayName,
           gender: payload.sex === 1 ? 'male' : 'female',
           birthDate,
           birthTime,
           birthSecond: 0,
-          birthPlace: normalizeBirthPlaceLabel(payloadLocation.addressData),
+          birthPlace,
           timezone: payload.hw && payload.bjtime ? 8 : payloadLocation.timezone,
           longitude: payloadLocation.longitude,
           latitude: payloadLocation.latitude ?? (UNKNOWN_LOCATION.latitude as number),
           cityNameEn: payloadLocation.option?.nameEn || payloadLocation.option?.city || payloadLocation.addressData[1] || payloadLocation.addressData[0],
-          useDaylightSaving: Boolean(payload.xls),
-          useSolarTime: Boolean(setTimeInfo[1].value),
-          useSeparateZiHour: Boolean(setTimeInfo[2].value),
+          useDaylightSaving,
+          useSolarTime,
+          useSeparateZiHour,
           unknowhour: payload.unknowhour,
           xls: payload.xls,
           bjtime: payload.bjtime,
@@ -184,23 +241,162 @@ export default function FortuneForm() {
         }),
       });
 
-      const result = await response.json();
-      if (!result.success) {
-        setError(result.error || '分析请求失败，请稍后再试');
+      if (!response.ok || !response.body) {
+        const failed = await response.json().catch(() => null);
+        setError(failed?.error || '分析请求失败，请稍后再试');
+        setLoadingSummary(null);
         setLoading(false);
+        analyzeRequestRef.current = null;
         return;
       }
 
-      router.push(`/result/${result.reportId}`);
-    } catch {
-      setError('网络连接异常，请稍后重试');
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let completedReportId = '';
+      let completedMeta: {
+        llmUsed: boolean;
+        deliveryTier?: 'basic' | 'enhanced' | 'expert';
+        grade?: 'S' | 'A' | 'B' | 'C';
+        score?: number;
+        targetAchieved?: boolean;
+        upgradeQueued?: boolean;
+        upgradeStatus?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+        upgradeAttempts?: number;
+        upgradeMaxAttempts?: number;
+      } | null = null;
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          break;
+        }
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            continue;
+          }
+
+          const event = JSON.parse(trimmed) as
+            | { type: 'stage'; stage: string; progress: number; label: string; detail: string }
+            | {
+                type: 'complete';
+                reportId: string;
+                llm?: { used?: boolean; fallbackToEngine?: boolean };
+                quality?: {
+                  score?: number;
+                  grade?: 'S' | 'A' | 'B' | 'C';
+                  deliveryTier?: 'basic' | 'enhanced' | 'expert';
+                  targetAchieved?: boolean;
+                };
+                upgrade?: {
+                  queued?: boolean;
+                  reason?: string;
+                  status?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+                  attempts?: number;
+                  maxAttempts?: number;
+                };
+              }
+            | { type: 'error'; error: string };
+
+          if (event.type === 'stage') {
+            setServerStage({
+              stage: event.stage,
+              progress: event.progress,
+              label: event.label,
+              detail: event.detail,
+            });
+            continue;
+          }
+
+          if (event.type === 'error') {
+            setError(event.error || '分析失败，请稍后再试');
+            setLoadingSummary(null);
+            setServerStage(null);
+            setCompletionMeta(null);
+            setLoading(false);
+            analyzeRequestRef.current = null;
+            return;
+          }
+
+          if (event.type === 'complete') {
+            completedReportId = event.reportId;
+            completedMeta = {
+              llmUsed: !!event.llm?.used,
+              deliveryTier: event.quality?.deliveryTier,
+              grade: event.quality?.grade,
+              score: event.quality?.score,
+              targetAchieved: !!event.quality?.targetAchieved,
+              upgradeQueued: !!event.upgrade?.queued,
+              upgradeStatus: event.upgrade?.status,
+              upgradeAttempts: event.upgrade?.attempts,
+              upgradeMaxAttempts: event.upgrade?.maxAttempts,
+            };
+            setCompletionMeta(completedMeta);
+          }
+        }
+      }
+
+      if (!completedReportId) {
+        setError('分析结果未完整返回，请稍后重试');
+        setLoadingSummary(null);
+        setServerStage(null);
+        setCompletionMeta(null);
+        setLoading(false);
+        analyzeRequestRef.current = null;
+        return;
+      }
+
+      setLoadingComplete(true);
+      const targetAchieved = completedMeta?.targetAchieved;
+      const deliveryTier = completedMeta?.deliveryTier;
+      const upgradeQueued = completedMeta?.upgradeQueued;
+      setServerStage({
+        stage: 'complete',
+        progress: 100,
+        label: targetAchieved || deliveryTier === 'expert' ? '专家版报告已准备就绪' : '当前可读版报告已准备就绪',
+        detail: targetAchieved || deliveryTier === 'expert'
+          ? '本次结果已经达到专家版标准，正在为你打开完整报告。'
+          : upgradeQueued
+            ? '当前先打开可读版结果，后台会继续增强并尝试提升到 S 级专家版。'
+            : '结果页已经生成并保存完成，正在为你打开当前报告。',
+      });
+      await wait(680);
+      analyzeRequestRef.current = null;
+      router.push(`/result/${completedReportId}`);
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        setError('已取消本次测算，你可以继续修改信息后重新提交');
+      } else {
+        setError('网络连接异常，请稍后重试');
+      }
+      setLoadingSummary(null);
+      setServerStage(null);
+      setCompletionMeta(null);
+      setLoadingComplete(false);
       setLoading(false);
+      analyzeRequestRef.current = null;
     }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     await submitPayload(infoData, locationState);
+  };
+
+  const handleCancelLoading = () => {
+    analyzeRequestRef.current?.abort();
+    analyzeRequestRef.current = null;
+    setLoadingSummary(null);
+    setServerStage(null);
+    setCompletionMeta(null);
+    setLoadingComplete(false);
+    setLoading(false);
   };
 
   const handleTimeConfirm = (tab: 0 | 1 | 2, data: string[] | string) => {
@@ -257,7 +453,15 @@ export default function FortuneForm() {
   };
 
   if (loading) {
-    return <FortuneProgress isComplete={false} />;
+    return (
+      <FortuneProgress
+        isComplete={loadingComplete}
+        summary={loadingSummary}
+        onCancel={handleCancelLoading}
+        serverStage={serverStage}
+        completionMeta={completionMeta}
+      />
+    );
   }
 
   return (

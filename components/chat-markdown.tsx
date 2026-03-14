@@ -5,6 +5,8 @@ import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
 export default function ChatMarkdown({ content }: { content: string }) {
+  const normalizedContent = normalizeChatMarkdown(content);
+
   return (
     <div className="chat-markdown text-sm leading-7 text-[color:var(--ink)]">
       <ReactMarkdown
@@ -57,8 +59,22 @@ export default function ChatMarkdown({ content }: { content: string }) {
           strong: ({ children }) => <strong className="font-semibold text-[color:var(--ink)]">{children}</strong>,
         }}
       >
-        {content}
+        {normalizedContent}
       </ReactMarkdown>
     </div>
   );
+}
+
+function normalizeChatMarkdown(content: string) {
+  return `${content || ''}`
+    .replace(/\r\n/g, '\n')
+    .replace(/^\s*[•●◦▪▸►]\s+/gm, '- ')
+    .replace(/^(\s*)(\d+)[、．](\s+)/gm, '$1$2.$3')
+    .replace(/^(\s{0,3}#{1,6})([^\s#])/gm, '$1 $2')
+    .replace(/([^\n])\n(- |\d+\. |>|#{1,6} )/g, '$1\n\n$2')
+    .replace(/```([\w-]+)?\n?([\s\S]*?)```/g, (_match, lang = '', body = '') => {
+      const normalizedBody = `${body}`.replace(/\n{3,}/g, '\n\n').trimEnd();
+      return `\`\`\`${lang}\n${normalizedBody}\n\`\`\``;
+    })
+    .trim();
 }

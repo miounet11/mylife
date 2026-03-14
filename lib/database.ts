@@ -10,6 +10,10 @@ import type {
   ContentSignalRecord,
   ContentRadarRunRecord,
   ContentSchedulerRunRecord,
+  ReportUpgradeJobRecord,
+  ReportMonthlyDigestRunRecord,
+  EmailDeliveryJobRecord,
+  PremiumServiceRequestRecord,
 } from './user-types';
 
 interface RawFortuneRow {
@@ -86,6 +90,53 @@ interface RawContentSchedulerRunRow {
   created_at?: string;
 }
 
+interface RawReportUpgradeJobRow {
+  id: string;
+  report_id: string;
+  user_id: string;
+  status: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  target_score?: number | null;
+  attempts?: number | null;
+  max_attempts?: number | null;
+  last_score?: number | null;
+  best_score?: number | null;
+  best_grade?: 'S' | 'A' | 'B' | 'C' | null;
+  next_run_at?: string | null;
+  locked_at?: string | null;
+  last_error?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface RawReportMonthlyDigestRunRow {
+  id: string;
+  cycle_key: string;
+  email: string;
+  user_id?: string | null;
+  report_id?: string | null;
+  status: 'sent' | 'skipped' | 'error';
+  reason?: string | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
+interface RawEmailDeliveryJobRow {
+  id: string;
+  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update';
+  status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
+  recipient_list?: string | null;
+  payload?: string | null;
+  attempts?: number | null;
+  max_attempts?: number | null;
+  next_run_at?: string | null;
+  locked_at?: string | null;
+  last_error?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface RawEventRow {
   id: string;
   user_id: string;
@@ -110,6 +161,21 @@ interface RawQuestionRow {
   category: string;
   analysis?: string | null;
   created_at?: string;
+}
+
+interface RawPremiumServiceRequestRow {
+  id: string;
+  user_id: string;
+  report_id?: string | null;
+  service_key: 'event-simulation' | 'event-verdict' | 'event-review' | 'meihua-enhancement';
+  status: 'new' | 'contacted' | 'in_progress' | 'delivered' | 'closed' | 'cancelled';
+  priority?: 'normal' | 'high' | 'urgent' | null;
+  contact_name?: string | null;
+  contact_value?: string | null;
+  intake?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 function parseJson<T>(value: string | null | undefined, fallback: T): T {
@@ -171,6 +237,16 @@ function classifyDriftReason(input: { reason?: string; notes?: string; title?: s
     key: 'uncategorized' as DriftReasonKey,
     label: '待进一步标注',
   };
+}
+
+function mapRouteHealthLabel(key: string) {
+  if (key === 'analyze') return '测算主流程';
+  if (key === 'chat:ask') return '聊天提问';
+  if (key === 'chat:regenerate') return '聊天重生成';
+  if (key === 'chat:edit') return '聊天编辑重提';
+  if (key === 'chat:delete') return '聊天删除';
+  if (key === 'chat:load') return '聊天上下文加载';
+  return key;
 }
 
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
@@ -253,6 +329,76 @@ function mapContentSchedulerRunRow(row: RawContentSchedulerRunRow): ContentSched
     generatedCount: row.generated_count || 0,
     publishedCount: row.published_count || 0,
     meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapEmailDeliveryJobRow(row: RawEmailDeliveryJobRow): EmailDeliveryJobRecord {
+  return {
+    id: row.id,
+    kind: row.kind,
+    status: row.status,
+    to: parseJson(row.recipient_list, []),
+    payload: parseJson(row.payload, {}),
+    attempts: row.attempts || 0,
+    maxAttempts: row.max_attempts || 0,
+    nextRunAt: row.next_run_at || undefined,
+    lockedAt: row.locked_at || undefined,
+    lastError: row.last_error || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapPremiumServiceRequestRow(row: RawPremiumServiceRequestRow): PremiumServiceRequestRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    reportId: row.report_id || undefined,
+    serviceKey: row.service_key,
+    status: row.status,
+    priority: row.priority || undefined,
+    contactName: row.contact_name || undefined,
+    contactValue: row.contact_value || undefined,
+    intake: parseJson(row.intake, {}),
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapReportUpgradeJobRow(row: RawReportUpgradeJobRow): ReportUpgradeJobRecord {
+  return {
+    id: row.id,
+    reportId: row.report_id,
+    userId: row.user_id,
+    status: row.status,
+    targetScore: row.target_score || 0,
+    attempts: row.attempts || 0,
+    maxAttempts: row.max_attempts || 0,
+    lastScore: row.last_score || 0,
+    bestScore: row.best_score || 0,
+    bestGrade: row.best_grade || undefined,
+    nextRunAt: row.next_run_at || undefined,
+    lockedAt: row.locked_at || undefined,
+    lastError: row.last_error || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapReportMonthlyDigestRunRow(row: RawReportMonthlyDigestRunRow): ReportMonthlyDigestRunRecord {
+  return {
+    id: row.id,
+    cycleKey: row.cycle_key,
+    email: row.email,
+    userId: row.user_id || undefined,
+    reportId: row.report_id || undefined,
+    status: row.status,
+    reason: row.reason || undefined,
+    meta: row.meta ? JSON.parse(row.meta) : {},
     createdAt: row.created_at,
   };
 }
@@ -605,6 +751,77 @@ export function initializeDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS report_upgrade_jobs (
+      id TEXT PRIMARY KEY,
+      report_id TEXT NOT NULL UNIQUE,
+      user_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      target_score INTEGER DEFAULT 95,
+      attempts INTEGER DEFAULT 0,
+      max_attempts INTEGER DEFAULT 6,
+      last_score INTEGER DEFAULT 0,
+      best_score INTEGER DEFAULT 0,
+      best_grade TEXT,
+      next_run_at TEXT,
+      locked_at TEXT,
+      last_error TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS report_monthly_digest_runs (
+      id TEXT PRIMARY KEY,
+      cycle_key TEXT NOT NULL,
+      email TEXT NOT NULL,
+      user_id TEXT,
+      report_id TEXT,
+      status TEXT NOT NULL,
+      reason TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(cycle_key, email)
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS email_delivery_jobs (
+      id TEXT PRIMARY KEY,
+      kind TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      recipient_list JSON NOT NULL,
+      payload JSON,
+      attempts INTEGER DEFAULT 0,
+      max_attempts INTEGER DEFAULT 4,
+      next_run_at TEXT,
+      locked_at TEXT,
+      last_error TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS premium_service_requests (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      report_id TEXT,
+      service_key TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'new',
+      priority TEXT DEFAULT 'normal',
+      contact_name TEXT,
+      contact_value TEXT,
+      intake JSON,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // 索引
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -626,6 +843,14 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_content_radar_runs_source_id ON content_radar_runs(source_id);
     CREATE INDEX IF NOT EXISTS idx_content_radar_runs_created_at ON content_radar_runs(created_at);
     CREATE INDEX IF NOT EXISTS idx_content_scheduler_runs_created_at ON content_scheduler_runs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_status_next_run ON report_upgrade_jobs(status, next_run_at);
+    CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_report_id ON report_upgrade_jobs(report_id);
+    CREATE INDEX IF NOT EXISTS idx_report_monthly_digest_runs_cycle ON report_monthly_digest_runs(cycle_key, status);
+    CREATE INDEX IF NOT EXISTS idx_email_delivery_jobs_status_next_run ON email_delivery_jobs(status, next_run_at);
+    CREATE INDEX IF NOT EXISTS idx_email_delivery_jobs_kind_created_at ON email_delivery_jobs(kind, created_at);
+    CREATE INDEX IF NOT EXISTS idx_premium_service_requests_user_id ON premium_service_requests(user_id);
+    CREATE INDEX IF NOT EXISTS idx_premium_service_requests_report_id ON premium_service_requests(report_id);
+    CREATE INDEX IF NOT EXISTS idx_premium_service_requests_status_created_at ON premium_service_requests(status, created_at);
   `);
 }
 
@@ -658,6 +883,15 @@ export const userOperations = {
   getByEmail: (email: string) => {
     const stmt = db.prepare('SELECT * FROM users WHERE email = ?');
     return stmt.get(email.trim().toLowerCase());
+  },
+
+  listWithEmail: (limit = 500) => {
+    return db.prepare(`
+      SELECT * FROM users
+      WHERE email IS NOT NULL AND email != ''
+      ORDER BY datetime(updated_at) DESC
+      LIMIT ?
+    `).all(limit);
   },
 
   update: (id: string, updates: Partial<Omit<UserRecord, 'id'>>) => {
@@ -731,6 +965,12 @@ export const fortuneOperations = {
   getByUserId: (userId: string) => {
     const stmt = db.prepare('SELECT * FROM fortunes WHERE user_id = ? ORDER BY created_at DESC');
     const rows = stmt.all(userId) as RawFortuneRow[];
+    return rows.map(mapFortuneRow);
+  },
+
+  listRecent: (limit = 100) => {
+    const stmt = db.prepare('SELECT * FROM fortunes ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC LIMIT ?');
+    const rows = stmt.all(limit) as RawFortuneRow[];
     return rows.map(mapFortuneRow);
   },
 
@@ -880,7 +1120,36 @@ export const analyticsOperations = {
       totalLatencyMs: number;
       currentState: string;
       reopenAt?: string;
+      lastStateChangedAt?: string;
       scopes: Record<string, number>;
+    }> = {};
+    const llmFailureHotspots: Record<string, {
+      key: string;
+      label: string;
+      model: string;
+      scope: string;
+      count: number;
+      totalLatencyMs: number;
+      avgLatencyMs: number;
+      lastSeenAt?: string;
+    }> = {};
+    const routeHealthBuckets: Record<string, {
+      key: string;
+      label: string;
+      success: number;
+      failed: number;
+      fallbacks: number;
+      totalDurationMs: number;
+      maxDurationMs: number;
+      lastSeenAt?: string;
+    }> = {};
+    const requestFailureHotspots: Record<string, {
+      key: string;
+      label: string;
+      route: string;
+      action: string;
+      count: number;
+      lastSeenAt?: string;
     }> = {};
     const journeyCounts: Record<string, { key: string; label: string; count: number }> = {
       home_page_viewed: { key: 'home_page_viewed', label: '首页访问', count: 0 },
@@ -893,6 +1162,7 @@ export const analyticsOperations = {
       report_event_saved_from_result: { key: 'report_event_saved_from_result', label: '结果页沉淀事件', count: 0 },
       event_feedback_recorded: { key: 'event_feedback_recorded', label: '回填验证结果', count: 0 },
       newsletter_subscribed: { key: 'newsletter_subscribed', label: '邮件订阅', count: 0 },
+      auth_code_requested: { key: 'auth_code_requested', label: '请求验证码', count: 0 },
       auth_verified: { key: 'auth_verified', label: '完成邮箱验证', count: 0 },
     };
     const pendingValidationBuckets = {
@@ -912,6 +1182,10 @@ export const analyticsOperations = {
       reportId?: string;
       priorityScore: number;
     }> = [];
+    const recentLlmWindowMs = 24 * 60 * 60 * 1000;
+    let recentLlmAttempts = 0;
+    let recentLlmSuccesses = 0;
+    let recentLlmFailures = 0;
 
     for (const row of eventRows) {
       const feedback = parseJson(row.user_feedback, {}) as { wasAccurate?: boolean; userNotes?: string };
@@ -1081,6 +1355,8 @@ export const analyticsOperations = {
 
       if (eventName === 'llm_model_attempt') {
         const model = typeof meta.model === 'string' ? meta.model : '';
+        const scope = typeof meta.scope === 'string' ? meta.scope : 'unknown';
+        const createdAtMs = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
         if (model) {
           if (!llmModelBuckets[model]) {
             llmModelBuckets[model] = {
@@ -1093,14 +1369,39 @@ export const analyticsOperations = {
               scopes: {},
             };
           }
-          const scope = typeof meta.scope === 'string' ? meta.scope : 'unknown';
           llmModelBuckets[model].attempts += 1;
           llmModelBuckets[model].totalLatencyMs += typeof meta.latencyMs === 'number' ? meta.latencyMs : 0;
           llmModelBuckets[model].scopes[scope] = (llmModelBuckets[model].scopes[scope] || 0) + 1;
           if (meta.success === true) {
             llmModelBuckets[model].successes += 1;
+            if (Number.isFinite(createdAtMs) && nowTime - createdAtMs <= recentLlmWindowMs) {
+              recentLlmAttempts += 1;
+              recentLlmSuccesses += 1;
+            }
           } else {
             llmModelBuckets[model].failures += 1;
+            if (Number.isFinite(createdAtMs) && nowTime - createdAtMs <= recentLlmWindowMs) {
+              recentLlmAttempts += 1;
+              recentLlmFailures += 1;
+            }
+            const traceLabel = typeof meta.traceLabel === 'string' ? meta.traceLabel : `${scope}:${model}`;
+            if (!llmFailureHotspots[traceLabel]) {
+              llmFailureHotspots[traceLabel] = {
+                key: traceLabel,
+                label: traceLabel,
+                model,
+                scope,
+                count: 0,
+                totalLatencyMs: 0,
+                avgLatencyMs: 0,
+              };
+            }
+            llmFailureHotspots[traceLabel].count += 1;
+            llmFailureHotspots[traceLabel].totalLatencyMs += typeof meta.latencyMs === 'number' ? meta.latencyMs : 0;
+            llmFailureHotspots[traceLabel].avgLatencyMs = Math.round(
+              llmFailureHotspots[traceLabel].totalLatencyMs / llmFailureHotspots[traceLabel].count
+            );
+            llmFailureHotspots[traceLabel].lastSeenAt = row.created_at || llmFailureHotspots[traceLabel].lastSeenAt;
           }
         }
       }
@@ -1121,7 +1422,90 @@ export const analyticsOperations = {
           }
           llmModelBuckets[model].currentState = typeof meta.state === 'string' ? meta.state : llmModelBuckets[model].currentState;
           llmModelBuckets[model].reopenAt = typeof meta.reopenAt === 'string' ? meta.reopenAt : llmModelBuckets[model].reopenAt;
+          llmModelBuckets[model].lastStateChangedAt = row.created_at || llmModelBuckets[model].lastStateChangedAt;
         }
+      }
+
+      if (eventName === 'analyze_completed' || eventName === 'analyze_failed') {
+        const key = 'analyze';
+        if (!routeHealthBuckets[key]) {
+          routeHealthBuckets[key] = {
+            key,
+            label: '测算主流程',
+            success: 0,
+            failed: 0,
+            fallbacks: 0,
+            totalDurationMs: 0,
+            maxDurationMs: 0,
+          };
+        }
+        const durationMs = typeof meta.durationMs === 'number' ? meta.durationMs : 0;
+        if (eventName === 'analyze_completed') {
+          routeHealthBuckets[key].success += 1;
+          if (meta.fallbackToEngine === true) {
+            routeHealthBuckets[key].fallbacks += 1;
+          }
+        } else {
+          routeHealthBuckets[key].failed += 1;
+          const stage = typeof meta.stage === 'string' ? meta.stage : 'unknown';
+          const error = typeof meta.error === 'string' ? meta.error : 'unknown';
+          const hotspotKey = `analyze:${stage}:${error}`;
+          if (!requestFailureHotspots[hotspotKey]) {
+            requestFailureHotspots[hotspotKey] = {
+              key: hotspotKey,
+              label: `测算失败 · ${stage}`,
+              route: 'analyze',
+              action: stage,
+              count: 0,
+            };
+          }
+          requestFailureHotspots[hotspotKey].count += 1;
+          requestFailureHotspots[hotspotKey].lastSeenAt = row.created_at || requestFailureHotspots[hotspotKey].lastSeenAt;
+        }
+        routeHealthBuckets[key].totalDurationMs += durationMs;
+        routeHealthBuckets[key].maxDurationMs = Math.max(routeHealthBuckets[key].maxDurationMs, durationMs);
+        routeHealthBuckets[key].lastSeenAt = row.created_at || routeHealthBuckets[key].lastSeenAt;
+      }
+
+      if (eventName === 'chat_completed' || eventName === 'chat_failed') {
+        const action = typeof meta.action === 'string' ? meta.action : 'ask';
+        const routeKey = `chat:${action}`;
+        if (!routeHealthBuckets[routeKey]) {
+          routeHealthBuckets[routeKey] = {
+            key: routeKey,
+            label: mapRouteHealthLabel(routeKey),
+            success: 0,
+            failed: 0,
+            fallbacks: 0,
+            totalDurationMs: 0,
+            maxDurationMs: 0,
+          };
+        }
+        const durationMs = typeof meta.durationMs === 'number' ? meta.durationMs : 0;
+        if (eventName === 'chat_completed') {
+          routeHealthBuckets[routeKey].success += 1;
+          if (meta.llmUsed === false) {
+            routeHealthBuckets[routeKey].fallbacks += 1;
+          }
+        } else {
+          routeHealthBuckets[routeKey].failed += 1;
+          const error = typeof meta.error === 'string' ? meta.error : 'unknown';
+          const hotspotKey = `${routeKey}:${error}`;
+          if (!requestFailureHotspots[hotspotKey]) {
+            requestFailureHotspots[hotspotKey] = {
+              key: hotspotKey,
+              label: `${mapRouteHealthLabel(routeKey)}失败`,
+              route: 'chat',
+              action,
+              count: 0,
+            };
+          }
+          requestFailureHotspots[hotspotKey].count += 1;
+          requestFailureHotspots[hotspotKey].lastSeenAt = row.created_at || requestFailureHotspots[hotspotKey].lastSeenAt;
+        }
+        routeHealthBuckets[routeKey].totalDurationMs += durationMs;
+        routeHealthBuckets[routeKey].maxDurationMs = Math.max(routeHealthBuckets[routeKey].maxDurationMs, durationMs);
+        routeHealthBuckets[routeKey].lastSeenAt = row.created_at || routeHealthBuckets[routeKey].lastSeenAt;
       }
     }
 
@@ -1133,6 +1517,241 @@ export const analyticsOperations = {
     const totalAnalyzeSubmissions = journeyCounts.analyze_submitted.count || 0;
     const totalChatActions = Object.values(chatActionBuckets).reduce((sum, item) => sum + item.count, 0);
     const totalReasoningModeCount = Object.values(reasoningModeBuckets).reduce((sum, item) => sum + item.count, 0);
+    const emailRetryRows = emailDeliveryJobOperations.listRecent(50, 'all');
+    const emailRetryQueue = emailRetryRows.reduce<{
+      pending: number;
+      running: number;
+      sent: number;
+      failed: number;
+      cancelled: number;
+    }>((accumulator, item) => {
+      accumulator[item.status] += 1;
+      return accumulator;
+    }, {
+      pending: 0,
+      running: 0,
+      sent: 0,
+      failed: 0,
+      cancelled: 0,
+    });
+    const recentPremiumRequests = premiumServiceRequestOperations.listRecent({ limit: 6, status: 'all' });
+    const premiumServiceStatus = premiumServiceRequestOperations.countByStatus();
+    const authRequested = journeyCounts.auth_code_requested.count || 0;
+    const authVerified = journeyCounts.auth_verified.count || 0;
+    const reportGenerated = journeyCounts.report_generated.count || 0;
+    const reportViewed = journeyCounts.report_viewed.count || 0;
+    const chatAsked = journeyCounts.chat_message_sent.count || 0;
+    const premiumRequested = analyticsRows.filter((item) => item.event_name === 'premium_service_requested').length;
+    const funnelDiagnostics = [
+      {
+        key: 'analyze_to_report',
+        label: '提交测算 -> 成功出报告',
+        from: totalAnalyzeSubmissions,
+        to: reportGenerated,
+      },
+      {
+        key: 'report_to_view',
+        label: '报告生成 -> 打开结果页',
+        from: reportGenerated,
+        to: reportViewed,
+      },
+      {
+        key: 'view_to_chat',
+        label: '结果页查看 -> 继续聊天',
+        from: reportViewed,
+        to: chatAsked,
+      },
+      {
+        key: 'auth_request_to_verify',
+        label: '请求验证码 -> 完成验证',
+        from: authRequested,
+        to: authVerified,
+      },
+      {
+        key: 'view_to_premium',
+        label: '结果页查看 -> 提交专项需求',
+        from: reportViewed,
+        to: premiumRequested,
+      },
+    ].map((item) => ({
+      ...item,
+      conversionRate: item.from > 0 ? Math.round((item.to / item.from) * 100) : 0,
+      dropOff: Math.max(0, item.from - item.to),
+      severity: item.from === 0
+        ? 'neutral'
+        : item.to === 0 || Math.round((item.to / item.from) * 100) < 20
+          ? 'critical'
+          : Math.round((item.to / item.from) * 100) < 50
+            ? 'warning'
+            : 'healthy',
+    }));
+    const modelHealthBreakdown = Object.values(llmModelBuckets)
+      .map((item) => {
+        const lastStateChangedAtMs = item.lastStateChangedAt ? new Date(item.lastStateChangedAt).getTime() : Number.NaN;
+        const reopenAtMs = item.reopenAt ? new Date(item.reopenAt).getTime() : Number.NaN;
+        const openDurationMinutes = Number.isFinite(lastStateChangedAtMs)
+          && (item.currentState === 'open' || item.currentState === 'half-open')
+          ? Math.max(0, Math.round((nowTime - lastStateChangedAtMs) / 60000))
+          : 0;
+        const reopenOverdue = item.currentState === 'open' && Number.isFinite(reopenAtMs) ? reopenAtMs <= nowTime : false;
+
+        return {
+          model: item.model,
+          attempts: item.attempts,
+          successes: item.successes,
+          failures: item.failures,
+          successRate: item.attempts > 0 ? Math.round((item.successes / item.attempts) * 100) : 0,
+          avgLatencyMs: item.attempts > 0 ? Math.round(item.totalLatencyMs / item.attempts) : 0,
+          currentState: item.currentState,
+          reopenAt: item.reopenAt,
+          lastStateChangedAt: item.lastStateChangedAt,
+          openDurationMinutes,
+          reopenOverdue,
+          scopes: item.scopes,
+        };
+      })
+      .sort((left, right) => right.attempts - left.attempts);
+    const totalModelAttempts = modelHealthBreakdown.reduce((sum, item) => sum + item.attempts, 0);
+    const totalModelSuccesses = modelHealthBreakdown.reduce((sum, item) => sum + item.successes, 0);
+    const totalModelFailures = modelHealthBreakdown.reduce((sum, item) => sum + item.failures, 0);
+    const totalModelSuccessRate = totalModelAttempts > 0 ? Math.round((totalModelSuccesses / totalModelAttempts) * 100) : 0;
+    const routeHealthBreakdown = Object.values(routeHealthBuckets)
+      .map((item) => {
+        const total = item.success + item.failed;
+        return {
+          key: item.key,
+          label: item.label,
+          success: item.success,
+          failed: item.failed,
+          fallbackCount: item.fallbacks,
+          total,
+          successRate: total > 0 ? Math.round((item.success / total) * 100) : 0,
+          fallbackRate: item.success > 0 ? Math.round((item.fallbacks / item.success) * 100) : 0,
+          avgDurationMs: total > 0 ? Math.round(item.totalDurationMs / total) : 0,
+          maxDurationMs: item.maxDurationMs,
+          lastSeenAt: item.lastSeenAt,
+        };
+      })
+      .sort((left, right) => right.failed - left.failed || right.avgDurationMs - left.avgDurationMs);
+    const openModelCount = modelHealthBreakdown.filter((item) => item.currentState === 'open').length;
+    const halfOpenModelCount = modelHealthBreakdown.filter((item) => item.currentState === 'half-open').length;
+    const overdueCircuitCount = modelHealthBreakdown.filter((item) => item.reopenOverdue).length;
+    const recentLlmSuccessRate = recentLlmAttempts > 0 ? Math.round((recentLlmSuccesses / recentLlmAttempts) * 100) : 0;
+    const pendingEmailQueue = emailRetryQueue.pending + emailRetryQueue.running;
+    const failedEmailQueue = emailRetryQueue.failed;
+    const feedbackBacklog = pendingValidationBuckets.overdue + pendingValidationBuckets.driftNeedsNotes + pendingValidationBuckets.driftReadyForCorrection;
+    const worstFunnel = funnelDiagnostics
+      .filter((item) => item.from > 0)
+      .sort((left, right) => left.conversionRate - right.conversionRate)[0];
+    const weakestRoute = routeHealthBreakdown
+      .filter((item) => item.total > 0)
+      .sort((left, right) => left.successRate - right.successRate || right.failed - left.failed)[0];
+    const primaryBlockers: string[] = [];
+    const healthySignals: string[] = [];
+
+    if (recentLlmAttempts > 0 && recentLlmSuccessRate < 20) {
+      primaryBlockers.push(`近 24 小时模型成功率仅 ${recentLlmSuccessRate}%，当前主要故障集中在模型供应链。`);
+    } else if (openModelCount > 0 || halfOpenModelCount > 0) {
+      primaryBlockers.push(`当前仍有 ${openModelCount} 个模型熔断、${halfOpenModelCount} 个模型处于半开探测。`);
+    } else if (totalModelAttempts > 0 && totalModelSuccessRate < 70) {
+      primaryBlockers.push(`模型总成功率 ${totalModelSuccessRate}% ，仍未达到稳定交付区间。`);
+    } else {
+      healthySignals.push('模型链路目前没有明显的熔断阻塞。');
+    }
+
+    if (worstFunnel && worstFunnel.conversionRate < 35) {
+      primaryBlockers.push(`${worstFunnel.label} 转化仅 ${worstFunnel.conversionRate}% ，存在明显用户流失。`);
+    } else if (worstFunnel) {
+      healthySignals.push(`当前最弱漏斗是“${worstFunnel.label}”，转化 ${worstFunnel.conversionRate}%。`);
+    }
+
+    if (weakestRoute && weakestRoute.successRate < 85) {
+      primaryBlockers.push(`${weakestRoute.label} 成功率仅 ${weakestRoute.successRate}% ，平均耗时 ${weakestRoute.avgDurationMs}ms。`);
+    } else if (weakestRoute) {
+      healthySignals.push(`${weakestRoute.label} 当前成功率 ${weakestRoute.successRate}% 。`);
+    }
+
+    if (feedbackBacklog > 0) {
+      primaryBlockers.push(`还有 ${feedbackBacklog} 条验证/纠偏待处理，真实反馈闭环还不够快。`);
+    } else {
+      healthySignals.push('验证闭环队列当前可控。');
+    }
+
+    if (failedEmailQueue > 0 || pendingEmailQueue > 3) {
+      primaryBlockers.push(`邮件重试队列仍有 ${pendingEmailQueue} 条待处理，另有 ${failedEmailQueue} 条最终失败。`);
+    } else {
+      healthySignals.push('邮件投递链路当前没有明显积压。');
+    }
+
+    const systemHealthSeverity = primaryBlockers.length === 0
+      ? 'healthy'
+      : (recentLlmAttempts > 0 && recentLlmSuccessRate < 20)
+          || overdueCircuitCount > 0
+          || (worstFunnel ? worstFunnel.conversionRate < 20 : false)
+        ? 'critical'
+        : 'warning';
+    const systemHealth = {
+      severity: systemHealthSeverity,
+      title: systemHealthSeverity === 'critical'
+        ? '当前系统存在明确阻塞，优先看模型链路与核心漏斗'
+        : systemHealthSeverity === 'warning'
+          ? '当前系统可运行，但有若干卡点正在拖慢体验与转化'
+          : '当前系统整体健康，主要链路可闭环运行',
+      summary: systemHealthSeverity === 'critical'
+        ? '页面本身不是主问题，最可能影响用户体感的是模型请求失败、熔断恢复不及时，以及关键漏斗转化偏低。'
+        : systemHealthSeverity === 'warning'
+          ? '系统可继续跑，但已经出现局部故障或明显流失，需要针对性压降失败率和回收反馈。'
+          : '模型、邮件、反馈和转化链路目前都没有明显硬阻塞，可以继续观察用户行为细节。',
+      updatedAt: analyticsRows[0]?.created_at || null,
+      blockers: primaryBlockers.slice(0, 4),
+      healthySignals: healthySignals.slice(0, 4),
+      cards: [
+        {
+          key: 'llm',
+          label: '模型链路',
+          value: `${totalModelSuccessRate}%`,
+          helper: totalModelAttempts > 0
+            ? `${totalModelAttempts} 次请求，失败 ${totalModelFailures} 次，熔断 ${openModelCount} 个`
+            : '还没有模型调用数据',
+          tone: recentLlmAttempts > 0 && recentLlmSuccessRate < 20 ? 'critical' : openModelCount > 0 || halfOpenModelCount > 0 ? 'warning' : 'healthy',
+        },
+        {
+          key: 'funnel',
+          label: '最弱漏斗',
+          value: worstFunnel ? `${worstFunnel.conversionRate}%` : '-',
+          helper: worstFunnel ? `${worstFunnel.label}，流失 ${worstFunnel.dropOff}` : '还没有足够的漏斗数据',
+          tone: worstFunnel ? (worstFunnel.conversionRate < 20 ? 'critical' : worstFunnel.conversionRate < 50 ? 'warning' : 'healthy') : 'neutral',
+        },
+        {
+          key: 'feedback',
+          label: '反馈积压',
+          value: `${feedbackBacklog}`,
+          helper: `待验证 ${pendingValidationBuckets.overdue}，待备注 ${pendingValidationBuckets.driftNeedsNotes}，待纠偏 ${pendingValidationBuckets.driftReadyForCorrection}`,
+          tone: feedbackBacklog > 12 ? 'critical' : feedbackBacklog > 0 ? 'warning' : 'healthy',
+        },
+        {
+          key: 'email',
+          label: '邮件队列',
+          value: `${pendingEmailQueue}/${failedEmailQueue}`,
+          helper: `待处理 ${pendingEmailQueue}，最终失败 ${failedEmailQueue}`,
+          tone: failedEmailQueue > 0 ? 'critical' : pendingEmailQueue > 3 ? 'warning' : 'healthy',
+        },
+        {
+          key: 'route',
+          label: '接口健康',
+          value: weakestRoute ? `${weakestRoute.successRate}%` : '-',
+          helper: weakestRoute ? `${weakestRoute.label}，失败 ${weakestRoute.failed}，降级 ${weakestRoute.fallbackCount}` : '还没有接口健康样本',
+          tone: weakestRoute ? (weakestRoute.successRate < 85 ? 'warning' : 'healthy') : 'neutral',
+        },
+      ],
+      llmSnapshot: {
+        attempts24h: recentLlmAttempts,
+        successRate24h: recentLlmSuccessRate,
+        openModelCount,
+        halfOpenModelCount,
+        overdueCircuitCount,
+      },
+    };
 
     return {
       totals: {
@@ -1191,19 +1810,20 @@ export const analyticsOperations = {
           share: totalReasoningModeCount > 0 ? Math.round((item.count / totalReasoningModeCount) * 100) : 0,
         }))
         .sort((left, right) => right.count - left.count),
-      modelHealthBreakdown: Object.values(llmModelBuckets)
-        .map((item) => ({
-          model: item.model,
-          attempts: item.attempts,
-          successes: item.successes,
-          failures: item.failures,
-          successRate: item.attempts > 0 ? Math.round((item.successes / item.attempts) * 100) : 0,
-          avgLatencyMs: item.attempts > 0 ? Math.round(item.totalLatencyMs / item.attempts) : 0,
-          currentState: item.currentState,
-          reopenAt: item.reopenAt,
-          scopes: item.scopes,
-        }))
-        .sort((left, right) => right.attempts - left.attempts),
+      modelHealthBreakdown,
+      llmFailureHotspots: Object.values(llmFailureHotspots)
+        .sort((left, right) => right.count - left.count || right.avgLatencyMs - left.avgLatencyMs)
+        .slice(0, 10),
+      routeHealthBreakdown,
+      requestFailureHotspots: Object.values(requestFailureHotspots)
+        .sort((left, right) => right.count - left.count)
+        .slice(0, 10),
+      emailRetryQueue,
+      recentEmailRetryJobs: emailRetryRows.slice(0, 8),
+      premiumServiceStatus,
+      recentPremiumRequests,
+      funnelDiagnostics,
+      systemHealth,
       journeyFunnel: Object.values(journeyCounts),
       eventsLast7d,
       recentEvents: analyticsOperations.listRecent(12),
@@ -1335,6 +1955,192 @@ export const contentSchedulerRunOperations = {
     `).all(limit) as RawContentSchedulerRunRow[];
 
     return rows.map(mapContentSchedulerRunRow);
+  },
+};
+
+export const reportUpgradeJobOperations = {
+  enqueue: (job: ReportUpgradeJobRecord) => {
+    const existing = db.prepare('SELECT * FROM report_upgrade_jobs WHERE report_id = ?').get(job.reportId) as RawReportUpgradeJobRow | undefined;
+    const now = new Date().toISOString();
+
+    if (existing) {
+      return db.prepare(`
+        UPDATE report_upgrade_jobs
+        SET user_id = ?,
+            status = ?,
+            target_score = ?,
+            max_attempts = ?,
+            next_run_at = ?,
+            locked_at = NULL,
+            last_error = NULL,
+            meta = ?,
+            updated_at = ?
+        WHERE report_id = ?
+      `).run(
+        job.userId,
+        job.status,
+        job.targetScore || 95,
+        job.maxAttempts || 6,
+        job.nextRunAt || now,
+        JSON.stringify(job.meta || {}),
+        now,
+        job.reportId
+      );
+    }
+
+    return db.prepare(`
+      INSERT INTO report_upgrade_jobs (
+        id, report_id, user_id, status, target_score, attempts, max_attempts,
+        last_score, best_score, best_grade, next_run_at, locked_at, last_error, meta, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      job.id,
+      job.reportId,
+      job.userId,
+      job.status,
+      job.targetScore || 95,
+      job.attempts || 0,
+      job.maxAttempts || 6,
+      job.lastScore || 0,
+      job.bestScore || 0,
+      job.bestGrade || null,
+      job.nextRunAt || now,
+      job.lockedAt || null,
+      job.lastError || null,
+      JSON.stringify(job.meta || {}),
+      now,
+      now
+    );
+  },
+
+  getByReportId: (reportId: string) => {
+    const row = db.prepare('SELECT * FROM report_upgrade_jobs WHERE report_id = ?').get(reportId) as RawReportUpgradeJobRow | undefined;
+    return row ? mapReportUpgradeJobRow(row) : null;
+  },
+
+  listByUserId: (userId: string, limit = 20) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_upgrade_jobs
+      WHERE user_id = ?
+      ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, limit) as RawReportUpgradeJobRow[];
+
+    return rows.map(mapReportUpgradeJobRow);
+  },
+
+  claimNextRunnable: () => {
+    const now = new Date().toISOString();
+    const row = db.prepare(`
+      SELECT * FROM report_upgrade_jobs
+      WHERE status IN ('pending', 'retry')
+        AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
+      ORDER BY COALESCE(last_score, 0) ASC, attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+      LIMIT 1
+    `).get(now) as RawReportUpgradeJobRow | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    const updated = db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'running',
+          attempts = attempts + 1,
+          locked_at = ?,
+          updated_at = ?
+      WHERE id = ? AND status IN ('pending', 'retry')
+    `).run(now, now, row.id);
+
+    if (!updated.changes) {
+      return null;
+    }
+
+    const claimed = db.prepare('SELECT * FROM report_upgrade_jobs WHERE id = ?').get(row.id) as RawReportUpgradeJobRow | undefined;
+    return claimed ? mapReportUpgradeJobRow(claimed) : null;
+  },
+
+  markCompleted: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'completed',
+          last_score = ?,
+          best_score = ?,
+          best_grade = ?,
+          last_error = NULL,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates?.lastScore || 0,
+      updates?.bestScore || updates?.lastScore || 0,
+      updates?.bestGrade || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markRetry: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'retry',
+          last_score = ?,
+          best_score = ?,
+          best_grade = ?,
+          next_run_at = ?,
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates?.lastScore || 0,
+      updates?.bestScore || updates?.lastScore || 0,
+      updates?.bestGrade || null,
+      updates?.nextRunAt || now,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markFailed: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'failed',
+          last_score = ?,
+          best_score = ?,
+          best_grade = ?,
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates?.lastScore || 0,
+      updates?.bestScore || updates?.lastScore || 0,
+      updates?.bestGrade || null,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  listRecent: (limit = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_upgrade_jobs
+      ORDER BY datetime(updated_at) DESC
+      LIMIT ?
+    `).all(limit) as RawReportUpgradeJobRow[];
+
+    return rows.map(mapReportUpgradeJobRow);
   },
 };
 
@@ -1486,6 +2292,9 @@ export const questionOperations = {
 
 export const emailSubscriptionOperations = {
   upsert: (email: string, source = 'site', tags: string[] = []) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = emailSubscriptionOperations.getByEmail(normalizedEmail);
+    const mergedTags = [...new Set([...(existing?.tags || []), ...tags])];
     const stmt = db.prepare(`
       INSERT INTO email_subscriptions (id, email, status, source, tags)
       VALUES (?, ?, 'active', ?, ?)
@@ -1496,7 +2305,7 @@ export const emailSubscriptionOperations = {
         updated_at = datetime('now')
     `);
     const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    return stmt.run(id, email.trim().toLowerCase(), source, JSON.stringify(tags));
+    return stmt.run(id, normalizedEmail, source, JSON.stringify(mergedTags));
   },
 
   getByEmail: (email: string) => {
@@ -1509,6 +2318,28 @@ export const emailSubscriptionOperations = {
     };
   },
 
+  listActiveByTags: (tags: string[] = [], limit = 200) => {
+    const rows = db.prepare(`
+      SELECT * FROM email_subscriptions
+      WHERE status = 'active'
+      ORDER BY datetime(updated_at) DESC
+      LIMIT ?
+    `).all(limit) as Array<{ email: string; status: string; source?: string | null; tags?: string | null; updated_at?: string }>;
+
+    const normalizedTags = tags.filter(Boolean);
+    return rows
+      .map((row) => ({
+        ...row,
+        tags: row.tags ? JSON.parse(row.tags) : [],
+      }))
+      .filter((row) => {
+        if (normalizedTags.length === 0) {
+          return true;
+        }
+        return row.tags.some((tag: string) => normalizedTags.includes(tag));
+      });
+  },
+
   unsubscribe: (email: string) => {
     const stmt = db.prepare(`
       UPDATE email_subscriptions
@@ -1516,6 +2347,353 @@ export const emailSubscriptionOperations = {
       WHERE email = ?
     `);
     return stmt.run(email.trim().toLowerCase());
+  },
+};
+
+export const reportMonthlyDigestRunOperations = {
+  create: (run: ReportMonthlyDigestRunRecord) => {
+    return db.prepare(`
+      INSERT INTO report_monthly_digest_runs (
+        id, cycle_key, email, user_id, report_id, status, reason, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(cycle_key, email) DO UPDATE SET
+        user_id = excluded.user_id,
+        report_id = excluded.report_id,
+        status = excluded.status,
+        reason = excluded.reason,
+        meta = excluded.meta
+    `).run(
+      run.id,
+      run.cycleKey,
+      run.email.trim().toLowerCase(),
+      run.userId || null,
+      run.reportId || null,
+      run.status,
+      run.reason || null,
+      JSON.stringify(run.meta || {})
+    );
+  },
+
+  getByCycleAndEmail: (cycleKey: string, email: string) => {
+    const row = db.prepare(`
+      SELECT * FROM report_monthly_digest_runs
+      WHERE cycle_key = ? AND email = ?
+      LIMIT 1
+    `).get(cycleKey, email.trim().toLowerCase()) as RawReportMonthlyDigestRunRow | undefined;
+
+    return row ? mapReportMonthlyDigestRunRow(row) : null;
+  },
+
+  listRecent: (limit = 50) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_monthly_digest_runs
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(limit) as RawReportMonthlyDigestRunRow[];
+
+    return rows.map(mapReportMonthlyDigestRunRow);
+  },
+
+  listByUserOrEmail: (params: {
+    userId?: string | null;
+    email?: string | null;
+    limit?: number;
+  }) => {
+    const limit = Math.max(1, params.limit || 20);
+    const normalizedEmail = `${params.email || ''}`.trim().toLowerCase();
+    const rows = params.userId && normalizedEmail
+      ? db.prepare(`
+          SELECT * FROM report_monthly_digest_runs
+          WHERE user_id = ? OR email = ?
+          ORDER BY datetime(created_at) DESC
+          LIMIT ?
+        `).all(params.userId, normalizedEmail, limit) as RawReportMonthlyDigestRunRow[]
+      : params.userId
+        ? db.prepare(`
+            SELECT * FROM report_monthly_digest_runs
+            WHERE user_id = ?
+            ORDER BY datetime(created_at) DESC
+            LIMIT ?
+          `).all(params.userId, limit) as RawReportMonthlyDigestRunRow[]
+        : normalizedEmail
+          ? db.prepare(`
+              SELECT * FROM report_monthly_digest_runs
+              WHERE email = ?
+              ORDER BY datetime(created_at) DESC
+              LIMIT ?
+            `).all(normalizedEmail, limit) as RawReportMonthlyDigestRunRow[]
+          : [];
+
+    return rows.map(mapReportMonthlyDigestRunRow);
+  },
+};
+
+export const emailDeliveryJobOperations = {
+  create: (job: EmailDeliveryJobRecord) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      INSERT INTO email_delivery_jobs (
+        id, kind, status, recipient_list, payload, attempts, max_attempts, next_run_at, locked_at, last_error, meta, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      job.id,
+      job.kind,
+      job.status || 'pending',
+      JSON.stringify(job.to || []),
+      JSON.stringify(job.payload || {}),
+      job.attempts || 0,
+      job.maxAttempts || 4,
+      job.nextRunAt || now,
+      job.lockedAt || null,
+      job.lastError || null,
+      JSON.stringify(job.meta || {}),
+      now,
+      now
+    );
+  },
+
+  listRecent: (limit = 50, status?: EmailDeliveryJobRecord['status'] | 'all') => {
+    const rows = status && status !== 'all'
+      ? db.prepare(`
+          SELECT * FROM email_delivery_jobs
+          WHERE status = ?
+          ORDER BY datetime(updated_at) DESC
+          LIMIT ?
+        `).all(status, limit) as RawEmailDeliveryJobRow[]
+      : db.prepare(`
+          SELECT * FROM email_delivery_jobs
+          ORDER BY datetime(updated_at) DESC
+          LIMIT ?
+        `).all(limit) as RawEmailDeliveryJobRow[];
+
+    return rows.map(mapEmailDeliveryJobRow);
+  },
+
+  acquireDueBatch: (limit = 5, lockMinutes = 10) => {
+    const now = new Date().toISOString();
+    const staleLockCutoff = new Date(Date.now() - lockMinutes * 60 * 1000).toISOString();
+    const rows = db.prepare(`
+      SELECT * FROM email_delivery_jobs
+      WHERE status IN ('pending', 'running')
+        AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime('now'))
+        AND (locked_at IS NULL OR datetime(locked_at) <= datetime(?))
+        AND attempts < max_attempts
+      ORDER BY datetime(next_run_at) ASC, datetime(created_at) ASC
+      LIMIT ?
+    `).all(staleLockCutoff, limit) as RawEmailDeliveryJobRow[];
+
+    const items: EmailDeliveryJobRecord[] = [];
+    for (const row of rows) {
+      const result = db.prepare(`
+        UPDATE email_delivery_jobs
+        SET status = 'running',
+            attempts = COALESCE(attempts, 0) + 1,
+            locked_at = ?,
+            updated_at = ?
+        WHERE id = ?
+          AND (locked_at IS NULL OR datetime(locked_at) <= datetime(?))
+          AND attempts < max_attempts
+      `).run(now, now, row.id, staleLockCutoff);
+
+      if (result.changes > 0) {
+        const updated = db.prepare(`SELECT * FROM email_delivery_jobs WHERE id = ? LIMIT 1`).get(row.id) as RawEmailDeliveryJobRow | undefined;
+        if (updated) {
+          items.push(mapEmailDeliveryJobRow(updated));
+        }
+      }
+    }
+
+    return items;
+  },
+
+  markSent: (id: string, meta?: Record<string, unknown>) => {
+    const current = db.prepare(`SELECT * FROM email_delivery_jobs WHERE id = ? LIMIT 1`).get(id) as RawEmailDeliveryJobRow | undefined;
+    const nextMeta = {
+      ...parseJson(current?.meta, {}),
+      ...(meta || {}),
+    };
+
+    return db.prepare(`
+      UPDATE email_delivery_jobs
+      SET status = 'sent',
+          locked_at = NULL,
+          last_error = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(nextMeta),
+      new Date().toISOString(),
+      id
+    );
+  },
+
+  markRetryableFailure: (id: string, params: { lastError: string; nextRunAt: string; meta?: Record<string, unknown> }) => {
+    const current = db.prepare(`SELECT * FROM email_delivery_jobs WHERE id = ? LIMIT 1`).get(id) as RawEmailDeliveryJobRow | undefined;
+    const currentAttempts = Number(current?.attempts || 0);
+    const maxAttempts = Number(current?.max_attempts || 0);
+    const exhausted = maxAttempts > 0 && currentAttempts >= maxAttempts;
+    const nextMeta = {
+      ...parseJson(current?.meta, {}),
+      ...(params.meta || {}),
+    };
+
+    return db.prepare(`
+      UPDATE email_delivery_jobs
+      SET status = ?,
+          next_run_at = ?,
+          locked_at = NULL,
+          last_error = ?,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      exhausted ? 'failed' : 'pending',
+      exhausted ? null : params.nextRunAt,
+      params.lastError,
+      JSON.stringify(nextMeta),
+      new Date().toISOString(),
+      id
+    );
+  },
+};
+
+export const premiumServiceRequestOperations = {
+  create: (request: PremiumServiceRequestRecord) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      INSERT INTO premium_service_requests (
+        id, user_id, report_id, service_key, status, priority, contact_name, contact_value, intake, meta, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      request.id,
+      request.userId,
+      request.reportId || null,
+      request.serviceKey,
+      request.status,
+      request.priority || 'normal',
+      request.contactName || null,
+      request.contactValue || null,
+      JSON.stringify(request.intake || {}),
+      JSON.stringify(request.meta || {}),
+      now,
+      now
+    );
+  },
+
+  listByUser: (userId: string, limit = 20) => {
+    const rows = db.prepare(`
+      SELECT * FROM premium_service_requests
+      WHERE user_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, limit) as RawPremiumServiceRequestRow[];
+
+    return rows.map(mapPremiumServiceRequestRow);
+  },
+
+  listByUserAndReport: (userId: string, reportId: string, limit = 20) => {
+    const rows = db.prepare(`
+      SELECT * FROM premium_service_requests
+      WHERE user_id = ? AND report_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, reportId, limit) as RawPremiumServiceRequestRow[];
+
+    return rows.map(mapPremiumServiceRequestRow);
+  },
+
+  listRecent: (params?: {
+    limit?: number;
+    status?: PremiumServiceRequestRecord['status'] | 'all';
+    serviceKey?: PremiumServiceRequestRecord['serviceKey'] | 'all';
+  }) => {
+    const limit = params?.limit || 50;
+    const clauses: string[] = [];
+    const queryParams: Array<string | number> = [];
+
+    if (params?.status && params.status !== 'all') {
+      clauses.push('status = ?');
+      queryParams.push(params.status);
+    }
+
+    if (params?.serviceKey && params.serviceKey !== 'all') {
+      clauses.push('service_key = ?');
+      queryParams.push(params.serviceKey);
+    }
+
+    const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
+    const rows = db.prepare(`
+      SELECT * FROM premium_service_requests
+      ${where}
+      ORDER BY
+        CASE status
+          WHEN 'new' THEN 0
+          WHEN 'contacted' THEN 1
+          WHEN 'in_progress' THEN 2
+          WHEN 'delivered' THEN 3
+          WHEN 'closed' THEN 4
+          WHEN 'cancelled' THEN 5
+          ELSE 9
+        END ASC,
+        datetime(created_at) DESC
+      LIMIT ?
+    `).all(...queryParams, limit) as RawPremiumServiceRequestRow[];
+
+    return rows.map(mapPremiumServiceRequestRow);
+  },
+
+  countByStatus: () => {
+    const rows = db.prepare(`
+      SELECT status, COUNT(*) as count
+      FROM premium_service_requests
+      GROUP BY status
+    `).all() as Array<{
+      status: PremiumServiceRequestRecord['status'];
+      count: number;
+    }>;
+
+    return rows.reduce<Record<PremiumServiceRequestRecord['status'], number>>((accumulator, row) => {
+      accumulator[row.status] = Number(row.count || 0);
+      return accumulator;
+    }, {
+      new: 0,
+      contacted: 0,
+      in_progress: 0,
+      delivered: 0,
+      closed: 0,
+      cancelled: 0,
+    });
+  },
+
+  getById: (id: string) => {
+    const row = db.prepare(`
+      SELECT * FROM premium_service_requests
+      WHERE id = ?
+      LIMIT 1
+    `).get(id) as RawPremiumServiceRequestRow | undefined;
+
+    return row ? mapPremiumServiceRequestRow(row) : null;
+  },
+
+  updateStatus: (
+    id: string,
+    updates: Pick<PremiumServiceRequestRecord, 'status'> & Partial<Pick<PremiumServiceRequestRecord, 'priority' | 'meta'>>
+  ) => {
+    return db.prepare(`
+      UPDATE premium_service_requests
+      SET status = ?,
+          priority = ?,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates.status,
+      updates.priority || 'normal',
+      JSON.stringify(updates.meta || {}),
+      new Date().toISOString(),
+      id
+    );
   },
 };
 

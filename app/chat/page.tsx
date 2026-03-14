@@ -1,10 +1,12 @@
 'use client';
 
 import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import { Bot, MessageSquareText, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import UpdatesStatusPanelWithQuery from '@/components/updates-status-panel-with-query';
 
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   loading: () => <ChatSkeleton />,
@@ -53,6 +55,14 @@ export default function ChatPage() {
                   </div>
                 );
               })}
+
+              <Suspense fallback={<ChatUpdatePanelSkeleton />}>
+                <UpdatesStatusPanelWithQuery
+                  compact
+                  title="继续追问前，先看后续更新"
+                  description="如果这份报告还在增强、最近已有月度更新，或订阅没有激活，这里会直接提示，不用你来回切页面。"
+                />
+              </Suspense>
             </div>
           </div>
 
@@ -75,4 +85,8 @@ function ChatSkeleton() {
       <div className="h-16 animate-pulse rounded-[1.5rem] bg-slate-200" />
     </div>
   );
+}
+
+function ChatUpdatePanelSkeleton() {
+  return <div className="h-52 animate-pulse rounded-[1.75rem] bg-slate-200" />;
 }

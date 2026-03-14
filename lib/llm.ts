@@ -8,7 +8,7 @@ import {
 } from '@/lib/llm-provider-health';
 
 const getApiBaseUrl = () => {
-  return process.env.API_BASE_URL || 'https://ttkk.inping.com/v1';
+  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
 };
 
 const normalizeApiKey = (value?: string | null) => {
@@ -28,214 +28,85 @@ const getDefaultModel = () => {
   return process.env.DEFAULT_MODEL || 'auto';
 };
 
-export async function generateFortuneInterpretation(baziData: Record<string, unknown>, timeoutMs: number = 25000) {
+const toModelDisplayName = (model: string) => {
+  if (model === 'gpt-5.2') {
+    return '主分析模型 GPT-5.2';
+  }
+  if (model === 'grok-420-fast') {
+    return '备用模型 Grok 420 Fast';
+  }
+  if (model === 'auto') {
+    return '自动路由模型';
+  }
+  return `模型 ${model}`;
+};
+
+type LlmProgressEvent = {
+  type: 'model-attempt' | 'model-fallback' | 'model-success' | 'model-failed';
+  model: string;
+  nextModel?: string;
+  detail: string;
+};
+
+type PhaseKey = 'structure' | 'narrative';
+
+export async function generateFortuneInterpretation(
+  baziData: Record<string, unknown>,
+  timeoutMs: number = 25000,
+  onProgress?: (event: LlmProgressEvent) => void | Promise<void>
+) {
   const apiKey = getApiKey();
   if (!apiKey) {
-     console.warn("API_KEY is not set. Skip LLM interpretation.");
-     return null;
+    console.warn('API_KEY is not set. Skip LLM interpretation.');
+    return null;
   }
 
   const openai = new OpenAI({
-    apiKey: apiKey,
+    apiKey,
     baseURL: getApiBaseUrl(),
     timeout: timeoutMs,
     maxRetries: 0,
   });
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
   console.log(`[LLM] Starting interpretation with ${timeoutMs}ms timeout...`);
-  
-  const prompt = `
-你是一位精通传统子平八字、滴天髓等命理学，同时又懂得现代心理学和职场发展的顶级AI命理大师。
-请根据以下用户的八字排盘数据，为其生成一份极具深度、同理心且极度专业、"千人千面"的命理解析报告。
-
-【用户排盘数据】
-${JSON.stringify(baziData, null, 2)}
-
-${(baziData as Record<string, unknown>).shenSha ? `【神煞信息】
-${JSON.stringify((baziData as Record<string, unknown>).shenSha, null, 2)}
-神煞是命局中的特殊星曜，请在解析中结合神煞信息给出更精准的判断。` : ''}
-
-${(baziData as Record<string, unknown>).dayun ? `【大运信息】
-${JSON.stringify((baziData as Record<string, unknown>).dayun, null, 2)}
-请结合大运走势，对当前运程和未来趋势给出精准预测。` : ''}
-
-请严格以JSON格式输出，不要包含任何markdown标记（如 \`\`\`json ），直接输出合法的JSON对象。
-JSON结构必须完全符合以下定义：
-{
-  "basic": {
-     // 基本盘面总结，如日主强弱等（字符串）
-  },
-  "pattern": {
-    "type": "格局名称",
-    "description": "对格局的详细且通俗的解释，字数在100字左右",
-    "strength": "strong/medium/weak",
-    "quality": "good/medium/bad"
-  },
-  "fiveElements": {
-    // 必须包含 wood, fire, earth, metal, water 五个键，每个键对应对象：
-    // { "description": "对该五行在命局中作用的专业且易懂的解析", "strength": 数字, "quality": "good/medium/bad/weak/strong" }
-  },
-  "fortune": {
-    "currentDaYun": "当前大运天干地支及详细解析（结合大运信息中的具体数据）",
-    "currentDaYunAge": "当前大运起止年龄",
-    "currentLiuNian": "当前流年名称及简析",
-    "interaction": "大运与流年的互动关系，是否有刑冲合害，对运势的具体影响",
-    "nextYear": "明年运势预测，结合流年天干地支与命局的关系",
-    "shenShaInfluence": "神煞对当前运程的具体影响（如有天乙贵人、文昌等吉神，或羊刃、劫煞等凶神，请具体说明）",
-    "trend": "未来3-5年运势走向总结"
-  },
-  "advice": {
-    "career": {
-      "general": "事业总体建议，字数在100字左右",
-      "specific": ["具体建议1", "具体建议2", "具体建议3"],
-      "timing": "有利时机",
-      "direction": "有利方位",
-      "colors": ["有利颜色1", "有利颜色2"],
-      "avoid": ["避免事项1", "避免事项2"]
-    },
-    "wealth": {
-      // 结构同 career
-      "general": "财富总体建议",
-      "specific": ["具体建议1", "具体建议2"],
-      "timing": "有利时机",
-      "direction": "有利方位",
-      "colors": ["有利颜色1", "有利颜色2"],
-      "avoid": ["避免事项"]
-    },
-    "marriage": {
-      // 结构同 career
-      "general": "婚姻感情总体建议",
-      "specific": ["具体建议1", "具体建议2"],
-      "timing": "有利时机",
-      "direction": "有利方位",
-      "colors": ["有利颜色"],
-      "avoid": ["避免事项"]
-    },
-    "health": {
-      // 结构同 career
-      "general": "健康总体建议",
-      "specific": ["具体建议1", "具体建议2"],
-      "timing": "有利时机",
-      "directions": ["有利方位1", "有利方位2"],
-      "colors": ["有利颜色"],
-      "avoid": ["避免事项"]
-    },
-    "directions": ["所有有利方位汇总"],
-    "colors": ["所有有利颜色汇总"],
-    "timing": ["所有有利时机汇总"]
-  },
-  "evidence": {
-    "celebrities": [
-      {
-         "name": "一位命局相似的历史或现代名人（必须合理）",
-         "bazi": ["年柱", "月柱", "日柱", "时柱"],
-         "similar": ["相似点1", "相似点2"],
-         "lesson": "从TA身上能学到什么"
-      }
-    ]
-  },
-  "analysis": {
-    "opening": "一句极具大师风范的开场白（如：'细观您的八字，命理之象，历历在目。'）",
-    "explanation": "一段200字左右的综合深度解析，将格局、五行、十神融会贯通，给用户指出人生最核心的破局点。"
-  }
-}
-`;
 
   try {
     const baseChain = getModelFallbackChain(getDefaultModel());
-    const plan = getDynamicModelExecutionPlan(baseChain, 'report');
-    const modelCandidates = plan.orderedModels;
-    const planSummary = summarizeModelExecutionPlan(plan);
-    const attemptTimeouts = computeAttemptTimeouts(timeoutMs, modelCandidates.length);
     const deadlineAt = Date.now() + timeoutMs;
-    console.log(
-      `[LLM] Calling API at ${getApiBaseUrl()} with planner ${planSummary.label} ` +
-      `(base=${formatModelAttemptLabel(baseChain)})`
-    );
+    const structureBudgetMs = Math.max(2600, Math.floor(timeoutMs * 0.68));
 
-    let lastError: unknown = null;
+    const structureDraft = await executeReportPhase({
+      openai,
+      phase: 'structure',
+      baseChain,
+      timeoutMs: structureBudgetMs,
+      deadlineAt,
+      prompt: buildStructuredPrompt(baziData),
+      onProgress,
+    });
 
-    for (const [index, model] of modelCandidates.entries()) {
-      const remainingBudget = deadlineAt - Date.now();
-      if (remainingBudget < 900) {
-        break;
-      }
-
-      const attemptController = new AbortController();
-      const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
-      const attemptTimeoutId = setTimeout(() => attemptController.abort(), attemptTimeoutMs);
-      const startedAt = Date.now();
-      try {
-        const completion = await openai.chat.completions.create({
-          model,
-          messages: [
-            { role: 'system', content: '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。你必须充分利用提供的神煞信息和大运数据进行精准解析，不得忽略任何神煞的吉凶影响。只输出合法的JSON，不含任何markdown标记。' },
-            { role: 'user', content: prompt }
-          ],
-          temperature: 0.7,
-        }, {
-          signal: attemptController.signal,
-          timeout: attemptTimeoutMs,
-          maxRetries: 0,
-        });
-
-        const responseText = completion.choices[0].message.content;
-        if (!responseText) {
-          lastError = new Error(`EMPTY_CONTENT:${model}`);
-          console.error(`[LLM] Model ${model} returned empty content`);
-          recordModelAttempt({
-            model,
-            scope: 'report',
-            success: false,
-            latencyMs: Date.now() - startedAt,
-            errorType: 'empty',
-            traceLabel: 'report:main',
-          });
-          continue;
-        }
-
-        let cleanedText = responseText.trim();
-        const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          cleanedText = jsonMatch[0];
-        }
-
-        const parsed = JSON.parse(cleanedText);
-        recordModelAttempt({
-          model,
-          scope: 'report',
-          success: true,
-          latencyMs: Date.now() - startedAt,
-          traceLabel: 'report:main',
-        });
-        if (model !== modelCandidates[0]) {
-          console.warn(`[LLM] Model fallback succeeded with ${model}`);
-        }
-        return parsed;
-      } catch (error) {
-        lastError = error;
-        const message = error instanceof Error ? error.message : String(error);
-        recordModelAttempt({
-          model,
-          scope: 'report',
-          success: false,
-          latencyMs: Date.now() - startedAt,
-          errorType: error instanceof Error ? error.name || 'error' : 'error',
-          traceLabel: 'report:main',
-        });
-        console.error(`[LLM] Model ${model} failed: ${message}`);
-      } finally {
-        clearTimeout(attemptTimeoutId);
-      }
+    if (!structureDraft) {
+      return null;
     }
 
-    console.error(`[LLM] All model attempts failed: ${formatModelAttemptLabel(modelCandidates)}`);
-    if (lastError) return null;
-    return null;
+    const remainingBudget = deadlineAt - Date.now();
+    if (remainingBudget < 1400) {
+      return structureDraft;
+    }
 
+    const narrativePatch = await executeReportPhase({
+      openai,
+      phase: 'narrative',
+      baseChain,
+      timeoutMs: remainingBudget,
+      deadlineAt,
+      prompt: buildNarrativePatchPrompt(baziData, structureDraft),
+      onProgress,
+    });
+
+    return narrativePatch
+      ? mergeInterpretation(structureDraft, narrativePatch)
+      : structureDraft;
   } catch (error) {
     if (error instanceof Error) {
       if (
@@ -243,15 +114,394 @@ JSON结构必须完全符合以下定义：
         error.message.includes('timeout') ||
         error.message.includes('timed out')
       ) {
-        console.error("[LLM] Request timeout - API took too long to respond");
+        console.error('[LLM] Request timeout - API took too long to respond');
       } else {
-        console.error("[LLM] Generation Error:", error.message);
+        console.error('[LLM] Generation Error:', error.message);
       }
     } else {
-      console.error("[LLM] Generation Error:", error);
+      console.error('[LLM] Generation Error:', error);
     }
     return null;
-  } finally {
-    clearTimeout(timeoutId);
   }
+}
+
+async function executeReportPhase(params: {
+  openai: OpenAI;
+  phase: PhaseKey;
+  baseChain: string[];
+  timeoutMs: number;
+  deadlineAt: number;
+  prompt: string;
+  onProgress?: (event: LlmProgressEvent) => void | Promise<void>;
+}) {
+  const plan = getDynamicModelExecutionPlan(params.baseChain, 'report');
+  const modelCandidates = plan.orderedModels;
+  const planSummary = summarizeModelExecutionPlan(plan);
+  const attemptTimeouts = computeAttemptTimeouts(params.timeoutMs, modelCandidates.length);
+  const phaseLabel = params.phase === 'structure' ? '结构化解释草案' : '正文补强与建议完善';
+  const traceLabel = `report:${params.phase}`;
+
+  console.log(
+    `[LLM] ${traceLabel} calling API at ${getApiBaseUrl()} with planner ${planSummary.label} ` +
+    `(base=${formatModelAttemptLabel(params.baseChain)})`
+  );
+
+  let lastError: unknown = null;
+
+  for (const [index, model] of modelCandidates.entries()) {
+    const remainingBudget = Math.min(params.timeoutMs, params.deadlineAt - Date.now());
+    if (remainingBudget < 900) {
+      break;
+    }
+
+    await params.onProgress?.({
+      type: 'model-attempt',
+      model,
+      detail: `${toModelDisplayName(model)} 正在生成${phaseLabel}。`,
+    });
+
+    const attemptController = new AbortController();
+    const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
+    const attemptTimeoutId = setTimeout(() => attemptController.abort(), attemptTimeoutMs);
+    const startedAt = Date.now();
+
+    try {
+      const completion = await params.openai.chat.completions.create({
+        model,
+        messages: [
+          { role: 'system', content: buildPhaseSystemPrompt(params.phase) },
+          { role: 'user', content: params.prompt },
+        ],
+        temperature: params.phase === 'structure' ? 0.45 : 0.55,
+      }, {
+        signal: attemptController.signal,
+        timeout: attemptTimeoutMs,
+        maxRetries: 0,
+      });
+
+      const responseText = completion.choices?.[0]?.message?.content?.trim();
+      if (!responseText) {
+        lastError = new Error(`EMPTY_CONTENT:${model}`);
+        recordModelAttempt({
+          model,
+          scope: 'report',
+          success: false,
+          latencyMs: Date.now() - startedAt,
+          errorType: 'empty',
+          traceLabel,
+        });
+        continue;
+      }
+
+      const parsed = parseJsonContent<Record<string, unknown>>(responseText);
+      if (!parsed) {
+        lastError = new Error(`JSON_PARSE_FAILED:${model}`);
+        recordModelAttempt({
+          model,
+          scope: 'report',
+          success: false,
+          latencyMs: Date.now() - startedAt,
+          errorType: 'parse',
+          traceLabel,
+        });
+        continue;
+      }
+
+      recordModelAttempt({
+        model,
+        scope: 'report',
+        success: true,
+        latencyMs: Date.now() - startedAt,
+        traceLabel,
+      });
+      if (model !== modelCandidates[0]) {
+        console.warn(`[LLM] Model fallback succeeded with ${model} for ${params.phase}`);
+      }
+
+      await params.onProgress?.({
+        type: 'model-success',
+        model,
+        detail: params.phase === 'structure'
+          ? `${toModelDisplayName(model)} 已完成结构草案，正在争取补强正文与建议。`
+          : `${toModelDisplayName(model)} 已完成正文增强。`,
+      });
+
+      return parsed;
+    } catch (error) {
+      lastError = error;
+      const message = error instanceof Error ? error.message : String(error);
+      recordModelAttempt({
+        model,
+        scope: 'report',
+        success: false,
+        latencyMs: Date.now() - startedAt,
+        errorType: error instanceof Error ? error.name || 'error' : 'error',
+        traceLabel,
+      });
+      console.error(`[LLM] ${traceLabel} model ${model} failed: ${message}`);
+      const nextModel = modelCandidates[index + 1];
+      await params.onProgress?.({
+        type: nextModel ? 'model-fallback' : 'model-failed',
+        model,
+        nextModel,
+        detail: nextModel
+          ? `${toModelDisplayName(model)} 在${phaseLabel}阶段响应较慢或异常，正在切换到 ${toModelDisplayName(nextModel)}。`
+          : `${toModelDisplayName(model)} 在${phaseLabel}阶段暂未稳定返回，当前没有更多可用模型可切换。`,
+      });
+    } finally {
+      clearTimeout(attemptTimeoutId);
+    }
+  }
+
+  console.error(`[LLM] ${traceLabel} all model attempts failed: ${formatModelAttemptLabel(modelCandidates)}`);
+  if (lastError) return null;
+  return null;
+}
+
+function buildPhaseSystemPrompt(phase: PhaseKey) {
+  if (phase === 'structure') {
+    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。先输出完整、克制、结构稳定的 JSON 草案，只输出合法 JSON，不要 markdown。';
+  }
+
+  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案只补强正文、趋势解释和行动建议，只输出合法 JSON，不要 markdown。';
+}
+
+function buildStructuredPrompt(baziData: Record<string, unknown>) {
+  return `
+你需要先生成一份稳定的结构化命理报告草案。目标是字段完整、可解析、可用于后续补强。
+
+【用户排盘数据】
+${JSON.stringify(baziData, null, 2)}
+
+${(baziData as Record<string, unknown>).shenSha ? `【神煞信息】
+${JSON.stringify((baziData as Record<string, unknown>).shenSha, null, 2)}` : ''}
+
+${(baziData as Record<string, unknown>).dayun ? `【大运信息】
+${JSON.stringify((baziData as Record<string, unknown>).dayun, null, 2)}` : ''}
+
+要求：
+1. 输出合法 JSON，不要 markdown。
+2. 先保证字段完整和判断正确，再追求文采。
+3. 文本保持中等长度，减少冗长，方便后续第二阶段补强。
+4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
+
+JSON 结构必须完整包含：
+{
+  "basic": {
+    "summary": "一句基础盘面总结"
+  },
+  "pattern": {
+    "type": "格局名称",
+    "description": "80字以内的格局解释",
+    "strength": "strong/medium/weak",
+    "quality": "good/medium/bad"
+  },
+  "fiveElements": {
+    "wood": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
+    "fire": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
+    "earth": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
+    "metal": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
+    "water": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" }
+  },
+  "fortune": {
+    "currentDaYun": "当前大运解释",
+    "currentDaYunAge": "年龄范围",
+    "currentLiuNian": "当前流年解释",
+    "interaction": "大运流年互动",
+    "nextYear": "明年趋势",
+    "shenShaInfluence": "神煞影响",
+    "trend": "未来3-5年总结"
+  },
+  "advice": {
+    "career": {
+      "general": "事业总建议",
+      "specific": ["建议1", "建议2"],
+      "timing": "时机",
+      "direction": "方位",
+      "colors": ["颜色1"],
+      "avoid": ["避免事项1"]
+    },
+    "wealth": {
+      "general": "财富总建议",
+      "specific": ["建议1", "建议2"],
+      "timing": "时机",
+      "direction": "方位",
+      "colors": ["颜色1"],
+      "avoid": ["避免事项1"]
+    },
+    "marriage": {
+      "general": "关系总建议",
+      "specific": ["建议1", "建议2"],
+      "timing": "时机",
+      "direction": "方位",
+      "colors": ["颜色1"],
+      "avoid": ["避免事项1"]
+    },
+    "health": {
+      "general": "健康总建议",
+      "specific": ["建议1", "建议2"],
+      "timing": "时机",
+      "directions": ["方位1"],
+      "colors": ["颜色1"],
+      "avoid": ["避免事项1"]
+    },
+    "directions": ["汇总方位"],
+    "colors": ["汇总颜色"],
+    "timing": ["汇总时机"]
+  },
+  "evidence": {
+    "celebrities": [
+      {
+        "name": "相似名人",
+        "bazi": ["年柱", "月柱", "日柱", "时柱"],
+        "similar": ["相似点1"],
+        "lesson": "启发"
+      }
+    ]
+  },
+  "analysis": {
+    "opening": "开场句",
+    "explanation": "150字左右的综合解释"
+  }
+}
+`;
+}
+
+function buildNarrativePatchPrompt(
+  baziData: Record<string, unknown>,
+  draft: Record<string, unknown>
+) {
+  return `
+你现在不是重写整份报告，而是在已有结构化草案上做第二阶段补强。
+
+【用户排盘数据】
+${JSON.stringify(baziData, null, 2)}
+
+【当前结构草案】
+${JSON.stringify(draft, null, 2)}
+
+要求：
+1. 只补强叙事深度、行动建议和趋势说明，不要推翻已有结构。
+2. 必须结合大运、流年、神煞、关键结构来写，不要空话。
+3. explanation 控制在 260-420 字，opening 更有大师感但不要浮夸。
+4. career/wealth/marriage/health 的 general 和 specific 要更落地，避免重复。
+5. 输出合法 JSON，不要 markdown。
+
+只输出需要覆盖的补丁字段：
+{
+  "fortune": {
+    "interaction": "补强后的互动解释",
+    "nextYear": "补强后的明年趋势",
+    "trend": "补强后的未来3-5年趋势",
+    "shenShaInfluence": "补强后的神煞影响"
+  },
+  "advice": {
+    "career": {
+      "general": "补强后的事业建议",
+      "specific": ["更具体建议1", "更具体建议2", "更具体建议3"]
+    },
+    "wealth": {
+      "general": "补强后的财富建议",
+      "specific": ["更具体建议1", "更具体建议2", "更具体建议3"]
+    },
+    "marriage": {
+      "general": "补强后的关系建议",
+      "specific": ["更具体建议1", "更具体建议2"]
+    },
+    "health": {
+      "general": "补强后的健康建议",
+      "specific": ["更具体建议1", "更具体建议2"]
+    }
+  },
+  "analysis": {
+    "opening": "补强后的开场白",
+    "explanation": "补强后的综合解释"
+  },
+  "evidence": {
+    "celebrities": [
+      {
+        "name": "更合理的相似名人",
+        "bazi": ["年柱", "月柱", "日柱", "时柱"],
+        "similar": ["相似点1", "相似点2"],
+        "lesson": "可借鉴的经验"
+      }
+    ]
+  }
+}
+`;
+}
+
+function parseJsonContent<T>(content: string): T | null {
+  const trimmed = content.trim();
+  const fenceMatch = trimmed.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidates = [
+    trimmed,
+    stripMarkdownFence(trimmed),
+    fenceMatch?.[1]?.trim(),
+  ].filter((item): item is string => !!item);
+
+  const firstBraceIndex = trimmed.indexOf('{');
+  const lastBraceIndex = trimmed.lastIndexOf('}');
+  if (firstBraceIndex >= 0 && lastBraceIndex > firstBraceIndex) {
+    candidates.push(trimmed.slice(firstBraceIndex, lastBraceIndex + 1));
+  }
+
+  for (const candidate of [...new Set(candidates)]) {
+    try {
+      return JSON.parse(candidate) as T;
+    } catch {}
+
+    try {
+      return JSON.parse(repairJsonCandidate(candidate)) as T;
+    } catch {}
+  }
+
+  return null;
+}
+
+function stripMarkdownFence(value: string) {
+  return value
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+}
+
+function repairJsonCandidate(value: string) {
+  return value
+    .replace(/[“”]/g, '"')
+    .replace(/[‘’]/g, '\'')
+    .replace(/,\s*([}\]])/g, '$1')
+    .trim();
+}
+
+function mergeInterpretation(
+  baseValue: Record<string, unknown>,
+  patchValue: Record<string, unknown>
+): Record<string, unknown> {
+  const result: Record<string, unknown> = { ...baseValue };
+
+  for (const [key, patch] of Object.entries(patchValue)) {
+    const base = result[key];
+
+    if (Array.isArray(patch)) {
+      result[key] = patch.length > 0 ? patch : Array.isArray(base) ? base : patch;
+      continue;
+    }
+
+    if (isPlainObject(base) && isPlainObject(patch)) {
+      result[key] = mergeInterpretation(
+        base as Record<string, unknown>,
+        patch as Record<string, unknown>
+      );
+      continue;
+    }
+
+    result[key] = patch;
+  }
+
+  return result;
+}
+
+function isPlainObject(value: unknown) {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

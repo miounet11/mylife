@@ -1,6 +1,7 @@
 import { analyzeFortune } from '@/lib/fortune-engine';
 import { runAgenticPipeline } from '@/lib/agentic-report';
 import { generateFortuneInterpretation } from '@/lib/llm';
+import { buildReportQualityAudit } from '@/lib/report-quality';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 
@@ -19,6 +20,7 @@ export const ENGINE_BUILD_VERSIONS = {
 } as const;
 
 type PipelineSource = 'analyze' | 'upgrade';
+type ReportStage = 'engine' | 'llm' | 'agentic' | 'merge';
 
 export async function generateVersionedReport(params: {
   name: string;
@@ -30,7 +32,17 @@ export async function generateVersionedReport(params: {
   sect?: 1 | 2;
   source: PipelineSource;
   upgradedFromVersion?: string;
+  onProgress?: (event: {
+    stage: ReportStage;
+    status: 'started' | 'completed';
+    detail: string;
+  }) => void | Promise<void>;
 }) {
+  await params.onProgress?.({
+    stage: 'engine',
+    status: 'started',
+    detail: '结构化命理引擎开始计算四柱、五行、十神与大运底座。',
+  });
   const baseResult = analyzeFortune(
     params.name,
     params.birthDate,
@@ -40,9 +52,30 @@ export async function generateVersionedReport(params: {
     params.gender,
     { sect: params.sect || 2 }
   );
+  await params.onProgress?.({
+    stage: 'engine',
+    status: 'completed',
+    detail: '基础命盘与运势结构已完成，开始进入增强分析层。',
+  });
 
+  await params.onProgress?.({
+    stage: 'llm',
+    status: 'started',
+    detail: '正在调用语言模型增强解释层，补充更完整的自然语言报告。',
+  });
+  await params.onProgress?.({
+    stage: 'agentic',
+    status: 'started',
+    detail: '并发专家 Agent 已启动，正在整合事业、关系、健康与策略视角。',
+  });
   const [llmEnhancement, agentic] = await Promise.all([
-    enhanceWithLLM(baseResult as unknown as Record<string, unknown>),
+    enhanceWithLLM(baseResult as unknown as Record<string, unknown>, async (event) => {
+      await params.onProgress?.({
+        stage: 'llm',
+        status: 'started',
+        detail: event.detail,
+      });
+    }),
     runAgenticPipeline({
       enabled: ENABLE_AGENTIC_PIPELINE,
       groundTruth: {
@@ -58,15 +91,46 @@ export async function generateVersionedReport(params: {
           fortune: baseResult.fortune,
         },
       },
+      onProgress: async (event) => {
+        await params.onProgress?.({
+          stage: 'agentic',
+          status: 'started',
+          detail: event.detail,
+        });
+      },
     }),
   ]);
+  await params.onProgress?.({
+    stage: 'llm',
+    status: 'completed',
+    detail: llmEnhancement.llmUsed
+      ? '语言模型增强已完成，正文将使用更完整的解释与建议。'
+      : '语言模型未稳定返回，当前将回退为结构化引擎与专家层整合输出。',
+  });
+  await params.onProgress?.({
+    stage: 'agentic',
+    status: 'completed',
+    detail: agentic.used || ((agentic.orchestration.successRate || 0) > 0)
+      ? '并发 Agent 已返回有效结果，正在做一致性校验与融合。'
+      : '并发 Agent 已执行，但本次主要采用 deterministic 专家层与校验结果。',
+  });
   const { llmInterpretation, llmUsed } = llmEnhancement;
 
+  await params.onProgress?.({
+    stage: 'merge',
+    status: 'started',
+    detail: '正在整合引擎、LLM、Agent 与人生 K 线结果，准备最终报告。',
+  });
   const merged = mergeLLMResult(baseResult, llmInterpretation, {
     llmUsed,
     source: params.source,
     upgradedFromVersion: params.upgradedFromVersion,
     agentic,
+  });
+  await params.onProgress?.({
+    stage: 'merge',
+    status: 'completed',
+    detail: '最终报告已完成整合，可以进入结果页。',
   });
 
   return {
@@ -91,12 +155,20 @@ export async function regenerateReportFromRecord(record: FortuneRecord) {
   });
 }
 
-async function enhanceWithLLM(baseResult: Record<string, unknown>) {
+async function enhanceWithLLM(
+  baseResult: Record<string, unknown>,
+  onProgress?: (event: {
+    type: 'model-attempt' | 'model-fallback' | 'model-success' | 'model-failed';
+    model: string;
+    nextModel?: string;
+    detail: string;
+  }) => void | Promise<void>
+) {
   let routeTimeoutId: ReturnType<typeof setTimeout> | undefined;
 
   try {
     const llmInterpretation = await Promise.race([
-      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS),
+      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS, onProgress),
       new Promise<null>((resolve) => {
         routeTimeoutId = setTimeout(() => resolve(null), ANALYZE_LLM_BUDGET_MS);
       }),
@@ -252,6 +324,7 @@ function mergeLLMResult(
     strategySummary,
     temporalSummary,
   ].filter(Boolean).join('\n\n');
+  merged.analysis.qualityAudit = buildReportQualityAudit(merged as FortuneAnalysisResult);
 
   return merged;
 }

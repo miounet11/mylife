@@ -56,6 +56,16 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
       }
 
       setSavedKeys((current) => [...current, item.key]);
+      void trackClientEvent({
+        eventName: 'report_event_saved_from_result',
+        page: `/result/${reportId}`,
+        meta: {
+          reportId,
+          suggestionKey: item.key,
+          suggestionType: item.type,
+          suggestionSource: item.source,
+        },
+      });
     } catch {
       setError('网络异常，保存事件失败');
     } finally {

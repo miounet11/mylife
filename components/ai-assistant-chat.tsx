@@ -3,8 +3,9 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Copy, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import { buildChatEventDraft } from '@/lib/chat-context';
+import { getChatIntentPreset } from '@/lib/chat-intent';
 import ChatMarkdown from '@/components/chat-markdown';
 
 interface ChatMessage {
@@ -13,6 +14,11 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   llmUsed?: boolean;
+  edited?: boolean;
+  regenerated?: boolean;
+  reportId?: string | null;
+  eventId?: string | null;
+  responseToQuestionId?: string | null;
 }
 
 interface ChatContextReport {
@@ -86,6 +92,7 @@ export default function AIAssistantChat() {
   const searchParams = useSearchParams();
   const reportId = searchParams.get('reportId') || '';
   const eventId = searchParams.get('eventId') || '';
+  const intent = searchParams.get('intent') || '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [context, setContext] = useState<ChatContextState | null>(null);
   const [input, setInput] = useState('');
@@ -97,9 +104,18 @@ export default function AIAssistantChat() {
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editingContent, setEditingContent] = useState('');
   const [messageActionKey, setMessageActionKey] = useState<string | null>(null);
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const [isNearBottom, setIsNearBottom] = useState(true);
   const messagesScrollerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialScrollDoneRef = useRef(false);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
+  const intentPreset = getIntentPreset(intent);
+  const scopePayload = {
+    reportId: reportId || context?.report?.id || undefined,
+    eventId: eventId || context?.focusedEvent?.id || undefined,
+    intent: intent || undefined,
+  };
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const node = messagesScrollerRef.current;
@@ -116,6 +132,7 @@ export default function AIAssistantChat() {
       const queryParams = new URLSearchParams();
       if (reportId) queryParams.set('reportId', reportId);
       if (eventId) queryParams.set('eventId', eventId);
+      if (intent) queryParams.set('intent', intent);
       const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
       const response = await fetch(`/api/chat${query}`, { cache: 'no-store' });
       const data = await response.json();
@@ -130,6 +147,11 @@ export default function AIAssistantChat() {
         content: item.content || '',
         timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
         llmUsed: item.role === 'assistant' ? !!item.llmUsed : undefined,
+        edited: !!item.edited,
+        regenerated: !!item.regenerated,
+        reportId: item.reportId || null,
+        eventId: item.eventId || null,
+        responseToQuestionId: item.responseToQuestionId || null,
       }));
 
       setMessages(mapped);
@@ -153,7 +175,25 @@ export default function AIAssistantChat() {
   }, [reportId, eventId]);
 
   useEffect(() => {
+    const node = messagesScrollerRef.current;
+    if (!node) return undefined;
+
+    const handleScroll = () => {
+      const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
+      setIsNearBottom(distanceToBottom <= 120);
+    };
+
+    handleScroll();
+    node.addEventListener('scroll', handleScroll);
+
+    return () => {
+      node.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
+
+  useEffect(() => {
     if (loadingHistory) return;
+    if (initialScrollDoneRef.current && !isNearBottom && !isTyping) return;
     const behavior: ScrollBehavior = initialScrollDoneRef.current ? 'smooth' : 'auto';
     const timer = window.requestAnimationFrame(() => {
       scrollToBottom(behavior);
@@ -161,7 +201,28 @@ export default function AIAssistantChat() {
     });
 
     return () => window.cancelAnimationFrame(timer);
-  }, [messages, isTyping, loadingHistory]);
+  }, [messages, isTyping, loadingHistory, isNearBottom]);
+
+  useEffect(() => {
+    const node = inputRef.current;
+    if (!node) return;
+    node.style.height = '0px';
+    node.style.height = `${Math.min(node.scrollHeight, 200)}px`;
+  }, [input]);
+
+  useEffect(() => {
+    if (!intentPreset || input.trim() || messages.length > 0) {
+      return;
+    }
+
+    setInput(intentPreset.prefillQuestion);
+  }, [intentPreset, input, messages.length]);
+
+  useEffect(() => {
+    if (!copiedMessageId) return undefined;
+    const timer = window.setTimeout(() => setCopiedMessageId(null), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copiedMessageId]);
 
   const trackFollowupClick = (question: string) => {
     void fetch('/api/analytics/track', {
@@ -174,6 +235,7 @@ export default function AIAssistantChat() {
           question,
           reportId: context?.report?.id || reportId || null,
           eventId: context?.focusedEvent?.id || eventId || null,
+          intent: intent || null,
         },
       }),
     }).catch(() => undefined);
@@ -227,8 +289,7 @@ export default function AIAssistantChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question,
-          reportId: reportId || context?.report?.id || undefined,
-          eventId: eventId || context?.focusedEvent?.id || undefined,
+          ...scopePayload,
         }),
       });
       const data = await response.json();
@@ -253,6 +314,9 @@ export default function AIAssistantChat() {
 
   const handleDeleteMessage = async (messageId: string) => {
     if (isTyping || loadingHistory) return;
+    if (!window.confirm('删除这条消息后，这条消息之后的对话也会一并移除，确认继续吗？')) {
+      return;
+    }
     setMessageActionKey(`delete:${messageId}`);
     setError('');
     setEditingMessageId(null);
@@ -263,8 +327,7 @@ export default function AIAssistantChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messageId,
-          reportId: reportId || context?.report?.id || undefined,
-          eventId: eventId || context?.focusedEvent?.id || undefined,
+          ...scopePayload,
         }),
       });
       const data = await response.json();
@@ -282,6 +345,9 @@ export default function AIAssistantChat() {
 
   const handleRegenerateMessage = async (messageId: string) => {
     if (isTyping || loadingHistory) return;
+    if (!window.confirm('重新生成会覆盖这条回答之后的对话分支，确认继续吗？')) {
+      return;
+    }
     setMessageActionKey(`regenerate:${messageId}`);
     setIsTyping(true);
     setError('');
@@ -294,8 +360,7 @@ export default function AIAssistantChat() {
         body: JSON.stringify({
           action: 'regenerate',
           messageId,
-          reportId: reportId || context?.report?.id || undefined,
-          eventId: eventId || context?.focusedEvent?.id || undefined,
+          ...scopePayload,
         }),
       });
       const data = await response.json();
@@ -334,6 +399,10 @@ export default function AIAssistantChat() {
       return;
     }
 
+    if (!window.confirm('重新提交后，这条问题之后的回答会按新问题重算，后续对话分支也会被替换，确认继续吗？')) {
+      return;
+    }
+
     setMessageActionKey(`edit:${messageId}`);
     setIsTyping(true);
     setError('');
@@ -346,8 +415,7 @@ export default function AIAssistantChat() {
           action: 'edit',
           messageId,
           content,
-          reportId: reportId || context?.report?.id || undefined,
-          eventId: eventId || context?.focusedEvent?.id || undefined,
+          ...scopePayload,
         }),
       });
       const data = await response.json();
@@ -416,6 +484,15 @@ export default function AIAssistantChat() {
     });
   };
 
+  const handleCopyMessage = async (messageId: string, content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      setCopiedMessageId(messageId);
+    } catch {
+      setError('复制失败，请稍后再试');
+    }
+  };
+
   const quickQuestions = context?.suggestedPrompts?.length
     ? context.suggestedPrompts
     : [
@@ -424,6 +501,9 @@ export default function AIAssistantChat() {
         '我该如何判断一段关系是否值得推进？',
         '今年最需要规避的风险是什么？',
       ];
+  const visibleQuickQuestions = intentPreset
+    ? Array.from(new Set([...intentPreset.questions, ...quickQuestions])).slice(0, 4)
+    : quickQuestions;
 
   return (
     <div className="flex h-full flex-col bg-transparent">
@@ -434,82 +514,106 @@ export default function AIAssistantChat() {
           </div>
           <div>
             <h2 className="font-semibold text-[color:var(--ink)]">AI 命理助手</h2>
-            <p className="text-sm text-[color:var(--muted)]">看完报告后继续问，把重点问题说清楚。</p>
+            <p className="text-sm text-[color:var(--muted)]">
+              {intentPreset ? `当前已进入${intentPreset.entryLabel}，建议直接围绕一件具体事情发问。` : '看完报告后继续问，把重点问题说清楚。'}
+            </p>
           </div>
         </div>
+
+        {intentPreset ? (
+          <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/82 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+            <span className="font-semibold text-[color:var(--accent-strong)]">{intentPreset.entryLabel}</span>
+            {` · ${intentPreset.helper}`}
+          </div>
+        ) : null}
       </div>
 
-      <div ref={messagesScrollerRef} className="flex-1 space-y-4 overflow-y-auto p-5">
-        {context && (
-          <ContextCard
-            context={context}
-            onPromptClick={handlePromptClick}
-            onSaveSuggestedEvent={handleSaveSuggestedEvent}
-            disabled={isTyping || loadingHistory}
-            savingEventKey={savingEventKey}
-            savedEventKeys={savedEventKeys}
-          />
-        )}
+      <div className="relative flex-1">
+        <div ref={messagesScrollerRef} className="flex h-full flex-col space-y-4 overflow-y-auto p-5">
+          {context && (
+            <ContextCard
+              context={context}
+              onPromptClick={handlePromptClick}
+              onSaveSuggestedEvent={handleSaveSuggestedEvent}
+              disabled={isTyping || loadingHistory}
+              savingEventKey={savingEventKey}
+              savedEventKeys={savedEventKeys}
+            />
+          )}
 
-        {error && (
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-            {error}
-          </div>
-        )}
+          {error && (
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {error}
+            </div>
+          )}
 
-        {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
+          {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
-        {!loadingHistory && messages.length === 0 && (
-          <div className="space-y-6 rounded-[1.75rem] bg-white/75 p-6">
-            <div>
-              <div className="section-label">
-                <Sparkles className="h-3.5 w-3.5" />
-                推荐追问
+          {!loadingHistory && messages.length === 0 && (
+            <div className="space-y-6 rounded-[1.75rem] bg-white/75 p-6">
+              <div>
+                <div className="section-label">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  推荐追问
+                </div>
+                <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先问一个最具体的问题</h3>
+                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  用报告里的一个板块、一个月份或一个现实事件作为锚点，回答会明显更有用。
+                </p>
               </div>
-              <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先问一个最具体的问题</h3>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                用报告里的一个板块、一个月份或一个现实事件作为锚点，回答会明显更有用。
-              </p>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                {visibleQuickQuestions.map((question) => (
+                  <QuickQuestionButton
+                    key={question}
+                    question={question}
+                    onClick={() => handlePromptClick(question)}
+                    disabled={isTyping || loadingHistory}
+                  />
+                ))}
+              </div>
             </div>
+          )}
 
-            <div className="grid gap-3 md:grid-cols-2">
-              {quickQuestions.map((question) => (
-                <QuickQuestionButton
-                  key={question}
-                  question={question}
-                  onClick={() => handlePromptClick(question)}
-                  disabled={isTyping || loadingHistory}
-                />
-              ))}
+          {messages.map((message, index) => (
+            <MessageBubble
+              key={message.id}
+              message={message}
+              previousUserQuestion={findPreviousUserQuestion(messages, index)}
+              onSaveEvent={handleSaveMessageEvent}
+              onDelete={handleDeleteMessage}
+              onRegenerate={handleRegenerateMessage}
+              onStartEdit={handleStartEdit}
+              onCancelEdit={handleCancelEdit}
+              onSubmitEdit={handleSubmitEdit}
+              isEditing={editingMessageId === message.id}
+              editingContent={editingContent}
+              onEditingContentChange={setEditingContent}
+              isSaving={savingEventKey === `message:${message.id}`}
+              isSaved={savedEventKeys.includes(`message:${message.id}`)}
+              isActing={messageActionKey === `delete:${message.id}` || messageActionKey === `regenerate:${message.id}` || messageActionKey === `edit:${message.id}`}
+              onCopy={handleCopyMessage}
+              copied={copiedMessageId === message.id}
+            />
+          ))}
+
+          {isTyping && (
+            <div className="flex justify-start">
+              <div className="rounded-[1.5rem] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
-        {messages.map((message, index) => (
-          <MessageBubble
-            key={message.id}
-            message={message}
-            previousUserQuestion={findPreviousUserQuestion(messages, index)}
-            onSaveEvent={handleSaveMessageEvent}
-            onDelete={handleDeleteMessage}
-            onRegenerate={handleRegenerateMessage}
-            onStartEdit={handleStartEdit}
-            onCancelEdit={handleCancelEdit}
-            onSubmitEdit={handleSubmitEdit}
-            isEditing={editingMessageId === message.id}
-            editingContent={editingContent}
-            onEditingContentChange={setEditingContent}
-            isSaving={savingEventKey === `message:${message.id}`}
-            isSaved={savedEventKeys.includes(`message:${message.id}`)}
-            isActing={messageActionKey === `delete:${message.id}` || messageActionKey === `regenerate:${message.id}` || messageActionKey === `edit:${message.id}`}
-          />
-        ))}
-
-        {isTyping && (
-          <div className="flex justify-start">
-            <div className="rounded-[1.5rem] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
-          </div>
-        )}
+        {!isNearBottom && messages.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => scrollToBottom('smooth')}
+            className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white/95 px-4 py-2 text-sm font-semibold text-[color:var(--ink)] shadow-[0_18px_36px_rgba(23,32,51,0.14)]"
+          >
+            <ArrowDown className="h-4 w-4" />
+            回到最新消息
+          </button>
+        ) : null}
       </div>
 
       <div className="border-t border-white/60 bg-white/70 p-5">
@@ -522,13 +626,23 @@ export default function AIAssistantChat() {
         >
           <div className="flex-1">
             <textarea
+              ref={inputRef}
               value={input}
               onChange={(event) => setInput(event.target.value)}
-              placeholder="输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”"
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' && !event.shiftKey) {
+                  event.preventDefault();
+                  if (input.trim() && !isTyping) {
+                    void sendQuestion(input);
+                  }
+                }
+              }}
+              placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
               rows={2}
-              className="w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+              className="min-h-[56px] w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
               disabled={isTyping}
             />
+            <div className="mt-2 px-1 text-xs text-[color:var(--muted)]">`Enter` 发送，`Shift + Enter` 换行。建议一次只问一个具体问题。</div>
           </div>
           <button
             type="submit"
@@ -622,7 +736,7 @@ function ContextCard({
         <div className="rounded-[1.5rem] bg-slate-50 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">推荐追问</div>
           <div className="mt-3 grid gap-3">
-            {context.suggestedPrompts.slice(0, 3).map((question) => (
+            {(intentPreset ? Array.from(new Set([...intentPreset.questions, ...context.suggestedPrompts])) : context.suggestedPrompts).slice(0, 3).map((question) => (
               <QuickQuestionButton
                 key={question}
                 question={question}
@@ -709,6 +823,29 @@ function ContextCard({
   );
 }
 
+type IntentPreset = {
+  entryLabel: string;
+  helper: string;
+  placeholder: string;
+  prefillQuestion: string;
+  questions: string[];
+};
+
+function getIntentPreset(intent: string): IntentPreset | null {
+  const preset = getChatIntentPreset(intent);
+  if (!preset) {
+    return null;
+  }
+
+  return {
+    entryLabel: preset.entryLabel,
+    helper: preset.helper,
+    placeholder: preset.placeholder,
+    prefillQuestion: preset.prefillQuestion,
+    questions: preset.questions,
+  };
+}
+
 function MessageBubble({
   message,
   previousUserQuestion,
@@ -724,6 +861,8 @@ function MessageBubble({
   isSaving,
   isSaved,
   isActing,
+  onCopy,
+  copied,
 }: {
   message: ChatMessage;
   previousUserQuestion: string;
@@ -739,6 +878,8 @@ function MessageBubble({
   isSaving: boolean;
   isSaved: boolean;
   isActing: boolean;
+  onCopy: (messageId: string, content: string) => void;
+  copied: boolean;
 }) {
   const time = new Date(message.timestamp).toLocaleTimeString('zh-CN', {
     hour: '2-digit',
@@ -785,7 +926,12 @@ function MessageBubble({
             <>
               <p className="text-sm leading-7">{message.content}</p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-white/75">
-                <span>{time}</span>
+                <div className="flex items-center gap-2">
+                  <span>{time}</span>
+                  {message.edited ? (
+                    <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold text-white/88">已编辑</span>
+                  ) : null}
+                </div>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
@@ -816,11 +962,17 @@ function MessageBubble({
   return (
     <div className="flex justify-start">
       <div className="max-w-3xl rounded-[1.75rem] border border-[color:var(--line)] bg-white px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">命理回复</span>
           {message.llmUsed === false && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">兜底模式</span>
           )}
+          {message.regenerated ? (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">已重生成</span>
+          ) : null}
+          {message.edited ? (
+            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">源问题已编辑</span>
+          ) : null}
         </div>
         <div className="mt-3">
           <ChatMarkdown content={message.content} />
@@ -848,6 +1000,14 @@ function MessageBubble({
                 {isSaved ? '已记下' : isSaving ? '保存中...' : '记为提醒'}
               </button>
             )}
+            <button
+              type="button"
+              onClick={() => onCopy(message.id, message.content)}
+              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)]"
+            >
+              <Copy className="h-4 w-4" />
+              {copied ? '已复制' : '复制'}
+            </button>
             <button
               type="button"
               onClick={() => onDelete(message.id)}

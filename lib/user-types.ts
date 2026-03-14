@@ -453,6 +453,28 @@ export interface FortuneAnalysisResult {
       verdict?: 'PASS' | 'WARN' | 'FAIL';
       failedRules?: string[];
     };
+    qualityAudit?: {
+      overallScore?: number;
+      grade?: 'S' | 'A' | 'B' | 'C';
+      status?: 'ready' | 'watch' | 'retry';
+      deliveryTier?: 'basic' | 'enhanced' | 'expert';
+      targetScore?: number;
+      targetGrade?: 'S' | 'A' | 'B' | 'C';
+      targetAchieved?: boolean;
+      summary?: string;
+      dimensions?: Array<{
+        key?: 'engine' | 'llm' | 'agentic' | 'consistency' | 'completeness';
+        label?: string;
+        score?: number;
+        status?: 'strong' | 'ok' | 'watch' | 'weak';
+        detail?: string;
+      }>;
+      strengths?: string[];
+      concerns?: string[];
+      blockingIssues?: string[];
+      recommendedActions?: string[];
+      nextActionLabel?: string;
+    };
     contextUsed?: {
       solarTerm?: boolean;
       lichunBoundary?: boolean;
@@ -464,6 +486,39 @@ export interface FortuneAnalysisResult {
     contextSignals?: Record<string, unknown>;
     agentResults?: Record<string, unknown>;
     loop?: Record<string, unknown>;
+    feedbackLoop?: {
+      syncedAt?: string;
+      linkedReportId?: string;
+      validationInsights?: {
+        totalLinkedEvents?: number;
+        accurateCount?: number;
+        driftCount?: number;
+        pendingCount?: number;
+        summary?: string;
+        lessons?: string[];
+      };
+      correctionInsight?: {
+        level?: 'healthy' | 'watch' | 'action';
+        summary?: string;
+        likelyCause?: string;
+        fixes?: string[];
+        checkpoints?: string[];
+      };
+    };
+    versionLineage?: Array<{
+      version: string;
+      generatedAt?: string;
+      generatedFrom?: 'analyze' | 'upgrade';
+      upgradedFromVersion?: string;
+      reasoningMode?: 'engine' | 'deterministic-expert' | 'parallel-agents';
+      llmUsed?: boolean;
+      agenticUsed?: boolean;
+      qualityScore?: number;
+      qualityGrade?: 'S' | 'A' | 'B' | 'C';
+      deliveryTier?: 'basic' | 'enhanced' | 'expert';
+      targetAchieved?: boolean;
+      summary?: string;
+    }>;
     enhancementNotes?: string[];
   };
 
@@ -655,6 +710,68 @@ export interface ContentSchedulerRunRecord {
   publishedCount?: number;
   meta?: Record<string, unknown>;
   createdAt?: string;
+}
+
+export interface ReportUpgradeJobRecord {
+  id: string;
+  reportId: string;
+  userId: string;
+  status: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  targetScore?: number;
+  attempts?: number;
+  maxAttempts?: number;
+  lastScore?: number;
+  bestScore?: number;
+  bestGrade?: 'S' | 'A' | 'B' | 'C';
+  nextRunAt?: string;
+  lockedAt?: string;
+  lastError?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ReportMonthlyDigestRunRecord {
+  id: string;
+  cycleKey: string;
+  email: string;
+  userId?: string;
+  reportId?: string;
+  status: 'sent' | 'skipped' | 'error';
+  reason?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
+export interface EmailDeliveryJobRecord {
+  id: string;
+  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update';
+  status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
+  to: string[];
+  payload?: Record<string, unknown>;
+  attempts?: number;
+  maxAttempts?: number;
+  nextRunAt?: string;
+  lockedAt?: string;
+  lastError?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PremiumServiceRequestRecord {
+  id: string;
+  userId: string;
+  reportId?: string;
+  serviceKey: 'event-simulation' | 'event-verdict' | 'event-review' | 'meihua-enhancement';
+  status: 'new' | 'contacted' | 'in_progress' | 'delivered' | 'closed' | 'cancelled';
+  priority?: 'normal' | 'high' | 'urgent';
+  contactName?: string;
+  contactValue?: string;
+  intake?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // 数据库事件记录

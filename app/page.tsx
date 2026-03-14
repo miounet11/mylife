@@ -8,12 +8,15 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import UpdatesStatusPanel from '@/components/updates-status-panel';
 import {
   getFeaturedCaseStudies,
   getFeaturedEntityInsights,
   getFeaturedKnowledgeArticles,
 } from '@/lib/content-store';
+import { getAuthSession } from '@/lib/auth';
 import { getEntityTypeLabel } from '@/lib/content';
+import { buildUpdatesSummary } from '@/lib/updates-summary';
 
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
@@ -49,10 +52,18 @@ const journeySteps = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
   const featuredArticles = getFeaturedKnowledgeArticles(2);
   const featuredCases = getFeaturedCaseStudies(2);
   const featuredInsights = getFeaturedEntityInsights(3);
+  const session = await getAuthSession();
+  const initialAuthenticated = !!session.authenticated && !!session.user?.id;
+  const initialSummary = initialAuthenticated && session.user?.id
+    ? buildUpdatesSummary({
+        userId: session.user.id,
+        email: session.user.email,
+      })
+    : null;
 
   return (
     <div className="page-shell">
@@ -128,6 +139,15 @@ export default function HomePage() {
               </div>
             </div>
           </div>
+        </section>
+
+        <section className="page-frame pb-2 md:pb-4">
+          <UpdatesStatusPanel
+            title="如果你已经来过，这里直接继续"
+            description="登录后会优先显示你最近的报告、当前升级进度和月度更新，不需要重新从零开始找。"
+            initialAuthenticated={initialAuthenticated}
+            initialSummary={initialSummary}
+          />
         </section>
 
         <section className="page-frame py-6 md:py-10">

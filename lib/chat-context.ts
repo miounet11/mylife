@@ -1,4 +1,5 @@
 import type { EventRecord, FortuneRecord } from '@/lib/user-types';
+import { getChatIntentPreset, type ChatIntent } from '@/lib/chat-intent';
 import {
   buildConfidenceAnalysis,
   buildMonthlyWindows,
@@ -40,6 +41,7 @@ export interface ChatCorrectionPrompt {
 }
 
 export interface ChatExperienceContext {
+  intent?: ChatIntent;
   summary: string;
   focusAreas: string[];
   suggestedPrompts: string[];
@@ -85,9 +87,11 @@ export function buildChatExperienceContext(params: {
   report?: FortuneRecord | null;
   events?: EventRecord[];
   focusEventId?: string;
+  intent?: ChatIntent;
   now?: Date;
 }): ChatExperienceContext {
   const now = params.now || new Date();
+  const intentPreset = getChatIntentPreset(params.intent);
   const events = (params.events || [])
     .slice()
     .sort((left, right) => {
@@ -103,18 +107,26 @@ export function buildChatExperienceContext(params: {
 
   if (!params.report) {
     return {
+      intent: params.intent,
       summary: [
+        intentPreset ? `当前会话已进入${intentPreset.entryLabel}。${intentPreset.helper}` : '',
         buildNoReportSummary(events),
         mappedFocusedEvent
           ? `当前用户希望围绕事件“${mappedFocusedEvent.title}”做纠偏分析。请优先解释偏差更可能来自时机、执行还是信息缺口。`
           : '',
       ].filter(Boolean).join('\n'),
       focusAreas: [
+        intentPreset ? `专项：${intentPreset.entryLabel}` : '',
         ...(events.length > 0 ? ['最近事件复盘', '现实节奏校验'] : ['命局主轴', '阶段节奏', '风险规避']),
         validationSummary.headline,
         mappedFocusedEvent ? `焦点事件：${mappedFocusedEvent.title}` : '',
       ].filter(Boolean),
-      suggestedPrompts: buildPromptList(GENERIC_PROMPTS, events, mappedFocusedEvent, correctionPrompts),
+      suggestedPrompts: buildPromptList(
+        [...(intentPreset?.questions || []), ...GENERIC_PROMPTS],
+        events,
+        mappedFocusedEvent,
+        correctionPrompts
+      ),
       correctionPrompts,
       recentEvents: recentReferenceEvents.map(mapEvent),
       suggestedEventDrafts: [],
@@ -147,6 +159,7 @@ export function buildChatExperienceContext(params: {
   const riskWindow = [...windows].sort((left, right) => left.score - right.score)[0];
   const recentEvents = recentReferenceEvents.map(mapEvent);
   const focusAreas = [
+    intentPreset ? `专项：${intentPreset.entryLabel}` : '',
     report.pattern?.type ? `格局：${report.pattern.type}` : '',
     report.fortune?.currentDaYun ? `阶段：${report.fortune.currentDaYun}` : '',
     (report.advice?.yongShen || []).length > 0 ? `用神：${report.advice?.yongShen.join('、')}` : '',
@@ -157,6 +170,7 @@ export function buildChatExperienceContext(params: {
   ].filter(Boolean);
   const suggestedPrompts = buildPromptList(
     [
+      ...(intentPreset?.questions || []),
       mappedFocusedEvent ? `围绕“${mappedFocusedEvent.title}”这件事，最可能的偏差原因是什么？` : '',
       mappedFocusedEvent ? `如果我要修正“${mappedFocusedEvent.title}”的判断，下一步最该看什么？` : '',
       topScenario ? `${topScenario.title}现在最该怎么推进？` : '',
@@ -178,13 +192,27 @@ export function buildChatExperienceContext(params: {
   );
 
   return {
+    intent: params.intent,
     summary: [
+      intentPreset ? `当前会话已进入${intentPreset.entryLabel}。${intentPreset.helper}` : '',
       '你正在继续追问同一份命理报告，请明确引用报告里的结构、行运、窗口和现实事件，不要给泛泛空话。',
       `报告核心：日主${report.bazi?.dayMaster || '未知'}，格局${report.pattern?.type || '以当前结构为准'}，当前大运${report.fortune?.currentDaYun || '以当前阶段判断为准'}，当前流年${report.fortune?.currentLiuNian || '以当年节奏继续校验'}。`,
       (report.advice?.yongShen || []).length > 0 ? `用神/喜神：${[...(report.advice?.yongShen || []), ...(report.advice?.xiShen || [])].join('、')}。` : '',
       topScenario ? `当前最值得展开的方向：${topScenario.title}，结论是“${topScenario.actionLabel}”。` : '',
       bestWindow ? `最近最佳窗口：${bestWindow.label}，原因：${bestWindow.reason}` : '',
       riskWindow ? `需要额外谨慎的窗口：${riskWindow.label}，原因：${riskWindow.reason}` : '',
+      intentPreset?.key === 'event-simulation'
+        ? `回答时优先把事件拆成试探、推进、确认三段节奏。`
+        : '',
+      intentPreset?.key === 'event-verdict'
+        ? '回答时优先给出倾向判断、依据和前置条件。'
+        : '',
+      intentPreset?.key === 'event-review'
+        ? '回答时优先区分偏差来自时机、执行还是信息判断。'
+        : '',
+      intentPreset?.key === 'meihua-enhancement'
+        ? '回答时优先聚焦近 7 天到 30 天的短周期变化。'
+        : '',
       recentEvents.length > 0
         ? `用户最近事件：${recentEvents.map((item) => `${item.date} ${item.title}`).join('；')}。`
         : '当前还没有已记录的现实事件，可提醒用户把关键节点存成事件，后续复盘。',
