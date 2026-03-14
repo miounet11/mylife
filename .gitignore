@@ -23,6 +23,9 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Local reference assets
+image copy*.png
+
 # Local env files
 .env*.local
 .env

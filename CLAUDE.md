@@ -226,7 +226,7 @@ tests/
 1. **理解项目上下文**
    - 阅读本文档了解项目架构
    - 查看模块级 CLAUDE.md 了解具体实现
-   - 参考 PROJECT-SUMMARY.md 了解业务逻辑
+   - 参考 README.md 与 docs 下当前文档了解业务逻辑
 
 2. **修改代码前**
    - 先阅读相关模块文档
@@ -295,11 +295,10 @@ tests/
 
 ## 相关文档
 
-- [项目总结](./PROJECT-SUMMARY.md) - 完整的项目开发总结
-- [重构计划](./REFACTORING-PLAN.md) - 代码重构方案
-- [部署指南](./DEPLOY-GUIDE.md) - 生产环境部署步骤
-- [AI 助手系统](./AI-ASSISTANT-SYSTEM.md) - AI 对话系统设计
-- [大师话术指南](./MASTER-LANGUAGE-GUIDE.md) - 命理话术库说明
+- [README](./README.md) - 当前项目总览与入口说明
+- [系统架构](./docs/ARCHITECTURE.md) - 当前架构、主链路与数据流
+- [开发指南](./docs/DEVELOPMENT.md) - 当前开发流程与约定
+- [运维指南](./docs/OPERATIONS.md) - 部署、PM2、监控与排障
 
 ---
 
