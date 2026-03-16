@@ -2,6 +2,7 @@ import { trackServerEvent } from '@/lib/analytics';
 import { emailDeliveryJobOperations } from '@/lib/database';
 import { deliverMailWithRetry } from '@/lib/email';
 import {
+  sendReportReadyEmail,
   sendPremiumServiceAdminNotificationEmail,
   sendPremiumServiceRequestReceivedEmail,
   sendPremiumServiceStatusUpdateEmail,
@@ -61,6 +62,10 @@ function getJobPage(kind: JobKind, payload: Record<string, unknown>) {
     const reportId = typeof payload.reportId === 'string' ? payload.reportId : '';
     return reportId ? `/result/${reportId}` : '/result';
   }
+  if (kind === 'report_ready') {
+    const reportId = typeof payload.reportId === 'string' ? payload.reportId : '';
+    return reportId ? `/result/${reportId}` : '/result';
+  }
   if (kind === 'premium_service_status_update' || kind === 'premium_service_admin_alert') {
     return '/admin/premium-services';
   }
@@ -98,6 +103,20 @@ async function executeJob(job: EmailDeliveryJobRecord) {
         statusLabel: `${payload.statusLabel || '处理中'}`,
         reportId: typeof payload.reportId === 'string' ? payload.reportId : undefined,
         note: typeof payload.note === 'string' ? payload.note : undefined,
+      }));
+    case 'report_ready':
+      return deliverMailWithRetry(() => sendReportReadyEmail({
+        email: `${payload.email || job.to[0] || ''}`,
+        name: `${payload.name || '用户'}`,
+        reportId: `${payload.reportId || ''}`,
+        score: typeof payload.score === 'number' ? payload.score : undefined,
+        grade: ['S', 'A', 'B', 'C'].includes(`${payload.grade || ''}`)
+          ? `${payload.grade}` as 'S' | 'A' | 'B' | 'C'
+          : undefined,
+        deliveryTier: ['basic', 'enhanced', 'expert'].includes(`${payload.deliveryTier || ''}`)
+          ? `${payload.deliveryTier}` as 'basic' | 'enhanced' | 'expert'
+          : undefined,
+        queuedUpgrade: payload.queuedUpgrade === true,
       }));
     default:
       return {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
-import { generateManagedContentDrafts, type GeneratedManagedContentDraft } from '@/lib/content-generation';
-import { listManagedContentEntries, saveManagedContentEntry } from '@/lib/content-store';
+import { enqueueContentGenerationJob, getContentGenerationJob } from '@/lib/content-generation-jobs';
+import type { ContentGenerationInput } from '@/lib/content-generation';
 
 export const maxDuration = 30;
 
@@ -13,25 +13,53 @@ async function ensureAdmin() {
   return session.user;
 }
 
-function ensureUniqueSlugs(entries: GeneratedManagedContentDraft[]) {
-  const existingSlugs = new Set(listManagedContentEntries().map((item) => item.slug));
-  const batchSlugs = new Set<string>();
+function buildInput(body: any): ContentGenerationInput {
+  return {
+    mode: body.mode === 'cluster' ? 'cluster' : 'single',
+    contentType: body.contentType,
+    subtype: body.subtype,
+    topic: `${body.topic || ''}`.trim(),
+    angle: `${body.angle || ''}`.trim(),
+    platform: `${body.platform || ''}`.trim(),
+    keywords: Array.isArray(body.keywords)
+      ? body.keywords.map((item: unknown) => `${item || ''}`.trim()).filter(Boolean)
+      : [],
+    audience: `${body.audience || ''}`.trim(),
+    locale: `${body.locale || ''}`.trim() || undefined,
+    market: `${body.market || ''}`.trim(),
+    entityName: `${body.entityName || ''}`.trim(),
+    sourceSignals: `${body.sourceSignals || ''}`.trim(),
+    status: body.status === 'published' ? 'published' : 'draft',
+    featured: body.featured === true,
+  };
+}
 
-  return entries.map((entry) => {
-    let slug = entry.slug;
-    let suffix = 2;
+function buildJobSummary(job: ReturnType<typeof getContentGenerationJob>) {
+  if (!job) {
+    return null;
+  }
 
-    while (existingSlugs.has(slug) || batchSlugs.has(slug)) {
-      slug = `${entry.slug}-${suffix}`;
-      suffix += 1;
-    }
+  const result = (job.result || {}) as {
+    entries?: unknown[];
+  };
+  const entries = Array.isArray(result.entries) ? result.entries : [];
 
-    batchSlugs.add(slug);
-    return {
-      ...entry,
-      slug,
-    };
-  });
+  return {
+    id: job.id,
+    status: job.status,
+    attempts: job.attempts || 0,
+    maxAttempts: job.maxAttempts || 0,
+    generatedCount: job.generatedCount || 0,
+    llmSucceededCount: job.llmSucceededCount || 0,
+    fallbackCount: job.fallbackCount || 0,
+    nextRunAt: job.nextRunAt || null,
+    lockedAt: job.lockedAt || null,
+    lastError: job.lastError || null,
+    createdAt: job.createdAt || null,
+    updatedAt: job.updatedAt || null,
+    meta: job.meta || {},
+    entries,
+  };
 }
 
 export async function POST(request: NextRequest) {
@@ -42,58 +70,54 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    if (!`${body.topic || ''}`.trim()) {
+    const input = buildInput(body);
+
+    if (!input.topic.trim()) {
       return NextResponse.json({ success: false, error: '请输入主题' }, { status: 400 });
     }
 
-    const generated = await generateManagedContentDrafts({
-      mode: body.mode === 'cluster' ? 'cluster' : 'single',
-      contentType: body.contentType,
-      subtype: body.subtype,
-      topic: `${body.topic || ''}`.trim(),
-      angle: `${body.angle || ''}`.trim(),
-      platform: `${body.platform || ''}`.trim(),
-      keywords: Array.isArray(body.keywords) ? body.keywords.map((item: unknown) => `${item || ''}`.trim()).filter(Boolean) : [],
-      audience: `${body.audience || ''}`.trim(),
-      entityName: `${body.entityName || ''}`.trim(),
-      sourceSignals: `${body.sourceSignals || ''}`.trim(),
-      status: body.status === 'published' ? 'published' : 'draft',
-      featured: body.featured === true,
+    const job = enqueueContentGenerationJob({
+      userId: user.id,
+      input,
+      meta: {
+        trigger: 'admin-api',
+      },
     });
-
-    const uniqueEntries = ensureUniqueSlugs(generated.entries);
-    const savedEntries = uniqueEntries.map((entry) =>
-      saveManagedContentEntry({
-        id: '',
-        contentType: entry.contentType,
-        subtype: entry.subtype,
-        slug: entry.slug,
-        title: entry.title,
-        name: entry.name,
-        excerpt: entry.excerpt,
-        category: entry.category,
-        readTime: entry.readTime,
-        tags: entry.tags,
-        featured: entry.featured,
-        seoTitle: entry.seoTitle,
-        seoDescription: entry.seoDescription,
-        sections: entry.sections,
-        status: entry.status,
-        source: entry.source,
-      }, user.id)
-    );
 
     return NextResponse.json({
       success: true,
-      entries: savedEntries,
-      meta: {
-        generatedCount: savedEntries.length,
-        llmSucceededCount: generated.llmSucceededCount,
-        fallbackCount: generated.fallbackCount,
-      },
-    });
+      async: true,
+      job: buildJobSummary(job),
+      pollAfterMs: 3000,
+    }, { status: 202 });
   } catch (error) {
-    console.error('[API] AI 生成内容失败:', error);
-    return NextResponse.json({ success: false, error: 'AI 生成失败，请稍后重试' }, { status: 500 });
+    console.error('[API] 创建内容生成任务失败:', error);
+    return NextResponse.json({ success: false, error: '内容生成任务创建失败' }, { status: 500 });
   }
+}
+
+export async function GET(request: NextRequest) {
+  const user = await ensureAdmin();
+  if (!user) {
+    return NextResponse.json({ success: false, error: '无权限访问' }, { status: 403 });
+  }
+
+  const url = 'nextUrl' in request && request.nextUrl
+    ? request.nextUrl
+    : new URL(request.url);
+  const jobId = `${url.searchParams.get('jobId') || ''}`.trim();
+  if (!jobId) {
+    return NextResponse.json({ success: false, error: '缺少任务 ID' }, { status: 400 });
+  }
+
+  const job = getContentGenerationJob(jobId);
+  if (!job) {
+    return NextResponse.json({ success: false, error: '任务不存在' }, { status: 404 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    job: buildJobSummary(job),
+    pollAfterMs: ['pending', 'running', 'retry'].includes(job.status) ? 3000 : null,
+  });
 }

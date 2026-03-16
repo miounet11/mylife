@@ -533,6 +533,7 @@ export default function AIAssistantChat() {
           {context && (
             <ContextCard
               context={context}
+              intentPreset={intentPreset}
               onPromptClick={handlePromptClick}
               onSaveSuggestedEvent={handleSaveSuggestedEvent}
               disabled={isTyping || loadingHistory}
@@ -659,6 +660,7 @@ export default function AIAssistantChat() {
 
 function ContextCard({
   context,
+  intentPreset,
   onPromptClick,
   onSaveSuggestedEvent,
   disabled,
@@ -666,6 +668,7 @@ function ContextCard({
   savedEventKeys,
 }: {
   context: ChatContextState;
+  intentPreset: IntentPreset | null;
   onPromptClick: (question: string) => void;
   onSaveSuggestedEvent: (item: SuggestedEventDraft) => void;
   disabled: boolean;

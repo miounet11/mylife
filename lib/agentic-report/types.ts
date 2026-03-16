@@ -1,4 +1,6 @@
 import type { DayunResult } from '@/lib/dayun-calculator';
+import type { ReferenceContextOverlay } from '@/lib/reference-engine-bridge';
+import type { ReferenceCorpusInput, ReferenceIntelligencePack } from '@/lib/reference-intelligence';
 import type { FortuneAnalysisResult, Pillar } from '@/lib/user-types';
 
 export type EngineStrength = 'strong' | 'weak' | 'follow' | 'balanced';
@@ -174,6 +176,10 @@ export interface ContextSignalPack {
     familyRolePressure?: string[];
     collaborationMode?: string[];
   };
+  referenceIntelligence?: {
+    pack: ReferenceIntelligencePack;
+    overlay: ReferenceContextOverlay;
+  };
 }
 
 export interface AgentExecutionContext {
@@ -234,6 +240,7 @@ export interface BuildContextSignalsInput {
   currentPlace?: string;
   targetPlaces?: string[];
   industries?: string[];
+  referenceCorpus?: ReferenceCorpusInput;
   engine: EngineGroundTruth;
   report?: {
     advice?: FortuneAnalysisResult['advice'];

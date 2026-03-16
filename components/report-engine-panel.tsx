@@ -134,6 +134,7 @@ export default function ReportEnginePanel({
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const [submittingStrategy, setSubmittingStrategy] = useState<'immediate' | 'queue' | 'defer' | null>(null);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const resolvedReasoningMode = deriveReportReasoningMode({
@@ -214,6 +215,7 @@ export default function ReportEnginePanel({
   const handleUpgrade = async (strategy: 'immediate' | 'queue' | 'defer') => {
     setError('');
     setSuccess('');
+    setSubmittingStrategy(strategy);
 
     try {
       const response = await fetch(`/api/fortune/${reportId}`, {
@@ -224,21 +226,44 @@ export default function ReportEnginePanel({
       const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '升级重算失败');
+        setSubmittingStrategy(null);
         return;
       }
 
+      const upgradeQueued = data.data?.upgradeQueued === true;
+      const queueReason = typeof data.data?.queueReason === 'string' ? data.data.queueReason : '';
+      const upgradeStatus = typeof data.data?.upgradeJob?.status === 'string' ? data.data.upgradeJob.status : '';
+      const alreadyQueued = queueReason === 'already_queued'
+        || (!upgradeQueued && ['pending', 'running', 'retry'].includes(upgradeStatus));
+
       if (strategy === 'immediate') {
-        setSuccess(`已重算到 ${data.data?.reportVersion || engineBuilds.report}`);
+        setSuccess(
+          alreadyQueued
+            ? '已执行当前版本重算，后台增强任务已经在队列中继续处理。'
+            : `已重算到 ${data.data?.reportVersion || engineBuilds.report}`
+        );
       } else if (strategy === 'queue') {
-        setSuccess('已加入后台增强队列，系统会继续提升这份报告。');
+        setSuccess(
+          alreadyQueued
+            ? '这份报告已经在后台增强队列中，无需重复提交。'
+            : '已加入后台增强队列，系统会继续提升这份报告。'
+        );
       } else {
-        setSuccess('已设置为等待模型恢复后增强，系统会稍后自动尝试。');
+        setSuccess(
+          alreadyQueued
+            ? '当前已存在排队中的增强任务，已更新为等待模型恢复后再尝试。'
+            : '已设置为等待模型恢复后增强，系统会稍后自动尝试。'
+        );
       }
-      startTransition(() => {
-        router.refresh();
-      });
+
+      window.setTimeout(() => {
+        startTransition(() => {
+          router.refresh();
+        });
+      }, 1200);
     } catch {
       setError('网络异常，升级重算失败');
+      setSubmittingStrategy(null);
     }
   };
 
@@ -510,12 +535,14 @@ export default function ReportEnginePanel({
                   title: '等待模型恢复后增强',
                   description: '如果当前供应商不稳定，先延后 30 分钟再尝试，避免连续触发低质量重算。',
                 },
-              ].map((item) => (
+              ].map((item) => {
+                const isActing = submittingStrategy === item.key || (isPending && submittingStrategy === null && item.primary);
+                return (
                 <button
                   key={item.key}
                   type="button"
                   onClick={() => void handleUpgrade(item.key)}
-                  disabled={isPending}
+                  disabled={!!submittingStrategy || isPending}
                   className={`rounded-[1.25rem] border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
                     item.primary
                       ? 'border-transparent bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white'
@@ -523,14 +550,15 @@ export default function ReportEnginePanel({
                   }`}
                 >
                   <div className="flex items-center gap-2 text-sm font-semibold">
-                    <RefreshCcw className={`h-4 w-4 ${isPending && item.primary ? 'animate-spin' : ''}`} />
-                    {isPending && item.primary ? '处理中...' : item.title}
+                    <RefreshCcw className={`h-4 w-4 ${isActing ? 'animate-spin' : ''}`} />
+                    {isActing ? '处理中...' : item.title}
                   </div>
                   <div className={`mt-2 text-xs leading-6 ${item.primary ? 'text-white/85' : 'text-[color:var(--muted)]'}`}>
                     {item.description}
                   </div>
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
           {error ? <div className="text-sm text-rose-700">{error}</div> : null}

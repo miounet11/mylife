@@ -170,25 +170,25 @@ export default function FortuneProgress({
           : '';
   const completionHeading = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
     ? '专家版报告已完成'
-    : '当前报告已完成';
+    : '主报告已完成';
   const completionDescription = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
     ? '这次已经生成达到专家版门槛的完整报告，正在为你打开结果页。'
     : completionMeta?.upgradeQueued
-      ? `当前先交付${deliveryTierLabel}，后台会继续增强并尝试提升到 S级专家版。`
-      : `当前已生成${deliveryTierLabel}，正在为你打开结果页。`;
+      ? `当前先交付${deliveryTierLabel}主结果，页面会优先打开核心结论，后台继续增强深度区块并尝试提升到 S级专家版。`
+      : `当前已生成${deliveryTierLabel}主结果，结果页会先展示核心结论，扩展区块按顺序继续加载。`;
   const finalStatusLabel = isComplete
     ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
       ? '已达到专家版'
       : completionMeta?.upgradeQueued
-        ? '先看当前版，后台继续增强'
-        : '结果页即将打开'
+        ? '先看主结果，后台继续增强'
+        : '核心结果先打开'
     : '持续计算中';
   const finalStageMessage = isComplete
     ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
       ? '当前版本已越过 95 分 S级门槛。'
       : completionMeta?.upgradeQueued
-        ? `当前质量 ${completionMeta?.score || '--'} / ${completionMeta?.grade || 'B'}，结果页打开后系统仍会在后台继续提升。`
-        : '当前结果已经整理完成，正在进入报告页。'
+        ? `当前质量 ${completionMeta?.score || '--'} / ${completionMeta?.grade || 'B'}，系统会先打开核心报告，深度区块和后台增强会继续补齐。`
+        : '当前结果已经整理完成，核心区块会先打开，其余扩展内容继续分批显示。'
     : reassuranceMessages[messageIndex];
 
   return (
@@ -242,8 +242,8 @@ export default function FortuneProgress({
               <div className="inline-flex items-center rounded-full bg-[color:var(--accent-soft)] px-4 py-2 text-sm font-medium text-[color:var(--accent-strong)]">
                 {isComplete
                   ? completionMeta?.upgradeQueued
-                    ? '进入结果页后，系统仍会继续在后台增强'
-                    : '结果页即将打开，无需重复操作'
+                    ? '进入结果页后先看核心结论，系统仍会继续在后台增强'
+                    : '结果页即将打开，核心内容会先显示'
                   : '提交后系统会自动继续，期间无需重复点击'}
               </div>
             </div>

@@ -3,11 +3,14 @@ import Link from 'next/link';
 import { ArrowLeft, Clock3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
+import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { getFeaturedKnowledgeArticles, getKnowledgeArticleBySlug } from '@/lib/content-store';
+import { getKnowledgeArticleBySlug, getManagedContentEntryBySlug, isPublicKnowledgeEntry } from '@/lib/content-store';
+import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
+import { getKnowledgeTopicHubBySlug, getRelatedKnowledgeEntries } from '@/lib/knowledge-network-feed';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -33,9 +36,19 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function KnowledgeArticlePage({ params }: PageProps) {
   const { slug } = await params;
   const article = getKnowledgeArticleBySlug(slug);
-  if (!article) notFound();
+  const managedEntry = getManagedContentEntryBySlug('knowledge', slug);
+  if (!article || !managedEntry || !isPublicKnowledgeEntry(managedEntry)) notFound();
+  const locale = typeof managedEntry.meta?.locale === 'string' ? managedEntry.meta.locale : '';
+  const market = typeof managedEntry.meta?.market === 'string' ? managedEntry.meta.market : '';
 
-  const related = getFeaturedKnowledgeArticles(3).filter((item) => item.slug !== article.slug).slice(0, 2);
+  const topicHub = getKnowledgeTopicHubBySlug(article.slug);
+  const related = getRelatedKnowledgeEntries(article.slug, 4);
+  const fallbackRelated = related.length === 0
+    ? listFeaturedKnowledgeEditorialEntries(4)
+      .map((item) => item.entry)
+      .filter((item) => item.slug !== article.slug)
+      .slice(0, 3)
+    : [];
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -93,9 +106,11 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             </div>
 
             <h1 className="mt-5 text-4xl font-black text-[color:var(--ink)] md:text-5xl">{article.title}</h1>
-            <div className="mt-4 inline-flex items-center gap-2 text-sm text-[color:var(--muted)]">
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[color:var(--muted)]">
               <Clock3 className="h-4 w-4" />
               {article.readTime}
+              {(locale || market) ? <ContentLocaleBadge locale={locale} market={market} /> : null}
+              {market ? <span>{market}</span> : null}
             </div>
             <p className="mt-5 text-base leading-8 text-[color:var(--muted)]">{article.excerpt}</p>
 
@@ -132,9 +147,42 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             />
 
             <div className="soft-card rounded-[1.75rem] p-5">
-              <div className="text-sm font-semibold text-[color:var(--muted)]">相关文章</div>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">
+                {topicHub ? `同专题继续阅读：${topicHub.topicName}` : '相关文章'}
+              </div>
+              {topicHub?.relatedTopicNames.length ? (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {topicHub.relatedTopicNames.slice(0, 4).map((item) => (
+                    <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              ) : null}
               <div className="mt-4 space-y-4">
                 {related.map((item) => (
+                  <ContentCardLink
+                    key={item.entry.slug}
+                    href={`/knowledge/${item.entry.slug}`}
+                    page={`/knowledge/${article.slug}`}
+                    meta={{
+                      surfaceKey: `knowledge_article:${article.slug}`,
+                      targetSurfaceKey: `knowledge_article:${item.entry.slug}`,
+                      contentType: 'knowledge',
+                      slug: item.entry.slug,
+                      title: item.entry.title,
+                      category: item.entry.category,
+                      tags: item.entry.tags,
+                      topicName: item.topicName,
+                      synthesisType: item.synthesisType,
+                    }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
+                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.entry.excerpt}</div>
+                  </ContentCardLink>
+                ))}
+                {fallbackRelated.map((item) => (
                   <ContentCardLink
                     key={item.slug}
                     href={`/knowledge/${item.slug}`}

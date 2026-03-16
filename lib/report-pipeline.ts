@@ -1,13 +1,31 @@
 import { analyzeFortune } from '@/lib/fortune-engine';
 import { runAgenticPipeline } from '@/lib/agentic-report';
-import { generateFortuneInterpretation } from '@/lib/llm';
+import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-definitions';
+import { getModelFallbackChain } from '@/lib/llm-model-fallback';
+import {
+  assessScopeProviderHealth,
+  hasRunnableModelsForSnapshots,
+  shouldConservativelyDeferForSnapshots,
+} from '@/lib/llm-provider-health';
+import { generateFortuneInterpretationCore, generateFortuneInterpretationFollowup } from '@/lib/llm';
 import { buildReportQualityAudit } from '@/lib/report-quality';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 
-const ANALYZE_LLM_TIMEOUT_MS = 9000;
-const ANALYZE_LLM_BUDGET_MS = 9500;
+const ANALYZE_LLM_CORE_TIMEOUT_MS = 12000;
+const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 5000;
 const ENABLE_AGENTIC_PIPELINE = process.env.ENABLE_AGENTIC_PIPELINE !== '0';
+const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
+  'core_constitution',
+  'kline_narrative',
+  'strategy_advisor',
+];
+const ANALYZE_FALLBACK_AGENT_KEYS: CoreAgentKey[] = [
+  'kline_narrative',
+  'strategy_advisor',
+];
+const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 13000;
+const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 12000;
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {
@@ -18,6 +36,19 @@ export const ENGINE_BUILD_VERSIONS = {
   prompts: 'agent-prompts-v1',
   report: CURRENT_REPORT_VERSION,
 } as const;
+
+export function resolveAnalyzeAgentKeys(params: {
+  llmUsed: boolean;
+  shouldRunAgentic: boolean;
+}): CoreAgentKey[] {
+  if (!params.shouldRunAgentic) {
+    return [...CORE_AGENT_KEYS];
+  }
+
+  return params.llmUsed
+    ? ANALYZE_FRONT_AGENT_KEYS
+    : ANALYZE_FALLBACK_AGENT_KEYS;
+}
 
 type PipelineSource = 'analyze' | 'upgrade';
 type ReportStage = 'engine' | 'llm' | 'agentic' | 'merge';
@@ -63,21 +94,56 @@ export async function generateVersionedReport(params: {
     status: 'started',
     detail: '正在调用语言模型增强解释层，补充更完整的自然语言报告。',
   });
+  const llmCore = await enhanceWithLLM(baseResult as unknown as Record<string, unknown>, null, async (event) => {
+    await params.onProgress?.({
+      stage: 'llm',
+      status: 'started',
+      detail: event.detail,
+    });
+  });
+  await params.onProgress?.({
+    stage: 'llm',
+    status: 'completed',
+    detail: llmCore.llmUsed
+      ? '语言模型增强已完成，正文将使用更完整的解释与建议。'
+      : '核心解释未稳定返回，当前将回退为结构化引擎与专家层整合输出。',
+  });
   await params.onProgress?.({
     stage: 'agentic',
     status: 'started',
-    detail: '并发专家 Agent 已启动，正在整合事业、关系、健康与策略视角。',
+    detail: llmCore.llmUsed
+      ? '核心解释已返回，正在并行补强建议层与并发专家 Agent 视角。'
+      : '当前直接进入并发专家 Agent 阶段，优先保证结果稳定交付。',
   });
+  const agentScopeHealth = assessScopeProviderHealth(
+    getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+    'agent'
+  );
+  const shouldRunAgentic = ENABLE_AGENTIC_PIPELINE
+    && !agentScopeHealth.shouldDefer
+    && !shouldConservativelyDeferForSnapshots(agentScopeHealth.snapshots || []);
+  const agentKeys = params.source === 'analyze'
+    ? resolveAnalyzeAgentKeys({
+        llmUsed: llmCore.llmUsed,
+        shouldRunAgentic,
+      })
+    : [...CORE_AGENT_KEYS];
   const [llmEnhancement, agentic] = await Promise.all([
-    enhanceWithLLM(baseResult as unknown as Record<string, unknown>, async (event) => {
-      await params.onProgress?.({
-        stage: 'llm',
-        status: 'started',
-        detail: event.detail,
-      });
-    }),
+    llmCore.llmInterpretation
+      ? enhanceWithLLM(baseResult as unknown as Record<string, unknown>, llmCore.llmInterpretation as Record<string, unknown>, async (event) => {
+          await params.onProgress?.({
+            stage: 'llm',
+            status: 'started',
+            detail: event.detail,
+          });
+        })
+      : Promise.resolve(llmCore),
     runAgenticPipeline({
-      enabled: ENABLE_AGENTIC_PIPELINE,
+      enabled: shouldRunAgentic,
+      agentKeys,
+      enableRetry: params.source !== 'analyze',
+      mainTaskTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS : undefined,
+      mainLlmTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS : undefined,
       groundTruth: {
         birthDate: params.birthDate,
         report: baseResult,
@@ -101,16 +167,11 @@ export async function generateVersionedReport(params: {
     }),
   ]);
   await params.onProgress?.({
-    stage: 'llm',
-    status: 'completed',
-    detail: llmEnhancement.llmUsed
-      ? '语言模型增强已完成，正文将使用更完整的解释与建议。'
-      : '语言模型未稳定返回，当前将回退为结构化引擎与专家层整合输出。',
-  });
-  await params.onProgress?.({
     stage: 'agentic',
     status: 'completed',
-    detail: agentic.used || ((agentic.orchestration.successRate || 0) > 0)
+    detail: !shouldRunAgentic
+      ? '当前 Agent 模型波动较大，本次已切换为稳定专家层兜底输出，避免长时间等待。'
+      : agentic.used || ((agentic.orchestration.successRate || 0) > 0)
       ? '并发 Agent 已返回有效结果，正在做一致性校验与融合。'
       : '并发 Agent 已执行，但本次主要采用 deterministic 专家层与校验结果。',
   });
@@ -139,6 +200,8 @@ export async function generateVersionedReport(params: {
       reportVersion: CURRENT_REPORT_VERSION,
     },
     llmUsed,
+    llmUnavailable: llmEnhancement.llmUnavailable,
+    deferredByProviderHealth: llmEnhancement.deferredByProviderHealth,
   };
 }
 
@@ -157,6 +220,7 @@ export async function regenerateReportFromRecord(record: FortuneRecord) {
 
 async function enhanceWithLLM(
   baseResult: Record<string, unknown>,
+  draft: Record<string, unknown> | null,
   onProgress?: (event: {
     type: 'model-attempt' | 'model-fallback' | 'model-success' | 'model-failed';
     model: string;
@@ -164,29 +228,62 @@ async function enhanceWithLLM(
     detail: string;
   }) => void | Promise<void>
 ) {
-  let routeTimeoutId: ReturnType<typeof setTimeout> | undefined;
-
   try {
-    const llmInterpretation = await Promise.race([
-      generateFortuneInterpretation(baseResult, ANALYZE_LLM_TIMEOUT_MS, onProgress),
-      new Promise<null>((resolve) => {
-        routeTimeoutId = setTimeout(() => resolve(null), ANALYZE_LLM_BUDGET_MS);
-      }),
-    ]);
+    const llmHealth = assessScopeProviderHealth(
+      getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+      'report'
+    );
+    const reportSnapshots = llmHealth.snapshots || [];
+    if (llmHealth.shouldDefer && !hasRunnableModelsForSnapshots(reportSnapshots)) {
+      await onProgress?.({
+        type: 'model-failed',
+        model: 'provider_health_gate',
+        detail: '当前报告增强模型全部处于熔断或不可探测状态，本次直接采用结构化引擎与专家层结果，避免长时间等待。',
+      });
+
+      return {
+        llmInterpretation: draft || null,
+        llmUsed: !!draft,
+        llmUnavailable: !draft,
+        deferredByProviderHealth: true,
+      };
+    }
+
+    if (!draft) {
+      const llmInterpretation = await generateFortuneInterpretationCore(
+        baseResult,
+        ANALYZE_LLM_CORE_TIMEOUT_MS,
+        onProgress
+      );
+
+      return {
+        llmInterpretation,
+        llmUsed: !!llmInterpretation,
+        llmUnavailable: !llmInterpretation,
+        deferredByProviderHealth: false,
+      };
+    }
+
+    const llmInterpretation = await generateFortuneInterpretationFollowup(
+      baseResult,
+      draft,
+      ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS,
+      onProgress
+    );
 
     return {
       llmInterpretation,
       llmUsed: !!llmInterpretation,
+      llmUnavailable: false,
+      deferredByProviderHealth: false,
     };
   } catch {
     return {
-      llmInterpretation: null,
-      llmUsed: false,
+      llmInterpretation: draft || null,
+      llmUsed: !!draft,
+      llmUnavailable: !draft,
+      deferredByProviderHealth: false,
     };
-  } finally {
-    if (routeTimeoutId) {
-      clearTimeout(routeTimeoutId);
-    }
   }
 }
 

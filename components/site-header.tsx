@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/knowledge', label: '知识库' },
+  { href: '/knowledge/topics', label: '专题地图' },
   { href: '/insights', label: '洞察中心' },
   { href: '/analyze', label: '开始分析' },
   { href: '/chat', label: 'AI 咨询' },

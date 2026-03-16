@@ -11,9 +11,11 @@ import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/ch
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
 import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
 import {
+  assessScopeProviderHealth,
   computeAttemptTimeouts,
   getDynamicModelExecutionPlan,
   recordModelAttempt,
+  shouldConservativelyDeferForSnapshots,
   summarizeModelExecutionPlan,
 } from '@/lib/llm-provider-health';
 
@@ -118,6 +120,15 @@ async function generateAIResponse(
 
   try {
     const baseChain = getModelFallbackChain(getDefaultModel());
+    const providerHealth = assessScopeProviderHealth(baseChain, 'chat');
+    if (providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || [])) {
+      return {
+        answer: fallbackAnswer,
+        llmUsed: false,
+        fallbackReason: 'provider_health_gate',
+      };
+    }
+
     const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
     const modelCandidates = plan.orderedModels;
     const planSummary = summarizeModelExecutionPlan(plan);
@@ -143,6 +154,7 @@ async function generateAIResponse(
           model,
           messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
           temperature: 0.7,
+          max_tokens: 900,
         }, {
           signal: controller.signal,
           timeout: attemptTimeoutMs,

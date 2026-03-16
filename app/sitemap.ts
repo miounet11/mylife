@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
+import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +9,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const knowledgeArticles = getKnowledgeArticles();
   const caseStudies = getCaseStudies();
   const entityInsights = getEntityInsights();
+  const knowledgeTopics = listKnowledgeTopicHubRoutes();
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: 'https://www.life-kline.com',
@@ -34,6 +36,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: 'https://www.life-kline.com/knowledge/topics',
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.78,
+    },
+    {
       url: 'https://www.life-kline.com/cases',
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -56,6 +64,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly' as const,
       priority: 0.72,
+    })),
+    ...knowledgeTopics.map((topic) => ({
+      url: `https://www.life-kline.com/knowledge/topics/${topic.topicSlug}`,
+      lastModified: new Date(topic.updatedAt || Date.now()),
+      changeFrequency: 'weekly' as const,
+      priority: 0.74,
     })),
     ...caseStudies.map((item) => ({
       url: `https://www.life-kline.com/cases/${item.slug}`,

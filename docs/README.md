@@ -8,12 +8,18 @@
 - [ARCHITECTURE.md](./ARCHITECTURE.md)
 - [DEVELOPMENT.md](./DEVELOPMENT.md)
 - [OPERATIONS.md](./OPERATIONS.md)
+- [report-retro-upgrade-playbook-v1.md](./report-retro-upgrade-playbook-v1.md)
 - [../CHANGELOG.md](../CHANGELOG.md)
 
 ## 策略与内容文档
 
 - [content-automation-system-v1.md](./content-automation-system-v1.md)
 - [content-distribution-playbook-v1.md](./content-distribution-playbook-v1.md)
+- [domain-knowledge-acquisition-playbook-v1.md](./domain-knowledge-acquisition-playbook-v1.md)
+- [knowledge-engine-roadmap-v1.md](./knowledge-engine-roadmap-v1.md)
+- [legal-knowledge-engine-roadmap-v1.md](./legal-knowledge-engine-roadmap-v1.md)
+- [related-reference-domains-v1.md](./related-reference-domains-v1.md)
+- [reference-intelligence-system-v1.md](./reference-intelligence-system-v1.md)
 - [social-content-skill-stack-v1.md](./social-content-skill-stack-v1.md)
 - [v2-report-quality-subscription-strategy.md](./v2-report-quality-subscription-strategy.md)
 

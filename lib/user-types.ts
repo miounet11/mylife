@@ -712,6 +712,25 @@ export interface ContentSchedulerRunRecord {
   createdAt?: string;
 }
 
+export interface ContentGenerationJobRecord {
+  id: string;
+  userId: string;
+  status: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  request: Record<string, unknown>;
+  result?: Record<string, unknown>;
+  generatedCount?: number;
+  llmSucceededCount?: number;
+  fallbackCount?: number;
+  attempts?: number;
+  maxAttempts?: number;
+  nextRunAt?: string;
+  lockedAt?: string;
+  lastError?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ReportUpgradeJobRecord {
   id: string;
   reportId: string;
@@ -745,7 +764,7 @@ export interface ReportMonthlyDigestRunRecord {
 
 export interface EmailDeliveryJobRecord {
   id: string;
-  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update';
+  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update' | 'report_ready';
   status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
   to: string[];
   payload?: Record<string, unknown>;

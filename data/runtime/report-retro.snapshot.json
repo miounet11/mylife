@@ -1,0 +1,637 @@
+{
+  "generatedAt": "2026-03-15T20:40:14.798Z",
+  "windowMinutes": 1440,
+  "analytics": {
+    "totalEvents": 2151,
+    "activeSessions": 15,
+    "uniqueSubmitters": 40,
+    "uniqueCompleters": 40,
+    "uniqueReportViewers": 6,
+    "topEvents": [
+      {
+        "eventName": "llm_model_attempt",
+        "count": 1305
+      },
+      {
+        "eventName": "llm_model_circuit_changed",
+        "count": 335
+      },
+      {
+        "eventName": "chat_completed",
+        "count": 84
+      },
+      {
+        "eventName": "home_page_viewed",
+        "count": 56
+      },
+      {
+        "eventName": "chat_context_loaded",
+        "count": 51
+      },
+      {
+        "eventName": "analyze_completed",
+        "count": 43
+      },
+      {
+        "eventName": "report_generated",
+        "count": 43
+      },
+      {
+        "eventName": "analyze_submitted",
+        "count": 43
+      },
+      {
+        "eventName": "analyze_page_viewed",
+        "count": 35
+      },
+      {
+        "eventName": "chat_message_sent",
+        "count": 33
+      },
+      {
+        "eventName": "report_viewed",
+        "count": 27
+      },
+      {
+        "eventName": "chat_page_viewed",
+        "count": 24
+      },
+      {
+        "eventName": "profile_page_viewed",
+        "count": 12
+      },
+      {
+        "eventName": "updates_page_viewed",
+        "count": 11
+      },
+      {
+        "eventName": "email_delivery_succeeded",
+        "count": 8
+      }
+    ],
+    "missingSessionPageViews": 51
+  },
+  "reports": {
+    "total": 43,
+    "realLikely": 18,
+    "likelyTest": 25,
+    "viewedDistinct": 11,
+    "basicCount": 42,
+    "llmCount": 3,
+    "fallbackCompleted": 42,
+    "fallbackRate": 98,
+    "basicRate": 98,
+    "llmRate": 7
+  },
+  "realReportCards": [
+    {
+      "id": "report_1773580896450_h1mka4s2a",
+      "userId": "user_1773474141908-v4c5bgc5k",
+      "name": "贾亚文",
+      "birthPlace": "河北省 邢台市",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:21:36",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": true
+    },
+    {
+      "id": "report_1773580708341_1fnh5qxib",
+      "userId": "guest_1773580708341-i9rd16lci",
+      "name": "贾亚文",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:18:28",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773580666816_elqpcfmsk",
+      "userId": "guest_1773580666817-jou7tp57p",
+      "name": "贾亚文",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:17:46",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773580492941_q9mzzlt11",
+      "userId": "guest_1773580492941-0pfn2g1mx",
+      "name": "贾亚文",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:14:52",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773580359936_a3ue6ilf0",
+      "userId": "guest_1773580359937-a7jxqqwr4",
+      "name": "贾亚文",
+      "birthPlace": "河北省 邢台市",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:12:39",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773557340829_1hzc5y48r",
+      "userId": "guest_1773361363346-du60h0zwj",
+      "name": "老",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 06:49:00",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": true
+    },
+    {
+      "id": "report_1773556316584_61fnwbho3",
+      "userId": "guest_1773556316584-or7pqlqrl",
+      "name": "Emily",
+      "birthPlace": "上海市 青浦区",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 06:31:56",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773556214308_b2k5wsxry",
+      "userId": "guest_1773556214308-gkbpkrkz8",
+      "name": "黄卓楠",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 06:30:14",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773556101273_0rsq6cdgr",
+      "userId": "guest_1773556101273-qhq9j20k8",
+      "name": "黄卓楠",
+      "birthPlace": "广东省 惠州市",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 06:28:21",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773556066570_mrb0xiudw",
+      "userId": "guest_1773556066570-zaejj3rgv",
+      "name": "黄卓楠",
+      "birthPlace": "广东省 惠州市",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 06:27:46",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773553767712_uhs9671lx",
+      "userId": "guest_1773553767712-zhtlqk3sk",
+      "name": "王建军",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 05:49:27",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    },
+    {
+      "id": "report_1773541575674_wbd4fc4el",
+      "userId": "guest_1773541575674-d7d5ynp9v",
+      "name": "沙棘",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 02:26:15",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": false,
+      "viewed": false
+    }
+  ],
+  "testReportCards": [
+    {
+      "id": "report_1773592292747_s2wnuwm4d",
+      "userId": "guest_1773592292748-62k49pi54",
+      "name": "验证B",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 16:31:32",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 73,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773589529700_r0tms1zn1",
+      "userId": "guest_1773589461101-ios977ahs",
+      "name": "测试A",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 15:45:29",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 76,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": true
+    },
+    {
+      "id": "report_1773582477236_lu0g97chg",
+      "userId": "guest_1773582477236-6j4rrtifk",
+      "name": "x",
+      "birthPlace": "吉林省 吉林市",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:47:57",
+      "llmUsed": false,
+      "reasoningMode": "parallel-agents",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773580503825_6n0tztprf",
+      "userId": "guest_1773580503825-1s3611z0y",
+      "name": "案例2",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:15:03",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773580499370_zxfp0oz0j",
+      "userId": "guest_1773580499371-40cyw00hc",
+      "name": "案例1",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 13:14:59",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773573967306_aizh56qs5",
+      "userId": "guest_1773573967306-pldl22cqa",
+      "name": "案例1",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 11:26:07",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 76,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773562301589_x8asbi1k4",
+      "userId": "guest_1773562301589-p29ry37hb",
+      "name": "哈哈",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 08:11:41",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773562245153_oolatcn65",
+      "userId": "guest_1773562245154-feru9nher",
+      "name": "哈哈",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 08:10:45",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773558582168_1n5r1cwxk",
+      "userId": "guest_1773558582169-vwizxssyo",
+      "name": "乙",
+      "birthPlace": "上海",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 07:09:42",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773558582300_nyipaqni6",
+      "userId": "guest_1773558582300-35893a1u5",
+      "name": "丙",
+      "birthPlace": "广州",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 07:09:42",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773558581238_umt3qwo3v",
+      "userId": "guest_1773558581239-btyl37omg",
+      "name": "甲",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 07:09:41",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 78,
+      "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    },
+    {
+      "id": "report_1773558434469_f5x04qyxz",
+      "userId": "guest_1773558434469-2754azu7t",
+      "name": "甲",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-03-15 07:07:14",
+      "llmUsed": false,
+      "reasoningMode": "deterministic-expert",
+      "score": 81,
+      "grade": "A",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "likelyTest": true,
+      "viewed": false
+    }
+  ],
+  "activeSessions": [
+    {
+      "sessionId": "user_1773474141908-v4c5bgc5k",
+      "homeViewed": 1,
+      "analyzeViewed": 13,
+      "submitted": 2,
+      "completed": 2,
+      "reportViewed": 11,
+      "chatCompleted": 59,
+      "lastAt": "2026-03-15 13:40:41"
+    },
+    {
+      "sessionId": "user_1773538942185-p7g8lh78a",
+      "homeViewed": 0,
+      "analyzeViewed": 8,
+      "submitted": 2,
+      "completed": 2,
+      "reportViewed": 4,
+      "chatCompleted": 10,
+      "lastAt": "2026-03-15 05:15:04"
+    },
+    {
+      "sessionId": "guest_1773538641851-wfp3ho7rb",
+      "homeViewed": 1,
+      "analyzeViewed": 2,
+      "submitted": 2,
+      "completed": 2,
+      "reportViewed": 1,
+      "chatCompleted": 7,
+      "lastAt": "2026-03-15 01:42:22"
+    },
+    {
+      "sessionId": "guest_1773589461101-ios977ahs",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 6,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 15:58:40"
+    },
+    {
+      "sessionId": "guest_1773361363346-du60h0zwj",
+      "homeViewed": 2,
+      "analyzeViewed": 3,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 4,
+      "chatCompleted": 1,
+      "lastAt": "2026-03-15 07:24:26"
+    },
+    {
+      "sessionId": "guest_1773592292748-62k49pi54",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 16:31:32"
+    },
+    {
+      "sessionId": "guest_1773582477236-6j4rrtifk",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:47:57"
+    },
+    {
+      "sessionId": "guest_1773580708341-i9rd16lci",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:18:28"
+    },
+    {
+      "sessionId": "guest_1773580666817-jou7tp57p",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:17:46"
+    },
+    {
+      "sessionId": "guest_1773580503825-1s3611z0y",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:15:03"
+    },
+    {
+      "sessionId": "guest_1773580499371-40cyw00hc",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:14:59"
+    },
+    {
+      "sessionId": "guest_1773580492941-0pfn2g1mx",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:14:52"
+    },
+    {
+      "sessionId": "guest_1773580359937-a7jxqqwr4",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 13:12:39"
+    },
+    {
+      "sessionId": "guest_1773573967306-pldl22cqa",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 11:26:07"
+    },
+    {
+      "sessionId": "guest_1773562301589-p29ry37hb",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 1,
+      "completed": 1,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-03-15 08:11:41"
+    }
+  ],
+  "failureHotspots": [
+    {
+      "key": "stage=llm | error=Invalid state: Controller is already closed",
+      "count": 1
+    }
+  ],
+  "recommendations": [
+    "页面浏览埋点仍有缺 session，先检查缓存客户端、旁路请求或外部脚本。",
+    "最近 42 次测算回退到了引擎输出，优先跟踪 LLM 健康和增强质量，而不是主流程可用性。",
+    "把最近 5 份真实报告纳入版本评估名单，持续对照质量分、是否被查看、是否触发聊天。"
+  ]
+}

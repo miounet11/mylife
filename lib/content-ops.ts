@@ -1,4 +1,4 @@
-import { generateManagedContentDrafts } from '@/lib/content-generation';
+import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/lib/content-generation';
 import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
@@ -8,6 +8,7 @@ import {
 } from '@/lib/content-store';
 import type { EntityInsightType } from '@/lib/content';
 import { runContentRadarCycle } from '@/lib/content-radar';
+import { buildPublicGrowthAudit } from '@/lib/public-growth-plan';
 import type { ContentSchedulerRunRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
@@ -62,7 +63,9 @@ type GenerationQueueItem = {
   reason: string;
   priorityScore: number;
   audience: string;
-  sourceType?: 'cluster' | 'radar';
+  market?: string;
+  locale?: string;
+  sourceType?: 'cluster' | 'radar' | 'public-growth';
 };
 
 type AutoPublishCandidate = {
@@ -366,7 +369,7 @@ function qualifiesForAutoPublish(entry: {
     return true;
   }
 
-  return `${entry.source || ''}`.startsWith('agent-fallback:');
+  return false;
 }
 
 function ensureUniqueSlug(slug: string, used: Set<string>) {
@@ -781,6 +784,7 @@ export function buildContentOpsSnapshot(params: {
     entries: params.entries,
     analyticsRows: params.analyticsRows,
   });
+  const publicGrowth = buildPublicGrowthAudit(params.entries);
   const { surfaceBuckets, clusterSignalBuckets, entryBuckets } = performance;
 
   const topSurfaces: ContentSurfaceStat[] = Object.entries(surfaceBuckets)
@@ -866,7 +870,22 @@ export function buildContentOpsSnapshot(params: {
       };
     });
 
-  const mergedQueue = [...radarQueue, ...generationQueue]
+  const publicGrowthQueue: GenerationQueueItem[] = publicGrowth.queue.map((item) => ({
+    key: item.target.key,
+    title: item.target.title,
+    topic: item.target.topic,
+    angle: item.target.angle,
+    contentType: item.target.primaryType,
+    keywords: item.target.keywords,
+    reason: `${item.target.market}的公开流量位仍缺核心内容，当前已发布 ${item.publishedCount} 篇、草稿 ${item.draftCount} 篇，应优先补这一页。`,
+    priorityScore: item.priorityScore + 120,
+    audience: item.target.audience,
+    market: item.target.market,
+    locale: item.target.locale,
+    sourceType: 'public-growth',
+  }));
+
+  const mergedQueue = [...publicGrowthQueue, ...radarQueue, ...generationQueue]
     .sort((left, right) => right.priorityScore - left.priorityScore)
     .slice(0, 10);
 
@@ -1016,6 +1035,8 @@ export async function runContentAutomationCycle(params: {
       platform: 'auto-ops',
       keywords: uniqueStrings(item.keywords),
       audience: item.audience,
+      locale: item.locale as ContentGenerationLocale | undefined,
+      market: item.market,
       sourceSignals: item.reason,
       status: 'draft',
       featured: false,
@@ -1048,6 +1069,13 @@ export async function runContentAutomationCycle(params: {
         sections: draft.sections,
         status: finalStatus,
         source: `${draft.source}:automation`,
+        meta: {
+          growthPlanKey: item.sourceType === 'public-growth' ? item.key : undefined,
+          market: item.market,
+          locale: item.locale,
+          sourceType: item.sourceType,
+          automationReason: item.reason,
+        },
       }, params.userId);
 
       if (entry) {

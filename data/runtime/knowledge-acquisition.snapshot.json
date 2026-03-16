@@ -1,0 +1,389 @@
+{
+  "status": "success",
+  "runId": "knowledge_1773669848857_ayfwtpsu",
+  "pid": 3177592,
+  "startedAt": "2026-03-16T14:04:08.858Z",
+  "finishedAt": "2026-03-16T14:04:14.868Z",
+  "durationMs": 6010,
+  "cycle": {
+    "ranAt": "2026-03-16T14:04:14.864Z",
+    "radarRefreshed": true,
+    "radarSignalsFetched": 30,
+    "coreSeededCount": 0,
+    "domainSeedResults": [],
+    "promotedSignalsCount": 0,
+    "promotedSignals": [],
+    "extractedObjects": {
+      "topicCount": 0,
+      "questionCount": 0,
+      "conceptCount": 0,
+      "textCount": 0,
+      "bookCount": 0,
+      "relationCount": 0
+    },
+    "synthesizedDrafts": {
+      "draftCount": 24,
+      "persistedCount": 24,
+      "candidateCount": 2,
+      "publishedCount": 2,
+      "titles": [
+        "八字体系专题总览",
+        "八字体系概念词汇表",
+        "八字体系问题地图",
+        "八字体系问题簇综述",
+        "八字体系书单路径",
+        "八字体系书目阶梯",
+        "应用专题专题总览",
+        "应用专题概念词汇表",
+        "应用专题问题地图",
+        "应用专题问题簇综述",
+        "应用专题书单路径",
+        "应用专题书目阶梯",
+        "书籍体系专题总览",
+        "书籍体系概念词汇表",
+        "书籍体系问题地图",
+        "书籍体系问题簇综述",
+        "书籍体系书单路径",
+        "书籍体系书目阶梯",
+        "方法论专题总览",
+        "方法论概念词汇表",
+        "方法论问题地图",
+        "方法论问题簇综述",
+        "方法论书单路径",
+        "方法论书目阶梯"
+      ]
+    },
+    "graphEnrichment": {
+      "topicConceptLinksAdded": 0,
+      "topicTopicLinksAdded": 0,
+      "relatedTopicCount": 15
+    },
+    "selectedDomains": [],
+    "coreMissingAfterRun": 0,
+    "domainPlans": [
+      {
+        "domain": "metaphysics",
+        "title": "玄学 / 命理 / 易学",
+        "priorityScore": 104.4,
+        "productRelevanceAverage": 89.4,
+        "totalSources": 5,
+        "seededSources": 5,
+        "unseededSources": 0,
+        "coreSourceCount": 5,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 1,
+          "P2": 2,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "公版经典骨架",
+          "书目体系",
+          "流派比较",
+          "问题地图",
+          "参考智能"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "school",
+          "question",
+          "topic",
+          "case"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 公版经典骨架、书目体系 建第一批知识对象，避免只做链接堆积。",
+          "把 2 个社区 / 平台源作为问题发现层，只保留摘要、标签和问题映射。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "psychology",
+        "title": "心理学",
+        "priorityScore": 98,
+        "productRelevanceAverage": 87,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 2,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 0,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "心理术语归一",
+          "情绪与压力表达",
+          "关系和行为解释辅助"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 心理术语归一、情绪与压力表达 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "philosophy",
+        "title": "哲学",
+        "priorityScore": 96,
+        "productRelevanceAverage": 85,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 2,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 0,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "概念澄清",
+          "方法论强化",
+          "世界观与认识论支撑"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "person",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 概念澄清、方法论强化 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "ai",
+        "title": "AI / 机器学习",
+        "priorityScore": 93.5,
+        "productRelevanceAverage": 82.5,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 2,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 0,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "模型方法论",
+          "Agent 系统参考",
+          "知识引擎实现参考"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 模型方法论、Agent 系统参考 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "statistics",
+        "title": "统计学",
+        "priorityScore": 89.5,
+        "productRelevanceAverage": 81,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 2,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 1,
+          "P1": 1,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "验证框架",
+          "不确定性表达",
+          "评分与校准方法"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 1 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 验证框架、不确定性表达 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "medicine",
+        "title": "医学 / 健康参考",
+        "priorityScore": 87.5,
+        "productRelevanceAverage": 72,
+        "totalSources": 5,
+        "seededSources": 5,
+        "unseededSources": 0,
+        "coreSourceCount": 0,
+        "exploratorySourceCount": 1,
+        "byTier": {
+          "P0": 3,
+          "P1": 2,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "健康边界说明",
+          "症状语言校正",
+          "风险提示语料",
+          "循证参考入口"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 3 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 健康边界说明、症状语言校正 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "history",
+        "title": "历史学",
+        "priorityScore": 87,
+        "productRelevanceAverage": 76,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 0,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 0,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "历史语境",
+          "思想史脉络",
+          "案例时间线"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "person",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 历史语境、思想史脉络 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "programming",
+        "title": "程序 / 软件工程",
+        "priorityScore": 87,
+        "productRelevanceAverage": 76,
+        "totalSources": 2,
+        "seededSources": 2,
+        "unseededSources": 0,
+        "coreSourceCount": 0,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 2,
+          "P1": 0,
+          "P2": 0,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "工程方法论",
+          "系统实现参考",
+          "工具文档骨架"
+        ],
+        "coreObjects": [
+          "source_document",
+          "concept",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 2 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 工程方法论、系统实现参考 建第一批知识对象，避免只做链接堆积。",
+          "当前优先做高权威和目录型来源，暂不需要平台问题层扩张。"
+        ],
+        "nextWaveSources": []
+      },
+      {
+        "domain": "astrology",
+        "title": "星座学 / 西方占星",
+        "priorityScore": 82.83,
+        "productRelevanceAverage": 72.33,
+        "totalSources": 3,
+        "seededSources": 3,
+        "unseededSources": 0,
+        "coreSourceCount": 0,
+        "exploratorySourceCount": 0,
+        "byTier": {
+          "P0": 1,
+          "P1": 1,
+          "P2": 1,
+          "P3": 0
+        },
+        "primaryGoals": [
+          "星座学书目",
+          "术语映射",
+          "与命理对照问题",
+          "用户兴趣入口"
+        ],
+        "coreObjects": [
+          "source_document",
+          "book",
+          "concept",
+          "school",
+          "question",
+          "topic"
+        ],
+        "recommendedActions": [
+          "先完成 1 个 P0 骨架源的索引和权限标注，再扩到书目与问题层。",
+          "围绕 星座学书目、术语映射 建第一批知识对象，避免只做链接堆积。",
+          "把 1 个社区 / 平台源作为问题发现层，只保留摘要、标签和问题映射。"
+        ],
+        "nextWaveSources": []
+      }
+    ]
+  },
+  "updatedAt": "2026-03-16T14:04:14.868Z"
+}

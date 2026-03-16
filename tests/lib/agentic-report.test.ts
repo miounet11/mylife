@@ -247,6 +247,30 @@ describe('agentic-report pipeline helpers', () => {
     expect(verify.verdict).toMatch(/PASS|WARN/);
   });
 
+  it('builds fallback summaries from personalized engine signals instead of a fixed template', () => {
+    const engine = buildEngineGroundTruth({ birthDate, report });
+    const context = buildContextSignals({
+      birthDate,
+      birthPlace: '北京',
+      currentPlace: '上海',
+      industries: ['科技'],
+      engine,
+      report: {
+        advice: report.advice,
+        fortune: report.fortune,
+      },
+      now: new Date(Date.UTC(2026, 2, 12)),
+    });
+
+    const fallback = buildFallbackAgentResults({ engine, context, report: { advice: report.advice, fortune: report.fortune } });
+    const strategy = fallback.strategy_advisor as { summary?: string; highlights?: string[] };
+    const career = fallback.career_wealth as { summary?: string; highlights?: string[] };
+
+    expect(strategy.summary).toContain('事业');
+    expect(strategy.highlights).toContain('当前主线：事业');
+    expect(career.summary).toContain('事业窗口更适合看');
+  });
+
   it('returns fallback-based agentic pipeline output when disabled', async () => {
     const result = await runAgenticPipeline({
       enabled: false,

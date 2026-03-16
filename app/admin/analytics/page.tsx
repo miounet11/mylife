@@ -1084,6 +1084,7 @@ function parseMeta(meta: string | null | undefined) {
 function mapEmailChannelLabel(channel: string) {
   if (channel === 'auth_code') return '登录验证码';
   if (channel === 'newsletter_confirmation') return '订阅确认';
+  if (channel === 'report_ready') return '报告生成通知';
   if (channel === 'premium_service_request_receipt') return '专项提交回执';
   if (channel === 'premium_service_admin_alert') return '专项后台提醒';
   if (channel === 'premium_service_status_update') return '专项状态更新';

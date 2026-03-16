@@ -3,19 +3,23 @@ export const revalidate = 0;
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowRight, CalendarClock, Compass, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, CalendarClock, Compass, Network, ShieldCheck, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
+import ContentLocaleBadge from '@/components/content-locale-badge';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
 import {
   getFeaturedCaseStudies,
   getFeaturedEntityInsights,
-  getFeaturedKnowledgeArticles,
+  isPublicKnowledgeEntry,
+  listPublishedManagedContentEntriesByType,
 } from '@/lib/content-store';
 import { getAuthSession } from '@/lib/auth';
 import { getEntityTypeLabel } from '@/lib/content';
+import { getContentLocalePresentation, getLocaleAnchorId, type ContentLocaleGroupKey } from '@/lib/content-locale';
+import { listFeaturedKnowledgeEditorialEntries, listFeaturedKnowledgeTopicHubs } from '@/lib/knowledge-editorial';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
@@ -53,9 +57,51 @@ const journeySteps = [
 ];
 
 export default async function HomePage() {
-  const featuredArticles = getFeaturedKnowledgeArticles(2);
+  const featuredArticles = listFeaturedKnowledgeEditorialEntries(2);
+  const featuredTopicHubs = listFeaturedKnowledgeTopicHubs(2);
   const featuredCases = getFeaturedCaseStudies(2);
   const featuredInsights = getFeaturedEntityInsights(3);
+  const localePathTargets = [
+    {
+      key: 'en' as ContentLocaleGroupKey,
+      title: 'English Readers',
+      description: 'For global professionals, overseas-born Chinese, and English-speaking readers exploring Bazi with a practical lens.',
+      knowledgeHref: `/knowledge#${getLocaleAnchorId('en')}`,
+      casesHref: `/cases#${getLocaleAnchorId('en')}`,
+    },
+    {
+      key: 'zh-Hant' as ContentLocaleGroupKey,
+      title: '繁體中文讀者',
+      description: '面向台灣、香港與偏好繁體中文閱讀的用戶，優先看到更自然的語感與情境。',
+      knowledgeHref: `/knowledge#${getLocaleAnchorId('zh-Hant')}`,
+      casesHref: `/cases#${getLocaleAnchorId('zh-Hant')}`,
+    },
+    {
+      key: 'zh-Hans' as ContentLocaleGroupKey,
+      title: '简体中文读者',
+      description: '面向中国大陆、海外华人和偏好简体中文阅读的用户，先看最核心的知识与案例。',
+      knowledgeHref: `/knowledge#${getLocaleAnchorId('zh-Hans')}`,
+      casesHref: `/cases#${getLocaleAnchorId('zh-Hans')}`,
+    },
+  ];
+  const localeSpotlights = [...listPublishedManagedContentEntriesByType('knowledge').filter((entry) => isPublicKnowledgeEntry(entry)), ...listPublishedManagedContentEntriesByType('case')]
+    .reduce<Record<ContentLocaleGroupKey, { title: string; href: string; locale: string; market: string; typeLabel: string } | null>>((accumulator, entry) => {
+      const locale = typeof entry.meta?.locale === 'string' ? entry.meta.locale : '';
+      const market = typeof entry.meta?.market === 'string' ? entry.meta.market : '';
+      const presentation = getContentLocalePresentation(locale, market);
+      if (accumulator[presentation.groupKey]) {
+        return accumulator;
+      }
+
+      accumulator[presentation.groupKey] = {
+        title: entry.title,
+        href: entry.contentType === 'knowledge' ? `/knowledge/${entry.slug}` : `/cases/${entry.slug}`,
+        locale,
+        market,
+        typeLabel: entry.contentType === 'knowledge' ? '知识入口' : '案例入口',
+      };
+      return accumulator;
+    }, { en: null, 'zh-Hant': null, 'zh-Hans': null });
   const session = await getAuthSession();
   const initialAuthenticated = !!session.authenticated && !!session.user?.id;
   const initialSummary = initialAuthenticated && session.user?.id
@@ -167,6 +213,33 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="page-frame py-6 md:py-10">
+          <div className="grid gap-4 md:grid-cols-3">
+            {localePathTargets.map((item) => {
+              const spotlight = localeSpotlights[item.key];
+              return (
+                <div key={item.key} className="soft-card rounded-[1.75rem] p-6">
+                  <div className="section-label">{item.title}</div>
+                  <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
+                  {spotlight ? (
+                    <Link href={spotlight.href} className="mt-5 block rounded-[1.25rem] bg-white/70 p-4 transition hover:bg-white">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-[color:var(--muted)]">
+                        <span>{spotlight.typeLabel}</span>
+                        <ContentLocaleBadge locale={spotlight.locale} market={spotlight.market} compact />
+                      </div>
+                      <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{spotlight.title}</div>
+                    </Link>
+                  ) : null}
+                  <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold text-[color:var(--accent-strong)]">
+                    <Link href={item.knowledgeHref}>知识内容</Link>
+                    <Link href={item.casesHref}>案例内容</Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
         <section className="page-frame py-10 md:py-16" id="analysis-form">
           <div className="mx-auto max-w-5xl space-y-5">
             <div className="text-center">
@@ -221,26 +294,70 @@ export default async function HomePage() {
 
               {featuredArticles.map((item) => (
                 <ContentCardLink
-                  key={item.slug}
-                  href={`/knowledge/${item.slug}`}
+                  key={item.entry.slug}
+                  href={`/knowledge/${item.entry.slug}`}
                   page="/"
                   meta={{
                     surfaceKey: 'home_featured_content',
                     contentType: 'knowledge',
-                    slug: item.slug,
-                    title: item.title,
-                    category: item.category,
-                    tags: item.tags,
+                    slug: item.entry.slug,
+                    title: item.entry.title,
+                    category: item.entry.category,
+                    tags: item.entry.tags,
+                    topicName: item.topicName,
+                    synthesisType: item.synthesisType,
+                    editorialTier: item.editorialTier,
                   }}
                   className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
                 >
-                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
-                  <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
-                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</p>
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
+                    {item.topicName || item.entry.category}
+                  </div>
+                  <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{item.entry.title}</div>
+                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.entry.excerpt}</p>
                 </ContentCardLink>
               ))}
             </div>
           </div>
+
+          {featuredTopicHubs.length > 0 && (
+            <div className="mt-8 grid gap-4 md:grid-cols-2">
+              {featuredTopicHubs.map((hub) => (
+                <ContentCardLink
+                  key={hub.topicKey}
+                  href={`/knowledge/topics/${hub.topicSlug}`}
+                  page="/"
+                  meta={{
+                    surfaceKey: 'home_featured_topic_hubs',
+                    targetSurfaceKey: `knowledge_topic:${hub.topicSlug}`,
+                    contentType: 'knowledge',
+                    topicName: hub.topicName,
+                  }}
+                  className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
+                >
+                  <div className="flex items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
+                    <Network className="h-3.5 w-3.5" />
+                    自动精选专题
+                  </div>
+                  <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{hub.topicName}</div>
+                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                    这一专题已经形成 {hub.entryCount} 篇互链内容，适合用户顺着读下去，也适合继续扩充成站内稳定流量入口。
+                  </p>
+                  <div className="mt-4 space-y-3">
+                    {hub.entries.slice(0, 2).map((item) => (
+                      <div
+                        key={item.entry.slug}
+                        className="block rounded-[1.25rem] bg-white/70 p-4"
+                      >
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
+                        <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.entry.excerpt}</div>
+                      </div>
+                    ))}
+                  </div>
+                </ContentCardLink>
+              ))}
+            </div>
+          )}
 
           <div className="mt-8 grid gap-4 md:grid-cols-3">
             {featuredInsights.map((item) => (

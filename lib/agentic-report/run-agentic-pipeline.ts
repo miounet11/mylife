@@ -9,6 +9,7 @@ import { runRepair } from '@/lib/agentic-report/review/run-repair';
 import { runReview } from '@/lib/agentic-report/review/run-review';
 import { runVerify } from '@/lib/agentic-report/review/run-verify';
 import { runAgent } from '@/lib/agentic-report/run-agent';
+import { buildAutoReferenceCorpusFromKnowledgeBase } from '@/lib/reference-corpus-builder';
 import type { BuildContextSignalsInput, BuildGroundTruthInput } from '@/lib/agentic-report/types';
 
 const AGENT_LABELS: Record<CoreAgentKey, string> = {
@@ -23,9 +24,7 @@ const AGENT_LABELS: Record<CoreAgentKey, string> = {
 
 const PRIORITY_RETRY_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
-  'kline_narrative',
   'strategy_advisor',
-  'temporal_spatial_advisor',
 ];
 
 const RETRYABLE_ERROR_PATTERNS = [
@@ -33,21 +32,42 @@ const RETRYABLE_ERROR_PATTERNS = [
   'AGENT_TIMEOUT',
   'JSON_PARSE_FAILED',
 ] as const;
+const AGENT_MAIN_TASK_TIMEOUT_MS = 26000;
+const AGENT_MAIN_LLM_TIMEOUT_MS = 25000;
+const AGENT_RETRY_TASK_TIMEOUT_MS = 30000;
+const AGENT_RETRY_LLM_TIMEOUT_MS = 29000;
 
 export async function runAgenticPipeline(params: {
   groundTruth: BuildGroundTruthInput;
   context: Omit<BuildContextSignalsInput, 'engine'>;
   enabled?: boolean;
   agentKeys?: CoreAgentKey[];
+  enableRetry?: boolean;
+  mainTaskTimeoutMs?: number;
+  mainLlmTimeoutMs?: number;
+  retryTaskTimeoutMs?: number;
+  retryLlmTimeoutMs?: number;
   onProgress?: (event: {
     type: 'agent-start' | 'agent-success' | 'agent-fallback' | 'agent-retry';
     agentKey: CoreAgentKey;
     detail: string;
   }) => void | Promise<void>;
-}) {
+  }) {
+  const referenceCorpus = hasReferenceCorpus(params.context.referenceCorpus)
+    ? params.context.referenceCorpus
+    : buildAutoReferenceCorpusFromKnowledgeBase({
+        birthPlace: params.context.birthPlace,
+        currentPlace: params.context.currentPlace,
+        targetPlaces: params.context.targetPlaces,
+        industries: params.context.industries,
+        report: params.context.report,
+      });
   const context = createAgenticContext({
     groundTruth: params.groundTruth,
-    context: params.context,
+    context: {
+      ...params.context,
+      referenceCorpus,
+    },
   });
 
   if (params.enabled === false) {
@@ -82,16 +102,20 @@ export async function runAgenticPipeline(params: {
   const keys = params.agentKeys || CORE_AGENT_KEYS;
   const startedAt = Date.now();
   let llmCalls = 0;
+  const mainTaskTimeoutMs = params.mainTaskTimeoutMs || AGENT_MAIN_TASK_TIMEOUT_MS;
+  const mainLlmTimeoutMs = params.mainLlmTimeoutMs || AGENT_MAIN_LLM_TIMEOUT_MS;
+  const retryTaskTimeoutMs = params.retryTaskTimeoutMs || AGENT_RETRY_TASK_TIMEOUT_MS;
+  const retryLlmTimeoutMs = params.retryLlmTimeoutMs || AGENT_RETRY_LLM_TIMEOUT_MS;
   const tasks = keys.map((key) => ({
     key,
     input: context,
-    timeoutMs: 7000,
+    timeoutMs: mainTaskTimeoutMs,
     execute: async () => executeAgentTask({
       key,
       context,
       onProgress: params.onProgress,
       traceSuffix: 'main',
-      timeoutMs: 6500,
+      timeoutMs: mainLlmTimeoutMs,
       onCall: () => {
         llmCalls += 1;
       },
@@ -99,14 +123,18 @@ export async function runAgenticPipeline(params: {
   }));
 
   const firstRun = await runParallelAgents(tasks);
-  const retryCandidates = keys.filter((key) => (
-    PRIORITY_RETRY_AGENT_KEYS.includes(key) &&
-    !firstRun.results[key]?.ok &&
-    isRetryableAgentError(firstRun.results[key]?.error)
-  ));
+  const retryCandidates = params.enableRetry === false
+    ? []
+    : keys.filter((key) => (
+      PRIORITY_RETRY_AGENT_KEYS.includes(key) &&
+      !firstRun.results[key]?.ok &&
+      isRetryableAgentError(firstRun.results[key]?.error)
+    ));
   const rerunResults = await rerunPriorityAgents({
     keys: retryCandidates,
     context,
+    taskTimeoutMs: retryTaskTimeoutMs,
+    llmTimeoutMs: retryLlmTimeoutMs,
     onProgress: params.onProgress,
     onCall: () => {
       llmCalls += 1;
@@ -156,6 +184,15 @@ export async function runAgenticPipeline(params: {
   };
 }
 
+function hasReferenceCorpus(input?: BuildContextSignalsInput['referenceCorpus']) {
+  if (!input) return false;
+  return Boolean(
+    (input.sourceDocuments && input.sourceDocuments.length > 0) ||
+    (input.bibliographyEntries && input.bibliographyEntries.length > 0) ||
+    (input.entities && input.entities.length > 0)
+  );
+}
+
 async function executeAgentTask(params: {
   key: CoreAgentKey;
   context: ReturnType<typeof createAgenticContext>;
@@ -184,6 +221,7 @@ async function executeAgentTask(params: {
     user: prompt.user,
     temperature: isRetry ? Math.min(prompt.temperature, 0.35) : prompt.temperature,
     timeoutMs: params.timeoutMs,
+    maxTokens: 900,
     traceLabel: `agent:${params.key}:${params.traceSuffix}`,
     scope: 'agent',
   });
@@ -206,6 +244,8 @@ async function executeAgentTask(params: {
 async function rerunPriorityAgents(params: {
   keys: CoreAgentKey[];
   context: ReturnType<typeof createAgenticContext>;
+  taskTimeoutMs: number;
+  llmTimeoutMs: number;
   onCall: () => void;
   onProgress?: (event: {
     type: 'agent-start' | 'agent-success' | 'agent-fallback' | 'agent-retry';
@@ -228,11 +268,11 @@ async function rerunPriorityAgents(params: {
     results[key] = await runAgent({
       key,
       input: params.context,
-      timeoutMs: 9200,
+      timeoutMs: params.taskTimeoutMs,
       execute: async () => executeAgentTask({
         key,
         context: params.context,
-        timeoutMs: 8800,
+        timeoutMs: params.llmTimeoutMs,
         traceSuffix: 'retry',
         onCall: params.onCall,
         onProgress: params.onProgress,

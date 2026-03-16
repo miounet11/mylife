@@ -1,4 +1,4 @@
-const DEFAULT_MODEL_CHAIN = ['gpt-5.2', 'grok-420-fast', 'auto'] as const;
+const DEFAULT_MODEL_CHAIN = ['grok-420-fast', 'gpt-5.2', 'auto'] as const;
 
 function normalizeModel(value?: string | null) {
   const model = (value || '').trim();
@@ -27,7 +27,7 @@ export function getModelFallbackChain(preferredModel?: string | null) {
 
   const defaultModel = normalizeModel(process.env.DEFAULT_MODEL);
   const defaultChain = defaultModel && defaultModel !== 'auto'
-    ? [defaultModel, 'grok-420-fast', 'auto']
+    ? [defaultModel, 'gpt-5.2', 'auto']
     : [...DEFAULT_MODEL_CHAIN];
 
   if (configuredChain.length > 0) {

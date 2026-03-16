@@ -1,0 +1,86 @@
+[
+  {
+    "key": "ai-productivity-paradox",
+    "title": "AI 提效为什么反而更焦虑",
+    "topic": "AI工具让工作更快之后，为什么很多人反而更焦虑、更忙、更难判断方向",
+    "angle": "结合 AI productivity paradox 与职场焦虑信号，解释效率提升为什么不自动等于更轻松，并承接职业节奏与决策类测算。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "AI 从业者 / 知识工作者",
+    "keywords": ["AI生产力", "效率悖论", "职场焦虑", "AI工具", "工作效率", "判断方向"],
+    "audience": "已经在使用 AI 工具，但感到工作更碎片、更焦虑、方向更难判断的知识工作者",
+    "trafficPotential": 9,
+    "conversionPotential": 8,
+    "sourceSignals": [
+      "Fortune: The AI productivity paradox: More work, not less",
+      "Google News: AI productivity / workplace anxiety cluster"
+    ]
+  },
+  {
+    "key": "ai-workplace-anxiety",
+    "title": "AI 时代的职场替代焦虑",
+    "topic": "AI时代的替代焦虑为什么会持续放大，普通职场人真正该先判断什么",
+    "angle": "连接 workplace AI anxiety、人才发展不确定性与职业决策窗口，避免泛泛而谈的情绪安抚。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "城市职场用户",
+    "keywords": ["AI焦虑", "职场替代", "职业危机", "工作不确定性", "职业决策", "时间窗口"],
+    "audience": "担心 AI 替代、岗位收缩和职业路径失衡的职场用户",
+    "trafficPotential": 9,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Patheos: The Silent Crisis Of Gen AI Anxiety In The Workplace",
+      "AOL / Facility Executive: AI anxiety in the workplace"
+    ]
+  },
+  {
+    "key": "career-paralysis-decision",
+    "title": "选择太多为什么反而跳不动",
+    "topic": "当机会变多、信息变多时，为什么很多人反而更难换工作和做决定",
+    "angle": "围绕 career paralysis 与 decision fatigue，切入普通用户最真实的拖延、内耗和窗口错过问题。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "换工作 / 转岗用户",
+    "keywords": ["选择太多", "决策瘫痪", "跳槽", "转岗", "职业窗口", "拖延"],
+    "audience": "面对多种工作选项、长期迟迟无法决定去留的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Mexico Business News: Career Paralysis: Trapped by Too Many Options",
+      "Times of India: Take one decision at a time"
+    ]
+  },
+  {
+    "key": "astrology-book-ladder",
+    "title": "占星与命理入门书梯",
+    "topic": "2026年想系统读懂占星、命理和基础判断框架，应该先看哪些书",
+    "angle": "不做泛泛书单，而是做从入门到应用的阅读阶梯，承接知识库与长期 SEO 入口。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "命理 / 占星初学者",
+    "keywords": ["占星书单", "命理入门", "玄学书籍", "易学书单", "占星入门", "阅读路径"],
+    "audience": "刚接触占星与命理、需要阅读路径和入门框架的用户",
+    "trafficPotential": 8,
+    "conversionPotential": 7,
+    "sourceSignals": [
+      "vocal.media: 7 Astrology Books You Need To Read In 2026"
+    ]
+  },
+  {
+    "key": "overseas-ai-career-anxiety",
+    "title": "海外华人的 AI 职业焦虑",
+    "topic": "海外华人在AI转型、裁员压力和职业切换面前，最需要先判断哪些变量",
+    "angle": "把海外职业焦虑、AI 产业变化、时区迁移与个人职业节奏结合，延续海外华人内容优势。",
+    "primaryType": "case",
+    "locale": "zh-US",
+    "market": "北美华人 / 海外华人职场",
+    "keywords": ["海外华人", "AI职业焦虑", "裁员", "转型", "职业切换", "北美职场"],
+    "audience": "生活在海外、同时面对 AI 冲击、岗位变化与身份迁移焦虑的华人职场用户",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Google News cluster: AI anxiety + career uncertainty",
+      "ATD: uncertainty and anxiety in talent development"
+    ]
+  }
+]

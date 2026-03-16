@@ -50,6 +50,15 @@ type LlmProgressEvent = {
 
 type PhaseKey = 'structure' | 'narrative';
 
+function createLlmClient(timeoutMs: number) {
+  return new OpenAI({
+    apiKey: getApiKey()!,
+    baseURL: getApiBaseUrl(),
+    timeout: timeoutMs,
+    maxRetries: 0,
+  });
+}
+
 export async function generateFortuneInterpretation(
   baziData: Record<string, unknown>,
   timeoutMs: number = 25000,
@@ -61,52 +70,31 @@ export async function generateFortuneInterpretation(
     return null;
   }
 
-  const openai = new OpenAI({
-    apiKey,
-    baseURL: getApiBaseUrl(),
-    timeout: timeoutMs,
-    maxRetries: 0,
-  });
-
   console.log(`[LLM] Starting interpretation with ${timeoutMs}ms timeout...`);
 
   try {
-    const baseChain = getModelFallbackChain(getDefaultModel());
-    const deadlineAt = Date.now() + timeoutMs;
-    const structureBudgetMs = Math.max(2600, Math.floor(timeoutMs * 0.68));
-
-    const structureDraft = await executeReportPhase({
-      openai,
-      phase: 'structure',
-      baseChain,
-      timeoutMs: structureBudgetMs,
-      deadlineAt,
-      prompt: buildStructuredPrompt(baziData),
-      onProgress,
-    });
+    const coreTimeoutMs = Math.max(3000, Math.floor(timeoutMs * 0.72));
+    const structureDraft = await generateFortuneInterpretationCore(
+      baziData,
+      coreTimeoutMs,
+      onProgress
+    );
 
     if (!structureDraft) {
       return null;
     }
 
-    const remainingBudget = deadlineAt - Date.now();
+    const remainingBudget = Math.max(0, timeoutMs - coreTimeoutMs);
     if (remainingBudget < 1400) {
       return structureDraft;
     }
 
-    const narrativePatch = await executeReportPhase({
-      openai,
-      phase: 'narrative',
-      baseChain,
-      timeoutMs: remainingBudget,
-      deadlineAt,
-      prompt: buildNarrativePatchPrompt(baziData, structureDraft),
-      onProgress,
-    });
-
-    return narrativePatch
-      ? mergeInterpretation(structureDraft, narrativePatch)
-      : structureDraft;
+    return generateFortuneInterpretationFollowup(
+      baziData,
+      structureDraft,
+      remainingBudget,
+      onProgress
+    );
   } catch (error) {
     if (error instanceof Error) {
       if (
@@ -125,6 +113,60 @@ export async function generateFortuneInterpretation(
   }
 }
 
+export async function generateFortuneInterpretationCore(
+  baziData: Record<string, unknown>,
+  timeoutMs: number = 18000,
+  onProgress?: (event: LlmProgressEvent) => void | Promise<void>
+) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    return null;
+  }
+
+  const openai = createLlmClient(timeoutMs);
+  const baseChain = getModelFallbackChain(getDefaultModel());
+  const deadlineAt = Date.now() + timeoutMs;
+
+  return executeReportPhase({
+    openai,
+    phase: 'structure',
+    baseChain,
+    timeoutMs,
+    deadlineAt,
+    prompt: buildStructuredPrompt(baziData),
+    onProgress,
+  });
+}
+
+export async function generateFortuneInterpretationFollowup(
+  baziData: Record<string, unknown>,
+  structureDraft: Record<string, unknown>,
+  timeoutMs: number = 8000,
+  onProgress?: (event: LlmProgressEvent) => void | Promise<void>
+) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
+    return structureDraft;
+  }
+
+  const openai = createLlmClient(timeoutMs);
+  const baseChain = getModelFallbackChain(getDefaultModel());
+  const deadlineAt = Date.now() + timeoutMs;
+  const narrativePatch = await executeReportPhase({
+    openai,
+    phase: 'narrative',
+    baseChain,
+    timeoutMs,
+    deadlineAt,
+    prompt: buildNarrativePatchPrompt(baziData, structureDraft),
+    onProgress,
+  });
+
+  return narrativePatch
+    ? mergeInterpretation(structureDraft, narrativePatch)
+    : structureDraft;
+}
+
 async function executeReportPhase(params: {
   openai: OpenAI;
   phase: PhaseKey;
@@ -137,7 +179,7 @@ async function executeReportPhase(params: {
   const plan = getDynamicModelExecutionPlan(params.baseChain, 'report');
   const modelCandidates = plan.orderedModels;
   const planSummary = summarizeModelExecutionPlan(plan);
-  const attemptTimeouts = computeAttemptTimeouts(params.timeoutMs, modelCandidates.length);
+  const attemptTimeouts = computeReportAttemptTimeouts(params.phase, params.timeoutMs, modelCandidates.length);
   const phaseLabel = params.phase === 'structure' ? '结构化解释草案' : '正文补强与建议完善';
   const traceLabel = `report:${params.phase}`;
 
@@ -172,7 +214,8 @@ async function executeReportPhase(params: {
           { role: 'system', content: buildPhaseSystemPrompt(params.phase) },
           { role: 'user', content: params.prompt },
         ],
-        temperature: params.phase === 'structure' ? 0.45 : 0.55,
+        temperature: params.phase === 'structure' ? 0.4 : 0.5,
+        max_tokens: params.phase === 'structure' ? 520 : 360,
       }, {
         signal: attemptController.signal,
         timeout: attemptTimeoutMs,
@@ -258,34 +301,137 @@ async function executeReportPhase(params: {
   return null;
 }
 
-function buildPhaseSystemPrompt(phase: PhaseKey) {
-  if (phase === 'structure') {
-    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。先输出完整、克制、结构稳定的 JSON 草案，只输出合法 JSON，不要 markdown。';
+function computeReportAttemptTimeouts(phase: PhaseKey, totalBudgetMs: number, attemptCount: number) {
+  if (attemptCount <= 0) return [];
+  if (attemptCount === 1) return [totalBudgetMs];
+
+  const weights = phase === 'structure'
+    ? attemptCount === 2
+      ? [0.74, 0.26]
+      : [0.66, 0.22, 0.12]
+    : attemptCount === 2
+      ? [0.7, 0.3]
+      : [0.6, 0.24, 0.16];
+
+  return computeAttemptTimeoutsWithWeights(totalBudgetMs, attemptCount, weights);
+}
+
+function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: number, weights: number[]) {
+  const fallbackWeight = 1 / attemptCount;
+  const minBudget = Math.max(1200, Math.floor(totalBudgetMs * 0.08));
+  const budgets: number[] = [];
+  let consumed = 0;
+
+  for (let index = 0; index < attemptCount; index += 1) {
+    const remainingSlots = attemptCount - index;
+    const remainingBudget = totalBudgetMs - consumed;
+    if (index === attemptCount - 1) {
+      budgets.push(Math.max(minBudget, remainingBudget));
+      break;
+    }
+
+    const rawBudget = Math.floor(totalBudgetMs * (weights[index] || fallbackWeight));
+    const reservedForTail = minBudget * (remainingSlots - 1);
+    const budget = Math.max(minBudget, Math.min(rawBudget, remainingBudget - reservedForTail));
+    budgets.push(budget);
+    consumed += budget;
   }
 
-  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案只补强正文、趋势解释和行动建议，只输出合法 JSON，不要 markdown。';
+  return budgets;
+}
+
+function buildPhaseSystemPrompt(phase: PhaseKey) {
+  if (phase === 'structure') {
+    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
+  }
+
+  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案做小幅补强，只输出合法 JSON，不要 markdown，不要重复。';
+}
+
+function compactForPrompt(value: unknown, depth: number = 0): unknown {
+  if (value == null) return value;
+  if (typeof value === 'string') {
+    return value.length > 260 ? `${value.slice(0, 260)}...` : value;
+  }
+  if (typeof value !== 'object') {
+    return value;
+  }
+  if (depth >= 6) {
+    return '[trimmed]';
+  }
+  if (Array.isArray(value)) {
+    if (value.length <= 12) {
+      return value.map((item) => compactForPrompt(item, depth + 1));
+    }
+    const head = value.slice(0, 6);
+    const tail = value.slice(-6);
+    return [...head, ...tail].map((item) => compactForPrompt(item, depth + 1));
+  }
+
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([key, item]) => [key, compactForPrompt(item, depth + 1)])
+  );
+}
+
+function buildReportPromptPayload(baziData: Record<string, unknown>) {
+  const advice = (baziData.advice || {}) as Record<string, unknown>;
+  const fortune = (baziData.fortune || {}) as Record<string, unknown>;
+  const basic = (baziData.basic || {}) as Record<string, unknown>;
+
+  return compactForPrompt({
+    basic: {
+      name: basic.name,
+      dayMaster: basic.dayMaster,
+      lunarDate: basic.lunarDate,
+      zodiac: basic.zodiac,
+      pillars: basic.pillars,
+    },
+    pattern: baziData.pattern,
+    tenGods: baziData.tenGods,
+    fortune: {
+      currentDaYun: fortune.currentDaYun,
+      currentDaYunAge: fortune.currentDaYunAge,
+      currentLiuNian: fortune.currentLiuNian,
+      interaction: fortune.interaction,
+      nextYear: fortune.nextYear,
+      shenShaInfluence: fortune.shenShaInfluence,
+      trend: fortune.trend,
+    },
+    advice: {
+      yongShen: advice.yongShen,
+      xiShen: advice.xiShen,
+      jiShen: advice.jiShen,
+      directions: advice.directions,
+      colors: advice.colors,
+      timing: advice.timing,
+    },
+  });
 }
 
 function buildStructuredPrompt(baziData: Record<string, unknown>) {
+  const compactBaziData = buildReportPromptPayload(baziData);
+  const compactShenSha = compactForPrompt((baziData as Record<string, unknown>).shenSha);
+  const compactDayun = compactForPrompt((baziData as Record<string, unknown>).dayun);
+
   return `
 你需要先生成一份稳定的结构化命理报告草案。目标是字段完整、可解析、可用于后续补强。
 
 【用户排盘数据】
-${JSON.stringify(baziData, null, 2)}
+${JSON.stringify(compactBaziData)}
 
 ${(baziData as Record<string, unknown>).shenSha ? `【神煞信息】
-${JSON.stringify((baziData as Record<string, unknown>).shenSha, null, 2)}` : ''}
+${JSON.stringify(compactShenSha)}` : ''}
 
 ${(baziData as Record<string, unknown>).dayun ? `【大运信息】
-${JSON.stringify((baziData as Record<string, unknown>).dayun, null, 2)}` : ''}
+${JSON.stringify(compactDayun)}` : ''}
 
 要求：
 1. 输出合法 JSON，不要 markdown。
 2. 先保证字段完整和判断正确，再追求文采。
-3. 文本保持中等长度，减少冗长，方便后续第二阶段补强。
+3. 文本保持简洁，总体宁短勿长，方便稳定返回。
 4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
 
-JSON 结构必须完整包含：
+JSON 结构必须完整包含以下最小字段：
 {
   "basic": {
     "summary": "一句基础盘面总结"
@@ -296,72 +442,16 @@ JSON 结构必须完整包含：
     "strength": "strong/medium/weak",
     "quality": "good/medium/bad"
   },
-  "fiveElements": {
-    "wood": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
-    "fire": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
-    "earth": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
-    "metal": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" },
-    "water": { "description": "说明", "strength": 0, "quality": "good/medium/bad/weak/strong" }
-  },
   "fortune": {
     "currentDaYun": "当前大运解释",
-    "currentDaYunAge": "年龄范围",
     "currentLiuNian": "当前流年解释",
     "interaction": "大运流年互动",
     "nextYear": "明年趋势",
-    "shenShaInfluence": "神煞影响",
     "trend": "未来3-5年总结"
-  },
-  "advice": {
-    "career": {
-      "general": "事业总建议",
-      "specific": ["建议1", "建议2"],
-      "timing": "时机",
-      "direction": "方位",
-      "colors": ["颜色1"],
-      "avoid": ["避免事项1"]
-    },
-    "wealth": {
-      "general": "财富总建议",
-      "specific": ["建议1", "建议2"],
-      "timing": "时机",
-      "direction": "方位",
-      "colors": ["颜色1"],
-      "avoid": ["避免事项1"]
-    },
-    "marriage": {
-      "general": "关系总建议",
-      "specific": ["建议1", "建议2"],
-      "timing": "时机",
-      "direction": "方位",
-      "colors": ["颜色1"],
-      "avoid": ["避免事项1"]
-    },
-    "health": {
-      "general": "健康总建议",
-      "specific": ["建议1", "建议2"],
-      "timing": "时机",
-      "directions": ["方位1"],
-      "colors": ["颜色1"],
-      "avoid": ["避免事项1"]
-    },
-    "directions": ["汇总方位"],
-    "colors": ["汇总颜色"],
-    "timing": ["汇总时机"]
-  },
-  "evidence": {
-    "celebrities": [
-      {
-        "name": "相似名人",
-        "bazi": ["年柱", "月柱", "日柱", "时柱"],
-        "similar": ["相似点1"],
-        "lesson": "启发"
-      }
-    ]
   },
   "analysis": {
     "opening": "开场句",
-    "explanation": "150字左右的综合解释"
+    "explanation": "120-220字的综合解释"
   }
 }
 `;
@@ -371,38 +461,35 @@ function buildNarrativePatchPrompt(
   baziData: Record<string, unknown>,
   draft: Record<string, unknown>
 ) {
+  const compactBaziData = buildReportPromptPayload(baziData);
+  const compactDraft = compactForPrompt(draft);
+
   return `
 你现在不是重写整份报告，而是在已有结构化草案上做第二阶段补强。
 
 【用户排盘数据】
-${JSON.stringify(baziData, null, 2)}
+${JSON.stringify(compactBaziData)}
 
 【当前结构草案】
-${JSON.stringify(draft, null, 2)}
+${JSON.stringify(compactDraft)}
 
 要求：
 1. 只补强叙事深度、行动建议和趋势说明，不要推翻已有结构。
 2. 必须结合大运、流年、神煞、关键结构来写，不要空话。
-3. explanation 控制在 260-420 字，opening 更有大师感但不要浮夸。
+3. explanation 控制在 140-220 字，opening 更有定性力量但不要浮夸。
 4. career/wealth/marriage/health 的 general 和 specific 要更落地，避免重复。
 5. 输出合法 JSON，不要 markdown。
 
 只输出需要覆盖的补丁字段：
 {
-  "fortune": {
-    "interaction": "补强后的互动解释",
-    "nextYear": "补强后的明年趋势",
-    "trend": "补强后的未来3-5年趋势",
-    "shenShaInfluence": "补强后的神煞影响"
-  },
   "advice": {
     "career": {
       "general": "补强后的事业建议",
-      "specific": ["更具体建议1", "更具体建议2", "更具体建议3"]
+      "specific": ["更具体建议1", "更具体建议2"]
     },
     "wealth": {
       "general": "补强后的财富建议",
-      "specific": ["更具体建议1", "更具体建议2", "更具体建议3"]
+      "specific": ["更具体建议1", "更具体建议2"]
     },
     "marriage": {
       "general": "补强后的关系建议",
@@ -411,21 +498,14 @@ ${JSON.stringify(draft, null, 2)}
     "health": {
       "general": "补强后的健康建议",
       "specific": ["更具体建议1", "更具体建议2"]
-    }
+    },
+    "directions": ["汇总方位"],
+    "colors": ["汇总颜色"],
+    "timing": ["汇总时机"]
   },
   "analysis": {
     "opening": "补强后的开场白",
     "explanation": "补强后的综合解释"
-  },
-  "evidence": {
-    "celebrities": [
-      {
-        "name": "更合理的相似名人",
-        "bazi": ["年柱", "月柱", "日柱", "时柱"],
-        "similar": ["相似点1", "相似点2"],
-        "lesson": "可借鉴的经验"
-      }
-    ]
   }
 }
 `;

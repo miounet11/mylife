@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createFortuneWithUser } from '@/lib/database';
+import { createFortuneWithUser, userOperations } from '@/lib/database';
+import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
+import { deliverMailWithRetry, isEmailDeliveryConfigured, sendReportReadyEmail } from '@/lib/email';
 import { trackServerEvent } from '@/lib/analytics';
 import { CURRENT_REPORT_VERSION, generateVersionedReport } from '@/lib/report-pipeline';
 import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
@@ -10,7 +12,7 @@ import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import type { FortuneAdvice } from '@/lib/user-types';
 import { validateAnalyzeRequest } from '@/lib/validators';
 
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 type AnalyzeInput = {
   name: string;
@@ -165,11 +167,31 @@ async function streamAnalyze(
 ) {
   const encoder = new TextEncoder();
   const stageRef: AnalyzeStageRef = { current: 'received' };
+  let closed = false;
 
   const stream = new ReadableStream<Uint8Array>({
     start: async (controller) => {
       const send = (event: StreamEvent) => {
-        controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        if (closed) {
+          return;
+        }
+        try {
+          controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        } catch {
+          closed = true;
+        }
+      };
+
+      const close = () => {
+        if (closed) {
+          return;
+        }
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          closed = true;
+        }
       };
 
       try {
@@ -210,8 +232,11 @@ async function streamAnalyze(
           },
           timestamp: new Date().toISOString(),
         });
-        controller.close();
+        close();
       } catch (error) {
+        if (closed) {
+          return;
+        }
         console.error('[API] 流式命理分析失败:', error);
         trackServerEvent({
           sessionId: context.clientKey,
@@ -228,8 +253,11 @@ async function streamAnalyze(
           type: 'error',
           error: '分析失败，请稍后再试',
         });
-        controller.close();
+        close();
       }
+    },
+    cancel() {
+      closed = true;
     },
   });
 
@@ -426,6 +454,16 @@ async function executeAnalyze(
     },
   });
 
+  await notifyRegisteredUserReportReady({
+    userId,
+    reportId,
+    reportName: data.name,
+    score: finalResult.analysis?.qualityAudit?.overallScore,
+    grade: finalResult.analysis?.qualityAudit?.grade,
+    deliveryTier: finalResult.analysis?.qualityAudit?.deliveryTier,
+    queuedUpgrade: queuedUpgrade.queued,
+  });
+
   stage({
     type: 'stage',
     stage: 'complete',
@@ -478,6 +516,127 @@ function createSavedReportSnapshot(params: {
     reportVersion: CURRENT_REPORT_VERSION,
     isPublic: false,
   };
+}
+
+async function notifyRegisteredUserReportReady(params: {
+  userId: string;
+  reportId: string;
+  reportName: string;
+  score?: number;
+  grade?: 'S' | 'A' | 'B' | 'C';
+  deliveryTier?: 'basic' | 'enhanced' | 'expert';
+  queuedUpgrade?: boolean;
+}) {
+  if (!isEmailDeliveryConfigured()) {
+    return;
+  }
+
+  const user = userOperations.getById(params.userId) as {
+    email?: string | null;
+    name?: string | null;
+    email_verified?: number | null;
+  } | undefined;
+  const email = `${user?.email || ''}`.trim().toLowerCase();
+  const emailVerified = user?.email_verified === 1;
+
+  if (!email || !emailVerified) {
+    return;
+  }
+
+  try {
+    const deliveryResult = await deliverMailWithRetry(() => sendReportReadyEmail({
+      email,
+      name: params.reportName || user?.name || '用户',
+      reportId: params.reportId,
+      score: params.score,
+      grade: params.grade,
+      deliveryTier: params.deliveryTier,
+      queuedUpgrade: params.queuedUpgrade,
+    }));
+
+    if (deliveryResult?.success) {
+      trackServerEvent({
+        userId: params.userId,
+        sessionId: params.userId,
+        eventName: 'email_delivery_succeeded',
+        page: `/result/${params.reportId}`,
+        meta: {
+          channel: 'report_ready',
+          reportId: params.reportId,
+          emailDomain: email.split('@')[1] || '',
+          deliveryTier: params.deliveryTier || 'basic',
+          queuedUpgrade: !!params.queuedUpgrade,
+        },
+      });
+      return;
+    }
+
+    queueEmailDeliveryJob({
+      kind: 'report_ready',
+      to: [email],
+      payload: {
+        email,
+        name: params.reportName || user?.name || '用户',
+        reportId: params.reportId,
+        score: params.score,
+        grade: params.grade,
+        deliveryTier: params.deliveryTier,
+        queuedUpgrade: !!params.queuedUpgrade,
+      },
+      meta: {
+        userId: params.userId,
+        reportId: params.reportId,
+      },
+    });
+
+    trackServerEvent({
+      userId: params.userId,
+      sessionId: params.userId,
+      eventName: 'email_delivery_failed',
+      page: `/result/${params.reportId}`,
+      meta: {
+        channel: 'report_ready',
+        reportId: params.reportId,
+        emailDomain: email.split('@')[1] || '',
+        deliveryTier: params.deliveryTier || 'basic',
+        queuedUpgrade: !!params.queuedUpgrade,
+        reason: deliveryResult?.message || 'queued_for_retry',
+      },
+    });
+  } catch (error) {
+    queueEmailDeliveryJob({
+      kind: 'report_ready',
+      to: [email],
+      payload: {
+        email,
+        name: params.reportName || user?.name || '用户',
+        reportId: params.reportId,
+        score: params.score,
+        grade: params.grade,
+        deliveryTier: params.deliveryTier,
+        queuedUpgrade: !!params.queuedUpgrade,
+      },
+      meta: {
+        userId: params.userId,
+        reportId: params.reportId,
+      },
+    });
+
+    trackServerEvent({
+      userId: params.userId,
+      sessionId: params.userId,
+      eventName: 'email_delivery_failed',
+      page: `/result/${params.reportId}`,
+      meta: {
+        channel: 'report_ready',
+        reportId: params.reportId,
+        emailDomain: email.split('@')[1] || '',
+        deliveryTier: params.deliveryTier || 'basic',
+        queuedUpgrade: !!params.queuedUpgrade,
+        reason: error instanceof Error ? error.message : 'queued_for_retry',
+      },
+    });
+  }
 }
 
 function mapPipelineStage(progressEvent: {

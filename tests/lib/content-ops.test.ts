@@ -88,7 +88,8 @@ describe('content ops snapshot', () => {
     expect(snapshot.topSurfaces[0]?.key).toBe('knowledge_article:true-solar-time-guide');
     expect(snapshot.generationQueue.length).toBeGreaterThan(0);
     expect(snapshot.generationQueue.some((item) => item.key === 'career-timing')).toBe(true);
-    expect(snapshot.generationQueue[0]?.sourceType).toBe('radar');
+    expect(snapshot.generationQueue.some((item) => item.sourceType === 'radar')).toBe(true);
+    expect(snapshot.generationQueue.some((item) => item.sourceType === 'public-growth')).toBe(true);
     expect(snapshot.contentPerformance[0]?.title).toBe('真太阳时为什么重要');
     expect(snapshot.radarSourcePerformance[0]?.sourceLabel).toBe('TikTok Feed');
     expect(snapshot.radarSourcePerformance[0]?.quickStarts).toBe(1);

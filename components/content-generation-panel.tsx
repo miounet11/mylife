@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type ContentType = 'knowledge' | 'case' | 'insight';
 type ContentStatus = 'draft' | 'published';
@@ -26,6 +26,23 @@ type ContentEntry = {
   status: ContentStatus;
   source: string;
   updatedAt: string;
+};
+
+type ContentGenerationJob = {
+  id: string;
+  status: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  attempts: number;
+  maxAttempts: number;
+  generatedCount: number;
+  llmSucceededCount: number;
+  fallbackCount: number;
+  nextRunAt: string | null;
+  lockedAt: string | null;
+  lastError: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
+  meta?: Record<string, unknown>;
+  entries: ContentEntry[];
 };
 
 interface GeneratorState {
@@ -68,6 +85,58 @@ export default function ContentGenerationPanel({
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [lastGenerated, setLastGenerated] = useState<ContentEntry[]>([]);
+  const [job, setJob] = useState<ContentGenerationJob | null>(null);
+  const [pollAfterMs, setPollAfterMs] = useState(3000);
+
+  useEffect(() => {
+    if (!job || !['pending', 'running', 'retry'].includes(job.status)) {
+      return undefined;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/admin/content/generate?jobId=${encodeURIComponent(job.id)}`, {
+          cache: 'no-store',
+        });
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          setError(data.error || '生成任务状态获取失败');
+          setGenerating(false);
+          return;
+        }
+
+        const nextJob = (data.job || null) as ContentGenerationJob | null;
+        setJob(nextJob);
+        setPollAfterMs(Number(data.pollAfterMs) > 0 ? Number(data.pollAfterMs) : 3000);
+
+        if (!nextJob) {
+          setGenerating(false);
+          setError('生成任务不存在');
+          return;
+        }
+
+        if (nextJob.status === 'completed') {
+          const entries = Array.isArray(nextJob.entries) ? nextJob.entries : [];
+          const summary = `已生成 ${entries.length} 条草稿，LLM 成功 ${nextJob.llmSucceededCount || 0} 条${nextJob.fallbackCount ? `，回退 ${nextJob.fallbackCount} 条` : ''}`;
+          setMessage(summary);
+          setLastGenerated(entries);
+          setGenerating(false);
+          onGenerated(entries, summary);
+          return;
+        }
+
+        if (nextJob.status === 'failed' || nextJob.status === 'cancelled') {
+          setGenerating(false);
+          setError(nextJob.lastError || '生成任务失败');
+        }
+      } catch {
+        setGenerating(false);
+        setError('网络异常，无法获取生成进度');
+      }
+    }, pollAfterMs);
+
+    return () => window.clearTimeout(timer);
+  }, [job, onGenerated, pollAfterMs]);
 
   const generate = async () => {
     const topic = form.topic.trim();
@@ -102,18 +171,20 @@ export default function ContentGenerationPanel({
       const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || 'AI 生成失败');
+        setGenerating(false);
         return;
       }
 
-      const entries = (data.entries || []) as ContentEntry[];
-      const meta = data.meta || {};
-      const summary = `已生成 ${entries.length} 条草稿，LLM 成功 ${meta.llmSucceededCount || 0} 条${meta.fallbackCount ? `，回退 ${meta.fallbackCount} 条` : ''}`;
-      setMessage(summary);
-      setLastGenerated(entries);
-      onGenerated(entries, summary);
+      const nextJob = (data.job || null) as ContentGenerationJob | null;
+      setJob(nextJob);
+      setPollAfterMs(Number(data.pollAfterMs) > 0 ? Number(data.pollAfterMs) : 3000);
+      setLastGenerated([]);
+      setMessage(nextJob ? `已进入异步生成队列，任务 ${nextJob.id} 正在执行。` : '已进入异步生成队列。');
+      if (!nextJob) {
+        setGenerating(false);
+      }
     } catch {
       setError('网络异常，AI 生成失败');
-    } finally {
       setGenerating(false);
     }
   };
@@ -270,6 +341,15 @@ export default function ContentGenerationPanel({
 
       {message && <p className="mt-4 text-sm text-[color:var(--accent-strong)]">{message}</p>}
       {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+      {job && (
+        <div className="mt-4 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 p-4 text-sm text-[color:var(--ink)]">
+          <div className="font-semibold">任务状态：{job.status}</div>
+          <div className="mt-1 text-[color:var(--muted)]">
+            尝试 {job.attempts} / {job.maxAttempts}
+            {job.lastError ? ` · 最近错误：${job.lastError}` : ''}
+          </div>
+        </div>
+      )}
 
       <button
         type="button"
@@ -277,7 +357,7 @@ export default function ContentGenerationPanel({
         disabled={generating}
         className="mt-6 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
       >
-        {generating ? '生成中...' : form.mode === 'cluster' ? '生成整组选题草稿' : '生成内容草稿'}
+        {generating ? '任务执行中...' : form.mode === 'cluster' ? '生成整组选题草稿' : '生成内容草稿'}
       </button>
 
       {lastGenerated.length > 0 && (

@@ -1,0 +1,80 @@
+[
+  {
+    "key": "diaspora-time-precision",
+    "title": "海外华人出生时间与真太阳时",
+    "topic": "海外华人出生在不同时区和夏令时环境下，真太阳时为什么更容易算错",
+    "angle": "解释海外出生、夏令时、时区换算、出生地经纬度为什么会直接影响排盘结果，并自然承接输入出生地的必要性。",
+    "primaryType": "knowledge",
+    "locale": "zh-US",
+    "market": "北美华人 / 海外华人",
+    "keywords": ["海外华人", "夏令时", "daylight saving", "时区", "真太阳时", "出生地", "排盘"],
+    "audience": "出生在美国、加拿大、澳洲或长期海外生活，担心出生时间换算出错的华人用户",
+    "trafficPotential": 10,
+    "conversionPotential": 10
+  },
+  {
+    "key": "taiwan-report-reading",
+    "title": "台灣用戶讀懂八字命盤與流年",
+    "topic": "台灣用戶第一次看八字命盤、流年與排盤結果時，最容易看不懂什麼",
+    "angle": "用繁體中文和台灣常見表達解釋命盤、流年、排盤閱讀路徑，降低新用戶理解門檻。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣用戶",
+    "keywords": ["台灣", "八字", "命盤", "排盤", "流年", "看盤", "真太陽時"],
+    "audience": "台灣地區首次接觸八字分析、習慣繁體中文與在地表達的用戶",
+    "trafficPotential": 9,
+    "conversionPotential": 9
+  },
+  {
+    "key": "hong-kong-career-window",
+    "title": "香港用戶轉工與事業時機",
+    "topic": "香港用戶在轉工、升職、行業變化面前，怎樣判斷事業時機和風險窗口",
+    "angle": "用繁體中文和香港常用表達解釋轉工、事業節奏和風險邊界，承接職業測算需求。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港用戶",
+    "keywords": ["香港", "轉工", "事業", "升職", "時機", "流年", "命盤"],
+    "audience": "香港職場用戶，正在面對轉工、升職或行業波動，想確認時間窗口的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10
+  },
+  {
+    "key": "hong-kong-migration-city",
+    "title": "香港與海外遷移節奏",
+    "topic": "香港用戶在移居、換城市、海外發展之間，命盤更適合幫助判斷什麼",
+    "angle": "圍繞遷移、換城市、海外定居和發展節奏建立可搜尋的遷移專題入口。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港 / 海外遷移用戶",
+    "keywords": ["香港", "移民", "移居", "換城市", "海外發展", "定居", "時機"],
+    "audience": "考慮離開香港、切換城市或重新布局海外發展的華人用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 9
+  },
+  {
+    "key": "singapore-malaysia-career",
+    "title": "新马华人事业与家庭节奏",
+    "topic": "新马华人换工作时，事业和家庭应该先看什么",
+    "angle": "聚焦新马华人换工作、事业节奏和家庭平衡的真实决策场景，先解决最常见的判断卡点。",
+    "primaryType": "case",
+    "locale": "zh-SG",
+    "market": "新加坡 / 马来西亚华人",
+    "keywords": ["新加坡", "马来西亚", "新馬", "華人", "事業", "家庭", "跳槽", "時間窗口"],
+    "audience": "生活在新加坡或马来西亚，需要平衡事业推进、家庭决策和节奏判断的华人用户",
+    "trafficPotential": 8,
+    "conversionPotential": 9
+  },
+  {
+    "key": "diaspora-relationship-timing",
+    "title": "海外华人关系推进与婚恋节奏",
+    "topic": "海外华人在跨文化关系、婚恋推进和长期承诺面前，命理内容更适合帮助判断什么",
+    "angle": "围绕关系推进、沟通节奏、异地与跨文化关系建立案例型入口，承接婚恋测算。",
+    "primaryType": "case",
+    "locale": "zh-US",
+    "market": "海外华人关系场景",
+    "keywords": ["海外华人", "婚恋", "关系", "异地", "跨文化", "结婚", "时间窗口"],
+    "audience": "生活在海外、面对跨文化或异地关系推进问题的华人用户",
+    "trafficPotential": 8,
+    "conversionPotential": 10
+  }
+]

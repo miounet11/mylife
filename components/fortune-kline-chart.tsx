@@ -25,17 +25,6 @@ interface KLineChartProps {
   height?: number;
 }
 
-const defaultData: FortuneData[] = [
-  { year: 2019, career: 60, wealth: 50, marriage: 70, health: 80 },
-  { year: 2020, career: 65, wealth: 55, marriage: 72, health: 78 },
-  { year: 2021, career: 70, wealth: 60, marriage: 75, health: 75 },
-  { year: 2022, career: 75, wealth: 65, marriage: 73, health: 77 },
-  { year: 2023, career: 80, wealth: 70, marriage: 71, health: 76 },
-  { year: 2024, career: 85, wealth: 75, marriage: 70, health: 74 },
-  { year: 2025, career: 88, wealth: 78, marriage: 68, health: 72 },
-  { year: 2026, career: 90, wealth: 80, marriage: 65, health: 70 },
-];
-
 const series = [
   { key: 'career', label: '事业', color: '#b2955d' },
   { key: 'wealth', label: '财富', color: '#0284c7' },
@@ -44,8 +33,20 @@ const series = [
 ] as const;
 
 export default function FortuneKLineChart({ data, showLegend = true, height = 380 }: KLineChartProps) {
-  const chartData = data && data.length > 0 ? data : defaultData;
+  const chartData = data && data.length > 0 ? data : [];
   const latest = chartData[chartData.length - 1];
+
+  if (chartData.length === 0) {
+    return (
+      <div className="soft-card w-full rounded-[2rem] p-6 md:p-8">
+        <div className="section-label">阶段趋势</div>
+        <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">人生运势曲线</h3>
+        <div className="mt-6 rounded-[1.5rem] bg-slate-50 px-5 py-8 text-sm leading-7 text-[color:var(--muted)]">
+          当前还没有足够的历史分析结果，暂时无法生成可回看的阶段趋势图。
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="soft-card w-full rounded-[2rem] p-6 md:p-8">

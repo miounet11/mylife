@@ -2,11 +2,12 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { getCaseStudyBySlug } from '@/lib/content-store';
+import { getCaseStudyBySlug, getManagedContentEntryBySlug } from '@/lib/content-store';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -30,7 +31,10 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function CaseDetailPage({ params }: PageProps) {
   const { slug } = await params;
   const item = getCaseStudyBySlug(slug);
-  if (!item) notFound();
+  const managedEntry = getManagedContentEntryBySlug('case', slug);
+  if (!item || !managedEntry) notFound();
+  const locale = typeof managedEntry.meta?.locale === 'string' ? managedEntry.meta.locale : '';
+  const market = typeof managedEntry.meta?.market === 'string' ? managedEntry.meta.market : '';
   const articleSchema = {
     '@context': 'https://schema.org',
     '@type': 'Article',
@@ -87,6 +91,12 @@ export default async function CaseDetailPage({ params }: PageProps) {
               {item.scenario}
             </div>
             <h1 className="mt-5 text-4xl font-black text-[color:var(--ink)] md:text-5xl">{item.title}</h1>
+            {(locale || market) ? (
+              <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[color:var(--muted)]">
+                <ContentLocaleBadge locale={locale} market={market} />
+                {market ? <span>{market}</span> : null}
+              </div>
+            ) : null}
             <p className="mt-5 text-base leading-8 text-[color:var(--muted)]">{item.excerpt}</p>
 
             <div className="mt-8 space-y-8">

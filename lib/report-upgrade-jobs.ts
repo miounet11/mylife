@@ -1,6 +1,8 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { emailSubscriptionOperations, fortuneOperations, reportUpgradeJobOperations, userOperations } from '@/lib/database';
 import { isEmailDeliveryConfigured, sendReportUpgradeReadyEmail } from '@/lib/email';
+import { getModelFallbackChain } from '@/lib/llm-model-fallback';
+import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
 import { REPORT_EXPERT_TARGET_SCORE } from '@/lib/report-quality';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
@@ -10,6 +12,7 @@ const DEFAULT_MAX_ATTEMPTS = Math.max(2, Number(process.env.REPORT_UPGRADE_MAX_A
 const INITIAL_DELAY_MS = Math.max(15_000, Number(process.env.REPORT_UPGRADE_INITIAL_DELAY_MS || 45_000));
 const RETRY_BASE_DELAY_MS = Math.max(30_000, Number(process.env.REPORT_UPGRADE_RETRY_DELAY_MS || 1000 * 60 * 10));
 const DEFAULT_BATCH_SIZE = Math.max(1, Number(process.env.REPORT_UPGRADE_BATCH_SIZE || 2));
+const PROVIDER_DEFER_MS = Math.max(10 * 60 * 1000, Number(process.env.REPORT_UPGRADE_PROVIDER_DEFER_MS || 1000 * 60 * 20));
 
 export function enqueueReportUpgrade(params: {
   report: FortuneRecord;
@@ -41,7 +44,13 @@ export function enqueueReportUpgrade(params: {
   }
 
   const now = new Date();
-  const nextRunAt = params.nextRunAt || new Date(now.getTime() + computeInitialDelayMs(qualityAudit?.overallScore || 0)).toISOString();
+  const providerHealth = assessReportProviderHealth();
+  const deferredForProvider = providerHealth.shouldDefer;
+  const nextRunAt = params.nextRunAt || new Date(
+    now.getTime() + (deferredForProvider
+      ? PROVIDER_DEFER_MS
+      : computeInitialDelayMs(qualityAudit?.overallScore || 0))
+  ).toISOString();
   const bestScore = Math.max(
     qualityAudit?.overallScore || 0,
     existing?.bestScore || 0
@@ -51,7 +60,7 @@ export function enqueueReportUpgrade(params: {
     id: existing?.id || `upgrade_${generateId()}`,
     reportId: params.report.id,
     userId: params.report.userId,
-    status: 'pending',
+    status: deferredForProvider ? 'retry' : 'pending',
     targetScore: REPORT_EXPERT_TARGET_SCORE,
     attempts: existing?.attempts || 0,
     maxAttempts: existing?.maxAttempts || DEFAULT_MAX_ATTEMPTS,
@@ -59,11 +68,14 @@ export function enqueueReportUpgrade(params: {
     bestScore,
     bestGrade: qualityAudit?.grade || existing?.bestGrade,
     nextRunAt,
+    lastError: deferredForProvider ? 'PROVIDER_UNHEALTHY' : null,
     meta: {
-      reason: params.reason || 'quality_gate',
+      reason: params.reason || (deferredForProvider ? 'provider_unhealthy' : 'quality_gate'),
       reportVersion: params.report.reportVersion || 'v1',
       deliveryTier: qualityAudit?.deliveryTier || 'basic',
       targetAchieved: !!qualityAudit?.targetAchieved,
+      deferredForProvider,
+      providerHealth: deferredForProvider ? providerHealth.summary : undefined,
       ...(params.meta || {}),
     },
   };
@@ -72,7 +84,7 @@ export function enqueueReportUpgrade(params: {
 
   return {
     queued: true,
-    reason: 'queued',
+    reason: deferredForProvider ? 'provider_unhealthy' : 'queued',
     job: reportUpgradeJobOperations.getByReportId(params.report.id),
   };
 }
@@ -109,9 +121,29 @@ export async function processNextReportUpgradeJob() {
   const previousAudit = report.analysis?.qualityAudit;
   const previousScore = previousAudit?.overallScore || 0;
   const previousBestScore = Math.max(previousScore, job.bestScore || 0);
+  const providerHealth = assessReportProviderHealth();
+
+  if (providerHealth.shouldDefer) {
+    reportUpgradeJobOperations.markDeferred(job.id, {
+      nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
+      lastError: 'PROVIDER_UNHEALTHY',
+      meta: {
+        ...(job.meta || {}),
+        deferredForProvider: true,
+        providerHealth: providerHealth.summary,
+      },
+    });
+
+    return {
+      processed: true,
+      status: 'retry',
+      reportId: report.id,
+      reason: 'provider_unhealthy',
+    };
+  }
 
   try {
-    const { result, llmUsed } = await regenerateReportFromRecord(report);
+    const { result, llmUsed, llmUnavailable, deferredByProviderHealth } = await regenerateReportFromRecord(report);
     result.analysis = withReportVersionLineage({
       previousAnalysis: report.analysis,
       previousReportVersion: report.reportVersion || 'v1',
@@ -145,6 +177,31 @@ export async function processNextReportUpgradeJob() {
         shenSha: result.shenSha,
         reportVersion: CURRENT_REPORT_VERSION,
       });
+    }
+
+    if (llmUnavailable && !newAudit?.targetAchieved) {
+      reportUpgradeJobOperations.markDeferred(job.id, {
+        lastScore: newScore,
+        bestScore,
+        bestGrade,
+        nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
+        lastError: deferredByProviderHealth ? 'PROVIDER_UNHEALTHY' : 'LLM_UNAVAILABLE',
+        meta: {
+          ...(job.meta || {}),
+          lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
+          llmUsed,
+          llmUnavailable,
+          improved,
+          deferredByProviderHealth,
+        },
+      });
+
+      return {
+        processed: true,
+        status: 'retry',
+        reportId: report.id,
+        reason: deferredByProviderHealth ? 'provider_unhealthy' : 'llm_unavailable',
+      };
     }
 
     if (newAudit?.targetAchieved) {
@@ -379,6 +436,37 @@ async function notifyUpgradeCompleted(params: {
 }
 
 export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SIZE) {
+  const providerHealth = assessReportProviderHealth();
+  if (providerHealth.shouldDefer) {
+    const deferredJobs = reportUpgradeJobOperations.listRunnablePending(limit);
+    for (const job of deferredJobs) {
+      reportUpgradeJobOperations.markDeferred(job.id, {
+        lastScore: job.lastScore,
+        bestScore: job.bestScore,
+        bestGrade: job.bestGrade,
+        nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
+        lastError: 'PROVIDER_UNHEALTHY',
+        meta: {
+          ...(job.meta || {}),
+          deferredForProvider: true,
+          providerHealth: providerHealth.summary,
+        },
+      });
+    }
+
+    return {
+      processed: deferredJobs.length > 0,
+      processedCount: deferredJobs.length,
+      reason: 'provider_unhealthy',
+      jobs: deferredJobs.map((job) => ({
+        processed: true,
+        status: 'retry',
+        reportId: job.reportId,
+        reason: 'provider_unhealthy',
+      })),
+    };
+  }
+
   const jobs: Array<{
     processed: boolean;
     status?: string;
@@ -401,6 +489,9 @@ export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SI
       break;
     }
     jobs.push(result);
+    if (result.reason === 'provider_unhealthy') {
+      break;
+    }
   }
 
   return {
@@ -440,6 +531,35 @@ function computeRetryDelayMs(params: {
   }
 
   return Math.max(60_000, Math.floor(base * attemptFactor));
+}
+
+function assessReportProviderHealth() {
+  const baseChain = getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto');
+  const reportAssessment = assessScopeProviderHealth(baseChain, 'report');
+  const agentAssessment = assessScopeProviderHealth(baseChain, 'agent');
+  const reportSnapshots = reportAssessment.snapshots || [];
+  const agentSnapshots = agentAssessment.snapshots || [];
+  const shouldDefer = reportAssessment.shouldDefer
+    && !hasRunnableModelsForSnapshots(reportSnapshots);
+
+  return {
+    shouldDefer,
+    summary: {
+      report: summarizeHealthSnapshots(reportSnapshots),
+      agent: summarizeHealthSnapshots(agentSnapshots),
+    },
+  };
+}
+
+function summarizeHealthSnapshots(snapshots: ModelHealthSnapshot[]) {
+  return snapshots.map((item) => ({
+    model: item.model,
+    state: item.state,
+    successRate: item.successRate,
+    failureRate: item.failureRate,
+    attempts: item.attempts,
+    avgLatencyMs: item.avgLatencyMs,
+  }));
 }
 
 function gradeByHigherScore(params: {

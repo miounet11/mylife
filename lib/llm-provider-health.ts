@@ -90,17 +90,26 @@ function getAttemptEvents(models: string[], scope?: LlmScope) {
   `, params) as Array<{ created_at: string; meta?: string | null }>;
 }
 
-function getCircuitEvents(models: string[]) {
+function getCircuitEvents(models: string[], scope?: LlmScope) {
   if (!models.length) return [];
 
   const placeholders = models.map(() => '?').join(', ');
+  const params: Array<string> = [...models];
+  let scopeClause = '';
+
+  if (scope) {
+    scopeClause = ` AND (json_extract(meta, '$.scope') = ? OR json_extract(meta, '$.scope') IS NULL)`;
+    params.push(scope);
+  }
+
   return analyticsOperations.rawQuery(`
     SELECT created_at, meta
     FROM analytics_events
     WHERE event_name = 'llm_model_circuit_changed'
       AND json_extract(meta, '$.model') IN (${placeholders})
+      ${scopeClause}
     ORDER BY created_at DESC
-  `, models) as Array<{ created_at: string; meta?: string | null }>;
+  `, params) as Array<{ created_at: string; meta?: string | null }>;
 }
 
 function parseMeta<T>(value?: string | null) {
@@ -215,14 +224,15 @@ export function buildModelExecutionPlan(params: {
   let ordered = [...healthy, ...degraded, ...probes];
 
   if (!ordered.length) {
-    const fallbackProbe = [...params.snapshots]
-      .sort((left, right) => {
-        const leftTime = left.reopenAt ? new Date(left.reopenAt).getTime() : now.getTime();
-        const rightTime = right.reopenAt ? new Date(right.reopenAt).getTime() : now.getTime();
-        return leftTime - rightTime || left.defaultOrder - right.defaultOrder;
-      })[0];
-
-    ordered = fallbackProbe ? [fallbackProbe] : [];
+    const fullyOpen = params.snapshots.every((item) => item.state === 'open');
+    if (!fullyOpen) {
+      ordered = [...params.snapshots]
+        .sort((left, right) => {
+          const leftTime = left.reopenAt ? new Date(left.reopenAt).getTime() : now.getTime();
+          const rightTime = right.reopenAt ? new Date(right.reopenAt).getTime() : now.getTime();
+          return left.defaultOrder - right.defaultOrder || leftTime - rightTime;
+        });
+    }
   }
 
   return {
@@ -231,14 +241,14 @@ export function buildModelExecutionPlan(params: {
   };
 }
 
-export function getDynamicModelExecutionPlan(models: string[], scope: LlmScope) {
+function buildExecutionPlan(models: string[], scope?: LlmScope) {
   const attemptRows = getAttemptEvents(models, scope);
-  const circuitRows = getCircuitEvents(models);
+  const circuitRows = getCircuitEvents(models, scope);
   const attempts = attemptRows.map((row) => {
     const meta = parseMeta<Record<string, unknown>>(row.meta);
     return {
       model: typeof meta.model === 'string' ? meta.model : '',
-      scope: typeof meta.scope === 'string' ? meta.scope as LlmScope : scope,
+      scope: typeof meta.scope === 'string' ? meta.scope as LlmScope : (scope || 'report'),
       success: meta.success === true,
       latencyMs: typeof meta.latencyMs === 'number' ? meta.latencyMs : 0,
       errorType: typeof meta.errorType === 'string' ? meta.errorType : undefined,
@@ -269,6 +279,10 @@ export function getDynamicModelExecutionPlan(models: string[], scope: LlmScope) 
   });
 }
 
+export function getDynamicModelExecutionPlan(models: string[], scope: LlmScope) {
+  return buildExecutionPlan(models, scope);
+}
+
 export function summarizeModelExecutionPlan(plan: {
   orderedModels: string[];
   snapshots: ModelHealthSnapshot[];
@@ -296,10 +310,10 @@ export function computeAttemptTimeouts(totalBudgetMs: number, attemptCount: numb
   const weights = attemptCount === 1
     ? [1]
     : attemptCount === 2
-    ? [0.6, 0.4]
-    : [0.46, 0.32, 0.22];
+    ? [0.78, 0.22]
+    : [0.7, 0.2, 0.1];
   const fallbackWeight = 1 / attemptCount;
-  const minBudget = Math.max(1000, Math.floor(totalBudgetMs * 0.18));
+  const minBudget = Math.max(1200, Math.floor(totalBudgetMs * 0.1));
   const budgets: number[] = [];
   let consumed = 0;
 
@@ -319,6 +333,103 @@ export function computeAttemptTimeouts(totalBudgetMs: number, attemptCount: numb
   }
 
   return budgets;
+}
+
+export function assessScopeProviderHealth(models: string[], scope: LlmScope) {
+  const plan = buildExecutionPlan(models, scope);
+  const globalPlan = buildExecutionPlan(models);
+  return {
+    shouldDefer: shouldDeferForScopeSnapshots(plan.snapshots || [], globalPlan.snapshots || []),
+    snapshots: plan.snapshots || [],
+  };
+}
+
+export function shouldDeferForProviderSnapshots(snapshots: ModelHealthSnapshot[]) {
+  const closedCount = snapshots.filter((item) => item.state === 'closed').length;
+  const viableCount = snapshots.filter((item) => item.state !== 'open').length;
+  const successCapableCount = snapshots.filter((item) => item.successRate >= 0.15).length;
+  const severeFailureCount = snapshots.filter((item) => item.attempts >= 6 && item.failureRate >= 0.85).length;
+  const earlyFailureCount = snapshots.filter((item) => (
+    item.attempts >= 4
+    && item.failureRate >= 0.75
+    && item.consecutiveFailures >= 3
+  )).length;
+  const unhealthyCount = snapshots.filter((item) => (
+    item.state === 'open'
+    || item.state === 'half-open'
+    || (
+      item.attempts >= 4
+      && item.failureRate >= 0.75
+      && item.successRate <= 0.1
+    )
+  )).length;
+  const fullyOpen = snapshots.length > 0 && snapshots.every((item) => item.state === 'open');
+  const probeExhausted = snapshots.length > 0
+    && closedCount === 0
+    && successCapableCount === 0
+    && snapshots.every((item) => (
+      item.attempts >= 2
+      && item.failureRate >= 0.95
+      && item.consecutiveFailures >= 2
+      && item.state !== 'closed'
+    ));
+
+  return fullyOpen || probeExhausted || (
+    snapshots.length > 0
+    && closedCount <= 1
+    && successCapableCount === 0
+    && (
+      (viableCount <= 1 && severeFailureCount >= Math.max(1, snapshots.length - 1))
+      || (
+        unhealthyCount >= Math.max(1, snapshots.length - 1)
+        && earlyFailureCount >= Math.max(1, Math.ceil(snapshots.length / 2))
+      )
+    )
+  );
+}
+
+export function shouldDeferForScopeSnapshots(
+  localSnapshots: ModelHealthSnapshot[],
+  globalSnapshots: ModelHealthSnapshot[] = []
+) {
+  if (shouldDeferForProviderSnapshots(localSnapshots)) {
+    return true;
+  }
+
+  const localAttemptCount = localSnapshots.reduce((sum, item) => sum + item.attempts, 0);
+  const localSampleThin = localAttemptCount < Math.max(6, localSnapshots.length * 3);
+  if (!localSampleThin) {
+    return false;
+  }
+
+  return shouldDeferForProviderSnapshots(globalSnapshots);
+}
+
+export function shouldConservativelyDeferForSnapshots(snapshots: ModelHealthSnapshot[]) {
+  if (!snapshots.length) {
+    return false;
+  }
+
+  const closedSnapshots = snapshots.filter((item) => item.state === 'closed');
+  if (closedSnapshots.length === 0) {
+    return true;
+  }
+
+  const healthyClosedCount = closedSnapshots.filter((item) => (
+    item.attempts < 2
+    || item.successRate >= 0.15
+    || item.failures === 0
+  )).length;
+
+  return healthyClosedCount === 0;
+}
+
+export function hasRunnableModelsForSnapshots(snapshots: ModelHealthSnapshot[]) {
+  if (!snapshots.length) {
+    return true;
+  }
+
+  return snapshots.some((item) => item.state !== 'open');
 }
 
 export function recordModelAttempt(input: {
@@ -358,7 +469,7 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
       createdAt: row.created_at,
     } satisfies ModelAttemptEvent;
   });
-  const circuits = getCircuitEvents([model]).map((row) => {
+  const circuits = getCircuitEvents([model], scope).map((row) => {
     const meta = parseMeta<Record<string, unknown>>(row.meta);
     return {
       model,

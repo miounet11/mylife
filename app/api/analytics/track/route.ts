@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { trackServerEvent, type AnalyticsEventName } from '@/lib/analytics';
-import { getCurrentUserId } from '@/lib/user-utils';
+import { getOrCreateGuestUserId } from '@/lib/user-utils';
 
 const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'home_page_viewed',
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = await getCurrentUserId();
+    const userId = await getOrCreateGuestUserId();
     trackServerEvent({
       userId,
       sessionId: userId,

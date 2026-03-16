@@ -3,6 +3,7 @@ import Link from 'next/link';
 const footerLinks = [
   { href: '/login', label: '邮箱登录' },
   { href: '/knowledge', label: '知识库' },
+  { href: '/knowledge/topics', label: '专题地图' },
   { href: '/insights', label: '洞察中心' },
   { href: '/cases', label: '案例库' },
   { href: '/updates', label: '邮件更新' },

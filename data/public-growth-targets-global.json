@@ -1,0 +1,104 @@
+[
+  {
+    "key": "en-bazi-career-framework",
+    "title": "Bazi for career timing in uncertain markets",
+    "topic": "How Bazi can help professionals judge career timing without replacing real-world judgment",
+    "angle": "Write for English-speaking professionals who are curious about Bazi but skeptical of vague mystical claims. Focus on timing, trade-offs, and decision quality.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking professionals / globally curious readers",
+    "keywords": ["Bazi career timing", "career decision framework", "Chinese metaphysics", "job timing", "career uncertainty", "decision quality"],
+    "audience": "English-speaking professionals who want a grounded explanation of how Bazi can support career judgment under uncertainty",
+    "trafficPotential": 8,
+    "conversionPotential": 8,
+    "sourceSignals": [
+      "Global search intent around Bazi + career decisions",
+      "English-speaking curiosity around practical metaphysics frameworks"
+    ]
+  },
+  {
+    "key": "en-true-solar-time-guide",
+    "title": "True solar time for overseas-born readers",
+    "topic": "Why true solar time changes chart accuracy for overseas-born Chinese and global Bazi readers",
+    "angle": "Explain true solar time, daylight saving, and birth-location calibration in plain English for diaspora and global readers who do not know the technical vocabulary yet.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "Overseas-born Chinese / English-speaking Bazi readers",
+    "keywords": ["true solar time", "Bazi birth time", "daylight saving", "chart accuracy", "overseas Chinese", "birth location"],
+    "audience": "Readers outside mainland China who want to avoid charting errors caused by timezone and birth-location confusion",
+    "trafficPotential": 9,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Repeated diaspora confusion around true solar time",
+      "Need for English explanations of Bazi calibration"
+    ]
+  },
+  {
+    "key": "en-cross-cultural-relationship-timing",
+    "title": "Relationship timing in cross-cultural dating",
+    "topic": "What Bazi-style timing frameworks can and cannot help with in cross-cultural relationships",
+    "angle": "Target English-speaking diaspora and globally mixed couples. Avoid deterministic promises and focus on pacing, pressure points, and compatibility timing.",
+    "primaryType": "case",
+    "locale": "en-GB",
+    "market": "English-speaking diaspora / cross-cultural couples",
+    "keywords": ["cross-cultural dating", "relationship timing", "Bazi compatibility", "diaspora relationships", "emotional pacing", "marriage timing"],
+    "audience": "Diaspora readers navigating serious relationships across cultures, countries, and family systems",
+    "trafficPotential": 7,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Cross-cultural relationship timing questions",
+      "Diaspora demand for grounded compatibility guidance"
+    ]
+  },
+  {
+    "key": "tw-career-window-framework",
+    "title": "台灣用戶的職涯時機判讀",
+    "topic": "台灣用戶在轉職、升遷與方向重選時，應該先看哪些命盤與現實變量",
+    "angle": "用台灣更自然的語感寫出職涯決策文章，不要寫成大陸模板，強調命盤判讀與現實條件並行。",
+    "primaryType": "case",
+    "locale": "zh-TW",
+    "market": "台灣職場用戶",
+    "keywords": ["台灣 轉職", "職涯時機", "命盤判讀", "升遷", "工作方向", "流年"],
+    "audience": "正在考慮轉職、升遷、換跑道，想用更穩定框架看時機的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "台灣職涯決策內容需求",
+      "繁體中文命盤閱讀與應用內容缺口"
+    ]
+  },
+  {
+    "key": "hk-relocation-judgment",
+    "title": "香港用戶的移居與換城市判斷",
+    "topic": "香港用戶在移居英國、加拿大或換城市發展前，最應先判斷哪些結構與時機變量",
+    "angle": "結合香港用戶常見的移居、轉工與家庭責任壓力，用繁體中文寫成可判斷、可承接的知識內容。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港移居 / 換城市用戶",
+    "keywords": ["香港 移居", "換城市", "英國 加拿大", "命盤 時機", "家庭責任", "發展方向"],
+    "audience": "正在考慮移居、換城市或重新配置家庭與事業節奏的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "香港移居與城市選擇焦慮",
+      "繁體中文遷移決策內容需求"
+    ]
+  },
+  {
+    "key": "en-singapore-professional-timing",
+    "title": "Timing decisions for Singapore professionals",
+    "topic": "How English-speaking professionals in Singapore should judge whether to stay, switch, or relocate under uncertainty",
+    "angle": "Write for Singapore-based professionals who may not be Chinese-reading users but still respond to practical decision frameworks around timing, pressure, and optionality.",
+    "primaryType": "case",
+    "locale": "en-SG",
+    "market": "Singapore professionals / regional talent",
+    "keywords": ["Singapore career timing", "stay or switch job", "relocation decision", "career uncertainty", "timing framework", "regional talent"],
+    "audience": "English-speaking professionals in Singapore who are weighing stability, role changes, or regional relocation",
+    "trafficPotential": 7,
+    "conversionPotential": 8,
+    "sourceSignals": [
+      "Singapore professional mobility",
+      "English-language demand for decision timing frameworks"
+    ]
+  }
+]

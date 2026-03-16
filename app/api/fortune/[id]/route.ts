@@ -193,6 +193,7 @@ export async function PATCH(
           llmUsed,
           qualityAudit: result.analysis?.qualityAudit,
           upgradeQueued: queuedUpgrade.queued,
+          queueReason: queuedUpgrade.reason,
           upgradeJob: queuedUpgrade.job,
         },
       });

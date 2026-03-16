@@ -10,6 +10,7 @@ import type {
   ContentSignalRecord,
   ContentRadarRunRecord,
   ContentSchedulerRunRecord,
+  ContentGenerationJobRecord,
   ReportUpgradeJobRecord,
   ReportMonthlyDigestRunRecord,
   EmailDeliveryJobRecord,
@@ -90,6 +91,25 @@ interface RawContentSchedulerRunRow {
   created_at?: string;
 }
 
+interface RawContentGenerationJobRow {
+  id: string;
+  user_id: string;
+  status: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
+  request_payload?: string | null;
+  result_payload?: string | null;
+  generated_count?: number | null;
+  llm_succeeded_count?: number | null;
+  fallback_count?: number | null;
+  attempts?: number | null;
+  max_attempts?: number | null;
+  next_run_at?: string | null;
+  locked_at?: string | null;
+  last_error?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 interface RawReportUpgradeJobRow {
   id: string;
   report_id: string;
@@ -123,7 +143,7 @@ interface RawReportMonthlyDigestRunRow {
 
 interface RawEmailDeliveryJobRow {
   id: string;
-  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update';
+  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update' | 'report_ready';
   status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
   recipient_list?: string | null;
   payload?: string | null;
@@ -249,6 +269,8 @@ function mapRouteHealthLabel(key: string) {
   return key;
 }
 
+const REPORT_UPGRADE_STALE_LOCK_MINUTES = Math.max(5, Number(process.env.REPORT_UPGRADE_LOCK_MINUTES || 20));
+
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
   return {
     id: row.id,
@@ -330,6 +352,27 @@ function mapContentSchedulerRunRow(row: RawContentSchedulerRunRow): ContentSched
     publishedCount: row.published_count || 0,
     meta: parseJson(row.meta, {}),
     createdAt: row.created_at,
+  };
+}
+
+function mapContentGenerationJobRow(row: RawContentGenerationJobRow): ContentGenerationJobRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    status: row.status,
+    request: parseJson(row.request_payload, {}),
+    result: parseJson(row.result_payload, {}),
+    generatedCount: row.generated_count || 0,
+    llmSucceededCount: row.llm_succeeded_count || 0,
+    fallbackCount: row.fallback_count || 0,
+    attempts: row.attempts || 0,
+    maxAttempts: row.max_attempts || 0,
+    nextRunAt: row.next_run_at || undefined,
+    lockedAt: row.locked_at || undefined,
+    lastError: row.last_error || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -752,6 +795,27 @@ export function initializeDatabase() {
   `);
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS content_generation_jobs (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      status TEXT NOT NULL,
+      request_payload JSON NOT NULL,
+      result_payload JSON,
+      generated_count INTEGER DEFAULT 0,
+      llm_succeeded_count INTEGER DEFAULT 0,
+      fallback_count INTEGER DEFAULT 0,
+      attempts INTEGER DEFAULT 0,
+      max_attempts INTEGER DEFAULT 3,
+      next_run_at TEXT,
+      locked_at TEXT,
+      last_error TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS report_upgrade_jobs (
       id TEXT PRIMARY KEY,
       report_id TEXT NOT NULL UNIQUE,
@@ -843,6 +907,8 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_content_radar_runs_source_id ON content_radar_runs(source_id);
     CREATE INDEX IF NOT EXISTS idx_content_radar_runs_created_at ON content_radar_runs(created_at);
     CREATE INDEX IF NOT EXISTS idx_content_scheduler_runs_created_at ON content_scheduler_runs(created_at);
+    CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_status_next_run ON content_generation_jobs(status, next_run_at);
+    CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_user_created_at ON content_generation_jobs(user_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_status_next_run ON report_upgrade_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_report_id ON report_upgrade_jobs(report_id);
     CREATE INDEX IF NOT EXISTS idx_report_monthly_digest_runs_cycle ON report_monthly_digest_runs(cycle_key, status);
@@ -1958,6 +2024,199 @@ export const contentSchedulerRunOperations = {
   },
 };
 
+export const contentGenerationJobOperations = {
+  create: (job: ContentGenerationJobRecord) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      INSERT INTO content_generation_jobs (
+        id, user_id, status, request_payload, result_payload,
+        generated_count, llm_succeeded_count, fallback_count,
+        attempts, max_attempts, next_run_at, locked_at, last_error, meta, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      job.id,
+      job.userId,
+      job.status,
+      JSON.stringify(job.request || {}),
+      JSON.stringify(job.result || {}),
+      job.generatedCount || 0,
+      job.llmSucceededCount || 0,
+      job.fallbackCount || 0,
+      job.attempts || 0,
+      job.maxAttempts || 3,
+      job.nextRunAt || now,
+      job.lockedAt || null,
+      job.lastError || null,
+      JSON.stringify(job.meta || {}),
+      now,
+      now
+    );
+  },
+
+  getById: (id: string) => {
+    const row = db.prepare(`
+      SELECT * FROM content_generation_jobs
+      WHERE id = ?
+      LIMIT 1
+    `).get(id) as RawContentGenerationJobRow | undefined;
+
+    return row ? mapContentGenerationJobRow(row) : null;
+  },
+
+  claimNextRunnable: (staleLockMinutes = 40) => {
+    const staleLockCutoff = new Date(Date.now() - staleLockMinutes * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+
+    db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'retry',
+          locked_at = NULL,
+          next_run_at = COALESCE(next_run_at, ?),
+          updated_at = ?,
+          last_error = COALESCE(last_error, 'LOCK_STALE_REQUEUED')
+      WHERE status = 'running'
+        AND locked_at IS NOT NULL
+        AND datetime(locked_at) <= datetime(?)
+        AND attempts < max_attempts
+    `).run(now, now, staleLockCutoff);
+
+    db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'failed',
+          locked_at = NULL,
+          updated_at = ?,
+          last_error = COALESCE(last_error, 'LOCK_STALE_MAX_ATTEMPTS')
+      WHERE status = 'running'
+        AND locked_at IS NOT NULL
+        AND datetime(locked_at) <= datetime(?)
+        AND attempts >= max_attempts
+    `).run(now, staleLockCutoff);
+
+    const row = db.prepare(`
+      SELECT * FROM content_generation_jobs
+      WHERE status IN ('pending', 'retry')
+        AND attempts < max_attempts
+        AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
+      ORDER BY attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+      LIMIT 1
+    `).get(now) as RawContentGenerationJobRow | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    const updated = db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'running',
+          attempts = attempts + 1,
+          locked_at = ?,
+          updated_at = ?
+      WHERE id = ? AND status IN ('pending', 'retry')
+    `).run(now, now, row.id);
+
+    if (!updated.changes) {
+      return null;
+    }
+
+    const claimed = db.prepare(`
+      SELECT * FROM content_generation_jobs
+      WHERE id = ?
+      LIMIT 1
+    `).get(row.id) as RawContentGenerationJobRow | undefined;
+
+    return claimed ? mapContentGenerationJobRow(claimed) : null;
+  },
+
+  markCompleted: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'completed',
+          result_payload = ?,
+          generated_count = ?,
+          llm_succeeded_count = ?,
+          fallback_count = ?,
+          last_error = NULL,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(updates?.result || {}),
+      updates?.generatedCount || 0,
+      updates?.llmSucceededCount || 0,
+      updates?.fallbackCount || 0,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markRetry: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'retry',
+          result_payload = ?,
+          generated_count = ?,
+          llm_succeeded_count = ?,
+          fallback_count = ?,
+          next_run_at = ?,
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(updates?.result || {}),
+      updates?.generatedCount || 0,
+      updates?.llmSucceededCount || 0,
+      updates?.fallbackCount || 0,
+      updates?.nextRunAt || now,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markFailed: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE content_generation_jobs
+      SET status = 'failed',
+          result_payload = ?,
+          generated_count = ?,
+          llm_succeeded_count = ?,
+          fallback_count = ?,
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      JSON.stringify(updates?.result || {}),
+      updates?.generatedCount || 0,
+      updates?.llmSucceededCount || 0,
+      updates?.fallbackCount || 0,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  listRecent: (limit = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM content_generation_jobs
+      ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC
+      LIMIT ?
+    `).all(limit) as RawContentGenerationJobRow[];
+
+    return rows.map(mapContentGenerationJobRow);
+  },
+};
+
 export const reportUpgradeJobOperations = {
   enqueue: (job: ReportUpgradeJobRecord) => {
     const existing = db.prepare('SELECT * FROM report_upgrade_jobs WHERE report_id = ?').get(job.reportId) as RawReportUpgradeJobRow | undefined;
@@ -2029,11 +2288,52 @@ export const reportUpgradeJobOperations = {
     return rows.map(mapReportUpgradeJobRow);
   },
 
-  claimNextRunnable: () => {
+  listRunnablePending: (limit = 20) => {
     const now = new Date().toISOString();
+    const rows = db.prepare(`
+      SELECT * FROM report_upgrade_jobs
+      WHERE status = 'pending'
+        AND attempts < max_attempts
+        AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
+      ORDER BY COALESCE(last_score, 0) ASC, attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+      LIMIT ?
+    `).all(now, limit) as RawReportUpgradeJobRow[];
+
+    return rows.map(mapReportUpgradeJobRow);
+  },
+
+  claimNextRunnable: () => {
+    const staleLockCutoff = new Date(Date.now() - REPORT_UPGRADE_STALE_LOCK_MINUTES * 60 * 1000).toISOString();
+    const now = new Date().toISOString();
+    db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'retry',
+          locked_at = NULL,
+          next_run_at = COALESCE(next_run_at, ?),
+          updated_at = ?,
+          last_error = COALESCE(last_error, 'LOCK_STALE_REQUEUED')
+      WHERE status = 'running'
+        AND locked_at IS NOT NULL
+        AND datetime(locked_at) <= datetime(?)
+        AND attempts < max_attempts
+    `).run(now, now, staleLockCutoff);
+
+    db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'failed',
+          locked_at = NULL,
+          updated_at = ?,
+          last_error = COALESCE(last_error, 'LOCK_STALE_MAX_ATTEMPTS')
+      WHERE status = 'running'
+        AND locked_at IS NOT NULL
+        AND datetime(locked_at) <= datetime(?)
+        AND attempts >= max_attempts
+    `).run(now, staleLockCutoff);
+
     const row = db.prepare(`
       SELECT * FROM report_upgrade_jobs
       WHERE status IN ('pending', 'retry')
+        AND attempts < max_attempts
         AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
       ORDER BY COALESCE(last_score, 0) ASC, attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
       LIMIT 1
@@ -2101,6 +2401,33 @@ export const reportUpgradeJobOperations = {
       updates?.lastScore || 0,
       updates?.bestScore || updates?.lastScore || 0,
       updates?.bestGrade || null,
+      updates?.nextRunAt || now,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markDeferred: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'retry',
+          attempts = CASE WHEN attempts > 0 THEN attempts - 1 ELSE 0 END,
+          last_score = COALESCE(?, last_score),
+          best_score = COALESCE(?, best_score),
+          best_grade = COALESCE(?, best_grade),
+          next_run_at = ?,
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates?.lastScore ?? null,
+      updates?.bestScore ?? null,
+      updates?.bestGrade ?? null,
       updates?.nextRunAt || now,
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),

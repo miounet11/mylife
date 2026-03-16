@@ -8,6 +8,7 @@ import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'luc
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
 
 // 动态导入
 const UserProfile = dynamic(() => import('@/components/user-profile'), {
@@ -131,32 +132,17 @@ export default function ProfilePage() {
   }, [events]);
 
   const chartData = useMemo(() => {
-    const strengthToBase = (strength?: string) => {
-      if (strength === 'strong') return 85;
-      if (strength === 'weak') return 55;
-      return 70;
-    };
-
-    const points = (fortunes || []).map((item: any) => {
-      const year = new Date(item.created_at || Date.now()).getFullYear();
-      const base = strengthToBase(item?.pattern?.strength);
-      return {
-        year,
-        career: base,
-        wealth: Math.min(100, base + 5),
-        marriage: Math.max(0, base - 5),
-        health: base,
-      };
-    });
-
-    const byYear = new Map<number, { year: number; career: number; wealth: number; marriage: number; health: number }>();
-    points.forEach((p) => byYear.set(p.year, p));
-    return Array.from(byYear.values()).sort((a, b) => a.year - b.year);
+    return buildProfileChartData(fortunes);
   }, [fortunes]);
 
   const latestFortune = fortunes[0] as any;
   const latestResultId = latestFortune?.id;
-  const hasProfileData = fortunes.length > 0 || mappedEvents.length > 0 || !!user;
+  const hasProfileData = hasProfileContent({
+    user,
+    fortunes,
+    eventCount: mappedEvents.length,
+  });
+  const hasChartData = chartData.length > 0;
 
   return (
     <div className="page-shell">
@@ -335,7 +321,7 @@ export default function ProfilePage() {
           )}
 
           {/* 命理K线图 */}
-          {hasProfileData && (
+          {hasChartData && (
             <section className="mb-8">
               <Suspense fallback={<ChartSkeleton />}>
                 <FortuneKLineChart data={chartData} />

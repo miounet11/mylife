@@ -18,7 +18,7 @@
 - 数据存储：SQLite（`data/lifekline.db`）
 - 进程管理：PM2
 - 生产入口：`https://www.life-kline.com`
-- 当前默认模型链：`gpt-5.2 -> grok-420-fast -> auto`
+- 当前默认模型链：`grok-420-fast -> gpt-5.2 -> auto`
 - 当前主报告版本：`v3`
 
 ## 核心页面

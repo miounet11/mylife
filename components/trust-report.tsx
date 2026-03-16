@@ -192,6 +192,40 @@ type ReportResult = {
   expertInterpretation?: ExpertInterpretationBlock[];
   validationInsights?: ReportValidationInsights;
   correctionInsight?: ReportCorrectionInsight;
+  stateVector?: {
+    current?: {
+      tianShi: number;
+      diLi: number;
+      renHe: number;
+    };
+    history?: Array<{
+      year: number;
+      tianShi: number;
+      diLi: number;
+      renHe: number;
+    }>;
+    forecast?: Array<{
+      year: number;
+      tianShi: number;
+      diLi: number;
+      renHe: number;
+    }>;
+  };
+  referenceIntelligence?: {
+    pack?: {
+      authority?: {
+        sourceCount?: number;
+        classicBookCount?: number;
+        authorityScore?: number;
+      };
+      dimensions?: {
+        tianShi?: { score?: number; signals?: string[] };
+        diLi?: { score?: number; signals?: string[] };
+        renHe?: { score?: number; signals?: string[] };
+      };
+      modelDirectives?: string[];
+    };
+  };
 };
 
 const elementMeta: Record<ElementKey, { label: string; color: string; icon: typeof Leaf }> = {
@@ -254,6 +288,8 @@ export default function TrustReport({ result }: { result: ReportResult }) {
   const expertInterpretation = result.expertInterpretation || [];
   const validationInsights = result.validationInsights;
   const correctionInsight = result.correctionInsight;
+  const stateVector = result.stateVector;
+  const referencePack = result.referenceIntelligence?.pack;
   const reasoningMode = deriveReportReasoningMode({
     reasoningMode: result.reasoningMode || analysis.reasoningMode,
     agenticUsed: result.agenticUsed || analysis.agenticUsed,
@@ -370,6 +406,45 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       detail: readStringList(spatialFactors.movementAdvice as string[] | undefined, '优先选择低摩擦、高匹配环境。'),
     },
   ];
+  const stateVectorCards = stateVector?.current
+    ? [
+        {
+          label: '天时',
+          value: stateVector.current.tianShi.toFixed(1),
+          detail: referencePack?.dimensions?.tianShi?.score
+            ? `参考层评分 ${referencePack.dimensions.tianShi.score.toFixed(1)}，更强调时机、节气与窗口。`
+            : '更看节气、阶段、流年和推进窗口。',
+        },
+        {
+          label: '地利',
+          value: stateVector.current.diLi.toFixed(1),
+          detail: referencePack?.dimensions?.diLi?.score
+            ? `参考层评分 ${referencePack.dimensions.diLi.score.toFixed(1)}，更强调城市、环境与空间匹配。`
+            : '更看城市、空间环境和迁移匹配。',
+        },
+        {
+          label: '人和',
+          value: stateVector.current.renHe.toFixed(1),
+          detail: referencePack?.dimensions?.renHe?.score
+            ? `参考层评分 ${referencePack.dimensions.renHe.score.toFixed(1)}，更强调关系、合作与互动质量。`
+            : '更看关系协同、合作质量和边界。',
+        },
+      ]
+    : [];
+  const referenceCards = referencePack?.authority
+    ? [
+        {
+          label: '参考权威度',
+          value: String(referencePack.authority.authorityScore || 0),
+          detail: `当前共吸收 ${referencePack.authority.sourceCount || 0} 个来源，经典书目 ${referencePack.authority.classicBookCount || 0} 个。`,
+        },
+        {
+          label: '模型指令',
+          value: referencePack.modelDirectives?.[0] || '当前外部资料主要作为解释增强层。',
+          detail: '外部资料不会替代命盘底层结构，只用于校准和增强解释。',
+        },
+      ]
+    : [];
 
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12">
@@ -697,6 +772,22 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <InsightCard key={item.label} label={item.label} value={item.value} detail={item.detail} />
               ))}
             </div>
+
+            {stateVectorCards.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-3">
+                {stateVectorCards.map((item) => (
+                  <InsightCard key={item.label} label={item.label} value={item.value} detail={item.detail} />
+                ))}
+              </div>
+            )}
+
+            {referenceCards.length > 0 && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {referenceCards.map((item) => (
+                  <InsightCard key={item.label} label={item.label} value={item.value} detail={item.detail} />
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       )}

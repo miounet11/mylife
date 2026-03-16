@@ -3,6 +3,8 @@ import { getMacroCycleSignals } from '@/lib/agentic-report/context/macro-cycles'
 import { getSolarTermContext } from '@/lib/agentic-report/context/solar-terms';
 import { getSpatialFactors } from '@/lib/agentic-report/context/spatial-factors';
 import type { BuildContextSignalsInput, ContextSignalPack, LifeStage } from '@/lib/agentic-report/types';
+import { buildReferenceContextOverlay } from '@/lib/reference-engine-bridge';
+import { buildReferenceIntelligencePack } from '@/lib/reference-intelligence';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
 
 export function buildContextSignals({
@@ -11,6 +13,7 @@ export function buildContextSignals({
   currentPlace,
   targetPlaces,
   industries,
+  referenceCorpus,
   engine,
   report,
   now = new Date(),
@@ -31,6 +34,15 @@ export function buildContextSignals({
     favoredElements: [...engine.constitution.yongShen, ...engine.constitution.xiShen],
     avoidedElements: engine.constitution.jiShen,
   });
+  const referenceIntelligence = hasReferenceCorpus(referenceCorpus)
+    ? (() => {
+        const pack = buildReferenceIntelligencePack(referenceCorpus || {});
+        return {
+          pack,
+          overlay: buildReferenceContextOverlay(pack),
+        };
+      })()
+    : undefined;
 
   return {
     version,
@@ -56,7 +68,17 @@ export function buildContextSignals({
       familyRolePressure: inferFamilyRolePressure(age),
       collaborationMode: inferCollaborationMode(engine.constitution.yongShen, macro.industryCycle || []),
     },
+    referenceIntelligence,
   };
+}
+
+function hasReferenceCorpus(input?: BuildContextSignalsInput['referenceCorpus']) {
+  if (!input) return false;
+  return Boolean(
+    (input.sourceDocuments && input.sourceDocuments.length > 0) ||
+    (input.bibliographyEntries && input.bibliographyEntries.length > 0) ||
+    (input.entities && input.entities.length > 0)
+  );
 }
 
 function inferLifeStage(age: number): LifeStage {

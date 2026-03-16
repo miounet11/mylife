@@ -146,6 +146,49 @@ export async function sendReportUpgradeReadyEmail(params: {
   });
 }
 
+export async function sendReportReadyEmail(params: {
+  email: string;
+  name: string;
+  reportId: string;
+  score?: number;
+  grade?: 'S' | 'A' | 'B' | 'C';
+  deliveryTier?: 'basic' | 'enhanced' | 'expert';
+  queuedUpgrade?: boolean;
+}) {
+  const { appName, baseUrl } = getEmailConfig();
+  const safeName = escapeHtml(params.name || '用户');
+  const resultUrl = `${baseUrl}/result/${encodeURIComponent(params.reportId)}`;
+  const deliveryTierLabel = params.deliveryTier === 'expert'
+    ? 'S级专家版'
+    : params.deliveryTier === 'enhanced'
+      ? '增强版'
+      : '可读版';
+  const scoreLabel = params.score ? `${params.score} / ${params.grade || 'B'}` : (params.grade || 'B');
+  const nextStepCopy = params.queuedUpgrade
+    ? '当前先为你送达可阅读版本，后台会继续增强，并在升级完成后再次提醒你。'
+    : '这份报告已经完整保存，你现在可以直接打开结果页继续阅读与追问。';
+
+  return sendMailV2({
+    to: params.email,
+    subject: `${appName} 报告已生成`,
+    subtype: 'html',
+    text: `${safeName}，你的报告已经生成。当前版本 ${deliveryTierLabel}，质量 ${scoreLabel}。查看报告：${resultUrl}`,
+    content: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#1f2937;line-height:1.8">
+        <h2 style="margin:0 0 16px;font-size:22px;color:#111827">你的报告已经生成</h2>
+        <p style="margin:0 0 12px">${safeName}，系统已经完成本次测算，并为你保存了专属结果页。</p>
+        <p style="margin:0 0 12px">当前版本：<strong>${deliveryTierLabel}</strong></p>
+        <p style="margin:0 0 12px">质量评级：<strong>${escapeHtml(scoreLabel)}</strong></p>
+        <p style="margin:0 0 16px">${nextStepCopy}</p>
+        <a href="${escapeHtml(resultUrl)}" style="display:inline-block;padding:10px 16px;border-radius:999px;background:#111827;color:#f7d3a1;text-decoration:none;font-weight:700">
+          打开报告
+        </a>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px">如果你在手机上稍后继续阅读，可直接从这封邮件重新打开：${escapeHtml(resultUrl)}</p>
+      </div>
+    `,
+  });
+}
+
 export async function sendMonthlyReportDigestEmail(params: {
   email: string;
   name: string;

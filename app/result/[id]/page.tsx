@@ -52,6 +52,7 @@ import ReportSubscriptionPanel from '@/components/report-subscription-panel';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
 import type { UpdatesStatusSummary } from '@/components/updates-status-panel';
 import RelatedContent from '@/components/related-content';
+import ResultDeferredSection from '@/components/result-deferred-section';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
 import { calculateDayun } from '@/lib/dayun-calculator';
@@ -69,6 +70,7 @@ import {
   buildYearlyTrendSnapshots,
   buildYearlyRoadmap,
 } from '@/lib/report-v2';
+import { buildStateVectorData } from '@/lib/state-vector';
 import { CURRENT_REPORT_VERSION, ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
 import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
@@ -88,8 +90,6 @@ export async function generateMetadata({ params }: PageProps) {
     const fortuneData = fortuneOperations.getById(id);
     if (fortuneData) {
       const publicName = getPublicDisplayName(fortuneData.name);
-      const currentUserId = await getCurrentUserId();
-      const isOwner = !!currentUserId && fortuneData.userId === currentUserId;
       const isPublic = fortuneData.isPublic !== false;
       return {
         title: `${publicName}的命理分析报告 | 人生K线`,
@@ -99,7 +99,7 @@ export async function generateMetadata({ params }: PageProps) {
         },
         robots: {
           index: isPublic,
-          follow: isPublic || isOwner,
+          follow: isPublic,
         },
         openGraph: {
           url: `https://www.life-kline.com/result/${id}`,
@@ -328,6 +328,13 @@ async function getResult(reportId: string) {
       scenarioViews,
       monthlyWindows,
     });
+    const referenceIntelligence = readReferenceIntelligence(analysis.contextSignals);
+    const stateVector = buildStateVectorData({
+      klineData: fortuneData.klineData || null,
+      advice: fortuneData.advice,
+      dayun,
+      referencePack: referenceIntelligence?.pack,
+    });
 
     // Transform database format to match frontend expectations
     return {
@@ -340,6 +347,8 @@ async function getResult(reportId: string) {
       yearlyTrendSnapshots,
       expertInterpretation,
       actionSuggestions,
+      stateVector,
+      referenceIntelligence,
     };
   } catch(e) {
     console.error("Error fetching report:", e);
@@ -460,6 +469,21 @@ export default async function ResultPage({ params }: PageProps) {
     theme: item.theme,
     status: item.status,
   }));
+  const stateVectorCurrent = result.stateVector?.current;
+  const stateVectorCards = stateVectorCurrent
+    ? [
+        { label: '天时', value: stateVectorCurrent.tianShi, detail: '看当前时机、阶段节奏和推进窗口。' },
+        { label: '地利', value: stateVectorCurrent.diLi, detail: '看城市、空间环境和地理匹配度。' },
+        { label: '人和', value: stateVectorCurrent.renHe, detail: '看关系协同、合作边界和互动质量。' },
+      ]
+    : [];
+  const referenceAuthority = result.referenceIntelligence?.pack?.authority;
+  const referenceLeadDirective = result.referenceIntelligence?.pack?.modelDirectives?.[0];
+  const referenceSignals = [
+    ...(result.referenceIntelligence?.pack?.dimensions?.tianShi?.signals || []),
+    ...(result.referenceIntelligence?.pack?.dimensions?.diLi?.signals || []),
+    ...(result.referenceIntelligence?.pack?.dimensions?.renHe?.signals || []),
+  ].slice(0, 6);
   const currentStageSummary = result.scenarioViews?.[0]?.summary
     || result.analysis?.opening
     || result.pattern?.description
@@ -467,6 +491,11 @@ export default async function ResultPage({ params }: PageProps) {
   const nextFocusSummary = topMonthlyWindows.length > 0
     ? `接下来优先关注 ${topMonthlyWindows.map((item) => item.label).join('、')}。`
     : '接下来应优先结合人生K线、当前大运和场景建议看清阶段主线。';
+  const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
+  const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
+  const stagedReadingHint = result.qualityAudit?.targetAchieved || result.llmUsed
+    ? '页面内容较多，系统会先让你看到核心判断，再逐步展开验证、趋势和延伸区块。'
+    : '当前先交付核心判断和可执行结论，验证、趋势和延伸区块会继续分批展开，后台也会继续增强。';
   const feedbackLevel = correctionInsight.level || 'healthy';
   const feedbackHeroTone = feedbackLevel === 'action'
     ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -652,6 +681,44 @@ export default async function ResultPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+
+              <div className="mt-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                    分批呈现
+                  </span>
+                  {upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status) ? (
+                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                      后台增强中
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                  {stagedReadingHint}
+                </div>
+                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                  <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {coreSectionNames.map((item) => (
+                        <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">继续展开</div>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {deferredSectionNames.map((item) => (
+                        <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                          {item}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -667,6 +734,12 @@ export default async function ResultPage({ params }: PageProps) {
                   initialIsPublic={result.isPublic}
                   canManage={canManage}
                   publicName={publicName}
+                  reportVersion={result.reportVersion || 'v1'}
+                  deliveryTierLabel={deliveryTierLabel}
+                  reasoningModeLabel={reasoningModeLabel}
+                  summary={currentStageSummary}
+                  nextFocusSummary={nextFocusSummary}
+                  highlights={reportHighlights}
                 />
               </div>
             </div>
@@ -716,6 +789,54 @@ export default async function ResultPage({ params }: PageProps) {
                 </div>
               );
             })}
+
+            {stateVectorCards.length > 0 && (
+              <div className="soft-card rounded-[1.75rem] p-5">
+                <div className="flex items-center gap-3">
+                  <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
+                  <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
+                </div>
+                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  这是当前报告的三维状态向量。命盘是底盘，窗口、环境和关系会决定判断落地时的摩擦与放大效果。
+                </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  {stateVectorCards.map((item) => (
+                    <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                      <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value.toFixed(1)}</div>
+                      <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.detail}</div>
+                    </div>
+                  ))}
+                </div>
+                {referenceAuthority ? (
+                  <div className="mt-4 rounded-[1.4rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                        {`参考权威度 ${referenceAuthority.authorityScore}`}
+                      </span>
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                        {`来源 ${referenceAuthority.sourceCount}`}
+                      </span>
+                      <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                        {`经典书目 ${referenceAuthority.classicBookCount}`}
+                      </span>
+                    </div>
+                    {referenceLeadDirective ? (
+                      <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{referenceLeadDirective}</div>
+                    ) : null}
+                    {referenceSignals.length > 0 ? (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {referenceSignals.map((signal) => (
+                          <span key={signal} className="rounded-full bg-white px-3 py-1 text-xs text-[color:var(--ink)]">
+                            {signal}
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+              </div>
+            )}
 
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="flex items-center gap-3">
@@ -834,57 +955,103 @@ export default async function ResultPage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* 可信报告 */}
-        <Suspense fallback={<ReportSkeleton />}>
-          <TrustReport result={{ ...result, validationInsights, correctionInsight }} />
-        </Suspense>
-
-        <div id="premium" className="mt-16 scroll-mt-28">
-          <ReportPremiumServices
-            reportId={id}
-            canManage={canManage}
-            offers={premiumServiceOffers}
-            initialEmail={initialPremiumEmail}
-            initialRequests={initialPremiumRequests}
-          />
-        </div>
-
-        <div id="subscription" className="mt-16 scroll-mt-28">
-          <ReportSubscriptionPanel
-            reportId={id}
-            canManage={canManage}
-            deliveryTierLabel={deliveryTierLabel}
-            qualityScore={qualityAudit?.overallScore}
-            qualityGrade={qualityAudit?.grade}
-            targetAchieved={qualityAudit?.targetAchieved}
-            upgradeStatusLabel={upgradeStatusLabel}
-            monthlyHighlights={topMonthlyWindows}
-          />
-        </div>
-
-        {/* 人生K线图 */}
-        {result.klineData && result.klineData.length > 0 && (
-          <div id="trend" className="mt-12 scroll-mt-28">
-            <Suspense fallback={<ChartSkeleton />}>
-              <FortuneChart data={result.klineData} />
-            </Suspense>
-          </div>
-        )}
-
-        {/* NextStep引导 */}
-        <div id="next-step" className="mt-16 scroll-mt-28">
-          <Suspense fallback={<GuideSkeleton />}>
-            <NextStepGuide
-              reportId={id}
-              hasPendingValidation={validationInsights.pendingCount > 0}
-              hasDrift={validationInsights.driftCount > 0}
-              canManage={canManage}
-            />
+        <ResultDeferredSection
+          id="validation"
+          title="可信报告与验证区块正在整理"
+          description="核心结论已经优先显示。可信度、验证和纠偏区块会继续补齐后展开，不需要重复刷新。"
+          delayMs={0}
+        >
+          <Suspense fallback={<ReportSkeleton />}>
+            <TrustReport result={{ ...result, validationInsights, correctionInsight }} />
           </Suspense>
+        </ResultDeferredSection>
+
+        <div className="mt-16">
+          <ResultDeferredSection
+            id="premium"
+            title="专项服务区块正在载入"
+            description="专项模拟、断事和事件复盘会在主报告后继续展开，避免一上来被整页信息压住。"
+            delayMs={180}
+          >
+            <div className="scroll-mt-28">
+              <ReportPremiumServices
+                reportId={id}
+                canManage={canManage}
+                offers={premiumServiceOffers}
+                initialEmail={initialPremiumEmail}
+                initialRequests={initialPremiumRequests}
+              />
+            </div>
+          </ResultDeferredSection>
         </div>
 
         <div className="mt-16">
-          <RelatedContent />
+          <ResultDeferredSection
+            id="subscription"
+            title="订阅与更新区块正在载入"
+            description="月度更新、订阅入口和增强跟踪会继续补上，先看主报告不影响判断。"
+            delayMs={320}
+          >
+            <div className="scroll-mt-28">
+              <ReportSubscriptionPanel
+                reportId={id}
+                canManage={canManage}
+                deliveryTierLabel={deliveryTierLabel}
+                qualityScore={qualityAudit?.overallScore}
+                qualityGrade={qualityAudit?.grade}
+                targetAchieved={qualityAudit?.targetAchieved}
+                upgradeStatusLabel={upgradeStatusLabel}
+                monthlyHighlights={topMonthlyWindows}
+              />
+            </div>
+          </ResultDeferredSection>
+        </div>
+
+        {result.klineData && result.klineData.length > 0 && (
+          <div className="mt-12">
+            <ResultDeferredSection
+              id="trend"
+              title="趋势图正在载入"
+              description="人生K线和趋势图会在首屏判断后继续显示，核心判断不会因此延后。"
+              delayMs={480}
+            >
+              <div className="scroll-mt-28">
+                <Suspense fallback={<ChartSkeleton />}>
+                  <FortuneChart data={result.klineData} />
+                </Suspense>
+              </div>
+            </ResultDeferredSection>
+          </div>
+        )}
+
+        <div className="mt-16">
+          <ResultDeferredSection
+            id="next-step"
+            title="下一步行动区块正在载入"
+            description="系统先给你核心判断，再继续补齐后续动作、验证提醒和延伸阅读路径。"
+            delayMs={620}
+          >
+            <div className="scroll-mt-28">
+              <Suspense fallback={<GuideSkeleton />}>
+                <NextStepGuide
+                  reportId={id}
+                  hasPendingValidation={validationInsights.pendingCount > 0}
+                  hasDrift={validationInsights.driftCount > 0}
+                  canManage={canManage}
+                />
+              </Suspense>
+            </div>
+          </ResultDeferredSection>
+        </div>
+
+        <div className="mt-16">
+          <ResultDeferredSection
+            title="延伸内容区块正在载入"
+            description="相关内容和进一步阅读会在主报告后继续展开，先把这份结果读清楚更重要。"
+            delayMs={760}
+          >
+            <RelatedContent />
+          </ResultDeferredSection>
         </div>
       </main>
 
@@ -916,4 +1083,32 @@ function GuideSkeleton() {
   return (
     <div className="h-64 bg-gray-200 rounded-xl animate-pulse"></div>
   );
+}
+
+function readReferenceIntelligence(contextSignals: unknown) {
+  const record = (contextSignals || {}) as {
+    referenceIntelligence?: {
+      pack?: {
+        authority?: {
+          sourceCount?: number;
+          classicBookCount?: number;
+          authorityScore?: number;
+        };
+        dimensions?: {
+          tianShi?: { signals?: string[] };
+          diLi?: { signals?: string[] };
+          renHe?: { signals?: string[] };
+        };
+        modelDirectives?: string[];
+        stateVectorAdjustment?: {
+          tianShiDelta?: number;
+          diLiDelta?: number;
+          renHeDelta?: number;
+        };
+      };
+      overlay?: Record<string, unknown>;
+    };
+  };
+
+  return record.referenceIntelligence;
 }

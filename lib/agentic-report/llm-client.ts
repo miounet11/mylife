@@ -31,6 +31,10 @@ function getModel() {
   return process.env.DEFAULT_MODEL || 'auto';
 }
 
+function uniqueModels(values: Array<string | null | undefined>) {
+  return [...new Set(values.map((item) => `${item || ''}`.trim()).filter(Boolean))];
+}
+
 function truncateForLog(value: string, maxLength: number = 240) {
   return value.length > maxLength ? `${value.slice(0, maxLength)}...` : value;
 }
@@ -107,9 +111,12 @@ export async function callJsonLLM<T>(params: {
   user: string;
   temperature?: number;
   timeoutMs?: number;
+  maxTokens?: number;
   model?: string;
+  modelChain?: string[];
   traceLabel?: string;
   scope?: LlmScope;
+  disableHealthReorder?: boolean;
 }): Promise<T | null> {
   const apiKey = getApiKey();
   const traceLabel = params.traceLabel || 'agent';
@@ -126,10 +133,23 @@ export async function callJsonLLM<T>(params: {
     timeout: timeoutMs,
     maxRetries: 0,
   });
-  const baseModelChain = getModelFallbackChain(params.model || getModel());
-  const plan = getDynamicModelExecutionPlan(baseModelChain, scope);
+  const baseModelChain = params.modelChain?.length
+    ? uniqueModels(params.modelChain)
+    : getModelFallbackChain(params.model || getModel());
+  const plan = params.disableHealthReorder
+    ? {
+        orderedModels: baseModelChain,
+        snapshots: [],
+      }
+    : getDynamicModelExecutionPlan(baseModelChain, scope);
   const modelCandidates = plan.orderedModels;
-  const planSummary = summarizeModelExecutionPlan(plan);
+  const planSummary = params.disableHealthReorder
+    ? {
+        ordered: baseModelChain,
+        skipped: [],
+        label: `ordered=${baseModelChain.join(' -> ')}`,
+      }
+    : summarizeModelExecutionPlan(plan);
   const attemptTimeouts = computeAttemptTimeouts(timeoutMs, modelCandidates.length);
   const deadlineAt = Date.now() + timeoutMs;
   console.log(
@@ -154,6 +174,7 @@ export async function callJsonLLM<T>(params: {
         const completion = await client.chat.completions.create({
           model,
           temperature: params.temperature ?? 0.5,
+          max_tokens: params.maxTokens ?? 900,
           messages: [
             { role: 'system', content: params.system },
             { role: 'user', content: params.user },

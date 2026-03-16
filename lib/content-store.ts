@@ -41,6 +41,83 @@ export interface ManagedContentEntry {
   updatedAt: string;
 }
 
+function readNumber(meta: Record<string, unknown> | undefined, key: string) {
+  const value = meta?.[key];
+  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+}
+
+function readBoolean(meta: Record<string, unknown> | undefined, key: string) {
+  return meta?.[key] === true;
+}
+
+function readString(meta: Record<string, unknown> | undefined, key: string) {
+  const value = meta?.[key];
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function hasBlockedPlaceholderParagraphs(entry: ManagedContentEntry) {
+  const text = entry.sections
+    .flatMap((section) => section.paragraphs || [])
+    .join('\n');
+
+  return /当前尚未|当前.*不足|应继续补|仍薄|还没有足够/.test(text);
+}
+
+function isKnowledgeSynthesisPublicReady(entry: ManagedContentEntry) {
+  const synthesisType = readString(entry.meta, 'synthesisType');
+  const qualityScore = readNumber(entry.meta, 'qualityScore');
+  const conceptCount = readNumber(entry.meta, 'conceptCount');
+  const questionCount = readNumber(entry.meta, 'questionCount');
+  const bookCount = readNumber(entry.meta, 'bookCount');
+  const relatedTopicCount = readNumber(entry.meta, 'relatedTopicCount');
+
+  if (!readBoolean(entry.meta, 'publicationReady')) {
+    return false;
+  }
+
+  if (!['topic-overview', 'concept-glossary'].includes(synthesisType)) {
+    return false;
+  }
+
+  if (qualityScore < 84) {
+    return false;
+  }
+
+  if (conceptCount < 3) {
+    return false;
+  }
+
+  if ((questionCount + bookCount + relatedTopicCount) < 2) {
+    return false;
+  }
+
+  if (hasBlockedPlaceholderParagraphs(entry)) {
+    return false;
+  }
+
+  return true;
+}
+
+export function isPublicKnowledgeEntry(entry: ManagedContentEntry) {
+  if (entry.contentType !== 'knowledge' || entry.status !== 'published') {
+    return false;
+  }
+
+  if (entry.source === 'seed' || entry.source === 'cms') {
+    return true;
+  }
+
+  if (entry.source.startsWith('knowledge-synthesis:')) {
+    return isKnowledgeSynthesisPublicReady(entry);
+  }
+
+  if (entry.source.startsWith('agent-fallback:')) {
+    return false;
+  }
+
+  return readBoolean(entry.meta, 'publicationReady');
+}
+
 function mapRow(row: any): ManagedContentEntry {
   return {
     id: row.id,
@@ -204,12 +281,22 @@ function toEntityInsight(entry: ManagedContentEntry): EntityInsight {
 }
 
 export function getKnowledgeArticles() {
-  return listPublishedEntriesByType('knowledge').map(toKnowledgeArticle);
+  return listPublishedEntriesByType('knowledge')
+    .filter((entry) => isPublicKnowledgeEntry(entry))
+    .map(toKnowledgeArticle);
+}
+
+export function listPublishedManagedContentEntriesByType(contentType: ManagedContentType) {
+  return listPublishedEntriesByType(contentType);
+}
+
+export function getManagedContentEntryBySlug(contentType: ManagedContentType, slug: string) {
+  return getPublishedEntryBySlug(contentType, slug);
 }
 
 export function getKnowledgeArticleBySlug(slug: string) {
   const entry = getPublishedEntryBySlug('knowledge', slug);
-  return entry ? toKnowledgeArticle(entry) : null;
+  return entry && isPublicKnowledgeEntry(entry) ? toKnowledgeArticle(entry) : null;
 }
 
 export function getFeaturedKnowledgeArticles(limit = 3) {
