@@ -44,11 +44,11 @@ describe('knowledge synthesis', () => {
     expect(snapshot.topics[0]?.concepts.length).toBeGreaterThan(0);
     expect(drafts.drafts.some((item) => item.category === '自动专题总览')).toBe(true);
     expect(drafts.drafts.some((item) => item.category === '自动概念词汇表')).toBe(true);
-    expect(drafts.drafts.some((item) => item.category === '自动问题地图')).toBe(true);
-    expect(drafts.drafts.some((item) => item.category === '自动问题簇综述')).toBe(true);
     expect(drafts.drafts.some((item) => item.category === '自动书单路径')).toBe(true);
-    expect(drafts.drafts.some((item) => item.category === '自动书目阶梯')).toBe(true);
-    expect(drafts.drafts.length).toBeGreaterThanOrEqual(6);
+    expect(drafts.drafts.some((item) => item.category === '自动问题地图')).toBe(false);
+    expect(drafts.drafts.some((item) => item.category === '自动问题簇综述')).toBe(false);
+    expect(drafts.drafts.some((item) => item.category === '自动书目阶梯')).toBe(false);
+    expect(drafts.drafts.length).toBeGreaterThanOrEqual(3);
     expect(drafts.drafts.every((item) => typeof item.meta?.qualityScore === 'number')).toBe(true);
     expect(drafts.drafts.every((item) => item.slug !== 'question-map' && item.slug !== 'book-path')).toBe(true);
 

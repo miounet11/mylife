@@ -53,6 +53,12 @@ export function resolveAnalyzeAgentKeys(params: {
 type PipelineSource = 'analyze' | 'upgrade';
 type ReportStage = 'engine' | 'llm' | 'agentic' | 'merge';
 
+type FallbackNarrative = {
+  opening: string;
+  summary: string;
+  explanation: string;
+};
+
 export async function generateVersionedReport(params: {
   name: string;
   birthDate: Date;
@@ -230,11 +236,14 @@ async function enhanceWithLLM(
 ) {
   try {
     const llmHealth = assessScopeProviderHealth(
-      getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+      getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto', 'report'),
       'report'
     );
     const reportSnapshots = llmHealth.snapshots || [];
-    if (llmHealth.shouldDefer && !hasRunnableModelsForSnapshots(reportSnapshots)) {
+    if (
+      (llmHealth.shouldDefer && !hasRunnableModelsForSnapshots(reportSnapshots))
+      || shouldConservativelyDeferForSnapshots(reportSnapshots)
+    ) {
       await onProgress?.({
         type: 'model-failed',
         model: 'provider_health_gate',
@@ -414,16 +423,112 @@ function mergeLLMResult(
   const strategySummary = strategyAgent.summary;
   const temporalSummary = temporalAgent.summary;
   const coreSummary = coreAgent.summary;
-
-  merged.analysis.explanation = [
-    merged.analysis.explanation,
+  const focusedNarrative = buildDeterministicFallbackNarrative(merged as FortuneAnalysisResult, {
+    openingOverride: llmResult?.analysis?.opening || baseResult.analysis?.opening,
+    summaryOverride: llmResult?.analysis?.summary || baseResult.analysis?.summary,
+    explanationOverride: llmResult?.analysis?.explanation || baseResult.analysis?.explanation,
     coreSummary,
     strategySummary,
     temporalSummary,
-  ].filter(Boolean).join('\n\n');
+  });
+
+  merged.analysis.opening = focusedNarrative.opening;
+  merged.analysis.summary = focusedNarrative.summary;
+  merged.analysis.explanation = focusedNarrative.explanation;
   merged.analysis.qualityAudit = buildReportQualityAudit(merged as FortuneAnalysisResult);
 
   return merged;
+}
+
+export function buildDeterministicFallbackNarrative(
+  result: FortuneAnalysisResult,
+  extras?: {
+    openingOverride?: string;
+    summaryOverride?: string;
+    explanationOverride?: string;
+    coreSummary?: string;
+    strategySummary?: string;
+    temporalSummary?: string;
+  }
+): FallbackNarrative {
+  const favored = uniqueList([
+    ...(result.advice?.yongShen || []),
+    ...(result.advice?.xiShen || []),
+  ]).slice(0, 3);
+  const actionFocus = firstNonEmpty([
+    ...(result.advice?.career?.specific || []),
+    ...(result.advice?.wealth?.specific || []),
+    ...(result.advice?.marriage?.specific || []),
+    ...(result.advice?.health?.specific || []),
+  ]);
+  const timingFocus = firstNonEmpty([
+    result.advice?.career?.timing,
+    result.advice?.wealth?.timing,
+    result.advice?.marriage?.timing,
+    result.advice?.health?.timing,
+    result.advice?.timing?.[0],
+  ]);
+  const avoidFocus = firstNonEmpty([
+    ...(result.advice?.career?.avoid || []),
+    ...(result.advice?.wealth?.avoid || []),
+    ...(result.advice?.health?.avoid || []),
+    ...(result.advice?.marriage?.avoid || []),
+  ]);
+  const rawOpening = sanitizeNarrativeForUser([
+    extras?.openingOverride || '',
+    extras?.summaryOverride || '',
+  ].filter(Boolean).join('。'));
+  const evidenceHighlights = summarizeNarrativeEvidence([
+    extras?.explanationOverride || '',
+    extras?.coreSummary || '',
+    result.pattern?.description || '',
+    result.analysis?.opening || '',
+  ].join(' '));
+  const patternLine = cleanNarrativeText(
+    `${result.pattern?.type || '当前命局'}是当前主判断，${result.fortune?.currentDaYun || '当前阶段'}决定接下来一段时间的推进节奏。`
+  );
+  const evidenceLine = cleanNarrativeText(
+    evidenceHighlights
+      || (favored.length > 0 ? `优先顺着${favored.join('、')}对应的动作去取舍。` : '')
+      || result.pattern?.description
+  );
+  const actionLine = cleanNarrativeText(
+    [
+      actionFocus ? `现在更适合先做：${actionFocus}` : '',
+      timingFocus ? `重点窗口放在${timingFocus}` : '',
+      summarizeActionOrRisk(extras?.strategySummary || '', 'action'),
+    ].filter(Boolean).join('；')
+  );
+  const riskLine = cleanNarrativeText(
+    [
+      avoidFocus ? `先别做：${avoidFocus}` : '',
+      summarizeActionOrRisk(extras?.temporalSummary || '', 'risk'),
+      summarizeActionOrRisk(result.fortune?.interaction || '', 'risk'),
+    ].filter(Boolean).join('；')
+  );
+  const summaryLine = cleanNarrativeText(
+    sanitizeNarrativeForUser(
+      extras?.summaryOverride
+      || [
+        patternLine,
+        favored.length > 0 ? `优先顺着${favored.join('、')}相关方向推进。` : '',
+      ].filter(Boolean).join(' ')
+    )
+  );
+  const openingLine = cleanNarrativeText(
+    trimToSentence(rawOpening || summaryLine || patternLine, 48)
+  );
+
+  return {
+    opening: openingLine,
+    summary: summaryLine,
+    explanation: [
+      `主判断：${patternLine}`,
+      `判断依据：${evidenceLine || '当前先以命局结构、行运位置和用神取舍作为主依据。'}。`,
+      `现在先做：${actionLine || '先推进一个低成本、可验证的小动作，再根据反馈继续收口。'}。`,
+      `风险提醒：${riskLine || '不要在时机没有坐实前同时推进多个高成本动作。'}。`,
+    ].map((line) => cleanNarrativeText(sanitizeNarrativeForUser(line))).join('\n\n'),
+  };
 }
 
 function readAgentSummary(agentResults: Record<string, unknown>, key: string) {
@@ -560,6 +665,116 @@ function joinParagraphs(values: Array<string | undefined>) {
   return values.filter(Boolean).join('\n\n');
 }
 
+function firstNonEmpty(values: Array<string | undefined>) {
+  return values.map((item) => `${item || ''}`.trim()).find(Boolean) || '';
+}
+
+function cleanNarrativeText(value: string) {
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/[；;]{2,}/g, '；')
+    .replace(/[。]{2,}/g, '。')
+    .replace(/：\s+/g, '：')
+    .trim()
+    .replace(/[；;,，。]+$/g, '');
+}
+
 function windowLabel(agent: ReturnType<typeof readAgentData>) {
   return agent.windows?.[0]?.label || '';
+}
+
+const NARRATIVE_NOISE_PATTERNS = [
+  /macro_cycle/ig,
+  /solar_terms?/ig,
+  /geography/ig,
+  /industry_cycle/ig,
+  /geoClimate/ig,
+  /spatialFactors?/ig,
+  /currentSolarTerm/ig,
+  /nationalCycle/ig,
+  /天时外部参照[^。]*。?/g,
+  /地利外部参照[^。]*。?/g,
+  /这份命盘的落地效果会被[^。]*。?/g,
+  /命局主轴围绕[^。]*。?/g,
+  /生时环境落在[^。]*。?/g,
+  /四柱落点为[^。]*。?/g,
+  /当前最优策略不是同时做很多事[^。]*。?/g,
+  /现实落地优先结合[^。]*。?/g,
+  /解释增强即可。?/g,
+  /格局清正。?/g,
+  /乃富贵之命也。?/g,
+];
+
+const HYPE_OPENING_PATTERNS = [
+  /^细观您的八字[，,]?/,
+  /^您好[，,][^。]{0,12}。?/,
+  /^从您的八字来看[，,]?/,
+  /^王焙琪[，,]/,
+];
+
+function sanitizeNarrativeForUser(value: string) {
+  let next = `${value || ''}`;
+
+  for (const pattern of NARRATIVE_NOISE_PATTERNS) {
+    next = next.replace(pattern, ' ');
+  }
+
+  next = next
+    .replace(/\b([A-Za-z_]+)\b/g, (token) => (
+      ['macro_cycle', 'solar_terms', 'geography', 'industry_cycle', 'geoClimate', 'spatialFactors', 'currentSolarTerm', 'nationalCycle']
+        .includes(token)
+        ? ''
+        : token
+    ))
+    .replace(/(\d{4})-\1/g, '$1年前后')
+    .replace(/[（(][^)）]*(macro_cycle|solar_terms|geography|industry_cycle)[^)）]*[）)]/ig, '')
+    .replace(/\s+/g, ' ')
+    .replace(/[；;]{2,}/g, '；')
+    .replace(/[。]{2,}/g, '。')
+    .trim();
+
+  return next;
+}
+
+function summarizeNarrativeEvidence(value: string) {
+  const sentences = splitChineseSentences(sanitizeNarrativeForUser(value))
+    .filter((sentence) => sentence.length >= 8)
+    .filter((sentence) => !/^当前最优策略/.test(sentence))
+    .filter((sentence) => !/命局主轴|生时环境|四柱落点/.test(sentence))
+    .slice(0, 2);
+
+  return cleanNarrativeText(sentences.join('；'));
+}
+
+function summarizeActionOrRisk(value: string, kind: 'action' | 'risk') {
+  const sentences = splitChineseSentences(sanitizeNarrativeForUser(value))
+    .filter((sentence) => sentence.length >= 8)
+    .filter((sentence) => kind === 'action'
+      ? /(适合|宜|先|可以|推进|布局|收口|聚焦|发力)/.test(sentence)
+      : /(不要|避免|风险|谨慎|留出缓冲|先别)/.test(sentence))
+    .slice(0, 1);
+
+  return cleanNarrativeText(sentences.join('；'));
+}
+
+function splitChineseSentences(value: string) {
+  return `${value || ''}`
+    .split(/[。！？!?\n]+/)
+    .map((item) => cleanNarrativeText(item))
+    .filter(Boolean);
+}
+
+function trimToSentence(value: string, limit: number) {
+  const normalized = sanitizeNarrativeForUser(value);
+  const firstSentence = splitChineseSentences(normalized)[0] || normalized;
+  const deHyped = HYPE_OPENING_PATTERNS.reduce(
+    (text, pattern) => text.replace(pattern, ''),
+    firstSentence
+  ).trim();
+
+  if (deHyped.length <= limit) {
+    return deHyped;
+  }
+
+  return `${deHyped.slice(0, Math.max(0, limit - 1)).trim()}…`;
 }

@@ -109,6 +109,60 @@ function buildTopicMeta(pack: TopicSynthesisPack) {
   };
 }
 
+function hasTopicOverviewSignals(pack: TopicSynthesisPack) {
+  return (pack.concepts.length + pack.questions.length + pack.books.length) >= 3;
+}
+
+function hasConceptGlossarySignals(pack: TopicSynthesisPack) {
+  return pack.concepts.length >= 1;
+}
+
+function hasQuestionMapSignals(pack: TopicSynthesisPack) {
+  return pack.questions.length >= 2;
+}
+
+function hasQuestionClusterSignals(pack: TopicSynthesisPack) {
+  return pack.questions.length >= 3 && pack.concepts.length >= 2;
+}
+
+function hasBookPathSignals(pack: TopicSynthesisPack) {
+  return pack.books.length >= 1;
+}
+
+function hasBookLadderSignals(pack: TopicSynthesisPack) {
+  return pack.books.length >= 2;
+}
+
+function buildDraftInputsForPack(pack: TopicSynthesisPack) {
+  const drafts: Array<Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string }> = [];
+
+  if (hasTopicOverviewSignals(pack)) {
+    drafts.push(buildTopicOverviewDraft(pack));
+  }
+
+  if (hasConceptGlossarySignals(pack)) {
+    drafts.push(buildConceptGlossaryDraft(pack));
+  }
+
+  if (hasQuestionMapSignals(pack)) {
+    drafts.push(buildQuestionMapDraft(pack));
+  }
+
+  if (hasQuestionClusterSignals(pack)) {
+    drafts.push(buildQuestionClusterSummaryDraft(pack));
+  }
+
+  if (hasBookPathSignals(pack)) {
+    drafts.push(buildBookPathDraft(pack));
+  }
+
+  if (hasBookLadderSignals(pack)) {
+    drafts.push(buildBookLadderDraft(pack));
+  }
+
+  return drafts;
+}
+
 export function buildKnowledgeSynthesisSnapshot(
   params?: {
     topicLimit?: number;
@@ -531,14 +585,8 @@ export function generateKnowledgeSynthesisDrafts(
   const drafts: ManagedContentEntry[] = [];
 
   snapshot.topics.forEach((pack) => {
-    const draftInputs = [
-      buildTopicOverviewDraft(pack),
-      buildConceptGlossaryDraft(pack),
-      buildQuestionMapDraft(pack),
-      buildQuestionClusterSummaryDraft(pack),
-      buildBookPathDraft(pack),
-      buildBookLadderDraft(pack),
-    ].map((input) => decorateKnowledgeDraftInput(input, { autoPublish }));
+    const draftInputs = buildDraftInputsForPack(pack)
+      .map((input) => decorateKnowledgeDraftInput(input, { autoPublish }));
 
     const persisted = draftInputs
       .map((input) => saveManagedContentEntry(input, userId))
@@ -563,13 +611,8 @@ export function buildKnowledgeSynthesisDraftInputs(
 
   return {
     snapshot,
-    drafts: snapshot.topics.flatMap((pack) => [
-      buildTopicOverviewDraft(pack),
-      buildConceptGlossaryDraft(pack),
-      buildQuestionMapDraft(pack),
-      buildQuestionClusterSummaryDraft(pack),
-      buildBookPathDraft(pack),
-      buildBookLadderDraft(pack),
-    ]).map((input) => decorateKnowledgeDraftInput(input, { autoPublish: false })),
+    drafts: snapshot.topics
+      .flatMap((pack) => buildDraftInputsForPack(pack))
+      .map((input) => decorateKnowledgeDraftInput(input, { autoPublish: false })),
   };
 }

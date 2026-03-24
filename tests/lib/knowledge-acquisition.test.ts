@@ -104,13 +104,13 @@ describe('knowledge acquisition', () => {
     expect(result.promotedSignalsCount).toBe(1);
     expect(result.extractedObjects.questionCount).toBeGreaterThan(0);
     expect(result.extractedObjects.conceptCount).toBeGreaterThan(0);
-    expect(result.synthesizedDrafts.draftCount).toBeGreaterThanOrEqual(6);
+    expect(result.synthesizedDrafts.draftCount).toBeGreaterThanOrEqual(5);
     expect(result.synthesizedDrafts.candidateCount).toBeGreaterThan(0);
     expect(result.graphEnrichment.relatedTopicCount).toBeGreaterThanOrEqual(0);
     expect(result.synthesizedDrafts.titles.some((item) => item.includes('专题总览'))).toBe(true);
     expect(result.synthesizedDrafts.titles.some((item) => item.includes('概念词汇表'))).toBe(true);
     expect(result.synthesizedDrafts.titles.some((item) => item.includes('问题地图') || item.includes('问题簇综述'))).toBe(true);
-    expect(result.synthesizedDrafts.titles.some((item) => item.includes('书单路径') || item.includes('书目阶梯'))).toBe(true);
+    expect(result.synthesizedDrafts.titles.some((item) => item.includes('书单路径') || item.includes('书目阶梯'))).toBe(false);
     expect(result.coreMissingAfterRun).toBe(0);
     testDb.close();
   });

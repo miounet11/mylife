@@ -534,13 +534,16 @@ function computeRetryDelayMs(params: {
 }
 
 function assessReportProviderHealth() {
-  const baseChain = getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto');
+  const baseChain = getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto', 'report');
   const reportAssessment = assessScopeProviderHealth(baseChain, 'report');
-  const agentAssessment = assessScopeProviderHealth(baseChain, 'agent');
+  const agentAssessment = assessScopeProviderHealth(
+    getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+    'agent'
+  );
   const reportSnapshots = reportAssessment.snapshots || [];
   const agentSnapshots = agentAssessment.snapshots || [];
   const shouldDefer = reportAssessment.shouldDefer
-    && !hasRunnableModelsForSnapshots(reportSnapshots);
+    || !hasRunnableModelsForSnapshots(reportSnapshots);
 
   return {
     shouldDefer,

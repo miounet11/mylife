@@ -1,4 +1,7 @@
+export type LlmFallbackScope = 'report' | 'agent' | 'chat' | 'content';
+
 const DEFAULT_MODEL_CHAIN = ['grok-420-fast', 'gpt-5.2', 'auto'] as const;
+const DEFAULT_REPORT_MODEL_CHAIN = ['auto', 'grok-420-fast'] as const;
 
 function normalizeModel(value?: string | null) {
   const model = (value || '').trim();
@@ -19,21 +22,37 @@ function dedupeModels(models: Array<string | null | undefined>) {
   return result;
 }
 
-export function getModelFallbackChain(preferredModel?: string | null) {
+function getDefaultChain(scope?: LlmFallbackScope) {
+  const configuredScopeChain = scope === 'report'
+    ? (process.env.REPORT_MODEL_FALLBACK_CHAIN || '')
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean)
+    : [];
+  if (configuredScopeChain.length > 0) {
+    return configuredScopeChain;
+  }
+
   const configuredChain = (process.env.MODEL_FALLBACK_CHAIN || '')
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
-
-  const defaultModel = normalizeModel(process.env.DEFAULT_MODEL);
-  const defaultChain = defaultModel && defaultModel !== 'auto'
-    ? [defaultModel, 'gpt-5.2', 'auto']
-    : [...DEFAULT_MODEL_CHAIN];
-
   if (configuredChain.length > 0) {
-    return dedupeModels(preferredModel ? [preferredModel, ...configuredChain] : configuredChain);
+    return configuredChain;
   }
 
+  if (scope === 'report') {
+    return [...DEFAULT_REPORT_MODEL_CHAIN];
+  }
+
+  const defaultModel = normalizeModel(process.env.DEFAULT_MODEL);
+  return defaultModel && defaultModel !== 'auto'
+    ? [defaultModel, 'gpt-5.2', 'auto']
+    : [...DEFAULT_MODEL_CHAIN];
+}
+
+export function getModelFallbackChain(preferredModel?: string | null, scope?: LlmFallbackScope) {
+  const defaultChain = getDefaultChain(scope);
   return dedupeModels(preferredModel ? [preferredModel, ...defaultChain] : defaultChain);
 }
 

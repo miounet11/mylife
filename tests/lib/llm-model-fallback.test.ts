@@ -1,6 +1,7 @@
 describe('llm model fallback', () => {
   const originalDefaultModel = process.env.DEFAULT_MODEL;
   const originalFallbackChain = process.env.MODEL_FALLBACK_CHAIN;
+  const originalReportFallbackChain = process.env.REPORT_MODEL_FALLBACK_CHAIN;
 
   afterEach(() => {
     if (typeof originalDefaultModel === 'undefined') {
@@ -13,6 +14,12 @@ describe('llm model fallback', () => {
       delete process.env.MODEL_FALLBACK_CHAIN;
     } else {
       process.env.MODEL_FALLBACK_CHAIN = originalFallbackChain;
+    }
+
+    if (typeof originalReportFallbackChain === 'undefined') {
+      delete process.env.REPORT_MODEL_FALLBACK_CHAIN;
+    } else {
+      process.env.REPORT_MODEL_FALLBACK_CHAIN = originalReportFallbackChain;
     }
 
     jest.resetModules();
@@ -41,5 +48,25 @@ describe('llm model fallback', () => {
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
     expect(getModelFallbackChain()).toEqual(['grok-420-fast', 'gpt-5.2', 'auto']);
     expect(getModelFallbackChain('gpt-5.2')).toEqual(['gpt-5.2', 'grok-420-fast', 'auto']);
+  });
+
+  it('uses a shorter default chain for report scope', async () => {
+    process.env.DEFAULT_MODEL = 'auto';
+    delete process.env.MODEL_FALLBACK_CHAIN;
+    delete process.env.REPORT_MODEL_FALLBACK_CHAIN;
+
+    const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getModelFallbackChain(undefined, 'report')).toEqual(['auto', 'grok-420-fast']);
+    expect(getModelFallbackChain('auto', 'report')).toEqual(['auto', 'grok-420-fast']);
+  });
+
+  it('lets report scope use its own configured fallback chain', async () => {
+    process.env.DEFAULT_MODEL = 'auto';
+    process.env.MODEL_FALLBACK_CHAIN = 'grok-420-fast, gpt-5.2, auto';
+    process.env.REPORT_MODEL_FALLBACK_CHAIN = 'auto, grok-420-fast';
+
+    const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getModelFallbackChain(undefined, 'report')).toEqual(['auto', 'grok-420-fast']);
+    expect(getModelFallbackChain(undefined, 'chat')).toEqual(['grok-420-fast', 'gpt-5.2', 'auto']);
   });
 });

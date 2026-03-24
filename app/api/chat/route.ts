@@ -223,6 +223,7 @@ async function generateAIResponse(
 
 function trackChatCompleted(params: {
   userId: string;
+  sessionId?: string | null;
   action: 'ask' | 'regenerate' | 'edit' | 'delete' | 'load';
   reportId?: string | null;
   eventId?: string | null;
@@ -237,7 +238,7 @@ function trackChatCompleted(params: {
 }) {
   trackServerEvent({
     userId: params.userId,
-    sessionId: params.userId,
+    sessionId: params.sessionId || params.userId,
     eventName: 'chat_completed',
     page: '/chat',
     meta: {
@@ -258,6 +259,7 @@ function trackChatCompleted(params: {
 
 function trackChatFailed(params: {
   userId?: string | null;
+  sessionId?: string | null;
   action: 'ask' | 'regenerate' | 'edit' | 'delete' | 'load';
   reportId?: string | null;
   eventId?: string | null;
@@ -267,7 +269,7 @@ function trackChatFailed(params: {
 }) {
   trackServerEvent({
     userId: params.userId || undefined,
-    sessionId: params.userId || undefined,
+    sessionId: params.sessionId || params.userId || undefined,
     eventName: 'chat_failed',
     page: '/chat',
     meta: {
@@ -514,11 +516,13 @@ function getScopedChatRows(
 export async function POST(request: NextRequest) {
   const requestStartedAt = Date.now();
   let userId = '';
+  let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
   try {
     const clientKey = getClientKey(request);
+    sessionId = clientKey;
     const rateLimit = checkRateLimit(`chat:${clientKey}`, RATE_LIMITS.chat);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -589,7 +593,7 @@ export async function POST(request: NextRequest) {
 
     trackServerEvent({
       userId,
-      sessionId: userId,
+      sessionId,
       eventName: 'chat_message_sent',
       page: '/chat',
       meta: {
@@ -604,6 +608,7 @@ export async function POST(request: NextRequest) {
     });
     trackChatCompleted({
       userId,
+      sessionId,
       action: 'ask',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
@@ -628,6 +633,7 @@ export async function POST(request: NextRequest) {
     console.error('[API] AI聊天失败:', error);
     trackChatFailed({
       userId,
+      sessionId,
       action: 'ask',
       reportId: requestedReportId,
       eventId: requestedEventId,
@@ -645,12 +651,14 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   const requestStartedAt = Date.now();
   let userId = '';
+  let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
   let trackedAction: 'regenerate' | 'edit' = 'edit';
   try {
     const clientKey = getClientKey(request);
+    sessionId = clientKey;
     const rateLimit = checkRateLimit(`chat:${clientKey}`, RATE_LIMITS.chat);
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -724,7 +732,7 @@ export async function PATCH(request: NextRequest) {
 
       trackServerEvent({
         userId,
-        sessionId: userId,
+        sessionId,
         eventName: 'chat_message_sent',
         page: '/chat',
         meta: {
@@ -740,6 +748,7 @@ export async function PATCH(request: NextRequest) {
       });
       trackChatCompleted({
         userId,
+        sessionId,
         action: 'regenerate',
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
@@ -840,7 +849,7 @@ export async function PATCH(request: NextRequest) {
 
       trackServerEvent({
         userId,
-        sessionId: userId,
+        sessionId,
         eventName: 'chat_message_sent',
         page: '/chat',
         meta: {
@@ -856,6 +865,7 @@ export async function PATCH(request: NextRequest) {
       });
       trackChatCompleted({
         userId,
+        sessionId,
         action: 'edit',
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
@@ -883,6 +893,7 @@ export async function PATCH(request: NextRequest) {
     console.error('[API] 更新聊天消息失败:', error);
     trackChatFailed({
       userId,
+      sessionId,
       action: trackedAction,
       reportId: requestedReportId,
       eventId: requestedEventId,
@@ -900,10 +911,12 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   const requestStartedAt = Date.now();
   let userId = '';
+  let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
   try {
+    sessionId = getClientKey(request);
     const data = await request.json();
     const messageId = typeof data?.messageId === 'string' ? data.messageId : '';
     userId = await getOrCreateGuestUserId();
@@ -934,7 +947,7 @@ export async function DELETE(request: NextRequest) {
 
     trackServerEvent({
       userId,
-      sessionId: userId,
+      sessionId,
       eventName: 'chat_message_sent',
       page: '/chat',
       meta: {
@@ -948,6 +961,7 @@ export async function DELETE(request: NextRequest) {
       });
     trackChatCompleted({
       userId,
+      sessionId,
       action: 'delete',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
@@ -969,6 +983,7 @@ export async function DELETE(request: NextRequest) {
     console.error('[API] 删除聊天消息失败:', error);
     trackChatFailed({
       userId,
+      sessionId,
       action: 'delete',
       reportId: requestedReportId,
       eventId: requestedEventId,
@@ -986,10 +1001,12 @@ export async function DELETE(request: NextRequest) {
 export async function GET(request: NextRequest) {
   const requestStartedAt = Date.now();
   let userId = '';
+  let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
   try {
+    sessionId = getClientKey(request);
     userId = await getOrCreateGuestUserId();
     requestedReportId = resolveRequestedReportId(request);
     requestedEventId = resolveRequestedEventId(request);
@@ -1000,7 +1017,7 @@ export async function GET(request: NextRequest) {
 
     trackServerEvent({
       userId,
-      sessionId: userId,
+      sessionId,
       eventName: 'chat_context_loaded',
       page: '/chat',
       meta: {
@@ -1014,6 +1031,7 @@ export async function GET(request: NextRequest) {
     });
     trackChatCompleted({
       userId,
+      sessionId,
       action: 'load',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
@@ -1034,6 +1052,7 @@ export async function GET(request: NextRequest) {
     console.error('[API] 获取聊天历史失败:', error);
     trackChatFailed({
       userId,
+      sessionId,
       action: 'load',
       reportId: requestedReportId,
       eventId: requestedEventId,

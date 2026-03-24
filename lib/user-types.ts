@@ -417,6 +417,7 @@ export interface FortuneAnalysisResult {
   // 综合解析（LLM生成或基础引擎生成）
   analysis: {
     opening: string;
+    summary?: string;
     explanation: string;
     llmUsed?: boolean;
     agenticUsed?: boolean;

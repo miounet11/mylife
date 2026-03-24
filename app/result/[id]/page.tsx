@@ -84,6 +84,13 @@ function getPublicDisplayName(name?: string | null) {
   return `${cleaned.slice(0, 1)}**`;
 }
 
+function compactCopy(value?: string | null, maxLength = 92) {
+  const normalized = `${value || ''}`.replace(/\s+/g, ' ').trim();
+  if (!normalized) return '';
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trim()}…`;
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   try {
@@ -491,11 +498,52 @@ export default async function ResultPage({ params }: PageProps) {
   const nextFocusSummary = topMonthlyWindows.length > 0
     ? `接下来优先关注 ${topMonthlyWindows.map((item) => item.label).join('、')}。`
     : '接下来应优先结合人生K线、当前大运和场景建议看清阶段主线。';
+  const leadPlaybook = result.decisionPlaybook?.[0];
+  const leadWindow = topMonthlyWindows[0];
+  const favoredElements = [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])].slice(0, 3);
+  const decisionEvidence = [
+    result.pattern?.type
+      ? `结构主轴：当前以 ${result.pattern.type} 为主判断。`
+      : '',
+    result.fortune?.currentDaYun
+      ? `阶段位置：当前行运落在 ${result.fortune.currentDaYun}。`
+      : '',
+    favoredElements.length > 0
+      ? `顺势重点：优先放大 ${favoredElements.join('、')} 对应动作。`
+      : result.confidence?.stablePoints?.[0] || '',
+  ].filter(Boolean).slice(0, 3);
+  const decisionHeadline = compactCopy(
+    leadPlaybook?.whyNow
+      || currentStageSummary
+      || result.confidence?.summary
+  );
+  const decisionWindowLabel = leadWindow
+    ? `${leadWindow.label} · ${leadWindow.theme}`
+    : compactCopy(nextFocusSummary, 48);
+  const decisionNowAction = compactCopy(
+    leadPlaybook?.nowAction
+      || result.actionSuggestions?.[0]?.description
+      || '先按当前阶段主线推进一个最小可验证动作，再继续观察反馈。'
+  );
+  const decisionAvoidAction = compactCopy(
+    leadPlaybook?.avoidAction
+      || result.confidence?.sensitivePoints?.[0]
+      || qualityAudit?.concerns?.[0]
+      || '不要在时机未确认前同时推进多个高成本动作。'
+  );
   const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
   const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
   const stagedReadingHint = result.qualityAudit?.targetAchieved || result.llmUsed
     ? '页面内容较多，系统会先让你看到核心判断，再逐步展开验证、趋势和延伸区块。'
     : '当前先交付核心判断和可执行结论，验证、趋势和延伸区块会继续分批展开，后台也会继续增强。';
+  const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
+  const enhancementStatusMessage = isEnhancementPending
+    ? upgradeJob?.lastError === 'LLM_UNAVAILABLE'
+      ? '当前先显示稳定可读版。后台已经在持续尝试深度增强，但上游模型今天波动较大，增强版会在成功后自动补齐。'
+      : '当前先显示稳定可读版。后台增强任务仍在继续，不需要反复刷新页面。'
+    : !result.llmUsed
+    ? '当前这份结果以结构化引擎和专家层整合输出为主，适合先看结论、阶段和行动建议。'
+    : '当前已经拿到深度增强版，可直接按完整路径阅读。';
   const feedbackLevel = correctionInsight.level || 'healthy';
   const feedbackHeroTone = feedbackLevel === 'action'
     ? 'bg-rose-50 text-rose-700 border-rose-200'
@@ -550,6 +598,11 @@ export default async function ResultPage({ params }: PageProps) {
               <div className="section-label">个人命理总览</div>
 
               <div className="mt-5 flex flex-wrap gap-2">
+                {isEnhancementPending ? (
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                    深度增强补强中
+                  </span>
+                ) : null}
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                   {result.llmUsed ? 'LLM 深度增强' : '结构化整合输出'}
                 </span>
@@ -575,6 +628,38 @@ export default async function ResultPage({ params }: PageProps) {
               <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)]">
                 这份报告已经把命局结构、当前阶段、人生K线和行动建议整合到同一页。先把最关键的判断读懂，再决定是否继续深问、记录事件、开启月度更新，或分享给别人查看。
               </p>
+
+              <div className={`mt-5 rounded-[1.5rem] border px-4 py-4 ${
+                isEnhancementPending
+                  ? 'border-amber-200 bg-amber-50/80'
+                  : result.llmUsed
+                  ? 'border-emerald-200 bg-emerald-50/70'
+                  : 'border-[color:var(--line)] bg-white/75'
+              }`}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                    isEnhancementPending
+                      ? 'bg-white text-amber-800'
+                      : result.llmUsed
+                      ? 'bg-white text-emerald-700'
+                      : 'bg-slate-100 text-[color:var(--muted)]'
+                  }`}>
+                    {isEnhancementPending
+                      ? '稳定版已可阅读'
+                      : result.llmUsed
+                      ? '深度版已送达'
+                      : '当前为稳定可读版'}
+                  </span>
+                  {upgradeStatusLabel ? (
+                    <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                      {upgradeStatusLabel}
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                  {enhancementStatusMessage}
+                </div>
+              </div>
 
               {qualityAudit ? (
                 <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/75 px-4 py-4">
@@ -638,13 +723,21 @@ export default async function ResultPage({ params }: PageProps) {
 
               <div className="mt-6 grid gap-3 md:grid-cols-[1.08fr_0.92fr]">
                 <div className="rounded-[1.5rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">首屏结论</div>
-                  <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
-                    {result.pattern?.type || '命局结构'} 是当前的核心结构判断，
-                    {result.fortune?.currentDaYun ? ` 当前行运落在 ${result.fortune.currentDaYun}。` : ' 当前行运信息已写入报告正文。'}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">决策摘要</div>
+                    <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                      {decisionWindowLabel}
+                    </span>
                   </div>
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                    {currentStageSummary}
+                  <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
+                    {decisionHeadline}
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {decisionEvidence.map((item) => (
+                      <div key={item} className="rounded-2xl bg-white/78 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                        {item}
+                      </div>
+                    ))}
                   </div>
                   <div className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
                     {nextFocusSummary}
@@ -652,7 +745,17 @@ export default async function ResultPage({ params }: PageProps) {
                 </div>
 
                 <div className="rounded-[1.5rem] bg-white/82 px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">立即动作</div>
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">现在怎么做</div>
+                  <div className="mt-3 grid gap-3">
+                    <div className="rounded-2xl bg-[rgba(178,149,93,0.1)] px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">现在先做</div>
+                      <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{decisionNowAction}</div>
+                    </div>
+                    <div className="rounded-2xl bg-rose-50 px-4 py-3">
+                      <div className="text-[11px] uppercase tracking-[0.18em] text-rose-500">先别做</div>
+                      <div className="mt-2 text-sm leading-7 text-rose-800">{decisionAvoidAction}</div>
+                    </div>
+                  </div>
                   <div className="mt-3 flex flex-col gap-3">
                     <Link
                       href={`/chat?reportId=${encodeURIComponent(id)}`}
@@ -899,9 +1002,15 @@ export default async function ResultPage({ params }: PageProps) {
                 AI 深度解析
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-500">
-                <span className="h-1.5 w-1.5 rounded-full bg-slate-400"></span>
-                基础引擎解析
+              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
+                isEnhancementPending
+                  ? 'border-amber-200 bg-amber-50 text-amber-800'
+                  : 'border-slate-200 bg-slate-50 text-slate-500'
+              }`}>
+                <span className={`h-1.5 w-1.5 rounded-full ${
+                  isEnhancementPending ? 'bg-amber-500' : 'bg-slate-400'
+                }`}></span>
+                {isEnhancementPending ? '稳定版已出，深度增强中' : '基础引擎解析'}
               </span>
             )}
             <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${

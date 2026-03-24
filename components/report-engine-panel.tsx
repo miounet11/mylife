@@ -205,6 +205,7 @@ export default function ReportEnginePanel({
     : queuedStrategy === 'queue'
       ? '仅排队后台增强'
       : '立即重算后继续增强';
+  const upgradeBlockerLabel = formatUpgradeBlocker(upgradeJob?.lastError);
   const lineage = Array.isArray(versionLineage) ? versionLineage : [];
   const latestVersion = lineage[0];
   const previousVersion = lineage[1];
@@ -309,7 +310,9 @@ export default function ReportEnginePanel({
               ? `系统已经完成后台增强，历史最高分 ${upgradeJob.bestScore || qualityAudit?.overallScore || '--'}。`
               : upgradeJob.status === 'failed'
               ? `后台增强已达到当前重试上限，历史最高分 ${upgradeJob.bestScore || qualityAudit?.overallScore || '--'}。`
-              : `系统会继续尝试把当前版本从 ${deliveryTierLabel} 提升到 S级专家版。`}
+              : llmUsed
+              ? `系统会继续尝试把当前版本从 ${deliveryTierLabel} 提升到 S级专家版。`
+              : `当前稳定可读版已经先交付，系统会继续尝试把它补强到更完整的深度版。`}
           </div>
           <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
             {`已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次`}
@@ -318,9 +321,9 @@ export default function ReportEnginePanel({
           <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
             当前策略：{queuedStrategyLabel}
           </div>
-          {upgradeJob.lastError ? (
+          {upgradeBlockerLabel ? (
             <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-              最近一次阻塞原因：{upgradeJob.lastError}
+              最近一次阻塞原因：{upgradeBlockerLabel}
             </div>
           ) : null}
         </div>
@@ -515,7 +518,7 @@ export default function ReportEnginePanel({
           <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="text-sm font-semibold text-[color:var(--ink)]">选择升级方式</div>
             <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-              如果你现在就想刷新这份报告，用立即重算。若当前模型不稳定，可以先排队，或等待模型恢复后再增强。
+              你不需要盯着页面一直刷新。现在就想重试可以直接重算；如果上游模型还不稳，更适合先排队，让系统在后台继续补强。
             </div>
             <div className="mt-4 grid gap-3">
               {[
@@ -590,4 +593,20 @@ function formatVersionTime(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatUpgradeBlocker(lastError?: string) {
+  if (!lastError) {
+    return '';
+  }
+
+  if (lastError === 'LLM_UNAVAILABLE') {
+    return '上游模型本轮没有稳定返回，系统已保留当前可读版，并会在后续窗口继续重试。';
+  }
+
+  if (lastError === 'PROVIDER_UNHEALTHY') {
+    return '上游模型当前整体波动较大，本轮先跳过增强，等待健康度恢复后再试。';
+  }
+
+  return lastError;
 }

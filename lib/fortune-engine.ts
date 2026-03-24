@@ -135,6 +135,7 @@ export const analyzeFortune = (
 
   // 14. 生成人生K线数据（使用精确大运）
   const klineData = generateLifeKlineData(birthDate, gender, pillars, yongShenResult, dayunResult);
+  const summary = buildAnalysisSummary(yongShenResult, dayunResult);
 
   return {
     basic: { dayMaster, pillars },
@@ -146,7 +147,7 @@ export const analyzeFortune = (
     fortune: buildFortuneTrend(baziStr, birthDate, gender, yongShenResult, dayunResult),
     advice,
     evidence: { statistics: evidence.statistics, celebrities: evidence.celebrities, similarCases: [] },
-    analysis: { opening, explanation },
+    analysis: { opening, summary, explanation },
     klineData,
     dayun: dayunResult,
     shenSha: shenShaResult ?? undefined,
@@ -430,6 +431,19 @@ const buildExplanation = (pillars: Pillar[], ys: YongShenResult | null, shiShen:
   }
 
   return text;
+};
+
+const buildAnalysisSummary = (ys: YongShenResult | null, dayunResult?: DayunResult): string => {
+  const pattern = ys?.pattern?.pattern || (ys?.strengthDesc ? `${ys.strengthDesc}格局` : '当前命局');
+  const dayun = dayunResult?.currentDayun?.ganZhi
+    ? `${dayunResult.currentDayun.ganZhi}大运`
+    : '当前阶段';
+  const yongShen = (ys?.yongShen || []).slice(0, 2).join('、');
+
+  return [
+    `${pattern}是当前主判断，重心落在${dayun}。`,
+    yongShen ? `优先顺着${yongShen}对应方向做取舍。` : '',
+  ].filter(Boolean).join('');
 };
 
 // ==================== 辅助函数 ====================

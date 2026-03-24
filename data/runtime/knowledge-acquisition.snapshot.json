@@ -1,12 +1,12 @@
 {
   "status": "success",
-  "runId": "knowledge_1773669848857_ayfwtpsu",
-  "pid": 3177592,
-  "startedAt": "2026-03-16T14:04:08.858Z",
-  "finishedAt": "2026-03-16T14:04:14.868Z",
-  "durationMs": 6010,
+  "runId": "knowledge_1774310451242_nt0q2tj2",
+  "pid": 3187365,
+  "startedAt": "2026-03-24T00:00:51.242Z",
+  "finishedAt": "2026-03-24T00:00:57.375Z",
+  "durationMs": 6133,
   "cycle": {
-    "ranAt": "2026-03-16T14:04:14.864Z",
+    "ranAt": "2026-03-24T00:00:57.370Z",
     "radarRefreshed": true,
     "radarSignalsFetched": 30,
     "coreSeededCount": 0,
@@ -24,9 +24,15 @@
     "synthesizedDrafts": {
       "draftCount": 24,
       "persistedCount": 24,
-      "candidateCount": 2,
-      "publishedCount": 2,
+      "candidateCount": 3,
+      "publishedCount": 3,
       "titles": [
+        "相关术数专题总览",
+        "相关术数概念词汇表",
+        "相关术数问题地图",
+        "相关术数问题簇综述",
+        "相关术数书单路径",
+        "相关术数书目阶梯",
         "八字体系专题总览",
         "八字体系概念词汇表",
         "八字体系问题地图",
@@ -44,19 +50,13 @@
         "书籍体系问题地图",
         "书籍体系问题簇综述",
         "书籍体系书单路径",
-        "书籍体系书目阶梯",
-        "方法论专题总览",
-        "方法论概念词汇表",
-        "方法论问题地图",
-        "方法论问题簇综述",
-        "方法论书单路径",
-        "方法论书目阶梯"
+        "书籍体系书目阶梯"
       ]
     },
     "graphEnrichment": {
       "topicConceptLinksAdded": 0,
       "topicTopicLinksAdded": 0,
-      "relatedTopicCount": 15
+      "relatedTopicCount": 21
     },
     "selectedDomains": [],
     "coreMissingAfterRun": 0,
@@ -385,5 +385,5 @@
       }
     ]
   },
-  "updatedAt": "2026-03-16T14:04:14.868Z"
+  "updatedAt": "2026-03-24T00:00:57.376Z"
 }

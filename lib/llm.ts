@@ -124,7 +124,7 @@ export async function generateFortuneInterpretationCore(
   }
 
   const openai = createLlmClient(timeoutMs);
-  const baseChain = getModelFallbackChain(getDefaultModel());
+  const baseChain = getModelFallbackChain(getDefaultModel(), 'report');
   const deadlineAt = Date.now() + timeoutMs;
 
   return executeReportPhase({
@@ -150,7 +150,7 @@ export async function generateFortuneInterpretationFollowup(
   }
 
   const openai = createLlmClient(timeoutMs);
-  const baseChain = getModelFallbackChain(getDefaultModel());
+  const baseChain = getModelFallbackChain(getDefaultModel(), 'report');
   const deadlineAt = Date.now() + timeoutMs;
   const narrativePatch = await executeReportPhase({
     openai,
@@ -342,10 +342,10 @@ function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: 
 
 function buildPhaseSystemPrompt(phase: PhaseKey) {
   if (phase === 'structure') {
-    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
+    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。请按实务判断顺序输出：先定旺衰格局，再定用神忌神，再落到大运流年。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
   }
 
-  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案做小幅补强，只输出合法 JSON，不要 markdown，不要重复。';
+  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案做小幅补强，强调一句主判断、一个优先动作、一个主要风险。只输出合法 JSON，不要 markdown，不要重复。';
 }
 
 function compactForPrompt(value: unknown, depth: number = 0): unknown {
@@ -430,6 +430,9 @@ ${JSON.stringify(compactDayun)}` : ''}
 2. 先保证字段完整和判断正确，再追求文采。
 3. 文本保持简洁，总体宁短勿长，方便稳定返回。
 4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
+5. `analysis.summary` 必须像一句决策结论，先给判断，不要空泛抒情。
+6. 禁止输出内部占位词或工程词，如 `macro_cycle`、`solar_terms`、`geography`。
+7. 禁止使用夸饰空话，如“格局清正”“乃富贵之命也”。
 
 JSON 结构必须完整包含以下最小字段：
 {
@@ -451,6 +454,7 @@ JSON 结构必须完整包含以下最小字段：
   },
   "analysis": {
     "opening": "开场句",
+    "summary": "60字以内的阶段摘要",
     "explanation": "120-220字的综合解释"
   }
 }
@@ -479,6 +483,9 @@ ${JSON.stringify(compactDraft)}
 3. explanation 控制在 140-220 字，opening 更有定性力量但不要浮夸。
 4. career/wealth/marriage/health 的 general 和 specific 要更落地，避免重复。
 5. 输出合法 JSON，不要 markdown。
+6. `analysis.summary` 必须前置主结论，像给用户的决策摘要。
+7. 禁止输出内部占位词、工程词、提示词痕迹或“解释增强即可”这类句子。
+8. 不要写“格局清正”“富贵之命”等空泛恭维。
 
 只输出需要覆盖的补丁字段：
 {
@@ -505,6 +512,7 @@ ${JSON.stringify(compactDraft)}
   },
   "analysis": {
     "opening": "补强后的开场白",
+    "summary": "补强后的阶段摘要",
     "explanation": "补强后的综合解释"
   }
 }
