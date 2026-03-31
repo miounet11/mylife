@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createFortuneWithUser, userOperations } from '@/lib/database';
+import { createFortuneWithUser, toolSessionOperations, userOperations } from '@/lib/database';
 import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
 import { deliverMailWithRetry, isEmailDeliveryConfigured, sendReportReadyEmail } from '@/lib/email';
 import { trackServerEvent } from '@/lib/analytics';
@@ -9,6 +9,7 @@ import { withReportVersionLineage } from '@/lib/report-version-lineage';
 import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import { appendToolMemoryToNarrative, summarizeToolSessions } from '@/lib/tool-context';
 import type { FortuneAdvice } from '@/lib/user-types';
 import { validateAnalyzeRequest } from '@/lib/validators';
 
@@ -286,6 +287,8 @@ async function executeAnalyze(
     options?.onStage?.(event);
   };
 
+  const userId = await getOrCreateGuestUserId();
+  const recentToolSessions = toolSessionOperations.listByUser(userId, 8);
   const timing = resolveEffectiveTiming(data);
   const timezone = (data.timezone as number) || 8;
   const useSeparateZiHour = Boolean(data.useSeparateZiHour);
@@ -325,6 +328,22 @@ async function executeAnalyze(
     },
   });
 
+  const toolMemory = summarizeToolSessions(recentToolSessions, null, 5);
+  if (toolMemory) {
+    finalResult.analysis = {
+      ...(finalResult.analysis || {}),
+      contextSignals: {
+        ...((finalResult.analysis?.contextSignals as Record<string, unknown>) || {}),
+        toolMemory,
+      },
+      enhancementNotes: [
+        ...(((finalResult.analysis?.enhancementNotes || []) as string[]) || []),
+        `已纳入最近 ${toolMemory.recentSessions.length} 次单项工具结果作为用户历史上下文。`,
+      ],
+      explanation: appendToolMemoryToNarrative(finalResult.analysis?.explanation || '', toolMemory),
+    };
+  }
+
   stage({
     type: 'stage',
     stage: 'persist',
@@ -334,7 +353,6 @@ async function executeAnalyze(
   });
 
   const reportId = generateReportId();
-  const userId = await getOrCreateGuestUserId();
   finalResult.analysis = withReportVersionLineage({
     nextAnalysis: finalResult.analysis,
     nextReportVersion: CURRENT_REPORT_VERSION,

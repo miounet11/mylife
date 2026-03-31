@@ -2,6 +2,7 @@ export type LlmFallbackScope = 'report' | 'agent' | 'chat' | 'content';
 
 const DEFAULT_MODEL_CHAIN = ['grok-420-fast', 'gpt-5.2', 'auto'] as const;
 const DEFAULT_REPORT_MODEL_CHAIN = ['auto', 'grok-420-fast'] as const;
+const DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN = ['gpt-5.2', 'auto'] as const;
 
 function normalizeModel(value?: string | null) {
   const model = (value || '').trim();
@@ -53,6 +54,19 @@ function getDefaultChain(scope?: LlmFallbackScope) {
 
 export function getModelFallbackChain(preferredModel?: string | null, scope?: LlmFallbackScope) {
   const defaultChain = getDefaultChain(scope);
+  return dedupeModels(preferredModel ? [preferredModel, ...defaultChain] : defaultChain);
+}
+
+export function getReportNarrativeFallbackChain(preferredModel?: string | null) {
+  const configuredChain = (process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN || '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const defaultChain = configuredChain.length > 0
+    ? configuredChain
+    : [...DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN];
+
   return dedupeModels(preferredModel ? [preferredModel, ...defaultChain] : defaultChain);
 }
 

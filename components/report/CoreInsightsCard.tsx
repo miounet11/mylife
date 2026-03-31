@@ -2,7 +2,7 @@
  * 核心洞察卡片组件 (v1.3.0)
  * Core Insights Card Component
  *
- * 在分析结果页面顶部展示关键命理洞察
+ * 在分析结果页面顶部展示关键结构洞察
  * 日主五行 | 用神喜忌 | 核心特质 | 人生巅峰
  */
 import React from 'react';
@@ -115,7 +115,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
           <div className="p-1.5 bg-[#d4af37]/20 rounded-lg">
             <Crown className="w-4 h-4 text-[#d4af37]" />
           </div>
-          <h3 className="text-sm font-medium text-white/90 font-display tracking-wide">命理核心洞察</h3>
+          <h3 className="text-sm font-medium text-white/90 font-display tracking-wide">核心结构洞察</h3>
         </div>
 
         {/* 四格洞察 */}

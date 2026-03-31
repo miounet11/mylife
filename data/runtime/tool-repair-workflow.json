@@ -1,0 +1,334 @@
+{
+  "items": [
+    {
+      "slug": "family-responsibility-order",
+      "title": "责任排序",
+      "pagePath": "/tools/family-responsibility-order",
+      "status": "in_progress",
+      "owner": "system-check",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": "cta_to_run",
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.205Z",
+      "baseline": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "family-parent-pressure",
+      "title": "父母压力",
+      "pagePath": "/tools/family-parent-pressure",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": "cta_to_run",
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "timing-monthly-rhythm",
+      "title": "月度节奏",
+      "pagePath": "/tools/timing-monthly-rhythm",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": "cta_to_run",
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 1,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-job-switch",
+      "title": "转岗判断",
+      "pagePath": "/tools/career-job-switch",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-entrepreneurship",
+      "title": "创业时机",
+      "pagePath": "/tools/career-entrepreneurship",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-partnership-fit",
+      "title": "合作适配",
+      "pagePath": "/tools/career-partnership-fit",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-boss-relationship",
+      "title": "上级关系",
+      "pagePath": "/tools/career-boss-relationship",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.201Z",
+      "updatedAt": "2026-03-31T06:39:30.201Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-team-conflict",
+      "title": "团队冲突",
+      "pagePath": "/tools/career-team-conflict",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.202Z",
+      "updatedAt": "2026-03-31T06:39:30.202Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-interview-readiness",
+      "title": "面试胜率",
+      "pagePath": "/tools/career-interview-readiness",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.202Z",
+      "updatedAt": "2026-03-31T06:39:30.202Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    },
+    {
+      "slug": "career-burnout-risk",
+      "title": "职业透支",
+      "pagePath": "/tools/career-burnout-risk",
+      "status": "todo",
+      "owner": "",
+      "notes": "",
+      "priorityScore": 193,
+      "gapType": null,
+      "createdAt": "2026-03-31T06:39:30.202Z",
+      "updatedAt": "2026-03-31T06:39:30.202Z",
+      "baseline": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "latest": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      },
+      "delta": {
+        "detailViews": 0,
+        "ctaStartRate": 0,
+        "ctaToRunRate": 0,
+        "runFailureRate": 0,
+        "premiumRate": 0
+      }
+    }
+  ]
+}

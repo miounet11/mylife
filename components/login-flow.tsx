@@ -78,7 +78,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
         邮箱登录
       </div>
       <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">用邮箱验证码绑定你的长期档案</h2>
-      <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+      <p className="mt-2 intro-copy">
         登录后，游客状态下生成的分析结果、事件和内容订阅会被并入你的正式账号。管理员邮箱还会自动拥有内容后台权限。
       </p>
 
@@ -94,29 +94,32 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
           />
         </div>
 
-        <div className="flex flex-col gap-3 md:flex-row">
-          <input
-            type="text"
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
-            placeholder="输入 6 位验证码"
-            className="flex-1 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
-          />
-          <button
-            type="button"
-            onClick={requestCode}
-            disabled={requesting || !email.trim()}
-            className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-sm font-semibold text-[color:var(--ink)] disabled:opacity-60"
-          >
-            {requesting ? '生成中...' : '获取验证码'}
-          </button>
+        <div className="space-y-2">
+          <div className="action-guide">操作按钮</div>
+          <div className="action-strip flex flex-col gap-3 md:flex-row">
+            <input
+              type="text"
+              value={code}
+              onChange={(event) => setCode(event.target.value)}
+              placeholder="输入 6 位验证码"
+              className="flex-1 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+            />
+            <button
+              type="button"
+              onClick={requestCode}
+              disabled={requesting || !email.trim()}
+              className="action-secondary px-5 py-3 disabled:opacity-60"
+            >
+              {requesting ? '生成中...' : '获取验证码'}
+            </button>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={verifyCode}
           disabled={verifying || !email.trim() || code.trim().length !== 6}
-          className="w-full rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          className="action-primary action-main w-full px-5 py-3 disabled:opacity-60"
         >
           {verifying ? '登录中...' : '验证并登录'}
         </button>

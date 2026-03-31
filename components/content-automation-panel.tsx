@@ -206,8 +206,8 @@ export default function ContentAutomationPanel({
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">内容自动化</div>
           <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">按用户偏好和内容缺口，自动扩张内容架构</div>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[color:var(--muted)]">
-            这一层会综合最近 30 天的内容访问、卡片点击、就近测算转化，以及当前内容覆盖度，给出下一轮最该生成的主题队列。
+          <p className="mt-3 max-w-3xl text-xs leading-6 text-[color:var(--muted)]">
+            这一层会综合最近 30 天的内容访问、卡片点击、快速分析转化，以及当前内容覆盖度，给出下一轮最该生成的主题队列。
           </p>
         </div>
 
@@ -216,7 +216,7 @@ export default function ContentAutomationPanel({
             type="button"
             onClick={() => void runCycle(false)}
             disabled={running !== null || scheduling}
-            className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-sm font-semibold text-[color:var(--ink)] disabled:opacity-60"
+            className="action-secondary disabled:opacity-60"
           >
             {running === 'draft' ? '生成中...' : '自动生成草稿'}
           </button>
@@ -267,7 +267,7 @@ export default function ContentAutomationPanel({
               { label: '已发布内容', value: snapshot.metrics.publishedEntries },
               { label: '草稿库存', value: snapshot.metrics.draftEntries },
               { label: '近 30 日访问', value: snapshot.metrics.pageViews30d },
-              { label: '就近测算率', value: `${snapshot.metrics.quickStartRate}%` },
+              { label: '快速分析率', value: `${snapshot.metrics.quickStartRate}%` },
             ].map((item) => (
               <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
@@ -286,7 +286,7 @@ export default function ContentAutomationPanel({
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                         <div className="mt-1 text-xs text-[color:var(--muted)]">
-                          浏览 {item.views} / 点击 {item.clicks} / 就近测算 {item.quickStarts}
+                          浏览 {item.views} / 点击 {item.clicks} / 快速分析 {item.quickStarts}
                         </div>
                       </div>
                       <div className="text-right">
@@ -296,7 +296,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     目前还没有足够的内容行为数据，等访问累积后这里会给出更稳定的判断。
                   </div>
                 )}
@@ -315,7 +315,7 @@ export default function ContentAutomationPanel({
                         <div className="text-xs text-[color:var(--muted)]">{item.sourceType === 'radar' ? '热点驱动' : '结构补位'}</div>
                       </div>
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.reason}</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">选题：{item.topic}</div>
                   </div>
                 ))}
@@ -353,7 +353,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     当前还没有达到自动发布阈值的草稿，先继续生成和补齐内容层。
                   </div>
                 )}
@@ -373,7 +373,7 @@ export default function ContentAutomationPanel({
                     '发布排序会优先参考历史高转化内容类型与热点来源反馈',
                     `固定发布时间：${scheduler.publishHours.map((hour) => `${String(hour).padStart(2, '0')}:00`).join(' / ')}`,
                   ].map((item) => (
-                    <div key={item} className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -394,7 +394,7 @@ export default function ContentAutomationPanel({
                       </div>
                     </div>
                   )) : (
-                    <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                    <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                       计划任务还没有执行记录。
                     </div>
                   )}
@@ -418,7 +418,7 @@ export default function ContentAutomationPanel({
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.quickStarts}</div>
-                        <div className="text-xs text-[color:var(--muted)]">测算发起</div>
+                        <div className="text-xs text-[color:var(--muted)]">分析发起</div>
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">
@@ -426,7 +426,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     当前还没有足够的内容归因数据。
                   </div>
                 )}
@@ -447,7 +447,7 @@ export default function ContentAutomationPanel({
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.quickStarts}</div>
-                        <div className="text-xs text-[color:var(--muted)]">测算发起</div>
+                        <div className="text-xs text-[color:var(--muted)]">分析发起</div>
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">
@@ -458,7 +458,7 @@ export default function ContentAutomationPanel({
                     )}
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     目前还没有热点转内容的真实表现数据。
                   </div>
                 )}

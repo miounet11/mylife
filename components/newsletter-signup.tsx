@@ -7,7 +7,7 @@ import { Mail, Sparkles } from 'lucide-react';
 export default function NewsletterSignup({
   source = 'site',
   title = '订阅站点更新',
-  description = '接收新的命理解读文章、公开案例和关键功能更新。',
+  description = '接收新的结构解读文章、公开案例和关键功能更新。',
 }: {
   source?: string;
   title?: string;
@@ -55,7 +55,7 @@ export default function NewsletterSignup({
         邮箱订阅
       </div>
       <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">{title}</h2>
-      <p className="mt-2 max-w-2xl text-sm leading-7 text-[color:var(--muted)]">{description}</p>
+      <p className="intro-copy mt-2 max-w-2xl">{description}</p>
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 md:flex-row">
         <div className="relative flex-1">
@@ -71,7 +71,7 @@ export default function NewsletterSignup({
         <button
           type="submit"
           disabled={loading || !email.trim()}
-          className="inline-flex items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          className="action-primary disabled:opacity-60"
         >
           {loading ? '提交中...' : '订阅更新'}
         </button>
@@ -80,9 +80,9 @@ export default function NewsletterSignup({
       {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
       {error && <p className="mt-3 text-sm text-rose-700">{error}</p>}
 
-      <div className="mt-4 text-sm text-[color:var(--muted)]">
+      <div className="intro-copy mt-4">
         需要管理订阅状态？
-        <Link href="/updates" className="ml-2 font-semibold text-[color:var(--accent-strong)]">
+        <Link href="/updates" className="action-secondary ml-2 inline-flex">
           进入订阅管理
         </Link>
       </div>

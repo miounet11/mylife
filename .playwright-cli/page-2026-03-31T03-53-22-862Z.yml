@@ -1,0 +1,366 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 人生K线
+            - generic [ref=e12]:
+              - generic [ref=e13]: 世界易系统入口
+              - generic [ref=e14]: v1.0.0.1
+        - navigation [ref=e15]:
+          - link "世界易" [ref=e16] [cursor=pointer]:
+            - /url: /world-yi
+          - link "知识库" [ref=e17] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e18] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e19] [cursor=pointer]:
+            - /url: /insights
+          - link "工具中心" [ref=e20] [cursor=pointer]:
+            - /url: /tools
+          - link "进入判断" [ref=e21] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e22] [cursor=pointer]:
+            - /url: /chat
+          - link "事件日历" [ref=e23] [cursor=pointer]:
+            - /url: /events
+          - link "我的档案" [ref=e24] [cursor=pointer]:
+            - /url: /profile
+          - link "案例库" [ref=e25] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e26] [cursor=pointer]:
+            - /url: /updates
+        - generic [ref=e27]:
+          - link "邮箱登录" [ref=e28] [cursor=pointer]:
+            - /url: /login
+          - link "查看案例" [ref=e29] [cursor=pointer]:
+            - /url: /cases
+            - text: 查看案例
+            - img [ref=e30]
+    - main [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]: 世界易分析入口
+          - heading "这里不是只做一次填写，而是开始重建你的判断。" [level=1] [ref=e36]
+          - paragraph [ref=e37]: 世界易会先帮助你看结构，再看阶段，再结合环境落到动作。录入这些出生信息，不是为了得到一句宿命话，而是为了进入你的个人判断页。
+        - generic [ref=e38]:
+          - generic [ref=e39]:
+            - generic [ref=e40]: 先看结构
+            - generic [ref=e41]: 你不是乱，你是有结构。
+          - generic [ref=e42]:
+            - generic [ref=e43]: 再看阶段
+            - generic [ref=e44]: 很多卡住不是命差，而是所处阶段没看清。
+          - generic [ref=e45]:
+            - generic [ref=e46]: 把环境带进来
+            - generic [ref=e47]: 地点、关系、行业和生活压力都会改变推进成本。
+          - generic [ref=e48]:
+            - generic [ref=e49]: 最后回到动作
+            - generic [ref=e50]: 结果页最重要的，不是术语，而是现在先做什么。
+      - generic [ref=e55]:
+        - generic [ref=e56]:
+          - generic [ref=e57]: 世界易分析协议
+          - heading "这里提交的不是一张表，而是你个人判断页的底层坐标。" [level=2] [ref=e58]
+          - paragraph [ref=e59]: 出生时间、地点、真太阳时、时区和场景类型，会一起决定后面结果页如何组织结构、阶段、环境和动作。世界易不是为了制造神秘感，而是为了降低误判。
+          - generic [ref=e60]:
+            - generic [ref=e61]:
+              - generic [ref=e62]: 当前公开总量
+              - generic [ref=e63]: 91 篇
+            - generic [ref=e64]:
+              - generic [ref=e65]: 当前公开知识
+              - generic [ref=e66]: 50 篇
+            - generic [ref=e67]:
+              - generic [ref=e68]: 当前公开案例
+              - generic [ref=e69]: 32 篇
+            - generic [ref=e70]:
+              - generic [ref=e71]: 环境洞察层
+              - generic [ref=e72]: 9 篇
+            - generic [ref=e73]:
+              - generic [ref=e74]: 世界易目标内容宇宙
+              - generic [ref=e75]: 2000 篇
+            - generic [ref=e76]:
+              - generic [ref=e77]: 分析输出主顺序
+              - generic [ref=e78]: 结构 -> 阶段 -> 环境 -> 动作
+            - generic [ref=e79]:
+              - generic [ref=e80]: 当前公开入口
+              - generic [ref=e81]: 28 个
+            - generic [ref=e82]:
+              - generic [ref=e83]: 创始叙事
+              - generic [ref=e84]: 凯莉 · v1.0.0.1
+        - generic [ref=e85]:
+          - link "单项工具中心" [ref=e86] [cursor=pointer]:
+            - /url: /tools
+          - link "世界易总入口" [ref=e87] [cursor=pointer]:
+            - /url: /world-yi
+          - link "十卷主书工程" [ref=e88] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "人生六域入口" [ref=e89] [cursor=pointer]:
+            - /url: /world-yi/domains
+          - link "全球华人路径" [ref=e90] [cursor=pointer]:
+            - /url: /world-yi/global
+          - link "公开案例库" [ref=e91] [cursor=pointer]:
+            - /url: /cases
+          - link "知识体系入口" [ref=e92] [cursor=pointer]:
+            - /url: /knowledge
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - img [ref=e97]
+              - generic [ref=e102]: 开始新判断前，先看已有进度
+            - generic [ref=e103]: 如果你已经有报告或升级任务，这里会先把当前状态给你，避免重复进入同一份结果。
+          - link "登录查看更新" [ref=e104] [cursor=pointer]:
+            - /url: /login?next=%2Fupdates
+            - text: 登录查看更新
+            - img [ref=e105]
+        - generic [ref=e107]: 登录后，这里会显示你当前报告的升级任务、月度更新和订阅状态。
+      - generic [ref=e108]:
+        - generic [ref=e109]:
+          - generic [ref=e110]:
+            - generic [ref=e111]:
+              - img [ref=e112]
+              - text: 判断与记录
+            - heading "新的判断可以继续做，以前的结果也能随时回看。" [level=1] [ref=e115]
+            - paragraph [ref=e116]: 这里可以继续填写新的出生信息，也能查看你自己、家人或其他对象的历史判断记录。
+            - generic [ref=e117]:
+              - generic [ref=e118]: 世界易提醒
+              - paragraph [ref=e119]: 录入信息只是入口。真正有价值的是后面的结果页会帮你把结构、阶段、环境和动作压缩成可读的判断顺序。
+              - generic [ref=e120]:
+                - link "世界易总入口" [ref=e121] [cursor=pointer]:
+                  - /url: /world-yi
+                - link "全球传播入口" [ref=e122] [cursor=pointer]:
+                  - /url: /world-yi/global
+                - link "English Gateway" [ref=e123] [cursor=pointer]:
+                  - /url: /world-yi/en
+            - generic [ref=e124]:
+              - generic [ref=e125]: 世界易工作台协议
+              - generic [ref=e126]:
+                - generic [ref=e127]: 录入不是求一句结论，而是建立个人判断底座
+                - generic [ref=e128]: 结果页会先解释结构，再解释阶段和环境
+                - generic [ref=e129]: 历史记录会逐步变成可复盘的长期判断档案
+                - generic [ref=e130]: 本人、家人、伴侣和代测对象会共用同一套秩序
+              - generic [ref=e131]:
+                - link "世界易总入口" [ref=e132] [cursor=pointer]:
+                  - /url: /world-yi
+                - link "方法论入口" [ref=e133] [cursor=pointer]:
+                  - /url: /knowledge/world-yi-methodology
+                - link "案例证据层" [ref=e134] [cursor=pointer]:
+                  - /url: /cases
+                - link "全球华人路径" [ref=e135] [cursor=pointer]:
+                  - /url: /world-yi/global
+          - generic [ref=e136]:
+            - generic [ref=e137]:
+              - generic [ref=e138]: 累计判断
+              - generic [ref=e139]: "0"
+              - paragraph [ref=e140]: 包含你自己和代看对象的所有记录。
+            - generic [ref=e141]:
+              - generic [ref=e142]: 本人判断
+              - generic [ref=e143]: "0"
+              - paragraph [ref=e144]: 按当前档案匹配到的个人记录。
+            - generic [ref=e145]:
+              - generic [ref=e146]: 其他对象
+              - generic [ref=e147]: "0"
+              - paragraph [ref=e148]: 家人、伴侣或其他对象的历史记录。
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]: 新建世界易判断
+                - generic [ref=e155]: 按下面的步骤录入后，你会直接进入个人结构、阶段、环境和动作分析，不再只是拿到一次性结果。
+              - img [ref=e157]
+            - generic [ref=e158]:
+              - generic [ref=e160]:
+                - generic [ref=e161]:
+                  - generic [ref=e162]:
+                    - generic [ref=e163]: 结构底座
+                    - generic [ref=e164]: 出生信息会先决定命局底座，不先被单一事件带跑。
+                  - generic [ref=e165]:
+                    - generic [ref=e166]: 阶段坐标
+                    - generic [ref=e167]: 真太阳时、时区与时间精度会影响阶段判断。
+                  - generic [ref=e168]:
+                    - generic [ref=e169]: 动作导向
+                    - generic [ref=e170]: 最终结果要落到现在先做什么，而不是停在术语。
+                - generic [ref=e171]:
+                  - generic [ref=e172]: 世界易录入提示
+                  - generic [ref=e173]: 这一步不是单纯提交一份资料，而是在为你的个人判断页建立底座。系统后面会按“结构 → 阶段 → 环境 → 动作”的顺序整理结果。
+                - generic [ref=e174]:
+                  - generic [ref=e175]: 慢请求处理提醒
+                  - generic [ref=e176]: 如果网络波动或模型响应偏慢，你可以稍后回来看判断记录。登录并绑定邮箱后，报告生成完成时也可以直接收邮件提醒。
+                - generic [ref=e177]:
+                  - generic [ref=e178]:
+                    - generic [ref=e179]:
+                      - generic [ref=e180]:
+                        - generic [ref=e181]: 录入完成度
+                        - generic [ref=e182]: 不是必须填到完美，但补齐关键缺口会明显提升判断质量。
+                      - generic [ref=e183]: 50%
+                    - generic [ref=e184]:
+                      - generic [ref=e185]:
+                        - generic [ref=e186]:
+                          - generic [ref=e187]: 判断主题
+                          - generic [ref=e188]: 待补强
+                        - generic [ref=e189]: 当前还是默认分类
+                        - generic [ref=e190]: 建议先把主题缩到更具体的事业、关系、财富等主线。
+                      - generic [ref=e191]:
+                        - generic [ref=e192]:
+                          - generic [ref=e193]: 出生时间精度
+                          - generic [ref=e194]: 已增强
+                        - generic [ref=e195]: 1990年01月01日 00:00
+                        - generic [ref=e196]: 阶段判断会更稳，结果更容易落到月份和窗口。
+                      - generic [ref=e197]:
+                        - generic [ref=e198]:
+                          - generic [ref=e199]: 环境坐标
+                          - generic [ref=e200]: 待补强
+                        - generic [ref=e201]: 当前仍是未知地
+                        - generic [ref=e202]: 补上出生地点后，真太阳时和环境判断会更可靠。
+                      - generic [ref=e203]:
+                        - generic [ref=e204]:
+                          - generic [ref=e205]: 时间修正
+                          - generic [ref=e206]: 已增强
+                        - generic [ref=e207]: 真太阳时已开启
+                        - generic [ref=e208]: 系统会优先按更稳的时间基准整理阶段。
+                  - generic [ref=e209]:
+                    - generic [ref=e210]: 本次更适合这样问
+                    - generic [ref=e211]: 综合问题也要先压成一个主问题，再进入判断。
+                    - generic [ref=e212]:
+                      - generic [ref=e213]: 建议追问方式
+                      - generic [ref=e214]: 更适合追问“现在最该先看事业、关系、财富、健康、家庭还是迁移哪条主线”。
+                    - generic [ref=e215]:
+                      - generic [ref=e216]: 当前下一步
+                      - generic [ref=e217]: 先把案例分类从“默认分类”切到更具体的问题主线，结果会更聚焦。
+                    - generic [ref=e218]:
+                      - generic [ref=e219]: 避免这样问
+                      - generic [ref=e220]: 不要一次把所有问题混在一起，先锁定一条最想判断的主线。
+                - generic [ref=e221]:
+                  - generic [ref=e222]: 命主姓名
+                  - textbox "请输入姓名" [ref=e223]
+                - generic [ref=e224]:
+                  - generic [ref=e225]:
+                    - button "男" [ref=e226] [cursor=pointer]:
+                      - generic [ref=e229]: 男
+                    - button "女" [ref=e230] [cursor=pointer]:
+                      - generic [ref=e233]: 女
+                  - generic [ref=e234]:
+                    - button "公历" [ref=e235] [cursor=pointer]
+                    - button "农历" [ref=e236] [cursor=pointer]
+                    - button "四柱" [ref=e237] [cursor=pointer]
+                - generic [ref=e238]:
+                  - generic [ref=e239]: 出生时间
+                  - button "1990年01月01日 00:00" [ref=e240] [cursor=pointer]
+                - generic [ref=e241]:
+                  - generic [ref=e242]: 出生地址
+                  - button "未知地 北京时间" [ref=e243] [cursor=pointer]
+                - generic [ref=e244]:
+                  - button "夏令时" [ref=e245] [cursor=pointer]:
+                    - generic [ref=e248]: 夏令时
+                  - button "真太阳时" [ref=e249] [cursor=pointer]:
+                    - generic [ref=e252]: 真太阳时
+                  - button "早晚子时" [ref=e253] [cursor=pointer]:
+                    - generic [ref=e256]: 早晚子时
+                  - generic [ref=e257]:
+                    - generic [ref=e258]: 保存
+                    - button [ref=e259] [cursor=pointer]
+                - generic [ref=e261]:
+                  - generic [ref=e262]: 真太阳时：1990-01-01 00:00
+                  - generic [ref=e263]: 地址经纬： 北纬39.9288 东经116.416
+                - generic [ref=e264]:
+                  - generic [ref=e265]: 案例分类
+                  - button "默认分类" [ref=e267] [cursor=pointer]:
+                    - generic [ref=e270]: 默认分类
+                - generic [ref=e271]:
+                  - generic [ref=e272]: 本次建盘协议
+                  - generic [ref=e273]:
+                    - generic [ref=e274]:
+                      - generic [ref=e275]: 判断主题
+                      - generic [ref=e276]: 默认分类
+                    - generic [ref=e277]:
+                      - generic [ref=e278]: 出生信息模式
+                      - generic [ref=e279]: 1990年01月01日 00:00
+                    - generic [ref=e280]:
+                      - generic [ref=e281]: 环境坐标
+                      - generic [ref=e282]: 未知地 北京时间
+                    - generic [ref=e283]:
+                      - generic [ref=e284]: 时间修正
+                      - generic [ref=e285]: 真太阳时开启
+                - generic [ref=e286]: 提交后你先拿到的，不是一句抽象结论，而是主结构、当前阶段、环境提示和现在先做什么。
+                - button "用当前信息进入判断" [ref=e287] [cursor=pointer]
+              - button "丙 辛 甲 丙 午 卯 辰 寅 即时起局 农历：2026年二月十三 寅时 公历：2026-03-31 03:53" [ref=e289] [cursor=pointer]:
+                - generic [ref=e295]:
+                  - generic [ref=e296]:
+                    - generic [ref=e297]: 丙
+                    - generic [ref=e298]: 辛
+                    - generic [ref=e299]: 甲
+                    - generic [ref=e300]: 丙
+                  - generic [ref=e301]:
+                    - generic [ref=e302]: 午
+                    - generic [ref=e303]: 卯
+                    - generic [ref=e304]: 辰
+                    - generic [ref=e305]: 寅
+                - generic [ref=e306]:
+                  - generic [ref=e307]: 即时起局
+                  - generic [ref=e308]: 农历：2026年二月十三 寅时
+                  - generic [ref=e309]: 公历：2026-03-31 03:53
+              - generic [ref=e310]: 如果你只是想先快速进入结果，也可以直接用上面的快速入口。后续结果页仍会优先整理成世界易的结构、阶段和动作顺序。
+              - generic [ref=e311]:
+                - img [ref=e312]
+                - generic [ref=e314]: 平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考
+          - generic [ref=e315]:
+            - generic [ref=e317]:
+              - generic [ref=e318]:
+                - generic [ref=e319]: 既有判断列表
+                - generic [ref=e320]: 可以按名字筛选，也可以直接回看以前的结构判断、阶段判断和行动建议。
+              - button "全部" [ref=e322] [cursor=pointer]
+            - generic [ref=e323]:
+              - generic [ref=e324]: 还没有判断记录
+              - paragraph [ref=e325]: 先完成一次录入，后续所有本人和代测对象的报告都会在这里集中展示。
+      - generic [ref=e327]:
+        - generic [ref=e328]:
+          - generic [ref=e329]: 单项工具矩阵
+          - heading "综合判断建立底盘，工具中心负责把高频问题拆得更细。" [level=2] [ref=e330]
+          - paragraph [ref=e331]: 当你完成一次综合判断后，可以继续进入 120 个单项测试工具，围绕事业、财富、关系、健康、家庭、迁移、阶段窗口和生活应用继续下钻。
+        - generic [ref=e332]:
+          - link "事业与财富" [ref=e333] [cursor=pointer]:
+            - /url: /tools
+          - link "关系与家庭" [ref=e334] [cursor=pointer]:
+            - /url: /tools
+          - link "恢复与健康" [ref=e335] [cursor=pointer]:
+            - /url: /tools
+          - link "迁移与出国" [ref=e336] [cursor=pointer]:
+            - /url: /tools
+          - link "阶段窗口" [ref=e337] [cursor=pointer]:
+            - /url: /tools
+          - link "高频生活应用" [ref=e338] [cursor=pointer]:
+            - /url: /tools
+    - contentinfo [ref=e339]:
+      - generic [ref=e340]:
+        - generic [ref=e341]:
+          - generic [ref=e342]: 人生K线
+          - paragraph [ref=e343]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+          - paragraph [ref=e344]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+        - generic [ref=e345]:
+          - link "邮箱登录" [ref=e346] [cursor=pointer]:
+            - /url: /login
+          - link "世界易" [ref=e347] [cursor=pointer]:
+            - /url: /world-yi
+          - link "主书工程" [ref=e348] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "工具中心" [ref=e349] [cursor=pointer]:
+            - /url: /tools
+          - link "知识库" [ref=e350] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e351] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e352] [cursor=pointer]:
+            - /url: /insights
+          - link "案例库" [ref=e353] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e354] [cursor=pointer]:
+            - /url: /updates
+          - link "进入判断" [ref=e355] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e356] [cursor=pointer]:
+            - /url: /chat
+          - link "事件管理" [ref=e357] [cursor=pointer]:
+            - /url: /events
+  - alert [ref=e358]

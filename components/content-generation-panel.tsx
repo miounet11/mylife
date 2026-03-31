@@ -333,7 +333,7 @@ export default function ContentGenerationPanel({
           <textarea
             value={form.sourceSignals}
             onChange={(event) => setForm((prev) => ({ ...prev, sourceSignals: event.target.value }))}
-            className="min-h-[110px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm leading-7"
+            className="min-h-[110px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6"
             placeholder="把你收集到的平台热词、评论区问题、选题备注直接贴进来"
           />
         </Field>

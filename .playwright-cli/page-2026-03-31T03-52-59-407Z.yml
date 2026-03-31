@@ -1,0 +1,591 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e10]:
+          - generic [ref=e11]: 人生K线
+          - generic [ref=e12]:
+            - generic [ref=e13]: 世界易系统入口
+            - generic [ref=e14]: v1.0.0.1
+      - navigation [ref=e15]:
+        - link "世界易" [ref=e16] [cursor=pointer]:
+          - /url: /world-yi
+        - link "知识库" [ref=e17] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e18] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e19] [cursor=pointer]:
+          - /url: /insights
+        - link "工具中心" [ref=e20] [cursor=pointer]:
+          - /url: /tools
+        - link "进入判断" [ref=e21] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e22] [cursor=pointer]:
+          - /url: /chat
+        - link "事件日历" [ref=e23] [cursor=pointer]:
+          - /url: /events
+        - link "我的档案" [ref=e24] [cursor=pointer]:
+          - /url: /profile
+        - link "案例库" [ref=e25] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e26] [cursor=pointer]:
+          - /url: /updates
+      - link "工具中心" [ref=e29] [cursor=pointer]:
+        - /url: /tools
+        - text: 工具中心
+        - img [ref=e30]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - img [ref=e36]
+          - text: 岗位匹配
+        - heading "岗位匹配测试" [level=1] [ref=e40]
+        - paragraph [ref=e41]: 你不是不努力，你可能只是站错了岗位。
+        - generic [ref=e42]:
+          - generic [ref=e43]: 岗位
+          - generic [ref=e44]: 适配
+          - generic [ref=e45]: 工作卡住
+        - generic [ref=e46]:
+          - generic [ref=e47]: 这个工具适合谁
+          - paragraph [ref=e48]: 想确认自己适不适合继续留在当前角色的人
+          - generic [ref=e49]: 它会优先帮你：识别适配点、消耗点和推进方式
+      - generic [ref=e50]:
+        - generic [ref=e51]:
+          - generic [ref=e52]: 触发时刻
+          - generic [ref=e53]: 每天上班都像顶着一块石头，但又说不清到底是不喜欢还是不适合。
+        - generic [ref=e54]:
+          - generic [ref=e55]: 错误问法
+          - generic [ref=e56]: 我适不适合这份工作？
+        - generic [ref=e57]:
+          - generic [ref=e58]: 正确问法
+          - generic [ref=e59]: 这份岗位到底是阶段不对，还是结构不匹配？
+        - generic [ref=e60]:
+          - generic [ref=e61]: 免费层价值
+          - generic [ref=e62]: 免费先给你岗位适配摘要、当前风险点和一个立即动作。
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e65]: 补充一句你现在最关心的场景
+        - generic [ref=e66]: 工具会优先读取你已有档案和综合报告，这里只需要补一句当前场景，帮助结果更聚焦。
+        - generic [ref=e67]: 这次结果会自动存到你的个人上下文里，后面再做别的工具时会直接继承。
+        - textbox "例如：我正在考虑 4 月换岗，这次是该继续争取还是先保守？" [ref=e68]
+        - button "开始这个工具" [ref=e69] [cursor=pointer]
+      - generic [ref=e70]:
+        - generic [ref=e71]:
+          - img [ref=e72]
+          - text: 运行前提示
+        - generic [ref=e75]:
+          - generic [ref=e76]: 免费版输出：headline、summary、recommendedAction、riskReminder
+          - generic [ref=e77]: 深测会补：whyItMatches、evidence、premiumPreview
+          - generic [ref=e78]: 提示语：我现在的岗位/角色到底适不适合长期做下去？
+          - generic [ref=e79]: 付费点：付费深测会拆岗位结构、窗口、风险线和下一步职业路径。
+          - generic [ref=e80]:
+            - link "返回该分类" [ref=e81] [cursor=pointer]:
+              - /url: /tools/category/career
+            - link "进入结构追问" [ref=e82] [cursor=pointer]:
+              - /url: /chat
+              - generic [ref=e83]:
+                - img [ref=e84]
+                - text: 进入结构追问
+            - link "重新做综合判断" [ref=e87] [cursor=pointer]:
+              - /url: /analyze
+    - generic [ref=e89]:
+      - generic [ref=e90]:
+        - generic [ref=e91]:
+          - img [ref=e92]
+          - text: 编辑精选
+        - generic [ref=e94]: 事业精选
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - generic [ref=e97]: 这个工具为什么值得单独做
+          - generic [ref=e98]: 把“我到底适不适合继续做这份工作”拆成岗位结构、组织接口和长期代价。
+        - generic [ref=e99]:
+          - generic [ref=e100]: 核心决策视角
+          - generic [ref=e101]: 先看你是不适配，还是只是阶段性疲劳，再决定留、转还是重排职责。
+        - generic [ref=e102]:
+          - generic [ref=e103]:
+            - img [ref=e104]
+            - text: 为什么现在做最值钱
+          - generic [ref=e107]: 如果你已经在反复想离开，但还没看清问题到底是岗位错、老板错还是阶段错，这就是最值钱的一步。
+    - generic [ref=e109]:
+      - generic [ref=e110]:
+        - generic [ref=e111]: 免费先看
+        - generic [ref=e112]: 当前适配度判断
+      - generic [ref=e113]:
+        - generic [ref=e114]: 免费先看
+        - generic [ref=e115]: 最容易耗损的位置
+      - generic [ref=e116]:
+        - generic [ref=e117]: 免费先看
+        - generic [ref=e118]: 短期该继续还是先稳住
+      - generic [ref=e119]:
+        - generic [ref=e120]: 深测再展开
+        - generic [ref=e121]: 完整角色画像
+      - generic [ref=e122]:
+        - generic [ref=e123]: 深测再展开
+        - generic [ref=e124]: 未来 3-6 个月窗口
+      - generic [ref=e125]:
+        - generic [ref=e126]: 深测再展开
+        - generic [ref=e127]: 最优转向建议
+    - generic [ref=e129]:
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - img [ref=e133]
+            - text: 案例化示例
+          - heading "别人为什么会连续用这个工具" [level=2] [ref=e136]
+          - paragraph [ref=e137]: 这些是按用户常见场景整理的示例，用来帮助理解这个工具的真实价值，不替代医疗、法律或投资等专业意见。
+        - generic [ref=e138]: 示例重点是让用户快速代入
+      - generic [ref=e139]:
+        - article [ref=e140]:
+          - generic [ref=e141]: 32 岁运营负责人
+          - heading "先缩窄问题，再决定要不要硬冲" [level=3] [ref=e142]
+          - generic [ref=e143]:
+            - paragraph [ref=e144]: 她连续两个月在想“我现在的岗位/角色到底适不适合长期做下去？”，但一直把问题混成“我要不要辞职”。
+            - paragraph [ref=e145]: 先做了 岗位匹配测试，把问题缩成岗位结构、上级接口和窗口三件事。
+            - paragraph [ref=e146]: 结果发现不是能力差，而是当前岗位接口严重错位，她先调整职责边界后再谈转向。
+          - generic [ref=e147]: 少走了一次冲动离职，后面再做窗口类工具时，判断明显更稳。
+        - article [ref=e148]:
+          - generic [ref=e149]: 29 岁产品经理
+          - heading "先看代价，再决定换不换" [level=3] [ref=e150]
+          - generic [ref=e151]:
+            - paragraph [ref=e152]: 他原本只盯着“机会看起来更大”，没有把 岗位匹配 背后的组织代价算进去。
+            - paragraph [ref=e153]: 用这个工具先看适配和风险，再串到下一步窗口或机会工具。
+            - paragraph [ref=e154]: 他提前发现新机会的推进方式并不适合自己，避免了高成本跳槽。
+          - generic [ref=e155]: 先用免费结果收口问题，再用深测决定是否出手，转化点非常自然。
+        - article [ref=e156]:
+          - generic [ref=e157]: 35 岁团队主管
+          - heading "把综合焦虑拆成一条行动链" [level=3] [ref=e158]
+          - generic [ref=e159]:
+            - paragraph [ref=e160]: 她既想升职、又怕背锅，还在考虑换岗，原本每周都在摇摆。
+            - paragraph [ref=e161]: 先用 岗位匹配 看主问题，再接一个窗口工具和一个应用工具。
+            - paragraph [ref=e162]: 三次测试形成了“先稳岗位，再挑时机，再落动作”的顺序。
+          - generic [ref=e163]: 用户更容易连续使用多个工具，也更容易接受整套深测服务。
+    - generic [ref=e166]:
+      - generic [ref=e167]:
+        - generic [ref=e168]:
+          - img [ref=e169]
+          - text: 付费结果预期
+        - heading "付费后，这个工具会真正帮你解决什么" [level=2] [ref=e173]
+        - generic [ref=e174]:
+          - generic [ref=e175]: 完整角色画像
+          - generic [ref=e176]: 未来 3-6 个月窗口
+          - generic [ref=e177]: 拿到更明确的留/转/争路径
+          - generic [ref=e178]: 知道未来 3-6 个月先发力还是先保守
+          - generic [ref=e179]: 减少一次高成本职业误判
+      - generic [ref=e180]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - img [ref=e183]
+            - text: 常见犹豫点
+          - generic [ref=e186]:
+            - generic [ref=e187]:
+              - generic [ref=e188]: 我先看看免费结果，没必要这么快进付费吧？
+              - generic [ref=e189]: 可以先看免费结果，但如果你已经准备真的做决定、推进或止损，深测价值会更高。职业判断最怕继续模糊推进，晚一个窗口，代价往往更高。
+            - generic [ref=e190]:
+              - generic [ref=e191]: 我担心问题描述得不够清楚，做了也不准。
+              - generic [ref=e192]: 这类工具默认会继承你的综合报告和历史工具记录，不是完全靠这一次输入。你只需要补一句当前场景，系统会把已有上下文一起带入。
+            - generic [ref=e193]:
+              - generic [ref=e194]: 我能不能只做这一个，不继续串别的？
+              - generic [ref=e195]: "可以，但精品工具最强的价值在串联使用: 先看主问题，再看时机，再落动作。这样结果更稳，也更容易变成真正有用的决策链。"
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - img [ref=e198]
+            - text: FAQ
+          - generic [ref=e201]:
+            - generic [ref=e202]:
+              - generic [ref=e203]: 岗位匹配和综合报告有什么不同？
+              - generic [ref=e204]: 综合报告负责看大结构，岗位匹配负责把一个高频问题单独拆细，所以更适合反复复访和连续测算。
+            - generic [ref=e205]:
+              - generic [ref=e206]: 这次结果后面还会用到吗？
+              - generic [ref=e207]: 会。每次工具结果都会绑定当前用户，并作为后续工具、聊天和综合判断的上下文基础。
+            - generic [ref=e208]:
+              - generic [ref=e209]: 什么时候最适合升级专项服务？
+              - generic [ref=e210]: 当你已经准备真的做决定、需要更细的路径、窗口或止损线，而不是只想听一个摘要结论时，就该升级。
+    - generic [ref=e212]:
+      - generic [ref=e213]:
+        - img [ref=e214]
+        - text: 精品联动路径
+      - heading "别让这次测算停在当前页" [level=2] [ref=e220]
+      - paragraph [ref=e221]: 真正的高质量工具，不是做完一次就结束，而是继续把你带到原理、案例和下一个判断，逐步把问题拆干净。
+      - generic [ref=e222]:
+        - generic [ref=e223]:
+          - generic [ref=e224]:
+            - img [ref=e225]
+            - text: 先补原理
+          - paragraph [ref=e227]: 先理解这个主题的判断逻辑，用户更容易信任结果，也更愿意继续深测。
+          - generic [ref=e228]:
+            - link "事业专题 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。" [ref=e229] [cursor=pointer]:
+              - /url: /knowledge/world-yi-career-role-fit
+              - generic [ref=e230]: 事业专题
+              - generic [ref=e231]: 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度
+              - generic [ref=e232]: 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。
+            - link "人生六域 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。" [ref=e233] [cursor=pointer]:
+              - /url: /knowledge/world-yi-career-stage-reset
+              - generic [ref=e234]: 人生六域
+              - generic [ref=e235]: 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段
+              - generic [ref=e236]: 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。
+            - link "时代认知 从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。" [ref=e237] [cursor=pointer]:
+              - /url: /knowledge/world-yi-era-cognition
+              - generic [ref=e238]: 时代认知
+              - generic [ref=e239]: 从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统
+              - generic [ref=e240]: 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。
+        - generic [ref=e241]:
+          - generic [ref=e242]:
+            - img [ref=e243]
+            - text: 再看案例
+          - paragraph [ref=e246]: 看别人怎么把这个问题落到现实动作，用户会更容易进入“这也和我有关”的状态。
+          - generic [ref=e247]:
+            - link "事业与角色 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。" [ref=e248] [cursor=pointer]:
+              - /url: /cases/world-yi-case-career-role-fit
+              - generic [ref=e249]: 事业与角色
+              - generic [ref=e250]: 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛
+              - generic [ref=e251]: 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。
+            - link "事业与晋升 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。" [ref=e252] [cursor=pointer]:
+              - /url: /cases/world-yi-case-career-promotion-freeze
+              - generic [ref=e253]: 事业与晋升
+              - generic [ref=e254]: 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了
+              - generic [ref=e255]: 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。
+        - generic [ref=e256]:
+          - generic [ref=e257]:
+            - img [ref=e258]
+            - text: 然后继续测
+          - paragraph [ref=e260]: 先把当前问题做窄，再补窗口、风险和动作，连续测算比一次性判断更有价值。
+          - generic [ref=e261]:
+            - link "升职窗口 升职窗口 免费先告诉你当前窗口偏推进还是偏保守。" [ref=e262] [cursor=pointer]:
+              - /url: /tools/career-promotion-window?from=career-role-fit
+              - generic [ref=e263]: 升职窗口
+              - generic [ref=e264]: 升职窗口
+              - generic [ref=e265]: 免费先告诉你当前窗口偏推进还是偏保守。
+            - link "决策日判断 决策日判断 免费先判断 决策日判断 当前是推进窗、观察窗还是收缩窗。" [ref=e266] [cursor=pointer]:
+              - /url: /tools/timing-decision-day?from=career-role-fit
+              - generic [ref=e267]: 决策日判断
+              - generic [ref=e268]: 决策日判断
+              - generic [ref=e269]: 免费先判断 决策日判断 当前是推进窗、观察窗还是收缩窗。
+            - link "寻物复原 寻物复原 免费先给你 寻物复原 的短结论、一个风险提醒和一条立即动作。" [ref=e270] [cursor=pointer]:
+              - /url: /tools/application-lost-item?from=career-role-fit
+              - generic [ref=e271]: 寻物复原
+              - generic [ref=e272]: 寻物复原
+              - generic [ref=e273]: 免费先给你 寻物复原 的短结论、一个风险提醒和一条立即动作。
+    - generic [ref=e275]:
+      - generic [ref=e276]:
+        - img [ref=e277]
+        - text: 推荐测算路径
+      - heading "从一次测试，走到一条连续决策链" [level=2] [ref=e279]
+      - paragraph [ref=e280]: 一个精品工具不该孤立存在。最好的体验是先看主问题，再补窗口，最后落到具体动作。
+      - generic [ref=e281]:
+        - generic [ref=e282]:
+          - generic [ref=e283]: STEP 1
+          - generic [ref=e284]: 岗位匹配
+          - paragraph [ref=e285]: 先看主矛盾
+          - generic [ref=e286]: 免费先给你岗位适配摘要、当前风险点和一个立即动作。
+          - link "查看当前工具" [ref=e287] [cursor=pointer]:
+            - /url: /tools/career-role-fit
+            - text: 查看当前工具
+            - img [ref=e288]
+        - generic [ref=e290]:
+          - generic [ref=e291]: STEP 2
+          - generic [ref=e292]: 升职窗口
+          - paragraph [ref=e293]: 再补时机判断
+          - generic [ref=e294]: 免费先告诉你当前窗口偏推进还是偏保守。
+          - link "进入下一步" [ref=e295] [cursor=pointer]:
+            - /url: /tools/career-promotion-window?from=career-role-fit
+            - text: 进入下一步
+            - img [ref=e296]
+        - generic [ref=e298]:
+          - generic [ref=e299]: STEP 3
+          - generic [ref=e300]: 决策日判断
+          - paragraph [ref=e301]: 最后落到短动作
+          - generic [ref=e302]: 免费先判断 决策日判断 当前是推进窗、观察窗还是收缩窗。
+          - link "进入下一步" [ref=e303] [cursor=pointer]:
+            - /url: /tools/timing-decision-day?from=career-role-fit
+            - text: 进入下一步
+            - img [ref=e304]
+        - generic [ref=e306]:
+          - generic [ref=e307]: STEP 4
+          - generic [ref=e308]: 寻物复原
+          - paragraph [ref=e309]: 继续补齐上下文
+          - generic [ref=e310]: 免费先给你 寻物复原 的短结论、一个风险提醒和一条立即动作。
+          - link "进入下一步" [ref=e311] [cursor=pointer]:
+            - /url: /tools/application-lost-item?from=career-role-fit
+            - text: 进入下一步
+            - img [ref=e312]
+      - generic [ref=e314]:
+        - img [ref=e315]
+        - text: 每一步结果都会绑定当前用户并作为后续测算上下文，越往后测，建议越贴近真实处境。
+    - generic [ref=e319]:
+      - generic [ref=e320]:
+        - generic [ref=e321]:
+          - img [ref=e322]
+          - text: 协同路径
+        - heading "这个工具已经接入主测算和内容系统" [level=2] [ref=e325]
+        - paragraph [ref=e326]: 做完工具，不应该只停在结果页。下一步要么回到综合测算，要么继续读相关文章和案例，把判断越走越深。
+      - generic [ref=e327]:
+        - generic [ref=e328]:
+          - generic [ref=e329]:
+            - img [ref=e330]
+            - text: 综合测算
+          - link "综合测算 回到综合测算 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。" [ref=e334] [cursor=pointer]:
+            - /url: /analyze
+            - generic [ref=e335]: 综合测算
+            - generic [ref=e336]: 回到综合测算
+            - generic [ref=e337]: 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。
+        - generic [ref=e338]:
+          - generic [ref=e339]:
+            - img [ref=e340]
+            - text: 相关工具
+          - generic [ref=e342]:
+            - link "相关工具 升职窗口 不是你永远升不上去，而是你可能总在错的窗口硬冲。" [ref=e343] [cursor=pointer]:
+              - /url: /tools/career-promotion-window
+              - generic [ref=e344]: 相关工具
+              - generic [ref=e345]: 升职窗口
+              - generic [ref=e346]: 不是你永远升不上去，而是你可能总在错的窗口硬冲。
+            - link "相关工具 决策日判断 很多错判不是方向错，而是“决策日判断”这一步时机错。" [ref=e347] [cursor=pointer]:
+              - /url: /tools/timing-decision-day
+              - generic [ref=e348]: 相关工具
+              - generic [ref=e349]: 决策日判断
+              - generic [ref=e350]: 很多错判不是方向错，而是“决策日判断”这一步时机错。
+            - link "相关工具 寻物复原 高频现实问题最怕乱拍脑袋，而“寻物复原”就是该被单独判断的一类。" [ref=e351] [cursor=pointer]:
+              - /url: /tools/application-lost-item
+              - generic [ref=e352]: 相关工具
+              - generic [ref=e353]: 寻物复原
+              - generic [ref=e354]: 高频现实问题最怕乱拍脑袋，而“寻物复原”就是该被单独判断的一类。
+        - generic [ref=e355]:
+          - generic [ref=e356]:
+            - img [ref=e357]
+            - text: 相关文章
+          - generic [ref=e359]:
+            - link "相关文章 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。" [ref=e360] [cursor=pointer]:
+              - /url: /knowledge/world-yi-career-role-fit
+              - generic [ref=e361]: 相关文章
+              - generic [ref=e362]: 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度
+              - generic [ref=e363]: 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。
+            - link "相关文章 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。" [ref=e364] [cursor=pointer]:
+              - /url: /knowledge/world-yi-career-stage-reset
+              - generic [ref=e365]: 相关文章
+              - generic [ref=e366]: 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段
+              - generic [ref=e367]: 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。
+            - link "相关文章 从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。" [ref=e368] [cursor=pointer]:
+              - /url: /knowledge/world-yi-era-cognition
+              - generic [ref=e369]: 相关文章
+              - generic [ref=e370]: 从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统
+              - generic [ref=e371]: 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。
+        - generic [ref=e372]:
+          - generic [ref=e373]:
+            - img [ref=e374]
+            - text: 相关案例
+          - generic [ref=e376]:
+            - link "相关案例 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。" [ref=e377] [cursor=pointer]:
+              - /url: /cases/world-yi-case-career-role-fit
+              - generic [ref=e378]: 相关案例
+              - generic [ref=e379]: 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛
+              - generic [ref=e380]: 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。
+            - link "相关案例 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。" [ref=e381] [cursor=pointer]:
+              - /url: /cases/world-yi-case-career-promotion-freeze
+              - generic [ref=e382]: 相关案例
+              - generic [ref=e383]: 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了
+              - generic [ref=e384]: 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。
+            - link "相关案例 世界易案例：高压管理者不是能力不够，而是节奏先崩了 很多管理者不是做不成事，而是在错误阶段承担了错误密度的责任。" [ref=e385] [cursor=pointer]:
+              - /url: /cases/world-yi-case-burnout-manager
+              - generic [ref=e386]: 相关案例
+              - generic [ref=e387]: 世界易案例：高压管理者不是能力不够，而是节奏先崩了
+              - generic [ref=e388]: 很多管理者不是做不成事，而是在错误阶段承担了错误密度的责任。
+    - generic [ref=e391]:
+      - generic [ref=e392]:
+        - generic [ref=e393]:
+          - img [ref=e394]
+          - text: 深测版
+        - heading "免费版先给摘要，深测版再把这件事真正讲透。" [level=2] [ref=e398]
+        - paragraph [ref=e399]: 岗位匹配的免费版只给摘要。深测版会把“为什么、什么时候、先做什么、不要做什么”完整展开。
+        - generic [ref=e400]: 当你准备真的去谈、去换、去争，而不是只想“再看看”时，就该解锁深测。
+        - paragraph [ref=e401]: 深测版的目标不是给你安慰，而是帮你降低职业误判成本。
+        - generic [ref=e402]:
+          - generic [ref=e403]: 岗位/组织阻力拆解
+          - generic [ref=e404]: 未来 3-6 个月窗口
+          - generic [ref=e405]: 推进与止损双路径
+        - generic [ref=e406]:
+          - link "继续追问" [ref=e407] [cursor=pointer]:
+            - /url: /chat
+            - text: 继续追问
+            - img [ref=e408]
+          - link "进入更新中心" [ref=e410] [cursor=pointer]:
+            - /url: /updates
+      - generic [ref=e411]:
+        - generic [ref=e412]:
+          - img [ref=e413]
+          - text: 邮箱订阅
+        - heading "解锁深测提醒" [level=2] [ref=e416]
+        - paragraph [ref=e417]: 订阅后，后续可以围绕 岗位匹配 接收深测提醒、工具包推荐和阶段窗口变化。
+        - generic [ref=e418]:
+          - generic [ref=e419]:
+            - img
+            - textbox "输入你的邮箱地址" [ref=e420]
+          - button "订阅更新" [disabled] [ref=e421]
+        - generic [ref=e422]:
+          - text: 需要管理订阅状态？
+          - link "进入订阅管理" [ref=e423] [cursor=pointer]:
+            - /url: /updates
+    - generic [ref=e426]:
+      - generic [ref=e427]:
+        - generic [ref=e428]:
+          - img [ref=e429]
+          - text: 直接进入专项
+        - heading "不是只看一句结论，而是把这件事拆成能执行的专项判断。" [level=2] [ref=e433]
+        - paragraph [ref=e434]: 当前工具负责先缩窄问题，专项服务负责把 岗位匹配 真正做深。提交后，系统会带上你的综合报告、工具历史和当前问题，不需要你反复重讲背景。
+        - generic [ref=e435]:
+          - generic [ref=e436]: 推荐专项：断事专项
+          - generic [ref=e437]: 当前付费点：付费深测会拆岗位结构、窗口、风险线和下一步职业路径。
+          - generic [ref=e438]: 解锁后会展开：完整角色画像
+          - generic [ref=e439]: 解锁后会展开：未来 3-6 个月窗口
+          - generic [ref=e440]: 解锁后会展开：最优转向建议
+      - generic [ref=e441]:
+        - generic [ref=e442]:
+          - img [ref=e443]
+          - text: 提交专项需求
+        - generic [ref=e446]: 一次提交，就能把当前工具、结果记录和综合报告一起带入后续专项跟进。
+        - generic [ref=e447]:
+          - textbox "称呼，可选" [ref=e448]
+          - textbox "邮箱 / 微信 / 手机号" [ref=e449]
+          - textbox [ref=e450]: 我想围绕“岗位匹配”申请更深入的专项判断，当前最想解决的问题是：
+        - button "提交断事专项需求" [ref=e451] [cursor=pointer]:
+          - text: 提交断事专项需求
+          - img [ref=e452]
+    - generic [ref=e455]:
+      - generic [ref=e456]:
+        - generic [ref=e457]:
+          - generic [ref=e458]:
+            - img [ref=e459]
+            - text: 同域工具包
+          - heading "事业加速包" [level=2] [ref=e463]
+          - paragraph [ref=e464]: 把岗位匹配、升职窗口、Offer 对比和谈薪窗口串成一条事业推进链。
+          - generic [ref=e465]: 先看适不适合，再看什么时候争取，最后再决定怎么谈。
+          - paragraph [ref=e466]: 适合：卡在岗位、升职、跳槽和谈薪同一条线上反复犹豫的人。
+        - link "回到工具中心" [ref=e467] [cursor=pointer]:
+          - /url: /tools
+      - generic [ref=e468]:
+        - link "career 岗位匹配 当前岗位和真实结构是否匹配 进入工具" [ref=e469] [cursor=pointer]:
+          - /url: /tools/career-role-fit
+          - generic [ref=e470]: career
+          - generic [ref=e471]: 岗位匹配
+          - generic [ref=e472]: 当前岗位和真实结构是否匹配
+          - generic [ref=e473]:
+            - text: 进入工具
+            - img [ref=e474]
+        - link "career 升职窗口 什么时候更适合争取升级 进入工具" [ref=e476] [cursor=pointer]:
+          - /url: /tools/career-promotion-window
+          - generic [ref=e477]: career
+          - generic [ref=e478]: 升职窗口
+          - generic [ref=e479]: 什么时候更适合争取升级
+          - generic [ref=e480]:
+            - text: 进入工具
+            - img [ref=e481]
+        - link "career Offer 对比 多个机会之间如何选 进入工具" [ref=e483] [cursor=pointer]:
+          - /url: /tools/career-offer-choice
+          - generic [ref=e484]: career
+          - generic [ref=e485]: Offer 对比
+          - generic [ref=e486]: 多个机会之间如何选
+          - generic [ref=e487]:
+            - text: 进入工具
+            - img [ref=e488]
+        - link "career 谈薪窗口 什么时候谈薪更有利 进入工具" [ref=e490] [cursor=pointer]:
+          - /url: /tools/career-salary-negotiation
+          - generic [ref=e491]: career
+          - generic [ref=e492]: 谈薪窗口
+          - generic [ref=e493]: 什么时候谈薪更有利
+          - generic [ref=e494]:
+            - text: 进入工具
+            - img [ref=e495]
+    - generic [ref=e498]:
+      - generic [ref=e500]:
+        - generic [ref=e501]:
+          - img [ref=e502]
+          - text: 下一步推荐
+        - heading "把综合报告继续拆成可复访的单项工具" [level=2] [ref=e505]
+        - paragraph [ref=e506]: 先把当前问题做窄，再沿着阶段窗口和高频应用继续下钻。
+      - generic [ref=e507]:
+        - link "timing 年度主窗口 今年最核心的推进窗口 先配一个阶段窗口工具 进入工具" [ref=e508] [cursor=pointer]:
+          - /url: /tools/timing-yearly-window
+          - generic [ref=e509]: timing
+          - heading "年度主窗口" [level=3] [ref=e510]
+          - paragraph [ref=e511]: 今年最核心的推进窗口
+          - generic [ref=e512]: 先配一个阶段窗口工具
+          - generic [ref=e513]:
+            - text: 进入工具
+            - img [ref=e514]
+        - link "timing 月度节奏 本月更适合推进还是保守 先配一个阶段窗口工具 进入工具" [ref=e516] [cursor=pointer]:
+          - /url: /tools/timing-monthly-rhythm
+          - generic [ref=e517]: timing
+          - heading "月度节奏" [level=3] [ref=e518]
+          - paragraph [ref=e519]: 本月更适合推进还是保守
+          - generic [ref=e520]: 先配一个阶段窗口工具
+          - generic [ref=e521]:
+            - text: 进入工具
+            - img [ref=e522]
+        - link "timing 决策日判断 近期哪几天更适合关键动作 先配一个阶段窗口工具 进入工具" [ref=e524] [cursor=pointer]:
+          - /url: /tools/timing-decision-day
+          - generic [ref=e525]: timing
+          - heading "决策日判断" [level=3] [ref=e526]
+          - paragraph [ref=e527]: 近期哪几天更适合关键动作
+          - generic [ref=e528]: 先配一个阶段窗口工具
+          - generic [ref=e529]:
+            - text: 进入工具
+            - img [ref=e530]
+        - link "timing 签约窗口 签约、确认、递交的窗口 先配一个阶段窗口工具 进入工具" [ref=e532] [cursor=pointer]:
+          - /url: /tools/timing-signing-window
+          - generic [ref=e533]: timing
+          - heading "签约窗口" [level=3] [ref=e534]
+          - paragraph [ref=e535]: 签约、确认、递交的窗口
+          - generic [ref=e536]: 先配一个阶段窗口工具
+          - generic [ref=e537]:
+            - text: 进入工具
+            - img [ref=e538]
+        - link "timing 启动窗口 什么时候更适合启动新计划 先配一个阶段窗口工具 进入工具" [ref=e540] [cursor=pointer]:
+          - /url: /tools/timing-launch-window
+          - generic [ref=e541]: timing
+          - heading "启动窗口" [level=3] [ref=e542]
+          - paragraph [ref=e543]: 什么时候更适合启动新计划
+          - generic [ref=e544]: 先配一个阶段窗口工具
+          - generic [ref=e545]:
+            - text: 进入工具
+            - img [ref=e546]
+        - link "timing 暂停窗口 什么时候必须先停一下 先配一个阶段窗口工具 进入工具" [ref=e548] [cursor=pointer]:
+          - /url: /tools/timing-pause-window
+          - generic [ref=e549]: timing
+          - heading "暂停窗口" [level=3] [ref=e550]
+          - paragraph [ref=e551]: 什么时候必须先停一下
+          - generic [ref=e552]: 先配一个阶段窗口工具
+          - generic [ref=e553]:
+            - text: 进入工具
+            - img [ref=e554]
+  - contentinfo [ref=e556]:
+    - generic [ref=e557]:
+      - generic [ref=e558]:
+        - generic [ref=e559]: 人生K线
+        - paragraph [ref=e560]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+        - paragraph [ref=e561]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+      - generic [ref=e562]:
+        - link "邮箱登录" [ref=e563] [cursor=pointer]:
+          - /url: /login
+        - link "世界易" [ref=e564] [cursor=pointer]:
+          - /url: /world-yi
+        - link "主书工程" [ref=e565] [cursor=pointer]:
+          - /url: /world-yi/book
+        - link "工具中心" [ref=e566] [cursor=pointer]:
+          - /url: /tools
+        - link "知识库" [ref=e567] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e568] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e569] [cursor=pointer]:
+          - /url: /insights
+        - link "案例库" [ref=e570] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e571] [cursor=pointer]:
+          - /url: /updates
+        - link "进入判断" [ref=e572] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e573] [cursor=pointer]:
+          - /url: /chat
+        - link "事件管理" [ref=e574] [cursor=pointer]:
+          - /url: /events

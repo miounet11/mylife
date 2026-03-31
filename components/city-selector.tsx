@@ -209,7 +209,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
                       key={location.id}
                       type="button"
                       onClick={() => handleSelect(location)}
-                      className="rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--warm)] hover:bg-[rgba(201,125,58,0.08)]"
+                      className="product-chip transition hover:border-[color:var(--warm)] hover:bg-[rgba(201,125,58,0.08)]"
                     >
                       {location.displayName}
                     </button>

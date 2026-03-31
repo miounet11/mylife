@@ -420,6 +420,7 @@ export interface FortuneAnalysisResult {
     summary?: string;
     explanation: string;
     llmUsed?: boolean;
+    providerHealthDeferred?: boolean;
     agenticUsed?: boolean;
     reasoningMode?: 'engine' | 'deterministic-expert' | 'parallel-agents';
     pipelineVersion?: string;
@@ -789,6 +790,19 @@ export interface PremiumServiceRequestRecord {
   contactName?: string;
   contactValue?: string;
   intake?: Record<string, unknown>;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ToolSessionRecord {
+  id: string;
+  userId: string;
+  reportId?: string;
+  toolSlug: string;
+  status: 'completed' | 'locked';
+  input?: Record<string, unknown>;
+  result?: Record<string, unknown>;
   meta?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;

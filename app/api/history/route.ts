@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server';
-import { eventOperations, fortuneOperations, userOperations } from '@/lib/database';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import { getAuthSession } from '@/lib/auth';
+import { eventOperations, fortuneOperations, toolSessionOperations, userOperations } from '@/lib/database';
 
 export async function GET() {
   try {
-    const userId = await getOrCreateGuestUserId();
+    const session = await getAuthSession();
+    const authenticated = !!session.authenticated && !!session.user?.id;
+    const userId = authenticated && session.user?.id ? session.user.id : null;
     
-    const user = userOperations.getById(userId);
-    const fortunes = fortuneOperations.getByUserId(userId) || [];
-    const events = eventOperations.getByUserId(userId) || [];
+    const user = userId ? userOperations.getById(userId) : null;
+    const fortunes = userId ? fortuneOperations.getByUserId(userId) || [] : [];
+    const events = userId ? eventOperations.getByUserId(userId) || [] : [];
+    const toolSessions = userId ? toolSessionOperations.listByUser(userId, 30) || [] : [];
     
     return NextResponse.json({
       success: true,
-      user: user || { name: '未命名测算者', gender: 'male', id: userId },
+      authenticated,
+      user,
       fortunes: fortunes,
-      events: events
+      events: events,
+      toolSessions,
     });
   } catch (error) {
     console.error('[API] 获取历史记录失败:', error);

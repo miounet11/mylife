@@ -82,10 +82,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const reportId = typeof body?.reportId === 'string' ? body.reportId.trim() : '';
     const serviceKey = normalizeChatIntent(typeof body?.serviceKey === 'string' ? body.serviceKey : undefined);
+    const toolSlug = typeof body?.toolSlug === 'string' ? body.toolSlug.trim() : '';
     const question = `${body?.question || ''}`.trim();
     const contactName = `${body?.contactName || ''}`.trim();
     const contactValueInput = normalizeContactValue(typeof body?.contactValue === 'string' ? body.contactValue : undefined);
     const preferredContact = `${body?.preferredContact || ''}`.trim();
+    const attribution = body?.attribution && typeof body.attribution === 'object' ? body.attribution : null;
 
     if (!serviceKey) {
       return NextResponse.json({ success: false, error: '缺少专项服务类型' }, { status: 400 });
@@ -127,6 +129,8 @@ export async function POST(request: NextRequest) {
       },
       meta: {
         source: 'result_report',
+        toolSlug: toolSlug || null,
+        attribution,
       },
     });
 
@@ -146,9 +150,11 @@ export async function POST(request: NextRequest) {
       meta: {
         reportId: reportId || null,
         serviceKey,
+        toolSlug: toolSlug || null,
         serviceLabel: getPremiumServiceLabel(serviceKey),
         hasEmailContact: looksLikeEmail(contactValue),
         preferredContact: preferredContact || null,
+        attribution,
       },
     });
 

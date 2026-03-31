@@ -1,0 +1,207 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e10]:
+          - generic [ref=e11]: 人生K线
+          - generic [ref=e12]:
+            - generic [ref=e13]: 世界易系统入口
+            - generic [ref=e14]: v1.0.0.1
+      - navigation [ref=e15]:
+        - link "世界易" [ref=e16] [cursor=pointer]:
+          - /url: /world-yi
+        - link "知识库" [ref=e17] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e18] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e19] [cursor=pointer]:
+          - /url: /insights
+        - link "工具中心" [ref=e20] [cursor=pointer]:
+          - /url: /tools
+        - link "进入判断" [ref=e21] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e22] [cursor=pointer]:
+          - /url: /chat
+        - link "事件日历" [ref=e23] [cursor=pointer]:
+          - /url: /events
+        - link "我的档案" [ref=e24] [cursor=pointer]:
+          - /url: /profile
+        - link "案例库" [ref=e25] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e26] [cursor=pointer]:
+          - /url: /updates
+      - link "重新判断" [ref=e29] [cursor=pointer]:
+        - /url: /analyze
+        - text: 重新判断
+        - img [ref=e30]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - img [ref=e36]
+          - text: 世界易结构追问入口
+        - heading "把报告里的关键结论继续问深，不要再回到泛 AI 问答。" [level=1] [ref=e39]
+        - paragraph [ref=e40]: 这里不是聊天玩具，而是结果页之后的第二工作台。继续追问时，系统会优先围绕结构、阶段、环境和动作四层推进。
+        - generic [ref=e42]: 当前模式：自由结构追问
+        - generic [ref=e43]:
+          - generic [ref=e44]:
+            - img [ref=e45]
+            - text: 世界易追问协议
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: 结构追问
+              - generic [ref=e52]: 不要泛问运势，先把命局主轴和问题结构钉住。
+            - generic [ref=e53]:
+              - generic [ref=e54]: 阶段追问
+              - generic [ref=e55]: 围绕当下窗口和阶段位置来问，回答会更具体。
+            - generic [ref=e56]:
+              - generic [ref=e57]: 环境追问
+              - generic [ref=e58]: 把城市、关系、合作方和现实压力一并带进来。
+            - generic [ref=e59]:
+              - generic [ref=e60]: 动作追问
+              - generic [ref=e61]: 最后一定收敛到先做什么、先不做什么。
+          - generic [ref=e62]:
+            - generic [ref=e63]:
+              - generic [ref=e64]: 当前公开知识
+              - generic [ref=e65]: 50 篇
+            - generic [ref=e66]:
+              - generic [ref=e67]: 当前公开案例
+              - generic [ref=e68]: 32 篇
+            - generic [ref=e69]:
+              - generic [ref=e70]: 环境洞察层
+              - generic [ref=e71]: 9 篇
+            - generic [ref=e72]:
+              - generic [ref=e73]: 公开入口
+              - generic [ref=e74]: 28 个
+          - generic [ref=e75]:
+            - link "世界易总入口" [ref=e76] [cursor=pointer]:
+              - /url: /world-yi
+            - link "方法论入口" [ref=e77] [cursor=pointer]:
+              - /url: /knowledge/world-yi-methodology
+            - link "专题地图" [ref=e78] [cursor=pointer]:
+              - /url: /world-yi/network
+            - link "返回我的档案" [ref=e79] [cursor=pointer]:
+              - /url: /profile
+        - generic [ref=e80]:
+          - generic [ref=e81]:
+            - img [ref=e82]
+            - text: 四类专项追问
+          - paragraph [ref=e85]: 不同问题不要混着问。现在已经把事件推演、断事、复盘和短周期增强四条路径拆开，你可以直接切专项。
+          - generic [ref=e86]:
+            - link "事件推演 把问题说成一件具体事件，系统会优先按“结构、阶段、环境、动作”四层来拆时间线、推进条件和风险点。" [ref=e87] [cursor=pointer]:
+              - /url: /chat?intent=event-simulation
+              - generic [ref=e88]: 事件推演
+              - generic [ref=e89]: 把问题说成一件具体事件，系统会优先按“结构、阶段、环境、动作”四层来拆时间线、推进条件和风险点。
+            - link "断事专项 适合二选一或明确决策问题，系统会更强调倾向判断、结构依据、环境变量和前置条件。" [ref=e90] [cursor=pointer]:
+              - /url: /chat?intent=event-verdict
+              - generic [ref=e91]: 断事专项
+              - generic [ref=e92]: 适合二选一或明确决策问题，系统会更强调倾向判断、结构依据、环境变量和前置条件。
+            - link "事件剖析 适合已经发生过的事情，重点看偏差是来自时机、执行、环境，还是信息判断本身。" [ref=e93] [cursor=pointer]:
+              - /url: /chat?intent=event-review
+              - generic [ref=e94]: 事件剖析
+              - generic [ref=e95]: 适合已经发生过的事情，重点看偏差是来自时机、执行、环境，还是信息判断本身。
+            - link "摇卦 / 梅花易增强 适合时间敏感、临门一脚式的问题，系统会把判断收敛到更短周期的时位、变数和即时风险。" [ref=e96] [cursor=pointer]:
+              - /url: /chat?intent=meihua-enhancement
+              - generic [ref=e97]: 摇卦 / 梅花易增强
+              - generic [ref=e98]: 适合时间敏感、临门一脚式的问题，系统会把判断收敛到更短周期的时位、变数和即时风险。
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - img [ref=e101]
+            - generic [ref=e104]: 围绕你的报告继续追问
+            - generic [ref=e105]: 系统会优先带入最近报告里的结构、阶段和窗口，让回答不再飘在空中。
+          - generic [ref=e106]:
+            - img [ref=e107]
+            - generic [ref=e109]: 把判断顺手沉淀成提醒
+            - generic [ref=e110]: 关键窗口、建议动作和现实反馈都可以直接记下，后面才能真正复盘。
+          - generic [ref=e111]:
+            - img [ref=e112]
+            - generic [ref=e115]: 把泛问题压成结构问题
+            - generic [ref=e116]: 别问“我接下来怎样”，改问“这件事现在该推进、观察还是收手”。
+          - generic [ref=e117]:
+            - generic [ref=e118]:
+              - generic [ref=e119]:
+                - generic [ref=e120]:
+                  - img [ref=e121]
+                  - generic [ref=e126]: 继续追问前，先看后续更新
+                - generic [ref=e127]: 如果这份报告还在增强、最近已有月度更新，或订阅没有激活，这里会直接提示，不用你来回切页面。
+              - link "登录查看更新" [ref=e128] [cursor=pointer]:
+                - /url: /login?next=%2Fupdates
+                - text: 登录查看更新
+                - img [ref=e129]
+            - generic [ref=e131]: 正在加载这份报告的更新状态...
+      - generic [ref=e133]:
+        - generic [ref=e134]:
+          - generic [ref=e135]:
+            - img [ref=e137]
+            - generic [ref=e140]:
+              - heading "世界易结构追问器" [level=2] [ref=e141]
+              - paragraph [ref=e142]: 看完报告后继续问，把结构、阶段、环境和动作问清楚。
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - img [ref=e145]
+              - text: 追问顺序
+            - generic [ref=e149]:
+              - generic [ref=e150]: 先看结构
+              - generic [ref=e151]: 再看阶段
+              - generic [ref=e152]: 必须带环境
+              - generic [ref=e153]: 最后回到动作
+          - generic [ref=e155]: 自由结构追问
+          - generic [ref=e156]:
+            - generic [ref=e157]: 专项切换
+            - generic [ref=e158]:
+              - link "事件推演 当前用户进入的是事件推演专项，回答时要把问题压成一条可执行的事件时间线。" [ref=e159] [cursor=pointer]:
+                - /url: /chat?intent=event-simulation
+                - generic [ref=e160]: 事件推演
+                - generic [ref=e161]: 当前用户进入的是事件推演专项，回答时要把问题压成一条可执行的事件时间线。
+              - link "断事专项 当前用户进入的是断事专项，回答时要明确倾向、依据和前置条件。" [ref=e162] [cursor=pointer]:
+                - /url: /chat?intent=event-verdict
+                - generic [ref=e163]: 断事专项
+                - generic [ref=e164]: 当前用户进入的是断事专项，回答时要明确倾向、依据和前置条件。
+              - link "事件剖析 当前用户进入的是事件剖析专项，回答时要优先复盘偏差原因和纠偏动作。" [ref=e165] [cursor=pointer]:
+                - /url: /chat?intent=event-review
+                - generic [ref=e166]: 事件剖析
+                - generic [ref=e167]: 当前用户进入的是事件剖析专项，回答时要优先复盘偏差原因和纠偏动作。
+              - link "摇卦 / 梅花易增强 当前用户进入的是摇卦 / 梅花易增强专项，回答时要聚焦短周期判断与即时风险。" [ref=e168] [cursor=pointer]:
+                - /url: /chat?intent=meihua-enhancement
+                - generic [ref=e169]: 摇卦 / 梅花易增强
+                - generic [ref=e170]: 当前用户进入的是摇卦 / 梅花易增强专项，回答时要聚焦短周期判断与即时风险。
+        - generic [ref=e173]: 正在载入聊天记录...
+        - generic [ref=e175]:
+          - generic [ref=e176]:
+            - textbox "输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”" [ref=e177]
+            - generic [ref=e178]: "`Enter` 发送，`Shift + Enter` 换行。建议一次只问一个具体问题。"
+          - button [disabled] [ref=e179]:
+            - img [ref=e180]
+  - contentinfo [ref=e183]:
+    - generic [ref=e184]:
+      - generic [ref=e185]:
+        - generic [ref=e186]: 人生K线
+        - paragraph [ref=e187]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+        - paragraph [ref=e188]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+      - generic [ref=e189]:
+        - link "邮箱登录" [ref=e190] [cursor=pointer]:
+          - /url: /login
+        - link "世界易" [ref=e191] [cursor=pointer]:
+          - /url: /world-yi
+        - link "主书工程" [ref=e192] [cursor=pointer]:
+          - /url: /world-yi/book
+        - link "工具中心" [ref=e193] [cursor=pointer]:
+          - /url: /tools
+        - link "知识库" [ref=e194] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e195] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e196] [cursor=pointer]:
+          - /url: /insights
+        - link "案例库" [ref=e197] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e198] [cursor=pointer]:
+          - /url: /updates
+        - link "进入判断" [ref=e199] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e200] [cursor=pointer]:
+          - /url: /chat
+        - link "事件管理" [ref=e201] [cursor=pointer]:
+          - /url: /events

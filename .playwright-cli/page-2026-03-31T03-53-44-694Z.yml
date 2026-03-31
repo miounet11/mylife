@@ -1,0 +1,264 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 人生K线
+            - generic [ref=e12]:
+              - generic [ref=e13]: 世界易系统入口
+              - generic [ref=e14]: v1.0.0.1
+        - navigation [ref=e15]:
+          - link "世界易" [ref=e16] [cursor=pointer]:
+            - /url: /world-yi
+          - link "知识库" [ref=e17] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e18] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e19] [cursor=pointer]:
+            - /url: /insights
+          - link "工具中心" [ref=e20] [cursor=pointer]:
+            - /url: /tools
+          - link "进入判断" [ref=e21] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e22] [cursor=pointer]:
+            - /url: /chat
+          - link "事件日历" [ref=e23] [cursor=pointer]:
+            - /url: /events
+          - link "我的档案" [ref=e24] [cursor=pointer]:
+            - /url: /profile
+          - link "案例库" [ref=e25] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e26] [cursor=pointer]:
+            - /url: /updates
+        - generic [ref=e27]:
+          - link "邮箱登录" [ref=e28] [cursor=pointer]:
+            - /url: /login
+          - link "新建分析" [ref=e29] [cursor=pointer]:
+            - /url: /analyze
+            - text: 新建分析
+            - img [ref=e30]
+    - main [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - img [ref=e36]
+            - text: 复盘工作台
+          - heading "用户回来看历史时，应该立刻知道现在该处理什么。" [level=1] [ref=e39]
+          - paragraph [ref=e40]: 这里不再只是冷冰冰的历史列表，而是把报告、已发生事件、待验证样本和偏差纠正合到同一处，让每次回访都能继续推进。
+        - generic [ref=e41]:
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e47]: 复访价值概览
+          - generic [ref=e48]:
+            - generic [ref=e49]: 先回看最关键的一份报告
+            - generic [ref=e50]: 把已发生事件补回验证结果
+            - generic [ref=e51]: 对偏差样本做纠偏分析
+            - generic [ref=e52]: 再带着上下文继续问 AI
+      - generic [ref=e53]:
+        - generic [ref=e54]:
+          - generic [ref=e55]: 历史报告
+          - generic [ref=e57]: "0"
+          - generic [ref=e58]: 已生成、可继续复访的报告数量。
+        - generic [ref=e59]:
+          - generic [ref=e60]: 验证准确
+          - generic [ref=e62]: "0"
+          - generic [ref=e63]: 已被现实事件验证为准确的判断。
+        - generic [ref=e64]:
+          - generic [ref=e65]: 待验证
+          - generic [ref=e67]: "0"
+          - generic [ref=e68]: 已经进入验证期，但还没有回填结果的事件。
+        - generic [ref=e69]:
+          - generic [ref=e70]: 待纠偏
+          - generic [ref=e72]: "0"
+          - generic [ref=e73]: 已经出现偏差，最值得继续追问和修正的样本。
+      - generic [ref=e75]:
+        - generic [ref=e76]:
+          - generic [ref=e77]:
+            - generic [ref=e78]:
+              - img [ref=e79]
+              - text: 单项工具复访区
+            - paragraph [ref=e82]: 历史页不只看综合报告，也要看你最近用哪些单项工具把问题进一步做窄了。
+          - link "全部工具" [ref=e83] [cursor=pointer]:
+            - /url: /tools
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - img [ref=e87]
+            - text: 还没有单项工具记录
+          - generic [ref=e91]: 先完成一次综合判断，再进入工具中心做更聚焦的单项测试。
+      - generic [ref=e93]:
+        - generic [ref=e94]:
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - generic [ref=e97]:
+                - img [ref=e98]
+                - text: 个人升级面板
+              - heading "未命名测算者的下一步，不该只停在浏览" [level=2] [ref=e102]
+              - paragraph [ref=e103]: 系统已经有你的最近报告和工具历史。这里应该直接把你带回最该继续的报告、工具、文章、案例和付费承接点。
+            - generic [ref=e104]: 当前最自然的付费承接是 事件推演，因为免费层已经能先帮你缩窄问题。
+          - generic [ref=e105]:
+            - generic [ref=e106]:
+              - generic [ref=e107]:
+                - img [ref=e108]
+                - text: 现在最该继续的工具
+              - heading "年度主窗口" [level=3] [ref=e111]
+              - paragraph [ref=e112]: 很多错判不是方向错，而是“年度主窗口”这一步时机错。
+              - generic [ref=e113]:
+                - generic [ref=e114]: 当前主线：未命名测算者还没有形成稳定路径，先做综合测算，再选一个高频工具建立第一次可复用判断。
+                - generic [ref=e115]: 免费层先拿：免费先判断 年度主窗口 当前是推进窗、观察窗还是收缩窗。
+                - generic [ref=e116]: 付费承接：深测版会拆具体时间区间、动作优先级和错过窗口后的替代方案。
+              - generic [ref=e117]:
+                - link "继续测年度主窗口" [ref=e118] [cursor=pointer]:
+                  - /url: /tools/timing-yearly-window
+                  - text: 继续测年度主窗口
+                  - img [ref=e119]
+                - link "先建立综合测算底盘" [ref=e121] [cursor=pointer]:
+                  - /url: /analyze
+            - generic [ref=e122]:
+              - generic [ref=e123]:
+                - generic [ref=e124]:
+                  - img [ref=e125]
+                  - text: 继续放大的入口
+                - generic [ref=e128]:
+                  - link "补一个工具：月度节奏" [ref=e129] [cursor=pointer]:
+                    - /url: /tools/timing-monthly-rhythm
+                  - link "读相关文章：用命理报告辅助职业决策时，最常见的三个误区" [ref=e130] [cursor=pointer]:
+                    - /url: /knowledge/career-decision-with-bazi
+                  - link "看相关案例：世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛" [ref=e131] [cursor=pointer]:
+                    - /url: /cases/world-yi-case-career-role-fit
+              - generic [ref=e132]:
+                - generic [ref=e133]:
+                  - img [ref=e134]
+                  - text: 付费升级点
+                - generic [ref=e136]: 最自然的下一步不是重新解释背景，而是直接进入 事件推演，把当前问题做成更明确的判断和动作方案。
+                - link "从这个工具进入付费承接" [ref=e137] [cursor=pointer]:
+                  - /url: /tools/timing-yearly-window
+                  - text: 从这个工具进入付费承接
+                  - img [ref=e138]
+        - generic [ref=e140]:
+          - generic [ref=e141]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - text: 协同路径
+            - heading "结合你的历史记录，继续往下走" [level=2] [ref=e146]
+            - paragraph [ref=e147]: 历史页的价值不只是回看，还要基于你已经做过的报告和工具，继续把文章、案例和下一步测算串起来。
+          - generic [ref=e148]:
+            - generic [ref=e149]:
+              - generic [ref=e150]:
+                - img [ref=e151]
+                - text: 综合测算
+              - link "综合测算 回到综合测算 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。" [ref=e155] [cursor=pointer]:
+                - /url: /analyze
+                - generic [ref=e156]: 综合测算
+                - generic [ref=e157]: 回到综合测算
+                - generic [ref=e158]: 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。
+            - generic [ref=e159]:
+              - generic [ref=e160]:
+                - img [ref=e161]
+                - text: 相关工具
+              - generic [ref=e163]:
+                - link "相关工具 岗位匹配 你不是不努力，你可能只是站错了岗位。" [ref=e164] [cursor=pointer]:
+                  - /url: /tools/career-role-fit
+                  - generic [ref=e165]: 相关工具
+                  - generic [ref=e166]: 岗位匹配
+                  - generic [ref=e167]: 你不是不努力，你可能只是站错了岗位。
+                - link "相关工具 升职窗口 不是你永远升不上去，而是你可能总在错的窗口硬冲。" [ref=e168] [cursor=pointer]:
+                  - /url: /tools/career-promotion-window
+                  - generic [ref=e169]: 相关工具
+                  - generic [ref=e170]: 升职窗口
+                  - generic [ref=e171]: 不是你永远升不上去，而是你可能总在错的窗口硬冲。
+                - link "相关工具 转岗判断 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。" [ref=e172] [cursor=pointer]:
+                  - /url: /tools/career-job-switch
+                  - generic [ref=e173]: 相关工具
+                  - generic [ref=e174]: 转岗判断
+                  - generic [ref=e175]: 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - img [ref=e178]
+                - text: 相关文章
+              - generic [ref=e180]:
+                - link "相关文章 用命理报告辅助职业决策时，最常见的三个误区 命理不是替代决策，而是帮助用户在高风险节点减少误判。职业分析尤其需要避免“绝对化结论”。" [ref=e181] [cursor=pointer]:
+                  - /url: /knowledge/career-decision-with-bazi
+                  - generic [ref=e182]: 相关文章
+                  - generic [ref=e183]: 用命理报告辅助职业决策时，最常见的三个误区
+                  - generic [ref=e184]: 命理不是替代决策，而是帮助用户在高风险节点减少误判。职业分析尤其需要避免“绝对化结论”。
+                - link "相关文章 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。" [ref=e185] [cursor=pointer]:
+                  - /url: /knowledge/world-yi-career-role-fit
+                  - generic [ref=e186]: 相关文章
+                  - generic [ref=e187]: 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度
+                  - generic [ref=e188]: 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。
+                - link "相关文章 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。" [ref=e189] [cursor=pointer]:
+                  - /url: /knowledge/world-yi-career-stage-reset
+                  - generic [ref=e190]: 相关文章
+                  - generic [ref=e191]: 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段
+                  - generic [ref=e192]: 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。
+            - generic [ref=e193]:
+              - generic [ref=e194]:
+                - img [ref=e195]
+                - text: 相关案例
+              - generic [ref=e197]:
+                - link "相关案例 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。" [ref=e198] [cursor=pointer]:
+                  - /url: /cases/world-yi-case-career-role-fit
+                  - generic [ref=e199]: 相关案例
+                  - generic [ref=e200]: 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛
+                  - generic [ref=e201]: 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。
+                - link "相关案例 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。" [ref=e202] [cursor=pointer]:
+                  - /url: /cases/world-yi-case-career-promotion-freeze
+                  - generic [ref=e203]: 相关案例
+                  - generic [ref=e204]: 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了
+                  - generic [ref=e205]: 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。
+                - link "相关案例 案例：换岗前，用户真正关心的是时机，而不是标签 职业场景里，用户最需要的是判断“现在推进还是先稳住”，这正是报告页和事件管理页协同的地方。" [ref=e206] [cursor=pointer]:
+                  - /url: /cases/career-switch-case
+                  - generic [ref=e207]: 相关案例
+                  - generic [ref=e208]: 案例：换岗前，用户真正关心的是时机，而不是标签
+                  - generic [ref=e209]: 职业场景里，用户最需要的是判断“现在推进还是先稳住”，这正是报告页和事件管理页协同的地方。
+      - generic [ref=e210]:
+        - generic [ref=e211]:
+          - generic [ref=e212]:
+            - generic [ref=e213]: 历史报告
+            - generic [ref=e214]: 继续回看最值得复用的报告
+            - generic [ref=e215]: 当前已关联 0 份进入现实验证链路的报告。优先回看已经沉淀过事件、能继续产生新判断的那几份。
+          - link "新建一份分析" [ref=e216] [cursor=pointer]:
+            - /url: /analyze
+            - text: 新建一份分析
+            - img [ref=e217]
+        - generic [ref=e219]:
+          - img [ref=e221]
+          - heading "还没有分析历史" [level=2] [ref=e224]
+          - paragraph [ref=e225]: 先完成一次判断，后续历史、咨询、事件和复盘都会围绕这份结果继续展开。
+          - link "开始第一次判断" [ref=e226] [cursor=pointer]:
+            - /url: /analyze
+    - contentinfo [ref=e227]:
+      - generic [ref=e228]:
+        - generic [ref=e229]:
+          - generic [ref=e230]: 人生K线
+          - paragraph [ref=e231]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+          - paragraph [ref=e232]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+        - generic [ref=e233]:
+          - link "邮箱登录" [ref=e234] [cursor=pointer]:
+            - /url: /login
+          - link "世界易" [ref=e235] [cursor=pointer]:
+            - /url: /world-yi
+          - link "主书工程" [ref=e236] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "工具中心" [ref=e237] [cursor=pointer]:
+            - /url: /tools
+          - link "知识库" [ref=e238] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e239] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e240] [cursor=pointer]:
+            - /url: /insights
+          - link "案例库" [ref=e241] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e242] [cursor=pointer]:
+            - /url: /updates
+          - link "进入判断" [ref=e243] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e244] [cursor=pointer]:
+            - /url: /chat
+          - link "事件管理" [ref=e245] [cursor=pointer]:
+            - /url: /events
+  - alert [ref=e246]

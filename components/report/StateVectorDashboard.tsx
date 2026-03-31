@@ -166,7 +166,7 @@ const ElementTags: React.FC<{
  */
 export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
   stateVector,
-  title = '多维命理状态',
+  title = '多维状态总览',
   className = '',
   compact = false,
 }) => {

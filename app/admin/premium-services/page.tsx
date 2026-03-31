@@ -20,14 +20,14 @@ export default async function AdminPremiumServicesPage() {
               高价值需求不能只收集，
               <span className="font-serif text-[color:var(--accent-strong)]">必须被持续跟进、沉淀和转化。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
+            <p className="text-sm leading-6 text-[color:var(--muted)]">
               这里统一处理结果页沉淀出来的深度需求。状态、优先级、联系备注和用户通知都在同一个后台闭环里完成。
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             {['事件推演', '断事专项', '事件剖析 / 梅花易'].map((item) => (
-              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-sm leading-7 text-[color:var(--ink)]">
+              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-xs leading-6 text-[color:var(--ink)]">
                 {item}
               </div>
             ))}

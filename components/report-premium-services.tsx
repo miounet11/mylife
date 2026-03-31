@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowRight, CalendarClock, Compass, ScrollText, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { getRememberedClientAttribution } from '@/lib/client-attribution';
 import {
   getPremiumServiceLabel,
   type PremiumServiceKey,
@@ -90,6 +91,7 @@ export default function ReportPremiumServices({
           contactValue,
           preferredContact,
           question,
+          attribution: getRememberedClientAttribution(),
         }),
       });
       const data = await response.json();
@@ -111,6 +113,8 @@ export default function ReportPremiumServices({
           target: 'premium_service_request_submit',
           source: 'report_premium_services',
           serviceKey: selectedOffer.key,
+          attributionSource: getRememberedClientAttribution()?.source || null,
+          attributionTarget: getRememberedClientAttribution()?.target || null,
         },
       });
     } catch {
@@ -129,12 +133,12 @@ export default function ReportPremiumServices({
             如果你不是只想看报告，
             <span className="font-serif text-[color:var(--accent-strong)]">而是想把一件事看透，这里进入专项推演。</span>
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-            基础报告负责看结构和阶段，付费专项负责把具体事件拆成判断、时机、动作和复盘。这样用户看到的不再是抽象命理，而是能直接拿去用的决策层。
+          <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
+            基础报告负责看结构和阶段，付费专项负责把具体事件拆成判断、时机、动作和复盘。这样用户看到的不再是抽象概念，而是能直接拿去用的决策层。
           </p>
         </div>
 
-        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--ink)] lg:max-w-sm">
+        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)] lg:max-w-sm">
           推荐承接方式：先锁定一件具体事件，再选择事件推演、断事或卦象增强。这样更容易形成高客单、高复购的服务闭环。
         </div>
       </div>
@@ -159,8 +163,8 @@ export default function ReportPremiumServices({
                 </span>
               </div>
 
-              <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">{offer.description}</p>
-              <div className="mt-4 rounded-[1.4rem] bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+              <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">{offer.description}</p>
+              <div className="mt-4 rounded-[1.4rem] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                 {offer.featuredSignal}
               </div>
 
@@ -222,7 +226,7 @@ export default function ReportPremiumServices({
                       },
                     });
                   }}
-                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                  className="action-secondary"
                 >
                   {offer.secondaryCtaLabel}
                   <ArrowRight className="h-4 w-4" />
@@ -248,7 +252,7 @@ export default function ReportPremiumServices({
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="soft-card rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
               先把你最想解决的一件事情写清楚。后续无论继续深问，还是进入人工跟进，都会以这份需求单为准。
             </div>
 
@@ -261,7 +265,7 @@ export default function ReportPremiumServices({
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     selectedServiceKey === offer.key
                       ? 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white'
-                      : 'border border-[color:var(--line)] bg-white text-[color:var(--ink)]'
+                      : 'action-secondary py-2 text-[color:var(--ink)]'
                   }`}
                 >
                   {offer.title}
@@ -270,7 +274,7 @@ export default function ReportPremiumServices({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
-              <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+              <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                 <div className="font-semibold">{selectedOffer?.title}</div>
                 <div className="mt-1 text-[color:var(--muted)]">{selectedOffer?.tagline}</div>
               </div>
@@ -301,7 +305,7 @@ export default function ReportPremiumServices({
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder={`请直接写清楚你最想解决的具体事情，例如：${selectedOffer?.title}里，我最想知道的是什么？`}
-                className="min-h-[150px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm leading-7 outline-none focus:border-[color:var(--accent)]"
+                className="min-h-[150px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
               />
 
               <button
@@ -319,7 +323,7 @@ export default function ReportPremiumServices({
 
           <div className="soft-card rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">最近提交的专项需求</div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
               你提交过的专项需求会留在这里，方便后续继续跟进、补充问题或确认当前进度。
             </div>
 
@@ -335,12 +339,12 @@ export default function ReportPremiumServices({
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
                     {item.createdAt ? formatRequestTime(item.createdAt) : '刚刚提交'}
                   </div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                     {`${item.intake?.question || '已提交需求，等待继续补充。'}`}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                   还没有提交过专项需求。先从最想解决的一件事情开始，系统会把你的需求单和这份报告关联起来。
                 </div>
               )}

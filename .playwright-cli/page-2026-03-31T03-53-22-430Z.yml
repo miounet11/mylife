@@ -1,0 +1,475 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 人生K线
+            - generic [ref=e12]:
+              - generic [ref=e13]: 世界易系统入口
+              - generic [ref=e14]: v1.0.0.1
+        - navigation [ref=e15]:
+          - link "世界易" [ref=e16] [cursor=pointer]:
+            - /url: /world-yi
+          - link "知识库" [ref=e17] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e18] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e19] [cursor=pointer]:
+            - /url: /insights
+          - link "工具中心" [ref=e20] [cursor=pointer]:
+            - /url: /tools
+          - link "进入判断" [ref=e21] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e22] [cursor=pointer]:
+            - /url: /chat
+          - link "事件日历" [ref=e23] [cursor=pointer]:
+            - /url: /events
+          - link "我的档案" [ref=e24] [cursor=pointer]:
+            - /url: /profile
+          - link "案例库" [ref=e25] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e26] [cursor=pointer]:
+            - /url: /updates
+        - link "开始分析" [ref=e29] [cursor=pointer]:
+          - /url: /analyze
+          - text: 开始分析
+          - img [ref=e30]
+    - main [ref=e32]:
+      - generic [ref=e33]:
+        - article [ref=e34]:
+          - navigation "Breadcrumb" [ref=e35]:
+            - generic [ref=e36]:
+              - link "首页" [ref=e37] [cursor=pointer]:
+                - /url: /
+              - generic [ref=e38]: /
+            - generic [ref=e39]:
+              - link "知识库" [ref=e40] [cursor=pointer]:
+                - /url: /knowledge
+              - generic [ref=e41]: /
+            - generic [ref=e43]: 世界易 v1.0.0.1 总论：凯莉与世界易的起点
+          - link "返回知识库" [ref=e44] [cursor=pointer]:
+            - /url: /knowledge
+            - img [ref=e45]
+            - text: 返回知识库
+          - generic [ref=e47]:
+            - img [ref=e48]
+            - text: 世界易总论
+          - heading "世界易 v1.0.0.1 总论：凯莉与世界易的起点" [level=1] [ref=e51]
+          - generic [ref=e52]:
+            - img [ref=e53]
+            - text: 18 分钟
+            - generic [ref=e56]: 简体中文 · 简体中文
+            - generic [ref=e57]: World Yi
+          - paragraph [ref=e58]: 世界易不是把旧术语重新包装，而是试图建立一套现代人可以直接拿来判断生活、关系、职业、迁移、命名与风险节奏的解释系统。
+          - generic [ref=e59]:
+            - generic [ref=e60]:
+              - heading "世界易为什么成立" [level=2] [ref=e61]
+              - generic [ref=e62]:
+                - paragraph [ref=e63]: 世界易的出发点，不是再做一套神秘化的术语展示，而是回答一个现实问题：当现代人面对职业转向、关系推进、迁移选择、家庭排序、起名决策、风险躲避时，为什么总在信息很多、判断很乱、节奏很散的状态里做决定。世界易试图建立的是一套判断秩序，而不是一堆零散结论。
+                - paragraph [ref=e64]: 这套体系以《易经》《周易》所代表的变易、时位、取象、观势思想为底层灵感，但表达上完全转向现代语境。用户不需要先背六十四卦，也不需要先掌握传统术语，仍然可以通过世界易理解一个判断应该先看什么、后看什么、什么是结构、什么是时机、什么是外部环境、什么是个人承载能力。
+            - generic [ref=e65]:
+              - heading "凯莉为什么被设定为创始人" [level=2] [ref=e66]
+              - generic [ref=e67]:
+                - paragraph [ref=e68]: 凯莉在世界易中不是一个神化人物，而是这套体系的叙事原点。创始人被设置为凯莉，意味着这套体系从一开始就不是纯学院派整理，也不是单纯沿袭旧框架，而是一位现代内容与判断系统建构者对古老变易思想的再组织。
+                - paragraph [ref=e69]: 在世界易的公开表达里，凯莉代表三件事：第一，敢于把复杂传统重新翻译成人可以直接使用的语言；第二，承认版本、承认迭代，不把任何一轮表达说成终极正确；第三，坚持让判断服务现实生活，而不是让现实服从术语。
+            - generic [ref=e70]:
+              - heading "世界易的四条核心原则" [level=2] [ref=e71]
+              - generic [ref=e72]:
+                - paragraph [ref=e73]: 第一条原则是先看结构，再看事件。世界易认为，任何具体问题的背后，都有一个更稳定的结构底色。结构不清，事件判断就容易被情绪和单一结果带偏。第二条原则是先看时位，再看愿望。很多事情不是能不能，而是何时做、做到什么程度、该不该在这个阶段承担更大的代价。
+                - paragraph [ref=e74]: 第三条原则是同时看内局和外局。内局指人的稳定结构、习性、承载方式与选择惯性；外局指时代周期、城市环境、行业节奏、家庭关系网络和现实资源。第四条原则是结论必须落到动作。世界易拒绝只给用户一个朦胧结论，而要求每次判断至少能落到一个优先动作、一个阶段重点、一个风险提醒。
+            - generic [ref=e75]:
+              - heading "世界易和传统易学的关系" [level=2] [ref=e76]
+              - generic [ref=e77]:
+                - paragraph [ref=e78]: 世界易不否认传统易学，而是试图重新组织传统易学的入口。传统体系中的阴阳、五行、象数、卦序、时位、进退，本质上都在讨论一件事：人如何在不断变化的世界里建立判断。世界易继承的是这种判断精神，而不是逐字逐句复制旧时代的表达方式。
+                - paragraph [ref=e79]: 因此，世界易的写法会避免让用户先被术语压住。比如同样讨论吉凶，世界易会先翻译成收益与代价；同样讨论旺衰，世界易会先翻译成承载力与消耗度；同样讨论用神忌神，世界易会先翻译成应顺之力与应避之力。这样做不是削弱传统，而是把传统真正接到现代决策上。
+            - generic [ref=e80]:
+              - heading "世界易的判断单元" [level=2] [ref=e81]
+              - generic [ref=e82]:
+                - paragraph [ref=e83]: 在世界易中，任何判断都至少由五个单元组成。第一是结构单元，回答这个人、这件事的基本底色是什么。第二是时机单元，回答当前阶段是在扩张、试探、收缩还是守成。第三是环境单元，回答外部城市、行业、家庭或社会压力是放大还是压制这个结构。第四是动作单元，回答下一步应该先做什么。第五是风险单元，回答什么看似诱人但当前不该碰。
+                - paragraph [ref=e84]: 这五个单元共同组成一个可阅读的判断框架。没有结构，判断会漂；没有时机，判断会硬；没有环境，判断会失真；没有动作，判断会空；没有风险，判断会诱导用户冲动。世界易要求这五个部分在任何主题下都尽量完整出现。
+            - generic [ref=e85]:
+              - heading "世界易如何处理“准不准”" [level=2] [ref=e86]
+              - generic [ref=e87]:
+                - paragraph [ref=e88]: 传统命理内容经常被追问“准不准”，但世界易认为更应该追问“这套判断是否能帮助你减少明显误判”。因为现实世界不是一次性开奖，而是连续做决定。一个成熟的判断体系，不是只在一件事上命中，而是能持续帮助用户知道什么时候该快、什么时候该慢、什么时候该保留余地。
+                - paragraph [ref=e89]: 所以世界易强调复盘。每一份判断都不是终点，而是一个阶段性的解释版本。现实事件反馈、用户后续行动、结果偏差，都会变成下一轮修正输入。世界易允许自己版本化，正是因为它不把判断做成宗教口号，而把它当作可以不断升级的生活解释系统。
+            - generic [ref=e90]:
+              - heading "世界易覆盖哪些主题" [level=2] [ref=e91]
+              - generic [ref=e92]:
+                - paragraph [ref=e93]: 世界易不会只做命盘解读，它要覆盖的是现代人最常见、又最容易判断失序的领域。第一层是人生主线主题，包括职业、财富、关系、健康、家庭、迁移。第二层是生活应用主题，包括起名、寻物、择时、空间布局、项目启动、合作判断、考试节奏。第三层是公共观察主题，包括城市气质、行业周期、组织压力、跨国生活方式与华人社区决策。
+                - paragraph [ref=e94]: 这意味着世界易既是一套个人判断学说，也是一套内容出版体系。它既能解释“我现在要不要换工作”，也能解释“为什么这一类人在某些城市更容易过度消耗”，还可以解释“为什么起名不能只追求好听而忽略结构与使用场景”。
+            - generic [ref=e95]:
+              - heading "世界易的边界" [level=2] [ref=e96]
+              - generic [ref=e97]:
+                - paragraph [ref=e98]: 世界易不是法律意见书，不是投资顾问合同，也不是医疗诊断替代物。它可以帮助用户建立判断框架、识别时机和风险、梳理优先级，但不能代替专业执照领域的最终处置。尤其在医学主题上，世界易可以讨论节奏、身心压力、恢复优先级与环境影响，但不直接替代临床检查与治疗决策。
+                - paragraph [ref=e99]: 这种边界不是削弱体系，而是让体系更可信。一个什么都敢包办的系统最终会失去判断秩序。世界易的强项是帮助人从混乱里看出结构，看出阶段，看出行动先后，而不是抢走所有专业领域的责任。
+            - generic [ref=e100]:
+              - heading "世界易为什么必须版本化" [level=2] [ref=e101]
+              - generic [ref=e102]:
+                - paragraph [ref=e103]: 古代易学可以在师承中慢慢生长，但现代内容体系如果不版本化，很快就会变成互相冲突的碎片。世界易从一开始就采用版本思想，例如当前是世界易初版 v1.0.0.1。这个版本号代表：它已经形成核心框架，但仍处于体系化公开发布的第一阶段。
+                - paragraph [ref=e104]: 版本化至少解决四个问题。第一，保证同一时期的表述口径一致。第二，为后续内容升级留下明确路径。第三，允许旧内容在新版本下被批注、改写和替换。第四，让用户知道这是一套会持续生长的体系，而不是一篇热闹文章。
+            - generic [ref=e105]:
+              - heading "世界易最终要成为什么" [level=2] [ref=e106]
+              - generic [ref=e107]:
+                - paragraph [ref=e108]: 世界易最终不只是一本书，而是一整套判断语言、内容库、案例库和产品解释系统。它要让用户在站内可以经历完整路径：先读总论，再读主题，再看案例，再测个人盘，再回到事件复盘，然后形成自己的长期判断档案。
+                - paragraph [ref=e109]: 如果说人生 K 线解决的是“把命理从术语翻成可行动结果”，那么世界易解决的是“把这一切上升为可持续传播、可不断扩写、可覆盖更多现实主题的学说框架”。它既是品牌母体，也是内容宇宙的根。
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - generic [ref=e113]:
+                - img [ref=e114]
+                - text: 协同路径
+              - heading "这篇文章可以直接接到测算和工具" [level=2] [ref=e117]
+              - paragraph [ref=e118]: 文章不是孤立阅读内容。它应该把用户带回综合测算，再分流到更具体的工具和案例。
+            - generic [ref=e119]:
+              - generic [ref=e120]:
+                - generic [ref=e121]:
+                  - img [ref=e122]
+                  - text: 综合测算
+                - link "综合测算 回到综合测算 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。" [ref=e126] [cursor=pointer]:
+                  - /url: /analyze
+                  - generic [ref=e127]: 综合测算
+                  - generic [ref=e128]: 回到综合测算
+                  - generic [ref=e129]: 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。
+              - generic [ref=e130]:
+                - generic [ref=e131]:
+                  - img [ref=e132]
+                  - text: 相关工具
+                - generic [ref=e134]:
+                  - link "相关工具 岗位匹配 你不是不努力，你可能只是站错了岗位。" [ref=e135] [cursor=pointer]:
+                    - /url: /tools/career-role-fit
+                    - generic [ref=e136]: 相关工具
+                    - generic [ref=e137]: 岗位匹配
+                    - generic [ref=e138]: 你不是不努力，你可能只是站错了岗位。
+                  - link "相关工具 升职窗口 不是你永远升不上去，而是你可能总在错的窗口硬冲。" [ref=e139] [cursor=pointer]:
+                    - /url: /tools/career-promotion-window
+                    - generic [ref=e140]: 相关工具
+                    - generic [ref=e141]: 升职窗口
+                    - generic [ref=e142]: 不是你永远升不上去，而是你可能总在错的窗口硬冲。
+                  - link "相关工具 转岗判断 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。" [ref=e143] [cursor=pointer]:
+                    - /url: /tools/career-job-switch
+                    - generic [ref=e144]: 相关工具
+                    - generic [ref=e145]: 转岗判断
+                    - generic [ref=e146]: 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。
+              - generic [ref=e147]:
+                - generic [ref=e148]:
+                  - img [ref=e149]
+                  - text: 相关文章
+                - generic [ref=e151]:
+                  - link "相关文章 世界易全球华人判断地图：留、回、拖、稳，为什么真正难的是多线决策同时压来 全球华人的痛点不是单一选择，而是身份、家庭、工作、城市、孩子与现金流同时进入同一张决策桌。" [ref=e152] [cursor=pointer]:
+                    - /url: /knowledge/world-yi-global-chinese-decision-map
+                    - generic [ref=e153]: 相关文章
+                    - generic [ref=e154]: 世界易全球华人判断地图：留、回、拖、稳，为什么真正难的是多线决策同时压来
+                    - generic [ref=e155]: 全球华人的痛点不是单一选择，而是身份、家庭、工作、城市、孩子与现金流同时进入同一张决策桌。
+                  - link "相关文章 世界易跨文化身份观：真正消耗人的，不只是环境变化，而是身份切换过密 很多全球化生活的疲惫，不只是工作累，而是不同文化、语言、家庭期待和自我叙事之间长期高速切换。" [ref=e156] [cursor=pointer]:
+                    - /url: /knowledge/world-yi-cross-cultural-identity
+                    - generic [ref=e157]: 相关文章
+                    - generic [ref=e158]: 世界易跨文化身份观：真正消耗人的，不只是环境变化，而是身份切换过密
+                    - generic [ref=e159]: 很多全球化生活的疲惫，不只是工作累，而是不同文化、语言、家庭期待和自我叙事之间长期高速切换。
+                  - link "相关文章 世界易海外职业重启观：很多人不是没有能力，而是旧身份在新环境里失去了放大器 海外职业重启最难的，不只是找工作，而是旧经验、旧身份和新环境之间突然失去连续性。" [ref=e160] [cursor=pointer]:
+                    - /url: /knowledge/world-yi-overseas-career-reset
+                    - generic [ref=e161]: 相关文章
+                    - generic [ref=e162]: 世界易海外职业重启观：很多人不是没有能力，而是旧身份在新环境里失去了放大器
+                    - generic [ref=e163]: 海外职业重启最难的，不只是找工作，而是旧经验、旧身份和新环境之间突然失去连续性。
+              - generic [ref=e164]:
+                - generic [ref=e165]:
+                  - img [ref=e166]
+                  - text: 相关案例
+                - generic [ref=e168]:
+                  - link "相关案例 世界易案例：跨境创业者最危险的不是慢，而是在身份未稳时把战线铺太宽 跨境创业常常把签证、团队、供应链、现金流和家庭压力一起拉高，真正的风险不是少冲，而是误把窗口期当长期结构。" [ref=e169] [cursor=pointer]:
+                    - /url: /cases/world-yi-case-cross-border-founder
+                    - generic [ref=e170]: 相关案例
+                    - generic [ref=e171]: 世界易案例：跨境创业者最危险的不是慢，而是在身份未稳时把战线铺太宽
+                    - generic [ref=e172]: 跨境创业常常把签证、团队、供应链、现金流和家庭压力一起拉高，真正的风险不是少冲，而是误把窗口期当长期结构。
+                  - link "相关案例 世界易案例：海外职业重启最痛的不是从零，而是旧能力突然没有人替你放大了 用户最难受的不是重新找工作，而是过去那套证明自己的系统在新环境中突然失效了。" [ref=e173] [cursor=pointer]:
+                    - /url: /cases/world-yi-case-overseas-career-reset
+                    - generic [ref=e174]: 相关案例
+                    - generic [ref=e175]: 世界易案例：海外职业重启最痛的不是从零，而是旧能力突然没有人替你放大了
+                    - generic [ref=e176]: 用户最难受的不是重新找工作，而是过去那套证明自己的系统在新环境中突然失效了。
+                  - link "相关案例 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。" [ref=e177] [cursor=pointer]:
+                    - /url: /cases/world-yi-case-career-role-fit
+                    - generic [ref=e178]: 相关案例
+                    - generic [ref=e179]: 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛
+                    - generic [ref=e180]: 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - img [ref=e184]
+              - text: 文章页快速分析
+            - heading "看懂原理之后，直接测自己的生日" [level=3] [ref=e187]
+            - paragraph [ref=e188]: 文章负责解释方法，下一步应该立刻回到你自己的结构与阶段。这里填生日和时间，分析页会自动带入。
+            - generic [ref=e189]:
+              - generic [ref=e190]:
+                - generic [ref=e191]: 结构
+                - generic [ref=e192]: 先看命局底座
+              - generic [ref=e193]:
+                - generic [ref=e194]: 阶段
+                - generic [ref=e195]: 再看当前时位
+              - generic [ref=e196]:
+                - generic [ref=e197]: 环境
+                - generic [ref=e198]: 把现实变量带进来
+              - generic [ref=e199]:
+                - generic [ref=e200]: 动作
+                - generic [ref=e201]: 最后落到现实下一步
+            - generic [ref=e202]:
+              - button "男" [ref=e203] [cursor=pointer]
+              - button "女" [ref=e204] [cursor=pointer]
+            - generic [ref=e205]:
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e208]:
+                    - img [ref=e209]
+                    - text: 公历出生日期
+                  - paragraph [ref=e211]: 支持直接粘贴 1998-08-08、19980808、1998年8月8日。
+                  - textbox "例如 1998-08-08" [ref=e212]
+                  - generic [ref=e213]:
+                    - generic [ref=e214]:
+                      - generic [ref=e215]: 年
+                      - textbox "年" [ref=e216]
+                    - generic [ref=e217]:
+                      - generic [ref=e218]: 月
+                      - textbox "月" [ref=e219]
+                    - generic [ref=e220]:
+                      - generic [ref=e221]: 日
+                      - textbox "日" [ref=e222]
+                - generic [ref=e223]:
+                  - generic [ref=e224]:
+                    - img [ref=e225]
+                    - text: 已识别日期
+                  - generic [ref=e228]:
+                    - generic [ref=e229]: 待填写
+                    - generic [ref=e230]:
+                      - img [ref=e231]
+                      - text: 填写后生效
+                  - generic [ref=e234]: 如果只记得大概日期，请先核对出生证明或户籍记录后再提交。
+              - generic [ref=e235]:
+                - generic [ref=e236]:
+                  - generic [ref=e237]:
+                    - img [ref=e238]
+                    - text: 钟表时间
+                  - paragraph [ref=e241]: 支持输入 14:30、1430、14点30分；如果只记得大概时段，可直接点下方时辰。
+                  - generic [ref=e242]:
+                    - textbox "例如 14:30" [ref=e243]
+                    - generic [ref=e244]:
+                      - generic [ref=e245]: 秒
+                      - textbox "秒" [ref=e246]
+                  - generic [ref=e247]:
+                    - button "子 23:00-01:00 夜半" [ref=e248] [cursor=pointer]:
+                      - generic: 子
+                      - generic: 23:00-01:00
+                      - generic: 夜半
+                    - button "丑 01:00-03:00 鸡鸣" [ref=e249] [cursor=pointer]:
+                      - generic: 丑
+                      - generic: 01:00-03:00
+                      - generic: 鸡鸣
+                    - button "寅 03:00-05:00 平旦" [ref=e250] [cursor=pointer]:
+                      - generic: 寅
+                      - generic: 03:00-05:00
+                      - generic: 平旦
+                    - button "卯 05:00-07:00 日出" [ref=e251] [cursor=pointer]:
+                      - generic: 卯
+                      - generic: 05:00-07:00
+                      - generic: 日出
+                    - button "辰 07:00-09:00 食时" [ref=e252] [cursor=pointer]:
+                      - generic: 辰
+                      - generic: 07:00-09:00
+                      - generic: 食时
+                    - button "巳 09:00-11:00 隅中" [ref=e253] [cursor=pointer]:
+                      - generic: 巳
+                      - generic: 09:00-11:00
+                      - generic: 隅中
+                    - button "午 11:00-13:00 日中" [ref=e254] [cursor=pointer]:
+                      - generic: 午
+                      - generic: 11:00-13:00
+                      - generic: 日中
+                    - button "未 13:00-15:00 日昳" [ref=e255] [cursor=pointer]:
+                      - generic: 未
+                      - generic: 13:00-15:00
+                      - generic: 日昳
+                    - button "申 15:00-17:00 晡时" [ref=e256] [cursor=pointer]:
+                      - generic: 申
+                      - generic: 15:00-17:00
+                      - generic: 晡时
+                    - button "酉 17:00-19:00 日入" [ref=e257] [cursor=pointer]:
+                      - generic: 酉
+                      - generic: 17:00-19:00
+                      - generic: 日入
+                    - button "戌 19:00-21:00 黄昏" [ref=e258] [cursor=pointer]:
+                      - generic: 戌
+                      - generic: 19:00-21:00
+                      - generic: 黄昏
+                    - button "亥 21:00-23:00 人定" [ref=e259] [cursor=pointer]:
+                      - generic: 亥
+                      - generic: 21:00-23:00
+                      - generic: 人定
+                  - generic [ref=e260]:
+                    - button "00 分" [ref=e261] [cursor=pointer]
+                    - button "15 分" [ref=e262] [cursor=pointer]
+                    - button "30 分" [ref=e263] [cursor=pointer]
+                    - button "45 分" [ref=e264] [cursor=pointer]
+                - generic [ref=e265]:
+                  - generic [ref=e266]:
+                    - img [ref=e267]
+                    - text: 当前识别
+                  - generic [ref=e271]: 待填写
+                  - generic [ref=e272]: 如果只知道大概区间，先选时辰也可以；系统会再结合出生地做真太阳时修正。
+            - generic [ref=e273]:
+              - paragraph [ref=e274]: 下一步会自动带入世界易分析页。你只需要再确认出生地，就可以开始完整判断。
+              - button "快速进入判断" [disabled] [ref=e275]:
+                - text: 快速进入判断
+                - img [ref=e276]
+          - generic [ref=e278]:
+            - generic [ref=e279]:
+              - img [ref=e280]
+              - text: 内容承接路径
+            - heading "这篇文章最该承接到的，是 岗位匹配 和后续 断事专项。" [level=3] [ref=e284]:
+              - text: 这篇文章最该承接到的，
+              - generic [ref=e285]: 是 岗位匹配 和后续 断事专项。
+            - paragraph [ref=e286]: 《世界易 v1.0.0.1 总论：凯莉与世界易的起点》已经帮你建立理解框架。下一步不要继续停在泛读，而是把问题压进和它最相关的工具，先免费拿到你的个人结果，再决定是否进入更深的专项判断。
+            - generic [ref=e287]:
+              - generic [ref=e288]:
+                - generic [ref=e289]:
+                  - img [ref=e290]
+                  - text: 为什么先测这个
+                - generic [ref=e294]:
+                  - generic [ref=e295]: 钩子：你不是不努力，你可能只是站错了岗位。
+                  - generic [ref=e296]: 免费层：免费先给你岗位适配摘要、当前风险点和一个立即动作。
+                  - generic [ref=e297]: 付费点：付费深测会拆岗位结构、窗口、风险线和下一步职业路径。
+              - generic [ref=e298]:
+                - generic [ref=e299]:
+                  - img [ref=e300]
+                  - text: 推荐动作顺序
+                - generic [ref=e303]:
+                  - generic [ref=e304]: 1. 先做 岗位匹配，把这篇文章里的抽象逻辑转成你的个人判断。
+                  - generic [ref=e305]: 2. 如果免费结果已经命中问题，再继续进入 断事专项。
+                  - generic [ref=e306]: 3. 这篇文章、工具结果和后续专项会自动关联，不需要重复交代背景。
+                - generic [ref=e307]:
+                  - link "先测岗位匹配" [ref=e308] [cursor=pointer]:
+                    - /url: /tools/career-role-fit
+                    - text: 先测岗位匹配
+                    - img [ref=e309]
+                  - link "先问 AI 适不适合测这个" [ref=e311] [cursor=pointer]:
+                    - /url: /chat?intent=event-verdict
+          - generic [ref=e313]:
+            - generic [ref=e314]:
+              - generic [ref=e315]:
+                - img [ref=e316]
+                - text: 直接进入专项
+              - heading "不是只看一句结论，而是把这件事拆成能执行的专项判断。" [level=2] [ref=e320]
+              - paragraph [ref=e321]: 当前工具负责先缩窄问题，专项服务负责把 岗位匹配 真正做深。提交后，系统会带上你的综合报告、工具历史和当前问题，不需要你反复重讲背景。
+              - generic [ref=e322]:
+                - generic [ref=e323]: 推荐专项：断事专项
+                - generic [ref=e324]: 当前付费点：付费深测会拆岗位结构、窗口、风险线和下一步职业路径。
+                - generic [ref=e325]: 解锁后会展开：完整角色画像
+                - generic [ref=e326]: 解锁后会展开：未来 3-6 个月窗口
+                - generic [ref=e327]: 解锁后会展开：最优转向建议
+            - generic [ref=e328]:
+              - generic [ref=e329]:
+                - img [ref=e330]
+                - text: 提交专项需求
+              - generic [ref=e333]: 一次提交，就能把当前工具、结果记录和综合报告一起带入后续专项跟进。
+              - generic [ref=e334]:
+                - textbox "称呼，可选" [ref=e335]
+                - textbox "邮箱 / 微信 / 手机号" [ref=e336]
+                - textbox [ref=e337]: 我想围绕“岗位匹配”申请更深入的专项判断，当前最想解决的问题是：
+              - button "提交断事专项需求" [ref=e338] [cursor=pointer]:
+                - text: 提交断事专项需求
+                - img [ref=e339]
+          - generic [ref=e341]:
+            - generic [ref=e342]: 世界易阅读路径
+            - link "先回世界易总入口" [ref=e343] [cursor=pointer]:
+              - /url: /world-yi
+              - text: 先回世界易总入口
+              - img [ref=e344]
+            - generic [ref=e346]:
+              - link "从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。" [ref=e347] [cursor=pointer]:
+                - /url: /knowledge/world-yi-era-cognition
+                - generic [ref=e348]: 从工业时代、信息时代到 AI 时代：为什么每个时代都需要不同的认知系统
+                - generic [ref=e349]: 工业时代强调秩序与执行，信息时代强调获取与分发，AI 时代则逼迫人回到更高维的判断能力。世界易要处理的，正是这个时代转折中的认知需求。
+              - link "AI 时代的判断危机：为什么答案越多，人越容易失去主线 AI 时代不再稀缺信息，真正稀缺的是判断秩序。世界易要处理的，正是这个时代的人为什么越来越难抓住主线。" [ref=e350] [cursor=pointer]:
+                - /url: /knowledge/world-yi-judgment-crisis
+                - generic [ref=e351]: AI 时代的判断危机：为什么答案越多，人越容易失去主线
+                - generic [ref=e352]: AI 时代不再稀缺信息，真正稀缺的是判断秩序。世界易要处理的，正是这个时代的人为什么越来越难抓住主线。
+              - link "世界易的高维吸引力模型：为什么天选论、阳明心学、曾仕强会打动人 用户喜欢的从来不只是知识本身，而是知识背后提供的意义、主体感、秩序感、文化感与可行动性。" [ref=e353] [cursor=pointer]:
+                - /url: /knowledge/world-yi-attraction-model
+                - generic [ref=e354]: 世界易的高维吸引力模型：为什么天选论、阳明心学、曾仕强会打动人
+                - generic [ref=e355]: 用户喜欢的从来不只是知识本身，而是知识背后提供的意义、主体感、秩序感、文化感与可行动性。
+              - link "世界易的五大学理基础：为什么它必须同时吸收易学、心理学、哲学、宗教与神学 世界易不是把多门学科硬拼在一起，而是以易学为中轴，把心理、哲学、宗教与神学都转成解释资源层。" [ref=e356] [cursor=pointer]:
+                - /url: /knowledge/world-yi-five-foundations
+                - generic [ref=e357]: 世界易的五大学理基础：为什么它必须同时吸收易学、心理学、哲学、宗教与神学
+                - generic [ref=e358]: 世界易不是把多门学科硬拼在一起，而是以易学为中轴，把心理、哲学、宗教与神学都转成解释资源层。
+              - link "世界易方法论：结构、时位、环境、动作、风险 世界易的所有判断，都必须经过五步：先定结构，再看时位，再看环境，再落动作，最后说风险。" [ref=e359] [cursor=pointer]:
+                - /url: /knowledge/world-yi-methodology
+                - generic [ref=e360]: 世界易方法论：结构、时位、环境、动作、风险
+                - generic [ref=e361]: 世界易的所有判断，都必须经过五步：先定结构，再看时位，再看环境，再落动作，最后说风险。
+              - link "世界易的现代翻译：如何把易学语言变成现代判断语言 世界易不回避传统概念，但会把它们翻译成现代人一读就能使用的判断语言。" [ref=e362] [cursor=pointer]:
+                - /url: /knowledge/world-yi-decision-language
+                - generic [ref=e363]: 世界易的现代翻译：如何把易学语言变成现代判断语言
+                - generic [ref=e364]: 世界易不回避传统概念，但会把它们翻译成现代人一读就能使用的判断语言。
+          - generic [ref=e365]:
+            - generic [ref=e366]: 相关文章
+            - generic [ref=e367]:
+              - link "世界易的案例方法：为什么真正好的案例不是讲神准，而是讲判断秩序 案例的价值不在于制造神秘感，而在于把结构、阶段、环境、动作和风险如何落到现实问题中讲清楚。" [ref=e368] [cursor=pointer]:
+                - /url: /knowledge/world-yi-case-method
+                - generic [ref=e369]: 世界易的案例方法：为什么真正好的案例不是讲神准，而是讲判断秩序
+                - generic [ref=e370]: 案例的价值不在于制造神秘感，而在于把结构、阶段、环境、动作和风险如何落到现实问题中讲清楚。
+              - link "世界易方法论：结构、时位、环境、动作、风险 世界易的所有判断，都必须经过五步：先定结构，再看时位，再看环境，再落动作，最后说风险。" [ref=e371] [cursor=pointer]:
+                - /url: /knowledge/world-yi-methodology
+                - generic [ref=e372]: 世界易方法论：结构、时位、环境、动作、风险
+                - generic [ref=e373]: 世界易的所有判断，都必须经过五步：先定结构，再看时位，再看环境，再落动作，最后说风险。
+              - link "世界易起名观：名字不是装饰，而是长期使用的结构接口 世界易看起名，不把名字当成玄妙符号，而把它视为一个人在现实社会长期被调用的结构接口。" [ref=e374] [cursor=pointer]:
+                - /url: /knowledge/world-yi-naming-system
+                - generic [ref=e375]: 世界易起名观：名字不是装饰，而是长期使用的结构接口
+                - generic [ref=e376]: 世界易看起名，不把名字当成玄妙符号，而把它视为一个人在现实社会长期被调用的结构接口。
+              - link "世界易寻物观：不是神秘感应，而是结构、时间与环境线索的叠加 寻物不是世界易最核心的主线，但它恰好能展示这套体系如何把象、位、时、境结合起来。" [ref=e377] [cursor=pointer]:
+                - /url: /knowledge/world-yi-lost-and-found
+                - generic [ref=e378]: 世界易寻物观：不是神秘感应，而是结构、时间与环境线索的叠加
+                - generic [ref=e379]: 寻物不是世界易最核心的主线，但它恰好能展示这套体系如何把象、位、时、境结合起来。
+          - generic [ref=e380]:
+            - generic [ref=e381]:
+              - img [ref=e382]
+              - text: 邮箱订阅
+            - heading "订阅内容更新" [level=2] [ref=e385]
+            - paragraph [ref=e386]: 当知识库新增深度文章、案例与结果页最佳实践时，第一时间收到更新。
+            - generic [ref=e387]:
+              - generic [ref=e388]:
+                - img
+                - textbox "输入你的邮箱地址" [ref=e389]
+              - button "订阅更新" [disabled] [ref=e390]
+            - generic [ref=e391]:
+              - text: 需要管理订阅状态？
+              - link "进入订阅管理" [ref=e392] [cursor=pointer]:
+                - /url: /updates
+    - contentinfo [ref=e393]:
+      - generic [ref=e394]:
+        - generic [ref=e395]:
+          - generic [ref=e396]: 人生K线
+          - paragraph [ref=e397]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+          - paragraph [ref=e398]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+        - generic [ref=e399]:
+          - link "邮箱登录" [ref=e400] [cursor=pointer]:
+            - /url: /login
+          - link "世界易" [ref=e401] [cursor=pointer]:
+            - /url: /world-yi
+          - link "主书工程" [ref=e402] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "工具中心" [ref=e403] [cursor=pointer]:
+            - /url: /tools
+          - link "知识库" [ref=e404] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e405] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e406] [cursor=pointer]:
+            - /url: /insights
+          - link "案例库" [ref=e407] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e408] [cursor=pointer]:
+            - /url: /updates
+          - link "进入判断" [ref=e409] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e410] [cursor=pointer]:
+            - /url: /chat
+          - link "事件管理" [ref=e411] [cursor=pointer]:
+            - /url: /events
+  - alert [ref=e412]

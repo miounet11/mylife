@@ -1,4 +1,4 @@
-// 命理分析结果页面
+// 结构判断结果页面
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 import { notFound } from 'next/navigation';
@@ -49,7 +49,9 @@ import ResultPublicControls from '@/components/result-public-controls';
 import ReportEnginePanel from '@/components/report-engine-panel';
 import ReportPremiumServices from '@/components/report-premium-services';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
+import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
+import ToolRecommendations from '@/components/tool-recommendations';
 import type { UpdatesStatusSummary } from '@/components/updates-status-panel';
 import RelatedContent from '@/components/related-content';
 import ResultDeferredSection from '@/components/result-deferred-section';
@@ -76,6 +78,7 @@ import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningM
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
 import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
+import { buildJourneyForReport } from '@/lib/surface-journeys';
 
 function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -91,6 +94,96 @@ function compactCopy(value?: string | null, maxLength = 92) {
   return `${normalized.slice(0, maxLength - 1).trim()}…`;
 }
 
+function inferWorldYiGuidedPaths(signalText: string) {
+  const lowered = signalText.toLowerCase();
+  const domainCandidates = [
+    {
+      key: 'career',
+      href: '/world-yi/domains/career',
+      title: '进入事业分科',
+      description: '把岗位、角色密度、推进节奏和组织压力重新排清。',
+      matches: ['事业', '工作', '职业', '升职', '岗位', '团队', '老板', 'career', 'job', 'promotion'],
+    },
+    {
+      key: 'wealth',
+      href: '/world-yi/domains/wealth',
+      title: '进入财富分科',
+      description: '把赚钱、守财、现金流和扩张时机拆开看。',
+      matches: ['财富', '赚钱', '收入', '现金流', '理财', '财务', '投资', 'wealth', 'money', 'cash'],
+    },
+    {
+      key: 'relationship',
+      href: '/world-yi/domains/relationship',
+      title: '进入关系分科',
+      description: '把关系从合不合，拉回边界、节奏和环境压力。',
+      matches: ['关系', '感情', '婚姻', '伴侣', '恋爱', '复合', 'relationship', 'marriage', 'partner'],
+    },
+    {
+      key: 'health',
+      href: '/world-yi/domains/health',
+      title: '进入健康分科',
+      description: '先看恢复秩序、透支循环和环境密度，再谈推进。',
+      matches: ['健康', '身体', '恢复', '焦虑', '睡眠', '压力', 'health', 'stress', 'recovery'],
+    },
+    {
+      key: 'family',
+      href: '/world-yi/domains/family',
+      title: '进入家庭分科',
+      description: '处理责任排序、代际压力和家庭恢复位。',
+      matches: ['家庭', '父母', '孩子', '照护', '代际', 'family', 'parent', 'child'],
+    },
+    {
+      key: 'migration',
+      href: '/world-yi/domains/migration',
+      title: '进入迁移分科',
+      description: '把留回、城市、身份成本和环境匹配一起看。',
+      matches: ['迁移', '移民', '出国', '回国', '城市', '海外', 'migration', 'overseas', 'relocation'],
+    },
+  ] as const;
+  const matchedDomain = domainCandidates.find((candidate) => candidate.matches.some((keyword) => lowered.includes(keyword)));
+
+  return [
+    {
+      href: '/knowledge/world-yi-methodology',
+      title: '先回方法论',
+      description: '如果你想知道这份结果为什么这样排，先看结构、阶段、环境、动作的判断总法。',
+    },
+    matchedDomain
+      ? {
+          href: matchedDomain.href,
+          title: matchedDomain.title,
+          description: matchedDomain.description,
+        }
+      : {
+          href: '/world-yi/domains',
+          title: '进入人生六域',
+          description: '把当前问题挂回事业、财富、关系、健康、家庭、迁移六条主线里继续读。',
+        },
+    lowered.includes('海外') || lowered.includes('出国') || lowered.includes('移民') || lowered.includes('跨境') || lowered.includes('global') || lowered.includes('overseas')
+      ? {
+          href: '/world-yi/global',
+          title: '进入全球华人层',
+          description: '当前问题涉及身份、迁移、跨文化或双边生活时，直接切到全球判断层。',
+        }
+      : {
+          href: '/world-yi/network',
+          title: '查看专题地图',
+          description: '从总入口切进六域、应用、全球与英文路径，看到这份报告在母系统中的位置。',
+        },
+    lowered.includes('名字') || lowered.includes('起名') || lowered.includes('家宅') || lowered.includes('择时') || lowered.includes('寻物')
+      ? {
+          href: '/world-yi/applications',
+          title: '进入生活应用层',
+          description: '当前问题更接近日常应用，就继续下钻到起名、择时、家宅和寻物路径。',
+        }
+      : {
+          href: '/world-yi/book',
+          title: '看世界易主书',
+          description: '如果你要理解世界易的母体系，就从十卷主书工程继续展开。',
+        },
+  ];
+}
+
 export async function generateMetadata({ params }: PageProps) {
   const { id } = await params;
   try {
@@ -99,8 +192,8 @@ export async function generateMetadata({ params }: PageProps) {
       const publicName = getPublicDisplayName(fortuneData.name);
       const isPublic = fortuneData.isPublic !== false;
       return {
-        title: `${publicName}的命理分析报告 | 人生K线`,
-        description: `${publicName}的命理分析报告，基于真太阳时修正与结构化解读，默认私密，可按需创建分享页。`,
+        title: `${publicName}的结构判断报告 | 人生K线`,
+        description: `${publicName}的结构判断报告，基于真太阳时修正与结构化解读，默认私密，可按需创建分享页。`,
         alternates: {
           canonical: `https://www.life-kline.com/result/${id}`,
         },
@@ -110,8 +203,8 @@ export async function generateMetadata({ params }: PageProps) {
         },
         openGraph: {
           url: `https://www.life-kline.com/result/${id}`,
-          title: `${publicName}的命理分析 | 人生K线`,
-          description: '结构化命理分析结果页，展示结构、趋势与建议，可按需分享。',
+          title: `${publicName}的结构判断 | 人生K线`,
+          description: '结构化判断结果页，展示结构、趋势与建议，可按需分享。',
         },
       };
     }
@@ -120,8 +213,8 @@ export async function generateMetadata({ params }: PageProps) {
   }
   
   return {
-    title: '您的命理分析报告 | 人生K线',
-    description: '结构化命理分析结果页，围绕命局结构、阶段节奏、行动建议与验证闭环展开。',
+    title: '您的结构判断报告 | 人生K线',
+    description: '结构化判断结果页，围绕个人结构、阶段节奏、行动建议与验证闭环展开。',
     robots: {
       index: true,
       follow: true,
@@ -134,7 +227,7 @@ async function getResult(reportId: string) {
     const fortuneData = fortuneOperations.getById(reportId);
     if (!fortuneData) return null;
     const analysis = (fortuneData.analysis ?? {
-      opening: '细观您的八字，命理之象，历历在目。',
+      opening: '当前结构、阶段与节奏已经开始显形。',
       explanation: '当前结果已由结构化引擎生成，可先查看场景视图、月度窗口和行动建议，再继续进入 AI 深问。',
     }) as {
       opening?: string;
@@ -262,7 +355,7 @@ async function getResult(reportId: string) {
     const baseResult = {
       basic: {
         ...fortuneData.bazi,
-        name: fortuneData.name || '测算者',
+        name: fortuneData.name || '判断对象',
         dayMaster: fortuneData.bazi?.dayMaster || '未知',
         userId: fortuneData.userId,
       },
@@ -439,19 +532,19 @@ export default async function ResultPage({ params }: PageProps) {
   const reportActions = [
     {
       title: '看完可继续深问 AI',
-      description: '把最关键的一条结论继续追问，把这份报告变成持续对话，而不是一次性阅读。',
+      description: '把关键结论继续追问成可执行问题。',
       icon: Bot,
     },
     {
       title: '把关键窗口落成事件',
-      description: '把推进期、收缩期和风险节点保存到事件系统，后面才有机会持续验证和复盘。',
+      description: '把窗口存成事件，后面才能验证和复盘。',
       icon: CalendarClock,
     },
     {
       title: result.isPublic ? '这份报告可直接分享' : '这份报告目前为隐藏模式',
       description: result.isPublic
-        ? '你已经主动开启了分享模式，外部用户可通过匿名链接查看这份匿名化结果页。'
-        : '报告默认仅你可见。确认内容适合外部浏览后，再手动创建公开分享页。',
+        ? '当前可通过匿名链接分享。'
+        : '默认私密，需要时再手动开启。',
       icon: Share2,
     },
   ];
@@ -531,6 +624,40 @@ export default async function ResultPage({ params }: PageProps) {
       || qualityAudit?.concerns?.[0]
       || '不要在时机未确认前同时推进多个高成本动作。'
   );
+  const reportJourney = buildJourneyForReport({
+    id,
+    userId: result.basic.userId,
+    name: result.basic.name,
+    birthDate: (result.basic as { birthDate?: string }).birthDate || '',
+    birthTime: (result.basic as { birthTime?: string }).birthTime || '',
+    birthPlace: (result.basic as { birthPlace?: string }).birthPlace,
+    timezone: (result.basic as { timezone?: number }).timezone || 8,
+    gender: (result.basic as { gender?: 'male' | 'female' }).gender || 'male',
+    bazi: result.basic as any,
+    fiveElements: result.fiveElements,
+    tenGods: result.tenGods,
+    pattern: result.pattern,
+    fortune: result.fortune,
+    advice: result.advice,
+    evidence: result.evidence,
+    analysis: result.analysis,
+    klineData: result.klineData || undefined,
+    dayun: result.dayun,
+    shenSha: result.shenSha,
+    reportVersion: result.reportVersion,
+    isPublic: result.isPublic,
+  });
+  const worldYiSignalText = [
+    result.pattern?.type,
+    currentStageSummary,
+    decisionNowAction,
+    decisionAvoidAction,
+    result.analysis?.opening,
+    result.analysis?.explanation,
+    ...(result.confidence?.stablePoints || []),
+    ...(result.confidence?.sensitivePoints || []),
+  ].filter(Boolean).join(' ');
+  const worldYiGuidedPaths = inferWorldYiGuidedPaths(worldYiSignalText);
   const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
   const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
   const stagedReadingHint = result.qualityAudit?.targetAchieved || result.llmUsed
@@ -559,8 +686,8 @@ export default async function ResultPage({ params }: PageProps) {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${publicName}的命理分析报告`,
-    description: `AI驱动的八字命理分析公开结果页。此为${publicName}的公开报告。`,
+    headline: `${publicName}的结构判断报告`,
+    description: `AI驱动的结构判断公开结果页。此为${publicName}的公开报告。`,
     mainEntityOfPage: `https://www.life-kline.com/result/${id}`,
     author: {
       '@type': 'Organization',
@@ -595,7 +722,7 @@ export default async function ResultPage({ params }: PageProps) {
             <div className="absolute left-8 top-24 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.16)] blur-3xl" />
 
             <div className="relative">
-              <div className="section-label">个人命理总览</div>
+              <div className="section-label">个人结构总览</div>
 
               <div className="mt-5 flex flex-wrap gap-2">
                 {isEnhancementPending ? (
@@ -622,12 +749,38 @@ export default async function ResultPage({ params }: PageProps) {
 
               <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
                 {publicName}当前最重要的，
-                <span className="font-serif text-[color:var(--accent-strong)]">不是再看一句吉凶，而是看清所处阶段和下一步节奏。</span>
+                <span className="font-serif text-[color:var(--accent-strong)]">不是再听一句抽象判断，而是看清所处阶段和下一步节奏。</span>
               </h1>
 
-              <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)]">
-                这份报告已经把命局结构、当前阶段、人生K线和行动建议整合到同一页。先把最关键的判断读懂，再决定是否继续深问、记录事件、开启月度更新，或分享给别人查看。
-              </p>
+              <p className="intro-copy mt-4">先做一个动作，再展开阅读。</p>
+              <div className="intro-panel mt-3">优先顺序：追问 → 记事件 → 开更新。</div>
+
+              <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4">
+                <div className="action-guide">核心操作</div>
+                <div className="action-strip mt-3 flex flex-wrap gap-3">
+                  <Link href={`/chat?reportId=${encodeURIComponent(id)}`} className="action-primary action-main">
+                    进入结构追问
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href={`/events?reportId=${encodeURIComponent(id)}`} className="action-secondary">
+                    管理关联事件
+                  </Link>
+                  <Link href="#subscription" className="action-secondary">
+                    开启月度更新
+                  </Link>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-3">
+                  {worldYiGuidedPaths.slice(0, 3).map((item) => (
+                    <Link key={item.href} href={item.href} className="rounded-[1.2rem] bg-slate-50 px-4 py-3 transition hover:bg-white">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                        <ArrowRight className="h-4 w-4 text-[color:var(--accent-strong)]" />
+                      </div>
+                      <div className="intro-copy mt-2">{item.description}</div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
               <div className={`mt-5 rounded-[1.5rem] border px-4 py-4 ${
                 isEnhancementPending
@@ -656,7 +809,7 @@ export default async function ResultPage({ params }: PageProps) {
                     </span>
                   ) : null}
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {enhancementStatusMessage}
                 </div>
               </div>
@@ -675,11 +828,11 @@ export default async function ResultPage({ params }: PageProps) {
                         : `距离 ${qualityAudit.targetScore || 95} 分 S级目标仍需增强`}
                     </span>
                   </div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                     {qualityAudit.summary}
                   </div>
                   {upgradeJob?.status ? (
-                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {`${upgradeStatusLabel}，已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次。`}
                       {upgradeJob.nextRunAt ? ` 下一次计划时间 ${upgradeJob.nextRunAt}。` : ''}
                     </div>
@@ -703,10 +856,10 @@ export default async function ResultPage({ params }: PageProps) {
                       {`偏差 ${validationInsights.driftCount || 0}`}
                     </span>
                   </div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                     {validationInsights.summary}
                   </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {correctionInsight.summary}
                   </div>
                 </div>
@@ -734,12 +887,12 @@ export default async function ResultPage({ params }: PageProps) {
                   </div>
                   <div className="mt-4 space-y-3">
                     {decisionEvidence.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white/78 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-2xl bg-white/78 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
                   </div>
-                  <div className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                  <div className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {nextFocusSummary}
                   </div>
                 </div>
@@ -749,39 +902,37 @@ export default async function ResultPage({ params }: PageProps) {
                   <div className="mt-3 grid gap-3">
                     <div className="rounded-2xl bg-[rgba(178,149,93,0.1)] px-4 py-3">
                       <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">现在先做</div>
-                      <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{decisionNowAction}</div>
+                      <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{decisionNowAction}</div>
                     </div>
                     <div className="rounded-2xl bg-rose-50 px-4 py-3">
                       <div className="text-[11px] uppercase tracking-[0.18em] text-rose-500">先别做</div>
-                      <div className="mt-2 text-sm leading-7 text-rose-800">{decisionAvoidAction}</div>
+                      <div className="mt-2 text-xs leading-6 text-rose-800">{decisionAvoidAction}</div>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-col gap-3">
                     <Link
                       href={`/chat?reportId=${encodeURIComponent(id)}`}
-                      className="inline-flex items-center justify-between rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
+                      className="action-primary action-main justify-between"
                     >
-                      进入 AI 咨询
+                      进入结构追问
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                       href="#subscription"
-                      className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                      className="action-secondary justify-between"
                     >
                       开启月度更新
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                     <Link
                       href="/analyze"
-                      className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                      className="action-secondary justify-between"
                     >
-                      再次测算一份
+                      再次生成一份
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
-                  <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
-                    报告默认私密。确认内容适合外部浏览后，再决定是否开启分享模式，姓名仍会保持匿名化展示。
-                  </div>
+                  <div className="intro-copy mt-4">默认私密，开启后仍以匿名方式分享。</div>
                 </div>
               </div>
 
@@ -796,7 +947,7 @@ export default async function ResultPage({ params }: PageProps) {
                     </span>
                   ) : null}
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {stagedReadingHint}
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-2">
@@ -828,9 +979,7 @@ export default async function ResultPage({ params }: PageProps) {
           <div className="grid gap-4">
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="font-semibold text-[color:var(--ink)]">分享与可见性</div>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                报告默认私密。只有拥有者主动开启后，外部用户才可以通过链接查看这份匿名化结果页。
-              </p>
+              <p className="intro-copy mt-2">默认私密，开启后外部用户仅能通过匿名链接查看。</p>
               <div className="mt-4">
                 <ResultPublicControls
                   reportId={id}
@@ -872,7 +1021,7 @@ export default async function ResultPage({ params }: PageProps) {
                 reportId={id}
                 compact
                 title="这份报告的升级与更新"
-                description="你不需要自己记得回来。这里直接显示这份报告的订阅、升级任务和最近月度更新。"
+                description="这里直接看订阅状态、升级进度和最近更新。"
                 initialAuthenticated={updatesPanelInitialAuthenticated}
                 initialSummary={updatesPanelInitialSummary}
               />
@@ -882,26 +1031,24 @@ export default async function ResultPage({ params }: PageProps) {
               const Icon = item.icon;
               return (
                 <div key={item.title} className="soft-card rounded-[1.75rem] p-5">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                      <Icon className="h-5 w-5" />
-                    </div>
-                    <div className="font-semibold text-[color:var(--ink)]">{item.title}</div>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                    <Icon className="h-5 w-5" />
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
+                  <div className="font-semibold text-[color:var(--ink)]">{item.title}</div>
+                </div>
+                  <p className="intro-copy mt-3">{item.description}</p>
                 </div>
               );
             })}
 
             {stateVectorCards.length > 0 && (
               <div className="soft-card rounded-[1.75rem] p-5">
-                <div className="flex items-center gap-3">
-                  <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
-                  <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
-                </div>
-                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  这是当前报告的三维状态向量。命盘是底盘，窗口、环境和关系会决定判断落地时的摩擦与放大效果。
-                </p>
+              <div className="flex items-center gap-3">
+                <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
+                <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
+              </div>
+                <p className="intro-copy mt-2">看时机、环境和关系，判断推进阻力与放大效应。</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {stateVectorCards.map((item) => (
                     <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
@@ -925,7 +1072,7 @@ export default async function ResultPage({ params }: PageProps) {
                       </span>
                     </div>
                     {referenceLeadDirective ? (
-                      <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{referenceLeadDirective}</div>
+                      <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{referenceLeadDirective}</div>
                     ) : null}
                     {referenceSignals.length > 0 ? (
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -950,7 +1097,7 @@ export default async function ResultPage({ params }: PageProps) {
                 {[
                   '先看总览和核心结构',
                   '再看五行分布与趋势图',
-                  '最后进入 AI 咨询或再次测算',
+                  '最后进入结构追问或再次生成一份',
                 ].map((item) => (
                   <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
                     {item}
@@ -964,7 +1111,7 @@ export default async function ResultPage({ params }: PageProps) {
             {canManage && (
               <div className="soft-card rounded-[1.75rem] p-5">
                 <div className="font-semibold text-[color:var(--ink)]">这份报告的验证状态</div>
-                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{validationInsights.summary}</p>
+                <p className="intro-copy mt-2">{validationInsights.summary}</p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {[
                     { label: '已验证准确', value: validationInsights.accurateCount },
@@ -983,10 +1130,10 @@ export default async function ResultPage({ params }: PageProps) {
             {canManage && validationInsights.totalLinkedEvents > 0 && (
               <div className="soft-card rounded-[1.75rem] p-5">
                 <div className="font-semibold text-[color:var(--ink)]">纠偏优先级</div>
-                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{correctionInsight.summary}</p>
+                <p className="intro-copy mt-2">{correctionInsight.summary}</p>
                 <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">更可能的原因</div>
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
+                  <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
                 </div>
               </div>
             )}
@@ -1032,7 +1179,7 @@ export default async function ResultPage({ params }: PageProps) {
                   { href: '#scenario', label: '场景', icon: ArrowRight },
                   { href: '#expert', label: '专家', icon: ScrollText },
                   { href: '#agentic', label: '并发层', icon: Bot },
-                  { href: '#pillars', label: '命盘', icon: Compass },
+                  { href: '#pillars', label: '结构盘', icon: Compass },
                   { href: '#engine', label: '引擎', icon: Bot },
                   { href: '#elements', label: '五行', icon: LineChart },
                   { href: '#windows', label: '窗口', icon: CalendarClock },
@@ -1053,7 +1200,7 @@ export default async function ResultPage({ params }: PageProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--muted)] transition hover:border-[color:var(--accent)] hover:text-[color:var(--ink)]"
+                    className="product-chip"
                   >
                     <Icon className="h-4 w-4" />
                     {item.label}
@@ -1151,6 +1298,45 @@ export default async function ResultPage({ params }: PageProps) {
               </Suspense>
             </div>
           </ResultDeferredSection>
+        </div>
+
+        <div className="mt-16">
+          <SurfaceJourneyPanel
+            journey={reportJourney}
+            title="这份主测算已经接到工具和内容系统"
+            description="综合报告负责定主轴，小工具负责拆具体问题，文章和案例负责沉淀理解与说服力。你不需要在这些入口之间来回断开。"
+          />
+        </div>
+
+        <div className="mt-16">
+          <ToolRecommendations
+            report={{
+              id,
+              userId: result.basic.userId,
+              name: result.basic.name,
+              birthDate: (result.basic as { birthDate?: string }).birthDate || '',
+              birthTime: (result.basic as { birthTime?: string }).birthTime || '',
+              birthPlace: (result.basic as { birthPlace?: string }).birthPlace,
+              timezone: (result.basic as { timezone?: number }).timezone || 8,
+              gender: (result.basic as { gender?: 'male' | 'female' }).gender || 'male',
+              bazi: result.basic as any,
+              fiveElements: result.fiveElements,
+              tenGods: result.tenGods,
+              pattern: result.pattern,
+              fortune: result.fortune,
+              advice: result.advice,
+              evidence: result.evidence,
+              analysis: result.analysis,
+              klineData: result.klineData || undefined,
+              dayun: result.dayun,
+              shenSha: result.shenSha,
+              reportVersion: result.reportVersion,
+              isPublic: result.isPublic,
+            }}
+            page={`/result/${id}`}
+            title="推荐单项工具"
+            description="综合报告先看全局，再用单项工具把某一件事继续拆深，最容易形成复访和持续判断。"
+          />
         </div>
 
         <div className="mt-16">

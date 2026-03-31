@@ -52,7 +52,7 @@ export default function AuthStatus() {
     return (
       <Link
         href="/login"
-        className="hidden rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--muted)] transition hover:text-[color:var(--ink)] md:inline-flex"
+        className="action-secondary hidden min-h-0 px-4 py-2 text-[color:var(--muted)] hover:text-[color:var(--ink)] md:inline-flex"
       >
         邮箱登录
       </Link>
@@ -64,21 +64,21 @@ export default function AuthStatus() {
       {session.user.role === 'admin' && (
         <Link
           href="/admin/content"
-          className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-medium text-[color:var(--ink)]"
+          className="action-secondary min-h-0 px-3 py-2"
         >
           内容后台
         </Link>
       )}
       <Link
         href="/profile"
-        className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-medium text-[color:var(--ink)]"
+        className="action-secondary min-h-0 px-3 py-2"
       >
         {session.user.email || session.user.name}
       </Link>
       <button
         type="button"
         onClick={logout}
-        className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-sm font-medium text-[color:var(--muted)]"
+        className="action-secondary min-h-0 px-3 py-2 text-[color:var(--muted)]"
       >
         退出
       </button>

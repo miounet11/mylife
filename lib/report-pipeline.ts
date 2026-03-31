@@ -13,7 +13,7 @@ import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 
 const ANALYZE_LLM_CORE_TIMEOUT_MS = 12000;
-const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 5000;
+const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 3200;
 const ENABLE_AGENTIC_PIPELINE = process.env.ENABLE_AGENTIC_PIPELINE !== '0';
 const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
@@ -48,6 +48,28 @@ export function resolveAnalyzeAgentKeys(params: {
   return params.llmUsed
     ? ANALYZE_FRONT_AGENT_KEYS
     : ANALYZE_FALLBACK_AGENT_KEYS;
+}
+
+export function shouldRunAnalyzeAgentic(params: {
+  source: PipelineSource;
+  llmUsed: boolean;
+  deferredByProviderHealth: boolean;
+  agentScopeHealthDeferred: boolean;
+  agentScopeSnapshotsConservative: boolean;
+}) {
+  if (!ENABLE_AGENTIC_PIPELINE) {
+    return false;
+  }
+
+  if (params.agentScopeHealthDeferred || params.agentScopeSnapshotsConservative) {
+    return false;
+  }
+
+  if (params.source === 'analyze' && !params.llmUsed && params.deferredByProviderHealth) {
+    return false;
+  }
+
+  return true;
 }
 
 type PipelineSource = 'analyze' | 'upgrade';
@@ -125,9 +147,13 @@ export async function generateVersionedReport(params: {
     getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
     'agent'
   );
-  const shouldRunAgentic = ENABLE_AGENTIC_PIPELINE
-    && !agentScopeHealth.shouldDefer
-    && !shouldConservativelyDeferForSnapshots(agentScopeHealth.snapshots || []);
+  const shouldRunAgentic = shouldRunAnalyzeAgentic({
+    source: params.source,
+    llmUsed: llmCore.llmUsed,
+    deferredByProviderHealth: llmCore.deferredByProviderHealth,
+    agentScopeHealthDeferred: agentScopeHealth.shouldDefer,
+    agentScopeSnapshotsConservative: shouldConservativelyDeferForSnapshots(agentScopeHealth.snapshots || []),
+  });
   const agentKeys = params.source === 'analyze'
     ? resolveAnalyzeAgentKeys({
         llmUsed: llmCore.llmUsed,
@@ -190,6 +216,7 @@ export async function generateVersionedReport(params: {
   });
   const merged = mergeLLMResult(baseResult, llmInterpretation, {
     llmUsed,
+    deferredByProviderHealth: llmEnhancement.deferredByProviderHealth,
     source: params.source,
     upgradedFromVersion: params.upgradedFromVersion,
     agentic,
@@ -200,9 +227,11 @@ export async function generateVersionedReport(params: {
     detail: '最终报告已完成整合，可以进入结果页。',
   });
 
+  const finalized = finalizeReportForDelivery(merged as FortuneAnalysisResult);
+
   return {
     result: {
-      ...merged,
+      ...finalized,
       reportVersion: CURRENT_REPORT_VERSION,
     },
     llmUsed,
@@ -222,6 +251,75 @@ export async function regenerateReportFromRecord(record: FortuneRecord) {
     source: 'upgrade',
     upgradedFromVersion: record.reportVersion || 'v1',
   });
+}
+
+export function finalizeReportForDelivery(result: FortuneAnalysisResult): FortuneAnalysisResult {
+  const repairedAdvice = repairExistingAdvice(result.advice as FortuneAnalysisResult['advice']);
+  const repairedFortune = {
+    ...(result.fortune || {}),
+    interaction: joinParagraphs([result.fortune?.interaction]),
+    nextYear: joinParagraphs([result.fortune?.nextYear]),
+  };
+
+  const draft = {
+    ...result,
+    fortune: repairedFortune,
+    advice: repairedAdvice,
+    analysis: {
+      ...(result.analysis || {}),
+    },
+  } as FortuneAnalysisResult;
+
+  const repairedNarrative = buildDeterministicFallbackNarrative(draft, {
+    openingOverride: result.analysis?.opening,
+    summaryOverride: result.analysis?.summary,
+    explanationOverride: hasStructuredNarrativeSections(result.analysis?.explanation || '')
+      ? ''
+      : result.analysis?.explanation,
+  });
+
+  draft.analysis = {
+    ...(draft.analysis || {}),
+    opening: repairedNarrative.opening,
+    summary: repairedNarrative.summary,
+    explanation: repairedNarrative.explanation,
+  };
+  draft.analysis.qualityAudit = buildReportQualityAudit(draft);
+
+  return draft;
+}
+
+export function repairStoredReportNarrative(record: FortuneRecord): FortuneAnalysisResult {
+  const draft = {
+    basic: record.bazi,
+    fiveElements: record.fiveElements,
+    tenGods: record.tenGods,
+    pattern: record.pattern,
+    fortune: {
+      ...(record.fortune || {}),
+      interaction: joinParagraphs([record.fortune?.interaction]),
+      nextYear: joinParagraphs([record.fortune?.nextYear]),
+      trend: joinParagraphs([record.fortune?.trend]),
+    },
+    advice: record.advice as FortuneAnalysisResult['advice'],
+    evidence: record.evidence,
+    analysis: {
+      ...(record.analysis || {}),
+    },
+    klineData: record.klineData,
+    dayun: record.dayun,
+    shenSha: record.shenSha,
+  } as FortuneAnalysisResult;
+  const finalized = finalizeReportForDelivery(draft);
+
+  finalized.analysis = {
+    ...(finalized.analysis || {}),
+    pipelineVersion: CURRENT_REPORT_VERSION,
+    generatedAt: new Date().toISOString(),
+  };
+  finalized.analysis.qualityAudit = buildReportQualityAudit(finalized);
+
+  return finalized;
 }
 
 async function enhanceWithLLM(
@@ -301,6 +399,7 @@ function mergeLLMResult(
   llmInterpretation: Record<string, any> | null,
   meta: {
     llmUsed: boolean;
+    deferredByProviderHealth: boolean;
     source: PipelineSource;
     upgradedFromVersion?: string;
     agentic: Awaited<ReturnType<typeof runAgenticPipeline>>;
@@ -383,6 +482,7 @@ function mergeLLMResult(
   merged.analysis = {
     ...merged.analysis,
     llmUsed: meta.llmUsed,
+    providerHealthDeferred: meta.deferredByProviderHealth,
     agenticUsed,
     reasoningMode,
     pipelineVersion: CURRENT_REPORT_VERSION,
@@ -410,6 +510,8 @@ function mergeLLMResult(
       `核心命局由 ${ENGINE_BUILD_VERSIONS.core} 计算生成。`,
       meta.llmUsed
         ? `解析文本已由 ${ENGINE_BUILD_VERSIONS.llm} 做深度增强。`
+        : meta.deferredByProviderHealth
+        ? '上游模型当前波动较大，本次主动切换为稳定专家版交付，优先保证结果可读与可用。'
         : '本次未获取到 LLM 深度增强，当前由结构化引擎与 deterministic 专家层共同生成正文。',
       `人生 K 线与趋势判断按 ${ENGINE_BUILD_VERSIONS.kline} 版本生成。`,
       meta.agentic.enabled && agenticUsed
@@ -487,6 +589,12 @@ export function buildDeterministicFallbackNarrative(
   const patternLine = cleanNarrativeText(
     `${result.pattern?.type || '当前命局'}是当前主判断，${result.fortune?.currentDaYun || '当前阶段'}决定接下来一段时间的推进节奏。`
   );
+  const worldYiLead = cleanNarrativeText(
+    [
+      result.pattern?.type ? `你不是乱，你是${result.pattern.type}结构正在发力。` : '你不是乱，你是有结构。',
+      result.fortune?.currentDaYun ? `当前重点在${result.fortune.currentDaYun}这段阶段。` : '当前更要先看阶段，不要只看情绪。',
+    ].join(' ')
+  );
   const evidenceLine = cleanNarrativeText(
     evidenceHighlights
       || (favored.length > 0 ? `优先顺着${favored.join('、')}对应的动作去取舍。` : '')
@@ -494,14 +602,14 @@ export function buildDeterministicFallbackNarrative(
   );
   const actionLine = cleanNarrativeText(
     [
-      actionFocus ? `现在更适合先做：${actionFocus}` : '',
-      timingFocus ? `重点窗口放在${timingFocus}` : '',
+      actionFocus ? stripDecisionCue(actionFocus, 'action') : '',
+      timingFocus ? formatTimingReference(timingFocus) : '',
       summarizeActionOrRisk(extras?.strategySummary || '', 'action'),
     ].filter(Boolean).join('；')
   );
   const riskLine = cleanNarrativeText(
     [
-      avoidFocus ? `先别做：${avoidFocus}` : '',
+      avoidFocus ? stripDecisionCue(avoidFocus, 'risk') : '',
       summarizeActionOrRisk(extras?.temporalSummary || '', 'risk'),
       summarizeActionOrRisk(result.fortune?.interaction || '', 'risk'),
     ].filter(Boolean).join('；')
@@ -510,19 +618,25 @@ export function buildDeterministicFallbackNarrative(
     sanitizeNarrativeForUser(
       extras?.summaryOverride
       || [
-        patternLine,
+        worldYiLead,
         favored.length > 0 ? `优先顺着${favored.join('、')}相关方向推进。` : '',
       ].filter(Boolean).join(' ')
     )
   );
+  const openingCandidate = trimToSentence(rawOpening || summaryLine || patternLine, 48);
   const openingLine = cleanNarrativeText(
-    trimToSentence(rawOpening || summaryLine || patternLine, 48)
+    !openingCandidate
+      ? summaryLine
+      : openingCandidate.includes('从您的命局来看')
+      ? summaryLine
+      : openingCandidate
   );
 
   return {
     opening: openingLine,
     summary: summaryLine,
     explanation: [
+      `世界易判断：先看结构，再看阶段，再决定动作。`,
       `主判断：${patternLine}`,
       `判断依据：${evidenceLine || '当前先以命局结构、行运位置和用神取舍作为主依据。'}。`,
       `现在先做：${actionLine || '先推进一个低成本、可验证的小动作，再根据反馈继续收口。'}。`,
@@ -566,13 +680,13 @@ function mergeCareerAdvice(
       llmAdvice?.general || baseAdvice?.general,
       careerAgent.summary,
     ]),
-    specific: uniqueList([
+    specific: sanitizeAdviceItems('career', [
       ...(llmAdvice?.specific || baseAdvice?.specific || []),
       ...careerAgent.actions,
       ...strategyAgent.actions.slice(0, 1),
     ]),
-    timing: llmAdvice?.timing || baseAdvice?.timing || windowLabel(careerAgent) || windowLabel(strategyAgent),
-    avoid: uniqueList([
+    timing: sanitizeAdviceTiming('career', llmAdvice?.timing || baseAdvice?.timing || windowLabel(careerAgent) || windowLabel(strategyAgent)),
+    avoid: sanitizeAdviceItems('career', [
       ...(llmAdvice?.avoid || baseAdvice?.avoid || []),
       ...careerAgent.risks,
       ...strategyAgent.risks,
@@ -593,17 +707,17 @@ function mergeWealthAdvice(
     ...(llmAdvice || baseAdvice),
     general: joinParagraphs([
       llmAdvice?.general || baseAdvice?.general,
-      careerAgent.summary,
-      temporalAgent.summary,
     ]),
-    specific: uniqueList([
+    specific: sanitizeAdviceItems('wealth', [
       ...(llmAdvice?.specific || baseAdvice?.specific || []),
+      ...careerAgent.actions,
       ...strategyAgent.actions,
+      ...temporalAgent.actions,
     ]),
-    timing: llmAdvice?.timing || baseAdvice?.timing || windowLabel(strategyAgent) || windowLabel(temporalAgent),
+    timing: sanitizeAdviceTiming('wealth', llmAdvice?.timing || baseAdvice?.timing || windowLabel(strategyAgent) || windowLabel(temporalAgent)),
     direction: llmAdvice?.direction || baseAdvice?.direction || '',
     colors: llmAdvice?.colors || baseAdvice?.colors || [],
-    avoid: uniqueList([
+    avoid: sanitizeAdviceItems('wealth', [
       ...(llmAdvice?.avoid || baseAdvice?.avoid || []),
       ...strategyAgent.risks,
       ...temporalAgent.risks,
@@ -622,11 +736,11 @@ function mergeMarriageAdvice(
       llmAdvice?.general || baseAdvice?.general,
       relationshipAgent.summary,
     ]),
-    specific: uniqueList([
+    specific: sanitizeAdviceItems('marriage', [
       ...(llmAdvice?.specific || baseAdvice?.specific || []),
       ...relationshipAgent.actions,
     ]),
-    timing: llmAdvice?.timing || baseAdvice?.timing || windowLabel(relationshipAgent),
+    timing: sanitizeAdviceTiming('marriage', llmAdvice?.timing || baseAdvice?.timing || windowLabel(relationshipAgent)),
     direction: llmAdvice?.direction || baseAdvice?.direction || '',
     colors: llmAdvice?.colors || baseAdvice?.colors || [],
   };
@@ -643,14 +757,14 @@ function mergeHealthAdvice(
       llmAdvice?.general || baseAdvice?.general,
       healthAgent.summary,
     ]),
-    specific: uniqueList([
+    specific: sanitizeAdviceItems('health', [
       ...(llmAdvice?.specific || baseAdvice?.specific || []),
       ...healthAgent.actions,
     ]),
-    timing: llmAdvice?.timing || baseAdvice?.timing || windowLabel(healthAgent),
+    timing: sanitizeAdviceTiming('health', llmAdvice?.timing || baseAdvice?.timing || windowLabel(healthAgent)),
     directions: llmAdvice?.directions || baseAdvice?.directions || [],
     colors: llmAdvice?.colors || baseAdvice?.colors || [],
-    avoid: uniqueList([
+    avoid: sanitizeAdviceItems('health', [
       ...(llmAdvice?.avoid || baseAdvice?.avoid || []),
       ...healthAgent.risks,
     ]),
@@ -662,7 +776,12 @@ function uniqueList(values: string[]) {
 }
 
 function joinParagraphs(values: Array<string | undefined>) {
-  return values.filter(Boolean).join('\n\n');
+  const paragraphs = values
+    .flatMap((value) => `${value || ''}`.split(/\n+/))
+    .map((value) => cleanNarrativeText(sanitizeNarrativeForUser(value)))
+    .filter(Boolean);
+
+  return dedupeNarrativeSegments(paragraphs).join('\n\n');
 }
 
 function firstNonEmpty(values: Array<string | undefined>) {
@@ -672,8 +791,11 @@ function firstNonEmpty(values: Array<string | undefined>) {
 function cleanNarrativeText(value: string) {
   return value
     .replace(/\s+/g, ' ')
+    .replace(/^[，,；;:：]+/g, '')
+    .replace(/[，,]\s*[，,]/g, '，')
     .replace(/[；;]{2,}/g, '；')
     .replace(/[。]{2,}/g, '。')
+    .replace(/([，；])。/g, '。')
     .replace(/：\s+/g, '：')
     .trim()
     .replace(/[；;,，。]+$/g, '');
@@ -694,15 +816,19 @@ const NARRATIVE_NOISE_PATTERNS = [
   /nationalCycle/ig,
   /天时外部参照[^。]*。?/g,
   /地利外部参照[^。]*。?/g,
+  /人和外部参照[^。]*。?/g,
   /这份命盘的落地效果会被[^。]*。?/g,
+  /当前最优策略不是同时做很多事[^。]*。?/g,
   /命局主轴围绕[^。]*。?/g,
   /生时环境落在[^。]*。?/g,
   /四柱落点为[^。]*。?/g,
-  /当前最优策略不是同时做很多事[^。]*。?/g,
   /现实落地优先结合[^。]*。?/g,
+  /主攻方向先放在[^；。]*[；。]?/g,
+  /(?:^|[。；，,\s])(?:当前)?(?:事业|财富|关系|健康)窗口[:：][^。；]*/g,
   /解释增强即可。?/g,
   /格局清正。?/g,
   /乃富贵之命也。?/g,
+  /(?:relationship|family_role|settlement)/ig,
 ];
 
 const HYPE_OPENING_PATTERNS = [
@@ -727,10 +853,17 @@ function sanitizeNarrativeForUser(value: string) {
         : token
     ))
     .replace(/(\d{4})-\1/g, '$1年前后')
+    .replace(/围绕(\d{4})-(\d{4})(?:阶段|窗口)排序动作/g, (_, start, end) => {
+      const normalized = normalizeWindowRange(Number(start), Number(end));
+      return normalized === '当前阶段'
+        ? '围绕当前阶段排序动作'
+        : `围绕${normalized}排序动作`;
+    })
     .replace(/[（(][^)）]*(macro_cycle|solar_terms|geography|industry_cycle)[^)）]*[）)]/ig, '')
     .replace(/\s+/g, ' ')
     .replace(/[；;]{2,}/g, '；')
     .replace(/[。]{2,}/g, '。')
+    .replace(/([，；])。/g, '。')
     .trim();
 
   return next;
@@ -777,4 +910,134 @@ function trimToSentence(value: string, limit: number) {
   }
 
   return `${deHyped.slice(0, Math.max(0, limit - 1)).trim()}…`;
+}
+
+function formatTimingReference(value: string) {
+  const normalized = stripDecisionCue(cleanNarrativeText(sanitizeNarrativeForUser(value)), 'timing');
+  if (!normalized) {
+    return '';
+  }
+
+  if (/(年|月|季度|上半年|下半年|农历|近期|阶段|窗口|岁|春|夏|秋|冬)/.test(normalized)) {
+    return `重点窗口放在${normalized}`;
+  }
+
+  return `重点参照${normalized}`;
+}
+
+type AdviceTopic = 'career' | 'wealth' | 'marriage' | 'health';
+
+const ADVICE_TOPIC_BLOCKERS: Record<AdviceTopic, RegExp[]> = {
+  career: [/围绕(?:财富|关系|健康)做一条最短路径/, /主攻方向先放在(?:财富|关系|健康)/, /(?:财富|关系|健康)板块把节奏拖散/],
+  wealth: [/围绕(?:事业|关系|健康)做一条最短路径/, /主攻方向先放在(?:事业|关系|健康)/, /(?:事业|关系|健康)板块把节奏拖散/],
+  marriage: [/围绕(?:事业|财富|健康)做一条最短路径/, /主攻方向先放在(?:事业|财富|健康)/, /(?:事业|财富|健康)板块把节奏拖散/],
+  health: [/围绕(?:事业|财富|关系)做一条最短路径/, /主攻方向先放在(?:事业|财富|关系)/, /(?:事业|财富|关系)板块把节奏拖散/],
+};
+
+function sanitizeAdviceItems(topic: AdviceTopic, values: string[]) {
+  const blockers = ADVICE_TOPIC_BLOCKERS[topic];
+
+  return dedupeNarrativeSegments(values
+    .map((value) => cleanNarrativeText(sanitizeNarrativeForUser(value)))
+    .filter((value) => value.length >= 4)
+    .filter((value) => !blockers.some((pattern) => pattern.test(value))))
+    .slice(0, 6);
+}
+
+function sanitizeAdviceTiming(topic: AdviceTopic, value: string) {
+  const [timing] = sanitizeAdviceItems(topic, [value]);
+  return timing || '';
+}
+
+function repairExistingAdvice(advice?: FortuneAnalysisResult['advice']) {
+  return {
+    ...(advice || {}),
+    career: advice?.career ? {
+      ...advice.career,
+      general: joinParagraphs([advice.career.general]),
+      specific: sanitizeAdviceItems('career', advice.career.specific || []),
+      timing: sanitizeAdviceTiming('career', advice.career.timing || ''),
+      avoid: sanitizeAdviceItems('career', advice.career.avoid || []),
+    } : undefined,
+    wealth: advice?.wealth ? {
+      ...advice.wealth,
+      general: joinParagraphs([advice.wealth.general]),
+      specific: sanitizeAdviceItems('wealth', advice.wealth.specific || []),
+      timing: sanitizeAdviceTiming('wealth', advice.wealth.timing || ''),
+      avoid: sanitizeAdviceItems('wealth', advice.wealth.avoid || []),
+    } : undefined,
+    marriage: advice?.marriage ? {
+      ...advice.marriage,
+      general: joinParagraphs([advice.marriage.general]),
+      specific: sanitizeAdviceItems('marriage', advice.marriage.specific || []),
+      timing: sanitizeAdviceTiming('marriage', advice.marriage.timing || ''),
+      avoid: sanitizeAdviceItems('marriage', advice.marriage.avoid || []),
+    } : undefined,
+    health: advice?.health ? {
+      ...advice.health,
+      general: joinParagraphs([advice.health.general]),
+      specific: sanitizeAdviceItems('health', advice.health.specific || []),
+      timing: sanitizeAdviceTiming('health', advice.health.timing || ''),
+      avoid: sanitizeAdviceItems('health', advice.health.avoid || []),
+    } : undefined,
+    timing: dedupeNarrativeSegments((advice?.timing || [])
+      .map((value) => stripDecisionCue(cleanNarrativeText(sanitizeNarrativeForUser(value)), 'timing'))
+      .filter((value) => value.length >= 2)),
+  };
+}
+
+function stripDecisionCue(value: string, kind: 'action' | 'risk' | 'timing') {
+  const normalized = cleanNarrativeText(sanitizeNarrativeForUser(value));
+  if (!normalized) {
+    return '';
+  }
+
+  const patterns = kind === 'action'
+    ? [/^(?:现在更适合先做|现在先做|先做|宜先|先把)[：:\s]*/]
+    : kind === 'risk'
+    ? [/^(?:先别做|不要|避免|应避免)[：:\s]*/]
+    : [/^(?:重点窗口放在|重点参照)[：:\s]*/];
+
+  return patterns.reduce((text, pattern) => text.replace(pattern, '').trim(), normalized);
+}
+
+function dedupeNarrativeSegments(values: string[]) {
+  const seen = new Set<string>();
+
+  return values.filter((value) => {
+    const normalized = normalizeNarrativeForCompare(value);
+    if (!normalized || seen.has(normalized)) {
+      return false;
+    }
+    seen.add(normalized);
+    return true;
+  });
+}
+
+function normalizeNarrativeForCompare(value: string) {
+  return cleanNarrativeText(sanitizeNarrativeForUser(value))
+    .replace(/[，。；：、\s]/g, '')
+    .toLowerCase();
+}
+
+function hasStructuredNarrativeSections(value: string) {
+  return ['世界易判断：', '主判断：', '判断依据：', '现在先做：', '风险提醒：']
+    .every((label) => `${value || ''}`.includes(label));
+}
+
+function normalizeWindowRange(startYear: number, endYear: number) {
+  if (!Number.isFinite(startYear) || !Number.isFinite(endYear)) {
+    return '';
+  }
+
+  if (startYear === endYear) {
+    return `${startYear}年前后`;
+  }
+
+  const currentYear = new Date().getUTCFullYear();
+  if (endYear < currentYear - 1 || startYear > currentYear + 8) {
+    return '当前阶段';
+  }
+
+  return `${startYear}-${endYear}阶段`;
 }

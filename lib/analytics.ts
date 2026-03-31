@@ -1,4 +1,5 @@
 import { analyticsOperations } from '@/lib/database';
+import { forwardServerAnalyticsEventToGoogleAnalytics } from '@/lib/google-analytics-server';
 import type { AnalyticsEventRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
@@ -16,8 +17,14 @@ export type AnalyticsEventName =
   | 'case_article_viewed'
   | 'insights_page_viewed'
   | 'insight_article_viewed'
+  | 'tools_page_viewed'
+  | 'tool_detail_viewed'
+  | 'tool_result_viewed'
   | 'content_card_clicked'
+  | 'tool_card_clicked'
   | 'content_quick_analyze_started'
+  | 'tool_run_started'
+  | 'tool_run_completed'
   | 'analyze_submitted'
   | 'analyze_completed'
   | 'analyze_failed'
@@ -56,6 +63,7 @@ interface TrackEventInput {
   eventName: AnalyticsEventName;
   page?: string;
   meta?: Record<string, unknown>;
+  forwardToGoogleAnalytics?: boolean;
 }
 
 export function trackServerEvent(input: TrackEventInput) {
@@ -70,6 +78,15 @@ export function trackServerEvent(input: TrackEventInput) {
     };
 
     analyticsOperations.create(payload);
+    if (input.forwardToGoogleAnalytics !== false) {
+      void forwardServerAnalyticsEventToGoogleAnalytics({
+        eventName: input.eventName,
+        userId: input.userId,
+        sessionId: input.sessionId,
+        page: input.page,
+        meta: input.meta,
+      });
+    }
   } catch (error) {
     console.error('[Analytics] trackServerEvent failed:', error);
   }

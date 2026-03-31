@@ -1,0 +1,26 @@
+[     255ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3000/_next/static/css/8bb9b6de01e9acb3.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3000/tools/career-role-fit:0
+[     782ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js:0
+[     784ms] [ERROR] Refused to execute script from 'http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled. @ http://127.0.0.1:3000/tools/career-role-fit:1
+[     784ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:3000/_next/static/chunks/app/tools/%5Bslug%5D/page-937ebd0514d4f95e.js:0
+[     785ms] [ERROR] Refused to execute script from 'http://127.0.0.1:3000/_next/static/chunks/app/tools/%5Bslug%5D/page-937ebd0514d4f95e.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled. @ http://127.0.0.1:3000/tools/career-role-fit:1
+[    4228ms] [WARNING] The resource https://www.googletagmanager.com/gtag/js?id=G-CC5FJRFNFS was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:3000/tools/career-role-fit:0
+[  121067ms] [ERROR] ChunkLoadError: Loading chunk 1490 failed.
+(timeout: http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js)
+    at r.f.j (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:3060)
+    at http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1226
+    at Array.reduce (<anonymous>)
+    at r.e (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1205)
+    at c (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:150351)
+    at http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:165116
+    at t (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:166574) @ http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:0
+[  121083ms] [ERROR] Application error: ChunkLoadError: Loading chunk 1490 failed.
+(timeout: http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js)
+    at r.f.j (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:3060)
+    at http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1226
+    at Array.reduce (<anonymous>)
+    at r.e (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1205)
+    at c (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:150351)
+    at http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:165116
+    at t (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:166574) @ http://127.0.0.1:3000/_next/static/chunks/app/error-0c16e16541edb64f.js:0
+[  843180ms] [ERROR] Connecting to 'https://www.google.com/g/collect?v=2&tid=G-CC5FJRFNFS&gtm=45je63r2v9238634935za200zd9238634935&_p=1774928123030&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1490878510.1774928123&ul=en-us&sr=1440x1600&uaa=x86&uab=64&uafvl=Chromium%3B146.0.7680.80%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.80&uamb=0&uam=&uap=Linux&uapv=&uaw=0&are=1&frm=0&pscdl=noapi&_eu=AAAAAAQ&_s=2&tag_exp=0%7E115616985%7E115938465%7E115938468%7E116991816%7E117266400%7E117484252&sid=1774928123&sct=1&seg=1&dl=http%3A%2F%2F127.0.0.1%2Ftools%2Fcareer-role-fit&dt=%E5%B2%97%E4%BD%8D%E5%8C%B9%E9%85%8D%E6%B5%8B%E8%AF%95+%7C+%E4%BA%BA%E7%94%9FK%E7%BA%BF%E5%B7%A5%E5%85%B7%E4%B8%AD%E5%BF%83&en=user_engagement&_et=721819&tfd=843157&gaf=1' violates the following Content Security Policy directive: "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com". The action has been blocked. @ https://www.googletagmanager.com/gtag/js?id=G-CC5FJRFNFS:229
+[  843186ms] [ERROR] Fetch API cannot load https://www.google.com/g/collect?v=2&tid=G-CC5FJRFNFS&gtm=45je63r2v9238634935za200zd9238634935&_p=1774928123030&gcd=13l3l3l3l1l1&npa=0&dma=0&cid=1490878510.1774928123&ul=en-us&sr=1440x1600&uaa=x86&uab=64&uafvl=Chromium%3B146.0.7680.80%7CNot-A.Brand%3B24.0.0.0%7CGoogle%2520Chrome%3B146.0.7680.80&uamb=0&uam=&uap=Linux&uapv=&uaw=0&are=1&frm=0&pscdl=noapi&_eu=AAAAAAQ&_s=2&tag_exp=0%7E115616985%7E115938465%7E115938468%7E116991816%7E117266400%7E117484252&sid=1774928123&sct=1&seg=1&dl=http%3A%2F%2F127.0.0.1%2Ftools%2Fcareer-role-fit&dt=%E5%B2%97%E4%BD%8D%E5%8C%B9%E9%85%8D%E6%B5%8B%E8%AF%95+%7C+%E4%BA%BA%E7%94%9FK%E7%BA%BF%E5%B7%A5%E5%85%B7%E4%B8%AD%E5%BF%83&en=user_engagement&_et=721819&tfd=843157&gaf=1. Refused to connect because it violates the document's Content Security Policy. @ https://www.googletagmanager.com/gtag/js?id=G-CC5FJRFNFS:229

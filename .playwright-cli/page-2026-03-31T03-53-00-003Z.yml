@@ -1,0 +1,596 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 人生K线
+            - generic [ref=e12]:
+              - generic [ref=e13]: 世界易系统入口
+              - generic [ref=e14]: v1.0.0.1
+        - navigation [ref=e15]:
+          - link "世界易" [ref=e16] [cursor=pointer]:
+            - /url: /world-yi
+          - link "知识库" [ref=e17] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e18] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e19] [cursor=pointer]:
+            - /url: /insights
+          - link "工具中心" [ref=e20] [cursor=pointer]:
+            - /url: /tools
+          - link "进入判断" [ref=e21] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e22] [cursor=pointer]:
+            - /url: /chat
+          - link "事件日历" [ref=e23] [cursor=pointer]:
+            - /url: /events
+          - link "我的档案" [ref=e24] [cursor=pointer]:
+            - /url: /profile
+          - link "案例库" [ref=e25] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e26] [cursor=pointer]:
+            - /url: /updates
+        - generic [ref=e27]:
+          - link "邮箱登录" [ref=e28] [cursor=pointer]:
+            - /url: /login
+          - link "立即开始" [ref=e29] [cursor=pointer]:
+            - /url: "#analysis-form"
+            - text: 立即开始
+            - img [ref=e30]
+    - main [ref=e32]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]:
+            - img [ref=e37]
+            - text: 更快理解价值，更快进入分析
+          - generic [ref=e40]:
+            - heading "看清你的个人结构、当前阶段和下一步行动建议。" [level=1] [ref=e41]
+            - paragraph [ref=e42]: 先了解这份分析能帮你看清什么，再用最少的信息完成填写，直接进入结果页。
+          - generic [ref=e43]:
+            - link "立即开始分析" [ref=e44] [cursor=pointer]:
+              - /url: "#analysis-form"
+              - text: 立即开始分析
+              - img [ref=e45]
+            - link "看单项工具矩阵" [ref=e47] [cursor=pointer]:
+              - /url: /tools
+            - link "先看报告样例" [ref=e48] [cursor=pointer]:
+              - /url: /cases
+          - generic [ref=e49]:
+            - generic [ref=e50]:
+              - generic [ref=e51]: 更准确
+              - generic [ref=e52]: 真太阳时修正
+            - generic [ref=e53]:
+              - generic [ref=e54]: 更易懂
+              - generic [ref=e55]: 结构 + 趋势 + 建议
+            - generic [ref=e56]:
+              - generic [ref=e57]: 更安心
+              - generic [ref=e58]: 默认私密，可选分享
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - generic [ref=e62]: 你会拿到什么
+            - generic [ref=e63]: 一份能看懂、能持续使用的判断报告
+          - generic [ref=e64]:
+            - generic [ref=e66]:
+              - generic [ref=e67]: "01"
+              - generic [ref=e68]:
+                - generic [ref=e69]: 结构结论
+                - generic [ref=e70]: 先告诉你核心结构、关键矛盾和当前真正的主轴问题。
+            - generic [ref=e72]:
+              - generic [ref=e73]: "02"
+              - generic [ref=e74]:
+                - generic [ref=e75]: 阶段判断
+                - generic [ref=e76]: 解释最近为什么卡住、该冲还是等、什么时候容易转折。
+            - generic [ref=e78]:
+              - generic [ref=e79]: "03"
+              - generic [ref=e80]:
+                - generic [ref=e81]: 行动建议
+                - generic [ref=e82]: 把事业、关系、财富等建议写成人话，不堆术语。
+      - generic [ref=e84]:
+        - generic [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]:
+              - img [ref=e88]
+              - generic [ref=e93]: 如果你已经来过，这里直接继续
+            - generic [ref=e94]: 登录后会优先显示你最近的报告、当前升级进度和月度更新，不需要重新从零开始找。
+          - link "登录查看更新" [ref=e95] [cursor=pointer]:
+            - /url: /login?next=%2Fupdates
+            - text: 登录查看更新
+            - img [ref=e96]
+        - generic [ref=e98]: 登录后，这里会显示你当前报告的升级任务、月度更新和订阅状态。
+      - generic [ref=e100]:
+        - generic [ref=e101]:
+          - generic [ref=e102]:
+            - generic [ref=e103]:
+              - img [ref=e104]
+              - text: 个人升级面板
+            - heading "你的下一步，不该只停在浏览" [level=2] [ref=e108]
+            - paragraph [ref=e109]: 系统已经有你的最近报告和工具历史。这里应该直接把你带回最该继续的报告、工具、文章、案例和付费承接点。
+          - generic [ref=e110]: 当前最自然的付费承接是 事件推演，因为免费层已经能先帮你缩窄问题。
+        - generic [ref=e111]:
+          - generic [ref=e112]:
+            - generic [ref=e113]:
+              - img [ref=e114]
+              - text: 现在最该继续的工具
+            - heading "年度主窗口" [level=3] [ref=e117]
+            - paragraph [ref=e118]: 很多错判不是方向错，而是“年度主窗口”这一步时机错。
+            - generic [ref=e119]:
+              - generic [ref=e120]: 当前主线：你还没有形成稳定路径，先做综合测算，再选一个高频工具建立第一次可复用判断。
+              - generic [ref=e121]: 免费层先拿：免费先判断 年度主窗口 当前是推进窗、观察窗还是收缩窗。
+              - generic [ref=e122]: 付费承接：深测版会拆具体时间区间、动作优先级和错过窗口后的替代方案。
+            - generic [ref=e123]:
+              - link "继续测年度主窗口" [ref=e124] [cursor=pointer]:
+                - /url: /tools/timing-yearly-window
+                - text: 继续测年度主窗口
+                - img [ref=e125]
+              - link "先建立综合测算底盘" [ref=e127] [cursor=pointer]:
+                - /url: /analyze
+          - generic [ref=e128]:
+            - generic [ref=e129]:
+              - generic [ref=e130]:
+                - img [ref=e131]
+                - text: 继续放大的入口
+              - generic [ref=e134]:
+                - link "补一个工具：月度节奏" [ref=e135] [cursor=pointer]:
+                  - /url: /tools/timing-monthly-rhythm
+                - link "读相关文章：用命理报告辅助职业决策时，最常见的三个误区" [ref=e136] [cursor=pointer]:
+                  - /url: /knowledge/career-decision-with-bazi
+                - link "看相关案例：世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛" [ref=e137] [cursor=pointer]:
+                  - /url: /cases/world-yi-case-career-role-fit
+            - generic [ref=e138]:
+              - generic [ref=e139]:
+                - img [ref=e140]
+                - text: 付费升级点
+              - generic [ref=e142]: 最自然的下一步不是重新解释背景，而是直接进入 事件推演，把当前问题做成更明确的判断和动作方案。
+              - link "从这个工具进入付费承接" [ref=e143] [cursor=pointer]:
+                - /url: /tools/timing-yearly-window
+                - text: 从这个工具进入付费承接
+                - img [ref=e144]
+      - generic [ref=e147]:
+        - generic [ref=e148]:
+          - generic [ref=e149]:
+            - img [ref=e150]
+            - text: 协同路径
+          - heading "先建立你的第一条协同路径" [level=2] [ref=e153]
+          - paragraph [ref=e154]: 第一次进入时，先做综合测算，再选一个高频工具，最后去读相关方法文章和案例，会比只看一个入口更有感觉。
+        - generic [ref=e155]:
+          - generic [ref=e156]:
+            - generic [ref=e157]:
+              - img [ref=e158]
+              - text: 综合测算
+            - link "综合测算 回到综合测算 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。" [ref=e162] [cursor=pointer]:
+              - /url: /analyze
+              - generic [ref=e163]: 综合测算
+              - generic [ref=e164]: 回到综合测算
+              - generic [ref=e165]: 当前主轴更接近career。先看整体结构，再把问题拆进单项工具和内容路径里。
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - img [ref=e168]
+              - text: 相关工具
+            - generic [ref=e170]:
+              - link "相关工具 岗位匹配 你不是不努力，你可能只是站错了岗位。" [ref=e171] [cursor=pointer]:
+                - /url: /tools/career-role-fit
+                - generic [ref=e172]: 相关工具
+                - generic [ref=e173]: 岗位匹配
+                - generic [ref=e174]: 你不是不努力，你可能只是站错了岗位。
+              - link "相关工具 升职窗口 不是你永远升不上去，而是你可能总在错的窗口硬冲。" [ref=e175] [cursor=pointer]:
+                - /url: /tools/career-promotion-window
+                - generic [ref=e176]: 相关工具
+                - generic [ref=e177]: 升职窗口
+                - generic [ref=e178]: 不是你永远升不上去，而是你可能总在错的窗口硬冲。
+              - link "相关工具 转岗判断 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。" [ref=e179] [cursor=pointer]:
+                - /url: /tools/career-job-switch
+                - generic [ref=e180]: 相关工具
+                - generic [ref=e181]: 转岗判断
+                - generic [ref=e182]: 有些卡住不是你不行，而是你已经不该再在这条路上硬耗。
+          - generic [ref=e183]:
+            - generic [ref=e184]:
+              - img [ref=e185]
+              - text: 相关文章
+            - generic [ref=e187]:
+              - link "相关文章 用命理报告辅助职业决策时，最常见的三个误区 命理不是替代决策，而是帮助用户在高风险节点减少误判。职业分析尤其需要避免“绝对化结论”。" [ref=e188] [cursor=pointer]:
+                - /url: /knowledge/career-decision-with-bazi
+                - generic [ref=e189]: 相关文章
+                - generic [ref=e190]: 用命理报告辅助职业决策时，最常见的三个误区
+                - generic [ref=e191]: 命理不是替代决策，而是帮助用户在高风险节点减少误判。职业分析尤其需要避免“绝对化结论”。
+              - link "相关文章 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。" [ref=e192] [cursor=pointer]:
+                - /url: /knowledge/world-yi-career-role-fit
+                - generic [ref=e193]: 相关文章
+                - generic [ref=e194]: 世界易事业观：职业真正难的不是选名字，而是选对推进方式和角色密度
+                - generic [ref=e195]: 世界易看事业，不先问头衔，而先问一个人适合怎样的推进结构、承压方式和角色密度。
+              - link "相关文章 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。" [ref=e196] [cursor=pointer]:
+                - /url: /knowledge/world-yi-career-stage-reset
+                - generic [ref=e197]: 相关文章
+                - generic [ref=e198]: 世界易事业重排法：职业卡住时，先不要急着换赛道，先判断你是不是卡在错误阶段
+                - generic [ref=e199]: 很多职业焦虑不是行业本身不行，而是阶段错读、角色错配和环境密度一起叠加后的结果。
+          - generic [ref=e200]:
+            - generic [ref=e201]:
+              - img [ref=e202]
+              - text: 相关案例
+            - generic [ref=e204]:
+              - link "相关案例 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。" [ref=e205] [cursor=pointer]:
+                - /url: /cases/world-yi-case-career-role-fit
+                - generic [ref=e206]: 相关案例
+                - generic [ref=e207]: 世界易案例：不是不适合这份工作，而是你一直在错位角色里硬扛
+                - generic [ref=e208]: 很多人表面上职业焦虑，实际不是行业错了，而是自己长期停在最消耗的角色密度里。
+              - link "相关案例 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。" [ref=e209] [cursor=pointer]:
+                - /url: /cases/world-yi-case-career-promotion-freeze
+                - generic [ref=e210]: 相关案例
+                - generic [ref=e211]: 世界易案例：升职机会来了却不敢接，不一定是胆小，而是你知道当前系统快到边界了
+                - generic [ref=e212]: 很多职业用户表面在纠结升不升，实际在纠结自己现在的承载系统能不能再多压一层。
+              - link "相关案例 案例：换岗前，用户真正关心的是时机，而不是标签 职业场景里，用户最需要的是判断“现在推进还是先稳住”，这正是报告页和事件管理页协同的地方。" [ref=e213] [cursor=pointer]:
+                - /url: /cases/career-switch-case
+                - generic [ref=e214]: 相关案例
+                - generic [ref=e215]: 案例：换岗前，用户真正关心的是时机，而不是标签
+                - generic [ref=e216]: 职业场景里，用户最需要的是判断“现在推进还是先稳住”，这正是报告页和事件管理页协同的地方。
+      - generic [ref=e218]:
+        - generic [ref=e219]:
+          - img [ref=e221]
+          - heading "先看个人结构" [level=2] [ref=e224]
+          - paragraph [ref=e225]: 先交代核心结构、能量分布和真正的主轴问题，让用户知道自己为什么总在这里卡住。
+        - generic [ref=e226]:
+          - img [ref=e228]
+          - heading "再看当前阶段" [level=2] [ref=e232]
+          - paragraph [ref=e233]: 把大运、流年和最近节奏解释清楚，回答为什么这段时间会这样。
+        - generic [ref=e234]:
+          - img [ref=e236]
+          - heading "最后给出行动建议" [level=2] [ref=e239]
+          - paragraph [ref=e240]: 不是一句好坏判断，而是明确告诉你什么时候适合推进、等待、调整和复盘。
+      - generic [ref=e242]:
+        - generic [ref=e243]:
+          - generic [ref=e244]: English Readers
+          - paragraph [ref=e245]: For global professionals, overseas-born Chinese, and English-speaking readers exploring Bazi with a practical lens.
+          - 'link "知识入口 English · Global / US World Yi Introduction: A Modern Decision Framework for the AI Era" [ref=e246] [cursor=pointer]':
+            - /url: /knowledge/world-yi-en-introduction
+            - generic [ref=e247]:
+              - generic [ref=e248]: 知识入口
+              - generic [ref=e249]: English · Global / US
+            - generic [ref=e250]: "World Yi Introduction: A Modern Decision Framework for the AI Era"
+          - generic [ref=e251]:
+            - link "知识内容" [ref=e252] [cursor=pointer]:
+              - /url: /knowledge#content-locale-en
+            - link "案例内容" [ref=e253] [cursor=pointer]:
+              - /url: /cases#content-locale-en
+        - generic [ref=e254]:
+          - generic [ref=e255]: 繁體中文讀者
+          - paragraph [ref=e256]: 面向台灣、香港與偏好繁體中文閱讀的用戶，優先看到更自然的語感與情境。
+          - link "知识入口 繁體中文 · 香港 香港用戶移居英國、加拿大或換城市發展前，最應先判斷的結構與時機變量" [ref=e257] [cursor=pointer]:
+            - /url: /knowledge/hong-kong-emigration-uk-canada-city-relocation-structural-timing-factors
+            - generic [ref=e258]:
+              - generic [ref=e259]: 知识入口
+              - generic [ref=e260]: 繁體中文 · 香港
+            - generic [ref=e261]: 香港用戶移居英國、加拿大或換城市發展前，最應先判斷的結構與時機變量
+          - generic [ref=e262]:
+            - link "知识内容" [ref=e263] [cursor=pointer]:
+              - /url: /knowledge#content-locale-zh-Hant
+            - link "案例内容" [ref=e264] [cursor=pointer]:
+              - /url: /cases#content-locale-zh-Hant
+        - generic [ref=e265]:
+          - generic [ref=e266]: 简体中文读者
+          - paragraph [ref=e267]: 面向中国大陆、海外华人和偏好简体中文阅读的用户，先看最核心的知识与案例。
+          - link "知识入口 简体中文 · 简体中文 真太阳时为什么会直接影响命盘结果" [ref=e268] [cursor=pointer]:
+            - /url: /knowledge/true-solar-time-guide
+            - generic [ref=e269]:
+              - generic [ref=e270]: 知识入口
+              - generic [ref=e271]: 简体中文 · 简体中文
+            - generic [ref=e272]: 真太阳时为什么会直接影响命盘结果
+          - generic [ref=e273]:
+            - link "知识内容" [ref=e274] [cursor=pointer]:
+              - /url: /knowledge#content-locale-zh-Hans
+            - link "案例内容" [ref=e275] [cursor=pointer]:
+              - /url: /cases#content-locale-zh-Hans
+      - generic [ref=e278]:
+        - generic [ref=e279]:
+          - generic [ref=e280]:
+            - img [ref=e281]
+            - text: 世界易 v1.0.0.1
+          - heading "从工业时代到 AI 时代，人更需要一套高维判断语言。" [level=2] [ref=e284]
+          - paragraph [ref=e285]: 凯莉提出的世界易，不是旧叙事换包装，而是试图在 AI 时代重新统一世界、人与环境的解释秩序，让古老的变易思想重新成为现代人的判断语言。
+          - generic [ref=e286]:
+            - link "进入世界易总入口" [ref=e287] [cursor=pointer]:
+              - /url: /world-yi
+            - link "读世界易总论" [ref=e288] [cursor=pointer]:
+              - /url: /knowledge/world-yi-v1-manifesto
+            - link "读时代认知" [ref=e289] [cursor=pointer]:
+              - /url: /knowledge/world-yi-era-cognition
+        - generic [ref=e290]:
+          - generic [ref=e291]:
+            - generic [ref=e292]: 你不是乱
+            - generic [ref=e293]: 世界易先告诉你：你是有结构的。
+          - generic [ref=e294]:
+            - generic [ref=e295]: 你不是倒霉
+            - generic [ref=e296]: 很多痛苦不是命差，而是处在某个阶段。
+          - generic [ref=e297]:
+            - generic [ref=e298]: 你不是没路
+            - generic [ref=e299]: 真正的问题往往是进退顺序错了。
+          - generic [ref=e300]:
+            - generic [ref=e301]: 你可以重建判断
+            - generic [ref=e302]: AI 时代最稀缺的不是信息，而是判断秩序。
+      - generic [ref=e308]:
+        - generic [ref=e309]:
+          - generic [ref=e310]:
+            - img [ref=e311]
+            - text: 世界易系统层
+          - heading "这已经不是一个单点判断工具，而是一套正在进入网页、内容和产品的判断体系。" [level=2] [ref=e314]
+          - paragraph [ref=e315]: 现在你在站内看到的，不只是分析入口，而是一个正在成书、成矩阵、成案例、成全球路径的世界易体系。它会持续把变易智慧翻译成现代人真正能使用的判断母语。
+          - generic [ref=e316]:
+            - generic [ref=e317]:
+              - generic [ref=e318]: 当前公开总量
+              - generic [ref=e319]: 91 篇
+            - generic [ref=e320]:
+              - generic [ref=e321]: 知识主干
+              - generic [ref=e322]: 50 篇
+            - generic [ref=e323]:
+              - generic [ref=e324]: 案例层
+              - generic [ref=e325]: 32 篇
+            - generic [ref=e326]:
+              - generic [ref=e327]: 环境洞察
+              - generic [ref=e328]: 9 篇
+            - generic [ref=e329]:
+              - generic [ref=e330]: 全球与英文
+              - generic [ref=e331]: 8 组入口
+            - generic [ref=e332]:
+              - generic [ref=e333]: 公开入口
+              - generic [ref=e334]: 28 个
+          - generic [ref=e335]:
+            - link "单项工具中心" [ref=e336] [cursor=pointer]:
+              - /url: /tools
+              - generic [ref=e337]:
+                - text: 单项工具中心
+                - img [ref=e338]
+            - link "世界易总入口" [ref=e340] [cursor=pointer]:
+              - /url: /world-yi
+              - generic [ref=e341]:
+                - text: 世界易总入口
+                - img [ref=e342]
+            - link "十卷主书工程" [ref=e344] [cursor=pointer]:
+              - /url: /world-yi/book
+              - generic [ref=e345]:
+                - text: 十卷主书工程
+                - img [ref=e346]
+            - link "人生六域入口" [ref=e348] [cursor=pointer]:
+              - /url: /world-yi/domains
+              - generic [ref=e349]:
+                - text: 人生六域入口
+                - img [ref=e350]
+            - link "全球华人路径" [ref=e352] [cursor=pointer]:
+              - /url: /world-yi/global
+              - generic [ref=e353]:
+                - text: 全球华人路径
+                - img [ref=e354]
+            - link "首批 120 篇矩阵" [ref=e356] [cursor=pointer]:
+              - /url: /world-yi/matrix
+              - generic [ref=e357]:
+                - text: 首批 120 篇矩阵
+                - img [ref=e358]
+            - link "发布架构" [ref=e360] [cursor=pointer]:
+              - /url: /world-yi/publish
+              - generic [ref=e361]:
+                - text: 发布架构
+                - img [ref=e362]
+        - generic [ref=e364]:
+          - generic [ref=e365]:
+            - img [ref=e367]
+            - generic [ref=e369]: 十卷主书初版
+            - paragraph [ref=e370]: 不是一篇爆文，而是从总论、方法、六域、环境、应用到治理的十卷母本。
+          - generic [ref=e371]:
+            - img [ref=e373]
+            - generic [ref=e376]: 人生六域
+            - paragraph [ref=e377]: 事业、财富、关系、健康、家庭、迁移六条主线已经独立成入口。
+          - generic [ref=e378]:
+            - img [ref=e380]
+            - generic [ref=e385]: 全球与英文层
+            - paragraph [ref=e386]: 海外华人和英文路径已经起量，不再只服务单一语境。
+          - generic [ref=e387]:
+            - img [ref=e389]
+            - generic [ref=e393]: 内容矩阵
+            - paragraph [ref=e394]: 十卷主书已经映射为首批 120 篇执行批次，后续通向 2000 篇内容宇宙。
+      - generic [ref=e396]:
+        - generic [ref=e397]:
+          - generic [ref=e398]:
+            - img [ref=e399]
+            - text: 快速填写
+          - heading "填完必要信息，直接进入结果页" [level=2] [ref=e402]
+          - paragraph [ref=e403]: 只保留真正影响判断质量的字段，尽量少打断、少解释、少来回切换。
+        - generic [ref=e404]:
+          - generic [ref=e406]:
+            - generic [ref=e407]:
+              - generic [ref=e408]:
+                - generic [ref=e409]: 结构底座
+                - generic [ref=e410]: 出生信息会先决定命局底座，不先被单一事件带跑。
+              - generic [ref=e411]:
+                - generic [ref=e412]: 阶段坐标
+                - generic [ref=e413]: 真太阳时、时区与时间精度会影响阶段判断。
+              - generic [ref=e414]:
+                - generic [ref=e415]: 动作导向
+                - generic [ref=e416]: 最终结果要落到现在先做什么，而不是停在术语。
+            - generic [ref=e417]:
+              - generic [ref=e418]: 世界易录入提示
+              - generic [ref=e419]: 这一步不是单纯提交一份资料，而是在为你的个人判断页建立底座。系统后面会按“结构 → 阶段 → 环境 → 动作”的顺序整理结果。
+            - generic [ref=e420]:
+              - generic [ref=e421]: 慢请求处理提醒
+              - generic [ref=e422]: 如果网络波动或模型响应偏慢，你可以稍后回来看判断记录。登录并绑定邮箱后，报告生成完成时也可以直接收邮件提醒。
+            - generic [ref=e423]:
+              - generic [ref=e424]:
+                - generic [ref=e425]:
+                  - generic [ref=e426]:
+                    - generic [ref=e427]: 录入完成度
+                    - generic [ref=e428]: 不是必须填到完美，但补齐关键缺口会明显提升判断质量。
+                  - generic [ref=e429]: 50%
+                - generic [ref=e430]:
+                  - generic [ref=e431]:
+                    - generic [ref=e432]:
+                      - generic [ref=e433]: 判断主题
+                      - generic [ref=e434]: 待补强
+                    - generic [ref=e435]: 当前还是默认分类
+                    - generic [ref=e436]: 建议先把主题缩到更具体的事业、关系、财富等主线。
+                  - generic [ref=e437]:
+                    - generic [ref=e438]:
+                      - generic [ref=e439]: 出生时间精度
+                      - generic [ref=e440]: 已增强
+                    - generic [ref=e441]: 1990年01月01日 00:00
+                    - generic [ref=e442]: 阶段判断会更稳，结果更容易落到月份和窗口。
+                  - generic [ref=e443]:
+                    - generic [ref=e444]:
+                      - generic [ref=e445]: 环境坐标
+                      - generic [ref=e446]: 待补强
+                    - generic [ref=e447]: 当前仍是未知地
+                    - generic [ref=e448]: 补上出生地点后，真太阳时和环境判断会更可靠。
+                  - generic [ref=e449]:
+                    - generic [ref=e450]:
+                      - generic [ref=e451]: 时间修正
+                      - generic [ref=e452]: 已增强
+                    - generic [ref=e453]: 真太阳时已开启
+                    - generic [ref=e454]: 系统会优先按更稳的时间基准整理阶段。
+              - generic [ref=e455]:
+                - generic [ref=e456]: 本次更适合这样问
+                - generic [ref=e457]: 综合问题也要先压成一个主问题，再进入判断。
+                - generic [ref=e458]:
+                  - generic [ref=e459]: 建议追问方式
+                  - generic [ref=e460]: 更适合追问“现在最该先看事业、关系、财富、健康、家庭还是迁移哪条主线”。
+                - generic [ref=e461]:
+                  - generic [ref=e462]: 当前下一步
+                  - generic [ref=e463]: 先把案例分类从“默认分类”切到更具体的问题主线，结果会更聚焦。
+                - generic [ref=e464]:
+                  - generic [ref=e465]: 避免这样问
+                  - generic [ref=e466]: 不要一次把所有问题混在一起，先锁定一条最想判断的主线。
+            - generic [ref=e467]:
+              - generic [ref=e468]: 命主姓名
+              - textbox "请输入姓名" [ref=e469]
+            - generic [ref=e470]:
+              - generic [ref=e471]:
+                - button "男" [ref=e472] [cursor=pointer]:
+                  - generic [ref=e475]: 男
+                - button "女" [ref=e476] [cursor=pointer]:
+                  - generic [ref=e479]: 女
+              - generic [ref=e480]:
+                - button "公历" [ref=e481] [cursor=pointer]
+                - button "农历" [ref=e482] [cursor=pointer]
+                - button "四柱" [ref=e483] [cursor=pointer]
+            - generic [ref=e484]:
+              - generic [ref=e485]: 出生时间
+              - button "1990年01月01日 00:00" [ref=e486] [cursor=pointer]
+            - generic [ref=e487]:
+              - generic [ref=e488]: 出生地址
+              - button "未知地 北京时间" [ref=e489] [cursor=pointer]
+            - generic [ref=e490]:
+              - button "夏令时" [ref=e491] [cursor=pointer]:
+                - generic [ref=e494]: 夏令时
+              - button "真太阳时" [ref=e495] [cursor=pointer]:
+                - generic [ref=e498]: 真太阳时
+              - button "早晚子时" [ref=e499] [cursor=pointer]:
+                - generic [ref=e502]: 早晚子时
+              - generic [ref=e503]:
+                - generic [ref=e504]: 保存
+                - button [ref=e505] [cursor=pointer]
+            - generic [ref=e507]:
+              - generic [ref=e508]: 真太阳时：1990-01-01 00:00
+              - generic [ref=e509]: 地址经纬： 北纬39.9288 东经116.416
+            - generic [ref=e510]:
+              - generic [ref=e511]: 案例分类
+              - button "默认分类" [ref=e513] [cursor=pointer]:
+                - generic [ref=e516]: 默认分类
+            - generic [ref=e517]:
+              - generic [ref=e518]: 本次建盘协议
+              - generic [ref=e519]:
+                - generic [ref=e520]:
+                  - generic [ref=e521]: 判断主题
+                  - generic [ref=e522]: 默认分类
+                - generic [ref=e523]:
+                  - generic [ref=e524]: 出生信息模式
+                  - generic [ref=e525]: 1990年01月01日 00:00
+                - generic [ref=e526]:
+                  - generic [ref=e527]: 环境坐标
+                  - generic [ref=e528]: 未知地 北京时间
+                - generic [ref=e529]:
+                  - generic [ref=e530]: 时间修正
+                  - generic [ref=e531]: 真太阳时开启
+            - generic [ref=e532]: 提交后你先拿到的，不是一句抽象结论，而是主结构、当前阶段、环境提示和现在先做什么。
+            - button "用当前信息进入判断" [ref=e533] [cursor=pointer]
+          - button "丙 辛 甲 丙 午 卯 辰 寅 即时起局 农历：2026年二月十三 寅时 公历：2026-03-31 03:52" [ref=e535] [cursor=pointer]:
+            - generic [ref=e541]:
+              - generic [ref=e542]:
+                - generic [ref=e543]: 丙
+                - generic [ref=e544]: 辛
+                - generic [ref=e545]: 甲
+                - generic [ref=e546]: 丙
+              - generic [ref=e547]:
+                - generic [ref=e548]: 午
+                - generic [ref=e549]: 卯
+                - generic [ref=e550]: 辰
+                - generic [ref=e551]: 寅
+            - generic [ref=e552]:
+              - generic [ref=e553]: 即时起局
+              - generic [ref=e554]: 农历：2026年二月十三 寅时
+              - generic [ref=e555]: 公历：2026-03-31 03:52
+          - generic [ref=e556]: 如果你只是想先快速进入结果，也可以直接用上面的快速入口。后续结果页仍会优先整理成世界易的结构、阶段和动作顺序。
+          - generic [ref=e557]:
+            - img [ref=e558]
+            - generic [ref=e560]: 平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考
+      - generic [ref=e561]:
+        - generic [ref=e562]:
+          - generic [ref=e563]:
+            - generic [ref=e564]: 继续了解
+            - heading "看几个真实案例和常见问题，再开始也不晚。" [level=2] [ref=e565]
+            - paragraph [ref=e566]: 如果你想先确认这份分析适不适合自己，可以先看看案例、知识说明和不同场景的解读方式。
+          - generic [ref=e567]:
+            - link "迁移与去留 世界易案例：海归用户最难的不是选国家，而是选阶段 很多海归用户表面问“回不回”，真正的问题其实是当前阶段到底适合扩张、沉淀，还是先保留双边可能性。" [ref=e568] [cursor=pointer]:
+              - /url: /cases/world-yi-case-return-or-stay
+              - generic [ref=e569]: 迁移与去留
+              - generic [ref=e570]: 世界易案例：海归用户最难的不是选国家，而是选阶段
+              - paragraph [ref=e571]: 很多海归用户表面问“回不回”，真正的问题其实是当前阶段到底适合扩张、沉淀，还是先保留双边可能性。
+            - link "升学与高考 案例：把升学焦虑转成可执行的时间与方向判断 一个典型的升学场景里，用户真正需要的不是玄乎的结论，而是对节奏、方向和风险的更清晰判断。" [ref=e572] [cursor=pointer]:
+              - /url: /cases/gaokao-path-case
+              - generic [ref=e573]: 升学与高考
+              - generic [ref=e574]: 案例：把升学焦虑转成可执行的时间与方向判断
+              - paragraph [ref=e575]: 一个典型的升学场景里，用户真正需要的不是玄乎的结论，而是对节奏、方向和风险的更清晰判断。
+        - generic [ref=e576]:
+          - link "城市洞察 世界易城市观察：为什么温哥华容易让一些人安静下来，也让另一些人失去推进感 城市不是背景板，它会放大人的某些结构，也会削弱另一些结构。" [ref=e577] [cursor=pointer]:
+            - /url: /insights/city/world-yi-vancouver
+            - generic [ref=e578]: 城市洞察
+            - generic [ref=e579]: 世界易城市观察：为什么温哥华容易让一些人安静下来，也让另一些人失去推进感
+            - paragraph [ref=e580]: 城市不是背景板，它会放大人的某些结构，也会削弱另一些结构。
+          - link "城市洞察 世界易城市观察：为什么新加坡会放大效率、秩序和焦虑，也放大结构不稳的人身上所有紧绷感 高效率城市不只会放大执行力，也会放大结构里的紧绷、边界薄和持续承压问题。" [ref=e581] [cursor=pointer]:
+            - /url: /insights/city/world-yi-singapore
+            - generic [ref=e582]: 城市洞察
+            - generic [ref=e583]: 世界易城市观察：为什么新加坡会放大效率、秩序和焦虑，也放大结构不稳的人身上所有紧绷感
+            - paragraph [ref=e584]: 高效率城市不只会放大执行力，也会放大结构里的紧绷、边界薄和持续承压问题。
+          - link "行业洞察 世界易行业观察：AI 服务业最怕的不是竞争激烈，而是所有人都误把短期高热当长期结构 AI 行业机会很多，但窗口和结构混在一起时，最容易把团队、产品和个人节奏一起推乱。" [ref=e585] [cursor=pointer]:
+            - /url: /insights/industry/world-yi-ai-service-industry
+            - generic [ref=e586]: 行业洞察
+            - generic [ref=e587]: 世界易行业观察：AI 服务业最怕的不是竞争激烈，而是所有人都误把短期高热当长期结构
+            - paragraph [ref=e588]: AI 行业机会很多，但窗口和结构混在一起时，最容易把团队、产品和个人节奏一起推乱。
+    - contentinfo [ref=e589]:
+      - generic [ref=e590]:
+        - generic [ref=e591]:
+          - generic [ref=e592]: 人生K线
+          - paragraph [ref=e593]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+          - paragraph [ref=e594]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+        - generic [ref=e595]:
+          - link "邮箱登录" [ref=e596] [cursor=pointer]:
+            - /url: /login
+          - link "世界易" [ref=e597] [cursor=pointer]:
+            - /url: /world-yi
+          - link "主书工程" [ref=e598] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "工具中心" [ref=e599] [cursor=pointer]:
+            - /url: /tools
+          - link "知识库" [ref=e600] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e601] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e602] [cursor=pointer]:
+            - /url: /insights
+          - link "案例库" [ref=e603] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e604] [cursor=pointer]:
+            - /url: /updates
+          - link "进入判断" [ref=e605] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e606] [cursor=pointer]:
+            - /url: /chat
+          - link "事件管理" [ref=e607] [cursor=pointer]:
+            - /url: /events
+  - alert [ref=e608]

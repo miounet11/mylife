@@ -1,4 +1,4 @@
-import { buildDeterministicFallbackNarrative, resolveAnalyzeAgentKeys } from '@/lib/report-pipeline';
+import { buildDeterministicFallbackNarrative, finalizeReportForDelivery, resolveAnalyzeAgentKeys, shouldRunAnalyzeAgentic } from '@/lib/report-pipeline';
 
 describe('report pipeline analyze agent keys', () => {
   it('uses full deterministic expert coverage when agentic llm path is deferred', () => {
@@ -24,6 +24,16 @@ describe('report pipeline analyze agent keys', () => {
       'kline_narrative',
       'strategy_advisor',
     ]);
+  });
+
+  it('skips analyze agentic execution when llm is deferred by provider health', () => {
+    expect(shouldRunAnalyzeAgentic({
+      source: 'analyze',
+      llmUsed: false,
+      deferredByProviderHealth: true,
+      agentScopeHealthDeferred: false,
+      agentScopeSnapshotsConservative: false,
+    })).toBe(false);
   });
 
   it('builds a focused fallback narrative when llm enhancement is unavailable', () => {
@@ -119,12 +129,304 @@ describe('report pipeline analyze agent keys', () => {
       temporalSummary: '火旺窗口更有利，但不要因为窗口变好就一次性压满。',
     });
 
+    expect(narrative.summary).toContain('你不是乱');
     expect(narrative.summary).toContain('身弱格');
     expect(narrative.summary).toContain('甲午大运');
+    expect(narrative.opening.length).toBeGreaterThan(0);
+    expect(narrative.explanation).toContain('世界易判断：');
     expect(narrative.explanation).toContain('主判断：');
     expect(narrative.explanation).toContain('判断依据：');
     expect(narrative.explanation).toContain('现在先做：');
     expect(narrative.explanation).toContain('风险提醒：');
     expect(narrative.explanation).toContain('先收敛战线，只推进一个最关键项目');
+  });
+
+  it('strips placeholder leaks and template tail from focused narrative output', () => {
+    const narrative = buildDeterministicFallbackNarrative({
+      basic: {
+        dayMaster: '辛',
+        pillars: [],
+      },
+      fiveElements: {
+        wood: { strength: 12, quality: 'weak', description: '木弱' },
+        fire: { strength: 28, quality: 'strong', description: '火旺' },
+        earth: { strength: 20, quality: 'medium', description: '土中等' },
+        metal: { strength: 24, quality: 'strong', description: '金旺' },
+        water: { strength: 16, quality: 'medium', description: '水中等' },
+      },
+      tenGods: {
+        self: '辛',
+        output: [],
+        input: [],
+        control: [],
+        controlled: [],
+      },
+      pattern: {
+        type: '身旺格',
+        strength: 'strong',
+        quality: 'good',
+        description: '身旺，宜用火木收敛金气。',
+      },
+      fortune: {
+        currentDaYun: '丙午大运',
+        currentLiuNian: '丁未流年',
+        interaction: '这份命盘的落地效果会被 macro_cycle 和 geography 放大。涉及土过重的环境或动作，要留出缓冲。',
+        nextYear: '明年仍有火土窗口。',
+      },
+      advice: {
+        career: {
+          general: '先收敛方向。',
+          specific: ['先把资源压到一个主航道'],
+          timing: '2027-2027',
+          avoid: ['不要同时开两条重资产线'],
+          direction: '南方',
+          colors: ['红色'],
+        },
+        wealth: {
+          general: '先保留现金流。',
+          specific: ['先做轻量验证'],
+          timing: '午月',
+          direction: '南方',
+          colors: ['红色'],
+          avoid: ['避免冲动追加'],
+        },
+        marriage: {
+          general: '先稳沟通。',
+          specific: ['先减少情绪化对话'],
+          timing: '夏季',
+          direction: '南方',
+          colors: ['红色'],
+          avoid: ['不要逼迫对方马上表态'],
+        },
+        health: {
+          general: '先稳作息。',
+          specific: ['先把睡眠拉回稳定区间'],
+          timing: '近期',
+          directions: ['南方'],
+          colors: ['红色'],
+          avoid: ['避免长期熬夜'],
+        },
+        colors: ['红色'],
+        directions: ['南方'],
+        timing: ['午月'],
+        yongShen: ['火'],
+        jiShen: ['金'],
+        xiShen: ['木'],
+      },
+      evidence: {
+        statistics: {
+          totalSamples: 1,
+          similarCases: 1,
+          successRate: 1,
+          averageIncome: '0',
+          averageAge: 30,
+        },
+        celebrities: [],
+        similarCases: [],
+      },
+      analysis: {
+        opening: '细观您的八字，格局清正。命局主轴围绕身旺格展开。',
+        summary: '',
+        explanation: '当前最优策略不是同时做很多事，而是围绕2027-2027阶段排序动作。天时外部参照中性，结合macro_cycle、solar_terms做解释增强即可。',
+      },
+    }, {
+      openingOverride: '您好，测试用户。从您的八字来看，格局清正。',
+      summaryOverride: '当前先收敛主线，不要分散推进。',
+      explanationOverride: '身旺但火木为用，当前大运可发力。天时外部参照中性，结合macro_cycle、solar_terms做解释增强即可。',
+      strategySummary: '先把资源压到一个主航道，不要同时开两条重资产线。',
+      temporalSummary: '2027-2027窗口可推进，但不要因为窗口转暖就一次压满。',
+    });
+
+    expect(narrative.opening).not.toContain('格局清正');
+    expect(narrative.opening.length).toBeGreaterThan(0);
+    expect(narrative.summary).not.toContain('macro_cycle');
+    expect(narrative.explanation).not.toContain('solar_terms');
+    expect(narrative.explanation).not.toContain('2036-2036');
+    expect(narrative.explanation).toContain('2027年前后');
+    expect(narrative.explanation).not.toContain('现在先做：现在更适合先做：');
+    expect(narrative.explanation).not.toContain('风险提醒：先别做：先别做：');
+  });
+
+  it('finalizes first-delivery reports into cleaned user-facing output', () => {
+    const finalized = finalizeReportForDelivery({
+      basic: {
+        dayMaster: '辛',
+        pillars: [],
+      },
+      fiveElements: {
+        wood: { strength: 12, quality: 'weak', description: '木弱' },
+        fire: { strength: 28, quality: 'strong', description: '火旺' },
+        earth: { strength: 20, quality: 'medium', description: '土中等' },
+        metal: { strength: 24, quality: 'strong', description: '金旺' },
+        water: { strength: 16, quality: 'medium', description: '水中等' },
+      },
+      tenGods: {
+        self: '辛',
+        output: [],
+        input: [],
+        control: [],
+        controlled: [],
+      },
+      pattern: {
+        type: '身弱格',
+        strength: 'medium',
+        quality: 'good',
+        description: '日主偏弱，宜先扶身再谈放大。',
+      },
+      fortune: {
+        currentDaYun: '丁未大运（18-27岁）',
+        currentLiuNian: '丙午流年',
+        interaction: '天时外部参照中性，结合macro_cycle、solar_terms做解释增强即可。',
+        nextYear: '命局主轴围绕身弱格展开。',
+      },
+      advice: {
+        career: {
+          general: '事业与财富动作要同时服从命局用神。',
+          specific: ['现在更适合先做：先把资源压到一个主航道'],
+          timing: '重点窗口放在2027-2027',
+          avoid: ['先别做：不要同时开两条重资产线'],
+          direction: '南方',
+          colors: ['红色'],
+        },
+        wealth: {
+          general: '正财得用，财运以正职工作为主。',
+          specific: ['先做轻量验证'],
+          timing: '午月',
+          direction: '西方',
+          colors: ['黄色'],
+          avoid: ['避免情绪化追加'],
+        },
+        marriage: {
+          general: '关系板块更看阶段节奏和现实协同。 人和外部参照偏强，可把relationship、family_role作为顺势放大的辅助信号。',
+          specific: ['先在2028-2030对应阶段做观察和校准，再推进关键关系决定'],
+          timing: '夏季',
+          direction: '南方',
+          colors: ['红色'],
+          avoid: [],
+        },
+        health: {
+          general: '健康不是单独板块，而是决定你能否承接好运窗口的底盘能力。',
+          specific: ['先按2016-2018的节奏做恢复和负荷管理'],
+          timing: '近期',
+          directions: ['东南方'],
+          colors: ['红色'],
+          avoid: ['高压阶段最容易用透支换效率'],
+        },
+        colors: ['红色'],
+        directions: ['南方'],
+        timing: ['近期运势上升'],
+        yongShen: ['土'],
+        jiShen: ['水'],
+        xiShen: ['金'],
+      },
+      evidence: {
+        statistics: {
+          totalSamples: 1,
+          similarCases: 1,
+          successRate: 1,
+          averageIncome: '0',
+          averageAge: 30,
+        },
+        celebrities: [],
+        similarCases: [],
+      },
+      analysis: {
+        opening: '您好，测试用户。从您的八字来看，格局清正。',
+        summary: '',
+        explanation: '当前最优策略不是同时做很多事，而是围绕2027-2027阶段排序动作。天时外部参照中性，结合macro_cycle、solar_terms做解释增强即可。',
+        llmUsed: true,
+        verify: {
+          consistencyScore: 90,
+          verdict: 'WARN',
+          failedRules: [],
+        },
+        orchestration: {
+          totalLlmCalls: 0,
+          successRate: 0,
+          succeeded: [],
+          failed: [],
+        },
+      },
+    } as any);
+
+    expect(finalized.analysis.summary).toContain('你不是乱');
+    expect(finalized.analysis.explanation).toContain('世界易判断：');
+    expect(finalized.analysis.explanation).not.toContain('macro_cycle');
+    expect(finalized.analysis.explanation).not.toContain('2027-2027');
+    expect(finalized.analysis.qualityAudit?.overallScore).toBeGreaterThan(0);
+  });
+
+  it('does not double-wrap explanation when sections already exist', () => {
+    const finalized = finalizeReportForDelivery({
+      basic: {
+        dayMaster: '辛',
+        pillars: [],
+      },
+      fiveElements: {},
+      tenGods: {},
+      pattern: {
+        type: '身弱格',
+        description: '日主偏弱。',
+      },
+      fortune: {
+        currentDaYun: '丁未大运',
+        currentLiuNian: '丙午流年',
+        interaction: '当前阶段宜守成。',
+        nextYear: '明年继续稳步推进。',
+      },
+      advice: {
+        career: {
+          general: '先稳节奏。',
+          specific: ['先做一个关键动作'],
+          timing: '下半年',
+          avoid: ['不要硬冲'],
+        },
+        wealth: {
+          general: '先控风险。',
+          specific: ['先做轻量验证'],
+          timing: '下半年',
+          avoid: ['避免重仓'],
+        },
+        marriage: {
+          general: '先稳沟通。',
+          specific: ['先观察'],
+          timing: '夏季',
+        },
+        health: {
+          general: '先稳作息。',
+          specific: ['先补睡眠'],
+          timing: '近期',
+          avoid: ['避免透支'],
+        },
+        colors: [],
+        directions: [],
+        timing: [],
+      },
+      evidence: {
+        statistics: {
+          totalSamples: 1,
+          similarCases: 1,
+          successRate: 1,
+          averageIncome: '0',
+          averageAge: 30,
+        },
+        celebrities: [],
+        similarCases: [],
+      },
+      analysis: {
+        opening: '先稳住主线。',
+        summary: '当前先稳住主线，再按窗口推进。',
+        explanation: '世界易判断：先看结构，再看阶段，再决定动作\n\n主判断：先稳住主线\n\n判断依据：结构已经明确\n\n现在先做：先做一个关键动作\n\n风险提醒：不要硬冲',
+        llmUsed: false,
+        orchestration: {
+          totalLlmCalls: 0,
+          successRate: 0,
+          succeeded: [],
+          failed: [],
+        },
+      },
+    } as any);
+
+    expect(finalized.analysis.explanation.match(/世界易判断：/g)?.length || 0).toBe(1);
   });
 });

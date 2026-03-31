@@ -8,7 +8,7 @@ import SiteHeader from '@/components/site-header';
 export default function CreateProfilePage() {
   return (
     <div className="page-shell">
-      <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
+      <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
@@ -21,9 +21,8 @@ export default function CreateProfilePage() {
               档案不是单独创建的，
               <span className="font-serif text-[color:var(--accent-strong)]">而是从分析结果自然沉淀出来。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
-              旧逻辑会把用户直接重定向，体验像断层。现在这里明确告诉用户，档案来自已有分析、事件和趋势的持续积累。
-            </p>
+            <p className="intro-copy">档案来自已有分析、事件和趋势的持续积累。</p>
+            <div className="intro-panel">优先动作：做过分析就进档案，没做过就先开始分析。</div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
@@ -38,7 +37,7 @@ export default function CreateProfilePage() {
               <ActionCard
                 icon={LineChart}
                 title="先完成第一次分析"
-                description="如果还没有结果，先去测算。档案会在结果、事件和咨询中逐步形成。"
+                description="如果还没有结果，先去生成判断。档案会在结果、事件和咨询中逐步形成。"
                 href="/analyze"
                 label="开始分析"
               />
@@ -71,8 +70,8 @@ function ActionCard({
         <Icon className="h-5 w-5" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{title}</h2>
-      <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{description}</p>
-      <Link href={href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
+      <p className="intro-copy mt-2">{description}</p>
+      <Link href={href} className="action-secondary mt-5">
         {label}
         <ArrowRight className="h-4 w-4" />
       </Link>

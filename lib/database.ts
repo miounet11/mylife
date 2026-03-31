@@ -15,6 +15,7 @@ import type {
   ReportMonthlyDigestRunRecord,
   EmailDeliveryJobRecord,
   PremiumServiceRequestRecord,
+  ToolSessionRecord,
 } from './user-types';
 
 interface RawFortuneRow {
@@ -198,6 +199,19 @@ interface RawPremiumServiceRequestRow {
   updated_at?: string;
 }
 
+interface RawToolSessionRow {
+  id: string;
+  user_id: string;
+  report_id?: string | null;
+  tool_slug: string;
+  status: 'completed' | 'locked';
+  input?: string | null;
+  result?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
 function parseJson<T>(value: string | null | undefined, fallback: T): T {
   if (!value) return fallback;
   try {
@@ -270,6 +284,51 @@ function mapRouteHealthLabel(key: string) {
 }
 
 const REPORT_UPGRADE_STALE_LOCK_MINUTES = Math.max(5, Number(process.env.REPORT_UPGRADE_LOCK_MINUTES || 20));
+const REPORT_UPGRADE_KNOWN_TEST_NAMES = [
+  '测试A',
+  '验证B',
+  '测试用户',
+  '测试用户2',
+  '案例1',
+  '案例2',
+  '甲',
+  '乙',
+  '丙',
+  '哈哈',
+  '即时局',
+  'x',
+] as const;
+const REPORT_UPGRADE_KNOWN_TEST_NAMES_SQL = REPORT_UPGRADE_KNOWN_TEST_NAMES
+  .map((name) => `'${name.replace(/'/g, "''")}'`)
+  .join(', ');
+const REPORT_UPGRADE_PRIORITY_SQL = `
+CASE
+  WHEN EXISTS (
+    SELECT 1
+    FROM fortunes AS f
+    WHERE f.id = report_upgrade_jobs.report_id
+      AND trim(COALESCE(f.name, '')) <> ''
+      AND trim(COALESCE(f.name, '')) NOT IN (${REPORT_UPGRADE_KNOWN_TEST_NAMES_SQL})
+      AND trim(COALESCE(f.name, '')) NOT LIKE '测试%'
+      AND trim(COALESCE(f.name, '')) NOT GLOB '案例[0-9]*'
+      AND trim(COALESCE(f.name, '')) NOT IN ('A', 'B', 'C', '丁')
+      AND NOT (
+        trim(COALESCE(f.name, '')) GLOB '[0-9]*'
+        AND trim(COALESCE(f.name, '')) NOT GLOB '*[^0-9]*'
+      )
+      AND NOT (
+        length(trim(COALESCE(f.name, ''))) BETWEEN 2 AND 3
+        AND lower(trim(COALESCE(f.name, ''))) GLOB '[a-z]*'
+        AND lower(trim(COALESCE(f.name, ''))) NOT GLOB '*[^a-z]*'
+      )
+      AND NOT (
+        length(trim(COALESCE(f.name, ''))) = 1
+        AND trim(COALESCE(f.name, '')) GLOB '[A-Za-z]'
+      )
+  ) THEN 0
+  ELSE 1
+END
+`;
 
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
   return {
@@ -405,6 +464,21 @@ function mapPremiumServiceRequestRow(row: RawPremiumServiceRequestRow): PremiumS
     contactName: row.contact_name || undefined,
     contactValue: row.contact_value || undefined,
     intake: parseJson(row.intake, {}),
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapToolSessionRow(row: RawToolSessionRow): ToolSessionRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    reportId: row.report_id || undefined,
+    toolSlug: row.tool_slug,
+    status: row.status,
+    input: parseJson(row.input, {}),
+    result: parseJson(row.result, {}),
     meta: parseJson(row.meta, {}),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -886,6 +960,23 @@ export function initializeDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tool_sessions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      report_id TEXT,
+      tool_slug TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'completed',
+      input JSON,
+      result JSON,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (report_id) REFERENCES fortunes(id) ON DELETE SET NULL
+    )
+  `);
+
   // 索引
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -917,6 +1008,9 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_premium_service_requests_user_id ON premium_service_requests(user_id);
     CREATE INDEX IF NOT EXISTS idx_premium_service_requests_report_id ON premium_service_requests(report_id);
     CREATE INDEX IF NOT EXISTS idx_premium_service_requests_status_created_at ON premium_service_requests(status, created_at);
+    CREATE INDEX IF NOT EXISTS idx_tool_sessions_user_id ON tool_sessions(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_tool_sessions_tool_slug ON tool_sessions(tool_slug, created_at);
+    CREATE INDEX IF NOT EXISTS idx_tool_sessions_report_id ON tool_sessions(report_id, created_at);
   `);
 }
 
@@ -2295,7 +2389,11 @@ export const reportUpgradeJobOperations = {
       WHERE status = 'pending'
         AND attempts < max_attempts
         AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
-      ORDER BY COALESCE(last_score, 0) ASC, attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+      ORDER BY ${REPORT_UPGRADE_PRIORITY_SQL},
+               COALESCE(last_score, 0) ASC,
+               attempts ASC,
+               datetime(next_run_at) ASC,
+               datetime(created_at) ASC
       LIMIT ?
     `).all(now, limit) as RawReportUpgradeJobRow[];
 
@@ -2335,7 +2433,11 @@ export const reportUpgradeJobOperations = {
       WHERE status IN ('pending', 'retry')
         AND attempts < max_attempts
         AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
-      ORDER BY COALESCE(last_score, 0) ASC, attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+      ORDER BY ${REPORT_UPGRADE_PRIORITY_SQL},
+               COALESCE(last_score, 0) ASC,
+               attempts ASC,
+               datetime(next_run_at) ASC,
+               datetime(created_at) ASC
       LIMIT 1
     `).get(now) as RawReportUpgradeJobRow | undefined;
 
@@ -2453,6 +2555,30 @@ export const reportUpgradeJobOperations = {
       updates?.lastScore || 0,
       updates?.bestScore || updates?.lastScore || 0,
       updates?.bestGrade || null,
+      updates?.lastError || null,
+      JSON.stringify(updates?.meta || {}),
+      now,
+      id
+    );
+  },
+
+  markCancelled: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      UPDATE report_upgrade_jobs
+      SET status = 'cancelled',
+          last_score = COALESCE(?, last_score),
+          best_score = COALESCE(?, best_score),
+          best_grade = COALESCE(?, best_grade),
+          last_error = ?,
+          locked_at = NULL,
+          meta = ?,
+          updated_at = ?
+      WHERE id = ?
+    `).run(
+      updates?.lastScore ?? null,
+      updates?.bestScore ?? null,
+      updates?.bestGrade ?? null,
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
@@ -3021,6 +3147,55 @@ export const premiumServiceRequestOperations = {
       new Date().toISOString(),
       id
     );
+  },
+};
+
+export const toolSessionOperations = {
+  create: (session: ToolSessionRecord) => {
+    const now = new Date().toISOString();
+    return db.prepare(`
+      INSERT INTO tool_sessions (
+        id, user_id, report_id, tool_slug, status, input, result, meta, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      session.id,
+      session.userId,
+      session.reportId || null,
+      session.toolSlug,
+      session.status,
+      JSON.stringify(session.input || {}),
+      JSON.stringify(session.result || {}),
+      JSON.stringify(session.meta || {}),
+      now,
+      now
+    );
+  },
+
+  getById: (id: string) => {
+    const row = db.prepare('SELECT * FROM tool_sessions WHERE id = ?').get(id) as RawToolSessionRow | undefined;
+    return row ? mapToolSessionRow(row) : null;
+  },
+
+  listByUser: (userId: string, limit = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM tool_sessions
+      WHERE user_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, limit) as RawToolSessionRow[];
+
+    return rows.map(mapToolSessionRow);
+  },
+
+  listByUserAndTool: (userId: string, toolSlug: string, limit = 20) => {
+    const rows = db.prepare(`
+      SELECT * FROM tool_sessions
+      WHERE user_id = ? AND tool_slug = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, toolSlug, limit) as RawToolSessionRow[];
+
+    return rows.map(mapToolSessionRow);
   },
 };
 

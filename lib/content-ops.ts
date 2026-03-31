@@ -2,6 +2,7 @@ import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/li
 import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
+  refreshManagedContentJourneyMetadata,
   saveManagedContentEntry,
   type ManagedContentEntry,
   type ManagedContentType,
@@ -1097,6 +1098,10 @@ export async function runContentSchedulerCycle(params?: {
   trigger?: 'cron' | 'manual';
 }) {
   const trigger = params?.trigger || 'cron';
+  const journeyRefresh = refreshManagedContentJourneyMetadata({
+    limit: 80,
+    userId: 'system_scheduler',
+  });
   const config = getContentSchedulerConfig();
   const now = new Date();
   const runs = contentSchedulerRunOperations.listRecent(20);
@@ -1222,6 +1227,7 @@ export async function runContentSchedulerCycle(params?: {
     generatedCount,
     publishedCount,
     meta: {
+      journeyRefreshedCount: journeyRefresh.refreshedCount,
       localNow: state.localNow,
       radarRefreshed,
       publishWindowOpen: state.publishWindowOpen,

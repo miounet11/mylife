@@ -39,14 +39,14 @@ function mapSummaryToHint(summary: ReferenceDimensionSummary, dimension: Referen
   }
 
   if (summary.score >= 6.2) {
-    return `${labelMap[dimension]}外部参照偏强，优先结合${leading}解释当前判断。`;
+    return `${labelMap[dimension]}外部参照偏强，可把${leading}作为顺势放大的辅助信号。`;
   }
 
   if (summary.score <= 4.2) {
-    return `${labelMap[dimension]}外部参照偏谨慎，涉及${leading}时要降低激进结论。`;
+    return `${labelMap[dimension]}外部参照偏谨慎，涉及${leading}时更适合保守推进。`;
   }
 
-  return `${labelMap[dimension]}外部参照中性，结合${leading}做解释增强即可。`;
+  return `${labelMap[dimension]}外部参照中性，可把${leading}当作辅助校准信号。`;
 }
 
 export function calibrateStateVectorCurrent(

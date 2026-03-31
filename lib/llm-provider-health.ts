@@ -10,6 +10,7 @@ export type ModelAttemptEvent = {
   success: boolean;
   latencyMs: number;
   errorType?: string;
+  errorMessage?: string;
   traceLabel?: string;
   createdAt: string;
 };
@@ -58,6 +59,7 @@ const OPEN_MIN_ATTEMPTS = getIntEnv('LLM_CIRCUIT_OPEN_MIN_ATTEMPTS', 6);
 const OPEN_CONSECUTIVE_FAILURES = getIntEnv('LLM_CIRCUIT_OPEN_CONSECUTIVE_FAILURES', 4);
 const RECOVERY_SUCCESS_STREAK = getIntEnv('LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK', 2);
 const OPEN_COOLDOWN_MINUTES = getIntEnv('LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES', 8);
+const IMMEDIATE_OPEN_CONSECUTIVE_FAILURES = getIntEnv('LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES', 2);
 
 function toIso(date: Date) {
   return date.toISOString();
@@ -65,6 +67,19 @@ function toIso(date: Date) {
 
 function roundRate(value: number) {
   return Math.round(value * 1000) / 1000;
+}
+
+function isFreshCircuitTimestamp(value?: string, now: Date = new Date()) {
+  if (!value) {
+    return false;
+  }
+
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) {
+    return false;
+  }
+
+  return now.getTime() - timestamp <= HEALTH_WINDOW_MINUTES * 60 * 1000;
 }
 
 function getAttemptEvents(models: string[], scope?: LlmScope) {
@@ -121,6 +136,32 @@ function parseMeta<T>(value?: string | null) {
   }
 }
 
+export function isImmediateOpenFailure(errorType?: string, errorMessage?: string) {
+  const normalizedType = `${errorType || ''}`.toLowerCase();
+  const normalizedMessage = `${errorMessage || ''}`.toLowerCase();
+  const combined = `${normalizedType} ${normalizedMessage}`;
+
+  return (
+    combined.includes('token_cooling')
+    || combined.includes('upstream_forbidden')
+    || combined.includes('blocked_user')
+    || combined.includes('gateway_error')
+    || normalizedType === 'aborterror'
+    || combined.includes('request was aborted')
+    || combined.includes('timed out')
+    || combined.includes('timeout')
+  );
+}
+
+function hasImmediateOpenFailureStreak(attempts: ModelAttemptEvent[]) {
+  const recentFailures = attempts
+    .filter((item) => !item.success)
+    .slice(0, IMMEDIATE_OPEN_CONSECUTIVE_FAILURES);
+
+  return recentFailures.length >= IMMEDIATE_OPEN_CONSECUTIVE_FAILURES
+    && recentFailures.every((item) => isImmediateOpenFailure(item.errorType, item.errorMessage));
+}
+
 export function deriveModelHealthSnapshots(params: {
   models: string[];
   attempts: ModelAttemptEvent[];
@@ -160,17 +201,25 @@ export function deriveModelHealthSnapshots(params: {
     const latestCircuit = params.circuits.find((item) => item.model === model);
     let state: LlmCircuitState = 'closed';
     let reopenAt = latestCircuit?.reopenAt;
+    const latestCircuitFresh = isFreshCircuitTimestamp(latestCircuit?.createdAt, now);
+    const reopenAtFresh = isFreshCircuitTimestamp(latestCircuit?.reopenAt, now);
 
     if (recentSuccessStreak >= RECOVERY_SUCCESS_STREAK) {
       state = 'closed';
       reopenAt = undefined;
-    } else if (latestCircuit?.state === 'half-open') {
+    } else if (latestCircuit?.state === 'half-open' && latestCircuitFresh) {
       state = 'half-open';
+    } else if (latestCircuit?.state === 'half-open') {
+      state = 'closed';
+      reopenAt = undefined;
     } else if (latestCircuit?.state === 'open' && latestCircuit.reopenAt) {
       if (new Date(latestCircuit.reopenAt).getTime() > now.getTime()) {
         state = 'open';
-      } else {
+      } else if (reopenAtFresh || latestCircuitFresh) {
         state = 'half-open';
+      } else {
+        state = 'closed';
+        reopenAt = undefined;
       }
     } else if (attempts.length >= OPEN_MIN_ATTEMPTS && failureRate >= DEGRADE_FAILURE_RATE) {
       state = 'degraded';
@@ -252,6 +301,7 @@ function buildExecutionPlan(models: string[], scope?: LlmScope) {
       success: meta.success === true,
       latencyMs: typeof meta.latencyMs === 'number' ? meta.latencyMs : 0,
       errorType: typeof meta.errorType === 'string' ? meta.errorType : undefined,
+      errorMessage: typeof meta.errorMessage === 'string' ? meta.errorMessage : undefined,
       traceLabel: typeof meta.traceLabel === 'string' ? meta.traceLabel : undefined,
       createdAt: row.created_at,
     } satisfies ModelAttemptEvent;
@@ -438,6 +488,7 @@ export function recordModelAttempt(input: {
   success: boolean;
   latencyMs: number;
   errorType?: string;
+  errorMessage?: string;
   traceLabel?: string;
 }) {
   analyticsOperations.create({
@@ -449,6 +500,7 @@ export function recordModelAttempt(input: {
       success: input.success,
       latencyMs: input.latencyMs,
       errorType: input.errorType,
+      errorMessage: input.errorMessage,
       traceLabel: input.traceLabel,
     },
   });
@@ -465,6 +517,7 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
       success: meta.success === true,
       latencyMs: typeof meta.latencyMs === 'number' ? meta.latencyMs : 0,
       errorType: typeof meta.errorType === 'string' ? meta.errorType : undefined,
+      errorMessage: typeof meta.errorMessage === 'string' ? meta.errorMessage : undefined,
       traceLabel: typeof meta.traceLabel === 'string' ? meta.traceLabel : undefined,
       createdAt: row.created_at,
     } satisfies ModelAttemptEvent;
@@ -489,6 +542,28 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
   const recentSuccessStreak = attempts
     .slice(0, RECOVERY_SUCCESS_STREAK)
     .every((item) => item.success);
+
+  if (
+    hasImmediateOpenFailureStreak(attempts)
+    && latestCircuit?.state !== 'open'
+  ) {
+    const reopenAt = new Date(now.getTime() + OPEN_COOLDOWN_MINUTES * 60 * 1000);
+    analyticsOperations.create({
+      id: `evt_${generateId()}`,
+      eventName: 'llm_model_circuit_changed',
+      meta: {
+        model,
+        scope,
+        state: 'open',
+        previousState: latestCircuit?.state || 'closed',
+        reason: 'immediate_hard_failure_streak',
+        reopenAt: toIso(reopenAt),
+        attempts: snapshot.attempts,
+        consecutiveFailures: snapshot.consecutiveFailures,
+      },
+    });
+    return;
+  }
 
   if (
     snapshot.attempts >= OPEN_MIN_ATTEMPTS &&

@@ -20,10 +20,10 @@ export default function NextStepGuide({
     {
       title: hasDrift ? '继续纠偏这份结果' : '继续追问这份结果',
       description: hasDrift
-        ? '这份报告已经出现偏差样本，最该做的是回到 AI 咨询，把偏差拆成时机、执行和输入问题。'
-        : '把报告里最模糊、最关键、最想验证的一条结论，立即带去 AI 咨询深问。',
+        ? '这份报告已经出现偏差样本，最该做的是回到结构追问，把偏差拆成时机、执行和输入问题。'
+        : '把报告里最模糊、最关键、最想验证的一条结论，立即带去结构追问深问。',
       href: reportId ? `/chat?reportId=${encodeURIComponent(reportId)}` : '/chat',
-      label: hasDrift ? '进入纠偏咨询' : '进入 AI 咨询',
+      label: hasDrift ? '进入纠偏追问' : '进入结构追问',
       icon: Bot,
     },
     {
@@ -48,7 +48,7 @@ export default function NextStepGuide({
         ? '真正的留存不靠你记得回来，而靠系统在窗口变化、报告升级和内容更新时主动提醒你。'
         : '公开结果只能帮助你理解产品价值，真正适合长期使用的是建立自己的报告、事件和更新体系。',
       href: canManage ? '/updates' : '/analyze',
-      label: canManage ? '管理订阅与邮件更新' : '开始我的测算',
+      label: canManage ? '管理订阅与邮件更新' : '开始我的判断',
       icon: Sparkles,
     },
   ];
@@ -66,7 +66,7 @@ export default function NextStepGuide({
               真正降低流失，
               <span className="font-serif text-[color:var(--accent-strong)]">关键在报告之后。</span>
             </h2>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
+            <p className="intro-copy">
               用户看完报告时最容易离开，所以这里不再让用户自己想下一步，而是直接给出可继续追问、可验证、可复访、可订阅的动作路径。
             </p>
 
@@ -94,13 +94,13 @@ export default function NextStepGuide({
                     <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                       <Icon className="h-5 w-5" />
                     </div>
-                    <Link href={action.href} className="rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                    <Link href={action.href} className="product-chip">
                       推荐
                     </Link>
                   </div>
                   <h3 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{action.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{action.description}</p>
-                  <Link href={action.href} className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
+                  <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{action.description}</p>
+                  <Link href={action.href} className="action-secondary mt-5">
                     {action.label}
                     <ArrowRight className="h-4 w-4" />
                   </Link>

@@ -38,27 +38,27 @@ export default function ReportSubscriptionPanel({
   const benefits = [
     {
       title: '月度窗口更新',
-      description: '每个月给你一版新的节律摘要，不需要反复重读同一份旧报告。',
+      description: '每月推送新节律摘要，不用反复翻旧报告。',
       icon: Sparkles,
     },
     {
       title: '报告升级提醒',
-      description: '当前报告继续增强成功后，第一时间知道，不必自己反复回来检查。',
+      description: '报告增强完成后主动通知你。',
       icon: RefreshCcw,
     },
     {
       title: '关键节点通知',
-      description: '把真正值得注意的推进期、收缩期和风险点提前推到你面前。',
+      description: '关键推进期和风险点会提前提醒。',
       icon: BellRing,
     },
     {
       title: '长期复盘闭环',
-      description: '把每次判断和后续现实事件串起来，逐步形成更有价值的个人节律档案。',
+      description: '把判断和真实结果串起来，形成可复盘档案。',
       icon: Stars,
     },
     {
       title: '专项断事与推演',
-      description: '后续可承接事件推演、断事、事件剖析和卦象增强，让高价值问题进入付费深度服务。',
+      description: '高价值问题可直接进入事件推演等深度服务。',
       icon: Sparkles,
     },
   ];
@@ -117,15 +117,15 @@ export default function ReportSubscriptionPanel({
             让这份报告持续生长，
             <span className="font-serif text-[color:var(--accent-strong)]">而不是一次看完就结束。</span>
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-            当前这份结果是你此刻的阶段快照。真正的长期价值，在于后续每个月的窗口变化、报告升级状态、关键节点提醒和复盘记录。
+          <p className="intro-copy mt-4">
+            这份报告先给你当前结论，长期价值来自后续窗口变化和关键节点提醒。
           </p>
 
           <div className="mt-5 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span className="product-chip">
               当前交付：{deliveryTierLabel}
             </span>
-            <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span className="product-chip">
               质量 {qualityScore || '--'} / {qualityGrade || 'B'}
             </span>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -163,7 +163,7 @@ export default function ReportSubscriptionPanel({
                     </div>
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </div>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
+                  <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
                 </div>
               );
             })}
@@ -175,10 +175,10 @@ export default function ReportSubscriptionPanel({
           <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
             {canManage ? '订阅你的月度更新与升级提醒' : '订阅站点更新并了解更多节律内容'}
           </div>
-          <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
             {canManage
-              ? '如果你希望这份报告后续继续产生价值，最重要的不是重复刷新页面，而是让系统在月度变化、升级完成和关键窗口出现时主动通知你。'
-              : '你正在查看公开结果页。真正更有价值的是建立自己的节律档案，同时接收持续更新。'}
+              ? '让系统在关键变化出现时主动通知你，比反复刷新更高效。'
+              : '公开页只是一部分，建立自己的节律档案会更有价值。'}
           </p>
 
           <form onSubmit={handleSubscribe} className="mt-5">
@@ -195,7 +195,7 @@ export default function ReportSubscriptionPanel({
             <button
               type="submit"
               disabled={loading || !email.trim()}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              className="action-primary mt-3 w-full disabled:opacity-60"
             >
               {loading ? '提交中...' : '开启月度更新'}
             </button>
@@ -218,7 +218,7 @@ export default function ReportSubscriptionPanel({
                   },
                 });
               }}
-              className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+              className="action-secondary justify-between"
             >
               {canManage ? '继续深问这份报告' : '生成我的专属报告'}
               <ArrowRight className="h-4 w-4" />
@@ -237,7 +237,7 @@ export default function ReportSubscriptionPanel({
                   },
                 });
               }}
-              className="inline-flex items-center justify-between rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+              className="action-secondary justify-between"
             >
               管理订阅与邮件更新
               <ArrowRight className="h-4 w-4" />

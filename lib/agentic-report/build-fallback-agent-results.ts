@@ -164,10 +164,10 @@ function buildAgentFallback(key: CoreAgentKey, context: StructuredAgenticContext
     case 'strategy_advisor':
       return {
         summary: [
-          `当前最优策略不是同时做很多事，而是围绕${topWindow?.label || '当前窗口'}排序动作。`,
-          dominantTrack ? `主攻方向先放在${mapTrackLabel(dominantTrack.label)}` : '',
-          pressureTrack ? `，同时避免让${mapTrackLabel(pressureTrack.label)}板块把节奏拖散。` : '',
-          leadIndustry?.industry ? `现实落地优先结合${leadIndustry.industry}等更顺势的场域。` : '',
+          topWindow ? `当前先按${topWindow.label}这段窗口排序动作。` : '当前先排序动作，再决定发力顺序。',
+          dominantTrack ? `${mapTrackLabel(dominantTrack.label)}是当前主线。` : '',
+          pressureTrack ? `${mapTrackLabel(pressureTrack.label)}是当前更容易失衡的位置。` : '',
+          leadIndustry?.industry ? `现实动作优先落在${leadIndustry.industry}等更顺势的场景。` : '',
           reference?.timingHints?.[0] || '',
         ].filter(Boolean).join(' '),
         highlights: [
@@ -182,14 +182,19 @@ function buildAgentFallback(key: CoreAgentKey, context: StructuredAgenticContext
           avoidedElements.length > 0 ? `凡是会放大${avoidedElements.join('、')}失衡的动作，都要降优先级。` : '',
         ].filter(Boolean),
         actions: [
-          dominantTrack ? `先围绕${mapTrackLabel(dominantTrack.label)}做一条最短路径，再按窗口复盘。` : '先排序，再推进，再复盘。',
+          dominantTrack ? `先把${mapTrackLabel(dominantTrack.label)}的一步关键动作做实，再按窗口复盘。` : '先排序，再推进，再复盘。',
         ],
         citations: ['temporal', 'kline.windows', ...(reference ? ['reference.overlay.timing'] : [])],
         ...common,
       };
     case 'temporal_spatial_advisor':
       return {
-        summary: `这份命盘的落地效果会被${temporal.currentSolarTerm || '当前节气'}、立春边界、${geo.currentPlace || geo.birthPlace || '当前城市'}的环境、${spatial.favorableDirections[0] || '有利方位'}和行业周期显著放大或压制。${reference?.geoHints?.[0] ? ` ${reference.geoHints[0]}` : ''}`,
+        summary: [
+          `${temporal.currentSolarTerm || '当前节气'}前后更要重视节奏切换和环境匹配。`,
+          `${geo.currentPlace || geo.birthPlace || '当前城市'}与${spatial.favorableDirections[0] || '有利方位'}方向，是这段时间更值得借力的位置。`,
+          '先把场域和节奏调顺，再做高成本推进。',
+          reference?.geoHints?.[0] || '',
+        ].filter(Boolean).join(' '),
         highlights: [
           temporal.currentSolarTerm ? `当前节气：${temporal.currentSolarTerm}` : '当前节气待补充',
           `有利方位：${spatial.favorableDirections.join('、') || '待补充'}`,

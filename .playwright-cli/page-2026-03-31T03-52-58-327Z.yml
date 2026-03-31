@@ -1,0 +1,366 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e10]:
+            - generic [ref=e11]: 人生K线
+            - generic [ref=e12]:
+              - generic [ref=e13]: 世界易系统入口
+              - generic [ref=e14]: v1.0.0.1
+        - navigation [ref=e15]:
+          - link "世界易" [ref=e16] [cursor=pointer]:
+            - /url: /world-yi
+          - link "知识库" [ref=e17] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e18] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e19] [cursor=pointer]:
+            - /url: /insights
+          - link "工具中心" [ref=e20] [cursor=pointer]:
+            - /url: /tools
+          - link "进入判断" [ref=e21] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e22] [cursor=pointer]:
+            - /url: /chat
+          - link "事件日历" [ref=e23] [cursor=pointer]:
+            - /url: /events
+          - link "我的档案" [ref=e24] [cursor=pointer]:
+            - /url: /profile
+          - link "案例库" [ref=e25] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e26] [cursor=pointer]:
+            - /url: /updates
+        - link "先做综合判断" [ref=e29] [cursor=pointer]:
+          - /url: /analyze
+          - text: 先做综合判断
+          - img [ref=e30]
+    - main [ref=e32]:
+      - generic [ref=e33]:
+        - generic [ref=e34]:
+          - generic [ref=e35]:
+            - img [ref=e36]
+            - text: 世界易工具中心
+          - heading "不是只给一份综合报告，而是把高频问题拆成 120 个单项工具。" [level=1] [ref=e40]
+          - paragraph [ref=e41]: 这些工具默认读取你的综合判断、结构结论和历史记录，把事业、财富、关系、健康、家庭、迁移、阶段窗口和生活应用拆成更容易复访的入口。
+          - generic [ref=e42]:
+            - link "先建立个人底盘" [ref=e43] [cursor=pointer]:
+              - /url: /analyze
+              - text: 先建立个人底盘
+              - img [ref=e44]
+            - link "查看我的档案" [ref=e46] [cursor=pointer]:
+              - /url: /profile
+            - link "世界易应用层" [ref=e47] [cursor=pointer]:
+              - /url: /world-yi/applications
+        - generic [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]: 120 个工具
+            - generic [ref=e51]: 首批按六域、窗口与应用层组织，不再是零散页面。
+          - generic [ref=e52]:
+            - generic [ref=e53]: 统一底盘
+            - generic [ref=e54]: 所有工具优先复用综合报告、档案、聊天和专项服务。
+          - generic [ref=e55]:
+            - generic [ref=e56]: 免费初测
+            - generic [ref=e57]: 先给摘要结论，再引导深测、专项或订阅。
+          - generic [ref=e58]:
+            - generic [ref=e59]: 可复访
+            - generic [ref=e60]: 每个工具结果都会沉淀到你的个人工作台。
+      - generic [ref=e61]:
+        - generic [ref=e62]:
+          - img [ref=e63]
+          - text: 分类入口
+        - generic [ref=e66]:
+          - link "20 个工具 事业工具 围绕岗位、角色、推进和组织压力拆成高频单项判断。 进入这一组" [ref=e67] [cursor=pointer]:
+            - /url: /tools/category/career
+            - generic [ref=e68]: 20 个工具
+            - heading "事业工具" [level=2] [ref=e69]
+            - paragraph [ref=e70]: 围绕岗位、角色、推进和组织压力拆成高频单项判断。
+            - generic [ref=e71]:
+              - text: 进入这一组
+              - img [ref=e72]
+          - link "20 个工具 财富工具 围绕赚钱方式、保留能力、扩张时机和风险识别做细分工具。 进入这一组" [ref=e74] [cursor=pointer]:
+            - /url: /tools/category/wealth
+            - generic [ref=e75]: 20 个工具
+            - heading "财富工具" [level=2] [ref=e76]
+            - paragraph [ref=e77]: 围绕赚钱方式、保留能力、扩张时机和风险识别做细分工具。
+            - generic [ref=e78]:
+              - text: 进入这一组
+              - img [ref=e79]
+          - link "20 个工具 关系工具 围绕推进、边界、复合、结婚和关系消耗做主题切片。 进入这一组" [ref=e81] [cursor=pointer]:
+            - /url: /tools/category/relationship
+            - generic [ref=e82]: 20 个工具
+            - heading "关系工具" [level=2] [ref=e83]
+            - paragraph [ref=e84]: 围绕推进、边界、复合、结婚和关系消耗做主题切片。
+            - generic [ref=e85]:
+              - text: 进入这一组
+              - img [ref=e86]
+          - link "15 个工具 健康工具 围绕恢复秩序、透支预警和压力窗口做持续跟踪。 进入这一组" [ref=e88] [cursor=pointer]:
+            - /url: /tools/category/health
+            - generic [ref=e89]: 15 个工具
+            - heading "健康工具" [level=2] [ref=e90]
+            - paragraph [ref=e91]: 围绕恢复秩序、透支预警和压力窗口做持续跟踪。
+            - generic [ref=e92]:
+              - text: 进入这一组
+              - img [ref=e93]
+          - link "15 个工具 家庭工具 围绕责任排序、代际压力、家庭恢复和照护结构做专题工具。 进入这一组" [ref=e95] [cursor=pointer]:
+            - /url: /tools/category/family
+            - generic [ref=e96]: 15 个工具
+            - heading "家庭工具" [level=2] [ref=e97]
+            - paragraph [ref=e98]: 围绕责任排序、代际压力、家庭恢复和照护结构做专题工具。
+            - generic [ref=e99]:
+              - text: 进入这一组
+              - img [ref=e100]
+          - link "15 个工具 迁移工具 围绕留回、换城、出国、身份成本和环境适配做判断。 进入这一组" [ref=e102] [cursor=pointer]:
+            - /url: /tools/category/migration
+            - generic [ref=e103]: 15 个工具
+            - heading "迁移工具" [level=2] [ref=e104]
+            - paragraph [ref=e105]: 围绕留回、换城、出国、身份成本和环境适配做判断。
+            - generic [ref=e106]:
+              - text: 进入这一组
+              - img [ref=e107]
+          - link "8 个工具 阶段窗口工具 围绕年运、月运、推进窗口、风险节点和恢复窗口做阶段测算。 进入这一组" [ref=e109] [cursor=pointer]:
+            - /url: /tools/category/timing
+            - generic [ref=e110]: 8 个工具
+            - heading "阶段窗口工具" [level=2] [ref=e111]
+            - paragraph [ref=e112]: 围绕年运、月运、推进窗口、风险节点和恢复窗口做阶段测算。
+            - generic [ref=e113]:
+              - text: 进入这一组
+              - img [ref=e114]
+          - link "7 个工具 生活应用工具 围绕择时、家宅、起名、寻物和短周期决策建立高频入口。 进入这一组" [ref=e116] [cursor=pointer]:
+            - /url: /tools/category/application
+            - generic [ref=e117]: 7 个工具
+            - heading "生活应用工具" [level=2] [ref=e118]
+            - paragraph [ref=e119]: 围绕择时、家宅、起名、寻物和短周期决策建立高频入口。
+            - generic [ref=e120]:
+              - text: 进入这一组
+              - img [ref=e121]
+      - generic [ref=e123]:
+        - generic [ref=e124]:
+          - img [ref=e125]
+          - text: 推荐先做
+        - generic [ref=e128]:
+          - link "career 岗位匹配 你不是不努力，你可能只是站错了岗位。 示例：32 岁运营负责人做了 岗位匹配，少走了一次冲动离职，后面再做窗口类工具时，判断明显更稳。 岗位 适配 工作卡住" [ref=e129] [cursor=pointer]:
+            - /url: /tools/career-role-fit
+            - generic [ref=e130]: career
+            - heading "岗位匹配" [level=3] [ref=e131]
+            - paragraph [ref=e132]: 你不是不努力，你可能只是站错了岗位。
+            - generic [ref=e133]: 示例：32 岁运营负责人做了 岗位匹配，少走了一次冲动离职，后面再做窗口类工具时，判断明显更稳。
+            - generic [ref=e134]:
+              - generic [ref=e135]: 岗位
+              - generic [ref=e136]: 适配
+              - generic [ref=e137]: 工作卡住
+          - link "career 升职窗口 不是你永远升不上去，而是你可能总在错的窗口硬冲。 示例：32 岁运营负责人做了 升职窗口，少走了一次冲动离职，后面再做窗口类工具时，判断明显更稳。 升职 加责任 窗口" [ref=e138] [cursor=pointer]:
+            - /url: /tools/career-promotion-window
+            - generic [ref=e139]: career
+            - heading "升职窗口" [level=3] [ref=e140]
+            - paragraph [ref=e141]: 不是你永远升不上去，而是你可能总在错的窗口硬冲。
+            - generic [ref=e142]: 示例：32 岁运营负责人做了 升职窗口，少走了一次冲动离职，后面再做窗口类工具时，判断明显更稳。
+            - generic [ref=e143]:
+              - generic [ref=e144]: 升职
+              - generic [ref=e145]: 加责任
+              - generic [ref=e146]: 窗口
+          - link "relationship 推进节奏 关系里最折磨人的，通常不是没答案，而是“推进节奏”一直看不清。 示例：27 岁女生做了 推进节奏，用户先被“说中”，再愿意继续做更深的关系链路工具。 推进节奏 关系 阶段" [ref=e147] [cursor=pointer]:
+            - /url: /tools/relationship-pace-fit
+            - generic [ref=e148]: relationship
+            - heading "推进节奏" [level=3] [ref=e149]
+            - paragraph [ref=e150]: 关系里最折磨人的，通常不是没答案，而是“推进节奏”一直看不清。
+            - generic [ref=e151]: 示例：27 岁女生做了 推进节奏，用户先被“说中”，再愿意继续做更深的关系链路工具。
+            - generic [ref=e152]:
+              - generic [ref=e153]: 推进节奏
+              - generic [ref=e154]: 关系
+              - generic [ref=e155]: 阶段
+          - link "relationship 边界冲突 关系里最折磨人的，通常不是没答案，而是“边界冲突”一直看不清。 示例：27 岁女生做了 边界冲突，用户先被“说中”，再愿意继续做更深的关系链路工具。 边界冲突 关系 边界" [ref=e156] [cursor=pointer]:
+            - /url: /tools/relationship-boundary-conflict
+            - generic [ref=e157]: relationship
+            - heading "边界冲突" [level=3] [ref=e158]
+            - paragraph [ref=e159]: 关系里最折磨人的，通常不是没答案，而是“边界冲突”一直看不清。
+            - generic [ref=e160]: 示例：27 岁女生做了 边界冲突，用户先被“说中”，再愿意继续做更深的关系链路工具。
+            - generic [ref=e161]:
+              - generic [ref=e162]: 边界冲突
+              - generic [ref=e163]: 关系
+              - generic [ref=e164]: 边界
+          - link "wealth 赚钱方式 你真正焦虑的不是“有没有财运”，而是“赚钱方式”到底该怎么判断。 示例：31 岁自由职业者做了 赚钱方式，她先修正保留能力，后面再做扩张类工具时更愿意付费看细路线。 赚钱方式 财富 结构" [ref=e165] [cursor=pointer]:
+            - /url: /tools/wealth-income-channel
+            - generic [ref=e166]: wealth
+            - heading "赚钱方式" [level=3] [ref=e167]
+            - paragraph [ref=e168]: 你真正焦虑的不是“有没有财运”，而是“赚钱方式”到底该怎么判断。
+            - generic [ref=e169]: 示例：31 岁自由职业者做了 赚钱方式，她先修正保留能力，后面再做扩张类工具时更愿意付费看细路线。
+            - generic [ref=e170]:
+              - generic [ref=e171]: 赚钱方式
+              - generic [ref=e172]: 财富
+              - generic [ref=e173]: 结构
+          - link "wealth 现金流压力 你真正焦虑的不是“有没有财运”，而是“现金流压力”到底该怎么判断。 示例：31 岁自由职业者做了 现金流压力，她先修正保留能力，后面再做扩张类工具时更愿意付费看细路线。 现金流压力 财富 风险" [ref=e174] [cursor=pointer]:
+            - /url: /tools/wealth-cashflow-pressure
+            - generic [ref=e175]: wealth
+            - heading "现金流压力" [level=3] [ref=e176]
+            - paragraph [ref=e177]: 你真正焦虑的不是“有没有财运”，而是“现金流压力”到底该怎么判断。
+            - generic [ref=e178]: 示例：31 岁自由职业者做了 现金流压力，她先修正保留能力，后面再做扩张类工具时更愿意付费看细路线。
+            - generic [ref=e179]:
+              - generic [ref=e180]: 现金流压力
+              - generic [ref=e181]: 财富
+              - generic [ref=e182]: 风险
+          - link "timing 年度主窗口 很多错判不是方向错，而是“年度主窗口”这一步时机错。 示例：30 岁准备谈判用户做了 年度主窗口，时间工具最大的钩子，就是让用户感到“我终于知道什么时候动”。 年度主窗口 阶段 窗口" [ref=e183] [cursor=pointer]:
+            - /url: /tools/timing-yearly-window
+            - generic [ref=e184]: timing
+            - heading "年度主窗口" [level=3] [ref=e185]
+            - paragraph [ref=e186]: 很多错判不是方向错，而是“年度主窗口”这一步时机错。
+            - generic [ref=e187]: 示例：30 岁准备谈判用户做了 年度主窗口，时间工具最大的钩子，就是让用户感到“我终于知道什么时候动”。
+            - generic [ref=e188]:
+              - generic [ref=e189]: 年度主窗口
+              - generic [ref=e190]: 阶段
+              - generic [ref=e191]: 窗口
+          - link "timing 月度节奏 很多错判不是方向错，而是“月度节奏”这一步时机错。 示例：30 岁准备谈判用户做了 月度节奏，时间工具最大的钩子，就是让用户感到“我终于知道什么时候动”。 月度节奏 阶段 窗口" [ref=e192] [cursor=pointer]:
+            - /url: /tools/timing-monthly-rhythm
+            - generic [ref=e193]: timing
+            - heading "月度节奏" [level=3] [ref=e194]
+            - paragraph [ref=e195]: 很多错判不是方向错，而是“月度节奏”这一步时机错。
+            - generic [ref=e196]: 示例：30 岁准备谈判用户做了 月度节奏，时间工具最大的钩子，就是让用户感到“我终于知道什么时候动”。
+            - generic [ref=e197]:
+              - generic [ref=e198]: 月度节奏
+              - generic [ref=e199]: 阶段
+              - generic [ref=e200]: 窗口
+          - link "application 个人起名 高频现实问题最怕乱拍脑袋，而“个人起名”就是该被单独判断的一类。 示例：24 岁短周期决策用户做了 个人起名，应用类工具最适合做即时价值，也最容易形成转化入口。 个人起名 应用 身份" [ref=e201] [cursor=pointer]:
+            - /url: /tools/application-naming-person
+            - generic [ref=e202]: application
+            - heading "个人起名" [level=3] [ref=e203]
+            - paragraph [ref=e204]: 高频现实问题最怕乱拍脑袋，而“个人起名”就是该被单独判断的一类。
+            - generic [ref=e205]: 示例：24 岁短周期决策用户做了 个人起名，应用类工具最适合做即时价值，也最容易形成转化入口。
+            - generic [ref=e206]:
+              - generic [ref=e207]: 个人起名
+              - generic [ref=e208]: 应用
+              - generic [ref=e209]: 身份
+          - link "application 品牌命名 高频现实问题最怕乱拍脑袋，而“品牌命名”就是该被单独判断的一类。 示例：24 岁短周期决策用户做了 品牌命名，应用类工具最适合做即时价值，也最容易形成转化入口。 品牌命名 应用 表达" [ref=e210] [cursor=pointer]:
+            - /url: /tools/application-naming-brand
+            - generic [ref=e211]: application
+            - heading "品牌命名" [level=3] [ref=e212]
+            - paragraph [ref=e213]: 高频现实问题最怕乱拍脑袋，而“品牌命名”就是该被单独判断的一类。
+            - generic [ref=e214]: 示例：24 岁短周期决策用户做了 品牌命名，应用类工具最适合做即时价值，也最容易形成转化入口。
+            - generic [ref=e215]:
+              - generic [ref=e216]: 品牌命名
+              - generic [ref=e217]: 应用
+              - generic [ref=e218]: 表达
+      - generic [ref=e219]:
+        - generic [ref=e220]:
+          - generic [ref=e221]:
+            - generic [ref=e222]:
+              - generic [ref=e223]:
+                - img [ref=e224]
+                - text: 同域工具包
+              - heading "事业加速包" [level=2] [ref=e228]
+              - paragraph [ref=e229]: 把岗位匹配、升职窗口、Offer 对比和谈薪窗口串成一条事业推进链。
+              - generic [ref=e230]: 先看适不适合，再看什么时候争取，最后再决定怎么谈。
+              - paragraph [ref=e231]: 适合：卡在岗位、升职、跳槽和谈薪同一条线上反复犹豫的人。
+            - link "回到工具中心" [ref=e232] [cursor=pointer]:
+              - /url: /tools
+          - generic [ref=e233]:
+            - link "career 岗位匹配 当前岗位和真实结构是否匹配 进入工具" [ref=e234] [cursor=pointer]:
+              - /url: /tools/career-role-fit
+              - generic [ref=e235]: career
+              - generic [ref=e236]: 岗位匹配
+              - generic [ref=e237]: 当前岗位和真实结构是否匹配
+              - generic [ref=e238]:
+                - text: 进入工具
+                - img [ref=e239]
+            - link "career 升职窗口 什么时候更适合争取升级 进入工具" [ref=e241] [cursor=pointer]:
+              - /url: /tools/career-promotion-window
+              - generic [ref=e242]: career
+              - generic [ref=e243]: 升职窗口
+              - generic [ref=e244]: 什么时候更适合争取升级
+              - generic [ref=e245]:
+                - text: 进入工具
+                - img [ref=e246]
+            - link "career Offer 对比 多个机会之间如何选 进入工具" [ref=e248] [cursor=pointer]:
+              - /url: /tools/career-offer-choice
+              - generic [ref=e249]: career
+              - generic [ref=e250]: Offer 对比
+              - generic [ref=e251]: 多个机会之间如何选
+              - generic [ref=e252]:
+                - text: 进入工具
+                - img [ref=e253]
+            - link "career 谈薪窗口 什么时候谈薪更有利 进入工具" [ref=e255] [cursor=pointer]:
+              - /url: /tools/career-salary-negotiation
+              - generic [ref=e256]: career
+              - generic [ref=e257]: 谈薪窗口
+              - generic [ref=e258]: 什么时候谈薪更有利
+              - generic [ref=e259]:
+                - text: 进入工具
+                - img [ref=e260]
+        - generic [ref=e262]:
+          - generic [ref=e263]:
+            - generic [ref=e264]:
+              - generic [ref=e265]:
+                - img [ref=e266]
+                - text: 同域工具包
+              - heading "关系澄清包" [level=2] [ref=e270]
+              - paragraph [ref=e271]: 把推进节奏、边界冲突、复合倾向和沟通错位放在一起看。
+              - generic [ref=e272]: 不要只问结果，先把关系为什么卡住看清。
+              - paragraph [ref=e273]: 适合：想知道该推进、修复还是收手的人。
+            - link "回到工具中心" [ref=e274] [cursor=pointer]:
+              - /url: /tools
+          - generic [ref=e275]:
+            - link "relationship 推进节奏 这段关系该推进、观察还是收手 进入工具" [ref=e276] [cursor=pointer]:
+              - /url: /tools/relationship-pace-fit
+              - generic [ref=e277]: relationship
+              - generic [ref=e278]: 推进节奏
+              - generic [ref=e279]: 这段关系该推进、观察还是收手
+              - generic [ref=e280]:
+                - text: 进入工具
+                - img [ref=e281]
+            - link "relationship 边界冲突 关系中哪里最容易失衡 进入工具" [ref=e283] [cursor=pointer]:
+              - /url: /tools/relationship-boundary-conflict
+              - generic [ref=e284]: relationship
+              - generic [ref=e285]: 边界冲突
+              - generic [ref=e286]: 关系中哪里最容易失衡
+              - generic [ref=e287]:
+                - text: 进入工具
+                - img [ref=e288]
+            - link "relationship 复合倾向 是否适合尝试复合 进入工具" [ref=e290] [cursor=pointer]:
+              - /url: /tools/relationship-reconciliation
+              - generic [ref=e291]: relationship
+              - generic [ref=e292]: 复合倾向
+              - generic [ref=e293]: 是否适合尝试复合
+              - generic [ref=e294]:
+                - text: 进入工具
+                - img [ref=e295]
+            - link "relationship 沟通错位 双方到底哪里没对上 进入工具" [ref=e297] [cursor=pointer]:
+              - /url: /tools/relationship-communication-gap
+              - generic [ref=e298]: relationship
+              - generic [ref=e299]: 沟通错位
+              - generic [ref=e300]: 双方到底哪里没对上
+              - generic [ref=e301]:
+                - text: 进入工具
+                - img [ref=e302]
+    - contentinfo [ref=e304]:
+      - generic [ref=e305]:
+        - generic [ref=e306]:
+          - generic [ref=e307]: 人生K线
+          - paragraph [ref=e308]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+          - paragraph [ref=e309]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+        - generic [ref=e310]:
+          - link "邮箱登录" [ref=e311] [cursor=pointer]:
+            - /url: /login
+          - link "世界易" [ref=e312] [cursor=pointer]:
+            - /url: /world-yi
+          - link "主书工程" [ref=e313] [cursor=pointer]:
+            - /url: /world-yi/book
+          - link "工具中心" [ref=e314] [cursor=pointer]:
+            - /url: /tools
+          - link "知识库" [ref=e315] [cursor=pointer]:
+            - /url: /knowledge
+          - link "专题地图" [ref=e316] [cursor=pointer]:
+            - /url: /knowledge/topics
+          - link "洞察中心" [ref=e317] [cursor=pointer]:
+            - /url: /insights
+          - link "案例库" [ref=e318] [cursor=pointer]:
+            - /url: /cases
+          - link "邮件更新" [ref=e319] [cursor=pointer]:
+            - /url: /updates
+          - link "进入判断" [ref=e320] [cursor=pointer]:
+            - /url: /analyze
+          - link "结构追问" [ref=e321] [cursor=pointer]:
+            - /url: /chat
+          - link "事件管理" [ref=e322] [cursor=pointer]:
+            - /url: /events
+  - alert [ref=e323]

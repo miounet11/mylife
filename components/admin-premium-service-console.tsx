@@ -232,7 +232,7 @@ export default function AdminPremiumServiceConsole() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--ink)]">专项需求跟进台</div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
               这里统一处理结果页提交的事件推演、断事、事件剖析和卦象增强需求。
             </div>
           </div>
@@ -241,7 +241,7 @@ export default function AdminPremiumServiceConsole() {
             <select
               value={statusFilter}
               onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+              className="action-secondary px-4 py-3 text-sm"
             >
               <option value="all">全部状态</option>
               <option value="new">新提交</option>
@@ -255,7 +255,7 @@ export default function AdminPremiumServiceConsole() {
             <select
               value={serviceFilter}
               onChange={(event) => setServiceFilter(event.target.value as PremiumServiceKey | 'all')}
-              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+              className="action-secondary px-4 py-3 text-sm"
             >
               <option value="all">全部专项</option>
               <option value="event-simulation">事件推演</option>
@@ -267,7 +267,7 @@ export default function AdminPremiumServiceConsole() {
             <button
               type="button"
               onClick={() => loadRequests()}
-              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+              className="action-secondary"
             >
               刷新列表
             </button>
@@ -314,7 +314,7 @@ export default function AdminPremiumServiceConsole() {
                     {item.reportId ? (
                       <Link
                         href={`/result/${encodeURIComponent(item.reportId)}`}
-                        className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 font-semibold text-[color:var(--ink)]"
+                        className="action-secondary min-h-0 px-4 py-2"
                       >
                         查看报告
                       </Link>
@@ -326,14 +326,14 @@ export default function AdminPremiumServiceConsole() {
                   <div className="space-y-3">
                     <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">用户问题</div>
-                      <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">
+                      <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">
                         {`${item.intake?.question || '未填写问题'}`}
                       </div>
                     </div>
 
                     <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">联系方式</div>
-                      <div className="mt-2 grid gap-2 text-sm leading-7 text-[color:var(--ink)]">
+                      <div className="mt-2 grid gap-2 text-xs leading-6 text-[color:var(--ink)]">
                         <div>称呼：{item.contactName || '未填写'}</div>
                         <div>联系：{item.contactValue || '未填写'}</div>
                         <div>偏好：{`${item.intake?.preferredContact || '未填写'}`}</div>
@@ -371,7 +371,7 @@ export default function AdminPremiumServiceConsole() {
                       value={draft.adminNote}
                       onChange={(event) => updateDraft(item.id, { adminNote: event.target.value })}
                       placeholder="写下这次跟进说明、判断重点或下一步动作"
-                      className="min-h-[120px] w-full rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+                      className="min-h-[120px] w-full rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
                     />
 
                     <label className="flex items-center gap-3 rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">

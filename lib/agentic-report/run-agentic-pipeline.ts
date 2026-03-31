@@ -9,6 +9,8 @@ import { runRepair } from '@/lib/agentic-report/review/run-repair';
 import { runReview } from '@/lib/agentic-report/review/run-review';
 import { runVerify } from '@/lib/agentic-report/review/run-verify';
 import { runAgent } from '@/lib/agentic-report/run-agent';
+import { getModelFallbackChain } from '@/lib/llm-model-fallback';
+import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
 import { buildAutoReferenceCorpusFromKnowledgeBase } from '@/lib/reference-corpus-builder';
 import type { BuildContextSignalsInput, BuildGroundTruthInput } from '@/lib/agentic-report/types';
 
@@ -69,37 +71,37 @@ export async function runAgenticPipeline(params: {
       referenceCorpus,
     },
   });
+  const keys = params.agentKeys || CORE_AGENT_KEYS;
 
   if (params.enabled === false) {
-    const fallbackResults = buildFallbackAgentResults(context, [...(params.agentKeys || CORE_AGENT_KEYS)]);
-    const review = runReview(context, fallbackResults);
-    const repair = runRepair(fallbackResults, review);
-    const verify = runVerify(context, repair.repairedResults);
-
-    return {
-      enabled: false,
-      used: false,
+    return buildDeterministicFallbackPipelineResult({
       context,
-      agentResults: repair.repairedResults,
-      review,
-      repair,
-      verify,
-      orchestration: {
-        mode: 'deterministic-expert' as const,
-        agentsRun: Object.keys(fallbackResults),
-        rerunAgents: [],
-        totalLlmCalls: 0,
-        durationMs: 0,
-        successRate: 1,
-        succeeded: [],
-        failed: [],
-        errors: [],
-        agentSources: Object.fromEntries(Object.keys(fallbackResults).map((key) => [key, 'fallback'])),
-      },
-    };
+      keys,
+      enabled: false,
+    });
   }
 
-  const keys = params.agentKeys || CORE_AGENT_KEYS;
+  const agentScopeHealth = assessScopeProviderHealth(
+    getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+    'agent'
+  );
+  if (!hasRunnableModelsForSnapshots(agentScopeHealth.snapshots)) {
+    for (const key of keys) {
+      await params.onProgress?.({
+        type: 'agent-fallback',
+        agentKey: key,
+        detail: `${AGENT_LABELS[key] || key}分析模块当前跳过 LLM 调用，系统直接回退到稳定专家层结果。`,
+      });
+    }
+
+    return buildDeterministicFallbackPipelineResult({
+      context,
+      keys,
+      enabled: true,
+      errors: ['AGENT_SCOPE_NO_RUNNABLE_MODELS'],
+    });
+  }
+
   const startedAt = Date.now();
   let llmCalls = 0;
   const mainTaskTimeoutMs = params.mainTaskTimeoutMs || AGENT_MAIN_TASK_TIMEOUT_MS;
@@ -180,6 +182,40 @@ export async function runAgenticPipeline(params: {
       failed,
       errors: merged.errors,
       agentSources,
+    },
+  };
+}
+
+function buildDeterministicFallbackPipelineResult(params: {
+  context: ReturnType<typeof createAgenticContext>;
+  keys: CoreAgentKey[];
+  enabled: boolean;
+  errors?: string[];
+}) {
+  const fallbackResults = buildFallbackAgentResults(params.context, [...params.keys]);
+  const review = runReview(params.context, fallbackResults);
+  const repair = runRepair(fallbackResults, review);
+  const verify = runVerify(params.context, repair.repairedResults);
+
+  return {
+    enabled: params.enabled,
+    used: false,
+    context: params.context,
+    agentResults: repair.repairedResults,
+    review,
+    repair,
+    verify,
+    orchestration: {
+      mode: 'deterministic-expert' as const,
+      agentsRun: Object.keys(fallbackResults),
+      rerunAgents: [],
+      totalLlmCalls: 0,
+      durationMs: 0,
+      successRate: 1,
+      succeeded: [],
+      failed: [],
+      errors: params.errors || [],
+      agentSources: Object.fromEntries(Object.keys(fallbackResults).map((key) => [key, 'fallback'])),
     },
   };
 }

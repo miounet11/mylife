@@ -1,0 +1,305 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "人生K线 世界易系统入口v1.0.0.1" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e10]:
+          - generic [ref=e11]: 人生K线
+          - generic [ref=e12]: 世界易系统入口v1.0.0.1
+      - navigation [ref=e13]:
+        - link "世界易" [ref=e14] [cursor=pointer]:
+          - /url: /world-yi
+        - link "知识库" [ref=e15] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e16] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e17] [cursor=pointer]:
+          - /url: /insights
+        - link "工具中心" [ref=e18] [cursor=pointer]:
+          - /url: /tools
+        - link "进入判断" [ref=e19] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e20] [cursor=pointer]:
+          - /url: /chat
+        - link "事件日历" [ref=e21] [cursor=pointer]:
+          - /url: /events
+        - link "我的档案" [ref=e22] [cursor=pointer]:
+          - /url: /profile
+        - link "案例库" [ref=e23] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e24] [cursor=pointer]:
+          - /url: /updates
+      - link "开始分析" [ref=e26] [cursor=pointer]:
+        - /url: /analyze
+        - text: 开始分析
+        - img [ref=e27]
+    - generic [ref=e30]:
+      - link "世界易" [ref=e31] [cursor=pointer]:
+        - /url: /world-yi
+      - link "知识库" [ref=e32] [cursor=pointer]:
+        - /url: /knowledge
+      - link "专题地图" [ref=e33] [cursor=pointer]:
+        - /url: /knowledge/topics
+      - link "洞察中心" [ref=e34] [cursor=pointer]:
+        - /url: /insights
+      - link "工具中心" [ref=e35] [cursor=pointer]:
+        - /url: /tools
+      - link "进入判断" [ref=e36] [cursor=pointer]:
+        - /url: /analyze
+      - link "结构追问" [ref=e37] [cursor=pointer]:
+        - /url: /chat
+      - link "事件日历" [ref=e38] [cursor=pointer]:
+        - /url: /events
+      - link "我的档案" [ref=e39] [cursor=pointer]:
+        - /url: /profile
+      - link "案例库" [ref=e40] [cursor=pointer]:
+        - /url: /cases
+      - link "邮件更新" [ref=e41] [cursor=pointer]:
+        - /url: /updates
+  - main [ref=e42]:
+    - generic [ref=e43]:
+      - article [ref=e44]:
+        - navigation "Breadcrumb" [ref=e45]:
+          - generic [ref=e46]:
+            - link "首页" [ref=e47] [cursor=pointer]:
+              - /url: /
+            - text: /
+          - generic [ref=e48]:
+            - link "案例库" [ref=e49] [cursor=pointer]:
+              - /url: /cases
+            - text: /
+          - generic [ref=e50]: 世界易案例：海归用户最难的不是选国家，而是选阶段
+        - link "返回案例库" [ref=e51] [cursor=pointer]:
+          - /url: /cases
+          - img [ref=e52]
+          - text: 返回案例库
+        - generic [ref=e54]:
+          - img [ref=e55]
+          - text: 迁移与去留
+        - heading "世界易案例：海归用户最难的不是选国家，而是选阶段" [level=1] [ref=e58]
+        - generic [ref=e59]:
+          - generic [ref=e60]: 简体中文 · 海外华人
+          - text: Global Chinese
+        - paragraph [ref=e61]: 很多海归用户表面问“回不回”，真正的问题其实是当前阶段到底适合扩张、沉淀，还是先保留双边可能性。
+        - generic [ref=e63]:
+          - heading "问题不只是地理选择" [level=2] [ref=e64]
+          - generic [ref=e65]:
+            - paragraph [ref=e66]: 这类用户看似在问国家选择，实际在问的是阶段位置。如果阶段本身还不稳，贸然回国或贸然定居都可能把问题放大。世界易会先看这个人当前是该先稳定现金流、先处理身份与家庭边界，还是可以进入下一轮扩张。
+            - paragraph [ref=e67]: 因此，迁移决策的真正难点，不在地图上，而在时位上。
+        - generic [ref=e68]:
+          - generic [ref=e69]: 同类案例继续阅读
+          - generic [ref=e70]:
+            - link "世界易案例：搬家之后状态更差，不一定是运气差，而是空间和节奏不匹配 用户以为是自己心态出问题，实际是居住动线、通勤压力和恢复条件一起把消耗放大了。" [ref=e71] [cursor=pointer]:
+              - /url: /cases/world-yi-case-house-relocation
+              - generic [ref=e72]: 世界易案例：搬家之后状态更差，不一定是运气差，而是空间和节奏不匹配
+              - generic [ref=e73]: 用户以为是自己心态出问题，实际是居住动线、通勤压力和恢复条件一起把消耗放大了。
+            - link "世界易案例：双城生活拖得越久越累，不一定是你软弱，而是两边都在持续抽你的系统 双城或双国生活最危险的，不只是来回成本，而是长期没有真正落点，结果每一边都需要你不断补位。" [ref=e74] [cursor=pointer]:
+              - /url: /cases/world-yi-case-dual-city-fatigue
+              - generic [ref=e75]: 世界易案例：双城生活拖得越久越累，不一定是你软弱，而是两边都在持续抽你的系统
+              - generic [ref=e76]: 双城或双国生活最危险的，不只是来回成本，而是长期没有真正落点，结果每一边都需要你不断补位。
+            - link "世界易案例：婚后要不要迁移，真正难的不是城市选择，而是两个人的阶段并不一致 很多婚后迁移争论看上去像地点问题，实际是一个人想扩张，一个人需要稳定，阶段不一致才是核心冲突。" [ref=e77] [cursor=pointer]:
+              - /url: /cases/world-yi-case-marriage-migration
+              - generic [ref=e78]: 世界易案例：婚后要不要迁移，真正难的不是城市选择，而是两个人的阶段并不一致
+              - generic [ref=e79]: 很多婚后迁移争论看上去像地点问题，实际是一个人想扩张，一个人需要稳定，阶段不一致才是核心冲突。
+      - generic [ref=e80]:
+        - generic [ref=e81]:
+          - generic [ref=e82]:
+            - img [ref=e83]
+            - text: 案例页快速分析
+          - heading "案例和你之间，只差把生日带进去" [level=3] [ref=e86]
+          - paragraph [ref=e87]: 案例证明这套系统能解决具体问题。现在直接填自己的生日与时间，下一步继续补出生地，就能看你的个人结构和当前阶段。
+          - generic [ref=e88]:
+            - generic [ref=e89]:
+              - generic [ref=e90]: 结构
+              - generic [ref=e91]: 先看命局底座
+            - generic [ref=e92]:
+              - generic [ref=e93]: 阶段
+              - generic [ref=e94]: 再看当前时位
+            - generic [ref=e95]:
+              - generic [ref=e96]: 环境
+              - generic [ref=e97]: 把现实变量带进来
+            - generic [ref=e98]:
+              - generic [ref=e99]: 动作
+              - generic [ref=e100]: 最后落到现实下一步
+          - generic [ref=e101]:
+            - button "男" [ref=e102]
+            - button "女" [ref=e103]
+          - generic [ref=e104]:
+            - generic [ref=e105]:
+              - generic [ref=e106]:
+                - generic [ref=e107]:
+                  - img [ref=e108]
+                  - text: 公历出生日期
+                - paragraph [ref=e110]: 支持直接粘贴 1998-08-08、19980808、1998年8月8日。
+                - textbox "例如 1998-08-08" [ref=e111]: 1990-01-01
+                - generic [ref=e112]:
+                  - generic [ref=e113]:
+                    - text: 年
+                    - textbox "年" [ref=e114]: "1990"
+                  - generic [ref=e115]:
+                    - text: 月
+                    - textbox "月" [ref=e116]: "01"
+                  - generic [ref=e117]:
+                    - text: 日
+                    - textbox "日" [ref=e118]: "01"
+              - generic [ref=e119]:
+                - generic [ref=e120]:
+                  - img [ref=e121]
+                  - text: 已识别日期
+                - generic [ref=e124]:
+                  - generic [ref=e125]: 1990 / 01 / 01
+                  - generic [ref=e126]:
+                    - img [ref=e127]
+                    - text: 作为判断日期
+                - generic [ref=e130]: 如果只记得大概日期，请先核对出生证明或户籍记录后再提交。
+            - generic [ref=e131]:
+              - generic [ref=e132]:
+                - generic [ref=e133]:
+                  - img [ref=e134]
+                  - text: 钟表时间
+                - paragraph [ref=e137]: 支持输入 14:30、1430、14点30分；如果只记得大概时段，可直接点下方时辰。
+                - generic [ref=e138]:
+                  - textbox "例如 14:30" [ref=e139]: 12:00
+                  - generic [ref=e140]:
+                    - text: 秒
+                    - textbox "秒" [ref=e141]: "00"
+                - generic [ref=e142]:
+                  - button "子 23:00-01:00 夜半" [ref=e143]:
+                    - generic [ref=e144]: 子
+                    - generic [ref=e145]: 23:00-01:00
+                    - generic [ref=e146]: 夜半
+                  - button "丑 01:00-03:00 鸡鸣" [ref=e147]:
+                    - generic [ref=e148]: 丑
+                    - generic [ref=e149]: 01:00-03:00
+                    - generic [ref=e150]: 鸡鸣
+                  - button "寅 03:00-05:00 平旦" [ref=e151]:
+                    - generic [ref=e152]: 寅
+                    - generic [ref=e153]: 03:00-05:00
+                    - generic [ref=e154]: 平旦
+                  - button "卯 05:00-07:00 日出" [ref=e155]:
+                    - generic [ref=e156]: 卯
+                    - generic [ref=e157]: 05:00-07:00
+                    - generic [ref=e158]: 日出
+                  - button "辰 07:00-09:00 食时" [ref=e159]:
+                    - generic [ref=e160]: 辰
+                    - generic [ref=e161]: 07:00-09:00
+                    - generic [ref=e162]: 食时
+                  - button "巳 09:00-11:00 隅中" [ref=e163]:
+                    - generic [ref=e164]: 巳
+                    - generic [ref=e165]: 09:00-11:00
+                    - generic [ref=e166]: 隅中
+                  - button "午 11:00-13:00 日中" [ref=e167]:
+                    - generic [ref=e168]: 午
+                    - generic [ref=e169]: 11:00-13:00
+                    - generic [ref=e170]: 日中
+                  - button "未 13:00-15:00 日昳" [ref=e171]:
+                    - generic [ref=e172]: 未
+                    - generic [ref=e173]: 13:00-15:00
+                    - generic [ref=e174]: 日昳
+                  - button "申 15:00-17:00 晡时" [ref=e175]:
+                    - generic [ref=e176]: 申
+                    - generic [ref=e177]: 15:00-17:00
+                    - generic [ref=e178]: 晡时
+                  - button "酉 17:00-19:00 日入" [ref=e179]:
+                    - generic [ref=e180]: 酉
+                    - generic [ref=e181]: 17:00-19:00
+                    - generic [ref=e182]: 日入
+                  - button "戌 19:00-21:00 黄昏" [ref=e183]:
+                    - generic [ref=e184]: 戌
+                    - generic [ref=e185]: 19:00-21:00
+                    - generic [ref=e186]: 黄昏
+                  - button "亥 21:00-23:00 人定" [ref=e187]:
+                    - generic [ref=e188]: 亥
+                    - generic [ref=e189]: 21:00-23:00
+                    - generic [ref=e190]: 人定
+                - generic [ref=e191]:
+                  - button "00 分" [ref=e192]
+                  - button "15 分" [ref=e193]
+                  - button "30 分" [ref=e194]
+                  - button "45 分" [ref=e195]
+              - generic [ref=e196]:
+                - generic [ref=e197]:
+                  - img [ref=e198]
+                  - text: 当前识别
+                - generic [ref=e201]:
+                  - generic [ref=e202]: 12:00:00
+                  - generic [ref=e203]: 午时 · 日中
+                - generic [ref=e204]: 如果只知道大概区间，先选时辰也可以；系统会再结合出生地做真太阳时修正。
+          - generic [ref=e205]:
+            - paragraph [ref=e206]: 下一步会自动带入世界易分析页。你只需要再确认出生地，就可以开始完整判断。
+            - button "快速进入判断" [ref=e207]:
+              - text: 快速进入判断
+              - img [ref=e208]
+        - generic [ref=e210]:
+          - generic [ref=e211]: 世界易案例路径
+          - paragraph [ref=e212]: 这篇案例不该只被当成单个故事来看。更重要的是回到世界易的案例方法、判断顺序和总入口，理解它为什么这样分析。
+          - generic [ref=e213]:
+            - link "世界易的案例方法 为什么真正好的案例不是做玄感展示，而是讲结构、阶段、环境、动作与风险。" [ref=e214] [cursor=pointer]:
+              - /url: /knowledge/world-yi-case-method
+              - generic [ref=e215]: 世界易的案例方法
+              - generic [ref=e216]: 为什么真正好的案例不是做玄感展示，而是讲结构、阶段、环境、动作与风险。
+            - link "世界易方法论 先看结构，再看时位，再带环境，最后回到动作和风险。" [ref=e217] [cursor=pointer]:
+              - /url: /knowledge/world-yi-methodology
+              - generic [ref=e218]: 世界易方法论
+              - generic [ref=e219]: 先看结构，再看时位，再带环境，最后回到动作和风险。
+            - link "进入全球案例入口 如果你想继续沿全球华人路径阅读，直接进入全球案例与专题入口。" [ref=e220] [cursor=pointer]:
+              - /url: /world-yi/global/cases
+              - generic [ref=e221]: 进入全球案例入口
+              - generic [ref=e222]: 如果你想继续沿全球华人路径阅读，直接进入全球案例与专题入口。
+            - link "看世界易主书工程 如果你想把单个案例放回更完整的学说母本，可以从十卷主书入口继续往上看。" [ref=e223] [cursor=pointer]:
+              - /url: /world-yi/book
+              - generic [ref=e224]: 看世界易主书工程
+              - generic [ref=e225]: 如果你想把单个案例放回更完整的学说母本，可以从十卷主书入口继续往上看。
+        - generic [ref=e226]:
+          - generic [ref=e227]: 这类案例的价值
+          - generic [ref=e228]:
+            - paragraph [ref=e229]: 它能把抽象判断结果翻译成真实场景。
+            - paragraph [ref=e230]: 它能提升新用户对产品价值的理解速度。
+            - paragraph [ref=e231]: 它能成为长期可累积、可搜索、可分享的内容资产。
+        - generic [ref=e232]:
+          - generic [ref=e233]:
+            - img [ref=e234]
+            - text: 邮箱订阅
+          - heading "订阅案例更新" [level=2] [ref=e237]
+          - paragraph [ref=e238]: 当我们新增更有代表性的升学、事业、婚恋案例时，直接发到你的邮箱。
+          - generic [ref=e239]:
+            - generic [ref=e240]:
+              - img [ref=e241]
+              - textbox "输入你的邮箱地址" [ref=e244]
+            - button "订阅更新" [disabled] [ref=e245]
+          - generic [ref=e246]:
+            - text: 需要管理订阅状态？
+            - link "进入订阅管理" [ref=e247] [cursor=pointer]:
+              - /url: /updates
+  - contentinfo [ref=e248]:
+    - generic [ref=e249]:
+      - generic [ref=e250]:
+        - generic [ref=e251]: 人生K线
+        - paragraph [ref=e252]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+        - paragraph [ref=e253]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+      - generic [ref=e254]:
+        - link "邮箱登录" [ref=e255] [cursor=pointer]:
+          - /url: /login
+        - link "世界易" [ref=e256] [cursor=pointer]:
+          - /url: /world-yi
+        - link "主书工程" [ref=e257] [cursor=pointer]:
+          - /url: /world-yi/book
+        - link "工具中心" [ref=e258] [cursor=pointer]:
+          - /url: /tools
+        - link "知识库" [ref=e259] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e260] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e261] [cursor=pointer]:
+          - /url: /insights
+        - link "案例库" [ref=e262] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e263] [cursor=pointer]:
+          - /url: /updates
+        - link "进入判断" [ref=e264] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e265] [cursor=pointer]:
+          - /url: /chat
+        - link "事件管理" [ref=e266] [cursor=pointer]:
+          - /url: /events

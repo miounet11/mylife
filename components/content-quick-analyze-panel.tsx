@@ -17,8 +17,8 @@ interface ContentQuickAnalyzePanelProps {
 }
 
 export default function ContentQuickAnalyzePanel({
-  title = '输入生日，直接进入个人测算',
-  description = '先填出生日期、时间和性别，出生地可以在下一步继续补充。这样内容阅读不会中断，但转化入口始终在手边。',
+  title = '输入生日，直接进入世界易个人判断',
+  description = '先填出生日期、时间和性别，出生地在下一步继续补充。',
   sourceLabel = '内容页快捷入口',
   sourceKey = 'content_surface',
   contentMeta = {},
@@ -26,12 +26,14 @@ export default function ContentQuickAnalyzePanel({
   const router = useRouter();
   const pathname = usePathname();
   const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [birthDate, setBirthDate] = useState({ year: 1990, month: 1, day: 1 });
-  const [birthTime, setBirthTime] = useState({ hour: 12, minute: 0, second: 0 });
-  const [dateValid, setDateValid] = useState(true);
-  const [timeValid, setTimeValid] = useState(true);
+  const [birthDate, setBirthDate] = useState({ year: null, month: null, day: null });
+  const [birthTime, setBirthTime] = useState({ hour: null, minute: null, second: null });
+  const [dateValid, setDateValid] = useState(false);
+  const [timeValid, setTimeValid] = useState(false);
 
-  const canSubmit = dateValid && timeValid;
+  const hasCompleteDate = birthDate.year !== null && birthDate.month !== null && birthDate.day !== null;
+  const hasCompleteTime = birthTime.hour !== null && birthTime.minute !== null && birthTime.second !== null;
+  const canSubmit = dateValid && timeValid && hasCompleteDate && hasCompleteTime;
 
   return (
     <div className="product-panel-strong overflow-hidden p-5 md:p-6">
@@ -41,7 +43,22 @@ export default function ContentQuickAnalyzePanel({
       </div>
 
       <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)]">{title}</h3>
-      <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{description}</p>
+      <p className="intro-copy mt-3">{description}</p>
+      <div className="intro-panel mt-3">优先动作：先填时间信息，再进入分析页补出生地。</div>
+
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        {[
+          ['结构', '先看命局底座'],
+          ['阶段', '再看当前时位'],
+          ['环境', '把现实变量带进来'],
+          ['动作', '最后落到现实下一步'],
+        ].map(([titleText, body]) => (
+          <div key={titleText} className="rounded-[1.2rem] bg-white/78 px-4 py-4">
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{titleText}</div>
+            <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{body}</div>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-5 inline-flex rounded-full border border-[color:var(--line)] bg-white/80 p-1">
         {[
@@ -77,9 +94,7 @@ export default function ContentQuickAnalyzePanel({
       </div>
 
       <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="text-xs leading-6 text-[color:var(--muted)]">
-          下一步会自动带入分析页。你只需要再确认出生地，就可以开始完整排盘。
-        </p>
+        <p className="intro-copy">下一步会自动带入分析页，只需要再确认出生地。</p>
         <button
           type="button"
           disabled={!canSubmit}
@@ -103,7 +118,7 @@ export default function ContentQuickAnalyzePanel({
           }}
           className="action-primary disabled:cursor-not-allowed disabled:opacity-60"
         >
-          快速进入测算
+          快速进入判断
           <ArrowRight className="ml-2 h-4 w-4" />
         </button>
       </div>

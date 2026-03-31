@@ -4,8 +4,11 @@ import Link from 'next/link';
 import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, ChevronRight, Clock, History, Sparkles, Target } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PersonalJourneyHub from '@/components/personal-journey-hub';
+import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import ToolHistoryPanel from '@/components/tool-history-panel';
 
 type HistoryFortune = {
   id: string;
@@ -81,7 +84,7 @@ const mapStrengthToResult = (strength?: string) => {
 };
 
 const truncate = (text: string, max = 58) => {
-  if (!text) return '已完成命理综合分析，建议重新进入结果页查看完整阶段判断与行动建议。';
+  if (!text) return '已完成综合判断，建议重新进入结果页查看完整阶段判断与行动建议。';
   return text.length > max ? `${text.slice(0, max)}...` : text;
 };
 
@@ -135,7 +138,7 @@ export default function HistoryPage() {
         return {
           id: item.id,
           createdAt: parseReportCreatedAt(item.id),
-          title: item.pattern?.type ? `命理 · ${item.pattern.type}` : '命理综合分析',
+          title: item.pattern?.type ? `结构 · ${item.pattern.type}` : '综合判断',
           result: mapStrengthToResult(item.pattern?.strength),
           summary: truncate(item.analysis?.opening || item.analysis?.explanation || item.pattern?.description || ''),
           stage: item.fortune?.currentDaYun || '当前阶段信息已写入报告正文',
@@ -190,40 +193,33 @@ export default function HistoryPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="新建分析" />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
-        <section className="mb-8 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-5">
-            <div className="section-label">
+        <PublicSurfaceHero
+          label={(
+            <>
               <Sparkles className="h-3.5 w-3.5" />
               复盘工作台
-            </div>
-            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              用户回来看历史时，
-              <span className="font-serif text-[color:var(--accent-strong)]">应该立刻知道现在该处理什么。</span>
-            </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
-              这里不再只是冷冰冰的历史列表，而是把报告、已发生事件、待验证样本和偏差纠正合到同一处，让每次回访都能继续推进。
-            </p>
-          </div>
-
-          <div className="glass-panel rounded-[2rem] p-6">
-            <div className="flex items-center gap-3">
-              <History className="h-5 w-5 text-[color:var(--accent-strong)]" />
-              <div className="font-semibold text-[color:var(--ink)]">复访价值概览</div>
-            </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {[
-                '先回看最关键的一份报告',
-                '把已发生事件补回验证结果',
-                '对偏差样本做纠偏分析',
-                '再带着上下文继续问 AI',
-              ].map((item) => (
-                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                  {item}
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+            </>
+          )}
+          title={(
+            <>
+              每次回来看历史，
+              <span className="font-serif text-[color:var(--accent-strong)]">都应该立刻知道下一步该做什么。</span>
+            </>
+          )}
+          description="把报告、事件、待验证样本和纠偏入口放在同一处。"
+          hint="建议先处理“待纠偏”和“待验证”，再继续追问。"
+          actions={[
+            <Link key="events" href="/events" className="action-primary action-main">进入事件页</Link>,
+            <Link key="chat" href="/chat" className="action-secondary">继续追问</Link>,
+            <Link key="analyze" href="/analyze" className="action-secondary">新建分析</Link>,
+          ]}
+          highlights={[
+            { body: '先回看最关键的一份报告' },
+            { body: '把已发生事件补回验证结果' },
+            { body: '对偏差样本做纠偏分析' },
+            { body: '再带着上下文继续问 AI' },
+          ]}
+        />
 
         <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
@@ -237,10 +233,25 @@ export default function HistoryPage() {
               <div className="mt-3 flex items-center gap-3">
                 <div className={`rounded-full px-3 py-1 text-sm font-semibold ${item.tone}`}>{item.value}</div>
               </div>
-              <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.detail}</div>
+              <div className="intro-copy mt-3">{item.detail}</div>
             </div>
           ))}
         </section>
+
+        <div className="mb-8">
+          <ToolHistoryPanel
+            title="单项工具复访区"
+            description="这里也会显示你最近用哪些单项工具把问题继续做窄。"
+          />
+        </div>
+
+        <div className="mb-8">
+          <PersonalJourneyHub
+            title="结合你的历史记录，继续往下走"
+            description="基于你做过的报告和工具，继续把文章、案例和下一步测算串起来。"
+            page="/history"
+          />
+        </div>
 
         {error ? (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -255,7 +266,7 @@ export default function HistoryPage() {
                 <Clock className="h-5 w-5 text-amber-700" />
                 <div>
                   <div className="font-semibold text-[color:var(--ink)]">当前最该补回验证的事件</div>
-                  <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">这些事件已经过了发生时间，但还没有记录实际结果。</div>
+                  <div className="intro-copy mt-1">这些事件已过发生时间，但还没有回填结果。</div>
                 </div>
               </div>
               <div className="mt-4 grid gap-3">
@@ -263,15 +274,15 @@ export default function HistoryPage() {
                   <div key={event.id} className="rounded-[1.5rem] bg-white/80 p-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
                     <div className="mt-1 text-xs text-[color:var(--muted)]">{new Date(event.date).toLocaleDateString('zh-CN')}</div>
-                    <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                    <div className="intro-copy mt-3">
                       {event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm || event.description || '回到事件页补回验证结果。'}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="action-secondary">
                         打开事件页
                       </Link>
                       {event.fortuneAnalysis?.reportId ? (
-                        <Link href={`/result/${event.fortuneAnalysis.reportId}`} className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                        <Link href={`/result/${event.fortuneAnalysis.reportId}`} className="action-secondary">
                           回到关联报告
                         </Link>
                       ) : null}
@@ -286,7 +297,7 @@ export default function HistoryPage() {
                 <AlertTriangle className="h-5 w-5 text-rose-700" />
                 <div>
                   <div className="font-semibold text-[color:var(--ink)]">当前最该纠偏的样本</div>
-                  <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">这些事件已经出现偏差，最适合继续做纠偏分析和深问。</div>
+                  <div className="intro-copy mt-1">这些事件已出现偏差，优先继续做纠偏分析。</div>
                 </div>
               </div>
               <div className="mt-4 grid gap-3">
@@ -294,16 +305,16 @@ export default function HistoryPage() {
                   <div key={event.id} className="rounded-[1.5rem] bg-white/80 p-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
                     <div className="mt-1 text-xs text-[color:var(--muted)]">{new Date(event.date).toLocaleDateString('zh-CN')}</div>
-                    <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                    <div className="intro-copy mt-3">
                       {event.userFeedback?.userNotes || event.fortuneAnalysis?.reason || '进入聊天页继续做偏差修正。'}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
                       {event.fortuneAnalysis?.reportId ? (
-                        <Link href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`} className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-2 text-xs font-semibold text-white">
+                        <Link href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`} className="action-primary">
                           进入纠偏分析
                         </Link>
                       ) : null}
-                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="action-secondary">
                         查看事件详情
                       </Link>
                     </div>
@@ -319,11 +330,9 @@ export default function HistoryPage() {
             <div>
               <div className="section-label">历史报告</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">继续回看最值得复用的报告</div>
-              <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                当前已关联 {reviewWorkbench.linkedReportCount} 份进入现实验证链路的报告。优先回看已经沉淀过事件、能继续产生新判断的那几份。
-              </div>
+              <div className="intro-copy mt-2">{`当前已有 ${reviewWorkbench.linkedReportCount} 份报告进入现实验证链路。`}</div>
             </div>
-            <Link href="/analyze" className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white">
+            <Link href="/analyze" className="action-primary">
               新建一份分析
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -346,7 +355,7 @@ export default function HistoryPage() {
                           <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                             {item.title}
                           </span>
-                          <span className="inline-flex items-center gap-1 text-sm text-[color:var(--muted)]">
+                          <span className="inline-flex items-center gap-1 text-xs text-[color:var(--muted)]">
                             <Calendar className="h-3.5 w-3.5" />
                             {new Date(item.createdAt).toLocaleDateString('zh-CN')}
                           </span>
@@ -357,8 +366,8 @@ export default function HistoryPage() {
                             {item.deliveryTierLabel}
                           </span>
                         </div>
-                        <p className="mt-3 text-base font-medium text-[color:var(--ink)]">{item.summary}</p>
-                        <div className="mt-4 flex flex-wrap gap-3 text-sm text-[color:var(--muted)]">
+                        <p className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{item.summary}</p>
+                        <div className="mt-4 flex flex-wrap gap-3 text-xs text-[color:var(--muted)]">
                           <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1">
                             <Target className="h-3.5 w-3.5" />
                             {item.stage}
@@ -374,7 +383,7 @@ export default function HistoryPage() {
                       </div>
 
                       <div className="flex items-center gap-4">
-                        <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-700">
+                        <div className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
                           {item.result}
                         </div>
                         <ChevronRight className="h-5 w-5 text-[color:var(--muted)]" />
@@ -390,9 +399,9 @@ export default function HistoryPage() {
                 <Clock className="h-8 w-8 text-slate-400" />
               </div>
               <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">还没有分析历史</h2>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">先完成一次测算，后续历史、咨询、事件和复盘都会围绕这份结果继续展开。</p>
+              <p className="intro-copy mt-2">先完成一次判断，后续历史、咨询和复盘都会围绕这份结果展开。</p>
               <Link href="/analyze" className="action-primary mt-6">
-                开始第一次测算
+                开始第一次判断
               </Link>
             </div>
           )}

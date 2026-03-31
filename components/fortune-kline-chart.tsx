@@ -41,7 +41,7 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
       <div className="soft-card w-full rounded-[2rem] p-6 md:p-8">
         <div className="section-label">阶段趋势</div>
         <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">人生运势曲线</h3>
-        <div className="mt-6 rounded-[1.5rem] bg-slate-50 px-5 py-8 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="mt-6 rounded-[1.5rem] bg-slate-50 px-5 py-8 text-xs leading-6 text-[color:var(--muted)]">
           当前还没有足够的历史分析结果，暂时无法生成可回看的阶段趋势图。
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
         <div>
           <div className="section-label">阶段趋势</div>
           <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">人生运势曲线</h3>
-          <p className="mt-2 max-w-2xl text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-2 max-w-2xl text-xs leading-6 text-[color:var(--muted)]">
             把一次性分析转成可回看的趋势图，帮助用户理解不同年份在事业、财富、关系和健康上的节奏变化。
           </p>
         </div>
@@ -106,10 +106,10 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
       </div>
 
       <div className="mt-6 grid gap-3 md:grid-cols-2">
-        <div className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
           上升更明显的曲线，通常意味着这条维度更适合主动推进；波动或下行更明显的曲线，则更适合控制节奏与降低暴露。
         </div>
-        <div className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="rounded-[1.5rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
           最好的使用方式不是“看一眼”，而是把趋势图和报告结论、事件记录、后续咨询放在一起交叉验证。
         </div>
       </div>

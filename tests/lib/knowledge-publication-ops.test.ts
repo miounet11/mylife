@@ -1,6 +1,7 @@
 import { describe, expect, test } from '@jest/globals';
 import {
   deleteManagedContentEntry,
+  getManagedContentJourneyMeta,
   listManagedContentEntries,
   saveManagedContentEntry,
 } from '@/lib/content-store';
@@ -96,6 +97,9 @@ describe('knowledge publication ops', () => {
       expect(typeof published?.meta?.editorialScore).toBe('number');
       expect(published?.meta?.homepageEligible).toBe(true);
       expect(published?.meta?.publicationReady).toBe(true);
+      const journeyMeta = getManagedContentJourneyMeta(published || null);
+      expect(journeyMeta.relatedReportThemes.length).toBeGreaterThan(0);
+      expect(journeyMeta.relatedToolSlugs.length).toBeGreaterThan(0);
       expect(stillDraft?.status).toBe('draft');
     } finally {
       deleteManagedContentEntry('content_test_topic_overview');

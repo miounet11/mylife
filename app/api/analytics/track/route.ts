@@ -17,8 +17,14 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'case_article_viewed',
   'insights_page_viewed',
   'insight_article_viewed',
+  'tools_page_viewed',
+  'tool_detail_viewed',
+  'tool_result_viewed',
   'content_card_clicked',
+  'tool_card_clicked',
   'content_quick_analyze_started',
+  'tool_run_started',
+  'tool_run_completed',
   'report_viewed',
   'chat_followup_clicked',
   'result_cta_clicked',
@@ -47,6 +53,7 @@ export async function POST(request: NextRequest) {
       eventName,
       page,
       meta,
+      forwardToGoogleAnalytics: false,
     });
 
     return NextResponse.json({

@@ -8,7 +8,7 @@ export default function ChatMarkdown({ content }: { content: string }) {
   const normalizedContent = normalizeChatMarkdown(content);
 
   return (
-    <div className="chat-markdown text-sm leading-7 text-[color:var(--ink)]">
+    <div className="chat-markdown text-xs leading-6 text-[color:var(--ink)]">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{

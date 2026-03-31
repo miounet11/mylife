@@ -29,6 +29,8 @@ body {
     radial-gradient(circle at top right, rgba(31, 23, 15, 0.05), transparent 24%),
     linear-gradient(180deg, #fbf5ea 0%, #f5ecde 45%, #f0e4d4 100%);
   color: var(--ink);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
 body::before {
@@ -59,6 +61,11 @@ body::before {
   h4 {
     letter-spacing: -0.02em;
   }
+
+  :focus-visible {
+    outline: 2px solid rgba(178, 149, 93, 0.52);
+    outline-offset: 2px;
+  }
 }
 
 @layer utilities {
@@ -79,12 +86,14 @@ body::before {
     border: 1px solid rgba(255, 249, 240, 0.82);
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(18px);
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
   }
 
   .soft-card {
     background: var(--surface-strong);
     border: 1px solid var(--line);
     box-shadow: var(--shadow-soft);
+    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
   }
 
   .product-panel {
@@ -138,20 +147,74 @@ body::before {
   }
 
   .action-primary {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold text-white transition;
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
     box-shadow: 0 16px 36px rgba(178, 149, 93, 0.28);
+    border: 2px solid rgba(139, 115, 70, 0.25);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
   }
 
   .action-primary:hover {
     transform: translateY(-1px);
+    box-shadow: 0 20px 40px rgba(178, 149, 93, 0.34);
   }
 
   .action-secondary {
-    @apply inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold transition;
-    background: rgba(255, 255, 255, 0.72);
+    @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition;
+    background: rgba(255, 255, 255, 0.9);
     color: var(--ink);
-    border: 1px solid var(--line);
+    border: 2px solid rgba(139, 115, 70, 0.2);
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .action-secondary:hover {
+    transform: translateY(-1px);
+    border-color: rgba(178, 149, 93, 0.5);
+    background: rgba(255, 255, 255, 1);
+  }
+
+  .action-main {
+    box-shadow: 0 22px 46px rgba(178, 149, 93, 0.36);
+  }
+
+  .action-strip {
+    @apply rounded-[1.2rem] border p-3;
+    background: rgba(255, 255, 255, 0.7);
+    border-color: rgba(139, 115, 70, 0.2);
+  }
+
+  .action-guide {
+    @apply text-[11px] font-bold uppercase tracking-[0.16em];
+    color: var(--accent-strong);
+  }
+
+  .intro-copy {
+    @apply text-xs leading-6;
+    color: var(--muted);
+    max-width: 44rem;
+  }
+
+  .intro-panel {
+    @apply rounded-[1.2rem] border px-4 py-3 text-xs leading-6;
+    background: rgba(247, 240, 228, 0.82);
+    border-color: rgba(139, 115, 70, 0.14);
+    color: var(--muted);
+  }
+
+  .smooth-button {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .smooth-button:active {
+    transform: translateY(0.5px) scale(0.995);
+  }
+
+  .smooth-input {
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+  }
+
+  .smooth-input:focus {
+    box-shadow: 0 0 0 4px rgba(178, 149, 93, 0.14);
   }
 
   .scrollbar-none {
@@ -160,5 +223,27 @@ body::before {
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .glass-panel:hover,
+  .soft-card:hover {
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }

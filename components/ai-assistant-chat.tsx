@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Copy, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import { ArrowDown, ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Compass, Copy, Layers3, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
 import { buildChatEventDraft } from '@/lib/chat-context';
-import { getChatIntentPreset } from '@/lib/chat-intent';
+import { getChatIntentPreset, listChatIntentPresets } from '@/lib/chat-intent';
+import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
 import ChatMarkdown from '@/components/chat-markdown';
 
 interface ChatMessage {
@@ -88,6 +89,29 @@ interface QuickQuestionButtonProps {
   disabled?: boolean;
 }
 
+const defaultWorldYiQuestions = [
+  '结合我的命局结构和当前阶段，现在最该先推进哪一件事？',
+  '如果把这件事放到接下来三个月看，我更该推进、观察还是收手？',
+  '这段关系现在的问题更像结构不合、阶段不对，还是环境压力过大？',
+  '我现在最需要规避的误判是什么，为什么？',
+];
+
+const chatDoctrineSteps = [
+  '先看结构',
+  '再看阶段',
+  '必须带环境',
+  '最后回到动作',
+];
+
+function buildScopedChatHref(params: { reportId?: string; eventId?: string; intent?: string }) {
+  const query = new URLSearchParams();
+  if (params.reportId) query.set('reportId', params.reportId);
+  if (params.eventId) query.set('eventId', params.eventId);
+  if (params.intent) query.set('intent', params.intent);
+  const serialized = query.toString();
+  return serialized ? `/chat?${serialized}` : '/chat';
+}
+
 export default function AIAssistantChat() {
   const searchParams = useSearchParams();
   const reportId = searchParams.get('reportId') || '';
@@ -111,6 +135,14 @@ export default function AIAssistantChat() {
   const initialScrollDoneRef = useRef(false);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
   const intentPreset = getIntentPreset(intent);
+  const scopedIntentLinks = listChatIntentPresets().map((item) => ({
+    ...item,
+    href: buildScopedChatHref({
+      reportId: reportId || context?.report?.id || undefined,
+      eventId: eventId || context?.focusedEvent?.id || undefined,
+      intent: item.key,
+    }),
+  }));
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
     eventId: eventId || context?.focusedEvent?.id || undefined,
@@ -300,6 +332,13 @@ export default function AIAssistantChat() {
       }
 
       await fetchHistory(false);
+
+      trackGoogleAnalyticsEvent('chat_completed', {
+        report_id: reportId || context?.report?.id || '',
+        event_id: eventId || context?.focusedEvent?.id || '',
+        intent: intent || 'default',
+        llm_used: !!data.llmUsed,
+      });
 
       if (!data.llmUsed) {
         setError('当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。');
@@ -495,12 +534,7 @@ export default function AIAssistantChat() {
 
   const quickQuestions = context?.suggestedPrompts?.length
     ? context.suggestedPrompts
-    : [
-        '我最近事业运如何？',
-        '接下来三个月财运怎么样？',
-        '我该如何判断一段关系是否值得推进？',
-        '今年最需要规避的风险是什么？',
-      ];
+    : defaultWorldYiQuestions;
   const visibleQuickQuestions = intentPreset
     ? Array.from(new Set([...intentPreset.questions, ...quickQuestions])).slice(0, 4)
     : quickQuestions;
@@ -513,19 +547,67 @@ export default function AIAssistantChat() {
             <Bot className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="font-semibold text-[color:var(--ink)]">AI 命理助手</h2>
+            <h2 className="font-semibold text-[color:var(--ink)]">世界易结构追问器</h2>
             <p className="text-sm text-[color:var(--muted)]">
-              {intentPreset ? `当前已进入${intentPreset.entryLabel}，建议直接围绕一件具体事情发问。` : '看完报告后继续问，把重点问题说清楚。'}
+              {intentPreset ? `当前已进入${intentPreset.entryLabel}，建议直接围绕一件具体事情发问。` : '看完报告后继续问，把结构、阶段、环境和动作问清楚。'}
             </p>
           </div>
         </div>
 
+        <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
+          <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
+            <Layers3 className="h-3.5 w-3.5" />
+            追问顺序
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {chatDoctrineSteps.map((item) => (
+              <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
         {intentPreset ? (
-          <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/82 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+          <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/82 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
             <span className="font-semibold text-[color:var(--accent-strong)]">{intentPreset.entryLabel}</span>
             {` · ${intentPreset.helper}`}
           </div>
         ) : null}
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {reportId || context?.report?.id ? (
+            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+              已绑定报告
+            </span>
+          ) : null}
+          {eventId || context?.focusedEvent?.id ? (
+            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+              已绑定事件
+            </span>
+          ) : null}
+          <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+            {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
+          </span>
+        </div>
+
+        <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
+          <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专项切换</div>
+          <div className="mt-3 grid gap-2">
+            {scopedIntentLinks.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`rounded-[1rem] px-3 py-3 text-sm transition hover:-translate-y-0.5 ${
+                  item.key === intentPreset?.key ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
+                }`}
+              >
+                <div>{item.entryLabel}</div>
+                <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{item.summaryHint}</div>
+              </Link>
+            ))}
+          </div>
+        </div>
       </div>
 
       <div className="relative flex-1">
@@ -555,11 +637,11 @@ export default function AIAssistantChat() {
               <div>
                 <div className="section-label">
                   <Sparkles className="h-3.5 w-3.5" />
-                  推荐追问
+                  世界易推荐追问
                 </div>
-                <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先问一个最具体的问题</h3>
-                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  用报告里的一个板块、一个月份或一个现实事件作为锚点，回答会明显更有用。
+                <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先把问题压成一个可判断的结构问题</h3>
+                <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  最好带上报告里的一个板块、一个月份或一个现实事件作为锚点。问题越具体，越容易得到“现在该怎么做”的回答。
                 </p>
               </div>
 
@@ -609,7 +691,7 @@ export default function AIAssistantChat() {
           <button
             type="button"
             onClick={() => scrollToBottom('smooth')}
-            className="absolute bottom-4 right-4 inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white/95 px-4 py-2 text-sm font-semibold text-[color:var(--ink)] shadow-[0_18px_36px_rgba(23,32,51,0.14)]"
+            className="action-secondary absolute bottom-4 right-4 bg-white/95 py-2 shadow-[0_18px_36px_rgba(23,32,51,0.14)]"
           >
             <ArrowDown className="h-4 w-4" />
             回到最新消息
@@ -680,13 +762,13 @@ function ContextCard({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="section-label">
-            <Sparkles className="h-3.5 w-3.5" />
-            这次咨询
+            <Compass className="h-3.5 w-3.5" />
+            这次世界易追问
           </div>
           <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">
             {context.report ? `已锚定报告 ${context.report.pattern} / ${context.report.currentDaYun}` : '当前对话未绑定具体报告'}
           </h3>
-          <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
             {context.report
               ? `日主 ${context.report.dayMaster}，当前重点是 ${context.report.topScenario}，最近优先窗口 ${context.report.bestWindow}。`
               : '你可以直接提问，我们会结合最近记录的内容继续回答。'}
@@ -694,7 +776,7 @@ function ContextCard({
         </div>
         <Link
           href={context.report ? `/result/${context.report.id}` : '/events'}
-          className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary py-2"
         >
           {context.report ? '返回报告' : '查看事件'}
           <ArrowRight className="h-4 w-4" />
@@ -710,6 +792,35 @@ function ContextCard({
           ))}
         </div>
       )}
+
+      <div className="rounded-[1.5rem] bg-slate-50 p-4">
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">本次追问路径</div>
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          {[
+            {
+              title: '结构锚点',
+              description: context.report ? `当前先以 ${context.report.pattern} 作为主结构锚点。` : '先围绕一个核心问题建立结构锚点。',
+            },
+            {
+              title: '阶段坐标',
+              description: context.report ? `阶段重点先看 ${context.report.currentDaYun} 与 ${context.report.bestWindow}。` : '优先说明问题发生在哪个时间窗口。',
+            },
+            {
+              title: '环境变量',
+              description: '把城市、合作关系、家庭压力和现实资源一起带进来，别只问抽象结果。',
+            },
+            {
+              title: '动作落点',
+              description: '每轮追问都尽量收敛成一个“现在先做什么”的动作结论。',
+            },
+          ].map((item) => (
+            <div key={item.title} className="rounded-[1.2rem] bg-white px-4 py-4">
+              <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-[1.04fr_0.96fr]">
         <div className="rounded-[1.5rem] bg-slate-50 p-4">
@@ -754,7 +865,7 @@ function ContextCard({
       {context.validationSummary?.headline && (
         <div className="rounded-[1.5rem] bg-slate-50 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最近反馈</div>
-          <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{context.validationSummary.headline}</div>
+          <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{context.validationSummary.headline}</div>
         </div>
       )}
 
@@ -762,7 +873,7 @@ function ContextCard({
         <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">本次重点问题</div>
           <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{context.focusedEvent.title}</div>
-          <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
             {context.focusedEvent.reason || context.focusedEvent.notes || '当前对话应优先围绕这条已出现偏差的事件做纠偏分析。'}
           </div>
         </div>
@@ -771,7 +882,7 @@ function ContextCard({
       {context.correctionPrompts.length > 0 && (
         <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">建议先问</div>
-          <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
             先把问题拆清楚，再继续追问，答案会更有针对性。
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -815,7 +926,7 @@ function ContextCard({
                       {isSaved ? '已保存' : savingEventKey === eventKey ? '保存中...' : '记下来'}
                     </button>
                   </div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.reason}</div>
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                 </div>
               );
             })}
@@ -899,7 +1010,7 @@ function MessageBubble({
                 value={editingContent}
                 onChange={(event) => onEditingContentChange(event.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-2xl border border-white/20 bg-white/12 px-4 py-3 text-sm leading-7 text-white outline-none placeholder:text-white/60"
+                className="w-full resize-none rounded-2xl border border-white/20 bg-white/12 px-4 py-3 text-xs leading-6 text-white outline-none placeholder:text-white/60"
                 placeholder="修改你的问题"
               />
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -927,7 +1038,7 @@ function MessageBubble({
             </div>
           ) : (
             <>
-              <p className="text-sm leading-7">{message.content}</p>
+              <p className="text-xs leading-6">{message.content}</p>
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-white/75">
                 <div className="flex items-center gap-2">
                   <span>{time}</span>
@@ -966,7 +1077,7 @@ function MessageBubble({
     <div className="flex justify-start">
       <div className="max-w-3xl rounded-[1.75rem] border border-[color:var(--line)] bg-white px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-semibold text-[color:var(--ink)]">命理回复</span>
+          <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (
             <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">兜底模式</span>
           )}
@@ -1034,9 +1145,10 @@ function QuickQuestionButton({ question, onClick, disabled = false }: QuickQuest
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4 text-left text-sm leading-7 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4 text-left text-xs leading-6 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      {question}
+      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">结构化追问</div>
+      <div className="mt-2">{question}</div>
     </button>
   );
 }

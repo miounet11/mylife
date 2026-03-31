@@ -1,4 +1,4 @@
-// 四柱排盘图表组件
+// 四柱结构图表组件
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -28,7 +28,7 @@ export default function FourPillarsChart({ pillars, birthDate, birthTime }: Four
         <CardTitle>
           <div className="flex items-center space-x-3">
             <span className="text-3xl">🔮</span>
-            <span className="text-2xl font-bold text-gray-900">四柱排盘</span>
+            <span className="text-2xl font-bold text-gray-900">四柱结构</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -51,7 +51,7 @@ export default function FourPillarsChart({ pillars, birthDate, birthTime }: Four
           </div>
         </div>
 
-        {/* 四柱排盘表 */}
+        {/* 四柱结构表 */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {pillars.map((pillar, index) => (
             <PillarCard

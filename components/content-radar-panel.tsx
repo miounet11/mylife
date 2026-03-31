@@ -195,7 +195,7 @@ export default function ContentRadarPanel({
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">内容雷达</div>
           <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">抓公开热点信号，反推下一轮内容爆点</div>
-          <p className="mt-3 max-w-3xl text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-3 max-w-3xl text-xs leading-6 text-[color:var(--muted)]">
             优先读取 RSSHub 或公开 RSS / Atom 源，再把热点标题、摘要和关键词归一化，给内容自动化系统提供选题情报。
           </p>
         </div>
@@ -204,7 +204,7 @@ export default function ContentRadarPanel({
           type="button"
           onClick={() => void runNow()}
           disabled={running || bridging || loading}
-          className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-sm font-semibold text-[color:var(--ink)] disabled:opacity-60"
+          className="action-secondary disabled:opacity-60"
         >
           {running ? '抓取中...' : '立即抓取热点'}
         </button>
@@ -273,7 +273,7 @@ export default function ContentRadarPanel({
                         type="button"
                         onClick={() => void promoteSignal(signal.id, 'single')}
                         disabled={!!promoting || running || bridging}
-                        className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:opacity-60"
+                        className="action-secondary min-h-0 px-3 py-2 text-xs disabled:opacity-60"
                       >
                         {promoting === `${signal.id}:single` ? '生成中...' : '生成草稿'}
                       </button>
@@ -288,7 +288,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     还没有热点信号，先执行一次抓取。
                   </div>
                 )}
@@ -304,14 +304,14 @@ export default function ContentRadarPanel({
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.suggestedTopic}</div>
                       <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{item.score}</div>
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.suggestedAngle}</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.suggestedAngle}</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">{item.keywords.join('、') || '无关键词'}</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => void promoteSignal(item.signalId, 'single')}
                         disabled={!!promoting || running || bridging}
-                        className="rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:opacity-60"
+                        className="action-secondary min-h-0 px-3 py-2 text-xs disabled:opacity-60"
                       >
                         {promoting === `${item.signalId}:single` ? '生成中...' : '生成单篇'}
                       </button>
@@ -326,7 +326,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                     当前还没有足够信号来生成建议选题。
                   </div>
                 )}
@@ -351,7 +351,7 @@ export default function ContentRadarPanel({
                   {run.error && <div className="mt-2 text-xs leading-6 text-rose-700">{run.error}</div>}
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                   还没有执行记录。
                 </div>
               )}

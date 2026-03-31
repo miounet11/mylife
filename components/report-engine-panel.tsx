@@ -284,10 +284,10 @@ export default function ReportEnginePanel({
         <VersionTile label="Agent执行" value={totalAgentCalls > 0 ? `${successfulAgents}/${totalAgentCalls} 成功` : '未触发'} />
         <VersionTile label="一致性评分" value={typeof consistencyScore === 'number' ? `${consistencyScore}` : '待生成'} />
         <VersionTile label="人生 K 线" value={engineBuilds.kline} />
-        <VersionTile label="命理引擎" value={engineBuilds.core} />
+        <VersionTile label="结构引擎" value={engineBuilds.core} />
       </div>
 
-      <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+      <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
         {description}
       </div>
 
@@ -305,7 +305,7 @@ export default function ReportEnginePanel({
               {backgroundUpgradeLabel}
             </div>
           </div>
-          <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+          <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
             {upgradeJob.status === 'completed'
               ? `系统已经完成后台增强，历史最高分 ${upgradeJob.bestScore || qualityAudit?.overallScore || '--'}。`
               : upgradeJob.status === 'failed'
@@ -343,7 +343,7 @@ export default function ReportEnginePanel({
             {auditLabel}
           </div>
         </div>
-        <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{auditSummary}</div>
+        <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{auditSummary}</div>
         <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
           {targetAchieved
             ? '当前版本已经越过 95 分的 S级专家门槛。'
@@ -365,7 +365,7 @@ export default function ReportEnginePanel({
       </div>
 
       {verifyVerdict ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
           当前一致性结论：{verifyVerdict}
           {typeof consistencyScore === 'number' ? `，评分 ${consistencyScore}/100。` : '。'}
         </div>
@@ -379,7 +379,7 @@ export default function ReportEnginePanel({
               {feedbackLabel}
             </div>
           </div>
-          <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+          <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
             {feedbackLoop.validationInsights.summary || '当前还没有足够的反馈样本。'}
           </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-4">
@@ -396,7 +396,7 @@ export default function ReportEnginePanel({
             ))}
           </div>
           {feedbackLoop.correctionInsight?.summary ? (
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
               {feedbackLoop.correctionInsight.summary}
               {feedbackLoop.correctionInsight.likelyCause ? ` ${feedbackLoop.correctionInsight.likelyCause}` : ''}
             </div>
@@ -411,10 +411,10 @@ export default function ReportEnginePanel({
             <div className="text-xs text-[color:var(--muted)]">{`已记录 ${lineage.length} 次生成`}</div>
           </div>
           {latestVersion ? (
-            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
               {latestVersion.generatedFrom === 'upgrade'
                 ? `当前版本 ${latestVersion.version} 来自升级重算${latestVersion.upgradedFromVersion ? `，上一版为 ${latestVersion.upgradedFromVersion}` : ''}。`
-                : `当前版本 ${latestVersion.version} 来自首次测算生成。`}
+                : `当前版本 ${latestVersion.version} 来自首次判断生成。`}
               {qualityDelta !== null
                 ? qualityDelta >= 0
                   ? ` 相比上一版，质量分提升 ${qualityDelta} 分。`
@@ -458,7 +458,7 @@ export default function ReportEnginePanel({
       ) : null}
 
       {upstreamUnavailable && orchestration?.errors && orchestration.errors.length > 0 ? (
-        <div className="mt-4 rounded-[1.4rem] bg-amber-50 px-4 py-4 text-sm leading-7 text-amber-900">
+        <div className="mt-4 rounded-[1.4rem] bg-amber-50 px-4 py-4 text-xs leading-6 text-amber-900">
           当前 Agent 失败摘要：{orchestration.errors.slice(0, 3).map((item) => `${item.key} ${item.error}`).join('；')}
           {failedAgents > 3 ? `；另有 ${failedAgents - 3} 个模块失败` : ''}
         </div>
@@ -467,7 +467,7 @@ export default function ReportEnginePanel({
       {enhancementNotes && enhancementNotes.length > 0 && (
         <div className="mt-4 grid gap-3">
           {enhancementNotes.map((item) => (
-            <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+            <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
               {item}
             </div>
           ))}
@@ -479,7 +479,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-amber-900">当前需要重点关注</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.concerns.slice(0, 3).map((item) => (
-              <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm leading-7 text-amber-900">
+              <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-amber-900">
                 {item}
               </div>
             ))}
@@ -492,7 +492,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-rose-900">阻塞 S级交付的关键问题</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.blockingIssues.slice(0, 4).map((item) => (
-              <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-sm leading-7 text-rose-900">
+              <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-xs leading-6 text-rose-900">
                 {item}
               </div>
             ))}
@@ -505,7 +505,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-[color:var(--ink)]">建议动作</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.recommendedActions.slice(0, 3).map((item) => (
-              <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+              <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                 {item}
               </div>
             ))}
@@ -517,7 +517,7 @@ export default function ReportEnginePanel({
         <div className="mt-4 space-y-3">
           <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="text-sm font-semibold text-[color:var(--ink)]">选择升级方式</div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
               你不需要盯着页面一直刷新。现在就想重试可以直接重算；如果上游模型还不稳，更适合先排队，让系统在后台继续补强。
             </div>
             <div className="mt-4 grid gap-3">

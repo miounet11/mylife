@@ -113,7 +113,7 @@ export default function ResultDeferredSection({
         <LoaderCircle className="h-5 w-5 animate-spin text-[color:var(--accent-strong)]" />
         <div className="font-semibold text-[color:var(--ink)]">{title}</div>
       </div>
-      <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{description}</p>
+      <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{description}</p>
       <div className="mt-4 space-y-3">
         <div className="h-4 rounded-full bg-slate-100" />
         <div className="h-4 w-11/12 rounded-full bg-slate-100" />

@@ -4,9 +4,9 @@ import { forwardRef, useEffect, useRef, useState } from 'react';
 import { CalendarDays, CheckCircle2, Sparkles } from 'lucide-react';
 
 interface BirthDateValue {
-  year: number;
-  month: number;
-  day: number;
+  year: number | null;
+  month: number | null;
+  day: number | null;
 }
 
 interface BirthDateInputProps {
@@ -27,6 +27,9 @@ function formatPart(value: number) {
 }
 
 function formatDateValue(value: BirthDateValue) {
+  if (value.year === null || value.month === null || value.day === null) {
+    return '';
+  }
   return `${value.year}-${formatPart(value.month)}-${formatPart(value.day)}`;
 }
 
@@ -95,9 +98,9 @@ export default function BirthDateInput({
   onChange,
   onValidityChange,
 }: BirthDateInputProps) {
-  const [yearText, setYearText] = useState(String(value.year));
-  const [monthText, setMonthText] = useState(formatPart(value.month));
-  const [dayText, setDayText] = useState(formatPart(value.day));
+  const [yearText, setYearText] = useState(value.year === null ? '' : String(value.year));
+  const [monthText, setMonthText] = useState(value.month === null ? '' : formatPart(value.month));
+  const [dayText, setDayText] = useState(value.day === null ? '' : formatPart(value.day));
   const [smartInput, setSmartInput] = useState(formatDateValue(value));
   const [error, setError] = useState('');
 
@@ -105,9 +108,9 @@ export default function BirthDateInput({
   const dayRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setYearText(String(value.year));
-    setMonthText(formatPart(value.month));
-    setDayText(formatPart(value.day));
+    setYearText(value.year === null ? '' : String(value.year));
+    setMonthText(value.month === null ? '' : formatPart(value.month));
+    setDayText(value.day === null ? '' : formatPart(value.day));
     setSmartInput(formatDateValue(value));
   }, [value, value.day, value.month, value.year]);
 
@@ -244,11 +247,13 @@ export default function BirthDateInput({
         </div>
         <div className="mt-2 flex items-center justify-between gap-3">
           <div className="text-sm text-[color:var(--ink)]">
-            {formatDateValue(value).replaceAll('-', ' / ')}
+            {value.year !== null && value.month !== null && value.day !== null
+              ? formatDateValue(value).replaceAll('-', ' / ')
+              : '待填写'}
           </div>
           <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--accent-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
-            作为排盘日期
+            {value.year !== null && value.month !== null && value.day !== null ? '作为判断日期' : '填写后生效'}
           </div>
         </div>
         {error ? (

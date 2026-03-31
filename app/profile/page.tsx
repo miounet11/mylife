@@ -8,6 +8,8 @@ import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'luc
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PersonalJourneyHub from '@/components/personal-journey-hub';
+import ToolHistoryPanel from '@/components/tool-history-panel';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
 
 // 动态导入
@@ -156,28 +158,39 @@ export default function ProfilePage() {
           hasSubscription: !!updatesSummary?.subscription,
         }}
       />
-      <SiteHeader ctaHref="/chat" ctaLabel="继续咨询" />
+      <SiteHeader ctaHref="/chat" ctaLabel="继续追问" />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
         <section className="mb-8 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
           <div className="space-y-5">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              用户沉淀页
+              我的档案
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              档案页的目标不是展示数据，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是让用户留下来。</span>
+              你的判断轨迹，不只是一份记录，
+              <span className="font-serif text-[color:var(--accent-strong)]">更是下一步的导航。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
-              在这里，用户会看到自己过往的分析、关键事件和阶段趋势，逐步形成长期使用而不是一次性消费。
+            <p className="intro-copy">
+              在这里你可以回看历史分析、关键事件和阶段趋势，把每次判断都接到下一次动作。
             </p>
+            <div className="intro-panel">优先动作：继续追问或打开最新报告，避免在页面内反复浏览。</div>
+            <div className="space-y-2">
+              <div className="action-guide">快速操作</div>
+              <div className="action-strip flex flex-wrap gap-3">
+                <Link href={latestResultId ? `/result/${latestResultId}` : '/analyze'} className="action-primary action-main">
+                  {latestResultId ? '打开最新报告' : '开始分析'}
+                </Link>
+                <Link href="/chat" className="action-secondary">继续追问</Link>
+                <Link href="/events" className="action-secondary">管理事件</Link>
+              </div>
+            </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
             <div className="text-sm font-semibold text-[color:var(--muted)]">当前档案能承接的动作</div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {['查看阶段趋势图', '回顾最近分析结果', '继续进入 AI 咨询', '把节点落到事件管理'].map((item) => (
+              {['查看阶段趋势图', '回顾最近分析结果', '继续进入结构追问', '把节点落到事件管理'].map((item) => (
                 <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                   {item}
                 </div>
@@ -195,7 +208,7 @@ export default function ProfilePage() {
 
           <section className="grid gap-4 md:grid-cols-4">
             {[
-              { label: '累计分析', value: `${fortunes.length}`, helper: '已沉淀的命理结果' },
+              { label: '累计分析', value: `${fortunes.length}`, helper: '已沉淀的判断结果' },
               { label: '关键事件', value: `${mappedEvents.length}`, helper: '可回访的节点记录' },
               { label: '趋势年份', value: `${chartData.length || 0}`, helper: '可查看阶段波动' },
               { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, helper: '最近一次分析结果' },
@@ -215,7 +228,8 @@ export default function ProfilePage() {
                 <div className="mt-1 text-sm text-[color:var(--muted)]">把档案页变成下一步动作的中枢，而不是终点。</div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                <ProfileAction href="/chat" label="继续咨询" icon={Bot} />
+                <ProfileAction href="/chat" label="继续追问" icon={Bot} />
+                <ProfileAction href="/tools" label="工具中心" icon={Sparkles} />
                 <ProfileAction href="/events" label="管理事件" icon={CalendarClock} />
                 <ProfileAction href="/history" label="查看历史" icon={History} />
                 <ProfileAction href={user?.email ? '/updates' : '/login'} label={user?.email ? '管理订阅' : '绑定邮箱'} icon={Sparkles} />
@@ -224,6 +238,18 @@ export default function ProfilePage() {
             </div>
           </section>
 
+          <ToolHistoryPanel
+            compact
+            title="最近使用的单项工具"
+            description="最近做过的聚焦判断会沉淀在这里，方便继续深问与复访。"
+          />
+
+          <PersonalJourneyHub
+            title="你的主测算、工具和文章已经开始形成个人路径"
+            description="这里会直接告诉你下一步该回哪份报告、做哪个工具、读哪篇文章和案例。"
+            page="/profile"
+          />
+
           <section className="glass-panel rounded-[1.75rem] p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
@@ -231,13 +257,11 @@ export default function ProfilePage() {
                   <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
                   <div className="text-lg font-bold text-[color:var(--ink)]">我的更新状态</div>
                 </div>
-                <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  报告升级、月度更新和订阅状态，不应该只停留在邮箱里，这里直接给你看当前状态。
-                </div>
+                <div className="intro-copy mt-2">这里直接看报告升级、月度更新和订阅状态。</div>
               </div>
               <Link
                 href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
-                className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+                className="action-secondary"
               >
                 {user?.email ? '进入更新中心' : '登录查看更新'}
                 <ArrowRight className="h-4 w-4" />
@@ -277,7 +301,7 @@ export default function ProfilePage() {
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <div className="rounded-[1.4rem] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="intro-copy mt-2">
                     {updatesSummary?.latestReport
                       ? `${updatesSummary.latestReport.name || '我的报告'}，当前版本 ${updatesSummary.latestReport.reportVersion || 'v1'}。`
                       : '当前还没有最近报告。'}
@@ -285,7 +309,7 @@ export default function ProfilePage() {
                   {updatesSummary?.latestReport?.id ? (
                     <Link
                       href={`/result/${updatesSummary.latestReport.id}`}
-                      className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]"
+                      className="action-secondary mt-3"
                     >
                       打开最新报告
                       <ArrowRight className="h-4 w-4" />
@@ -295,14 +319,12 @@ export default function ProfilePage() {
 
                 <div className="rounded-[1.4rem] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="intro-copy mt-2">
                     {updatesSummary?.latestDigest
                       ? `${updatesSummary.latestDigest.cycleKey || '本周期'}：${mapDigestStatus(updatesSummary.latestDigest.status)}`
                       : '当前还没有月度更新回执。'}
                   </div>
-                  <div className="mt-1 text-sm leading-7 text-[color:var(--muted)]">
-                    {updatesSummary?.latestDigest?.reason || '后续会在这里显示最近一次发送或跳过原因。'}
-                  </div>
+                  <div className="intro-copy mt-1">{updatesSummary?.latestDigest?.reason || '后续会在这里显示最近一次发送或跳过原因。'}</div>
                 </div>
               </div>
             ) : null}
@@ -311,16 +333,14 @@ export default function ProfilePage() {
           {!loading && !hasProfileData && (
             <section className="glass-panel rounded-[2rem] p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
-              <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-[color:var(--muted)]">
-                先完成一次命理分析，结果页、趋势图、事件管理和 AI 咨询才会逐步沉淀成长期档案。
-              </p>
+              <p className="intro-copy mx-auto mt-3 max-w-2xl">先完成一次结构判断，结果页、趋势图、事件管理和结构追问才会逐步沉淀成长期档案。</p>
               <Link href="/analyze" className="action-primary mt-6">
                 开始第一次分析
               </Link>
             </section>
           )}
 
-          {/* 命理K线图 */}
+          {/* 人生K线图 */}
           {hasChartData && (
             <section className="mb-8">
               <Suspense fallback={<ChartSkeleton />}>
@@ -400,7 +420,7 @@ function ProfileAction({
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)]"
+      className="action-secondary"
     >
       <Icon className="h-4 w-4" />
       {label}
@@ -423,7 +443,7 @@ function ProfileStatusTile({
     <div className={`rounded-[1.4rem] px-4 py-5 ${mapProfileStatusTone(tone)}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 break-all text-2xl font-black">{value}</div>
-      <div className="mt-2 text-sm leading-7 opacity-85">{helper}</div>
+      <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>
     </div>
   );
 }

@@ -5,12 +5,12 @@ import { useEffect, useMemo, useState } from 'react';
 
 const steps = [
   {
-    name: '锁定出生信息与排盘上下文',
+    name: '锁定出生信息与判断上下文',
     detail: '先冻结用户输入，确认生日、地点、时区与是否启用真太阳时修正。',
     target: 18,
   },
   {
-    name: '修正出生时刻并建立命盘底座',
+    name: '修正出生时刻并建立结构底座',
     detail: '根据经纬度、时区与节律参数处理出生时刻，准备四柱与基础结构。',
     target: 40,
   },
@@ -36,6 +36,7 @@ const reassuranceMessages = [
   '如果模型响应稍慢，系统会继续等待或自动切换备用策略，不需要重复提交。',
   '正在把命局结构、阶段判断和建议整理成可直接阅读的结果页。',
   '你不需要停留在空白页，我们会持续反馈当前处理阶段。',
+  '世界易会先看结构，再看阶段，再把环境和动作压缩成一页结果。',
 ];
 
 interface FortuneProgressSummary {
@@ -67,18 +68,33 @@ interface FortuneProgressCompletionMeta {
   upgradeMaxAttempts?: number;
 }
 
+interface FortuneProgressDeliverySupport {
+  canEmailNotify: boolean;
+  emailLabel?: string | null;
+}
+
+function buildDeliveryHint(deliverySupport?: FortuneProgressDeliverySupport | null) {
+  if (deliverySupport?.canEmailNotify && deliverySupport.emailLabel) {
+    return `如果上游网络或模型响应偏慢，你可以先离开页面；只要报告成功生成并保存完成，系统也会发一封结果提醒到 ${deliverySupport.emailLabel}。`;
+  }
+
+  return '如果上游网络或模型响应偏慢，你可以稍后回来继续查看；报告一旦成功保存，也会出现在你的判断记录里。登录并绑定邮箱后，还可以直接收邮件提醒。';
+}
+
 export default function FortuneProgress({
   isComplete = false,
   summary,
   onCancel,
   serverStage,
   completionMeta,
+  deliverySupport,
 }: {
   isComplete?: boolean;
   summary?: FortuneProgressSummary | null;
   onCancel?: () => void;
   serverStage?: FortuneProgressServerStage | null;
   completionMeta?: FortuneProgressCompletionMeta | null;
+  deliverySupport?: FortuneProgressDeliverySupport | null;
 }) {
   const [progress, setProgress] = useState(0);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -190,6 +206,7 @@ export default function FortuneProgress({
         ? `当前质量 ${completionMeta?.score || '--'} / ${completionMeta?.grade || 'B'}，系统会先打开核心报告，深度区块和后台增强会继续补齐。`
         : '当前结果已经整理完成，核心区块会先打开，其余扩展内容继续分批显示。'
     : reassuranceMessages[messageIndex];
+  const deliveryHint = buildDeliveryHint(deliverySupport);
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -201,7 +218,7 @@ export default function FortuneProgress({
               <h3 className="text-3xl font-black text-[color:var(--ink)]">
                 {isComplete ? completionHeading : '报告正在生成'}
               </h3>
-              <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+              <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
                 {isComplete ? completionDescription : '我们把处理过程拆成清晰阶段，让用户在等待时始终知道系统正在做什么。'}
               </p>
             </div>
@@ -235,7 +252,7 @@ export default function FortuneProgress({
                 type="button"
                 disabled={!onCancel || isComplete}
                 onClick={onCancel}
-                className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-50"
+                className="action-secondary py-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 返回修改信息
               </button>
@@ -248,11 +265,22 @@ export default function FortuneProgress({
               </div>
             </div>
 
+            <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/72 p-4 text-xs leading-6 text-[color:var(--muted)]">
+              世界易处理中轴：先定结构，再看阶段，再结合环境整理动作与风险。你看到的不是一段空等，而是在生成一套更有顺序的判断结果。
+            </div>
+
+            {isSlow ? (
+              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-4 text-xs leading-6 text-amber-900">
+                <div className="font-semibold text-amber-800">等待偏长时，不需要一直守着页面</div>
+                <div className="mt-2">{deliveryHint}</div>
+              </div>
+            ) : null}
+
             {summary ? (
               <div className="rounded-[1.5rem] bg-[rgba(201,125,58,0.1)] p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
                   <Stars className="h-4 w-4" />
-                  本次测算已锁定输入
+                  本次判断已锁定输入
                 </div>
                 <div className="mt-3 space-y-2 text-sm text-[color:var(--ink)]">
                   <div className="flex items-start gap-2">
@@ -301,7 +329,7 @@ export default function FortuneProgress({
               <div className="mt-2 text-base font-semibold leading-7 text-[color:var(--ink)]">
                 {serverStage?.label || steps[currentStep].name}
               </div>
-              <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
                 {serverStage?.detail || steps[currentStep].detail}
               </div>
               {nextStep ? (
@@ -316,18 +344,18 @@ export default function FortuneProgress({
               )}
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/60 bg-white/70 p-4 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="rounded-[1.5rem] border border-white/60 bg-white/70 p-4 text-xs leading-6 text-[color:var(--muted)]">
               {finalStageMessage}
             </div>
 
             {isSlow ? (
-              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-sm leading-7 text-amber-800">
+              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-amber-800">
                 {slowHint}
               </div>
             ) : null}
 
             {isComplete && completionMeta?.upgradeQueued ? (
-              <div className="rounded-[1.5rem] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-sm leading-7 text-[color:var(--accent-strong)]">
+              <div className="rounded-[1.5rem] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                 {backgroundUpgradeLabel || '后台增强任务已建立'}
                 {typeof completionMeta.upgradeAttempts === 'number' && typeof completionMeta.upgradeMaxAttempts === 'number'
                   ? `，当前重试进度 ${completionMeta.upgradeAttempts} / ${completionMeta.upgradeMaxAttempts}。`

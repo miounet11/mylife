@@ -85,7 +85,7 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
         </div>
         <div>
           <div className="font-semibold text-[color:var(--ink)]">把报告判断落成事件</div>
-          <p className="mt-1 text-sm leading-7 text-[color:var(--muted)]">关键窗口不要只看完就走，直接存进事件系统，后面才能持续验证。</p>
+          <p className="mt-1 text-xs leading-6 text-[color:var(--muted)]">关键窗口不要只看完就走，直接存进事件系统，后面才能持续验证。</p>
         </div>
       </div>
 
@@ -105,14 +105,14 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
                   type="button"
                   onClick={() => void saveSuggestion(item)}
                   disabled={isSaved || savingKey === item.key}
-                  className="inline-flex shrink-0 items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="action-secondary min-h-0 shrink-0 px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
                   {isSaved ? '已保存' : savingKey === item.key ? '保存中...' : '存为事件'}
                 </button>
               </div>
-              <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
-              <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">{item.reason}</div>
+              <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
+              <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.reason}</div>
             </div>
           );
         })}
@@ -152,7 +152,7 @@ export default function ReportEventCapture({ reportId, suggestions }: ReportEven
               },
             });
           }}
-          className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           查看事件中心
           <ArrowRight className="h-4 w-4" />

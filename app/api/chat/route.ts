@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
-import { eventOperations, fortuneOperations, questionOperations, runInTransaction } from '@/lib/database';
+import { eventOperations, fortuneOperations, questionOperations, runInTransaction, toolSessionOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
@@ -469,10 +469,12 @@ function buildChatPayload(
 ) {
   const report = getChatReport(userId, requestedReportId);
   const events = eventOperations.getByUserId(userId).slice(0, 8);
+  const toolSessions = toolSessionOperations.listByUser(userId, 8);
 
   return buildChatExperienceContext({
     report,
     events,
+    toolSessions,
     focusEventId: requestedEventId,
     intent: requestedIntent,
   });

@@ -7,11 +7,13 @@ import AuthStatus from '@/components/auth-status';
 import { cn } from '@/lib/utils';
 
 const navItems = [
+  { href: '/world-yi', label: '世界易' },
   { href: '/knowledge', label: '知识库' },
   { href: '/knowledge/topics', label: '专题地图' },
   { href: '/insights', label: '洞察中心' },
-  { href: '/analyze', label: '开始分析' },
-  { href: '/chat', label: 'AI 咨询' },
+  { href: '/tools', label: '工具中心' },
+  { href: '/analyze', label: '进入判断' },
+  { href: '/chat', label: '结构追问' },
   { href: '/events', label: '事件日历' },
   { href: '/profile', label: '我的档案' },
   { href: '/cases', label: '案例库' },
@@ -38,22 +40,27 @@ export default function SiteHeader({
           </div>
           <div>
             <div className="text-base font-semibold tracking-tight text-[color:var(--ink)]">人生K线</div>
-            <div className="text-xs text-[color:var(--muted)]">真太阳时命理分析</div>
+            <div className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
+              <span>世界易系统入口</span>
+              <span className="rounded-full bg-[color:var(--accent-soft)] px-2 py-0.5 font-semibold text-[color:var(--accent-strong)]">v1.0.0.1</span>
+            </div>
           </div>
         </Link>
 
         <nav className="hidden items-center gap-2 lg:flex">
           {navItems.map((item) => {
-            const active = pathname === item.href;
+            const active = item.href === '/'
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'rounded-full px-4 py-2 text-sm font-medium transition',
+                  'smooth-button rounded-full px-4 py-2 text-sm font-medium transition',
                   active
                     ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                    : 'text-[color:var(--muted)] hover:bg-white hover:text-[color:var(--ink)]'
+                    : 'text-[color:var(--muted)] hover:-translate-y-0.5 hover:bg-white hover:text-[color:var(--ink)]'
                 )}
               >
                 {item.label}
@@ -66,7 +73,7 @@ export default function SiteHeader({
           <AuthStatus />
           <Link
             href={ctaHref}
-            className="inline-flex items-center gap-2 rounded-full bg-[color:var(--ink)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--accent-strong)]"
+            className="smooth-button inline-flex items-center gap-2 rounded-full bg-[color:var(--ink)] px-4 py-2 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--accent-strong)]"
           >
             {ctaLabel}
             <ArrowRight className="h-4 w-4" />
@@ -77,16 +84,18 @@ export default function SiteHeader({
       <div className="scrollbar-none border-t border-white/50 px-4 py-2 lg:hidden">
         <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto">
           {navItems.map((item) => {
-            const active = pathname === item.href;
+            const active = item.href === '/'
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition',
+                  'smooth-button whitespace-nowrap rounded-full border px-3 py-1.5 text-xs font-medium transition',
                   active
                     ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                    : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                    : 'border-[color:var(--line)] bg-white text-[color:var(--muted)] hover:-translate-y-0.5'
                 )}
               >
                 {item.label}

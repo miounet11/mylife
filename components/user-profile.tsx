@@ -26,7 +26,7 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
   const pattern = latest?.pattern?.type || '--';
   const dayun = latest?.fortune?.currentDaYun || '--';
 
-  const displayName = user?.name || latest?.name || '未命名测算者';
+  const displayName = user?.name || latest?.name || '未命名用户';
   const displayGender = user?.gender === 'female' ? '女' : '男';
   const displayAge = calculateAge(user?.birth_date || latest?.birth_date);
   const displayPlace = user?.birth_place || latest?.birth_place || '--';

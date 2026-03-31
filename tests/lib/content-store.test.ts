@@ -1,8 +1,12 @@
 import { describe, expect, test } from '@jest/globals';
+import { db } from '@/lib/database';
 import {
   deleteManagedContentEntry,
+  getManagedContentEntryBySlug,
+  getManagedContentJourneyMeta,
   getKnowledgeArticleBySlug,
   getKnowledgeArticles,
+  refreshManagedContentJourneyMetadata,
   saveManagedContentEntry,
 } from '@/lib/content-store';
 
@@ -140,6 +144,189 @@ describe('content store public knowledge visibility', () => {
       ids.forEach((id) => {
         deleteManagedContentEntry(id);
       });
+    }
+  });
+
+  test('auto-enriches journey meta for saved content without manual mapping', () => {
+    const id = 'content_test_auto_journey_meta';
+    const relatedKnowledgeId = 'content_test_related_knowledge_seed';
+    const relatedCaseId = 'content_test_related_case_seed';
+
+    try {
+      saveManagedContentEntry({
+        id: relatedKnowledgeId,
+        contentType: 'knowledge',
+        subtype: null,
+        slug: 'career-structure-related-knowledge',
+        title: '岗位结构和事业升级的判断逻辑',
+        name: null,
+        excerpt: '围绕事业、岗位、升职和窗口建立知识结构。',
+        category: '事业判断',
+        readTime: '5 分钟',
+        tags: ['事业', '岗位', '升职', '窗口'],
+        featured: false,
+        seoTitle: '岗位结构和事业升级的判断逻辑',
+        seoDescription: '相关知识种子。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {},
+      }, 'test_user');
+
+      saveManagedContentEntry({
+        id: relatedCaseId,
+        contentType: 'case',
+        subtype: null,
+        slug: 'career-structure-related-case',
+        title: '升职窗口判断案例',
+        name: null,
+        excerpt: '真实用户围绕岗位、升职和职业窗口做判断。',
+        category: '事业判断',
+        readTime: null,
+        tags: ['事业', '岗位', '升职', '窗口'],
+        featured: false,
+        seoTitle: '升职窗口判断案例',
+        seoDescription: '相关案例种子。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {},
+      }, 'test_user');
+
+      saveManagedContentEntry({
+        id,
+        contentType: 'knowledge',
+        subtype: null,
+        slug: 'career-role-structure-test',
+        title: '岗位结构和升职窗口怎么一起判断',
+        name: null,
+        excerpt: '这篇内容围绕事业、岗位、升职和窗口展开，用于验证自动协同关系是否会补齐。',
+        category: '事业判断',
+        readTime: '6 分钟',
+        tags: ['事业', '岗位', '升职', '窗口'],
+        featured: false,
+        seoTitle: '岗位结构和升职窗口怎么一起判断',
+        seoDescription: '验证自动协同关系补齐。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {},
+      }, 'test_user');
+
+      const entry = getManagedContentEntryBySlug('knowledge', 'career-role-structure-test');
+      const journeyMeta = getManagedContentJourneyMeta(entry);
+      expect(journeyMeta.relatedReportThemes.length).toBeGreaterThan(0);
+      expect(journeyMeta.relatedToolSlugs.length).toBeGreaterThan(0);
+      expect(journeyMeta.relatedKnowledgeSlugs).toContain('career-structure-related-knowledge');
+      expect(journeyMeta.relatedCaseSlugs).toContain('career-structure-related-case');
+      expect(entry?.meta?.journeyAutomation).toBe('auto');
+    } finally {
+      deleteManagedContentEntry(id);
+      deleteManagedContentEntry(relatedKnowledgeId);
+      deleteManagedContentEntry(relatedCaseId);
+    }
+  });
+
+  test('refreshManagedContentJourneyMetadata upgrades legacy content meta in place', () => {
+    const knowledgeId = 'content_test_refresh_legacy_knowledge';
+    const caseId = 'content_test_refresh_legacy_case';
+
+    try {
+      saveManagedContentEntry({
+        id: caseId,
+        contentType: 'case',
+        subtype: null,
+        slug: 'legacy-refresh-related-case',
+        title: '关系风险案例',
+        name: null,
+        excerpt: '围绕关系、婚恋和互动风险的案例内容。',
+        category: '关系判断',
+        readTime: null,
+        tags: ['关系', '婚恋', '风险'],
+        featured: false,
+        seoTitle: '关系风险案例',
+        seoDescription: '关系风险案例描述。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {},
+      }, 'test_user');
+
+      saveManagedContentEntry({
+        id: knowledgeId,
+        contentType: 'knowledge',
+        subtype: null,
+        slug: 'legacy-refresh-source-knowledge',
+        title: '关系推进和边界建立',
+        name: null,
+        excerpt: '围绕关系推进、边界和风险窗口的知识内容。',
+        category: '关系判断',
+        readTime: '6 分钟',
+        tags: ['关系', '边界', '婚恋'],
+        featured: false,
+        seoTitle: '关系推进和边界建立',
+        seoDescription: '关系推进和边界建立描述。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {
+          relatedToolSlugs: ['relationship-boundary-map'],
+        },
+      }, 'test_user');
+
+      db.prepare(`
+        UPDATE content_entries
+        SET meta = ?
+        WHERE id = ?
+      `).run(JSON.stringify({
+        contentVersion: 'content-v1',
+        relatedToolSlugs: [],
+        relatedReportThemes: [],
+        relatedKnowledgeSlugs: [],
+        relatedCaseSlugs: [],
+        journeyAutomation: '',
+      }), knowledgeId);
+
+      const result = refreshManagedContentJourneyMetadata({
+        limit: 20,
+        userId: 'test_refresh',
+      });
+      const entry = getManagedContentEntryBySlug('knowledge', 'legacy-refresh-source-knowledge');
+      const journeyMeta = getManagedContentJourneyMeta(entry);
+
+      expect(result.refreshedCount).toBeGreaterThan(0);
+      expect(entry?.meta?.contentVersion).toBe('content-v2');
+      expect(entry?.meta?.journeyAutomation).toBe('auto');
+      expect(journeyMeta.relatedToolSlugs.length).toBeGreaterThan(0);
+      expect(journeyMeta.relatedCaseSlugs).toContain('legacy-refresh-related-case');
+    } finally {
+      deleteManagedContentEntry(knowledgeId);
+      deleteManagedContentEntry(caseId);
     }
   });
 });

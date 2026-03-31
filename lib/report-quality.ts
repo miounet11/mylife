@@ -47,20 +47,34 @@ export interface ReportQualityAudit {
   nextActionLabel: string;
 }
 
+interface NarrativeQualitySignals {
+  missingSummary: boolean;
+  leakedInternalTerms: boolean;
+  duplicateNarrative: boolean;
+  malformedRange: boolean;
+  templateResidue: boolean;
+  crossTopicLeak: boolean;
+  severeUserVisibleDefect: boolean;
+}
+
 export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQualityAudit {
   const llmUsed = !!result.analysis?.llmUsed;
+  const providerHealthDeferred = result.analysis?.providerHealthDeferred === true;
   const orchestration = result.analysis?.orchestration;
   const verify = result.analysis?.verify;
   const agentSuccessRate = typeof orchestration?.successRate === 'number'
     ? orchestration.successRate
     : 0;
   const totalAgentCalls = orchestration?.totalLlmCalls || 0;
+  const narrativeSignals = inspectNarrativeQuality(result);
 
   const engineScore = clampScore(scoreEngineFoundation(result));
-  const llmScore = clampScore(scoreLLMEnhancement(result));
+  const llmScore = clampScore(scoreLLMEnhancement(result, narrativeSignals));
   const agenticScore = clampScore(scoreAgenticExecution(result));
-  const consistencyScore = clampScore(verify?.consistencyScore ?? 62);
-  const completenessScore = clampScore(scoreCompleteness(result));
+  const consistencyScore = clampScore(
+    (verify?.consistencyScore ?? 62) - getConsistencyPenalty(narrativeSignals)
+  );
+  const completenessScore = clampScore(scoreCompleteness(result, narrativeSignals));
 
   const dimensions: ReportQualityAuditDimension[] = [
     {
@@ -78,7 +92,9 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
       score: llmScore,
       status: toDimensionStatus(llmScore),
       detail: llmUsed
-        ? '本次拿到了 LLM 深度增强正文。'
+        ? narrativeSignals.severeUserVisibleDefect
+          ? '本次虽然拿到了增强正文，但仍有明显模板化或脏文本残留。'
+          : '本次拿到了 LLM 深度增强正文。'
         : '本次未获得稳定的 LLM 深度增强，正文以结构化整合输出为主。',
     },
     {
@@ -95,7 +111,9 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
       label: '一致性校验',
       score: consistencyScore,
       status: toDimensionStatus(consistencyScore),
-      detail: verify?.verdict
+      detail: narrativeSignals.malformedRange
+        ? '阶段窗口文本存在异常，时机判断需按保守分处理。'
+        : verify?.verdict
         ? `当前校验结论为 ${verify.verdict}。`
         : '当前未拿到完整校验结论，按保守评分处理。',
     },
@@ -104,7 +122,9 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
       label: '内容完整度',
       score: completenessScore,
       status: toDimensionStatus(completenessScore),
-      detail: completenessScore >= 85
+      detail: narrativeSignals.missingSummary
+        ? '阶段摘要缺失，用户无法第一眼获取主结论。'
+        : completenessScore >= 85
         ? '正文、建议、窗口与趋势内容相对充足。'
         : '内容可阅读，但解释深度或行动建议仍有补强空间。',
     },
@@ -121,8 +141,10 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   const status = deriveAuditStatus({
     overallScore,
     llmUsed,
+    providerHealthDeferred,
     verifyVerdict: verify?.verdict,
     agentSuccessRate,
+    narrativeSignals,
   });
   const grade = deriveAuditGrade(overallScore);
 
@@ -137,7 +159,12 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   }
 
   if (llmUsed) {
-    strengths.push('本次拿到了 LLM 深度增强，正文解释会更细更完整。');
+    if (!narrativeSignals.severeUserVisibleDefect) {
+      strengths.push('本次拿到了 LLM 深度增强，正文解释会更细更完整。');
+    }
+  } else if (providerHealthDeferred) {
+    strengths.push('上游模型波动时已主动切换为稳定专家版交付，避免长时间等待后仍返回脏结果。');
+    recommendedActions.push('当前版本可先使用；待上游模型恢复后，再触发增强重算以争取更高分专家版。');
   } else {
     concerns.push('本次未获得稳定的 LLM 深度增强，文本深度会低于理想版本。');
     recommendedActions.push('建议稍后使用当前版本重新升级重算，争取拿到完整的 LLM 增强正文。');
@@ -168,15 +195,38 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     strengths.push('当前正文覆盖了结构、趋势、建议与阶段窗口，已具备较完整的阅读价值。');
   }
 
+  if (narrativeSignals.missingSummary) {
+    concerns.push('阶段摘要缺失，用户第一眼拿不到主结论。');
+    recommendedActions.push('先补齐一句话阶段摘要，再交付结果页主报告。');
+  }
+  if (narrativeSignals.leakedInternalTerms || narrativeSignals.templateResidue) {
+    concerns.push('正文仍有模板化或内部提示词残留，用户会直接感知为不专业。');
+    recommendedActions.push('清理模板残留与内部上下文字段后，再作为正式报告交付。');
+  }
+  if (narrativeSignals.duplicateNarrative) {
+    concerns.push('正文出现重复叙述，阅读成本过高。');
+    recommendedActions.push('合并重复段落，优先保留“结构-阶段-动作”主线。');
+  }
+  if (narrativeSignals.malformedRange) {
+    concerns.push('阶段窗口表述异常，时机建议可信度不足。');
+    recommendedActions.push('重新生成阶段窗口，只保留与当前阶段直接相关的时间表达。');
+  }
+  if (narrativeSignals.crossTopicLeak) {
+    concerns.push('分科建议存在串味，不同板块的动作边界不够清晰。');
+    recommendedActions.push('按事业、财富、关系、健康重新过滤建议，避免板块串写。');
+  }
+
   if (recommendedActions.length === 0) {
     recommendedActions.push('当前版本可直接使用；若后续补充真实事件反馈，系统还能继续修正和增强报告。');
   }
 
   const blockingIssues = deriveBlockingIssues({
     llmUsed,
+    providerHealthDeferred,
     agentSuccessRate,
     verifyVerdict: verify?.verdict,
     dimensions,
+    narrativeSignals,
   });
   const targetAchieved = isReportExpertGrade({
     overallScore,
@@ -185,12 +235,16 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   });
   const deliveryTier = getReportDeliveryTier({
     llmUsed,
+    providerHealthDeferred,
     agentSuccessRate,
     verifyVerdict: verify?.verdict,
     targetAchieved,
+    narrativeSignals,
   });
   const nextActionLabel = targetAchieved
     ? '已达到 S级专家版'
+    : narrativeSignals.severeUserVisibleDefect
+    ? '修正文案链路后重算'
     : verify?.verdict === 'FAIL'
     ? '核对信息后重新测算'
     : '继续增强到 S级';
@@ -203,7 +257,7 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     targetScore: REPORT_EXPERT_TARGET_SCORE,
     targetGrade: REPORT_EXPERT_TARGET_GRADE,
     targetAchieved,
-    summary: buildSummary(status, llmUsed, verify?.verdict, targetAchieved),
+    summary: buildSummary(status, llmUsed, providerHealthDeferred, verify?.verdict, targetAchieved, narrativeSignals),
     dimensions,
     strengths: uniqueList(strengths),
     concerns: uniqueList(concerns),
@@ -230,16 +284,26 @@ function scoreEngineFoundation(result: FortuneAnalysisResult) {
   return score;
 }
 
-function scoreLLMEnhancement(result: FortuneAnalysisResult) {
+function scoreLLMEnhancement(result: FortuneAnalysisResult, narrativeSignals: NarrativeQualitySignals) {
   if (!result.analysis?.llmUsed) {
     return 38;
   }
 
   const explanationLength = `${result.analysis?.explanation || ''}`.replace(/\s+/g, '').length;
-  if (explanationLength >= 420) return 94;
-  if (explanationLength >= 280) return 88;
-  if (explanationLength >= 180) return 80;
-  return 72;
+  let score = 72;
+
+  if (explanationLength >= 420) score = 94;
+  else if (explanationLength >= 280) score = 88;
+  else if (explanationLength >= 180) score = 80;
+
+  if (narrativeSignals.missingSummary) score -= 18;
+  if (narrativeSignals.leakedInternalTerms) score -= 26;
+  if (narrativeSignals.templateResidue) score -= 14;
+  if (narrativeSignals.duplicateNarrative) score -= 16;
+  if (narrativeSignals.malformedRange) score -= 10;
+  if (narrativeSignals.crossTopicLeak) score -= 12;
+
+  return score;
 }
 
 function scoreAgenticExecution(result: FortuneAnalysisResult) {
@@ -259,7 +323,7 @@ function scoreAgenticExecution(result: FortuneAnalysisResult) {
   return 42;
 }
 
-function scoreCompleteness(result: FortuneAnalysisResult) {
+function scoreCompleteness(result: FortuneAnalysisResult, narrativeSignals: NarrativeQualitySignals) {
   let score = 48;
   const explanationLength = `${result.analysis?.explanation || ''}`.replace(/\s+/g, '').length;
   const adviceCount = [
@@ -283,16 +347,28 @@ function scoreCompleteness(result: FortuneAnalysisResult) {
   if (klineCount >= 3) score += 8;
   if ((result.fortune?.interaction || '').length >= 20) score += 6;
 
+  if (narrativeSignals.missingSummary) score -= 22;
+  if (narrativeSignals.duplicateNarrative) score -= 12;
+  if (narrativeSignals.templateResidue) score -= 8;
+  if (narrativeSignals.crossTopicLeak) score -= 8;
+
   return score;
 }
 
 function deriveAuditStatus(params: {
   overallScore: number;
   llmUsed: boolean;
+  providerHealthDeferred: boolean;
   verifyVerdict?: 'PASS' | 'WARN' | 'FAIL';
   agentSuccessRate: number;
+  narrativeSignals?: NarrativeQualitySignals;
 }): ReportQualityAuditStatus {
-  if (params.verifyVerdict === 'FAIL' || !params.llmUsed || params.overallScore < 66) {
+  if (
+    params.verifyVerdict === 'FAIL'
+    || (!params.llmUsed && !params.providerHealthDeferred)
+    || params.overallScore < 66
+    || params.narrativeSignals?.severeUserVisibleDefect
+  ) {
     return 'retry';
   }
   if (params.verifyVerdict === 'WARN' || params.agentSuccessRate < 0.5 || params.overallScore < 82) {
@@ -311,14 +387,22 @@ function deriveAuditGrade(score: number): ReportQualityAuditGrade {
 function buildSummary(
   status: ReportQualityAuditStatus,
   llmUsed: boolean,
+  providerHealthDeferred: boolean,
   verifyVerdict?: 'PASS' | 'WARN' | 'FAIL',
-  targetAchieved?: boolean
+  targetAchieved?: boolean,
+  narrativeSignals?: NarrativeQualitySignals
 ) {
   if (targetAchieved) {
     return '本次报告已经达到 95 分以上的 S级专家交付标准，可作为当前阶段的专家版主报告使用。';
   }
+  if (narrativeSignals?.severeUserVisibleDefect) {
+    return '本次报告存在明显文本缺陷或模板残留，当前不应按正式专家版交付，建议先修正文案链路后重算。';
+  }
   if (status === 'ready') {
     return '本次报告整体稳定，已经达到可直接使用的增强版标准，但距离 95 分 S级专家版仍有提升空间。';
+  }
+  if (providerHealthDeferred) {
+    return '本次报告为上游模型波动下的稳定专家版交付，当前可先使用，待增强链路恢复后再升级到更完整版本。';
   }
   if (status === 'watch') {
     return '本次报告整体可读，但部分增强链路或校验项处于观察状态，短期时机与策略建议建议结合现实再复核。';
@@ -334,13 +418,15 @@ function buildSummary(
 
 function deriveBlockingIssues(params: {
   llmUsed: boolean;
+  providerHealthDeferred: boolean;
   agentSuccessRate: number;
   verifyVerdict?: 'PASS' | 'WARN' | 'FAIL';
   dimensions: ReportQualityAuditDimension[];
+  narrativeSignals: NarrativeQualitySignals;
 }) {
   const issues: string[] = [];
 
-  if (!params.llmUsed) {
+  if (!params.llmUsed && !params.providerHealthDeferred) {
     issues.push('缺少稳定的 LLM 深度增强正文');
   }
   if (params.agentSuccessRate < 0.5) {
@@ -351,6 +437,21 @@ function deriveBlockingIssues(params: {
   }
   if (params.verifyVerdict === 'FAIL') {
     issues.push('一致性校验未通过');
+  }
+  if (params.narrativeSignals.missingSummary) {
+    issues.push('阶段摘要缺失');
+  }
+  if (params.narrativeSignals.leakedInternalTerms || params.narrativeSignals.templateResidue) {
+    issues.push('正文存在模板化或内部提示词残留');
+  }
+  if (params.narrativeSignals.duplicateNarrative) {
+    issues.push('正文存在重复叙述');
+  }
+  if (params.narrativeSignals.malformedRange) {
+    issues.push('阶段窗口表述异常');
+  }
+  if (params.narrativeSignals.crossTopicLeak) {
+    issues.push('分科建议边界不清');
   }
 
   params.dimensions.forEach((dimension) => {
@@ -379,12 +480,20 @@ export function isReportExpertGrade(input: {
 
 function getReportDeliveryTier(params: {
   llmUsed: boolean;
+  providerHealthDeferred: boolean;
   agentSuccessRate: number;
   verifyVerdict?: 'PASS' | 'WARN' | 'FAIL';
   targetAchieved: boolean;
+  narrativeSignals: NarrativeQualitySignals;
 }): ReportDeliveryTier {
   if (params.targetAchieved) {
     return 'expert';
+  }
+  if (params.narrativeSignals.severeUserVisibleDefect) {
+    return 'basic';
+  }
+  if (params.providerHealthDeferred && params.verifyVerdict !== 'FAIL') {
+    return 'enhanced';
   }
   if (params.llmUsed && params.verifyVerdict !== 'FAIL' && params.agentSuccessRate >= 0.3) {
     return 'enhanced';
@@ -405,4 +514,138 @@ function uniqueList(values: string[]) {
 
 function clampScore(value: number) {
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function getConsistencyPenalty(signals: NarrativeQualitySignals) {
+  let penalty = 0;
+
+  if (signals.leakedInternalTerms) penalty += 10;
+  if (signals.templateResidue) penalty += 8;
+  if (signals.duplicateNarrative) penalty += 6;
+  if (signals.malformedRange) penalty += 8;
+  if (signals.crossTopicLeak) penalty += 6;
+
+  return penalty;
+}
+
+function inspectNarrativeQuality(result: FortuneAnalysisResult): NarrativeQualitySignals {
+  const opening = `${result.analysis?.opening || ''}`;
+  const summary = `${result.analysis?.summary || ''}`.trim();
+  const explanation = `${result.analysis?.explanation || ''}`;
+  const adviceTexts = [
+    result.advice?.career?.general,
+    result.advice?.career?.timing,
+    ...(result.advice?.career?.specific || []),
+    ...(result.advice?.career?.avoid || []),
+    result.advice?.wealth?.general,
+    result.advice?.wealth?.timing,
+    ...(result.advice?.wealth?.specific || []),
+    ...(result.advice?.wealth?.avoid || []),
+    result.advice?.marriage?.general,
+    result.advice?.marriage?.timing,
+    ...(result.advice?.marriage?.specific || []),
+    result.advice?.health?.general,
+    result.advice?.health?.timing,
+    ...(result.advice?.health?.specific || []),
+    ...(result.advice?.health?.avoid || []),
+  ].filter(Boolean).join('\n');
+  const combined = [opening, summary, explanation, adviceTexts].filter(Boolean).join('\n');
+
+  const leakedInternalTerms = /(macro_cycle|solar_terms?|geography|industry_cycle|geoClimate|spatialFactors?|currentSolarTerm|nationalCycle)/i.test(combined);
+  const templateResidue = /(命局主轴围绕|生时环境落在|四柱落点为|外部参照|解释增强即可|当前最优策略不是同时做很多事|显著放大或压制|格局清正|乃富贵之命也)/.test(combined);
+  const duplicateNarrative = hasDuplicateNarrative(opening, summary, explanation);
+  const malformedRange = hasMalformedNarrativeRange(combined);
+  const crossTopicLeak = hasCrossTopicLeak(result);
+  const missingSummary = summary.length < 8;
+  const severeUserVisibleDefect = missingSummary || leakedInternalTerms || templateResidue || duplicateNarrative || malformedRange || crossTopicLeak;
+
+  return {
+    missingSummary,
+    leakedInternalTerms,
+    duplicateNarrative,
+    malformedRange,
+    templateResidue,
+    crossTopicLeak,
+    severeUserVisibleDefect,
+  };
+}
+
+function hasDuplicateNarrative(opening: string, summary: string, explanation: string) {
+  const segments = [opening, summary, ...`${explanation || ''}`.split(/\n+/)]
+    .map((segment) => normalizeNarrativeSegment(segment))
+    .filter((segment) => segment.length >= 12);
+
+  const seen = new Set<string>();
+  for (const segment of segments) {
+    if (seen.has(segment)) {
+      return true;
+    }
+    seen.add(segment);
+  }
+
+  return false;
+}
+
+function hasMalformedNarrativeRange(value: string) {
+  if (/(\d{4})-\1/.test(value)) {
+    return true;
+  }
+
+  const currentYear = new Date().getUTCFullYear();
+  const matches = value.matchAll(/围绕(\d{4})-(\d{4})(?:阶段|窗口)排序动作/g);
+  for (const match of matches) {
+    const startYear = Number(match[1]);
+    const endYear = Number(match[2]);
+    if (endYear < currentYear - 1 || startYear > currentYear + 8) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function hasCrossTopicLeak(result: FortuneAnalysisResult) {
+  const topicPatterns = {
+    career: /(围绕(?:财富|关系|健康)做一条最短路径|主攻方向先放在(?:财富|关系|健康)|(?:财富|关系|健康)板块把节奏拖散)/,
+    wealth: /(围绕(?:事业|关系|健康)做一条最短路径|主攻方向先放在(?:事业|关系|健康)|(?:事业|关系|健康)板块把节奏拖散)/,
+    marriage: /(围绕(?:事业|财富|健康)做一条最短路径|主攻方向先放在(?:事业|财富|健康)|(?:事业|财富|健康)板块把节奏拖散)/,
+    health: /(围绕(?:事业|财富|关系)做一条最短路径|主攻方向先放在(?:事业|财富|关系)|(?:事业|财富|关系)板块把节奏拖散)/,
+  } as const;
+
+  return (
+    sectionHasCrossTopicLeak(topicPatterns.career, [
+      result.advice?.career?.general || '',
+      result.advice?.career?.timing || '',
+      ...(result.advice?.career?.specific || []),
+      ...(result.advice?.career?.avoid || []),
+    ])
+    || sectionHasCrossTopicLeak(topicPatterns.wealth, [
+      result.advice?.wealth?.general || '',
+      result.advice?.wealth?.timing || '',
+      ...(result.advice?.wealth?.specific || []),
+      ...(result.advice?.wealth?.avoid || []),
+    ])
+    || sectionHasCrossTopicLeak(topicPatterns.marriage, [
+      result.advice?.marriage?.general || '',
+      result.advice?.marriage?.timing || '',
+      ...(result.advice?.marriage?.specific || []),
+    ])
+    || sectionHasCrossTopicLeak(topicPatterns.health, [
+      result.advice?.health?.general || '',
+      result.advice?.health?.timing || '',
+      ...(result.advice?.health?.specific || []),
+      ...(result.advice?.health?.avoid || []),
+    ])
+  );
+}
+
+function sectionHasCrossTopicLeak(pattern: RegExp, values: string[]) {
+  return values.some((value) => pattern.test(value));
+}
+
+function normalizeNarrativeSegment(value: string) {
+  return `${value || ''}`
+    .replace(/\s+/g, '')
+    .replace(/[，。；：、]/g, '')
+    .toLowerCase();
 }

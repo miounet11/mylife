@@ -2,6 +2,7 @@ describe('llm model fallback', () => {
   const originalDefaultModel = process.env.DEFAULT_MODEL;
   const originalFallbackChain = process.env.MODEL_FALLBACK_CHAIN;
   const originalReportFallbackChain = process.env.REPORT_MODEL_FALLBACK_CHAIN;
+  const originalReportNarrativeFallbackChain = process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN;
 
   afterEach(() => {
     if (typeof originalDefaultModel === 'undefined') {
@@ -20,6 +21,12 @@ describe('llm model fallback', () => {
       delete process.env.REPORT_MODEL_FALLBACK_CHAIN;
     } else {
       process.env.REPORT_MODEL_FALLBACK_CHAIN = originalReportFallbackChain;
+    }
+
+    if (typeof originalReportNarrativeFallbackChain === 'undefined') {
+      delete process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN;
+    } else {
+      process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN = originalReportNarrativeFallbackChain;
     }
 
     jest.resetModules();
@@ -68,5 +75,20 @@ describe('llm model fallback', () => {
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
     expect(getModelFallbackChain(undefined, 'report')).toEqual(['auto', 'grok-420-fast']);
     expect(getModelFallbackChain(undefined, 'chat')).toEqual(['grok-420-fast', 'gpt-5.2', 'auto']);
+  });
+
+  it('uses a shorter narrative chain for report followup by default', async () => {
+    delete process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN;
+
+    const { getReportNarrativeFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getReportNarrativeFallbackChain()).toEqual(['gpt-5.2', 'auto']);
+    expect(getReportNarrativeFallbackChain('gpt-5.2')).toEqual(['gpt-5.2', 'auto']);
+  });
+
+  it('lets narrative followup use its own configured chain', async () => {
+    process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN = 'auto, gpt-5.2';
+
+    const { getReportNarrativeFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getReportNarrativeFallbackChain()).toEqual(['auto', 'gpt-5.2']);
   });
 });

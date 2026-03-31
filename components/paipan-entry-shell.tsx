@@ -22,12 +22,12 @@ const supportCards = [
   },
   {
     title: '时间更准',
-    description: '支持真太阳时、夏令时、早晚子时这些会影响排盘的关键逻辑。',
+    description: '支持真太阳时、夏令时、早晚子时这些会影响结构判断的关键逻辑。',
     icon: CalendarClock,
   },
   {
     title: '结果可延续',
-    description: '排盘完成后还能继续进入结果、咨询、事件和档案体系。',
+    description: '完成分析后还能继续进入结果、咨询、事件和档案体系。',
     icon: Compass,
   },
 ];
@@ -48,8 +48,8 @@ export default function PaipanEntryShell({ compact = false }: PaipanEntryShellPr
               填完必要信息，
               <span className="font-serif text-[color:var(--accent-strong)]">直接进入下一界面。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
-              页面审美和站内其他内容页保持一致，录入区只保留真正影响排盘的字段，重点优化填写流程本身，而不是再堆说明。
+            <p className="text-sm leading-6 text-[color:var(--muted)]">
+              页面审美和站内其他内容页保持一致，录入区只保留真正影响判断的字段，重点优化填写流程本身，而不是再堆说明。
             </p>
           </div>
 
@@ -62,7 +62,7 @@ export default function PaipanEntryShell({ compact = false }: PaipanEntryShellPr
                     <Icon className="h-4.5 w-4.5" />
                   </div>
                   <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
+                  <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
                 </div>
               );
             })}

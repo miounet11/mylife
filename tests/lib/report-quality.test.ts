@@ -58,6 +58,7 @@ const baseResult = {
   },
   analysis: {
     opening: '细观此局，结构已明。',
+    summary: '当前先稳住主线，再顺着资源窗口逐步发力。',
     explanation: '这是一段足够长的解释文本，用于模拟已经完成深度增强的报告正文。'.repeat(20),
     llmUsed: true,
     verify: {
@@ -107,6 +108,7 @@ describe('report quality audit', () => {
       analysis: {
         ...baseResult.analysis,
         llmUsed: false,
+        providerHealthDeferred: false,
         verify: {
           consistencyScore: 74,
           verdict: 'WARN' as const,
@@ -127,5 +129,66 @@ describe('report quality audit', () => {
     expect(audit.deliveryTier).toBe('basic');
     expect(audit.targetAchieved).toBe(false);
     expect(audit.blockingIssues.length).toBeGreaterThan(0);
+  });
+
+  it('keeps a provider-health deferred stable report in enhanced tier', () => {
+    const audit = buildReportQualityAudit({
+      ...baseResult,
+      analysis: {
+        ...baseResult.analysis,
+        llmUsed: false,
+        providerHealthDeferred: true,
+        verify: {
+          consistencyScore: 90,
+          verdict: 'PASS' as const,
+          failedRules: [],
+        },
+        orchestration: {
+          totalLlmCalls: 0,
+          successRate: 0,
+          succeeded: [],
+          failed: [],
+        },
+      },
+    } as any);
+
+    expect(audit.status).toBe('watch');
+    expect(audit.deliveryTier).toBe('enhanced');
+    expect(audit.summary).toContain('稳定专家版交付');
+    expect(audit.blockingIssues).not.toContain('缺少稳定的 LLM 深度增强正文');
+  });
+
+  it('downgrades reports with missing summary, template residue, duplicated narrative and bad ranges', () => {
+    const repeatedBlock = '命局主轴围绕身旺格展开，生时环境落在五月，四柱落点为甲子、乙丑、丙寅、丁卯。';
+    const audit = buildReportQualityAudit({
+      ...baseResult,
+      advice: {
+        ...baseResult.advice,
+        wealth: {
+          ...baseResult.advice.wealth,
+          specific: ['先围绕健康做一条最短路径，再按窗口复盘。'],
+        },
+      },
+      analysis: {
+        ...baseResult.analysis,
+        opening: `您好，测试用户。${repeatedBlock}`,
+        summary: '',
+        explanation: [
+          repeatedBlock,
+          repeatedBlock,
+          '当前最优策略不是同时做很多事，而是围绕2036-2036阶段排序动作。',
+          '天时外部参照中性，结合macro_cycle、solar_terms做解释增强即可。',
+        ].join('\n\n'),
+      },
+    } as any);
+
+    expect(audit.status).toBe('retry');
+    expect(audit.grade).not.toBe('S');
+    expect(audit.deliveryTier).toBe('basic');
+    expect(audit.summary).toContain('文本缺陷');
+    expect(audit.blockingIssues).toContain('阶段摘要缺失');
+    expect(audit.blockingIssues).toContain('正文存在模板化或内部提示词残留');
+    expect(audit.blockingIssues).toContain('阶段窗口表述异常');
+    expect(audit.blockingIssues).toContain('分科建议边界不清');
   });
 });

@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, Network, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PublicArticleHero from '@/components/public-article-hero';
+import ContentBreadcrumbs from '@/components/content-breadcrumbs';
 import ContentCardLink from '@/components/content-card-link';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
@@ -11,6 +13,11 @@ import {
   getKnowledgeTopicHubByTopicSlug,
   listKnowledgeTopicHubRoutes,
 } from '@/lib/knowledge-network-feed';
+import {
+  createBreadcrumbSchema,
+  createCollectionPageSchema,
+  createPublicContentMetadata,
+} from '@/lib/public-content-seo';
 
 interface PageProps {
   params: Promise<{ topicSlug: string }>;
@@ -34,10 +41,12 @@ export async function generateMetadata({ params }: PageProps) {
     };
   }
 
-  return {
+  return createPublicContentMetadata({
     title: `${hub.topicName}专题地图 | 人生K线`,
     description: `围绕${hub.topicName}自动聚合的专题地图，包含${hub.entryCount}篇可互链知识内容与相邻主题线索。`,
-  };
+    path: `/knowledge/topics/${hub.topicSlug}`,
+    type: 'website',
+  });
 }
 
 export default async function KnowledgeTopicPage({ params }: PageProps) {
@@ -45,14 +54,21 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
   const hub = getKnowledgeTopicHubByTopicSlug(topicSlug);
   if (!hub) notFound();
 
-  const schema = {
-    '@context': 'https://schema.org',
-    '@type': 'CollectionPage',
-    headline: `${hub.topicName}专题地图`,
-    description: `围绕${hub.topicName}自动聚合的专题地图，包含${hub.entryCount}篇可互链知识内容。`,
-    mainEntityOfPage: `https://www.life-kline.com/knowledge/topics/${hub.topicSlug}`,
-    url: `https://www.life-kline.com/knowledge/topics/${hub.topicSlug}`,
-  };
+  const breadcrumbItems = [
+    { name: '首页', path: '/' },
+    { name: '知识库', path: '/knowledge' },
+    { name: '专题地图', path: '/knowledge/topics' },
+    { name: `${hub.topicName}专题地图`, path: `/knowledge/topics/${hub.topicSlug}` },
+  ];
+  const schemas = [
+    createCollectionPageSchema({
+      headline: `${hub.topicName}专题地图`,
+      description: `围绕${hub.topicName}自动聚合的专题地图，包含${hub.entryCount}篇可互链知识内容。`,
+      path: `/knowledge/topics/${hub.topicSlug}`,
+      keywords: [hub.topicName, ...hub.relatedTopicNames.slice(0, 4)],
+    }),
+    createBreadcrumbSchema(breadcrumbItems),
+  ];
 
   return (
     <div className="page-shell">
@@ -67,35 +83,50 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
           synthesisTypes: hub.synthesisTypes,
         }}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
           <article className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <Link href="/knowledge/topics" className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
-              <ArrowLeft className="h-4 w-4" />
-              返回专题地图
-            </Link>
-
-            <div className="mt-6 section-label">
-              <Network className="h-3.5 w-3.5" />
-              自动专题网络
-            </div>
-
-            <h1 className="mt-5 text-4xl font-black text-[color:var(--ink)] md:text-5xl">{hub.topicName}专题地图</h1>
-            <p className="mt-5 text-base leading-8 text-[color:var(--muted)]">
-              这一专题当前已经形成 {hub.entryCount} 篇可互链内容，覆盖 {hub.synthesisTypes.join('、')} 等层次。它适合作为一个稳定的搜索入口，也适合作为后续持续扩写的主干主题。
-            </p>
+            <PublicArticleHero
+              breadcrumbs={(
+                <ContentBreadcrumbs
+                  items={breadcrumbItems.map((item, index) => ({
+                    label: item.name,
+                    href: index === breadcrumbItems.length - 1 ? undefined : item.path,
+                  }))}
+                />
+              )}
+              backLink={(
+                <Link href="/knowledge/topics" className="action-secondary inline-flex">
+                  <ArrowLeft className="h-4 w-4" />
+                  返回专题地图
+                </Link>
+              )}
+              label={(
+                <>
+                  <Network className="h-3.5 w-3.5" />
+                  自动专题网络
+                </>
+              )}
+              title={`${hub.topicName}专题地图`}
+              excerpt={`这一专题当前已经形成 ${hub.entryCount} 篇可互链内容，覆盖 ${hub.synthesisTypes.join('、')} 等层次。它适合作为一个稳定的搜索入口，也适合作为后续持续扩写的主干主题。`}
+              hint="先读本专题第一篇，再回到分析页做个人验证，效率最高。"
+              actions={[
+                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
+                <Link key="topics" href="/knowledge/topics" className="action-secondary">返回专题地图</Link>,
+              ]}
+            />
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
               <div className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">内容层次</div>
-                <div className="mt-3 text-base leading-7 text-[color:var(--ink)]">{hub.synthesisTypes.join('、')}</div>
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{hub.synthesisTypes.join('、')}</div>
               </div>
               <div className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">相邻主题</div>
-                <div className="mt-3 text-base leading-7 text-[color:var(--ink)]">
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {hub.relatedTopicNames.length ? hub.relatedTopicNames.join('、') : '当前仍在继续扩写中'}
                 </div>
               </div>
@@ -108,7 +139,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     路径 {index + 1} · {item.synthesisType || item.entry.category || '知识内容'}
                   </div>
                   <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.entry.title}</h2>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.entry.excerpt}</p>
+                  <p className="intro-copy mt-3">{item.entry.excerpt}</p>
                   <ContentCardLink
                     href={`/knowledge/${item.entry.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
@@ -120,7 +151,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                       title: item.entry.title,
                       synthesisType: item.synthesisType,
                     }}
-                    className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]"
+                    className="action-secondary mt-4"
                   >
                     阅读这篇内容
                     <ArrowRight className="h-4 w-4" />
@@ -140,7 +171,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                 topicName: hub.topicName,
                 entryCount: hub.entryCount,
               }}
-              title="顺着专题看懂后，直接回到自己的命盘"
+              title="顺着专题看懂后，直接回到自己的判断结果"
               description="专题页负责建立认知框架，真正有价值的下一步仍然是回到你的出生信息，验证这些结构和节奏如何落到个人身上。"
             />
 
@@ -152,7 +183,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     {item}
                   </span>
                 )) : (
-                  <span className="text-sm leading-7 text-[color:var(--muted)]">当前专题已成型，系统会继续补充可桥接的相邻主题。</span>
+                  <span className="text-xs leading-6 text-[color:var(--muted)]">当前专题已成型，系统会继续补充可桥接的相邻主题。</span>
                 )}
               </div>
             </div>

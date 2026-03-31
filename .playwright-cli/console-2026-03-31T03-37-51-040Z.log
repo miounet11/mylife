@@ -1,0 +1,25 @@
+[     361ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3000/_next/static/css/8bb9b6de01e9acb3.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3000/knowledge/world-yi-v1-manifesto:0
+[     384ms] [ERROR] Refused to apply style from 'http://127.0.0.1:3000/_next/static/css/8bb9b6de01e9acb3.css' because its MIME type ('text/html') is not a supported stylesheet MIME type, and strict MIME checking is enabled. @ http://127.0.0.1:3000/knowledge/world-yi-v1-manifesto:0
+[     613ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js:0
+[     613ms] [ERROR] Refused to execute script from 'http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled. @ http://127.0.0.1:3000/knowledge/world-yi-v1-manifesto:1
+[     614ms] [ERROR] Failed to load resource: the server responded with a status of 400 (Bad Request) @ http://127.0.0.1:3000/_next/static/chunks/app/knowledge/%5Bslug%5D/page-10fa6fcb7d286e04.js:0
+[     614ms] [ERROR] Refused to execute script from 'http://127.0.0.1:3000/_next/static/chunks/app/knowledge/%5Bslug%5D/page-10fa6fcb7d286e04.js' because its MIME type ('text/html') is not executable, and strict MIME type checking is enabled. @ http://127.0.0.1:3000/knowledge/world-yi-v1-manifesto:1
+[    3797ms] [WARNING] The resource https://www.googletagmanager.com/gtag/js?id=G-CC5FJRFNFS was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://127.0.0.1:3000/knowledge/world-yi-v1-manifesto:0
+[  120805ms] [ERROR] ChunkLoadError: Loading chunk 1490 failed.
+(timeout: http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js)
+    at r.f.j (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:3060)
+    at http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1226
+    at Array.reduce (<anonymous>)
+    at r.e (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1205)
+    at c (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:150351)
+    at http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:165116
+    at t (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:166574) @ http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:0
+[  120829ms] [ERROR] Application error: ChunkLoadError: Loading chunk 1490 failed.
+(timeout: http://127.0.0.1:3000/_next/static/chunks/1490-b04e1e6911132083.js)
+    at r.f.j (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:3060)
+    at http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1226
+    at Array.reduce (<anonymous>)
+    at r.e (http://127.0.0.1:3000/_next/static/chunks/webpack-cf5c25721f3267cb.js:1:1205)
+    at c (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:150351)
+    at http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:165116
+    at t (http://127.0.0.1:3000/_next/static/chunks/1255-ad409e5887c155b0.js:1:166574) @ http://127.0.0.1:3000/_next/static/chunks/app/error-0c16e16541edb64f.js:0

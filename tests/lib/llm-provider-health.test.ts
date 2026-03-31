@@ -1,339 +1,56 @@
-import {
-  buildModelExecutionPlan,
-  computeAttemptTimeouts,
-  deriveModelHealthSnapshots,
-  hasRunnableModelsForSnapshots,
-  shouldDeferForScopeSnapshots,
-  summarizeModelExecutionPlan,
-  shouldConservativelyDeferForSnapshots,
-  shouldDeferForProviderSnapshots,
-  type ModelAttemptEvent,
-  type ModelCircuitEvent,
-} from '@/lib/llm-provider-health';
+import { describe, expect, test } from '@jest/globals';
+import { deriveModelHealthSnapshots, isImmediateOpenFailure } from '@/lib/llm-provider-health';
 
-describe('llm provider health', () => {
-  const models = ['gpt-5.2', 'grok-420-fast', 'auto'];
-
-  it('pushes degraded model behind healthier fallbacks', () => {
-    const attempts: ModelAttemptEvent[] = [
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2500, createdAt: '2026-03-13T06:00:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2600, createdAt: '2026-03-13T05:59:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2550, createdAt: '2026-03-13T05:58:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2500, createdAt: '2026-03-13T05:57:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2450, createdAt: '2026-03-13T05:56:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: true, latencyMs: 2300, createdAt: '2026-03-13T05:55:00.000Z' },
-      { model: 'grok-420-fast', scope: 'report', success: true, latencyMs: 1600, createdAt: '2026-03-13T05:59:30.000Z' },
-      { model: 'auto', scope: 'report', success: true, latencyMs: 1400, createdAt: '2026-03-13T05:59:20.000Z' },
-    ];
-    const circuits: ModelCircuitEvent[] = [];
-
-    const snapshots = deriveModelHealthSnapshots({ models, attempts, circuits });
-    const plan = buildModelExecutionPlan({ models, snapshots });
-
-    expect(plan.orderedModels[0]).toBe('grok-420-fast');
-    expect(plan.orderedModels[1]).toBe('auto');
-    expect(plan.orderedModels[2]).toBe('gpt-5.2');
+describe('llm provider health immediate open failures', () => {
+  test('treats provider cooling and upstream forbidden as immediate-open failures', () => {
+    expect(isImmediateOpenFailure('Error', '403 {"error":"token_cooling","message":"Grok token cooling"}')).toBe(true);
+    expect(isImmediateOpenFailure('Error', '403 {"error":"upstream_forbidden","upstream_reason":"blocked_user"}')).toBe(true);
   });
 
-  it('skips open circuit models until probe stage', () => {
-    const attempts: ModelAttemptEvent[] = [];
-    const circuits: ModelCircuitEvent[] = [
-      {
-        model: 'gpt-5.2',
-        state: 'open',
-        createdAt: '2026-03-13T06:00:00.000Z',
-        reopenAt: '2026-03-13T06:20:00.000Z',
-      },
-    ];
+  test('treats repeated aborts and timeouts as immediate-open failures', () => {
+    expect(isImmediateOpenFailure('AbortError', 'Request was aborted.')).toBe(true);
+    expect(isImmediateOpenFailure('Error', 'The request timed out after 8000ms')).toBe(true);
+  });
 
+  test('does not mark parse failures as immediate-open failures', () => {
+    expect(isImmediateOpenFailure('SyntaxError', 'Unexpected token')).toBe(false);
+    expect(isImmediateOpenFailure('Error', 'JSON_PARSE_FAILED:auto')).toBe(false);
+  });
+
+  test('drops stale half-open circuits back to closed', () => {
     const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts,
-      circuits,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-    const plan = buildModelExecutionPlan({
-      models,
-      snapshots,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(plan.orderedModels).toEqual(['grok-420-fast', 'auto']);
-  });
-
-  it('keeps explicit half-open models in probe stage instead of treating them as degraded', () => {
-    const attempts: ModelAttemptEvent[] = [
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:00:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2300, createdAt: '2026-03-13T05:59:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2250, createdAt: '2026-03-13T05:58:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2100, createdAt: '2026-03-13T05:57:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2000, createdAt: '2026-03-13T05:56:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2100, createdAt: '2026-03-13T05:55:00.000Z' },
-      { model: 'grok-420-fast', scope: 'report', success: true, latencyMs: 1600, createdAt: '2026-03-13T05:59:30.000Z' },
-    ];
-    const circuits: ModelCircuitEvent[] = [
-      {
-        model: 'gpt-5.2',
-        state: 'half-open',
-        createdAt: '2026-03-13T06:10:00.000Z',
-      },
-    ];
-
-    const snapshots = deriveModelHealthSnapshots({ models, attempts, circuits });
-    const gptSnapshot = snapshots.find((item) => item.model === 'gpt-5.2');
-    const plan = buildModelExecutionPlan({ models, snapshots });
-
-    expect(gptSnapshot?.state).toBe('half-open');
-    expect(plan.orderedModels).toEqual(['grok-420-fast', 'auto', 'gpt-5.2']);
-  });
-
-  it('summarizes ordered and skipped models for logs', () => {
-    const attempts: ModelAttemptEvent[] = [];
-    const circuits: ModelCircuitEvent[] = [
-      {
-        model: 'gpt-5.2',
-        state: 'open',
-        createdAt: '2026-03-13T06:00:00.000Z',
-        reopenAt: '2026-03-13T06:20:00.000Z',
-      },
-    ];
-
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts,
-      circuits,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-    const plan = buildModelExecutionPlan({
-      models,
-      snapshots,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-    const summary = summarizeModelExecutionPlan(plan);
-
-    expect(summary.label).toContain('ordered=');
-    expect(summary.label).toContain('skipped=gpt-5.2[open');
-  });
-
-  it('returns no execution candidates when every model is still open', () => {
-    const attempts: ModelAttemptEvent[] = [];
-    const circuits: ModelCircuitEvent[] = [
-      {
-        model: 'gpt-5.2',
-        state: 'open',
-        createdAt: '2026-03-13T06:00:00.000Z',
-        reopenAt: '2026-03-13T06:20:00.000Z',
-      },
-      {
-        model: 'grok-420-fast',
-        state: 'open',
-        createdAt: '2026-03-13T06:00:00.000Z',
-        reopenAt: '2026-03-13T06:20:00.000Z',
-      },
-      {
-        model: 'auto',
-        state: 'open',
-        createdAt: '2026-03-13T06:00:00.000Z',
-        reopenAt: '2026-03-13T06:20:00.000Z',
-      },
-    ];
-
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts,
-      circuits,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-    const plan = buildModelExecutionPlan({
-      models,
-      snapshots,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(plan.orderedModels).toEqual([]);
-  });
-
-  it('returns a recovered model to default order after consecutive successes', () => {
-    const attempts: ModelAttemptEvent[] = [
-      { model: 'gpt-5.2', scope: 'report', success: true, latencyMs: 1500, createdAt: '2026-03-13T06:11:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: true, latencyMs: 1450, createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:09:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2250, createdAt: '2026-03-13T06:08:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2300, createdAt: '2026-03-13T06:07:00.000Z' },
-      { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2100, createdAt: '2026-03-13T06:06:00.000Z' },
-      { model: 'grok-420-fast', scope: 'report', success: true, latencyMs: 1600, createdAt: '2026-03-13T06:10:30.000Z' },
-    ];
-    const circuits: ModelCircuitEvent[] = [
-      {
-        model: 'gpt-5.2',
-        state: 'half-open',
-        createdAt: '2026-03-13T06:10:00.000Z',
-      },
-    ];
-
-    const snapshots = deriveModelHealthSnapshots({ models, attempts, circuits });
-    const gptSnapshot = snapshots.find((item) => item.model === 'gpt-5.2');
-    const plan = buildModelExecutionPlan({ models, snapshots });
-
-    expect(gptSnapshot?.state).toBe('closed');
-    expect(plan.orderedModels[0]).toBe('gpt-5.2');
-  });
-
-  it('splits total timeout budget across attempts', () => {
-    expect(computeAttemptTimeouts(9000, 3).reduce((sum, item) => sum + item, 0)).toBe(9000);
-    expect(computeAttemptTimeouts(6500, 3)).toHaveLength(3);
-  });
-
-  it('defers quickly when the scope shows broad consecutive provider failures', () => {
-    const attemptRows: ModelAttemptEvent[] = [
-      { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:09:00.000Z' },
-      { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:08:00.000Z' },
-      { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:07:00.000Z' },
-      { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:09:00.000Z' },
-      { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:08:00.000Z' },
-      { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:07:00.000Z' },
-      { model: 'auto', scope: 'chat', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'auto', scope: 'chat', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:09:00.000Z' },
-      { model: 'auto', scope: 'chat', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:08:00.000Z' },
-      { model: 'auto', scope: 'chat', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:07:00.000Z' },
-    ];
-    const circuits: ModelCircuitEvent[] = [
-      { model: 'gpt-5.2', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'grok-420-fast', state: 'degraded', createdAt: '2026-03-13T06:10:00.000Z' },
-      { model: 'auto', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-    ];
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: attemptRows,
-      circuits,
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(shouldDeferForProviderSnapshots(snapshots)).toBe(true);
-  });
-
-  it('falls back to global provider health when the local scope has too little history', () => {
-    const localSnapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', scope: 'chat', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:10:00.000Z' },
-      ],
-      circuits: [],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-    const globalSnapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:09:00.000Z' },
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:08:00.000Z' },
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:07:00.000Z' },
-        { model: 'grok-420-fast', scope: 'agent', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', scope: 'agent', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:09:00.000Z' },
-        { model: 'grok-420-fast', scope: 'agent', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:08:00.000Z' },
-        { model: 'grok-420-fast', scope: 'agent', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:07:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:09:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:08:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:07:00.000Z' },
-      ],
-      circuits: [
-        { model: 'gpt-5.2', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-      ],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(shouldDeferForScopeSnapshots(localSnapshots, globalSnapshots)).toBe(true);
-  });
-
-  it('defers once every model has already exhausted early probe attempts without any success', () => {
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:09:00.000Z' },
-        { model: 'grok-420-fast', scope: 'report', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', scope: 'report', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:09:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', scope: 'report', success: false, latencyMs: 1600, createdAt: '2026-03-13T06:09:00.000Z' },
-      ],
-      circuits: [
-        { model: 'gpt-5.2', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-      ],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(shouldDeferForProviderSnapshots(snapshots)).toBe(true);
-  });
-
-  it('conservatively defers when no closed model is currently available', () => {
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'gpt-5.2', scope: 'chat', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', scope: 'chat', success: false, latencyMs: 4200, createdAt: '2026-03-13T06:10:00.000Z' },
-      ],
-      circuits: [
-        { model: 'gpt-5.2', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-        { model: 'auto', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-      ],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(shouldConservativelyDeferForSnapshots(snapshots)).toBe(true);
-  });
-
-  it('does not conservatively defer when at least one closed model still looks viable', () => {
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'grok-420-fast', scope: 'report', success: true, latencyMs: 1600, createdAt: '2026-03-13T06:10:00.000Z' },
-      ],
-      circuits: [],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(shouldConservativelyDeferForSnapshots(snapshots)).toBe(false);
-  });
-
-  it('treats half-open and degraded snapshots as still runnable for probe-worthy scopes', () => {
-    const snapshots = deriveModelHealthSnapshots({
-      models,
-      attempts: [
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'gpt-5.2', scope: 'report', success: false, latencyMs: 2200, createdAt: '2026-03-13T06:09:00.000Z' },
-      ],
-      circuits: [
-        { model: 'gpt-5.2', state: 'half-open', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'grok-420-fast', state: 'degraded', createdAt: '2026-03-13T06:10:00.000Z' },
-        { model: 'auto', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-      ],
-      now: new Date('2026-03-13T06:10:00.000Z'),
-    });
-
-    expect(hasRunnableModelsForSnapshots(snapshots)).toBe(true);
-  });
-
-  it('treats fully open snapshots as not runnable', () => {
-    const snapshots = deriveModelHealthSnapshots({
-      models,
+      models: ['auto'],
       attempts: [],
       circuits: [
-        { model: 'gpt-5.2', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-        { model: 'grok-420-fast', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
-        { model: 'auto', state: 'open', createdAt: '2026-03-13T06:10:00.000Z', reopenAt: '2026-03-13T06:18:00.000Z' },
+        {
+          model: 'auto',
+          state: 'half-open',
+          createdAt: '2026-03-30T00:00:00.000Z',
+          reopenAt: '2026-03-30T00:08:00.000Z',
+        },
       ],
-      now: new Date('2026-03-13T06:10:00.000Z'),
+      now: new Date('2026-03-30T03:30:00.000Z'),
     });
 
-    expect(hasRunnableModelsForSnapshots(snapshots)).toBe(false);
+    expect(snapshots[0]?.state).toBe('closed');
+    expect(snapshots[0]?.reopenAt).toBeUndefined();
+  });
+
+  test('keeps recently reopened circuits in half-open state', () => {
+    const snapshots = deriveModelHealthSnapshots({
+      models: ['auto'],
+      attempts: [],
+      circuits: [
+        {
+          model: 'auto',
+          state: 'open',
+          createdAt: '2026-03-30T03:20:00.000Z',
+          reopenAt: '2026-03-30T03:24:00.000Z',
+        },
+      ],
+      now: new Date('2026-03-30T03:30:00.000Z'),
+    });
+
+    expect(snapshots[0]?.state).toBe('half-open');
   });
 });

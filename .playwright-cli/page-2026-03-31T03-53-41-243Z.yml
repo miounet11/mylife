@@ -1,0 +1,167 @@
+- generic [ref=e2]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "人生K线 世界易系统入口 v1.0.0.1" [ref=e5] [cursor=pointer]:
+        - /url: /
+        - img [ref=e7]
+        - generic [ref=e10]:
+          - generic [ref=e11]: 人生K线
+          - generic [ref=e12]:
+            - generic [ref=e13]: 世界易系统入口
+            - generic [ref=e14]: v1.0.0.1
+      - navigation [ref=e15]:
+        - link "世界易" [ref=e16] [cursor=pointer]:
+          - /url: /world-yi
+        - link "知识库" [ref=e17] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e18] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e19] [cursor=pointer]:
+          - /url: /insights
+        - link "工具中心" [ref=e20] [cursor=pointer]:
+          - /url: /tools
+        - link "进入判断" [ref=e21] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e22] [cursor=pointer]:
+          - /url: /chat
+        - link "事件日历" [ref=e23] [cursor=pointer]:
+          - /url: /events
+        - link "我的档案" [ref=e24] [cursor=pointer]:
+          - /url: /profile
+        - link "案例库" [ref=e25] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e26] [cursor=pointer]:
+          - /url: /updates
+      - link "继续追问" [ref=e29] [cursor=pointer]:
+        - /url: /chat
+        - text: 继续追问
+        - img [ref=e30]
+  - main [ref=e32]:
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - img [ref=e36]
+          - text: 用户沉淀页
+        - heading "档案页的目标不是展示数据，而是让用户留下来。" [level=1] [ref=e39]
+        - paragraph [ref=e40]: 在这里，用户会看到自己过往的分析、关键事件和阶段趋势，逐步形成长期使用而不是一次性消费。
+      - generic [ref=e41]:
+        - generic [ref=e42]: 当前档案能承接的动作
+        - generic [ref=e43]:
+          - generic [ref=e44]: 查看阶段趋势图
+          - generic [ref=e45]: 回顾最近分析结果
+          - generic [ref=e46]: 继续进入结构追问
+          - generic [ref=e47]: 把节点落到事件管理
+    - generic [ref=e48]:
+      - generic [ref=e49]:
+        - generic [ref=e50]:
+          - generic [ref=e51]: 累计分析
+          - generic [ref=e52]: "0"
+          - generic [ref=e53]: 已沉淀的判断结果
+        - generic [ref=e54]:
+          - generic [ref=e55]: 关键事件
+          - generic [ref=e56]: "0"
+          - generic [ref=e57]: 可回访的节点记录
+        - generic [ref=e58]:
+          - generic [ref=e59]: 趋势年份
+          - generic [ref=e60]: "0"
+          - generic [ref=e61]: 可查看阶段波动
+        - generic [ref=e62]:
+          - generic [ref=e63]: 最近格局
+          - generic [ref=e64]: 待生成
+          - generic [ref=e65]: 最近一次分析结果
+      - generic [ref=e67]:
+        - generic [ref=e68]:
+          - generic [ref=e69]: 继续操作
+          - generic [ref=e70]: 把档案页变成下一步动作的中枢，而不是终点。
+        - generic [ref=e71]:
+          - link "继续追问" [ref=e72] [cursor=pointer]:
+            - /url: /chat
+            - img [ref=e73]
+            - text: 继续追问
+          - link "工具中心" [ref=e76] [cursor=pointer]:
+            - /url: /tools
+            - img [ref=e77]
+            - text: 工具中心
+          - link "管理事件" [ref=e80] [cursor=pointer]:
+            - /url: /events
+            - img [ref=e81]
+            - text: 管理事件
+          - link "查看历史" [ref=e85] [cursor=pointer]:
+            - /url: /history
+            - img [ref=e86]
+            - text: 查看历史
+          - link "绑定邮箱" [ref=e90] [cursor=pointer]:
+            - /url: /login
+            - img [ref=e91]
+            - text: 绑定邮箱
+          - link "开始分析" [ref=e94] [cursor=pointer]:
+            - /url: /analyze
+            - img [ref=e95]
+            - text: 开始分析
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - generic [ref=e100]:
+            - img [ref=e101]
+            - text: 最近使用的单项工具
+          - paragraph [ref=e104]: 把综合报告继续拆成单项工具后，最近做过的聚焦判断会沉淀在这里，方便继续深问与复访。
+        - link "全部工具" [ref=e105] [cursor=pointer]:
+          - /url: /tools
+      - generic [ref=e109]:
+        - generic [ref=e110]:
+          - generic [ref=e111]:
+            - generic [ref=e112]:
+              - img [ref=e113]
+              - generic [ref=e118]: 我的更新状态
+            - generic [ref=e119]: 报告升级、月度更新和订阅状态，不应该只停留在邮箱里，这里直接给你看当前状态。
+          - link "登录查看更新" [ref=e120] [cursor=pointer]:
+            - /url: /login?next=%2Fupdates
+            - text: 登录查看更新
+            - img [ref=e121]
+        - generic [ref=e123]:
+          - generic [ref=e124]:
+            - generic [ref=e125]: 订阅状态
+            - generic [ref=e126]: 未激活
+            - generic [ref=e127]: 尚未绑定邮箱
+          - generic [ref=e128]:
+            - generic [ref=e129]: 活跃升级任务
+            - generic [ref=e130]: "0"
+            - generic [ref=e131]: 后台增强中的报告数量
+          - generic [ref=e132]:
+            - generic [ref=e133]: 最近月度更新
+            - generic [ref=e134]: 暂无
+            - generic [ref=e135]: 暂无记录
+          - generic [ref=e136]:
+            - generic [ref=e137]: 最新报告
+            - generic [ref=e138]: 待生成
+            - generic [ref=e139]: 还没有生成可复访的结果
+  - contentinfo [ref=e140]:
+    - generic [ref=e141]:
+      - generic [ref=e142]:
+        - generic [ref=e143]: 人生K线
+        - paragraph [ref=e144]: 人生K线正在把世界易变成网站的母系统，让结构、阶段、环境、动作成为全站统一的判断语言，而不再只是一次性结果展示。
+        - paragraph [ref=e145]: 当前公开层已覆盖世界易入口、十卷主书工程、知识库、案例库、结果页和结构追问器；母文档与版本治理仍继续在后台演进。
+      - generic [ref=e146]:
+        - link "邮箱登录" [ref=e147] [cursor=pointer]:
+          - /url: /login
+        - link "世界易" [ref=e148] [cursor=pointer]:
+          - /url: /world-yi
+        - link "主书工程" [ref=e149] [cursor=pointer]:
+          - /url: /world-yi/book
+        - link "工具中心" [ref=e150] [cursor=pointer]:
+          - /url: /tools
+        - link "知识库" [ref=e151] [cursor=pointer]:
+          - /url: /knowledge
+        - link "专题地图" [ref=e152] [cursor=pointer]:
+          - /url: /knowledge/topics
+        - link "洞察中心" [ref=e153] [cursor=pointer]:
+          - /url: /insights
+        - link "案例库" [ref=e154] [cursor=pointer]:
+          - /url: /cases
+        - link "邮件更新" [ref=e155] [cursor=pointer]:
+          - /url: /updates
+        - link "进入判断" [ref=e156] [cursor=pointer]:
+          - /url: /analyze
+        - link "结构追问" [ref=e157] [cursor=pointer]:
+          - /url: /chat
+        - link "事件管理" [ref=e158] [cursor=pointer]:
+          - /url: /events

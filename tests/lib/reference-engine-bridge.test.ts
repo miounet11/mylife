@@ -85,5 +85,6 @@ describe('reference engine bridge', () => {
     expect(overlay.timingHints.length).toBeGreaterThan(0);
     expect(overlay.directives.length).toBeGreaterThan(0);
     expect(overlay.citations[0]?.dimension).toBe('tianShi');
+    expect(overlay.timingHints.join(' ')).not.toContain('解释增强即可');
   });
 });

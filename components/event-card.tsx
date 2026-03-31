@@ -174,7 +174,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
           <div className="flex items-center space-x-2 text-xs text-gray-600">
             <span className="flex items-center space-x-1">
               <Check className={`w-3 h-3 ${event.wasAccurate ? 'text-green-600' : 'text-red-600'}`} />
-              <span>命理预测</span>
+              <span>报告预测</span>
             </span>
             <span>·</span>
             <span className="font-semibold">

@@ -1,5 +1,6 @@
-import type { EventRecord, FortuneRecord } from '@/lib/user-types';
+import type { EventRecord, FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
 import { getChatIntentPreset, type ChatIntent } from '@/lib/chat-intent';
+import { summarizeToolSessions } from '@/lib/tool-context';
 import {
   buildConfidenceAnalysis,
   buildMonthlyWindows,
@@ -47,6 +48,13 @@ export interface ChatExperienceContext {
   suggestedPrompts: string[];
   correctionPrompts: ChatCorrectionPrompt[];
   recentEvents: ChatContextEvent[];
+  recentTools?: Array<{
+    toolSlug: string;
+    toolTitle: string;
+    category: string;
+    headline: string;
+    recommendedAction: string;
+  }>;
   suggestedEventDrafts: ReportActionSuggestion[];
   validationSummary?: {
     accurateCount: number;
@@ -86,6 +94,7 @@ const GENERIC_PROMPTS = [
 export function buildChatExperienceContext(params: {
   report?: FortuneRecord | null;
   events?: EventRecord[];
+  toolSessions?: ToolSessionRecord[];
   focusEventId?: string;
   intent?: ChatIntent;
   now?: Date;
@@ -101,6 +110,7 @@ export function buildChatExperienceContext(params: {
     });
   const recentReferenceEvents = getReferenceEvents(events, now);
   const validationSummary = buildValidationSummary(events);
+  const toolMemory = summarizeToolSessions(params.toolSessions || [], params.report || null, 4);
   const focusedEvent = params.focusEventId ? events.find((item) => item.id === params.focusEventId) : undefined;
   const mappedFocusedEvent = focusedEvent ? mapEvent(focusedEvent) : undefined;
   const correctionPrompts = buildCorrectionPrompts(mappedFocusedEvent, params.report || null);
@@ -118,6 +128,7 @@ export function buildChatExperienceContext(params: {
       focusAreas: [
         intentPreset ? `专项：${intentPreset.entryLabel}` : '',
         ...(events.length > 0 ? ['最近事件复盘', '现实节奏校验'] : ['命局主轴', '阶段节奏', '风险规避']),
+        ...(toolMemory?.focusAreas?.length ? [`最近工具：${toolMemory.focusAreas.join('、')}`] : []),
         validationSummary.headline,
         mappedFocusedEvent ? `焦点事件：${mappedFocusedEvent.title}` : '',
       ].filter(Boolean),
@@ -129,6 +140,13 @@ export function buildChatExperienceContext(params: {
       ),
       correctionPrompts,
       recentEvents: recentReferenceEvents.map(mapEvent),
+      recentTools: toolMemory?.recentSessions?.map((item) => ({
+        toolSlug: item.toolSlug,
+        toolTitle: item.toolTitle,
+        category: item.category,
+        headline: item.headline,
+        recommendedAction: item.recommendedAction,
+      })) || [],
       suggestedEventDrafts: [],
       validationSummary,
       focusedEvent: mappedFocusedEvent,
@@ -176,7 +194,10 @@ export function buildChatExperienceContext(params: {
       topScenario ? `${topScenario.title}现在最该怎么推进？` : '',
       bestWindow ? `如果把重点放在${bestWindow.label}，我应该提前准备什么？` : '',
       riskWindow ? `我该怎样规避${riskWindow.label}这段时间的风险？` : '',
-      recentEvents[0] ? `结合我在${recentEvents[0].date}的“${recentEvents[0].title}”，我应该提前注意什么？` : '',
+    recentEvents[0] ? `结合我在${recentEvents[0].date}的“${recentEvents[0].title}”，我应该提前注意什么？` : '',
+      toolMemory?.recentSessions?.[0]
+        ? `结合我最近做的“${toolMemory.recentSessions[0].toolTitle}”，这次最该继续追问哪一层？`
+        : '',
     ],
     events,
     mappedFocusedEvent,
@@ -216,6 +237,7 @@ export function buildChatExperienceContext(params: {
       recentEvents.length > 0
         ? `用户最近事件：${recentEvents.map((item) => `${item.date} ${item.title}`).join('；')}。`
         : '当前还没有已记录的现实事件，可提醒用户把关键节点存成事件，后续复盘。',
+      toolMemory ? `最近工具记录：${toolMemory.summary}` : '',
       mappedFocusedEvent
         ? `本次重点纠偏事件：${mappedFocusedEvent.title}。其当前状态为${mapValidationSummaryLabel(mappedFocusedEvent.validationStatus)}。`
         : '',
@@ -228,6 +250,13 @@ export function buildChatExperienceContext(params: {
     suggestedPrompts,
     correctionPrompts,
     recentEvents,
+    recentTools: toolMemory?.recentSessions?.map((item) => ({
+      toolSlug: item.toolSlug,
+      toolTitle: item.toolTitle,
+      category: item.category,
+      headline: item.headline,
+      recommendedAction: item.recommendedAction,
+    })) || [],
     suggestedEventDrafts,
     validationSummary,
     focusedEvent: mappedFocusedEvent,

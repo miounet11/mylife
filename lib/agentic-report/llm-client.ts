@@ -156,6 +156,12 @@ export async function callJsonLLM<T>(params: {
     `[Agentic LLM] ${traceLabel} planner ${planSummary.label} ` +
     `(base=${formatModelAttemptLabel(baseModelChain)})`
   );
+  if (modelCandidates.length === 0) {
+    console.warn(
+      `[Agentic LLM] ${traceLabel} no runnable models after health planning, skip request.`
+    );
+    return null;
+  }
 
   try {
     let lastError: unknown = null;
@@ -194,6 +200,7 @@ export async function callJsonLLM<T>(params: {
             success: false,
             latencyMs: Date.now() - startedAt,
             errorType: 'empty',
+            errorMessage: 'EMPTY_CONTENT',
             traceLabel,
           });
           lastError = new Error(`EMPTY_CONTENT:${model}`);
@@ -211,6 +218,7 @@ export async function callJsonLLM<T>(params: {
             success: false,
             latencyMs: Date.now() - startedAt,
             errorType: `parse:${parsed.reason || 'unknown'}`,
+            errorMessage: parsed.reason || 'JSON_PARSE_FAILED',
             traceLabel,
           });
           lastError = new Error(`JSON_PARSE_FAILED:${model}:${parsed.reason || 'UNKNOWN'}`);
@@ -236,6 +244,7 @@ export async function callJsonLLM<T>(params: {
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: classifyError(error),
+          errorMessage: (error as Error).message,
           traceLabel,
         });
         console.error(

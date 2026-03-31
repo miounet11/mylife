@@ -244,8 +244,12 @@ describe('agentic reference context integration', () => {
 
     const temporalSpatial = fallback.temporal_spatial_advisor as { summary?: string; citations?: string[] };
     const relationship = fallback.relationship_family as { summary?: string; citations?: string[] };
+    const strategy = fallback.strategy_advisor as { summary?: string; actions?: string[] };
 
     expect(temporalSpatial.summary).toContain('地利');
+    expect(temporalSpatial.summary).not.toContain('显著放大或压制');
+    expect(strategy.summary).not.toContain('当前最优策略不是同时做很多事');
+    expect(strategy.actions?.[0]).not.toContain('做一条最短路径');
     expect(relationship.citations).toContain('reference.overlay.human');
   });
 });

@@ -5,9 +5,9 @@ import { Clock3, Sparkles } from 'lucide-react';
 import { getShichenOption, SHICHEN_OPTIONS } from '@/lib/shichen';
 
 interface BirthTimeValue {
-  hour: number;
-  minute: number;
-  second: number;
+  hour: number | null;
+  minute: number | null;
+  second: number | null;
 }
 
 interface BirthTimeInputProps {
@@ -21,6 +21,9 @@ function formatPart(value: number) {
 }
 
 function formatClockValue(value: BirthTimeValue) {
+  if (value.hour === null || value.minute === null) {
+    return '';
+  }
   return `${formatPart(value.hour)}:${formatPart(value.minute)}`;
 }
 
@@ -88,16 +91,16 @@ export default function BirthTimeInput({
   onValidityChange,
 }: BirthTimeInputProps) {
   const [smartInput, setSmartInput] = useState(formatClockValue(value));
-  const [secondText, setSecondText] = useState(formatPart(value.second));
+  const [secondText, setSecondText] = useState(value.second === null ? '' : formatPart(value.second));
   const [error, setError] = useState('');
   const secondRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setSmartInput(formatClockValue(value));
-    setSecondText(formatPart(value.second));
+    setSecondText(value.second === null ? '' : formatPart(value.second));
   }, [value, value.hour, value.minute, value.second]);
 
-  const currentShichen = useMemo(() => getShichenOption(value.hour), [value.hour]);
+  const currentShichen = useMemo(() => (value.hour === null ? null : getShichenOption(value.hour)), [value.hour]);
 
   const commitTime = (hour: number, minute: number, second: number, nextError: string = '') => {
     if (!isValidTime(hour, minute, second)) {
@@ -134,7 +137,7 @@ export default function BirthTimeInput({
 
               const parsed = parseSmartTime(nextValue);
               if (parsed) {
-                commitTime(parsed.hour, parsed.minute, value.second);
+                commitTime(parsed.hour, parsed.minute, value.second ?? 0);
               }
             }}
             onBlur={() => {
@@ -145,7 +148,7 @@ export default function BirthTimeInput({
                 return;
               }
 
-              commitTime(parsed.hour, parsed.minute, value.second);
+              commitTime(parsed.hour, parsed.minute, value.second ?? 0);
             }}
             placeholder="例如 14:30"
             className="w-full rounded-2xl border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-4 py-3 text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
@@ -168,11 +171,22 @@ export default function BirthTimeInput({
                   return;
                 }
 
+                if (value.hour === null || value.minute === null) {
+                  onValidityChange?.(false);
+                  return;
+                }
+
                 commitTime(value.hour, value.minute, Number(numericValue));
               }}
               onBlur={() => {
                 if (secondText.length === 0) {
                   setError('请补充秒数');
+                  onValidityChange?.(false);
+                  return;
+                }
+
+                if (value.hour === null || value.minute === null) {
+                  setError('请先填写时和分');
                   onValidityChange?.(false);
                   return;
                 }
@@ -186,14 +200,14 @@ export default function BirthTimeInput({
 
         <div className="mt-4 grid grid-cols-3 gap-2 md:grid-cols-6">
           {SHICHEN_OPTIONS.map((option) => {
-            const isSelected = option.name === currentShichen.name;
+            const isSelected = option.name === currentShichen?.name;
             return (
               <button
                 key={option.name}
                 type="button"
                 onClick={() => {
                   setSmartInput(`${formatPart(option.midHour)}:00`);
-                  commitTime(option.midHour, 0, value.second);
+                  commitTime(option.midHour, 0, value.second ?? 0);
                 }}
                 className={`rounded-2xl border px-3 py-3 text-left transition ${
                   isSelected
@@ -219,8 +233,9 @@ export default function BirthTimeInput({
               key={minuteValue}
               type="button"
               onClick={() => {
-                setSmartInput(`${formatPart(value.hour)}:${formatPart(minuteValue)}`);
-                commitTime(value.hour, minuteValue, value.second);
+                const nextHour = value.hour ?? 12;
+                setSmartInput(`${formatPart(nextHour)}:${formatPart(minuteValue)}`);
+                commitTime(nextHour, minuteValue, value.second ?? 0);
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
                 value.minute === minuteValue
@@ -241,11 +256,15 @@ export default function BirthTimeInput({
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[color:var(--ink)]">
           <span className="rounded-full bg-white/80 px-3 py-1 font-semibold">
-            {formatPart(value.hour)}:{formatPart(value.minute)}:{formatPart(value.second)}
+            {value.hour !== null && value.minute !== null && value.second !== null
+              ? `${formatPart(value.hour)}:${formatPart(value.minute)}:${formatPart(value.second)}`
+              : '待填写'}
           </span>
-          <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getPeriodStyle(currentShichen.period)}`}>
-            {currentShichen.label} · {currentShichen.alias}
-          </span>
+          {currentShichen ? (
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ${getPeriodStyle(currentShichen.period)}`}>
+              {currentShichen.label} · {currentShichen.alias}
+            </span>
+          ) : null}
         </div>
         {error ? (
           <div className="mt-2 text-xs text-red-600">{error}</div>

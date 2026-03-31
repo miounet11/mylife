@@ -10,10 +10,12 @@ import BirthTimeModal from './birth-time-modal';
 import InstantPaipanCard from './instant-paipan-card';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
 import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES } from '@/lib/birth-entry';
+import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
 import {
   DEFAULT_CASE_TYPES,
+  DEFAULT_CASE_TYPE_ID,
   UNKNOWN_LOCATION,
   buildLunarArrFromBirthday,
   createDefaultInfoData,
@@ -101,6 +103,82 @@ function wait(ms: number) {
   });
 }
 
+function maskEmail(email?: string | null) {
+  const normalized = `${email || ''}`.trim().toLowerCase();
+  if (!normalized || !normalized.includes('@')) {
+    return '';
+  }
+
+  const [localPart, domain] = normalized.split('@');
+  if (!localPart || !domain) {
+    return normalized;
+  }
+
+  if (localPart.length <= 2) {
+    return `${localPart[0] || '*'}*@${domain}`;
+  }
+
+  return `${localPart.slice(0, 2)}***@${domain}`;
+}
+
+function getCaseTypeGuidance(caseTypeName: string) {
+  const normalized = caseTypeName.trim();
+
+  if (/事业|工作|职业|升职|岗位/.test(normalized)) {
+    return {
+      headline: '事业类问题要先问角色适配、阶段窗口和组织压力。',
+      focus: '更适合追问“这次换岗该推进、观察还是收手”“现在的岗位和我是否匹配”。',
+      avoid: '不要只问会不会升职，先问为什么卡、卡在结构还是环境。',
+    };
+  }
+
+  if (/财富|财务|收入|投资|赚钱/.test(normalized)) {
+    return {
+      headline: '财富类问题要先拆赚钱方式、保留能力和扩张时机。',
+      focus: '更适合追问“现在该保守守财还是放大投入”“现金流最脆弱的点在哪里”。',
+      avoid: '不要只问有没有财运，先问钱怎么进、怎么漏、什么时候别扩。',
+    };
+  }
+
+  if (/关系|感情|婚姻|伴侣|桃花/.test(normalized)) {
+    return {
+      headline: '关系类问题要先看边界、节奏和环境挤压。',
+      focus: '更适合追问“这段关系更像结构不合还是阶段不对”“现在该推进还是拉开距离”。',
+      avoid: '不要只问合不合，先问关系为什么卡、谁在消耗、环境是否在放大问题。',
+    };
+  }
+
+  if (/健康|身体|恢复|睡眠/.test(normalized)) {
+    return {
+      headline: '健康类问题先看恢复秩序、长期透支和现实负荷。',
+      focus: '更适合追问“当前最该先减什么负”“恢复窗口什么时候更适合调整”。',
+      avoid: '不要只问会不会出问题，先问透支在哪、恢复位够不够。',
+    };
+  }
+
+  if (/家庭|父母|孩子|家宅|照护/.test(normalized)) {
+    return {
+      headline: '家庭类问题先处理责任排序，再谈情绪压力。',
+      focus: '更适合追问“当前最该先排哪条责任线”“谁在代替整个系统承压”。',
+      avoid: '不要上来追求圆满，先把责任顺序和恢复位排清楚。',
+    };
+  }
+
+  if (/迁移|移民|出国|回国|城市|海外/.test(normalized)) {
+    return {
+      headline: '迁移类问题先看阶段、身份成本和环境匹配。',
+      focus: '更适合追问“现在适合动还是先稳住”“这次移动最大的现实成本是什么”。',
+      avoid: '不要把地图当答案，先问你当前阶段撑不撑得住这次移动。',
+    };
+  }
+
+  return {
+    headline: '综合问题也要先压成一个主问题，再进入判断。',
+    focus: '更适合追问“现在最该先看事业、关系、财富、健康、家庭还是迁移哪条主线”。',
+    avoid: '不要一次把所有问题混在一起，先锁定一条最想判断的主线。',
+  };
+}
+
 export default function FortuneForm() {
   const router = useRouter();
   const analyzeRequestRef = useRef<AbortController | null>(null);
@@ -141,11 +219,46 @@ export default function FortuneForm() {
     upgradeAttempts?: number;
     upgradeMaxAttempts?: number;
   } | null>(null);
+  const [sessionState, setSessionState] = useState<{
+    authenticated: boolean;
+    user: {
+      email: string | null;
+      emailVerified?: boolean;
+    } | null;
+  } | null>(null);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
     setSetTimeInfo(createSetTimeInfo(midnightValue));
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadSession = async () => {
+      try {
+        const response = await fetch('/api/auth/session', { cache: 'no-store' });
+        const data = await response.json();
+
+        if (!cancelled) {
+          setSessionState({
+            authenticated: !!data.authenticated,
+            user: data.user || null,
+          });
+        }
+      } catch {
+        if (!cancelled) {
+          setSessionState({ authenticated: false, user: null });
+        }
+      }
+    };
+
+    void loadSession();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -183,6 +296,56 @@ export default function FortuneForm() {
   const addressLabel = formatAddressLabel(locationState.addressData);
   const latitudeLabel = locationState.latitude !== undefined ? `北纬${locationState.latitude.toFixed(4)}` : '';
   const longitudeLabel = `东经${locationState.longitude.toFixed(3)}`;
+  const selectedCaseType = useMemo(
+    () => caseTypes.find((item) => item.id === infoData.typeId)?.name || '综合判断',
+    [caseTypes, infoData.typeId]
+  );
+  const isSpecificCaseType = infoData.typeId !== DEFAULT_CASE_TYPE_ID;
+  const hasKnownLocation = locationState.addressData[0] !== '未知地';
+  const hasKnownBirthHour = infoData.unknowhour === 0;
+  const usesSolarTime = setTimeInfo[1].value === 1;
+  const entryReadiness = [
+    {
+      label: '判断主题',
+      done: isSpecificCaseType,
+      value: isSpecificCaseType ? selectedCaseType : '当前还是默认分类',
+      helper: isSpecificCaseType ? '主问题已经更聚焦，后续结果会更容易收敛。' : '建议先把主题缩到更具体的事业、关系、财富等主线。',
+    },
+    {
+      label: '出生时间精度',
+      done: hasKnownBirthHour,
+      value: hasKnownBirthHour ? birthLabel : '当前为未知时辰',
+      helper: hasKnownBirthHour ? '阶段判断会更稳，结果更容易落到月份和窗口。' : '如果能补足时辰，结果页的阶段与动作建议会更扎实。',
+    },
+    {
+      label: '环境坐标',
+      done: hasKnownLocation,
+      value: hasKnownLocation ? addressLabel : '当前仍是未知地',
+      helper: hasKnownLocation ? '地点、时区与经纬度已经进入判断。' : '补上出生地点后，真太阳时和环境判断会更可靠。',
+    },
+    {
+      label: '时间修正',
+      done: usesSolarTime,
+      value: usesSolarTime ? '真太阳时已开启' : '当前按钟表时间',
+      helper: usesSolarTime ? '系统会优先按更稳的时间基准整理阶段。' : '建议开启真太阳时，让阶段判断更接近真实节律。',
+    },
+  ];
+  const readinessScore = Math.round((entryReadiness.filter((item) => item.done).length / entryReadiness.length) * 100);
+  const nextHint = !isSpecificCaseType
+    ? '先把案例分类从“默认分类”切到更具体的问题主线，结果会更聚焦。'
+    : !hasKnownLocation
+      ? '建议补上出生地点，让时间修正和环境判断一起成立。'
+      : !hasKnownBirthHour
+        ? '如果你能确认时辰，阶段窗口和动作建议会更稳。'
+        : !usesSolarTime
+          ? '建议开启真太阳时，让结果更接近真实节律。'
+          : '当前信息已经够进入判断，后续重点是看结果页里的结构、阶段和动作排序。';
+  const caseTypeGuidance = getCaseTypeGuidance(selectedCaseType);
+  const submitLabel = readinessScore >= 75 ? '生成我的世界易判断' : '用当前信息进入判断';
+  const verifiedEmail = sessionState?.authenticated && sessionState?.user?.emailVerified
+    ? maskEmail(sessionState.user.email)
+    : '';
+  const hasEmailDelivery = Boolean(verifiedEmail);
 
   const submitPayload = async (payload: PaipanInfoData, payloadLocation: FormLocationState) => {
     setLoading(true);
@@ -209,6 +372,14 @@ export default function FortuneForm() {
     });
 
     try {
+      trackGoogleAnalyticsEvent('analyze_submitted', {
+        case_type: selectedCaseType,
+        readiness_score: readinessScore,
+        has_known_location: hasKnownLocation,
+        has_known_birth_hour: hasKnownBirthHour,
+        use_solar_time: useSolarTime,
+      });
+
       const controller = new AbortController();
       analyzeRequestRef.current = controller;
       const response = await fetch('/api/analyze', {
@@ -338,6 +509,16 @@ export default function FortuneForm() {
               upgradeMaxAttempts: event.upgrade?.maxAttempts,
             };
             setCompletionMeta(completedMeta);
+            trackGoogleAnalyticsEvent('analyze_completed', {
+              report_id: event.reportId,
+              llm_used: !!event.llm?.used,
+              delivery_tier: event.quality?.deliveryTier || 'basic',
+              quality_grade: event.quality?.grade || 'B',
+              quality_score: event.quality?.score || 0,
+              target_achieved: !!event.quality?.targetAchieved,
+              upgrade_queued: !!event.upgrade?.queued,
+              upgrade_status: event.upgrade?.status || 'none',
+            });
           }
         }
       }
@@ -371,9 +552,13 @@ export default function FortuneForm() {
       router.push(`/result/${completedReportId}`);
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
-        setError('已取消本次测算，你可以继续修改信息后重新提交');
+        setError('已取消本次判断，你可以继续修改信息后重新提交');
       } else {
-        setError('网络连接异常，请稍后重试');
+        setError(
+          hasEmailDelivery
+            ? `网络连接异常，请稍后重试。若报告已经成功生成并保存完成，系统也会把结果提醒发到 ${verifiedEmail}。`
+            : '网络连接异常，请稍后重试。你也可以稍后回到判断记录里查看是否已生成结果。'
+        );
       }
       setLoadingSummary(null);
       setServerStage(null);
@@ -460,6 +645,10 @@ export default function FortuneForm() {
         onCancel={handleCancelLoading}
         serverStage={serverStage}
         completionMeta={completionMeta}
+        deliverySupport={{
+          canEmailNotify: hasEmailDelivery,
+          emailLabel: verifiedEmail || null,
+        }}
       />
     );
   }
@@ -469,6 +658,82 @@ export default function FortuneForm() {
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[681px]">
         <div className="rounded-[30px] bg-white px-5 py-7 shadow-[0_18px_50px_rgba(16,16,16,0.08)] md:px-[56px] md:py-[52px]">
           <div className="space-y-[22px]">
+            <div className="grid gap-3 md:grid-cols-3">
+              {[
+                ['结构底座', '出生信息会先决定命局底座，不先被单一事件带跑。'],
+                ['阶段坐标', '真太阳时、时区与时间精度会影响阶段判断。'],
+                ['动作导向', '最终结果要落到现在先做什么，而不是停在术语。'],
+              ].map(([title, description]) => (
+                <div key={title} className="rounded-[18px] border border-[#efe8d9] bg-[#fbf8f2] px-4 py-4">
+                  <div className="text-[15px] font-semibold text-[#3f392f]">{title}</div>
+                  <div className="mt-2 text-[13px] leading-6 text-[#6a6356]">{description}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-[18px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-[14px] leading-7 text-[#6a6356]">
+              <div className="font-semibold text-[#3f392f]">世界易录入提示</div>
+              <div className="mt-2">
+                这一步不是单纯提交一份资料，而是在为你的个人判断页建立底座。系统后面会按“结构 → 阶段 → 环境 → 动作”的顺序整理结果。
+              </div>
+            </div>
+
+            <div className={`rounded-[18px] px-4 py-4 text-[14px] leading-7 ${hasEmailDelivery ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-[#ece7da] bg-white text-[#6a6356]'}`}>
+              <div className={`font-semibold ${hasEmailDelivery ? 'text-emerald-800' : 'text-[#3f392f]'}`}>慢请求处理提醒</div>
+              <div className="mt-2">
+                {hasEmailDelivery
+                  ? `如果网络波动或模型响应偏慢，你不用一直守着页面。只要报告成功生成并保存完成，系统会把结果提醒发到 ${verifiedEmail}，你也可以稍后回到判断记录里继续看。`
+                  : '如果网络波动或模型响应偏慢，你可以稍后回来看判断记录。登录并绑定邮箱后，报告生成完成时也可以直接收邮件提醒。'}
+              </div>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-[1.02fr_0.98fr]">
+              <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="text-[15px] font-semibold text-[#3f392f]">录入完成度</div>
+                    <div className="mt-1 text-[13px] leading-6 text-[#6a6356]">不是必须填到完美，但补齐关键缺口会明显提升判断质量。</div>
+                  </div>
+                  <div className="rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-[#b2955d]">
+                    {readinessScore}%
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {entryReadiness.map((item) => (
+                    <div key={item.label} className="rounded-[14px] bg-white/90 px-4 py-3">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">{item.label}</div>
+                        <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
+                          {item.done ? '已增强' : '待补强'}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{item.value}</div>
+                      <div className="mt-2 text-[13px] leading-6 text-[#6a6356]">{item.helper}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4">
+                <div className="text-[15px] font-semibold text-[#3f392f]">本次更适合这样问</div>
+                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[14px] leading-7 text-[#4b4439]">
+                  {caseTypeGuidance.headline}
+                </div>
+                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">建议追问方式</div>
+                  <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{caseTypeGuidance.focus}</div>
+                </div>
+                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">当前下一步</div>
+                  <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{nextHint}</div>
+                </div>
+                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">避免这样问</div>
+                  <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{caseTypeGuidance.avoid}</div>
+                </div>
+              </div>
+            </div>
+
             <div className="flex items-center gap-[14px]">
               <span className="shrink-0 whitespace-nowrap text-[16px] text-[#444444]">命主姓名</span>
               <input
@@ -640,11 +905,40 @@ export default function FortuneForm() {
               </div>
             ) : null}
 
+            <div className="rounded-[18px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-[14px] leading-7 text-[#6a6356]">
+              <div className="font-semibold text-[#3f392f]">本次建盘协议</div>
+              <div className="mt-3 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">判断主题</div>
+                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{selectedCaseType}</div>
+                </div>
+                <div className="rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">出生信息模式</div>
+                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{birthLabel}</div>
+                </div>
+                <div className="rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">环境坐标</div>
+                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{addressLabel}</div>
+                </div>
+                <div className="rounded-[14px] bg-white/90 px-4 py-3">
+                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">时间修正</div>
+                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">
+                    {setTimeInfo[1].value ? '真太阳时开启' : '按钟表时间'}
+                    {setTimeInfo[0].value ? ' · 夏令时已启用' : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[18px] border border-[#ececec] bg-[#fafafa] px-4 py-4 text-[14px] leading-7 text-[#6d6d6d]">
+              提交后你先拿到的，不是一句抽象结论，而是主结构、当前阶段、环境提示和现在先做什么。
+            </div>
+
             <button
               type="submit"
               className="flex h-[63px] w-full items-center justify-center rounded-full bg-black font-serif text-[18px] font-bold text-[#f7d3a1]"
             >
-              开始排盘
+              {submitLabel}
             </button>
           </div>
         </div>
@@ -656,6 +950,10 @@ export default function FortuneForm() {
               void submitPayload(payload, UNKNOWN_LOCATION);
             }}
           />
+        </div>
+
+        <div className="mt-4 rounded-[20px] bg-white px-4 py-4 text-[13px] leading-7 text-[#8a8a8a] shadow-[0_8px_24px_rgba(16,16,16,0.05)]">
+          如果你只是想先快速进入结果，也可以直接用上面的快速入口。后续结果页仍会优先整理成世界易的结构、阶段和动作顺序。
         </div>
 
         <div className="mt-4 flex h-[42px] items-center justify-center rounded-[20px] bg-white px-4 text-[12px] text-[#c2c2c2] shadow-[0_8px_24px_rgba(16,16,16,0.05)]">

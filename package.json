@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:clean": "node scripts/dev-clean-start.js",
     "build": "node scripts/build-with-static-retention.js",
     "start": "next start",
     "lint": "next lint",
@@ -23,9 +24,16 @@
     "growth:global:generate": "tsx scripts/public-growth-global-generate.ts",
     "growth:global:promote": "tsx scripts/public-growth-global-promote.ts",
     "content:generate:daemon": "node scripts/content-generation-daemon.js",
+    "qa:tools-runtime": "node scripts/verify-tools-runtime.js",
+    "qa:public-surface-labels": "node scripts/check-public-surface-labels.js",
+    "qa:public-surface-heroes": "node scripts/check-public-surface-heroes.js",
+    "qa:world-yi-surfaces": "node scripts/check-world-yi-surfaces.js",
+    "qa:public-product-components": "node scripts/check-public-product-components.js",
+    "qa:public-surfaces": "npm run qa:public-surface-labels && npm run qa:public-surface-heroes && npm run qa:world-yi-surfaces && npm run qa:public-product-components",
     "system:health": "node scripts/system-health.js",
     "system:requests": "node scripts/request-window.js",
-    "system:retro": "node scripts/report-retro.js"
+    "system:retro": "node scripts/report-retro.js",
+    "system:report-eval": "tsx scripts/report-demand-eval.ts"
   },
   "dependencies": {
     "better-sqlite3": "^11.7.0",

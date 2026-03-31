@@ -18,6 +18,7 @@ jest.mock('@/lib/database', () => ({
     markCompleted: jest.fn(),
     markDeferred: jest.fn(),
     markFailed: jest.fn(),
+    markCancelled: jest.fn(),
     markRetry: jest.fn(),
   },
   userOperations: {
@@ -49,6 +50,7 @@ jest.mock('@/lib/report-quality', () => ({
 jest.mock('@/lib/report-pipeline', () => ({
   CURRENT_REPORT_VERSION: 'v3',
   regenerateReportFromRecord: jest.fn(),
+  repairStoredReportNarrative: jest.fn((report) => report),
 }));
 
 jest.mock('@/lib/report-version-lineage', () => ({
@@ -57,7 +59,7 @@ jest.mock('@/lib/report-version-lineage', () => ({
 
 import { fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
 import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
-import { regenerateReportFromRecord } from '@/lib/report-pipeline';
+import { regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
 import { enqueueReportUpgrade, processNextReportUpgradeJob, processReportUpgradeBatch } from '@/lib/report-upgrade-jobs';
 
 const mockedFortuneOperations = fortuneOperations as jest.Mocked<typeof fortuneOperations>;
@@ -65,13 +67,18 @@ const mockedReportUpgradeJobOperations = reportUpgradeJobOperations as jest.Mock
 const mockedAssessScopeProviderHealth = assessScopeProviderHealth as jest.MockedFunction<typeof assessScopeProviderHealth>;
 const mockedHasRunnableModelsForSnapshots = hasRunnableModelsForSnapshots as jest.MockedFunction<typeof hasRunnableModelsForSnapshots>;
 const mockedRegenerateReportFromRecord = regenerateReportFromRecord as jest.MockedFunction<typeof regenerateReportFromRecord>;
+const mockedRepairStoredReportNarrative = repairStoredReportNarrative as jest.MockedFunction<typeof repairStoredReportNarrative>;
 
 describe('report upgrade jobs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedReportUpgradeJobOperations.getByReportId.mockReturnValue(null);
     mockedReportUpgradeJobOperations.listRunnablePending.mockReturnValue([]);
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReset();
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue(null as any);
     mockedRegenerateReportFromRecord.mockReset();
+    mockedRepairStoredReportNarrative.mockReset();
+    mockedRepairStoredReportNarrative.mockImplementation((report) => report as any);
     mockedAssessScopeProviderHealth.mockReset();
     mockedAssessScopeProviderHealth.mockReturnValue({
       shouldDefer: false,
@@ -94,6 +101,7 @@ describe('report upgrade jobs', () => {
       report: {
         id: 'report_pending',
         userId: 'user_pending',
+        name: '王静怡',
         reportVersion: 'v3',
         analysis: {
           qualityAudit: {
@@ -120,6 +128,31 @@ describe('report upgrade jobs', () => {
         lastError: null,
       })
     );
+  });
+
+  it('does not enqueue likely test samples for automatic upgrade', () => {
+    const result = enqueueReportUpgrade({
+      report: {
+        id: 'report_test_like',
+        userId: 'user_test_like',
+        name: '案例1',
+        reportVersion: 'v3',
+        analysis: {
+          qualityAudit: {
+            overallScore: 82,
+            grade: 'B',
+            deliveryTier: 'basic',
+            targetAchieved: false,
+          },
+        },
+      } as any,
+    });
+
+    expect(result).toMatchObject({
+      queued: false,
+      reason: 'likely_test_sample',
+    });
+    expect(mockedReportUpgradeJobOperations.enqueue).not.toHaveBeenCalled();
   });
 
   it('enqueues a deferred retry immediately when providers are unhealthy', () => {
@@ -156,6 +189,7 @@ describe('report upgrade jobs', () => {
       report: {
         id: 'report_retry',
         userId: 'user_retry',
+        name: '许文昊',
         reportVersion: 'v3',
         analysis: {
           qualityAudit: {
@@ -188,6 +222,68 @@ describe('report upgrade jobs', () => {
     );
   });
 
+  it('still defers report upgrades when providers are only half-open but report scope is marked unhealthy', () => {
+    mockedReportUpgradeJobOperations.getByReportId
+      .mockReturnValueOnce(null)
+      .mockReturnValueOnce({
+        id: 'job_half_open',
+        reportId: 'report_half_open',
+        status: 'retry',
+        lastError: 'PROVIDER_UNHEALTHY',
+      } as any);
+    mockedAssessScopeProviderHealth.mockReturnValue({
+      shouldDefer: true,
+      snapshots: [
+        {
+          model: 'grok-420-fast',
+          defaultOrder: 0,
+          state: 'half-open',
+          attempts: 8,
+          successes: 0,
+          failures: 8,
+          successRate: 0,
+          failureRate: 1,
+          avgLatencyMs: 4200,
+          consecutiveFailures: 8,
+          rankPenalty: 350,
+        },
+      ],
+    } as any);
+    mockedHasRunnableModelsForSnapshots.mockReturnValue(true);
+
+    const result = enqueueReportUpgrade({
+      report: {
+        id: 'report_half_open',
+        userId: 'user_half_open',
+        name: '徐越',
+        reportVersion: 'v3',
+        analysis: {
+          qualityAudit: {
+            overallScore: 79,
+            grade: 'B',
+            deliveryTier: 'basic',
+            targetAchieved: false,
+          },
+        },
+      } as any,
+    });
+
+    expect(result).toMatchObject({
+      queued: true,
+      reason: 'provider_unhealthy',
+      job: expect.objectContaining({
+        status: 'retry',
+      }),
+    });
+    expect(mockedReportUpgradeJobOperations.enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        reportId: 'report_half_open',
+        status: 'retry',
+        lastError: 'PROVIDER_UNHEALTHY',
+      })
+    );
+  });
+
   it('defers the job instead of spending a normal retry when LLM output is unavailable', async () => {
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue({
       id: 'job_1',
@@ -206,7 +302,7 @@ describe('report upgrade jobs', () => {
     mockedFortuneOperations.getById.mockReturnValue({
       id: 'report_1',
       userId: 'user_1',
-      name: '测试用户',
+      name: '吴合风',
       gender: 'male',
       birthDate: '1990-01-01',
       birthTime: '00:00',
@@ -276,7 +372,7 @@ describe('report upgrade jobs', () => {
     mockedFortuneOperations.getById.mockReturnValue({
       id: 'report_2',
       userId: 'user_2',
-      name: '测试用户2',
+      name: '茼彤',
       gender: 'female',
       birthDate: '1992-02-02',
       birthTime: '08:00',
@@ -391,7 +487,68 @@ describe('report upgrade jobs', () => {
     expect(mockedReportUpgradeJobOperations.markDeferred).not.toHaveBeenCalled();
   });
 
-  it('skips the whole batch when provider health is globally unhealthy', async () => {
+  it('cancels queued likely test samples instead of upgrading them', async () => {
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue({
+      id: 'job_test',
+      reportId: 'report_test',
+      userId: 'user_test',
+      status: 'running',
+      attempts: 1,
+      maxAttempts: 6,
+      targetScore: 95,
+      lastScore: 80,
+      bestScore: 80,
+      bestGrade: 'B',
+      meta: { reason: 'quality_gate' },
+    } as any);
+    mockedFortuneOperations.getById.mockReturnValue({
+      id: 'report_test',
+      userId: 'user_test',
+      name: '测试用户2',
+      birthDate: '1990-01-01',
+      birthTime: '08:00',
+      birthPlace: '北京',
+      timezone: 8,
+      gender: 'male',
+      bazi: {},
+      fiveElements: {},
+      tenGods: {},
+      pattern: {},
+      fortune: {},
+      advice: {},
+      evidence: {},
+      reportVersion: 'v3',
+      analysis: {
+        qualityAudit: {
+          overallScore: 80,
+          grade: 'B',
+          deliveryTier: 'basic',
+          targetAchieved: false,
+        },
+      },
+    } as any);
+
+    const result = await processNextReportUpgradeJob();
+
+    expect(result).toMatchObject({
+      processed: true,
+      status: 'cancelled',
+      reason: 'likely_test_sample',
+      reportId: 'report_test',
+    });
+    expect(mockedReportUpgradeJobOperations.markCancelled).toHaveBeenCalledWith(
+      'job_test',
+      expect.objectContaining({
+        lastError: 'LIKELY_TEST_SAMPLE',
+        meta: expect.objectContaining({
+          skippedAsLikelyTest: true,
+        }),
+      })
+    );
+    expect(mockedRegenerateReportFromRecord).not.toHaveBeenCalled();
+  });
+
+  it('returns a provider unhealthy batch result when no runnable job can be claimed', async () => {
     mockedAssessScopeProviderHealth.mockReturnValue({
       shouldDefer: true,
       snapshots: [
@@ -412,6 +569,7 @@ describe('report upgrade jobs', () => {
       ],
     } as any);
     mockedHasRunnableModelsForSnapshots.mockReturnValue(false);
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue(null as any);
 
     const result = await processReportUpgradeBatch(2);
 
@@ -421,11 +579,10 @@ describe('report upgrade jobs', () => {
       reason: 'provider_unhealthy',
       jobs: [],
     });
-    expect(mockedReportUpgradeJobOperations.listRunnablePending).toHaveBeenCalledWith(2);
-    expect(mockedReportUpgradeJobOperations.claimNextRunnable).not.toHaveBeenCalled();
+    expect(mockedReportUpgradeJobOperations.claimNextRunnable).toHaveBeenCalledTimes(1);
   });
 
-  it('converts due pending jobs to deferred retry when the whole batch is unhealthy', async () => {
+  it('repairs and defers a claimed job when provider health is unhealthy', async () => {
     mockedAssessScopeProviderHealth.mockReturnValue({
       shouldDefer: true,
       snapshots: [
@@ -446,45 +603,101 @@ describe('report upgrade jobs', () => {
       ],
     } as any);
     mockedHasRunnableModelsForSnapshots.mockReturnValue(false);
-    mockedReportUpgradeJobOperations.listRunnablePending.mockReturnValue([
-      {
-        id: 'job_pending_1',
-        reportId: 'report_pending_1',
-        userId: 'user_pending_1',
-        status: 'pending',
-        attempts: 0,
-        maxAttempts: 6,
-        lastScore: 72,
-        bestScore: 72,
-        bestGrade: 'C',
-        meta: { reason: 'quality_gate' },
-      } as any,
-    ]);
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValueOnce({
+      id: 'job_pending_1',
+      reportId: 'report_pending_1',
+      userId: 'user_pending_1',
+      status: 'running',
+      attempts: 1,
+      maxAttempts: 6,
+      targetScore: 95,
+      lastScore: 72,
+      bestScore: 72,
+      bestGrade: 'C',
+      meta: { reason: 'quality_gate' },
+    } as any);
+    mockedFortuneOperations.getById.mockReturnValue({
+      id: 'report_pending_1',
+      userId: 'user_pending_1',
+      name: '徐越',
+      birthDate: '1990-01-01',
+      birthTime: '08:00',
+      birthPlace: '北京',
+      timezone: 8,
+      gender: 'male',
+      bazi: {},
+      fiveElements: {},
+      tenGods: {},
+      pattern: {},
+      fortune: {},
+      advice: {},
+      evidence: {},
+      reportVersion: 'v3',
+      analysis: {
+        opening: '您好，徐越。',
+        summary: '',
+        explanation: '旧版说明',
+        qualityAudit: {
+          overallScore: 72,
+          grade: 'C',
+          deliveryTier: 'basic',
+          targetAchieved: false,
+        },
+      },
+    } as any);
+    mockedRepairStoredReportNarrative.mockReturnValue({
+      basic: {},
+      fiveElements: {},
+      tenGods: {},
+      pattern: {},
+      fortune: {},
+      advice: {},
+      evidence: {},
+      analysis: {
+        opening: '当前先稳住主线。',
+        summary: '当前先稳住主线，再按窗口推进。',
+        explanation: '主判断：先稳住主线。\n\n判断依据：结构已经明确。\n\n现在先做：先做最关键的一步。\n\n风险提醒：不要同时开多条线。',
+        qualityAudit: {
+          overallScore: 74,
+          grade: 'B',
+          deliveryTier: 'basic',
+          targetAchieved: false,
+        },
+      },
+    } as any);
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValueOnce(null as any);
 
     const result = await processReportUpgradeBatch(2);
 
     expect(result).toMatchObject({
       processed: true,
       processedCount: 1,
-      reason: 'provider_unhealthy',
       jobs: [
         expect.objectContaining({
           status: 'retry',
           reportId: 'report_pending_1',
-          reason: 'provider_unhealthy',
+          reason: 'provider_unhealthy_repaired',
         }),
       ],
     });
+    expect(mockedFortuneOperations.update).toHaveBeenCalledWith(
+      'report_pending_1',
+      expect.objectContaining({
+        analysis: expect.objectContaining({
+          summary: '当前先稳住主线，再按窗口推进。',
+        }),
+      })
+    );
     expect(mockedReportUpgradeJobOperations.markDeferred).toHaveBeenCalledWith(
       'job_pending_1',
       expect.objectContaining({
         lastError: 'PROVIDER_UNHEALTHY',
         meta: expect.objectContaining({
           deferredForProvider: true,
+          repairOnlyApplied: true,
         }),
       })
     );
-    expect(mockedReportUpgradeJobOperations.claimNextRunnable).not.toHaveBeenCalled();
   });
 
   it('continues the batch when report models are still runnable', async () => {
@@ -507,7 +720,7 @@ describe('report upgrade jobs', () => {
     mockedFortuneOperations.getById.mockReturnValue({
       id: 'report_3',
       userId: 'user_3',
-      name: '测试用户3',
+      name: '许文昊',
       gender: 'male',
       birthDate: '1991-01-01',
       birthTime: '09:00',

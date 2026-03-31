@@ -389,7 +389,7 @@ function EventsPageContent() {
   return (
     <div className="page-shell">
       <AnalyticsPageView eventName="events_page_viewed" page="/events" meta={{ focusedReportId: focusedReportId || null }} />
-      <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
+      <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
       <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
         <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
@@ -399,22 +399,25 @@ function EventsPageContent() {
               结果后的复访场景
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              把关键节点存下来，
-              <span className="font-serif text-[color:var(--accent-strong)]">用户才有回来的理由。</span>
+              一页管理关键节点，
+              <span className="font-serif text-[color:var(--accent-strong)]">减少错过窗口。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
-              事件页承担的是长期复用。用户可以把报告中的窗口期、现实中的重要事项和提醒机制放到同一处管理。
-            </p>
+            <p className="intro-copy">把关键事件、提醒和验证放在同一处，复盘会更快。</p>
+            <div className="intro-panel">先创建事件，再回到报告或追问页做验证闭环。</div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">这个页面承接的典型动作</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {['记录重要考试与面试', '跟踪感情与家庭节点', '设置提醒避免错过窗口期', '回到报告或 AI 继续追问'].map((item) => (
-                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                  {item}
-                </div>
-              ))}
+            <div className="action-guide">快速操作</div>
+            <div className="action-strip mt-3 flex flex-wrap gap-3">
+              <button onClick={openCreateForm} className="action-primary action-main" type="button">
+                创建事件
+              </button>
+              <Link href={focusedReportId ? `/result/${encodeURIComponent(focusedReportId)}` : '/analyze'} className="action-secondary">
+                {focusedReportId ? '返回关联报告' : '去生成一份报告'}
+              </Link>
+              <Link href={focusedReportId ? `/chat?reportId=${encodeURIComponent(focusedReportId)}` : '/chat'} className="action-secondary">
+                进入结构追问
+              </Link>
             </div>
           </div>
         </section>
@@ -431,23 +434,24 @@ function EventsPageContent() {
               <div>
                 <div className="section-label">报告联动模式</div>
                 <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">当前正在处理这份报告关联的事件与验证结果</div>
-                <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
-                  新建事件会自动绑定当前报告，更适合把结果页里的判断持续沉淀成长期验证样本。
-                </div>
+                <div className="intro-copy mt-2">新建事件会自动绑定当前报告，便于后续验证。</div>
               </div>
-              <div className="flex flex-wrap gap-3">
+              <div className="space-y-2">
+                <div className="action-guide">快速操作</div>
+                <div className="action-strip flex flex-wrap gap-3">
                 <Link
                   href={`/result/${encodeURIComponent(focusedReportId)}`}
-                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                  className="action-secondary"
                 >
                   返回关联报告
                 </Link>
                 <Link
                   href="/events"
-                  className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-4 py-3 text-sm font-semibold text-[color:var(--muted)]"
+                  className="action-secondary"
                 >
                   查看全部事件
                 </Link>
+                </div>
               </div>
             </div>
           </section>
@@ -462,8 +466,7 @@ function EventsPageContent() {
                   验证工作台
                 </div>
                 <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">
-                  不只是记录事件，
-                  <span className="font-serif text-[color:var(--accent-strong)]">而是把该验证的、该纠偏的、该继续追问的全放在一起。</span>
+                  先验证，再纠偏，再追问。
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-4">
@@ -581,16 +584,16 @@ function EventsPageContent() {
             <h2 className="text-2xl font-black text-[color:var(--ink)]">
               {view === 'calendar' ? '事件日历' : '事件列表'}
             </h2>
-            <div className="flex items-center rounded-full border border-[color:var(--line)] bg-white px-3 py-1.5">
+            <div className="product-chip">
               <span className="text-sm text-[color:var(--muted)]">{filteredEvents.length} 个事件</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="flex rounded-full border border-[color:var(--line)] bg-white p-1">
+            <div className="action-strip flex p-1">
               <button
                 onClick={() => setView('calendar')}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-slate-100'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-white'}`}
               >
                 <span className="inline-flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -599,7 +602,7 @@ function EventsPageContent() {
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'list' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-slate-100'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'list' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-white'}`}
               >
                 <span className="inline-flex items-center gap-2">
                   <Grid className="h-4 w-4" />
@@ -610,7 +613,7 @@ function EventsPageContent() {
 
             <button
               onClick={openCreateForm}
-              className="inline-flex items-center space-x-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(178,149,93,0.24)]"
+              className="action-primary"
             >
               <Plus className="w-4 h-4" />
               <span>添加事件</span>
@@ -626,7 +629,7 @@ function EventsPageContent() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as 'all' | EventType)}
-              className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
+              className="smooth-input rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
             >
               <option value="all">全部类型</option>
               <option value="career">事业</option>
@@ -698,7 +701,7 @@ function EventsPageContent() {
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-medium text-[color:var(--muted)]"
+                  className="action-secondary py-2 text-[color:var(--muted)]"
                 >
                   取消
                 </button>
@@ -811,7 +814,7 @@ function EventsPageContent() {
 function EventsPageFallback() {
   return (
     <div className="page-shell">
-      <SiteHeader ctaHref="/analyze" ctaLabel="重新测算" />
+      <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
       <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
         <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
           <div className="space-y-5">
@@ -820,8 +823,8 @@ function EventsPageFallback() {
               结果后的复访场景
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              把关键节点存下来，
-              <span className="font-serif text-[color:var(--accent-strong)]">用户才有回来的理由。</span>
+              一页管理关键节点，
+              <span className="font-serif text-[color:var(--accent-strong)]">减少错过窗口。</span>
             </h1>
           </div>
           <div className="glass-panel rounded-[2rem] p-6">
@@ -883,7 +886,7 @@ function WorkbenchPanel({
       </div>
       <div className="mt-4 grid gap-3">
         {items.length > 0 ? items : (
-          <div className="rounded-[1.25rem] bg-white px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+          <div className="rounded-[1.25rem] bg-white px-4 py-4 intro-copy">
             {empty}
           </div>
         )}
@@ -911,7 +914,7 @@ function WorkbenchQueueItem({
           </div>
         </div>
       </div>
-      <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{reason}</div>
+      <div className="intro-copy mt-2">{reason}</div>
       <div className="mt-3">{actionSlot}</div>
     </div>
   );

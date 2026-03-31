@@ -1,3 +1,9 @@
+import {
+  worldYiCaseStudies,
+  worldYiEntityInsights,
+  worldYiKnowledgeArticles,
+} from '@/lib/world-yi';
+
 export interface ContentSection {
   title: string;
   paragraphs: string[];
@@ -184,6 +190,8 @@ export const knowledgeArticles: KnowledgeArticle[] = [
       }
     ]
   }
+  ,
+  ...worldYiKnowledgeArticles
 ];
 
 export const caseStudies: CaseStudy[] = [
@@ -256,14 +264,16 @@ export const caseStudies: CaseStudy[] = [
         ]
       },
       {
-        title: '公开结果页和 AI 咨询的配合',
+        title: '公开结果页和结构追问的配合',
         paragraphs: [
-          '关系话题往往需要在看完报告后继续追问，因此公开结果页和 AI 咨询必须是一条连续路径。',
+          '关系话题往往需要在看完报告后继续追问，因此公开结果页和结构追问必须是一条连续路径。',
           '这也是为什么结果页不能只是终点，而要是后续互动的入口。'
         ]
       }
     ]
   }
+  ,
+  ...worldYiCaseStudies
 ];
 
 export const entityInsights: EntityInsight[] = [
@@ -426,6 +436,8 @@ export const entityInsights: EntityInsight[] = [
       }
     ]
   }
+  ,
+  ...worldYiEntityInsights
 ];
 
 export function getKnowledgeArticleBySlug(slug: string) {

@@ -82,13 +82,13 @@ export default function ResultPublicControls({
   const reportUrl = buildAbsoluteUrl(`/result/${reportId}`);
   const analyzeUrl = buildAbsoluteUrl('/analyze');
   const activeShareUrl = isPublic ? reportUrl : analyzeUrl;
-  const activeShareTitle = isPublic ? `${publicName}的命理分析报告` : `${BRAND_NAME}命理测算入口`;
+  const activeShareTitle = isPublic ? `${publicName}的结构判断报告` : `${BRAND_NAME}判断入口`;
   const activeShareText = isPublic
-    ? `查看这份来自${BRAND_NAME}的匿名化命理分析结果，支持继续深问、订阅和事件验证。`
-    : `打开${BRAND_NAME}，快速填写生辰信息并进入下一步测算。`;
+    ? `查看这份来自${BRAND_NAME}的匿名化结构判断结果，支持继续深问、订阅和事件验证。`
+    : `打开${BRAND_NAME}，快速填写信息并进入下一步结构判断。`;
   const posterFooter = isPublic
     ? '扫码查看这份匿名化结果页'
-    : `当前未公开，扫码直达 ${BRAND_NAME} 测算入口`;
+    : `当前未公开，扫码直达 ${BRAND_NAME} 判断入口`;
 
   useEffect(() => {
     let cancelled = false;
@@ -153,8 +153,8 @@ export default function ResultPublicControls({
 
   const handleOpenX = () => {
     const text = isPublic
-      ? `我刚在${BRAND_NAME}完成了一份命理分析，结构、节奏和行动建议都很清晰。`
-      : `我在${BRAND_NAME}找到一个填写很快的命理测算入口，直接提交就能继续分析。`;
+      ? `我刚在${BRAND_NAME}完成了一份结构判断报告，结构、节奏和行动建议都很清晰。`
+      : `我在${BRAND_NAME}找到一个填写很快的判断入口，直接提交就能继续分析。`;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(activeShareUrl)}`;
     window.open(xUrl, '_blank', 'noopener,noreferrer');
   };
@@ -379,7 +379,7 @@ export default function ResultPublicControls({
                 <div class="metrics">${highlightMarkup}</div>
               </div>
               <div class="panel">
-                <div class="section-title">${isPublic ? '扫码看结果' : '扫码去测算'}</div>
+                <div class="section-title">${isPublic ? '扫码看结果' : '扫码去判断'}</div>
                 <div class="section-body">${escapeHtml(posterFooter)}</div>
                 <div style="margin-top:16px;">${qrMarkup}</div>
                 <div class="url">${escapeHtml(activeShareUrl)}</div>
@@ -432,9 +432,9 @@ export default function ResultPublicControls({
             {BRAND_NAME} · {getSiteOrigin().replace(/^https?:\/\//, '')}
           </div>
           <div className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
-            {isPublic ? `${publicName}的命理分析可直接分享` : `${BRAND_NAME} 测算入口分享卡`}
+            {isPublic ? `${publicName}的结构判断结果可直接分享` : `${BRAND_NAME} 判断入口分享卡`}
           </div>
-          <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
             {summary}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
@@ -453,7 +453,7 @@ export default function ResultPublicControls({
         <div className="grid gap-4 px-5 py-5 md:grid-cols-[1.08fr_0.92fr]">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">传播重点</div>
-            <div className="mt-3 rounded-[1.35rem] bg-white/80 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+            <div className="mt-3 rounded-[1.35rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
               {nextFocusSummary}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -469,9 +469,9 @@ export default function ResultPublicControls({
           <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
               <QrCode className="h-4 w-4 text-[color:var(--accent-strong)]" />
-              {isPublic ? '扫码查看当前报告' : '扫码进入测算入口'}
+              {isPublic ? '扫码查看当前报告' : '扫码进入判断入口'}
             </div>
-            <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
               {posterFooter}
             </div>
             <div className="mt-4 flex justify-center rounded-[1.5rem] bg-[rgba(246,241,232,0.7)] p-4">
@@ -501,7 +501,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleShare()}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           <Share2 className="h-4 w-4" />
           系统分享
@@ -509,17 +509,17 @@ export default function ResultPublicControls({
 
         <button
           type="button"
-          onClick={() => void handleCopy(activeShareUrl, 'active', isPublic ? '已复制结果链接' : '已复制测算入口')}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          onClick={() => void handleCopy(activeShareUrl, 'active', isPublic ? '已复制结果链接' : '已复制判断入口')}
+          className="action-secondary"
         >
           <Copy className="h-4 w-4" />
-          {copiedKey === 'active' ? '已复制链接' : isPublic ? '复制结果链接' : '复制测算入口'}
+          {copiedKey === 'active' ? '已复制链接' : isPublic ? '复制结果链接' : '复制判断入口'}
         </button>
 
         <button
           type="button"
           onClick={handleOpenX}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           <ExternalLink className="h-4 w-4" />
           分享到 X.com
@@ -528,7 +528,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleExportImage()}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           <Download className="h-4 w-4" />
           导出分享长图
@@ -537,7 +537,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={handleExportDocument}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           <FileText className="h-4 w-4" />
           导出文档 / PDF
@@ -545,11 +545,11 @@ export default function ResultPublicControls({
 
         <button
           type="button"
-          onClick={() => void handleCopy(analyzeUrl, 'analyze', '已复制测算入口')}
-          className="inline-flex items-center justify-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+          onClick={() => void handleCopy(analyzeUrl, 'analyze', '已复制判断入口')}
+          className="action-secondary"
         >
           <Copy className="h-4 w-4" />
-          {copiedKey === 'analyze' ? '已复制入口' : '复制测算入口'}
+          {copiedKey === 'analyze' ? '已复制入口' : '复制判断入口'}
         </button>
 
         {canManage && (
@@ -565,10 +565,10 @@ export default function ResultPublicControls({
         )}
       </div>
 
-      <div className="rounded-[1.4rem] bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+      <div className="rounded-[1.4rem] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
         {message || (isPublic
           ? '当前传播链路已经可用：链接、二维码、X.com、长图和文档都会直达这份匿名化报告。'
-          : '当前报告仍是私密状态。你仍可导出结果卡片和文档，也可直接传播测算入口；开启公开后，二维码和外部分享会自动切换到当前报告。')}
+          : '当前报告仍是私密状态。你仍可导出结果卡片和文档，也可直接传播判断入口；开启公开后，二维码和外部分享会自动切换到当前报告。')}
       </div>
     </div>
   );

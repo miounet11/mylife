@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
+import { formatModelAttemptLabel, getModelFallbackChain, getReportNarrativeFallbackChain } from '@/lib/llm-model-fallback';
 import {
   computeAttemptTimeouts,
   getDynamicModelExecutionPlan,
@@ -150,7 +150,7 @@ export async function generateFortuneInterpretationFollowup(
   }
 
   const openai = createLlmClient(timeoutMs);
-  const baseChain = getModelFallbackChain(getDefaultModel(), 'report');
+  const baseChain = getReportNarrativeFallbackChain('gpt-5.2');
   const deadlineAt = Date.now() + timeoutMs;
   const narrativePatch = await executeReportPhase({
     openai,
@@ -279,6 +279,7 @@ async function executeReportPhase(params: {
         success: false,
         latencyMs: Date.now() - startedAt,
         errorType: error instanceof Error ? error.name || 'error' : 'error',
+        errorMessage: message,
         traceLabel,
       });
       console.error(`[LLM] ${traceLabel} model ${model} failed: ${message}`);
@@ -342,10 +343,10 @@ function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: 
 
 function buildPhaseSystemPrompt(phase: PhaseKey) {
   if (phase === 'structure') {
-    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API。请按实务判断顺序输出：先定旺衰格局，再定用神忌神，再落到大运流年。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
+    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API，同时要使用更接近“世界易”的判断语言。请按实务判断顺序输出：先定结构，再定阶段，再落到动作与风险。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
   }
 
-  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API。请基于已有草案做小幅补强，强调一句主判断、一个优先动作、一个主要风险。只输出合法 JSON，不要 markdown，不要重复。';
+  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API，同时要使用更接近“世界易”的判断语言。请基于已有草案做小幅补强，强调一句主判断、一个优先动作、一个主要风险，不要滑向空泛宿命论。只输出合法 JSON，不要 markdown，不要重复。';
 }
 
 function compactForPrompt(value: unknown, depth: number = 0): unknown {
@@ -430,9 +431,10 @@ ${JSON.stringify(compactDayun)}` : ''}
 2. 先保证字段完整和判断正确，再追求文采。
 3. 文本保持简洁，总体宁短勿长，方便稳定返回。
 4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
-5. `analysis.summary` 必须像一句决策结论，先给判断，不要空泛抒情。
-6. 禁止输出内部占位词或工程词，如 `macro_cycle`、`solar_terms`、`geography`。
+5. analysis.summary 必须像一句世界易式决策结论，优先体现“结构 + 阶段 + 动作”，先给判断，不要空泛抒情。
+6. 禁止输出内部占位词或工程词，如 macro_cycle、solar_terms、geography。
 7. 禁止使用夸饰空话，如“格局清正”“乃富贵之命也”。
+8. 尽量避免传统宿命腔，优先使用“先看结构、再看阶段、最后定动作”的现代判断语言。
 
 JSON 结构必须完整包含以下最小字段：
 {
@@ -483,9 +485,10 @@ ${JSON.stringify(compactDraft)}
 3. explanation 控制在 140-220 字，opening 更有定性力量但不要浮夸。
 4. career/wealth/marriage/health 的 general 和 specific 要更落地，避免重复。
 5. 输出合法 JSON，不要 markdown。
-6. `analysis.summary` 必须前置主结论，像给用户的决策摘要。
+6. analysis.summary 必须前置主结论，像给用户的世界易式决策摘要。
 7. 禁止输出内部占位词、工程词、提示词痕迹或“解释增强即可”这类句子。
 8. 不要写“格局清正”“富贵之命”等空泛恭维。
+9. 尽量体现“你不是乱，你是有结构”“你不是倒霉，你是处在某个阶段”这类判断方向，但不要机械照抄。
 
 只输出需要覆盖的补丁字段：
 {

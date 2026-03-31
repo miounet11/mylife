@@ -107,11 +107,11 @@ export default function UpdatesStatusPanel({
             <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
             <div className="font-semibold text-[color:var(--ink)]">{title}</div>
           </div>
-          <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{description}</div>
+          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{description}</div>
         </div>
         <Link
           href={ctaHref}
-          className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]"
+          className="action-secondary"
         >
           {ctaLabel}
           <ArrowRight className="h-4 w-4" />
@@ -119,15 +119,15 @@ export default function UpdatesStatusPanel({
       </div>
 
       {loading ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
           正在加载这份报告的更新状态...
         </div>
       ) : error ? (
-        <div className="mt-4 rounded-[1.4rem] bg-rose-50 px-4 py-4 text-sm leading-7 text-rose-700">
+        <div className="mt-4 rounded-[1.4rem] bg-rose-50 px-4 py-4 text-xs leading-6 text-rose-700">
           {error}
         </div>
       ) : !authenticated ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
           登录后，这里会显示你当前报告的升级任务、月度更新和订阅状态。
         </div>
       ) : (
@@ -158,8 +158,8 @@ export default function UpdatesStatusPanel({
               <RefreshCcw className="h-4 w-4 text-[color:var(--accent-strong)]" />
               当前进度
             </div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{focusStatus}</div>
-            <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{focusStatus}</div>
+            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
               {focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt || '系统会把后续升级、月度变化和提醒状态集中回写到这里。'}
             </div>
           </div>
@@ -168,14 +168,14 @@ export default function UpdatesStatusPanel({
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href={`/result/${focusReport.id}`}
-                className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
+                className="action-primary action-main"
               >
                 打开这份报告
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href={`/chat?reportId=${encodeURIComponent(focusReport.id)}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+                className="action-secondary"
               >
                 继续围绕这份报告追问
                 <ArrowRight className="h-4 w-4" />
@@ -203,7 +203,7 @@ function StatusTile({
     <div className={`rounded-[1.4rem] px-4 py-4 ${mapTone(tone)}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 break-all text-2xl font-black">{value}</div>
-      <div className="mt-2 text-sm leading-7 opacity-85">{helper}</div>
+      <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>
     </div>
   );
 }

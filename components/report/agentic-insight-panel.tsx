@@ -88,14 +88,14 @@ export default function AgenticInsightPanel({
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
           {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
         </div>
-        <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+        <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
           {getReasoningModeDescription(resolvedReasoningMode)}
           {allFallback ? ` 本次共尝试 ${totalAgentCalls} 个 Agent，当前全部回退为 deterministic 专家层结果。` : ''}
           {verify?.verdict ? ` 一致性结论 ${verify.verdict}，当前评分 ${verify.consistencyScore ?? '待计算'}。` : ''}
         </div>
 
         {totalAgentCalls > 0 ? (
-          <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--ink)]">
+          <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
             Agent 调度状态：成功 {successfulAgents} 个，失败 {failedAgents} 个。
           </div>
         ) : null}
@@ -118,7 +118,7 @@ export default function AgenticInsightPanel({
                   </div>
                 </div>
                 {item.summary ? (
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{item.summary}</div>
+                  <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.summary}</div>
                 ) : null}
                 {item.highlights.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -130,7 +130,7 @@ export default function AgenticInsightPanel({
                   </div>
                 ) : null}
                 {item.actions.length > 0 ? (
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
                     优先动作：{item.actions.slice(0, 2).join('；')}
                   </div>
                 ) : null}
@@ -138,7 +138,7 @@ export default function AgenticInsightPanel({
             ))}
           </div>
         ) : (
-          <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
+          <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
             {allFallback
               ? '当前并发 Agent 没有返回可用结果，页面内容来自结构化引擎和 deterministic 专家层回退。'
               : '当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。'}
@@ -163,7 +163,7 @@ export default function AgenticInsightPanel({
           <SignalTile
             label="宏观周期"
             value={readMacroSummary(macroCycles)}
-            detail="这层不替代命盘，只决定此刻更适合扩张、过渡还是收缩。"
+            detail="这层不替代个人结构，只决定此刻更适合扩张、过渡还是收缩。"
           />
           <SignalTile
             label="地理气候"
@@ -178,13 +178,13 @@ export default function AgenticInsightPanel({
         </div>
 
         {verify?.failedRules && verify.failedRules.length > 0 ? (
-          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-xs leading-6 text-amber-900">
             仍待继续修正的规则：{verify.failedRules.join('、')}
           </div>
         ) : null}
 
         {orchestration?.errors && orchestration.errors.length > 0 ? (
-          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-sm leading-7 text-amber-900">
+          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-xs leading-6 text-amber-900">
             Agent 失败原因：{orchestration.errors.slice(0, 4).map((item) => `${AGENT_LABELS[item.key] || item.key} ${item.error}`).join('；')}
           </div>
         ) : null}
@@ -198,7 +198,7 @@ export default function AgenticInsightPanel({
               </div>
             </div>
             {conflicts.slice(0, 2).map((item) => (
-              <div key={item.id || item.type} className="rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--ink)]">
+              <div key={item.id || item.type} className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 <span className="font-semibold">{item.type || '冲突'}</span>
                 {item.severity ? ` / ${item.severity}` : ''}：{item.explanation || '待补充说明'}
               </div>
@@ -234,7 +234,7 @@ function SignalTile({ label, value, detail }: { label: string; value: string; de
     <div className="rounded-[1.5rem] bg-slate-50 p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{detail}</div>
+      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{detail}</div>
     </div>
   );
 }

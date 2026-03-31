@@ -100,7 +100,7 @@ export default function NewsletterManager() {
           订阅管理
         </div>
         <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">查询、恢复或退订邮箱更新</h2>
-        <p className="mt-2 max-w-2xl text-sm leading-7 text-[color:var(--muted)]">
+        <p className="mt-2 max-w-2xl text-xs leading-6 text-[color:var(--muted)]">
           适合管理知识文章、公开案例、产品更新等邮件通知。这里不做积分或复杂奖励，只保留最必要的控制能力。
         </p>
 
@@ -135,14 +135,14 @@ export default function NewsletterManager() {
         <div className="soft-card rounded-[1.75rem] p-6">
           <div className="text-sm font-semibold text-[color:var(--muted)]">当前状态</div>
           {subscription ? (
-            <div className="mt-4 space-y-3 text-sm leading-7 text-[color:var(--ink)]">
+            <div className="mt-4 space-y-3 text-xs leading-6 text-[color:var(--ink)]">
               <p>邮箱：{subscription.email}</p>
               <p>状态：{isActive ? '已订阅' : '已退订'}</p>
               <p>来源：{subscription.source || 'site'}</p>
               <p>标签：{subscription.tags.length > 0 ? subscription.tags.join(' / ') : '默认更新'}</p>
             </div>
           ) : (
-            <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
+            <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
               输入邮箱后可查看当前订阅状态。如果没有记录，也可以直接恢复订阅。
             </p>
           )}
@@ -163,7 +163,7 @@ export default function NewsletterManager() {
               type="button"
               onClick={() => updateSubscription('unsubscribe')}
               disabled={!normalizedEmail || actionLoading !== null}
-              className="rounded-full border border-[color:var(--line)] bg-white px-5 py-3 text-sm font-semibold text-[color:var(--ink)] disabled:opacity-60"
+              className="action-secondary disabled:opacity-60"
             >
               {actionLoading === 'unsubscribe' ? '处理中...' : '退订所有更新'}
             </button>

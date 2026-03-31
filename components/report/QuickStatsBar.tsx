@@ -83,7 +83,7 @@ export const QuickStatsBar: React.FC<QuickStatsBarProps> = ({
               <Star className={`w-5 h-5 ${summaryColors.text}`} />
             </div>
             <div>
-              <div className="text-xs text-neutral-500 mb-0.5">命理总分</div>
+              <div className="text-xs text-neutral-500 mb-0.5">状态总分</div>
               <div className="flex items-baseline gap-1">
                 <span className={`text-2xl font-bold tabular-nums ${summaryColors.text}`}>
                   {normalizedSummary.toFixed(1)}

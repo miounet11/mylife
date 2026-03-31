@@ -441,7 +441,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         {
           label: '模型指令',
           value: referencePack.modelDirectives?.[0] || '当前外部资料主要作为解释增强层。',
-          detail: '外部资料不会替代命盘底层结构，只用于校准和增强解释。',
+          detail: '外部资料不会替代底层结构判断，只用于校准和增强解释。',
         },
       ]
     : [];
@@ -458,13 +458,13 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             EXPERT ENGINE REPORT
           </div>
           <CardTitle className="mt-4 max-w-4xl text-3xl font-black text-white md:text-5xl">
-            这份报告要把命理引擎、行运引擎与人生 K 线引擎
+            这份报告要把结构引擎、阶段引擎与人生 K 线引擎
             <span className="font-serif">落成用户真正看得懂的判断链。</span>
           </CardTitle>
         </CardHeader>
 
         <CardContent className="relative z-10 space-y-6 pt-2">
-          <p className="max-w-4xl whitespace-pre-wrap text-base leading-8 text-white/82">
+          <p className="max-w-4xl whitespace-pre-wrap text-sm leading-6 text-white/82">
             {analysis.explanation || '本报告已基于四柱、五行、十神、大运与趋势曲线完成结构化归纳。'}
           </p>
 
@@ -482,7 +482,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               <div key={item.label} className="rounded-[1.5rem] border border-white/10 bg-white/10 px-4 py-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
                 <div className="mt-2 text-lg font-bold leading-8 text-white">{item.value}</div>
-                <div className="mt-2 text-sm leading-7 text-white/76">{item.detail}</div>
+                <div className="mt-2 text-xs leading-6 text-white/76">{item.detail}</div>
               </div>
             ))}
           </div>
@@ -551,7 +551,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先看点</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.focus.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -562,7 +562,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险提醒</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.risks.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -588,7 +588,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div key={item.key} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
                   <div className="mt-3 text-lg font-bold leading-8 text-[color:var(--ink)]">{item.headline}</div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.detail}</div>
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.detail}</div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {item.tags.map((tag) => (
                       <span key={tag} className="rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
@@ -622,7 +622,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Activity className="h-5 w-5 text-[color:var(--accent-strong)]" />
-              四柱命盘结构
+              四柱结构总览
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
@@ -695,7 +695,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             <MetricTile label="喜神" value={(advice.xiShen || []).join('、') || '需结合行运节奏继续确认'} />
             <MetricTile label="忌神" value={(advice.jiShen || []).join('、') || '需结合现实反馈持续校正'} />
             <MetricTile label="当前运势交互" value={fortune.interaction || '需结合当前大运与流年联动判断'} />
-            <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
               {pattern.description || '当前报告已给出结构判断，建议继续结合下方推导链与阶段节奏理解其落点。'}
             </div>
           </CardContent>
@@ -707,7 +707,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Layers3 className="h-5 w-5 text-[color:var(--accent-strong)]" />
-              十神主轴与命理引擎
+              十神主轴与结构引擎
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
@@ -717,7 +717,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <span className={`h-3 w-3 rounded-full ${item.accent}`} />
                   <div className="font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </div>
-                <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.description}</p>
+                <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {item.values.length > 0 ? item.values.map((value) => (
                     <span key={value} className="rounded-full bg-slate-50 px-3 py-1 text-sm font-medium text-[color:var(--ink)]">
@@ -727,7 +727,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     <span className="rounded-full bg-slate-50 px-3 py-1 text-sm text-[color:var(--muted)]">显性权重较低</span>
                   )}
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.summary}</div>
+                <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.summary}</div>
               </section>
             ))}
           </CardContent>
@@ -744,7 +744,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             {reasoningSteps.map((step, index) => (
               <div key={step} className="rounded-[1.5rem] bg-slate-50 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Step {index + 1}</div>
-                <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{step}</div>
+                <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{step}</div>
               </div>
             ))}
 
@@ -866,7 +866,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="mt-1 text-sm text-[color:var(--muted)]">
                   {currentDayun.startAge}-{currentDayun.endAge}岁 / {currentDayun.startYear}-{currentDayun.endYear}年
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {currentDayun.description}
                   {dayun.currentDayunYear ? ` 当前处于这步大运的第 ${dayun.currentDayunYear} 年。` : ''}
                 </div>
@@ -885,10 +885,10 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
                     {item.startAge}-{item.endAge}岁 / {item.startYear}-{item.endYear}年
                   </div>
-                  <div className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{item.description}</div>
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
                 </div>
               )) : (
-                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
+                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
                   当前报告未返回完整大运序列，但运势摘要已经写入上文。
                 </div>
               )}
@@ -920,7 +920,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             {shenSha.summary && (
-              <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--ink)]">
+              <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 {shenSha.summary}
               </div>
             )}
@@ -940,7 +940,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="font-semibold text-[color:var(--ink)]">{item.name}</div>
                       <div className="text-xs text-[color:var(--muted)]">{mapPillarName(item.pillar)}</div>
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.description}</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
                   </div>
                 ))}
               </div>
@@ -960,10 +960,10 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 {celebrities.slice(0, 2).map((item) => (
                   <div key={item.name} className="rounded-[1.5rem] bg-slate-50 p-4">
                     <div className="font-semibold text-[color:var(--ink)]">{item.name || '参考案例'}</div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
                       {(item.similar || []).join('、') || '命局结构存在一定参考相似性。'}
                     </div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{item.lesson || '该参考案例已纳入样本，但当前未展开更细的经验拆解。'}</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.lesson || '该参考案例已纳入样本，但当前未展开更细的经验拆解。'}</div>
                   </div>
                 ))}
               </div>
@@ -993,7 +993,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="mt-3 text-xl font-black text-[color:var(--ink)]">{item.score}</div>
                   <div className="mt-1 text-xs text-[color:var(--muted)]">{item.element}月令倾向</div>
                   <div className="mt-3 text-sm font-medium text-[color:var(--ink)]">{item.theme}</div>
-                  <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.reason}</div>
+                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                 </div>
               ))}
             </div>
@@ -1035,7 +1035,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
                   <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">本阶段避免</div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{item.avoidAction}</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.avoidAction}</div>
                   </div>
                 </div>
               ))}
@@ -1076,7 +1076,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">建议动作</div>
                       <div className="mt-3 grid gap-3">
                         {phase.actions.map((item) => (
-                          <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -1087,7 +1087,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险控制</div>
                       <div className="mt-3 grid gap-3">
                         {phase.risks.map((item) => (
-                          <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -1119,12 +1119,12 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       {item.overallScore}/100
                     </div>
                   </div>
-                  <div className="mt-4 text-sm leading-7 text-[color:var(--ink)]">{item.headline}</div>
+                  <div className="mt-4 text-xs leading-6 text-[color:var(--ink)]">{item.headline}</div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <InsightCard label="最强主线" value={item.dominantTrack} detail="这一年更值得重点配置资源的方向。" />
                     <InsightCard label="压力位" value={item.pressureTrack} detail="这一年需要留缓冲和验证的板块。" />
                   </div>
-                  <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-sm leading-7 text-[color:var(--muted)]">
+                  <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
                     {item.advice}
                   </div>
                 </div>
@@ -1148,7 +1148,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">结构可信度</div>
                 <div className="mt-2 text-4xl font-black text-[color:var(--ink)]">{confidence.overallScore}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">{mapConfidenceLevel(confidence.level)}</div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{confidence.summary}</div>
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{confidence.summary}</div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
@@ -1156,7 +1156,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">稳定结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.stablePoints.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -1167,7 +1167,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">敏感结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.sensitivePoints.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -1192,7 +1192,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     {mapSensitivityLevel(confidence.birthTimeSensitivity.level)}
                   </span>
                 </div>
-                <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{confidence.birthTimeSensitivity.explanation}</div>
+                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{confidence.birthTimeSensitivity.explanation}</div>
               </div>
 
               <div className="rounded-[1.75rem] bg-slate-50 p-5">
@@ -1221,7 +1221,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="rounded-[1.75rem] bg-[color:var(--accent-soft)] p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">闭环状态</div>
-              <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{validationInsights.summary}</div>
+              <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{validationInsights.summary}</div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-4">
@@ -1233,7 +1233,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
             <div className="grid gap-3">
               {validationInsights.lessons.map((item) => (
-                <div key={item} className="rounded-[1.5rem] bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[1.5rem] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}
@@ -1264,8 +1264,8 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   {correctionInsight.level === 'action' ? '立即纠偏' : correctionInsight.level === 'watch' ? '持续观察' : '整体健康'}
                 </span>
               </div>
-              <div className="mt-3 text-sm leading-7 text-[color:var(--ink)]">{correctionInsight.summary}</div>
-              <div className="mt-4 rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
+              <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.summary}</div>
+              <div className="mt-4 rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
@@ -1273,7 +1273,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">纠偏动作</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.fixes.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -1284,7 +1284,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">下一步检查点</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.checkpoints.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -1357,7 +1357,7 @@ function InsightCard({ label, value, detail }: { label: string; value: string; d
     <div className="rounded-[1.5rem] bg-slate-50 p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{detail}</div>
+      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{detail}</div>
     </div>
   );
 }
@@ -1380,7 +1380,7 @@ function TrendCard({
         {title}
       </div>
       <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{description}</div>
+      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{description}</div>
     </div>
   );
 }
@@ -1416,11 +1416,11 @@ function AdviceSection({
         {icon}
         <h3 className="text-lg font-bold text-[color:var(--ink)]">{title}</h3>
       </div>
-      <p className="mt-4 whitespace-pre-wrap text-sm leading-8 text-[color:var(--ink)]">{summary}</p>
+      <p className="mt-4 whitespace-pre-wrap text-xs leading-6 text-[color:var(--ink)]">{summary}</p>
       {points.length > 0 && (
         <div className="mt-4 grid gap-3">
           {points.map((item, index) => (
-            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
               {item}
             </div>
           ))}

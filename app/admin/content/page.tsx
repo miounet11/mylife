@@ -20,14 +20,14 @@ export default async function AdminContentPage() {
               内容站能不能长期做大，
               <span className="font-serif text-[color:var(--accent-strong)]">取决于你能不能持续运营内容库。</span>
             </h1>
-            <p className="text-base leading-8 text-[color:var(--muted)]">
+            <p className="text-sm leading-6 text-[color:var(--muted)]">
               这里统一维护知识文章、案例内容和行业/城市/组织洞察。现在也支持直接调用现有 LLM 生成草稿、按内容行为判断下一轮缺口，并对合格内容自动发布。
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             {['知识内容', '案例内容', 'SEO 实体页'].map((item) => (
-              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-sm leading-7 text-[color:var(--ink)]">
+              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-xs leading-6 text-[color:var(--ink)]">
                 {item}
               </div>
             ))}

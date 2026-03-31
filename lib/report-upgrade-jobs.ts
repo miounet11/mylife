@@ -4,9 +4,10 @@ import { isEmailDeliveryConfigured, sendReportUpgradeReadyEmail } from '@/lib/em
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
 import { REPORT_EXPERT_TARGET_SCORE } from '@/lib/report-quality';
-import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
+import { CURRENT_REPORT_VERSION, regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
+import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
-import type { FortuneRecord, ReportUpgradeJobRecord } from '@/lib/user-types';
+import type { FortuneAnalysisResult, FortuneRecord, ReportUpgradeJobRecord } from '@/lib/user-types';
 
 const DEFAULT_MAX_ATTEMPTS = Math.max(2, Number(process.env.REPORT_UPGRADE_MAX_ATTEMPTS || 6));
 const INITIAL_DELAY_MS = Math.max(15_000, Number(process.env.REPORT_UPGRADE_INITIAL_DELAY_MS || 45_000));
@@ -22,6 +23,14 @@ export function enqueueReportUpgrade(params: {
   meta?: Record<string, unknown>;
 }) {
   const qualityAudit = params.report.analysis?.qualityAudit;
+  if (!params.force && isLikelyTestReportName(params.report.name)) {
+    return {
+      queued: false,
+      reason: 'likely_test_sample',
+      job: reportUpgradeJobOperations.getByReportId(params.report.id),
+    };
+  }
+
   if (!params.force && qualityAudit?.targetAchieved) {
     return {
       queued: false,
@@ -121,15 +130,75 @@ export async function processNextReportUpgradeJob() {
   const previousAudit = report.analysis?.qualityAudit;
   const previousScore = previousAudit?.overallScore || 0;
   const previousBestScore = Math.max(previousScore, job.bestScore || 0);
+
+  if (isLikelyTestReportName(report.name)) {
+    reportUpgradeJobOperations.markCancelled(job.id, {
+      lastScore: previousScore,
+      bestScore: previousBestScore,
+      bestGrade: job.bestGrade || previousAudit?.grade,
+      lastError: 'LIKELY_TEST_SAMPLE',
+      meta: {
+        ...(job.meta || {}),
+        skippedAsLikelyTest: true,
+      },
+    });
+
+    return {
+      processed: true,
+      status: 'cancelled',
+      reportId: report.id,
+      reason: 'likely_test_sample',
+    };
+  }
+
   const providerHealth = assessReportProviderHealth();
 
   if (providerHealth.shouldDefer) {
+    const repaired = repairStoredReportNarrative(report);
+    const repairedAudit = repaired.analysis?.qualityAudit;
+    const repairedApplied = shouldApplyProviderRepair({
+      current: report,
+      repaired,
+    });
+
+    if (repairedApplied) {
+      fortuneOperations.update(report.id, {
+        name: report.name,
+        bazi: repaired.basic,
+        fiveElements: repaired.fiveElements,
+        tenGods: repaired.tenGods || {},
+        pattern: repaired.pattern,
+        fortune: repaired.fortune,
+        advice: repaired.advice,
+        evidence: repaired.evidence,
+        analysis: repaired.analysis,
+        klineData: repaired.klineData,
+        dayun: repaired.dayun,
+        shenSha: repaired.shenSha,
+        reportVersion: report.reportVersion || CURRENT_REPORT_VERSION,
+      });
+    }
+
     reportUpgradeJobOperations.markDeferred(job.id, {
+      lastScore: repairedApplied ? repairedAudit?.overallScore || previousScore : previousScore,
+      bestScore: repairedApplied
+        ? Math.max(previousBestScore, repairedAudit?.overallScore || 0)
+        : previousBestScore,
+      bestGrade: repairedApplied
+        ? gradeByHigherScore({
+            previousScore: previousBestScore,
+            previousGrade: job.bestGrade || previousAudit?.grade,
+            nextScore: repairedAudit?.overallScore || 0,
+            nextGrade: repairedAudit?.grade,
+          })
+        : (job.bestGrade || previousAudit?.grade),
       nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
       lastError: 'PROVIDER_UNHEALTHY',
       meta: {
         ...(job.meta || {}),
         deferredForProvider: true,
+        repairOnlyApplied: repairedApplied,
+        repairOnlyQualityScore: repairedAudit?.overallScore,
         providerHealth: providerHealth.summary,
       },
     });
@@ -138,7 +207,7 @@ export async function processNextReportUpgradeJob() {
       processed: true,
       status: 'retry',
       reportId: report.id,
-      reason: 'provider_unhealthy',
+      reason: repairedApplied ? 'provider_unhealthy_repaired' : 'provider_unhealthy',
     };
   }
 
@@ -437,36 +506,6 @@ async function notifyUpgradeCompleted(params: {
 
 export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SIZE) {
   const providerHealth = assessReportProviderHealth();
-  if (providerHealth.shouldDefer) {
-    const deferredJobs = reportUpgradeJobOperations.listRunnablePending(limit);
-    for (const job of deferredJobs) {
-      reportUpgradeJobOperations.markDeferred(job.id, {
-        lastScore: job.lastScore,
-        bestScore: job.bestScore,
-        bestGrade: job.bestGrade,
-        nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
-        lastError: 'PROVIDER_UNHEALTHY',
-        meta: {
-          ...(job.meta || {}),
-          deferredForProvider: true,
-          providerHealth: providerHealth.summary,
-        },
-      });
-    }
-
-    return {
-      processed: deferredJobs.length > 0,
-      processedCount: deferredJobs.length,
-      reason: 'provider_unhealthy',
-      jobs: deferredJobs.map((job) => ({
-        processed: true,
-        status: 'retry',
-        reportId: job.reportId,
-        reason: 'provider_unhealthy',
-      })),
-    };
-  }
-
   const jobs: Array<{
     processed: boolean;
     status?: string;
@@ -482,7 +521,7 @@ export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SI
         return {
           processed: false,
           processedCount: 0,
-          reason: result.reason || 'empty',
+          reason: providerHealth.shouldDefer ? 'provider_unhealthy' : (result.reason || 'empty'),
           jobs,
         };
       }
@@ -574,4 +613,40 @@ function gradeByHigherScore(params: {
   return params.nextScore >= params.previousScore
     ? params.nextGrade
     : params.previousGrade;
+}
+
+function shouldApplyProviderRepair(params: {
+  current: FortuneRecord;
+  repaired: FortuneRecord | FortuneAnalysisResult;
+}) {
+  const currentAnalysis = params.current.analysis || {};
+  const repairedAnalysis = params.repaired.analysis || {};
+  const currentSummary = `${currentAnalysis.summary || ''}`.trim();
+  const repairedSummary = `${repairedAnalysis.summary || ''}`.trim();
+  const currentExplanation = `${currentAnalysis.explanation || ''}`.trim();
+  const repairedExplanation = `${repairedAnalysis.explanation || ''}`.trim();
+  const currentOpening = `${currentAnalysis.opening || ''}`.trim();
+  const repairedOpening = `${repairedAnalysis.opening || ''}`.trim();
+  const currentScore = currentAnalysis.qualityAudit?.overallScore || 0;
+  const repairedScore = repairedAnalysis.qualityAudit?.overallScore || 0;
+  const currentHasTemplateResidue = hasTemplateResidue([currentOpening, currentSummary, currentExplanation]);
+  const repairedHasTemplateResidue = hasTemplateResidue([repairedOpening, repairedSummary, repairedExplanation]);
+
+  return (
+    (currentSummary.length < 8 && repairedSummary.length >= 8)
+    || (!hasStructuredNarrative(currentExplanation) && hasStructuredNarrative(repairedExplanation))
+    || (currentHasTemplateResidue && !repairedHasTemplateResidue)
+    || (currentOpening !== repairedOpening && repairedOpening.length > 0)
+    || repairedScore > currentScore
+  );
+}
+
+function hasStructuredNarrative(value: string) {
+  return ['主判断：', '判断依据：', '现在先做：', '风险提醒：']
+    .every((label) => value.includes(label));
+}
+
+function hasTemplateResidue(parts: string[]) {
+  return /(命局主轴围绕|生时环境落在|四柱落点为|外部参照|解释增强即可|当前最优策略不是同时做很多事|显著放大或压制|格局清正|乃富贵之命也|macro_cycle|solar_terms|geography|settlement|relationship|family_role)/i
+    .test(parts.join('\n'));
 }

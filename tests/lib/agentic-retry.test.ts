@@ -1,11 +1,23 @@
 jest.mock('@/lib/agentic-report/llm-client', () => ({
   callJsonLLM: jest.fn(),
 }));
+jest.mock('@/lib/llm-model-fallback', () => ({
+  getModelFallbackChain: jest.fn(() => ['gpt-5.2', 'auto']),
+}));
+jest.mock('@/lib/llm-provider-health', () => ({
+  assessScopeProviderHealth: jest.fn(() => ({
+    shouldDefer: false,
+    snapshots: [{ state: 'closed' }],
+  })),
+  hasRunnableModelsForSnapshots: jest.fn(() => true),
+}));
 
 import { runAgenticPipeline } from '@/lib/agentic-report/run-agentic-pipeline';
 import { callJsonLLM } from '@/lib/agentic-report/llm-client';
+import { hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
 
 const mockedCallJsonLLM = callJsonLLM as jest.MockedFunction<typeof callJsonLLM>;
+const mockedHasRunnableModelsForSnapshots = hasRunnableModelsForSnapshots as jest.MockedFunction<typeof hasRunnableModelsForSnapshots>;
 
 const birthDate = new Date(Date.UTC(1991, 7, 12));
 
@@ -140,6 +152,8 @@ const report = {
 describe('agentic retry', () => {
   beforeEach(() => {
     mockedCallJsonLLM.mockReset();
+    mockedHasRunnableModelsForSnapshots.mockReset();
+    mockedHasRunnableModelsForSnapshots.mockReturnValue(true);
   });
 
   it('reruns priority agents once before falling back', async () => {
@@ -181,5 +195,41 @@ describe('agentic retry', () => {
     expect(result.orchestration.succeeded).toContain('core_constitution');
     expect(result.orchestration.agentSources.core_constitution).toBe('llm');
     expect(progressEvents).toContain('agent-retry:core_constitution');
+  });
+
+  it('skips all agent llm calls when provider health leaves no runnable models', async () => {
+    mockedHasRunnableModelsForSnapshots.mockReturnValue(false);
+
+    const progressEvents: string[] = [];
+    const result = await runAgenticPipeline({
+      enabled: true,
+      agentKeys: ['core_constitution', 'strategy_advisor'],
+      groundTruth: {
+        birthDate,
+        report,
+      },
+      context: {
+        birthDate,
+        birthPlace: '北京',
+        currentPlace: '上海',
+        report: {
+          advice: report.advice,
+          fortune: report.fortune,
+        },
+      },
+      onProgress: async (event) => {
+        progressEvents.push(`${event.type}:${event.agentKey}`);
+      },
+    });
+
+    expect(mockedCallJsonLLM).not.toHaveBeenCalled();
+    expect(result.used).toBe(false);
+    expect(result.orchestration.mode).toBe('deterministic-expert');
+    expect(result.orchestration.totalLlmCalls).toBe(0);
+    expect(result.orchestration.errors).toContain('AGENT_SCOPE_NO_RUNNABLE_MODELS');
+    expect(result.orchestration.agentSources.core_constitution).toBe('fallback');
+    expect(result.orchestration.agentSources.strategy_advisor).toBe('fallback');
+    expect(progressEvents).toContain('agent-fallback:core_constitution');
+    expect(progressEvents).toContain('agent-fallback:strategy_advisor');
   });
 });

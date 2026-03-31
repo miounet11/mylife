@@ -77,7 +77,7 @@ export default function ImportantEvents({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="text-xl">重要事件</CardTitle>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">把命理窗口期和现实节点放到一处，形成真正可复访的使用路径。</p>
+            <p className="mt-1 text-sm text-[color:var(--muted)]">把关键判断窗口和现实节点放到一处，形成真正可复访的使用路径。</p>
           </div>
           {onAdd && (
             <button
@@ -146,7 +146,7 @@ function EventRow({
             )}
             {event.fortuneAnalysis?.source === 'result_report' && (
               <span className="rounded-full border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                来自命理报告
+                来自判断报告
               </span>
             )}
             {event.fortuneAnalysis?.source === 'chat_message' && (
@@ -179,17 +179,17 @@ function EventRow({
             )}
           </div>
 
-          <p className="mt-4 text-sm leading-7 text-[color:var(--ink)]">{event.description || '尚未补充这条事件的详细说明。'}</p>
+          <p className="mt-4 text-xs leading-6 text-[color:var(--ink)]">{event.description || '尚未补充这条事件的详细说明。'}</p>
 
           {(event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {event.fortuneAnalysis?.reason && (
-                <div className="rounded-2xl bg-[rgba(178,149,93,0.08)] px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+                <div className="rounded-2xl bg-[rgba(178,149,93,0.08)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                   {event.fortuneAnalysis.reason}
                 </div>
               )}
               {event.followUpAdvice?.shortTerm && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
                   {event.followUpAdvice.shortTerm}
                 </div>
               )}
@@ -200,7 +200,7 @@ function EventRow({
             <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href={`/result/${event.fortuneAnalysis.reportId}`}
-                className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                className="action-secondary min-h-0 px-4 py-2 text-xs"
               >
                 查看关联报告
               </Link>
@@ -216,7 +216,7 @@ function EventRow({
           )}
 
           {(event.userFeedback?.wasAccurate !== undefined || event.userFeedback?.userNotes) && (
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-7 text-[color:var(--muted)]">
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
               <span className="font-semibold text-[color:var(--ink)]">验证结果：</span>
               {event.userFeedback?.wasAccurate === true && '这次判断已被记录为准确。'}
               {event.userFeedback?.wasAccurate === false && '这次判断已被记录为存在偏差。'}
@@ -236,7 +236,7 @@ function EventRow({
               )}
               {event.predictionAccuracy !== undefined && (
                 <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--muted)]">
-                  命理预测：<span className={event.wasAccurate ? 'font-semibold text-emerald-700' : 'font-semibold text-rose-700'}>{event.wasAccurate ? '准确' : '待验证/不准确'}</span>
+                  报告预测：<span className={event.wasAccurate ? 'font-semibold text-emerald-700' : 'font-semibold text-rose-700'}>{event.wasAccurate ? '准确' : '待验证/不准确'}</span>
                 </div>
               )}
             </div>

@@ -2,15 +2,33 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Clock3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PublicArticleHero from '@/components/public-article-hero';
+import ContentBreadcrumbs from '@/components/content-breadcrumbs';
 import ContentCardLink from '@/components/content-card-link';
+import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { getKnowledgeArticleBySlug, getManagedContentEntryBySlug, isPublicKnowledgeEntry } from '@/lib/content-store';
+import SurfaceJourneyPanel from '@/components/surface-journey-panel';
+import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
+import {
+  getKnowledgeArticleBySlug,
+  getManagedContentEntryBySlug,
+  getManagedContentJourneyMeta,
+  isPublicKnowledgeEntry,
+  listPublishedManagedContentEntriesByType,
+} from '@/lib/content-store';
 import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
 import { getKnowledgeTopicHubBySlug, getRelatedKnowledgeEntries } from '@/lib/knowledge-network-feed';
+import { buildJourneyForContent } from '@/lib/surface-journeys';
+import { getToolDefinition } from '@/lib/tools';
+import {
+  createArticleSchema,
+  createBreadcrumbSchema,
+  createPublicContentMetadata,
+} from '@/lib/public-content-seo';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -21,16 +39,20 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
   const article = getKnowledgeArticleBySlug(slug);
+  const managedEntry = getManagedContentEntryBySlug('knowledge', slug);
   if (!article) {
     return {
       title: '文章未找到 | 人生K线',
     };
   }
 
-  return {
+  return createPublicContentMetadata({
     title: article.seoTitle,
     description: article.seoDescription,
-  };
+    path: `/knowledge/${article.slug}`,
+    type: 'article',
+    locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
+  });
 }
 
 export default async function KnowledgeArticlePage({ params }: PageProps) {
@@ -43,34 +65,87 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
 
   const topicHub = getKnowledgeTopicHubBySlug(article.slug);
   const related = getRelatedKnowledgeEntries(article.slug, 4);
+  const isWorldYiArticle = article.slug.startsWith('world-yi-');
+  const isWorldYiEnglishArticle = isWorldYiArticle && locale === 'en';
+  const worldYiReadingOrder = [
+    ...(isWorldYiEnglishArticle ? [
+      'world-yi-en-introduction',
+      'world-yi-en-judgment-language',
+      'world-yi-en-global-life',
+      'world-yi-en-wealth-pattern',
+      'world-yi-en-relationship-environment',
+    ] : [
+      'world-yi-v1-manifesto',
+      'world-yi-era-cognition',
+      'world-yi-judgment-crisis',
+      'world-yi-attraction-model',
+      'world-yi-five-foundations',
+      'world-yi-methodology',
+      'world-yi-decision-language',
+      'world-yi-life-domains',
+      'world-yi-wealth-rhythm',
+      'world-yi-relationship-order',
+      'world-yi-relationship-conflict-repair',
+      'world-yi-partner-selection',
+      'world-yi-family-generational-order',
+      'world-yi-health-recovery-order',
+      'world-yi-migration-stage-logic',
+      'world-yi-home-recovery-system',
+      'world-yi-daily-application-discipline',
+      'world-yi-product-language',
+      'world-yi-version-governance',
+      'world-yi-home-order',
+      'world-yi-timing-selection',
+      'world-yi-version-faq',
+    ]),
+  ];
+  const worldYiSeriesEntries = isWorldYiArticle
+    ? worldYiReadingOrder
+        .map((entrySlug) => getManagedContentEntryBySlug('knowledge', entrySlug))
+        .filter((entry): entry is NonNullable<typeof entry> => !!entry && isPublicKnowledgeEntry(entry))
+        .filter((entry) => entry.slug !== article.slug)
+        .slice(0, 6)
+    : [];
+  const fallbackWorldYiEntries = !isWorldYiArticle
+    ? listPublishedManagedContentEntriesByType('knowledge')
+        .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-') && !entry.slug.startsWith('world-yi-en-'))
+        .slice(0, 4)
+    : [];
   const fallbackRelated = related.length === 0
     ? listFeaturedKnowledgeEditorialEntries(4)
       .map((item) => item.entry)
       .filter((item) => item.slug !== article.slug)
       .slice(0, 3)
     : [];
-  const articleSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Article',
-    headline: article.seoTitle,
-    description: article.seoDescription,
-    articleSection: article.category,
-    keywords: article.tags.join(', '),
-    mainEntityOfPage: `https://www.life-kline.com/knowledge/${article.slug}`,
-    url: `https://www.life-kline.com/knowledge/${article.slug}`,
-    author: {
-      '@type': 'Organization',
-      name: '人生K线',
-    },
-    publisher: {
-      '@type': 'Organization',
-      name: '人生K线',
-      logo: {
-        '@type': 'ImageObject',
-        url: 'https://www.life-kline.com/icon.svg',
-      },
-    },
-  };
+  const breadcrumbItems = [
+    { name: '首页', path: '/' },
+    { name: '知识库', path: '/knowledge' },
+    ...(topicHub ? [{ name: `${topicHub.topicName}专题地图`, path: `/knowledge/topics/${topicHub.topicSlug}` }] : []),
+    { name: article.title, path: `/knowledge/${article.slug}` },
+  ];
+  const schemas = [
+    createArticleSchema({
+      headline: article.seoTitle,
+      description: article.seoDescription,
+      path: `/knowledge/${article.slug}`,
+      articleSection: article.category,
+      keywords: article.tags,
+    }),
+    createBreadcrumbSchema(breadcrumbItems),
+  ];
+  const journey = buildJourneyForContent({
+    title: article.title,
+    excerpt: article.excerpt,
+    tags: article.tags,
+    category: article.category,
+    contentType: 'knowledge',
+    slug: article.slug,
+  });
+  const journeyMeta = getManagedContentJourneyMeta(managedEntry);
+  const primaryTool = journeyMeta.relatedToolSlugs
+    .map((toolSlug) => getToolDefinition(toolSlug))
+    .find((tool) => !!tool)
+    || null;
 
   return (
     <div className="page-shell">
@@ -86,33 +161,50 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
           tags: article.tags,
         }}
       />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
           <article className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <Link href="/knowledge" className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
-              <ArrowLeft className="h-4 w-4" />
-              返回知识库
-            </Link>
-
-            <div className="mt-6 section-label">
-              <Sparkles className="h-3.5 w-3.5" />
-              {article.category}
-            </div>
-
-            <h1 className="mt-5 text-4xl font-black text-[color:var(--ink)] md:text-5xl">{article.title}</h1>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[color:var(--muted)]">
-              <Clock3 className="h-4 w-4" />
-              {article.readTime}
-              {(locale || market) ? <ContentLocaleBadge locale={locale} market={market} /> : null}
-              {market ? <span>{market}</span> : null}
-            </div>
-            <p className="mt-5 text-base leading-8 text-[color:var(--muted)]">{article.excerpt}</p>
+            <PublicArticleHero
+              breadcrumbs={(
+                <ContentBreadcrumbs
+                  items={breadcrumbItems.map((item, index) => ({
+                    label: item.name,
+                    href: index === breadcrumbItems.length - 1 ? undefined : item.path,
+                  }))}
+                />
+              )}
+              backLink={(
+                <Link href="/knowledge" className="action-secondary inline-flex">
+                  <ArrowLeft className="h-4 w-4" />
+                  返回知识库
+                </Link>
+              )}
+              label={(
+                <>
+                  <Sparkles className="h-3.5 w-3.5" />
+                  {article.category}
+                </>
+              )}
+              title={article.title}
+              meta={(
+                <>
+                  <Clock3 className="h-4 w-4" />
+                  {article.readTime}
+                  {(locale || market) ? <ContentLocaleBadge locale={locale} market={market} /> : null}
+                  {market ? <span>{market}</span> : null}
+                </>
+              )}
+              excerpt={article.excerpt}
+              hint="建议先读完本页摘要，再开始个人分析，避免信息跳转过早。"
+              actions={[
+                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
+                <Link key="knowledge" href="/knowledge" className="action-secondary">返回知识库</Link>,
+                ...(topicHub ? [<Link key="topic" href={`/knowledge/topics/${topicHub.topicSlug}`} className="action-secondary">查看专题地图</Link>] : []),
+              ]}
+            />
 
             <div className="mt-8 space-y-8">
               {article.sections.map((section) => (
@@ -120,7 +212,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
                   <div className="mt-4 space-y-4">
                     {section.paragraphs.map((paragraph, index) => (
-                      <p key={`${section.title}-${index}`} className="text-base leading-8 text-[color:var(--ink)]">
+                      <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
                         {paragraph}
                       </p>
                     ))}
@@ -128,11 +220,40 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 </section>
               ))}
             </div>
+
+            {topicHub ? (
+              <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
+                <div className="text-sm font-semibold text-[color:var(--muted)]">所属专题路径</div>
+                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{topicHub.topicName}专题地图</h2>
+                <p className="intro-copy mt-3">这篇文章已进入稳定专题节点，可直接回专题继续扩展。</p>
+                <ContentCardLink
+                  href={`/knowledge/topics/${topicHub.topicSlug}`}
+                  page={`/knowledge/${article.slug}`}
+                  meta={{
+                    surfaceKey: `knowledge_article:${article.slug}`,
+                    targetSurfaceKey: `knowledge_topic:${topicHub.topicSlug}`,
+                    contentType: 'knowledge',
+                    topicName: topicHub.topicName,
+                  }}
+                  className="action-secondary mt-4"
+                >
+                  返回专题地图
+                </ContentCardLink>
+              </section>
+            ) : null}
+
+            <section className="mt-10">
+              <SurfaceJourneyPanel
+                journey={journey}
+                title="这篇文章可以直接接到测算和工具"
+                description="从文章直接回到综合测算、工具和案例。"
+              />
+            </section>
           </article>
 
           <div className="space-y-5">
             <ContentQuickAnalyzePanel
-              sourceLabel="文章页就近测算"
+              sourceLabel="文章页快速分析"
               sourceKey={`knowledge_article:${article.slug}`}
               contentMeta={{
                 contentType: 'knowledge',
@@ -143,8 +264,91 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 tags: article.tags,
               }}
               title="看懂原理之后，直接测自己的生日"
-              description="文章负责解释方法，下一步应该立刻回到你自己的命盘。这里填生日和时间，分析页会自动带入。"
+              description="这里填生日和时间，下一步直接回到你的结构与阶段。"
             />
+
+            {primaryTool ? (
+              <>
+                <ContentConversionPanel
+                  tool={primaryTool}
+                  page={`/knowledge/${article.slug}`}
+                  contentLabel="文章"
+                  contentTitle={article.title}
+                />
+                <ToolPremiumRequestPanel tool={primaryTool} page={`/knowledge/${article.slug}`} />
+              </>
+            ) : null}
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              {isWorldYiArticle ? (
+                <>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">
+                    {isWorldYiEnglishArticle ? 'World Yi Reading Path' : '世界易阅读路径'}
+                  </div>
+                  <Link href={isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi'} className="action-secondary mt-3 inline-flex">
+                    {isWorldYiEnglishArticle ? 'Back to World Yi English Gateway' : '先回世界易总入口'}
+                    <ArrowLeft className="h-4 w-4 rotate-180" />
+                  </Link>
+                  <div className="mt-4 space-y-4">
+                    {worldYiSeriesEntries.map((item) => (
+                      <ContentCardLink
+                        key={item.slug}
+                        href={`/knowledge/${item.slug}`}
+                        page={`/knowledge/${article.slug}`}
+                        meta={{
+                          surfaceKey: `world_yi_series:${article.slug}`,
+                          targetSurfaceKey: `knowledge_article:${item.slug}`,
+                          contentType: 'knowledge',
+                          slug: item.slug,
+                          title: item.title,
+                          category: item.category,
+                          tags: item.tags,
+                          series: 'world-yi',
+                        }}
+                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                      >
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                        <div className="intro-copy mt-2">{item.excerpt}</div>
+                      </ContentCardLink>
+                    ))}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">世界易入口</div>
+                  <p className="intro-copy mt-3">想从单篇知识继续往上，直接进入世界易总入口。</p>
+                  <Link href="/world-yi" className="action-secondary mt-4 inline-flex">
+                    进入世界易总入口
+                    <ArrowLeft className="h-4 w-4 rotate-180" />
+                  </Link>
+                  {fallbackWorldYiEntries.length > 0 ? (
+                    <div className="mt-4 space-y-4">
+                      {fallbackWorldYiEntries.map((item) => (
+                        <ContentCardLink
+                          key={item.slug}
+                          href={`/knowledge/${item.slug}`}
+                          page={`/knowledge/${article.slug}`}
+                          meta={{
+                            surfaceKey: `knowledge_article:${article.slug}`,
+                            targetSurfaceKey: `knowledge_article:${item.slug}`,
+                            contentType: 'knowledge',
+                            slug: item.slug,
+                            title: item.title,
+                            category: item.category,
+                            tags: item.tags,
+                            series: 'world-yi',
+                          }}
+                          className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                        >
+                          <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                          <div className="intro-copy mt-2">{item.excerpt}</div>
+                        </ContentCardLink>
+                      ))}
+                    </div>
+                  ) : null}
+                </>
+              )}
+            </div>
 
             <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">
@@ -179,7 +383,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.entry.excerpt}</div>
+                    <div className="intro-copy mt-2">{item.entry.excerpt}</div>
                   </ContentCardLink>
                 ))}
                 {fallbackRelated.map((item) => (
@@ -199,7 +403,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                    <div className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{item.excerpt}</div>
+                    <div className="intro-copy mt-2">{item.excerpt}</div>
                   </ContentCardLink>
                 ))}
               </div>
@@ -208,7 +412,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             <NewsletterSignup
               source={`knowledge_article:${article.slug}`}
               title="订阅内容更新"
-              description="当知识库新增深度文章、案例与结果页最佳实践时，第一时间收到更新。"
+              description="新增深度文章、案例和结果页最佳实践时第一时间收到更新。"
             />
           </div>
         </section>

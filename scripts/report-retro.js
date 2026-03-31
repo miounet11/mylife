@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
+const { isLikelyTestReportName } = require('../lib/report-sample-classifier');
 
 const DEFAULT_MINUTES = 24 * 60;
 const args = process.argv.slice(2);
@@ -10,21 +11,6 @@ const saveSnapshot = args.includes('--save');
 const jsonOnly = args.includes('--json');
 
 const db = new Database('data/lifekline.db', { readonly: true });
-
-const KNOWN_TEST_NAMES = new Set([
-  '测试A',
-  '验证B',
-  '测试用户',
-  '测试用户2',
-  '案例1',
-  '案例2',
-  '甲',
-  '乙',
-  '丙',
-  '哈哈',
-  '即时局',
-  'x',
-]);
 
 function parseMeta(value) {
   if (!value) return {};
@@ -37,17 +23,6 @@ function parseMeta(value) {
 
 function readText(value) {
   return `${value || ''}`.trim();
-}
-
-function isLikelyTestName(name) {
-  const normalized = readText(name);
-  if (!normalized) return true;
-  if (KNOWN_TEST_NAMES.has(normalized)) return true;
-  if (/^测试/.test(normalized)) return true;
-  if (/^案例\d+$/.test(normalized)) return true;
-  if (/^(甲|乙|丙|丁|A|B|C)$/.test(normalized)) return true;
-  if (normalized.length === 1 && /^[a-z]$/i.test(normalized)) return true;
-  return false;
 }
 
 function toPercent(value, total) {
@@ -153,7 +128,7 @@ const reports = reportRows.map((row) => ({
   grade: readText(row.grade) || 'C',
   deliveryTier: readText(row.delivery_tier) || 'basic',
   targetAchieved: row.target_achieved === 1,
-  likelyTest: isLikelyTestName(row.name),
+  likelyTest: isLikelyTestReportName(row.name),
 }));
 
 const realReports = reports.filter((row) => !row.likelyTest);
