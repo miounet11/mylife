@@ -11,7 +11,7 @@ export function backfillEmailSubscriptionsFromUsers(limit = 500) {
     }
 
     const existing = emailSubscriptionOperations.getByEmail(email);
-    if (existing?.status === 'active') {
+    if (existing) {
       continue;
     }
 

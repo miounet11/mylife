@@ -1,5 +1,6 @@
 import Database from 'better-sqlite3';
 import path from 'path';
+import { isLikelyRealUserReportName } from '../lib/report-sample-classifier';
 
 type DemandPersona = {
   id: string;
@@ -40,6 +41,14 @@ type LoadedReport = {
     yongShen?: string[];
     jiShen?: string[];
   };
+};
+
+type ReportSelectionMeta = {
+  mode: 'fixed-default' | 'manual-ids' | 'recent-real';
+  requestedCount: number;
+  selectedCount: number;
+  windowDays?: number;
+  viewedFirst?: boolean;
 };
 
 const DEFAULT_REPORT_IDS = [
@@ -145,14 +154,16 @@ function main() {
   const args = process.argv.slice(2);
   const jsonOnly = args.includes('--json');
   const reportIds = args.filter((arg) => !arg.startsWith('--'));
-  const targetIds = reportIds.length > 0 ? reportIds : DEFAULT_REPORT_IDS;
   const db = new Database(path.resolve(process.cwd(), 'data/lifekline.db'), { readonly: true });
+  const selection = resolveSelection(args, reportIds, db);
+  const targetIds = selection.ids;
   const reports = loadReports(db, targetIds);
 
   const output = {
     generatedAt: new Date().toISOString(),
     personaCount: PERSONAS.length,
     expertJudgeCount: EXPERT_JUDGES.length,
+    selection: selection.meta,
     reports: reports.map((report) => evaluateReport(report)),
   };
 
@@ -162,6 +173,113 @@ function main() {
   }
 
   console.log(renderText(output));
+}
+
+function resolveSelection(
+  args: string[],
+  reportIds: string[],
+  db: InstanceType<typeof Database>
+) {
+  const recentRealRaw = readFlagValue(args, '--recent-real');
+  if (recentRealRaw !== null) {
+    const requestedCount = clampPositiveInt(recentRealRaw, 8);
+    const windowDays = clampPositiveInt(readFlagValue(args, '--window-days'), 30);
+    const ids = selectRecentRealReportIds(db, {
+      limit: requestedCount,
+      windowDays,
+    });
+    return {
+      ids,
+      meta: {
+        mode: 'recent-real' as const,
+        requestedCount,
+        selectedCount: ids.length,
+        windowDays,
+        viewedFirst: true,
+      },
+    };
+  }
+
+  if (reportIds.length > 0) {
+    return {
+      ids: reportIds,
+      meta: {
+        mode: 'manual-ids' as const,
+        requestedCount: reportIds.length,
+        selectedCount: reportIds.length,
+      },
+    };
+  }
+
+  return {
+    ids: DEFAULT_REPORT_IDS,
+    meta: {
+      mode: 'fixed-default' as const,
+      requestedCount: DEFAULT_REPORT_IDS.length,
+      selectedCount: DEFAULT_REPORT_IDS.length,
+    },
+  };
+}
+
+function selectRecentRealReportIds(
+  db: InstanceType<typeof Database>,
+  params: {
+    limit: number;
+    windowDays: number;
+  }
+) {
+  const rows = db.prepare(`
+    SELECT
+      f.id,
+      f.name,
+      f.created_at,
+      EXISTS(
+        SELECT 1
+        FROM analytics_events a
+        WHERE a.event_name = 'report_viewed'
+          AND json_extract(a.meta, '$.reportId') = f.id
+      ) AS viewed
+    FROM fortunes f
+    WHERE datetime(f.created_at) >= datetime('now', ?)
+    ORDER BY viewed DESC, datetime(f.created_at) DESC
+    LIMIT 200
+  `).all(`-${params.windowDays} days`) as Array<{
+    id: string;
+    name: string;
+    created_at: string;
+    viewed: number;
+  }>;
+
+  return rows
+    .filter((row) => isLikelyRealUserReportName(row.name))
+    .slice(0, params.limit)
+    .map((row) => row.id);
+}
+
+function readFlagValue(args: string[], flag: string) {
+  const exactIndex = args.indexOf(flag);
+  if (exactIndex >= 0) {
+    const next = args[exactIndex + 1];
+    if (!next || next.startsWith('--')) {
+      return '';
+    }
+    return next;
+  }
+
+  const matched = args.find((arg) => arg.startsWith(`${flag}=`));
+  if (!matched) {
+    return null;
+  }
+
+  return matched.slice(flag.length + 1);
+}
+
+function clampPositiveInt(value: string | null, fallback: number) {
+  const parsed = Number.parseInt(`${value || ''}`, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return fallback;
+  }
+  return parsed;
 }
 
 function loadReports(db: InstanceType<typeof Database>, ids: string[]) {
@@ -357,6 +475,7 @@ function renderText(payload: {
   generatedAt: string;
   personaCount: number;
   expertJudgeCount: number;
+  selection: ReportSelectionMeta;
   reports: Array<ReturnType<typeof evaluateReport>>;
 }) {
   const lines: string[] = [];
@@ -365,6 +484,12 @@ function renderText(payload: {
   lines.push(`- generatedAt: ${payload.generatedAt}`);
   lines.push(`- personaCount: ${payload.personaCount}`);
   lines.push(`- expertJudgeCount: ${payload.expertJudgeCount}`);
+  lines.push(`- selection.mode: ${payload.selection.mode}`);
+  lines.push(`- selection.requestedCount: ${payload.selection.requestedCount}`);
+  lines.push(`- selection.selectedCount: ${payload.selection.selectedCount}`);
+  if (payload.selection.windowDays) {
+    lines.push(`- selection.windowDays: ${payload.selection.windowDays}`);
+  }
   lines.push('');
 
   for (const report of payload.reports) {

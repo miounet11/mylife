@@ -1,17 +1,19 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { parseLocalDate } from '@/lib/utils';
+
 interface UserProfileProps {
   user?: any;
   fortunes?: any[];
   eventCount?: number;
 }
 
-const calculateAge = (birthDate?: string): string => {
-  if (!birthDate) return '--';
-  const parsed = new Date(birthDate);
-  if (Number.isNaN(parsed.getTime())) return '--';
+const calculateAge = (birthDate?: string, now?: Date): string => {
+  if (!birthDate || !now) return '--';
+  const parsed = parseLocalDate(birthDate);
+  if (!parsed) return '--';
 
-  const now = new Date();
   let age = now.getFullYear() - parsed.getFullYear();
   const monthDiff = now.getMonth() - parsed.getMonth();
   if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < parsed.getDate())) {
@@ -21,6 +23,12 @@ const calculateAge = (birthDate?: string): string => {
 };
 
 export default function UserProfile({ user, fortunes = [], eventCount = 0 }: UserProfileProps) {
+  const [mountedAt, setMountedAt] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setMountedAt(new Date());
+  }, []);
+
   const latest = fortunes[0];
   const dayMaster = latest?.bazi?.dayMaster || '--';
   const pattern = latest?.pattern?.type || '--';
@@ -28,7 +36,7 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
 
   const displayName = user?.name || latest?.name || '未命名用户';
   const displayGender = user?.gender === 'female' ? '女' : '男';
-  const displayAge = calculateAge(user?.birth_date || latest?.birth_date);
+  const displayAge = mountedAt ? calculateAge(user?.birth_date || latest?.birth_date, mountedAt) : '--';
   const displayPlace = user?.birth_place || latest?.birth_place || '--';
   const displayBirthDate = user?.birth_date || latest?.birth_date || '--';
   const displayBirthTime = user?.birth_time || latest?.birth_time || '--';
@@ -37,9 +45,9 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
 
   const createdAt = user?.created_at ? new Date(user.created_at) : null;
   const usageDays =
-    createdAt && !Number.isNaN(createdAt.getTime())
-      ? Math.max(1, Math.floor((Date.now() - createdAt.getTime()) / (1000 * 60 * 60 * 24)))
-      : 1;
+    mountedAt && createdAt && !Number.isNaN(createdAt.getTime())
+      ? Math.max(1, Math.floor((mountedAt.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24)))
+      : '--';
 
   return (
     <div className="soft-card overflow-hidden rounded-[2rem]">

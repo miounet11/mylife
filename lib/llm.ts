@@ -1,39 +1,27 @@
 import OpenAI from 'openai';
+import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
 import { formatModelAttemptLabel, getModelFallbackChain, getReportNarrativeFallbackChain } from '@/lib/llm-model-fallback';
+import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import {
   computeAttemptTimeouts,
   getDynamicModelExecutionPlan,
   recordModelAttempt,
   summarizeModelExecutionPlan,
 } from '@/lib/llm-provider-health';
-
-const getApiBaseUrl = () => {
-  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
-};
-
-const normalizeApiKey = (value?: string | null) => {
-  const key = (value || '').trim();
-  if (!key || key === 'dummy_key') return null;
-  return key;
-};
-
-const getApiKey = () => {
-  return (
-    normalizeApiKey(process.env.OPENAI_API_KEY) ||
-    normalizeApiKey(process.env.API_KEY)
-  );
-};
-
-const getDefaultModel = () => {
-  return process.env.DEFAULT_MODEL || 'auto';
-};
+import { WORLD_YI_DELIVERY_DIRECTIVE, WORLD_YI_DOCTRINE_BRIEF } from '@/lib/world-yi-doctrine';
 
 const toModelDisplayName = (model: string) => {
+  if (model === 'gpt-5.4') {
+    return '主分析模型 GPT-5.4';
+  }
   if (model === 'gpt-5.2') {
     return '主分析模型 GPT-5.2';
   }
+  if (model === 'gpt-5.2-codex') {
+    return '备用推理模型 GPT-5.2 Codex';
+  }
   if (model === 'grok-420-fast') {
-    return '备用模型 Grok 420 Fast';
+    return '快速生成模型 Grok 420 Fast';
   }
   if (model === 'auto') {
     return '自动路由模型';
@@ -124,7 +112,7 @@ export async function generateFortuneInterpretationCore(
   }
 
   const openai = createLlmClient(timeoutMs);
-  const baseChain = getModelFallbackChain(getDefaultModel(), 'report');
+  const baseChain = getModelFallbackChain(undefined, 'report');
   const deadlineAt = Date.now() + timeoutMs;
 
   return executeReportPhase({
@@ -150,7 +138,7 @@ export async function generateFortuneInterpretationFollowup(
   }
 
   const openai = createLlmClient(timeoutMs);
-  const baseChain = getReportNarrativeFallbackChain('gpt-5.2');
+  const baseChain = getReportNarrativeFallbackChain();
   const deadlineAt = Date.now() + timeoutMs;
   const narrativePatch = await executeReportPhase({
     openai,
@@ -208,14 +196,15 @@ async function executeReportPhase(params: {
     const startedAt = Date.now();
 
     try {
-      const completion = await params.openai.chat.completions.create({
+      const completion = await createOpenAiCompatibleChatCompletion(params.openai, {
         model,
         messages: [
           { role: 'system', content: buildPhaseSystemPrompt(params.phase) },
           { role: 'user', content: params.prompt },
         ],
         temperature: params.phase === 'structure' ? 0.4 : 0.5,
-        max_tokens: params.phase === 'structure' ? 520 : 360,
+        maxTokens: params.phase === 'structure' ? 520 : 360,
+        reasoningEffort: params.phase === 'structure' ? 'medium' : 'low',
       }, {
         signal: attemptController.signal,
         timeout: attemptTimeoutMs,
@@ -231,6 +220,7 @@ async function executeReportPhase(params: {
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: 'empty',
+          errorMessage: 'EMPTY_CONTENT',
           traceLabel,
         });
         continue;
@@ -245,6 +235,7 @@ async function executeReportPhase(params: {
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: 'parse',
+          errorMessage: 'JSON_PARSE_FAILED',
           traceLabel,
         });
         continue;
@@ -343,10 +334,22 @@ function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: 
 
 function buildPhaseSystemPrompt(phase: PhaseKey) {
   if (phase === 'structure') {
-    return '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API，同时要使用更接近“世界易”的判断语言。请按实务判断顺序输出：先定结构，再定阶段，再落到动作与风险。优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。';
+    return [
+      '你是一个精通子平八字、神煞体系、大运流年的顶级命理学API，同时要使用更接近“世界易”的判断语言。',
+      WORLD_YI_DOCTRINE_BRIEF,
+      WORLD_YI_DELIVERY_DIRECTIVE,
+      '请按实务判断顺序输出：先定结构，再定阶段，再落到动作与风险。',
+      '优先追求短、准、稳的 JSON 草案，只输出合法 JSON，不要 markdown，不要额外解释。',
+    ].join('\n');
   }
 
-  return '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API，同时要使用更接近“世界易”的判断语言。请基于已有草案做小幅补强，强调一句主判断、一个优先动作、一个主要风险，不要滑向空泛宿命论。只输出合法 JSON，不要 markdown，不要重复。';
+  return [
+    '你是一个精通子平八字、现代叙事表达和行动建议设计的顶级命理学API，同时要使用更接近“世界易”的判断语言。',
+    WORLD_YI_DOCTRINE_BRIEF,
+    WORLD_YI_DELIVERY_DIRECTIVE,
+    '请基于已有草案做小幅补强，强调一句主判断、一个优先动作、一个主要风险，不要滑向空泛宿命论。',
+    '只输出合法 JSON，不要 markdown，不要重复。',
+  ].join('\n');
 }
 
 function compactForPrompt(value: unknown, depth: number = 0): unknown {
@@ -378,6 +381,8 @@ function buildReportPromptPayload(baziData: Record<string, unknown>) {
   const advice = (baziData.advice || {}) as Record<string, unknown>;
   const fortune = (baziData.fortune || {}) as Record<string, unknown>;
   const basic = (baziData.basic || {}) as Record<string, unknown>;
+  const worldStateSnapshot = (baziData.worldStateSnapshot || {}) as Record<string, unknown>;
+  const contextSnapshot = (baziData.contextSnapshot || {}) as Record<string, unknown>;
 
   return compactForPrompt({
     basic: {
@@ -406,6 +411,10 @@ function buildReportPromptPayload(baziData: Record<string, unknown>) {
       colors: advice.colors,
       timing: advice.timing,
     },
+    tacitSummary: baziData.tacitSummary,
+    tacitSignals: baziData.tacitSignals,
+    worldStateSnapshot,
+    contextSnapshot,
   });
 }
 
@@ -432,9 +441,12 @@ ${JSON.stringify(compactDayun)}` : ''}
 3. 文本保持简洁，总体宁短勿长，方便稳定返回。
 4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
 5. analysis.summary 必须像一句世界易式决策结论，优先体现“结构 + 阶段 + 动作”，先给判断，不要空泛抒情。
+5.1 允许综合默会知识、经验判断和跨学科直觉，但必须回到现实取舍与行动，不要写成神秘表演。
+5.2 如果输入里有 worldStateSnapshot / tacitSummary / contextSnapshot，必须把它们当成正式判断输入，而不是边角补充。
 6. 禁止输出内部占位词或工程词，如 macro_cycle、solar_terms、geography。
 7. 禁止使用夸饰空话，如“格局清正”“乃富贵之命也”。
 8. 尽量避免传统宿命腔，优先使用“先看结构、再看阶段、最后定动作”的现代判断语言。
+9. 口气要像真正见过很多人生样本的权威判断者，直接下判断，不要写成犹豫解释器。
 
 JSON 结构必须完整包含以下最小字段：
 {
@@ -489,6 +501,8 @@ ${JSON.stringify(compactDraft)}
 7. 禁止输出内部占位词、工程词、提示词痕迹或“解释增强即可”这类句子。
 8. 不要写“格局清正”“富贵之命”等空泛恭维。
 9. 尽量体现“你不是乱，你是有结构”“你不是倒霉，你是处在某个阶段”这类判断方向，但不要机械照抄。
+10. 允许默会知识式判断，但必须最终落回现实动作、代价、边界与顺序。
+11. 如果输入里有 worldStateSnapshot，必须把“当前世界状态下更该顺势、保守、试探还是收缩”写进主判断。
 
 只输出需要覆盖的补丁字段：
 {

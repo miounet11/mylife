@@ -1,12 +1,12 @@
 {
   "status": "success",
-  "runId": "knowledge_1774982222493_iwcr2l1f",
-  "pid": 3661330,
-  "startedAt": "2026-03-31T18:37:02.493Z",
-  "finishedAt": "2026-03-31T18:37:08.411Z",
-  "durationMs": 5918,
+  "runId": "knowledge_1776442566126_xhi5ee54",
+  "pid": 513300,
+  "startedAt": "2026-04-17T16:16:06.126Z",
+  "finishedAt": "2026-04-17T16:16:14.543Z",
+  "durationMs": 8417,
   "cycle": {
-    "ranAt": "2026-03-31T18:37:08.404Z",
+    "ranAt": "2026-04-17T16:16:14.534Z",
     "radarRefreshed": true,
     "radarSignalsFetched": 30,
     "coreSeededCount": 0,
@@ -22,9 +22,9 @@
       "relationCount": 0
     },
     "synthesizedDrafts": {
-      "draftCount": 19,
-      "persistedCount": 19,
-      "candidateCount": 6,
+      "draftCount": 17,
+      "persistedCount": 17,
+      "candidateCount": 9,
       "publishedCount": 4,
       "titles": [
         "八字体系专题总览",
@@ -32,26 +32,24 @@
         "八字体系问题地图",
         "八字体系书单路径",
         "八字体系书目阶梯",
-        "易学体系专题总览",
-        "易学体系概念词汇表",
-        "易学体系问题地图",
-        "易学体系问题簇综述",
-        "易学体系书单路径",
-        "易学体系书目阶梯",
-        "相关术数专题总览",
-        "相关术数概念词汇表",
-        "相关术数书单路径",
-        "相关术数书目阶梯",
         "应用专题专题总览",
         "应用专题概念词汇表",
         "应用专题书单路径",
-        "应用专题书目阶梯"
+        "应用专题书目阶梯",
+        "基础原理专题总览",
+        "基础原理概念词汇表",
+        "基础原理书单路径",
+        "基础原理书目阶梯",
+        "相关术数专题总览",
+        "相关术数概念词汇表",
+        "相关术数书单路径",
+        "相关术数书目阶梯"
       ]
     },
     "graphEnrichment": {
       "topicConceptLinksAdded": 0,
       "topicTopicLinksAdded": 0,
-      "relatedTopicCount": 21
+      "relatedTopicCount": 28
     },
     "selectedDomains": [],
     "coreMissingAfterRun": 0,
@@ -380,5 +378,5 @@
       }
     ]
   },
-  "updatedAt": "2026-03-31T18:37:08.411Z"
+  "updatedAt": "2026-04-17T16:16:14.543Z"
 }

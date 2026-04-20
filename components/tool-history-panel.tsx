@@ -25,17 +25,23 @@ type ToolHistoryResponse = {
 
 function formatDate(value?: string) {
   if (!value) return '刚刚';
-  try {
-    return new Date(value).toLocaleDateString('zh-CN');
-  } catch {
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matched) {
+    return `${matched[1]}-${matched[2]}-${matched[3]}`;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
     return value;
   }
+
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
 }
 
 export default function ToolHistoryPanel({
   compact = false,
   title = '工具历史',
-  description = '最近做过的单项工具会沉淀在这里，方便继续复访。',
+  description = '',
 }: {
   compact?: boolean;
   title?: string;
@@ -80,7 +86,7 @@ export default function ToolHistoryPanel({
             <Sparkles className="h-3.5 w-3.5" />
             {title}
           </div>
-          <p className="intro-copy mt-3">{description}</p>
+          {description ? <p className="intro-copy mt-3 text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
         <Link href="/tools" className="action-secondary">
           全部工具
@@ -109,8 +115,8 @@ export default function ToolHistoryPanel({
                   {item.tool?.category}
                 </span>
               </div>
-              <div className="intro-copy mt-3">
-                {item.result?.headline || item.result?.recommendedAction || '最近一次工具结果已生成，可继续复访。'}
+              <div className="mt-3 text-sm text-[color:var(--ink)]">
+                {item.result?.headline || item.result?.recommendedAction || '已生成结果'}
               </div>
               <div className="mt-4 flex items-center justify-between text-xs text-[color:var(--muted)]">
                 <span className="inline-flex items-center gap-1">
@@ -125,12 +131,11 @@ export default function ToolHistoryPanel({
             </Link>
           ))
         ) : (
-          <div className="rounded-[1.5rem] bg-slate-50 p-5 intro-copy">
+          <div className="rounded-[1.5rem] bg-slate-50 p-5 text-sm text-[color:var(--ink)]">
             <div className="inline-flex items-center gap-2 font-semibold text-[color:var(--ink)]">
               <Layers3 className="h-4 w-4" />
               还没有单项工具记录
             </div>
-            <div className="mt-2">先完成一次综合判断，再进入工具中心做更聚焦的单项测试。</div>
           </div>
         )}
       </div>

@@ -88,15 +88,22 @@ export default function AgenticInsightPanel({
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
           {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
         </div>
-        <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-          {getReasoningModeDescription(resolvedReasoningMode)}
-          {allFallback ? ` 本次共尝试 ${totalAgentCalls} 个 Agent，当前全部回退为 deterministic 专家层结果。` : ''}
-          {verify?.verdict ? ` 一致性结论 ${verify.verdict}，当前评分 ${verify.consistencyScore ?? '待计算'}。` : ''}
+        <div className="mt-4 intro-panel">
+          <div className="text-sm font-semibold text-[color:var(--ink)]">当前状态</div>
+          <div className="mt-2 intro-copy">
+            {getReasoningModeDescription(resolvedReasoningMode)}
+          </div>
         </div>
 
         {totalAgentCalls > 0 ? (
-          <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
-            Agent 调度状态：成功 {successfulAgents} 个，失败 {failedAgents} 个。
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <StatusTile label="调度尝试" value={`${totalAgentCalls} 个`} detail={allFallback ? '当前全部回退为引擎结果' : '已纳入本次报告'} />
+            <StatusTile label="成功接入" value={`${successfulAgents} 个`} detail={successfulAgents > 0 ? '已形成解释输入' : '本次无成功返回'} />
+            <StatusTile
+              label="一致性"
+              value={verify?.verdict || '待校验'}
+              detail={verify?.verdict ? `评分 ${verify.consistencyScore ?? '待计算'}` : `失败 ${failedAgents} 个`}
+            />
           </div>
         ) : null}
 
@@ -130,7 +137,7 @@ export default function AgenticInsightPanel({
                   </div>
                 ) : null}
                 {item.actions.length > 0 ? (
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-3 intro-copy">
                     优先动作：{item.actions.slice(0, 2).join('；')}
                   </div>
                 ) : null}
@@ -138,7 +145,7 @@ export default function AgenticInsightPanel({
             ))}
           </div>
         ) : (
-          <div className="mt-5 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
+          <div className="mt-5 intro-panel intro-copy">
             {allFallback
               ? '当前并发 Agent 没有返回可用结果，页面内容来自结构化引擎和 deterministic 专家层回退。'
               : '当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。'}
@@ -234,7 +241,17 @@ function SignalTile({ label, value, detail }: { label: string; value: string; de
     <div className="rounded-[1.5rem] bg-slate-50 p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{detail}</div>
+      <div className="mt-2 intro-copy">{detail}</div>
+    </div>
+  );
+}
+
+function StatusTile({ label, value, detail }: { label: string; value: string; detail: string }) {
+  return (
+    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
+      <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{value}</div>
+      <div className="mt-2 intro-copy">{detail}</div>
     </div>
   );
 }

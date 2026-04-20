@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getKnowledgeAcquisitionLockTtlMs, getKnowledgeCronToken } from '@/lib/env';
 import { runKnowledgeAcquisitionCycle } from '@/lib/knowledge-acquisition';
 import {
   acquireKnowledgeAcquisitionLockWithRecovery,
@@ -12,11 +13,11 @@ import {
 export const maxDuration = 30;
 
 function readLockTtlMs() {
-  return Math.max(60_000, Number(process.env.KNOWLEDGE_ACQUISITION_LOCK_TTL_MS || 1000 * 60 * 45));
+  return getKnowledgeAcquisitionLockTtlMs();
 }
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || ''}`.trim();
+  const expected = getKnowledgeCronToken();
   if (!expected) {
     return false;
   }

@@ -1,11 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import {
+  getContentRadarCronToken,
+  isContentRadarAutoGenerateEnabled,
+  isContentRadarAutoPublishEnabled,
+} from '@/lib/env';
 import { runContentAutomationCycle } from '@/lib/content-ops';
 import { runContentRadarCycle } from '@/lib/content-radar';
 
 export const maxDuration = 30;
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.CONTENT_RADAR_CRON_TOKEN || ''}`.trim();
+  const expected = getContentRadarCronToken();
   if (!expected) {
     return false;
   }
@@ -20,8 +25,8 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await runContentRadarCycle();
-    const shouldAutoGenerate = process.env.CONTENT_RADAR_AUTO_GENERATE === '1';
-    const shouldAutoPublish = process.env.CONTENT_RADAR_AUTO_PUBLISH === '1';
+    const shouldAutoGenerate = isContentRadarAutoGenerateEnabled();
+    const shouldAutoPublish = isContentRadarAutoPublishEnabled();
     const automation = shouldAutoGenerate
       ? await runContentAutomationCycle({
           userId: 'system_radar',

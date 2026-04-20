@@ -10,7 +10,9 @@ import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
 import ToolHistoryPanel from '@/components/tool-history-panel';
+import { buildChatHref } from '@/lib/chat-entry';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
+import { toEventViewModels, type EventTransportRecord } from '@/lib/event-view';
 
 // 动态导入
 const UserProfile = dynamic(() => import('@/components/user-profile'), {
@@ -30,12 +32,12 @@ type ProfileResponse = {
   data?: {
     user: Record<string, unknown>;
     fortunes: Record<string, unknown>[];
-    events: Record<string, unknown>[];
+    events: EventTransportRecord[];
   };
   // 兼容 history API 的扁平结构
   user?: Record<string, unknown>;
   fortunes?: Record<string, unknown>[];
-  events?: Record<string, unknown>[];
+  events?: EventTransportRecord[];
   error?: string;
 };
 
@@ -77,7 +79,7 @@ export default function ProfilePage() {
   const [error, setError] = useState('');
   const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const [fortunes, setFortunes] = useState<Record<string, unknown>[]>([]);
-  const [events, setEvents] = useState<Record<string, unknown>[]>([]);
+  const [events, setEvents] = useState<EventTransportRecord[]>([]);
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummaryResponse['data'] | null>(null);
 
   useEffect(() => {
@@ -117,20 +119,7 @@ export default function ProfilePage() {
   }, []);
 
   const mappedEvents = useMemo(() => {
-    return (events || []).map((event: any) => ({
-      id: event.id,
-      type: ['career', 'wealth', 'marriage', 'health', 'family', 'other'].includes(event.type) ? event.type : 'other',
-      title: event.title,
-      date: new Date(event.date),
-      time: event.time || undefined,
-      description: event.description || '',
-      impact: ['positive', 'negative', 'neutral'].includes(event.impact) ? event.impact : 'neutral',
-      reminder: {
-        enabled: !!event.reminder_enabled,
-        advanceDays: event.reminder_advance_days || 0,
-        method: (event.reminder_method || 'app') as 'app' | 'email' | 'sms',
-      },
-    }));
+    return toEventViewModels(events || []);
   }, [events]);
 
   const chartData = useMemo(() => {
@@ -171,24 +160,29 @@ export default function ProfilePage() {
               你的判断轨迹，不只是一份记录，
               <span className="font-serif text-[color:var(--accent-strong)]">更是下一步的导航。</span>
             </h1>
-            <p className="intro-copy">
-              在这里你可以回看历史分析、关键事件和阶段趋势，把每次判断都接到下一次动作。
-            </p>
-            <div className="intro-panel">优先动作：继续追问或打开最新报告，避免在页面内反复浏览。</div>
             <div className="space-y-2">
               <div className="action-guide">快速操作</div>
               <div className="action-strip flex flex-wrap gap-3">
                 <Link href={latestResultId ? `/result/${latestResultId}` : '/analyze'} className="action-primary action-main">
                   {latestResultId ? '打开最新报告' : '开始分析'}
                 </Link>
-                <Link href="/chat" className="action-secondary">继续追问</Link>
+                <Link
+                  href={buildChatHref({
+                    reportId: latestResultId || undefined,
+                    question: '请根据我的档案、最近报告和事件记录，帮我判断：当前最值得优先推进的一条主线是什么，为什么？',
+                    source: 'profile_page',
+                  })}
+                  className="action-secondary"
+                >
+                  继续追问
+                </Link>
                 <Link href="/events" className="action-secondary">管理事件</Link>
               </div>
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">当前档案能承接的动作</div>
+            <div className="text-sm font-semibold text-[color:var(--muted)]">功能</div>
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {['查看阶段趋势图', '回顾最近分析结果', '继续进入结构追问', '把节点落到事件管理'].map((item) => (
                 <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
@@ -225,10 +219,17 @@ export default function ProfilePage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-lg font-bold text-[color:var(--ink)]">继续操作</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">把档案页变成下一步动作的中枢，而不是终点。</div>
               </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                <ProfileAction href="/chat" label="继续追问" icon={Bot} />
+                <ProfileAction
+                  href={buildChatHref({
+                    reportId: latestResultId || undefined,
+                    question: '请结合我的档案信息继续做结构追问，告诉我当前最值得先做的一步动作和最需要防的误判。',
+                    source: 'profile_actions',
+                  })}
+                  label="继续追问"
+                  icon={Bot}
+                />
                 <ProfileAction href="/tools" label="工具中心" icon={Sparkles} />
                 <ProfileAction href="/events" label="管理事件" icon={CalendarClock} />
                 <ProfileAction href="/history" label="查看历史" icon={History} />
@@ -246,7 +247,7 @@ export default function ProfilePage() {
 
           <PersonalJourneyHub
             title="你的主测算、工具和文章已经开始形成个人路径"
-            description="这里会直接告诉你下一步该回哪份报告、做哪个工具、读哪篇文章和案例。"
+            description="这里会把主报告、工具结果和阅读记录接回一条持续复访的个人路径，不再是分散的单次页面。"
             page="/profile"
           />
 
@@ -257,7 +258,6 @@ export default function ProfilePage() {
                   <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
                   <div className="text-lg font-bold text-[color:var(--ink)]">我的更新状态</div>
                 </div>
-                <div className="intro-copy mt-2">这里直接看报告升级、月度更新和订阅状态。</div>
               </div>
               <Link
                 href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
@@ -301,7 +301,7 @@ export default function ProfilePage() {
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 <div className="rounded-[1.4rem] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
-                  <div className="intro-copy mt-2">
+                  <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestReport
                       ? `${updatesSummary.latestReport.name || '我的报告'}，当前版本 ${updatesSummary.latestReport.reportVersion || 'v1'}。`
                       : '当前还没有最近报告。'}
@@ -319,12 +319,12 @@ export default function ProfilePage() {
 
                 <div className="rounded-[1.4rem] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
-                  <div className="intro-copy mt-2">
+                  <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestDigest
                       ? `${updatesSummary.latestDigest.cycleKey || '本周期'}：${mapDigestStatus(updatesSummary.latestDigest.status)}`
                       : '当前还没有月度更新回执。'}
                   </div>
-                  <div className="intro-copy mt-1">{updatesSummary?.latestDigest?.reason || '后续会在这里显示最近一次发送或跳过原因。'}</div>
+                  <div className="mt-1 text-sm text-[color:var(--muted)]">{updatesSummary?.latestDigest?.reason || '暂无回执说明'}</div>
                 </div>
               </div>
             ) : null}
@@ -333,7 +333,6 @@ export default function ProfilePage() {
           {!loading && !hasProfileData && (
             <section className="glass-panel rounded-[2rem] p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
-              <p className="intro-copy mx-auto mt-3 max-w-2xl">先完成一次结构判断，结果页、趋势图、事件管理和结构追问才会逐步沉淀成长期档案。</p>
               <Link href="/analyze" className="action-primary mt-6">
                 开始第一次分析
               </Link>

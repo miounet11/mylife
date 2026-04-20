@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getReportMonthlyDigestCronToken } from '@/lib/env';
 import { runReportMonthlyDigestCycle } from '@/lib/report-monthly-digest';
 
 export const maxDuration = 30;
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.REPORT_MONTHLY_DIGEST_CRON_TOKEN || ''}`.trim();
+  const expected = getReportMonthlyDigestCronToken();
   if (!expected) {
     return false;
   }

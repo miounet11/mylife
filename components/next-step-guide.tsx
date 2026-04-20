@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, Bot, CalendarClock, CheckCircle2, FolderHeart, Sparkles } from 'lucide-react';
+import { buildChatHref } from '@/lib/chat-entry';
 
 interface NextStepGuideProps {
   reportId?: string;
@@ -16,13 +17,20 @@ export default function NextStepGuide({
   hasDrift = false,
   canManage = false,
 }: NextStepGuideProps) {
+  const followupQuestion = hasDrift
+    ? '这份报告已经出现偏差样本，请按结构、阶段、环境、动作四层帮我复盘：这次偏差更像时机问题、执行问题、环境问题，还是输入判断失真？'
+    : '请围绕我这份报告里最关键的一条结论继续深问，按结构、阶段、环境、动作四层拆开：我现在最该先做什么，为什么，最需要防什么误判？';
   const nextActions = [
     {
       title: hasDrift ? '继续纠偏这份结果' : '继续追问这份结果',
       description: hasDrift
         ? '这份报告已经出现偏差样本，最该做的是回到结构追问，把偏差拆成时机、执行和输入问题。'
         : '把报告里最模糊、最关键、最想验证的一条结论，立即带去结构追问深问。',
-      href: reportId ? `/chat?reportId=${encodeURIComponent(reportId)}` : '/chat',
+      href: buildChatHref({
+        reportId: reportId || undefined,
+        question: followupQuestion,
+        source: 'next_step_guide',
+      }),
       label: hasDrift ? '进入纠偏追问' : '进入结构追问',
       icon: Bot,
     },
@@ -66,9 +74,6 @@ export default function NextStepGuide({
               真正降低流失，
               <span className="font-serif text-[color:var(--accent-strong)]">关键在报告之后。</span>
             </h2>
-            <p className="intro-copy">
-              用户看完报告时最容易离开，所以这里不再让用户自己想下一步，而是直接给出可继续追问、可验证、可复访、可订阅的动作路径。
-            </p>
 
             <div className="space-y-3">
               {[
@@ -99,7 +104,6 @@ export default function NextStepGuide({
                     </Link>
                   </div>
                   <h3 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{action.title}</h3>
-                  <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{action.description}</p>
                   <Link href={action.href} className="action-secondary mt-5">
                     {action.label}
                     <ArrowRight className="h-4 w-4" />

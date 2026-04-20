@@ -3,18 +3,28 @@ import {
   sendMailV2,
   sendVerificationCode,
 } from '@/mail';
+import {
+  getAppBaseUrl,
+  getMailAppName,
+  getMailAuthUser,
+  getMailFromAddress,
+  getMailPassword,
+  getMailSmtpHost,
+  getMailSmtpHostIp,
+  isMailSmtpAuthDisabled,
+} from '@/lib/env';
 
 function getEmailConfig() {
-  const disableAuth = process.env.MAIL_SMTP_DISABLE_AUTH === 'true';
+  const disableAuth = isMailSmtpAuthDisabled();
   return {
-    from: process.env.MAIL_FROM || '',
-    password: process.env.MAIL_AUTH_PASSWORD || process.env.MAIL_PASSWORD || '',
-    authUser: process.env.MAIL_AUTH_USER || process.env.MAIL_FROM || '',
-    host: process.env.MAIL_SMTP_HOST || '',
-    hostIp: process.env.MAIL_SMTP_HOST_IP || '',
+    from: getMailFromAddress(),
+    password: getMailPassword(),
+    authUser: getMailAuthUser(),
+    host: getMailSmtpHost(),
+    hostIp: getMailSmtpHostIp(),
     disableAuth,
-    appName: process.env.MAIL_FROM_NAME || process.env.EMAIL_APP_NAME || '人生K线',
-    baseUrl: process.env.NEXT_PUBLIC_APP_URL || 'https://www.life-kline.com',
+    appName: getMailAppName(),
+    baseUrl: getAppBaseUrl(),
   };
 }
 
@@ -25,6 +35,14 @@ function escapeHtml(value: string) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
+}
+
+function renderPrimaryButton(href: string, label: string) {
+  return `
+    <a href="${escapeHtml(href)}" style="display:inline-block;padding:10px 16px;border-radius:999px;background:#111827;color:#f7d3a1;text-decoration:none;font-weight:700">
+      ${escapeHtml(label)}
+    </a>
+  `;
 }
 
 export function isEmailDeliveryConfigured() {
@@ -241,6 +259,58 @@ export async function sendMonthlyReportDigestEmail(params: {
           查看完整报告
         </a>
         <p style="margin:16px 0 0;color:#6b7280;font-size:13px">你也可以在站内管理订阅状态：${escapeHtml(baseUrl)}/updates</p>
+      </div>
+    `,
+  });
+}
+
+export async function sendUserLifecycleEmail(params: {
+  email: string;
+  name: string;
+  stageKey: string;
+  stageLabel: string;
+  subject: string;
+  previewText: string;
+  intro: string;
+  detail: string;
+  primaryCtaLabel: string;
+  primaryCtaHref: string;
+  secondaryCtaLabel?: string;
+  secondaryCtaHref?: string;
+  bullets?: string[];
+  reportId?: string;
+}) {
+  const { appName, baseUrl } = getEmailConfig();
+  const safeName = escapeHtml(params.name || '用户');
+  const bulletsHtml = (params.bullets || [])
+    .map((item) => `<li style="margin:0 0 10px">${escapeHtml(item)}</li>`)
+    .join('');
+  const secondaryLink = params.secondaryCtaLabel && params.secondaryCtaHref
+    ? `<a href="${escapeHtml(params.secondaryCtaHref)}" style="margin-left:12px;color:#92400e;text-decoration:none;font-weight:600">${escapeHtml(params.secondaryCtaLabel)}</a>`
+    : '';
+
+  return sendMailV2({
+    to: params.email,
+    subject: params.subject,
+    subtype: 'html',
+    text: `${params.previewText} ${params.primaryCtaHref}`,
+    content: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#1f2937;line-height:1.8">
+        <div style="margin:0 0 8px;color:#92400e;font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase">${escapeHtml(appName)} · ${escapeHtml(params.stageLabel)}</div>
+        <h2 style="margin:0 0 16px;font-size:22px;color:#111827">${safeName}，${escapeHtml(params.intro)}</h2>
+        <p style="margin:0 0 12px">${escapeHtml(params.detail)}</p>
+        ${params.bullets && params.bullets.length > 0 ? `
+          <ul style="margin:0 0 16px;padding-left:20px">
+            ${bulletsHtml}
+          </ul>
+        ` : ''}
+        <div style="margin:18px 0 0">
+          ${renderPrimaryButton(params.primaryCtaHref, params.primaryCtaLabel)}
+          ${secondaryLink}
+        </div>
+        <p style="margin:16px 0 0;color:#6b7280;font-size:13px">
+          你可以随时在站内管理订阅状态：${escapeHtml(baseUrl)}/updates
+        </p>
       </div>
     `,
   });

@@ -1,5 +1,7 @@
 import {
   buildReasoningPlanPrompt,
+  getEffectiveContentGenerationTimeoutMs,
+  isAutomatedGrowthPlatform,
   normalizeGeneratedContentDraft,
   resolveContentGenerationLlmConfig,
   sanitizeContentSlug,
@@ -43,6 +45,23 @@ describe('content generation helpers', () => {
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',
     }, 'knowledge', null).system).toContain('苏格拉底式');
+  });
+
+  it('treats public growth lanes as automated fast-draft platforms', () => {
+    expect(isAutomatedGrowthPlatform('public-growth')).toBe(true);
+    expect(isAutomatedGrowthPlatform('public-growth-wave2')).toBe(true);
+    expect(isAutomatedGrowthPlatform('public-growth-global')).toBe(true);
+    expect(isAutomatedGrowthPlatform('seo')).toBe(false);
+  });
+
+  it('caps automated growth timeout to keep scheduled runs responsive', () => {
+    process.env = {
+      ...originalEnv,
+      CONTENT_GENERATION_TIMEOUT_MS: '32000',
+    };
+
+    expect(getEffectiveContentGenerationTimeoutMs({ platform: 'public-growth' })).toBe(8000);
+    expect(getEffectiveContentGenerationTimeoutMs({ platform: 'seo' })).toBe(32000);
   });
 
   it('builds socratic reasoning prompts before long-form writing', () => {
@@ -158,6 +177,7 @@ describe('content generation helpers', () => {
     expect(draft.seoDescription).toContain('風險');
     expect(draft.sections[0]?.title).toBe('這類焦慮為什麼會持續放大');
     expect(draft.sections[0]?.paragraphs[0]).toContain('香港用户');
+    expect(draft.sections.every((section) => section.paragraphs.every((paragraph) => paragraph.length >= 36))).toBe(true);
     expect(draft.source).toBe('agent-fallback:public-growth');
   });
 
@@ -183,6 +203,7 @@ describe('content generation helpers', () => {
     expect(draft.readTime).toContain('min read');
     expect(draft.sections[0]?.title).toBe('What problem sits underneath the trend');
     expect(draft.sections[0]?.paragraphs[0]).toContain('keeps rising');
+    expect(draft.sections.every((section) => section.paragraphs.every((paragraph) => paragraph.length >= 36))).toBe(true);
     expect(draft.source).toBe('agent-fallback:public-growth-global');
   });
 });

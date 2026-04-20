@@ -585,7 +585,7 @@ export default function ContentAdminConsole() {
   };
 
   return (
-    <div className="space-y-6">
+    <div id="content-operations-console" className="space-y-6">
       <ContentRadarPanel onAutomationCompleted={async (summary) => {
         setMessage(summary);
         setError('');
@@ -609,26 +609,39 @@ export default function ContentAdminConsole() {
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="text-sm font-semibold text-[color:var(--muted)]">今日修复工作台</div>
-              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">先修高价值缺口，不凭感觉改内容</div>
-              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                这里把内容页、工具页和高跳出页面按真实 PV、跳出和联动弱点排好序，运营可以直接照着修。
-              </div>
+              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">修复工作台</div>
             </div>
-            <button
-              type="button"
-              onClick={loadWorkboard}
-              className="action-secondary min-h-0 px-4 py-2"
-            >
-              刷新清单
-            </button>
+            <div className="space-y-2">
+              <div className="action-guide">主动作</div>
+              <button
+                type="button"
+                onClick={loadWorkboard}
+                className="action-primary"
+              >
+                刷新修复清单
+              </button>
+            </div>
+          </div>
+
+          <div className="mt-5 grid gap-4 md:grid-cols-3">
+            {[
+              { label: '内容待修', value: workboard?.prioritizedContentFixes?.length || 0 },
+              { label: '跳出页', value: workboard?.prioritizedBouncePages?.length || 0 },
+              { label: '工具待修', value: workboard?.prioritizedToolFixes?.length || 0 },
+            ].map((item) => (
+              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+              </div>
+            ))}
           </div>
 
           <div className="mt-5 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">工作台加载中...</div>
+              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedContentFixes?.length ? workboard.prioritizedContentFixes.slice(0, 6).map((item, index) => (
               <div key={`${item.contentType}-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -646,22 +659,22 @@ export default function ContentAdminConsole() {
                   </div>
                 </div>
                 <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
               </div>
             )) : (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">当前还没有足够的内容修复样本。</div>
+              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div className="text-sm font-semibold text-[color:var(--ink)]">暂无内容修复样本</div>
+              </div>
             )}
           </div>
         </div>
 
         <div className="glass-panel rounded-[2rem] p-6">
           <div className="text-sm font-semibold text-[color:var(--muted)]">高跳出页</div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-            先修这些入口页，能最快拉低跳出和提高后续测算。
-          </div>
+          <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{workboard?.prioritizedBouncePages?.length || 0}</div>
           <div className="mt-4 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">跳出诊断加载中...</div>
+              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedBouncePages?.length ? workboard.prioritizedBouncePages.slice(0, 6).map((item) => (
               <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
@@ -669,29 +682,31 @@ export default function ContentAdminConsole() {
                   <div className="text-xs font-semibold text-rose-700">{`跳出 ${item.bounceRate}%`}</div>
                 </div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{`PV ${item.views}`}</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.action}</div>
+                <div className="mt-2 text-xs text-[color:var(--muted)]">{item.action}</div>
               </div>
             )) : (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">当前还没有足够的跳出页样本。</div>
+              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div className="text-sm font-semibold text-[color:var(--ink)]">暂无高跳出页样本</div>
+              </div>
             )}
           </div>
         </div>
       </div>
 
       <div className="glass-panel rounded-[2rem] p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--muted)]">工具修复联动作战板</div>
-            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">内容不只要写，还要把人送进更好的工具</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              这些是当前最该精修的工具页。改内容时优先把它们挂进去，优先吃高价值转化。
-            </div>
+            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">工具修复板</div>
+          </div>
+          <div className="rounded-[1.4rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs font-semibold text-[color:var(--accent-strong)]">
+            当前待修 {workboard?.prioritizedToolFixes?.length || 0} 个工具
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {workboardLoading ? (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">工具清单加载中...</div>
+            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
           ) : workboard?.prioritizedToolFixes?.length ? workboard.prioritizedToolFixes.slice(0, 6).map((item, index) => (
             <div key={item.slug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
               <div className="flex items-center justify-between gap-3">
@@ -715,24 +730,25 @@ export default function ContentAdminConsole() {
                 <div>{`专项 ${item.premiumRate}%`}</div>
               </div>
               <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
-              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+              <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">当前还没有足够的工具修复样本。</div>
+            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具修复样本</div>
+            </div>
           )}
         </div>
       </div>
 
       <div className="glass-panel rounded-[2rem] p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--muted)]">工具修复执行队列</div>
-            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">工单流转 + 修复前后对比</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              每条工具工单都可标记待修、进行中、已验证；并显示修复后与基线相比的真实变化。
-            </div>
+            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">修复执行队列</div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="space-y-2">
+            <div className="action-guide">主动作</div>
+            <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={() => setRepairStatusFilter('all')}
@@ -761,7 +777,22 @@ export default function ContentAdminConsole() {
             >
               已验证
             </button>
+            </div>
           </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-4">
+          {[
+            { label: '全部工单', value: toolRepairWorkflow.length },
+            { label: '待修', value: toolRepairWorkflow.filter((item) => item.status === 'todo').length },
+            { label: '进行中', value: toolRepairWorkflow.filter((item) => item.status === 'in_progress').length },
+            { label: '已验证', value: toolRepairWorkflow.filter((item) => item.status === 'verified').length },
+          ].map((item) => (
+            <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+              <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+            </div>
+          ))}
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]">
@@ -881,19 +912,21 @@ export default function ContentAdminConsole() {
               })()}
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">当前筛选条件下没有工单。</div>
+            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="text-sm font-semibold text-[color:var(--ink)]">暂无匹配工单</div>
+            </div>
           )}
         </div>
       </div>
 
       <div className="glass-panel rounded-[2rem] p-6">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--muted)]">工具漏斗断点清单</div>
-            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">不是只看分数，要看具体卡在哪一步</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              从“详情曝光 → 点击开始 → 实际开跑 → 结果到专项”里抓主断点，按优先级直接修。
-            </div>
+            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">漏斗断点清单</div>
+          </div>
+          <div className="rounded-[1.4rem] bg-slate-100 px-4 py-3 text-xs font-semibold text-[color:var(--muted)]">
+            当前断点 {workboard?.prioritizedToolJourneyGaps?.length || 0} 个
           </div>
         </div>
 
@@ -922,10 +955,12 @@ export default function ContentAdminConsole() {
                 <div>{`专项 ${item.premiumRate}%`}</div>
               </div>
               <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
-              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+              <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">当前还没有足够的工具漏斗样本。</div>
+            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具漏斗样本</div>
+            </div>
           )}
         </div>
       </div>
@@ -934,13 +969,18 @@ export default function ContentAdminConsole() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--muted)]">批量协同编排</div>
-            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">把整批内容挂到同一条测算路径里</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              先在左侧勾选内容，再用这里一次性补主轴和工具。适合批量把一组文章或案例挂到某个主问题之下。
-            </div>
+            <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">批量协同编排</div>
           </div>
-          <div className="rounded-[1.4rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
-            当前已选择 {selectedIds.length} 条内容
+          <div className="space-y-2">
+            <div className="action-guide">主动作</div>
+            <button
+              type="button"
+              onClick={applyBulkJourney}
+              disabled={bulkApplying}
+              className="action-primary disabled:opacity-60"
+            >
+              {bulkApplying ? '批量保存中...' : `批量挂到协同路径${selectedIds.length > 0 ? `（${selectedIds.length} 条）` : ''}`}
+            </button>
           </div>
         </div>
 
@@ -991,14 +1031,9 @@ export default function ContentAdminConsole() {
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={applyBulkJourney}
-          disabled={bulkApplying}
-          className="mt-5 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {bulkApplying ? '批量保存中...' : '批量挂到协同路径'}
-        </button>
+        <div className="mt-5 rounded-[1.4rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+          当前已选择 {selectedIds.length} 条内容
+        </div>
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
@@ -1053,7 +1088,7 @@ export default function ContentAdminConsole() {
                         {entry.contentType} · {entry.status} · {entry.source}
                       </div>
                       <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{entry.title}</div>
-                      <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{entry.slug}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">{entry.slug}</div>
                       </div>
                     </div>
                     <div className="flex gap-2">
@@ -1079,7 +1114,7 @@ export default function ContentAdminConsole() {
           </div>
         </div>
 
-        <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+        <div id="content-editor-panel" className="glass-panel rounded-[2rem] p-6 md:p-8">
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-sm font-semibold text-[color:var(--muted)]">编辑器</div>
@@ -1166,9 +1201,6 @@ export default function ContentAdminConsole() {
 
         <div className="mt-4 rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-slate-50/80 p-5">
           <div className="text-sm font-semibold text-[color:var(--ink)]">协同编排字段</div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-            这些字段用于人工指定“这篇内容应该优先挂哪些工具、哪些主轴、哪些相关文章和案例”。页面联动会优先吃这里的配置，再用自动规则兜底。
-          </div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             <Field label="关联工具 Slugs">

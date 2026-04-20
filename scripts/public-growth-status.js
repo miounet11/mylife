@@ -52,6 +52,17 @@ function isPubliclyPublished(row, meta) {
     return false;
   }
 
+  if (
+    row.content_type === 'knowledge'
+    && (
+      meta.sourceType === 'public-growth'
+      || meta.sourceType === 'public-growth-wave2'
+      || meta.sourceType === 'public-growth-global'
+    )
+  ) {
+    return meta.publicationReady === true;
+  }
+
   if (row.content_type !== 'knowledge') {
     return true;
   }
@@ -67,6 +78,17 @@ function hasBlockedPlaceholderParagraphs(sections) {
   return /当前尚未|当前.*不足|应继续补|仍薄|还没有足够|仍要回到個人生日測算|仍要回到个人生日测算/.test(text);
 }
 
+function hasQualifiedSectionDepth(sections) {
+  return Array.isArray(sections)
+    && sections.length >= 4
+    && sections.every((section) => (
+      `${section?.title || ''}`.trim().length >= 4
+      && Array.isArray(section?.paragraphs)
+      && section.paragraphs.length >= 2
+      && section.paragraphs.every((paragraph) => `${paragraph || ''}`.trim().length >= 36)
+    ));
+}
+
 function assessPublication(row, meta) {
   const reasons = [];
   let score = 0;
@@ -78,8 +100,11 @@ function assessPublication(row, meta) {
   if (`${row.source || ''}`.startsWith('agent-llm:')) {
     score += 35;
     reasons.push('llm-generated');
-  } else {
+  } else if (`${row.source || ''}`.startsWith('agent-fallback:')) {
+    score += 20;
     reasons.push('fallback-source');
+  } else {
+    reasons.push('unsupported-source');
   }
 
   if ((row.excerpt || '').trim().length >= 72) {
@@ -102,6 +127,12 @@ function assessPublication(row, meta) {
     score += 10;
     reasons.push('section-coverage');
   }
+  if (hasQualifiedSectionDepth(meta.sections)) {
+    score += 10;
+    reasons.push('section-depth');
+  } else {
+    reasons.push('section-depth-insufficient');
+  }
   if (meta.locale) {
     score += 6;
     reasons.push('locale');
@@ -119,8 +150,18 @@ function assessPublication(row, meta) {
     reasons.push('placeholder-copy');
   }
 
+  const isLlmSource = `${row.source || ''}`.startsWith('agent-llm:');
+  const isFallbackSource = `${row.source || ''}`.startsWith('agent-fallback:');
+
   return {
-    ready: score >= 84 && `${row.source || ''}`.startsWith('agent-llm:') && !blocked && !!meta.locale && !!meta.market,
+    ready: (
+      ((isLlmSource && score >= 90) || (isFallbackSource && score >= 85))
+      && (isLlmSource || isFallbackSource)
+      && hasQualifiedSectionDepth(meta.sections)
+      && !blocked
+      && !!meta.locale
+      && !!meta.market
+    ),
     score,
     reasons,
   };
@@ -224,6 +265,6 @@ console.log(JSON.stringify({
     .filter((item) => item.status === 'draft')
     .sort((left, right) => right.score - left.score)
     .slice(0, 8),
-  queue: coverage.filter((item) => item.missing || item.draftCount === 0).slice(0, 8),
+  queue: coverage.filter((item) => item.missing).slice(0, 8),
   coverage,
 }, null, 2));

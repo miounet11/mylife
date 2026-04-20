@@ -74,7 +74,35 @@ body::before {
   }
 
   .page-shell {
-    @apply relative min-h-screen;
+    @apply relative min-h-screen overflow-hidden;
+  }
+
+  .page-shell::before {
+    content: '';
+    position: fixed;
+    inset: -18% -12% auto auto;
+    width: 34rem;
+    height: 34rem;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 42% 42%, rgba(178, 149, 93, 0.2), transparent 36%),
+      conic-gradient(from 140deg, rgba(34, 26, 18, 0.1), transparent, rgba(208, 160, 106, 0.22), transparent);
+    border-radius: 999px;
+    filter: blur(6px);
+    opacity: 0.72;
+    z-index: -1;
+  }
+
+  .page-shell::after {
+    content: '';
+    position: fixed;
+    inset: auto auto -24% -18%;
+    width: 40rem;
+    height: 40rem;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(139, 115, 70, 0.14), transparent 62%);
+    border-radius: 999px;
+    z-index: -1;
   }
 
   .page-frame {
@@ -133,7 +161,7 @@ body::before {
   }
 
   .section-label {
-    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em];
+    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em];
     background: rgba(255, 250, 243, 0.8);
     color: var(--accent-strong);
     border: 1px solid rgba(178, 149, 93, 0.16);
@@ -179,8 +207,8 @@ body::before {
 
   .action-strip {
     @apply rounded-[1.2rem] border p-3;
-    background: rgba(255, 255, 255, 0.7);
-    border-color: rgba(139, 115, 70, 0.2);
+    background: rgba(255, 255, 255, 0.62);
+    border-color: rgba(139, 115, 70, 0.16);
   }
 
   .action-guide {
@@ -189,16 +217,30 @@ body::before {
   }
 
   .intro-copy {
-    @apply text-xs leading-6;
+    @apply text-sm leading-7;
+    color: var(--muted);
+    max-width: 42rem;
+  }
+
+  .intro-panel {
+    @apply rounded-[1.2rem] border px-4 py-3 text-sm leading-7;
+    background: rgba(247, 240, 228, 0.82);
+    border-color: rgba(139, 115, 70, 0.14);
+    color: var(--muted);
+  }
+
+  .hero-description {
+    @apply text-base leading-8;
     color: var(--muted);
     max-width: 44rem;
   }
 
-  .intro-panel {
-    @apply rounded-[1.2rem] border px-4 py-3 text-xs leading-6;
-    background: rgba(247, 240, 228, 0.82);
+  .hero-hint {
+    @apply rounded-[1.2rem] border px-4 py-3 text-sm leading-7;
+    background: rgba(247, 240, 228, 0.86);
     border-color: rgba(139, 115, 70, 0.14);
     color: var(--muted);
+    max-width: 42rem;
   }
 
   .smooth-button {

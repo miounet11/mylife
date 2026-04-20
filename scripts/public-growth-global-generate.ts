@@ -27,6 +27,10 @@ function parseKeyArg() {
   return raw ? raw.split('=')[1]?.trim() : '';
 }
 
+function parseRepairDraftsFlag() {
+  return process.argv.includes('--repair-drafts');
+}
+
 function uniqueStrings(values: string[]) {
   return [...new Set(values.map((item) => `${item || ''}`.trim()).filter(Boolean))];
 }
@@ -45,28 +49,38 @@ function ensureUniqueSlug(slug: string, used: Set<string>) {
 async function main() {
   const limit = parseLimitArg();
   const key = parseKeyArg();
+  const repairDrafts = parseRepairDraftsFlag();
   const targets = (globalTargets as GlobalTarget[])
     .filter((item) => !key || item.key === key);
   const existingEntries = listManagedContentEntries();
   const usedSlugs = new Set(existingEntries.map((entry) => entry.slug));
-  const queue = targets
-    .filter((item) => {
-      const matched = existingEntries.filter((entry) => (
-        entry.meta?.growthPlanKey === item.key
+  const queue = repairDrafts
+    ? targets
+      .filter((item) => existingEntries.some((entry) => (
+        entry.status === 'draft'
+        && entry.meta?.growthPlanKey === item.key
         && entry.meta?.sourceType === 'public-growth-global'
-      ));
+        && `${entry.source || ''}`.startsWith('agent-fallback:')
+      )))
+      .slice(0, limit)
+    : targets
+      .filter((item) => {
+        const matched = existingEntries.filter((entry) => (
+          entry.meta?.growthPlanKey === item.key
+          && entry.meta?.sourceType === 'public-growth-global'
+        ));
 
-      if (matched.some((entry) => entry.status === 'published')) {
-        return false;
-      }
+        if (matched.some((entry) => entry.status === 'published')) {
+          return false;
+        }
 
-      if (matched.some((entry) => entry.status === 'draft' && entry.source.startsWith('agent-llm:'))) {
-        return false;
-      }
+        if (matched.some((entry) => entry.status === 'draft' && entry.source.startsWith('agent-llm:'))) {
+          return false;
+        }
 
-      return true;
-    })
-    .slice(0, limit);
+        return true;
+      })
+      .slice(0, limit);
 
   const savedEntries = [];
   let llmSucceededCount = 0;

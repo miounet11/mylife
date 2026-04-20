@@ -4,10 +4,11 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
+import { getCaseStudies, getEntityInsights, isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { getContentLocalePresentation, getLocaleAnchorId, type ContentLocaleGroupKey } from '@/lib/content-locale';
 import { listKnowledgeTopicHubs } from '@/lib/knowledge-network-feed';
 import {
@@ -15,40 +16,44 @@ import {
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getFeaturedTools } from '@/lib/tools';
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
-export const metadata = createPublicContentMetadata({
-  title: '世界易知识库 | 人生K线',
-  description: '围绕真太阳时、结构判断、结果阅读和决策应用建立长期可积累的现代判断知识库。',
-  path: '/knowledge',
-  type: 'website',
-});
+export function generateMetadata() {
+  return createPublicContentMetadata({
+    title: '世界易知识库 | 人生K线',
+    description: '围绕真太阳时、结构判断、结果阅读和决策应用建立长期可积累的现代判断知识库。',
+    path: '/knowledge',
+    type: 'website',
+    languages: {
+      'zh-CN': '/knowledge',
+      'en-US': '/world-yi/en',
+      'x-default': '/knowledge',
+    },
+  });
+}
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 const worldYiKnowledgePowerLinks = [
   {
     title: '十卷主书',
-    description: '把世界易从母理论、方法、六域到传播治理全部挂在主书工程上。',
     href: '/world-yi/book',
     icon: BookOpen,
   },
   {
     title: '人生六域',
-    description: '让事业、财富、关系、健康、家庭、迁移成为持续扩写的主干。',
     href: '/world-yi/domains',
     icon: Compass,
   },
   {
     title: '全球华人',
-    description: '把留回、身份、婚姻、教育、养老等现实议题独立成层。',
     href: '/world-yi/global',
     icon: Globe2,
   },
   {
     title: '发布架构',
-    description: '区分母文档、公开页面和产品化内容，避免体系继续失焦。',
     href: '/world-yi/publish',
     icon: Layers3,
   },
@@ -88,6 +93,24 @@ export default function KnowledgePage() {
       ...group,
     }));
   const topicHubs = listKnowledgeTopicHubs({ limit: 4 });
+  const knowledgeSignals = [
+    ...topicHubs.flatMap((hub) => [hub.topicName, ...hub.relatedTopicNames]),
+    ...knowledgeEntries.slice(0, 16).flatMap((entry) => [entry.title, entry.category || '', ...entry.tags]),
+  ].filter((signal): signal is string => typeof signal === 'string' && signal.length > 0)
+    .map((signal) => signal.toLowerCase());
+  const matchesKnowledgeSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return knowledgeSignals.some((signal) => lowered.includes(signal));
+  };
+  const toolItems = getFeaturedTools(12)
+    .filter((tool) => matchesKnowledgeSignal([tool.title, tool.shortTitle, tool.themeLabel, ...tool.hookKeywords].join(' ')))
+    .slice(0, 3);
+  const caseItems = getCaseStudies()
+    .filter((item) => matchesKnowledgeSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const insightItems = getEntityInsights()
+    .filter((item) => matchesKnowledgeSignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
+    .slice(0, 2);
   const schemas = [
     createCollectionPageSchema({
       headline: '世界易知识库',
@@ -127,14 +150,9 @@ export default function KnowledgePage() {
               长期内容资产
             </>
           )}
-          title={(
-            <>
-              知识库不是附属页，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是站点长期价值的一部分。</span>
-            </>
-          )}
-          description="这里专门解释真太阳时、报告阅读、结构判断与现实决策等高价值主题。它既服务真实用户，也承担 SEO 与品牌可信度建设。"
-          hint="首次使用建议：先看专题地图，再进入文章详情。"
+          title="知识库"
+          description="这里负责解释方法论、报告阅读方式和现实应用，帮助用户在进入个人判断前先建立清晰预期。"
+          hint="如果你不是来做系统学习，而是想直接看自己的结果，可以随时回到分析入口。"
           actions={[
             <ContentCardLink
               key="topics"
@@ -177,10 +195,7 @@ export default function KnowledgePage() {
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
               <div>
-                <h2 className="text-3xl font-black text-[color:var(--ink)]">从一篇文章，进入一整套学说起点</h2>
-                <p className="intro-copy mt-4">
-                  世界易由凯莉提出，目标不是给旧叙事再套一层包装，而是在 AI 时代重新统一世界、人与环境的解释秩序。先读总论，再进入时代认知、方法、人生六域、起名、寻物、迁移与案例体系。
-                </p>
+                <h2 className="text-3xl font-black text-[color:var(--ink)]">主入口</h2>
                 <div className="action-guide mt-5 inline-flex items-center gap-2">
                   进入世界易总入口
                   <ArrowRight className="h-4 w-4" />
@@ -208,13 +223,7 @@ export default function KnowledgePage() {
                   <Layers3 className="h-3.5 w-3.5" />
                   世界易知识系统层
                 </div>
-                <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">
-                  知识库现在不再是散点文章，
-                  <span className="font-serif text-[color:var(--accent-strong)]">而是在被世界易母系统重新组织。</span>
-                </h2>
-                <p className="intro-copy">
-                  这里已经不只是常识合集。世界易正在把知识内容重写为主书、六域、应用、全球、案例与治理协同的版本化工程，让每一篇文章都能回到统一判断秩序。
-                </p>
+                <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">数据面板</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
                     { label: '当前公开世界易内容', value: `${worldYiStats.publicKnowledgeCount + worldYiStats.publicCaseCount} 篇` },
@@ -254,7 +263,6 @@ export default function KnowledgePage() {
                         <Icon className="h-5 w-5" />
                       </div>
                       <div className="mt-4 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
-                      <p className="intro-copy mt-3">{item.description}</p>
                       <div className="action-guide mt-5 inline-flex items-center gap-2">
                         进入路径
                         <ArrowRight className="h-4 w-4" />
@@ -266,6 +274,16 @@ export default function KnowledgePage() {
             </div>
           </div>
         </section>
+
+        <PublicEvidencePanel
+          page="/knowledge"
+          title="把知识层接到工具、案例和环境洞察"
+          description="只看原理还不够。知识库应该继续接到具体工具、真实案例和环境洞察，既帮助用户继续判断，也让搜索与问答引擎更容易理解这个站点的完整能力图谱。"
+          surfaceKey="knowledge_page_evidence"
+          toolItems={toolItems}
+          caseItems={caseItems}
+          insightItems={insightItems}
+        />
 
         <section className="mt-10 grid gap-4 md:grid-cols-2">
           {topicHubs.length > 0 ? topicHubs.map((hub) => (
@@ -286,7 +304,7 @@ export default function KnowledgePage() {
                 专题路径
               </div>
               <h2 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">{hub.topicName}</h2>
-              <p className="intro-copy mt-3">{`已形成 ${hub.entryCount} 篇互链内容，可直接作为专题入口。`}</p>
+              <p className="mt-3 text-sm text-[color:var(--muted)]">{hub.entryCount} 篇</p>
               {hub.relatedTopicNames.length > 0 && (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {hub.relatedTopicNames.slice(0, 4).map((item) => (
@@ -303,14 +321,13 @@ export default function KnowledgePage() {
                     className="block rounded-[1.25rem] bg-white/70 p-4"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
-                    <div className="intro-copy mt-2">{item.entry.excerpt}</div>
                   </div>
                 ))}
               </div>
             </ContentCardLink>
           )) : (
-            <div className="soft-card rounded-[1.75rem] p-6 intro-copy md:col-span-2">
-              当前公开专题仍在整理中，先保留高质量基础文章对外展示。
+            <div className="soft-card rounded-[1.75rem] p-6 text-sm text-[color:var(--muted)] md:col-span-2">
+              暂无专题
             </div>
           )}
         </section>
@@ -337,7 +354,6 @@ export default function KnowledgePage() {
                     <BookOpen className="h-3.5 w-3.5" />
                     {group.groupLabel}
                   </div>
-                  <p className="intro-copy">{group.groupDescription}</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -368,7 +384,6 @@ export default function KnowledgePage() {
                           <ContentLocaleBadge locale={locale} market={market} compact />
                         </div>
                         <h2 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">{article.title}</h2>
-                        <p className="intro-copy mt-3">{article.excerpt}</p>
                         <div className="mt-3 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
                         <div className="action-guide mt-5 inline-flex items-center gap-2">
                           阅读全文
@@ -390,9 +405,8 @@ export default function KnowledgePage() {
             meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">继续往专题走</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">从单篇知识，进入专题地图</h2>
-            <p className="intro-copy mt-3">想把单篇文章变成阅读路径，下一步就进专题地图。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专题</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">专题地图</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               进入专题地图
               <ArrowRight className="h-4 w-4" />
@@ -405,9 +419,8 @@ export default function KnowledgePage() {
             meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">继续往证据走</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">原理看完，回到案例库验证</h2>
-            <p className="intro-copy mt-3">知识解释方法，案例验证它怎样落到真实问题里。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               查看案例库
               <ArrowRight className="h-4 w-4" />
@@ -420,9 +433,8 @@ export default function KnowledgePage() {
             meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">继续往环境走</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">把知识放回城市、行业与组织</h2>
-            <p className="intro-copy mt-3">完整判断不会停在个人结构，还要补环境层。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               进入洞察中心
               <ArrowRight className="h-4 w-4" />
@@ -435,16 +447,16 @@ export default function KnowledgePage() {
             sourceLabel="知识内容转化"
             sourceKey="knowledge_page"
             contentMeta={{ contentType: 'knowledge', surfaceKey: 'knowledge_page' }}
-            title="读到这里，直接把生日带入个人分析"
-            description="先填生日和时间，下一步补出生地即可开始分析。"
+            title="个人分析"
+            description="看完方法和案例后，直接进入正式分析，把抽象方法落回你自己的节奏、环境和行动问题。"
           />
         </section>
 
         <section className="mt-12">
           <NewsletterSignup
             source="knowledge_page"
-            title="订阅判断知识与站点更新"
-            description="适合持续追踪世界易内容和产品更新。"
+            title="订阅更新"
+            description="接收知识文章、专题扩写和方法更新，方便你持续跟进这套判断系统的公开内容。"
           />
         </section>
       </main>

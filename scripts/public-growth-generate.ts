@@ -1,12 +1,29 @@
 import './load-env';
+import publicGrowthTargets from '@/data/public-growth-targets.json';
 import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/lib/content-generation';
 import { getContentOpsSnapshot } from '@/lib/content-ops';
 import { listManagedContentEntries, saveManagedContentEntry } from '@/lib/content-store';
+
+type PublicGrowthTarget = {
+  key: string;
+  title: string;
+  topic: string;
+  angle: string;
+  primaryType: 'knowledge' | 'case' | 'insight';
+  locale: ContentGenerationLocale;
+  market: string;
+  keywords: string[];
+  audience: string;
+};
 
 function parseLimitArg() {
   const raw = process.argv.find((arg) => arg.startsWith('--limit='));
   const value = raw ? Number(raw.split('=')[1]) : 3;
   return Number.isFinite(value) && value > 0 ? Math.min(8, Math.round(value)) : 3;
+}
+
+function parseRepairDraftsFlag() {
+  return process.argv.includes('--repair-drafts');
 }
 
 function uniqueStrings(values: string[]) {
@@ -26,10 +43,36 @@ function ensureUniqueSlug(slug: string, used: Set<string>) {
 
 async function main() {
   const limit = parseLimitArg();
-  const queue = getContentOpsSnapshot().generationQueue
-    .filter((item) => item.sourceType === 'public-growth')
-    .slice(0, limit);
   const existingEntries = listManagedContentEntries();
+  const repairDrafts = parseRepairDraftsFlag();
+  const queue = repairDrafts
+    ? existingEntries
+      .filter((entry) => entry.status === 'draft')
+      .filter((entry) => entry.meta?.sourceType === 'public-growth')
+      .filter((entry) => `${entry.source || ''}`.startsWith('agent-fallback:'))
+      .map((entry) => {
+        const target = (publicGrowthTargets as PublicGrowthTarget[]).find((item) => item.key === entry.meta?.growthPlanKey);
+        if (!target) return null;
+        return {
+          key: target.key,
+          title: target.title,
+          locale: target.locale,
+          market: target.market,
+          contentType: target.primaryType,
+          subtype: undefined,
+          topic: target.topic,
+          angle: target.angle,
+          keywords: target.keywords,
+          audience: target.audience,
+          reason: `repair draft for ${target.key}`,
+          priorityScore: 0,
+        };
+      })
+      .filter((item): item is NonNullable<typeof item> => !!item)
+      .slice(0, limit)
+    : getContentOpsSnapshot().generationQueue
+      .filter((item) => item.sourceType === 'public-growth')
+      .slice(0, limit);
   const usedSlugs = new Set(existingEntries.map((entry) => entry.slug));
   const savedEntries = [];
   let llmSucceededCount = 0;

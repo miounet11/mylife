@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpenText, Compass, LibraryBig, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
@@ -9,9 +9,12 @@ import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import ToolCardLink from '@/components/tool-card-link';
 import {
+  getCaseStudies,
   getEntityInsightByTypeAndSlug,
   getEntityInsightsByType,
+  getKnowledgeArticles,
 } from '@/lib/content-store';
 import { entityTypeLabels, type EntityInsightType } from '@/lib/content';
 import {
@@ -19,6 +22,7 @@ import {
   createBreadcrumbSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getFeaturedTools } from '@/lib/tools';
 
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
@@ -60,6 +64,20 @@ export default async function InsightDetailPage({ params }: PageProps) {
     { name: entityTypeLabels[insight.type], path: '/insights' },
     { name: insight.title, path: `/insights/${insight.type}/${insight.slug}` },
   ];
+  const pageSignals = [insight.title, insight.excerpt, insight.name, ...insight.tags];
+  const matchesPageSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return pageSignals.some((signal) => signal && lowered.includes(signal.toLowerCase()));
+  };
+  const toolItems = getFeaturedTools(12)
+    .filter((tool) => matchesPageSignal([tool.title, tool.shortTitle, tool.themeLabel, ...tool.hookKeywords].join(' ')))
+    .slice(0, 3);
+  const knowledgeItems = getKnowledgeArticles()
+    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.category, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const caseItems = getCaseStudies()
+    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
+    .slice(0, 2);
   const schemas = [
     createArticleSchema({
       headline: insight.seoTitle,
@@ -142,7 +160,6 @@ export default async function InsightDetailPage({ params }: PageProps) {
             {otherTypes.length > 0 ? (
               <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">跨实体继续追踪</div>
-                <p className="intro-copy mt-3">同一个主题通常会同时出现在城市、行业和组织层。</p>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   {otherTypes.map((entry) => (
                     <ContentCardLink
@@ -163,7 +180,6 @@ export default async function InsightDetailPage({ params }: PageProps) {
                       className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
-                      <div className="intro-copy mt-2">{entry.excerpt}</div>
                     </ContentCardLink>
                   ))}
                 </div>
@@ -186,12 +202,81 @@ export default async function InsightDetailPage({ params }: PageProps) {
                 tags: insight.tags,
               }}
               title="群体洞察看完，直接看你自己的时间点"
-              description="把生日带入分析页，直接看个人结构和当前窗口。"
+              description="先看外部环境的共性，再把个人出生信息带进去，判断你是在顺势、逆势还是该换场。"
             />
 
             <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Compass className="h-4 w-4" />
+                洞察相关工具
+              </div>
+              <div className="mt-4 grid gap-3">
+                {toolItems.length > 0 ? toolItems.map((tool) => (
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page={`/insights/${insight.type}/${insight.slug}`}
+                    className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
+                  </ToolCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <BookOpenText className="h-4 w-4" />
+                洞察相关知识
+              </div>
+              <div className="mt-4 grid gap-3">
+                {knowledgeItems.length > 0 ? knowledgeItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/knowledge/${item.slug}`}
+                    page={`/insights/${insight.type}/${insight.slug}`}
+                    meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `knowledge_article:${item.slug}`, contentType: 'knowledge' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应知识内容</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <LibraryBig className="h-4 w-4" />
+                洞察相关案例
+              </div>
+              <div className="mt-4 grid gap-3">
+                {caseItems.length > 0 ? caseItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/cases/${item.slug}`}
+                    page={`/insights/${insight.type}/${insight.slug}`}
+                    meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">世界易环境路径</div>
-              <p className="intro-copy mt-3">从单篇洞察回到世界易环境方法，理解判断成本为什么会变化。</p>
               <div className="mt-4 space-y-4">
                 <ContentCardLink
                   href="/knowledge/world-yi-environment-method"
@@ -205,7 +290,6 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">世界易的环境方法</div>
-                  <div className="intro-copy mt-2">环境不是背景，而是和结构、阶段并列的判断层。</div>
                 </ContentCardLink>
                 <ContentCardLink
                   href="/knowledge/world-yi-judgment-crisis"
@@ -219,7 +303,6 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">AI 时代的判断危机</div>
-                  <div className="intro-copy mt-2">答案越多，人越需要更高位的环境和阶段排序能力。</div>
                 </ContentCardLink>
                 <ContentCardLink
                   href="/world-yi"
@@ -233,7 +316,6 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">回到世界易总入口</div>
-                  <div className="intro-copy mt-2">从单篇洞察回到主书、方法、案例和全球传播层。</div>
                 </ContentCardLink>
               </div>
             </div>
@@ -261,28 +343,27 @@ export default async function InsightDetailPage({ params }: PageProps) {
                       className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                      <div className="intro-copy mt-2">{item.excerpt}</div>
                     </ContentCardLink>
                   ))
                 ) : (
-                  <p className="intro-copy">当前类型仍在扩充，后续会加入更多同主题实体页面。</p>
+                  <p className="text-sm text-[color:var(--muted)]">暂无更多同类页面</p>
                 )}
               </div>
             </div>
 
             <div className="soft-card rounded-[1.75rem] p-5">
-              <div className="text-sm font-semibold text-[color:var(--muted)]">这类页面的作用</div>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">页面类型</div>
               <div className="mt-4 space-y-3 text-xs leading-6 text-[color:var(--ink)]">
-                <p>承接具体搜索意图，而不是只依赖工具页流量。</p>
-                <p>把结果页里的职业、城市、组织话题延伸成长期内容。</p>
-                <p>让首页、结果页、案例页和知识页形成更强的内链网络。</p>
+                <p>搜索承接</p>
+                <p>结果延伸</p>
+                <p>站内互链</p>
               </div>
             </div>
 
             <NewsletterSignup
               source={`insight_article:${insight.type}:${insight.slug}`}
               title="订阅实体洞察更新"
-              description="新增更多行业、城市和组织节奏内容时直接发送到邮箱。"
+              description="跟进城市、行业和组织的后续变化，让环境判断不会停留在一次性的快照。"
             />
           </div>
         </section>

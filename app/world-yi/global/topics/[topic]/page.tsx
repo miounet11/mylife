@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Globe2, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -8,6 +6,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
+import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiGlobalTopicSurfaces, type WorldYiGlobalTopicKey } from '@/lib/world-yi-global-surfaces';
 
 export const dynamic = 'force-dynamic';
@@ -16,16 +15,38 @@ function getSurface(topic: string) {
   return worldYiGlobalTopicSurfaces[topic as WorldYiGlobalTopicKey] || null;
 }
 
-export function generateMetadata({ params }: { params: { topic: string } }): Metadata {
-  const surface = getSurface(params.topic);
-  return {
-    title: surface ? `${surface.title} | 人生K线` : '世界易全球专题 | 人生K线',
-    description: surface?.description || '世界易全球华人专题页',
-  };
+export async function generateMetadata({ params }: { params: Promise<{ topic: string }> }) {
+  const { topic } = await params;
+  const surface = getSurface(topic);
+  if (!surface) {
+    return createPublicContentMetadata({
+      title: '世界易全球专题 | 人生K线',
+      description: '世界易全球华人专题页。',
+      path: `/world-yi/global/topics/${topic}`,
+      type: 'website',
+      languages: {
+        'zh-CN': `/world-yi/global/topics/${topic}`,
+        'x-default': `/world-yi/global/topics/${topic}`,
+      },
+    });
+  }
+
+  return createPublicContentMetadata({
+    title: `${surface.title} | 人生K线`,
+    description: surface.description,
+    path: `/world-yi/global/topics/${surface.key}`,
+    type: 'website',
+    languages: {
+      'zh-CN': `/world-yi/global/topics/${surface.key}`,
+      'en-US': '/world-yi/en/tracks',
+      'x-default': `/world-yi/global/topics/${surface.key}`,
+    },
+  });
 }
 
-export default function WorldYiGlobalTopicDetailPage({ params }: { params: { topic: string } }) {
-  const surface = getSurface(params.topic);
+export default async function WorldYiGlobalTopicDetailPage({ params }: { params: Promise<{ topic: string }> }) {
+  const { topic } = await params;
+  const surface = getSurface(topic);
   if (!surface) {
     notFound();
   }
@@ -36,9 +57,34 @@ export default function WorldYiGlobalTopicDetailPage({ params }: { params: { top
   const caseEntries = surface.caseSlugs
     .map((slug) => getManagedContentEntryBySlug('case', slug))
     .filter((entry): entry is NonNullable<typeof entry> => !!entry);
+  const schemas = [
+    createCollectionPageSchema({
+      headline: surface.title,
+      description: surface.description,
+      path: `/world-yi/global/topics/${surface.key}`,
+      keywords: ['世界易', surface.title, '全球华人', '专题', '案例'],
+    }),
+    createItemListSchema(
+      `${surface.title}知识`,
+      knowledgeEntries.map((entry, index) => ({
+        name: entry.title,
+        path: `/knowledge/${entry.slug}`,
+        position: index + 1,
+      })),
+    ),
+    createItemListSchema(
+      `${surface.title}案例`,
+      caseEntries.map((entry, index) => ({
+        name: entry.title,
+        path: `/cases/${entry.slug}`,
+        position: index + 1,
+      })),
+    ),
+  ].filter(Boolean);
 
   return (
     <div className="page-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <AnalyticsPageView
         eventName="knowledge_page_viewed"
         page={`/world-yi/global/topics/${surface.key}`}
@@ -65,6 +111,36 @@ export default function WorldYiGlobalTopicDetailPage({ params }: { params: { top
           highlights={surface.doctrine.map((body) => ({ body }))}
         />
 
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
+          <ContentCardLink
+            href="/world-yi/global/topics"
+            page={`/world-yi/global/topics/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_topics_page', contentType: 'knowledge', series: 'world-yi-global' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专题索引</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">回到全球专题</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/global/cases"
+            page={`/world-yi/global/topics/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_cases_page', contentType: 'case', series: 'world-yi-global' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例层</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">查看全球案例</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/en"
+            page={`/world-yi/global/topics/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', locale: 'en', series: 'world-yi-en' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">英文层</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English gateway</h2>
+          </ContentCardLink>
+        </section>
+
         <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
           <div className="section-label">
             <Sparkles className="h-3.5 w-3.5" />
@@ -86,23 +162,14 @@ export default function WorldYiGlobalTopicDetailPage({ params }: { params: { top
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
               </ContentCardLink>
             ))}
           </div>
         </section>
 
         <section className="mt-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="section-label">对应案例</div>
-              <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">这些专题必须由案例来支撑，而不是只停在概念解释。</h2>
-            </div>
-            <Link href="/world-yi/global/cases" className="action-secondary">
-              查看全球案例
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          <div className="section-label">对应案例</div>
+          <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">对应案例</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {caseEntries.map((entry) => (
               <ContentCardLink
@@ -119,7 +186,6 @@ export default function WorldYiGlobalTopicDetailPage({ params }: { params: { top
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
               </ContentCardLink>
             ))}
           </div>

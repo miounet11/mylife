@@ -2,6 +2,7 @@ import {
   buildConfidenceAnalysis,
   buildDecisionPlaybook,
   buildExpertInterpretation,
+  buildReportActionSuggestions,
   buildReportCorrectionInsight,
   buildMonthlyWindows,
   buildReportValidationInsights,
@@ -99,6 +100,12 @@ describe('report-v2 helpers', () => {
     expect(first[11].key).toBe('2027-02');
   });
 
+  it('anchors monthly windows to local month instead of UTC month rollover', () => {
+    const windows = buildMonthlyWindows(baseResult, '2026-03');
+
+    expect(windows[0]?.key).toBe('2026-03');
+  });
+
   it('builds confidence analysis with stable and sensitive areas', () => {
     const confidence = buildConfidenceAnalysis(baseResult);
     expect(confidence.overallScore).toBeGreaterThanOrEqual(45);
@@ -191,5 +198,15 @@ describe('report-v2 helpers', () => {
     expect(correction.level).toBe('action');
     expect(correction.fixes.length).toBeGreaterThan(0);
     expect(correction.checkpoints.length).toBeGreaterThan(0);
+  });
+
+  it('builds action suggestions on local month keys near timezone boundaries', () => {
+    const suggestions = buildReportActionSuggestions({
+      ...baseResult,
+      monthlyWindows: [],
+    }, '2026-03');
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0]?.date).toBe('2026-03-01');
   });
 });

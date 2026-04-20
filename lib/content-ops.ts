@@ -9,9 +9,43 @@ import {
 } from '@/lib/content-store';
 import type { EntityInsightType } from '@/lib/content';
 import { runContentRadarCycle } from '@/lib/content-radar';
-import { buildPublicGrowthAudit } from '@/lib/public-growth-plan';
+import { assessGrowthPublication } from '@/lib/public-growth-plan';
 import type { ContentSchedulerRunRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
+import {
+  readOpenAgentContentAnalysisSnapshot,
+  readWorldYiContentDecisionLedger,
+  resolveWorldYiAutonomyRuntimePolicy,
+  summarizeWorldYiContentDecisionLedger,
+  summarizeOpenAgentAutonomyBacklogFocus,
+  writeWorldYiContentDecisionLedgerEntry,
+  type OpenAgentContentAnalysisPlan,
+  type WorldYiContentDecision,
+  type WorldYiAutonomyPolicy,
+  type WorldYiContentDecisionSample,
+} from '@/lib/world-yi-autonomous-state';
+import {
+  buildWorldYiPublicationLaneSummaries,
+  buildWorldYiPublicationReserveSignal,
+  findWorldYiLaneCoverageRow,
+  getWorldYiPublicationLaneConfigByKey,
+  type LaneKey,
+  type PublicationLaneSummary,
+  type SourceType,
+} from '@/lib/world-yi-publication-lanes';
+import {
+  getContentSchedulerAdaptiveFreshnessWeight,
+  getContentSchedulerAdaptiveRadarSourceWeight,
+  getContentSchedulerAdaptiveTypeWeight,
+  getContentSchedulerDailyPublishLimit,
+  getContentSchedulerDraftBatchSize,
+  getContentSchedulerDraftReserveTarget,
+  getContentSchedulerGenerateCooldownMinutes,
+  getContentSchedulerMinPublishGapMinutes,
+  getContentSchedulerPublishHoursRaw,
+  getContentSchedulerRadarRefreshMaxAgeHours,
+  getContentSchedulerTimezoneOffsetMinutes,
+} from '@/lib/env';
 
 type AnalyticsRow = {
   event_name: string;
@@ -66,7 +100,7 @@ type GenerationQueueItem = {
   audience: string;
   market?: string;
   locale?: string;
-  sourceType?: 'cluster' | 'radar' | 'public-growth';
+  sourceType?: 'cluster' | 'radar' | SourceType;
 };
 
 type AutoPublishCandidate = {
@@ -138,6 +172,8 @@ type ContentSchedulerState = {
   recentRuns: ContentSchedulerRunRecord[];
 };
 
+type ContentSchedulerExecutionMode = 'live' | 'validate';
+
 type ContentTypeBenchmark = {
   contentType: ManagedContentType;
   publishedCount: number;
@@ -164,6 +200,74 @@ type ScheduledPublishCandidate = {
   entry: ManagedContentEntry;
   score: number;
   reasons: string[];
+};
+
+type EvaluatedScheduledPublishCandidate = ScheduledPublishCandidate & {
+  ready: boolean;
+  hardBlockReasons: string[];
+  sourceType?: string;
+  growthPlanKey?: string;
+  laneKey?: string;
+  laneLabel?: string;
+  laneTargetKey?: string;
+  laneNeedsCoverage: boolean;
+  weakLane: boolean;
+  decision: WorldYiContentDecision;
+  policySource: WorldYiAutonomyPolicy['source'];
+  policyFocusKeys: string[];
+  minimumScore: number;
+};
+
+type ScheduledPublishEvaluation = {
+  autonomyPolicy: WorldYiAutonomyPolicy;
+  candidates: EvaluatedScheduledPublishCandidate[];
+};
+
+type CandidateSuppressionSummary = {
+  exactTitleBlockedCount: number;
+  familyBlockedCount: number;
+  topBlockedReasons: string[];
+};
+
+type CandidateSuppressionIndex = {
+  exactTitleCounts: Record<string, number>;
+  familyBuckets: Record<string, { count: number; reasonCounts: Record<string, number> }>;
+};
+
+type AutoPublishGateDecision = {
+  ready: boolean;
+  score: number;
+  reasons: string[];
+  hardBlockReasons: string[];
+};
+
+type OpenAgentBlockedPatternField =
+  | 'key'
+  | 'title'
+  | 'topic'
+  | 'reason'
+  | 'source'
+  | 'slug'
+  | 'sourceType'
+  | 'market'
+  | 'locale'
+  | 'audience'
+  | 'contentType'
+  | 'signature';
+
+export type OpenAgentBlockedPatternTarget = {
+  key?: string;
+  title?: string;
+  topic?: string;
+  reason?: string;
+  source?: string;
+  slug?: string;
+  sourceType?: string;
+  market?: string;
+  locale?: string;
+  audience?: string;
+  contentType?: string;
+  signatures?: string[];
 };
 
 export const STRATEGIC_CLUSTERS: StrategicCluster[] = [
@@ -285,8 +389,21 @@ function normalizeText(value: string) {
   return value.trim().toLowerCase();
 }
 
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function normalizeBlockedPatternText(value: string) {
+  return normalizeText(value).replace(/\s+/g, ' ').trim();
+}
+
 function uniqueStrings(values: string[]) {
   return [...new Set(values.filter(Boolean))];
+}
+
+function readMetaString(meta: Record<string, unknown> | undefined, key: string) {
+  const value = meta?.[key];
+  return typeof value === 'string' ? value.trim() : '';
 }
 
 function buildSurfaceLabel(key: string) {
@@ -339,38 +456,727 @@ function getPublishedTypesForCluster(entries: ManagedContentEntry[], cluster: St
   };
 }
 
-function qualifiesForAutoPublish(entry: {
-  llmUsed: boolean;
-  source?: string;
-  excerpt: string;
-  seoTitle: string;
-  seoDescription: string;
-  tags: string[];
-  sections: Array<{ title: string; paragraphs: string[] }>;
-}) {
+function hasStructuredAutoPublishQuality(entry: ManagedContentEntry) {
   const paragraphQualityOk = entry.sections.every((section) => (
     section.title.trim().length >= 4 &&
     section.paragraphs.length >= 2 &&
-    section.paragraphs.every((paragraph) => paragraph.trim().length >= 12)
+    section.paragraphs.every((paragraph) => paragraph.trim().length >= 18)
   ));
-  const baseOk = (
-    entry.excerpt.trim().length >= 56 &&
+
+  return (
+    entry.excerpt.trim().length >= 72 &&
     entry.seoTitle.trim().length >= 12 &&
-    entry.seoDescription.trim().length >= 42 &&
+    entry.seoDescription.trim().length >= 72 &&
     entry.tags.length >= 4 &&
     entry.sections.length >= 4 &&
     paragraphQualityOk
   );
+}
 
-  if (!baseOk) {
+function normalizeTitleKey(value: string) {
+  return normalizeText(value)
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function normalizeTitleFamilyKey(value: string) {
+  return normalizeTitleKey(value)
+    .replace(/的深度解读|的深度解讀|deep dive/gi, ' ')
+    .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, ' ')
+    .replace(/\b\d{4}\b/g, ' ')
+    .replace(/\b\d{1,2}\b/g, ' ')
+    .replace(/[0-9]/g, ' ')
+    .replace(/[-–—:："“”'’.,()/]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function buildCandidateSuppressionIndex(): CandidateSuppressionIndex {
+  return readWorldYiContentDecisionLedger(6)
+    .flatMap((ledgerEntry) => ledgerEntry.decisions || [])
+    .filter((sample) => sample.decision === 'blocked')
+    .reduce<CandidateSuppressionIndex>((accumulator, sample) => {
+      const exactTitleKey = normalizeTitleKey(sample.title);
+      const familyKey = normalizeTitleFamilyKey(sample.title);
+
+      if (exactTitleKey) {
+        accumulator.exactTitleCounts[exactTitleKey] = (accumulator.exactTitleCounts[exactTitleKey] || 0) + 1;
+      }
+
+      if (familyKey.length >= 12) {
+        if (!accumulator.familyBuckets[familyKey]) {
+          accumulator.familyBuckets[familyKey] = {
+            count: 0,
+            reasonCounts: {},
+          };
+        }
+
+        accumulator.familyBuckets[familyKey].count += 1;
+        sample.hardBlockReasons.forEach((reason) => {
+          accumulator.familyBuckets[familyKey].reasonCounts[reason] = (
+            accumulator.familyBuckets[familyKey].reasonCounts[reason] || 0
+          ) + 1;
+        });
+      }
+
+      return accumulator;
+    }, {
+      exactTitleCounts: {},
+      familyBuckets: {},
+    });
+}
+
+function summarizeRecentCandidateSuppression(
+  entry: ManagedContentEntry,
+  suppressionIndex: CandidateSuppressionIndex
+): CandidateSuppressionSummary {
+  const exactTitleBlockedCount = suppressionIndex.exactTitleCounts[normalizeTitleKey(entry.title)] || 0;
+  const familyBucket = suppressionIndex.familyBuckets[normalizeTitleFamilyKey(entry.title)];
+  const topBlockedReasons = Object.entries(familyBucket?.reasonCounts || {})
+    .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+    .slice(0, 3)
+    .map(([reason]) => reason);
+
+  return {
+    exactTitleBlockedCount,
+    familyBlockedCount: familyBucket?.count || 0,
+    topBlockedReasons,
+  };
+}
+
+function buildCandidateSuppressionReason(
+  entry: ManagedContentEntry,
+  suppressionIndex: CandidateSuppressionIndex
+) {
+  const suppression = summarizeRecentCandidateSuppression(entry, suppressionIndex);
+  const dominatedBySameReasons = suppression.topBlockedReasons.some((reason) => (
+    /仅允许 LLM 草稿进入自动发布候选|历史转化过弱|热点来源历史反馈过弱|结构质量未达自动发布阈值/.test(reason)
+  ));
+
+  if (suppression.exactTitleBlockedCount >= 2) {
+    return `重复标题预过滤：最近 ${suppression.exactTitleBlockedCount} 次同标题候选均已被阻断`;
+  }
+
+  if (
+    suppression.familyBlockedCount >= 3
+    && dominatedBySameReasons
+    && !entry.source.startsWith('agent-llm:')
+  ) {
+    return `重复题材/来源疲劳预过滤：最近 ${suppression.familyBlockedCount} 次同题材候选已因相近原因被阻断`;
+  }
+
+  return '';
+}
+
+function buildAutoPublishGateDecision(params: {
+  entry: ManagedContentEntry;
+  performance: ContentPerformanceContext;
+  lanes: PublicationLaneSummary[];
+  autonomyPolicy: WorldYiAutonomyPolicy;
+  now?: Date;
+  config?: ContentSchedulerConfig;
+}): AutoPublishGateDecision {
+  const now = params.now || new Date();
+  const config = params.config || getContentSchedulerConfig();
+  const entry = params.entry;
+  const reasons: string[] = [];
+  const hardBlockReasons: string[] = [];
+  const sourceType = readMetaString(entry.meta, 'sourceType');
+  const growthPlanKey = readMetaString(entry.meta, 'growthPlanKey');
+  const laneSignal = findWorldYiLaneCoverageRow({
+    lanes: params.lanes,
+    sourceType,
+    growthPlanKey,
+  });
+  const reserveSignal = buildWorldYiPublicationReserveSignal(params.lanes);
+
+  if (params.autonomyPolicy.publishGate.requireLlmSource && !entry.source.startsWith('agent-llm:')) {
+    hardBlockReasons.push('仅允许 LLM 草稿进入自动发布候选');
+  }
+
+  if (!hasStructuredAutoPublishQuality(entry)) {
+    hardBlockReasons.push('结构质量未达自动发布阈值');
+  } else {
+    reasons.push('结构质量通过');
+  }
+
+  let score = computeAutoPublishScore(entry);
+  reasons.push(`基础质量分 ${score}`);
+
+  if (laneSignal?.queueRow) {
+    score += params.autonomyPolicy.publishGate.laneGapBoost;
+    reasons.push(`补齐 ${laneSignal.lane.label} 缺口 +${params.autonomyPolicy.publishGate.laneGapBoost}`);
+  } else if (laneSignal?.lane && reserveSignal.weakLaneKeys.includes(laneSignal.lane.key)) {
+    score += params.autonomyPolicy.publishGate.weakLaneBoost;
+    reasons.push(`补强 ${laneSignal.lane.label} 保底储备 +${params.autonomyPolicy.publishGate.weakLaneBoost}`);
+  }
+
+  if (params.autonomyPolicy.publishGate.backlogLaneReserveBoost > 0 && laneSignal?.lane) {
+    score += params.autonomyPolicy.publishGate.backlogLaneReserveBoost;
+    reasons.push(`OpenAgent backlog 强化 lane reserve +${params.autonomyPolicy.publishGate.backlogLaneReserveBoost}`);
+  }
+
+  if (
+    sourceType === 'public-growth'
+    || sourceType === 'public-growth-wave2'
+    || sourceType === 'public-growth-global'
+  ) {
+    const publicationAssessment = assessGrowthPublication(entry, sourceType);
+    score += Math.round(publicationAssessment.score / 2);
+    reasons.push(`公开流量位质量校验 +${Math.round(publicationAssessment.score / 2)}`);
+
+    if (params.autonomyPolicy.publishGate.requireGrowthPublicationReady && !publicationAssessment.ready) {
+      hardBlockReasons.push('公开流量位质量校验未通过');
+    }
+  }
+
+  const typeBenchmark = params.performance.contentTypeBenchmarks[entry.contentType];
+  if (typeBenchmark) {
+    const typeBoost = typeBenchmark.avgConversionRate * config.adaptiveTypeWeight / 10
+      + typeBenchmark.avgQuickStarts * 4;
+    score += typeBoost;
+    reasons.push(`${entry.contentType} 历史转化加权 +${Math.round(typeBoost)}`);
+
+    if (
+      params.autonomyPolicy.publishGate.blockLowPerformanceTypes
+      && typeBenchmark.publishedCount >= params.autonomyPolicy.publishGate.lowPerformanceTypeMinPublishedCount
+      && typeBenchmark.avgConversionRate === 0
+      && typeBenchmark.avgQuickStarts === 0
+      && !laneSignal?.queueRow
+    ) {
+      hardBlockReasons.push(`${entry.contentType} 历史转化过弱，优先补缺口而不是继续发布`);
+    }
+  }
+
+  const radarSourceId = readMetaString(entry.meta, 'radarSourceId');
+  if (radarSourceId && params.performance.radarSourceBenchmarks[radarSourceId]) {
+    const sourceBenchmark = params.performance.radarSourceBenchmarks[radarSourceId];
+    const sourceBoost = sourceBenchmark.avgConversionRate * config.adaptiveRadarSourceWeight / 10
+      + sourceBenchmark.avgQuickStarts * 6;
+    score += sourceBoost;
+    reasons.push(`热点源反馈加权 +${Math.round(sourceBoost)}`);
+
+    if (
+      params.autonomyPolicy.publishGate.blockLowPerformanceRadarSources
+      && sourceBenchmark.publishedCount >= params.autonomyPolicy.publishGate.lowPerformanceRadarSourceMinPublishedCount
+      && sourceBenchmark.avgConversionRate === 0
+      && sourceBenchmark.avgQuickStarts === 0
+      && !laneSignal?.queueRow
+    ) {
+      hardBlockReasons.push('热点来源历史反馈过弱，暂停自动发布');
+    }
+  }
+
+  const updatedAt = parseUtcDate(entry.updatedAt);
+  const ageHours = updatedAt ? Math.max(0, (now.getTime() - updatedAt.getTime()) / 3_600_000) : 48;
+  const freshnessBoost = Math.max(0, 24 - ageHours) * config.adaptiveFreshnessWeight / 24;
+  score += freshnessBoost;
+  reasons.push(`新鲜度加权 +${Math.round(freshnessBoost)}`);
+
+  const minimumScore = params.autonomyPolicy.publishGate.minScore;
+  if (score < minimumScore) {
+    hardBlockReasons.push(`综合评分不足 ${minimumScore}`);
+  }
+
+  return {
+    ready: hardBlockReasons.length === 0,
+    score: Math.round(score),
+    reasons,
+    hardBlockReasons,
+  };
+}
+
+function classifyScheduledCandidateDecision(decision: AutoPublishGateDecision): WorldYiContentDecision {
+  if (decision.ready) {
+    return 'hold';
+  }
+
+  if (decision.hardBlockReasons.some((reason) => (
+    /仅允许 LLM 草稿进入自动发布候选|历史转化过弱|热点来源历史反馈过弱/.test(reason)
+  ))) {
+    return 'blocked';
+  }
+
+  return 'revise';
+}
+
+function sortEvaluatedScheduledCandidates(
+  left: EvaluatedScheduledPublishCandidate,
+  right: EvaluatedScheduledPublishCandidate
+) {
+  if (left.ready !== right.ready) {
+    return left.ready ? -1 : 1;
+  }
+
+  const scoreGap = right.score - left.score;
+  if (scoreGap !== 0) {
+    return scoreGap;
+  }
+
+  return (parseUtcDate(right.entry.updatedAt)?.getTime() || 0) - (parseUtcDate(left.entry.updatedAt)?.getTime() || 0);
+}
+
+function evaluateDraftEntries(params: {
+  entries: ManagedContentEntry[];
+  performance: ContentPerformanceContext;
+  lanes: PublicationLaneSummary[];
+  autonomyPolicy: WorldYiAutonomyPolicy;
+  analysisPlan?: OpenAgentContentAnalysisPlan | null;
+  now?: Date;
+  config?: ContentSchedulerConfig;
+}) {
+  const reserveSignal = buildWorldYiPublicationReserveSignal(params.lanes);
+  const suppressionIndex = buildCandidateSuppressionIndex();
+
+  return params.entries
+    .filter((entry) => entry.status === 'draft')
+    .map((entry) => {
+      const sourceType = readMetaString(entry.meta, 'sourceType') || undefined;
+      const growthPlanKey = readMetaString(entry.meta, 'growthPlanKey') || undefined;
+      const laneSignal = findWorldYiLaneCoverageRow({
+        lanes: params.lanes,
+        sourceType,
+        growthPlanKey,
+      });
+      const openAgentBlockedPatternReason = buildDraftEntryBlockedPatternReason({
+        entry,
+        sourceType,
+        growthPlanKey,
+        analysisPlan: params.analysisPlan || null,
+      });
+      const suppressionReason = buildCandidateSuppressionReason(entry, suppressionIndex);
+      const prefilterReasons = [
+        openAgentBlockedPatternReason,
+        suppressionReason,
+      ].filter(Boolean);
+
+      if (prefilterReasons.length > 0) {
+        return {
+          entry,
+          score: 0,
+          reasons: prefilterReasons,
+          ready: false,
+          hardBlockReasons: prefilterReasons,
+          sourceType,
+          growthPlanKey,
+          laneKey: laneSignal?.lane.key,
+          laneLabel: laneSignal?.lane.label,
+          laneTargetKey: laneSignal?.queueRow?.key,
+          laneNeedsCoverage: !!laneSignal?.queueRow,
+          weakLane: laneSignal?.lane ? reserveSignal.weakLaneKeys.includes(laneSignal.lane.key) : false,
+          decision: 'blocked' as const,
+          policySource: params.autonomyPolicy.source,
+          policyFocusKeys: params.autonomyPolicy.focusKeys,
+          minimumScore: params.autonomyPolicy.publishGate.minScore,
+        } satisfies EvaluatedScheduledPublishCandidate;
+      }
+
+      const decision = buildAutoPublishGateDecision({
+        entry,
+        performance: params.performance,
+        lanes: params.lanes,
+        autonomyPolicy: params.autonomyPolicy,
+        now: params.now,
+        config: params.config,
+      });
+
+      return {
+        entry,
+        score: decision.score,
+        reasons: decision.reasons,
+        ready: decision.ready,
+        hardBlockReasons: decision.hardBlockReasons,
+        sourceType,
+        growthPlanKey,
+        laneKey: laneSignal?.lane.key,
+        laneLabel: laneSignal?.lane.label,
+        laneTargetKey: laneSignal?.queueRow?.key,
+        laneNeedsCoverage: !!laneSignal?.queueRow,
+        weakLane: laneSignal?.lane ? reserveSignal.weakLaneKeys.includes(laneSignal.lane.key) : false,
+        decision: classifyScheduledCandidateDecision(decision),
+        policySource: params.autonomyPolicy.source,
+        policyFocusKeys: params.autonomyPolicy.focusKeys,
+        minimumScore: params.autonomyPolicy.publishGate.minScore,
+      } satisfies EvaluatedScheduledPublishCandidate;
+    })
+    .sort(sortEvaluatedScheduledCandidates);
+}
+
+function evaluateScheduledPublishCandidates(params: {
+  entries: ManagedContentEntry[];
+  analyticsRows: AnalyticsRow[];
+  now?: Date;
+  config?: ContentSchedulerConfig;
+}): ScheduledPublishEvaluation {
+  const now = params.now || new Date();
+  const config = params.config || getContentSchedulerConfig();
+  const performance = buildContentPerformanceContext({
+    entries: params.entries,
+    analyticsRows: params.analyticsRows,
+  });
+  const lanes = buildWorldYiPublicationLaneSummaries(params.entries);
+  const backlogFocus = summarizeOpenAgentAutonomyBacklogFocus();
+  const openAgentContentAnalysis = readActiveOpenAgentContentAnalysisPlan();
+  const policyResolution = resolveWorldYiAutonomyRuntimePolicy({
+    fallbackFocus: backlogFocus,
+    analysisPlan: openAgentContentAnalysis,
+  });
+
+  return {
+    autonomyPolicy: policyResolution.effectivePolicy,
+    candidates: evaluateDraftEntries({
+      entries: params.entries,
+      performance,
+      lanes,
+      autonomyPolicy: policyResolution.effectivePolicy,
+      analysisPlan: openAgentContentAnalysis,
+      now,
+      config,
+    }),
+  };
+}
+
+function readActiveOpenAgentContentAnalysisPlan(maxAgeHours = 12) {
+  const snapshot = readOpenAgentContentAnalysisSnapshot();
+  if (!snapshot || snapshot.status !== 'success') {
+    return null;
+  }
+
+  const updatedAt = parseUtcDate(snapshot.updatedAt);
+  if (!updatedAt) {
+    return null;
+  }
+
+  const ageHours = (Date.now() - updatedAt.getTime()) / 3_600_000;
+  if (ageHours > maxAgeHours) {
+    return null;
+  }
+
+  return snapshot.plan;
+}
+
+function rankOpenAgentQueueOverridePriority(priority?: OpenAgentContentAnalysisPlan['queueOverrides'][number]['priority']) {
+  switch (priority) {
+    case 'critical':
+      return 1200;
+    case 'high':
+      return 800;
+    case 'medium':
+      return 500;
+    default:
+      return 0;
+  }
+}
+
+function splitOpenAgentBlockedPattern(pattern: string) {
+  const raw = `${pattern || ''}`.trim();
+  const matched = raw.match(/^(key|title|topic|reason|source|slug|sourceType|market|locale|audience|contentType|signature)\s*:\s*(.+)$/i);
+  if (!matched) {
+    return {
+      field: null,
+      needle: normalizeBlockedPatternText(raw),
+    };
+  }
+
+  const fieldMap: Record<string, OpenAgentBlockedPatternField> = {
+    key: 'key',
+    title: 'title',
+    topic: 'topic',
+    reason: 'reason',
+    source: 'source',
+    slug: 'slug',
+    sourcetype: 'sourceType',
+    market: 'market',
+    locale: 'locale',
+    audience: 'audience',
+    contenttype: 'contentType',
+    signature: 'signature',
+  };
+
+  return {
+    field: fieldMap[matched[1].toLowerCase()] || null,
+    needle: normalizeBlockedPatternText(matched[2]),
+  };
+}
+
+function buildOpenAgentBlockedPatternFields(target: OpenAgentBlockedPatternTarget) {
+  const signatures = uniqueStrings(target.signatures || []);
+
+  return {
+    key: [target.key || ''],
+    title: [target.title || ''],
+    topic: [target.topic || ''],
+    reason: [target.reason || ''],
+    source: uniqueStrings([target.source || '', ...signatures]),
+    slug: [target.slug || ''],
+    sourceType: [target.sourceType || ''],
+    market: [target.market || ''],
+    locale: [target.locale || ''],
+    audience: [target.audience || ''],
+    contentType: [target.contentType || ''],
+    signature: signatures,
+  } satisfies Record<OpenAgentBlockedPatternField, string[]>;
+}
+
+function matchOpenAgentBlockedNeedle(candidate: string, needle: string) {
+  const normalizedCandidate = normalizeBlockedPatternText(candidate);
+  if (!normalizedCandidate || !needle) {
     return false;
   }
 
-  if (entry.llmUsed) {
-    return true;
+  if (needle.includes('*')) {
+    const regex = new RegExp(needle.split('*').map(escapeRegex).join('.*'), 'i');
+    return regex.test(normalizedCandidate);
   }
 
-  return false;
+  return normalizedCandidate.includes(needle);
+}
+
+export function matchesOpenAgentBlockedPattern(pattern: string, target: OpenAgentBlockedPatternTarget) {
+  const { field, needle } = splitOpenAgentBlockedPattern(pattern);
+  if (!needle) {
+    return false;
+  }
+
+  const fields = buildOpenAgentBlockedPatternFields(target);
+  const candidates = field
+    ? fields[field]
+    : Object.values(fields).flat();
+
+  return candidates.some((candidate) => matchOpenAgentBlockedNeedle(candidate, needle));
+}
+
+function buildDraftEntryBlockedPatternReason(params: {
+  entry: ManagedContentEntry;
+  sourceType?: string;
+  growthPlanKey?: string;
+  analysisPlan: OpenAgentContentAnalysisPlan | null;
+}) {
+  const blockedPatterns = params.analysisPlan?.blockedPatterns || [];
+  if (blockedPatterns.length === 0) {
+    return '';
+  }
+
+  const protectedKeys = buildOpenAgentProtectedGenerationKeySet(params.analysisPlan);
+  if (
+    (params.growthPlanKey && protectedKeys.has(params.growthPlanKey))
+    || (params.entry.slug && protectedKeys.has(params.entry.slug))
+  ) {
+    return '';
+  }
+
+  const sourceSegments = `${params.entry.source || ''}`.split(':').filter(Boolean);
+  const sourceFamily = sourceSegments[0] || '';
+  const sourceLeaf = sourceSegments[sourceSegments.length - 1] || '';
+  const synthesisType = readMetaString(params.entry.meta, 'synthesisType');
+
+  const matchedPattern = blockedPatterns.find((pattern) => matchesOpenAgentBlockedPattern(pattern, {
+    title: params.entry.title,
+    source: params.entry.source,
+    slug: params.entry.slug,
+    sourceType: params.sourceType,
+    contentType: params.entry.contentType,
+    signatures: uniqueStrings([
+      params.entry.source && params.entry.slug ? `${params.entry.source}:${params.entry.slug}` : '',
+      sourceFamily && params.entry.slug ? `${sourceFamily}:${params.entry.slug}` : '',
+      sourceFamily && params.entry.slug && sourceLeaf ? `${sourceFamily}:${params.entry.slug}:${sourceLeaf}` : '',
+      params.sourceType && params.growthPlanKey ? `${params.sourceType}:${params.growthPlanKey}` : '',
+      params.sourceType && params.entry.slug ? `${params.sourceType}:${params.entry.slug}` : '',
+      synthesisType && params.entry.slug ? `knowledge-synthesis:${params.entry.slug}:${synthesisType}` : '',
+    ]),
+  }));
+
+  return matchedPattern ? `OpenAgent 模式预过滤：匹配阻断模式 ${matchedPattern}` : '';
+}
+
+function buildGenerationQueueBlockedPatternTarget(item: GenerationQueueItem): OpenAgentBlockedPatternTarget {
+  return {
+    key: item.key,
+    title: item.title,
+    topic: item.topic,
+    reason: item.reason,
+    source: item.sourceType,
+    sourceType: item.sourceType,
+    market: item.market,
+    locale: item.locale,
+    audience: item.audience,
+    contentType: item.contentType,
+    signatures: uniqueStrings([
+      item.sourceType && item.key ? `${item.sourceType}:${item.key}` : '',
+      item.sourceType && item.key && item.contentType ? `${item.sourceType}:${item.key}:${item.contentType}` : '',
+    ]),
+  };
+}
+
+function buildOpenAgentProtectedGenerationKeySet(analysisPlan: OpenAgentContentAnalysisPlan | null) {
+  return new Set([
+    ...(analysisPlan?.queueOverrides || []).map((item) => item.key),
+    ...(analysisPlan?.laneContracts || []).flatMap((item) => item.targetKeys),
+  ].filter(Boolean));
+}
+
+function prioritizeLaneQueueByOpenAgentPlan(params: {
+  lane: PublicationLaneSummary;
+  items: GenerationQueueItem[];
+  analysisPlan: OpenAgentContentAnalysisPlan | null;
+  weakLaneKeys: LaneKey[];
+  perLaneQuota: number;
+}) {
+  const contract = params.analysisPlan?.laneContracts.find((item) => item.lane === params.lane.key) || null;
+  const targetRank = new Map<string, number>((contract?.targetKeys || []).map((key, index) => [key, 100 - index]));
+  const isWeakLane = params.weakLaneKeys.includes(params.lane.key);
+
+  return [...params.items]
+    .sort((left, right) => {
+      const leftRank = targetRank.get(left.key) || 0;
+      const rightRank = targetRank.get(right.key) || 0;
+      if (leftRank !== rightRank) {
+        return rightRank - leftRank;
+      }
+
+      if (isWeakLane && left.sourceType === right.sourceType) {
+        return right.priorityScore - left.priorityScore;
+      }
+
+      return right.priorityScore - left.priorityScore;
+    })
+    .slice(0, Math.max(params.perLaneQuota, isWeakLane ? Math.max(2, params.perLaneQuota) : params.perLaneQuota));
+}
+
+export function applyOpenAgentAnalysisToGenerationQueue(params: {
+  queue: GenerationQueueItem[];
+  analysisPlan: OpenAgentContentAnalysisPlan | null;
+}) {
+  if (!params.analysisPlan) {
+    return params.queue;
+  }
+
+  const overrideRank = new Map(
+    params.analysisPlan.queueOverrides.map((item) => [item.key, rankOpenAgentQueueOverridePriority(item.priority)])
+  );
+  const blockedPatterns = params.analysisPlan.blockedPatterns.map((item) => `${item || ''}`.trim()).filter(Boolean);
+  const protectedKeys = buildOpenAgentProtectedGenerationKeySet(params.analysisPlan);
+
+  return [...params.queue]
+    .filter((item) => (
+      protectedKeys.has(item.key)
+      || !blockedPatterns.some((pattern) => matchesOpenAgentBlockedPattern(
+        pattern,
+        buildGenerationQueueBlockedPatternTarget(item)
+      ))
+    ))
+    .sort((left, right) => {
+      const leftRank = overrideRank.get(left.key) || 0;
+      const rightRank = overrideRank.get(right.key) || 0;
+      if (leftRank !== rightRank) {
+        return rightRank - leftRank;
+      }
+
+      return right.priorityScore - left.priorityScore;
+    });
+}
+
+function buildWeakLaneGenerationContract(params: {
+  publicationReserve: ReturnType<typeof buildWorldYiPublicationReserveSignal>;
+  draftBatchSize: number;
+}) {
+  const weakLaneGaps = params.publicationReserve.weakLaneKeys.map((laneKey) => ({
+    laneKey,
+    gap: Math.max(1, params.publicationReserve.minQueuedTargetsPerLane - (params.publicationReserve.queuedTargetsPerLane[laneKey] || 0)),
+  }));
+  const generationLimit = Math.min(
+    params.draftBatchSize,
+    weakLaneGaps.reduce((sum, item) => sum + item.gap, 0)
+  );
+
+  return {
+    weakLaneKeys: weakLaneGaps.map((item) => item.laneKey),
+    generationLimit,
+  };
+}
+
+function buildContentDecisionSamples(params: {
+  candidates: EvaluatedScheduledPublishCandidate[];
+  publishedEntry?: ManagedContentEntry | null;
+  evaluatedAt?: string;
+}): WorldYiContentDecisionSample[] {
+  const publishedKey = params.publishedEntry
+    ? buildEntryKey(params.publishedEntry.contentType, params.publishedEntry.slug)
+    : '';
+  const evaluatedAt = params.evaluatedAt || new Date().toISOString();
+
+  return params.candidates.map((candidate) => {
+    const candidateKey = buildEntryKey(candidate.entry.contentType, candidate.entry.slug);
+
+    return {
+      id: candidateKey,
+      entryId: candidate.entry.id,
+      slug: candidate.entry.slug,
+      title: candidate.entry.title,
+      contentType: candidate.entry.contentType,
+      source: candidate.entry.source,
+      sourceType: candidate.sourceType,
+      growthPlanKey: candidate.growthPlanKey,
+      laneKey: candidate.laneKey,
+      laneLabel: candidate.laneLabel,
+      laneTargetKey: candidate.laneTargetKey,
+      laneNeedsCoverage: candidate.laneNeedsCoverage,
+      weakLane: candidate.weakLane,
+      decision: publishedKey && candidateKey === publishedKey ? 'publish' : candidate.decision,
+      score: candidate.score,
+      reasons: candidate.reasons,
+      hardBlockReasons: candidate.hardBlockReasons,
+      policySource: candidate.policySource,
+      policyFocusKeys: candidate.policyFocusKeys,
+      minimumScore: candidate.minimumScore,
+      evaluatedAt,
+    };
+  });
+}
+
+function persistContentDecisionLedger(params: {
+  cycleRunId?: string;
+  trigger: 'cron' | 'manual';
+  mode: ContentSchedulerExecutionMode;
+  reason: string;
+  state: ContentSchedulerState;
+  autonomyPolicy: WorldYiAutonomyPolicy;
+  candidates: EvaluatedScheduledPublishCandidate[];
+  generatedCount: number;
+  publishedCount: number;
+  publishedEntry?: ManagedContentEntry | null;
+  radarRefreshed: boolean;
+  preview?: {
+    wouldRefreshRadar: boolean;
+    wouldGenerateCount: number;
+    wouldPublishTitle: string | null;
+    wouldPublishSlug: string | null;
+  } | null;
+  evaluatedAt?: string;
+}) {
+  return writeWorldYiContentDecisionLedgerEntry({
+    id: params.cycleRunId ? `${params.cycleRunId}_content_decisions` : `content_decisions_${generateId()}`,
+    cycleRunId: params.cycleRunId,
+    trigger: params.trigger,
+    mode: params.mode,
+    reason: params.reason,
+    publishWindowOpen: params.state.publishWindowOpen,
+    canPublishNow: params.state.canPublishNow,
+    generatedCount: params.generatedCount,
+    publishedCount: params.publishedCount,
+    publishedTitle: params.publishedEntry?.title || null,
+    publishedSlug: params.publishedEntry?.slug || null,
+    radarRefreshed: params.radarRefreshed,
+    policySource: params.autonomyPolicy.source,
+    policyFocusKeys: params.autonomyPolicy.focusKeys,
+    preview: params.preview || null,
+    decisions: buildContentDecisionSamples({
+      candidates: params.candidates,
+      publishedEntry: params.publishedEntry,
+      evaluatedAt: params.evaluatedAt,
+    }),
+    createdAt: params.evaluatedAt || new Date().toISOString(),
+  });
 }
 
 function ensureUniqueSlug(slug: string, used: Set<string>) {
@@ -457,17 +1263,17 @@ function nextPublishSlotLabel(now: Date, config: ContentSchedulerConfig) {
 
 function getContentSchedulerConfig(): ContentSchedulerConfig {
   return {
-    timezoneOffsetMinutes: parsePositiveNumber(process.env.CONTENT_SCHEDULER_TIMEZONE_OFFSET_MINUTES, 480, 0),
-    publishHours: parsePublishHours(process.env.CONTENT_SCHEDULER_PUBLISH_HOURS || '10,15,20'),
-    dailyPublishLimit: parsePositiveNumber(process.env.CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT, 3, 1),
-    minPublishGapMinutes: parsePositiveNumber(process.env.CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES, 180, 30),
-    draftReserveTarget: parsePositiveNumber(process.env.CONTENT_SCHEDULER_DRAFT_RESERVE_TARGET, 12, 3),
-    draftBatchSize: parsePositiveNumber(process.env.CONTENT_SCHEDULER_DRAFT_BATCH_SIZE, 3, 1),
-    generateCooldownMinutes: parsePositiveNumber(process.env.CONTENT_SCHEDULER_GENERATE_COOLDOWN_MINUTES, 240, 30),
-    radarRefreshMaxAgeHours: parsePositiveNumber(process.env.CONTENT_SCHEDULER_RADAR_REFRESH_MAX_AGE_HOURS, 4, 1),
-    adaptiveTypeWeight: parsePositiveNumber(process.env.CONTENT_SCHEDULER_ADAPTIVE_TYPE_WEIGHT, 10, 0),
-    adaptiveRadarSourceWeight: parsePositiveNumber(process.env.CONTENT_SCHEDULER_ADAPTIVE_RADAR_SOURCE_WEIGHT, 14, 0),
-    adaptiveFreshnessWeight: parsePositiveNumber(process.env.CONTENT_SCHEDULER_ADAPTIVE_FRESHNESS_WEIGHT, 8, 0),
+    timezoneOffsetMinutes: getContentSchedulerTimezoneOffsetMinutes(),
+    publishHours: parsePublishHours(getContentSchedulerPublishHoursRaw()),
+    dailyPublishLimit: getContentSchedulerDailyPublishLimit(),
+    minPublishGapMinutes: getContentSchedulerMinPublishGapMinutes(),
+    draftReserveTarget: getContentSchedulerDraftReserveTarget(),
+    draftBatchSize: getContentSchedulerDraftBatchSize(),
+    generateCooldownMinutes: getContentSchedulerGenerateCooldownMinutes(),
+    radarRefreshMaxAgeHours: getContentSchedulerRadarRefreshMaxAgeHours(),
+    adaptiveTypeWeight: getContentSchedulerAdaptiveTypeWeight(),
+    adaptiveRadarSourceWeight: getContentSchedulerAdaptiveRadarSourceWeight(),
+    adaptiveFreshnessWeight: getContentSchedulerAdaptiveFreshnessWeight(),
   };
 }
 
@@ -706,74 +1512,9 @@ export function rankScheduledPublishCandidates(params: {
   now?: Date;
   config?: ContentSchedulerConfig;
 }) {
-  const now = params.now || new Date();
-  const config = params.config || getContentSchedulerConfig();
-  const performance = buildContentPerformanceContext({
-    entries: params.entries,
-    analyticsRows: params.analyticsRows,
-  });
-
-  return params.entries
-    .filter((entry) => entry.status === 'draft')
-    .filter((entry) => qualifiesForAutoPublish({
-      llmUsed: entry.source.startsWith('agent-llm:'),
-      source: entry.source,
-      excerpt: entry.excerpt,
-      seoTitle: entry.seoTitle,
-      seoDescription: entry.seoDescription,
-      tags: entry.tags,
-      sections: entry.sections,
-    }))
-    .map((entry) => {
-      const baseScore = computeAutoPublishScore(entry);
-      const reasons = [`质量分 ${baseScore}`];
-      let score = baseScore;
-
-      const typeBenchmark = performance.contentTypeBenchmarks[entry.contentType];
-      if (typeBenchmark) {
-        const typeBoost = typeBenchmark.avgConversionRate * config.adaptiveTypeWeight / 10
-          + typeBenchmark.avgQuickStarts * 4;
-        score += typeBoost;
-        reasons.push(`${entry.contentType} 历史转化加权 +${Math.round(typeBoost)}`);
-      }
-
-      const radarSourceId = typeof entry.meta?.radarSourceId === 'string' ? entry.meta.radarSourceId : '';
-      if (radarSourceId && performance.radarSourceBenchmarks[radarSourceId]) {
-        const sourceBenchmark = performance.radarSourceBenchmarks[radarSourceId];
-        const sourceBoost = sourceBenchmark.avgConversionRate * config.adaptiveRadarSourceWeight / 10
-          + sourceBenchmark.avgQuickStarts * 6;
-        score += sourceBoost;
-        reasons.push(`热点源反馈加权 +${Math.round(sourceBoost)}`);
-      }
-
-      const updatedAt = parseUtcDate(entry.updatedAt);
-      const ageHours = updatedAt ? Math.max(0, (now.getTime() - updatedAt.getTime()) / 3_600_000) : 48;
-      const freshnessBoost = Math.max(0, 24 - ageHours) * config.adaptiveFreshnessWeight / 24;
-      score += freshnessBoost;
-      reasons.push(`新鲜度加权 +${Math.round(freshnessBoost)}`);
-
-      return {
-        entry,
-        score: Math.round(score),
-        reasons,
-      } satisfies ScheduledPublishCandidate;
-    })
-    .sort((left, right) => {
-      const scoreGap = right.score - left.score;
-      if (scoreGap !== 0) {
-        return scoreGap;
-      }
-      return (parseUtcDate(right.entry.updatedAt)?.getTime() || 0) - (parseUtcDate(left.entry.updatedAt)?.getTime() || 0);
-    });
-}
-
-function selectScheduledPublishCandidate(params: {
-  entries: ManagedContentEntry[];
-  analyticsRows: AnalyticsRow[];
-  now?: Date;
-  config?: ContentSchedulerConfig;
-}) {
-  return rankScheduledPublishCandidates(params)[0] || null;
+  return evaluateScheduledPublishCandidates(params).candidates
+    .filter((candidate) => candidate.ready)
+    .map(({ ready: _ready, hardBlockReasons: _hardBlockReasons, sourceType: _sourceType, growthPlanKey: _growthPlanKey, laneKey: _laneKey, laneLabel: _laneLabel, laneTargetKey: _laneTargetKey, laneNeedsCoverage: _laneNeedsCoverage, weakLane: _weakLane, decision: _decision, policySource: _policySource, policyFocusKeys: _policyFocusKeys, minimumScore: _minimumScore, ...candidate }) => candidate);
 }
 
 export function buildContentOpsSnapshot(params: {
@@ -785,7 +1526,22 @@ export function buildContentOpsSnapshot(params: {
     entries: params.entries,
     analyticsRows: params.analyticsRows,
   });
-  const publicGrowth = buildPublicGrowthAudit(params.entries);
+  const publicationLanes = buildWorldYiPublicationLaneSummaries(params.entries);
+  const publicationReserve = buildWorldYiPublicationReserveSignal(publicationLanes);
+  const autonomyFocus = summarizeOpenAgentAutonomyBacklogFocus();
+  const openAgentContentAnalysis = readActiveOpenAgentContentAnalysisPlan();
+  const policyResolution = resolveWorldYiAutonomyRuntimePolicy({
+    fallbackFocus: autonomyFocus,
+    analysisPlan: openAgentContentAnalysis,
+  });
+  const autonomyPolicy = policyResolution.effectivePolicy;
+  const evaluatedDraftCandidates = evaluateDraftEntries({
+    entries: params.entries,
+    performance,
+    lanes: publicationLanes,
+    autonomyPolicy,
+    analysisPlan: openAgentContentAnalysis,
+  });
   const { surfaceBuckets, clusterSignalBuckets, entryBuckets } = performance;
 
   const topSurfaces: ContentSurfaceStat[] = Object.entries(surfaceBuckets)
@@ -871,36 +1627,84 @@ export function buildContentOpsSnapshot(params: {
       };
     });
 
-  const publicGrowthQueue: GenerationQueueItem[] = publicGrowth.queue.map((item) => ({
-    key: item.target.key,
-    title: item.target.title,
-    topic: item.target.topic,
-    angle: item.target.angle,
-    contentType: item.target.primaryType,
-    keywords: item.target.keywords,
-    reason: `${item.target.market}的公开流量位仍缺核心内容，当前已发布 ${item.publishedCount} 篇、草稿 ${item.draftCount} 篇，应优先补这一页。`,
-    priorityScore: item.priorityScore + 120,
-    audience: item.target.audience,
-    market: item.target.market,
-    locale: item.target.locale,
-    sourceType: 'public-growth',
-  }));
+  const laneQueue: GenerationQueueItem[] = publicationLanes.flatMap((lane) => {
+    const laneConfig = getWorldYiPublicationLaneConfigByKey(lane.key);
+    if (!laneConfig) {
+      return [];
+    }
 
-  const mergedQueue = [...publicGrowthQueue, ...radarQueue, ...generationQueue]
-    .sort((left, right) => right.priorityScore - left.priorityScore)
+    return lane.queue.flatMap<GenerationQueueItem>((row) => {
+      const target = laneConfig.targets.find((item) => item.key === row.key);
+      if (!target) {
+        return [];
+      }
+
+      const laneReserveBoost = publicationReserve.weakLaneKeys.includes(lane.key)
+        ? autonomyPolicy.queueWeights.weakLaneBoost
+        : 0;
+      const backlogBoost = autonomyPolicy.queueWeights.backlogLaneReserveBoost;
+      const reasonParts = [
+        `${target.market} 的公开流量位仍缺核心内容，当前已发布 ${row.publishedCount} 篇、草稿 ${row.draftCount} 篇。`,
+      ];
+
+      if (publicationReserve.weakLaneKeys.includes(lane.key)) {
+        reasonParts.push(`${lane.label} 当前低于 reserve floor，优先补齐这一条 lane。`);
+      }
+      if (autonomyFocus.laneReserve) {
+        reasonParts.push('OpenAgent backlog 正在强调 lane reserve，补稿优先级已上调。');
+      }
+
+      return [{
+        key: target.key,
+        title: target.title,
+        topic: target.topic,
+        angle: target.angle,
+        contentType: target.primaryType,
+        keywords: target.keywords,
+        reason: reasonParts.join(' '),
+        priorityScore: row.priorityScore + autonomyPolicy.queueWeights.laneGapBaseBoost + laneReserveBoost + backlogBoost,
+        audience: target.audience,
+        market: target.market,
+        locale: target.locale,
+        sourceType: laneConfig.sourceType,
+      } satisfies GenerationQueueItem];
+    });
+  });
+
+  const balancedLaneQueue = publicationLanes.flatMap((lane) => {
+    const laneConfig = getWorldYiPublicationLaneConfigByKey(lane.key);
+    if (!laneConfig) {
+      return [];
+    }
+
+    return prioritizeLaneQueueByOpenAgentPlan({
+      lane,
+      items: laneQueue.filter((item) => item.sourceType === laneConfig.sourceType),
+      analysisPlan: openAgentContentAnalysis,
+      weakLaneKeys: publicationReserve.weakLaneKeys,
+      perLaneQuota: autonomyPolicy.queueWeights.perLaneQuota,
+    });
+  });
+
+  const mergedQueue = applyOpenAgentAnalysisToGenerationQueue({
+    queue: [
+    ...balancedLaneQueue,
+    ...radarQueue.slice(0, autonomyPolicy.queueWeights.radarQuota),
+    ...generationQueue.slice(0, autonomyPolicy.queueWeights.clusterQuota),
+    ],
+    analysisPlan: openAgentContentAnalysis,
+  })
     .slice(0, 10);
 
-  const autoPublishCandidates: AutoPublishCandidate[] = params.entries
-    .filter((entry) => entry.status === 'draft' && entry.source.startsWith('agent-llm:'))
-    .map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      slug: entry.slug,
-      source: entry.source,
-      score: computeAutoPublishScore(entry),
+  const autoPublishCandidates: AutoPublishCandidate[] = evaluatedDraftCandidates
+    .filter((candidate) => candidate.ready && candidate.entry.source.startsWith('agent-llm:'))
+    .map((candidate) => ({
+      id: candidate.entry.id,
+      title: candidate.entry.title,
+      slug: candidate.entry.slug,
+      source: candidate.entry.source,
+      score: candidate.score,
     }))
-    .filter((entry) => entry.score >= 180)
-    .sort((left, right) => right.score - left.score)
     .slice(0, 8);
 
   const contentPerformance: ContentPerformanceStat[] = params.entries
@@ -992,6 +1796,14 @@ export function buildContentOpsSnapshot(params: {
     autoPublishCandidates,
     contentPerformance,
     radarSourcePerformance,
+    publicationReserve,
+    autonomyFocus,
+    autonomyPolicy,
+    autonomyPolicyBase: policyResolution.basePolicy,
+    autonomyPolicySignalApplications: policyResolution.appliedSignals,
+    autonomyPolicyIgnoredSignals: policyResolution.ignoredSignals,
+    openAgentContentAnalysis,
+    decisionLedgerSummary: summarizeWorldYiContentDecisionLedger(),
   };
 }
 
@@ -1025,6 +1837,19 @@ export async function runContentAutomationCycle(params: {
   const plan = buildAutomationRunPlan(params.limit || 3);
   const usedSlugs = new Set(listManagedContentEntries().map((entry) => entry.slug));
   const savedEntries: ManagedContentEntry[] = [];
+  const analyticsRows = listRecentContentAnalyticsRows();
+  const baseEntries = listManagedContentEntries();
+  const performance = buildContentPerformanceContext({
+    entries: baseEntries,
+    analyticsRows,
+  });
+  const lanes = buildWorldYiPublicationLaneSummaries(baseEntries);
+  const backlogFocus = summarizeOpenAgentAutonomyBacklogFocus();
+  const openAgentContentAnalysis = readActiveOpenAgentContentAnalysisPlan();
+  const autonomyPolicy = resolveWorldYiAutonomyRuntimePolicy({
+    fallbackFocus: backlogFocus,
+    analysisPlan: openAgentContentAnalysis,
+  }).effectivePolicy;
 
   for (const item of plan) {
     const generated = await generateManagedContentDrafts({
@@ -1044,15 +1869,45 @@ export async function runContentAutomationCycle(params: {
     });
 
     for (const draft of generated.entries) {
-      const finalStatus = params.autoPublish && qualifiesForAutoPublish({
-        llmUsed: draft.llmUsed,
-        source: draft.source,
+      const growthPlanKey = item.sourceType?.startsWith('public-growth') ? item.key : undefined;
+      const draftEntry: ManagedContentEntry = {
+        id: '',
+        contentType: draft.contentType,
+        subtype: draft.subtype,
+        slug: draft.slug,
+        title: draft.title,
+        name: draft.name,
         excerpt: draft.excerpt,
+        category: draft.category,
+        readTime: draft.readTime,
+        tags: draft.tags,
+        featured: draft.featured,
         seoTitle: draft.seoTitle,
         seoDescription: draft.seoDescription,
-        tags: draft.tags,
         sections: draft.sections,
-      }) ? 'published' : 'draft';
+        status: 'draft',
+        source: `${draft.source}:automation`,
+        meta: {
+          growthPlanKey,
+          market: item.market,
+          locale: item.locale,
+          sourceType: item.sourceType,
+          automationReason: item.reason,
+        },
+        createdBy: params.userId,
+        updatedBy: params.userId,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      const autoPublishDecision = params.autoPublish
+        ? buildAutoPublishGateDecision({
+            entry: draftEntry,
+            performance,
+            lanes,
+            autonomyPolicy,
+          })
+        : null;
+      const finalStatus = autoPublishDecision?.ready ? 'published' : 'draft';
       const entry = saveManagedContentEntry({
         id: '',
         contentType: draft.contentType,
@@ -1068,14 +1923,19 @@ export async function runContentAutomationCycle(params: {
         seoTitle: draft.seoTitle,
         seoDescription: draft.seoDescription,
         sections: draft.sections,
+        createdBy: params.userId,
+        updatedBy: params.userId,
         status: finalStatus,
         source: `${draft.source}:automation`,
         meta: {
-          growthPlanKey: item.sourceType === 'public-growth' ? item.key : undefined,
+          growthPlanKey,
           market: item.market,
           locale: item.locale,
           sourceType: item.sourceType,
           automationReason: item.reason,
+          autoPublishScore: autoPublishDecision?.score,
+          autoPublishReasons: autoPublishDecision?.reasons,
+          autoPublishBlockedBy: autoPublishDecision?.hardBlockReasons,
         },
       }, params.userId);
 
@@ -1096,12 +1956,18 @@ export async function runContentAutomationCycle(params: {
 
 export async function runContentSchedulerCycle(params?: {
   trigger?: 'cron' | 'manual';
+  mode?: ContentSchedulerExecutionMode;
+  cycleRunId?: string;
 }) {
   const trigger = params?.trigger || 'cron';
-  const journeyRefresh = refreshManagedContentJourneyMetadata({
-    limit: 80,
-    userId: 'system_scheduler',
-  });
+  const mode = params?.mode || 'live';
+  const validationMode = mode === 'validate';
+  const journeyRefresh = validationMode
+    ? { refreshedCount: 0 }
+    : refreshManagedContentJourneyMetadata({
+        limit: 80,
+        userId: 'system_scheduler',
+      });
   const config = getContentSchedulerConfig();
   const now = new Date();
   const runs = contentSchedulerRunOperations.listRecent(20);
@@ -1113,14 +1979,100 @@ export async function runContentSchedulerCycle(params?: {
     now,
     config,
   });
+  let publicationReserve = buildWorldYiPublicationReserveSignal(buildWorldYiPublicationLaneSummaries(entries));
+  let weakLaneGenerationContract = buildWeakLaneGenerationContract({
+    publicationReserve,
+    draftBatchSize: config.draftBatchSize,
+  });
 
   const recentSignal = contentSignalOperations.listRecent(1)[0];
   const signalAgeMinutes = minutesBetween(now, recentSignal?.createdAt);
+  const shouldRefreshRadar = signalAgeMinutes === null || signalAgeMinutes >= config.radarRefreshMaxAgeHours * 60;
   let radarRefreshed = false;
 
-  if (signalAgeMinutes === null || signalAgeMinutes >= config.radarRefreshMaxAgeHours * 60) {
+  if (!validationMode && shouldRefreshRadar) {
     await runContentRadarCycle();
     radarRefreshed = true;
+  }
+
+  if (validationMode) {
+    const scheduledEvaluation = evaluateScheduledPublishCandidates({
+      entries,
+      analyticsRows,
+      now,
+      config,
+    });
+    const publishQuota = state.canPublishNow
+      ? Math.max(0, Math.min(
+          config.draftBatchSize,
+          config.dailyPublishLimit - state.publishedToday,
+        ))
+      : 0;
+    const readyPreviewCandidates = scheduledEvaluation.candidates.filter((candidate) => candidate.ready);
+    const previewPublishCount = Math.min(publishQuota, readyPreviewCandidates.length);
+    const previewCandidate = previewPublishCount > 0 ? readyPreviewCandidates[0] || null : null;
+    const draftReserveGenerationLimit = state.needsDraftReplenishment
+      ? Math.min(config.draftBatchSize, Math.max(1, state.draftReserveTarget - state.draftReserveCount))
+      : 0;
+    const canGenerateAfterPublish = state.minutesSinceLastGenerate === undefined ||
+      state.minutesSinceLastGenerate >= config.generateCooldownMinutes;
+    const postPublishDraftReserveCount = Math.max(0, state.draftReserveCount - previewPublishCount);
+    const postPublishReserveGenerationLimit = previewPublishCount > 0 && canGenerateAfterPublish && postPublishDraftReserveCount < state.draftReserveTarget
+      ? Math.min(config.draftBatchSize, Math.max(1, state.draftReserveTarget - postPublishDraftReserveCount))
+      : 0;
+    const previewGenerationLimit = Math.max(
+      draftReserveGenerationLimit,
+      postPublishReserveGenerationLimit,
+      weakLaneGenerationContract.generationLimit
+    );
+    const finalReason = postPublishReserveGenerationLimit > 0
+      ? 'validation_mode_detected_post_publish_reserve_gap'
+      : previewCandidate
+        ? 'validation_mode_detected_publish_candidate'
+        : weakLaneGenerationContract.generationLimit > 0
+          ? 'validation_mode_detected_weak_lane_contract'
+          : previewGenerationLimit > 0
+            ? 'validation_mode_detected_reserve_gap'
+            : shouldRefreshRadar
+              ? 'validation_mode_detected_radar_refresh'
+              : 'validation_mode_no_action';
+    const preview = {
+      mode: 'validate' as const,
+      wouldRefreshRadar: shouldRefreshRadar,
+      wouldGenerateCount: previewGenerationLimit,
+      wouldPublishTitle: previewCandidate?.entry.title || null,
+      wouldPublishSlug: previewCandidate?.entry.slug || null,
+    };
+    const decisionLedgerEntry = persistContentDecisionLedger({
+      cycleRunId: params?.cycleRunId,
+      trigger,
+      mode,
+      reason: finalReason,
+      state,
+      autonomyPolicy: scheduledEvaluation.autonomyPolicy,
+      candidates: scheduledEvaluation.candidates,
+      generatedCount: 0,
+      publishedCount: 0,
+      publishedEntry: null,
+      radarRefreshed: false,
+      preview,
+      evaluatedAt: now.toISOString(),
+    });
+    const opsSnapshot = getContentOpsSnapshot();
+
+    return {
+      success: true,
+      generatedCount: 0,
+      publishedCount: 0,
+      publishedEntry: null,
+      generatedTitles: [],
+      reason: finalReason,
+      radarRefreshed: false,
+      scheduler: getContentSchedulerOverview(),
+      opsSnapshot,
+      preview,
+      decisionLedgerSummary: summarizeWorldYiContentDecisionLedger([decisionLedgerEntry]),
+    };
   }
 
   let generatedCount = 0;
@@ -1128,10 +2080,22 @@ export async function runContentSchedulerCycle(params?: {
   let publishedEntry: ManagedContentEntry | null = null;
   let generatedTitles: string[] = [];
   let publishRescueGenerated = false;
+  let weakLaneContractTriggered = weakLaneGenerationContract.generationLimit > 0;
+  let scheduledEvaluation = evaluateScheduledPublishCandidates({
+    entries,
+    analyticsRows,
+    now,
+    config,
+  });
 
-  if (state.needsDraftReplenishment) {
-    const reserveGap = Math.max(1, state.draftReserveTarget - state.draftReserveCount);
-    const generationLimit = Math.min(config.draftBatchSize, reserveGap);
+  if (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0) {
+    const reserveGap = state.needsDraftReplenishment
+      ? Math.max(1, state.draftReserveTarget - state.draftReserveCount)
+      : 0;
+    const generationLimit = Math.min(
+      config.draftBatchSize,
+      Math.max(reserveGap, weakLaneGenerationContract.generationLimit)
+    );
     const generation = await runContentAutomationCycle({
       userId: 'system_scheduler',
       limit: generationLimit,
@@ -1146,17 +2110,27 @@ export async function runContentSchedulerCycle(params?: {
       now,
       config,
     });
-  }
-
-  if (state.canPublishNow) {
-    let candidate = selectScheduledPublishCandidate({
+    publicationReserve = buildWorldYiPublicationReserveSignal(buildWorldYiPublicationLaneSummaries(entries));
+    weakLaneGenerationContract = buildWeakLaneGenerationContract({
+      publicationReserve,
+      draftBatchSize: config.draftBatchSize,
+    });
+    scheduledEvaluation = evaluateScheduledPublishCandidates({
       entries,
       analyticsRows,
       now,
       config,
     });
+  }
 
-    if (!candidate) {
+  if (state.canPublishNow) {
+    const publishQuota = Math.max(0, Math.min(
+      config.draftBatchSize,
+      config.dailyPublishLimit - state.publishedToday,
+    ));
+    let readyCandidates = scheduledEvaluation.candidates.filter((item) => item.ready);
+
+    if (readyCandidates.length === 0 && publishQuota > 0) {
       const rescueGeneration = await runContentAutomationCycle({
         userId: 'system_scheduler',
         limit: 1,
@@ -1166,16 +2140,17 @@ export async function runContentSchedulerCycle(params?: {
       generatedTitles = uniqueStrings([...generatedTitles, ...rescueGeneration.savedEntries.map((entry) => entry.title)]).slice(0, 6);
       publishRescueGenerated = rescueGeneration.generatedCount > 0;
       entries = listManagedContentEntries();
-      candidate = selectScheduledPublishCandidate({
+      scheduledEvaluation = evaluateScheduledPublishCandidates({
         entries,
         analyticsRows,
         now,
         config,
       });
+      readyCandidates = scheduledEvaluation.candidates.filter((item) => item.ready);
     }
 
-    if (candidate) {
-      publishedEntry = saveManagedContentEntry({
+    for (const candidate of readyCandidates.slice(0, publishQuota)) {
+      const nextPublishedEntry = saveManagedContentEntry({
         id: candidate.entry.id,
         contentType: candidate.entry.contentType,
         subtype: candidate.entry.subtype,
@@ -1190,6 +2165,8 @@ export async function runContentSchedulerCycle(params?: {
         seoTitle: candidate.entry.seoTitle,
         seoDescription: candidate.entry.seoDescription,
         sections: candidate.entry.sections,
+        createdBy: candidate.entry.createdBy,
+        updatedBy: 'system_scheduler',
         status: 'published',
         source: candidate.entry.source,
         meta: {
@@ -1200,7 +2177,59 @@ export async function runContentSchedulerCycle(params?: {
           scheduleReasons: candidate.reasons,
         },
       }, 'system_scheduler');
-      publishedCount += publishedEntry ? 1 : 0;
+
+      if (nextPublishedEntry) {
+        publishedEntry = nextPublishedEntry;
+        publishedCount += 1;
+      }
+    }
+
+    entries = listManagedContentEntries();
+    state = buildContentSchedulerState({
+      entries,
+      runs,
+      now,
+      config,
+    });
+    publicationReserve = buildWorldYiPublicationReserveSignal(buildWorldYiPublicationLaneSummaries(entries));
+    weakLaneGenerationContract = buildWeakLaneGenerationContract({
+      publicationReserve,
+      draftBatchSize: config.draftBatchSize,
+    });
+
+    if (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0) {
+      const reserveGap = state.needsDraftReplenishment
+        ? Math.max(1, state.draftReserveTarget - state.draftReserveCount)
+        : 0;
+      const generationLimit = Math.min(
+        config.draftBatchSize,
+        Math.max(reserveGap, weakLaneGenerationContract.generationLimit)
+      );
+      const replenishment = await runContentAutomationCycle({
+        userId: 'system_scheduler',
+        limit: generationLimit,
+        autoPublish: false,
+      });
+      generatedCount += replenishment.generatedCount;
+      generatedTitles = uniqueStrings([...generatedTitles, ...replenishment.savedEntries.map((entry) => entry.title)]).slice(0, 6);
+      entries = listManagedContentEntries();
+      state = buildContentSchedulerState({
+        entries,
+        runs,
+        now,
+        config,
+      });
+      publicationReserve = buildWorldYiPublicationReserveSignal(buildWorldYiPublicationLaneSummaries(entries));
+      weakLaneGenerationContract = buildWeakLaneGenerationContract({
+        publicationReserve,
+        draftBatchSize: config.draftBatchSize,
+      });
+      scheduledEvaluation = evaluateScheduledPublishCandidates({
+        entries,
+        analyticsRows,
+        now,
+        config,
+      });
     }
   }
 
@@ -1211,6 +2240,8 @@ export async function runContentSchedulerCycle(params?: {
     finalReason = '按发布节奏完成本轮自动发布';
   } else if (publishRescueGenerated) {
     finalReason = '发布窗口内已尝试补稿，但仍未达到自动发布阈值';
+  } else if (weakLaneContractTriggered && generatedCount > 0) {
+    finalReason = `弱 lane 保底合同已触发，优先补齐 ${publicationReserve.weakLaneKeys.join(', ') || '目标 lane'} 草稿`;
   } else if (generatedCount > 0) {
     finalReason = '稿池低于阈值，已自动补充草稿';
   } else if (state.publishWindowOpen && !state.canPublishNow) {
@@ -1228,6 +2259,7 @@ export async function runContentSchedulerCycle(params?: {
     publishedCount,
     meta: {
       journeyRefreshedCount: journeyRefresh.refreshedCount,
+      executionMode: mode,
       localNow: state.localNow,
       radarRefreshed,
       publishWindowOpen: state.publishWindowOpen,
@@ -1244,6 +2276,22 @@ export async function runContentSchedulerCycle(params?: {
     },
   };
   contentSchedulerRunOperations.create(run);
+  const decisionLedgerEntry = persistContentDecisionLedger({
+    cycleRunId: params?.cycleRunId,
+    trigger,
+    mode,
+    reason: finalReason,
+    state,
+    autonomyPolicy: scheduledEvaluation.autonomyPolicy,
+    candidates: scheduledEvaluation.candidates,
+    generatedCount,
+    publishedCount,
+    publishedEntry,
+    radarRefreshed,
+    preview: null,
+    evaluatedAt: now.toISOString(),
+  });
+  const opsSnapshot = getContentOpsSnapshot();
 
   return {
     success: true,
@@ -1254,5 +2302,8 @@ export async function runContentSchedulerCycle(params?: {
     reason: finalReason,
     radarRefreshed,
     scheduler: getContentSchedulerOverview(),
+    opsSnapshot,
+    preview: null,
+    decisionLedgerSummary: summarizeWorldYiContentDecisionLedger([decisionLedgerEntry]),
   };
 }

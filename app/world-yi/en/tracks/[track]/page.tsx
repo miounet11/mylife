@@ -1,5 +1,3 @@
-import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Globe2, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -8,6 +6,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
+import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiEnglishTrackSurfaces, type WorldYiEnglishTrackKey } from '@/lib/world-yi-global-surfaces';
 
 export const dynamic = 'force-dynamic';
@@ -16,16 +15,40 @@ function getSurface(track: string) {
   return worldYiEnglishTrackSurfaces[track as WorldYiEnglishTrackKey] || null;
 }
 
-export function generateMetadata({ params }: { params: { track: string } }): Metadata {
-  const surface = getSurface(params.track);
-  return {
-    title: surface ? `${surface.title} | Life Kline` : 'World Yi English Track | Life Kline',
-    description: surface?.description || 'World Yi English track page',
-  };
+export async function generateMetadata({ params }: { params: Promise<{ track: string }> }) {
+  const { track } = await params;
+  const surface = getSurface(track);
+  if (!surface) {
+    return createPublicContentMetadata({
+      title: 'World Yi English Track | Life Kline',
+      description: 'World Yi English track page.',
+      path: `/world-yi/en/tracks/${track}`,
+      type: 'website',
+      locale: 'en-US',
+      languages: {
+        'en-US': `/world-yi/en/tracks/${track}`,
+        'x-default': `/world-yi/en/tracks/${track}`,
+      },
+    });
+  }
+
+  return createPublicContentMetadata({
+    title: `${surface.title} | Life Kline`,
+    description: surface.description,
+    path: `/world-yi/en/tracks/${surface.key}`,
+    type: 'website',
+    locale: 'en-US',
+    languages: {
+      'zh-CN': '/world-yi/global/topics',
+      'en-US': `/world-yi/en/tracks/${surface.key}`,
+      'x-default': `/world-yi/en/tracks/${surface.key}`,
+    },
+  });
 }
 
-export default function WorldYiEnglishTrackDetailPage({ params }: { params: { track: string } }) {
-  const surface = getSurface(params.track);
+export default async function WorldYiEnglishTrackDetailPage({ params }: { params: Promise<{ track: string }> }) {
+  const { track } = await params;
+  const surface = getSurface(track);
   if (!surface) {
     notFound();
   }
@@ -36,9 +59,34 @@ export default function WorldYiEnglishTrackDetailPage({ params }: { params: { tr
   const caseEntries = surface.caseSlugs
     .map((slug) => getManagedContentEntryBySlug('case', slug))
     .filter((entry): entry is NonNullable<typeof entry> => !!entry);
+  const schemas = [
+    createCollectionPageSchema({
+      headline: surface.title,
+      description: surface.description,
+      path: `/world-yi/en/tracks/${surface.key}`,
+      keywords: ['World Yi', surface.title, 'English', 'track', 'cases'],
+    }),
+    createItemListSchema(
+      `${surface.title} Articles`,
+      knowledgeEntries.map((entry, index) => ({
+        name: entry.title,
+        path: `/knowledge/${entry.slug}`,
+        position: index + 1,
+      })),
+    ),
+    createItemListSchema(
+      `${surface.title} Cases`,
+      caseEntries.map((entry, index) => ({
+        name: entry.title,
+        path: `/cases/${entry.slug}`,
+        position: index + 1,
+      })),
+    ),
+  ].filter(Boolean);
 
   return (
     <div className="page-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <AnalyticsPageView
         eventName="knowledge_page_viewed"
         page={`/world-yi/en/tracks/${surface.key}`}
@@ -66,6 +114,36 @@ export default function WorldYiEnglishTrackDetailPage({ params }: { params: { tr
           highlights={surface.doctrine.map((body) => ({ body }))}
         />
 
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
+          <ContentCardLink
+            href="/world-yi/en/tracks"
+            page={`/world-yi/en/tracks/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_tracks_page', contentType: 'knowledge', locale: 'en', series: 'world-yi-en' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Track index</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">All English tracks</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/en/cases"
+            page={`/world-yi/en/tracks/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Case layer</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English cases</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/global"
+            page={`/world-yi/en/tracks/${surface.key}`}
+            meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Chinese global layer</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Global Chinese path</h2>
+          </ContentCardLink>
+        </section>
+
         <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
           <div className="section-label">
             <Sparkles className="h-3.5 w-3.5" />
@@ -88,23 +166,14 @@ export default function WorldYiEnglishTrackDetailPage({ params }: { params: { tr
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
               </ContentCardLink>
             ))}
           </div>
         </section>
 
         <section className="mt-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="section-label">Cases</div>
-              <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">Cases keep English World Yi grounded in real decisions.</h2>
-            </div>
-            <Link href="/world-yi/en/cases" className="action-secondary">
-              Browse English cases
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
+          <div className="section-label">Cases</div>
+          <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">Cases</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {caseEntries.map((entry) => (
               <ContentCardLink
@@ -122,7 +191,6 @@ export default function WorldYiEnglishTrackDetailPage({ params }: { params: { tr
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
               </ContentCardLink>
             ))}
           </div>

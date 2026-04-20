@@ -7,6 +7,12 @@ import {
   contentGenerationJobOperations,
 } from '@/lib/database';
 import {
+  getContentGenerationJobBatchSize,
+  getContentGenerationJobMaxAttempts,
+  getContentGenerationJobRetryDelayMs,
+  getContentGenerationJobStaleLockMinutes,
+} from '@/lib/env';
+import {
   listManagedContentEntries,
   saveManagedContentEntry,
   type ManagedContentEntry,
@@ -14,10 +20,10 @@ import {
 import { generateId } from '@/lib/utils';
 import type { ContentGenerationJobRecord } from '@/lib/user-types';
 
-const DEFAULT_MAX_ATTEMPTS = Math.max(1, Number(process.env.CONTENT_GENERATION_JOB_MAX_ATTEMPTS || 3));
-const RETRY_DELAY_MS = Math.max(60_000, Number(process.env.CONTENT_GENERATION_JOB_RETRY_DELAY_MS || 1000 * 60 * 5));
-const STALE_LOCK_MINUTES = Math.max(10, Number(process.env.CONTENT_GENERATION_JOB_STALE_LOCK_MINUTES || 40));
-const DEFAULT_BATCH_SIZE = Math.max(1, Number(process.env.CONTENT_GENERATION_JOB_BATCH_SIZE || 1));
+const DEFAULT_MAX_ATTEMPTS = getContentGenerationJobMaxAttempts();
+const RETRY_DELAY_MS = getContentGenerationJobRetryDelayMs();
+const STALE_LOCK_MINUTES = getContentGenerationJobStaleLockMinutes();
+const DEFAULT_BATCH_SIZE = getContentGenerationJobBatchSize();
 
 function ensureUniqueSlugs(entries: GeneratedManagedContentDraft[]) {
   const existingSlugs = new Set(listManagedContentEntries().map((item) => item.slug));

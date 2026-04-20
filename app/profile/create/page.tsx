@@ -18,11 +18,8 @@ export default function CreateProfilePage() {
               档案入口优化
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              档案不是单独创建的，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是从分析结果自然沉淀出来。</span>
+              档案入口
             </h1>
-            <p className="intro-copy">档案来自已有分析、事件和趋势的持续积累。</p>
-            <div className="intro-panel">优先动作：做过分析就进档案，没做过就先开始分析。</div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
@@ -30,14 +27,14 @@ export default function CreateProfilePage() {
               <ActionCard
                 icon={FolderHeart}
                 title="查看现有档案"
-                description="如果你已经做过分析，直接进入档案页查看趋势、事件和历史记录。"
+                description="如果你已经做过分析、工具或订阅，这里可以直接回到自己的长期记录。"
                 href="/profile"
                 label="进入档案"
               />
               <ActionCard
                 icon={LineChart}
                 title="先完成第一次分析"
-                description="如果还没有结果，先去生成判断。档案会在结果、事件和咨询中逐步形成。"
+                description="先补齐出生信息，生成第一份结果后，个人档案和后续更新才会真正有内容。"
                 href="/analyze"
                 label="开始分析"
               />
@@ -70,7 +67,7 @@ function ActionCard({
         <Icon className="h-5 w-5" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{title}</h2>
-      <p className="intro-copy mt-2">{description}</p>
+      {description ? <p className="mt-2 text-sm text-[color:var(--muted)]">{description}</p> : null}
       <Link href={href} className="action-secondary mt-5">
         {label}
         <ArrowRight className="h-4 w-4" />

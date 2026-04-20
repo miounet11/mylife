@@ -194,43 +194,58 @@ export default function ContentRadarPanel({
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">内容雷达</div>
-          <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">抓公开热点信号，反推下一轮内容爆点</div>
-          <p className="mt-3 max-w-3xl text-xs leading-6 text-[color:var(--muted)]">
-            优先读取 RSSHub 或公开 RSS / Atom 源，再把热点标题、摘要和关键词归一化，给内容自动化系统提供选题情报。
-          </p>
+          <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">公开热点信号</div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => void runNow()}
-          disabled={running || bridging || loading}
-          className="action-secondary disabled:opacity-60"
-        >
-          {running ? '抓取中...' : '立即抓取热点'}
-        </button>
-        <button
-          type="button"
-          onClick={() => void runRadarAndAutomation()}
-          disabled={running || bridging || loading}
-          className="rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {bridging ? '推进中...' : '抓取并推进内容自动化'}
-        </button>
+        <div className="space-y-2">
+          <div className="action-guide">主动作</div>
+          <div className="action-strip flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => void runNow()}
+              disabled={running || bridging || loading}
+              className="action-secondary disabled:opacity-60"
+            >
+              {running ? '抓取中...' : '立即抓取热点'}
+            </button>
+            <button
+              type="button"
+              onClick={() => void runRadarAndAutomation()}
+              disabled={running || bridging || loading}
+              className="action-primary disabled:opacity-60"
+            >
+              {bridging ? '推进中...' : '抓取并推进内容自动化'}
+            </button>
+          </div>
+        </div>
       </div>
 
       {message && <p className="mt-4 text-sm text-[color:var(--accent-strong)]">{message}</p>}
       {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
 
       {loading ? (
-        <div className="mt-6 rounded-[1.5rem] bg-white/70 p-5 text-sm text-[color:var(--muted)]">内容雷达加载中...</div>
+        <div className="mt-6 rounded-[1.5rem] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
       ) : (
         <div className="mt-6 space-y-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            {[
+              { label: '信号总数', value: signals.length },
+              { label: '建议选题', value: suggestions.length },
+              { label: '数据源', value: sources.length },
+              { label: '最近执行', value: runs[0]?.status === 'success' ? '成功' : runs[0]?.status === 'error' ? '失败' : '暂无' },
+            ].map((item) => (
+              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+              </div>
+            ))}
+          </div>
+
           <div className="grid gap-4 md:grid-cols-3">
             {sources.map((source) => (
               <div key={source.id} className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">{source.label}</div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{source.platform} · {source.type}</div>
-                <div className="mt-2 break-all text-xs leading-6 text-[color:var(--muted)]">{source.url}</div>
+                <div className="mt-2 break-all text-xs text-[color:var(--muted)]">{source.url}</div>
               </div>
             ))}
           </div>
@@ -262,11 +277,11 @@ export default function ContentRadarPanel({
                         {signal.score || 0}
                       </div>
                     </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
                       {(signal.matchedKeywords || []).join('、') || '未命中站点关键词'}
                     </div>
                     {signal.summary && (
-                      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)] line-clamp-2">{signal.summary}</div>
+                      <div className="mt-2 line-clamp-2 text-xs text-[color:var(--muted)]">{signal.summary}</div>
                     )}
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
@@ -288,8 +303,8 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    还没有热点信号，先执行一次抓取。
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">暂无热点信号</div>
                   </div>
                 )}
               </div>
@@ -304,7 +319,7 @@ export default function ContentRadarPanel({
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.suggestedTopic}</div>
                       <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{item.score}</div>
                     </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.suggestedAngle}</div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">{item.suggestedAngle}</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">{item.keywords.join('、') || '无关键词'}</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
@@ -326,8 +341,8 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    当前还没有足够信号来生成建议选题。
+                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">暂无建议选题</div>
                   </div>
                 )}
               </div>
@@ -351,8 +366,8 @@ export default function ContentRadarPanel({
                   {run.error && <div className="mt-2 text-xs leading-6 text-rose-700">{run.error}</div>}
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  还没有执行记录。
+                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">暂无执行记录</div>
                 </div>
               )}
             </div>

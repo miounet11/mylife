@@ -404,6 +404,116 @@ export interface StoredReport {
   shareCount: number;
 }
 
+// ==================== Report V4 页面分区类型 ====================
+
+export interface ReportCockpitSection {
+  headline: string;
+  judgment?: string;
+  stageLabel?: string;
+  identityLabel?: string;
+  confidenceLabel?: string;
+  topActions: string[];
+  avoidances: string[];
+  focusChips: string[];
+  periodCards: Array<{
+    label: string;
+    value: string;
+    tone?: 'push' | 'steady' | 'caution';
+    note?: string;
+  }>;
+}
+
+export interface ReportLifeKLineSection {
+  headline?: string;
+  summary?: string;
+  arcLabel?: string;
+  latestMetrics: Array<{
+    label: string;
+    value: string;
+    tone?: 'strong' | 'steady' | 'watch';
+  }>;
+}
+
+export interface ReportBlueprintSection {
+  typeLabel?: string;
+  strongestAdvantage?: string;
+  recurringRisk?: string;
+  usefulDirection?: string;
+  unsuitablePattern?: string;
+  facts: string[];
+}
+
+export interface ReportCurrentStateSection {
+  headline: string;
+  summary?: string;
+  stance: 'push' | 'hold' | 'adjust' | 'recover';
+  stanceLabel: string;
+  evidence: string[];
+  usageNote?: string;
+}
+
+export interface ReportTimelineSection {
+  headline?: string;
+  summary?: string;
+  items: Array<{
+    label: string;
+    theme: string;
+    status: 'push' | 'steady' | 'caution';
+    statusLabel: string;
+    reason?: string;
+  }>;
+}
+
+export interface ReportScenarioPanelSection {
+  summary?: string;
+  panels: Array<{
+    key: string;
+    title: string;
+    verdict: string;
+    reason: string;
+    action: string;
+    status: 'push' | 'steady' | 'caution';
+    scoreLabel?: string;
+  }>;
+}
+
+export interface ReportActionBoardSection {
+  focusSummary?: string;
+  now: string[];
+  next30Days: string[];
+  next90Days: string[];
+  avoidList: string[];
+}
+
+export interface ReportValidationSection {
+  confidenceLabel?: string;
+  summary?: string;
+  tone?: 'high' | 'medium' | 'watch';
+  highConfidencePoints: string[];
+  sensitivePoints: string[];
+  correctionSummary?: string;
+  eventPrompts: string[];
+}
+
+export interface ReportPersonalityBridgeSection {
+  label?: string;
+  summary?: string;
+  traits: string[];
+  disclaimers: string[];
+}
+
+export interface ReportV4Sections {
+  cockpit: ReportCockpitSection;
+  lifeKLine: ReportLifeKLineSection;
+  coreBlueprint: ReportBlueprintSection;
+  currentOperatingSystem: ReportCurrentStateSection;
+  timeline12Months: ReportTimelineSection;
+  scenarioPanels: ReportScenarioPanelSection;
+  actionBoard: ReportActionBoardSection;
+  validationLayer: ReportValidationSection;
+  personalityBridge?: ReportPersonalityBridgeSection;
+}
+
 // ==================== 辅助类型 ====================
 
 /**

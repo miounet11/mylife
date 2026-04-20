@@ -16,12 +16,15 @@ dist/
 
 # Misc
 .DS_Store
+.AppleDouble
+._*
 *.pem
 
 # Debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+.playwright-cli/*.log
 
 # Local reference assets
 image copy*.png
@@ -29,6 +32,13 @@ image copy*.png
 # Local env files
 .env*.local
 .env
+
+# Local workspace state
+.claude/
+data/runtime/*.json
+data/runtime/*.lock
+data/lifekline.db
+data/lifekline.db-*
 
 # Vercel
 .vercel

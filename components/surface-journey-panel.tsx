@@ -5,8 +5,8 @@ import type { SurfaceJourney } from '@/lib/surface-journeys';
 
 export default function SurfaceJourneyPanel({
   journey,
-  title = '从这里继续，不用再从头找',
-  description = '把综合测算、单项工具、知识文章和案例连成一条可执行路径，让下一步更清楚。',
+  title = '协同路径',
+  description = '',
 }: {
   journey: SurfaceJourney;
   title?: string;
@@ -20,7 +20,7 @@ export default function SurfaceJourneyPanel({
           协同路径
         </div>
         <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">{title}</h2>
-        <p className="intro-copy mt-2 max-w-2xl">{description}</p>
+        {description ? <p className="intro-copy mt-2 max-w-2xl text-sm text-[color:var(--muted)]">{description}</p> : null}
       </div>
 
       <div className="mt-6 grid gap-4 xl:grid-cols-4">
@@ -74,7 +74,7 @@ function JourneyColumn({
             </div>
           </Link>
         )) : (
-          <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 intro-copy">
+          <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
             暂无更多关联内容。
           </div>
         )}

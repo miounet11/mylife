@@ -1,0 +1,164 @@
+import Link from 'next/link';
+import { ArrowRight, Compass } from 'lucide-react';
+
+import type { ReportCockpitSection } from '@/lib/report-types';
+import ResultCtaLink from '@/components/result-cta-link';
+
+type GuidedPath = {
+  href: string;
+  title: string;
+};
+
+interface ReportCockpitProps {
+  section: ReportCockpitSection;
+  reportId: string;
+  chatHref: string;
+  eventsHref: string;
+  guidedPaths?: GuidedPath[];
+  followupQuestion?: string;
+}
+
+function toneClasses(tone?: 'push' | 'steady' | 'caution') {
+  if (tone === 'push') return 'border-emerald-200 bg-emerald-50/80 text-emerald-800';
+  if (tone === 'caution') return 'border-amber-200 bg-amber-50/80 text-amber-900';
+  return 'border-[color:var(--line)] bg-white/82 text-[color:var(--ink)]';
+}
+
+export default function ReportCockpit({
+  section,
+  reportId,
+  chatHref,
+  eventsHref,
+  guidedPaths = [],
+  followupQuestion,
+}: ReportCockpitProps) {
+  const topActions = section.topActions.slice(0, 3);
+  const avoidances = section.avoidances.slice(0, 3);
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className="rounded-[1.6rem] bg-[rgba(178,149,93,0.1)] px-5 py-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">驾驶舱判断</div>
+          {section.stageLabel ? (
+            <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+              {section.stageLabel}
+            </span>
+          ) : null}
+          {section.confidenceLabel ? (
+            <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+              {section.confidenceLabel}
+            </span>
+          ) : null}
+        </div>
+
+        {section.judgment ? (
+          <div className="mt-3 text-xl font-bold leading-9 text-[color:var(--ink)]">{section.judgment}</div>
+        ) : null}
+
+        {section.identityLabel || section.focusChips.length > 0 ? (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {section.identityLabel ? (
+              <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                {section.identityLabel}
+              </span>
+            ) : null}
+            {section.focusChips.map((item) => (
+              <span key={item} className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
+                {item}
+              </span>
+            ))}
+          </div>
+        ) : null}
+
+        {section.periodCards.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            {section.periodCards.map((card) => (
+              <div key={`${card.label}-${card.value}`} className={`rounded-2xl border px-4 py-4 ${toneClasses(card.tone)}`}>
+                <div className="text-[11px] uppercase tracking-[0.18em] opacity-70">{card.label}</div>
+                <div className="mt-2 text-base font-bold">{card.value}</div>
+                {card.note ? <div className="mt-2 text-xs leading-6">{card.note}</div> : null}
+              </div>
+            ))}
+          </div>
+        ) : null}
+      </div>
+
+      <div className="space-y-4">
+        <div className="rounded-[1.5rem] bg-white/84 px-5 py-5">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">现在先做什么</div>
+          <div className="mt-3 grid gap-3">
+            <div className="rounded-2xl bg-[rgba(178,149,93,0.1)] px-4 py-3">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">先做</div>
+              <div className="mt-2 space-y-2 text-xs leading-6 text-[color:var(--ink)]">
+                {topActions.map((item) => (
+                  <div key={item}>{item}</div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl bg-rose-50 px-4 py-3">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-rose-500">先别做</div>
+              <div className="mt-2 space-y-2 text-xs leading-6 text-rose-800">
+                {avoidances.map((item) => (
+                  <div key={item}>{item}</div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 flex flex-col gap-3">
+            {followupQuestion ? (
+              <div className="rounded-2xl border border-[color:var(--line)] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                预设追问：{followupQuestion}
+              </div>
+            ) : null}
+            <ResultCtaLink
+              href={chatHref}
+              page={`/result/${reportId}`}
+              target="result_cockpit_chat"
+              className="action-primary action-main justify-between"
+              meta={{
+                reportId,
+                source: 'report_cockpit',
+              }}
+            >
+              进入结构追问
+              <ArrowRight className="h-4 w-4" />
+            </ResultCtaLink>
+            <ResultCtaLink
+              href={eventsHref}
+              page={`/result/${reportId}`}
+              target="result_cockpit_events"
+              className="action-secondary justify-between"
+              meta={{
+                reportId,
+                source: 'report_cockpit',
+              }}
+            >
+              记录关键事件
+              <ArrowRight className="h-4 w-4" />
+            </ResultCtaLink>
+          </div>
+        </div>
+
+        {guidedPaths.length > 0 ? (
+          <div className="soft-card rounded-[1.5rem] p-5">
+            <div className="flex items-center gap-3">
+              <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
+              <div className="font-semibold text-[color:var(--ink)]">阶段辅助线</div>
+            </div>
+            <div className="mt-4 grid gap-3">
+              {guidedPaths.map((item) => (
+                <Link key={item.href} href={item.href} className="rounded-[1.2rem] bg-slate-50 px-4 py-3 transition hover:bg-white">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                    <ArrowRight className="h-4 w-4 text-[color:var(--accent-strong)]" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}

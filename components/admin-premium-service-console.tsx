@@ -213,7 +213,7 @@ export default function AdminPremiumServiceConsole() {
   };
 
   return (
-    <div className="space-y-6">
+    <div id="premium-service-console" className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
         {[
           { label: '待处理', value: summary.countsByStatus.new, tone: 'bg-amber-50 text-amber-800' },
@@ -232,45 +232,47 @@ export default function AdminPremiumServiceConsole() {
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--ink)]">专项需求跟进台</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              这里统一处理结果页提交的事件推演、断事、事件剖析和卦象增强需求。
+            <div className="mt-2 intro-copy">
+              统一接住结果页提交的事件推演、断事、事件剖析和卦象增强需求。
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <select
-              value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-              className="action-secondary px-4 py-3 text-sm"
-            >
-              <option value="all">全部状态</option>
-              <option value="new">新提交</option>
-              <option value="contacted">已跟进</option>
-              <option value="in_progress">处理中</option>
-              <option value="delivered">已交付</option>
-              <option value="closed">已结束</option>
-              <option value="cancelled">已取消</option>
-            </select>
+          <div className="space-y-2">
+            <div className="action-guide">主动作</div>
+            <div className="action-strip flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={() => loadRequests()}
+                className="action-primary"
+              >
+                刷新跟进列表
+              </button>
+              <select
+                value={statusFilter}
+                onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+                className="action-secondary px-4 py-3 text-sm"
+              >
+                <option value="all">全部状态</option>
+                <option value="new">新提交</option>
+                <option value="contacted">已跟进</option>
+                <option value="in_progress">处理中</option>
+                <option value="delivered">已交付</option>
+                <option value="closed">已结束</option>
+                <option value="cancelled">已取消</option>
+              </select>
 
-            <select
-              value={serviceFilter}
-              onChange={(event) => setServiceFilter(event.target.value as PremiumServiceKey | 'all')}
-              className="action-secondary px-4 py-3 text-sm"
-            >
-              <option value="all">全部专项</option>
-              <option value="event-simulation">事件推演</option>
-              <option value="event-verdict">断事专项</option>
-              <option value="event-review">事件剖析</option>
-              <option value="meihua-enhancement">摇卦 / 梅花易</option>
-            </select>
-
-            <button
-              type="button"
-              onClick={() => loadRequests()}
-              className="action-secondary"
-            >
-              刷新列表
-            </button>
+              <select
+                value={serviceFilter}
+                onChange={(event) => setServiceFilter(event.target.value as PremiumServiceKey | 'all')}
+                className="action-secondary px-4 py-3 text-sm"
+              >
+                <option value="all">全部专项</option>
+                <option value="event-simulation">事件推演</option>
+                <option value="event-verdict">断事专项</option>
+                <option value="event-review">事件剖析</option>
+                <option value="meihua-enhancement">摇卦 / 梅花易</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -452,15 +454,15 @@ function formatDateTime(value?: string) {
     return '刚刚';
   }
 
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (matched) {
+    return `${matched[2]}-${matched[3]} ${matched[4]}:${matched[5]}`;
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }

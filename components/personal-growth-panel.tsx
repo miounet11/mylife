@@ -26,10 +26,9 @@ export default function PersonalGrowthPanel({
             个人升级面板
           </div>
           <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">{summary.heading}</h2>
-          <p className="intro-copy mt-2">{summary.description}</p>
         </div>
         <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-3 text-sm leading-6 text-[color:var(--ink)] lg:max-w-sm">
-          {summary.urgencyLine}
+          <div className="intro-copy">{summary.urgencyLine}</div>
         </div>
       </div>
 
@@ -40,7 +39,6 @@ export default function PersonalGrowthPanel({
             现在最该继续的工具
           </div>
           <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{summary.primaryTool.title}</h3>
-          <p className="intro-copy mt-2">{summary.primaryTool.hook}</p>
           <div className="mt-4 grid gap-3">
             <div className="rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm leading-6 text-[color:var(--ink)]">
               当前主线：{summary.focusLine}
@@ -93,8 +91,8 @@ export default function PersonalGrowthPanel({
               <BookOpen className="h-4 w-4" />
               付费升级点
             </div>
-            <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-4 intro-copy text-[color:var(--accent-strong)]">
-              {`最自然的下一步是直接进入 ${summary.primaryTool.premiumServiceLabel}。`}
+            <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-4 text-sm text-[color:var(--accent-strong)]">
+              {summary.primaryTool.premiumServiceLabel}
             </div>
             <TrackedLink href={summary.primaryTool.href} page={page} target="personal_growth_paid_path" className="action-secondary mt-4">
               从这个工具进入付费承接

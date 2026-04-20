@@ -1,5 +1,10 @@
 import OpenAI from 'openai';
+import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
 import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
+import {
+  createOpenAiCompatibleChatCompletion,
+  type OpenAiCompatibleReasoningEffort,
+} from '@/lib/openai-compatible-chat';
 import {
   computeAttemptTimeouts,
   getDynamicModelExecutionPlan,
@@ -13,22 +18,12 @@ type ChatMessage = {
   content: string;
 };
 
-function normalizeApiKey(value?: string | null) {
-  const key = (value || '').trim();
-  if (!key || key === 'dummy_key') return null;
-  return key;
-}
+function defaultReasoningEffortForScope(scope: LlmScope): OpenAiCompatibleReasoningEffort {
+  if (scope === 'report') {
+    return 'medium';
+  }
 
-function getApiKey() {
-  return normalizeApiKey(process.env.OPENAI_API_KEY) || normalizeApiKey(process.env.API_KEY);
-}
-
-function getBaseUrl() {
-  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
-}
-
-function getModel() {
-  return process.env.DEFAULT_MODEL || 'auto';
+  return 'low';
 }
 
 function uniqueModels(values: Array<string | null | undefined>) {
@@ -117,6 +112,7 @@ export async function callJsonLLM<T>(params: {
   traceLabel?: string;
   scope?: LlmScope;
   disableHealthReorder?: boolean;
+  reasoningEffort?: OpenAiCompatibleReasoningEffort;
 }): Promise<T | null> {
   const apiKey = getApiKey();
   const traceLabel = params.traceLabel || 'agent';
@@ -129,13 +125,13 @@ export async function callJsonLLM<T>(params: {
   const scope = params.scope || 'agent';
   const client = new OpenAI({
     apiKey,
-    baseURL: getBaseUrl(),
+    baseURL: getApiBaseUrl(),
     timeout: timeoutMs,
     maxRetries: 0,
   });
   const baseModelChain = params.modelChain?.length
     ? uniqueModels(params.modelChain)
-    : getModelFallbackChain(params.model || getModel());
+    : getModelFallbackChain(params.model || getDefaultModel());
   const plan = params.disableHealthReorder
     ? {
         orderedModels: baseModelChain,
@@ -177,10 +173,11 @@ export async function callJsonLLM<T>(params: {
       const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
       const startedAt = Date.now();
       try {
-        const completion = await client.chat.completions.create({
+        const completion = await createOpenAiCompatibleChatCompletion(client, {
           model,
           temperature: params.temperature ?? 0.5,
-          max_tokens: params.maxTokens ?? 900,
+          maxTokens: params.maxTokens ?? 900,
+          reasoningEffort: params.reasoningEffort || defaultReasoningEffortForScope(scope),
           messages: [
             { role: 'system', content: params.system },
             { role: 'user', content: params.user },

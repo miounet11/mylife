@@ -176,3 +176,81 @@ export function normalizeBirthPlaceLabel(addressData: string[]) {
 
   return [...new Set(cleaned)].join(' ');
 }
+
+export interface AnalyzeEntryProgressInput {
+  timeConfirmed: boolean;
+  locationConfirmed: boolean;
+  hasKnownBirthHour: boolean;
+  hasKnownLocation: boolean;
+  usesSolarTime: boolean;
+}
+
+export interface AnalyzeEntryProgressItem {
+  label: string;
+  done: boolean;
+  value: string;
+}
+
+export interface AnalyzeEntryProgressState {
+  entryReadiness: AnalyzeEntryProgressItem[];
+  readinessScore: number;
+  nextHint: string;
+  canSubmit: boolean;
+}
+
+export function getAnalyzeEntryProgress({
+  timeConfirmed,
+  locationConfirmed,
+  hasKnownBirthHour,
+  hasKnownLocation,
+  usesSolarTime,
+}: AnalyzeEntryProgressInput): AnalyzeEntryProgressState {
+  const entryReadiness: AnalyzeEntryProgressItem[] = [
+    {
+      label: '出生时间确认',
+      done: timeConfirmed,
+      value: timeConfirmed ? (hasKnownBirthHour ? '已确认具体时分' : '已确认：时辰未知') : '尚未确认出生时间',
+    },
+    {
+      label: '出生地点确认',
+      done: locationConfirmed,
+      value: locationConfirmed ? (hasKnownLocation ? '已确认出生地点' : '已确认：未知地（按北京时间）') : '尚未确认出生地点',
+    },
+    {
+      label: '时间精度',
+      done: hasKnownBirthHour,
+      value: hasKnownBirthHour ? '当前到具体时分' : '当前按未知时辰',
+    },
+    {
+      label: '环境坐标',
+      done: hasKnownLocation,
+      value: hasKnownLocation ? '已使用具体地点' : '当前按未知地 / 北京时间',
+    },
+    {
+      label: '时间修正',
+      done: usesSolarTime,
+      value: usesSolarTime ? '真太阳时已开启' : '当前按钟表时间',
+    },
+  ];
+
+  const readinessScore = Math.round((entryReadiness.filter((item) => item.done).length / entryReadiness.length) * 100);
+  const canSubmit = timeConfirmed && locationConfirmed;
+  const nextHint = !timeConfirmed
+    ? '先确认出生时间；如果暂时不知道时辰，也请在弹窗里明确选择“未知时辰”。'
+    : !locationConfirmed
+      ? '再确认出生地点；如果只能按北京时间处理，也请在地点弹窗里明确确认一次。'
+      : !hasKnownLocation
+        ? '当前可以进入判断；后续如果能补上出生地点，时间修正和环境判断会更稳。'
+        : !hasKnownBirthHour
+          ? '当前可以进入判断；后续如果能确认时辰，阶段窗口和动作建议会更稳。'
+          : !usesSolarTime
+            ? '建议开启真太阳时，让结果更接近真实节律。'
+            : '当前信息已经够进入判断，后续重点是看结果页里的结构、阶段和动作排序。';
+
+  return {
+    entryReadiness,
+    readinessScore,
+    nextHint,
+    canSubmit,
+  };
+}

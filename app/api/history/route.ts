@@ -1,18 +1,19 @@
 import { NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
 import { eventOperations, fortuneOperations, toolSessionOperations, userOperations } from '@/lib/database';
+import { normalizeEventTransportRecords } from '@/lib/event-view';
 
 export async function GET() {
   try {
     const session = await getAuthSession();
     const authenticated = !!session.authenticated && !!session.user?.id;
     const userId = authenticated && session.user?.id ? session.user.id : null;
-    
+
     const user = userId ? userOperations.getById(userId) : null;
     const fortunes = userId ? fortuneOperations.getByUserId(userId) || [] : [];
-    const events = userId ? eventOperations.getByUserId(userId) || [] : [];
+    const events = userId ? normalizeEventTransportRecords(eventOperations.getByUserId(userId)) : [];
     const toolSessions = userId ? toolSessionOperations.listByUser(userId, 30) || [] : [];
-    
+
     return NextResponse.json({
       success: true,
       authenticated,

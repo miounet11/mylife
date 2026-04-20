@@ -1,4 +1,5 @@
 import { listManagedContentEntries } from '@/lib/content-store';
+import { getKnowledgeAcquisitionLockTtlMs } from '@/lib/env';
 import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
 import { listKnowledgeTopicHubs } from '@/lib/knowledge-network-feed';
 import { listKnowledgePublishCandidates } from '@/lib/knowledge-publication-ops';
@@ -47,7 +48,7 @@ export interface KnowledgeOpsSnapshot {
 export function getKnowledgeOpsSnapshot(params?: {
   lockTtlMs?: number;
 }) : KnowledgeOpsSnapshot {
-  const lockTtlMs = params?.lockTtlMs ?? Math.max(60_000, Number(process.env.KNOWLEDGE_ACQUISITION_LOCK_TTL_MS || 1000 * 60 * 45));
+  const lockTtlMs = params?.lockTtlMs ?? getKnowledgeAcquisitionLockTtlMs();
   const entries = listManagedContentEntries().filter((entry) => entry.contentType === 'knowledge');
   const topicHubs = listKnowledgeTopicHubs({ limit: 12 });
   const featuredEditorial = listFeaturedKnowledgeEditorialEntries(12);

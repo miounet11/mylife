@@ -101,6 +101,17 @@ function isPubliclyPublished(entry: ManagedContentEntry) {
     return false;
   }
 
+  if (
+    entry.contentType === 'knowledge'
+    && (
+      entry.meta?.sourceType === 'public-growth'
+      || entry.meta?.sourceType === 'public-growth-wave2'
+      || entry.meta?.sourceType === 'public-growth-global'
+    )
+  ) {
+    return entry.meta?.publicationReady === true;
+  }
+
   if (entry.contentType !== 'knowledge') {
     return true;
   }
@@ -145,8 +156,11 @@ export function assessGrowthPublication(
   if (entry.source.startsWith('agent-llm:')) {
     score += 35;
     reasons.push('llm-generated');
-  } else {
+  } else if (entry.source.startsWith('agent-fallback:')) {
+    score += 20;
     reasons.push('fallback-source');
+  } else {
+    reasons.push('unsupported-source');
   }
 
   if (entry.excerpt.trim().length >= 72) {
@@ -198,11 +212,15 @@ export function assessGrowthPublication(
     reasons.push('placeholder-copy');
   }
 
+  const hasDepth = hasQualifiedSectionDepth(entry);
+  const hasCleanCopy = !hasBlockedPlaceholderParagraphs(entry);
+  const isLlmSource = entry.source.startsWith('agent-llm:');
+  const isFallbackSource = entry.source.startsWith('agent-fallback:');
   const ready = (
-    score >= 90
-    && entry.source.startsWith('agent-llm:')
-    && hasQualifiedSectionDepth(entry)
-    && !hasBlockedPlaceholderParagraphs(entry)
+    ((isLlmSource && score >= 90) || (isFallbackSource && score >= 85))
+    && (isLlmSource || isFallbackSource)
+    && hasDepth
+    && hasCleanCopy
     && !!locale
     && !!market
   );
@@ -250,6 +268,6 @@ export function buildPublicGrowthAudit(entries: ManagedContentEntry[]): PublicGr
 
   return {
     coverage,
-    queue: coverage.filter((item) => item.missing || item.draftCount === 0).slice(0, 8),
+    queue: coverage.filter((item) => item.missing).slice(0, 8),
   };
 }

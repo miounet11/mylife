@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: ['/'],
-        disallow: ['/api/', '/admin/', '/login', '/profile', '/history', '/chat', '/updates'],
+        disallow: ['/api/', '/admin/', '/login', '/profile', '/profile/', '/history', '/chat', '/updates'],
       },
     ],
     sitemap: 'https://www.life-kline.com/sitemap.xml',

@@ -1,5 +1,6 @@
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
+import { getReportUpgradeLockMinutes } from '@/lib/env';
 import path from 'path';
 import type {
   UserRecord,
@@ -13,10 +14,12 @@ import type {
   ContentGenerationJobRecord,
   ReportUpgradeJobRecord,
   ReportMonthlyDigestRunRecord,
+  UserLifecycleEmailRunRecord,
   EmailDeliveryJobRecord,
   PremiumServiceRequestRecord,
   ToolSessionRecord,
 } from './user-types';
+import { normalizeEventTransportRecord } from './event-view';
 
 interface RawFortuneRow {
   id: string;
@@ -40,6 +43,8 @@ interface RawFortuneRow {
   shen_sha?: string | null;
   report_version?: string | null;
   is_public: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 interface RawAnalyticsEventRow {
@@ -142,9 +147,21 @@ interface RawReportMonthlyDigestRunRow {
   created_at?: string;
 }
 
+interface RawUserLifecycleEmailRunRow {
+  id: string;
+  stage_key: string;
+  email: string;
+  user_id?: string | null;
+  report_id?: string | null;
+  status: 'sent' | 'skipped' | 'error';
+  reason?: string | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
 interface RawEmailDeliveryJobRow {
   id: string;
-  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update' | 'report_ready';
+  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update' | 'report_ready' | 'user_lifecycle';
   status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
   recipient_list?: string | null;
   payload?: string | null;
@@ -283,7 +300,7 @@ function mapRouteHealthLabel(key: string) {
   return key;
 }
 
-const REPORT_UPGRADE_STALE_LOCK_MINUTES = Math.max(5, Number(process.env.REPORT_UPGRADE_LOCK_MINUTES || 20));
+const REPORT_UPGRADE_STALE_LOCK_MINUTES = getReportUpgradeLockMinutes();
 const REPORT_UPGRADE_KNOWN_TEST_NAMES = [
   '测试A',
   '验证B',
@@ -330,6 +347,61 @@ CASE
 END
 `;
 
+const PRODUCT_ANALYTICS_EXCLUDED_EVENTS = [
+  'llm_model_attempt',
+  'llm_model_circuit_changed',
+  'email_delivery_succeeded',
+  'email_delivery_failed',
+  'report_feedback_synced',
+  'report_monthly_digest_sent',
+  'auth_code_requested',
+  'auth_verified',
+  'newsletter_subscribed',
+] as const;
+const PRODUCT_ANALYTICS_EXCLUDED_EVENTS_SQL = PRODUCT_ANALYTICS_EXCLUDED_EVENTS
+  .map((eventName) => `'${eventName.replace(/'/g, "''")}'`)
+  .join(', ');
+const PRODUCT_ANALYTICS_FILTER_SQL = `
+      AND event_name NOT IN (${PRODUCT_ANALYTICS_EXCLUDED_EVENTS_SQL})
+      AND COALESCE(page, '') NOT LIKE '%127.0.0.1%'
+      AND COALESCE(page, '') NOT LIKE '%localhost%'
+`;
+const RECENT_BEHAVIOR_TRACKED_EVENTS = [
+  'home_page_viewed',
+  'analyze_page_viewed',
+  'analyze_submitted',
+  'analyze_completed',
+  'report_generated',
+  'report_viewed',
+  'chat_page_viewed',
+  'chat_context_loaded',
+  'chat_completed',
+  'chat_message_sent',
+  'report_event_saved_from_result',
+  'report_past_event_saved_from_result',
+  'event_created',
+  'tool_detail_viewed',
+  'tool_run_started',
+  'knowledge_article_viewed',
+  'case_article_viewed',
+  'result_cta_clicked',
+  'chat_followup_clicked',
+  'auth_code_requested',
+  'auth_verified',
+  'profile_page_viewed',
+  'events_page_viewed',
+] as const;
+const RECENT_BEHAVIOR_TRACKED_EVENTS_SQL = RECENT_BEHAVIOR_TRACKED_EVENTS
+  .map((eventName) => `('${eventName.replace(/'/g, "''")}')`)
+  .join(', ');
+
+function toRoundedDecimal(value: number, digits = 2) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+  return Number(value.toFixed(digits));
+}
+
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
   return {
     id: row.id,
@@ -353,6 +425,8 @@ function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
     shenSha: parseJson(row.shen_sha, null) || undefined,
     reportVersion: row.report_version || undefined,
     isPublic: row.is_public !== 0,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   } as FortuneRecord;
 }
 
@@ -520,22 +594,39 @@ function mapReportMonthlyDigestRunRow(row: RawReportMonthlyDigestRunRow): Report
   };
 }
 
-function mapEventRow(row: RawEventRow): EventRecord {
+function mapUserLifecycleEmailRunRow(row: RawUserLifecycleEmailRunRow): UserLifecycleEmailRunRecord {
   return {
     id: row.id,
+    stageKey: row.stage_key,
+    email: row.email,
+    userId: row.user_id || undefined,
+    reportId: row.report_id || undefined,
+    status: row.status,
+    reason: row.reason || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapEventRow(row: RawEventRow): EventRecord {
+  return {
+    ...normalizeEventTransportRecord({
+      id: row.id,
+      user_id: row.user_id,
+      type: row.type,
+      title: row.title,
+      date: row.date,
+      time: row.time || undefined,
+      description: row.description || undefined,
+      impact: row.impact,
+      fortune_analysis: parseJson(row.fortune_analysis, {}),
+      user_feedback: parseJson(row.user_feedback, {}),
+      follow_up_advice: parseJson(row.follow_up_advice, {}),
+      reminder_enabled: row.reminder_enabled === 1,
+      reminder_advance_days: row.reminder_advance_days || undefined,
+      reminder_method: row.reminder_method || undefined,
+    }),
     userId: row.user_id,
-    type: row.type,
-    title: row.title,
-    date: row.date,
-    time: row.time || undefined,
-    description: row.description || undefined,
-    impact: row.impact,
-    fortuneAnalysis: parseJson(row.fortune_analysis, {}),
-    userFeedback: parseJson(row.user_feedback, {}),
-    followUpAdvice: parseJson(row.follow_up_advice, {}),
-    reminderEnabled: row.reminder_enabled === 1,
-    reminderAdvanceDays: row.reminder_advance_days || undefined,
-    reminderMethod: row.reminder_method || undefined,
   };
 }
 
@@ -926,6 +1017,21 @@ export function initializeDatabase() {
   `);
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS user_lifecycle_email_runs (
+      id TEXT PRIMARY KEY,
+      stage_key TEXT NOT NULL,
+      email TEXT NOT NULL,
+      user_id TEXT,
+      report_id TEXT,
+      status TEXT NOT NULL,
+      reason TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(stage_key, email)
+    )
+  `);
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS email_delivery_jobs (
       id TEXT PRIMARY KEY,
       kind TEXT NOT NULL,
@@ -1003,6 +1109,8 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_status_next_run ON report_upgrade_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_report_id ON report_upgrade_jobs(report_id);
     CREATE INDEX IF NOT EXISTS idx_report_monthly_digest_runs_cycle ON report_monthly_digest_runs(cycle_key, status);
+    CREATE INDEX IF NOT EXISTS idx_user_lifecycle_email_runs_stage ON user_lifecycle_email_runs(stage_key, created_at);
+    CREATE INDEX IF NOT EXISTS idx_user_lifecycle_email_runs_email ON user_lifecycle_email_runs(email, created_at);
     CREATE INDEX IF NOT EXISTS idx_email_delivery_jobs_status_next_run ON email_delivery_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_email_delivery_jobs_kind_created_at ON email_delivery_jobs(kind, created_at);
     CREATE INDEX IF NOT EXISTS idx_premium_service_requests_user_id ON premium_service_requests(user_id);
@@ -1209,6 +1317,273 @@ export const analyticsOperations = {
     return stmt.all(...params);
   },
 
+  getSystemHealthSummary: () => {
+    const totals = db.prepare(`
+      SELECT
+        (SELECT COUNT(*) FROM fortunes) as total_analyses,
+        (SELECT COUNT(*) FROM fortunes WHERE is_public = 1) as public_reports,
+        (SELECT COUNT(*) FROM questions WHERE category = 'chat_user') as chat_messages,
+        (SELECT COUNT(*) FROM email_subscriptions WHERE status = 'active') as active_subscribers,
+        (SELECT COUNT(*) FROM events) as total_events,
+        (SELECT COUNT(*) FROM analytics_events) as total_tracked_events,
+        (SELECT COUNT(*) FROM fortunes WHERE datetime(created_at) >= datetime('now', '-7 days')) as analyses_last_7d,
+        (SELECT COUNT(*) FROM analytics_events WHERE datetime(created_at) >= datetime('now', '-7 days')) as tracked_events_last_7d,
+        (SELECT COUNT(*) FROM events WHERE user_feedback IS NOT NULL AND json_extract(user_feedback, '$.wasAccurate') = 1) as validation_accurate,
+        (SELECT COUNT(*) FROM events WHERE user_feedback IS NOT NULL AND json_extract(user_feedback, '$.wasAccurate') = 0) as validation_drift,
+        (SELECT COUNT(*) FROM events WHERE user_feedback IS NULL OR json_extract(user_feedback, '$.wasAccurate') IS NULL) as validation_pending,
+        (SELECT COUNT(*) FROM events WHERE json_extract(fortune_analysis, '$.reportId') IS NOT NULL) as result_report_linked_events,
+        (SELECT COUNT(*) FROM events WHERE json_extract(fortune_analysis, '$.source') = 'chat_message') as chat_sourced_events
+    `).get() as {
+      total_analyses: number;
+      public_reports: number;
+      chat_messages: number;
+      active_subscribers: number;
+      total_events: number;
+      total_tracked_events: number;
+      analyses_last_7d: number;
+      tracked_events_last_7d: number;
+      validation_accurate: number;
+      validation_drift: number;
+      validation_pending: number;
+      result_report_linked_events: number;
+      chat_sourced_events: number;
+    };
+    const latestEvent = db.prepare(`
+      SELECT created_at FROM analytics_events
+      ORDER BY created_at DESC
+      LIMIT 1
+    `).get() as { created_at?: string } | undefined;
+    const recentLlmRows = db.prepare(`
+      SELECT event_name, meta, created_at
+      FROM analytics_events
+      WHERE event_name IN ('llm_model_attempt', 'llm_model_circuit_changed')
+        AND datetime(created_at) >= datetime('now', '-1 day')
+      ORDER BY created_at DESC
+      LIMIT 200
+    `).all() as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
+    const recentRouteRows = db.prepare(`
+      SELECT event_name, meta, created_at
+      FROM analytics_events
+      WHERE event_name IN ('analyze_completed', 'analyze_failed', 'chat_completed', 'chat_failed')
+        AND datetime(created_at) >= datetime('now', '-1 day')
+      ORDER BY created_at DESC
+      LIMIT 200
+    `).all() as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
+    const funnelRows = db.prepare(`
+      SELECT event_name, COUNT(*) as count
+      FROM analytics_events
+      WHERE event_name IN (
+        'analyze_submitted',
+        'report_generated',
+        'report_viewed',
+        'chat_message_sent',
+        'premium_service_requested',
+        'auth_code_requested',
+        'auth_verified'
+      )
+      GROUP BY event_name
+    `).all() as Array<{ event_name: string; count: number }>;
+    const emailRetryQueue = db.prepare(`
+      SELECT status, COUNT(*) as count
+      FROM email_delivery_jobs
+      WHERE status IN ('pending', 'running', 'failed')
+      GROUP BY status
+    `).all() as Array<{ status: string; count: number }>;
+
+    const funnelCounts = funnelRows.reduce<Record<string, number>>((accumulator, item) => {
+      accumulator[item.event_name] = item.count;
+      return accumulator;
+    }, {});
+    const emailCounts = emailRetryQueue.reduce<Record<string, number>>((accumulator, item) => {
+      accumulator[item.status] = item.count;
+      return accumulator;
+    }, {});
+    let recentLlmAttempts = 0;
+    let recentLlmSuccesses = 0;
+    let recentLlmFailures = 0;
+    let openModelCount = 0;
+    let halfOpenModelCount = 0;
+    let overdueCircuitCount = 0;
+    const modelStates: Record<string, { state: string; reopenAt?: string }> = {};
+    const routeHealthBuckets: Record<string, { label: string; success: number; failed: number; totalDurationMs: number }> = {};
+    const nowTime = Date.now();
+
+    for (const row of recentLlmRows) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      if (row.event_name === 'llm_model_attempt') {
+        recentLlmAttempts += 1;
+        if (meta.success === true) {
+          recentLlmSuccesses += 1;
+        } else {
+          recentLlmFailures += 1;
+        }
+      }
+      if (row.event_name === 'llm_model_circuit_changed') {
+        const model = typeof meta.model === 'string' ? meta.model : '';
+        const state = typeof meta.state === 'string' ? meta.state : '';
+        if (model && !modelStates[model]) {
+          modelStates[model] = {
+            state,
+            reopenAt: typeof meta.reopenAt === 'string' ? meta.reopenAt : undefined,
+          };
+        }
+      }
+    }
+
+    for (const item of Object.values(modelStates)) {
+      if (item.state === 'open') {
+        openModelCount += 1;
+        const reopenAtMs = item.reopenAt ? new Date(item.reopenAt).getTime() : Number.NaN;
+        if (Number.isFinite(reopenAtMs) && reopenAtMs <= nowTime) {
+          overdueCircuitCount += 1;
+        }
+      } else if (item.state === 'half-open') {
+        halfOpenModelCount += 1;
+      }
+    }
+
+    for (const row of recentRouteRows) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const action = typeof meta.action === 'string' ? meta.action : 'ask';
+      const key = row.event_name.startsWith('analyze_') ? 'analyze' : `chat:${action}`;
+      if (!routeHealthBuckets[key]) {
+        routeHealthBuckets[key] = {
+          label: mapRouteHealthLabel(key),
+          success: 0,
+          failed: 0,
+          totalDurationMs: 0,
+        };
+      }
+      routeHealthBuckets[key].totalDurationMs += typeof meta.durationMs === 'number' ? meta.durationMs : 0;
+      if (row.event_name.endsWith('_failed')) {
+        routeHealthBuckets[key].failed += 1;
+      } else {
+        routeHealthBuckets[key].success += 1;
+      }
+    }
+
+    const funnelDiagnostics = [
+      {
+        label: '提交测算 -> 成功出报告',
+        from: funnelCounts.analyze_submitted || 0,
+        to: funnelCounts.report_generated || 0,
+      },
+      {
+        label: '报告生成 -> 打开结果页',
+        from: funnelCounts.report_generated || 0,
+        to: funnelCounts.report_viewed || 0,
+      },
+      {
+        label: '结果页查看 -> 继续聊天',
+        from: funnelCounts.report_viewed || 0,
+        to: funnelCounts.chat_message_sent || 0,
+      },
+      {
+        label: '请求验证码 -> 完成验证',
+        from: funnelCounts.auth_code_requested || 0,
+        to: funnelCounts.auth_verified || 0,
+      },
+      {
+        label: '结果页查看 -> 提交专项需求',
+        from: funnelCounts.report_viewed || 0,
+        to: funnelCounts.premium_service_requested || 0,
+      },
+    ].map((item) => ({
+      ...item,
+      conversionRate: item.from > 0 ? Math.round((item.to / item.from) * 100) : 0,
+      dropOff: Math.max(0, item.from - item.to),
+    }));
+    const routeHealthBreakdown = Object.values(routeHealthBuckets)
+      .map((item) => {
+        const total = item.success + item.failed;
+        return {
+          ...item,
+          total,
+          successRate: total > 0 ? Math.round((item.success / total) * 100) : 0,
+          avgDurationMs: total > 0 ? Math.round(item.totalDurationMs / total) : 0,
+        };
+      })
+      .sort((left, right) => left.successRate - right.successRate || right.failed - left.failed);
+    const recentLlmSuccessRate = recentLlmAttempts > 0 ? Math.round((recentLlmSuccesses / recentLlmAttempts) * 100) : 0;
+    const pendingEmailQueue = (emailCounts.pending || 0) + (emailCounts.running || 0);
+    const failedEmailQueue = emailCounts.failed || 0;
+    const feedbackBacklog = totals.validation_pending + totals.validation_drift;
+    const worstFunnel = funnelDiagnostics
+      .filter((item) => item.from > 0)
+      .sort((left, right) => left.conversionRate - right.conversionRate)[0];
+    const weakestRoute = routeHealthBreakdown.find((item) => item.total > 0);
+    const primaryBlockers: string[] = [];
+    const healthySignals: string[] = [];
+
+    if (recentLlmAttempts > 0 && recentLlmSuccessRate < 20) {
+      primaryBlockers.push(`近 24 小时模型成功率仅 ${recentLlmSuccessRate}%，当前主要故障集中在模型供应链。`);
+    } else if (openModelCount > 0 || halfOpenModelCount > 0) {
+      primaryBlockers.push(`当前仍有 ${openModelCount} 个模型熔断、${halfOpenModelCount} 个模型处于半开探测。`);
+    } else {
+      healthySignals.push('模型链路目前没有明显的熔断阻塞。');
+    }
+
+    if (worstFunnel && worstFunnel.conversionRate < 35) {
+      primaryBlockers.push(`${worstFunnel.label} 转化仅 ${worstFunnel.conversionRate}% ，存在明显用户流失。`);
+    } else if (worstFunnel) {
+      healthySignals.push(`当前最弱漏斗是“${worstFunnel.label}”，转化 ${worstFunnel.conversionRate}%。`);
+    }
+
+    if (weakestRoute && weakestRoute.successRate < 85) {
+      primaryBlockers.push(`${weakestRoute.label} 成功率仅 ${weakestRoute.successRate}% ，平均耗时 ${weakestRoute.avgDurationMs}ms。`);
+    } else if (weakestRoute) {
+      healthySignals.push(`${weakestRoute.label} 当前成功率 ${weakestRoute.successRate}% 。`);
+    }
+
+    if (feedbackBacklog > 0) {
+      primaryBlockers.push(`还有 ${feedbackBacklog} 条验证/纠偏待处理，真实反馈闭环还不够快。`);
+    } else {
+      healthySignals.push('验证闭环队列当前可控。');
+    }
+
+    if (failedEmailQueue > 0 || pendingEmailQueue > 3) {
+      primaryBlockers.push(`邮件重试队列仍有 ${pendingEmailQueue} 条待处理，另有 ${failedEmailQueue} 条最终失败。`);
+    } else {
+      healthySignals.push('邮件投递链路当前没有明显积压。');
+    }
+
+    const systemHealthSeverity = primaryBlockers.length === 0
+      ? 'healthy'
+      : (recentLlmAttempts > 0 && recentLlmSuccessRate < 20)
+          || overdueCircuitCount > 0
+          || (worstFunnel ? worstFunnel.conversionRate < 20 : false)
+        ? 'critical'
+        : 'warning';
+
+    return {
+      totals,
+      systemHealth: {
+        severity: systemHealthSeverity,
+        title: systemHealthSeverity === 'critical'
+          ? '当前系统存在明确阻塞，优先看模型链路与核心漏斗'
+          : systemHealthSeverity === 'warning'
+            ? '当前系统可运行，但有若干卡点正在拖慢体验与转化'
+            : '当前系统整体健康，主要链路可闭环运行',
+        summary: systemHealthSeverity === 'critical'
+          ? '页面本身不是主问题，最可能影响用户体感的是模型请求失败、熔断恢复不及时，以及关键漏斗转化偏低。'
+          : systemHealthSeverity === 'warning'
+            ? '系统可继续跑，但已经出现局部故障或明显流失，需要针对性压降失败率和回收反馈。'
+            : '模型、邮件、反馈和转化链路目前都没有明显硬阻塞，可以继续观察用户行为细节。',
+        updatedAt: latestEvent?.created_at || null,
+        blockers: primaryBlockers.slice(0, 4),
+        healthySignals: healthySignals.slice(0, 4),
+        cards: [],
+        llmSnapshot: {
+          attempts24h: recentLlmAttempts,
+          successRate24h: recentLlmSuccessRate,
+          openModelCount,
+          halfOpenModelCount,
+          overdueCircuitCount,
+        },
+      },
+    };
+  },
+
   getOverview: () => {
     const totals = db.prepare(`
       SELECT
@@ -1320,6 +1695,7 @@ export const analyticsOperations = {
       chat_page_viewed: { key: 'chat_page_viewed', label: '聊天页访问', count: 0 },
       chat_message_sent: { key: 'chat_message_sent', label: '发送聊天消息', count: 0 },
       report_event_saved_from_result: { key: 'report_event_saved_from_result', label: '结果页沉淀事件', count: 0 },
+      report_past_event_saved_from_result: { key: 'report_past_event_saved_from_result', label: '结果页确认过去事件', count: 0 },
       event_feedback_recorded: { key: 'event_feedback_recorded', label: '回填验证结果', count: 0 },
       newsletter_subscribed: { key: 'newsletter_subscribed', label: '邮件订阅', count: 0 },
       auth_code_requested: { key: 'auth_code_requested', label: '请求验证码', count: 0 },
@@ -1673,6 +2049,709 @@ export const analyticsOperations = {
       eventName: item.event_name,
       count: item.count,
     }));
+    const userRegistrationSummary = db.prepare(`
+      SELECT
+        COUNT(*) AS totalUsers,
+        SUM(CASE WHEN email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS usersWithEmail,
+        SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS verifiedUsers,
+        MIN(created_at) AS firstUserAt,
+        MAX(created_at) AS latestUserAt
+      FROM users
+    `).get() as {
+      totalUsers: number;
+      usersWithEmail: number;
+      verifiedUsers: number;
+      firstUserAt?: string | null;
+      latestUserAt?: string | null;
+    };
+    const weeklyUserGrowth = db.prepare(`
+      WITH RECURSIVE weeks(week_start) AS (
+        SELECT date('now', '-6 days', 'weekday 1', '-42 days')
+        UNION ALL
+        SELECT date(week_start, '+7 days')
+        FROM weeks
+        WHERE week_start < date('now', '-6 days', 'weekday 1')
+      ),
+      user_weekly AS (
+        SELECT
+          date(created_at, '-6 days', 'weekday 1') AS week_start,
+          COUNT(*) AS new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS verified_new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 0 ELSE 1 END) AS guest_new_users
+        FROM users
+        WHERE datetime(created_at) >= datetime('now', '-49 days')
+        GROUP BY date(created_at, '-6 days', 'weekday 1')
+      )
+      SELECT
+        weeks.week_start AS weekStart,
+        strftime('%Y-W%W', weeks.week_start) AS weekLabel,
+        COALESCE(user_weekly.new_users, 0) AS newUsers,
+        COALESCE(user_weekly.guest_new_users, 0) AS guestNewUsers,
+        COALESCE(user_weekly.verified_new_users, 0) AS verifiedNewUsers
+      FROM weeks
+      LEFT JOIN user_weekly ON user_weekly.week_start = weeks.week_start
+      ORDER BY weeks.week_start DESC
+    `).all() as Array<{
+      weekStart: string;
+      weekLabel: string;
+      newUsers: number;
+      guestNewUsers: number;
+      verifiedNewUsers: number;
+    }>;
+    const weeklyProductUsage = db.prepare(`
+      WITH RECURSIVE weeks(week_start) AS (
+        SELECT date('now', '-6 days', 'weekday 1', '-42 days')
+        UNION ALL
+        SELECT date(week_start, '+7 days')
+        FROM weeks
+        WHERE week_start < date('now', '-6 days', 'weekday 1')
+      ),
+      usage_weekly AS (
+        SELECT
+          date(created_at, '-6 days', 'weekday 1') AS week_start,
+          COUNT(*) AS product_events,
+          COUNT(DISTINCT CASE WHEN user_id IS NOT NULL AND trim(user_id) <> '' THEN user_id END) AS active_keys,
+          COUNT(DISTINCT CASE WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN session_id END) AS sessions,
+          SUM(CASE WHEN event_name = 'analyze_completed' THEN 1 ELSE 0 END) AS analyze_completed,
+          SUM(CASE WHEN event_name = 'report_viewed' THEN 1 ELSE 0 END) AS report_views,
+          SUM(CASE WHEN event_name = 'chat_message_sent' THEN 1 ELSE 0 END) AS chat_messages,
+          SUM(CASE WHEN event_name IN ('event_created', 'report_event_saved_from_result', 'report_past_event_saved_from_result', 'chat_event_saved') THEN 1 ELSE 0 END) AS events_created
+        FROM analytics_events
+        WHERE datetime(created_at) >= datetime('now', '-49 days')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+        GROUP BY date(created_at, '-6 days', 'weekday 1')
+      )
+      SELECT
+        weeks.week_start AS weekStart,
+        strftime('%Y-W%W', weeks.week_start) AS weekLabel,
+        COALESCE(usage_weekly.product_events, 0) AS productEvents,
+        COALESCE(usage_weekly.active_keys, 0) AS activeKeys,
+        COALESCE(usage_weekly.sessions, 0) AS sessions,
+        COALESCE(usage_weekly.analyze_completed, 0) AS analyzeCompleted,
+        COALESCE(usage_weekly.report_views, 0) AS reportViews,
+        COALESCE(usage_weekly.chat_messages, 0) AS chatMessages,
+        COALESCE(usage_weekly.events_created, 0) AS eventsCreated
+      FROM weeks
+      LEFT JOIN usage_weekly ON usage_weekly.week_start = weeks.week_start
+      ORDER BY weeks.week_start DESC
+    `).all() as Array<{
+      weekStart: string;
+      weekLabel: string;
+      productEvents: number;
+      activeKeys: number;
+      sessions: number;
+      analyzeCompleted: number;
+      reportViews: number;
+      chatMessages: number;
+      eventsCreated: number;
+    }>;
+    const dailyProductUsage = db.prepare(`
+      WITH RECURSIVE days(day) AS (
+        SELECT date('now')
+        UNION ALL
+        SELECT date(day, '-1 day')
+        FROM days
+        WHERE day > date('now', '-13 days')
+      ),
+      usage_daily AS (
+        SELECT
+          date(created_at) AS day,
+          COUNT(*) AS product_events,
+          COUNT(DISTINCT CASE WHEN user_id IS NOT NULL AND trim(user_id) <> '' THEN user_id END) AS active_keys,
+          COUNT(DISTINCT CASE WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN session_id END) AS sessions,
+          SUM(CASE WHEN event_name = 'analyze_completed' THEN 1 ELSE 0 END) AS analyze_completed,
+          SUM(CASE WHEN event_name = 'report_viewed' THEN 1 ELSE 0 END) AS report_views,
+          SUM(CASE WHEN event_name = 'chat_message_sent' THEN 1 ELSE 0 END) AS chat_messages,
+          SUM(CASE WHEN event_name IN ('event_created', 'report_event_saved_from_result', 'report_past_event_saved_from_result', 'chat_event_saved') THEN 1 ELSE 0 END) AS events_created,
+          SUM(CASE WHEN event_name = 'auth_code_requested' THEN 1 ELSE 0 END) AS auth_code_requested
+        FROM analytics_events
+        WHERE datetime(created_at) >= datetime('now', '-14 days')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+        GROUP BY date(created_at)
+      ),
+      user_daily AS (
+        SELECT
+          date(created_at) AS day,
+          COUNT(*) AS new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS verified_new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 0 ELSE 1 END) AS guest_new_users
+        FROM users
+        WHERE datetime(created_at) >= datetime('now', '-14 days')
+        GROUP BY date(created_at)
+      ),
+      auth_daily AS (
+        SELECT
+          date(created_at) AS day,
+          COUNT(*) AS auth_code_requests,
+          SUM(CASE WHEN used_at IS NOT NULL THEN 1 ELSE 0 END) AS auth_code_used,
+          COUNT(DISTINCT email) AS distinct_emails
+        FROM auth_codes
+        WHERE datetime(created_at) >= datetime('now', '-14 days')
+        GROUP BY date(created_at)
+      )
+      SELECT
+        days.day AS day,
+        COALESCE(usage_daily.product_events, 0) AS productEvents,
+        COALESCE(usage_daily.active_keys, 0) AS activeKeys,
+        COALESCE(usage_daily.sessions, 0) AS sessions,
+        COALESCE(usage_daily.analyze_completed, 0) AS analyzeCompleted,
+        COALESCE(usage_daily.report_views, 0) AS reportViews,
+        COALESCE(usage_daily.chat_messages, 0) AS chatMessages,
+        COALESCE(usage_daily.events_created, 0) AS eventsCreated,
+        COALESCE(usage_daily.auth_code_requested, 0) AS authCodeRequested,
+        COALESCE(user_daily.new_users, 0) AS newUsers,
+        COALESCE(user_daily.guest_new_users, 0) AS guestNewUsers,
+        COALESCE(user_daily.verified_new_users, 0) AS verifiedNewUsers,
+        COALESCE(auth_daily.auth_code_requests, 0) AS authCodeRequests,
+        COALESCE(auth_daily.auth_code_used, 0) AS authCodeUsed,
+        COALESCE(auth_daily.distinct_emails, 0) AS distinctEmails
+      FROM days
+      LEFT JOIN usage_daily ON usage_daily.day = days.day
+      LEFT JOIN user_daily ON user_daily.day = days.day
+      LEFT JOIN auth_daily ON auth_daily.day = days.day
+      ORDER BY days.day DESC
+    `).all() as Array<{
+      day: string;
+      productEvents: number;
+      activeKeys: number;
+      sessions: number;
+      analyzeCompleted: number;
+      reportViews: number;
+      chatMessages: number;
+      eventsCreated: number;
+      authCodeRequested: number;
+      newUsers: number;
+      guestNewUsers: number;
+      verifiedNewUsers: number;
+      authCodeRequests: number;
+      authCodeUsed: number;
+      distinctEmails: number;
+    }>;
+    const sessionStrengthRaw = db.prepare(`
+      SELECT
+        COUNT(*) AS core_events,
+        COUNT(DISTINCT session_id) AS sessions,
+        COUNT(DISTINCT CASE WHEN user_id IS NOT NULL AND trim(user_id) <> '' THEN user_id END) AS active_keys
+      FROM analytics_events
+      WHERE datetime(created_at) >= datetime('now', '-30 days')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+        AND session_id IS NOT NULL
+        AND trim(session_id) <> ''
+    `).get() as {
+      core_events: number;
+      sessions: number;
+      active_keys: number;
+    };
+    const sessionsTableCountRow = db.prepare(`
+      SELECT COUNT(*) AS count
+      FROM sessions
+    `).get() as { count: number };
+    const sessionStrength30d = {
+      coreEvents: sessionStrengthRaw.core_events,
+      sessions: sessionStrengthRaw.sessions,
+      activeKeys: sessionStrengthRaw.active_keys,
+      eventsPerSession: sessionStrengthRaw.sessions > 0
+        ? toRoundedDecimal(sessionStrengthRaw.core_events / sessionStrengthRaw.sessions)
+        : 0,
+      eventsPerActiveKey: sessionStrengthRaw.active_keys > 0
+        ? toRoundedDecimal(sessionStrengthRaw.core_events / sessionStrengthRaw.active_keys)
+        : 0,
+      sessionTableCount: sessionsTableCountRow.count,
+      usingSessionProxy: sessionsTableCountRow.count === 0,
+    };
+    const recentBehaviorShiftWindow = {
+      currentStart: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
+      currentEnd: db.prepare(`SELECT date('now') AS value`).get() as { value: string },
+      previousStart: db.prepare(`SELECT date('now', '-6 days') AS value`).get() as { value: string },
+      previousEnd: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
+    };
+    const recentBehaviorShiftSummary = db.prepare(`
+      WITH usage_current AS (
+        SELECT
+          COUNT(*) AS product_events,
+          COUNT(DISTINCT CASE WHEN user_id IS NOT NULL AND trim(user_id) <> '' THEN user_id END) AS active_keys,
+          COUNT(DISTINCT CASE WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN session_id END) AS sessions,
+          SUM(CASE WHEN event_name = 'analyze_completed' THEN 1 ELSE 0 END) AS analyze_completed,
+          SUM(CASE WHEN event_name = 'report_viewed' THEN 1 ELSE 0 END) AS report_views,
+          SUM(CASE WHEN event_name = 'chat_message_sent' THEN 1 ELSE 0 END) AS chat_messages,
+          SUM(CASE WHEN event_name IN ('event_created', 'report_event_saved_from_result', 'report_past_event_saved_from_result', 'chat_event_saved') THEN 1 ELSE 0 END) AS events_created,
+          SUM(CASE WHEN event_name = 'tool_detail_viewed' THEN 1 ELSE 0 END) AS tool_detail_views,
+          SUM(CASE WHEN event_name = 'knowledge_article_viewed' THEN 1 ELSE 0 END) AS knowledge_views,
+          SUM(CASE WHEN event_name = 'case_article_viewed' THEN 1 ELSE 0 END) AS case_views,
+          SUM(CASE WHEN event_name = 'home_page_viewed' THEN 1 ELSE 0 END) AS home_views,
+          SUM(CASE WHEN event_name = 'analyze_page_viewed' THEN 1 ELSE 0 END) AS analyze_page_views,
+          SUM(CASE WHEN event_name = 'chat_page_viewed' THEN 1 ELSE 0 END) AS chat_page_views,
+          SUM(CASE WHEN event_name = 'chat_completed' THEN 1 ELSE 0 END) AS chat_completed,
+          SUM(CASE WHEN event_name = 'chat_context_loaded' THEN 1 ELSE 0 END) AS chat_context_loaded,
+          SUM(CASE WHEN event_name = 'result_cta_clicked' THEN 1 ELSE 0 END) AS result_cta_clicked,
+          SUM(CASE WHEN event_name = 'chat_followup_clicked' THEN 1 ELSE 0 END) AS chat_followup_clicked
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+      ),
+      usage_previous AS (
+        SELECT
+          COUNT(*) AS product_events,
+          COUNT(DISTINCT CASE WHEN user_id IS NOT NULL AND trim(user_id) <> '' THEN user_id END) AS active_keys,
+          COUNT(DISTINCT CASE WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN session_id END) AS sessions,
+          SUM(CASE WHEN event_name = 'analyze_completed' THEN 1 ELSE 0 END) AS analyze_completed,
+          SUM(CASE WHEN event_name = 'report_viewed' THEN 1 ELSE 0 END) AS report_views,
+          SUM(CASE WHEN event_name = 'chat_message_sent' THEN 1 ELSE 0 END) AS chat_messages,
+          SUM(CASE WHEN event_name IN ('event_created', 'report_event_saved_from_result', 'report_past_event_saved_from_result', 'chat_event_saved') THEN 1 ELSE 0 END) AS events_created,
+          SUM(CASE WHEN event_name = 'tool_detail_viewed' THEN 1 ELSE 0 END) AS tool_detail_views,
+          SUM(CASE WHEN event_name = 'knowledge_article_viewed' THEN 1 ELSE 0 END) AS knowledge_views,
+          SUM(CASE WHEN event_name = 'case_article_viewed' THEN 1 ELSE 0 END) AS case_views,
+          SUM(CASE WHEN event_name = 'home_page_viewed' THEN 1 ELSE 0 END) AS home_views,
+          SUM(CASE WHEN event_name = 'analyze_page_viewed' THEN 1 ELSE 0 END) AS analyze_page_views,
+          SUM(CASE WHEN event_name = 'chat_page_viewed' THEN 1 ELSE 0 END) AS chat_page_views,
+          SUM(CASE WHEN event_name = 'chat_completed' THEN 1 ELSE 0 END) AS chat_completed,
+          SUM(CASE WHEN event_name = 'chat_context_loaded' THEN 1 ELSE 0 END) AS chat_context_loaded,
+          SUM(CASE WHEN event_name = 'result_cta_clicked' THEN 1 ELSE 0 END) AS result_cta_clicked,
+          SUM(CASE WHEN event_name = 'chat_followup_clicked' THEN 1 ELSE 0 END) AS chat_followup_clicked
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+      ),
+      users_current AS (
+        SELECT
+          COUNT(*) AS new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS verified_new_users
+        FROM users
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+      ),
+      users_previous AS (
+        SELECT
+          COUNT(*) AS new_users,
+          SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS verified_new_users
+        FROM users
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+      ),
+      auth_current AS (
+        SELECT
+          COUNT(*) AS auth_code_requests,
+          SUM(CASE WHEN used_at IS NOT NULL THEN 1 ELSE 0 END) AS auth_code_used
+        FROM auth_codes
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+      ),
+      auth_previous AS (
+        SELECT
+          COUNT(*) AS auth_code_requests,
+          SUM(CASE WHEN used_at IS NOT NULL THEN 1 ELSE 0 END) AS auth_code_used
+        FROM auth_codes
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+      )
+      SELECT
+        usage_current.product_events AS currentProductEvents,
+        usage_previous.product_events AS previousProductEvents,
+        usage_current.active_keys AS currentActiveKeys,
+        usage_previous.active_keys AS previousActiveKeys,
+        usage_current.sessions AS currentSessions,
+        usage_previous.sessions AS previousSessions,
+        usage_current.analyze_completed AS currentAnalyzeCompleted,
+        usage_previous.analyze_completed AS previousAnalyzeCompleted,
+        usage_current.report_views AS currentReportViews,
+        usage_previous.report_views AS previousReportViews,
+        usage_current.chat_messages AS currentChatMessages,
+        usage_previous.chat_messages AS previousChatMessages,
+        usage_current.events_created AS currentEventsCreated,
+        usage_previous.events_created AS previousEventsCreated,
+        usage_current.tool_detail_views AS currentToolDetailViews,
+        usage_previous.tool_detail_views AS previousToolDetailViews,
+        usage_current.knowledge_views AS currentKnowledgeViews,
+        usage_previous.knowledge_views AS previousKnowledgeViews,
+        usage_current.case_views AS currentCaseViews,
+        usage_previous.case_views AS previousCaseViews,
+        usage_current.home_views AS currentHomeViews,
+        usage_previous.home_views AS previousHomeViews,
+        usage_current.analyze_page_views AS currentAnalyzePageViews,
+        usage_previous.analyze_page_views AS previousAnalyzePageViews,
+        usage_current.chat_page_views AS currentChatPageViews,
+        usage_previous.chat_page_views AS previousChatPageViews,
+        usage_current.chat_completed AS currentChatCompleted,
+        usage_previous.chat_completed AS previousChatCompleted,
+        usage_current.chat_context_loaded AS currentChatContextLoaded,
+        usage_previous.chat_context_loaded AS previousChatContextLoaded,
+        usage_current.result_cta_clicked AS currentResultCtaClicked,
+        usage_previous.result_cta_clicked AS previousResultCtaClicked,
+        usage_current.chat_followup_clicked AS currentChatFollowupClicked,
+        usage_previous.chat_followup_clicked AS previousChatFollowupClicked,
+        users_current.new_users AS currentNewUsers,
+        users_previous.new_users AS previousNewUsers,
+        users_current.verified_new_users AS currentVerifiedNewUsers,
+        users_previous.verified_new_users AS previousVerifiedNewUsers,
+        auth_current.auth_code_requests AS currentAuthCodeRequests,
+        auth_previous.auth_code_requests AS previousAuthCodeRequests,
+        auth_current.auth_code_used AS currentAuthCodeUsed,
+        auth_previous.auth_code_used AS previousAuthCodeUsed
+      FROM usage_current, usage_previous, users_current, users_previous, auth_current, auth_previous
+    `).get() as Record<string, number>;
+    const recentBehaviorShiftEvents = db.prepare(`
+      WITH current AS (
+        SELECT event_name, COUNT(*) AS count
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+          AND event_name IN (SELECT column1 FROM (VALUES ${RECENT_BEHAVIOR_TRACKED_EVENTS_SQL}))
+        GROUP BY event_name
+      ),
+      previous AS (
+        SELECT event_name, COUNT(*) AS count
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+          AND event_name IN (SELECT column1 FROM (VALUES ${RECENT_BEHAVIOR_TRACKED_EVENTS_SQL}))
+        GROUP BY event_name
+      ),
+      tracked(event_name) AS (
+        VALUES ${RECENT_BEHAVIOR_TRACKED_EVENTS_SQL}
+      )
+      SELECT
+        tracked.event_name AS eventName,
+        COALESCE(current.count, 0) AS currentCount,
+        COALESCE(previous.count, 0) AS previousCount
+      FROM tracked
+      LEFT JOIN current ON current.event_name = tracked.event_name
+      LEFT JOIN previous ON previous.event_name = tracked.event_name
+      ORDER BY ABS(COALESCE(current.count, 0) - COALESCE(previous.count, 0)) DESC, COALESCE(current.count, 0) DESC
+    `).all() as Array<{
+      eventName: string;
+      currentCount: number;
+      previousCount: number;
+    }>;
+    const recentBehaviorShiftFunnelRaw = db.prepare(`
+      WITH current_report_sessions AS (
+        SELECT COUNT(DISTINCT session_id) AS report_sessions
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+          AND event_name = 'report_viewed'
+          AND session_id IS NOT NULL
+          AND trim(session_id) <> ''
+      ),
+      previous_report_sessions AS (
+        SELECT COUNT(DISTINCT session_id) AS report_sessions
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+          AND event_name = 'report_viewed'
+          AND session_id IS NOT NULL
+          AND trim(session_id) <> ''
+      ),
+      current_tool_sessions AS (
+        SELECT COUNT(DISTINCT session_id) AS tool_sessions
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-3 days')
+          AND date(created_at) < date('now')
+          AND event_name = 'tool_detail_viewed'
+          AND session_id IS NOT NULL
+          AND trim(session_id) <> ''
+      ),
+      previous_tool_sessions AS (
+        SELECT COUNT(DISTINCT session_id) AS tool_sessions
+        FROM analytics_events
+        WHERE date(created_at) >= date('now', '-6 days')
+          AND date(created_at) < date('now', '-3 days')
+          AND event_name = 'tool_detail_viewed'
+          AND session_id IS NOT NULL
+          AND trim(session_id) <> ''
+      ),
+      current_report_to_chat AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-3 days')
+          AND date(ae.created_at) < date('now')
+          AND ae.event_name = 'chat_message_sent'
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-3 days')
+              AND date(created_at) < date('now')
+              AND event_name = 'report_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      ),
+      previous_report_to_chat AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-6 days')
+          AND date(ae.created_at) < date('now', '-3 days')
+          AND ae.event_name = 'chat_message_sent'
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-6 days')
+              AND date(created_at) < date('now', '-3 days')
+              AND event_name = 'report_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      ),
+      current_report_to_event AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-3 days')
+          AND date(ae.created_at) < date('now')
+          AND ae.event_name IN ('report_event_saved_from_result', 'report_past_event_saved_from_result', 'event_created')
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-3 days')
+              AND date(created_at) < date('now')
+              AND event_name = 'report_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      ),
+      previous_report_to_event AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-6 days')
+          AND date(ae.created_at) < date('now', '-3 days')
+          AND ae.event_name IN ('report_event_saved_from_result', 'report_past_event_saved_from_result', 'event_created')
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-6 days')
+              AND date(created_at) < date('now', '-3 days')
+              AND event_name = 'report_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      ),
+      current_tool_to_run AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-3 days')
+          AND date(ae.created_at) < date('now')
+          AND ae.event_name = 'tool_run_started'
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-3 days')
+              AND date(created_at) < date('now')
+              AND event_name = 'tool_detail_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      ),
+      previous_tool_to_run AS (
+        SELECT COUNT(DISTINCT ae.session_id) AS session_count
+        FROM analytics_events ae
+        WHERE date(ae.created_at) >= date('now', '-6 days')
+          AND date(ae.created_at) < date('now', '-3 days')
+          AND ae.event_name = 'tool_run_started'
+          AND ae.session_id IN (
+            SELECT DISTINCT session_id
+            FROM analytics_events
+            WHERE date(created_at) >= date('now', '-6 days')
+              AND date(created_at) < date('now', '-3 days')
+              AND event_name = 'tool_detail_viewed'
+              AND session_id IS NOT NULL
+              AND trim(session_id) <> ''
+          )
+      )
+      SELECT
+        current_report_sessions.report_sessions AS currentReportSessions,
+        previous_report_sessions.report_sessions AS previousReportSessions,
+        current_tool_sessions.tool_sessions AS currentToolDetailSessions,
+        previous_tool_sessions.tool_sessions AS previousToolDetailSessions,
+        current_report_to_chat.session_count AS currentReportToChatSessions,
+        previous_report_to_chat.session_count AS previousReportToChatSessions,
+        current_report_to_event.session_count AS currentReportToEventSessions,
+        previous_report_to_event.session_count AS previousReportToEventSessions,
+        current_tool_to_run.session_count AS currentToolToRunSessions,
+        previous_tool_to_run.session_count AS previousToolToRunSessions
+      FROM current_report_sessions, previous_report_sessions, current_tool_sessions, previous_tool_sessions,
+        current_report_to_chat, previous_report_to_chat, current_report_to_event, previous_report_to_event,
+        current_tool_to_run, previous_tool_to_run
+    `).get() as Record<string, number>;
+    const recentBehaviorShiftKeyMetrics = [
+      {
+        key: 'product_events',
+        label: '产品事件',
+        currentValue: recentBehaviorShiftSummary.currentProductEvents || 0,
+        previousValue: recentBehaviorShiftSummary.previousProductEvents || 0,
+      },
+      {
+        key: 'active_keys',
+        label: '活跃键',
+        currentValue: recentBehaviorShiftSummary.currentActiveKeys || 0,
+        previousValue: recentBehaviorShiftSummary.previousActiveKeys || 0,
+      },
+      {
+        key: 'sessions',
+        label: '会话',
+        currentValue: recentBehaviorShiftSummary.currentSessions || 0,
+        previousValue: recentBehaviorShiftSummary.previousSessions || 0,
+      },
+      {
+        key: 'analyze_completed',
+        label: '完成分析',
+        currentValue: recentBehaviorShiftSummary.currentAnalyzeCompleted || 0,
+        previousValue: recentBehaviorShiftSummary.previousAnalyzeCompleted || 0,
+      },
+      {
+        key: 'report_views',
+        label: '结果页查看',
+        currentValue: recentBehaviorShiftSummary.currentReportViews || 0,
+        previousValue: recentBehaviorShiftSummary.previousReportViews || 0,
+      },
+      {
+        key: 'chat_messages',
+        label: '聊天提问',
+        currentValue: recentBehaviorShiftSummary.currentChatMessages || 0,
+        previousValue: recentBehaviorShiftSummary.previousChatMessages || 0,
+      },
+      {
+        key: 'events_created',
+        label: '事件沉淀',
+        currentValue: recentBehaviorShiftSummary.currentEventsCreated || 0,
+        previousValue: recentBehaviorShiftSummary.previousEventsCreated || 0,
+      },
+      {
+        key: 'tool_detail_views',
+        label: '工具详情查看',
+        currentValue: recentBehaviorShiftSummary.currentToolDetailViews || 0,
+        previousValue: recentBehaviorShiftSummary.previousToolDetailViews || 0,
+      },
+      {
+        key: 'new_users',
+        label: '新增用户',
+        currentValue: recentBehaviorShiftSummary.currentNewUsers || 0,
+        previousValue: recentBehaviorShiftSummary.previousNewUsers || 0,
+      },
+      {
+        key: 'verified_new_users',
+        label: '新增已验证用户',
+        currentValue: recentBehaviorShiftSummary.currentVerifiedNewUsers || 0,
+        previousValue: recentBehaviorShiftSummary.previousVerifiedNewUsers || 0,
+      },
+      {
+        key: 'auth_code_used',
+        label: '验证码完成',
+        currentValue: recentBehaviorShiftSummary.currentAuthCodeUsed || 0,
+        previousValue: recentBehaviorShiftSummary.previousAuthCodeUsed || 0,
+      },
+    ].map((item) => {
+      const delta = item.currentValue - item.previousValue;
+      return {
+        ...item,
+        delta,
+        pctChange: item.previousValue > 0 ? toRoundedDecimal((delta * 100) / item.previousValue, 1) : null,
+        direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+      };
+    });
+    const recentBehaviorShiftEventBreakdown = recentBehaviorShiftEvents
+      .map((item) => {
+        const delta = item.currentCount - item.previousCount;
+        return {
+          ...item,
+          delta,
+          pctChange: item.previousCount > 0 ? toRoundedDecimal((delta * 100) / item.previousCount, 1) : null,
+          direction: delta > 0 ? 'up' : delta < 0 ? 'down' : 'flat',
+          label: item.eventName,
+        };
+      });
+    const recentBehaviorShiftTopChanges = recentBehaviorShiftEventBreakdown
+      .filter((item) => item.delta !== 0)
+      .slice(0, 8);
+    const recentBehaviorShiftFunnel = [
+      {
+        key: 'report_to_chat',
+        label: '结果页会话 -> 聊天提问',
+        currentValue: recentBehaviorShiftFunnelRaw.currentReportToChatSessions || 0,
+        previousValue: recentBehaviorShiftFunnelRaw.previousReportToChatSessions || 0,
+        currentBase: recentBehaviorShiftFunnelRaw.currentReportSessions || 0,
+        previousBase: recentBehaviorShiftFunnelRaw.previousReportSessions || 0,
+      },
+      {
+        key: 'report_to_event',
+        label: '结果页会话 -> 事件沉淀',
+        currentValue: recentBehaviorShiftFunnelRaw.currentReportToEventSessions || 0,
+        previousValue: recentBehaviorShiftFunnelRaw.previousReportToEventSessions || 0,
+        currentBase: recentBehaviorShiftFunnelRaw.currentReportSessions || 0,
+        previousBase: recentBehaviorShiftFunnelRaw.previousReportSessions || 0,
+      },
+      {
+        key: 'tool_to_run',
+        label: '工具详情会话 -> 工具开跑',
+        currentValue: recentBehaviorShiftFunnelRaw.currentToolToRunSessions || 0,
+        previousValue: recentBehaviorShiftFunnelRaw.previousToolToRunSessions || 0,
+        currentBase: recentBehaviorShiftFunnelRaw.currentToolDetailSessions || 0,
+        previousBase: recentBehaviorShiftFunnelRaw.previousToolDetailSessions || 0,
+      },
+    ].map((item) => {
+      const currentRate = item.currentBase > 0 ? Math.round((item.currentValue / item.currentBase) * 100) : 0;
+      const previousRate = item.previousBase > 0 ? Math.round((item.previousValue / item.previousBase) * 100) : 0;
+      return {
+        ...item,
+        currentRate,
+        previousRate,
+        rateDelta: currentRate - previousRate,
+        direction: currentRate > previousRate ? 'up' : currentRate < previousRate ? 'down' : 'flat',
+      };
+    });
+    const recentBehaviorShiftSignals: string[] = [];
+    const recentBehaviorShiftWarnings: string[] = [];
+
+    const productEventsDelta = (recentBehaviorShiftSummary.currentProductEvents || 0) - (recentBehaviorShiftSummary.previousProductEvents || 0);
+    if (productEventsDelta < 0) {
+      recentBehaviorShiftWarnings.push(`最近 3 个完整自然日产品事件比前 3 天少了 ${Math.abs(productEventsDelta)}，整体活跃在回落。`);
+    } else if (productEventsDelta > 0) {
+      recentBehaviorShiftSignals.push(`最近 3 个完整自然日产品事件增加了 ${productEventsDelta}，整体使用在回升。`);
+    }
+
+    const reportViewsDelta = (recentBehaviorShiftSummary.currentReportViews || 0) - (recentBehaviorShiftSummary.previousReportViews || 0);
+    if (reportViewsDelta < 0) {
+      recentBehaviorShiftWarnings.push(`结果页查看减少 ${Math.abs(reportViewsDelta)}，核心报告链路在降温。`);
+    }
+
+    const chatMessagesDelta = (recentBehaviorShiftSummary.currentChatMessages || 0) - (recentBehaviorShiftSummary.previousChatMessages || 0);
+    if (chatMessagesDelta < 0) {
+      recentBehaviorShiftWarnings.push(`聊天提问减少 ${Math.abs(chatMessagesDelta)}，报告后的继续提问意愿明显变弱。`);
+    }
+
+    const toolDetailDelta = (recentBehaviorShiftSummary.currentToolDetailViews || 0) - (recentBehaviorShiftSummary.previousToolDetailViews || 0);
+    if (toolDetailDelta > 0) {
+      recentBehaviorShiftSignals.push(`工具详情查看增加 ${toolDetailDelta}，用户对工具探索意愿在上升。`);
+    }
+
+    const caseViewsDelta = (recentBehaviorShiftSummary.currentCaseViews || 0) - (recentBehaviorShiftSummary.previousCaseViews || 0);
+    if (caseViewsDelta > 0) {
+      recentBehaviorShiftSignals.push(`案例内容查看增加 ${caseViewsDelta}，说明案例素材最近更能承接用户注意力。`);
+    }
+
+    const verificationDelta = (recentBehaviorShiftSummary.currentVerifiedNewUsers || 0) - (recentBehaviorShiftSummary.previousVerifiedNewUsers || 0);
+    if (verificationDelta < 0) {
+      recentBehaviorShiftWarnings.push(`新增已验证用户减少 ${Math.abs(verificationDelta)}，注册质量没有跟上新增量。`);
+    }
+
+    const reportToChatDelta = recentBehaviorShiftFunnel.find((item) => item.key === 'report_to_chat')?.rateDelta || 0;
+    if (reportToChatDelta < 0) {
+      recentBehaviorShiftWarnings.push(`结果页到聊天的会话转化下降 ${Math.abs(reportToChatDelta)} 个点，报告页后续动作承接变弱。`);
+    }
+
+    const recentBehaviorShift = {
+      window: {
+        currentStart: recentBehaviorShiftWindow.currentStart.value,
+        currentEnd: recentBehaviorShiftWindow.currentEnd.value,
+        previousStart: recentBehaviorShiftWindow.previousStart.value,
+        previousEnd: recentBehaviorShiftWindow.previousEnd.value,
+        compareLabel: '最近 3 个完整自然日 vs 前 3 个完整自然日',
+      },
+      keyMetrics: recentBehaviorShiftKeyMetrics,
+      topChanges: recentBehaviorShiftTopChanges,
+      funnel: recentBehaviorShiftFunnel,
+      signals: recentBehaviorShiftSignals.slice(0, 4),
+      warnings: recentBehaviorShiftWarnings.slice(0, 4),
+    };
     const totalPageViews = Object.values(pageViewBuckets).reduce((sum, item) => sum + item.count, 0);
     const totalAnalyzeSubmissions = journeyCounts.analyze_submitted.count || 0;
     const totalChatActions = Object.values(chatActionBuckets).reduce((sum, item) => sum + item.count, 0);
@@ -1983,6 +3062,29 @@ export const analyticsOperations = {
       premiumServiceStatus,
       recentPremiumRequests,
       funnelDiagnostics,
+      userRegistrationSummary: {
+        totalUsers: userRegistrationSummary.totalUsers,
+        usersWithEmail: userRegistrationSummary.usersWithEmail,
+        verifiedUsers: userRegistrationSummary.verifiedUsers,
+        guestUsers: Math.max(0, userRegistrationSummary.totalUsers - userRegistrationSummary.verifiedUsers),
+        verificationRate: userRegistrationSummary.totalUsers > 0
+          ? Math.round((userRegistrationSummary.verifiedUsers / userRegistrationSummary.totalUsers) * 100)
+          : 0,
+        firstUserAt: userRegistrationSummary.firstUserAt || null,
+        latestUserAt: userRegistrationSummary.latestUserAt || null,
+      },
+      weeklyUserGrowth,
+      weeklyProductUsage: weeklyProductUsage.map((item) => ({
+        ...item,
+        eventsPerSession: item.sessions > 0 ? toRoundedDecimal(item.productEvents / item.sessions) : 0,
+        eventsPerActiveKey: item.activeKeys > 0 ? toRoundedDecimal(item.productEvents / item.activeKeys) : 0,
+      })),
+      dailyProductUsage: dailyProductUsage.map((item) => ({
+        ...item,
+        eventsPerSession: item.sessions > 0 ? toRoundedDecimal(item.productEvents / item.sessions) : 0,
+      })),
+      sessionStrength30d,
+      recentBehaviorShift,
       systemHealth,
       journeyFunnel: Object.values(journeyCounts),
       eventsLast7d,
@@ -2878,6 +3980,74 @@ export const reportMonthlyDigestRunOperations = {
           : [];
 
     return rows.map(mapReportMonthlyDigestRunRow);
+  },
+};
+
+export const userLifecycleEmailRunOperations = {
+  create: (run: UserLifecycleEmailRunRecord) => {
+    return db.prepare(`
+      INSERT INTO user_lifecycle_email_runs (
+        id, stage_key, email, user_id, report_id, status, reason, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(stage_key, email) DO UPDATE SET
+        user_id = excluded.user_id,
+        report_id = excluded.report_id,
+        status = excluded.status,
+        reason = excluded.reason,
+        meta = excluded.meta
+    `).run(
+      run.id,
+      run.stageKey,
+      run.email.trim().toLowerCase(),
+      run.userId || null,
+      run.reportId || null,
+      run.status,
+      run.reason || null,
+      JSON.stringify(run.meta || {})
+    );
+  },
+
+  getByStageAndEmail: (stageKey: string, email: string) => {
+    const row = db.prepare(`
+      SELECT * FROM user_lifecycle_email_runs
+      WHERE stage_key = ? AND email = ?
+      LIMIT 1
+    `).get(stageKey, email.trim().toLowerCase()) as RawUserLifecycleEmailRunRow | undefined;
+
+    return row ? mapUserLifecycleEmailRunRow(row) : null;
+  },
+
+  listRecentByUserOrEmail: (params: {
+    userId?: string | null;
+    email?: string | null;
+    limit?: number;
+  }) => {
+    const limit = Math.max(1, params.limit || 20);
+    const normalizedEmail = `${params.email || ''}`.trim().toLowerCase();
+    const rows = params.userId && normalizedEmail
+      ? db.prepare(`
+          SELECT * FROM user_lifecycle_email_runs
+          WHERE user_id = ? OR email = ?
+          ORDER BY datetime(created_at) DESC
+          LIMIT ?
+        `).all(params.userId, normalizedEmail, limit) as RawUserLifecycleEmailRunRow[]
+      : params.userId
+        ? db.prepare(`
+            SELECT * FROM user_lifecycle_email_runs
+            WHERE user_id = ?
+            ORDER BY datetime(created_at) DESC
+            LIMIT ?
+          `).all(params.userId, limit) as RawUserLifecycleEmailRunRow[]
+        : normalizedEmail
+          ? db.prepare(`
+              SELECT * FROM user_lifecycle_email_runs
+              WHERE email = ?
+              ORDER BY datetime(created_at) DESC
+              LIMIT ?
+            `).all(normalizedEmail, limit) as RawUserLifecycleEmailRunRow[]
+          : [];
+
+    return rows.map(mapUserLifecycleEmailRunRow);
   },
 };
 

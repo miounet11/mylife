@@ -8,11 +8,18 @@ function parseLimitArg() {
   return Number.isFinite(value) && value > 0 ? Math.min(8, Math.round(value)) : 3;
 }
 
+function parseKeyArg() {
+  const raw = process.argv.find((arg) => arg.startsWith('--key='));
+  return raw ? raw.split('=')[1]?.trim() : '';
+}
+
 function main() {
   const limit = parseLimitArg();
+  const key = parseKeyArg();
   const drafts = listManagedContentEntries()
     .filter((entry) => entry.status === 'draft')
     .filter((entry) => entry.meta?.sourceType === 'public-growth-wave2')
+    .filter((entry) => !key || entry.meta?.growthPlanKey === key)
     .map((entry) => ({
       entry,
       assessment: assessGrowthPublication(entry, 'public-growth-wave2'),
@@ -41,6 +48,7 @@ function main() {
 
   console.log(JSON.stringify({
     checkedAt: new Date().toISOString(),
+    requestedKey: key || null,
     considered: drafts.map(({ entry, assessment }) => ({
       slug: entry.slug,
       title: entry.title,

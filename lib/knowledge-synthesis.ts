@@ -2,6 +2,7 @@ import type Database from 'better-sqlite3';
 import { db } from '@/lib/database';
 import { sanitizeContentSlug } from '@/lib/content-generation';
 import { saveManagedContentEntry, type ManagedContentEntry } from '@/lib/content-store';
+import { isKnowledgeSynthesisAutoPublishEnabled } from '@/lib/env';
 import {
   dedupeBibliographyEntries,
   dedupeKnowledgeEntities,
@@ -580,7 +581,7 @@ export function generateKnowledgeSynthesisDrafts(
   }
 ) {
   const userId = params?.userId || 'system_knowledge';
-  const autoPublish = params?.autoPublish ?? process.env.KNOWLEDGE_SYNTHESIS_AUTO_PUBLISH === '1';
+  const autoPublish = params?.autoPublish ?? isKnowledgeSynthesisAutoPublishEnabled();
   const snapshot = buildKnowledgeSynthesisSnapshot({ topicLimit: params?.topicLimit ?? 4 });
   const drafts: ManagedContentEntry[] = [];
 

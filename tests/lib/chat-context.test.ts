@@ -185,8 +185,19 @@ describe('chat-context helpers', () => {
 
     expect(draft.type).toBe('career');
     expect(draft.title).toContain('跳槽');
+    expect(draft.date).toBe(context.suggestedEventDrafts[0]?.date);
     expect(draft.fortuneAnalysis.source).toBe('chat_message');
     expect(draft.description).toContain('问题：');
+  });
+
+  it('uses local calendar date for chat drafts without UTC slicing', () => {
+    const draft = buildChatEventDraft({
+      question: '我现在要不要先推进合作？',
+      answer: '建议先试探，别一次压满。',
+      now: new Date(2026, 3, 20, 23, 45, 0),
+    });
+
+    expect(draft.date).toBe('2026-04-20');
   });
 
   it('prioritizes focused drift event in chat context', () => {
@@ -220,6 +231,35 @@ describe('chat-context helpers', () => {
     expect(context.correctionPrompts).toHaveLength(4);
     expect(context.correctionPrompts[0]?.question).toContain('跳槽谈判失败');
     expect(context.correctionPrompts[0]?.helper).toContain('窗口判断偏早');
+  });
+
+  it('keeps recent event ordering on local date keys without UTC drift', () => {
+    const context = buildChatExperienceContext({
+      events: [
+        {
+          id: 'evt_evening',
+          userId: 'user_001',
+          type: 'career',
+          title: '晚上沟通',
+          date: '2026-04-20',
+          time: '18:00',
+          impact: 'neutral',
+        },
+        {
+          id: 'evt_morning',
+          userId: 'user_001',
+          type: 'career',
+          title: '早上沟通',
+          date: '2026-04-20',
+          time: '09:00',
+          impact: 'neutral',
+        },
+      ],
+      now: new Date(2026, 3, 19, 12, 0, 0),
+    });
+
+    expect(context.recentEvents[0]?.id).toBe('evt_morning');
+    expect(context.recentEvents[1]?.id).toBe('evt_evening');
   });
 
   it('builds intent-aware prompts for event simulation', () => {

@@ -28,11 +28,9 @@ export default function ToolBundlePanel({
             同域工具包
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">{bundle.title}</h2>
-          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{bundle.description}</p>
-          <div className="mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
+          <div className="intro-copy mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
             {bundle.valueHeadline}
           </div>
-          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">适合：{bundle.recommendedFor}</p>
         </div>
         <Link href="/tools" className="action-secondary">
           回到工具中心
@@ -51,7 +49,6 @@ export default function ToolBundlePanel({
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>
             <div className="mt-3 text-lg font-bold text-[color:var(--ink)]">{tool.shortTitle}</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{tool.description}</div>
             <div className="action-guide mt-4 inline-flex items-center gap-2">
               进入工具
               <ArrowRight className="h-4 w-4" />

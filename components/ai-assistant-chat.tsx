@@ -4,84 +4,47 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Compass, Copy, Layers3, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
-import { buildChatEventDraft } from '@/lib/chat-context';
+import {
+  buildChatEventDraft,
+  type ChatContextEvent,
+  type ChatCorrectionPrompt,
+  type ChatExperienceContext,
+  type ChatReportContext,
+} from '@/lib/chat-context';
 import { getChatIntentPreset, listChatIntentPresets } from '@/lib/chat-intent';
 import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
 import ChatMarkdown from '@/components/chat-markdown';
+import TacitKnowledgeComposer from '@/components/tacit-knowledge-composer';
+import type { ReportActionSuggestion } from '@/lib/report-v2';
+import {
+  areTacitKnowledgeInputsEqual,
+  buildTacitKnowledgeSummary,
+  cloneTacitKnowledgeInput,
+  createEmptyTacitKnowledgeInput,
+  hasTacitKnowledgeInput,
+  type TacitKnowledgeInput,
+} from '@/lib/tacit-knowledge';
+import { buildChatHref } from '@/lib/chat-entry';
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  timestamp: Date | null;
   llmUsed?: boolean;
   edited?: boolean;
   regenerated?: boolean;
   reportId?: string | null;
   eventId?: string | null;
   responseToQuestionId?: string | null;
+  tacitContext?: TacitKnowledgeInput | null;
+  tacitSummary?: string | null;
 }
 
-interface ChatContextReport {
-  id: string;
-  name: string;
-  dayMaster: string;
-  pattern: string;
-  currentDaYun: string;
-  currentLiuNian: string;
-  yongShen: string[];
-  topScenario: string;
-  bestWindow: string;
-  riskWindow: string;
-  confidenceLevel: string;
-}
+type ChatContextReport = ChatReportContext;
+type SuggestedEventDraft = ReportActionSuggestion;
 
-interface ChatContextEvent {
-  id: string;
-  title: string;
-  date: string;
-  type: string;
-  impact: 'positive' | 'negative' | 'neutral';
-  validationStatus: 'accurate' | 'drift' | 'pending';
-  reportId?: string;
-  reason?: string;
-  notes?: string;
-}
-
-interface ChatCorrectionPrompt {
-  key: string;
-  question: string;
-  helper: string;
-}
-
-interface SuggestedEventDraft {
-  key: string;
-  title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  date: string;
-  impact: 'positive' | 'negative' | 'neutral';
-  description: string;
-  reason: string;
-  reminderAdvanceDays: number;
-  source: 'scenario' | 'window';
-}
-
-interface ChatContextState {
-  summary: string;
-  focusAreas: string[];
-  suggestedPrompts: string[];
-  correctionPrompts: ChatCorrectionPrompt[];
-  recentEvents: ChatContextEvent[];
-  suggestedEventDrafts: SuggestedEventDraft[];
-  validationSummary?: {
-    accurateCount: number;
-    driftCount: number;
-    pendingCount: number;
-    headline: string;
-  };
-  focusedEvent?: ChatContextEvent;
-  report?: ChatContextReport;
-}
+type ChatContextState = ChatExperienceContext;
 
 interface QuickQuestionButtonProps {
   question: string;
@@ -103,13 +66,16 @@ const chatDoctrineSteps = [
   '最后回到动作',
 ];
 
+function formatChatTime(value: Date | null) {
+  if (!value || Number.isNaN(value.getTime())) {
+    return '--:--';
+  }
+
+  return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
+}
+
 function buildScopedChatHref(params: { reportId?: string; eventId?: string; intent?: string }) {
-  const query = new URLSearchParams();
-  if (params.reportId) query.set('reportId', params.reportId);
-  if (params.eventId) query.set('eventId', params.eventId);
-  if (params.intent) query.set('intent', params.intent);
-  const serialized = query.toString();
-  return serialized ? `/chat?${serialized}` : '/chat';
+  return buildChatHref(params);
 }
 
 export default function AIAssistantChat() {
@@ -117,6 +83,7 @@ export default function AIAssistantChat() {
   const reportId = searchParams.get('reportId') || '';
   const eventId = searchParams.get('eventId') || '';
   const intent = searchParams.get('intent') || '';
+  const prefilledQuestion = searchParams.get('question') || '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [context, setContext] = useState<ChatContextState | null>(null);
   const [input, setInput] = useState('');
@@ -130,6 +97,10 @@ export default function AIAssistantChat() {
   const [messageActionKey, setMessageActionKey] = useState<string | null>(null);
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
+  const [previousUserQuestions, setPreviousUserQuestions] = useState<Record<string, string>>({});
+  const [tacitContext, setTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
+  const [restoredTacitContext, setRestoredTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
+  const [showTacitComposer, setShowTacitComposer] = useState(false);
   const messagesScrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initialScrollDoneRef = useRef(false);
@@ -148,6 +119,9 @@ export default function AIAssistantChat() {
     eventId: eventId || context?.focusedEvent?.id || undefined,
     intent: intent || undefined,
   };
+  const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
+  const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
+  const canRestoreTacit = hasTacitKnowledgeInput(restoredTacitContext) && !areTacitKnowledgeInputsEqual(restoredTacitContext, tacitContext);
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     const node = messagesScrollerRef.current;
@@ -177,17 +151,24 @@ export default function AIAssistantChat() {
         id: item.id,
         role: item.role,
         content: item.content || '',
-        timestamp: item.timestamp ? new Date(item.timestamp) : new Date(),
+        timestamp: item.timestamp ? new Date(item.timestamp) : null,
         llmUsed: item.role === 'assistant' ? !!item.llmUsed : undefined,
         edited: !!item.edited,
         regenerated: !!item.regenerated,
         reportId: item.reportId || null,
         eventId: item.eventId || null,
         responseToQuestionId: item.responseToQuestionId || null,
+        tacitContext: item.tacitContext || null,
+        tacitSummary: item.tacitSummary || null,
       }));
+      const latestTacitContext = findLatestScopedTacitContext(mapped);
 
       setMessages(mapped);
+      setPreviousUserQuestions(buildPreviousUserQuestionMap(mapped));
       setContext(data.context || null);
+      setRestoredTacitContext(latestTacitContext);
+      setTacitContext(cloneTacitKnowledgeInput(latestTacitContext));
+      setShowTacitComposer(hasTacitKnowledgeInput(latestTacitContext));
       return true;
     } catch {
       setError('网络异常，加载聊天历史失败');
@@ -204,7 +185,7 @@ export default function AIAssistantChat() {
   useEffect(() => {
     initialScrollDoneRef.current = false;
     void fetchHistoryRef.current(true);
-  }, [reportId, eventId]);
+  }, [reportId, eventId, intent]);
 
   useEffect(() => {
     const node = messagesScrollerRef.current;
@@ -243,12 +224,17 @@ export default function AIAssistantChat() {
   }, [input]);
 
   useEffect(() => {
-    if (!intentPreset || input.trim() || messages.length > 0) {
+    if (prefilledQuestion && !input.trim() && messages.length === 0) {
+      setInput(prefilledQuestion);
+      return;
+    }
+
+    if (!intentPreset || input.trim() || messages.length > 0 || prefilledQuestion) {
       return;
     }
 
     setInput(intentPreset.prefillQuestion);
-  }, [intentPreset, input, messages.length]);
+  }, [intentPreset, input, messages.length, prefilledQuestion]);
 
   useEffect(() => {
     if (!copiedMessageId) return undefined;
@@ -289,7 +275,7 @@ export default function AIAssistantChat() {
         setError(data.error || '保存事件失败');
         return;
       }
-      setSavedEventKeys((current) => [...current, eventKey]);
+      setSavedEventKeys((current) => (current.includes(eventKey) ? current : [...current, eventKey]));
     } catch {
       setError('网络异常，保存事件失败');
     } finally {
@@ -306,7 +292,9 @@ export default function AIAssistantChat() {
       id: `${Date.now()}_user`,
       role: 'user',
       content: question,
-      timestamp: new Date(),
+      timestamp: null,
+      tacitContext: hasTacitContext ? cloneTacitKnowledgeInput(tacitContext) : null,
+      tacitSummary: tacitSummary || null,
     };
 
     setMessages((current) => [...current, userMessage]);
@@ -314,6 +302,7 @@ export default function AIAssistantChat() {
     setIsTyping(true);
     setError('');
     setEditingMessageId(null);
+    setRestoredTacitContext(cloneTacitKnowledgeInput(tacitContext));
 
     try {
       const response = await fetch('/api/chat', {
@@ -321,6 +310,7 @@ export default function AIAssistantChat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           question,
+          tacitContext,
           ...scopePayload,
         }),
       });
@@ -542,70 +532,66 @@ export default function AIAssistantChat() {
   return (
     <div className="flex h-full flex-col bg-transparent">
       <div className="border-b border-white/60 bg-white/70 p-5">
-        <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-            <Bot className="h-5 w-5" />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+              <Bot className="h-5 w-5" />
+            </div>
+            <div>
+              <h2 className="font-semibold text-[color:var(--ink)]">世界易结构追问器</h2>
+            </div>
           </div>
-          <div>
-            <h2 className="font-semibold text-[color:var(--ink)]">世界易结构追问器</h2>
-            <p className="text-sm text-[color:var(--muted)]">
-              {intentPreset ? `当前已进入${intentPreset.entryLabel}，建议直接围绕一件具体事情发问。` : '看完报告后继续问，把结构、阶段、环境和动作问清楚。'}
-            </p>
-          </div>
-        </div>
 
-        <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
-          <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
-            <Layers3 className="h-3.5 w-3.5" />
-            追问顺序
-          </div>
-          <div className="mt-3 flex flex-wrap gap-2">
-            {chatDoctrineSteps.map((item) => (
-              <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
-                {item}
+          <div className="flex flex-wrap gap-2">
+            {reportId || context?.report?.id ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                已绑定报告
               </span>
-            ))}
+            ) : null}
+            {eventId || context?.focusedEvent?.id ? (
+              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                已绑定事件
+              </span>
+            ) : null}
+            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+              {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
+            </span>
           </div>
         </div>
 
-        {intentPreset ? (
-          <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/82 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-            <span className="font-semibold text-[color:var(--accent-strong)]">{intentPreset.entryLabel}</span>
-            {` · ${intentPreset.helper}`}
+        <div className="mt-4 grid gap-3 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+          <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
+              <Layers3 className="h-3.5 w-3.5" />
+              当前追问顺序
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {chatDoctrineSteps.map((item) => (
+                <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
+                  {item}
+                </span>
+              ))}
+            </div>
+            {intentPreset ? (
+              <div className="mt-3 text-xs font-semibold text-[color:var(--accent-strong)]">{intentPreset.entryLabel}</div>
+            ) : null}
           </div>
-        ) : null}
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          {reportId || context?.report?.id ? (
-            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
-              已绑定报告
-            </span>
-          ) : null}
-          {eventId || context?.focusedEvent?.id ? (
-            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
-              已绑定事件
-            </span>
-          ) : null}
-          <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
-            {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
-          </span>
-        </div>
-
-        <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
-          <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专项切换</div>
-          <div className="mt-3 grid gap-2">
-            {scopedIntentLinks.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`rounded-[1rem] px-3 py-3 text-sm transition hover:-translate-y-0.5 ${
-                  item.key === intentPreset?.key ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
-                }`}
-              >
-                <div>{item.entryLabel}</div>
-                <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{item.summaryHint}</div>
-              </Link>
-            ))}
+          <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专项切换</div>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {scopedIntentLinks.map((item) => (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={`rounded-[1rem] px-3 py-3 text-sm transition hover:-translate-y-0.5 ${
+                    item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
+                  }`}
+                >
+                  <div>{item.entryLabel}</div>
+                </Link>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -640,9 +626,6 @@ export default function AIAssistantChat() {
                   世界易推荐追问
                 </div>
                 <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先把问题压成一个可判断的结构问题</h3>
-                <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                  最好带上报告里的一个板块、一个月份或一个现实事件作为锚点。问题越具体，越容易得到“现在该怎么做”的回答。
-                </p>
               </div>
 
               <div className="grid gap-3 md:grid-cols-2">
@@ -658,11 +641,11 @@ export default function AIAssistantChat() {
             </div>
           )}
 
-          {messages.map((message, index) => (
+          {messages.map((message) => (
             <MessageBubble
               key={message.id}
               message={message}
-              previousUserQuestion={findPreviousUserQuestion(messages, index)}
+              previousUserQuestion={previousUserQuestions[message.id] || ''}
               onSaveEvent={handleSaveMessageEvent}
               onDelete={handleDeleteMessage}
               onRegenerate={handleRegenerateMessage}
@@ -705,35 +688,63 @@ export default function AIAssistantChat() {
             event.preventDefault();
             void sendQuestion(input);
           }}
-          className="flex items-end gap-3"
+          className="space-y-3"
         >
-          <div className="flex-1">
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                  event.preventDefault();
-                  if (input.trim() && !isTyping) {
-                    void sendQuestion(input);
+          <TacitKnowledgeComposer
+            value={tacitContext}
+            onChange={setTacitContext}
+            title="说不清也可以先点出来"
+            description=""
+            collapsedLabel="补充这一轮状态"
+            emptyHint=""
+            summaryLabel="本轮默会信息："
+            expanded={showTacitComposer}
+            onExpandedChange={setShowTacitComposer}
+            onReset={() => setTacitContext(createEmptyTacitKnowledgeInput())}
+            variant="chat"
+            restoreLabel="沿用上一轮状态"
+            onRestore={() => {
+              setTacitContext(cloneTacitKnowledgeInput(restoredTacitContext));
+              setShowTacitComposer(hasTacitKnowledgeInput(restoredTacitContext));
+            }}
+            canRestore={canRestoreTacit}
+          />
+
+          <div className="flex items-end gap-3">
+            <div className="flex-1">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' && !event.shiftKey) {
+                    event.preventDefault();
+                    if (input.trim() && !isTyping) {
+                      void sendQuestion(input);
+                    }
                   }
-                }
-              }}
-              placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
-              rows={2}
-              className="min-h-[56px] w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
-              disabled={isTyping}
-            />
-            <div className="mt-2 px-1 text-xs text-[color:var(--muted)]">`Enter` 发送，`Shift + Enter` 换行。建议一次只问一个具体问题。</div>
+                }}
+                placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
+                rows={2}
+                className="min-h-[56px] w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+                disabled={isTyping}
+              />
+              <div className="mt-2 flex flex-wrap items-center gap-2 px-1 text-xs text-[color:var(--muted)]">
+                {hasTacitContext ? (
+                  <span className="rounded-full bg-[color:var(--accent-soft)] px-2.5 py-1 font-semibold text-[color:var(--accent-strong)]">
+                    已带入默会信息
+                  </span>
+                ) : null}
+              </div>
+            </div>
+            <button
+              type="submit"
+              disabled={!input.trim() || isTyping}
+              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Send className="h-4 w-4" />
+            </button>
           </div>
-          <button
-            type="submit"
-            disabled={!input.trim() || isTyping}
-            className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Send className="h-4 w-4" />
-          </button>
         </form>
       </div>
     </div>
@@ -768,11 +779,6 @@ function ContextCard({
           <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">
             {context.report ? `已锚定报告 ${context.report.pattern} / ${context.report.currentDaYun}` : '当前对话未绑定具体报告'}
           </h3>
-          <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-            {context.report
-              ? `日主 ${context.report.dayMaster}，当前重点是 ${context.report.topScenario}，最近优先窗口 ${context.report.bestWindow}。`
-              : '你可以直接提问，我们会结合最近记录的内容继续回答。'}
-          </p>
         </div>
         <Link
           href={context.report ? `/result/${context.report.id}` : '/events'}
@@ -797,26 +803,13 @@ function ContextCard({
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">本次追问路径</div>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {[
-            {
-              title: '结构锚点',
-              description: context.report ? `当前先以 ${context.report.pattern} 作为主结构锚点。` : '先围绕一个核心问题建立结构锚点。',
-            },
-            {
-              title: '阶段坐标',
-              description: context.report ? `阶段重点先看 ${context.report.currentDaYun} 与 ${context.report.bestWindow}。` : '优先说明问题发生在哪个时间窗口。',
-            },
-            {
-              title: '环境变量',
-              description: '把城市、合作关系、家庭压力和现实资源一起带进来，别只问抽象结果。',
-            },
-            {
-              title: '动作落点',
-              description: '每轮追问都尽量收敛成一个“现在先做什么”的动作结论。',
-            },
+            context.report ? `结构先围绕 ${context.report.pattern} 展开。` : '先给当前问题找一个明确结构锚点。',
+            context.report ? `阶段重点先看 ${context.report.currentDaYun} 与 ${context.report.bestWindow}。` : '尽量说明问题发生在哪个时间窗口。',
+            '把关系、城市、合作与现实压力一起带进来。',
+            '最后收敛成现在先做什么。',
           ].map((item) => (
-            <div key={item.title} className="rounded-[1.2rem] bg-white px-4 py-4">
-              <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
+            <div key={item} className="rounded-[1.2rem] bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
+              {item}
             </div>
           ))}
         </div>
@@ -840,9 +833,7 @@ function ContextCard({
                 </div>
               ))
             ) : (
-              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[color:var(--muted)]">
-                还没有事件记录。看完聊天建议后，可以把关键节点存成事件持续复盘。
-              </div>
+              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[color:var(--muted)]">暂无事件记录</div>
             )}
           </div>
         </div>
@@ -873,7 +864,7 @@ function ContextCard({
         <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">本次重点问题</div>
           <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{context.focusedEvent.title}</div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+          <div className="mt-2 text-sm text-[color:var(--ink)]">
             {context.focusedEvent.reason || context.focusedEvent.notes || '当前对话应优先围绕这条已出现偏差的事件做纠偏分析。'}
           </div>
         </div>
@@ -882,9 +873,6 @@ function ContextCard({
       {context.correctionPrompts.length > 0 && (
         <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">建议先问</div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-            先把问题拆清楚，再继续追问，答案会更有针对性。
-          </div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {context.correctionPrompts.map((item) => (
               <CorrectionPromptButton
@@ -926,7 +914,7 @@ function ContextCard({
                       {isSaved ? '已保存' : savingEventKey === eventKey ? '保存中...' : '记下来'}
                     </button>
                   </div>
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                  <div className="mt-3 text-sm text-[color:var(--ink)]">{item.reason}</div>
                 </div>
               );
             })}
@@ -995,10 +983,7 @@ function MessageBubble({
   onCopy: (messageId: string, content: string) => void;
   copied: boolean;
 }) {
-  const time = new Date(message.timestamp).toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const time = formatChatTime(message.timestamp);
 
   if (message.role === 'user') {
     return (
@@ -1039,11 +1024,20 @@ function MessageBubble({
           ) : (
             <>
               <p className="text-xs leading-6">{message.content}</p>
+              {message.tacitSummary ? (
+                <div className="mt-3 rounded-[1rem] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                  <div className="font-semibold text-white">本轮默会信息</div>
+                  <div className="mt-1 text-white/82">{message.tacitSummary}</div>
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-white/75">
                 <div className="flex items-center gap-2">
                   <span>{time}</span>
                   {message.edited ? (
                     <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold text-white/88">已编辑</span>
+                  ) : null}
+                  {message.tacitSummary ? (
+                    <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold text-white/88">已带默会信息</span>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-2">
@@ -1093,7 +1087,8 @@ function MessageBubble({
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--muted)]">
           <span>{message.llmUsed ? '结合当前报告与对话内容生成' : '当前为简化回答'}</span>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <span>{time}</span>
             <button
               type="button"
               onClick={() => onRegenerate(message.id)}
@@ -1101,7 +1096,7 @@ function MessageBubble({
               className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RotateCcw className="h-4 w-4" />
-              {isActing ? '处理中...' : '重新生成'}
+              {isActing ? '处理中...' : '重生成'}
             </button>
             {previousUserQuestion && (
               <button
@@ -1111,7 +1106,7 @@ function MessageBubble({
                 className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
-                {isSaved ? '已记下' : isSaving ? '保存中...' : '记为提醒'}
+                {isSaved ? '已记下' : isSaving ? '保存中...' : '记提醒'}
               </button>
             )}
             <button
@@ -1131,7 +1126,6 @@ function MessageBubble({
               <Trash2 className="h-4 w-4" />
               删除
             </button>
-            <span>{time}</span>
           </div>
         </div>
       </div>
@@ -1172,19 +1166,34 @@ function CorrectionPromptButton({
       className="rounded-[1.5rem] border border-amber-200 bg-white px-4 py-4 text-left transition hover:border-amber-300 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-sm font-semibold leading-7 text-[color:var(--ink)]">{question}</div>
-      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{helper}</div>
+      <div className="mt-2 text-xs text-[color:var(--muted)]">{helper}</div>
     </button>
   );
 }
 
-function findPreviousUserQuestion(messages: ChatMessage[], currentIndex: number) {
-  for (let index = currentIndex - 1; index >= 0; index--) {
-    if (messages[index]?.role === 'user') {
-      return messages[index].content;
+function findLatestScopedTacitContext(messages: ChatMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const tacitContext = messages[index]?.tacitContext;
+    if (messages[index]?.role === 'user' && hasTacitKnowledgeInput(tacitContext)) {
+      return cloneTacitKnowledgeInput(tacitContext);
     }
   }
 
-  return '';
+  return createEmptyTacitKnowledgeInput();
+}
+
+function buildPreviousUserQuestionMap(messages: ChatMessage[]) {
+  const previousUserQuestions: Record<string, string> = {};
+  let latestUserQuestion = '';
+
+  for (const message of messages) {
+    previousUserQuestions[message.id] = latestUserQuestion;
+    if (message.role === 'user') {
+      latestUserQuestion = message.content;
+    }
+  }
+
+  return previousUserQuestions;
 }
 
 function mapEventTypeLabel(type: string) {

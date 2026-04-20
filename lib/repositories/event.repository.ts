@@ -2,6 +2,7 @@
 import type Database from 'better-sqlite3';
 import { BaseRepository } from './base.repository';
 import type { EventRecord } from '../user-types';
+import { formatLocalDateKey, getTodayLocalDateKey } from '../utils';
 
 interface CreateEventInput {
   id: string;
@@ -173,10 +174,9 @@ export class EventRepository extends BaseRepository<EventRecord> {
   }
 
   findUpcomingReminders(daysAhead = 7): EventRecord[] {
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date();
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + daysAhead);
-    const futureDateStr = futureDate.toISOString().split('T')[0];
 
     return this.queryAll<EventRecord>(
       `SELECT * FROM events
@@ -184,7 +184,7 @@ export class EventRepository extends BaseRepository<EventRecord> {
        AND date >= ?
        AND date <= ?
        ORDER BY date ASC`,
-      [today, futureDateStr]
+      [getTodayLocalDateKey(today), formatLocalDateKey(futureDate)]
     );
   }
 

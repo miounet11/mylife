@@ -6,7 +6,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicSurfaceHero from '@/components/public-surface-hero';
-import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, reportUpgradeJobOperations } from '@/lib/database';
+import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, reportUpgradeJobOperations, userLifecycleEmailRunOperations } from '@/lib/database';
 import { getAuthSession } from '@/lib/auth';
 
 export const metadata = {
@@ -27,6 +27,13 @@ export default async function UpdatesPage() {
   const upgradeJobs = currentUserId ? reportUpgradeJobOperations.listByUserId(currentUserId, 12) : [];
   const digestRuns = currentUserId || currentEmail
     ? reportMonthlyDigestRunOperations.listByUserOrEmail({
+        userId: currentUserId,
+        email: currentEmail,
+        limit: 6,
+      })
+    : [];
+  const lifecycleRuns = currentUserId || currentEmail
+    ? userLifecycleEmailRunOperations.listRecentByUserOrEmail({
         userId: currentUserId,
         email: currentEmail,
         limit: 6,
@@ -63,14 +70,9 @@ export default async function UpdatesPage() {
               邮件与留存
             </>
           )}
-          title={(
-            <>
-              公开内容要长期积累，
-              <span className="font-serif text-[color:var(--accent-strong)]">订阅也必须可控。</span>
-            </>
-          )}
-          description="这里不只管理邮件订阅，也把用户自己的报告升级、月度更新和关键提醒集中到同一个页面，不必只靠邮箱回收信息。"
-          hint="先看“我的更新中心”，再决定是否修改订阅设置。"
+          title="更新中心"
+          description="这里负责查看订阅、报告升级和后续提醒，让结果不是一次性页面，而是可以持续回访。"
+          hint="如果你还没有生成过报告，先完成一次分析，再回来开启更有上下文的更新。"
           actions={[
             <Link key="my-updates" href={session.authenticated ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
               {session.authenticated ? '查看我的更新' : '先登录查看'}
@@ -91,8 +93,7 @@ export default async function UpdatesPage() {
               <BellRing className="h-3.5 w-3.5" />
               我的更新中心
             </div>
-            <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">站内也能看到自己的报告更新，不必只靠邮件回收</h2>
-            <p className="intro-copy mt-2 max-w-3xl">登录后直接看订阅状态、升级进度和最近月度更新。</p>
+            <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">我的更新</h2>
 
             {session.authenticated && session.user ? (
               <div className="mt-6 space-y-6">
@@ -100,25 +101,25 @@ export default async function UpdatesPage() {
                   <StatusMetric
                     label="当前登录邮箱"
                     value={session.user.email || '未绑定'}
-                    helper={subscription?.status === 'active' ? '邮件订阅已激活' : '当前未发现激活订阅'}
+                    helper={subscription?.status === 'active' ? '已激活' : '未激活'}
                     tone="neutral"
                   />
                   <StatusMetric
                     label="活跃升级任务"
                     value={`${activeUpgradeCount}`}
-                    helper="后台仍在增强或排队中的报告"
+                    helper="进行中"
                     tone={activeUpgradeCount > 0 ? 'accent' : 'neutral'}
                   />
                   <StatusMetric
                     label="升级已完成"
                     value={`${completedUpgradeCount}`}
-                    helper="已经完成重算增强的报告"
+                    helper="已完成"
                     tone={completedUpgradeCount > 0 ? 'success' : 'neutral'}
                   />
                   <StatusMetric
                     label="最近月度更新"
                     value={latestDigest?.cycleKey || '暂无'}
-                    helper={latestDigest ? mapDigestStatus(latestDigest.status) : '还没有月度更新记录'}
+                    helper={latestDigest ? mapDigestStatus(latestDigest.status) : '暂无'}
                     tone={latestDigest?.status === 'sent' ? 'success' : latestDigest?.status === 'error' ? 'warning' : 'neutral'}
                   />
                 </div>
@@ -146,14 +147,14 @@ export default async function UpdatesPage() {
                               查看报告
                             </Link>
                           </div>
-                          <div className="mt-3 grid gap-2 intro-copy">
+                          <div className="mt-3 grid gap-2 text-sm text-[color:var(--muted)]">
                             <div>{upgradeJob ? `升级任务：${mapUpgradeStatus(upgradeJob.status)}` : '升级任务：当前没有排队中的增强任务'}</div>
                             <div>{reportDigest ? `月度更新：${reportDigest.cycleKey} · ${mapDigestStatus(reportDigest.status)}` : '月度更新：当前还没有生成记录'}</div>
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[1.4rem] bg-white px-4 py-4 intro-copy">
-                          当前账号下还没有已保存报告。先生成一份分析，后续这里会显示升级任务和月度更新。
+                        <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                          暂无报告
                         </div>
                       )}
                     </div>
@@ -169,34 +170,60 @@ export default async function UpdatesPage() {
                         <div key={item.id} className="rounded-[1.4rem] bg-white px-4 py-4">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-xs font-semibold text-[color:var(--ink)]">{item.cycleKey}</div>
-                            <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
+                          <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
                               {mapDigestStatus(item.status)}
-                            </div>
                           </div>
-                          <div className="intro-copy mt-2">
+                          </div>
+                          <div className="mt-2 text-sm text-[color:var(--muted)]">
                             {item.reportId ? `关联报告：${item.reportId}` : '当前未记录关联报告'}
                           </div>
-                          <div className="intro-copy mt-1">
+                          <div className="mt-1 text-sm text-[color:var(--muted)]">
                             {item.reason || '已记录'}
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[1.4rem] bg-white px-4 py-4 intro-copy">
-                          还没有月度更新或提醒记录。等报告进入周期后，这里会直接显示发送状态。
+                        <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                          暂无记录
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 intro-copy">
-                      保持邮箱可用，并让报告维持订阅状态。
-                    </div>
+                    <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--muted)]">邮箱与订阅</div>
+                  </div>
+                </div>
+
+                <div className="soft-card rounded-[1.75rem] p-6">
+                  <div className="flex items-center gap-3">
+                    <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
+                    <div className="font-semibold text-[color:var(--ink)]">生命周期提醒</div>
+                  </div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                    {lifecycleRuns.length > 0 ? lifecycleRuns.map((item) => (
+                      <div key={item.id} className="rounded-[1.4rem] bg-white px-4 py-4">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleStageLabel(item.stageKey)}</div>
+                          <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
+                            {mapLifecycleStatusLabel(item.status)}
+                          </div>
+                        </div>
+                        <div className="mt-2 text-sm text-[color:var(--muted)]">
+                          {item.reportId ? `关联报告：${item.reportId}` : '未绑定具体报告'}
+                        </div>
+                        <div className="mt-1 text-sm text-[color:var(--muted)]">
+                          {item.reason || '已记录'}
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                        暂无生命周期提醒记录
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
             ) : (
               <div className="mt-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-5 py-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">登录后可查看自己的更新中心</div>
-                <div className="intro-copy mt-2">登录后，这里会自动展示报告升级进度、月度更新和订阅状态。</div>
                 <div className="mt-4">
                   <Link
                     href="/login?next=%2Fupdates"
@@ -217,8 +244,8 @@ export default async function UpdatesPage() {
         <section className="mt-12">
           <NewsletterSignup
             source="updates_page"
-            title="直接订阅高价值更新"
-            description="想接收知识文章、案例和产品迭代通知，也可以直接在这里订阅。"
+            title="订阅更新"
+            description="把知识、案例和产品更新接回邮箱，方便你在报告生成后继续收到后续内容。"
           />
         </section>
       </main>
@@ -269,6 +296,21 @@ function mapDigestStatus(status?: string) {
   if (status === 'error') return '发送失败';
   if (status === 'skipped') return '本轮跳过';
   return '暂无记录';
+}
+
+function mapLifecycleStatusLabel(status?: string) {
+  if (status === 'sent') return '已发送';
+  if (status === 'error') return '待重试';
+  if (status === 'skipped') return '已跳过';
+  return '未知';
+}
+
+function mapLifecycleStageLabel(stageKey?: string | null) {
+  if (!stageKey) return '生命周期提醒';
+  if (stageKey.startsWith('signup_day1_no_report')) return '注册后首个价值提醒';
+  if (stageKey.startsWith('report_day2_no_followup')) return '报告后继续行动提醒';
+  if (stageKey.startsWith('inactive_day7_reactivation')) return '7 天未活跃召回';
+  return stageKey;
 }
 
 function mapDigestTone(status?: string) {

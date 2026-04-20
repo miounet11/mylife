@@ -82,5 +82,651 @@
       "Google News cluster: AI anxiety + career uncertainty",
       "ATD: uncertainty and anxiety in talent development"
     ]
+  },
+  {
+    "key": "burnout-or-misalignment",
+    "title": "你是累了，还是方向错了",
+    "topic": "当一个人长期感觉疲惫、抗拒工作和低效时，怎样判断是单纯过劳，还是结构与环境已经错配",
+    "angle": "围绕 burnout、misalignment 和节奏错配，帮助用户区分该休息、该调整环境，还是该重新选方向。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "城市白领 / 高压职场用户",
+    "keywords": ["职业倦怠", "方向错了", "过劳", "环境错配", "工作痛苦", "节奏判断"],
+    "audience": "长期疲惫、怀疑自己是不是不适合当前工作环境，想判断该扛、该调还是该换的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Burnout vs misalignment discussion cluster",
+      "Career exhaustion and meaning-loss search demand"
+    ]
+  },
+  {
+    "key": "marriage-pressure-timing",
+    "title": "催婚压力下该不该仓促进入关系",
+    "topic": "当家庭催婚、年龄焦虑和现实条件叠加时，一个人该如何判断关系推进是不是对的时机",
+    "angle": "不做情绪安慰，直接拆解关系时机、家庭压力、现实代价与长期匹配之间的判断顺序。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "适婚压力 / 关系决策用户",
+    "keywords": ["催婚", "关系时机", "结婚压力", "适婚焦虑", "关系推进", "婚恋判断"],
+    "audience": "正在面对家庭催婚、年龄焦虑或现实催促，担心仓促进入错误关系的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Marriage pressure and relationship timing search demand",
+      "Family pressure vs compatibility judgment discussion cluster"
+    ]
+  },
+  {
+    "key": "job-loss-rebuild-sequence",
+    "title": "失业之后先稳住什么再谈翻盘",
+    "topic": "一个人在失业、收入骤降和身份受挫之后，应该先稳住哪些变量，再谈下一步翻盘",
+    "angle": "围绕失业后的节奏判断、现实约束与重建顺序，帮助用户避免一边焦虑一边乱动。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "失业 / 职业重建用户",
+    "keywords": ["失业", "职业重建", "翻盘", "收入骤降", "节奏判断", "行动顺序"],
+    "audience": "刚经历失业、收入下降或职业挫折，急需判断下一步顺序的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Job loss recovery and career rebuild search demand",
+      "Unemployment anxiety and next-step sequencing discussions"
+    ]
+  },
+  {
+    "key": "parental-control-adult-decisions",
+    "title": "父母控制下怎样拿回自己的人生决定",
+    "topic": "成年人在父母强干预、道德压力和现实依赖并存时，应该怎样判断哪些决定必须自己拿回来",
+    "angle": "聚焦东亚家庭结构里的控制、愧疚与依赖，帮助用户判断边界、代价和先后顺序。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "家庭控制 / 边界重建用户",
+    "keywords": ["父母控制", "人生决定", "边界", "家庭压力", "成年人", "独立判断"],
+    "audience": "长期被父母强干预，正在尝试重建边界与自主决策能力的成年人",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Parental control and adult boundary-setting discussions",
+      "Family pressure, guilt, and decision autonomy search demand"
+    ]
+  },
+  {
+    "key": "relationship-exit-or-repair",
+    "title": "一段关系该修还是该走",
+    "topic": "当一段关系长期消耗、反复拉扯又难以下决断时，一个人最该先判断什么",
+    "angle": "帮助用户区分情绪不稳、结构失衡和长期代价，先判断该修复、该拉开距离还是该结束。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "关系困局 / 分手决策用户",
+    "keywords": ["感情该不该分手", "关系修复", "关系消耗", "长期代价", "关系决策", "判断顺序"],
+    "audience": "身处一段长期消耗关系中，想判断还有没有必要修复或该不该离开的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Relationship exit or repair search demand",
+      "Long-term emotional drain and breakup timing discussions"
+    ]
+  },
+  {
+    "key": "restart-after-failure-sequence",
+    "title": "连续失败之后怎样重启",
+    "topic": "一个人在连续失利、自我怀疑和外界压力并存时，应该怎样安排重启顺序",
+    "angle": "不做心灵鸡汤，直接帮助用户区分先止损、先恢复秩序，还是先找新机会。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "低谷重启 / 自我怀疑用户",
+    "keywords": ["连续失败", "如何重启", "自我怀疑", "止损", "恢复秩序", "重启顺序"],
+    "audience": "经历连续失利、强烈自我怀疑，急需重新安排人生和行动顺序的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Failure recovery and restart sequence demand",
+      "Search demand around rebuilding after repeated setbacks"
+    ]
+  },
+  {
+    "key": "should-you-quit-or-rest-first",
+    "title": "想辞职时先该离开还是先停下来",
+    "topic": "当一个人强烈想辞职、讨厌当前工作又分不清是累坏了还是方向错了时，最该先判断什么",
+    "angle": "围绕辞职冲动、环境错配、现金流安全感和恢复顺序，帮助用户避免情绪化裸辞。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "裸辞冲动 / 职业转向用户",
+    "keywords": ["想辞职", "裸辞", "先休息还是离开", "职业错配", "现金流", "判断顺序"],
+    "audience": "长期想辞职、身心疲惫、又担心裸辞代价过高，想判断先停还是先走的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Quit job now or rest first search demand",
+      "Burnout, resignation impulse, and cashflow anxiety cluster"
+    ]
+  },
+  {
+    "key": "relationship-stagnation-no-breakup",
+    "title": "关系卡住却又分不开时怎么办",
+    "topic": "当一段关系既看不到前进，也很难立刻结束时，一个人该怎样判断下一步",
+    "angle": "聚焦关系停滞、情感依赖、现实牵连和长期机会成本，帮助用户判断该拉开、重谈还是结束。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "关系停滞 / 难分难舍用户",
+    "keywords": ["关系卡住", "分不开", "感情停滞", "情感依赖", "下一步", "长期代价"],
+    "audience": "处在长期停滞关系中，既难以前进又难以彻底离开，想判断下一步的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Relationship stagnation and emotional dependency demand",
+      "Search demand around being stuck but unable to break up"
+    ]
+  },
+  {
+    "key": "midlife-career-reset-with-family",
+    "title": "中年转行还背着家庭时怎么重开",
+    "topic": "当一个人到了中年想转行，却同时背着家庭责任和收入压力时，应该怎样安排重开顺序",
+    "angle": "围绕中年转行、家庭开支、风险承压能力和节奏重建，帮助用户避免幻想式重启。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "中年转行 / 家庭压力用户",
+    "keywords": ["中年转行", "家庭压力", "收入压力", "怎么重开", "重启顺序", "职业重整"],
+    "audience": "到了中年想转行或重开事业，但肩负家庭责任和现实支出压力的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Midlife career reset with family obligations demand",
+      "Career reinvention under financial pressure cluster"
+    ]
+  },
+  {
+    "key": "stay-for-money-or-leave-for-sanity",
+    "title": "为了钱留下还是为了人不崩先离开",
+    "topic": "当一份工作给你钱却持续消耗身心时，一个人该怎样判断是继续忍还是及时离开",
+    "angle": "围绕收入安全感、心理耗损、家庭开支和替代路径，帮助用户判断继续留下的真实代价。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "高压工作 / 留走两难用户",
+    "keywords": ["为了钱留下", "先离开", "工作消耗", "收入安全感", "身心崩溃", "留走判断"],
+    "audience": "在高压工作中持续被消耗，又因为收入和现实责任不敢轻易离开的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stay for money or leave for sanity demand",
+      "High-pressure job, income dependence, and burnout search cluster"
+    ]
+  },
+  {
+    "key": "grief-after-breakup-rebuild-order",
+    "title": "分手后最先该重建什么",
+    "topic": "当一个人在分手后陷入失序、反复回头和自我怀疑时，最先应该重建哪些东西",
+    "angle": "不只谈情绪疗愈，而是帮助用户先恢复秩序、边界、节奏和现实支撑点。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "分手后重建 / 情感低谷用户",
+    "keywords": ["分手后怎么办", "重建顺序", "情感低谷", "恢复秩序", "边界", "下一步"],
+    "audience": "经历分手后失序、自我怀疑和反复回头，急需恢复生活与判断能力的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Post-breakup rebuild order demand",
+      "Search demand around emotional collapse and recovery sequence"
+    ]
+  },
+  {
+    "key": "adult-children-and-aging-parents-balance",
+    "title": "一边养孩子一边扛父母时怎么排顺序",
+    "topic": "当一个成年人同时要顾孩子、顾父母、顾工作时，应该先判断哪些事情不能一起硬扛",
+    "angle": "把三代责任、收入现实和时间精力放到同一框架里，帮助用户重排次序而不是继续硬撑。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "三代责任 / 家庭重压用户",
+    "keywords": ["顾孩子顾父母", "三代责任", "家庭重压", "怎么排顺序", "收入现实", "时间精力"],
+    "audience": "同时承担孩子、父母和工作责任，已经处在长期超载状态，想重排顺序的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Sandwich generation pressure demand",
+      "Three-generation care burden and life sequencing cluster"
+    ]
+  },
+  {
+    "key": "relationship-after-cheating-what-first",
+    "title": "被背叛之后先判断关系还是先稳住自己",
+    "topic": "当一个人在关系中遭遇背叛、信任崩塌和现实牵连时，最先该判断什么",
+    "angle": "不只谈原谅或分开，而是先判断安全感、现实依赖、边界和下一步顺序。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "关系背叛 / 信任崩塌用户",
+    "keywords": ["被背叛", "先稳住自己", "关系判断", "信任崩塌", "边界", "下一步顺序"],
+    "audience": "在关系中遭遇背叛、信任断裂，又被现实因素牵制，急需先判断顺序的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Post-betrayal relationship judgment demand",
+      "Search demand around infidelity, trust collapse, and next-step sequencing"
+    ]
+  },
+  {
+    "key": "work-promotion-or-health-collapse",
+    "title": "升职机会值不值得拿身体去换",
+    "topic": "当升职、加薪和健康透支同时出现时，一个人最该先判断什么",
+    "angle": "围绕职业机会、身体代价、家庭影响和长期承压能力，帮助用户判断值不值得继续硬撑。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "升职机会 / 健康透支用户",
+    "keywords": ["升职机会", "健康透支", "值不值得", "长期承压", "工作代价", "判断什么"],
+    "audience": "面对升职加薪机会，却明显感到身体和精神已经被持续透支的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Promotion versus health collapse demand",
+      "Search cluster around overwork, promotion pressure, and long-term cost"
+    ]
+  },
+  {
+    "key": "friendship-break-or-step-back",
+    "title": "一段友情该断还是先拉开距离",
+    "topic": "当一段友情长期消耗、价值观错位又难以立刻断开时，一个人该怎样判断下一步",
+    "angle": "把友情从情绪问题拉回边界、长期代价和现实关系网络的判断框架里。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "友情消耗 / 边界判断用户",
+    "keywords": ["友情该断吗", "拉开距离", "关系消耗", "价值观错位", "边界判断", "下一步"],
+    "audience": "长期被一段友情拖累，却又顾虑共同圈子和现实联系，想判断是否该拉开的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Friendship break or step back demand",
+      "Boundary-setting and friendship burnout discussions"
+    ]
+  },
+  {
+    "key": "move-city-to-escape-or-not",
+    "title": "想换城市是新机会还是只想逃开现在",
+    "topic": "当一个人强烈想换城市重来时，应该怎样判断那是机会、转机，还是只是逃离情绪",
+    "angle": "帮助用户区分环境错配、节奏转机和情绪性出走，避免把换城市当成万能解药。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "换城市 / 重开人生用户",
+    "keywords": ["换城市", "重来", "逃离现在", "新机会", "环境错配", "情绪性出走"],
+    "audience": "强烈想离开当前城市、工作或关系环境，想判断这是转机还是逃避的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Move city to escape or rebuild demand",
+      "Search demand around relocation as emotional reset"
+    ]
+  },
+  {
+    "key": "can-you-trust-yourself-again-after-failure",
+    "title": "连续失利之后怎么重新相信自己",
+    "topic": "当一个人在连续失利后不再相信自己的判断时，应该先重建什么",
+    "angle": "不讲自我鼓励，直接帮助用户重建秩序、判断依据和现实支撑点。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "判断崩塌 / 自我信任重建用户",
+    "keywords": ["重新相信自己", "连续失利", "判断崩塌", "重建什么", "秩序", "支撑点"],
+    "audience": "因为连续失败已经不再相信自己判断能力，急需重新建立秩序和判断依据的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Self-trust rebuild after failure demand",
+      "Search demand around decision collapse and recovery sequence"
+    ]
+  },
+  {
+    "key": "marriage-without-wanting-children",
+    "title": "想结婚但不想要孩子时先谈清什么",
+    "topic": "当一个人在关系里想进入婚姻，却不想要孩子或对子女问题高度犹豫时，最该先判断什么",
+    "angle": "聚焦价值观、现实安排、长期代价和家庭压力，帮助用户在婚前先谈清核心分歧。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "婚姻承诺 / 子女分歧用户",
+    "keywords": ["不想要孩子", "想结婚", "婚前谈清什么", "价值观分歧", "家庭压力", "长期代价"],
+    "audience": "在婚姻承诺前卡在子女问题、现实安排和家庭期待之间，需要先判断核心分歧的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Marriage without wanting children demand",
+      "Relationship commitment and parenthood disagreement cluster"
+    ]
+  },
+  {
+    "key": "quit-your-job-before-you-have-a-plan",
+    "title": "没计划时到底该不该先辞职",
+    "topic": "当一个人已经快撑不住，却又没有明确下一步计划时，应该先辞职还是先搭底盘",
+    "angle": "帮助用户判断裸辞冲动、现实安全感和最低可行底盘之间的关系。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "裸辞前夜 / 无计划用户",
+    "keywords": ["该不该先辞职", "没有计划", "裸辞", "现实安全感", "最低可行底盘", "先搭底盘"],
+    "audience": "已经快撑不住，但手上没有清晰计划和安全感缓冲的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Quit before you have a plan demand",
+      "Search demand around resignation without backup and minimum safety base"
+    ]
+  },
+  {
+    "key": "rebuild-after-family-shame",
+    "title": "在家庭羞耻感里长大的人怎么重建判断",
+    "topic": "当一个人长期被羞耻、否定和家庭比较塑造时，应该怎样重新建立自己的判断标准",
+    "angle": "不做纯疗愈表达，而是帮助用户辨认哪些判断其实不是自己的。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "家庭羞耻 / 判断重建用户",
+    "keywords": ["家庭羞耻感", "重新建立判断", "长期否定", "比较", "不是自己的判断", "重建标准"],
+    "audience": "长期在羞耻、比较和否定中成长，想重新建立自己判断标准的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Family shame and self-judgment rebuild demand",
+      "Search demand around chronic invalidation and decision paralysis"
+    ]
+  },
+  {
+    "key": "love-or-rescue-complex",
+    "title": "你是真的爱，还是又在救人",
+    "topic": "当一个人总是在关系里想救对方、替对方扛责任时，最该先判断什么",
+    "angle": "帮助用户区分爱、愧疚、控制和拯救欲，避免把耗损关系误判成深情。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "拯救型关系 / 耗损用户",
+    "keywords": ["是真的爱还是救人", "拯救欲", "耗损关系", "愧疚", "控制", "先判断什么"],
+    "audience": "总在关系里替对方负责、承担过多，想看清自己是不是又陷入拯救模式的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Rescue complex in relationships demand",
+      "Search demand around caretaking, over-responsibility, and emotional drain"
+    ]
+  },
+  {
+    "key": "stay-near-family-or-protect-boundaries",
+    "title": "留在家附近尽孝还是先保护边界",
+    "topic": "当家人要求你留下、陪伴和承担时，一个人该怎样判断边界和责任的顺序",
+    "angle": "聚焦尽孝、内疚、共居和个人边界的冲突，帮助用户先拆责任而不是一味顺从。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "家庭边界 / 尽孝压力用户",
+    "keywords": ["尽孝", "保护边界", "家附近", "责任顺序", "共居", "内疚"],
+    "audience": "被家庭责任和尽孝要求持续牵制，想判断边界与责任顺序的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stay near family or protect boundaries demand",
+      "Filial duty, guilt, and personal boundary conflict cluster"
+    ]
+  },
+  {
+    "key": "restart-after-burnout-what-not-to-do",
+    "title": "耗竭后重开最不该做什么",
+    "topic": "当一个人在严重耗竭后想重新开始时，哪些动作最容易让局面更糟",
+    "angle": "不只讲应该做什么，而是先讲重开时最常见的误判与自我加压。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "耗竭重开 / 易误判用户",
+    "keywords": ["耗竭后重开", "最不该做什么", "误判", "自我加压", "重新开始", "更糟"],
+    "audience": "耗竭后急着重开、却很容易再次把自己逼进旧循环的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "What not to do after burnout demand",
+      "Search demand around restart mistakes and repeated self-pressure"
+    ]
+  },
+  {
+    "key": "is-this-stability-or-stagnation",
+    "title": "你现在是稳定了，还是只是停滞了",
+    "topic": "当生活表面稳定、内心却持续空耗时，一个人该怎样判断这是不是假稳定",
+    "angle": "帮助用户区分真正的稳定、恐惧性的停滞和应该启动变化的窗口。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "假稳定 / 长期空耗用户",
+    "keywords": ["稳定还是停滞", "假稳定", "空耗", "变化窗口", "恐惧性停滞", "判断"],
+    "audience": "生活看似稳定，却越来越空耗和麻木，想判断是不是该动的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stability or stagnation demand",
+      "Search demand around fake stability, numbness, and life drift"
+    ]
+  },
+  {
+    "key": "should-you-marry-now-or-fix-life-foundation-first",
+    "title": "该先结婚，还是先把自己的人生底盘修好",
+    "topic": "当关系走到谈婚论嫁阶段，但一个人的收入、情绪和生活秩序都还不稳时，最该先判断什么",
+    "angle": "帮助用户区分想稳定下来和真的适合进入婚姻，不把婚姻当作修复混乱的工具。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "婚姻时机 / 人生底盘不稳用户",
+    "keywords": ["该先结婚吗", "人生底盘", "收入不稳", "情绪不稳", "谈婚论嫁", "先判断什么"],
+    "audience": "关系推进很快、却清楚知道自己现实基础还没稳住，想判断婚姻时机的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Marriage timing versus unstable foundation demand",
+      "Search demand around marriage pressure, instability, and life-order confusion"
+    ]
+  },
+  {
+    "key": "should-you-go-no-contact-or-rebuild-distance-slowly",
+    "title": "该彻底断联，还是先慢慢拉开距离",
+    "topic": "当一段关系、亲情或友情持续耗损时，一个人该怎样判断是立刻断联还是先分阶段退出",
+    "angle": "帮助用户比较风险、依赖、边界和反扑成本，不把断联写成单一正确答案。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "断联 / 退出关系判断用户",
+    "keywords": ["断联", "拉开距离", "关系耗损", "边界", "退出关系", "反扑成本"],
+    "audience": "正处在高耗损关系里，想判断断联还是渐退更适合自己现实处境的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "No-contact versus slow distancing demand",
+      "Search demand around toxic relationship exit sequencing and safety"
+    ]
+  },
+  {
+    "key": "should-you-keep-the-household-together-or-stop-overfunctioning",
+    "title": "该继续把这个家扛住，还是先停下过度负责",
+    "topic": "当一个人长期在家庭里过度负责、所有人都靠你运转时，最该先判断什么",
+    "angle": "帮助用户看清责任、控制感和透支之间的边界，不把撑住一切误判成真正稳定。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "家庭过度负责 / 透支用户",
+    "keywords": ["过度负责", "把家扛住", "家庭透支", "控制感", "责任边界", "先判断什么"],
+    "audience": "长期在家庭里独自承担过多责任，已经透支却不敢停下的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Overfunctioning in family systems demand",
+      "Search demand around family over-responsibility and emotional exhaustion"
+    ]
+  },
+  {
+    "key": "should-you-apologize-or-stop-chasing-closure",
+    "title": "该去道歉修复，还是先停止追着一个结果跑",
+    "topic": "当一个人执着于挽回关系、修复裂痕或得到回应时，最该先判断什么",
+    "angle": "帮助用户区分真修复和执念性追赶，把道歉、补偿和停止追逐放回成本与边界判断。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "关系修复执念 / closure 用户",
+    "keywords": ["道歉修复", "停止追着结果跑", "closure", "挽回关系", "执念", "边界判断"],
+    "audience": "总想修复、解释或挽回，却开始怀疑自己是在追逐结果而不是面对现实的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Apologize versus stop chasing closure demand",
+      "Search demand around reconciliation, closure seeking, and emotional fixation"
+    ]
+  },
+  {
+    "key": "should-you-rest-or-face-the-hard-decision-now",
+    "title": "该先休息恢复，还是现在就把硬决定做了",
+    "topic": "当一个人明知自己很累，却又担心拖下去会更糟时，最该先判断什么",
+    "angle": "帮助用户区分恢复性暂停和逃避性拖延，先判断当前决策质量是否足够支撑行动。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "耗竭决策 / 拖延混杂用户",
+    "keywords": ["先休息还是做决定", "硬决定", "恢复", "拖延", "决策质量", "耗竭"],
+    "audience": "在耗竭和现实压力之间左右拉扯，不知道该先恢复还是先处理关键决策的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Rest versus make hard decision now demand",
+      "Search demand around burnout, postponement, and decision timing"
+    ]
+  },
+  {
+    "key": "should-you-stop-explaining-yourself-and-change-the-structure",
+    "title": "该继续解释自己，还是直接换掉这个结构",
+    "topic": "当一个人不断解释、沟通、争取理解，却始终改变不了关系或环境时，最该先判断什么",
+    "angle": "帮助用户区分沟通失效和结构失效，避免把重复解释误判成仍有空间。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "沟通失效 / 结构失效用户",
+    "keywords": ["继续解释自己", "换掉结构", "沟通失效", "关系环境", "还有没有空间", "先判断什么"],
+    "audience": "不断解释、争取、沟通，却越来越怀疑问题根本不在表达方式的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Communication failure versus structure failure demand",
+      "Search demand around repeated explanation, invalidation, and leaving bad systems"
+    ]
+  },
+  {
+    "key": "should-you-stop-waiting-for-motivation-and-rebuild-order-first",
+    "title": "该别再等状态了，先把秩序重建起来吗",
+    "topic": "当一个人长期说等状态好了再开始，却越拖越散时，最该先判断什么",
+    "angle": "把动力问题转回秩序和结构问题，帮助用户先重建最小可执行秩序，而不是继续等感觉。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "拖延 / 状态等待用户",
+    "keywords": ["等状态好了再开始", "重建秩序", "拖延", "动力", "最小可执行", "先判断什么"],
+    "audience": "长期等待自己状态变好才行动，却越来越散乱和迟滞的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Stop waiting for motivation and rebuild order demand",
+      "Search demand around procrastination, low activation, and life disorder"
+    ]
+  },
+  {
+    "key": "should-you-save-the-relationship-or-admit-you-are-only-managing-chaos",
+    "title": "你是在修复关系，还是只是在维持一场混乱",
+    "topic": "当一个人总在关系里灭火、收拾残局、阻止崩盘时，最该先判断什么",
+    "angle": "帮助用户辨认修复和控场的差别，不把自己能扛住混乱误判成关系还有未来。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "关系控场 / 混乱维持用户",
+    "keywords": ["修复关系", "维持混乱", "灭火", "收拾残局", "关系还有没有未来", "先判断什么"],
+    "audience": "在关系里长期负责维持局面、开始怀疑自己只是延长问题的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Save the relationship or only manage chaos demand",
+      "Search demand around conflict cycles, emotional labor, and unstable partnerships"
+    ]
+  },
+  {
+    "key": "should-you-stop-performing-strength-and-admit-you-need-support",
+    "title": "该别再硬撑了，还是继续演一个什么都能扛的人",
+    "topic": "当一个人长期扮演能扛、能撑、不能倒的人时，最该先判断什么",
+    "angle": "帮助用户区分真正的承受力和角色化逞强，把求助放回现实支持结构里看。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "硬撑角色 / 支持结构用户",
+    "keywords": ["硬撑", "什么都能扛", "需要支持", "逞强", "支持结构", "先判断什么"],
+    "audience": "长期扮演强者角色、已经接近极限却仍不允许自己求助的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stop performing strength and ask for support demand",
+      "Search demand around overfunctioning, collapse risk, and needing support"
+    ]
+  },
+  {
+    "key": "should-you-quit-the-fight-for-fairness-and-protect-your-energy",
+    "title": "该继续争一个公平，还是先把自己的能量撤出来",
+    "topic": "当一个人在不对等关系、家庭或工作里一直想争公平时，最该先判断什么",
+    "angle": "帮助用户看清公平诉求和无效消耗之间的边界，不把继续耗下去误判成坚持。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "争公平 / 能量耗损用户",
+    "keywords": ["争公平", "把能量撤出来", "不对等关系", "继续耗下去", "坚持", "先判断什么"],
+    "audience": "长期在不对等关系或环境里争一个说法、却越来越被耗空的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Fight for fairness versus protect your energy demand",
+      "Search demand around injustice, resentment, and emotional depletion"
+    ]
+  },
+  {
+    "key": "should-you-delay-the-decision-because-you-are-afraid-of-regret",
+    "title": "你现在不做决定，是因为还没想清楚，还是只是怕后悔",
+    "topic": "当一个人持续拖着不决定，说是再想想，其实可能只是害怕承担后果时，最该先判断什么",
+    "angle": "帮助用户区分信息不足和后悔恐惧，先看不决定本身正在制造什么代价。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "后悔恐惧 / 决策拖延用户",
+    "keywords": ["怕后悔", "不做决定", "再想想", "信息不足", "决策拖延", "先判断什么"],
+    "audience": "长期拖着关键决定不做、开始怀疑自己不是没想清楚而是不敢承担后果的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Delay decision because of regret fear demand",
+      "Search demand around indecision, fear of consequences, and choice paralysis"
+    ]
+  },
+  {
+    "key": "should-you-stop-parenting-your-partner-and-face-the-truth",
+    "title": "你是在爱对方，还是一直在替对方当家长",
+    "topic": "当一个人在关系里长期负责提醒、善后、推动和兜底时，最该先判断什么",
+    "angle": "帮助用户识别伴侣关系何时已经变成了照护与管理，不把能扛误判成这段关系还能长久。",
+    "primaryType": "case",
+    "locale": "zh-CN",
+    "market": "伴侣照护化 / 关系失衡用户",
+    "keywords": ["替对方当家长", "伴侣关系", "提醒善后兜底", "照护化", "关系失衡", "先判断什么"],
+    "audience": "在关系里越来越像家长而不是伴侣，想判断这段关系是否还能继续的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Parenting your partner demand",
+      "Search demand around emotional labor, unequal relationships, and partner immaturity"
+    ]
+  },
+  {
+    "key": "should-you-keep-helping-everyone-or-admit-you-are-burning-out",
+    "title": "该继续帮所有人，还是先承认自己已经快耗竭了",
+    "topic": "当一个人总是优先救场、帮人、补位，结果自己越来越空时，最该先判断什么",
+    "angle": "帮助用户区分善意、习惯性补位和自我耗竭，不把继续帮下去误判成善良的唯一形式。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "救场型人格 / 耗竭用户",
+    "keywords": ["继续帮所有人", "快耗竭了", "救场", "补位", "善良", "先判断什么"],
+    "audience": "总是第一时间站出来帮人，结果自己越来越透支却停不下来的人群",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Keep helping everyone or admit burnout demand",
+      "Search demand around overhelping, people pleasing, and emotional exhaustion"
+    ]
+  },
+  {
+    "key": "should-you-wait-for-the-perfect-time-or-accept-the-window-is-now",
+    "title": "你是在等最好时机，还是其实窗口就是现在",
+    "topic": "当一个人总觉得条件还差一点、再等等更好时，最该先判断什么",
+    "angle": "帮助用户区分真正的时机未到和习惯性延后，先判断现在不动的代价是否已经更大。",
+    "primaryType": "knowledge",
+    "locale": "zh-CN",
+    "market": "时机等待 / 延后习惯用户",
+    "keywords": ["等最好时机", "窗口就是现在", "条件还差一点", "习惯性延后", "现在不动的代价", "先判断什么"],
+    "audience": "总在等更好条件才行动，却越来越怀疑自己错过窗口的人群",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Perfect time versus move now demand",
+      "Search demand around hesitation, opportunity windows, and chronic delay"
+    ]
   }
 ]

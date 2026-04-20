@@ -175,6 +175,17 @@ export interface ContextSignalPack {
     relationshipFocus?: string;
     familyRolePressure?: string[];
     collaborationMode?: string[];
+    tacitSummary?: string;
+    tacitSignals?: string[];
+  };
+  worldState: {
+    summary: string;
+    currentPriority: string;
+    actionBias: string;
+    timingBias: string;
+    environmentBias: string;
+    guardrails: string[];
+    tacitLeverage?: string;
   };
   referenceIntelligence?: {
     pack: ReferenceIntelligencePack;
@@ -245,6 +256,8 @@ export interface BuildContextSignalsInput {
   report?: {
     advice?: FortuneAnalysisResult['advice'];
     fortune?: FortuneAnalysisResult['fortune'];
+    tacitSummary?: string;
+    tacitSignals?: string[];
   };
   now?: Date;
   version?: string;
@@ -256,6 +269,8 @@ export interface StructuredAgenticContext {
   report?: {
     advice?: FortuneAnalysisResult['advice'];
     fortune?: FortuneAnalysisResult['fortune'];
+    tacitSummary?: string;
+    tacitSignals?: string[];
   };
 }
 

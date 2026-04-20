@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, BookOpenText, Compass, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
@@ -12,9 +12,12 @@ import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
+import ToolCardLink from '@/components/tool-card-link';
 import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
 import {
   getCaseStudyBySlug,
+  getEntityInsights,
+  getKnowledgeArticles,
   getManagedContentEntryBySlug,
   getManagedContentJourneyMeta,
   listPublishedManagedContentEntriesByType,
@@ -115,10 +118,23 @@ export default async function CaseDetailPage({ params }: PageProps) {
     slug: item.slug,
   });
   const journeyMeta = getManagedContentJourneyMeta(managedEntry);
-  const primaryTool = journeyMeta.relatedToolSlugs
+  const pageSignals = [item.title, item.excerpt, item.scenario, ...item.tags];
+  const matchesPageSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return pageSignals.some((signal) => signal && lowered.includes(signal.toLowerCase()));
+  };
+  const toolItems = journeyMeta.relatedToolSlugs
     .map((toolSlug) => getToolDefinition(toolSlug))
-    .find((tool) => !!tool)
-    || null;
+    .filter((tool): tool is NonNullable<typeof tool> => !!tool)
+    .slice(0, 3);
+  const knowledgeItems = getKnowledgeArticles()
+    .filter((entry) => entry.slug !== item.slug)
+    .filter((entry) => matchesPageSignal([entry.title, entry.excerpt, entry.category, ...entry.tags].join(' ')))
+    .slice(0, 2);
+  const insightItems = getEntityInsights()
+    .filter((entry) => matchesPageSignal([entry.title, entry.excerpt, entry.name, ...entry.tags].join(' ')))
+    .slice(0, 2);
+  const primaryTool = toolItems[0] || null;
 
   return (
     <div className="page-shell">
@@ -223,8 +239,8 @@ export default async function CaseDetailPage({ params }: PageProps) {
             <section className="mt-10">
               <SurfaceJourneyPanel
                 journey={journey}
-                title="这个案例已经接到你的测算和工具路径"
-                description="从案例直接回到测算、工具和方法文章。"
+                title="相关入口"
+                description="把这篇案例接回对应的方法、工具和后续动作入口，避免只停留在围观别人的结果。"
               />
             </section>
           </article>
@@ -242,7 +258,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                 tags: item.tags,
               }}
               title="案例和你之间，只差把生日带进去"
-              description="直接填生日与时间，下一步继续补出生地。"
+              description="把出生日期、时间和性别先带进分析入口，看看你和这类案例到底是相似结构，还是只是表面相像。"
             />
 
             {primaryTool ? (
@@ -258,8 +274,77 @@ export default async function CaseDetailPage({ params }: PageProps) {
             ) : null}
 
             <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Compass className="h-4 w-4" />
+                案例相关工具
+              </div>
+              <div className="mt-4 grid gap-3">
+                {toolItems.length > 0 ? toolItems.map((tool) => (
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page={`/cases/${item.slug}`}
+                    className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
+                  </ToolCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <BookOpenText className="h-4 w-4" />
+                案例相关知识
+              </div>
+              <div className="mt-4 grid gap-3">
+                {knowledgeItems.length > 0 ? knowledgeItems.map((entry) => (
+                  <ContentCardLink
+                    key={entry.slug}
+                    href={`/knowledge/${entry.slug}`}
+                    page={`/cases/${item.slug}`}
+                    meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `knowledge_article:${entry.slug}`, contentType: 'knowledge' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{entry.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应知识内容</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Sparkles className="h-4 w-4" />
+                案例相关洞察
+              </div>
+              <div className="mt-4 grid gap-3">
+                {insightItems.length > 0 ? insightItems.map((entry) => (
+                  <ContentCardLink
+                    key={entry.slug}
+                    href={`/insights/${entry.type}/${entry.slug}`}
+                    page={`/cases/${item.slug}`}
+                    meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `insight_article:${entry.slug}`, contentType: 'insight' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.name}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{entry.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">世界易案例路径</div>
-              <p className="intro-copy mt-3">从案例回到方法、判断顺序和总入口。</p>
               <div className="mt-4 space-y-4">
                 <ContentCardLink
                   href={caseMethodHref}
@@ -273,9 +358,6 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{caseMethodTitle}</div>
-                  <div className="intro-copy mt-2">
-                    {caseMethodDescription}
-                  </div>
                 </ContentCardLink>
                 <ContentCardLink
                   href={methodologyHref}
@@ -289,9 +371,6 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{methodologyTitle}</div>
-                  <div className="intro-copy mt-2">
-                    {methodologyDescription}
-                  </div>
                 </ContentCardLink>
                 <ContentCardLink
                   href={caseHubHref}
@@ -305,13 +384,6 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{caseHubLabel}</div>
-                  <div className="intro-copy mt-2">
-                    {isEnglishCase
-                      ? 'Continue through the English gateway and case path.'
-                      : isGlobalChineseCase
-                        ? '继续沿全球华人路径阅读。'
-                      : '继续进入世界易总论、主书和方法路径。'}
-                  </div>
                 </ContentCardLink>
                 <ContentCardLink
                   href="/world-yi/book"
@@ -325,7 +397,6 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">看世界易主书工程</div>
-                  <div className="intro-copy mt-2">把单个案例放回十卷主书的完整框架里。</div>
                 </ContentCardLink>
               </div>
             </div>
@@ -342,7 +413,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
             <NewsletterSignup
               source={`case_article:${item.slug}`}
               title="订阅案例更新"
-              description="新增代表性案例时直接发到邮箱。"
+              description="持续接收新的公开案例和场景拆解，方便你观察相似问题在不同人生阶段怎么展开。"
             />
           </div>
         </section>

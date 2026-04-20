@@ -5,7 +5,7 @@ import type { ToolMemorySummary } from '@/lib/tool-context';
 export default function ToolMemoryPanel({
   memory,
   title = '你的历史上下文',
-  description = '系统会继承你之前做过的单项工具结果，避免每次都从泛问题重新开始。',
+  description = '',
 }: {
   memory: ToolMemorySummary | null;
   title?: string;
@@ -23,15 +23,15 @@ export default function ToolMemoryPanel({
             <Database className="h-3.5 w-3.5" />
             {title}
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">这次测算不会从零开始</h2>
-          <p className="mt-3 max-w-3xl text-xs leading-6 text-[color:var(--muted)]">{description}</p>
+          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">历史上下文</h2>
+          {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
       </div>
 
       <div className="mt-6 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="text-sm font-semibold text-[color:var(--ink)]">系统已继承的判断基础</div>
-          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{memory.summary}</p>
+          <div className="text-sm font-semibold text-[color:var(--ink)]">已继承内容</div>
+          <p className="mt-3 text-sm text-[color:var(--ink)]">{memory.summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             {memory.focusAreas.map((item) => (
               <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
@@ -56,7 +56,7 @@ export default function ToolMemoryPanel({
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-2 text-sm text-[color:var(--ink)]">
                   {item.recommendedAction || item.headline}
                 </div>
               </div>

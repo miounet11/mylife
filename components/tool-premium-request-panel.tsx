@@ -97,11 +97,12 @@ export default function ToolPremiumRequestPanel({
             直接进入专项
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
-            不是只看一句结论，
-            <span className="font-serif text-[color:var(--accent-strong)]">而是把这件事拆成能执行的专项判断。</span>
+            专项判断
           </h2>
-          <p className="intro-copy mt-4">{`当前工具先缩窄问题，专项服务负责把 ${tool.shortTitle} 真正做深。`}</p>
-          <div className="intro-panel mt-3">提交后会自动带上综合报告、工具历史和当前问题。</div>
+
+          <div className="intro-copy mt-3 text-sm text-[color:var(--muted)]">
+            如果单个工具已经暴露出主矛盾，可以直接提交专项需求，把当前工具结果和历史上下文一起带入。
+          </div>
 
           <div className="mt-5 grid gap-3">
             <div className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
@@ -118,12 +119,11 @@ export default function ToolPremiumRequestPanel({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white/84 p-5">
+        <form onSubmit={handleSubmit} className="intro-panel rounded-[1.75rem] border border-[color:var(--line)] bg-white/84 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             <Sparkles className="h-4 w-4" />
             提交专项需求
           </div>
-          <div className="intro-copy mt-2">一次提交，就会把当前工具、结果记录和综合报告一起带入后续跟进。</div>
 
           <div className="mt-4 grid gap-4">
             <input

@@ -67,7 +67,17 @@ export function buildContextSignals({
       relationshipFocus: inferRelationshipFocus(age),
       familyRolePressure: inferFamilyRolePressure(age),
       collaborationMode: inferCollaborationMode(engine.constitution.yongShen, macro.industryCycle || []),
+      tacitSummary: report?.tacitSummary,
+      tacitSignals: report?.tacitSignals,
     },
+    worldState: buildWorldState({
+      engine,
+      report,
+      macro,
+      solarTerm: solar.currentSolarTerm,
+      lifeStage: inferLifeStage(age),
+      currentYear: now.getFullYear(),
+    }),
     referenceIntelligence,
   };
 }
@@ -135,4 +145,71 @@ function gatherIndustryHints(advice?: FortuneAnalysisResult['advice']) {
 
   const keywords = ['科技', '教育', '金融', '地产', '制造', '咨询', '内容', '医疗', '能源'];
   return keywords.filter((keyword) => hints.includes(keyword));
+}
+
+function buildWorldState(params: {
+  engine: BuildContextSignalsInput['engine'];
+  report?: BuildContextSignalsInput['report'];
+  macro: ReturnType<typeof getMacroCycleSignals>;
+  solarTerm?: string;
+  lifeStage: LifeStage;
+  currentYear: number;
+}) {
+  const favored = [...params.engine.constitution.yongShen, ...params.engine.constitution.xiShen].slice(0, 2);
+  const pressedIndustry = params.macro.industryCycle?.find((item) => item.direction === 'down');
+  const risingIndustry = params.macro.industryCycle?.find((item) => item.direction === 'up');
+  const currentWindow = params.engine.kline.windows[0];
+  const tacitSummary = params.report?.tacitSummary || '';
+
+  const currentPriority = [
+    currentWindow?.label ? `当前主窗口是${currentWindow.label}` : '',
+    favored.length ? `优先顺着${favored.join('、')}对应的结构发力` : '',
+    params.macro.economicCycle?.direction === 'contraction'
+      ? '外部处于收缩段，先保底盘再谈扩张'
+      : params.macro.economicCycle?.direction === 'expansion'
+      ? '外部处于扩张段，可以试探性放大优势'
+      : '外部处于过渡段，动作宜分层推进',
+  ].filter(Boolean).join('；');
+
+  const actionBias = params.macro.economicCycle?.direction === 'contraction'
+    ? '动作偏向收敛、验证、保留回撤空间。'
+    : params.macro.economicCycle?.direction === 'expansion'
+    ? '动作偏向试探后放大，但仍要围绕命局用神取舍。'
+    : '动作偏向先排序、再推进，不宜同时开多线。';
+
+  const timingBias = params.solarTerm
+    ? `当前节气参考是${params.solarTerm}，时机判断要结合当下转折感，而不是只看单一年份标签。`
+    : '时机判断优先看阶段变化和当前窗口，不把单点年份当作唯一答案。';
+
+  const environmentBias = [
+    risingIndustry ? `${risingIndustry.industry}更接近顺势方向，可优先观察。` : '',
+    pressedIndustry ? `${pressedIndustry.industry}承压明显，宜保守处理。` : '',
+    params.lifeStage === 'rising' || params.lifeStage === 'prime'
+      ? '当前更重要的是建立可复利的结构，而不是只求短期结果。'
+      : '当前更重要的是减少错误成本，保护长期秩序。',
+  ].filter(Boolean).join(' ');
+
+  const guardrails = [
+    '任何强结论都必须同时服从命局结构、阶段窗口和现实环境三者一致。',
+    '如果结构支持但环境不支持，先缩动作，不直接否定方向。',
+    '如果环境看起来很好但命局阶段不承接，先试探，不一次性压满。',
+    tacitSummary ? '用户没说出口的隐性状态也是真实输入，不能只按表层问题给答案。': '',
+  ].filter(Boolean);
+
+  return {
+    summary: [
+      `世界状态判断年份：${params.currentYear}`,
+      currentPriority,
+      actionBias,
+      environmentBias,
+    ].filter(Boolean).join('；'),
+    currentPriority,
+    actionBias,
+    timingBias,
+    environmentBias,
+    guardrails,
+    tacitLeverage: tacitSummary
+      ? `当前还要结合这层没完全说出口的状态：${tacitSummary}`
+      : '当前以结构、阶段、环境三层显性信号为主。',
+  };
 }

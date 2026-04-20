@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createLoginCode } from '@/lib/auth';
+import { shouldShowAuthPreviewCode } from '@/lib/env';
 import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
 import { validateEmail } from '@/lib/validators';
 import { trackServerEvent } from '@/lib/analytics';
@@ -65,10 +66,7 @@ export async function POST(request: NextRequest) {
       message: emailConfigured ? '验证码已发送至邮箱' : '验证码已生成',
       expiresAt: result.expiresAt,
       deliveryConfigured: emailConfigured,
-      previewCode:
-        process.env.NODE_ENV !== 'production' || process.env.AUTH_SHOW_CODE === 'true'
-          ? result.code
-          : undefined,
+      previewCode: shouldShowAuthPreviewCode() ? result.code : undefined,
     });
   } catch (error) {
     console.error('[API] 请求登录验证码失败:', error);

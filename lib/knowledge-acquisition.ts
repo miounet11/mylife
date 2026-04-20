@@ -1,6 +1,17 @@
 import type Database from 'better-sqlite3';
 import { contentSignalOperations, db } from '@/lib/database';
 import {
+  getKnowledgeAcquisitionCoreLimit,
+  getKnowledgeAcquisitionFocusDomainsRaw,
+  getKnowledgeAcquisitionMaxDomainsPerRun,
+  getKnowledgeAcquisitionRadarLimitPerSource,
+  getKnowledgeAcquisitionSignalMinScore,
+  getKnowledgeAcquisitionSignalPromotionLimit,
+  getKnowledgeSynthesisPublishBatchSize,
+  isKnowledgeAcquisitionRefreshRadarEnabled,
+  isKnowledgeSynthesisAutoPublishEnabled,
+} from '@/lib/env';
+import {
   buildDomainAcquisitionPlans,
   buildCoreReferenceSeedPlan,
   type DomainAcquisitionPlan,
@@ -122,7 +133,7 @@ function parseDomainList(raw: string | undefined) {
 function pickFocusDomains(paramsDomains?: DomainKey[]) {
   return paramsDomains?.length
     ? paramsDomains
-    : parseDomainList(process.env.KNOWLEDGE_ACQUISITION_FOCUS_DOMAINS).filter((item) => item !== 'law');
+    : parseDomainList(getKnowledgeAcquisitionFocusDomainsRaw()).filter((item) => item !== 'law');
 }
 
 function seedMissingSourceInputs(inputs: UpsertSourceDocumentInput[], database: Database.Database) {
@@ -262,12 +273,12 @@ export async function runKnowledgeAcquisitionCycle(
   },
   database: Database.Database = db
 ): Promise<KnowledgeAcquisitionCycleResult> {
-  const refreshRadar = params?.refreshRadar ?? process.env.KNOWLEDGE_ACQUISITION_REFRESH_RADAR === '1';
-  const radarLimitPerSource = params?.radarLimitPerSource ?? Number(process.env.KNOWLEDGE_ACQUISITION_RADAR_LIMIT_PER_SOURCE || 8);
-  const coreLimit = params?.coreLimit ?? Number(process.env.KNOWLEDGE_ACQUISITION_CORE_LIMIT || 18);
-  const maxDomainsPerRun = params?.maxDomainsPerRun ?? Number(process.env.KNOWLEDGE_ACQUISITION_MAX_DOMAINS_PER_RUN || 3);
-  const signalMinScore = params?.signalMinScore ?? Number(process.env.KNOWLEDGE_ACQUISITION_SIGNAL_MIN_SCORE || 18);
-  const signalPromotionLimit = params?.signalPromotionLimit ?? Number(process.env.KNOWLEDGE_ACQUISITION_SIGNAL_PROMOTION_LIMIT || 10);
+  const refreshRadar = params?.refreshRadar ?? isKnowledgeAcquisitionRefreshRadarEnabled();
+  const radarLimitPerSource = params?.radarLimitPerSource ?? getKnowledgeAcquisitionRadarLimitPerSource();
+  const coreLimit = params?.coreLimit ?? getKnowledgeAcquisitionCoreLimit();
+  const maxDomainsPerRun = params?.maxDomainsPerRun ?? getKnowledgeAcquisitionMaxDomainsPerRun();
+  const signalMinScore = params?.signalMinScore ?? getKnowledgeAcquisitionSignalMinScore();
+  const signalPromotionLimit = params?.signalPromotionLimit ?? getKnowledgeAcquisitionSignalPromotionLimit();
   const focusDomains = pickFocusDomains(params?.focusDomains);
 
   let radarSignalsFetched = 0;
@@ -331,10 +342,10 @@ export async function runKnowledgeAcquisitionCycle(
         autoPublish: false,
       })
     : { drafts: [] };
-  const publication = database === db && process.env.KNOWLEDGE_SYNTHESIS_AUTO_PUBLISH === '1'
+  const publication = database === db && isKnowledgeSynthesisAutoPublishEnabled()
     ? runKnowledgePublicationCycle({
         userId: 'system_knowledge',
-        limit: Number(process.env.KNOWLEDGE_SYNTHESIS_PUBLISH_BATCH_SIZE || 4),
+        limit: getKnowledgeSynthesisPublishBatchSize(),
       })
     : { publishedEntries: [] };
 

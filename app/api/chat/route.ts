@@ -3,13 +3,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { eventOperations, fortuneOperations, questionOperations, runInTransaction, toolSessionOperations } from '@/lib/database';
+import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
 import { generateId } from '@/lib/utils';
 import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
 import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/chat-context';
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
+import { normalizeEventTransportRecords } from '@/lib/event-view';
+import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
 import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
+import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import {
   assessScopeProviderHealth,
   computeAttemptTimeouts,
@@ -21,6 +25,8 @@ import {
 
 // 设置 API 路由超时为 30 秒
 export const maxDuration = 30;
+
+const CHAT_LLM_TIMEOUT_MS = 14000;
 
 type HistoryMessage = {
   role: 'user' | 'assistant';
@@ -43,6 +49,8 @@ type QuestionRow = {
     edited?: boolean;
     regenerated?: boolean;
     intent?: ChatIntent | null;
+    tacitContext?: Record<string, unknown> | null;
+    tacitSummary?: string | null;
   };
   createdAt?: string;
   created_at?: string;
@@ -51,27 +59,6 @@ type QuestionRow = {
 type TimelineMessage = QuestionRow & {
   role: 'user' | 'assistant';
   content: string;
-};
-
-const getApiBaseUrl = () => {
-  return process.env.API_BASE_URL || 'https://ttqq.inping.com/v1';
-};
-
-const normalizeApiKey = (value?: string | null) => {
-  const key = (value || '').trim();
-  if (!key || key === 'dummy_key') return null;
-  return key;
-};
-
-const getApiKey = () => {
-  return (
-    normalizeApiKey(process.env.OPENAI_API_KEY) ||
-    normalizeApiKey(process.env.API_KEY)
-  );
-};
-
-const getDefaultModel = () => {
-  return process.env.DEFAULT_MODEL || 'auto';
 };
 
 async function generateAIResponse(
@@ -120,20 +107,22 @@ async function generateAIResponse(
 
   try {
     const baseChain = getModelFallbackChain(getDefaultModel());
-    const providerHealth = assessScopeProviderHealth(baseChain, 'chat');
-    if (providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || [])) {
+    const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
+    const providerHealth = assessScopeProviderHealth(baseChain, 'chat', plan);
+    const modelCandidates = plan.orderedModels;
+    if (
+      (providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || []))
+      && modelCandidates.length === 0
+    ) {
       return {
         answer: fallbackAnswer,
         llmUsed: false,
         fallbackReason: 'provider_health_gate',
       };
     }
-
-    const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
-    const modelCandidates = plan.orderedModels;
     const planSummary = summarizeModelExecutionPlan(plan);
-    const attemptTimeouts = computeAttemptTimeouts(9000, modelCandidates.length);
-    const deadlineAt = Date.now() + 9000;
+    const attemptTimeouts = computeAttemptTimeouts(CHAT_LLM_TIMEOUT_MS, modelCandidates.length);
+    const deadlineAt = Date.now() + CHAT_LLM_TIMEOUT_MS;
     console.log(
       `[LLM Chat] planner ${planSummary.label} ` +
       `(base=${formatModelAttemptLabel(baseChain)})`
@@ -150,11 +139,12 @@ async function generateAIResponse(
       const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
       const startedAt = Date.now();
       try {
-        const completion = await openai.chat.completions.create({
+        const completion = await createOpenAiCompatibleChatCompletion(openai, {
           model,
           messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
           temperature: 0.7,
-          max_tokens: 900,
+          maxTokens: 900,
+          reasoningEffort: 'low',
         }, {
           signal: controller.signal,
           timeout: attemptTimeoutMs,
@@ -198,6 +188,7 @@ async function generateAIResponse(
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: error instanceof Error ? error.name || 'error' : 'error',
+          errorMessage: error instanceof Error ? error.message : String(error),
           traceLabel: 'chat:main',
         });
         console.error(`[LLM Chat] Model ${model} failed:`, error);
@@ -431,6 +422,8 @@ function toHistoryPayload(rows: TimelineMessage[]) {
     eventId: row.analysis?.eventId || null,
     intent: row.analysis?.intent || null,
     responseToQuestionId: row.analysis?.responseToQuestionId || null,
+    tacitContext: row.role === 'user' ? row.analysis?.tacitContext || null : null,
+    tacitSummary: row.role === 'user' ? row.analysis?.tacitSummary || null : null,
     timestamp: row.createdAt || row.created_at,
   }));
 }
@@ -468,7 +461,7 @@ function buildChatPayload(
   requestedIntent?: ChatIntent
 ) {
   const report = getChatReport(userId, requestedReportId);
-  const events = eventOperations.getByUserId(userId).slice(0, 8);
+  const events = normalizeEventTransportRecords(eventOperations.getByUserId(userId).slice(0, 8));
   const toolSessions = toolSessionOperations.listByUser(userId, 8);
 
   return buildChatExperienceContext({
@@ -535,6 +528,8 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
     const question = (data?.question || '').trim();
+    const tacitContext = sanitizeTacitKnowledgeInput(data?.tacitContext);
+    const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
     userId = await getOrCreateGuestUserId();
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
@@ -553,7 +548,10 @@ export async function POST(request: NextRequest) {
     const scopeEventId = context.focusedEvent?.id || requestedEventId;
     const previousRows = getScopedChatRows(userId, scopeReportId, scopeEventId, requestedIntent, 60);
     const userHistory = buildHistoryFromRows(previousRows).slice(-12);
-    const { answer, llmUsed, fallbackReason } = await generateAIResponse(question, userHistory, context.summary, {
+    const contextSummary = tacitSummary
+      ? `${context.summary}\n用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。`
+      : context.summary;
+    const { answer, llmUsed, fallbackReason } = await generateAIResponse(question, userHistory, contextSummary, {
       intent: requestedIntent,
       context,
     });
@@ -573,6 +571,8 @@ export async function POST(request: NextRequest) {
         focusAreas: context.focusAreas,
         turnId,
         intent: requestedIntent || null,
+        tacitContext: tacitContext || null,
+        tacitSummary: tacitSummary || null,
       },
     });
 
@@ -603,6 +603,7 @@ export async function POST(request: NextRequest) {
         durationMs: Date.now() - requestStartedAt,
         fallbackReason: fallbackReason || null,
         questionLength: question.length,
+        tacitSignalCount: tacitContext ? 1 : 0,
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,

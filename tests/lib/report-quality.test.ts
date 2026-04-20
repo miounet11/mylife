@@ -1,4 +1,4 @@
-import { buildReportQualityAudit } from '@/lib/report-quality';
+import { buildReportQualityAudit, buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 
 const baseResult = {
   basic: {
@@ -154,7 +154,7 @@ describe('report quality audit', () => {
 
     expect(audit.status).toBe('watch');
     expect(audit.deliveryTier).toBe('enhanced');
-    expect(audit.summary).toContain('稳定专家版交付');
+    expect(audit.summary).toContain('稳定深度报告交付');
     expect(audit.blockingIssues).not.toContain('缺少稳定的 LLM 深度增强正文');
   });
 
@@ -190,5 +190,61 @@ describe('report quality audit', () => {
     expect(audit.blockingIssues).toContain('正文存在模板化或内部提示词残留');
     expect(audit.blockingIssues).toContain('阶段窗口表述异常');
     expect(audit.blockingIssues).toContain('分科建议边界不清');
+  });
+
+  it('maps delivery tiers to user-facing report stages', () => {
+    expect(describeReportDeliveryStage('basic')).toMatchObject({
+      key: 'simple',
+      label: '简单报告',
+      shortLabel: '简单版',
+    });
+    expect(describeReportDeliveryStage('enhanced')).toMatchObject({
+      key: 'deep',
+      label: '深度报告',
+      shortLabel: '深度版',
+    });
+    expect(describeReportDeliveryStage('expert')).toMatchObject({
+      key: 'detailed',
+      label: '更细致的报告',
+      shortLabel: '细致版',
+    });
+  });
+
+  it('builds a user-facing stage ladder from the current delivery tier', () => {
+    expect(buildReportStageLadder('basic')).toEqual([
+      {
+        key: 'simple',
+        label: '简单报告',
+        shortLabel: '简单版',
+        description: '先给你一个可读的主结论，方便尽快完成第一次报告体验。',
+        status: 'current',
+      },
+      {
+        key: 'deep',
+        label: '深度报告',
+        shortLabel: '深度版',
+        description: '会补足更完整的结构解释、阶段判断和重点建议。',
+        status: 'locked',
+      },
+      {
+        key: 'detailed',
+        label: '更细致的报告',
+        shortLabel: '细致版',
+        description: '会补足更多细节拆解、阶段窗口和动作颗粒度，适合继续深挖。',
+        status: 'locked',
+      },
+    ]);
+
+    expect(buildReportStageLadder('enhanced').map((item) => item.status)).toEqual([
+      'completed',
+      'current',
+      'locked',
+    ]);
+
+    expect(buildReportStageLadder('expert').map((item) => item.status)).toEqual([
+      'completed',
+      'completed',
+      'current',
+    ]);
   });
 });

@@ -147,7 +147,7 @@ export default function BirthDateInput({
           <CalendarDays className="h-4 w-4 text-[color:var(--warm)]" />
           公历出生日期
         </div>
-        <p className="mt-1 text-xs leading-6 text-[color:var(--muted)]">
+        <p className="intro-copy mt-1">
           支持直接粘贴 1998-08-08、19980808、1998年8月8日。
         </p>
 

@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getContentGenerationCronToken } from '@/lib/env';
 import { processContentGenerationJobBatch } from '@/lib/content-generation-jobs';
 
 export const maxDuration = 900;
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.CONTENT_GENERATION_CRON_TOKEN || process.env.CONTENT_SCHEDULER_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || ''}`.trim();
+  const expected = getContentGenerationCronToken();
   if (!expected) {
     return false;
   }

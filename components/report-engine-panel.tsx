@@ -9,6 +9,7 @@ import {
   getReasoningModeLabel,
   type ReportReasoningMode,
 } from '@/lib/report-reasoning-mode';
+import { describeReportDeliveryStage } from '@/lib/report-quality';
 
 type EngineBuilds = {
   core: string;
@@ -158,12 +159,12 @@ export default function ReportEnginePanel({
     : `升级到 ${engineBuilds.report}`;
 
   const description = generatedFrom === 'upgrade'
-    ? `这份报告已经通过当前版本重算${upgradedFromVersion ? `，原始版本为 ${upgradedFromVersion}` : ''}。`
+    ? `已升级重算${upgradedFromVersion ? ` · 原始版本 ${upgradedFromVersion}` : ''}`
     : upstreamUnavailable
-    ? '本次已尝试 LLM 与并发 Agent 增强，但上游模型接口未在时限内返回，当前主报告为结构化引擎加 deterministic 专家层输出。待模型供应商恢复后，可再次重算增强。'
-    : getReasoningModeDescription(resolvedReasoningMode);
+    ? '上游模型未稳定返回'
+    : getReasoningModeLabel(resolvedReasoningMode);
   const auditStatus = qualityAudit?.status || 'watch';
-  const auditSummary = qualityAudit?.summary || '当前版本已完成基础自检，但还缺少更细的质量说明。';
+  const auditSummary = qualityAudit?.summary || '基础自检';
   const auditBadgeClass = auditStatus === 'ready'
     ? 'bg-emerald-50 text-emerald-700'
     : auditStatus === 'watch'
@@ -174,11 +175,8 @@ export default function ReportEnginePanel({
     : auditStatus === 'watch'
     ? '建议复核'
     : '建议重算';
-  const deliveryTierLabel = qualityAudit?.deliveryTier === 'expert'
-    ? 'S级专家版'
-    : qualityAudit?.deliveryTier === 'enhanced'
-    ? '增强版'
-    : '基础版';
+  const deliveryStage = describeReportDeliveryStage(qualityAudit?.deliveryTier);
+  const deliveryTierLabel = deliveryStage.label;
   const backgroundUpgradeLabel = upgradeJob?.status === 'running'
     ? '后台增强进行中'
     : upgradeJob?.status === 'retry' || upgradeJob?.status === 'pending'
@@ -274,6 +272,9 @@ export default function ReportEnginePanel({
         <Sparkles className="h-5 w-5 text-[color:var(--accent-strong)]" />
         <div className="font-semibold text-[color:var(--ink)]">报告引擎版本</div>
       </div>
+      <div className="intro-copy mt-2">
+        这里显示这份报告当前使用的引擎、质量自检和增强状态，帮助你判断是直接使用还是继续升级。
+      </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
         <VersionTile label="质量审计" value={qualityAudit?.overallScore ? `${qualityAudit.overallScore} / ${qualityAudit.grade || 'B'}` : '待生成'} />
@@ -287,9 +288,7 @@ export default function ReportEnginePanel({
         <VersionTile label="结构引擎" value={engineBuilds.core} />
       </div>
 
-      <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-        {description}
-      </div>
+      <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">{description}</div>
 
       {upgradeJob?.status && ['pending', 'running', 'retry', 'failed', 'completed'].includes(upgradeJob.status) ? (
         <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">
@@ -305,26 +304,13 @@ export default function ReportEnginePanel({
               {backgroundUpgradeLabel}
             </div>
           </div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-            {upgradeJob.status === 'completed'
-              ? `系统已经完成后台增强，历史最高分 ${upgradeJob.bestScore || qualityAudit?.overallScore || '--'}。`
-              : upgradeJob.status === 'failed'
-              ? `后台增强已达到当前重试上限，历史最高分 ${upgradeJob.bestScore || qualityAudit?.overallScore || '--'}。`
-              : llmUsed
-              ? `系统会继续尝试把当前版本从 ${deliveryTierLabel} 提升到 S级专家版。`
-              : `当前稳定可读版已经先交付，系统会继续尝试把它补强到更完整的深度版。`}
-          </div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-            {`已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次`}
+          <div className="mt-3 text-xs text-[color:var(--muted)]">
+            {`尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0}`}
             {upgradeJob.nextRunAt ? `，下一次计划时间 ${upgradeJob.nextRunAt}` : ''}
           </div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-            当前策略：{queuedStrategyLabel}
-          </div>
+          <div className="mt-2 text-xs text-[color:var(--muted)]">{queuedStrategyLabel}</div>
           {upgradeBlockerLabel ? (
-            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-              最近一次阻塞原因：{upgradeBlockerLabel}
-            </div>
+            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-[color:var(--muted)]">{upgradeBlockerLabel}</div>
           ) : null}
         </div>
       ) : null}
@@ -344,11 +330,6 @@ export default function ReportEnginePanel({
           </div>
         </div>
         <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{auditSummary}</div>
-        <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-          {targetAchieved
-            ? '当前版本已经越过 95 分的 S级专家门槛。'
-            : `当前版本还未越过 ${qualityAudit?.targetScore || 95} 分的 S级目标，暂不应视为最终专家版。`}
-        </div>
         {qualityAudit?.dimensions?.length ? (
           <div className="mt-4 grid gap-2">
             {qualityAudit.dimensions.map((item) => (
@@ -357,7 +338,7 @@ export default function ReportEnginePanel({
                   <span>{item.label || '维度'}</span>
                   <span>{typeof item.score === 'number' ? `${item.score}` : '--'}</span>
                 </div>
-                <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{item.detail || '待补充'}</div>
+                <div className="mt-1 text-xs text-[color:var(--muted)]">{item.detail || '待补充'}</div>
               </div>
             ))}
           </div>
@@ -379,9 +360,6 @@ export default function ReportEnginePanel({
               {feedbackLabel}
             </div>
           </div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-            {feedbackLoop.validationInsights.summary || '当前还没有足够的反馈样本。'}
-          </div>
           <div className="mt-4 grid gap-2 sm:grid-cols-4">
             {[
               { label: '关联事件', value: feedbackLoop.validationInsights.totalLinkedEvents || 0 },
@@ -395,11 +373,8 @@ export default function ReportEnginePanel({
               </div>
             ))}
           </div>
-          {feedbackLoop.correctionInsight?.summary ? (
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-              {feedbackLoop.correctionInsight.summary}
-              {feedbackLoop.correctionInsight.likelyCause ? ` ${feedbackLoop.correctionInsight.likelyCause}` : ''}
-            </div>
+          {feedbackLoop.correctionInsight?.likelyCause ? (
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-[color:var(--muted)]">{feedbackLoop.correctionInsight.likelyCause}</div>
           ) : null}
         </div>
       ) : null}
@@ -410,16 +385,9 @@ export default function ReportEnginePanel({
             <div className="text-sm font-semibold text-[color:var(--ink)]">版本演进记录</div>
             <div className="text-xs text-[color:var(--muted)]">{`已记录 ${lineage.length} 次生成`}</div>
           </div>
-          {latestVersion ? (
-            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-              {latestVersion.generatedFrom === 'upgrade'
-                ? `当前版本 ${latestVersion.version} 来自升级重算${latestVersion.upgradedFromVersion ? `，上一版为 ${latestVersion.upgradedFromVersion}` : ''}。`
-                : `当前版本 ${latestVersion.version} 来自首次判断生成。`}
-              {qualityDelta !== null
-                ? qualityDelta >= 0
-                  ? ` 相比上一版，质量分提升 ${qualityDelta} 分。`
-                  : ` 相比上一版，质量分下降 ${Math.abs(qualityDelta)} 分。`
-                : ''}
+          {latestVersion && qualityDelta !== null ? (
+            <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-[color:var(--muted)]">
+              {qualityDelta >= 0 ? `质量 +${qualityDelta}` : `质量 -${Math.abs(qualityDelta)}`}
             </div>
           ) : null}
           <div className="mt-4 grid gap-3">
@@ -427,7 +395,7 @@ export default function ReportEnginePanel({
               <div key={`${item.version}-${item.generatedAt || index}`} className="rounded-2xl bg-slate-50 px-4 py-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">
-                    {`${item.version} · ${item.deliveryTier === 'expert' ? 'S级专家版' : item.deliveryTier === 'enhanced' ? '增强版' : '基础版'}`}
+                    {`${item.version} · ${describeReportDeliveryStage(item.deliveryTier).label}`}
                   </div>
                   <div className="text-xs text-[color:var(--muted)]">
                     {item.generatedAt ? formatVersionTime(item.generatedAt) : '时间待补充'}
@@ -448,9 +416,6 @@ export default function ReportEnginePanel({
                         : '结构引擎'}
                   </span>
                 </div>
-                {item.summary ? (
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.summary}</div>
-                ) : null}
               </div>
             ))}
           </div>
@@ -502,7 +467,7 @@ export default function ReportEnginePanel({
 
       {qualityAudit?.recommendedActions && qualityAudit.recommendedActions.length > 0 ? (
         <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
-          <div className="text-sm font-semibold text-[color:var(--ink)]">建议动作</div>
+          <div className="text-sm font-semibold text-[color:var(--ink)]">动作</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.recommendedActions.slice(0, 3).map((item) => (
               <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
@@ -517,26 +482,20 @@ export default function ReportEnginePanel({
         <div className="mt-4 space-y-3">
           <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="text-sm font-semibold text-[color:var(--ink)]">选择升级方式</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              你不需要盯着页面一直刷新。现在就想重试可以直接重算；如果上游模型还不稳，更适合先排队，让系统在后台继续补强。
-            </div>
             <div className="mt-4 grid gap-3">
               {[
                 {
                   key: 'immediate' as const,
                   title: actionLabel,
-                  description: '立刻重算当前报告，并在结果不足时继续挂入后台增强队列。',
                   primary: true,
                 },
                 {
                   key: 'queue' as const,
                   title: '仅排队后台增强',
-                  description: '保留当前可读版结果，让系统在后台继续提升质量，不打断你现在阅读。',
                 },
                 {
                   key: 'defer' as const,
                   title: '等待模型恢复后增强',
-                  description: '如果当前供应商不稳定，先延后 30 分钟再尝试，避免连续触发低质量重算。',
                 },
               ].map((item) => {
                 const isActing = submittingStrategy === item.key || (isPending && submittingStrategy === null && item.primary);
@@ -555,9 +514,6 @@ export default function ReportEnginePanel({
                   <div className="flex items-center gap-2 text-sm font-semibold">
                     <RefreshCcw className={`h-4 w-4 ${isActing ? 'animate-spin' : ''}`} />
                     {isActing ? '处理中...' : item.title}
-                  </div>
-                  <div className={`mt-2 text-xs leading-6 ${item.primary ? 'text-white/85' : 'text-[color:var(--muted)]'}`}>
-                    {item.description}
                   </div>
                 </button>
                 );
@@ -582,17 +538,17 @@ function VersionTile({ label, value }: { label: string; value: string }) {
 }
 
 function formatVersionTime(value: string) {
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (matched) {
+    return `${matched[2]}-${matched[3]} ${matched[4]}:${matched[5]}`;
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
 function formatUpgradeBlocker(lastError?: string) {

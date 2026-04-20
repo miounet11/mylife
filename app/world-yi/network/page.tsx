@@ -9,30 +9,34 @@ import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { worldYiDomainSurfaces, worldYiApplicationSurface } from '@/lib/world-yi-surfaces';
 import { worldYiEnglishTrackSurfaces, worldYiGlobalTopicSurfaces } from '@/lib/world-yi-global-surfaces';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
+import { createPublicContentMetadata } from '@/lib/public-content-seo';
 
-export const metadata = {
+export const metadata = createPublicContentMetadata({
   title: '世界易专题地图 | 人生K线',
   description: '把世界易的主书、矩阵、六域、应用、全球华人、英文层与环境洞察统一到一张可下钻的专题地图里。',
-};
+  path: '/world-yi/network',
+  type: 'website',
+  languages: {
+    'zh-CN': '/world-yi/network',
+    'x-default': '/world-yi/network',
+  },
+});
 
 export const dynamic = 'force-dynamic';
 
 const controlLayers = [
   {
     title: '主书工程',
-    description: '十卷主书负责定宪法，是世界易所有公开页面的母本。',
     href: '/world-yi/book',
     icon: BookOpen,
   },
   {
     title: '内容矩阵',
-    description: '首批 120 篇与 2000 篇目标负责把主书映射成执行网络。',
     href: '/world-yi/matrix',
     icon: Layers3,
   },
   {
     title: '发布架构',
-    description: '解释哪些内容直接公开，哪些仍保留为母文档与治理层。',
     href: '/world-yi/publish',
     icon: Network,
   },
@@ -61,30 +65,25 @@ export default function WorldYiNetworkPage() {
               世界易专题地图
             </>
           )}
-          title={(
-            <>
-              这不再是一串入口，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是一张能继续长大的母导航图。</span>
-            </>
-          )}
-          description="世界易已经从总论扩到主书、矩阵、六域、应用、全球华人、英文层和环境洞察。这个页面的作用，就是把整套公开网络重新排成一张清晰地图。"
-          hint="先选一条主线进入，不建议同时打开多个网络分支。"
+          title="世界易网络"
+          description="把主书、六域、生活应用、全球华人与英文层入口汇到一张总地图里，方便你按主题继续下钻，而不是在零散页面里来回找。"
+          hint="适合已经理解部分体系、想快速定位下一层入口的人；如果你更想先得到自己的结果，直接进入判断。"
           actions={[
             { href: '/world-yi', label: '回到世界易总入口', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
             { href: '/knowledge/topics', label: '通用专题地图' },
             { href: '/analyze', label: '进入判断' },
           ]}
           highlights={[
-            { title: `${worldYiStats.publicContentCount} 篇`, body: '当前公开总量' },
-            { title: `${worldYiStats.publicKnowledgeCount} 篇`, body: '已公开知识' },
-            { title: `${worldYiStats.publicCaseCount} 篇`, body: '已公开案例' },
-            { title: `${worldYiStats.publicInsightCount} 篇`, body: '环境洞察' },
-            { title: `${worldYiRoadmapSummary.targetArticleCount} 篇`, body: '长期内容宇宙' },
-            { title: `${domains.length} 条主线`, body: '六域分科' },
-            { title: `${worldYiStats.applicationGroupCount} 组入口`, body: '生活应用' },
-            { title: `${globalTopics.length} 组专题`, body: '全球华人专题' },
-            { title: `${englishTracks.length} 条路径`, body: 'English tracks' },
-            { title: `${worldYiStats.publicRouteCount} 个`, body: '公开入口' },
+            { title: `${worldYiStats.publicContentCount} 篇`, body: '公开总量' },
+            { title: `${worldYiStats.publicKnowledgeCount} 篇`, body: '知识' },
+            { title: `${worldYiStats.publicCaseCount} 篇`, body: '案例' },
+            { title: `${worldYiStats.publicInsightCount} 篇`, body: '洞察' },
+            { title: `${worldYiRoadmapSummary.targetArticleCount} 篇`, body: '内容目标' },
+            { title: `${domains.length} 条`, body: '六域' },
+            { title: `${worldYiStats.applicationGroupCount} 组`, body: '应用' },
+            { title: `${globalTopics.length} 组`, body: '全球' },
+            { title: `${englishTracks.length} 条`, body: 'English' },
+            { title: `${worldYiStats.publicRouteCount} 个`, body: '入口' },
           ]}
         />
 
@@ -108,7 +107,6 @@ export default function WorldYiNetworkPage() {
                   <Icon className="h-5 w-5" />
                 </div>
                 <h2 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-                <p className="intro-copy mt-3">{item.description}</p>
               </ContentCardLink>
             );
           })}
@@ -135,7 +133,6 @@ export default function WorldYiNetworkPage() {
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{domain.shortTitle}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{domain.title}</h2>
-                <p className="intro-copy mt-3">{domain.summary}</p>
               </ContentCardLink>
             ))}
           </div>
@@ -163,10 +160,9 @@ export default function WorldYiNetworkPage() {
                   className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{group.title}</div>
-                  <p className="intro-copy mt-3">{group.description}</p>
                 </ContentCardLink>
               ))}
-            </div>
+          </div>
           </section>
 
           <section className="glass-panel rounded-[2rem] p-6 md:p-8">
@@ -187,9 +183,6 @@ export default function WorldYiNetworkPage() {
                 className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">全球华人专题网络</div>
-                <p className="intro-copy mt-3">
-                  身份、职业、家庭、教育四条跨文化主线已经形成专题索引。
-                </p>
               </ContentCardLink>
               <ContentCardLink
                 href="/world-yi/en/tracks"
@@ -203,9 +196,6 @@ export default function WorldYiNetworkPage() {
                 className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">English Track Network</div>
-                <p className="intro-copy mt-3">
-                  Foundation、Global Life、Wealth、Relationships 四条英文路径已经独立出来。
-                </p>
               </ContentCardLink>
             </div>
           </section>
@@ -218,10 +208,10 @@ export default function WorldYiNetworkPage() {
           </div>
           <div className="mt-5 grid gap-4 md:grid-cols-3">
             {[
-              ['城市观察', '看地点如何放大推进、恢复和身份感。'],
-              ['行业观察', '看赛道节奏如何改变风险和承压方式。'],
-              ['组织观察', '看岗位密度、接口成本和权力结构如何消耗人。'],
-            ].map(([title, description]) => (
+              ['城市观察'],
+              ['行业观察'],
+              ['组织观察'],
+            ].map(([title]) => (
               <ContentCardLink
                 key={title}
                 href="/world-yi/insights"
@@ -236,7 +226,6 @@ export default function WorldYiNetworkPage() {
                 className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
-                <p className="intro-copy mt-3">{description}</p>
               </ContentCardLink>
             ))}
           </div>

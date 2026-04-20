@@ -1,1 +1,3 @@
-export const GOOGLE_ANALYTICS_ID = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID?.trim() || 'G-CC5FJRFNFS';
+import { getGoogleAnalyticsId } from '@/lib/env';
+
+export const GOOGLE_ANALYTICS_ID = getGoogleAnalyticsId();

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
+import { getKnowledgeCronToken } from '@/lib/env';
 import { getKnowledgeOpsSnapshot } from '@/lib/knowledge-ops';
 
 export const maxDuration = 15;
@@ -10,7 +11,7 @@ async function isAuthorized(request: NextRequest) {
     return true;
   }
 
-  const expected = `${process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || ''}`.trim();
+  const expected = getKnowledgeCronToken();
   if (!expected) {
     return false;
   }

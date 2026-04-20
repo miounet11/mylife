@@ -29,6 +29,7 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'chat_followup_clicked',
   'result_cta_clicked',
   'report_upgrade_requested',
+  'report_past_event_saved_from_result',
 ]);
 
 export async function POST(request: NextRequest) {

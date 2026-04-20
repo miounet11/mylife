@@ -21,6 +21,7 @@ import { fortuneOperations, toolSessionOperations } from '@/lib/database';
 import { buildJourneyForTool } from '@/lib/surface-journeys';
 import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition } from '@/lib/tools';
 import { getCurrentUserId } from '@/lib/user-utils';
+import { buildChatHref } from '@/lib/chat-entry';
 
 export default async function ToolResultPage({
   params,
@@ -46,6 +47,13 @@ export default async function ToolResultPage({
   const premiumOffer = buildToolPremiumOffer(tool);
   const bundle = getToolBundleForSlug(tool.slug);
   const journey = buildJourneyForTool(tool);
+  const toolFollowupQuestion = `请围绕“${tool.shortTitle}”这次结果继续深问，按结构、阶段、环境、动作四层拆解：这条建议为什么成立，我现在该先推进什么，最需要防什么误判？`;
+  const toolChatHref = buildChatHref({
+    reportId: report?.id || null,
+    intent: tool.chatIntent || null,
+    question: toolFollowupQuestion,
+    source: 'tool_result_followup',
+  });
 
   return (
     <div className="page-shell">
@@ -72,7 +80,7 @@ export default async function ToolResultPage({
               <div className="action-guide">快速操作</div>
               <div className="action-strip flex flex-wrap gap-3">
                 <Link
-                  href={report ? `/chat?reportId=${encodeURIComponent(report.id)}&intent=${encodeURIComponent(tool.chatIntent || '')}` : '/chat'}
+                  href={toolChatHref}
                   className="action-primary action-main"
                 >
                   <Bot className="mr-1 h-4 w-4" />
@@ -122,7 +130,7 @@ export default async function ToolResultPage({
 
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
-                href={report ? `/chat?reportId=${encodeURIComponent(report.id)}&intent=${encodeURIComponent(tool.chatIntent || '')}` : '/chat'}
+                href={toolChatHref}
                 className="action-primary"
               >
                 <Bot className="mr-2 h-4 w-4" />

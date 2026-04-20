@@ -13,6 +13,7 @@ import {
   premiumServiceRequestOperations,
   userOperations,
 } from '@/lib/database';
+import { getPremiumServiceAlertEmails } from '@/lib/env';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { generateId } from '@/lib/utils';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
@@ -27,11 +28,7 @@ function looksLikeEmail(value: string) {
 }
 
 function getPremiumAdminEmails() {
-  const raw = `${process.env.PREMIUM_SERVICE_ALERT_EMAILS || process.env.ADMIN_EMAILS || process.env.MAIL_FROM || ''}`;
-  return raw
-    .split(',')
-    .map((item) => item.trim().toLowerCase())
-    .filter(Boolean);
+  return getPremiumServiceAlertEmails();
 }
 
 function trackEmailDelivery(params: {

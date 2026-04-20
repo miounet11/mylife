@@ -1,3 +1,5 @@
+import type { EventDateKey, EventTransportRecord, EventViewImpact, EventViewType } from '@/lib/event-view';
+
 // 用户档案类型定义
 export interface UserFortuneProfile {
   id: string;
@@ -116,10 +118,11 @@ export interface MonthlyFortune {
 
 export interface ImportantEvent {
   id: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
+  type: EventViewType;
+  // Historical legacy shape: older profile models still use Date here.
   date: Date;
   description: string;
-  impact: 'positive' | 'negative' | 'neutral';
+  impact: EventViewImpact;
   
   // 命理分析
   fortuneAnalysis: {
@@ -249,7 +252,7 @@ export interface FortuneEvent {
   title: string;
   description: string;
   
-  // 时间
+  // Historical legacy shape: this is an instant-like reminder time, not a pure calendar date.
   date: Date;
   duration: string;
   
@@ -283,9 +286,9 @@ export interface FortuneEvent {
 export interface DisasterWarning {
   id: string;
   userId: string;
-  type: 'career' | 'wealth' | 'health' | 'marriage' | 'family';
+  type: Exclude<EventViewType, 'other'>;
   
-  // 时间范围
+  // Warning windows are treated as real time ranges, unlike user-entered event date keys.
   startDate: Date;
   endDate: Date;
   severity: 'low' | 'medium' | 'high' | 'critical';
@@ -455,6 +458,14 @@ export interface FortuneAnalysisResult {
       verdict?: 'PASS' | 'WARN' | 'FAIL';
       failedRules?: string[];
     };
+    reliabilityGuard?: {
+      status?: 'passed' | 'conservative';
+      score?: number;
+      reasons?: string[];
+      conservativeDelivery?: boolean;
+      suppressedTimingAdvice?: boolean;
+      summary?: string;
+    };
     qualityAudit?: {
       overallScore?: number;
       grade?: 'S' | 'A' | 'B' | 'C';
@@ -507,6 +518,32 @@ export interface FortuneAnalysisResult {
         checkpoints?: string[];
       };
     };
+    v4ContractVersion?: 'v1';
+    sectionOwnership?: Partial<Record<'cockpit' | 'lifeKLine' | 'blueprint' | 'currentOperatingSystem' | 'timeline12Months' | 'scenarioPanels' | 'actionBoard' | 'validationLayer' | 'personalityBridge', string[]>>;
+    v4OwnedConcepts?: Partial<Record<'cockpit' | 'lifeKLine' | 'blueprint' | 'currentOperatingSystem' | 'timeline12Months' | 'scenarioPanels' | 'actionBoard' | 'validationLayer' | 'personalityBridge', string[]>>;
+    judgmentBlocks?: {
+      pastValidation?: {
+        headline?: string;
+        evidence?: string[];
+      };
+      presentDiagnosis?: {
+        headline?: string;
+        evidence?: string[];
+      };
+      futureGuidance?: {
+        headline?: string;
+        evidence?: string[];
+      };
+    };
+    pastEventTemplates?: Array<{
+      key: string;
+      title: string;
+      type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
+      description: string;
+      reason: string;
+      confidenceLabel?: 'high' | 'medium';
+      occurrenceWindow?: string;
+    }>;
     versionLineage?: Array<{
       version: string;
       generatedAt?: string;
@@ -637,6 +674,8 @@ export interface UserRecord {
   birthTime: string;
   birthPlace?: string;
   timezone: number;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // 数据库命理记录
@@ -662,6 +701,8 @@ export interface FortuneRecord {
   shenSha?: FortuneAnalysisResult['shenSha'];
   reportVersion?: string;
   isPublic?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AnalyticsEventRecord {
@@ -764,9 +805,26 @@ export interface ReportMonthlyDigestRunRecord {
   createdAt?: string;
 }
 
+export interface UserLifecycleEmailRunRecord {
+  id: string;
+  stageKey: string;
+  email: string;
+  userId?: string;
+  reportId?: string;
+  status: 'sent' | 'skipped' | 'error';
+  reason?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
 export interface EmailDeliveryJobRecord {
   id: string;
-  kind: 'premium_service_request_receipt' | 'premium_service_admin_alert' | 'premium_service_status_update' | 'report_ready';
+  kind:
+    | 'premium_service_request_receipt'
+    | 'premium_service_admin_alert'
+    | 'premium_service_status_update'
+    | 'report_ready'
+    | 'user_lifecycle';
   status: 'pending' | 'running' | 'sent' | 'failed' | 'cancelled';
   to: string[];
   payload?: Record<string, unknown>;
@@ -809,21 +867,8 @@ export interface ToolSessionRecord {
 }
 
 // 数据库事件记录
-export interface EventRecord {
-  id: string;
+export interface EventRecord extends EventTransportRecord {
   userId: string;
-  type: string;
-  title: string;
-  date: string;
-  time?: string;
-  description?: string;
-  impact: 'positive' | 'negative' | 'neutral';
-  fortuneAnalysis?: Record<string, unknown>;
-  userFeedback?: Record<string, unknown>;
-  followUpAdvice?: Record<string, unknown>;
-  reminderEnabled?: boolean;
-  reminderAdvanceDays?: number;
-  reminderMethod?: string;
 }
 
 // 数据库问题记录

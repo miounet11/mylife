@@ -77,10 +77,10 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
         <ShieldCheck className="h-3.5 w-3.5" />
         邮箱登录
       </div>
-      <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">用邮箱验证码绑定你的长期档案</h2>
-      <p className="mt-2 intro-copy">
-        登录后，游客状态下生成的分析结果、事件和内容订阅会被并入你的正式账号。管理员邮箱还会自动拥有内容后台权限。
-      </p>
+      <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">邮箱验证码登录</h2>
+      <div className="intro-copy mt-3 max-w-2xl">
+        登录后可以继续查看报告、订阅更新、管理事件和复访历史判断记录。
+      </div>
 
       <div className="mt-6 space-y-4">
         <div className="relative">
@@ -94,7 +94,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
           />
         </div>
 
-        <div className="space-y-2">
+        <div className="intro-panel space-y-2">
           <div className="action-guide">操作按钮</div>
           <div className="action-strip flex flex-col gap-3 md:flex-row">
             <input
@@ -135,11 +135,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
         </div>
       )}
 
-      {deliveryConfigured ? (
-        <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
-          邮箱绑定成功后，系统会自动把你加入内容更新订阅，并发送欢迎邮件。
-        </p>
-      ) : null}
+      {deliveryConfigured ? <div className="mt-4 text-sm text-[color:var(--muted)]">验证后订阅更新</div> : null}
     </div>
   );
 }

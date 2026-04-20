@@ -48,7 +48,7 @@ export default function PersonalJourneyHub({
       <SurfaceJourneyPanel
         journey={summary.journey}
         title={title || summary.heading}
-        description={description || summary.description}
+        description={description || ''}
       />
     </div>
   );

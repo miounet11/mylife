@@ -2,40 +2,19 @@
 
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Bell, Calendar, Clock, Edit, Plus, Trash2 } from 'lucide-react';
-import { formatDateTime } from '@/lib/utils';
+import { Bell, Calendar, Clock, Edit, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { buildChatHref } from '@/lib/chat-entry';
+import type { EventViewModel } from '@/lib/event-view';
+import {
+  formatEventDateKey,
+  getEstimatedPastEventPrompt,
+  getEventViewSortTime,
+} from '@/lib/event-view';
 
-interface Event {
-  id: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  title: string;
-  date: Date;
-  time?: string;
-  description: string;
-  impact: 'positive' | 'negative' | 'neutral';
-  reminder?: {
-    enabled: boolean;
-    advanceDays: number;
-    method: 'app' | 'email' | 'sms';
-  };
-  fortuneAnalysis?: {
-    source?: string;
-    reportId?: string;
-    suggestionKey?: string;
-    reason?: string;
-    title?: string;
-  };
-  followUpAdvice?: {
-    shortTerm?: string;
-    longTerm?: string;
-  };
-  userFeedback?: {
-    wasAccurate?: boolean;
-    userNotes?: string;
-  };
+type Event = EventViewModel & {
   predictionAccuracy?: boolean;
   wasAccurate?: boolean;
-}
+};
 
 interface ImportantEventsProps {
   events?: Event[];
@@ -69,7 +48,7 @@ export default function ImportantEvents({
   onToggleReminder,
   onMarkAccuracy,
 }: ImportantEventsProps) {
-  const sortedEvents = [...events].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const sortedEvents = [...events].sort((a, b) => getEventViewSortTime(a) - getEventViewSortTime(b));
 
   return (
     <Card>
@@ -77,7 +56,6 @@ export default function ImportantEvents({
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <CardTitle className="text-xl">重要事件</CardTitle>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">把关键判断窗口和现实节点放到一处，形成真正可复访的使用路径。</p>
           </div>
           {onAdd && (
             <button
@@ -108,7 +86,6 @@ export default function ImportantEvents({
         ) : (
           <div className="rounded-[1.75rem] border border-dashed border-[color:var(--line)] bg-slate-50 px-6 py-12 text-center">
             <div className="text-base font-semibold text-[color:var(--ink)]">还没有重要事件</div>
-            <div className="mt-2 text-sm text-[color:var(--muted)]">现在就把报告里的关键窗口期、现实节点或提醒需求存下来。</div>
           </div>
         )}
       </CardContent>
@@ -164,12 +141,17 @@ function EventRow({
                 已标记偏差
               </span>
             )}
+            {event.isEstimatedPastEvent && (
+              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                日期待补
+              </span>
+            )}
           </div>
 
           <div className="mt-4 flex flex-wrap items-center gap-4 text-sm text-[color:var(--muted)]">
             <span className="inline-flex items-center gap-2">
               <Calendar className="h-4 w-4" />
-              {formatDateTime(event.date)}
+              {formatEventDateKey(event.dateKey)}
             </span>
             {event.time && (
               <span className="inline-flex items-center gap-2">
@@ -178,6 +160,18 @@ function EventRow({
               </span>
             )}
           </div>
+
+          {event.isEstimatedPastEvent && (
+            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <div className="flex items-start gap-2">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+                <div>
+                  <div className="font-semibold">这条历史印证还没补真实日期</div>
+                  <div className="mt-1 leading-6">{getEstimatedPastEventPrompt(event)}</div>
+                </div>
+              </div>
+            </div>
+          )}
 
           <p className="mt-4 text-xs leading-6 text-[color:var(--ink)]">{event.description || '尚未补充这条事件的详细说明。'}</p>
 
@@ -189,7 +183,7 @@ function EventRow({
                 </div>
               )}
               {event.followUpAdvice?.shortTerm && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
                   {event.followUpAdvice.shortTerm}
                 </div>
               )}
@@ -206,17 +200,31 @@ function EventRow({
               </Link>
               {event.userFeedback?.wasAccurate === false && (
                 <Link
-                  href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`}
+                  href={buildChatHref({
+                    reportId: event.fortuneAnalysis.reportId,
+                    eventId: event.id,
+                    question: '这条事件已经被我标记为存在偏差，请结合原判断和实际结果，帮我拆开看偏差更可能出在结构、阶段、触发条件还是执行动作，并给我一个纠偏后的下一步方案。',
+                    source: 'important_events_drift',
+                  })}
                   className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700"
                 >
                   进入纠偏分析
                 </Link>
               )}
+              {event.isEstimatedPastEvent && onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(event)}
+                  className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700"
+                >
+                  补真实日期
+                </button>
+              )}
             </div>
           )}
 
           {(event.userFeedback?.wasAccurate !== undefined || event.userFeedback?.userNotes) && (
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
               <span className="font-semibold text-[color:var(--ink)]">验证结果：</span>
               {event.userFeedback?.wasAccurate === true && '这次判断已被记录为准确。'}
               {event.userFeedback?.wasAccurate === false && '这次判断已被记录为存在偏差。'}

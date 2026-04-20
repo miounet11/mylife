@@ -1,0 +1,54 @@
+{
+  "northStar": [
+    "获取持续搜索流量",
+    "普及世界易与易学判断框架",
+    "把现实困境翻译成结构、时机、环境与下一步动作"
+  ],
+  "weeklySlots": 9,
+  "laneQuotas": {
+    "main": 3,
+    "wave2": 3,
+    "global": 3
+  },
+  "contentTypeMix": {
+    "knowledge": 0.4,
+    "case": 0.5,
+    "insight": 0.1
+  },
+  "logicLayers": [
+    {
+      "key": "doctrine-spine",
+      "title": "Doctrine Spine",
+      "description": "固定世界易主张、六域框架、结构-时机-环境-动作的核心解释。"
+    },
+    {
+      "key": "traffic-capture",
+      "title": "Traffic Capture",
+      "description": "围绕用户真实搜索问题获取流量，把具体问题导回世界易判断框架。"
+    },
+    {
+      "key": "judgment-education",
+      "title": "Judgment Education",
+      "description": "用知识稿解释判断原则，用案例稿展示原则如何落到现实决策。"
+    },
+    {
+      "key": "conversion-bridge",
+      "title": "Conversion Bridge",
+      "description": "每篇公开内容都要承接到世界易入口、工具或个人分析动作。"
+    },
+    {
+      "key": "refresh-loop",
+      "title": "Refresh Loop",
+      "description": "持续复盘已发布内容，更新标题、摘要、内链，并把高频问题回写成新选题。"
+    }
+  ],
+  "expansionRules": {
+    "expandWhenMetricBelow": {
+      "content-scale": 0.25,
+      "non-seed-momentum": 0.65,
+      "publication-cadence": 0.75
+    },
+    "minQueuedTargetsPerLane": 3,
+    "targetMode": "evergreen-expansion"
+  }
+}

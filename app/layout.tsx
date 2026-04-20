@@ -25,6 +25,39 @@ export const metadata: Metadata = {
   creator: '人生K线',
   publisher: '人生K线',
   category: 'Education',
+  alternates: {
+    canonical: '/',
+    languages: {
+      'zh-CN': '/',
+      'en-US': '/world-yi/en',
+      'x-default': '/',
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'zh_CN',
+    alternateLocale: ['en_US'],
+    url: '/',
+    siteName: '人生K线',
+    title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
+    description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
+    images: [
+      {
+        url: '/icon.svg',
+        alt: '人生K线',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
+    description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
+    images: ['/icon.svg'],
+  },
+  other: {
+    'geo.region': 'CN',
+    'geo.placename': 'China',
+  },
   robots: {
     index: true,
     follow: true,

@@ -42,11 +42,17 @@ function truncate(text: string, max = 54) {
 
 function formatDateLabel(value?: string) {
   if (!value) return '未记录';
-  try {
-    return new Date(value).toLocaleDateString('zh-CN');
-  } catch {
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (matched) {
+    return `${matched[1]}-${matched[2]}-${matched[3]}`;
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
     return value;
   }
+
+  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
 }
 
 function mapStrengthLabel(strength?: string) {
@@ -55,21 +61,21 @@ function mapStrengthLabel(strength?: string) {
   return '节奏平衡';
 }
 
-const worldYiWorkspaceProtocols = [
-  '录入不是求一句结论，而是建立个人判断底座',
-  '结果页会先解释结构，再解释阶段和环境',
-  '历史记录会逐步变成可复盘的长期判断档案',
-  '本人、家人、伴侣和代测对象会共用同一套秩序',
-];
-
 const worldYiWorkspaceLinks = [
-  { label: '世界易总入口', href: '/world-yi' },
-  { label: '方法论入口', href: '/knowledge/world-yi-methodology' },
   { label: '案例证据层', href: '/cases' },
-  { label: '全球华人路径', href: '/world-yi/global' },
+  { label: '方法论入口', href: '/knowledge/world-yi-methodology' },
+  { label: '世界易总入口', href: '/world-yi' },
 ];
 
-export default function AnalyzeWorkspace() {
+export default function AnalyzeWorkspace({
+  returnHref,
+  returnLabel,
+  returnSource,
+}: {
+  returnHref?: string;
+  returnLabel?: string;
+  returnSource?: string;
+}) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [user, setUser] = useState<HistoryUser | null>(null);
@@ -126,39 +132,21 @@ export default function AnalyzeWorkspace() {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
+      <section className="grid gap-6 lg:grid-cols-[0.84fr_1.16fr] lg:items-start">
         <div className="space-y-5">
           <div className="section-label">
             <Sparkles className="h-3.5 w-3.5" />
             判断与记录
           </div>
           <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-            新的判断可以继续做，
-            <span className="font-serif text-[color:var(--accent-strong)]">以前的结果也能随时回看。</span>
+            先开始新的判断，
+            <span className="font-serif text-[color:var(--accent-strong)]">历史记录放在右侧随时回看。</span>
           </h1>
-          <p className="intro-copy">继续填写新对象，或直接回看历史判断记录。</p>
-          <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/75 px-5 py-5">
-            <div className="text-sm font-semibold text-[color:var(--ink)]">世界易提醒</div>
-            <p className="intro-copy mt-3">录入是入口，价值在后续结果页的结构化判断顺序。</p>
-            <div className="action-guide mt-4">操作按钮</div>
-            <div className="action-strip mt-2 flex flex-wrap gap-3 text-sm font-semibold">
-              <Link href="/world-yi" className="action-secondary">世界易总入口</Link>
-              <Link href="/world-yi/global" className="action-secondary">全球传播入口</Link>
-              <Link href="/world-yi/en" className="action-secondary">English Gateway</Link>
-            </div>
-          </div>
 
           <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,255,255,0.92),rgba(246,239,228,0.9))] px-5 py-5 shadow-[0_16px_40px_rgba(34,33,30,0.06)]">
-            <div className="text-sm font-semibold text-[color:var(--ink)]">世界易工作台协议</div>
-            <div className="mt-4 grid gap-3">
-              {worldYiWorkspaceProtocols.map((item) => (
-                <div key={item} className="rounded-[1.1rem] bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-                  {item}
-                </div>
-              ))}
-            </div>
-            <div className="action-guide mt-4">更多入口</div>
-            <div className="action-strip mt-2 flex flex-wrap gap-3 text-sm font-semibold">
+            <div className="text-sm font-semibold text-[color:var(--ink)]">快捷入口</div>
+            <div className="intro-copy mt-2">先开始新的综合判断；如果你还在理解体系，也可以先回到世界易总入口、方法论和案例层。</div>
+            <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
               {worldYiWorkspaceLinks.map((item) => (
                 <Link key={item.href} href={item.href} className="action-secondary">
                   {item.label}
@@ -172,28 +160,25 @@ export default function AnalyzeWorkspace() {
           <div className="soft-card rounded-[1.5rem] p-5">
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">累计判断</div>
             <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{fortunes.length}</div>
-            <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">包含你自己和代看对象的所有记录。</p>
           </div>
           <div className="soft-card rounded-[1.5rem] p-5">
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">本人判断</div>
             <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{categorized.mine.length}</div>
-            <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">按当前档案匹配到的个人记录。</p>
           </div>
           <div className="soft-card rounded-[1.5rem] p-5">
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">其他对象</div>
             <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{categorized.others.length}</div>
-            <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">家人、伴侣或其他对象的历史记录。</p>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-8 xl:grid-cols-[0.96fr_1.04fr]">
-        <div className="space-y-5">
+      <section className="grid gap-8 xl:grid-cols-[1.12fr_0.88fr] xl:items-start">
+        <div className="space-y-5" id="analyze-workspace">
           <div className="glass-panel rounded-[2rem] p-5 md:p-6">
             <div className="flex items-center justify-between gap-4">
-              <div>
+              <div className="space-y-2">
                 <div className="text-lg font-bold text-[color:var(--ink)]">新建世界易判断</div>
-                <div className="intro-copy mt-1">录入后直接进入结构、阶段、环境、动作的判断页。</div>
+                <div className="intro-copy text-sm leading-6 text-[color:var(--muted)]">左侧先完成新判断，右侧再回看既有记录，避免两个任务抢注意力。</div>
               </div>
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                 <Plus className="h-5 w-5" />
@@ -201,7 +186,11 @@ export default function AnalyzeWorkspace() {
             </div>
           </div>
 
-          <FortuneForm />
+          <FortuneForm
+            returnHref={returnHref}
+            returnLabel={returnLabel}
+            returnSource={returnSource}
+          />
         </div>
 
         <div className="space-y-5">
@@ -209,7 +198,6 @@ export default function AnalyzeWorkspace() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-lg font-bold text-[color:var(--ink)]">既有判断列表</div>
-                <div className="intro-copy mt-1">可按名字筛选，直接回看历史结果。</div>
               </div>
               <div className="flex flex-wrap gap-2">
                 {nameGroups.slice(0, 8).map((name) => (
@@ -294,9 +282,6 @@ export default function AnalyzeWorkspace() {
           ) : (
             <div className="glass-panel rounded-[2rem] px-6 py-12 text-center">
               <div className="text-xl font-bold text-[color:var(--ink)]">还没有判断记录</div>
-              <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-                先完成一次录入，后续所有本人和代测对象的报告都会在这里集中展示。
-              </p>
             </div>
           )}
         </div>

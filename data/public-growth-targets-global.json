@@ -100,5 +100,566 @@
       "Singapore professional mobility",
       "English-language demand for decision timing frameworks"
     ]
+  },
+  {
+    "key": "en-burnout-or-bad-fit",
+    "title": "Burnout or bad fit: what should you judge first?",
+    "topic": "How to tell whether your current exhaustion comes from temporary overwork, structural misfit, or a deeper timing problem",
+    "angle": "Write for English-speaking professionals who need a judgment framework, not wellness platitudes. Focus on trade-offs, context, and next action.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking professionals under pressure",
+    "keywords": ["burnout or bad fit", "career misalignment", "decision framework", "work exhaustion", "job timing", "next action"],
+    "audience": "Professionals who feel persistently drained and need help judging whether to rest, adapt, or leave",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Search demand around burnout vs bad-fit judgment",
+      "Professional exhaustion and career realignment discussions"
+    ]
+  },
+  {
+    "key": "zh-hk-family-career-tradeoff",
+    "title": "香港用戶的家庭與事業取捨判斷",
+    "topic": "當家庭責任、移居壓力與事業機會同時出現時，香港用戶最應先判斷哪些代價與時機變量",
+    "angle": "用繁體中文拆解香港用戶常見的家庭責任、伴侶協調與事業節奏衝突，幫助使用者先判斷取捨順序。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港家庭 / 事業兩難用戶",
+    "keywords": ["香港 家庭 事業", "取捨判斷", "移居壓力", "伴侶協調", "時機變量", "人生決策"],
+    "audience": "同時面對家庭責任、移居考慮與職涯轉變，需要更清楚判斷取捨順序的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong family-career tradeoff discussions",
+      "Traditional Chinese demand for structured life-decision content"
+    ]
+  },
+  {
+    "key": "en-after-layoff-what-first",
+    "title": "What to stabilize first after a layoff",
+    "topic": "How to judge the first variables to stabilize after a layoff before making a rushed career move",
+    "angle": "Write for English-speaking professionals who need a calm rebuild sequence after job loss, focused on timing, trade-offs, and decision quality.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "Laid-off professionals / career rebuild readers",
+    "keywords": ["after a layoff", "career rebuild", "what to do first", "job loss decisions", "stabilize first", "timing framework"],
+    "audience": "Professionals trying to regain stability and make better decisions after a layoff or abrupt career disruption",
+    "trafficPotential": 9,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Layoff recovery and rebuild-sequence demand",
+      "English search demand around what to do first after job loss"
+    ]
+  },
+  {
+    "key": "zh-tw-relationship-readiness",
+    "title": "台灣用戶的關係準備度判斷",
+    "topic": "台灣用戶在交往、同居或談婚論嫁之前，應該先看哪些準備度與風險變量",
+    "angle": "用繁體中文與台灣語感拆解關係準備度、節奏與代價，不做宿命式承諾，而是幫助使用者先看清現實條件。",
+    "primaryType": "case",
+    "locale": "zh-TW",
+    "market": "台灣關係決策用戶",
+    "keywords": ["台灣 感情", "關係準備度", "同居", "談婚論嫁", "風險變量", "節奏判斷"],
+    "audience": "正在考慮交往升級、同居或婚姻承諾，想先判斷準備度與風險的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Traditional Chinese demand for relationship-readiness frameworks",
+      "Taiwan relationship pacing and commitment discussions"
+    ]
+  },
+  {
+    "key": "en-relationship-exit-or-stay",
+    "title": "Should you repair the relationship or leave?",
+    "topic": "How to judge whether a draining relationship still has repair potential or is costing too much to continue",
+    "angle": "Write for English-speaking readers who need a decision framework around emotional drain, long-term cost, and relationship timing.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "English-speaking relationship decision readers",
+    "keywords": ["should i stay or leave", "repair or leave relationship", "relationship decision framework", "emotional drain", "long-term compatibility", "timing"],
+    "audience": "Readers trying to decide whether a troubled relationship should be repaired, slowed down, or ended",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stay or leave relationship search demand",
+      "English-language demand for grounded relationship decision frameworks"
+    ]
+  },
+  {
+    "key": "zh-hk-midlife-reset",
+    "title": "香港用戶的中途轉向與人生重整",
+    "topic": "香港用戶在中年轉向、失去舊方向或重新安排人生節奏時，應該先看哪些結構變量",
+    "angle": "以繁體中文處理中途轉向、失序與重整，不做空泛鼓勵，而是幫助使用者先判斷現實底盤與下一步。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港中途轉向 / 人生重整用戶",
+    "keywords": ["香港 中年轉向", "人生重整", "失去方向", "節奏重建", "下一步", "結構變量"],
+    "audience": "正在面對中途轉向、失去舊方向或想重新安排人生節奏的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Hong Kong midlife reset discussions",
+      "Traditional Chinese demand for structured life-rebuild content"
+    ]
+  },
+  {
+    "key": "en-should-you-quit-or-recover",
+    "title": "Should you quit now or recover first?",
+    "topic": "How to judge whether a strong urge to quit comes from temporary burnout, structural misfit, or a real need to leave",
+    "angle": "Write for English-speaking professionals who feel trapped between resignation, exhaustion, and uncertainty. Focus on judgment sequence, not motivational language.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking resignation decision readers",
+    "keywords": ["should i quit now", "recover first", "burnout or leave", "resignation decision", "job misfit", "decision sequence"],
+    "audience": "Professionals trying to decide whether to resign immediately, stabilize first, or reassess the role more carefully",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Quit now or recover first demand",
+      "English-language search demand around burnout versus resignation"
+    ]
+  },
+  {
+    "key": "zh-hk-parent-pressure-life-direction",
+    "title": "香港用戶在父母壓力下的人生方向判斷",
+    "topic": "當父母期待、經濟依賴和個人方向衝突時，香港用戶應該先判斷哪些邊界與代價",
+    "angle": "用繁體中文拆解父母壓力、居住安排、經濟現實和自主邊界，幫助使用者先看清可承受代價。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港家庭壓力 / 人生方向用戶",
+    "keywords": ["香港 父母壓力", "人生方向", "經濟依賴", "自主邊界", "家庭期待", "取捨"],
+    "audience": "長期在父母期待與個人方向之間拉扯，需要先判斷邊界和代價的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong parental pressure and life-direction demand",
+      "Traditional Chinese search demand for boundary-setting under family pressure"
+    ]
+  },
+  {
+    "key": "en-midlife-reset-under-pressure",
+    "title": "How to reset your life in midlife without fantasy",
+    "topic": "What to judge first when you need a midlife reset but still carry financial pressure, family obligations, and unfinished responsibilities",
+    "angle": "Write for English-speaking readers who need a grounded midlife reset framework. Focus on stabilizing sequence, trade-offs, and realistic action.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "English-speaking midlife reset readers",
+    "keywords": ["midlife reset", "life reset without fantasy", "financial pressure", "family obligations", "what to judge first", "next action"],
+    "audience": "Readers in midlife who feel the old direction is no longer viable and need a realistic reset sequence",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Midlife reset under pressure demand",
+      "English-language discussions on realistic life rebuild frameworks"
+    ]
+  },
+  {
+    "key": "en-stay-for-pay-or-leave",
+    "title": "Should you stay for the paycheck or leave before burnout gets worse?",
+    "topic": "How to judge whether income security is worth ongoing psychological and structural damage in a draining role",
+    "angle": "Write for English-speaking professionals trapped by income dependence, stress, and fear of losing optionality. Focus on trade-offs and next-step judgment.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "English-speaking high-pressure job readers",
+    "keywords": ["stay for the paycheck", "leave before burnout", "income security", "draining role", "trade-offs", "career judgment"],
+    "audience": "Professionals who feel trapped in a draining job because the paycheck still feels necessary",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stay for the paycheck or leave demand",
+      "English-language burnout, income dependence, and career tradeoff discussions"
+    ]
+  },
+  {
+    "key": "zh-tw-career-family-burnout-balance",
+    "title": "台灣用戶在工作、家庭與耗竭之間怎麼排順序",
+    "topic": "當工作壓力、家庭責任和長期耗竭同時出現時，台灣用戶應該先判斷哪些事情不能一起硬撐",
+    "angle": "用台灣語感處理高壓工作、家庭承擔與身心耗竭，不給空泛安慰，而是幫助使用者重排次序。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣高壓工作 / 家庭責任用戶",
+    "keywords": ["台灣 工作壓力", "家庭責任", "耗竭", "排順序", "不能一起硬撐", "重整"],
+    "audience": "長期在工作與家庭之間超載，身心耗竭卻還不知道先放掉什麼的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan burnout and family-balance demand",
+      "Traditional Chinese search demand around sequencing under overload"
+    ]
+  },
+  {
+    "key": "en-after-breakup-what-to-rebuild-first",
+    "title": "What should you rebuild first after a breakup?",
+    "topic": "How to judge what to stabilize first after a breakup when your routines, self-trust, and future plans all feel unstable",
+    "angle": "Write for English-speaking readers who need a rebuild sequence after emotional disruption, not generic healing advice.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking breakup recovery readers",
+    "keywords": ["after a breakup", "what to rebuild first", "recovery sequence", "self-trust", "future plans", "stabilize first"],
+    "audience": "Readers whose routines and judgment feel unstable after a breakup and who need a clearer rebuild order",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Breakup recovery sequence demand",
+      "English-language search demand around what to rebuild first after emotional disruption"
+    ]
+  },
+  {
+    "key": "en-return-home-or-stay-abroad",
+    "title": "Should you return home or keep building abroad?",
+    "topic": "How to judge whether going back home is a real strategic move or just a reaction to pressure abroad",
+    "angle": "Write for diaspora and globally mobile readers. Focus on trade-offs around belonging, career runway, family duty, and long-term cost.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "Diaspora return-home decision readers",
+    "keywords": ["return home or stay abroad", "diaspora decision", "career runway", "family duty", "belonging", "long-term cost"],
+    "audience": "Diaspora readers torn between returning home and continuing to build a life abroad",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Return home or stay abroad demand",
+      "Diaspora belonging, family duty, and career tradeoff discussions"
+    ]
+  },
+  {
+    "key": "zh-hk-divorce-with-children-order",
+    "title": "香港用戶帶著孩子考慮離婚時先看什麼",
+    "topic": "當香港用戶在婚姻消耗、孩子安排和經濟壓力之間拉扯時，應該先判斷哪些事情",
+    "angle": "用繁體中文處理離婚、孩子、居住安排與經濟現實，不給情緒出口式答案，而是先拆順序。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港離婚 / 子女安排用戶",
+    "keywords": ["香港 離婚", "帶孩子", "先看什麼", "經濟壓力", "居住安排", "順序"],
+    "audience": "帶著孩子考慮離婚、需要先看清孩子與現實安排代價的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong divorce with children decision demand",
+      "Traditional Chinese search demand around family breakup sequencing"
+    ]
+  },
+  {
+    "key": "en-should-you-rebuild-trust-or-walk-away",
+    "title": "Should you rebuild trust or walk away after betrayal?",
+    "topic": "How to judge whether trust can realistically be rebuilt after betrayal, or whether the long-term cost is already too high",
+    "angle": "Write for English-speaking readers facing betrayal in serious relationships. Focus on sequence, cost, and decision quality rather than emotional slogans.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "English-speaking betrayal decision readers",
+    "keywords": ["rebuild trust or walk away", "after betrayal", "relationship cost", "decision quality", "long-term trust", "stay or leave"],
+    "audience": "Readers trying to decide whether a relationship after betrayal can still be rebuilt realistically",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Rebuild trust or walk away demand",
+      "English-language search demand around betrayal, trust, and relationship exit decisions"
+    ]
+  },
+  {
+    "key": "zh-tw-second-career-after-burnout",
+    "title": "台灣用戶耗竭後重建第二職涯時先看什麼",
+    "topic": "當台灣用戶在長期耗竭後想重建第二職涯，應該先判斷哪些現實條件與時機變量",
+    "angle": "用台灣語感拆解耗竭後重開、收入底盤和長期職涯重建，不寫成勵志故事。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣第二職涯 / 耗竭重建用戶",
+    "keywords": ["台灣 第二職涯", "耗竭重建", "重開", "收入底盤", "時機變量", "現實條件"],
+    "audience": "在耗竭後考慮重建第二職涯，需要先判斷收入與現實條件的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan second career after burnout demand",
+      "Traditional Chinese demand for realistic career rebuild frameworks"
+    ]
+  },
+  {
+    "key": "en-when-loneliness-distorts-decisions",
+    "title": "When is loneliness distorting your decisions?",
+    "topic": "How to tell when isolation, lack of support, or emotional depletion are quietly distorting your choices",
+    "angle": "Write for English-speaking readers who need a grounded framework for judging whether loneliness is changing relationship, career, or relocation decisions.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking loneliness and judgment readers",
+    "keywords": ["loneliness distorting decisions", "isolation", "support", "emotional depletion", "relationship decisions", "career decisions"],
+    "audience": "Readers who suspect isolation and emotional depletion may be biasing major life decisions",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Loneliness and distorted judgment demand",
+      "English-language discussions on isolation, depletion, and decision quality"
+    ]
+  },
+  {
+    "key": "zh-hk-return-home-or-stay-abroad-family",
+    "title": "香港用戶在回流還是留外時先看哪些家庭代價",
+    "topic": "當香港用戶在回流、留外和家庭責任之間反覆猶豫時，應該先判斷哪些代價",
+    "angle": "用繁體中文拆解回流選擇、家庭責任、孩子安排與長期發展，不把它寫成單一情緒選擇。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港回流 / 留外家庭決策用戶",
+    "keywords": ["香港 回流", "留外", "家庭代價", "孩子安排", "長期發展", "先判斷哪些代價"],
+    "audience": "在回流和留外之間拉扯，需要先判斷家庭與發展代價的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong return-flow versus stay-abroad demand",
+      "Traditional Chinese discussions on family duty and relocation tradeoffs"
+    ]
+  },
+  {
+    "key": "en-should-you-quit-the-city-not-just-the-job",
+    "title": "Do you need to quit the job, or the whole city?",
+    "topic": "How to judge whether the real problem is the role itself, or the city, support system, and cost structure around it",
+    "angle": "Write for English-speaking readers who think they need a new job, but may actually be trapped in a city mismatch. Focus on cost, support, and long-term fit.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking city versus job misfit readers",
+    "keywords": ["quit the city or the job", "city mismatch", "support system", "cost structure", "career fit", "relocation decision"],
+    "audience": "Readers trying to tell whether burnout comes from the role itself or from the city and life structure around it",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "City versus job mismatch demand",
+      "English-language search demand around relocation, burnout, and career fit"
+    ]
+  },
+  {
+    "key": "zh-tw-breakup-or-burnout-confusion",
+    "title": "台灣用戶在分手痛苦和人生耗竭之間怎麼分清",
+    "topic": "當台灣用戶分不清自己現在的痛苦主要來自感情結束還是長期耗竭時，應該先怎麼判斷",
+    "angle": "用台灣語感拆解分手痛苦、生活耗竭和判斷混亂，幫助用戶先分清來源，不把所有崩塌都歸到同一件事。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣分手 / 耗竭混雜用戶",
+    "keywords": ["台灣 分手", "耗竭", "怎麼分清", "判斷混亂", "感情結束", "人生耗竭"],
+    "audience": "正處在分手與長期耗竭重疊期，想先分清主要問題來源的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 9,
+    "sourceSignals": [
+      "Taiwan breakup versus burnout confusion demand",
+      "Traditional Chinese discussions on emotional collapse mixed with long-term exhaustion"
+    ]
+  },
+  {
+    "key": "zh-hk-midlife-career-or-caregiving",
+    "title": "香港中年人該先顧職涯還是先顧照護責任",
+    "topic": "當香港中年人同時面臨職涯下滑、父母照護和家庭經濟壓力時，應該先排哪個順序",
+    "angle": "用繁體中文拆解中年職涯、照護責任和現實資源分配，不給抽象平衡建議，而是先看不可逆代價。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港中年職涯 / 照護責任用戶",
+    "keywords": ["香港 中年", "職涯", "照護責任", "先顧哪個", "家庭經濟壓力", "不可逆代價"],
+    "audience": "同時被職涯壓力與照護責任夾住、需要先排優先級的香港中年用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong midlife career versus caregiving demand",
+      "Traditional Chinese demand around caregiving burden and career sequencing"
+    ]
+  },
+  {
+    "key": "en-should-you-move-back-for-family-or-protect-your-runway",
+    "title": "Should you move back for family, or protect your runway?",
+    "topic": "How to judge whether returning for family duty is timely responsibility or a move that will collapse your long-term runway",
+    "angle": "Write for English-speaking diaspora readers balancing family pressure, personal runway, and the cost of interrupting a fragile rebuild.",
+    "primaryType": "case",
+    "locale": "en-US",
+    "market": "English-speaking diaspora family-duty readers",
+    "keywords": ["move back for family", "protect your runway", "diaspora decision", "family duty", "career interruption", "long-term cost"],
+    "audience": "Diaspora readers under family pressure who need to judge whether moving back is duty, panic, or a damaging sacrifice",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Move back for family versus protect runway demand",
+      "English-language diaspora discussions on family duty and interrupted career rebuilds"
+    ]
+  },
+  {
+    "key": "zh-tw-stay-in-safe-job-or-start-second-path",
+    "title": "台灣用戶該留在安全工作還是開始第二條路",
+    "topic": "當台灣用戶在穩定收入和第二條職涯路之間反覆猶豫時，應該先判斷哪些現實條件",
+    "angle": "用台灣語感拆解安全工作、第二收入來源和重開風險，不把轉向講成熱血選擇。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣安全工作 / 第二職涯用戶",
+    "keywords": ["台灣 安全工作", "第二條路", "第二職涯", "穩定收入", "重開風險", "先判斷哪些條件"],
+    "audience": "想從安全工作轉出、但又擔心失去收入底盤的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan safe job versus second path demand",
+      "Traditional Chinese demand around second career experimentation and stability tradeoffs"
+    ]
+  },
+  {
+    "key": "zh-hk-should-you-stay-married-for-structure-or-leave-for-breathing-room",
+    "title": "香港用戶該為了結構留下婚姻，還是為了喘息離開",
+    "topic": "當香港用戶在婚姻結構、孩子現實和個人耗竭之間反覆拉扯時，應該先判斷什麼",
+    "angle": "用繁體中文處理婚姻結構感、安全感和喘息空間，不給情緒站隊，而是先看現實順序。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港婚姻耗竭 / 孩子結構用戶",
+    "keywords": ["香港 婚姻", "留下還是離開", "孩子現實", "耗竭", "喘息空間", "先判斷什麼"],
+    "audience": "在婚姻結構與個人耗竭之間撕扯，想先看清現實代價與排序的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong marriage structure versus breathing room demand",
+      "Traditional Chinese discussions on marriage exhaustion, children, and staying for stability"
+    ]
+  },
+  {
+    "key": "en-should-you-keep-supporting-family-if-your-own-life-is-stalling",
+    "title": "Should you keep supporting family if your own life is stalling?",
+    "topic": "How to judge when family support is still meaningful duty, and when it is quietly stalling your own rebuild",
+    "angle": "Write for English-speaking diaspora readers carrying cross-border duty. Focus on cost, timing, and what support becomes destructive when it has no structure.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking family support burden readers",
+    "keywords": ["supporting family", "life is stalling", "diaspora duty", "rebuild cost", "family burden", "decision timing"],
+    "audience": "Readers supporting family across borders who need to judge whether current sacrifice still has structure or has become self-erasure",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Support family while your own life stalls demand",
+      "English-language demand around cross-border duty, burnout, and delayed self-rebuild"
+    ]
+  },
+  {
+    "key": "zh-tw-should-you-freeze-plans-because-parents-disagree",
+    "title": "台灣用戶該因為父母反對就先凍結人生計畫嗎",
+    "topic": "當台灣用戶的人生選擇遭遇父母強烈反對時，應該先判斷哪些結構性代價",
+    "angle": "用台灣語感拆解父母反對、內疚、現實依賴和人生時機，不把順從寫成成熟。",
+    "primaryType": "case",
+    "locale": "zh-TW",
+    "market": "台灣父母反對 / 人生計畫用戶",
+    "keywords": ["台灣 父母反對", "凍結人生計畫", "內疚", "現實依賴", "人生時機", "先判斷哪些代價"],
+    "audience": "因父母反對而遲遲不敢推進自己人生計畫、想先看清代價與時機的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan parent opposition versus life plan demand",
+      "Traditional Chinese demand around parental disapproval, guilt, and stalled adulthood"
+    ]
+  },
+  {
+    "key": "zh-hk-should-you-stay-in-the-role-for-income-or-exit-before-you-break",
+    "title": "香港用戶該為了收入留在這份工作，還是趁還沒崩前離開",
+    "topic": "當香港用戶在收入安全、職場消耗和身心下滑之間拉扯時，應該先看什麼",
+    "angle": "用繁體中文拆解收入安全感、工作崩塌成本和退出時機，不把忍耐等同成熟。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港收入安全 / 職場耗損用戶",
+    "keywords": ["香港 工作", "為了收入留下", "還沒崩前離開", "職場消耗", "退出時機", "先看什麼"],
+    "audience": "在收入與身心消耗之間被夾住，想判斷何時該留何時該退的香港用戶",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong income versus burnout exit timing demand",
+      "Traditional Chinese discussions on job endurance, health decline, and financial pressure"
+    ]
+  },
+  {
+    "key": "en-should-you-rebuild-finances-before-making-a-meaningful-change",
+    "title": "Should you rebuild your finances before making a meaningful change?",
+    "topic": "How to judge when a meaningful life change needs to wait for stronger financial footing, and when waiting is just fear dressed as prudence",
+    "angle": "Write for English-speaking readers stuck between purpose and financial fragility. Focus on runway, reversibility, and timing quality.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking purpose versus runway readers",
+    "keywords": ["rebuild finances first", "meaningful change", "runway", "prudence or fear", "timing quality", "life change"],
+    "audience": "Readers torn between making a meaningful move now and stabilizing money first before changing direction",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Finances first versus meaningful change demand",
+      "English-language demand around runway, purpose, and fear-based delay"
+    ]
+  },
+  {
+    "key": "zh-tw-should-you-keep-being-the-good-child-at-your-own-expense",
+    "title": "台灣用戶該繼續當乖孩子，還是先停止拿自己去交換和平",
+    "topic": "當台灣用戶長期用順從和自我壓抑維持家庭和平時，應該先判斷什麼",
+    "angle": "用台灣語感拆解乖孩子角色、家庭和平和自我消耗，不把壓抑順從寫成熟。",
+    "primaryType": "knowledge",
+    "locale": "zh-TW",
+    "market": "台灣乖孩子 / 家庭和平用戶",
+    "keywords": ["台灣 乖孩子", "交換和平", "順從", "自我壓抑", "家庭和平", "先判斷什麼"],
+    "audience": "長期用討好和順從維持家庭和平，卻越來越失去自己方向的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan good child role and self-sacrifice demand",
+      "Traditional Chinese demand around pleasing parents, suppression, and adult identity loss"
+    ]
+  },
+  {
+    "key": "zh-hk-should-you-delay-moving-because-the-family-is-not-ready",
+    "title": "香港用戶該因為家裡還沒準備好就一直延後搬走嗎",
+    "topic": "當香港用戶明知自己該搬、該轉、該脫離，但家庭始終沒有準備好時，應該先判斷什麼",
+    "angle": "用繁體中文拆解家庭拖延、責任綁定和人生時機，不把無限等待寫成成熟。",
+    "primaryType": "case",
+    "locale": "zh-HK",
+    "market": "香港搬離家庭 / 時機拖延用戶",
+    "keywords": ["香港 搬走", "家裡還沒準備好", "一直延後", "家庭責任", "人生時機", "先判斷什麼"],
+    "audience": "因家庭始終沒準備好而反覆延後自己人生轉向和搬離計畫的香港用戶",
+    "trafficPotential": 9,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong delay moving because family is not ready demand",
+      "Traditional Chinese discussions on leaving home, guilt, and delayed adulthood"
+    ]
+  },
+  {
+    "key": "en-should-you-stay-loyal-to-the-plan-or-admit-the-plan-is-dead",
+    "title": "Should you stay loyal to the plan, or admit the plan is dead?",
+    "topic": "How to judge when persistence is still strategic, and when you are only staying loyal to an outdated plan because it once made sense",
+    "angle": "Write for English-speaking readers stuck in sunk-cost plans. Focus on timing, reversibility, and the cost of dead strategy.",
+    "primaryType": "knowledge",
+    "locale": "en-US",
+    "market": "English-speaking sunk-cost plan readers",
+    "keywords": ["stay loyal to the plan", "plan is dead", "sunk cost", "dead strategy", "reversibility", "timing"],
+    "audience": "Readers clinging to old plans because they once made sense, but now suspect the strategy itself has expired",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Stay loyal to the plan or admit it is dead demand",
+      "English-language demand around sunk costs, stale strategy, and life pivots"
+    ]
+  },
+  {
+    "key": "zh-tw-should-you-keep-translating-yourself-to-family-or-build-distance",
+    "title": "台灣用戶該繼續向家人解釋自己，還是先拉開距離",
+    "topic": "當台灣用戶長期想讓家人理解自己，卻越解釋越失效時，應該先判斷什麼",
+    "angle": "用台灣語感拆解理解需求、家庭失效溝通和距離成本，不把一直解釋寫成熟。",
+    "primaryType": "case",
+    "locale": "zh-TW",
+    "market": "台灣家庭失效溝通 / 距離用戶",
+    "keywords": ["台灣 家人不理解", "繼續解釋自己", "拉開距離", "失效溝通", "距離成本", "先判斷什麼"],
+    "audience": "長期想讓家人理解自己、卻越說越痛苦，正在判斷該繼續解釋還是拉開距離的台灣用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Taiwan family invalidation versus distance demand",
+      "Traditional Chinese demand around failed explanation, parental misunderstanding, and boundaries"
+    ]
+  },
+  {
+    "key": "zh-hk-should-you-keep-paying-the-price-for-being-reliable",
+    "title": "香港用戶該繼續為了可靠而一直付出代價嗎",
+    "topic": "當香港用戶因為總是可靠、總是能扛，而被默認承擔更多責任時，應該先看什麼",
+    "angle": "用繁體中文拆解可靠形象、責任慣性和自我消耗，不把一直扛寫成真正的成熟。",
+    "primaryType": "knowledge",
+    "locale": "zh-HK",
+    "market": "香港可靠角色 / 責任慣性用戶",
+    "keywords": ["香港 可靠", "一直付出代價", "承擔更多責任", "責任慣性", "自我消耗", "先看什麼"],
+    "audience": "總因為可靠而被默認多承擔責任，開始懷疑自己是不是一直在拿人生補位的香港用戶",
+    "trafficPotential": 8,
+    "conversionPotential": 10,
+    "sourceSignals": [
+      "Hong Kong reliable role and hidden cost demand",
+      "Traditional Chinese discussions on over-responsibility, burnout, and being taken for granted"
+    ]
   }
 ]

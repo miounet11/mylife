@@ -1,18 +1,24 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { emailDeliveryJobOperations } from '@/lib/database';
+import {
+  getEmailRetryBaseDelayMs,
+  getEmailRetryBatchSize,
+  getEmailRetryMaxAttempts,
+} from '@/lib/env';
 import { deliverMailWithRetry } from '@/lib/email';
 import {
   sendReportReadyEmail,
   sendPremiumServiceAdminNotificationEmail,
   sendPremiumServiceRequestReceivedEmail,
   sendPremiumServiceStatusUpdateEmail,
+  sendUserLifecycleEmail,
 } from '@/lib/email';
 import type { EmailDeliveryJobRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
-const DEFAULT_MAX_ATTEMPTS = Math.max(2, Number(process.env.EMAIL_RETRY_MAX_ATTEMPTS || 4));
-const DEFAULT_BASE_DELAY_MS = Math.max(60_000, Number(process.env.EMAIL_RETRY_BASE_DELAY_MS || 1000 * 60 * 5));
-const DEFAULT_BATCH_SIZE = Math.max(1, Number(process.env.EMAIL_RETRY_BATCH_SIZE || 5));
+const DEFAULT_MAX_ATTEMPTS = getEmailRetryMaxAttempts();
+const DEFAULT_BASE_DELAY_MS = getEmailRetryBaseDelayMs();
+const DEFAULT_BATCH_SIZE = getEmailRetryBatchSize();
 
 type JobKind = EmailDeliveryJobRecord['kind'];
 
@@ -66,6 +72,13 @@ function getJobPage(kind: JobKind, payload: Record<string, unknown>) {
     const reportId = typeof payload.reportId === 'string' ? payload.reportId : '';
     return reportId ? `/result/${reportId}` : '/result';
   }
+  if (kind === 'user_lifecycle') {
+    const ctaHref = typeof payload.primaryCtaHref === 'string' ? payload.primaryCtaHref : '';
+    if (ctaHref.startsWith('http')) {
+      return '/updates';
+    }
+    return ctaHref || '/updates';
+  }
   if (kind === 'premium_service_status_update' || kind === 'premium_service_admin_alert') {
     return '/admin/premium-services';
   }
@@ -117,6 +130,25 @@ async function executeJob(job: EmailDeliveryJobRecord) {
           ? `${payload.deliveryTier}` as 'basic' | 'enhanced' | 'expert'
           : undefined,
         queuedUpgrade: payload.queuedUpgrade === true,
+      }));
+    case 'user_lifecycle':
+      return deliverMailWithRetry(() => sendUserLifecycleEmail({
+        email: `${payload.email || job.to[0] || ''}`,
+        name: `${payload.name || '用户'}`,
+        stageKey: `${payload.stageKey || 'lifecycle'}`,
+        stageLabel: `${payload.stageLabel || '后续提醒'}`,
+        subject: `${payload.subject || '人生K线提醒'}`,
+        previewText: `${payload.previewText || ''}`,
+        intro: `${payload.intro || '有一个后续动作值得继续完成'}`,
+        detail: `${payload.detail || ''}`,
+        primaryCtaLabel: `${payload.primaryCtaLabel || '继续查看'}`,
+        primaryCtaHref: `${payload.primaryCtaHref || '/updates'}`,
+        secondaryCtaLabel: typeof payload.secondaryCtaLabel === 'string' ? payload.secondaryCtaLabel : undefined,
+        secondaryCtaHref: typeof payload.secondaryCtaHref === 'string' ? payload.secondaryCtaHref : undefined,
+        bullets: Array.isArray(payload.bullets)
+          ? payload.bullets.filter((item): item is string => typeof item === 'string')
+          : [],
+        reportId: typeof payload.reportId === 'string' ? payload.reportId : undefined,
       }));
     default:
       return {

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowRight, CalendarClock, Compass, ScrollText, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution } from '@/lib/client-attribution';
+import { buildChatHref } from '@/lib/chat-entry';
 import {
   getPremiumServiceLabel,
   type PremiumServiceKey,
@@ -130,16 +131,12 @@ export default function ReportPremiumServices({
         <div className="max-w-3xl">
           <div className="section-label">付费深度增强</div>
           <h2 className="mt-4 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-            如果你不是只想看报告，
-            <span className="font-serif text-[color:var(--accent-strong)]">而是想把一件事看透，这里进入专项推演。</span>
+            深度专项服务
           </h2>
-          <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
-            基础报告负责看结构和阶段，付费专项负责把具体事件拆成判断、时机、动作和复盘。这样用户看到的不再是抽象概念，而是能直接拿去用的决策层。
-          </p>
         </div>
 
-        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)] lg:max-w-sm">
-          推荐承接方式：先锁定一件具体事件，再选择事件推演、断事或卦象增强。这样更容易形成高客单、高复购的服务闭环。
+        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4 text-sm text-[color:var(--ink)] lg:max-w-sm">
+          先锁定一件具体事件
         </div>
       </div>
 
@@ -163,7 +160,6 @@ export default function ReportPremiumServices({
                 </span>
               </div>
 
-              <p className="mt-4 text-xs leading-6 text-[color:var(--muted)]">{offer.description}</p>
               <div className="mt-4 rounded-[1.4rem] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                 {offer.featuredSignal}
               </div>
@@ -194,7 +190,7 @@ export default function ReportPremiumServices({
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href={canManage ? `/chat?reportId=${encodeURIComponent(reportId)}&intent=${offer.key}` : '/analyze'}
+                  href={mapPrimaryHref(offer, reportId, canManage)}
                   onClick={() => {
                     void trackClientEvent({
                       eventName: 'result_cta_clicked',
@@ -207,7 +203,7 @@ export default function ReportPremiumServices({
                       },
                     });
                   }}
-                  className="inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
+                  className="action-secondary inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
                 >
                   {canManage ? offer.primaryCtaLabel : '生成我的专属报告'}
                   <ArrowRight className="h-4 w-4" />
@@ -252,9 +248,7 @@ export default function ReportPremiumServices({
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="soft-card rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              先把你最想解决的一件事情写清楚。后续无论继续深问，还是进入人工跟进，都会以这份需求单为准。
-            </div>
+            <div className="intro-copy mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {offers.map((offer) => (
@@ -323,9 +317,6 @@ export default function ReportPremiumServices({
 
           <div className="soft-card rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">最近提交的专项需求</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              你提交过的专项需求会留在这里，方便后续继续跟进、补充问题或确认当前进度。
-            </div>
 
             <div className="mt-4 grid gap-3">
               {requests.length > 0 ? requests.map((item) => (
@@ -344,9 +335,7 @@ export default function ReportPremiumServices({
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  还没有提交过专项需求。先从最想解决的一件事情开始，系统会把你的需求单和这份报告关联起来。
-                </div>
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--muted)]">暂无专项需求</div>
               )}
             </div>
           </div>
@@ -369,8 +358,25 @@ function mapSecondaryHref(key: PremiumServiceOffer['key'], reportId: string, can
     case 'meihua-enhancement':
       return '#subscription';
     default:
-      return `/chat?reportId=${encodeURIComponent(reportId)}`;
+      return buildChatHref({
+        reportId,
+        question: '请围绕这份报告继续做结构追问，重点帮我判断：当前这件事更该推进、观察还是收手，前置条件是什么？',
+        source: 'report_premium_services_secondary',
+      });
   }
+}
+
+function mapPrimaryHref(offer: PremiumServiceOffer, reportId: string, canManage: boolean) {
+  if (!canManage) {
+    return '/analyze';
+  }
+
+  return buildChatHref({
+    reportId,
+    intent: offer.key,
+    question: `请围绕我这份报告继续评估“${offer.title}”这个专项方向：现在是否适合启动，最该先补什么条件，推进过程中最需要防什么风险？`,
+    source: 'report_premium_services_primary',
+  });
 }
 
 function mapRequestStatusLabel(status: PremiumServiceRequestRecord['status']) {
@@ -408,15 +414,15 @@ function mapRequestStatusClass(status: PremiumServiceRequestRecord['status']) {
 }
 
 function formatRequestTime(value: string) {
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})[T\s](\d{2}):(\d{2})/);
+  if (matched) {
+    return `${matched[2]}-${matched[3]} ${matched[4]}:${matched[5]}`;
+  }
+
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     return value;
   }
 
-  return date.toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }

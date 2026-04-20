@@ -22,21 +22,25 @@ export default function ToolEditorialPanel({
         </span>
       </div>
 
+      <div className="intro-copy mt-4 max-w-3xl">
+        这里给出为什么这个工具值得优先看，以及它最适合解决哪类核心判断问题。
+      </div>
+
       <div className="mt-6 grid gap-4 xl:grid-cols-3">
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="text-sm font-semibold text-[color:var(--ink)]">这个工具为什么值得单独做</div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{tool.signaturePromise}</div>
+          <div className="text-sm font-semibold text-[color:var(--ink)]">工具亮点</div>
+          <div className="mt-3 text-sm text-[color:var(--ink)]">{tool.signaturePromise}</div>
         </div>
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
           <div className="text-sm font-semibold text-[color:var(--ink)]">核心决策视角</div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{tool.decisionLens}</div>
+          <div className="mt-3 text-sm text-[color:var(--ink)]">{tool.decisionLens}</div>
         </div>
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             <Sparkles className="h-4 w-4" />
-            为什么现在做最值钱
+            当前时机
           </div>
-          <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{tool.premiumWhyNow}</div>
+          <div className="mt-3 text-sm text-[color:var(--ink)]">{tool.premiumWhyNow}</div>
         </div>
       </div>
     </section>

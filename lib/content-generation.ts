@@ -2,6 +2,14 @@ import { callJsonLLM } from '@/lib/agentic-report/llm-client';
 import { getEntityTypeLabel, type EntityInsightType } from '@/lib/content';
 import type { ContentSection } from '@/lib/content';
 import type { ContentStatus, ManagedContentType } from '@/lib/content-store';
+import {
+  getContentGenerationMaxTokens,
+  getContentGenerationModel,
+  getContentGenerationModelFallbackChainRaw,
+  getContentGenerationTimeoutMs,
+  isContentGenerationSegmentedEnabled,
+  isContentGenerationSocraticEnabled,
+} from '@/lib/env';
 
 export type ContentGenerationMode = 'single' | 'cluster';
 export type ContentGenerationLocale = 'zh-CN' | 'zh-TW' | 'zh-HK' | 'zh-SG' | 'zh-MY' | 'zh-US' | 'en-US' | 'en-GB' | 'en-SG';
@@ -105,28 +113,44 @@ function parseModelChain(value: string | undefined, fallback: string[]) {
 }
 
 export function resolveContentGenerationLlmConfig() {
-  const model = `${process.env.CONTENT_GENERATION_MODEL || ''}`.trim() || 'auto';
+  const model = getContentGenerationModel();
   const modelChain = parseModelChain(
-    process.env.CONTENT_GENERATION_MODEL_FALLBACK_CHAIN,
+    getContentGenerationModelFallbackChainRaw(),
     [model]
   );
 
   return {
     model,
     modelChain: modelChain.includes(model) ? modelChain : [model, ...modelChain],
-    maxTokens: Math.max(1200, Number(process.env.CONTENT_GENERATION_MAX_TOKENS || 2200)),
+    maxTokens: getContentGenerationMaxTokens(),
     disableHealthReorder: true,
   };
 }
 
 function isSocraticPlanningEnabled() {
-  const value = `${process.env.CONTENT_GENERATION_SOCRATIC_ENABLED || '1'}`.trim().toLowerCase();
-  return !['0', 'false', 'off', 'no'].includes(value);
+  return isContentGenerationSocraticEnabled();
 }
 
 function isSegmentedContentGenerationEnabled() {
-  const value = `${process.env.CONTENT_GENERATION_SEGMENTED_ENABLED || '1'}`.trim().toLowerCase();
-  return !['0', 'false', 'off', 'no'].includes(value);
+  return isContentGenerationSegmentedEnabled();
+}
+
+export function isAutomatedGrowthPlatform(platform?: string) {
+  const value = `${platform || ''}`.trim().toLowerCase();
+  return value === 'public-growth'
+    || value === 'public-growth-wave2'
+    || value === 'public-growth-global';
+}
+
+export function getEffectiveContentGenerationTimeoutMs(input?: ContentGenerationInput) {
+  const baseTimeoutMs = getContentGenerationTimeoutMs();
+
+  if (!isAutomatedGrowthPlatform(input?.platform)) {
+    return baseTimeoutMs;
+  }
+
+  // Auto-growth rounds should finish quickly and fall back cleanly when upstream LLMs are slow.
+  return Math.min(baseTimeoutMs, 8_000);
 }
 
 function isTraditionalChineseLocale(locale?: ContentGenerationLocale) {
@@ -324,11 +348,35 @@ function defaultCategory(contentType: ManagedContentType, subtype: EntityInsight
   return getEntityTypeLabel(subtype || 'industry');
 }
 
+function padParagraphForPublicationDepth(paragraph: string, input?: ContentGenerationInput) {
+  const text = `${paragraph || ''}`.trim();
+  if (text.length >= 36) {
+    return text;
+  }
+
+  if (isEnglishLocale(input?.locale)) {
+    return `${text} This is exactly why the reader still needs a fuller decision frame before acting.`;
+  }
+
+  if (isTraditionalChineseLocale(input?.locale)) {
+    return `${text} 這也是為什麼讀者仍需要回到更完整的判斷框架再做決定。`;
+  }
+
+  return `${text} 这也是为什么读者仍需要回到更完整的判断框架再做决定。`;
+}
+
+function normalizeFallbackSectionsDepth(sections: ContentSection[], input?: ContentGenerationInput) {
+  return sections.map((section) => ({
+    ...section,
+    paragraphs: (section.paragraphs || []).map((paragraph) => padParagraphForPublicationDepth(paragraph, input)),
+  }));
+}
+
 function buildFallbackSections(topic: string, contentType: ManagedContentType, input?: ContentGenerationInput): ContentSection[] {
   const { traditional, english, marketLabel } = buildLocalizedLabels(input);
 
   if (english && contentType === 'case') {
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: 'Why this pressure keeps intensifying',
         paragraphs: [
@@ -357,11 +405,11 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           'That is where a general framework becomes useful instead of decorative: readers move from broad recognition to a specific decision path, with clearer trade-offs, clearer timing, and fewer avoidable mistakes.',
         ],
       },
-    ];
+    ], input);
   }
 
   if (english && contentType === 'insight') {
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: 'What this external shift is really changing',
         paragraphs: [
@@ -390,11 +438,11 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           'Once readers can name the variables they need to check in their own case, they are far more likely to move from passive reading into structured personal analysis.',
         ],
       },
-    ];
+    ], input);
   }
 
   if (english) {
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: 'What problem sits underneath the trend',
         paragraphs: [
@@ -423,12 +471,12 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           'That is how a knowledge page becomes conversion-ready without turning into hard sell copy: it gives enough clarity for readers to know why a personal reading would answer a different level of question.',
         ],
       },
-    ];
+    ], input);
   }
 
   if (contentType === 'case') {
     if (traditional) {
-      return [
+      return normalizeFallbackSectionsDepth([
         {
           title: '這類焦慮為什麼會持續放大',
           paragraphs: [
@@ -457,10 +505,10 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
             '更務實的做法，是先用案例確定要核對的變量，再把個人資料帶入完整分析，確認哪些風險值得提前處理，哪些變化其實可以順勢而為。',
           ],
         },
-      ];
+      ], input);
     }
 
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: '这类焦虑为什么会持续放大',
         paragraphs: [
@@ -489,12 +537,12 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           '更务实的做法，是先用案例确定要核对的变量，再把个人资料带入完整分析，确认哪些风险值得提前处理，哪些变化其实可以顺势而为。',
         ],
       },
-    ];
+    ], input);
   }
 
   if (contentType === 'insight') {
     if (traditional) {
-      return [
+      return normalizeFallbackSectionsDepth([
         {
           title: '這個外部變化真正影響了什麼',
           paragraphs: [
@@ -523,10 +571,10 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
             '當外部趨勢被翻譯成可核對的個人問題後，後續無論是自我規劃還是進一步分析，都會更有依據。',
           ],
         },
-      ];
+      ], input);
     }
 
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: '这个外部变化真正影响了什么',
         paragraphs: [
@@ -555,11 +603,11 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           '当外部趋势被翻译成可核对的个人问题后，后续无论是自我规划还是进一步分析，都会更有依据。',
         ],
       },
-    ];
+    ], input);
   }
 
   if (traditional) {
-    return [
+    return normalizeFallbackSectionsDepth([
       {
         title: '這個問題為什麼在此刻值得看',
         paragraphs: [
@@ -574,7 +622,7 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           '只有把命理語言翻譯成現實決策語言，內容才真正有用。',
         ],
       },
-        {
+      {
         title: '建立判斷框架時要抓住哪些變量',
         paragraphs: [
           '真正有用的框架，至少要同時看結構、時間條件與現實限制，否則再多概念也很難轉成穩定判斷。',
@@ -588,10 +636,10 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
           '更有效的學習方式，是先用公共內容建立框架，再用個人資料驗證哪些判斷真正適用於自己。',
         ],
       },
-    ];
+    ], input);
   }
 
-  return [
+  return normalizeFallbackSectionsDepth([
     {
       title: '热点背后的真实问题',
       paragraphs: [
@@ -620,7 +668,7 @@ function buildFallbackSections(topic: string, contentType: ManagedContentType, i
         '更有效的学习方式，是先用公共内容建立框架，再用个人资料验证哪些判断真正适用于自己。',
       ],
     },
-  ];
+  ], input);
 }
 
 function buildFallbackExcerpt(topic: string, contentType: ManagedContentType, input?: ContentGenerationInput) {
@@ -1234,10 +1282,13 @@ async function generateDraftForType(
   contentType: ManagedContentType,
   subtype: EntityInsightType | null
 ) {
-  const timeoutMs = Math.max(18_000, Number(process.env.CONTENT_GENERATION_TIMEOUT_MS || 32_000));
+  const timeoutMs = getEffectiveContentGenerationTimeoutMs(input);
   const llmConfig = resolveContentGenerationLlmConfig();
+  const useFastDraftPath = isAutomatedGrowthPlatform(input.platform);
+  const planningEnabled = isSocraticPlanningEnabled() && !useFastDraftPath;
+  const segmentedEnabled = isSegmentedContentGenerationEnabled() && !useFastDraftPath;
   const reasoningPrompt = buildReasoningPlanPrompt(input, contentType, subtype);
-  const reasoningPlan = isSocraticPlanningEnabled()
+  const reasoningPlan = planningEnabled
     ? normalizeReasoningPlan(
         await callJsonLLM<RawContentReasoningPlan>({
           system: reasoningPrompt.system,
@@ -1256,7 +1307,7 @@ async function generateDraftForType(
         subtype
       )
     : null;
-  const result = reasoningPlan && isSegmentedContentGenerationEnabled()
+  const result = reasoningPlan && segmentedEnabled
     ? await generateSegmentedDraft(
         input,
         contentType,

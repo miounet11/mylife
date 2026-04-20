@@ -39,6 +39,38 @@ export function validateBirthDate(dateStr: string): ValidationError | null {
   return null;
 }
 
+export function validateEventDate(dateStr: string): ValidationError | null {
+  if (!dateStr || typeof dateStr !== 'string') {
+    return { field: 'date', message: '事件日期不能为空' };
+  }
+
+  const parts = dateStr.split('-').map(Number);
+  if (parts.length !== 3) {
+    return { field: 'date', message: '日期格式应为 YYYY-MM-DD' };
+  }
+
+  const [year, month, day] = parts;
+  if (isNaN(year) || isNaN(month) || isNaN(day)) {
+    return { field: 'date', message: '日期包含无效数字' };
+  }
+  if (year < 1900 || year > 2200) {
+    return { field: 'date', message: '事件年份应在 1900 到 2200 之间' };
+  }
+  if (month < 1 || month > 12) {
+    return { field: 'date', message: '月份应在 1-12 之间' };
+  }
+  if (day < 1 || day > 31) {
+    return { field: 'date', message: '日期应在 1-31 之间' };
+  }
+
+  const date = new Date(year, month - 1, day);
+  if (date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return { field: 'date', message: '日期不存在（如2月30日）' };
+  }
+
+  return null;
+}
+
 // 验证出生时间
 export function validateBirthTime(timeStr: string): ValidationError | null {
   if (!timeStr || typeof timeStr !== 'string') {
@@ -193,8 +225,8 @@ export function validateEventRequest(data: Record<string, unknown>): ValidationR
   if (!data.date || typeof data.date !== 'string') {
     errors.push({ field: 'date', message: '事件日期不能为空' });
   } else {
-    const dateErr = validateBirthDate(data.date as string);
-    if (dateErr) errors.push({ ...dateErr, field: 'date' });
+    const dateErr = validateEventDate(data.date as string);
+    if (dateErr) errors.push(dateErr);
   }
 
   const impactErr = validateImpact(data.impact as string);

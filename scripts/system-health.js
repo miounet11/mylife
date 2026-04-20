@@ -1,10 +1,28 @@
-const runUrl = process.env.SYSTEM_HEALTH_RUN_URL || 'http://127.0.0.1:3000/api/admin/system/health';
-const token = process.env.SYSTEM_HEALTH_TOKEN
-  || process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN
-  || process.env.CONTENT_RADAR_CRON_TOKEN
-  || process.env.CONTENT_SCHEDULER_CRON_TOKEN
+const { loadEnvConfig } = require('@next/env');
+
+loadEnvConfig(process.cwd());
+
+function loadPm2FallbackEnv() {
+  try {
+    const ecosystem = require('../ecosystem.config.js');
+    const apps = Array.isArray(ecosystem?.apps) ? ecosystem.apps : [];
+    const primaryApp = apps.find((app) => app?.name === 'life-kline-next') || apps[0];
+    return primaryApp?.env && typeof primaryApp.env === 'object' ? primaryApp.env : {};
+  } catch {
+    return {};
+  }
+}
+
+const pm2Env = loadPm2FallbackEnv();
+const readEnv = (name, fallback = '') => process.env[name] || pm2Env[name] || fallback;
+
+const runUrl = readEnv('SYSTEM_HEALTH_RUN_URL', 'http://127.0.0.1:3000/api/admin/system/health');
+const token = readEnv('SYSTEM_HEALTH_TOKEN')
+  || readEnv('KNOWLEDGE_ACQUISITION_CRON_TOKEN')
+  || readEnv('CONTENT_RADAR_CRON_TOKEN')
+  || readEnv('CONTENT_SCHEDULER_CRON_TOKEN')
   || '';
-const requestTimeoutMs = Math.max(5_000, Number(process.env.SYSTEM_HEALTH_REQUEST_TIMEOUT_MS || 15_000));
+const requestTimeoutMs = Math.max(5_000, Number(readEnv('SYSTEM_HEALTH_REQUEST_TIMEOUT_MS', 15_000)));
 
 async function fetchWithTimeout(url, options) {
   const controller = new AbortController();

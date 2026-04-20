@@ -3,6 +3,7 @@ import {
   fortuneOperations,
   reportMonthlyDigestRunOperations,
   reportUpgradeJobOperations,
+  userLifecycleEmailRunOperations,
 } from '@/lib/database';
 
 export type UpdatesSummary = {
@@ -32,6 +33,14 @@ export type UpdatesSummary = {
     reportId?: string | null;
     createdAt?: string | null;
   } | null;
+  recentLifecycleEmails?: Array<{
+    id: string;
+    stageKey?: string | null;
+    status?: string | null;
+    reason?: string | null;
+    reportId?: string | null;
+    createdAt?: string | null;
+  }>;
   focusReport?: {
     id: string;
     name?: string | null;
@@ -67,6 +76,11 @@ export function buildUpdatesSummary({
   const reports = fortuneOperations.getByUserId(userId);
   const upgradeJobs = reportUpgradeJobOperations.listByUserId(userId, 20);
   const digestRuns = reportMonthlyDigestRunOperations.listByUserOrEmail({
+    userId,
+    email: normalizedEmail,
+    limit: 6,
+  });
+  const lifecycleRuns = userLifecycleEmailRunOperations.listRecentByUserOrEmail({
     userId,
     email: normalizedEmail,
     limit: 6,
@@ -116,6 +130,14 @@ export function buildUpdatesSummary({
           createdAt: latestDigest.createdAt || null,
         }
       : null,
+    recentLifecycleEmails: lifecycleRuns.map((item) => ({
+      id: item.id,
+      stageKey: item.stageKey,
+      status: item.status,
+      reason: item.reason || null,
+      reportId: item.reportId || null,
+      createdAt: item.createdAt || null,
+    })),
     focusReport: focusReport
       ? {
           id: focusReport.id,

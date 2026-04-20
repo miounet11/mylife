@@ -134,8 +134,10 @@ describe('report pipeline analyze agent keys', () => {
     expect(narrative.summary).toContain('甲午大运');
     expect(narrative.opening.length).toBeGreaterThan(0);
     expect(narrative.explanation).toContain('世界易判断：');
+    expect(narrative.explanation).toContain('已发生的印证：');
     expect(narrative.explanation).toContain('主判断：');
     expect(narrative.explanation).toContain('判断依据：');
+    expect(narrative.explanation).toContain('接下来会怎么走：');
     expect(narrative.explanation).toContain('现在先做：');
     expect(narrative.explanation).toContain('风险提醒：');
     expect(narrative.explanation).toContain('先收敛战线，只推进一个最关键项目');
@@ -351,6 +353,15 @@ describe('report pipeline analyze agent keys', () => {
 
     expect(finalized.analysis.summary).toContain('你不是乱');
     expect(finalized.analysis.explanation).toContain('世界易判断：');
+    expect(finalized.analysis.explanation).toContain('已发生的印证：');
+    expect(finalized.analysis.explanation).toContain('接下来会怎么走：');
+    expect(finalized.analysis.judgmentBlocks?.pastValidation?.headline).toBeTruthy();
+    expect(finalized.analysis.judgmentBlocks?.presentDiagnosis?.headline).toBeTruthy();
+    expect(finalized.analysis.judgmentBlocks?.futureGuidance?.headline).toBeTruthy();
+    expect((finalized.analysis.judgmentBlocks?.futureGuidance?.evidence || []).length).toBeGreaterThan(0);
+    expect((finalized.analysis.pastEventTemplates || []).length).toBeGreaterThan(0);
+    expect(finalized.analysis.pastEventTemplates?.[0]?.title).toBeTruthy();
+    expect(finalized.analysis.pastEventTemplates?.some((item) => item.confidenceLabel === 'high')).toBe(true);
     expect(finalized.analysis.explanation).not.toContain('macro_cycle');
     expect(finalized.analysis.explanation).not.toContain('2027-2027');
     expect(finalized.analysis.qualityAudit?.overallScore).toBeGreaterThan(0);
@@ -428,5 +439,150 @@ describe('report pipeline analyze agent keys', () => {
     } as any);
 
     expect(finalized.analysis.explanation.match(/世界易判断：/g)?.length || 0).toBe(1);
+  });
+
+  it('switches failed verification reports into conservative delivery mode', () => {
+    const finalized = finalizeReportForDelivery({
+      basic: {
+        dayMaster: '壬',
+        pillars: [],
+      },
+      fiveElements: {},
+      tenGods: {},
+      pattern: {
+        type: '身弱格',
+        description: '日主偏弱。',
+      },
+      fortune: {
+        currentDaYun: '辛酉大运',
+        currentLiuNian: '甲辰流年',
+        interaction: '当前阶段波动较大。',
+        nextYear: '明年仍有变量。',
+      },
+      advice: {
+        career: {
+          general: '先收敛。',
+          specific: ['直接跳槽', '同时开两条线'],
+          timing: '三个月内定方向',
+          avoid: ['不要迟疑'],
+        },
+        wealth: {
+          general: '先控风险。',
+          specific: ['尽快做大额配置'],
+          timing: '本季度内完成',
+          avoid: ['不要错过窗口'],
+        },
+        marriage: {
+          general: '尽快推进。',
+          specific: ['立刻确定关系'],
+          timing: '立刻推进',
+        },
+        health: {
+          general: '先稳住。',
+          specific: ['快速恢复后马上重启'],
+          timing: '下周前',
+          avoid: ['不要停下来'],
+        },
+        colors: [],
+        directions: [],
+        timing: ['立刻推进'],
+      },
+      evidence: {
+        statistics: { totalSamples: 1, similarCases: 1, successRate: 1, averageIncome: '0', averageAge: 30 },
+        celebrities: [],
+        similarCases: [],
+      },
+      analysis: {
+        opening: '当前窗口已经到了。',
+        summary: '现在就该做决定。',
+        explanation: '原始解释文本。',
+        llmUsed: true,
+        verify: {
+          consistencyScore: 58,
+          verdict: 'FAIL',
+          failedRules: ['best_window_alignment', 'liunian_alignment'],
+        },
+        qualityAudit: {
+          status: 'retry',
+          deliveryTier: 'basic',
+        },
+        orchestration: {
+          totalLlmCalls: 5,
+          successRate: 0.2,
+          succeeded: ['a'],
+          failed: ['b', 'c'],
+        },
+      },
+    } as any);
+
+    expect(finalized.analysis.reliabilityGuard?.status).toBe('conservative');
+    expect(finalized.analysis.reliabilityGuard?.conservativeDelivery).toBe(true);
+    expect(finalized.analysis.reliabilityGuard?.summary).toContain('保守交付');
+    expect(finalized.analysis.explanation).toContain('先看稳定结构');
+    expect(finalized.advice.career.timing).toContain('保守节奏');
+    expect(finalized.advice.timing?.[0]).toContain('保守节奏');
+  });
+
+  it('keeps strong reports in passed reliability mode', () => {
+    const finalized = finalizeReportForDelivery({
+      basic: {
+        dayMaster: '甲',
+        pillars: [{}, {}, {}, {}],
+      },
+      fiveElements: {
+        wood: { strength: 25, quality: 'good', description: '木稳' },
+        fire: { strength: 22, quality: 'good', description: '火稳' },
+        earth: { strength: 18, quality: 'medium', description: '土中' },
+        metal: { strength: 16, quality: 'medium', description: '金中' },
+        water: { strength: 19, quality: 'medium', description: '水中' },
+      },
+      tenGods: {},
+      pattern: {
+        type: '身和格',
+        description: '结构平衡。',
+      },
+      fortune: {
+        currentDaYun: '甲午大运',
+        currentLiuNian: '乙巳流年',
+        interaction: '当前结构适合稳中推进。',
+        nextYear: '下一阶段仍有承接。',
+      },
+      advice: {
+        career: { general: '先稳住主线。', specific: ['先做一个关键动作'], timing: '下半年', avoid: ['不要分散'] },
+        wealth: { general: '先控风险。', specific: ['先做小额验证'], timing: '下半年', avoid: ['不要重仓'] },
+        marriage: { general: '先稳沟通。', specific: ['先观察'], timing: '夏季' },
+        health: { general: '先稳作息。', specific: ['先补睡眠'], timing: '近期', avoid: ['不要透支'] },
+        colors: [],
+        directions: [],
+        timing: [],
+      },
+      evidence: {
+        statistics: { totalSamples: 1, similarCases: 1, successRate: 1, averageIncome: '0', averageAge: 30 },
+        celebrities: [],
+        similarCases: [],
+      },
+      analysis: {
+        opening: '当前先稳住主线。',
+        summary: '先稳主线，再按窗口推进。',
+        explanation: '世界易判断：先看结构，再看阶段，再决定动作\n\n主判断：先稳主线\n\n判断依据：结构与时机基本一致\n\n现在先做：先做一个关键动作\n\n风险提醒：不要分散',
+        llmUsed: true,
+        verify: {
+          consistencyScore: 96,
+          verdict: 'PASS',
+          failedRules: [],
+        },
+        orchestration: {
+          totalLlmCalls: 6,
+          successRate: 0.86,
+          succeeded: ['a', 'b', 'c'],
+          failed: [],
+        },
+      },
+    } as any);
+
+    expect(finalized.analysis.reliabilityGuard?.status).toBe('passed');
+    expect(finalized.analysis.reliabilityGuard?.conservativeDelivery).toBe(false);
+    expect(finalized.analysis.summary).not.toContain('保守交付');
+    expect(finalized.analysis.explanation).toContain('世界易判断：');
   });
 });

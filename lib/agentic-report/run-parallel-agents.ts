@@ -1,10 +1,8 @@
 import { runAgent } from '@/lib/agentic-report/run-agent';
+import { getAgentParallelConcurrency } from '@/lib/env';
 import type { AgentTask, ParallelAgentRunResult } from '@/lib/agentic-report/types';
 
-const PARALLEL_AGENT_CONCURRENCY = Math.max(
-  1,
-  Number.parseInt(process.env.AGENT_PARALLEL_CONCURRENCY || '2', 10) || 2
-);
+const PARALLEL_AGENT_CONCURRENCY = getAgentParallelConcurrency();
 
 export async function runParallelAgents(tasks: AgentTask[]): Promise<ParallelAgentRunResult> {
   const startedAt = new Date();

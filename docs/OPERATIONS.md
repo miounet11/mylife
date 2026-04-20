@@ -11,6 +11,7 @@
 - `life-kline-scheduler`
 - `life-kline-report-upgrader`
 - `life-kline-monthly-digest`
+- `life-kline-user-lifecycle-email`
 - `life-kline-email-retry`
 
 配置文件：
@@ -44,7 +45,33 @@ pm2 status
 npm run knowledge:status
 npm run system:health
 npm run system:retro -- 1440 --save
+npm run system:upgrade-compare -- --days=7 --save
+npm run system:site-quality -- --save
+npm run email:lifecycle
 ```
+
+升级行为三窗口监控：
+
+- `preUpgrade`: 基线日前一个窗口
+- `initialPostUpgrade`: 基线日后的第一个窗口
+- `current`: 当前最近一个窗口
+- 对比重点：`pre -> initial` 看升级首波影响，`initial -> current` 看近期承接是否继续改善或回落
+- 输出会先给 `Focus signals`，用于快速定位当前该先看主链路、承接链路、交付层级，还是商业化转化
+- 每组 comparison 会按方向拆出 `Improving/Worsening metrics` 和 `Improving/Worsening rates`，方便先看改善项与恶化项，再决定是否细读完整 delta
+- `fallbackRate` 以 `analyze_completed` 事件次数为分母，用来观察完成测算里的 fallback 占比，不再混用去重 session 口径
+- `chat/tool/premium/report-event` 这类 `perReportViewRate` 是按事件次数计算的互动强度指标，可能超过 `100%`，不要按单次转化率解读
+- `llmAttemptPerCompletedRate` / `llmCircuitChangePerCompletedRate` 也是按 `analyze_completed` 事件次数计算的事件强度指标，可能超过 `100%`；它们反映每次完成测算背后的模型重试与熔断抖动，不是用户转化率
+
+站点质量治理快照：
+
+- `npm run system:site-quality -- --save`
+- 这个命令会把以下证据收成一份固定快照：
+  - `analytics overview` 里的系统健康、周使用、近 14 天日趋势、最近 3 天 vs 前 3 天行为变化
+  - `report retro` 的真实报告、fallback、页面埋点和活跃会话
+  - `admin-quality-workboard` 的高优先级工具/内容/跳出页修复队列
+  - `open-agent` 的 site governor / ops triage / report reliability 快照
+- 目标不是做一份漂亮汇报，而是把兼容性、稳定性、交互逻辑、开发效率四个维度压成同一套固定评估器，方便按回合比较改动前后效果
+- 快照文件默认写到 `data/runtime/site-quality-governor.snapshot.json`
 
 ### 查看日志
 
@@ -52,6 +79,7 @@ npm run system:retro -- 1440 --save
 pm2 logs life-kline-next --lines 100 --nostream
 pm2 logs life-kline-knowledge --lines 100 --nostream
 pm2 logs life-kline-report-upgrader --lines 100 --nostream
+pm2 logs life-kline-user-lifecycle-email --lines 100 --nostream
 pm2 logs life-kline-email-retry --lines 100 --nostream
 ```
 
@@ -108,6 +136,8 @@ curl -H "x-system-health-token: $SYSTEM_HEALTH_TOKEN" \
 git pull
 npm install
 npm run lint
+npm run test
+npm run system:site-quality -- --save
 npm run build
 pm2 startOrReload ecosystem.config.js
 pm2 status
@@ -190,6 +220,15 @@ pm2 status
 - `KNOWLEDGE_SYNTHESIS_PUBLISH_BATCH_SIZE=4`
 
 ### 报告升级与月度更新
+
+- `REPORT_MONTHLY_DIGEST_CRON_TOKEN`
+- `REPORT_MONTHLY_DIGEST_RUN_URL`
+- `REPORT_MONTHLY_DIGEST_INTERVAL_MS`
+- `USER_LIFECYCLE_EMAIL_CRON_TOKEN`
+- `USER_LIFECYCLE_EMAIL_RUN_URL`
+- `USER_LIFECYCLE_EMAIL_INTERVAL_MS`
+- `USER_LIFECYCLE_EMAIL_BATCH_SIZE`
+- `AUTONOMOUS_GROWTH_ENABLE_USER_LIFECYCLE_EMAIL`
 
 - `REPORT_UPGRADE_CRON_TOKEN`
 - `REPORT_UPGRADE_RUN_URL`

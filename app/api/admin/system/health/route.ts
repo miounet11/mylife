@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
+import { getSystemHealthTokens } from '@/lib/env';
 import { getSystemOpsSnapshot } from '@/lib/system-ops';
 
 export const maxDuration = 15;
 
 function getAllowedTokens() {
-  return [...new Set([
-    process.env.SYSTEM_HEALTH_TOKEN,
-    process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN,
-    process.env.CONTENT_RADAR_CRON_TOKEN,
-    process.env.CONTENT_SCHEDULER_CRON_TOKEN,
-  ].map((value) => `${value || ''}`.trim()).filter(Boolean))];
+  return getSystemHealthTokens();
 }
 
 async function isAuthorized(request: NextRequest) {
@@ -35,7 +31,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    snapshot: getSystemOpsSnapshot(),
+    snapshot: getSystemOpsSnapshot({ mode: 'summary' }),
     timestamp: new Date().toISOString(),
   });
 }

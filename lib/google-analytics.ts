@@ -15,6 +15,7 @@ const FORWARDED_ANALYTICS_EVENTS = new Set<AnalyticsEventName>([
   'result_cta_clicked',
   'report_viewed',
   'report_event_saved_from_result',
+  'report_past_event_saved_from_result',
 ]);
 
 const EVENT_PARAM_ALLOWLIST: Partial<Record<AnalyticsEventName, string[]>> = {
@@ -24,6 +25,7 @@ const EVENT_PARAM_ALLOWLIST: Partial<Record<AnalyticsEventName, string[]>> = {
   report_upgrade_requested: ['reportId', 'source', 'reason', 'status'],
   report_viewed: ['reportId', 'isPublic', 'reportVersion', 'reasoningMode', 'pattern'],
   report_event_saved_from_result: ['reportId', 'eventType', 'source'],
+  report_past_event_saved_from_result: ['reportId', 'templateKey', 'templateType', 'confidenceLabel'],
   result_cta_clicked: ['reportId', 'cta', 'surface', 'target'],
 };
 

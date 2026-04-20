@@ -1,6 +1,7 @@
 import {
   validateBirthDate,
   validateBirthTime,
+  validateEventDate,
   validateName,
   validateGender,
   validateTimezone,
@@ -37,6 +38,16 @@ describe('validateBirthDate', () => {
 
   it('rejects wrong format', () => {
     expect(validateBirthDate('1990/06/15')).not.toBeNull();
+  });
+});
+
+describe('validateEventDate', () => {
+  it('accepts a future event date', () => {
+    expect(validateEventDate('2099-06-15')).toBeNull();
+  });
+
+  it('rejects impossible event dates', () => {
+    expect(validateEventDate('2026-02-30')).not.toBeNull();
   });
 });
 
@@ -187,6 +198,11 @@ describe('validateEventRequest', () => {
 
   it('accepts valid event', () => {
     const result = validateEventRequest(validEvent);
+    expect(result.valid).toBe(true);
+  });
+
+  it('accepts future event dates', () => {
+    const result = validateEventRequest({ ...validEvent, date: '2099-03-01' });
     expect(result.valid).toBe(true);
   });
 

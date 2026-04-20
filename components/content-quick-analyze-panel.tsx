@@ -18,7 +18,7 @@ interface ContentQuickAnalyzePanelProps {
 
 export default function ContentQuickAnalyzePanel({
   title = '输入生日，直接进入世界易个人判断',
-  description = '先填出生日期、时间和性别，出生地在下一步继续补充。',
+  description = '先填出生日期、时间和性别，再去正式分析入口补充出生地并完成完整判断。',
   sourceLabel = '内容页快捷入口',
   sourceKey = 'content_surface',
   contentMeta = {},
@@ -43,10 +43,9 @@ export default function ContentQuickAnalyzePanel({
       </div>
 
       <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)]">{title}</h3>
-      <p className="intro-copy mt-3">{description}</p>
-      <div className="intro-panel mt-3">优先动作：先填时间信息，再进入分析页补出生地。</div>
+      {description ? <p className="intro-copy mt-3 text-sm text-[color:var(--muted)]">{description}</p> : null}
 
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="intro-panel mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {[
           ['结构', '先看命局底座'],
           ['阶段', '再看当前时位'],
@@ -93,8 +92,7 @@ export default function ContentQuickAnalyzePanel({
         />
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <p className="intro-copy">下一步会自动带入分析页，只需要再确认出生地。</p>
+      <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
         <button
           type="button"
           disabled={!canSubmit}

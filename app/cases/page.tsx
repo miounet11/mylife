@@ -4,16 +4,18 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
+import { getEntityInsights, getKnowledgeArticles, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { getContentLocalePresentation, getLocaleAnchorId, type ContentLocaleGroupKey } from '@/lib/content-locale';
 import {
   createCollectionPageSchema,
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getFeaturedTools } from '@/lib/tools';
 import { worldYiExecutionBatches, worldYiRoadmapSummary } from '@/lib/world-yi';
 
 export const metadata = createPublicContentMetadata({
@@ -21,6 +23,11 @@ export const metadata = createPublicContentMetadata({
   description: '通过升学、事业、婚恋等真实场景案例，解释这套判断系统到底解决什么问题。',
   path: '/cases',
   type: 'website',
+  languages: {
+    'zh-CN': '/cases',
+    'en-US': '/world-yi/en/cases',
+    'x-default': '/cases',
+  },
 });
 
 export const dynamic = 'force-dynamic';
@@ -28,19 +35,16 @@ export const dynamic = 'force-dynamic';
 const worldYiCasePowerLinks = [
   {
     title: '人生六域案例',
-    description: '把事业、财富、关系、健康、家庭、迁移全部做成可复用证据层。',
     href: '/world-yi/domains',
     icon: Compass,
   },
   {
     title: '全球华人案例',
-    description: '海外身份、婚姻、孩子教育、养老与留回判断开始独立成层。',
     href: '/world-yi/global/cases',
     icon: Globe2,
   },
   {
     title: '英文案例路径',
-    description: '让世界易不只在中文语境成立，也能服务英文阅读和海外用户。',
     href: '/world-yi/en/cases',
     icon: Layers3,
   },
@@ -90,6 +94,23 @@ export default function CasesPage() {
   const worldYiKnowledgeCount = listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => entry.slug.startsWith('world-yi-'))
     .length;
+  const caseSignals = caseEntries.slice(0, 18)
+    .flatMap((entry) => [entry.title, entry.category || '', ...entry.tags])
+    .filter((signal): signal is string => typeof signal === 'string' && signal.length > 0)
+    .map((signal) => signal.toLowerCase());
+  const matchesCaseSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return caseSignals.some((signal) => lowered.includes(signal));
+  };
+  const toolItems = getFeaturedTools(12)
+    .filter((tool) => matchesCaseSignal([tool.title, tool.shortTitle, tool.themeLabel, ...tool.hookKeywords].join(' ')))
+    .slice(0, 3);
+  const knowledgeItems = getKnowledgeArticles()
+    .filter((item) => matchesCaseSignal([item.title, item.excerpt, item.category, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const insightItems = getEntityInsights()
+    .filter((item) => matchesCaseSignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
+    .slice(0, 2);
   const caseDensityTarget = worldYiExecutionBatches.find((batch) => batch.phase === 'Batch 05')?.targetCount || 100;
   const schemas = [
     createCollectionPageSchema({
@@ -122,14 +143,9 @@ export default function CasesPage() {
               场景化案例
             </>
           )}
-          title={(
-            <>
-              用户不是来学术语，
-              <span className="font-serif text-[color:var(--accent-strong)]">而是来解决具体问题。</span>
-            </>
-          )}
-          description="案例页把产品价值翻译成真实情境，既适合新用户理解，也适合持续扩展成高质量的内容资产。"
-          hint="第一次阅读案例，优先看与你当前问题最接近的场景，再进入分析页落地。"
+          title="案例库"
+          description="用真实场景理解这套判断系统到底怎么落地，再决定要不要进入你自己的个人判断。"
+          hint="如果你已经看到和自己相近的问题类型，下一步就可以回到分析入口，把出生信息带进去。"
           actions={[
             <Link key="analyze" href="/analyze" className="action-primary action-main">
               开始分析
@@ -165,10 +181,7 @@ export default function CasesPage() {
               </div>
               <div className="mt-4 grid gap-5">
                 <div>
-                  <h2 className="text-3xl font-black text-[color:var(--ink)]">案例不是做玄感表演，而是把结构、阶段、环境和动作讲清楚</h2>
-                  <p className="intro-copy mt-4">
-                    世界易看案例，不把它当成玄感展示，而当成判断秩序的现实落地。真正好的案例，不只是说发生了什么，而是说明为什么会这样、现在该怎么做、什么风险该先避。
-                  </p>
+                  <h2 className="text-3xl font-black text-[color:var(--ink)]">案例维度</h2>
                   <div className="action-guide mt-5 inline-flex items-center gap-2">
                     进入世界易总入口
                     <ArrowRight className="h-4 w-4" />
@@ -199,10 +212,7 @@ export default function CasesPage() {
                 <Sparkles className="h-3.5 w-3.5" />
                 Batch 05
               </div>
-              <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">案例库正在从少量样本，进入世界易首批 100 篇案例密集化阶段</h2>
-              <p className="intro-copy mt-4">
-                接下来世界易会按事业、财富、关系、健康、家庭、迁移和生活应用分层扩案例。案例页不再只是展示，而是世界易证据层的核心入口。
-              </p>
+              <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">案例分类</h2>
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {['事业案例', '财富案例', '关系案例', '家庭案例', '迁移案例', '应用案例'].map((item) => (
                   <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
@@ -229,13 +239,7 @@ export default function CasesPage() {
                   <Layers3 className="h-3.5 w-3.5" />
                   世界易证据层
                 </div>
-                <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">
-                  案例库正在从“能看看”升级成
-                  <span className="font-serif text-[color:var(--accent-strong)]">世界易的公开证据网络。</span>
-                </h2>
-                <p className="intro-copy">
-                  用户最终信任的，不是概念，而是反复出现的判断秩序。世界易案例页要持续证明三件事：先看结构，再看阶段，必须带环境，最后落到动作与验证。
-                </p>
+                <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">数据面板</h2>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {[
                     { label: '当前公开世界易案例', value: `${worldYiCaseEntries.length} 篇` },
@@ -278,7 +282,6 @@ export default function CasesPage() {
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                        <p className="intro-copy mt-3">{item.description}</p>
                         <div className="action-guide mt-5 inline-flex items-center gap-2">
                           进入案例层
                           <ArrowRight className="h-4 w-4" />
@@ -308,6 +311,16 @@ export default function CasesPage() {
           </div>
         </section>
 
+        <PublicEvidencePanel
+          page="/cases"
+          title="把案例层接到工具、知识和环境洞察"
+          description="案例不该只是让人看看就走。它应该继续接到相关工具、原理解释和环境洞察，让用户能从“别人发生了什么”走到“我该怎么判断”。"
+          surfaceKey="cases_page_evidence"
+          toolItems={toolItems}
+          knowledgeItems={knowledgeItems}
+          insightItems={insightItems}
+        />
+
         <section className="mt-10 space-y-5">
           <div className="flex flex-wrap gap-3">
             {groupedCaseEntries.map((group) => (
@@ -327,7 +340,6 @@ export default function CasesPage() {
               <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-24">
                 <div className="space-y-2">
                   <div className="section-label">{group.groupLabel}</div>
-                  <p className="intro-copy">{group.groupDescription}</p>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -357,7 +369,6 @@ export default function CasesPage() {
                           <ContentLocaleBadge locale={locale} market={market} compact />
                         </div>
                         <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-                        <p className="intro-copy mt-3">{item.excerpt}</p>
                         <div className="mt-3 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
                         <div className="action-guide mt-5 inline-flex items-center gap-2">
                           查看案例
@@ -379,9 +390,8 @@ export default function CasesPage() {
             meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到方法层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例之后，回知识库补方法</h2>
-            <p className="intro-copy mt-3">案例负责证明有效，知识库负责解释为什么这样判断。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               进入知识库
               <ArrowRight className="h-4 w-4" />
@@ -394,9 +404,8 @@ export default function CasesPage() {
             meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到环境层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例之后，看外部环境变化</h2>
-            <p className="intro-copy mt-3">同样的结构，放到不同环境里，推进成本会完全不同。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               进入洞察中心
               <ArrowRight className="h-4 w-4" />
@@ -409,9 +418,8 @@ export default function CasesPage() {
             meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'case', series: 'world-yi' }}
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母系统</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例只是证据层，不是终点</h2>
-            <p className="intro-copy mt-3">要看清为什么这样分析，还是要回到世界易总入口。</p>
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               回到世界易
               <ArrowRight className="h-4 w-4" />
@@ -424,8 +432,8 @@ export default function CasesPage() {
             sourceLabel="案例页转化"
             sourceKey="cases_page"
             contentMeta={{ contentType: 'case', surfaceKey: 'cases_page' }}
-            title="案例看完，马上看自己的结构和阶段"
-            description="案例看完，直接带着生日进入分析。"
+            title="个人分析"
+            description="看完公开案例后，直接把自己的出生信息带进正式分析入口，判断你是否也处在相近结构里。"
           />
         </section>
       </main>

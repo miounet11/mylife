@@ -72,6 +72,28 @@ describe('public growth plan', () => {
     expect(missing?.target.market).toContain('香港');
   });
 
+  test('does not keep covered targets in queue only because draft reserve is empty', () => {
+    const entries: ManagedContentEntry[] = [
+      buildEntry({
+        slug: 'diaspora-time-guide-covered',
+        title: '海外华人真太阳时与时区换算指南',
+        excerpt: '解释海外华人出生在不同时区和夏令时环境下为什么更容易出现排盘误差，并说明为什么不能直接拿钟表时间代替命盘校正。',
+        tags: ['海外华人', '夏令时', '真太阳时', '排盘'],
+        meta: {
+          growthPlanKey: 'diaspora-time-precision',
+          market: '北美华人 / 海外华人',
+          locale: 'zh-US',
+          sourceType: 'public-growth',
+          publicationReady: true,
+        },
+      }),
+    ];
+
+    const audit = buildPublicGrowthAudit(entries);
+
+    expect(audit.queue.some((item) => item.target.key === 'diaspora-time-precision')).toBe(false);
+  });
+
   test('does not cross-match entries from a different locale market', () => {
     const entries: ManagedContentEntry[] = [
       buildEntry({
@@ -204,5 +226,28 @@ describe('public growth plan', () => {
 
     expect(assessment.ready).toBe(true);
     expect(assessment.reasons).toContain('section-depth');
+  });
+
+  test('counts promoted fallback knowledge entries as published growth coverage', () => {
+    const audit = buildPublicGrowthAudit([
+      buildEntry({
+        slug: 'diaspora-relocation-published',
+        title: '海外华人换城市与迁移风险窗口的深度解读',
+        source: 'agent-fallback:public-growth:public-growth',
+        status: 'published',
+        meta: {
+          growthPlanKey: 'diaspora-relocation-risk-window',
+          market: '海外华人迁移与换城市用户',
+          locale: 'zh-US',
+          sourceType: 'public-growth',
+          publicationReady: true,
+        },
+      }),
+    ]);
+
+    const target = audit.coverage.find((item) => item.target.key === 'diaspora-relocation-risk-window');
+
+    expect(target?.publishedCount).toBe(1);
+    expect(target?.missing).toBe(false);
   });
 });

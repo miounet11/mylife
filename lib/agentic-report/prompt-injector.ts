@@ -59,6 +59,14 @@ export function buildPromptModules(context: StructuredAgenticContext): AgentProm
       label: 'CONTEXT_SPATIAL',
       content: JSON.stringify(compactForPrompt(context.context.spatialFactors)),
     },
+    {
+      label: 'CONTEXT_HUMAN',
+      content: JSON.stringify(compactForPrompt(context.context.humanFactors)),
+    },
+    {
+      label: 'CONTEXT_WORLD_STATE',
+      content: JSON.stringify(compactForPrompt(context.context.worldState)),
+    },
   ];
 
   if (context.context.referenceIntelligence?.pack) {

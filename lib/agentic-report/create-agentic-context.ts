@@ -22,6 +22,8 @@ export function createAgenticContext(input: {
     report: {
       advice: input.context.report?.advice,
       fortune: input.context.report?.fortune,
+      tacitSummary: input.context.report?.tacitSummary,
+      tacitSignals: input.context.report?.tacitSignals,
     },
   };
 }

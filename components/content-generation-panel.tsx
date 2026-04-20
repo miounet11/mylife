@@ -191,11 +191,37 @@ export default function ContentGenerationPanel({
 
   return (
     <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">AI 内容生成</div>
-          <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">用现有 LLM 直接起草内容库</div>
+          <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">内容生成</div>
         </div>
+
+        <div className="space-y-2">
+          <div className="action-guide">主动作</div>
+          <button
+            type="button"
+            onClick={generate}
+            disabled={generating}
+            className="action-primary disabled:opacity-60"
+          >
+            {generating ? '任务执行中...' : form.mode === 'cluster' ? '生成整组选题草稿' : '生成内容草稿'}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-6 grid gap-4 md:grid-cols-4">
+        {[
+          { label: '当前模式', value: form.mode === 'cluster' ? '整组生成' : '单篇生成' },
+          { label: '发布目标', value: form.status === 'published' ? '直接发布' : '先进草稿' },
+          { label: '任务状态', value: mapJobStatus(job?.status, generating) },
+          { label: '最近产出', value: lastGenerated.length > 0 ? `${lastGenerated.length} 条` : '暂无' },
+        ].map((item) => (
+          <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+            <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
+          </div>
+        ))}
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -351,15 +377,6 @@ export default function ContentGenerationPanel({
         </div>
       )}
 
-      <button
-        type="button"
-        onClick={generate}
-        disabled={generating}
-        className="mt-6 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
-      >
-        {generating ? '任务执行中...' : form.mode === 'cluster' ? '生成整组选题草稿' : '生成内容草稿'}
-      </button>
-
       {lastGenerated.length > 0 && (
         <div className="mt-6 space-y-3">
           {lastGenerated.map((entry) => (
@@ -384,4 +401,26 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       {children}
     </label>
   );
+}
+
+function mapJobStatus(status: ContentGenerationJob['status'] | undefined, generating: boolean) {
+  if (status === 'completed') {
+    return '已完成';
+  }
+  if (status === 'failed') {
+    return '失败';
+  }
+  if (status === 'cancelled') {
+    return '已取消';
+  }
+  if (status === 'retry') {
+    return '重试中';
+  }
+  if (status === 'running' || generating) {
+    return '执行中';
+  }
+  if (status === 'pending') {
+    return '排队中';
+  }
+  return '待开始';
 }

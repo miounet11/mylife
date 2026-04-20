@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getEmailRetryCronToken } from '@/lib/env';
 import { runEmailDeliveryRetryCycle } from '@/lib/email-delivery-jobs';
 
 export const maxDuration = 20;
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.EMAIL_RETRY_CRON_TOKEN || process.env.REPORT_UPGRADE_CRON_TOKEN || ''}`.trim();
+  const expected = getEmailRetryCronToken();
   if (!expected) {
     return false;
   }

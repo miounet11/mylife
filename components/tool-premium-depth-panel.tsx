@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import NewsletterSignup from '@/components/newsletter-signup';
+import { buildChatHref } from '@/lib/chat-entry';
 import type { ToolDefinition, ToolPremiumOffer } from '@/lib/tools';
 
 export default function ToolPremiumDepthPanel({
@@ -23,14 +24,11 @@ export default function ToolPremiumDepthPanel({
             深测版
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
-            免费版先给摘要，
-            <span className="font-serif text-[color:var(--accent-strong)]">深测版再把这件事真正讲透。</span>
+            深测版
           </h2>
-          <p className="intro-copy mt-4">{offer.teaser}</p>
-          <div className="mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
+          <div className="intro-copy mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
             {offer.upgradeMoment}
           </div>
-          <p className="intro-copy mt-4">{offer.outcomeLine}</p>
 
           <div className="mt-5 grid gap-3">
             {offer.deliverables.map((item) => (
@@ -42,7 +40,12 @@ export default function ToolPremiumDepthPanel({
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              href={reportId ? `/chat?reportId=${encodeURIComponent(reportId)}&intent=${encodeURIComponent(tool.chatIntent || '')}` : '/chat'}
+              href={buildChatHref({
+                reportId: reportId || undefined,
+                intent: tool.chatIntent || undefined,
+                question: `请围绕“${tool.shortTitle}”继续深问，告诉我如果要进入深测，现在最该先确认的结构、阶段和风险点是什么？`,
+                source: 'tool_premium_depth_panel',
+              })}
               className="action-primary"
             >
               继续追问
@@ -55,7 +58,7 @@ export default function ToolPremiumDepthPanel({
         <NewsletterSignup
           source={`tool_premium_${tool.slug}`}
           title={offer.ctaLabel}
-          description={`订阅后，后续可以围绕 ${tool.shortTitle} 接收深测提醒、工具包推荐和阶段窗口变化。`}
+          description=""
         />
       </div>
     </section>

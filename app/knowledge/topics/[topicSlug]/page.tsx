@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, ArrowRight, Network, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Compass, LibraryBig, Network, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
@@ -9,6 +9,8 @@ import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import ToolCardLink from '@/components/tool-card-link';
+import { getCaseStudies, getEntityInsights } from '@/lib/content-store';
 import {
   getKnowledgeTopicHubByTopicSlug,
   listKnowledgeTopicHubRoutes,
@@ -18,12 +20,13 @@ import {
   createCollectionPageSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getToolDefinition } from '@/lib/tools';
 
 interface PageProps {
   params: Promise<{ topicSlug: string }>;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function generateStaticParams() {
   return listKnowledgeTopicHubRoutes().map((item) => ({
@@ -60,6 +63,23 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
     { name: '专题地图', path: '/knowledge/topics' },
     { name: `${hub.topicName}专题地图`, path: `/knowledge/topics/${hub.topicSlug}` },
   ];
+  const topicSignals = [hub.topicName, ...hub.relatedTopicNames, ...hub.entries.flatMap((item) => [item.entry.title, item.entry.category || '', ...item.entry.tags])];
+  const matchesTopicSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return topicSignals.some((signal) => signal && lowered.includes(signal.toLowerCase()));
+  };
+  const toolItems = hub.entries
+    .flatMap((item) => (Array.isArray(item.entry.meta?.relatedToolSlugs) ? item.entry.meta.relatedToolSlugs : []))
+    .filter((slug): slug is string => typeof slug === 'string')
+    .map((slug) => getToolDefinition(slug))
+    .filter((item): item is NonNullable<typeof item> => !!item)
+    .slice(0, 3);
+  const caseItems = getCaseStudies()
+    .filter((item) => matchesTopicSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const insightItems = getEntityInsights()
+    .filter((item) => matchesTopicSignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
+    .slice(0, 2);
   const schemas = [
     createCollectionPageSchema({
       headline: `${hub.topicName}专题地图`,
@@ -139,7 +159,6 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     路径 {index + 1} · {item.synthesisType || item.entry.category || '知识内容'}
                   </div>
                   <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.entry.title}</h2>
-                  <p className="intro-copy mt-3">{item.entry.excerpt}</p>
                   <ContentCardLink
                     href={`/knowledge/${item.entry.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
@@ -172,7 +191,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                 entryCount: hub.entryCount,
               }}
               title="顺着专题看懂后，直接回到自己的判断结果"
-              description="专题页负责建立认知框架，真正有价值的下一步仍然是回到你的出生信息，验证这些结构和节奏如何落到个人身上。"
+              description="当你已经知道自己最关心哪条问题线，就把出生信息带进正式分析，看看个人结构和这个专题怎么对应。"
             />
 
             <div className="soft-card rounded-[1.75rem] p-5">
@@ -183,7 +202,77 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     {item}
                   </span>
                 )) : (
-                  <span className="text-xs leading-6 text-[color:var(--muted)]">当前专题已成型，系统会继续补充可桥接的相邻主题。</span>
+                  <span className="text-sm text-[color:var(--muted)]">暂无相邻专题</span>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Compass className="h-4 w-4" />
+                专题相关工具
+              </div>
+              <div className="mt-4 grid gap-3">
+                {toolItems.length > 0 ? toolItems.map((tool) => (
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page={`/knowledge/topics/${hub.topicSlug}`}
+                    className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
+                  </ToolCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <LibraryBig className="h-4 w-4" />
+                专题相关案例
+              </div>
+              <div className="mt-4 grid gap-3">
+                {caseItems.length > 0 ? caseItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/cases/${item.slug}`}
+                    page={`/knowledge/topics/${hub.topicSlug}`}
+                    meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Sparkles className="h-4 w-4" />
+                专题相关洞察
+              </div>
+              <div className="mt-4 grid gap-3">
+                {insightItems.length > 0 ? insightItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/insights/${item.type}/${item.slug}`}
+                    page={`/knowledge/topics/${hub.topicSlug}`}
+                    meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
                 )}
               </div>
             </div>
@@ -191,7 +280,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
             <NewsletterSignup
               source={`knowledge_topic:${hub.topicSlug}`}
               title="订阅专题更新"
-              description="当这个专题新增总览、词汇表、问题地图和书单路径时，第一时间收到更新。"
+              description="持续接收这个专题的新增文章和关联扩写，方便你沿着同一条问题线继续深入。"
             />
           </div>
         </section>

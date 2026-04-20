@@ -3,12 +3,14 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {
-  getEntityInsightsByType,
+  getCaseStudies,
   getEntityInsights,
+  getKnowledgeArticles,
 } from '@/lib/content-store';
 import { entityTypeLabels, getEntityInsightTypes, type EntityInsightType } from '@/lib/content';
 import {
@@ -16,12 +18,17 @@ import {
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getFeaturedTools } from '@/lib/tools';
 
 export const metadata = createPublicContentMetadata({
   title: '行业与城市洞察 | 人生K线',
   description: '围绕行业、城市、组织节奏等具体场景建立高价值实体内容层，为搜索、传播与转化提供长期资产。',
   path: '/insights',
   type: 'website',
+  languages: {
+    'zh-CN': '/insights',
+    'x-default': '/insights',
+  },
 });
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +36,27 @@ export const dynamic = 'force-dynamic';
 export default function InsightsPage() {
   const insightTypes = getEntityInsightTypes();
   const insights = getEntityInsights();
+  const insightSignals = insights.slice(0, 18)
+    .flatMap((item) => [item.title, item.name, ...item.tags])
+    .filter((signal): signal is string => typeof signal === 'string' && signal.length > 0)
+    .map((signal) => signal.toLowerCase());
+  const matchesInsightSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return insightSignals.some((signal) => lowered.includes(signal));
+  };
+  const insightsByType = insightTypes.reduce<Record<EntityInsightType, typeof insights>>((accumulator, type) => {
+    accumulator[type] = insights.filter((item) => item.type === type);
+    return accumulator;
+  }, {} as Record<EntityInsightType, typeof insights>);
+  const toolItems = getFeaturedTools(12)
+    .filter((tool) => matchesInsightSignal([tool.title, tool.shortTitle, tool.themeLabel, ...tool.hookKeywords].join(' ')))
+    .slice(0, 3);
+  const knowledgeItems = getKnowledgeArticles()
+    .filter((item) => matchesInsightSignal([item.title, item.excerpt, item.category, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const caseItems = getCaseStudies()
+    .filter((item) => matchesInsightSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
+    .slice(0, 2);
   const schemas = [
     createCollectionPageSchema({
       headline: '行业与城市洞察',
@@ -115,10 +143,7 @@ export default function InsightsPage() {
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
               <div>
-                <h2 className="text-3xl font-black text-[color:var(--ink)]">城市、行业和组织，不是背景板，而是判断的一部分</h2>
-                <p className="intro-copy mt-4">
-                  世界易不只看个人结构，也看地点、行业、团队密度、文化语境和技术环境。洞察层存在的意义，就是把这些外部变量放回同一套判断结构里。
-                </p>
+                <h2 className="text-3xl font-black text-[color:var(--ink)]">环境主轴</h2>
                 <div className="action-guide mt-5 inline-flex items-center gap-2">
                   进入世界易环境洞察
                   <ArrowRight className="h-4 w-4" />
@@ -135,9 +160,19 @@ export default function InsightsPage() {
           </ContentCardLink>
         </section>
 
+        <PublicEvidencePanel
+          page="/insights"
+          title="把环境洞察接到工具、知识和案例证据"
+          description="洞察页不该只是环境描述。它应该继续把用户带到具体工具、知识原理和真实案例，让环境判断能落回个人决策与动作。"
+          surfaceKey="insights_page_evidence"
+          toolItems={toolItems}
+          knowledgeItems={knowledgeItems}
+          caseItems={caseItems}
+        />
+
         <section className="mt-10 space-y-10">
           {insightTypes.map((type) => (
-            <TypeSection key={type} type={type} />
+            <TypeSection key={type} type={type} items={insightsByType[type]} />
           ))}
         </section>
 
@@ -149,8 +184,7 @@ export default function InsightsPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到原理层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境看完，回知识库补判断语言</h2>
-            <p className="intro-copy mt-3">环境变化要放回知识库里的结构、阶段和阅读框架里理解。</p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               查看知识库
               <ArrowRight className="h-4 w-4" />
@@ -164,8 +198,7 @@ export default function InsightsPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境看完，回案例库看真实落地</h2>
-            <p className="intro-copy mt-3">行业和城市是外部变量，真正落地还要回案例里看。</p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               查看案例库
               <ArrowRight className="h-4 w-4" />
@@ -179,8 +212,7 @@ export default function InsightsPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母路径</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察页最终要回到世界易环境层</h2>
-            <p className="intro-copy mt-3">每篇洞察最终都要回到世界易的环境判断主轴。</p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境主轴</h2>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               进入环境主轴
               <ArrowRight className="h-4 w-4" />
@@ -194,7 +226,7 @@ export default function InsightsPage() {
             sourceKey="insights_page"
             contentMeta={{ contentType: 'insight', surfaceKey: 'insights_page' }}
             title="看完行业或城市节奏，直接测自己的时间窗口"
-            description="公开洞察解决群体层理解，下一步直接测个人时间窗口。"
+            description="先确认外部环境，再把出生信息带进个人分析，看看你和当前城市、行业或组织节奏是否匹配。"
           />
         </section>
 
@@ -202,7 +234,7 @@ export default function InsightsPage() {
           <NewsletterSignup
             source="insights_page"
             title="订阅行业与城市洞察"
-            description="适合持续跟踪职业、城市、组织节奏内容。"
+            description="适合持续跟踪城市、行业和组织变化的人，把环境判断保持在最新状态。"
           />
         </section>
       </main>
@@ -212,9 +244,7 @@ export default function InsightsPage() {
   );
 }
 
-function TypeSection({ type }: { type: EntityInsightType }) {
-  const items = getEntityInsightsByType(type);
-
+function TypeSection({ type, items }: { type: EntityInsightType; items: ReturnType<typeof getEntityInsights> }) {
   return (
     <section>
       <div className="mb-5 flex items-end justify-between gap-4">
@@ -245,7 +275,6 @@ function TypeSection({ type }: { type: EntityInsightType }) {
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
             <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h3>
-            <p className="intro-copy mt-3">{item.excerpt}</p>
             <div className="action-guide mt-5 inline-flex items-center gap-2">
               查看洞察
               <ArrowRight className="h-4 w-4" />

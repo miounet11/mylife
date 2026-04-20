@@ -4,38 +4,32 @@ import { worldYiEnglishTrackSurfaces, worldYiGlobalTopicSurfaces } from '@/lib/w
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { worldYiApplicationSurface, worldYiDomainSurfaces } from '@/lib/world-yi-surfaces';
 
-export const worldYiPublicRoutes = [
+const worldYiDomainRoutes = Object.keys(worldYiDomainSurfaces).map((key) => `/world-yi/domains/${key}`);
+const worldYiGlobalTopicRoutes = Object.keys(worldYiGlobalTopicSurfaces).map((key) => `/world-yi/global/topics/${key}`);
+const worldYiEnglishTrackRoutes = Object.keys(worldYiEnglishTrackSurfaces).map((key) => `/world-yi/en/tracks/${key}`);
+
+export const worldYiPublicRoutes = Array.from(new Set([
   '/world-yi',
   '/world-yi/book',
   '/world-yi/network',
   '/world-yi/matrix',
   '/world-yi/domains',
-  '/world-yi/domains/career',
-  '/world-yi/domains/wealth',
-  '/world-yi/domains/relationship',
-  '/world-yi/domains/health',
-  '/world-yi/domains/family',
-  '/world-yi/domains/migration',
+  ...worldYiDomainRoutes,
   '/world-yi/applications',
   '/world-yi/insights',
   '/world-yi/publish',
   '/world-yi/global',
   '/world-yi/global/cases',
   '/world-yi/global/topics',
-  '/world-yi/global/topics/identity',
-  '/world-yi/global/topics/career',
-  '/world-yi/global/topics/family',
-  '/world-yi/global/topics/education',
+  ...worldYiGlobalTopicRoutes,
   '/world-yi/en',
   '/world-yi/en/cases',
   '/world-yi/en/tracks',
-  '/world-yi/en/tracks/foundation',
-  '/world-yi/en/tracks/global-life',
-  '/world-yi/en/tracks/wealth',
-  '/world-yi/en/tracks/relationships',
-] as const;
+  ...worldYiEnglishTrackRoutes,
+]));
 
 export interface WorldYiPublicStats {
+  includesGrowthDistribution?: boolean;
   publicKnowledgeCount: number;
   publicCaseCount: number;
   publicInsightCount: number;
@@ -72,6 +66,28 @@ export interface WorldYiPublicStats {
   recentSchedulerPublishedAt: string | null;
   recentSchedulerPublishedTitle: string | null;
   recentSchedulerPublishedCount7d: number;
+}
+
+function isGrowthDistributionEntry(entry: ManagedContentEntry) {
+  const sourceType = typeof entry.meta?.sourceType === 'string' ? entry.meta.sourceType.trim() : '';
+  return sourceType === 'public-growth'
+    || sourceType === 'public-growth-wave2'
+    || sourceType === 'public-growth-global';
+}
+
+function isWorldYiCoreEntry(entry: ManagedContentEntry) {
+  return entry.slug.startsWith('world-yi-');
+}
+
+function dedupeEntries(entries: ManagedContentEntry[]) {
+  const seen = new Set<string>();
+  return entries.filter((entry) => {
+    if (seen.has(entry.id)) {
+      return false;
+    }
+    seen.add(entry.id);
+    return true;
+  });
 }
 
 function readString(record: Record<string, unknown> | undefined, key: string) {
@@ -134,12 +150,16 @@ function isWithinDays(value?: string | null, days = 7) {
 }
 
 export function getWorldYiPublicStats(): WorldYiPublicStats {
-  const worldYiKnowledgeEntries = listPublishedManagedContentEntriesByType('knowledge')
-    .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-'));
-  const worldYiCaseEntries = listPublishedManagedContentEntriesByType('case')
-    .filter((entry) => entry.slug.startsWith('world-yi-'));
-  const worldYiInsightEntries = listPublishedManagedContentEntriesByType('insight')
-    .filter((entry) => entry.slug.startsWith('world-yi-'));
+  const publishedKnowledgeEntries = listPublishedManagedContentEntriesByType('knowledge');
+  const publishedCaseEntries = listPublishedManagedContentEntriesByType('case');
+  const publishedInsightEntries = listPublishedManagedContentEntriesByType('insight');
+  const worldYiKnowledgeEntries = dedupeEntries(publishedKnowledgeEntries
+    .filter((entry) => isPublicKnowledgeEntry(entry) || isGrowthDistributionEntry(entry))
+    .filter((entry) => isWorldYiCoreEntry(entry) || isGrowthDistributionEntry(entry)));
+  const worldYiCaseEntries = dedupeEntries(publishedCaseEntries
+    .filter((entry) => isWorldYiCoreEntry(entry) || isGrowthDistributionEntry(entry)));
+  const worldYiInsightEntries = dedupeEntries(publishedInsightEntries
+    .filter((entry) => isWorldYiCoreEntry(entry) || isGrowthDistributionEntry(entry)));
   const allEntries = [...worldYiKnowledgeEntries, ...worldYiCaseEntries, ...worldYiInsightEntries];
   const seedEntries = allEntries.filter((entry) => entry.source === 'seed');
   const nonSeedEntries = allEntries.filter((entry) => entry.source !== 'seed');
@@ -167,6 +187,7 @@ export function getWorldYiPublicStats(): WorldYiPublicStats {
       : 'mixed_publication';
 
   return {
+    includesGrowthDistribution: true,
     publicKnowledgeCount: worldYiKnowledgeEntries.length,
     publicCaseCount: worldYiCaseEntries.length,
     publicInsightCount: worldYiInsightEntries.length,

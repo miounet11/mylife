@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getReportUpgradeCronToken } from '@/lib/env';
 import { syncReportFeedbackLoop, syncRecentReportFeedbackLoops } from '@/lib/report-feedback-loop';
 
 export const maxDuration = 30;
 
 function isAuthorized(request: NextRequest) {
-  const expected = `${process.env.REPORT_UPGRADE_CRON_TOKEN || ''}`.trim();
+  const expected = getReportUpgradeCronToken();
   if (!expected) {
     return false;
   }

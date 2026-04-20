@@ -17,8 +17,8 @@ export default function PublicArticleHero({
   label,
   title,
   meta,
-  excerpt,
-  hint,
+  excerpt: _excerpt,
+  hint: _hint,
   actions = [],
 }: PublicArticleHeroProps) {
   return (
@@ -29,8 +29,6 @@ export default function PublicArticleHero({
       <div className="mt-6 section-label">{label}</div>
       <h1 className="mt-5 text-4xl font-black text-[color:var(--ink)] md:text-5xl">{title}</h1>
       {meta ? <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[color:var(--muted)]">{meta}</div> : null}
-      <div className="mt-5 intro-copy">{excerpt}</div>
-      {hint ? <div className="mt-4 intro-panel">{hint}</div> : null}
       {actions.length > 0 ? (
         <div className="mt-4 space-y-2">
           <div className="action-guide">快速操作</div>

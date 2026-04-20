@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, BellRing, RefreshCcw } from 'lucide-react';
 import type { UpdatesSummary } from '@/lib/updates-summary';
+import { buildChatHref } from '@/lib/chat-entry';
 
 export type UpdatesStatusSummary = UpdatesSummary;
 
@@ -88,6 +89,7 @@ export default function UpdatesStatusPanel({
   const focusUpgradeStatus = focusReport?.upgradeJob?.status || '';
   const focusDigestStatus = focusReport?.digest?.status || '';
   const focusDigestLabel = focusReport?.digest?.cycleKey || summary?.latestDigest?.cycleKey || '暂无';
+  const latestLifecycle = summary?.recentLifecycleEmails?.[0] || null;
   const ctaHref = authenticated ? '/updates' : '/login?next=%2Fupdates';
   const ctaLabel = authenticated ? '进入更新中心' : '登录查看更新';
   const focusStatus = useMemo(() => {
@@ -107,7 +109,7 @@ export default function UpdatesStatusPanel({
             <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
             <div className="font-semibold text-[color:var(--ink)]">{title}</div>
           </div>
-          <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{description}</div>
+          {description ? <div className="intro-copy mt-2 text-sm text-[color:var(--muted)]">{description}</div> : null}
         </div>
         <Link
           href={ctaHref}
@@ -119,16 +121,16 @@ export default function UpdatesStatusPanel({
       </div>
 
       {loading ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-          正在加载这份报告的更新状态...
+        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
+          加载中...
         </div>
       ) : error ? (
         <div className="mt-4 rounded-[1.4rem] bg-rose-50 px-4 py-4 text-xs leading-6 text-rose-700">
           {error}
         </div>
       ) : !authenticated ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-          登录后，这里会显示你当前报告的升级任务、月度更新和订阅状态。
+        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
+          登录后查看
         </div>
       ) : (
         <>
@@ -151,6 +153,12 @@ export default function UpdatesStatusPanel({
               helper={mapDigestStatus(focusDigestStatus)}
               tone={focusDigestStatus === 'sent' ? 'success' : focusDigestStatus === 'error' ? 'warning' : 'neutral'}
             />
+            <StatusTile
+              label="最近召回提醒"
+              value={mapLifecycleStageLabel(latestLifecycle?.stageKey)}
+              helper={mapDigestStatus(latestLifecycle?.status || undefined)}
+              tone={latestLifecycle?.status === 'sent' ? 'success' : latestLifecycle?.status === 'error' ? 'warning' : 'neutral'}
+            />
           </div>
 
           <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
@@ -159,9 +167,9 @@ export default function UpdatesStatusPanel({
               当前进度
             </div>
             <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{focusStatus}</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-              {focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt || '系统会把后续升级、月度变化和提醒状态集中回写到这里。'}
-            </div>
+            {(focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt) ? (
+              <div className="mt-2 text-sm text-[color:var(--muted)]">{focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt}</div>
+            ) : null}
           </div>
 
           {focusReport?.id ? (
@@ -174,7 +182,11 @@ export default function UpdatesStatusPanel({
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href={`/chat?reportId=${encodeURIComponent(focusReport.id)}`}
+                href={buildChatHref({
+                  reportId: focusReport.id,
+                  question: '请围绕这份报告的当前升级进度和最近状态继续追问，告诉我现在最该回看哪一层，以及下一步最值得做什么。',
+                  source: 'updates_status_panel',
+                })}
                 className="action-secondary"
               >
                 继续围绕这份报告追问
@@ -220,4 +232,12 @@ function mapDigestStatus(status?: string) {
   if (status === 'error') return '发送失败';
   if (status === 'skipped') return '本轮跳过';
   return '暂无记录';
+}
+
+function mapLifecycleStageLabel(stageKey?: string | null) {
+  if (!stageKey) return '暂无';
+  if (stageKey.startsWith('signup_day1_no_report')) return '首次价值提醒';
+  if (stageKey.startsWith('report_day2_no_followup')) return '报告继续提醒';
+  if (stageKey.startsWith('inactive_day7_reactivation')) return '未活跃召回';
+  return '生命周期提醒';
 }

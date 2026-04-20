@@ -1,4 +1,5 @@
 import { cookies } from 'next/headers';
+import { isProductionEnvironment } from './env';
 import { generateId } from './utils';
 import { userOperations } from './database';
 
@@ -56,7 +57,7 @@ export async function getOrCreateGuestUserId(): Promise<string> {
   cookieStore.set(SESSION_COOKIE_NAME, newSessionId, {
     maxAge: 60 * 60 * 24 * 365,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionEnvironment(),
     sameSite: 'lax',
     path: '/',
   });

@@ -22,8 +22,15 @@ import ToolRecommendations from '@/components/tool-recommendations';
 import ResultCtaLink from '@/components/result-cta-link';
 import ToolRunner from '@/components/tool-runner';
 import { getAuthSession } from '@/lib/auth';
+import { buildChatHref } from '@/lib/chat-entry';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
 import { buildJourneyForTool } from '@/lib/surface-journeys';
+import {
+  createBreadcrumbSchema,
+  createCollectionPageSchema,
+  createItemListSchema,
+  createPublicContentMetadata,
+} from '@/lib/public-content-seo';
 import { summarizeToolSessions } from '@/lib/tool-context';
 import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition } from '@/lib/tools';
 
@@ -35,23 +42,31 @@ export async function generateMetadata({
   const { slug } = await params;
   const tool = getToolDefinition(slug);
   if (!tool) {
-    return {
+    return createPublicContentMetadata({
       title: '单项工具 | 人生K线',
-    };
+      description: '围绕具体问题组织的单项工具页。',
+      path: `/tools/${slug}`,
+      type: 'website',
+    });
   }
 
-  return {
+  return createPublicContentMetadata({
     title: `${tool.title} | 人生K线工具中心`,
     description: `${tool.description}。适合：${tool.targetUser}。`,
-  };
+    path: `/tools/${tool.slug}`,
+    type: 'website',
+  });
 }
 
 export default async function ToolDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ source?: string }>;
 }) {
   const { slug } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
   const tool = getToolDefinition(slug);
   if (!tool) {
     notFound();
@@ -66,13 +81,55 @@ export default async function ToolDetailPage({
   const premiumOffer = buildToolPremiumOffer(tool);
   const bundle = getToolBundleForSlug(tool.slug);
   const journey = buildJourneyForTool(tool);
+  const entrySource = resolvedSearchParams.source?.trim() || '';
+  const analyzeEntryHref = `/analyze?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}&toolSlug=${encodeURIComponent(tool.slug)}&source=tool_detail`;
+  const toolChatQuestion = `请围绕“${tool.shortTitle}”继续拆解：如果把这个问题落到我自己身上，现在更该推进、观察还是收手，先看哪一层，下一步最值得先做什么？`;
+  const toolPrimaryChatHref = buildChatHref({
+    reportId: report?.id,
+    intent: tool.chatIntent || tool.slug,
+    question: toolChatQuestion,
+    source: 'tool_detail_primary_chat',
+  });
+  const toolRunnerChatHref = buildChatHref({
+    reportId: report?.id,
+    intent: tool.chatIntent || tool.slug,
+    question: toolChatQuestion,
+    source: 'tool_detail_runner_tip_chat',
+  });
+  const runnerExamples = Array.from(new Set([
+    tool.rightQuestion,
+    tool.promptHint,
+    `结合我的综合报告，先判断${tool.shortTitle}现在更偏推进、观察还是收缩。`,
+  ].filter(Boolean)));
+  const schemas = [
+    createCollectionPageSchema({
+      headline: tool.title,
+      description: `${tool.description}。适合：${tool.targetUser}。`,
+      path: `/tools/${tool.slug}`,
+      keywords: [tool.title, tool.shortTitle, ...tool.hookKeywords],
+    }),
+    createBreadcrumbSchema([
+      { name: '首页', path: '/' },
+      { name: '工具中心', path: '/tools' },
+      { name: tool.title, path: `/tools/${tool.slug}` },
+    ]),
+    createItemListSchema(
+      `${tool.title}常见问题`,
+      tool.faqItems.map((item, index) => ({
+        name: item.question,
+        path: `/tools/${tool.slug}#faq`,
+        position: index + 1,
+      })),
+    ),
+  ].filter(Boolean);
 
   return (
     <div className="page-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <AnalyticsPageView
         eventName="tool_detail_viewed"
         page={`/tools/${tool.slug}`}
-        meta={{ toolSlug: tool.slug, category: tool.category }}
+        meta={{ toolSlug: tool.slug, category: tool.category, source: entrySource || 'direct' }}
       />
       <SiteHeader ctaHref="/tools" ctaLabel="工具中心" />
 
@@ -92,18 +149,18 @@ export default async function ToolDetailPage({
               actions={[
                 <ResultCtaLink
                   key="start"
-                  href="#tool-runner"
+                  href={report ? '#tool-runner' : analyzeEntryHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_primary_start"
                   className="action-primary action-main"
-                  meta={{ toolSlug: tool.slug, category: tool.category }}
+                  meta={{ toolSlug: tool.slug, category: tool.category, source: report ? 'tool_detail_runner' : 'tool_detail_analyze_gate' }}
                 >
-                  立即开始这个工具
+                  {report ? '立即开始这个工具' : '先生成综合报告再开始'}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </ResultCtaLink>,
                 <ResultCtaLink
                   key="chat"
-                  href={report ? `/chat?reportId=${encodeURIComponent(report.id)}&intent=${encodeURIComponent(tool.chatIntent || '')}` : '/chat'}
+                  href={toolPrimaryChatHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_primary_chat"
                   className="action-secondary"
@@ -148,9 +205,11 @@ export default async function ToolDetailPage({
                 <div className="rounded-[1.25rem] bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                   深测差异：{tool.paidValueLine}
                 </div>
-              </div>
-              <div className="mt-4 rounded-[1.25rem] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-                深测差异：{tool.paidValueLine}
+                {!report ? (
+                  <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50/80 p-4 text-xs leading-6 text-amber-900">
+                    这个工具会读取你的综合报告来判断结构与阶段。你现在可以先完成一次综合判断，回来后再直接运行，不会白走流程。
+                  </div>
+                ) : null}
               </div>
             </div>
 
@@ -161,7 +220,7 @@ export default async function ToolDetailPage({
               ].map(([title, description]) => (
                 <div key={title} className="soft-card rounded-[1.75rem] p-5">
                   <div className="text-base font-bold text-[color:var(--ink)]">{title}</div>
-                  <div className="intro-copy mt-2">{description}</div>
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{description}</div>
                 </div>
               ))}
             </div>
@@ -169,12 +228,21 @@ export default async function ToolDetailPage({
         </section>
 
         <section id="tool-runner" className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
-          <ToolRunner toolSlug={tool.slug} reportId={report?.id} />
+          <ToolRunner
+            toolSlug={tool.slug}
+            reportId={report?.id}
+            promptHint={tool.promptHint}
+            signaturePromise={tool.signaturePromise}
+            decisionLens={tool.decisionLens}
+            examples={runnerExamples}
+            analyzeHref={analyzeEntryHref}
+            hasReport={!!report}
+          />
 
           <div className="glass-panel rounded-[2rem] p-6">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              运行前提示
+              输出项目
             </div>
             <div className="mt-4 grid gap-3">
               <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
@@ -195,7 +263,7 @@ export default async function ToolDetailPage({
                   返回该分类
                 </ResultCtaLink>
                 <ResultCtaLink
-                  href={report ? `/chat?reportId=${encodeURIComponent(report.id)}&intent=${encodeURIComponent(tool.chatIntent || '')}` : '/chat'}
+                  href={toolRunnerChatHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_runner_tip_chat"
                   className="action-secondary"
@@ -237,7 +305,7 @@ export default async function ToolDetailPage({
             {tool.freeInsights.slice(0, 2).map((item) => (
               <div key={item} className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">免费先看</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item}</div>
+                <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
               </div>
             ))}
             {tool.premiumModules.slice(0, 2).map((item) => (
@@ -261,6 +329,23 @@ export default async function ToolDetailPage({
           <ToolLinkedContentPanel tool={tool} page={`/tools/${tool.slug}`} />
         </section>
 
+        <section id="faq" className="mt-10">
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              常见问题
+            </div>
+            <div className="mt-4 grid gap-4 md:grid-cols-2">
+              {tool.faqItems.slice(0, 4).map((item) => (
+                <div key={item.question} className="soft-card rounded-[1.5rem] p-5">
+                  <div className="text-base font-bold text-[color:var(--ink)]">{item.question}</div>
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item.answer}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
         <section className="mt-10">
           <ToolJourneyPanel tool={tool} />
         </section>
@@ -268,8 +353,8 @@ export default async function ToolDetailPage({
         <section className="mt-10">
           <SurfaceJourneyPanel
             journey={journey}
-            title="做完这个工具，下一步继续放大"
-            description="完成当前判断后，继续回到综合测算，或进入相关文章与案例，把结论落到真实动作。"
+            title="下一步"
+            description="先完成当前单项判断，再顺着相关内容、升级服务和后续动作，把问题继续往下拆。"
           />
         </section>
 
@@ -292,7 +377,7 @@ export default async function ToolDetailPage({
             report={report}
             page={`/tools/${tool.slug}`}
             title="下一步推荐"
-            description="先把当前问题做窄，再沿着阶段窗口和高频应用继续下钻。"
+            description="结合你当前的工具结果和已有报告，优先推荐最适合继续推进的关联工具与阅读路径。"
           />
         </section>
       </main>

@@ -45,9 +45,12 @@ describe('knowledge ops snapshot', () => {
         topicName: '运行主题',
         relatedTopicNames: ['关系节奏'],
         qualityScore: 95,
+        conceptCount: 4,
+        relatedTopicCount: 2,
         editorialScore: 106,
         editorialTier: 'flagship',
         homepageEligible: true,
+        publicationReady: true,
       },
     }, 'test_user');
 

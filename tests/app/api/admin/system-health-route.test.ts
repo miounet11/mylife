@@ -106,7 +106,7 @@ describe('GET /api/admin/system/health', () => {
     process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN = originalToken;
   });
 
-  it('returns a system snapshot for admins', async () => {
+  it('returns a cheap system snapshot for admins', async () => {
     const response = await GET(new Request('http://localhost/api/admin/system/health') as any);
     const payload = await response.json();
 
@@ -114,6 +114,7 @@ describe('GET /api/admin/system/health', () => {
     expect(payload.success).toBe(true);
     expect(payload.snapshot.severity).toBe('healthy');
     expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledTimes(1);
+    expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledWith({ mode: 'summary' });
   });
 
   it('allows token-based access when no admin session is present', async () => {

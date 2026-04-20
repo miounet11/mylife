@@ -27,6 +27,10 @@ function parseKeyArg() {
   return raw ? raw.split('=')[1]?.trim() : '';
 }
 
+function parseRepairDraftsFlag() {
+  return process.argv.includes('--repair-drafts');
+}
+
 function uniqueStrings(values: string[]) {
   return [...new Set(values.map((item) => `${item || ''}`.trim()).filter(Boolean))];
 }
@@ -45,17 +49,27 @@ function ensureUniqueSlug(slug: string, used: Set<string>) {
 async function main() {
   const limit = parseLimitArg();
   const key = parseKeyArg();
+  const repairDrafts = parseRepairDraftsFlag();
   const targets = (wave2Targets as Wave2Target[])
     .filter((item) => !key || item.key === key);
   const existingEntries = listManagedContentEntries();
   const usedSlugs = new Set(existingEntries.map((entry) => entry.slug));
-  const queue = targets
-    .filter((item) => !existingEntries.some((entry) => (
-      entry.meta?.growthPlanKey === item.key
-      && entry.meta?.sourceType === 'public-growth-wave2'
-      && (entry.status === 'draft' || entry.status === 'published')
-    )))
-    .slice(0, limit);
+  const queue = repairDrafts
+    ? targets
+      .filter((item) => existingEntries.some((entry) => (
+        entry.status === 'draft'
+        && entry.meta?.growthPlanKey === item.key
+        && entry.meta?.sourceType === 'public-growth-wave2'
+        && `${entry.source || ''}`.startsWith('agent-fallback:')
+      )))
+      .slice(0, limit)
+    : targets
+      .filter((item) => !existingEntries.some((entry) => (
+        entry.meta?.growthPlanKey === item.key
+        && entry.meta?.sourceType === 'public-growth-wave2'
+        && (entry.status === 'draft' || entry.status === 'published')
+      )))
+      .slice(0, limit);
 
   const savedEntries = [];
   let llmSucceededCount = 0;
@@ -81,9 +95,16 @@ async function main() {
     fallbackCount += generated.fallbackCount;
 
     for (const draft of generated.entries) {
-      const slug = ensureUniqueSlug(draft.slug, usedSlugs);
+      const existingDraft = existingEntries.find((entry) => (
+        entry.status === 'draft'
+        && entry.meta?.growthPlanKey === item.key
+        && entry.meta?.sourceType === 'public-growth-wave2'
+      ));
+      const slug = existingDraft
+        ? existingDraft.slug
+        : ensureUniqueSlug(draft.slug, usedSlugs);
       const entry = saveManagedContentEntry({
-        id: '',
+        id: existingDraft?.id || '',
         contentType: draft.contentType,
         subtype: draft.subtype,
         slug,

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 const SITE_URL = 'https://www.life-kline.com';
 const SITE_NAME = '人生K线';
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image.jpg`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/icon.svg`;
 
 export interface BreadcrumbItem {
   name: string;
@@ -15,6 +15,7 @@ interface PublicMetadataInput {
   path: string;
   type?: 'article' | 'website';
   locale?: string;
+  languages?: Record<string, string>;
 }
 
 interface ArticleSchemaInput {
@@ -42,22 +43,52 @@ function toAbsoluteUrl(path: string) {
   return path.startsWith('http') ? path : `${SITE_URL}${path}`;
 }
 
-function normalizeOgLocale(locale?: string) {
+function normalizeLocale(locale?: string) {
   if (!locale) {
-    return 'zh_CN';
+    return 'zh-CN';
   }
 
-  return locale.replace('-', '_');
+  return locale === 'en' ? 'en-US' : locale;
+}
+
+function normalizeOgLocale(locale?: string) {
+  return normalizeLocale(locale).replace('-', '_');
+}
+
+export function normalizeAlternateLanguagePaths(input: {
+  languages?: Record<string, string>;
+  defaultLocale?: string;
+  defaultPath: string;
+}) {
+  const defaultLocale = normalizeLocale(input.defaultLocale);
+  const languageEntries = input.languages ?? {
+    [defaultLocale]: input.defaultPath,
+    'x-default': input.defaultPath,
+  };
+
+  return {
+    ...languageEntries,
+    'x-default': languageEntries['x-default'] ?? languageEntries[defaultLocale] ?? input.defaultPath,
+  };
 }
 
 export function createPublicContentMetadata(input: PublicMetadataInput): Metadata {
   const url = toAbsoluteUrl(input.path);
+  const pageLocale = normalizeLocale(input.locale);
+  const languages = Object.fromEntries(
+    Object.entries(normalizeAlternateLanguagePaths({
+      languages: input.languages,
+      defaultLocale: pageLocale,
+      defaultPath: input.path,
+    })).map(([key, value]) => [key, toAbsoluteUrl(value)]),
+  );
 
   return {
     title: input.title,
     description: input.description,
     alternates: {
       canonical: url,
+      languages,
     },
     openGraph: {
       type: input.type === 'website' ? 'website' : 'article',
@@ -65,7 +96,7 @@ export function createPublicContentMetadata(input: PublicMetadataInput): Metadat
       siteName: SITE_NAME,
       title: input.title,
       description: input.description,
-      locale: normalizeOgLocale(input.locale),
+      locale: normalizeOgLocale(pageLocale),
       images: [
         {
           url: DEFAULT_OG_IMAGE,

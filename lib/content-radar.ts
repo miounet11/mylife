@@ -1,4 +1,5 @@
 import { contentRadarRunOperations, contentSignalOperations } from '@/lib/database';
+import { getContentRadarSourcesRaw } from '@/lib/env';
 import { STRATEGIC_CLUSTERS } from '@/lib/content-ops';
 import type { ContentGenerationInput } from '@/lib/content-generation';
 import type { EntityInsightType } from '@/lib/content';
@@ -200,7 +201,7 @@ const DEFAULT_CONTENT_RADAR_SOURCES: ContentRadarSource[] = [
 ];
 
 export function getContentRadarSources() {
-  const raw = `${process.env.CONTENT_RADAR_SOURCES || ''}`.trim();
+  const raw = getContentRadarSourcesRaw();
   if (!raw) {
     return DEFAULT_CONTENT_RADAR_SOURCES;
   }

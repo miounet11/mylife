@@ -1,3 +1,18 @@
+import type {
+  ReportActionBoardSection,
+  ReportBlueprintSection,
+  ReportCockpitSection,
+  ReportCurrentStateSection,
+  ReportLifeKLineSection,
+  ReportPersonalityBridgeSection,
+  ReportScenarioPanelSection,
+  ReportTimelineSection,
+  ReportV4Sections,
+  ReportValidationSection,
+} from './report-types';
+import type { EventDateKey, EventViewImpact, EventViewType } from './event-view';
+import { formatLocalDateKey } from './utils';
+
 type KlinePoint = {
   year: number;
   career: number;
@@ -24,6 +39,10 @@ type ReportV2Input = {
     pillars?: Array<{
       relationships?: Relationships;
     }>;
+  };
+  analysis?: {
+    opening?: string;
+    summary?: string;
   };
   pattern?: {
     type?: string;
@@ -95,9 +114,9 @@ export interface ConfidenceAnalysis {
 export interface ReportActionSuggestion {
   key: string;
   title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  date: string;
-  impact: 'positive' | 'negative' | 'neutral';
+  type: EventViewType;
+  date: EventDateKey;
+  impact: EventViewImpact;
   description: string;
   reason: string;
   reminderAdvanceDays: number;
@@ -162,6 +181,28 @@ export interface ExpertInterpretationBlock {
   detail: string;
   tags: string[];
 }
+
+type CalendarAnchor = Date | string;
+
+type ReportV4BuilderInput = {
+  result: ReportV2Input;
+  scenarioViews?: ScenarioView[];
+  monthlyWindows?: MonthlyWindow[];
+  confidence?: ConfidenceAnalysis | null;
+  decisionPlaybook?: DecisionPlaybookItem[];
+  actionSuggestions?: ReportActionSuggestion[];
+  validationInsights?: ReportValidationInsights | null;
+  correctionInsight?: ReportCorrectionInsight | null;
+  stateVector?: {
+    current?: {
+      tianShi: number;
+      diLi: number;
+      renHe: number;
+    };
+  } | null;
+  expertInterpretation?: ExpertInterpretationBlock[];
+  yearlyTrendSnapshots?: YearlyTrendSnapshot[];
+};
 
 export function buildScenarioViews(result: ReportV2Input): ScenarioView[] {
   const futurePoints = getFutureKlineSource(result.klineData || []);
@@ -249,7 +290,7 @@ export function buildScenarioViews(result: ReportV2Input): ScenarioView[] {
   });
 }
 
-export function buildMonthlyWindows(result: ReportV2Input, startDate = new Date()): MonthlyWindow[] {
+export function buildMonthlyWindows(result: ReportV2Input, startDate: CalendarAnchor = new Date()): MonthlyWindow[] {
   const favored = [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])];
   const avoided = result.advice?.jiShen || [];
   const source = getFutureKlineSource(result.klineData || []);
@@ -258,11 +299,12 @@ export function buildMonthlyWindows(result: ReportV2Input, startDate = new Date(
     : 60;
   const dayunModifier = mapDayunModifier(result.dayun?.currentDayun?.quality);
   const windows: MonthlyWindow[] = [];
+  const { year: startYear, month: startMonth } = resolveCalendarAnchor(startDate);
 
   for (let offset = 0; offset < 12; offset++) {
-    const date = new Date(Date.UTC(startDate.getUTCFullYear(), startDate.getUTCMonth() + offset, 1));
-    const year = date.getUTCFullYear();
-    const month = date.getUTCMonth() + 1;
+    const date = new Date(startYear, startMonth + offset, 1);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
     const element = mapMonthElement(month);
     const monthlySeed = hashString(`${year}-${month}-${(result.pattern?.type || '')}-${(favored || []).join(',')}`);
     const randomDrift = (monthlySeed % 11) - 5;
@@ -355,7 +397,7 @@ export function buildReportActionSuggestions(
     scenarioViews?: ScenarioView[];
     monthlyWindows?: MonthlyWindow[];
   },
-  startDate = new Date()
+  startDate: CalendarAnchor = new Date()
 ): ReportActionSuggestion[] {
   const scenarios = (result.scenarioViews || buildScenarioViews(result))
     .filter((item) => item.key !== 'overall');
@@ -421,7 +463,7 @@ export function buildYearlyRoadmap(
     scenarioViews?: ScenarioView[];
     monthlyWindows?: MonthlyWindow[];
   },
-  startDate = new Date()
+  startDate: CalendarAnchor = new Date()
 ): YearlyRoadmapPhase[] {
   const scenarios = (result.scenarioViews || buildScenarioViews(result)).filter((item) => item.key !== 'overall');
   const windows = result.monthlyWindows || buildMonthlyWindows(result, startDate);
@@ -750,6 +792,282 @@ export function buildExpertInterpretation(result: ReportV2Input & {
   ];
 }
 
+export function buildReportCockpitSection(params: ReportV4BuilderInput): ReportCockpitSection {
+  const scenarios = params.scenarioViews || buildScenarioViews(params.result);
+  const windows = params.monthlyWindows || buildMonthlyWindows(params.result);
+  const confidence = params.confidence || buildConfidenceAnalysis(params.result);
+  const playbook = params.decisionPlaybook || buildDecisionPlaybook({
+    ...params.result,
+    scenarioViews: scenarios,
+    monthlyWindows: windows,
+  });
+  const strongestScenario = scenarios.find((item) => item.key !== 'overall') || scenarios[0];
+  const bestWindow = [...windows].sort((left, right) => right.score - left.score)[0];
+  const riskWindow = [...windows].sort((left, right) => left.score - right.score)[0];
+  const favored = compactUniqueLines([
+    ...(params.result.advice?.yongShen || []),
+    ...(params.result.advice?.xiShen || []),
+  ], 3);
+
+  return {
+    headline: compactSentence(params.result.analysis?.opening || strongestScenario?.summary || '先看结构主轴，再决定当前动作节奏。', 54),
+    judgment: compactSentence(playbook[0]?.whyNow || strongestScenario?.summary || '', 88),
+    stageLabel: params.result.fortune?.currentDaYun || confidence.summary,
+    identityLabel: compactSentence(params.result.pattern?.type || params.result.basic?.dayMaster || '', 36),
+    confidenceLabel: `${mapConfidenceLabel(confidence.level)} · ${confidence.overallScore}`,
+    topActions: compactUniqueLines([
+      playbook[0]?.nowAction,
+      ...(params.actionSuggestions || []).map((item) => item.description),
+      strongestScenario?.actionLabel,
+    ], 3),
+    avoidances: compactUniqueLines([
+      playbook[0]?.avoidAction,
+      ...(confidence.sensitivePoints || []),
+      riskWindow ? `${riskWindow.label} 优先控节奏。` : '',
+    ], 3),
+    focusChips: compactUniqueLines([
+      params.result.pattern?.type,
+      strongestScenario ? `${mapTrackLabel(strongestScenario.key)}主线` : '',
+      ...favored.map((item) => `${item}顺势`),
+    ], 4),
+    periodCards: compactPeriodCards([
+      bestWindow ? {
+        label: '最近顺风窗口',
+        value: bestWindow.label,
+        tone: bestWindow.status,
+        note: compactSentence(bestWindow.theme, 28),
+      } : null,
+      riskWindow ? {
+        label: '需要控风险',
+        value: riskWindow.label,
+        tone: riskWindow.status,
+        note: compactSentence(riskWindow.reason, 34),
+      } : null,
+      strongestScenario ? {
+        label: '当前主战场',
+        value: mapTrackLabel(strongestScenario.key),
+        tone: strongestScenario.status,
+        note: compactSentence(strongestScenario.actionLabel, 30),
+      } : null,
+    ]),
+  };
+}
+
+export function buildReportLifeKLineSection(params: ReportV4BuilderInput): ReportLifeKLineSection {
+  const snapshots = params.yearlyTrendSnapshots || buildYearlyTrendSnapshots(params.result);
+  const latest = snapshots[0];
+  const current = params.stateVector?.current;
+
+  return {
+    headline: latest ? `${latest.year} - ${latest.year + 2} 长弧线` : '人生长弧线',
+    summary: compactSentence(latest?.headline || params.result.fortune?.interaction || '', 88),
+    arcLabel: compactSentence(latest?.advice || '', 60),
+    latestMetrics: [
+      current ? { label: '天时', value: current.tianShi.toFixed(1), tone: mapMetricTone(current.tianShi) } : null,
+      current ? { label: '地利', value: current.diLi.toFixed(1), tone: mapMetricTone(current.diLi) } : null,
+      current ? { label: '人和', value: current.renHe.toFixed(1), tone: mapMetricTone(current.renHe) } : null,
+      latest ? { label: '主导板块', value: latest.dominantTrack, tone: 'strong' as const } : null,
+    ].filter(Boolean) as ReportLifeKLineSection['latestMetrics'],
+  };
+}
+
+export function buildReportBlueprintSection(params: ReportV4BuilderInput): ReportBlueprintSection {
+  const expert = params.expertInterpretation || buildExpertInterpretation({
+    ...params.result,
+    scenarioViews: params.scenarioViews,
+    monthlyWindows: params.monthlyWindows,
+    confidence: params.confidence,
+  });
+  const strongestScenario = (params.scenarioViews || buildScenarioViews(params.result)).find((item) => item.key !== 'overall');
+  const weakestScenario = [...(params.scenarioViews || buildScenarioViews(params.result))]
+    .filter((item) => item.key !== 'overall')
+    .sort((left, right) => left.score - right.score)[0];
+  const favored = compactUniqueLines([
+    ...(params.result.advice?.yongShen || []),
+    ...(params.result.advice?.xiShen || []),
+  ], 3);
+
+  return {
+    typeLabel: params.result.pattern?.type,
+    strongestAdvantage: compactSentence(strongestScenario?.summary || expert[0]?.headline || '', 56),
+    recurringRisk: compactSentence(weakestScenario?.risks?.[0] || expert[2]?.detail || '', 56),
+    usefulDirection: compactSentence(favored.length > 0 ? `优先放大 ${favored.join('、')} 对应动作。` : expert[1]?.headline || '', 56),
+    unsuitablePattern: compactSentence((params.result.advice?.jiShen || []).length > 0 ? `避免 ${params.result.advice?.jiShen?.join('、')} 失衡放大。` : weakestScenario?.actionLabel || '', 56),
+    facts: compactUniqueLines([
+      expert[0]?.headline,
+      expert[1]?.headline,
+      params.result.basic?.dayMaster ? `日主 ${params.result.basic.dayMaster}` : '',
+      favored.length > 0 ? `顺势元素 ${favored.join('、')}` : '',
+    ], 4),
+  };
+}
+
+export function buildReportCurrentStateSection(params: ReportV4BuilderInput): ReportCurrentStateSection {
+  const scenarios = params.scenarioViews || buildScenarioViews(params.result);
+  const confidence = params.confidence || buildConfidenceAnalysis(params.result);
+  const leadScenario = scenarios.find((item) => item.key !== 'overall') || scenarios[0];
+  const current = params.stateVector?.current;
+  const stance = mapScenarioToCurrentStateStance(leadScenario?.status, confidence.level);
+
+  return {
+    headline: compactSentence(leadScenario?.summary || params.result.analysis?.summary || '当前重点是先校准阶段，再做关键动作。', 64),
+    summary: compactSentence(params.result.fortune?.interaction || confidence.summary || '', 92),
+    stance,
+    stanceLabel: mapCurrentStateLabel(stance),
+    evidence: compactUniqueLines([
+      params.result.pattern?.type ? `结构主轴：${params.result.pattern.type}` : '',
+      params.result.fortune?.currentDaYun ? `当前阶段：${params.result.fortune.currentDaYun}` : '',
+      current ? `天时/地利/人和：${current.tianShi.toFixed(1)} / ${current.diLi.toFixed(1)} / ${current.renHe.toFixed(1)}` : '',
+      leadScenario?.focus?.[0],
+    ], 3),
+    usageNote: compactSentence(leadScenario?.actionLabel || confidence.summary || '', 58),
+  };
+}
+
+export function buildReportTimelineSection(params: ReportV4BuilderInput): ReportTimelineSection {
+  const windows = params.monthlyWindows || buildMonthlyWindows(params.result);
+
+  return {
+    headline: '未来 12 个月节奏板',
+    summary: compactSentence('把窗口分成推进、稳住、谨慎、回看四种节奏，不把每个月都写成长文。', 68),
+    items: windows.slice(0, 12).map((item) => ({
+      label: item.label,
+      theme: compactSentence(item.theme, 26),
+      status: item.status,
+      statusLabel: mapWindowStatusLabel(item.status, item.score),
+      reason: compactSentence(item.reason, 44),
+    })),
+  };
+}
+
+export function buildReportScenarioPanelSection(params: ReportV4BuilderInput): ReportScenarioPanelSection {
+  const scenarios = (params.scenarioViews || buildScenarioViews(params.result))
+    .filter((item) => item.key !== 'overall')
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 4);
+
+  return {
+    summary: compactSentence('每个板块只保留一个判断、一个理由、一个动作，避免重复叙述。', 66),
+    panels: scenarios.map((item) => ({
+      key: item.key,
+      title: mapTrackLabel(item.key),
+      verdict: compactSentence(item.actionLabel, 28),
+      reason: compactSentence(item.summary || item.focus?.[0] || '', 56),
+      action: compactSentence(item.focus?.[0] || item.risks?.[0] || '', 56),
+      status: item.status,
+      scoreLabel: `评分 ${item.score}`,
+    })),
+  };
+}
+
+export function buildReportActionBoardSection(params: ReportV4BuilderInput): ReportActionBoardSection {
+  const playbook = params.decisionPlaybook || buildDecisionPlaybook({
+    ...params.result,
+    scenarioViews: params.scenarioViews,
+    monthlyWindows: params.monthlyWindows,
+  });
+  const suggestions = params.actionSuggestions || buildReportActionSuggestions({
+    ...params.result,
+    scenarioViews: params.scenarioViews,
+    monthlyWindows: params.monthlyWindows,
+  });
+
+  return {
+    focusSummary: compactSentence(playbook[0]?.whyNow || suggestions[0]?.reason || '先做当下最值得验证的动作。', 78),
+    now: compactUniqueLines([
+      ...playbook.slice(0, 2).map((item) => item.nowAction),
+      suggestions[0]?.description,
+    ], 3),
+    next30Days: compactUniqueLines([
+      playbook[0]?.bestWindow ? `围绕 ${playbook[0].bestWindow} 安排关键节点。` : '',
+      suggestions[0]?.reason,
+      playbook[1]?.nowAction,
+    ], 3),
+    next90Days: compactUniqueLines([
+      ...playbook.slice(0, 3).map((item) => item.whyNow),
+      suggestions[1]?.reason,
+    ], 3),
+    avoidList: compactUniqueLines([
+      ...playbook.slice(0, 2).map((item) => item.avoidAction),
+      suggestions.find((item) => item.impact === 'negative')?.description,
+    ], 3),
+  };
+}
+
+export function buildReportValidationSection(params: ReportV4BuilderInput): ReportValidationSection {
+  const confidence = params.confidence || buildConfidenceAnalysis(params.result);
+  const validation = params.validationInsights;
+  const correction = params.correctionInsight;
+
+  return {
+    confidenceLabel: `${mapConfidenceLabel(confidence.level)} · ${confidence.overallScore}`,
+    summary: compactSentence(validation?.summary || confidence.summary || '', 84),
+    tone: confidence.level,
+    highConfidencePoints: compactUniqueLines(confidence.stablePoints || [], 3),
+    sensitivePoints: compactUniqueLines(confidence.sensitivePoints || [], 3),
+    correctionSummary: compactSentence(correction?.summary || correction?.likelyCause || '', 84),
+    eventPrompts: compactUniqueLines([
+      validation?.pendingCount ? `还有 ${validation.pendingCount} 个事件待验证。` : '',
+      ...(correction?.checkpoints || []),
+      '遇到转岗、合作、关系推进或健康波动时及时回填结果。',
+    ], 3),
+  };
+}
+
+export function buildReportPersonalityBridgeSection(params: ReportV4BuilderInput): ReportPersonalityBridgeSection | undefined {
+  const expert = params.expertInterpretation || buildExpertInterpretation({
+    ...params.result,
+    scenarioViews: params.scenarioViews,
+    monthlyWindows: params.monthlyWindows,
+    confidence: params.confidence,
+  });
+  const tags = compactUniqueLines(expert.flatMap((item) => item.tags || []), 3);
+  if (tags.length === 0) {
+    return undefined;
+  }
+
+  return {
+    label: compactSentence(params.result.pattern?.type || params.result.basic?.dayMaster || '结构画像', 28),
+    summary: compactSentence('这是帮助你理解风格的软桥接标签，不是确定性人格结论。', 52),
+    traits: tags,
+    disclaimers: ['仅作沟通桥接，不等同于 MBTI / SBTI 定型判断。'],
+  };
+}
+
+export function buildReportV4Sections(params: ReportV4BuilderInput): ReportV4Sections {
+  const scenarioViews = params.scenarioViews || buildScenarioViews(params.result);
+  const monthlyWindows = params.monthlyWindows || buildMonthlyWindows(params.result);
+  const confidence = params.confidence || buildConfidenceAnalysis(params.result);
+  const decisionPlaybook = params.decisionPlaybook || buildDecisionPlaybook({
+    ...params.result,
+    scenarioViews,
+    monthlyWindows,
+  });
+  const actionSuggestions = params.actionSuggestions || buildReportActionSuggestions({
+    ...params.result,
+    scenarioViews,
+    monthlyWindows,
+  });
+  const expertInterpretation = params.expertInterpretation || buildExpertInterpretation({
+    ...params.result,
+    scenarioViews,
+    monthlyWindows,
+    confidence,
+  });
+
+  return {
+    cockpit: buildReportCockpitSection({ ...params, scenarioViews, monthlyWindows, confidence, decisionPlaybook, actionSuggestions }),
+    lifeKLine: buildReportLifeKLineSection({ ...params, scenarioViews, monthlyWindows }),
+    coreBlueprint: buildReportBlueprintSection({ ...params, scenarioViews, monthlyWindows, confidence, expertInterpretation }),
+    currentOperatingSystem: buildReportCurrentStateSection({ ...params, scenarioViews, confidence }),
+    timeline12Months: buildReportTimelineSection({ ...params, monthlyWindows }),
+    scenarioPanels: buildReportScenarioPanelSection({ ...params, scenarioViews }),
+    actionBoard: buildReportActionBoardSection({ ...params, scenarioViews, monthlyWindows, decisionPlaybook, actionSuggestions }),
+    validationLayer: buildReportValidationSection({ ...params, confidence }),
+    personalityBridge: buildReportPersonalityBridgeSection({ ...params, expertInterpretation }),
+  };
+}
+
 function getFutureKlineSource(data: KlinePoint[]) {
   if (!data || data.length === 0) return [];
   const currentYear = new Date().getUTCFullYear();
@@ -766,6 +1084,73 @@ function compactList(values?: string[], extra?: string) {
 
 function ensureFallback(values: string[], fallback: string) {
   return values.filter(Boolean).length > 0 ? values.filter(Boolean) : [fallback];
+}
+
+function compactUniqueLines(values: Array<string | null | undefined>, limit: number) {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const value of values) {
+    const cleaned = `${value || ''}`.replace(/\s+/g, ' ').trim();
+    if (!cleaned) continue;
+
+    const signature = cleaned
+      .replace(/[，。,.；;：:\s]/g, '')
+      .slice(0, 42);
+    if (seen.has(signature)) continue;
+
+    seen.add(signature);
+    result.push(cleaned);
+    if (result.length >= limit) break;
+  }
+
+  return result;
+}
+
+function compactSentence(value?: string | null, maxLength = 80) {
+  const cleaned = `${value || ''}`.replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  if (cleaned.length <= maxLength) return cleaned;
+  return `${cleaned.slice(0, maxLength - 1).trim()}…`;
+}
+
+function compactPeriodCards(cards: Array<ReportCockpitSection['periodCards'][number] | null>) {
+  return cards.filter(Boolean) as ReportCockpitSection['periodCards'];
+}
+
+function mapConfidenceLabel(level: ConfidenceAnalysis['level']) {
+  if (level === 'high') return '高可信';
+  if (level === 'medium') return '中可信';
+  return '观察级';
+}
+
+function mapMetricTone(value: number): 'strong' | 'steady' | 'watch' {
+  if (value >= 7.2) return 'strong';
+  if (value >= 5.8) return 'steady';
+  return 'watch';
+}
+
+function mapScenarioToCurrentStateStance(
+  status: ScenarioView['status'] | undefined,
+  confidenceLevel: ConfidenceAnalysis['level']
+): ReportCurrentStateSection['stance'] {
+  if (confidenceLevel === 'watch') return 'adjust';
+  if (status === 'push') return 'push';
+  if (status === 'caution') return 'recover';
+  return 'hold';
+}
+
+function mapCurrentStateLabel(stance: ReportCurrentStateSection['stance']) {
+  if (stance === 'push') return '主动推进';
+  if (stance === 'adjust') return '边走边校准';
+  if (stance === 'recover') return '先复盘修正';
+  return '稳住节奏';
+}
+
+function mapWindowStatusLabel(status: MonthlyWindow['status'], score?: number) {
+  if (status === 'push') return '推进';
+  if (status === 'steady') return typeof score === 'number' && score < 64 ? '准备' : '稳住';
+  return typeof score === 'number' && score < 52 ? '回看' : '谨慎';
 }
 
 function mapScenarioActionLabel(status: ScenarioView['status'], title: string) {
@@ -877,8 +1262,53 @@ function hashString(input: string) {
   return hash;
 }
 
-function formatDateKey(date: Date) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-01`;
+function resolveCalendarAnchor(anchor: CalendarAnchor) {
+  if (typeof anchor === 'string') {
+    const monthMatched = anchor.match(/^(\d{4})-(\d{2})$/);
+    if (monthMatched) {
+      return {
+        year: Number(monthMatched[1]),
+        month: Number(monthMatched[2]) - 1,
+      };
+    }
+
+    const dayMatched = anchor.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dayMatched) {
+      return {
+        year: Number(dayMatched[1]),
+        month: Number(dayMatched[2]) - 1,
+      };
+    }
+  }
+
+  const date = anchor instanceof Date ? anchor : new Date(anchor);
+  return {
+    year: date.getFullYear(),
+    month: date.getMonth(),
+  };
+}
+
+function formatDateKey(date: CalendarAnchor) {
+  if (typeof date === 'string') {
+    const monthMatched = date.match(/^(\d{4})-(\d{2})$/);
+    if (monthMatched) {
+      return `${monthMatched[1]}-${monthMatched[2]}-01`;
+    }
+
+    const dayMatched = date.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (dayMatched) {
+      return `${dayMatched[1]}-${dayMatched[2]}-01`;
+    }
+  }
+
+  const localDateKey = formatLocalDateKey(date instanceof Date ? date : new Date(date));
+  const matched = localDateKey.match(/^(\d{4})-(\d{2})-\d{2}$/);
+
+  if (!matched) {
+    return localDateKey;
+  }
+
+  return `${matched[1]}-${matched[2]}-01`;
 }
 
 function mapScenarioToEventType(key: ScenarioKey): ReportActionSuggestion['type'] {

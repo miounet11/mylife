@@ -1,4 +1,5 @@
 import type { ManagedContentEntry } from '@/lib/content-store';
+import { getKnowledgeSynthesisPublishThreshold } from '@/lib/env';
 
 export interface KnowledgeDraftAssessment {
   score: number;
@@ -33,7 +34,7 @@ export function assessKnowledgeDraftInput(
     autoPublish?: boolean;
   }
 ): KnowledgeDraftAssessment {
-  const publishThreshold = params?.publishThreshold ?? Number(process.env.KNOWLEDGE_SYNTHESIS_PUBLISH_THRESHOLD || 78);
+  const publishThreshold = params?.publishThreshold ?? getKnowledgeSynthesisPublishThreshold();
   const reasons: string[] = [];
   let score = 40;
 

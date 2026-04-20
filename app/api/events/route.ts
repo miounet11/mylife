@@ -1,6 +1,7 @@
 // 事件API
 import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations } from '@/lib/database';
+import { normalizeEventTransportRecord, normalizeEventTransportRecords } from '@/lib/event-view';
 import { syncReportFeedbackLoop } from '@/lib/report-feedback-loop';
 import { generateId } from '@/lib/utils';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
@@ -187,7 +188,7 @@ export async function PATCH(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: updated,
+      data: updated ? normalizeEventTransportRecord(updated) : null,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -280,11 +281,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    const normalizedEvents = normalizeEventTransportRecords(events);
+
     return NextResponse.json({
       success: true,
       data: {
-        events,
-        total: events.length,
+        events: normalizedEvents,
+        total: normalizedEvents.length,
       },
       timestamp: new Date().toISOString(),
     });

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, LockKeyhole, Sparkles, Target } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { buildChatHref } from '@/lib/chat-entry';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 
@@ -18,6 +19,12 @@ export default function ContentConversionPanel({
   contentTitle: string;
 }) {
   const premiumLabel = getPremiumServiceLabel(tool.premiumServiceKey || 'event-verdict');
+  const contentFollowupQuestion = `我刚看完这篇${contentLabel}《${contentTitle}》，请围绕“${tool.shortTitle}”帮我判断：如果把这个问题落到我自己身上，最该先看哪一层，下一步最值得先做什么？`;
+  const contentChatHref = buildChatHref({
+    intent: tool.chatIntent || tool.slug,
+    question: contentFollowupQuestion,
+    source: 'content_conversion_panel',
+  });
 
   return (
     <section className="product-panel-strong overflow-hidden p-5 md:p-6">
@@ -27,17 +34,19 @@ export default function ContentConversionPanel({
       </div>
 
       <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">
-        这篇{contentLabel}最该承接到的，
-        <span className="font-serif text-[color:var(--accent-strong)]">是 {tool.shortTitle} 和后续 {premiumLabel}。</span>
+        {tool.shortTitle}
+        <span className="font-serif text-[color:var(--accent-strong)]"> / {premiumLabel}</span>
       </h3>
-      <p className="intro-copy mt-3">《{contentTitle}》已经帮你建立理解框架，下一步直接压进最相关的工具。</p>
-      <div className="intro-panel mt-3">优先动作：先测工具，再决定是否进入更深专项。</div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
+      <div className="intro-copy mt-3 text-sm text-[color:var(--muted)]">
+        从内容进入工具、再进入专项或 AI 追问，避免停留在只读不行动的状态。
+      </div>
+
+      <div className="intro-panel mt-5 grid gap-4 xl:grid-cols-[1.02fr_0.98fr]">
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/84 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             <Target className="h-4 w-4" />
-            为什么先测这个
+            工具信息
           </div>
           <div className="mt-4 grid gap-3">
             <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
@@ -55,17 +64,17 @@ export default function ContentConversionPanel({
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/84 p-5">
           <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             <Sparkles className="h-4 w-4" />
-            推荐动作顺序
+            动作
           </div>
           <div className="mt-4 grid gap-3">
             <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-              1. 先做 {tool.shortTitle}，把这篇{contentLabel}里的抽象逻辑转成你的个人判断。
+              1. {tool.shortTitle}
             </div>
             <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-              2. 如果免费结果已经命中问题，再继续进入 {premiumLabel}。
+              2. {premiumLabel}
             </div>
             <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-              3. 这篇{contentLabel}、工具结果和后续专项会自动关联，不需要重复交代背景。
+              3. AI 追问
             </div>
           </div>
 
@@ -89,7 +98,7 @@ export default function ContentConversionPanel({
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
             <Link
-              href={`/chat?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}`}
+              href={contentChatHref}
               onClick={() => {
                 void trackClientEvent({
                   eventName: 'result_cta_clicked',
@@ -98,12 +107,13 @@ export default function ContentConversionPanel({
                     target: 'content_chat_followup',
                     source: 'content_conversion_panel',
                     toolSlug: tool.slug,
+                    contentType: contentLabel,
                   },
                 });
               }}
               className="action-secondary"
             >
-              先问 AI 适不适合测这个
+              先问 AI
             </Link>
           </div>
         </div>

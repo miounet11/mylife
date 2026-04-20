@@ -122,7 +122,7 @@ export default function BirthTimeInput({
           <Clock3 className="h-4 w-4 text-[color:var(--warm)]" />
           钟表时间
         </div>
-        <p className="mt-1 text-xs leading-6 text-[color:var(--muted)]">
+        <p className="intro-copy mt-1">
           支持输入 14:30、1430、14点30分；如果只记得大概时段，可直接点下方时辰。
         </p>
 

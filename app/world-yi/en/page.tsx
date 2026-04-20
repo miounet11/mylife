@@ -18,6 +18,11 @@ export const metadata = createPublicContentMetadata({
   path: '/world-yi/en',
   type: 'website',
   locale: 'en-US',
+  languages: {
+    'zh-CN': '/world-yi',
+    'en-US': '/world-yi/en',
+    'x-default': '/world-yi/en',
+  },
 });
 
 export const dynamic = 'force-dynamic';
@@ -25,19 +30,19 @@ export const dynamic = 'force-dynamic';
 const pillars = [
   {
     title: 'You are not random. You have structure.',
-    description: 'World Yi starts by clarifying how a person tends to carry pressure, make choices, and spend energy.',
+    body: 'World Yi starts by clarifying how a person tends to carry pressure, make choices, and spend energy.',
   },
   {
     title: 'You are not simply unlucky. You are in a stage.',
-    description: 'Many painful periods are not final verdicts. They are stage-specific conditions that require different pacing.',
+    body: 'Many painful periods are not final verdicts. They are stage-specific conditions that require different pacing.',
   },
   {
     title: 'Environment matters as much as intention.',
-    description: 'City, industry, family obligations, and technology conditions can all change the real cost of the same decision.',
+    body: 'City, industry, family obligations, and technology conditions can all change the real cost of the same decision.',
   },
   {
     title: 'The goal is judgment, not fatalism.',
-    description: 'World Yi does not ask people to surrender their lives. It helps them rebuild decision order.',
+    body: 'World Yi does not ask people to surrender their lives. It helps them rebuild decision order.',
   },
 ];
 
@@ -146,7 +151,7 @@ export default function WorldYiEnglishPage() {
             ].map(([title, description]) => (
               <div key={title} className="rounded-[1.5rem] bg-white/80 p-5">
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
-                <div className="intro-copy mt-3">{description}</div>
+                <div className="mt-3 text-sm font-semibold text-[color:var(--ink)]">{description}</div>
               </div>
             ))}
           </div>
@@ -184,7 +189,6 @@ export default function WorldYiEnglishPage() {
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
                 <div className="action-guide mt-5 inline-flex items-center gap-2">
                   Read article
                   <ArrowRight className="h-4 w-4" />
@@ -197,7 +201,7 @@ export default function WorldYiEnglishPage() {
         <section className="mt-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
             <div className="section-label">English Topic Tracks</div>
-            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Build a usable World Yi vocabulary before going deeper into cases</h2>
+            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Topic Tracks</h2>
             <div className="mt-5 grid gap-4">
               {englishTopicTracks.map((item) => (
                 <ContentCardLink
@@ -214,7 +218,6 @@ export default function WorldYiEnglishPage() {
                   className="rounded-[1.5rem] bg-white/80 p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                  <p className="intro-copy mt-3">{item.description}</p>
                   <div className="action-guide mt-4 inline-flex items-center gap-2">
                     Read track
                     <ArrowRight className="h-4 w-4" />
@@ -226,7 +229,7 @@ export default function WorldYiEnglishPage() {
 
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
             <div className="section-label">English Cases</div>
-            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Cases turn abstract language back into decision order</h2>
+            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Cases</h2>
             <div className="mt-5 space-y-4">
               {englishCases.slice(0, 4).map((entry) => (
                 <ContentCardLink
@@ -246,7 +249,6 @@ export default function WorldYiEnglishPage() {
                   className="block rounded-[1.5rem] bg-white/80 p-5 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
-                  <p className="intro-copy mt-3">{entry.excerpt}</p>
                 </ContentCardLink>
               ))}
             </div>
@@ -269,10 +271,7 @@ export default function WorldYiEnglishPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Back to Core</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">The English layer still belongs to the core system</h2>
-            <p className="intro-copy mt-3">
-              English content should not float as a detached landing page. It still needs to point back to the full World Yi mother path.
-            </p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Core System</h2>
           </ContentCardLink>
 
           <ContentCardLink
@@ -282,10 +281,7 @@ export default function WorldYiEnglishPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Back to Proof</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Move from English explanation to public evidence</h2>
-            <p className="intro-copy mt-3">
-              Once readers understand the language, the next useful step is to see how the framework appears in public cases and real situations.
-            </p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Public Cases</h2>
           </ContentCardLink>
 
           <ContentCardLink
@@ -295,10 +291,7 @@ export default function WorldYiEnglishPage() {
             className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Cross to Global</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Keep moving through the global Chinese layer</h2>
-            <p className="intro-copy mt-3">
-              For bilingual and cross-cultural readers, the English gateway and the global Chinese gateway should reinforce each other instead of splitting traffic.
-            </p>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Global Layer</h2>
           </ContentCardLink>
         </section>
       </main>

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getReportUpgradeCronToken } from '@/lib/env';
 import { processReportUpgradeBatch } from '@/lib/report-upgrade-jobs';
 
 function isAuthorized(request: NextRequest) {
-  const expected = process.env.REPORT_UPGRADE_CRON_TOKEN || '';
+  const expected = getReportUpgradeCronToken();
   if (!expected) return false;
   return request.headers.get('x-report-upgrade-cron-token') === expected;
 }

@@ -9,6 +9,14 @@ import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolHistoryPanel from '@/components/tool-history-panel';
+import { buildChatHref } from '@/lib/chat-entry';
+import {
+  formatEventDateKey,
+  getEventViewSortTime,
+  toEventViewModels,
+  type EventTransportRecord,
+  type EventViewModel,
+} from '@/lib/event-view';
 
 type HistoryFortune = {
   id: string;
@@ -43,24 +51,7 @@ type HistoryFortune = {
   reportVersion?: string;
 };
 
-type HistoryEvent = {
-  id: string;
-  title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  date: string;
-  description?: string;
-  fortuneAnalysis?: {
-    reportId?: string;
-    reason?: string;
-  };
-  followUpAdvice?: {
-    shortTerm?: string;
-  };
-  userFeedback?: {
-    wasAccurate?: boolean;
-    userNotes?: string;
-  };
-};
+type HistoryEvent = EventViewModel;
 
 type HistoryReportCard = {
   id: string;
@@ -74,6 +65,13 @@ type HistoryReportCard = {
   reportVersion: string;
   feedbackLabel: string;
   feedbackTone: string;
+};
+
+type HistoryResponse = {
+  success: boolean;
+  fortunes?: HistoryFortune[];
+  events?: EventTransportRecord[];
+  error?: string;
 };
 
 const mapStrengthToResult = (strength?: string) => {
@@ -102,17 +100,28 @@ const parseReportCreatedAt = (reportId: string) => {
   return new Date(timestamp).toISOString();
 };
 
+const formatDateLabel = (value?: string) => {
+  if (!value) return '未记录';
+
+  return formatEventDateKey(value);
+};
+
 export default function HistoryPage() {
   const [reports, setReports] = useState<HistoryFortune[]>([]);
   const [events, setEvents] = useState<HistoryEvent[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [reviewAnchorMs, setReviewAnchorMs] = useState<number | null>(null);
+
+  useEffect(() => {
+    setReviewAnchorMs(Date.now());
+  }, []);
 
   useEffect(() => {
     const load = async () => {
       try {
         const response = await fetch('/api/history', { cache: 'no-store' });
-        const data = await response.json();
+        const data = await response.json() as HistoryResponse;
 
         if (!response.ok || !data.success) {
           setError(data.error || '加载历史失败');
@@ -120,7 +129,7 @@ export default function HistoryPage() {
         }
 
         setReports((data.fortunes || []) as HistoryFortune[]);
-        setEvents((data.events || []) as HistoryEvent[]);
+        setEvents(toEventViewModels(data.events || []));
       } catch {
         setError('网络异常，无法加载历史数据');
       } finally {
@@ -165,15 +174,17 @@ export default function HistoryPage() {
   }, [reports]);
 
   const reviewWorkbench = useMemo(() => {
-    const now = Date.now();
-    const overduePending = events
-      .filter((event) => event.userFeedback?.wasAccurate === undefined && new Date(event.date).getTime() < now)
-      .sort((left, right) => new Date(left.date).getTime() - new Date(right.date).getTime());
+    const unresolved = events
+      .filter((event) => event.userFeedback?.wasAccurate === undefined)
+      .sort((left, right) => getEventViewSortTime(left) - getEventViewSortTime(right));
+    const overduePending = reviewAnchorMs === null
+      ? []
+      : unresolved.filter((event) => getEventViewSortTime(event) < reviewAnchorMs);
     const driftEvents = events
       .filter((event) => event.userFeedback?.wasAccurate === false)
-      .sort((left, right) => new Date(right.date).getTime() - new Date(left.date).getTime());
+      .sort((left, right) => getEventViewSortTime(right) - getEventViewSortTime(left));
     const accurateCount = events.filter((event) => event.userFeedback?.wasAccurate === true).length;
-    const pendingCount = events.filter((event) => event.userFeedback?.wasAccurate === undefined).length;
+    const pendingCount = unresolved.length;
     const driftCount = driftEvents.length;
     const linkedReportIds = new Set(events.map((event) => event.fortuneAnalysis?.reportId).filter(Boolean));
 
@@ -185,7 +196,7 @@ export default function HistoryPage() {
       driftEvents,
       linkedReportCount: linkedReportIds.size,
     };
-  }, [events]);
+  }, [events, reviewAnchorMs]);
 
   return (
     <div className="page-shell">
@@ -200,17 +211,21 @@ export default function HistoryPage() {
               复盘工作台
             </>
           )}
-          title={(
-            <>
-              每次回来看历史，
-              <span className="font-serif text-[color:var(--accent-strong)]">都应该立刻知道下一步该做什么。</span>
-            </>
-          )}
-          description="把报告、事件、待验证样本和纠偏入口放在同一处。"
-          hint="建议先处理“待纠偏”和“待验证”，再继续追问。"
+          title="历史记录"
+          description="把已经生成的报告、事件和追问记录放回同一个复盘工作台，方便你持续校准判断。"
+          hint="建议先回看最关键的一份报告，再补充已经发生的事件，最后带上下文继续追问。"
           actions={[
             <Link key="events" href="/events" className="action-primary action-main">进入事件页</Link>,
-            <Link key="chat" href="/chat" className="action-secondary">继续追问</Link>,
+            <Link
+              key="chat"
+              href={buildChatHref({
+                question: '请根据我历史里的报告、事件和偏差样本，帮我判断：现在最值得优先复盘哪一条主线，为什么？',
+                source: 'history_page',
+              })}
+              className="action-secondary"
+            >
+              继续追问
+            </Link>,
             <Link key="analyze" href="/analyze" className="action-secondary">新建分析</Link>,
           ]}
           highlights={[
@@ -223,17 +238,16 @@ export default function HistoryPage() {
 
         <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           {[
-            { label: '历史报告', value: reportCards.length, detail: '已生成、可继续复访的报告数量。', tone: 'text-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]' },
-            { label: '验证准确', value: reviewWorkbench.accurateCount, detail: '已被现实事件验证为准确的判断。', tone: 'text-emerald-700 bg-emerald-50' },
-            { label: '待验证', value: reviewWorkbench.pendingCount, detail: '已经进入验证期，但还没有回填结果的事件。', tone: 'text-amber-700 bg-amber-50' },
-            { label: '待纠偏', value: reviewWorkbench.driftCount, detail: '已经出现偏差，最值得继续追问和修正的样本。', tone: 'text-rose-700 bg-rose-50' },
+            { label: '历史报告', value: reportCards.length, tone: 'text-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]' },
+            { label: '验证准确', value: reviewWorkbench.accurateCount, tone: 'text-emerald-700 bg-emerald-50' },
+            { label: '待验证', value: reviewWorkbench.pendingCount, tone: 'text-amber-700 bg-amber-50' },
+            { label: '待纠偏', value: reviewWorkbench.driftCount, tone: 'text-rose-700 bg-rose-50' },
           ].map((item) => (
             <div key={item.label} className="soft-card rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
               <div className="mt-3 flex items-center gap-3">
                 <div className={`rounded-full px-3 py-1 text-sm font-semibold ${item.tone}`}>{item.value}</div>
               </div>
-              <div className="intro-copy mt-3">{item.detail}</div>
             </div>
           ))}
         </section>
@@ -241,14 +255,14 @@ export default function HistoryPage() {
         <div className="mb-8">
           <ToolHistoryPanel
             title="单项工具复访区"
-            description="这里也会显示你最近用哪些单项工具把问题继续做窄。"
+            description="把做过的单项工具判断放回一起复看，方便你确认哪些问题已经验证、哪些还要继续追踪。"
           />
         </div>
 
         <div className="mb-8">
           <PersonalJourneyHub
-            title="结合你的历史记录，继续往下走"
-            description="基于你做过的报告和工具，继续把文章、案例和下一步测算串起来。"
+            title="后续入口"
+            description="根据你已经生成的报告和验证记录，继续安排最适合现在推进的内容、工具和追问入口。"
             page="/history"
           />
         </div>
@@ -266,15 +280,14 @@ export default function HistoryPage() {
                 <Clock className="h-5 w-5 text-amber-700" />
                 <div>
                   <div className="font-semibold text-[color:var(--ink)]">当前最该补回验证的事件</div>
-                  <div className="intro-copy mt-1">这些事件已过发生时间，但还没有回填结果。</div>
                 </div>
               </div>
               <div className="mt-4 grid gap-3">
                 {reviewWorkbench.overduePending.slice(0, 3).map((event) => (
                   <div key={event.id} className="rounded-[1.5rem] bg-white/80 p-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
-                    <div className="mt-1 text-xs text-[color:var(--muted)]">{new Date(event.date).toLocaleDateString('zh-CN')}</div>
-                    <div className="intro-copy mt-3">
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">{formatDateLabel(event.dateKey || '')}</div>
+                    <div className="mt-3 text-sm text-[color:var(--ink)]">
                       {event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm || event.description || '回到事件页补回验证结果。'}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
@@ -297,20 +310,27 @@ export default function HistoryPage() {
                 <AlertTriangle className="h-5 w-5 text-rose-700" />
                 <div>
                   <div className="font-semibold text-[color:var(--ink)]">当前最该纠偏的样本</div>
-                  <div className="intro-copy mt-1">这些事件已出现偏差，优先继续做纠偏分析。</div>
                 </div>
               </div>
               <div className="mt-4 grid gap-3">
                 {reviewWorkbench.driftEvents.slice(0, 3).map((event) => (
                   <div key={event.id} className="rounded-[1.5rem] bg-white/80 p-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
-                    <div className="mt-1 text-xs text-[color:var(--muted)]">{new Date(event.date).toLocaleDateString('zh-CN')}</div>
-                    <div className="intro-copy mt-3">
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">{formatDateLabel(event.dateKey || '')}</div>
+                    <div className="mt-3 text-sm text-[color:var(--ink)]">
                       {event.userFeedback?.userNotes || event.fortuneAnalysis?.reason || '进入聊天页继续做偏差修正。'}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
                       {event.fortuneAnalysis?.reportId ? (
-                        <Link href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`} className="action-primary">
+                        <Link
+                          href={buildChatHref({
+                            reportId: event.fortuneAnalysis.reportId,
+                            eventId: event.id,
+                            question: '请围绕这条偏差事件继续做纠偏分析，告诉我这次最该修的是结构判断、阶段判断、环境判断，还是执行动作。',
+                            source: 'history_drift_review',
+                          })}
+                          className="action-primary"
+                        >
                           进入纠偏分析
                         </Link>
                       ) : null}
@@ -329,8 +349,8 @@ export default function HistoryPage() {
           <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="section-label">历史报告</div>
-              <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">继续回看最值得复用的报告</div>
-              <div className="intro-copy mt-2">{`当前已有 ${reviewWorkbench.linkedReportCount} 份报告进入现实验证链路。`}</div>
+              <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">报告</div>
+              <div className="mt-2 text-sm text-[color:var(--muted)]">{`已进入验证链路 ${reviewWorkbench.linkedReportCount} 份`}</div>
             </div>
             <Link href="/analyze" className="action-primary">
               新建一份分析
@@ -357,7 +377,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="inline-flex items-center gap-1 text-xs text-[color:var(--muted)]">
                             <Calendar className="h-3.5 w-3.5" />
-                            {new Date(item.createdAt).toLocaleDateString('zh-CN')}
+                            {formatDateLabel(item.createdAt)}
                           </span>
                           <span className="rounded-full border border-[color:var(--line)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                             {item.reportVersion}
@@ -399,7 +419,6 @@ export default function HistoryPage() {
                 <Clock className="h-8 w-8 text-slate-400" />
               </div>
               <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">还没有分析历史</h2>
-              <p className="intro-copy mt-2">先完成一次判断，后续历史、咨询和复盘都会围绕这份结果展开。</p>
               <Link href="/analyze" className="action-primary mt-6">
                 开始第一次判断
               </Link>

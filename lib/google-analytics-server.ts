@@ -1,11 +1,13 @@
 import 'server-only';
 
+import {
+  getGa4ApiSecret,
+  getGoogleAnalyticsMeasurementProtocolEndpoint,
+} from '@/lib/env';
 import { GOOGLE_ANALYTICS_ID } from '@/lib/google-analytics-config';
 
-const GOOGLE_ANALYTICS_API_SECRET = `${process.env.GA4_API_SECRET || ''}`.trim();
-const GOOGLE_ANALYTICS_MP_ENDPOINT = `${process.env.GA4_MEASUREMENT_PROTOCOL_REGION || ''}`.trim().toLowerCase() === 'eu'
-  ? 'https://region1.google-analytics.com/mp/collect'
-  : 'https://www.google-analytics.com/mp/collect';
+const GOOGLE_ANALYTICS_API_SECRET = getGa4ApiSecret();
+const GOOGLE_ANALYTICS_MP_ENDPOINT = getGoogleAnalyticsMeasurementProtocolEndpoint();
 
 const FORWARDED_SERVER_EVENTS = new Set([
   'auth_code_requested',

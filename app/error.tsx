@@ -56,11 +56,14 @@ export default function Error({
           <AlertTriangle className="h-8 w-8" />
         </div>
         <h2 className="mt-6 text-3xl font-black text-[color:var(--ink)]">页面临时出错了</h2>
-        <p className="mt-3 max-w-xl text-xs leading-6 text-[color:var(--muted)]">
-          {isStaleServerActionError
-            ? '当前页面可能来自旧部署版本，系统会自动刷新一次以恢复到最新版本。'
-            : '这通常是临时请求异常或页面状态中断。我们把错误页也做成明确可恢复的动作面板，而不是让用户被动退出。'}
-        </p>
+        <div className="mt-4 intro-panel">
+          <div className="text-sm font-semibold text-[color:var(--ink)]">恢复方式</div>
+          <div className="mt-2 intro-copy">
+            {isStaleServerActionError
+              ? '当前页面可能来自旧部署版本，系统会自动刷新一次以恢复到最新版本。'
+              : '这通常是临时请求异常或页面状态中断。优先重新加载，其次返回首页继续操作。'}
+          </div>
+        </div>
         <div className="mt-8 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={() => reset()}

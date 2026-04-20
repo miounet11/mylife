@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { ArrowRight, Globe2, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
@@ -6,11 +5,19 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
+import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
-export const metadata = {
+export const metadata = createPublicContentMetadata({
   title: '世界易全球案例 | 人生K线',
   description: '面向海外华人和跨文化用户的世界易案例路径，重点处理留回判断、家庭排序、跨境创业与孩子身份教育。',
-};
+  path: '/world-yi/global/cases',
+  type: 'website',
+  languages: {
+    'zh-CN': '/world-yi/global/cases',
+    'en-US': '/world-yi/en/cases',
+    'x-default': '/world-yi/global/cases',
+  },
+});
 
 export const dynamic = 'force-dynamic';
 
@@ -27,9 +34,26 @@ export default function WorldYiGlobalCasesPage() {
       'world-yi-case-global-school-choice',
     ].includes(entry.slug))
     .slice(0, 8);
+  const schemas = [
+    createCollectionPageSchema({
+      headline: '世界易全球案例',
+      description: '面向海外华人和跨文化用户的世界易案例路径，重点处理留回判断、家庭排序、跨境创业与孩子身份教育。',
+      path: '/world-yi/global/cases',
+      keywords: ['世界易', '全球案例', '海外华人', '跨境创业', '教育选择'],
+    }),
+    createItemListSchema(
+      '世界易全球案例',
+      globalCases.map((entry, index) => ({
+        name: entry.title,
+        path: `/cases/${entry.slug}`,
+        position: index + 1,
+      })),
+    ),
+  ].filter(Boolean);
 
   return (
     <div className="page-shell">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <AnalyticsPageView
         eventName="cases_page_viewed"
         page="/world-yi/global/cases"
@@ -45,26 +69,51 @@ export default function WorldYiGlobalCasesPage() {
               世界易全球案例
             </>
           )}
-          title={(
-            <>
-              面向全球华人的，
-              <span className="font-serif text-[color:var(--accent-strong)]">多线现实判断案例。</span>
-            </>
-          )}
-          description="这些案例不只讨论留回、城市和工作，还把父母照护、孩子教育、跨境创业、身份切换和现金流压力一起拉回同一套世界易结构。"
-          hint="建议先选择一个与你最接近的案例，再进入分析页验证个人路径。"
+          title="全球案例"
+          description="用真实全球案例去看留回、教育、跨境创业和家庭排序这些问题是怎么被拆解和判断的。"
+          hint="适合先找与自己接近的处境建立判断感；如果准备直接看个人结果，就回到分析入口补齐出生信息。"
           actions={[
             { href: '/analyze', label: '开始分析', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
             { href: '/world-yi/global', label: '回到全球入口' },
             { href: '/world-yi/en', label: 'English Gateway' },
           ]}
           highlights={[
-            { body: '留回问题通常只是表面，真正难的是阶段和责任排序。' },
-            { body: '海外家庭最怕多条现实线同时压来，却没有先后顺序。' },
-            { body: '跨境创业最危险的是把短期窗口误认成长期结构。' },
-            { body: '孩子语言和教育问题，常常连着父母自己的身份焦虑。' },
+            { body: '留回' },
+            { body: '家庭' },
+            { body: '跨境创业' },
+            { body: '教育' },
           ]}
         />
+
+        <section className="mt-10 grid gap-4 md:grid-cols-3">
+          <ContentCardLink
+            href="/world-yi/global"
+            page="/world-yi/global/cases"
+            meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Global gateway</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Back to global path</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/global/topics"
+            page="/world-yi/global/cases"
+            meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_topics_page', contentType: 'knowledge', series: 'world-yi-global' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Knowledge layer</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Browse global topics</h2>
+          </ContentCardLink>
+          <ContentCardLink
+            href="/world-yi/en/cases"
+            page="/world-yi/global/cases"
+            meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
+            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+          >
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">English layer</div>
+            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">See English cases</h2>
+          </ContentCardLink>
+        </section>
 
         <section className="mt-10">
           <div className="section-label">
@@ -91,7 +140,6 @@ export default function WorldYiGlobalCasesPage() {
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <p className="intro-copy mt-3">{entry.excerpt}</p>
                 <div className="action-guide mt-5 inline-flex items-center gap-2">
                   查看案例
                   <ArrowRight className="h-4 w-4" />

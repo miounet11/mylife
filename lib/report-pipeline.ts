@@ -1,6 +1,7 @@
 import { analyzeFortune } from '@/lib/fortune-engine';
-import { runAgenticPipeline } from '@/lib/agentic-report';
+import { createAgenticContext, runAgenticPipeline } from '@/lib/agentic-report';
 import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-definitions';
+import { getDefaultModel, isAgenticPipelineEnabled } from '@/lib/env';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import {
   assessScopeProviderHealth,
@@ -9,12 +10,14 @@ import {
 } from '@/lib/llm-provider-health';
 import { generateFortuneInterpretationCore, generateFortuneInterpretationFollowup } from '@/lib/llm';
 import { buildReportQualityAudit } from '@/lib/report-quality';
+import { applyReliabilityGuard } from '@/lib/report-reliability';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
+import { parseLocalDate } from '@/lib/utils';
 
 const ANALYZE_LLM_CORE_TIMEOUT_MS = 12000;
 const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 3200;
-const ENABLE_AGENTIC_PIPELINE = process.env.ENABLE_AGENTIC_PIPELINE !== '0';
+const ENABLE_AGENTIC_PIPELINE = isAgenticPipelineEnabled();
 const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
   'kline_narrative',
@@ -81,6 +84,19 @@ type FallbackNarrative = {
   explanation: string;
 };
 
+type NarrativeJudgmentBlock = {
+  headline: string;
+  evidence: string[];
+};
+
+type NarrativeJudgmentBlocks = {
+  pastValidation: NarrativeJudgmentBlock;
+  presentDiagnosis: NarrativeJudgmentBlock;
+  futureGuidance: NarrativeJudgmentBlock;
+};
+
+type PastEventTemplate = NonNullable<FortuneAnalysisResult['analysis']['pastEventTemplates']>[number];
+
 export async function generateVersionedReport(params: {
   name: string;
   birthDate: Date;
@@ -89,6 +105,8 @@ export async function generateVersionedReport(params: {
   timezone: number;
   gender: 'male' | 'female';
   sect?: 1 | 2;
+  tacitSummary?: string;
+  tacitSignals?: string[];
   source: PipelineSource;
   upgradedFromVersion?: string;
   onProgress?: (event: {
@@ -116,13 +134,42 @@ export async function generateVersionedReport(params: {
     status: 'completed',
     detail: '基础命盘与运势结构已完成，开始进入增强分析层。',
   });
+  const preLlmContext = createAgenticContext({
+    groundTruth: {
+      birthDate: params.birthDate,
+      report: baseResult,
+    },
+    context: {
+      birthDate: params.birthDate,
+      birthPlace: params.birthPlace,
+      currentPlace: params.birthPlace,
+      report: {
+        advice: baseResult.advice,
+        fortune: baseResult.fortune,
+        tacitSummary: params.tacitSummary,
+        tacitSignals: params.tacitSignals,
+      },
+    },
+  });
+  const llmInput = {
+    ...baseResult,
+    tacitSummary: params.tacitSummary,
+    tacitSignals: params.tacitSignals,
+    worldStateSnapshot: preLlmContext.context.worldState,
+    contextSnapshot: {
+      temporal: preLlmContext.context.temporal,
+      macroCycles: preLlmContext.context.macroCycles,
+      geoClimate: preLlmContext.context.geoClimate,
+      humanFactors: preLlmContext.context.humanFactors,
+    },
+  } as Record<string, unknown>;
 
   await params.onProgress?.({
     stage: 'llm',
     status: 'started',
     detail: '正在调用语言模型增强解释层，补充更完整的自然语言报告。',
   });
-  const llmCore = await enhanceWithLLM(baseResult as unknown as Record<string, unknown>, null, async (event) => {
+  const llmCore = await enhanceWithLLM(llmInput, null, async (event) => {
     await params.onProgress?.({
       stage: 'llm',
       status: 'started',
@@ -144,7 +191,7 @@ export async function generateVersionedReport(params: {
       : '当前直接进入并发专家 Agent 阶段，优先保证结果稳定交付。',
   });
   const agentScopeHealth = assessScopeProviderHealth(
-    getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+    getModelFallbackChain(getDefaultModel()),
     'agent'
   );
   const shouldRunAgentic = shouldRunAnalyzeAgentic({
@@ -162,7 +209,7 @@ export async function generateVersionedReport(params: {
     : [...CORE_AGENT_KEYS];
   const [llmEnhancement, agentic] = await Promise.all([
     llmCore.llmInterpretation
-      ? enhanceWithLLM(baseResult as unknown as Record<string, unknown>, llmCore.llmInterpretation as Record<string, unknown>, async (event) => {
+      ? enhanceWithLLM(llmInput, llmCore.llmInterpretation as Record<string, unknown>, async (event) => {
           await params.onProgress?.({
             stage: 'llm',
             status: 'started',
@@ -187,6 +234,8 @@ export async function generateVersionedReport(params: {
         report: {
           advice: baseResult.advice,
           fortune: baseResult.fortune,
+          tacitSummary: params.tacitSummary,
+          tacitSignals: params.tacitSignals,
         },
       },
       onProgress: async (event) => {
@@ -241,9 +290,15 @@ export async function generateVersionedReport(params: {
 }
 
 export async function regenerateReportFromRecord(record: FortuneRecord) {
+  const parsedBirthDate = parseLocalDate(record.birthDate);
+
+  if (!parsedBirthDate) {
+    throw new Error(`Invalid birthDate in record: ${record.birthDate}`);
+  }
+
   return generateVersionedReport({
     name: record.name,
-    birthDate: new Date(record.birthDate),
+    birthDate: parsedBirthDate,
     birthTime: record.birthTime,
     birthPlace: record.birthPlace || '北京',
     timezone: record.timezone || 8,
@@ -283,10 +338,17 @@ export function finalizeReportForDelivery(result: FortuneAnalysisResult): Fortun
     opening: repairedNarrative.opening,
     summary: repairedNarrative.summary,
     explanation: repairedNarrative.explanation,
+    judgmentBlocks: buildNarrativeJudgmentBlocks(draft),
+    pastEventTemplates: buildPastEventTemplates(draft),
   };
   draft.analysis.qualityAudit = buildReportQualityAudit(draft);
+  const guarded = applyReliabilityGuard(draft);
+  guarded.analysis = {
+    ...(guarded.analysis || {}),
+    qualityAudit: buildReportQualityAudit(guarded),
+  };
 
-  return draft;
+  return guarded;
 }
 
 export function repairStoredReportNarrative(record: FortuneRecord): FortuneAnalysisResult {
@@ -334,7 +396,7 @@ async function enhanceWithLLM(
 ) {
   try {
     const llmHealth = assessScopeProviderHealth(
-      getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto', 'report'),
+      getModelFallbackChain(undefined, 'report'),
       'report'
     );
     const reportSnapshots = llmHealth.snapshots || [];
@@ -492,6 +554,9 @@ function mergeLLMResult(
     engineBuilds: { ...ENGINE_BUILD_VERSIONS },
     orchestration: meta.agentic.orchestration,
     verify: meta.agentic.verify,
+    v4ContractVersion: 'v1',
+    sectionOwnership: buildReportSectionOwnership(),
+    v4OwnedConcepts: buildReportSectionOwnership(),
     contextUsed: {
       solarTerm: !!meta.agentic.context.context.temporal.currentSolarTerm,
       lichunBoundary: true,
@@ -536,7 +601,17 @@ function mergeLLMResult(
 
   merged.analysis.opening = focusedNarrative.opening;
   merged.analysis.summary = focusedNarrative.summary;
-  merged.analysis.explanation = focusedNarrative.explanation;
+  merged.analysis.explanation = dedupeAdjacentNarrativeParagraphs(focusedNarrative.explanation);
+  merged.analysis.judgmentBlocks = buildNarrativeJudgmentBlocks(merged as FortuneAnalysisResult, {
+    coreSummary,
+    strategySummary,
+    temporalSummary,
+  });
+  merged.analysis.pastEventTemplates = buildPastEventTemplates(merged as FortuneAnalysisResult, {
+    coreSummary,
+    strategySummary,
+    temporalSummary,
+  });
   merged.analysis.qualityAudit = buildReportQualityAudit(merged as FortuneAnalysisResult);
 
   return merged;
@@ -591,8 +666,8 @@ export function buildDeterministicFallbackNarrative(
   );
   const worldYiLead = cleanNarrativeText(
     [
-      result.pattern?.type ? `你不是乱，你是${result.pattern.type}结构正在发力。` : '你不是乱，你是有结构。',
-      result.fortune?.currentDaYun ? `当前重点在${result.fortune.currentDaYun}这段阶段。` : '当前更要先看阶段，不要只看情绪。',
+      result.pattern?.type ? `世界易看你，你不是乱，而是${result.pattern.type}结构正在发力。` : '世界易看你，你不是乱，而是有结构。',
+      result.fortune?.currentDaYun ? `当前重点就在${result.fortune.currentDaYun}这段阶段。` : '当前重点是先看阶段，不要只跟着情绪走。',
     ].join(' ')
   );
   const evidenceLine = cleanNarrativeText(
@@ -600,11 +675,28 @@ export function buildDeterministicFallbackNarrative(
       || (favored.length > 0 ? `优先顺着${favored.join('、')}对应的动作去取舍。` : '')
       || result.pattern?.description
   );
+  const pastValidationLine = cleanNarrativeText(
+    [
+      evidenceHighlights
+        ? `这类结构过去往往会先在现实里反复出现相似信号，当前已经能看到的印证是：${evidenceHighlights}`
+        : '',
+      result.pattern?.description
+        ? `命局底色早就存在，过去容易反复出现的不是偶然事件，而是${result.pattern.description}`
+        : '',
+    ].filter(Boolean).join('；')
+  );
   const actionLine = cleanNarrativeText(
     [
       actionFocus ? stripDecisionCue(actionFocus, 'action') : '',
       timingFocus ? formatTimingReference(timingFocus) : '',
       summarizeActionOrRisk(extras?.strategySummary || '', 'action'),
+    ].filter(Boolean).join('；')
+  );
+  const futureLine = cleanNarrativeText(
+    [
+      timingFocus ? formatTimingReference(timingFocus) : '',
+      summarizeActionOrRisk(extras?.temporalSummary || '', 'action'),
+      result.fortune?.nextYear ? sanitizeNarrativeForUser(result.fortune.nextYear) : '',
     ].filter(Boolean).join('；')
   );
   const riskLine = cleanNarrativeText(
@@ -636,13 +728,206 @@ export function buildDeterministicFallbackNarrative(
     opening: openingLine,
     summary: summaryLine,
     explanation: [
-      `世界易判断：先看结构，再看阶段，再决定动作。`,
+      `世界易判断：先看结构，再看阶段，再看环境，最后决定动作。这种判断包含可言传的规则，也包含长期经验积累出来的默会知识。`,
+      `已发生的印证：${pastValidationLine || '这类命局不是突然如此，而是过去已经在一些关键节点反复表现出同一条主线。'}。`,
       `主判断：${patternLine}`,
       `判断依据：${evidenceLine || '当前先以命局结构、行运位置和用神取舍作为主依据。'}。`,
+      `接下来会怎么走：${futureLine || '后面最值得关注的，不是再听更多说法，而是看窗口变化后你的主线是否开始加速显形。'}。`,
       `现在先做：${actionLine || '先推进一个低成本、可验证的小动作，再根据反馈继续收口。'}。`,
       `风险提醒：${riskLine || '不要在时机没有坐实前同时推进多个高成本动作。'}。`,
     ].map((line) => cleanNarrativeText(sanitizeNarrativeForUser(line))).join('\n\n'),
   };
+}
+
+function buildNarrativeJudgmentBlocks(
+  result: FortuneAnalysisResult,
+  extras?: {
+    coreSummary?: string;
+    strategySummary?: string;
+    temporalSummary?: string;
+  }
+): NarrativeJudgmentBlocks {
+  const favored = uniqueList([
+    ...(result.advice?.yongShen || []),
+    ...(result.advice?.xiShen || []),
+  ]).slice(0, 3);
+  const actionFocus = firstNonEmpty([
+    ...(result.advice?.career?.specific || []),
+    ...(result.advice?.wealth?.specific || []),
+    ...(result.advice?.marriage?.specific || []),
+    ...(result.advice?.health?.specific || []),
+  ]);
+  const timingFocus = firstNonEmpty([
+    result.advice?.career?.timing,
+    result.advice?.wealth?.timing,
+    result.advice?.marriage?.timing,
+    result.advice?.health?.timing,
+    result.advice?.timing?.[0],
+  ]);
+  const avoidFocus = firstNonEmpty([
+    ...(result.advice?.career?.avoid || []),
+    ...(result.advice?.wealth?.avoid || []),
+    ...(result.advice?.health?.avoid || []),
+    ...(result.advice?.marriage?.avoid || []),
+  ]);
+  const evidenceHighlights = summarizeNarrativeEvidence([
+    extras?.coreSummary || '',
+    result.pattern?.description || '',
+    result.analysis?.opening || '',
+    result.analysis?.explanation || '',
+  ].join(' '));
+  const pastEvidence = dedupeNarrativeSegments([
+    evidenceHighlights
+      ? `已经出现过的相似信号：${evidenceHighlights}`
+      : '',
+    result.pattern?.description
+      ? `反复发生的底层原因：${result.pattern.description}`
+      : '',
+    result.fortune?.interaction
+      ? `过去常见的表现方式：${summarizeActionOrRisk(result.fortune.interaction, 'risk') || sanitizeNarrativeForUser(result.fortune.interaction)}`
+      : '',
+  ].map((item) => cleanNarrativeText(item)).filter(Boolean)).slice(0, 3);
+  const presentEvidence = dedupeNarrativeSegments([
+    result.pattern?.type ? `当前主轴：${result.pattern.type}` : '',
+    result.fortune?.currentDaYun ? `当前阶段：${result.fortune.currentDaYun}` : '',
+    favored.length > 0 ? `顺势重点：${favored.join('、')}` : '',
+    extras?.coreSummary || '',
+  ].map((item) => cleanNarrativeText(item)).filter(Boolean)).slice(0, 3);
+  const futureEvidence = dedupeNarrativeSegments([
+    timingFocus ? formatTimingReference(timingFocus) : '',
+    actionFocus ? `下一步动作：${stripDecisionCue(actionFocus, 'action')}` : '',
+    avoidFocus ? `先避开的动作：${stripDecisionCue(avoidFocus, 'risk')}` : '',
+    extras?.strategySummary ? summarizeActionOrRisk(extras.strategySummary, 'action') : '',
+    extras?.temporalSummary ? summarizeActionOrRisk(extras.temporalSummary, 'action') : '',
+    result.fortune?.nextYear ? sanitizeNarrativeForUser(result.fortune.nextYear) : '',
+  ].map((item) => cleanNarrativeText(item)).filter(Boolean)).slice(0, 4);
+
+  return {
+    pastValidation: {
+      headline: cleanNarrativeText(
+        pastEvidence[0]
+          ? '你过去的人生里，已经反复出现过与这份命理结构一致的信号。'
+          : '这类命局不会突然显形，过去通常已经埋下相同主线。'
+      ),
+      evidence: pastEvidence,
+    },
+    presentDiagnosis: {
+      headline: cleanNarrativeText(
+        [
+          result.pattern?.type ? `你现在真正处在 ${result.pattern.type} 的发力阶段。` : '',
+          result.fortune?.currentDaYun ? `当前关键不在多想，而在看清 ${result.fortune.currentDaYun} 这一步到底要你怎么走。` : '',
+        ].filter(Boolean).join(' ')
+      ) || '你现在最重要的，不是继续寻找更多答案，而是看清当前阶段的主轴。',
+      evidence: presentEvidence,
+    },
+    futureGuidance: {
+      headline: cleanNarrativeText(
+        timingFocus
+          ? `接下来最容易起变化的是 ${formatTimingReference(timingFocus)} 这一段，动作要提前收口。`
+          : '接下来真正拉开差距的，不是想法，而是你是否顺着窗口把关键动作做准。'
+      ),
+      evidence: futureEvidence,
+    },
+  };
+}
+
+function buildPastEventTemplates(
+  result: FortuneAnalysisResult,
+  extras?: {
+    coreSummary?: string;
+    strategySummary?: string;
+    temporalSummary?: string;
+  }
+): PastEventTemplate[] {
+  const interactionRisk = summarizeActionOrRisk(result.fortune?.interaction || '', 'risk');
+  const strategyAction = summarizeActionOrRisk(extras?.strategySummary || '', 'action');
+  const temporalAction = summarizeActionOrRisk(extras?.temporalSummary || '', 'action');
+  const normalizedCurrentDaYun = cleanNarrativeText(result.fortune?.currentDaYun || '当前阶段');
+  const windowHint = cleanNarrativeText(
+    firstNonEmpty([
+      formatTimingReference(firstNonEmpty([
+        result.advice?.career?.timing,
+        result.advice?.wealth?.timing,
+        result.advice?.marriage?.timing,
+        result.advice?.health?.timing,
+      ])),
+      normalizedCurrentDaYun,
+    ])
+  );
+
+  const candidates: PastEventTemplate[] = [
+    {
+      key: 'career_shift',
+      title: '过去出现过一次事业方向重排或岗位切换',
+      type: 'career',
+      description: `你过去大概率经历过一次“继续硬撑不对、换方向才对”的阶段，常见表现是岗位调整、项目重排、离开原团队，或者突然意识到原路径不能再按老办法走。`,
+      reason: cleanNarrativeText(
+        [
+          result.pattern?.type ? `${result.pattern.type} 在现实里常先表现为事业主线重排。 ` : '',
+          normalizedCurrentDaYun ? `当前判断主轴落在 ${normalizedCurrentDaYun}，说明这种切换并不随机。 ` : '',
+          strategyAction || extras?.coreSummary || '',
+        ].join('')
+      ),
+      confidenceLabel: 'high',
+      occurrenceWindow: windowHint,
+    },
+    {
+      key: 'relationship_tension',
+      title: '过去出现过一次关系压力上升或沟通明显失衡',
+      type: 'marriage',
+      description: '你过去大概率经历过一段关系摩擦明显放大的时期，常见表现是冷战、反复争执、推进受阻，或者需要重新定义边界。',
+      reason: cleanNarrativeText(
+        [
+          result.advice?.marriage?.general || '',
+          interactionRisk || '',
+          result.pattern?.description || '',
+        ].join('；')
+      ),
+      confidenceLabel: 'medium',
+      occurrenceWindow: windowHint,
+    },
+    {
+      key: 'health_overdraw',
+      title: '过去出现过一次明显透支或恢复周期变长',
+      type: 'health',
+      description: '你过去很可能有过一段身体和情绪一起下滑的阶段，常见表现是睡眠紊乱、疲惫堆积、效率下降，或者必须靠休整才能拉回来。',
+      reason: cleanNarrativeText(
+        [
+          result.advice?.health?.general || '',
+          ...(result.advice?.health?.avoid || []).slice(0, 1),
+          interactionRisk,
+        ].filter(Boolean).join('；')
+      ),
+      confidenceLabel: 'high',
+      occurrenceWindow: '高压阶段前后',
+    },
+    {
+      key: 'money_rebalance',
+      title: '过去出现过一次钱财分配失衡或现金流收缩',
+      type: 'wealth',
+      description: '你过去大概率有过一次明显的财务收缩或资源错配，常见表现是支出压力突然变大、投入回报不成正比，或者不得不重新安排现金流。',
+      reason: cleanNarrativeText(
+        [
+          result.advice?.wealth?.general || '',
+          ...(result.advice?.wealth?.avoid || []).slice(0, 1),
+          temporalAction,
+        ].filter(Boolean).join('；')
+      ),
+      confidenceLabel: 'medium',
+      occurrenceWindow: windowHint,
+    },
+  ];
+
+  return candidates
+    .map((item) => ({
+      ...item,
+      title: cleanNarrativeText(item.title),
+      description: cleanNarrativeText(item.description),
+      reason: cleanNarrativeText(item.reason),
+      occurrenceWindow: cleanNarrativeText(item.occurrenceWindow || ''),
+    }))
+    .filter((item) => item.title && item.description && item.reason)
+    .slice(0, 4);
 }
 
 function readAgentSummary(agentResults: Record<string, unknown>, key: string) {
@@ -769,6 +1054,20 @@ function mergeHealthAdvice(
       ...healthAgent.risks,
     ]),
   };
+}
+
+function buildReportSectionOwnership() {
+  return {
+    cockpit: ['opening', 'summary', 'currentDaYun', 'decisionPlaybook', 'actionSuggestions', 'confidence'],
+    lifeKLine: ['klineData', 'yearlyTrendSnapshots', 'stateVector'],
+    blueprint: ['pattern', 'dayMaster', 'yongShen', 'xiShen', 'jiShen', 'expertInterpretation'],
+    currentOperatingSystem: ['scenarioViews', 'fortune.interaction', 'stateVector', 'confidence'],
+    timeline12Months: ['monthlyWindows'],
+    scenarioPanels: ['scenarioViews'],
+    actionBoard: ['decisionPlaybook', 'actionSuggestions'],
+    validationLayer: ['confidence', 'validationInsights', 'correctionInsight'],
+    personalityBridge: ['pattern', 'expertInterpretation.tags'],
+  } as const;
 }
 
 function uniqueList(values: string[]) {
@@ -1012,6 +1311,15 @@ function dedupeNarrativeSegments(values: string[]) {
     seen.add(normalized);
     return true;
   });
+}
+
+function dedupeAdjacentNarrativeParagraphs(value: string) {
+  const paragraphs = `${value || ''}`
+    .split(/\n{2,}/)
+    .map((item) => cleanNarrativeText(item))
+    .filter(Boolean);
+
+  return dedupeNarrativeSegments(paragraphs).join('\n\n');
 }
 
 function normalizeNarrativeForCompare(value: string) {

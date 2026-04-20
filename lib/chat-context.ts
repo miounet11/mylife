@@ -1,5 +1,12 @@
 import type { EventRecord, FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
+import { formatLocalDateKey, getCurrentLocalMonthKey } from '@/lib/utils';
 import { getChatIntentPreset, type ChatIntent } from '@/lib/chat-intent';
+import {
+  getEventTransportSortTime,
+  type EventDateKey,
+  type EventViewImpact,
+  type EventViewType,
+} from '@/lib/event-view';
 import { summarizeToolSessions } from '@/lib/tool-context';
 import {
   buildConfidenceAnalysis,
@@ -8,13 +15,18 @@ import {
   buildScenarioViews,
   type ReportActionSuggestion,
 } from '@/lib/report-v2';
+import {
+  buildTacitKnowledgeFocusTags,
+  buildTacitKnowledgeSummary,
+  sanitizeTacitKnowledgeInput,
+} from '@/lib/tacit-knowledge';
 
 export interface ChatContextEvent {
   id: string;
   title: string;
-  date: string;
-  type: string;
-  impact: 'positive' | 'negative' | 'neutral';
+  date: EventDateKey;
+  type: EventViewType;
+  impact: EventViewImpact;
   validationStatus: 'accurate' | 'drift' | 'pending';
   reportId?: string;
   reason?: string;
@@ -62,15 +74,16 @@ export interface ChatExperienceContext {
     pendingCount: number;
     headline: string;
   };
+  confirmedPastEventCount?: number;
   focusedEvent?: ChatContextEvent;
   report?: ChatReportContext;
 }
 
 export interface ChatEventDraft {
   title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  date: string;
-  impact: 'positive' | 'negative' | 'neutral';
+  type: EventViewType;
+  date: EventDateKey;
+  impact: EventViewImpact;
   description: string;
   reminderAdvanceDays: number;
   fortuneAnalysis: {
@@ -103,13 +116,10 @@ export function buildChatExperienceContext(params: {
   const intentPreset = getChatIntentPreset(params.intent);
   const events = (params.events || [])
     .slice()
-    .sort((left, right) => {
-      const leftTime = new Date(`${left.date}T${left.time || '00:00:00'}`).getTime();
-      const rightTime = new Date(`${right.date}T${right.time || '00:00:00'}`).getTime();
-      return leftTime - rightTime;
-    });
+    .sort((left, right) => getEventTransportSortTime(left) - getEventTransportSortTime(right));
   const recentReferenceEvents = getReferenceEvents(events, now);
   const validationSummary = buildValidationSummary(events);
+  const confirmedPastEvents = getConfirmedPastEvents(events).map(mapEvent);
   const toolMemory = summarizeToolSessions(params.toolSessions || [], params.report || null, 4);
   const focusedEvent = params.focusEventId ? events.find((item) => item.id === params.focusEventId) : undefined;
   const mappedFocusedEvent = focusedEvent ? mapEvent(focusedEvent) : undefined;
@@ -130,6 +140,7 @@ export function buildChatExperienceContext(params: {
         ...(events.length > 0 ? ['最近事件复盘', '现实节奏校验'] : ['命局主轴', '阶段节奏', '风险规避']),
         ...(toolMemory?.focusAreas?.length ? [`最近工具：${toolMemory.focusAreas.join('、')}`] : []),
         validationSummary.headline,
+        confirmedPastEvents.length > 0 ? `已确认历史印证：${confirmedPastEvents.length} 条` : '',
         mappedFocusedEvent ? `焦点事件：${mappedFocusedEvent.title}` : '',
       ].filter(Boolean),
       suggestedPrompts: buildPromptList(
@@ -149,11 +160,15 @@ export function buildChatExperienceContext(params: {
       })) || [],
       suggestedEventDrafts: [],
       validationSummary,
+      confirmedPastEventCount: confirmedPastEvents.length,
       focusedEvent: mappedFocusedEvent,
     };
   }
 
   const report = params.report;
+  const tacitKnowledge = sanitizeTacitKnowledgeInput(report.analysis?.contextSignals?.tacitKnowledge);
+  const tacitSummary = buildTacitKnowledgeSummary(tacitKnowledge);
+  const tacitTags = buildTacitKnowledgeFocusTags(tacitKnowledge);
   const reportInput = {
     basic: report.bazi,
     fiveElements: report.fiveElements,
@@ -168,7 +183,8 @@ export function buildChatExperienceContext(params: {
     shenSha: report.shenSha,
   };
   const scenarios = buildScenarioViews(reportInput);
-  const windows = buildMonthlyWindows(reportInput, now);
+  const calendarAnchor = getCurrentLocalMonthKey(now) || now;
+  const windows = buildMonthlyWindows(reportInput, calendarAnchor);
   const confidence = buildConfidenceAnalysis(reportInput);
   const topScenario = scenarios
     .filter((item) => item.key !== 'overall')
@@ -183,8 +199,10 @@ export function buildChatExperienceContext(params: {
     (report.advice?.yongShen || []).length > 0 ? `用神：${report.advice?.yongShen.join('、')}` : '',
     topScenario ? `主战场：${topScenario.actionLabel}` : '',
     bestWindow ? `最近优先窗口：${bestWindow.label}` : '',
+    ...tacitTags.map((item) => `隐性状态：${item}`),
     validationSummary.headline,
     mappedFocusedEvent ? `焦点事件：${mappedFocusedEvent.title}` : '',
+    confirmedPastEvents.length > 0 ? `已确认历史印证：${confirmedPastEvents.length} 条` : '',
   ].filter(Boolean);
   const suggestedPrompts = buildPromptList(
     [
@@ -209,7 +227,7 @@ export function buildChatExperienceContext(params: {
       scenarioViews: scenarios,
       monthlyWindows: windows,
     },
-    now
+    calendarAnchor
   );
 
   return {
@@ -222,6 +240,7 @@ export function buildChatExperienceContext(params: {
       topScenario ? `当前最值得展开的方向：${topScenario.title}，结论是“${topScenario.actionLabel}”。` : '',
       bestWindow ? `最近最佳窗口：${bestWindow.label}，原因：${bestWindow.reason}` : '',
       riskWindow ? `需要额外谨慎的窗口：${riskWindow.label}，原因：${riskWindow.reason}` : '',
+      tacitSummary ? `用户还有一层没完全说出口但真实存在的隐性状态：${tacitSummary}。回答时要把这些压力、身体信号和关系气氛当成有效输入。` : '',
       intentPreset?.key === 'event-simulation'
         ? `回答时优先把事件拆成试探、推进、确认三段节奏。`
         : '',
@@ -237,6 +256,9 @@ export function buildChatExperienceContext(params: {
       recentEvents.length > 0
         ? `用户最近事件：${recentEvents.map((item) => `${item.date} ${item.title}`).join('；')}。`
         : '当前还没有已记录的现实事件，可提醒用户把关键节点存成事件，后续复盘。',
+      confirmedPastEvents.length > 0
+        ? `用户已经亲自确认过 ${confirmedPastEvents.length} 条过去印证：${confirmedPastEvents.slice(0, 3).map((item) => item.title).join('；')}。回答时要把这些已验证的人生轨迹当成硬证据，而不是当成普通猜测。`
+        : '',
       toolMemory ? `最近工具记录：${toolMemory.summary}` : '',
       mappedFocusedEvent
         ? `本次重点纠偏事件：${mappedFocusedEvent.title}。其当前状态为${mapValidationSummaryLabel(mappedFocusedEvent.validationStatus)}。`
@@ -259,6 +281,7 @@ export function buildChatExperienceContext(params: {
     })) || [],
     suggestedEventDrafts,
     validationSummary,
+    confirmedPastEventCount: confirmedPastEvents.length,
     focusedEvent: mappedFocusedEvent,
     report: {
       id: report.id,
@@ -337,12 +360,20 @@ function mapEvent(event: EventRecord): ChatContextEvent {
 
 function getReferenceEvents(events: EventRecord[], now: Date) {
   const nowTime = now.getTime();
-  const upcoming = events.filter((item) => new Date(`${item.date}T${item.time || '00:00:00'}`).getTime() >= nowTime);
+  const upcoming = events.filter((item) => getEventTransportSortTime(item) >= nowTime);
   if (upcoming.length > 0) {
     return upcoming.slice(0, 3);
   }
 
   return events.slice(-3).reverse();
+}
+
+function getConfirmedPastEvents(events: EventRecord[]) {
+  return events.filter((event) => {
+    const feedback = (event.userFeedback as { wasAccurate?: boolean } | undefined) || {};
+    const analysis = (event.fortuneAnalysis as { templateKind?: string } | undefined) || {};
+    return feedback.wasAccurate === true && analysis.templateKind === 'past_event';
+  });
 }
 
 function buildPromptList(
@@ -357,6 +388,9 @@ function buildPromptList(
   }
   if (events.length > 0) {
     prompts.push('这些现实事件和报告判断是否一致？我应该如何验证准确度？');
+  }
+  if (getConfirmedPastEvents(events).length > 0) {
+    prompts.push('既然这些过去节点已经被我确认发生过，接下来最可能重复出现的模式是什么？');
   }
   if (events.some((item) => (item.userFeedback as { wasAccurate?: boolean } | undefined)?.wasAccurate === false)) {
     prompts.push('哪些判断已经出现偏差？偏差更可能来自时机、时辰还是我自己的执行问题？');
@@ -492,5 +526,5 @@ function mapAnswerImpact(answer: string): ChatEventDraft['impact'] {
 }
 
 function formatDate(date: Date) {
-  return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
+  return formatLocalDateKey(date);
 }

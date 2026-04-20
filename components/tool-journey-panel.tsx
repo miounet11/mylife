@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowRight, Milestone, Sparkles } from 'lucide-react';
+import { ArrowRight, Milestone } from 'lucide-react';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
 const journeyReasonMap: Record<ToolDefinition['category'], string[]> = {
@@ -16,7 +16,7 @@ const journeyReasonMap: Record<ToolDefinition['category'], string[]> = {
 export default function ToolJourneyPanel({
   tool,
   title = '推荐测算路径',
-  description = '先看主问题，再补窗口，最后落到具体动作。',
+  description = '',
 }: {
   tool: ToolDefinition;
   title?: string;
@@ -31,15 +31,15 @@ export default function ToolJourneyPanel({
         <Milestone className="h-3.5 w-3.5" />
         {title}
       </div>
-      <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">从一次测试，走到一条连续决策链</h2>
-      <p className="intro-copy mt-3 max-w-3xl">{description}</p>
+      <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">测算路径</h2>
+      {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
 
       <div className="mt-6 grid gap-4 xl:grid-cols-4">
         {items.map((item, index) => (
           <div key={item.slug} className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">STEP {index + 1}</div>
             <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">{item.shortTitle}</div>
-            <p className="intro-copy mt-3">{reasons[index] || '继续补齐上下文'}</p>
+            <div className="mt-3 text-sm text-[color:var(--muted)]">{reasons[index] || '补齐上下文'}</div>
             <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
               {item.freeValueLine}
             </div>
@@ -52,11 +52,6 @@ export default function ToolJourneyPanel({
             </Link>
           </div>
         ))}
-      </div>
-
-      <div className="intro-copy mt-5 flex items-center gap-2">
-        <Sparkles className="h-4 w-4" />
-        每一步结果都会绑定当前用户并作为后续测算上下文，越往后测，建议越贴近真实处境。
       </div>
     </section>
   );

@@ -1,33 +1,12 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { addMonths, eachDayOfInterval, endOfMonth, format, isSameDay, isToday, startOfMonth } from 'date-fns';
-
-interface Event {
-  id: string;
-  date: Date;
-  title: string;
-  description?: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-  impact: 'positive' | 'negative' | 'neutral';
-  reminder?: {
-    enabled: boolean;
-    advanceDays: number;
-    method: 'app' | 'email' | 'sms';
-  };
-  fortuneAnalysis?: {
-    source?: string;
-    reportId?: string;
-    reason?: string;
-  };
-  userFeedback?: {
-    wasAccurate?: boolean;
-  };
-}
+import { getEventViewFocusDate, type EventViewModel } from '@/lib/event-view';
 
 interface EventCalendarProps {
-  events?: Event[];
+  events?: EventViewModel[];
 }
 
 const typeMeta = {
@@ -46,34 +25,60 @@ const impactClass = {
 };
 
 export default function EventCalendar({ events = [] }: EventCalendarProps) {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState<Date | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-
-  const monthStart = startOfMonth(currentDate);
-  const monthEnd = endOfMonth(currentDate);
-  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
-  const paddingDays = new Date(monthStart).getDay();
-
   const selectedEvents = useMemo(() => {
     if (!selectedDate) return [];
     return getEventsForDay(events, selectedDate);
   }, [events, selectedDate]);
 
+  useEffect(() => {
+    const focusDate = getEventViewFocusDate(events) || new Date();
+    setCurrentDate(startOfMonth(focusDate));
+    setSelectedDate((current) => current || focusDate);
+  }, [events]);
+
+  if (!currentDate) {
+    return (
+      <div className="soft-card h-full rounded-[2rem] p-5 md:p-6">
+        <div className="flex items-center justify-between">
+          <div className="inline-flex h-10 w-10 rounded-full bg-slate-100" />
+          <div className="text-center">
+            <h2 className="text-2xl font-black text-[color:var(--ink)]">事件日历</h2>
+            <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
+          </div>
+          <div className="inline-flex h-10 w-10 rounded-full bg-slate-100" />
+        </div>
+
+        <div className="mt-6 rounded-[1.5rem] bg-slate-50 p-4 text-sm text-[color:var(--muted)]">
+          正在定位最值得先查看的月份...
+        </div>
+      </div>
+    );
+  }
+
+  const resolvedCurrentDate = currentDate;
+
+  const monthStart = startOfMonth(resolvedCurrentDate);
+  const monthEnd = endOfMonth(resolvedCurrentDate);
+  const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const paddingDays = new Date(monthStart).getDay();
+
   return (
     <div className="soft-card h-full rounded-[2rem] p-5 md:p-6">
       <div className="flex items-center justify-between">
         <button
-          onClick={() => setCurrentDate(addMonths(currentDate, -1))}
+          onClick={() => setCurrentDate(addMonths(resolvedCurrentDate, -1))}
           className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-center">
-          <h2 className="text-2xl font-black text-[color:var(--ink)]">{format(currentDate, 'yyyy年 M月')}</h2>
+          <h2 className="text-2xl font-black text-[color:var(--ink)]">{format(resolvedCurrentDate, 'yyyy年 M月')}</h2>
           <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
         </div>
         <button
-          onClick={() => setCurrentDate(addMonths(currentDate, 1))}
+          onClick={() => setCurrentDate(addMonths(resolvedCurrentDate, 1))}
           className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
         >
           <ChevronRight className="h-4 w-4" />
@@ -143,7 +148,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                         <div className="font-semibold text-[color:var(--ink)]">{event.title}</div>
                         <span className={`h-2 w-2 rounded-full ${impactClass[event.impact]}`} />
                       </div>
-                      <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">{event.description || '尚未补充事件说明。'}</div>
+                      <div className="mt-1 text-sm text-[color:var(--ink)]">{event.description || '暂无说明'}</div>
                       {event.fortuneAnalysis?.reason && (
                         <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
                           {event.fortuneAnalysis.reason}
@@ -169,13 +174,13 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
             <div className="mt-4 text-sm text-[color:var(--muted)]">这一天还没有安排事件。</div>
           )
         ) : (
-          <div className="mt-4 text-sm text-[color:var(--muted)]">点击日历中的日期，查看当天事件和提醒状态。</div>
+          <div className="mt-4 text-sm text-[color:var(--muted)]">选择日期</div>
         )}
       </div>
     </div>
   );
 }
 
-function getEventsForDay(events: Event[], date: Date): Event[] {
-  return events.filter((event) => isSameDay(new Date(event.date), date));
+function getEventsForDay(events: EventViewModel[], date: Date): EventViewModel[] {
+  return events.filter((event) => isSameDay(event.date, date));
 }

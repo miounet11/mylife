@@ -1,5 +1,13 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { emailSubscriptionOperations, fortuneOperations, reportUpgradeJobOperations, userOperations } from '@/lib/database';
+import {
+  getDefaultModel,
+  getReportUpgradeBatchSize,
+  getReportUpgradeInitialDelayMs,
+  getReportUpgradeMaxAttempts,
+  getReportUpgradeProviderDeferMs,
+  getReportUpgradeRetryDelayMs,
+} from '@/lib/env';
 import { isEmailDeliveryConfigured, sendReportUpgradeReadyEmail } from '@/lib/email';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
@@ -9,11 +17,11 @@ import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
 import type { FortuneAnalysisResult, FortuneRecord, ReportUpgradeJobRecord } from '@/lib/user-types';
 
-const DEFAULT_MAX_ATTEMPTS = Math.max(2, Number(process.env.REPORT_UPGRADE_MAX_ATTEMPTS || 6));
-const INITIAL_DELAY_MS = Math.max(15_000, Number(process.env.REPORT_UPGRADE_INITIAL_DELAY_MS || 45_000));
-const RETRY_BASE_DELAY_MS = Math.max(30_000, Number(process.env.REPORT_UPGRADE_RETRY_DELAY_MS || 1000 * 60 * 10));
-const DEFAULT_BATCH_SIZE = Math.max(1, Number(process.env.REPORT_UPGRADE_BATCH_SIZE || 2));
-const PROVIDER_DEFER_MS = Math.max(10 * 60 * 1000, Number(process.env.REPORT_UPGRADE_PROVIDER_DEFER_MS || 1000 * 60 * 20));
+const DEFAULT_MAX_ATTEMPTS = getReportUpgradeMaxAttempts();
+const INITIAL_DELAY_MS = getReportUpgradeInitialDelayMs();
+const RETRY_BASE_DELAY_MS = getReportUpgradeRetryDelayMs();
+const DEFAULT_BATCH_SIZE = getReportUpgradeBatchSize();
+const PROVIDER_DEFER_MS = getReportUpgradeProviderDeferMs();
 
 export function enqueueReportUpgrade(params: {
   report: FortuneRecord;
@@ -573,10 +581,10 @@ function computeRetryDelayMs(params: {
 }
 
 function assessReportProviderHealth() {
-  const baseChain = getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto', 'report');
+  const baseChain = getModelFallbackChain(undefined, 'report');
   const reportAssessment = assessScopeProviderHealth(baseChain, 'report');
   const agentAssessment = assessScopeProviderHealth(
-    getModelFallbackChain(process.env.DEFAULT_MODEL || 'auto'),
+    getModelFallbackChain(getDefaultModel()),
     'agent'
   );
   const reportSnapshots = reportAssessment.snapshots || [];

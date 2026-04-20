@@ -1,12 +1,13 @@
 // 用户档案API
 import { NextRequest, NextResponse } from 'next/server';
 import { eventOperations, fortuneOperations, userOperations } from '@/lib/database';
-import { generateId, formatDate } from '@/lib/utils';
+import { normalizeEventTransportRecords } from '@/lib/event-view';
+import { generateId } from '@/lib/utils';
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
-    
+
     // 验证数据
     if (!data.name || !data.birthDate || !data.birthTime || !data.gender) {
       return NextResponse.json(
@@ -46,7 +47,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -63,7 +64,7 @@ export async function GET(
     // 获取用户的命理数据
     const fortunes = fortuneOperations.getByUserId(id);
     // 获取用户的事件
-    const events = eventOperations.getByUserId(id);
+    const events = normalizeEventTransportRecords(eventOperations.getByUserId(id));
 
     return NextResponse.json({
       success: true,
@@ -92,7 +93,7 @@ export async function PUT(
     const updates = await request.json();
 
     // 更新用户
-    const result = userOperations.update(id, updates);
+    userOperations.update(id, updates);
 
     return NextResponse.json({
       success: true,
@@ -109,13 +110,13 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
     // 删除用户
-    const result = userOperations.delete(id);
+    userOperations.delete(id);
 
     return NextResponse.json({
       success: true,

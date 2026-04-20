@@ -1,5 +1,4 @@
 import { analyticsOperations } from '@/lib/database';
-import { forwardServerAnalyticsEventToGoogleAnalytics } from '@/lib/google-analytics-server';
 import type { AnalyticsEventRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
@@ -51,6 +50,7 @@ export type AnalyticsEventName =
   | 'premium_service_status_updated'
   | 'event_created'
   | 'report_event_saved_from_result'
+  | 'report_past_event_saved_from_result'
   | 'event_feedback_recorded'
   | 'event_updated'
   | 'event_deleted'
@@ -66,6 +66,21 @@ interface TrackEventInput {
   forwardToGoogleAnalytics?: boolean;
 }
 
+async function queueGoogleAnalyticsForward(input: {
+  eventName: AnalyticsEventName;
+  userId?: string | null;
+  sessionId?: string | null;
+  page?: string;
+  meta?: Record<string, unknown>;
+}) {
+  try {
+    const { forwardServerAnalyticsEventToGoogleAnalytics } = await import('@/lib/google-analytics-server');
+    await forwardServerAnalyticsEventToGoogleAnalytics(input);
+  } catch (error) {
+    console.error('[Analytics] google analytics forward skipped:', error);
+  }
+}
+
 export function trackServerEvent(input: TrackEventInput) {
   try {
     const payload: AnalyticsEventRecord = {
@@ -79,7 +94,7 @@ export function trackServerEvent(input: TrackEventInput) {
 
     analyticsOperations.create(payload);
     if (input.forwardToGoogleAnalytics !== false) {
-      void forwardServerAnalyticsEventToGoogleAnalytics({
+      void queueGoogleAnalyticsForward({
         eventName: input.eventName,
         userId: input.userId,
         sessionId: input.sessionId,

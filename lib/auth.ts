@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { db, userOperations } from '@/lib/database';
+import { getAdminEmails as getConfiguredAdminEmails, isProductionEnvironment } from '@/lib/env';
 import { generateId } from '@/lib/utils';
 
 const SESSION_COOKIE_NAME = 'life_kline_session_id';
@@ -11,12 +12,7 @@ function normalizeEmail(email: string) {
 }
 
 function getAdminEmails() {
-  return new Set(
-    `${process.env.ADMIN_EMAILS || ''}`
-      .split(',')
-      .map((item) => item.trim().toLowerCase())
-      .filter(Boolean)
-  );
+  return new Set(getConfiguredAdminEmails());
 }
 
 function isAdminEmail(email: string) {
@@ -107,7 +103,7 @@ async function setSessionUserId(userId: string) {
   cookieStore.set(SESSION_COOKIE_NAME, userId, {
     maxAge: 60 * 60 * 24 * 365,
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProductionEnvironment(),
     sameSite: 'lax',
     path: '/',
   });

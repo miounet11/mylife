@@ -1,8 +1,24 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { eventOperations, fortuneOperations } from '@/lib/database';
 import { buildConfidenceAnalysis, buildMonthlyWindows, buildReportCorrectionInsight, buildReportValidationInsights, buildScenarioViews } from '@/lib/report-v2';
+import type { FortuneRecord } from '@/lib/user-types';
+import { getCurrentLocalMonthKey } from '@/lib/utils';
 
-export function syncReportFeedbackLoop(reportId: string) {
+type ReportFeedbackSyncSuccess = {
+  success: true;
+  reportId: string;
+  validationInsights: ReturnType<typeof buildReportValidationInsights>;
+  correctionInsight: ReturnType<typeof buildReportCorrectionInsight>;
+};
+
+type ReportFeedbackSyncFailure = {
+  success: false;
+  reason: 'report_not_found';
+};
+
+export function syncReportFeedbackLoop(reportId: string, options?: {
+  trackEvent?: boolean;
+}) : ReportFeedbackSyncSuccess | ReportFeedbackSyncFailure {
   const report = fortuneOperations.getById(reportId);
   if (!report) {
     return {
@@ -25,6 +41,7 @@ export function syncReportFeedbackLoop(reportId: string) {
     dayun: report.dayun,
     shenSha: report.shenSha,
   });
+  const calendarAnchor = getCurrentLocalMonthKey() || new Date();
   const monthlyWindows = buildMonthlyWindows({
     basic: report.bazi,
     advice: report.advice,
@@ -34,7 +51,7 @@ export function syncReportFeedbackLoop(reportId: string) {
     klineData: report.klineData || null,
     dayun: report.dayun,
     shenSha: report.shenSha,
-  });
+  }, calendarAnchor);
   const confidence = buildConfidenceAnalysis({
     basic: report.bazi,
     advice: report.advice,
@@ -68,26 +85,28 @@ export function syncReportFeedbackLoop(reportId: string) {
       validationInsights,
       correctionInsight,
     },
-  };
+  } as NonNullable<FortuneRecord['analysis']>;
 
   fortuneOperations.update(reportId, {
     analysis: nextAnalysis,
   });
 
-  trackServerEvent({
-    userId: report.userId,
-    sessionId: report.userId,
-    eventName: 'report_feedback_synced',
-    page: `/result/${reportId}`,
-    meta: {
-      reportId,
-      linkedEvents: validationInsights.totalLinkedEvents,
-      accurateCount: validationInsights.accurateCount,
-      driftCount: validationInsights.driftCount,
-      pendingCount: validationInsights.pendingCount,
-      correctionLevel: correctionInsight.level,
-    },
-  });
+  if (options?.trackEvent !== false) {
+    trackServerEvent({
+      userId: report.userId,
+      sessionId: report.userId,
+      eventName: 'report_feedback_synced',
+      page: `/result/${reportId}`,
+      meta: {
+        reportId,
+        linkedEvents: validationInsights.totalLinkedEvents,
+        accurateCount: validationInsights.accurateCount,
+        driftCount: validationInsights.driftCount,
+        pendingCount: validationInsights.pendingCount,
+        correctionLevel: correctionInsight.level,
+      },
+    });
+  }
 
   return {
     success: true,
@@ -97,11 +116,13 @@ export function syncReportFeedbackLoop(reportId: string) {
   };
 }
 
-export function syncRecentReportFeedbackLoops(limit = 50) {
+export function syncRecentReportFeedbackLoops(limit = 50, options?: {
+  trackEvent?: boolean;
+}) {
   const reports = fortuneOperations.listRecent(limit);
-  const results = reports.map((report) => syncReportFeedbackLoop(report.id));
-  const synced = results.filter((item) => item.success);
-  const failed = results.filter((item) => !item.success);
+  const results = reports.map((report) => syncReportFeedbackLoop(report.id, options));
+  const synced = results.filter((item): item is ReportFeedbackSyncSuccess => item.success);
+  const failed = results.filter((item): item is ReportFeedbackSyncFailure => !item.success);
 
   return {
     scannedCount: reports.length,

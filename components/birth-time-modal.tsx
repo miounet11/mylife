@@ -16,7 +16,6 @@ interface BirthTimeModalProps {
   onClose: () => void;
   onTabChange: (nextTab: 0 | 1 | 2) => void;
   onConfirm: (tabIndex: 0 | 1 | 2, data: string[] | string) => void;
-  onSetUnknowhour: (value: 0 | 1) => void;
 }
 
 interface SolarState {
@@ -38,6 +37,11 @@ interface LunarState {
 interface PillarState {
   tgList: string[];
   dzList: string[];
+}
+
+interface TodaySnapshot {
+  solar: SolarState;
+  lunar: LunarState;
 }
 
 type PopoverMode = 'tg' | 'dz' | 'date' | null;
@@ -160,7 +164,7 @@ function formatCandidateDate(solar: any, unknowhour: boolean) {
   return `${dateLabel} ${padPart(solar.getHour())}:${padPart(solar.getMinute())}`;
 }
 
-function getTodayLunarState() {
+function buildTodaySnapshot(): TodaySnapshot {
   const now = new Date();
   const lunar = Solar.fromYmdHms(
     now.getFullYear(),
@@ -170,13 +174,24 @@ function getTodayLunarState() {
     now.getMinutes(),
     0
   ).getLunar();
-
-  return {
-    year: String(lunar.getYear()),
-    month: String(lunar.getMonth()),
-    day: String(lunar.getDay()),
+  const clock = {
     hour: padPart(now.getHours()),
     minute: padPart(now.getMinutes()),
+  };
+
+  return {
+    solar: {
+      year: String(now.getFullYear()),
+      month: padPart(now.getMonth() + 1),
+      day: padPart(now.getDate()),
+      ...clock,
+    },
+    lunar: {
+      year: String(lunar.getYear()),
+      month: String(lunar.getMonth()),
+      day: String(lunar.getDay()),
+      ...clock,
+    },
   };
 }
 
@@ -188,7 +203,6 @@ export default function BirthTimeModal({
   onClose,
   onTabChange,
   onConfirm,
-  onSetUnknowhour,
 }: BirthTimeModalProps) {
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(tabIndex);
   const [searchValue, setSearchValue] = useState('');
@@ -199,6 +213,7 @@ export default function BirthTimeModal({
   const [popoverMode, setPopoverMode] = useState<PopoverMode>(null);
   const [pillarIndex, setPillarIndex] = useState(0);
   const [dateList, setDateList] = useState<string[]>([]);
+  const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
   const wasOpenRef = useRef(false);
   const syncSnapshotRef = useRef({
     birthday,
@@ -234,6 +249,7 @@ export default function BirthTimeModal({
     setPillarState(buildPillarState(birthday, unknowhour));
     setPopoverMode(null);
     setDateList([]);
+    setTodaySnapshot(buildTodaySnapshot());
   }, [birthday, isOpen, tabIndex, unknowhour]);
 
   const solarDayCount = useMemo(() => {
@@ -257,30 +273,17 @@ export default function BirthTimeModal({
     }
   }, [lunarDayCount, lunarState.day]);
 
-  const todaySolar = useMemo(() => {
-    const now = new Date();
-    return {
-      year: String(now.getFullYear()),
-      month: padPart(now.getMonth() + 1),
-      day: padPart(now.getDate()),
-      hour: padPart(now.getHours()),
-      minute: padPart(now.getMinutes()),
-    };
-  }, []);
-
-  const todayLunar = useMemo(() => getTodayLunarState(), []);
-
   const showToday = useMemo(() => {
-    if (activeTab === 2) {
+    if (!todaySnapshot || activeTab === 2) {
       return false;
     }
 
     if (activeTab === 0) {
-      return JSON.stringify(solarState) !== JSON.stringify(todaySolar);
+      return JSON.stringify(solarState) !== JSON.stringify(todaySnapshot.solar);
     }
 
-    return JSON.stringify(lunarState) !== JSON.stringify(todayLunar);
-  }, [activeTab, lunarState, solarState, todayLunar, todaySolar]);
+    return JSON.stringify(lunarState) !== JSON.stringify(todaySnapshot.lunar);
+  }, [activeTab, lunarState, solarState, todaySnapshot]);
 
   const solarYearOptions = useMemo<PickerWheelOption[]>(
     () =>
@@ -348,11 +351,6 @@ export default function BirthTimeModal({
     return null;
   }
 
-  const syncUnknownFromClock = (hour: string, minute: string) => {
-    const nextUnknown = hour === UNKNOWN || minute === UNKNOWN ? 1 : 0;
-    onSetUnknowhour(nextUnknown);
-  };
-
   const handleTabChange = (nextTab: 0 | 1 | 2) => {
     setError('');
     setPopoverMode(null);
@@ -398,38 +396,15 @@ export default function BirthTimeModal({
   };
 
   const handleToday = () => {
-    const now = new Date();
+    const snapshot = buildTodaySnapshot();
+    setTodaySnapshot(snapshot);
 
     if (activeTab === 0) {
-      const nextState = {
-        year: String(now.getFullYear()),
-        month: padPart(now.getMonth() + 1),
-        day: padPart(now.getDate()),
-        hour: padPart(now.getHours()),
-        minute: padPart(now.getMinutes()),
-      };
-      setSolarState(nextState);
-      syncUnknownFromClock(nextState.hour, nextState.minute);
+      setSolarState(snapshot.solar);
       return;
     }
 
-    const lunar = Solar.fromYmdHms(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes(),
-      0
-    ).getLunar();
-    const nextState = {
-      year: String(lunar.getYear()),
-      month: String(lunar.getMonth()),
-      day: String(lunar.getDay()),
-      hour: padPart(now.getHours()),
-      minute: padPart(now.getMinutes()),
-    };
-    setLunarState(nextState);
-    syncUnknownFromClock(nextState.hour, nextState.minute);
+    setLunarState(snapshot.lunar);
   };
 
   const handleSearch = () => {
@@ -469,7 +444,6 @@ export default function BirthTimeModal({
       hour: padPart(hour),
       minute: padPart(minute),
     });
-    onSetUnknowhour(0);
   };
 
   const handleConfirm = async () => {
@@ -482,7 +456,6 @@ export default function BirthTimeModal({
         return;
       }
 
-      syncUnknownFromClock(solarState.hour, solarState.minute);
       onConfirm(activeTab, [solarState.year, solarState.month, solarState.day, solarState.hour, solarState.minute]);
       onClose();
       return;
@@ -496,7 +469,6 @@ export default function BirthTimeModal({
           return;
         }
 
-        syncUnknownFromClock(lunarState.hour, lunarState.minute);
         const monthLabel = lunarMonthOptions.find((option) => option.value === lunarState.month)?.label ?? formatLunarMonth(Number(lunarState.month));
         const dayLabel = formatLunarDay(Number(lunarState.day));
         onConfirm(activeTab, [lunarState.year, monthLabel, dayLabel, lunarState.hour, lunarState.minute]);
@@ -545,8 +517,6 @@ export default function BirthTimeModal({
           nextDzList[pillarIndex] = options[0];
         }
 
-        const unknownValue = value === UNKNOWN || nextDzList[3] === UNKNOWN ? 1 : 0;
-        onSetUnknowhour(unknownValue);
         return { tgList: nextTgList, dzList: nextDzList };
       });
       setPopoverMode('dz');
@@ -556,8 +526,6 @@ export default function BirthTimeModal({
     setPillarState((current) => {
       const nextDzList = current.dzList.slice();
       nextDzList[pillarIndex] = value;
-      const unknownValue = value === UNKNOWN || current.tgList[3] === UNKNOWN ? 1 : 0;
-      onSetUnknowhour(unknownValue);
       return { ...current, dzList: nextDzList };
     });
     setPopoverMode(null);
@@ -580,9 +548,13 @@ export default function BirthTimeModal({
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
+          className="relative w-full max-w-[440px] rounded-[28px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
           onClick={(event) => event.stopPropagation()}
         >
+          <div className="mb-4 space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">出生时间</div>
+            <div className="text-sm leading-6 text-[color:var(--muted)]">支持公历、农历和四柱三种录入方式，确认后会回填到主表单。</div>
+          </div>
           <div className="relative mb-[15px] flex items-center justify-center">
             <button type="button" onClick={onClose} className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[color:var(--muted)]">
               <X className="h-4 w-4" />
@@ -749,9 +721,9 @@ export default function BirthTimeModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="mt-[18px] flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
+            className="mt-[18px] flex h-[56px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1] shadow-[0_16px_34px_rgba(34,26,18,0.16)]"
           >
-            确定
+            确认出生时间
           </button>
 
           {popoverMode ? (

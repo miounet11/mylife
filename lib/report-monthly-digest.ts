@@ -1,13 +1,17 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, userOperations } from '@/lib/database';
+import {
+  getReportMonthlyDigestBatchSize,
+  getReportMonthlyDigestTimezoneOffsetMinutes,
+} from '@/lib/env';
 import { isEmailDeliveryConfigured, sendMonthlyReportDigestEmail } from '@/lib/email';
 import { buildMonthlyWindows, buildScenarioViews } from '@/lib/report-v2';
 import { backfillEmailSubscriptionsFromUsers } from '@/lib/subscription-backfill';
-import { generateId } from '@/lib/utils';
+import { generateId, getCurrentLocalMonthKey } from '@/lib/utils';
 import type { FortuneRecord } from '@/lib/user-types';
 
-const DEFAULT_BATCH_SIZE = Math.max(1, Number(process.env.REPORT_MONTHLY_DIGEST_BATCH_SIZE || 20));
-const DEFAULT_TIMEZONE_OFFSET_MINUTES = Number(process.env.REPORT_MONTHLY_DIGEST_TIMEZONE_OFFSET_MINUTES || 480);
+const DEFAULT_BATCH_SIZE = getReportMonthlyDigestBatchSize();
+const DEFAULT_TIMEZONE_OFFSET_MINUTES = getReportMonthlyDigestTimezoneOffsetMinutes();
 
 type CycleTrigger = 'cron' | 'manual';
 
@@ -235,6 +239,7 @@ export async function runReportMonthlyDigestCycle(params?: {
 }
 
 function buildDigestFromReport(report: FortuneRecord) {
+  const calendarAnchor = getCurrentLocalMonthKey() || new Date();
   const scenarioViews = buildScenarioViews({
     basic: report.bazi,
     advice: report.advice,
@@ -254,7 +259,7 @@ function buildDigestFromReport(report: FortuneRecord) {
     klineData: report.klineData || null,
     dayun: report.dayun,
     shenSha: report.shenSha,
-  });
+  }, calendarAnchor);
 
   const stageFocus = scenarioViews[0]?.summary
     || report.analysis?.opening

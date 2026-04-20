@@ -10,6 +10,11 @@ import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { appendToolMemoryToNarrative, summarizeToolSessions } from '@/lib/tool-context';
+import {
+  buildTacitKnowledgeFocusTags,
+  buildTacitKnowledgeSummary,
+  sanitizeTacitKnowledgeInput,
+} from '@/lib/tacit-knowledge';
 import type { FortuneAdvice } from '@/lib/user-types';
 import { validateAnalyzeRequest } from '@/lib/validators';
 
@@ -28,6 +33,7 @@ type AnalyzeInput = {
   useSolarTime?: boolean;
   useDaylightSaving?: boolean;
   useSeparateZiHour?: boolean;
+  tacitContext?: Record<string, unknown>;
 };
 
 type StreamStageEvent = {
@@ -289,6 +295,9 @@ async function executeAnalyze(
 
   const userId = await getOrCreateGuestUserId();
   const recentToolSessions = toolSessionOperations.listByUser(userId, 8);
+  const tacitContext = sanitizeTacitKnowledgeInput(data.tacitContext);
+  const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
+  const tacitSignals = buildTacitKnowledgeFocusTags(tacitContext);
   const timing = resolveEffectiveTiming(data);
   const timezone = (data.timezone as number) || 8;
   const useSeparateZiHour = Boolean(data.useSeparateZiHour);
@@ -319,6 +328,8 @@ async function executeAnalyze(
     timezone,
     gender: data.gender || 'male',
     sect: useSeparateZiHour ? 1 : 2,
+    tacitSummary,
+    tacitSignals,
     source: 'analyze',
     onProgress: async (progressEvent) => {
       const mapped = mapPipelineStage(progressEvent);
@@ -341,6 +352,21 @@ async function executeAnalyze(
         `已纳入最近 ${toolMemory.recentSessions.length} 次单项工具结果作为用户历史上下文。`,
       ],
       explanation: appendToolMemoryToNarrative(finalResult.analysis?.explanation || '', toolMemory),
+    };
+  }
+
+  if (tacitContext && tacitSummary) {
+    finalResult.analysis = {
+      ...(finalResult.analysis || {}),
+      contextSignals: {
+        ...((finalResult.analysis?.contextSignals as Record<string, unknown>) || {}),
+        tacitKnowledge: tacitContext,
+      },
+      enhancementNotes: [
+        ...(((finalResult.analysis?.enhancementNotes || []) as string[]) || []),
+        `已纳入一层无法直接用完整句子表达的隐性状态：${tacitSummary}。`,
+      ],
+      summary: finalResult.analysis?.summary || tacitSummary.slice(0, 64),
     };
   }
 
@@ -422,6 +448,7 @@ async function executeAnalyze(
       useSolarTime: !!data.useSolarTime,
       useDaylightSaving: !!data.useDaylightSaving,
       useSeparateZiHour: !!data.useSeparateZiHour,
+      tacitSignalCount: tacitSignals.length,
     },
   });
 
@@ -469,6 +496,7 @@ async function executeAnalyze(
       agentFailureCount: Array.isArray(finalResult.analysis?.orchestration?.failed)
         ? finalResult.analysis.orchestration.failed.length
         : 0,
+      tacitSignalCount: tacitSignals.length,
     },
   });
 

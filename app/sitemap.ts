@@ -2,8 +2,40 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
+import { normalizeAlternateLanguagePaths } from '@/lib/public-content-seo';
 import { listToolCategories, listToolDefinitions } from '@/lib/tools';
 import { worldYiPublicRoutes } from '@/lib/world-yi-public-stats';
+
+const SITE_URL = 'https://www.life-kline.com';
+
+function withSiteUrl(path: string) {
+  return path.startsWith('http') ? path : `${SITE_URL}${path}`;
+}
+
+function createSitemapEntry(path: string, options: {
+  lastModified: Date;
+  changeFrequency: NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>;
+  priority: number;
+  languages?: Record<string, string>;
+}) {
+  const languages = Object.fromEntries(
+    Object.entries(normalizeAlternateLanguagePaths({
+      languages: options.languages,
+      defaultLocale: 'zh-CN',
+      defaultPath: path,
+    })).map(([key, value]) => [key, withSiteUrl(value)]),
+  );
+
+  return {
+    url: withSiteUrl(path),
+    lastModified: options.lastModified,
+    changeFrequency: options.changeFrequency,
+    priority: options.priority,
+    alternates: {
+      languages,
+    },
+  } satisfies MetadataRoute.Sitemap[number];
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -15,82 +47,81 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const toolCategories = listToolCategories();
   const tools = listToolDefinitions();
   const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: 'https://www.life-kline.com',
+    createSitemapEntry('/', {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 1,
-    },
-    {
-      url: 'https://www.life-kline.com/knowledge',
+      languages: {
+        'zh-CN': '/',
+        'en-US': '/world-yi/en',
+      },
+    }),
+    createSitemapEntry('/knowledge', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.8,
-    },
-    {
-      url: 'https://www.life-kline.com/knowledge/topics',
+      languages: {
+        'zh-CN': '/knowledge',
+        'en-US': '/world-yi/en',
+      },
+    }),
+    createSitemapEntry('/knowledge/topics', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.78,
-    },
-    {
-      url: 'https://www.life-kline.com/cases',
+    }),
+    createSitemapEntry('/cases', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.75,
-    },
-    {
-      url: 'https://www.life-kline.com/insights',
+      languages: {
+        'zh-CN': '/cases',
+        'en-US': '/world-yi/en/cases',
+      },
+    }),
+    createSitemapEntry('/insights', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.76,
-    },
-    {
-      url: 'https://www.life-kline.com/tools',
+    }),
+    createSitemapEntry('/tools', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.82,
-    },
-    ...toolCategories.map((category) => ({
-      url: `https://www.life-kline.com/tools/category/${category.key}`,
+    }),
+    ...toolCategories.map((category) => createSitemapEntry(`/tools/category/${category.key}`, {
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.74,
     })),
-    ...tools.map((tool) => ({
-      url: `https://www.life-kline.com/tools/${tool.slug}`,
+    ...tools.map((tool) => createSitemapEntry(`/tools/${tool.slug}`, {
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.68,
     })),
-    ...worldYiPublicRoutes.map((path) => ({
-      url: `https://www.life-kline.com${path}`,
+    ...worldYiPublicRoutes.map((path) => createSitemapEntry(path, {
       lastModified: new Date(),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: path === '/world-yi' ? 0.86 : 0.8,
     })),
-    ...knowledgeArticles.map((article) => ({
-      url: `https://www.life-kline.com/knowledge/${article.slug}`,
+    ...knowledgeArticles.map((article) => createSitemapEntry(`/knowledge/${article.slug}`, {
       lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
+      changeFrequency: 'monthly',
       priority: 0.72,
     })),
-    ...knowledgeTopics.map((topic) => ({
-      url: `https://www.life-kline.com/knowledge/topics/${topic.topicSlug}`,
+    ...knowledgeTopics.map((topic) => createSitemapEntry(`/knowledge/topics/${topic.topicSlug}`, {
       lastModified: new Date(topic.updatedAt || Date.now()),
-      changeFrequency: 'weekly' as const,
+      changeFrequency: 'weekly',
       priority: 0.74,
     })),
-    ...caseStudies.map((item) => ({
-      url: `https://www.life-kline.com/cases/${item.slug}`,
+    ...caseStudies.map((item) => createSitemapEntry(`/cases/${item.slug}`, {
       lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
+      changeFrequency: 'monthly',
       priority: 0.7,
     })),
-    ...entityInsights.map((item) => ({
-      url: `https://www.life-kline.com/insights/${item.type}/${item.slug}`,
+    ...entityInsights.map((item) => createSitemapEntry(`/insights/${item.type}/${item.slug}`, {
       lastModified: new Date(),
-      changeFrequency: 'monthly' as const,
+      changeFrequency: 'monthly',
       priority: 0.68,
     })),
   ];
@@ -102,10 +133,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
     return [
       ...staticRoutes,
-      ...resultRoutes.map((item) => ({
-        url: `https://www.life-kline.com/result/${item.id}`,
+      ...resultRoutes.map((item) => createSitemapEntry(`/result/${item.id}`, {
         lastModified: new Date(item.updated_at || item.created_at || Date.now()),
-        changeFrequency: 'monthly' as const,
+        changeFrequency: 'monthly',
         priority: 0.65,
       })),
     ];

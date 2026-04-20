@@ -1,6 +1,7 @@
 jest.mock('@/lib/database', () => ({
   analyticsOperations: {
     getOverview: jest.fn(),
+    getSystemHealthSummary: jest.fn(),
   },
 }));
 
@@ -13,12 +14,27 @@ jest.mock('@/lib/knowledge-ops', () => ({
   getKnowledgeOpsSnapshot: jest.fn(),
 }));
 
+jest.mock('@/lib/knowledge-runtime-state', () => ({
+  readKnowledgeAcquisitionLockStatus: jest.fn(() => ({
+    lock: null,
+    stale: false,
+    ageMs: 0,
+  })),
+  readKnowledgeAcquisitionSnapshot: jest.fn(() => ({
+    status: 'success',
+    finishedAt: new Date().toISOString(),
+    durationMs: 1200,
+    updatedAt: new Date().toISOString(),
+  })),
+}));
+
 import { analyticsOperations } from '@/lib/database';
 import { getContentOpsSnapshot, getContentSchedulerOverview } from '@/lib/content-ops';
 import { getKnowledgeOpsSnapshot } from '@/lib/knowledge-ops';
 import { getSystemOpsSnapshot } from '@/lib/system-ops';
 
 const mockedGetOverview = analyticsOperations.getOverview as jest.MockedFunction<typeof analyticsOperations.getOverview>;
+const mockedGetSystemHealthSummary = analyticsOperations.getSystemHealthSummary as jest.MockedFunction<typeof analyticsOperations.getSystemHealthSummary>;
 const mockedGetContentOpsSnapshot = getContentOpsSnapshot as jest.MockedFunction<typeof getContentOpsSnapshot>;
 const mockedGetContentSchedulerOverview = getContentSchedulerOverview as jest.MockedFunction<typeof getContentSchedulerOverview>;
 const mockedGetKnowledgeOpsSnapshot = getKnowledgeOpsSnapshot as jest.MockedFunction<typeof getKnowledgeOpsSnapshot>;
@@ -128,6 +144,10 @@ describe('system ops snapshot', () => {
 
   beforeEach(() => {
     mockedGetOverview.mockReturnValue(baseOverview);
+    mockedGetSystemHealthSummary.mockReturnValue({
+      totals: baseOverview.totals,
+      systemHealth: baseOverview.systemHealth,
+    });
     mockedGetContentOpsSnapshot.mockReturnValue(baseContentSnapshot);
     mockedGetContentSchedulerOverview.mockReturnValue(baseScheduler);
     mockedGetKnowledgeOpsSnapshot.mockReturnValue(baseKnowledgeSnapshot);
@@ -201,5 +221,16 @@ describe('system ops snapshot', () => {
     expect(snapshot.services.knowledge.severity).toBe('critical');
     expect(snapshot.blockers.some((item) => item.includes('草稿储备'))).toBe(true);
     expect(snapshot.blockers.some((item) => item.includes('知识采集锁'))).toBe(true);
+  });
+
+  it('uses lightweight summary mode without loading full analytics, content, or knowledge snapshots', () => {
+    const snapshot = getSystemOpsSnapshot({ mode: 'summary' });
+
+    expect(snapshot.severity).toBe('healthy');
+    expect(mockedGetOverview).not.toHaveBeenCalled();
+    expect(mockedGetSystemHealthSummary).toHaveBeenCalledTimes(1);
+    expect(mockedGetContentOpsSnapshot).not.toHaveBeenCalled();
+    expect(mockedGetKnowledgeOpsSnapshot).not.toHaveBeenCalled();
+    expect(mockedGetContentSchedulerOverview).toHaveBeenCalledTimes(1);
   });
 });

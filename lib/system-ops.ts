@@ -1,6 +1,15 @@
 import { getContentOpsSnapshot, getContentSchedulerOverview } from '@/lib/content-ops';
 import { analyticsOperations } from '@/lib/database';
+import {
+  getContentSchedulerGenerateCooldownMinutes,
+  getKnowledgeAcquisitionIntervalMs,
+  getKnowledgeAcquisitionLockTtlMs,
+} from '@/lib/env';
 import { getKnowledgeOpsSnapshot } from '@/lib/knowledge-ops';
+import {
+  readKnowledgeAcquisitionLockStatus,
+  readKnowledgeAcquisitionSnapshot,
+} from '@/lib/knowledge-runtime-state';
 
 export type SystemHealthSeverity = 'healthy' | 'warning' | 'critical';
 
@@ -101,13 +110,58 @@ function safeAgeMs(iso?: string) {
 }
 
 export function getSystemOpsSnapshot(params?: {
+  mode?: 'full' | 'summary';
   knowledgeRunStaleMs?: number;
   contentGenerateStaleMinutes?: number;
 }) : SystemOpsSnapshot {
-  const overview = analyticsOperations.getOverview();
-  const contentOps = getContentOpsSnapshot();
+  const mode = params?.mode || 'full';
+  const summaryMode = mode === 'summary';
+  const overview = summaryMode
+    ? analyticsOperations.getSystemHealthSummary()
+    : analyticsOperations.getOverview();
   const scheduler = getContentSchedulerOverview();
-  const knowledgeOps = getKnowledgeOpsSnapshot();
+  const knowledgeSnapshot = summaryMode ? readKnowledgeAcquisitionSnapshot() : null;
+  const knowledgeLockTtlMs = summaryMode ? getKnowledgeAcquisitionLockTtlMs() : null;
+  const knowledgeLockStatus = knowledgeLockTtlMs ? readKnowledgeAcquisitionLockStatus(knowledgeLockTtlMs) : null;
+  const contentOps = summaryMode
+    ? {
+        metrics: {
+          publishedEntries: 0,
+          draftEntries: scheduler.draftReserveCount,
+          quickStartRate: 0,
+        },
+        generationQueue: [],
+        autoPublishCandidates: [],
+      }
+    : getContentOpsSnapshot();
+  const knowledgeOps = summaryMode
+    ? {
+        metrics: {
+          publishedKnowledgeEntries: 0,
+          draftKnowledgeEntries: 0,
+          publishedSynthesisEntries: 0,
+          draftSynthesisEntries: 0,
+          publishCandidateCount: 0,
+          topicHubCount: 0,
+          flagshipCount: 0,
+          homepageEligibleCount: 0,
+        },
+        acquisition: {
+          status: knowledgeSnapshot?.status || 'idle',
+          lastRunAt: knowledgeSnapshot?.finishedAt || knowledgeSnapshot?.updatedAt,
+          durationMs: knowledgeSnapshot?.durationMs,
+          error: knowledgeSnapshot?.error,
+          lock: {
+            present: !!knowledgeLockStatus?.lock,
+            stale: !!knowledgeLockStatus?.stale,
+            ageMs: knowledgeLockStatus?.ageMs || 0,
+            ttlMs: knowledgeLockTtlMs || 0,
+          },
+        },
+        featuredTopics: [],
+        publishQueue: [],
+      }
+    : getKnowledgeOpsSnapshot();
 
   const analyticsSeverity = mapAnalyticsSeverity(overview.systemHealth?.severity);
   const analyticsBlockers = (overview.systemHealth?.blockers || []).slice(0, 4);
@@ -118,7 +172,7 @@ export function getSystemOpsSnapshot(params?: {
   let contentSeverity: SystemHealthSeverity = 'healthy';
   const contentGenerateStaleMinutes = params?.contentGenerateStaleMinutes
     ?? Math.max(
-      Number(process.env.CONTENT_SCHEDULER_GENERATE_COOLDOWN_MINUTES || 240) * 2,
+      getContentSchedulerGenerateCooldownMinutes() * 2,
       360
     );
 
@@ -135,28 +189,28 @@ export function getSystemOpsSnapshot(params?: {
     contentBlockers.push(`内容补稿已超过 ${scheduler.minutesSinceLastGenerate} 分钟未恢复。`);
   }
 
-  if (contentOps.generationQueue.length === 0) {
+  if (!summaryMode && contentOps.generationQueue.length === 0) {
     contentSeverity = maxSeverity([contentSeverity, 'warning']);
     contentBlockers.push('内容生成队列为空，后续自动补稿缺少明确候选。');
   }
 
-  if (contentOps.metrics.publishedEntries > 0) {
+  if (!summaryMode && contentOps.metrics.publishedEntries > 0) {
     contentHealthySignals.push(`内容库已有 ${contentOps.metrics.publishedEntries} 篇已发布条目。`);
   }
-  if (contentOps.autoPublishCandidates.length > 0) {
+  if (!summaryMode && contentOps.autoPublishCandidates.length > 0) {
     contentHealthySignals.push(`当前还有 ${contentOps.autoPublishCandidates.length} 个内容自动发布候选。`);
   }
   if (!scheduler.needsDraftReplenishment) {
     contentHealthySignals.push('内容草稿储备目前仍在安全范围内。');
   }
-  if (contentOps.metrics.quickStartRate > 0) {
+  if (!summaryMode && contentOps.metrics.quickStartRate > 0) {
     contentHealthySignals.push(`内容页近 30 天快速开始转化率 ${contentOps.metrics.quickStartRate}%。`);
   }
 
   const knowledgeBlockers: string[] = [];
   const knowledgeHealthySignals: string[] = [];
   let knowledgeSeverity: SystemHealthSeverity = 'healthy';
-  const knowledgeIntervalMs = Math.max(300_000, Number(process.env.KNOWLEDGE_ACQUISITION_INTERVAL_MS || 1000 * 60 * 30));
+  const knowledgeIntervalMs = getKnowledgeAcquisitionIntervalMs();
   const knowledgeRunStaleMs = params?.knowledgeRunStaleMs ?? Math.max(knowledgeIntervalMs * 2, 1000 * 60 * 90);
   const knowledgeRunAgeMs = safeAgeMs(knowledgeOps.acquisition.lastRunAt);
 
@@ -168,7 +222,7 @@ export function getSystemOpsSnapshot(params?: {
   if (knowledgeOps.acquisition.status === 'error') {
     knowledgeSeverity = 'critical';
     knowledgeBlockers.push(`知识采集最近一次运行失败${knowledgeOps.acquisition.error ? `：${knowledgeOps.acquisition.error}` : '。'}`);
-  } else if (!knowledgeOps.acquisition.lastRunAt) {
+  } else if (!summaryMode && !knowledgeOps.acquisition.lastRunAt) {
     knowledgeSeverity = maxSeverity([knowledgeSeverity, 'warning']);
     knowledgeBlockers.push('知识采集还没有成功运行记录。');
   } else if ((knowledgeRunAgeMs || 0) > knowledgeRunStaleMs) {
@@ -176,22 +230,22 @@ export function getSystemOpsSnapshot(params?: {
     knowledgeBlockers.push(`知识采集快照距今已超过 ${Math.round((knowledgeRunAgeMs || 0) / 60_000)} 分钟。`);
   }
 
-  if (knowledgeOps.metrics.topicHubCount <= 0) {
+  if (!summaryMode && knowledgeOps.metrics.topicHubCount <= 0) {
     knowledgeSeverity = maxSeverity([knowledgeSeverity, 'warning']);
     knowledgeBlockers.push('知识专题枢纽仍为空，知识网络还不够可用。');
   }
-  if (knowledgeOps.metrics.publishedKnowledgeEntries <= 0) {
+  if (!summaryMode && knowledgeOps.metrics.publishedKnowledgeEntries <= 0) {
     knowledgeSeverity = maxSeverity([knowledgeSeverity, 'warning']);
     knowledgeBlockers.push('当前还没有已发布知识条目。');
   }
 
-  if (knowledgeOps.metrics.publishedKnowledgeEntries > 0) {
+  if (!summaryMode && knowledgeOps.metrics.publishedKnowledgeEntries > 0) {
     knowledgeHealthySignals.push(`知识库已有 ${knowledgeOps.metrics.publishedKnowledgeEntries} 篇已发布条目。`);
   }
-  if (knowledgeOps.metrics.topicHubCount > 0) {
+  if (!summaryMode && knowledgeOps.metrics.topicHubCount > 0) {
     knowledgeHealthySignals.push(`已形成 ${knowledgeOps.metrics.topicHubCount} 个专题枢纽。`);
   }
-  if (knowledgeOps.metrics.publishCandidateCount > 0) {
+  if (!summaryMode && knowledgeOps.metrics.publishCandidateCount > 0) {
     knowledgeHealthySignals.push(`当前还有 ${knowledgeOps.metrics.publishCandidateCount} 个知识发布候选待处理。`);
   }
   if (knowledgeOps.acquisition.status === 'success' && (knowledgeRunAgeMs || 0) <= knowledgeRunStaleMs) {

@@ -11,6 +11,8 @@ export type ReportQualityDimensionStatus = 'strong' | 'ok' | 'watch' | 'weak';
 export type ReportQualityAuditStatus = 'ready' | 'watch' | 'retry';
 export type ReportQualityAuditGrade = 'S' | 'A' | 'B' | 'C';
 export type ReportDeliveryTier = 'basic' | 'enhanced' | 'expert';
+export type UserFacingReportStageKey = 'simple' | 'deep' | 'detailed';
+export type UserFacingReportStageStatus = 'completed' | 'current' | 'locked';
 
 export const REPORT_EXPERT_TARGET_SCORE = 95;
 export const REPORT_EXPERT_TARGET_GRADE: ReportQualityAuditGrade = 'S';
@@ -267,6 +269,57 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   };
 }
 
+export interface UserFacingReportStage {
+  key: UserFacingReportStageKey;
+  label: string;
+  shortLabel: string;
+  description: string;
+}
+
+export interface UserFacingReportStageLadderItem extends UserFacingReportStage {
+  status: UserFacingReportStageStatus;
+}
+
+const USER_FACING_REPORT_STAGES: Record<ReportDeliveryTier, UserFacingReportStage> = {
+  basic: {
+    key: 'simple',
+    label: '简单报告',
+    shortLabel: '简单版',
+    description: '先给你一个可读的主结论，方便尽快完成第一次报告体验。',
+  },
+  enhanced: {
+    key: 'deep',
+    label: '深度报告',
+    shortLabel: '深度版',
+    description: '会补足更完整的结构解释、阶段判断和重点建议。',
+  },
+  expert: {
+    key: 'detailed',
+    label: '更细致的报告',
+    shortLabel: '细致版',
+    description: '会补足更多细节拆解、阶段窗口和动作颗粒度，适合继续深挖。',
+  },
+};
+
+const REPORT_STAGE_ORDER: ReportDeliveryTier[] = ['basic', 'enhanced', 'expert'];
+
+export function describeReportDeliveryStage(deliveryTier?: ReportDeliveryTier | null): UserFacingReportStage {
+  return USER_FACING_REPORT_STAGES[deliveryTier || 'basic'];
+}
+
+export function buildReportStageLadder(deliveryTier?: ReportDeliveryTier | null): UserFacingReportStageLadderItem[] {
+  const currentIndex = Math.max(0, REPORT_STAGE_ORDER.indexOf(deliveryTier || 'basic'));
+
+  return REPORT_STAGE_ORDER.map((tier, index) => ({
+    ...describeReportDeliveryStage(tier),
+    status: index < currentIndex
+      ? 'completed'
+      : index === currentIndex
+        ? 'current'
+        : 'locked',
+  }));
+}
+
 function scoreEngineFoundation(result: FortuneAnalysisResult) {
   let score = 58;
   const pillars = result.basic?.pillars || [];
@@ -402,7 +455,7 @@ function buildSummary(
     return '本次报告整体稳定，已经达到可直接使用的增强版标准，但距离 95 分 S级专家版仍有提升空间。';
   }
   if (providerHealthDeferred) {
-    return '本次报告为上游模型波动下的稳定专家版交付，当前可先使用，待增强链路恢复后再升级到更完整版本。';
+    return '本次报告为上游模型波动下的稳定深度报告交付，当前可先使用，待增强链路恢复后再升级到更完整版本。';
   }
   if (status === 'watch') {
     return '本次报告整体可读，但部分增强链路或校验项处于观察状态，短期时机与策略建议建议结合现实再复核。';

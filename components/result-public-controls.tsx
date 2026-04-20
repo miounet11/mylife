@@ -84,11 +84,11 @@ export default function ResultPublicControls({
   const activeShareUrl = isPublic ? reportUrl : analyzeUrl;
   const activeShareTitle = isPublic ? `${publicName}的结构判断报告` : `${BRAND_NAME}判断入口`;
   const activeShareText = isPublic
-    ? `查看这份来自${BRAND_NAME}的匿名化结构判断结果，支持继续深问、订阅和事件验证。`
-    : `打开${BRAND_NAME}，快速填写信息并进入下一步结构判断。`;
+    ? `${publicName}的结构判断报告`
+    : `${BRAND_NAME}判断入口`;
   const posterFooter = isPublic
-    ? '扫码查看这份匿名化结果页'
-    : `当前未公开，扫码直达 ${BRAND_NAME} 判断入口`;
+    ? '扫码查看结果'
+    : '扫码进入入口';
 
   useEffect(() => {
     let cancelled = false;
@@ -153,8 +153,8 @@ export default function ResultPublicControls({
 
   const handleOpenX = () => {
     const text = isPublic
-      ? `我刚在${BRAND_NAME}完成了一份结构判断报告，结构、节奏和行动建议都很清晰。`
-      : `我在${BRAND_NAME}找到一个填写很快的判断入口，直接提交就能继续分析。`;
+      ? `${publicName}的结构判断报告`
+      : `${BRAND_NAME}判断入口`;
     const xUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(activeShareUrl)}`;
     window.open(xUrl, '_blank', 'noopener,noreferrer');
   };
@@ -432,11 +432,9 @@ export default function ResultPublicControls({
             {BRAND_NAME} · {getSiteOrigin().replace(/^https?:\/\//, '')}
           </div>
           <div className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
-            {isPublic ? `${publicName}的结构判断结果可直接分享` : `${BRAND_NAME} 判断入口分享卡`}
+            {isPublic ? `${publicName}的结构判断结果` : `${BRAND_NAME} 判断入口`}
           </div>
-          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-            {summary}
-          </p>
+          <p className="intro-copy mt-3 text-sm text-[color:var(--ink)]">{summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {reportVersion}
@@ -469,11 +467,9 @@ export default function ResultPublicControls({
           <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
               <QrCode className="h-4 w-4 text-[color:var(--accent-strong)]" />
-              {isPublic ? '扫码查看当前报告' : '扫码进入判断入口'}
+              {isPublic ? '扫码查看结果' : '扫码进入入口'}
             </div>
-            <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-              {posterFooter}
-            </div>
+            <div className="mt-3 text-sm text-[color:var(--ink)]">{posterFooter}</div>
             <div className="mt-4 flex justify-center rounded-[1.5rem] bg-[rgba(246,241,232,0.7)] p-4">
               {qrCodeDataUrl ? (
                 <Image
@@ -490,7 +486,7 @@ export default function ResultPublicControls({
                 </div>
               )}
             </div>
-            <div className="mt-3 break-all rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+            <div className="mt-3 break-all rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
               {activeShareUrl}
             </div>
           </div>
@@ -560,15 +556,13 @@ export default function ResultPublicControls({
             className="sm:col-span-2 xl:col-span-3 inline-flex items-center justify-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white disabled:opacity-60"
           >
             {isPublic ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-            {loading ? '更新中...' : isPublic ? '当前公开，点击设为私密' : '当前私密，点击创建分享页'}
+            {loading ? '更新中...' : isPublic ? '设为私密' : '创建分享页'}
           </button>
         )}
       </div>
 
-      <div className="rounded-[1.4rem] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-        {message || (isPublic
-          ? '当前传播链路已经可用：链接、二维码、X.com、长图和文档都会直达这份匿名化报告。'
-          : '当前报告仍是私密状态。你仍可导出结果卡片和文档，也可直接传播判断入口；开启公开后，二维码和外部分享会自动切换到当前报告。')}
+      <div className="rounded-[1.4rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+        {message || (isPublic ? '当前公开' : '当前私密')}
       </div>
     </div>
   );

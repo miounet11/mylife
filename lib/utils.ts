@@ -8,29 +8,76 @@ export function cn(...inputs: ClassValue[]) {
 
 // 日期格式化
 export function formatDate(date: Date): string {
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return formatLocalDateKey(date);
+}
+
+export function formatLocalDateKey(date: Date): string {
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
-  
+
   return `${year}-${month}-${day}`;
 }
 
 export function formatDateTime(date: Date): string {
-  return date.toLocaleString('zh-CN', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  if (Number.isNaN(date.getTime())) {
+    return '--';
+  }
+
+  return `${formatDate(date)} ${formatTime(date)}`;
 }
 
 export function formatTime(date: Date): string {
-  return date.toLocaleTimeString('zh-CN', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
+  if (Number.isNaN(date.getTime())) {
+    return '--:--';
+  }
+
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
+export function parseLocalDate(value?: string): Date | null {
+  if (!value) {
+    return null;
+  }
+
+  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (matched) {
+    const year = Number(matched[1]);
+    const month = Number(matched[2]);
+    const day = Number(matched[3]);
+    const parsed = new Date(year, month - 1, day);
+
+    if (
+      Number.isNaN(parsed.getTime()) ||
+      parsed.getFullYear() !== year ||
+      parsed.getMonth() !== month - 1 ||
+      parsed.getDate() !== day
+    ) {
+      return null;
+    }
+
+    return parsed;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+export function getTodayLocalDateKey(now = new Date()): string {
+  return formatLocalDateKey(now);
+}
+
+export function getCurrentLocalMonthKey(now = new Date()): string {
+  const dateKey = formatLocalDateKey(now);
+  return dateKey ? dateKey.slice(0, 7) : '';
 }
 
 // 延迟函数

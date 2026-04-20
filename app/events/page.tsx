@@ -10,6 +10,18 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import { buildChatHref } from '@/lib/chat-entry';
+import { formatLocalDateKey, getTodayLocalDateKey } from '@/lib/utils';
+import {
+  formatEventQueueDateKey,
+  getEstimatedPastEventPrompt,
+  getEventViewSortTime,
+  toEventViewModels,
+  type EventViewImpact,
+  type EventViewModel,
+  type EventTransportRecord,
+  type EventViewType,
+} from '@/lib/event-view';
 
 // 动态导入
 const EventCalendar = dynamic(() => import('@/components/event-calendar'), {
@@ -20,38 +32,9 @@ const ImportantEvents = dynamic(() => import('@/components/important-events'), {
   loading: () => <EventsSkeleton />,
 });
 
-type EventType = 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
-type ImpactType = 'positive' | 'negative' | 'neutral';
-
-interface UIEvent {
-  id: string;
-  type: EventType;
-  title: string;
-  date: Date;
-  time?: string;
-  description: string;
-  impact: ImpactType;
-  reminder?: {
-    enabled: boolean;
-    advanceDays: number;
-    method: 'app' | 'email' | 'sms';
-  };
-  fortuneAnalysis?: {
-    source?: string;
-    reportId?: string;
-    suggestionKey?: string;
-    reason?: string;
-    title?: string;
-  };
-  followUpAdvice?: {
-    shortTerm?: string;
-    longTerm?: string;
-  };
-  userFeedback?: {
-    wasAccurate?: boolean;
-    userNotes?: string;
-  };
-}
+type EventType = EventViewType;
+type ImpactType = EventViewImpact;
+type UIEvent = EventViewModel;
 
 interface EventFormState {
   type: EventType;
@@ -70,31 +53,31 @@ interface ToastState {
   message: string;
 }
 
-const EVENT_TYPES: EventType[] = ['career', 'wealth', 'marriage', 'health', 'family', 'other'];
-
-const parseEventDate = (date: string, time?: string) => {
-  const dateTime = `${date}${time ? `T${time}` : 'T00:00:00'}`;
-  const parsed = new Date(dateTime);
-  return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
+type EventsResponse = {
+  success: boolean;
+  data?: {
+    events?: EventTransportRecord[];
+    total?: number;
+  };
+  error?: string;
 };
 
-const formatDateForInput = (date: Date) => {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
+const formatDateForInput = (date: Date) => formatLocalDateKey(date);
 
-const createDefaultForm = (): EventFormState => ({
+const DEFAULT_FORM: EventFormState = {
   type: 'career',
   title: '',
-  date: formatDateForInput(new Date()),
+  date: '',
   time: '09:00',
   description: '',
   impact: 'neutral',
   reminderEnabled: true,
   reminderAdvanceDays: 7,
   reminderMethod: 'app',
+};
+
+const createDefaultForm = (): EventFormState => ({
+  ...DEFAULT_FORM,
 });
 
 export default function EventsPage() {
@@ -121,6 +104,7 @@ function EventsPageContent() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [form, setForm] = useState<EventFormState>(createDefaultForm());
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [validationAnchorMs, setValidationAnchorMs] = useState<number | null>(null);
 
   const showSuccess = (message: string) => {
     setToast({ type: 'success', message });
@@ -137,43 +121,22 @@ function EventsPageContent() {
     return () => window.clearTimeout(timer);
   }, [toast]);
 
+  useEffect(() => {
+    setValidationAnchorMs(Date.now());
+  }, []);
+
   const loadEvents = useCallback(async () => {
     try {
       setError('');
       const query = focusedReportId ? `?reportId=${encodeURIComponent(focusedReportId)}` : '';
       const res = await fetch(`/api/events${query}`, { cache: 'no-store' });
-      const data = await res.json();
+      const data = await res.json() as EventsResponse;
       if (!res.ok || !data.success) {
         showError(data.error || '加载事件失败');
         return;
       }
 
-      const mapped: UIEvent[] = (data.data?.events || []).map((item: any) => {
-        const eventType = EVENT_TYPES.includes(item.type) ? item.type : 'other';
-        const impact: ImpactType = ['positive', 'negative', 'neutral'].includes(item.impact)
-          ? item.impact
-          : 'neutral';
-
-        return {
-          id: item.id,
-          type: eventType,
-          title: item.title,
-          date: parseEventDate(item.date, item.time),
-          time: item.time || undefined,
-          description: item.description || '',
-          impact,
-          reminder: {
-            enabled: !!(item.reminderEnabled ?? item.reminder_enabled),
-            advanceDays: item.reminderAdvanceDays ?? item.reminder_advance_days ?? 0,
-            method: (item.reminderMethod || item.reminder_method || 'app') as 'app' | 'email' | 'sms',
-          },
-          fortuneAnalysis: item.fortuneAnalysis || undefined,
-          followUpAdvice: item.followUpAdvice || undefined,
-          userFeedback: item.userFeedback || undefined,
-        };
-      });
-
-      setEvents(mapped);
+      setEvents(toEventViewModels(data.data?.events || []));
     } catch {
       showError('网络异常，无法加载事件');
     }
@@ -211,30 +174,34 @@ function EventsPageContent() {
   }, [handledCreateIntent, shouldOpenCreate, showForm]);
 
   const validationWorkbench = useMemo(() => {
-    const now = new Date();
-    const overduePending = workbenchEvents
-      .filter((event) => event.userFeedback?.wasAccurate === undefined && event.date.getTime() < now.getTime())
-      .sort((left, right) => left.date.getTime() - right.date.getTime());
+    const unresolved = workbenchEvents
+      .filter((event) => event.userFeedback?.wasAccurate === undefined)
+      .sort((left, right) => getEventSortTime(left) - getEventSortTime(right));
+    const overduePending = validationAnchorMs === null
+      ? []
+      : unresolved.filter((event) => getEventSortTime(event) < validationAnchorMs);
     const driftEvents = workbenchEvents
       .filter((event) => event.userFeedback?.wasAccurate === false)
-      .sort((left, right) => right.date.getTime() - left.date.getTime());
-    const upcomingValidation = workbenchEvents
-      .filter((event) => event.userFeedback?.wasAccurate === undefined && event.date.getTime() >= now.getTime())
-      .sort((left, right) => left.date.getTime() - right.date.getTime())
-      .slice(0, 4);
+      .sort((left, right) => getEventSortTime(right) - getEventSortTime(left));
+    const upcomingValidation = validationAnchorMs === null
+      ? unresolved.slice(0, 4)
+      : unresolved.filter((event) => getEventSortTime(event) >= validationAnchorMs).slice(0, 4);
 
     return {
       overduePending,
       driftEvents,
       upcomingValidation,
       accurateCount: workbenchEvents.filter((event) => event.userFeedback?.wasAccurate === true).length,
-      pendingCount: workbenchEvents.filter((event) => event.userFeedback?.wasAccurate === undefined).length,
+      pendingCount: unresolved.length,
     };
-  }, [workbenchEvents]);
+  }, [validationAnchorMs, workbenchEvents]);
 
   const openCreateForm = () => {
     setEditingEventId(null);
-    setForm(createDefaultForm());
+    setForm({
+      ...createDefaultForm(),
+      date: getTodayLocalDateKey(),
+    });
     setError('');
     setShowForm(true);
   };
@@ -244,7 +211,7 @@ function EventsPageContent() {
     setForm({
       type: event.type,
       title: event.title,
-      date: formatDateForInput(event.date),
+      date: event.dateKey,
       time: event.time || '09:00',
       description: event.description,
       impact: event.impact,
@@ -298,8 +265,15 @@ function EventsPageContent() {
         return;
       }
 
+      const editingEstimatedPastEvent = isEditMode && events.find((event) => event.id === editingEventId)?.isEstimatedPastEvent;
       closeForm();
-      showSuccess(isEditMode ? '事件已更新' : '事件已创建');
+      showSuccess(
+        editingEstimatedPastEvent
+          ? '真实日期已更新，这条历史印证样本现在可以正常参与复盘'
+          : isEditMode
+            ? '事件已更新'
+            : '事件已创建'
+      );
       await loadEvents();
     } catch {
       showError(editingEventId ? '网络异常，更新失败' : '网络异常，创建失败');
@@ -396,14 +370,11 @@ function EventsPageContent() {
           <div className="space-y-5">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              结果后的复访场景
+              事件中心
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              一页管理关键节点，
-              <span className="font-serif text-[color:var(--accent-strong)]">减少错过窗口。</span>
+              事件、提醒、验证
             </h1>
-            <p className="intro-copy">把关键事件、提醒和验证放在同一处，复盘会更快。</p>
-            <div className="intro-panel">先创建事件，再回到报告或追问页做验证闭环。</div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
@@ -415,7 +386,14 @@ function EventsPageContent() {
               <Link href={focusedReportId ? `/result/${encodeURIComponent(focusedReportId)}` : '/analyze'} className="action-secondary">
                 {focusedReportId ? '返回关联报告' : '去生成一份报告'}
               </Link>
-              <Link href={focusedReportId ? `/chat?reportId=${encodeURIComponent(focusedReportId)}` : '/chat'} className="action-secondary">
+              <Link
+                href={buildChatHref({
+                  reportId: focusedReportId || undefined,
+                  question: '请结合我事件中心里正在跟踪的这些节点，帮我判断：接下来最值得优先推进或验证的是哪一件事，为什么？',
+                  source: 'events_page',
+                })}
+                className="action-secondary"
+              >
                 进入结构追问
               </Link>
             </div>
@@ -433,8 +411,7 @@ function EventsPageContent() {
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="section-label">报告联动模式</div>
-                <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">当前正在处理这份报告关联的事件与验证结果</div>
-                <div className="intro-copy mt-2">新建事件会自动绑定当前报告，便于后续验证。</div>
+                <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">关联报告事件</div>
               </div>
               <div className="space-y-2">
                 <div className="action-guide">快速操作</div>
@@ -466,7 +443,7 @@ function EventsPageContent() {
                   验证工作台
                 </div>
                 <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">
-                  先验证，再纠偏，再追问。
+                  验证与纠偏
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-4">
@@ -522,7 +499,12 @@ function EventsPageContent() {
                       <div className="flex flex-wrap gap-2">
                         {event.fortuneAnalysis?.reportId ? (
                           <Link
-                            href={`/chat?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}&eventId=${encodeURIComponent(event.id)}`}
+                            href={buildChatHref({
+                              reportId: event.fortuneAnalysis.reportId,
+                              eventId: event.id,
+                              question: '请围绕这条已经出现偏差的事件做纠偏分析：这次偏差更像时机问题、执行问题、环境问题，还是输入判断失真？',
+                              source: 'events_drift_queue',
+                            })}
                             className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]"
                           >
                             进入纠偏分析
@@ -707,6 +689,20 @@ function EventsPageContent() {
                 </button>
               </div>
 
+              {editingEventId && (() => {
+                const editingEvent = events.find((event) => event.id === editingEventId);
+                if (!editingEvent?.isEstimatedPastEvent) {
+                  return null;
+                }
+
+                return (
+                  <div className="md:col-span-2 rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+                    <div className="font-semibold">这条历史印证还在使用暂估日期</div>
+                    <div className="mt-1 leading-6">{getEstimatedPastEventPrompt(editingEvent)}</div>
+                  </div>
+                );
+              })()}
+
               <input
                 value={form.title}
                 onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
@@ -820,11 +816,10 @@ function EventsPageFallback() {
           <div className="space-y-5">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              结果后的复访场景
+              事件中心
             </div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              一页管理关键节点，
-              <span className="font-serif text-[color:var(--accent-strong)]">减少错过窗口。</span>
+              事件、提醒、验证
             </h1>
           </div>
           <div className="glass-panel rounded-[2rem] p-6">
@@ -886,7 +881,7 @@ function WorkbenchPanel({
       </div>
       <div className="mt-4 grid gap-3">
         {items.length > 0 ? items : (
-          <div className="rounded-[1.25rem] bg-white px-4 py-4 intro-copy">
+          <div className="rounded-[1.25rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
             {empty}
           </div>
         )}
@@ -910,21 +905,18 @@ function WorkbenchQueueItem({
         <div>
           <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
           <div className="mt-1 text-xs text-[color:var(--muted)]">
-            {formatQueueDate(event.date)} · {mapTypeLabel(event.type)}
+            {formatQueueDate(event.dateKey)} · {mapTypeLabel(event.type)}
           </div>
         </div>
       </div>
-      <div className="intro-copy mt-2">{reason}</div>
+      <div className="mt-2 text-sm text-[color:var(--muted)]">{reason}</div>
       <div className="mt-3">{actionSlot}</div>
     </div>
   );
 }
 
-function formatQueueDate(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}.${m}.${d}`;
+function formatQueueDate(dateKey: string) {
+  return formatEventQueueDateKey(dateKey);
 }
 
 function mapTypeLabel(type: EventType) {

@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Clock3, Sparkles } from 'lucide-react';
+import { ArrowLeft, Clock3, Compass, LibraryBig, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
@@ -9,11 +9,15 @@ import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import PublicSearchIntentPanel from '@/components/public-search-intent-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
+import ToolCardLink from '@/components/tool-card-link';
 import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
 import {
+  getCaseStudies,
+  getEntityInsights,
   getKnowledgeArticleBySlug,
   getManagedContentEntryBySlug,
   getManagedContentJourneyMeta,
@@ -34,7 +38,7 @@ interface PageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600;
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
@@ -53,6 +57,14 @@ export async function generateMetadata({ params }: PageProps) {
     type: 'article',
     locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
   });
+}
+
+export async function generateStaticParams() {
+  return listPublishedManagedContentEntriesByType('knowledge')
+    .filter((entry) => isPublicKnowledgeEntry(entry))
+    .map((entry) => ({
+      slug: entry.slug,
+    }));
 }
 
 export default async function KnowledgeArticlePage({ params }: PageProps) {
@@ -142,10 +154,24 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
     slug: article.slug,
   });
   const journeyMeta = getManagedContentJourneyMeta(managedEntry);
-  const primaryTool = journeyMeta.relatedToolSlugs
+  const pageSignals = [article.title, article.excerpt, article.category, ...article.tags, ...(topicHub ? [topicHub.topicName, ...topicHub.relatedTopicNames] : [])];
+  const matchesPageSignal = (text: string) => {
+    const lowered = text.toLowerCase();
+    return pageSignals.some((signal) => signal && lowered.includes(signal.toLowerCase()));
+  };
+  const toolItems = journeyMeta.relatedToolSlugs
     .map((toolSlug) => getToolDefinition(toolSlug))
-    .find((tool) => !!tool)
-    || null;
+    .filter((tool): tool is NonNullable<typeof tool> => !!tool)
+    .slice(0, 3);
+  const caseItems = getCaseStudies()
+    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const insightItems = getEntityInsights()
+    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
+    .slice(0, 2);
+  const primaryTool = toolItems[0] || null;
+  const primaryCase = caseItems[0] || null;
+  const queryIntent = article.tags[0] || article.category || article.title;
 
   return (
     <div className="page-shell">
@@ -206,6 +232,16 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ]}
             />
 
+            <div className="mt-8">
+              <PublicSearchIntentPanel
+                page={`/knowledge/${article.slug}`}
+                title={article.title}
+                queryIntent={queryIntent}
+                toolHref={primaryTool ? `/tools/${primaryTool.slug}` : undefined}
+                caseHref={primaryCase ? `/cases/${primaryCase.slug}` : undefined}
+              />
+            </div>
+
             <div className="mt-8 space-y-8">
               {article.sections.map((section) => (
                 <section key={section.title}>
@@ -245,8 +281,8 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             <section className="mt-10">
               <SurfaceJourneyPanel
                 journey={journey}
-                title="这篇文章可以直接接到测算和工具"
-                description="从文章直接回到综合测算、工具和案例。"
+                title="相关入口"
+                description="把这篇文章接回专题、工具和后续动作入口，帮助你从理解方法继续走向个人判断。"
               />
             </section>
           </article>
@@ -264,7 +300,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 tags: article.tags,
               }}
               title="看懂原理之后，直接测自己的生日"
-              description="这里填生日和时间，下一步直接回到你的结构与阶段。"
+              description="把出生日期、时间和性别先带进分析入口，看看这套方法落到你自己身上时，重点到底在哪里。"
             />
 
             {primaryTool ? (
@@ -278,6 +314,76 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 <ToolPremiumRequestPanel tool={primaryTool} page={`/knowledge/${article.slug}`} />
               </>
             ) : null}
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Compass className="h-4 w-4" />
+                相关工具
+              </div>
+              <div className="mt-4 grid gap-3">
+                {toolItems.length > 0 ? toolItems.map((tool) => (
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page={`/knowledge/${article.slug}`}
+                    className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
+                  </ToolCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <LibraryBig className="h-4 w-4" />
+                相关案例
+              </div>
+              <div className="mt-4 grid gap-3">
+                {caseItems.length > 0 ? caseItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/cases/${item.slug}`}
+                    page={`/knowledge/${article.slug}`}
+                    meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
+                )}
+              </div>
+            </div>
+
+            <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <Sparkles className="h-4 w-4" />
+                相关洞察
+              </div>
+              <div className="mt-4 grid gap-3">
+                {insightItems.length > 0 ? insightItems.map((item) => (
+                  <ContentCardLink
+                    key={item.slug}
+                    href={`/insights/${item.type}/${item.slug}`}
+                    page={`/knowledge/${article.slug}`}
+                    meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
+                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                  >
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
+                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
+                  </ContentCardLink>
+                )) : (
+                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
+                )}
+              </div>
+            </div>
 
             <div className="soft-card rounded-[1.75rem] p-5">
               {isWorldYiArticle ? (
@@ -316,7 +422,6 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ) : (
                 <>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">世界易入口</div>
-                  <p className="intro-copy mt-3">想从单篇知识继续往上，直接进入世界易总入口。</p>
                   <Link href="/world-yi" className="action-secondary mt-4 inline-flex">
                     进入世界易总入口
                     <ArrowLeft className="h-4 w-4 rotate-180" />
@@ -337,15 +442,14 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                             category: item.category,
                             tags: item.tags,
                             series: 'world-yi',
-                          }}
-                          className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
-                        >
-                          <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                          <div className="intro-copy mt-2">{item.excerpt}</div>
-                        </ContentCardLink>
-                      ))}
-                    </div>
-                  ) : null}
+                        }}
+                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                      >
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
+                      </ContentCardLink>
+                    ))}
+                  </div>
+                ) : null}
                 </>
               )}
             </div>
@@ -383,7 +487,6 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
-                    <div className="intro-copy mt-2">{item.entry.excerpt}</div>
                   </ContentCardLink>
                 ))}
                 {fallbackRelated.map((item) => (
@@ -403,7 +506,6 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                    <div className="intro-copy mt-2">{item.excerpt}</div>
                   </ContentCardLink>
                 ))}
               </div>
@@ -412,7 +514,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             <NewsletterSignup
               source={`knowledge_article:${article.slug}`}
               title="订阅内容更新"
-              description="新增深度文章、案例和结果页最佳实践时第一时间收到更新。"
+              description="接收相关文章、专题扩写和方法更新，方便你把零散阅读逐步串成完整体系。"
             />
           </div>
         </section>

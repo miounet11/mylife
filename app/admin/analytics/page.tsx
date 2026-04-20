@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { buildAdminActionItems, buildAdminOperatingInsight } from '@/lib/admin-analytics-insights';
@@ -54,6 +55,12 @@ export default async function AdminAnalyticsPage() {
     premiumServiceStatus,
     recentPremiumRequests = [],
     funnelDiagnostics = [],
+    userRegistrationSummary,
+    weeklyUserGrowth = [],
+    weeklyProductUsage = [],
+    dailyProductUsage = [],
+    sessionStrength30d,
+    recentBehaviorShift,
     systemHealth,
   } = overview;
   const emailDeliveryRows = analyticsOperations.rawQuery(`
@@ -215,6 +222,72 @@ export default async function AdminAnalyticsPage() {
   }, {}))
     .sort((left, right) => (right.toolRuns + right.premiumRequests) - (left.toolRuns + left.premiumRequests))
     .slice(0, 8);
+  const chatReturnRows = analyticsOperations.rawQuery(`
+    SELECT event_name, page, meta, session_id, created_at
+    FROM analytics_events
+    WHERE datetime(created_at) >= datetime('now', '-30 days')
+      AND event_name IN ('result_cta_clicked', 'chat_page_viewed', 'chat_completed', 'chat_event_saved')
+    ORDER BY datetime(created_at) DESC
+    LIMIT 3000
+  `) as Array<{
+    event_name: string;
+    page?: string | null;
+    meta?: string | null;
+    session_id?: string | null;
+    created_at?: string | null;
+  }>;
+  const chatReturnBreakdown = Object.values(chatReturnRows.reduce<Record<string, {
+    key: string;
+    source: string;
+    ctaClicks: number;
+    chatPageViews: number;
+    chatCompleted: number;
+    chatEventsSaved: number;
+    latestAt?: string | null;
+  }>>((accumulator, row) => {
+    const meta = parseMeta(row.meta);
+    const source = typeof meta.source === 'string'
+      ? meta.source
+      : (row.event_name === 'chat_page_viewed' && typeof meta.source === 'string' ? meta.source : 'unknown');
+    if (!source || source === 'unknown') {
+      return accumulator;
+    }
+
+    if (!accumulator[source]) {
+      accumulator[source] = {
+        key: source,
+        source,
+        ctaClicks: 0,
+        chatPageViews: 0,
+        chatCompleted: 0,
+        chatEventsSaved: 0,
+        latestAt: row.created_at || null,
+      };
+    }
+
+    if (row.event_name === 'result_cta_clicked') {
+      accumulator[source].ctaClicks += 1;
+    }
+    if (row.event_name === 'chat_page_viewed') {
+      accumulator[source].chatPageViews += 1;
+    }
+    if (row.event_name === 'chat_completed') {
+      accumulator[source].chatCompleted += 1;
+    }
+    if (row.event_name === 'chat_event_saved') {
+      accumulator[source].chatEventsSaved += 1;
+    }
+    accumulator[source].latestAt = row.created_at || accumulator[source].latestAt;
+    return accumulator;
+  }, {}))
+    .map((item) => ({
+      ...item,
+      ctaToChatRate: item.ctaClicks > 0 ? Math.round((item.chatPageViews / item.ctaClicks) * 100) : 0,
+      chatCompletionRate: item.chatPageViews > 0 ? Math.round((item.chatCompleted / item.chatPageViews) * 100) : 0,
+      chatToEventRate: item.chatCompleted > 0 ? Math.round((item.chatEventsSaved / item.chatCompleted) * 100) : 0,
+    }))
+    .sort((left, right) => right.chatCompleted - left.chatCompleted || right.chatPageViews - left.chatPageViews)
+    .slice(0, 10);
   const toolFunnelBreakdown = Object.values(toolFunnelRows.reduce<Record<string, {
     toolSlug: string;
     detailViews: number;
@@ -594,88 +667,7 @@ export default async function AdminAnalyticsPage() {
     reasoningModeBreakdown,
     chatActionBreakdown,
   });
-  const dailyOpsRows = analyticsOperations.rawQuery(`
-    WITH RECURSIVE days(day) AS (
-      SELECT date('now')
-      UNION ALL
-      SELECT date(day, '-1 day')
-      FROM days
-      WHERE day > date('now', '-13 days')
-    ),
-    event_daily AS (
-      SELECT
-        date(created_at) AS day,
-        COUNT(*) AS total_events,
-        SUM(CASE WHEN event_name = 'home_page_viewed' THEN 1 ELSE 0 END) AS home_views,
-        SUM(CASE WHEN event_name = 'analyze_submitted' THEN 1 ELSE 0 END) AS analyze_submitted,
-        SUM(CASE WHEN event_name = 'analyze_completed' THEN 1 ELSE 0 END) AS analyze_completed,
-        SUM(CASE WHEN event_name = 'chat_message_sent' THEN 1 ELSE 0 END) AS chat_messages,
-        SUM(CASE WHEN event_name = 'tool_detail_viewed' THEN 1 ELSE 0 END) AS tool_detail_views,
-        SUM(CASE WHEN event_name = 'tool_run_started' THEN 1 ELSE 0 END) AS tool_run_started,
-        SUM(CASE WHEN event_name = 'premium_service_requested' THEN 1 ELSE 0 END) AS premium_requested,
-        SUM(CASE WHEN event_name = 'auth_code_requested' THEN 1 ELSE 0 END) AS auth_code_requested,
-        SUM(CASE WHEN event_name = 'auth_verified' THEN 1 ELSE 0 END) AS auth_verified
-      FROM analytics_events
-      WHERE datetime(created_at) >= datetime('now', '-14 days')
-      GROUP BY date(created_at)
-    ),
-    user_daily AS (
-      SELECT
-        date(created_at) AS day,
-        COUNT(*) AS users_created,
-        SUM(CASE WHEN email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS users_with_email,
-        SUM(CASE WHEN email_verified = 1 AND email IS NOT NULL AND trim(email) <> '' THEN 1 ELSE 0 END) AS users_verified
-      FROM users
-      WHERE datetime(created_at) >= datetime('now', '-14 days')
-      GROUP BY date(created_at)
-    ),
-    report_daily AS (
-      SELECT
-        date(created_at) AS day,
-        COUNT(*) AS reports_created
-      FROM fortunes
-      WHERE datetime(created_at) >= datetime('now', '-14 days')
-      GROUP BY date(created_at)
-    )
-    SELECT
-      days.day AS day,
-      COALESCE(event_daily.total_events, 0) AS total_events,
-      COALESCE(event_daily.home_views, 0) AS home_views,
-      COALESCE(event_daily.analyze_submitted, 0) AS analyze_submitted,
-      COALESCE(event_daily.analyze_completed, 0) AS analyze_completed,
-      COALESCE(event_daily.chat_messages, 0) AS chat_messages,
-      COALESCE(event_daily.tool_detail_views, 0) AS tool_detail_views,
-      COALESCE(event_daily.tool_run_started, 0) AS tool_run_started,
-      COALESCE(event_daily.premium_requested, 0) AS premium_requested,
-      COALESCE(event_daily.auth_code_requested, 0) AS auth_code_requested,
-      COALESCE(event_daily.auth_verified, 0) AS auth_verified,
-      COALESCE(user_daily.users_created, 0) AS users_created,
-      COALESCE(user_daily.users_with_email, 0) AS users_with_email,
-      COALESCE(user_daily.users_verified, 0) AS users_verified,
-      COALESCE(report_daily.reports_created, 0) AS reports_created
-    FROM days
-    LEFT JOIN event_daily ON event_daily.day = days.day
-    LEFT JOIN user_daily ON user_daily.day = days.day
-    LEFT JOIN report_daily ON report_daily.day = days.day
-    ORDER BY days.day DESC
-  `) as Array<{
-    day: string;
-    total_events: number;
-    home_views: number;
-    analyze_submitted: number;
-    analyze_completed: number;
-    chat_messages: number;
-    tool_detail_views: number;
-    tool_run_started: number;
-    premium_requested: number;
-    auth_code_requested: number;
-    auth_verified: number;
-    users_created: number;
-    users_with_email: number;
-    users_verified: number;
-    reports_created: number;
-  }>;
-  const last7DailyOps = dailyOpsRows.slice(0, 7);
+  const last7DailyOps = dailyProductUsage.slice(0, 7);
   const dailyOpsSummary = summarizeDailyOps(last7DailyOps);
   const qualityWorkboard = getAdminQualityWorkboard();
   const toolJourneyGapBreakdown = qualityWorkboard.prioritizedToolJourneyGaps.slice(0, 10);
@@ -703,14 +695,25 @@ export default async function AdminAnalyticsPage() {
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr]">
           <div className="space-y-5">
-            <div className="section-label">经营后台</div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
               产品不是上线就结束，
               <span className="font-serif text-[color:var(--accent-strong)]">必须能看到真实漏斗与真实行为。</span>
             </h1>
-            <p className="text-sm leading-6 text-[color:var(--muted)]">
-              现在它不只看流量，还要看引擎是否被现实验证。分析、聊天、事件、验证偏差，必须出现在同一个后台视图里。
-            </p>
+            <div className="action-guide">主动作</div>
+            <div className="action-strip flex flex-col gap-3 sm:flex-row">
+              <a href="#system-health-overview" className="action-primary">
+                先看系统状态
+              </a>
+              <a href="#daily-ops-table" className="action-secondary">
+                查看近 7 天运营实况
+              </a>
+              <Link href="/admin/content" className="action-secondary">
+                转到内容后台
+              </Link>
+            </div>
+            <div className="intro-copy max-w-3xl">
+              把流量、分析、聊天、事件验证和失败热点放进同一张经营视图，直接看到该修什么、该放大什么。
+            </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -718,75 +721,302 @@ export default async function AdminAnalyticsPage() {
               <div key={item.key} className="soft-card rounded-[1.5rem] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{totals[item.key]}</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.helper}</div>
+                <div className="mt-2 intro-copy">{item.helper}</div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section id="daily-ops-table" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
-              <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 天运营实况</div>
-              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">每日数据库与注册趋势</div>
-              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                覆盖每日事件总量、分析链路、聊天、工具使用和注册验证，不用再手工查库。
+              <div className="text-sm font-semibold text-[color:var(--muted)]">增长与使用强度</div>
+              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">注册质量、周使用趋势与每次访问深度</div>
+              <div className="mt-2 intro-copy">
+                把新增用户、验证质量、近 7 周产品使用和近 14 天日趋势放到同一层。这里的“每台”目前按访问会话代理统计，因为 `sessions` 表还没有真实设备样本。
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-2 lg:w-[30rem]">
+            <div className="grid gap-2 sm:grid-cols-2 lg:w-[34rem]">
               <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                最近 7 天事件：{dailyOpsSummary.totalEvents}
+                近 7 天产品事件：{dailyOpsSummary.totalProductEvents}
               </div>
               <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                分析完成率：{dailyOpsSummary.analyzeSuccessRate}%
+                每会话事件数：{sessionStrength30d?.eventsPerSession || 0}
               </div>
               <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                注册验证率：{dailyOpsSummary.authVerifyRate}%
+                验证用户占比：{userRegistrationSummary?.verificationRate || 0}%
               </div>
               <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                工具开跑率：{dailyOpsSummary.toolRunRate}%
+                近 7 天新增用户：{dailyOpsSummary.totalNewUsers}
               </div>
             </div>
           </div>
 
-          <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-2">
-              <thead>
-                <tr className="text-left text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">
-                  <th className="px-3 py-2">日期</th>
-                  <th className="px-3 py-2">事件</th>
-                  <th className="px-3 py-2">分析</th>
-                  <th className="px-3 py-2">聊天</th>
-                  <th className="px-3 py-2">工具详情/开跑</th>
-                  <th className="px-3 py-2">注册（请求/验证）</th>
-                  <th className="px-3 py-2">用户新增</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dailyOpsRows.length > 0 ? dailyOpsRows.map((item) => (
-                  <tr key={item.day} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
-                    <td className="px-3 py-3 font-semibold">{item.day}</td>
-                    <td className="px-3 py-3">{item.total_events}</td>
-                    <td className="px-3 py-3">{`${item.analyze_submitted}/${item.analyze_completed}`}</td>
-                    <td className="px-3 py-3">{item.chat_messages}</td>
-                    <td className="px-3 py-3">{`${item.tool_detail_views}/${item.tool_run_started}`}</td>
-                    <td className="px-3 py-3">{`${item.auth_code_requested}/${item.auth_verified}`}</td>
-                    <td className="px-3 py-3">{`${item.users_created}（已验证 ${item.users_verified}）`}</td>
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            <div className="rounded-[1.5rem] bg-white/82 p-5">
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">总用户</div>
+              <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{userRegistrationSummary?.totalUsers || 0}</div>
+              <div className="mt-2 intro-copy">
+                已验证 {userRegistrationSummary?.verifiedUsers || 0}，游客/未验证 {userRegistrationSummary?.guestUsers || 0}
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] bg-white/82 p-5">
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">近 30 天会话</div>
+              <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{sessionStrength30d?.sessions || 0}</div>
+              <div className="mt-2 intro-copy">
+                活跃键 {sessionStrength30d?.activeKeys || 0}，每活跃键 {sessionStrength30d?.eventsPerActiveKey || 0} 个核心行为
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] bg-white/82 p-5">
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">近 30 天核心事件</div>
+              <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{sessionStrength30d?.coreEvents || 0}</div>
+              <div className="mt-2 intro-copy">
+                已过滤 LLM 重试、邮件投递和同步噪音，只保留更接近用户真实使用的行为。
+              </div>
+            </div>
+            <div className="rounded-[1.5rem] bg-white/82 p-5">
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">会话口径说明</div>
+              <div className="mt-2 text-lg font-black text-[color:var(--ink)]">
+                {sessionStrength30d?.usingSessionProxy ? '按 session_id 代理' : '已接真实会话表'}
+              </div>
+              <div className="mt-2 intro-copy">
+                当前 `sessions` 表记录数 {sessionStrength30d?.sessionTableCount || 0}，所以“每台/每次访问”暂按 `analytics_events.session_id` 统计。
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 周新增用户</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">区分游客与已验证用户</div>
+                </div>
+                <MetricBadge value={weeklyUserGrowth.length} label="周" />
+              </div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">
+                      <th className="px-3 py-2">周</th>
+                      <th className="px-3 py-2">新增</th>
+                      <th className="px-3 py-2">游客/未验证</th>
+                      <th className="px-3 py-2">已验证</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeklyUserGrowth.length > 0 ? weeklyUserGrowth.map((item) => (
+                      <tr key={item.weekStart} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                        <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
+                        <td className="px-3 py-3">{item.newUsers}</td>
+                        <td className="px-3 py-3">{item.guestNewUsers}</td>
+                        <td className="px-3 py-3">{item.verifiedNewUsers}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={4}>
+                          暂无近几周用户增长数据。
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 周产品使用</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看活跃、深度和关键动作</div>
+                </div>
+                <MetricBadge value={weeklyProductUsage.length} label="周" />
+              </div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">
+                      <th className="px-3 py-2">周</th>
+                      <th className="px-3 py-2">事件</th>
+                      <th className="px-3 py-2">活跃键/会话</th>
+                      <th className="px-3 py-2">每会话</th>
+                      <th className="px-3 py-2">分析/报告</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {weeklyProductUsage.length > 0 ? weeklyProductUsage.map((item) => (
+                      <tr key={item.weekStart} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                        <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
+                        <td className="px-3 py-3">{item.productEvents}</td>
+                        <td className="px-3 py-3">{`${item.activeKeys}/${item.sessions}`}</td>
+                        <td className="px-3 py-3">{item.eventsPerSession}</td>
+                        <td className="px-3 py-3">{`${item.analyzeCompleted}/${item.reportViews}`}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={5}>
+                          暂无近几周产品使用数据。
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">最近 14 天日趋势</div>
+                <div className="mt-1 text-xl font-black text-[color:var(--ink)]">把使用、注册和验证码请求放进同一行</div>
+              </div>
+              <MetricBadge value={dailyProductUsage.length} label="天" />
+            </div>
+            <div className="mt-4 overflow-x-auto">
+              <table className="min-w-full border-separate border-spacing-y-2">
+                <thead>
+                  <tr className="text-left text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">
+                    <th className="px-3 py-2">日期</th>
+                    <th className="px-3 py-2">产品事件</th>
+                    <th className="px-3 py-2">活跃键/会话</th>
+                    <th className="px-3 py-2">分析/报告/聊天</th>
+                    <th className="px-3 py-2">新增用户</th>
+                    <th className="px-3 py-2">验证码请求/使用</th>
                   </tr>
-                )) : (
-                  <tr>
-                    <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={7}>
-                      暂无最近几天的数据。
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {dailyProductUsage.length > 0 ? dailyProductUsage.map((item) => (
+                    <tr key={item.day} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                      <td className="px-3 py-3 font-semibold">{item.day}</td>
+                      <td className="px-3 py-3">{item.productEvents}</td>
+                      <td className="px-3 py-3">{`${item.activeKeys}/${item.sessions}`}</td>
+                      <td className="px-3 py-3">{`${item.analyzeCompleted}/${item.reportViews}/${item.chatMessages}`}</td>
+                      <td className="px-3 py-3">{`${item.newUsers}（验 ${item.verifiedNewUsers} / 游 ${item.guestNewUsers}）`}</td>
+                      <td className="px-3 py-3">{`${item.authCodeRequests}/${item.authCodeUsed}`}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={6}>
+                        暂无最近两周的日趋势数据。
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-8 rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">最近几天行为变化</div>
+                <div className="mt-1 text-xl font-black text-[color:var(--ink)]">
+                  {recentBehaviorShift?.window?.compareLabel || '最近 3 天 vs 前 3 天'}
+                </div>
+                <div className="mt-2 intro-copy">
+                  {recentBehaviorShift?.window
+                    ? `${recentBehaviorShift.window.currentStart} 到 ${recentBehaviorShift.window.currentEnd}（不含结束日）对比 ${recentBehaviorShift.window.previousStart} 到 ${recentBehaviorShift.window.previousEnd}。`
+                    : '按完整自然日对比最近和上一段行为变化。'}
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2 lg:w-[30rem]">
+                {(recentBehaviorShift?.keyMetrics || []).slice(0, 4).map((item) => (
+                  <div key={item.key} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
+                    <div className="mt-2 flex items-end justify-between gap-3">
+                      <div className="text-2xl font-black text-[color:var(--ink)]">{item.currentValue}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
+                        {formatTrendDelta(item.delta, item.pctChange)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="rounded-[1.5rem] bg-rose-50/65 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">最近下滑点</div>
+                <div className="mt-3 grid gap-3">
+                  {recentBehaviorShift?.warnings?.length ? recentBehaviorShift.warnings.map((item) => (
+                    <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-xs leading-6 text-rose-700">
+                      {item}
+                    </div>
+                  )) : (
+                    <CompactEmptyState title="暂无明显下滑" detail="最近几天暂时没有看到很突出的短周期回落。" />
+                  )}
+                </div>
+              </div>
+
+              <div className="rounded-[1.5rem] bg-emerald-50/65 p-4">
+                <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">最近变好点</div>
+                <div className="mt-3 grid gap-3">
+                  {recentBehaviorShift?.signals?.length ? recentBehaviorShift.signals.map((item) => (
+                    <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-xs leading-6 text-emerald-700">
+                      {item}
+                    </div>
+                  )) : (
+                    <CompactEmptyState title="暂无明显改善" detail="最近几天还没有形成很明确的正向短周期信号。" />
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-6 xl:grid-cols-2">
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">变化最大的行为</div>
+                  <MetricBadge value={recentBehaviorShift?.topChanges?.length || 0} label="行为" />
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {recentBehaviorShift?.topChanges?.length ? recentBehaviorShift.topChanges.map((item) => (
+                    <div key={item.eventName} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
+                        <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
+                          {formatTrendDelta(item.delta, item.pctChange)}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-[color:var(--muted)]">
+                        最近 {item.currentCount}，前段 {item.previousCount}
+                      </div>
+                    </div>
+                  )) : (
+                    <CompactEmptyState title="暂无变化样本" detail="当前还没有足够的行为变化样本。" />
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">关键链路变化</div>
+                  <MetricBadge value={recentBehaviorShift?.funnel?.length || 0} label="链路" />
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {recentBehaviorShift?.funnel?.length ? recentBehaviorShift.funnel.map((item) => (
+                    <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                        <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
+                          {item.rateDelta > 0 ? `+${item.rateDelta}pt` : `${item.rateDelta}pt`}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-xs text-[color:var(--muted)]">
+                        最近 {item.currentValue}/{item.currentBase} = {item.currentRate}% ，前段 {item.previousValue}/{item.previousBase} = {item.previousRate}%
+                      </div>
+                    </div>
+                  )) : (
+                    <CompactEmptyState title="暂无链路变化样本" detail="等关键会话链路样本更多后再看。" />
+                  )}
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-          <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
+          <div id="system-health-overview" className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">系统状态总览</div>
@@ -799,7 +1029,7 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
                 <div className="mt-4 text-2xl font-black text-[color:var(--ink)]">{systemHealth?.title || '等待更多监控数据'}</div>
-                <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-3 intro-copy">
                   {systemHealth?.summary || '当埋点、模型请求和反馈数据继续积累后，这里会自动给出更明确的系统判断。'}
                 </div>
               </div>
@@ -808,7 +1038,7 @@ export default async function AdminAnalyticsPage() {
                   <div key={item.key} className={`rounded-[1.4rem] px-4 py-4 ${mapHealthCardTone(item.tone)}`}>
                     <div className="text-xs tracking-[0.18em]">{item.label}</div>
                     <div className="mt-2 text-3xl font-black">{item.value}</div>
-                    <div className="mt-2 text-xs leading-6 opacity-80">{item.helper}</div>
+                    <div className="mt-2 intro-copy opacity-80">{item.helper}</div>
                   </div>
                 ))}
               </div>
@@ -823,9 +1053,7 @@ export default async function AdminAnalyticsPage() {
                       {item}
                     </div>
                   )) : (
-                    <div className="rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-                      当前没有明显硬阻塞。
-                    </div>
+                    <CompactEmptyState title="暂无硬阻塞" detail="当前没有明显需要立刻处理的系统阻塞点。" />
                   )}
                 </div>
               </div>
@@ -838,9 +1066,7 @@ export default async function AdminAnalyticsPage() {
                       {item}
                     </div>
                   )) : (
-                    <div className="rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
-                      当前还没有足够的正向稳定性样本。
-                    </div>
+                    <CompactEmptyState title="暂无健康信号样本" detail="等正向稳定性样本更多后，这里再展示健康信号。" />
                   )}
                 </div>
               </div>
@@ -848,10 +1074,13 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">当前经营判断</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">当前经营判断</div>
+              <MetricBadge value={operatingInsight.priorities.length + operatingInsight.risks.length} label="判断项" />
+            </div>
             <div className="mt-4 rounded-[1.5rem] bg-white/80 px-4 py-5">
               <div className="text-2xl font-black text-[color:var(--ink)]">{operatingInsight.headline}</div>
-              <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{operatingInsight.summary}</div>
+              <div className="mt-3 intro-copy">{operatingInsight.summary}</div>
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
               <div className="rounded-[1.5rem] bg-slate-50 p-4">
@@ -862,7 +1091,7 @@ export default async function AdminAnalyticsPage() {
                       {item}
                     </div>
                   )) : (
-                    <div className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">当前没有额外优先事项。</div>
+                    <CompactEmptyState title="暂无额外优先事项" detail="当前经营判断没有新增优先项。" />
                   )}
                 </div>
               </div>
@@ -874,7 +1103,7 @@ export default async function AdminAnalyticsPage() {
                       {item}
                     </div>
                   )) : (
-                    <div className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">当前没有明显结构性风险。</div>
+                    <CompactEmptyState title="暂无结构性风险" detail="当前没有明显需要额外标记的系统性风险。" />
                   )}
                 </div>
               </div>
@@ -882,7 +1111,10 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">本周执行动作</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">本周执行动作</div>
+              <MetricBadge value={actionItems.length} label="动作" />
+            </div>
             <div className="mt-5 grid gap-3">
               {actionItems.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -892,7 +1124,7 @@ export default async function AdminAnalyticsPage() {
                       {mapActionToneLabel(item.tone)}
                     </div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.detail}</div>
+                  <div className="mt-2 intro-copy">{item.detail}</div>
                 </div>
               ))}
             </div>
@@ -916,18 +1148,21 @@ export default async function AdminAnalyticsPage() {
               <div className="rounded-[1.4rem] bg-white/80 px-4 py-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">验证命中率</div>
                 <div className="mt-2 text-3xl font-black text-emerald-700">{validationAccuracyRate}%</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">只统计已经回收验证结果的事件。</div>
+                <div className="mt-2 intro-copy">只统计已经回收验证结果的事件。</div>
               </div>
               <div className="rounded-[1.4rem] bg-white/80 px-4 py-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">偏差率</div>
                 <div className="mt-2 text-3xl font-black text-rose-700">{driftRate}%</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">偏差并不等于报告失效，更常见是时机和执行跑偏。</div>
+                <div className="mt-2 intro-copy">偏差并不等于报告失效，更常见是时机和执行跑偏。</div>
               </div>
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">核心漏斗</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">核心漏斗</div>
+              <MetricBadge value={journeyFunnel.length} label="步骤" />
+            </div>
             <div className="mt-5 grid gap-3">
               {journeyFunnel.length > 0 ? journeyFunnel.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -937,15 +1172,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有漏斗数据。
-                </div>
+                <CompactEmptyState title="暂无核心漏斗" detail="等结果页、聊天和事件沉淀链路继续积累后再看。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">近 7 日关键行为</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">近 7 日关键行为</div>
+              <MetricBadge value={eventsLast7d.length} label="事件类" />
+            </div>
             <div className="mt-5 grid gap-3">
               {eventsLast7d.length > 0 ? eventsLast7d.map((item) => (
                 <div key={item.eventName} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -955,15 +1191,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有近 7 日埋点数据。
-                </div>
+                <CompactEmptyState title="暂无近 7 日关键行为" detail="等关键埋点继续回流后，这里再显示近期高频行为。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">页面访问结构</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">页面访问结构</div>
+              <MetricBadge value={pageViewBreakdown.length} label="页面" />
+            </div>
             <div className="mt-5 grid gap-3">
               {pageViewBreakdown.length > 0 ? pageViewBreakdown.map((item) => (
                 <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -976,15 +1213,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有页面访问数据。
-                </div>
+                <CompactEmptyState title="暂无页面访问结构" detail="有了页面浏览样本后，这里再看流量主要落在哪些页面。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">分析入口偏好</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">分析入口偏好</div>
+              <MetricBadge value={analyzeOptionBreakdown.length} label="入口" />
+            </div>
             <div className="mt-5 grid gap-3">
               {analyzeOptionBreakdown.length > 0 ? analyzeOptionBreakdown.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -997,15 +1235,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有分析入口偏好数据。
-                </div>
+                <CompactEmptyState title="暂无入口偏好数据" detail="等用户在多个分析入口间形成选择后再判断。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">事件来源验证拆解</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">事件来源验证拆解</div>
+              <MetricBadge value={sourceBreakdown.length} label="来源" />
+            </div>
             <div className="mt-5 grid gap-3">
               {sourceBreakdown.length > 0 ? sourceBreakdown.map((item) => (
                 <div key={item.source} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1021,15 +1260,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有事件来源验证数据。
-                </div>
+                <CompactEmptyState title="暂无来源验证拆解" detail="等更多事件完成验证闭环后再比较不同沉淀来源。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">推理层覆盖</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">推理层覆盖</div>
+              <MetricBadge value={reasoningModeBreakdown.length} label="模式" />
+            </div>
             <div className="mt-5 grid gap-3">
               {reasoningModeBreakdown.length > 0 ? reasoningModeBreakdown.map((item) => (
                 <div key={item.mode} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1042,15 +1282,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有推理层覆盖数据。
-                </div>
+                <CompactEmptyState title="暂无推理层覆盖" detail="等多种推理模式开始稳定调用后再看覆盖结构。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">模型健康与熔断</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">模型健康与熔断</div>
+              <MetricBadge value={modelHealthBreakdown.length} label="模型" />
+            </div>
             <div className="mt-5 grid gap-3">
               {modelHealthBreakdown.length > 0 ? modelHealthBreakdown.map((item) => (
                 <div key={item.model} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1079,7 +1320,7 @@ export default async function AdminAnalyticsPage() {
                           : '当前可正常调度'}
                     </div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {item.reopenOverdue
                       ? '已超过设定重试时间但仍未恢复，优先排查供应商和网络链路。'
                       : item.reopenAt
@@ -1090,15 +1331,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有模型健康数据，等模型调用累积后这里会显示成功率、延迟和熔断状态。
-                </div>
+                <CompactEmptyState title="暂无模型健康数据" detail="等模型请求累积后，这里再看成功率、延迟和熔断状态。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">当前故障热点</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">当前故障热点</div>
+              <MetricBadge value={llmFailureHotspots.length} label="热点" />
+            </div>
             <div className="mt-5 grid gap-3">
               {llmFailureHotspots.length > 0 ? llmFailureHotspots.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1112,20 +1354,21 @@ export default async function AdminAnalyticsPage() {
                       <div className="text-xs text-[color:var(--muted)]">{`${item.avgLatencyMs}ms`}</div>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {item.lastSeenAt ? `最近一次：${item.lastSeenAt}` : '最近一次时间未记录'}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前没有明显的模型失败热点。
-                </div>
+                <CompactEmptyState title="暂无模型失败热点" detail="当前没有明显集中故障，可继续观察。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">接口健康</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">接口健康</div>
+              <MetricBadge value={routeHealthBreakdown.length} label="接口" />
+            </div>
             <div className="mt-5 grid gap-3">
               {routeHealthBreakdown.length > 0 ? routeHealthBreakdown.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1141,20 +1384,21 @@ export default async function AdminAnalyticsPage() {
                     <div>{`降级 ${item.fallbackCount}`}</div>
                     <div>{`均耗时 ${item.avgDurationMs}ms`}</div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {item.lastSeenAt ? `最近一次：${item.lastSeenAt}，最高耗时 ${item.maxDurationMs}ms` : `最高耗时 ${item.maxDurationMs}ms`}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有接口健康样本。
-                </div>
+                <CompactEmptyState title="暂无接口健康样本" detail="等接口请求再多一些，这里再看成功率和耗时。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">业务失败热点</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">业务失败热点</div>
+              <MetricBadge value={requestFailureHotspots.length} label="热点" />
+            </div>
             <div className="mt-5 grid gap-3">
               {requestFailureHotspots.length > 0 ? requestFailureHotspots.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1170,15 +1414,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有接口失败热点记录。
-                </div>
+                <CompactEmptyState title="暂无业务失败热点" detail="当前没有集中的业务失败记录。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">邮件系统状态</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">邮件系统状态</div>
+              <MetricBadge value={emailDeliverySummary.success + emailDeliverySummary.failed} label="近 7 日投递" />
+            </div>
             <div className="mt-5 grid gap-4">
               <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
@@ -1198,7 +1443,7 @@ export default async function AdminAnalyticsPage() {
                     {emailHealth.status === 'ok' ? '连接正常' : emailHealth.status === 'timeout' ? '探测超时' : '连接失败'}
                   </div>
                 </div>
-                <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-3 intro-copy">
                   {emailHealth.status === 'ok'
                     ? '当前 SMTP 认证和连接均正常，验证码、订阅确认和升级提醒可以继续投递。'
                     : emailHealth.error || '邮件探测失败'}
@@ -1225,9 +1470,7 @@ export default async function AdminAnalyticsPage() {
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    近 7 日还没有邮件投递记录。
-                  </div>
+                  <CompactEmptyState title="暂无邮件投递记录" detail="近 7 日还没有邮件发送或失败记录。" />
                 )}
               </div>
 
@@ -1272,16 +1515,17 @@ export default async function AdminAnalyticsPage() {
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    当前还没有邮件重试队列记录。
-                  </div>
+                  <CompactEmptyState title="暂无邮件重试记录" detail="当前没有进入重试队列的邮件任务。" />
                 )}
               </div>
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">用户转化卡点</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">用户转化卡点</div>
+              <MetricBadge value={funnelDiagnostics.length} label="断点" />
+            </div>
             <div className="mt-5 grid gap-3">
               {funnelDiagnostics.length > 0 ? funnelDiagnostics.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1298,15 +1542,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的用户转化数据。
-                </div>
+                  <CompactEmptyState title="暂无用户转化卡点" detail="等用户链路样本足够后，再定位主要流失点。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">归因转化热点</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">归因转化热点</div>
+              <MetricBadge value={attributedConversionBreakdown.length} label="热点" />
+            </div>
             <div className="mt-5 grid gap-3">
               {attributedConversionBreakdown.length > 0 ? attributedConversionBreakdown.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1325,9 +1570,49 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的归因转化数据。等用户从文章、案例、个人升级面板继续进入工具和专项后，这里会开始显示真实热点。
+                  <CompactEmptyState title="暂无归因转化热点" detail="等内容和升级面板继续承接到工具与专项后，再看真实归因。" />
+              )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">回流承接效果</div>
+                <div className="mt-2 intro-copy">
+                  直接看不同入口把用户带到聊天页、完成聊天、沉淀事件的真实效果，而不是只看 CTA 点击。
                 </div>
+              </div>
+              <MetricBadge value={chatReturnBreakdown.length} label="来源" />
+            </div>
+            <div className="mt-5 grid gap-3">
+              {chatReturnBreakdown.length > 0 ? chatReturnBreakdown.map((item) => (
+                <div key={`chat-return-${item.key}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{item.source}</div>
+                      <div className="mt-1 text-xs text-[color:var(--muted)]">
+                        {item.latestAt ? `最近一次 ${item.latestAt}` : '最近时间未知'}
+                      </div>
+                    </div>
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
+                      聊天完成率 {item.chatCompletionRate}%
+                    </div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                    <div>CTA {item.ctaClicks}</div>
+                    <div>到聊天页 {item.chatPageViews}</div>
+                    <div>完成聊天 {item.chatCompleted}</div>
+                    <div>沉淀事件 {item.chatEventsSaved}</div>
+                  </div>
+                  <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
+                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">点击到聊天 {item.ctaToChatRate}%</div>
+                    <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">聊天完成 {item.chatCompletionRate}%</div>
+                    <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-700">聊天到事件 {item.chatToEventRate}%</div>
+                  </div>
+                </div>
+              )) : (
+                <CompactEmptyState title="暂无回流承接效果样本" detail="等更多入口统一接入后，这里直接看哪些来源真的把用户带回聊天和事件沉淀。" />
               )}
             </div>
           </div>
@@ -1336,13 +1621,11 @@ export default async function AdminAnalyticsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">今日优先修复内容</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-2 intro-copy">
                   按质量缺口、真实 PV、跳出率和联动弱点综合排序，不是单看低分。
                 </div>
               </div>
-              <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                Top 10
-              </div>
+              <MetricBadge value={prioritizedContentFixes.length} label="项" />
             </div>
             <div className="mt-5 grid gap-3">
               {prioritizedContentFixes.length > 0 ? prioritizedContentFixes.map((item, index) => (
@@ -1366,12 +1649,10 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                  <div className="mt-2 intro-copy">{item.reason}</div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的内容质量样本。
-                </div>
+                <CompactEmptyState title="暂无内容修复样本" detail="等内容访问、跳出和联动样本再多一些后再排序。" />
               )}
             </div>
           </div>
@@ -1380,13 +1661,11 @@ export default async function AdminAnalyticsPage() {
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">今日优先修复工具</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-2 intro-copy">
                   优先修高流量但开跑弱、结果后付费弱、详情页高跳出的工具，不把精力浪费在没流量的角落。
                 </div>
               </div>
-              <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                Top 10
-              </div>
+              <MetricBadge value={prioritizedToolFixes.length} label="项" />
             </div>
             <div className="mt-5 grid gap-3">
               {prioritizedToolFixes.length > 0 ? prioritizedToolFixes.map((item, index) => (
@@ -1414,18 +1693,19 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                  <div className="mt-2 intro-copy">{item.reason}</div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的工具质量样本。
-                </div>
+                <CompactEmptyState title="暂无工具修复样本" detail="等工具曝光和开跑样本更多后再给优先清单。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">内容质量预警</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">内容质量预警</div>
+              <MetricBadge value={contentQualityBreakdown.length} label="页面" />
+            </div>
             <div className="mt-5 grid gap-3">
               {contentQualityBreakdown.length > 0 ? contentQualityBreakdown.map((item) => (
                 <div key={`${item.contentType}-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1444,20 +1724,21 @@ export default async function AdminAnalyticsPage() {
                     <div>联动 {item.linkageScore}</div>
                     <div>跳出 {item.bounceRate}%</div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {diagnoseContentQuality(item)}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的内容质量数据。
-                </div>
+                <CompactEmptyState title="暂无内容质量预警" detail="等内容质量样本足够后，这里再提示低质量页面。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">工具质量预警</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">工具质量预警</div>
+              <MetricBadge value={toolQualityBreakdown.length} label="工具" />
+            </div>
             <div className="mt-5 grid gap-3">
               {toolQualityBreakdown.length > 0 ? toolQualityBreakdown.map((item) => (
                 <div key={item.slug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1478,20 +1759,21 @@ export default async function AdminAnalyticsPage() {
                     <div>跳出 {item.bounceRate}%</div>
                   </div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">{`点击到开跑 ${item.ctaToRunRate}% · 运行失败 ${item.runFailureRate}% · 结果到专项 ${item.premiumRate}%`}</div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {diagnoseToolQuality(item)}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的工具质量数据。
-                </div>
+                <CompactEmptyState title="暂无工具质量预警" detail="等工具质量样本足够后，这里再提示高风险工具。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">高跳出页面</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">高跳出页面</div>
+              <MetricBadge value={bounceBreakdown.length} label="页面" />
+            </div>
             <div className="mt-5 grid gap-3">
               {bounceBreakdown.length > 0 ? bounceBreakdown.map((item) => (
                 <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1507,20 +1789,21 @@ export default async function AdminAnalyticsPage() {
                     <div>有效会话 {item.engagedCount}</div>
                     <div>跳出会话 {item.bouncedCount}</div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {diagnoseBouncePage(item)}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的页面跳出数据。
-                </div>
+                <CompactEmptyState title="暂无页面跳出预警" detail="等页面访问样本累积后，这里再看高跳出页面。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">专项服务与用户跟进</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">专项服务与用户跟进</div>
+              <MetricBadge value={recentPremiumRequests.length} label="最新需求" />
+            </div>
             <div className="mt-5 grid gap-4">
               <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-6">
                 <QueueMetric label="新提交" value={premiumServiceStatus?.new || 0} tone="text-amber-700 bg-amber-50" />
@@ -1543,21 +1826,22 @@ export default async function AdminAnalyticsPage() {
                         {mapPremiumStatusLabel(item.status)}
                       </div>
                     </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                    <div className="mt-2 intro-copy">
                       {`${item.intake?.question || '未填写问题'}`}
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    当前还没有专项需求记录。
-                  </div>
+                  <CompactEmptyState title="暂无专项需求记录" detail="当前还没有用户提交专项服务需求。" />
                 )}
               </div>
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">聊天动作结构</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">聊天动作结构</div>
+              <MetricBadge value={chatActionBreakdown.length} label="动作" />
+            </div>
             <div className="mt-5 grid gap-3">
               {chatActionBreakdown.length > 0 ? chatActionBreakdown.map((item) => (
                 <div key={item.action} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1570,15 +1854,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有聊天动作结构数据。
-                </div>
+                <CompactEmptyState title="暂无聊天动作结构" detail="等聊天交互样本继续积累后再看动作分布。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">结果页 CTA 表现</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">结果页 CTA 表现</div>
+              <MetricBadge value={ctaBreakdown.length} label="CTA" />
+            </div>
             <div className="mt-5 grid gap-3">
               {ctaBreakdown.length > 0 ? ctaBreakdown.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1588,15 +1873,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有结果页 CTA 数据。
-                </div>
+                <CompactEmptyState title="暂无结果页 CTA 数据" detail="等结果页点击样本积累后再看 CTA 表现。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">工具成交漏斗</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">工具成交漏斗</div>
+              <MetricBadge value={toolFunnelBreakdown.length} label="工具" />
+            </div>
             <div className="mt-5 grid gap-3">
               {toolFunnelBreakdown.length > 0 ? toolFunnelBreakdown.map((item) => (
                 <div key={item.toolSlug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1618,16 +1904,17 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的工具成交漏斗数据。
-                </div>
+                <CompactEmptyState title="暂无工具成交漏斗" detail="等工具详情、结果和专项链路更完整后再看成交漏斗。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">工具漏斗断点工单</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">工具漏斗断点工单</div>
+              <MetricBadge value={toolJourneyGapBreakdown.length} label="工单" />
+            </div>
+            <div className="mt-2 intro-copy">
               直接显示当前工具链路最先该修的断点类型，不再手动猜是首屏问题还是运行问题。
             </div>
             <div className="mt-5 grid gap-3">
@@ -1654,16 +1941,17 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的工具漏斗断点样本。
-                </div>
+                <CompactEmptyState title="暂无工具断点工单" detail="等工具漏斗样本足够后再定位主断点。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">统一工具修复队列</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">统一工具修复队列</div>
+              <MetricBadge value={unifiedToolRepairQueue.length} label="工具" />
+            </div>
+            <div className="mt-2 intro-copy">
               把“质量缺口”和“漏斗断点”合并排序，优先修高流量高损失工具。
             </div>
             <div className="mt-5 grid gap-3">
@@ -1698,21 +1986,22 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {item.gapAction}
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {item.gapType ? `主断点：${mapGapTypeLabel(item.gapType)}` : '当前无明确断点，按质量建议优先修包装与承接。'}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的统一修复样本。
-                </div>
+                <CompactEmptyState title="暂无统一修复队列" detail="当前还没有足够样本来合并质量缺口和漏斗断点。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">工具首屏链路健康</div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">工具首屏链路健康</div>
+              <MetricBadge value={toolJourneyHealthRows.length} label="工具" />
+            </div>
+            <div className="mt-2 intro-copy">
               看“详情曝光 → 点击开始 → 实际开跑 → 运行失败”的真实断点，优先修高流量链路。
             </div>
             <div className="mt-5 grid gap-3">
@@ -1738,20 +2027,21 @@ export default async function AdminAnalyticsPage() {
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">开始到开跑 {item.ctaToRunRate}%</div>
                     <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.premiumRate}%</div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {diagnoseToolJourneyHealth(item)}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有足够的工具首屏链路样本。
-                </div>
+                <CompactEmptyState title="暂无工具首屏链路样本" detail="等工具首屏到开跑链路样本更多后再判断。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">偏差原因分布</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">偏差原因分布</div>
+              <MetricBadge value={driftReasonBreakdown.length} label="原因" />
+            </div>
             <div className="mt-5 grid gap-3">
               {driftReasonBreakdown.length > 0 ? driftReasonBreakdown.map((item) => (
                 <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1762,20 +2052,21 @@ export default async function AdminAnalyticsPage() {
                       <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
                     </div>
                   </div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                  <div className="mt-2 intro-copy">
                     {item.examples.length > 0 ? `样本事件：${item.examples.join('、')}` : '当前分类下还没有代表性样本。'}
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有已记录的偏差原因，等用户持续回填后这里会显示最常见的偏差模式。
-                </div>
+                <CompactEmptyState title="暂无偏差原因分布" detail="等用户持续回填偏差事件后再看常见模式。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">待验证回收队列</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">待验证回收队列</div>
+              <MetricBadge value={followupQueue.length} label="事件" />
+            </div>
             <div className="mt-5 grid gap-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <QueueMetric label="已过期待验证" value={pendingValidationBuckets.overdue} tone="text-rose-700 bg-rose-50" />
@@ -1800,19 +2091,20 @@ export default async function AdminAnalyticsPage() {
                         {item.action}
                       </div>
                     </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                    <div className="mt-2 intro-copy">{item.reason}</div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                    当前没有需要优先回收或纠偏的事件队列。
-                  </div>
+                  <CompactEmptyState title="暂无待回收队列" detail="当前没有需要优先追踪或纠偏的事件。" />
                 )}
               </div>
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">报告版本结构</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">报告版本结构</div>
+              <MetricBadge value={reportVersionBreakdown.length} label="版本" />
+            </div>
             <div className="mt-5 grid gap-3">
               {reportVersionBreakdown.length > 0 ? reportVersionBreakdown.map((item) => (
                 <div key={item.version} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1825,15 +2117,16 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有报告版本数据。
-                </div>
+                <CompactEmptyState title="暂无报告版本结构" detail="等报告版本样本积累后再看版本占比。" />
               )}
             </div>
           </div>
 
           <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">最近埋点明细</div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm font-semibold text-[color:var(--muted)]">最近埋点明细</div>
+              <MetricBadge value={recentEvents.length} label="事件" />
+            </div>
             <div className="mt-5 grid gap-3">
               {recentEvents.length > 0 ? recentEvents.map((item) => (
                 <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -1844,9 +2137,7 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-2 text-xs text-[color:var(--muted)]">{item.page || '未记录页面'}</div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前还没有最近埋点明细。
-                </div>
+                <CompactEmptyState title="暂无最近埋点明细" detail="等埋点继续写入后，这里再显示最新事件明细。" />
               )}
             </div>
           </div>
@@ -1862,6 +2153,23 @@ function mapSourceLabel(source: string) {
   if (source === 'result_report') return '结果页沉淀';
   if (source === 'chat_message') return '聊天沉淀';
   return '手动创建';
+}
+
+function CompactEmptyState({ title, detail }: { title: string; detail: string }) {
+  return (
+    <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+      <div className="text-sm font-semibold text-[color:var(--ink)]">{title}</div>
+      <div className="mt-2 text-xs text-[color:var(--muted)]">{detail}</div>
+    </div>
+  );
+}
+
+function MetricBadge({ value, label }: { value: number | string; label: string }) {
+  return (
+    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+      {value} {label}
+    </div>
+  );
 }
 
 function mapPremiumServiceLabel(serviceKey: string) {
@@ -1915,6 +2223,7 @@ function mapAnalyticsEventLabel(eventName: string) {
     premium_service_status_updated: '专项需求跟进',
     event_created: '创建事件',
     report_event_saved_from_result: '结果页转事件',
+    report_past_event_saved_from_result: '结果页确认过去事件',
     event_feedback_recorded: '记录验证反馈',
     event_updated: '更新事件',
     event_deleted: '删除事件',
@@ -1982,6 +2291,21 @@ function mapHealthCardTone(severity: string) {
   if (severity === 'warning') return 'bg-amber-50 text-amber-700';
   if (severity === 'healthy') return 'bg-emerald-50 text-emerald-700';
   return 'bg-slate-100 text-slate-700';
+}
+
+function mapTrendTone(direction: string) {
+  if (direction === 'up') return 'bg-emerald-50 text-emerald-700';
+  if (direction === 'down') return 'bg-rose-50 text-rose-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
+function formatTrendDelta(delta: number, pctChange?: number | null) {
+  const signedDelta = delta > 0 ? `+${delta}` : `${delta}`;
+  if (pctChange === null || pctChange === undefined) {
+    return signedDelta;
+  }
+  const signedPct = pctChange > 0 ? `+${pctChange}%` : `${pctChange}%`;
+  return `${signedDelta} / ${signedPct}`;
 }
 
 function mapEmailRetryStatusLabel(status: string) {
@@ -2315,36 +2639,40 @@ function mapEmailChannelLabel(channel: string) {
 }
 
 function summarizeDailyOps(rows: Array<{
-  total_events: number;
-  analyze_submitted: number;
-  analyze_completed: number;
-  tool_detail_views: number;
-  tool_run_started: number;
-  auth_code_requested: number;
-  auth_verified: number;
+  productEvents: number;
+  analyzeCompleted: number;
+  reportViews: number;
+  sessions: number;
+  newUsers: number;
+  verifiedNewUsers: number;
+  authCodeRequests: number;
+  authCodeUsed: number;
 }>) {
   const totals = rows.reduce((accumulator, item) => ({
-    totalEvents: accumulator.totalEvents + (item.total_events || 0),
-    analyzeSubmitted: accumulator.analyzeSubmitted + (item.analyze_submitted || 0),
-    analyzeCompleted: accumulator.analyzeCompleted + (item.analyze_completed || 0),
-    toolDetailViews: accumulator.toolDetailViews + (item.tool_detail_views || 0),
-    toolRunStarted: accumulator.toolRunStarted + (item.tool_run_started || 0),
-    authRequested: accumulator.authRequested + (item.auth_code_requested || 0),
-    authVerified: accumulator.authVerified + (item.auth_verified || 0),
+    totalProductEvents: accumulator.totalProductEvents + (item.productEvents || 0),
+    analyzeCompleted: accumulator.analyzeCompleted + (item.analyzeCompleted || 0),
+    reportViews: accumulator.reportViews + (item.reportViews || 0),
+    sessions: accumulator.sessions + (item.sessions || 0),
+    totalNewUsers: accumulator.totalNewUsers + (item.newUsers || 0),
+    verifiedNewUsers: accumulator.verifiedNewUsers + (item.verifiedNewUsers || 0),
+    authRequested: accumulator.authRequested + (item.authCodeRequests || 0),
+    authVerified: accumulator.authVerified + (item.authCodeUsed || 0),
   }), {
-    totalEvents: 0,
-    analyzeSubmitted: 0,
+    totalProductEvents: 0,
     analyzeCompleted: 0,
-    toolDetailViews: 0,
-    toolRunStarted: 0,
+    reportViews: 0,
+    sessions: 0,
+    totalNewUsers: 0,
+    verifiedNewUsers: 0,
     authRequested: 0,
     authVerified: 0,
   });
 
   return {
     ...totals,
-    analyzeSuccessRate: totals.analyzeSubmitted > 0 ? Math.round((totals.analyzeCompleted / totals.analyzeSubmitted) * 100) : 0,
+    analyzeSuccessRate: totals.reportViews > 0 ? Math.round((totals.analyzeCompleted / totals.reportViews) * 100) : 0,
     authVerifyRate: totals.authRequested > 0 ? Math.round((totals.authVerified / totals.authRequested) * 100) : 0,
-    toolRunRate: totals.toolDetailViews > 0 ? Math.round((totals.toolRunStarted / totals.toolDetailViews) * 100) : 0,
+    sessionIntensity: totals.sessions > 0 ? Number((totals.totalProductEvents / totals.sessions).toFixed(2)) : 0,
+    registrationQualityRate: totals.totalNewUsers > 0 ? Math.round((totals.verifiedNewUsers / totals.totalNewUsers) * 100) : 0,
   };
 }

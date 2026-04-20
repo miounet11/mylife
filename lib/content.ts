@@ -475,3 +475,16 @@ export function getEntityInsightTypes() {
 export function getEntityTypeLabel(type: EntityInsightType) {
   return entityTypeLabels[type];
 }
+
+export function createContentSignalMatcher(signals: Array<string | null | undefined>) {
+  const normalizedSignals = [...new Set(
+    signals
+      .filter((signal): signal is string => typeof signal === 'string' && signal.length > 0)
+      .map((signal) => signal.toLowerCase()),
+  )];
+
+  return (text: string) => {
+    const lowered = text.toLowerCase();
+    return normalizedSignals.some((signal) => lowered.includes(signal));
+  };
+}

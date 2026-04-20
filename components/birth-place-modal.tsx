@@ -383,9 +383,13 @@ export default function BirthPlaceModal({
     <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
+          className="relative w-full max-w-[440px] rounded-[28px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
           onClick={(event) => event.stopPropagation()}
         >
+          <div className="mb-4 space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">出生地点</div>
+            <div className="text-sm leading-6 text-[color:var(--muted)]">地点会影响真太阳时换算和环境解释，国内与海外可分别选择。</div>
+          </div>
           <div className="relative flex h-[53px] items-center justify-center">
             <button type="button" onClick={onClose} className="absolute right-0 p-1 text-[color:var(--muted)]">
               <X className="h-4 w-4" />
@@ -532,9 +536,9 @@ export default function BirthPlaceModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="mt-4 flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
+            className="mt-4 flex h-[56px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1] shadow-[0_16px_34px_rgba(34,26,18,0.16)]"
           >
-            确定
+            确认出生地点
           </button>
 
           {activeTab === 1 ? (

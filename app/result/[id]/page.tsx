@@ -13,7 +13,6 @@ import {
   LineChart,
   LockKeyhole,
   ScrollText,
-  Share2,
   Sparkles,
 } from 'lucide-react';
 
@@ -55,9 +54,18 @@ import ToolRecommendations from '@/components/tool-recommendations';
 import type { UpdatesStatusSummary } from '@/components/updates-status-panel';
 import RelatedContent from '@/components/related-content';
 import ResultDeferredSection from '@/components/result-deferred-section';
+import ReportCockpit from '@/components/report/report-cockpit';
+import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
+import ReportCurrentState from '@/components/report/report-current-state';
+import ReportRhythmTimeline from '@/components/report/report-rhythm-timeline';
+import ReportScenarioPanels from '@/components/report/report-scenario-panels';
+import ReportActionBoard from '@/components/report/report-action-board';
+import ReportValidationPanel from '@/components/report/report-validation-panel';
+import ReportNextActions from '@/components/report/report-next-actions';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
 import { calculateDayun } from '@/lib/dayun-calculator';
+import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ReportEventCapture from '@/components/report-event-capture';
 import {
@@ -67,6 +75,7 @@ import {
   buildReportCorrectionInsight,
   buildMonthlyWindows,
   buildReportActionSuggestions,
+  buildReportV4Sections,
   buildReportValidationInsights,
   buildScenarioViews,
   buildYearlyTrendSnapshots,
@@ -79,6 +88,9 @@ import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
 import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
 import { buildJourneyForReport } from '@/lib/surface-journeys';
+import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
+import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
+import { buildChatHref, buildReportFollowupQuestion } from '@/lib/chat-entry';
 
 function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -92,6 +104,207 @@ function compactCopy(value?: string | null, maxLength = 92) {
   if (!normalized) return '';
   if (normalized.length <= maxLength) return normalized;
   return `${normalized.slice(0, maxLength - 1).trim()}…`;
+}
+
+function getLifeKLineMetricToneClasses(tone?: 'strong' | 'steady' | 'watch') {
+  if (tone === 'strong') {
+    return {
+      card: 'border-emerald-200 bg-emerald-50/70',
+      label: 'text-emerald-700',
+      value: 'text-emerald-900',
+    };
+  }
+  if (tone === 'watch') {
+    return {
+      card: 'border-amber-200 bg-amber-50/75',
+      label: 'text-amber-800',
+      value: 'text-amber-950',
+    };
+  }
+  return {
+    card: 'border-sky-200 bg-sky-50/70',
+    label: 'text-sky-700',
+    value: 'text-sky-900',
+  };
+}
+
+function buildPastValidationBlock(params: {
+  structuredBlock?: {
+    headline?: string;
+    evidence?: string[];
+  };
+  validationInsights: {
+    totalLinkedEvents?: number;
+    accurateCount?: number;
+    driftCount?: number;
+    pendingCount?: number;
+  };
+  linkedEvents: Array<{
+    title?: string;
+    userFeedback?: { wasAccurate?: boolean; userNotes?: string } | undefined;
+    fortuneAnalysis?: { reason?: string } | undefined;
+  }>;
+}) {
+  if (params.structuredBlock?.headline || (params.structuredBlock?.evidence || []).length > 0) {
+    return {
+      eyebrow: (params.validationInsights.totalLinkedEvents || 0) > 0 ? '已发生的印证' : '先建立印证样本',
+      headline: compactCopy(
+        params.structuredBlock?.headline || '你过去的人生里，已经反复出现过与这份命理结构一致的信号。'
+      ),
+      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 3),
+    };
+  }
+
+  const accurateEvents = params.linkedEvents.filter((event) => event.userFeedback?.wasAccurate === true).slice(0, 2);
+  const driftEvents = params.linkedEvents.filter((event) => event.userFeedback?.wasAccurate === false).slice(0, 1);
+  const accurateCount = params.validationInsights.accurateCount || 0;
+  const driftCount = params.validationInsights.driftCount || 0;
+  const pendingCount = params.validationInsights.pendingCount || 0;
+  const totalLinkedEvents = params.validationInsights.totalLinkedEvents || 0;
+
+  let headline = '你的人生主线已经开始在现实里显形，只是还需要继续补样本。';
+  if (accurateCount >= 2) {
+    headline = `这份命理判断已经被 ${accurateCount} 个真实事件印证，不是空泛结论。`;
+  } else if (accurateCount === 1) {
+    headline = '这份命理判断已经出现首个现实印证，说明主线方向是对的。';
+  } else if (driftCount > 0) {
+    headline = '现实反馈显示这份判断并非全错，真正要修的是时机和动作，不是推翻整体结构。';
+  }
+
+  const evidence = [
+    ...accurateEvents.map((event) => compactCopy(
+      `${event.title || '已记录事件'}：${event.userFeedback?.userNotes || event.fortuneAnalysis?.reason || '这类节点已经和报告判断形成对应。'}`
+    )),
+    ...driftEvents.map((event) => compactCopy(
+      `${event.title || '偏差事件'}：当前出现偏差，更像时机或执行跑偏，适合回看当时动作与节奏。`
+    )),
+    totalLinkedEvents === 0
+      ? '现在还没有足够的现实样本，后面一旦遇到转岗、合作、感情推进、搬迁、健康波动等节点，应立即记录。'
+      : `当前共关联 ${totalLinkedEvents} 个事件，其中待继续观察 ${pendingCount} 个。`,
+  ].filter(Boolean).slice(0, 3) as string[];
+
+  return {
+    eyebrow: totalLinkedEvents > 0 ? '已发生的印证' : '先建立印证样本',
+    headline,
+    evidence,
+  };
+}
+
+function buildPresentDiagnosisBlock(params: {
+  structuredBlock?: {
+    headline?: string;
+    evidence?: string[];
+  };
+  currentStageSummary: string;
+  decisionHeadline: string;
+  patternType?: string;
+  currentDaYun?: string;
+  favoredElements: string[];
+  stateVectorCards: Array<{ label: string; value: number }>;
+}) {
+  if (params.structuredBlock?.headline || (params.structuredBlock?.evidence || []).length > 0) {
+    return {
+      eyebrow: '你现在所处的位置',
+      headline: compactCopy(
+        params.structuredBlock?.headline || params.decisionHeadline || params.currentStageSummary
+      ),
+      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 3),
+    };
+  }
+
+  const strongestVector = [...params.stateVectorCards].sort((left, right) => right.value - left.value)[0];
+  const weakestVector = [...params.stateVectorCards].sort((left, right) => left.value - right.value)[0];
+  const evidence = [
+    params.patternType ? `命局主轴：你当前按 ${params.patternType} 结构来判断，不能脱离这个骨架。` : '',
+    params.currentDaYun ? `阶段位置：现在正落在 ${params.currentDaYun} 这一步运，重点是认清这一步到底要你收、要你守，还是要你推。` : '',
+    params.favoredElements.length > 0 ? `顺势方向：现阶段优先放大 ${params.favoredElements.join('、')} 对应的动作和环境。` : '',
+    strongestVector && weakestVector
+      ? `现实侧重点：${strongestVector.label}相对占优，${weakestVector.label}更容易拖后腿，决策时不要平均用力。`
+      : '',
+  ].filter(Boolean).slice(0, 3);
+
+  return {
+    eyebrow: '你现在所处的位置',
+    headline: compactCopy(
+      params.decisionHeadline || params.currentStageSummary || '你现在最重要的，不是继续求更多答案，而是认清当前阶段真正的主轴。'
+    ),
+    evidence,
+  };
+}
+
+function buildFutureGuidanceBlock(params: {
+  structuredBlock?: {
+    headline?: string;
+    evidence?: string[];
+  };
+  decisionNowAction: string;
+  decisionAvoidAction: string;
+  nextFocusSummary: string;
+  leadWindow?: { label: string; theme?: string } | null;
+  topMonthlyWindows: Array<{ label: string; theme?: string; status?: string }>;
+}) {
+  if (params.structuredBlock?.headline || (params.structuredBlock?.evidence || []).length > 0) {
+    return {
+      eyebrow: '接下来会怎么走',
+      headline: compactCopy(
+        params.structuredBlock?.headline || '接下来不要分散出击，先把当前阶段最该落地的动作做出来。'
+      ),
+      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 4),
+    };
+  }
+
+  const leadWindowLabel = params.leadWindow
+    ? `${params.leadWindow.label}${params.leadWindow.theme ? ` · ${params.leadWindow.theme}` : ''}`
+    : '';
+  const evidence = [
+    leadWindowLabel ? `最近优先窗口：${leadWindowLabel}。这不是让你同时做很多事，而是要求你在窗口内把关键动作做准。` : '',
+    params.decisionNowAction ? `现在就做：${params.decisionNowAction}` : '',
+    params.decisionAvoidAction ? `明确避开：${params.decisionAvoidAction}` : '',
+    params.topMonthlyWindows.length > 1
+      ? `后续观察顺序：${params.topMonthlyWindows.map((item) => item.label).join('、')}。`
+      : params.nextFocusSummary,
+  ].filter(Boolean).slice(0, 4);
+
+  return {
+    eyebrow: '接下来会怎么走',
+    headline: compactCopy(
+      leadWindowLabel
+        ? `接下来最容易起变化的是 ${leadWindowLabel} 这段，你要做的是顺势推进，而不是逆势硬顶。`
+        : '接下来不要分散出击，先把当前阶段最该落地的动作做出来。'
+    ),
+    evidence,
+  };
+}
+
+function buildFortuneRecordForExperience(params: {
+  id: string;
+  result: Awaited<ReturnType<typeof getResult>>;
+}): FortuneRecord {
+  const { id, result } = params;
+
+  return {
+    id,
+    userId: result.basic.userId,
+    name: result.basic.name,
+    birthDate: (result.basic as { birthDate?: string }).birthDate || '',
+    birthTime: (result.basic as { birthTime?: string }).birthTime || '',
+    birthPlace: (result.basic as { birthPlace?: string }).birthPlace,
+    timezone: (result.basic as { timezone?: number }).timezone || 8,
+    gender: (result.basic as { gender?: 'male' | 'female' }).gender || 'male',
+    bazi: result.basic,
+    fiveElements: result.fiveElements,
+    tenGods: result.tenGods,
+    pattern: result.pattern,
+    fortune: result.fortune,
+    advice: result.advice,
+    evidence: result.evidence,
+    analysis: result.analysis,
+    klineData: result.klineData || undefined,
+    dayun: result.dayun,
+    shenSha: result.shenSha,
+    reportVersion: result.reportVersion,
+    isPublic: result.isPublic,
+  };
 }
 
 function inferWorldYiGuidedPaths(signalText: string) {
@@ -215,9 +428,12 @@ export async function generateMetadata({ params }: PageProps) {
   return {
     title: '您的结构判断报告 | 人生K线',
     description: '结构化判断结果页，围绕个人结构、阶段节奏、行动建议与验证闭环展开。',
+    alternates: {
+      canonical: `https://www.life-kline.com/result/${id}`,
+    },
     robots: {
-      index: true,
-      follow: true,
+      index: false,
+      follow: false,
     },
   };
 }
@@ -229,117 +445,17 @@ async function getResult(reportId: string) {
     const analysis = (fortuneData.analysis ?? {
       opening: '当前结构、阶段与节奏已经开始显形。',
       explanation: '当前结果已由结构化引擎生成，可先查看场景视图、月度窗口和行动建议，再继续进入 AI 深问。',
-    }) as {
-      opening?: string;
-      explanation?: string;
-      llmUsed?: boolean;
-      agenticUsed?: boolean;
-      reasoningMode?: ReportReasoningMode;
-      pipelineVersion?: string;
-      generatedFrom?: 'analyze' | 'upgrade';
-      generatedAt?: string;
-      upgradedFromVersion?: string;
-      engineBuilds?: {
-        core: string;
-        llm: string;
-        kline: string;
-        report: string;
-        reviewer?: string;
-        prompts?: string;
-      };
-      orchestration?: {
-        mode?: 'single-llm' | 'deterministic-expert' | 'parallel-agents';
-        totalLlmCalls?: number;
-        successRate?: number;
-        succeeded?: string[];
-        failed?: string[];
-        errors?: Array<{ key: string; error: string }>;
-        agentSources?: Record<string, 'llm' | 'fallback'>;
-      };
-      verify?: {
-        consistencyScore?: number;
-        verdict?: 'PASS' | 'WARN' | 'FAIL';
-        failedRules?: string[];
-      };
-      qualityAudit?: {
-        overallScore?: number;
-        grade?: 'S' | 'A' | 'B' | 'C';
-        status?: 'ready' | 'watch' | 'retry';
-        deliveryTier?: 'basic' | 'enhanced' | 'expert';
-        targetScore?: number;
-        targetGrade?: 'S' | 'A' | 'B' | 'C';
-        targetAchieved?: boolean;
-        summary?: string;
-        dimensions?: Array<{
-          key?: 'engine' | 'llm' | 'agentic' | 'consistency' | 'completeness';
-          label?: string;
-          score?: number;
-          status?: 'strong' | 'ok' | 'watch' | 'weak';
-          detail?: string;
-        }>;
-        strengths?: string[];
-        concerns?: string[];
-        blockingIssues?: string[];
-        recommendedActions?: string[];
-        nextActionLabel?: string;
-      };
-      feedbackLoop?: {
-        syncedAt?: string;
-        linkedReportId?: string;
-        validationInsights?: {
-          totalLinkedEvents?: number;
-          accurateCount?: number;
-          driftCount?: number;
-          pendingCount?: number;
-          summary?: string;
-          lessons?: string[];
-        };
-        correctionInsight?: {
-          level?: 'healthy' | 'watch' | 'action';
-          summary?: string;
-          likelyCause?: string;
-          fixes?: string[];
-          checkpoints?: string[];
-        };
-      };
-      versionLineage?: Array<{
-        version?: string;
-        generatedAt?: string;
-        generatedFrom?: 'analyze' | 'upgrade';
-        upgradedFromVersion?: string;
-        reasoningMode?: ReportReasoningMode;
-        llmUsed?: boolean;
-        agenticUsed?: boolean;
-        qualityScore?: number;
-        qualityGrade?: 'S' | 'A' | 'B' | 'C';
-        deliveryTier?: 'basic' | 'enhanced' | 'expert';
-        targetAchieved?: boolean;
-        summary?: string;
-      }>;
-      upgradeJob?: {
-        status?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
-        attempts?: number;
-        maxAttempts?: number;
-        nextRunAt?: string;
-        bestScore?: number;
-        bestGrade?: 'S' | 'A' | 'B' | 'C';
-        lastError?: string;
-      };
-      loop?: Record<string, unknown>;
-      contextSignals?: Record<string, unknown>;
-      agentResults?: Record<string, unknown>;
-      enhancementNotes?: string[];
-      [key: string]: unknown;
-    };
+    }) as FortuneAnalysisResult['analysis'];
 
     const pillars = fortuneData.bazi?.pillars || [];
     const bazi = pillars
       .map((pillar) => `${pillar?.celestialStem || ''}${pillar?.earthlyBranch || ''}`)
       .filter((item) => item.length === 2);
     const yongShenResult = bazi.length === 4 ? determineYongShen(bazi) : null;
-    const dayun = fortuneData.dayun || (pillars.length >= 2 && fortuneData.birthDate && fortuneData.birthTime
+    const parsedBirthDate = parseLocalDate(fortuneData.birthDate);
+    const dayun = fortuneData.dayun || (pillars.length >= 2 && parsedBirthDate && fortuneData.birthTime
       ? calculateDayun(
-          new Date(fortuneData.birthDate),
+          parsedBirthDate,
           fortuneData.birthTime,
           fortuneData.gender,
           pillars[0]?.celestialStem || '',
@@ -348,7 +464,7 @@ async function getResult(reportId: string) {
             zhi: pillars[1]?.earthlyBranch || '',
           },
           yongShenResult,
-          new Date(fortuneData.birthDate).getFullYear()
+          parsedBirthDate.getFullYear()
         )
       : undefined);
     const shenSha = fortuneData.shenSha || (bazi.length === 4 ? analyzeShenSha(bazi) || undefined : undefined);
@@ -391,7 +507,7 @@ async function getResult(reportId: string) {
       qualityAudit: analysis.qualityAudit,
       versionLineage: analysis.versionLineage?.length
         ? analysis.versionLineage
-        : [createLineageEntry(analysis as any, fortuneData.reportVersion || 'v1')].filter(Boolean),
+        : [createLineageEntry(analysis, fortuneData.reportVersion || 'v1')].filter(Boolean),
       upgradeJob: reportUpgradeJobOperations.getByReportId(reportId) || undefined,
       orchestration: analysis.orchestration,
       loop: analysis.loop as Record<string, unknown> | undefined,
@@ -404,7 +520,8 @@ async function getResult(reportId: string) {
       isPublic: fortuneData.isPublic !== false,
     };
     const scenarioViews = buildScenarioViews(baseResult);
-    const monthlyWindows = buildMonthlyWindows(baseResult);
+    const calendarAnchor = getCurrentLocalMonthKey() || new Date();
+    const monthlyWindows = buildMonthlyWindows(baseResult, calendarAnchor);
     const confidence = buildConfidenceAnalysis(baseResult);
     const yearlyRoadmap = buildYearlyRoadmap({
       ...baseResult,
@@ -427,7 +544,7 @@ async function getResult(reportId: string) {
       ...baseResult,
       scenarioViews,
       monthlyWindows,
-    });
+    }, calendarAnchor);
     const referenceIntelligence = readReferenceIntelligence(analysis.contextSignals);
     const stateVector = buildStateVectorData({
       klineData: fortuneData.klineData || null,
@@ -494,11 +611,32 @@ export default async function ResultPage({ params }: PageProps) {
       fortuneAnalysis: event.fortuneAnalysis as { reason?: string } | undefined,
     }))
   );
+  const confirmedPastEventTitles = linkedEvents
+    .filter((event) => {
+      const feedback = event.userFeedback as { wasAccurate?: boolean } | undefined;
+      const analysis = event.fortuneAnalysis as { templateKind?: string } | undefined;
+      return feedback?.wasAccurate === true && analysis?.templateKind === 'past_event';
+    })
+    .map((event) => event.title)
+    .slice(0, 3);
   const correctionInsight = buildReportCorrectionInsight({
     validationInsights,
     confidence: result.confidence,
     scenarioViews: result.scenarioViews,
     monthlyWindows: result.monthlyWindows,
+  });
+  const reportV4Sections = buildReportV4Sections({
+    result,
+    scenarioViews: result.scenarioViews,
+    monthlyWindows: result.monthlyWindows,
+    confidence: result.confidence,
+    decisionPlaybook: result.decisionPlaybook,
+    actionSuggestions: result.actionSuggestions,
+    validationInsights,
+    correctionInsight,
+    stateVector: result.stateVector,
+    expertInterpretation: result.expertInterpretation,
+    yearlyTrendSnapshots: result.yearlyTrendSnapshots,
   });
   const premiumServiceOffers = buildPremiumServiceOffers({
     scenarioViews: result.scenarioViews,
@@ -529,32 +667,13 @@ export default async function ResultPage({ params }: PageProps) {
     { label: '最强五行', value: strongestEntry ? elementLabelMap[strongestEntry[0]] || strongestEntry[0] : '继续结合结构判断' },
     { label: '最弱五行', value: weakestEntry ? elementLabelMap[weakestEntry[0]] || weakestEntry[0] : '继续结合结构判断' },
   ];
-  const reportActions = [
-    {
-      title: '看完可继续深问 AI',
-      description: '把关键结论继续追问成可执行问题。',
-      icon: Bot,
-    },
-    {
-      title: '把关键窗口落成事件',
-      description: '把窗口存成事件，后面才能验证和复盘。',
-      icon: CalendarClock,
-    },
-    {
-      title: result.isPublic ? '这份报告可直接分享' : '这份报告目前为隐藏模式',
-      description: result.isPublic
-        ? '当前可通过匿名链接分享。'
-        : '默认私密，需要时再手动开启。',
-      icon: Share2,
-    },
-  ];
   const qualityAudit = result.qualityAudit;
   const upgradeJob = result.upgradeJob;
-  const deliveryTierLabel = qualityAudit?.deliveryTier === 'expert'
-    ? 'S级专家版'
-    : qualityAudit?.deliveryTier === 'enhanced'
-    ? '增强版'
-    : '基础版';
+  const reportDeliveryStage = describeReportDeliveryStage(qualityAudit?.deliveryTier);
+  const reportStageLadder = buildReportStageLadder(qualityAudit?.deliveryTier);
+  const currentStageLadderItem = reportStageLadder.find((item) => item.status === 'current') || reportStageLadder[0];
+  const nextStageLadderItem = reportStageLadder.find((item) => item.status === 'locked') || null;
+  const deliveryTierLabel = reportDeliveryStage.label;
   const upgradeStatusLabel = upgradeJob?.status === 'running'
     ? '后台增强进行中'
     : upgradeJob?.status === 'retry' || upgradeJob?.status === 'pending'
@@ -624,29 +743,40 @@ export default async function ResultPage({ params }: PageProps) {
       || qualityAudit?.concerns?.[0]
       || '不要在时机未确认前同时推进多个高成本动作。'
   );
-  const reportJourney = buildJourneyForReport({
-    id,
-    userId: result.basic.userId,
-    name: result.basic.name,
-    birthDate: (result.basic as { birthDate?: string }).birthDate || '',
-    birthTime: (result.basic as { birthTime?: string }).birthTime || '',
-    birthPlace: (result.basic as { birthPlace?: string }).birthPlace,
-    timezone: (result.basic as { timezone?: number }).timezone || 8,
-    gender: (result.basic as { gender?: 'male' | 'female' }).gender || 'male',
-    bazi: result.basic as any,
-    fiveElements: result.fiveElements,
-    tenGods: result.tenGods,
-    pattern: result.pattern,
-    fortune: result.fortune,
-    advice: result.advice,
-    evidence: result.evidence,
-    analysis: result.analysis,
-    klineData: result.klineData || undefined,
-    dayun: result.dayun,
-    shenSha: result.shenSha,
-    reportVersion: result.reportVersion,
-    isPublic: result.isPublic,
+  const pastValidationBlock = buildPastValidationBlock({
+    structuredBlock: result.analysis?.judgmentBlocks?.pastValidation,
+    validationInsights,
+    linkedEvents: linkedEvents.map((event) => ({
+      title: event.title,
+      userFeedback: event.userFeedback as { wasAccurate?: boolean; userNotes?: string } | undefined,
+      fortuneAnalysis: event.fortuneAnalysis as { reason?: string } | undefined,
+    })),
   });
+  if (confirmedPastEventTitles.length > 0) {
+    pastValidationBlock.evidence = [
+      `你已经亲自确认过这些过去节点：${confirmedPastEventTitles.join('、')}。`,
+      ...pastValidationBlock.evidence,
+    ].slice(0, 3);
+  }
+  const presentDiagnosisBlock = buildPresentDiagnosisBlock({
+    structuredBlock: result.analysis?.judgmentBlocks?.presentDiagnosis,
+    currentStageSummary,
+    decisionHeadline,
+    patternType: result.pattern?.type,
+    currentDaYun: result.fortune?.currentDaYun,
+    favoredElements,
+    stateVectorCards,
+  });
+  const futureGuidanceBlock = buildFutureGuidanceBlock({
+    structuredBlock: result.analysis?.judgmentBlocks?.futureGuidance,
+    decisionNowAction,
+    decisionAvoidAction,
+    nextFocusSummary,
+    leadWindow,
+    topMonthlyWindows,
+  });
+  const experienceReport = buildFortuneRecordForExperience({ id, result });
+  const reportJourney = buildJourneyForReport(experienceReport);
   const worldYiSignalText = [
     result.pattern?.type,
     currentStageSummary,
@@ -658,11 +788,17 @@ export default async function ResultPage({ params }: PageProps) {
     ...(result.confidence?.sensitivePoints || []),
   ].filter(Boolean).join(' ');
   const worldYiGuidedPaths = inferWorldYiGuidedPaths(worldYiSignalText);
+  const reportFollowupQuestion = buildReportFollowupQuestion({
+    actionSuggestions: result.actionSuggestions,
+    defaultQuestion: result.analysis?.summary || result.analysis?.opening || decisionNowAction,
+  });
+  const reportChatHref = buildChatHref({
+    reportId: id,
+    question: reportFollowupQuestion,
+    source: 'result_report_followup',
+  });
   const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
   const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
-  const stagedReadingHint = result.qualityAudit?.targetAchieved || result.llmUsed
-    ? '页面内容较多，系统会先让你看到核心判断，再逐步展开验证、趋势和延伸区块。'
-    : '当前先交付核心判断和可执行结论，验证、趋势和延伸区块会继续分批展开，后台也会继续增强。';
   const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
   const enhancementStatusMessage = isEnhancementPending
     ? upgradeJob?.lastError === 'LLM_UNAVAILABLE'
@@ -742,44 +878,137 @@ export default async function ResultPage({ params }: PageProps) {
                 <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                   {deliveryTierLabel}
                 </span>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {result.isPublic ? '已开启分享模式' : '默认私密'}
-                </span>
               </div>
 
               <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
-                {publicName}当前最重要的，
-                <span className="font-serif text-[color:var(--accent-strong)]">不是再听一句抽象判断，而是看清所处阶段和下一步节奏。</span>
+                {reportV4Sections.cockpit.headline || `${publicName}当前最重要的，`}
               </h1>
 
-              <p className="intro-copy mt-4">先做一个动作，再展开阅读。</p>
-              <div className="intro-panel mt-3">优先顺序：追问 → 记事件 → 开更新。</div>
+              <div className="mt-6">
+                <ReportCockpit
+                  section={reportV4Sections.cockpit}
+                  reportId={id}
+                  chatHref={reportChatHref}
+                  eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
+                  guidedPaths={worldYiGuidedPaths.slice(0, 3)}
+                  followupQuestion={reportFollowupQuestion}
+                />
+              </div>
 
-              <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4">
-                <div className="action-guide">核心操作</div>
-                <div className="action-strip mt-3 flex flex-wrap gap-3">
-                  <Link href={`/chat?reportId=${encodeURIComponent(id)}`} className="action-primary action-main">
-                    进入结构追问
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href={`/events?reportId=${encodeURIComponent(id)}`} className="action-secondary">
-                    管理关联事件
-                  </Link>
-                  <Link href="#subscription" className="action-secondary">
-                    开启月度更新
-                  </Link>
-                </div>
-                <div className="mt-4 grid gap-3 md:grid-cols-3">
-                  {worldYiGuidedPaths.slice(0, 3).map((item) => (
-                    <Link key={item.href} href={item.href} className="rounded-[1.2rem] bg-slate-50 px-4 py-3 transition hover:bg-white">
-                      <div className="flex items-center justify-between gap-3">
-                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                        <ArrowRight className="h-4 w-4 text-[color:var(--accent-strong)]" />
+              <div className="mt-5">
+                <ReportNextActions
+                  reportId={id}
+                  chatHref={reportChatHref}
+                  eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
+                  actionSuggestionCount={result.actionSuggestions?.length || 0}
+                  pastEventTemplateCount={result.analysis?.pastEventTemplates?.length || 0}
+                  followupQuestion={reportFollowupQuestion}
+                />
+              </div>
+
+
+              <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+                <div className="soft-card rounded-[1.75rem] p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
+                      <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">
+                        {reportV4Sections.lifeKLine.headline || '人生长弧线'}
+                      </h3>
+                    </div>
+                    {reportV4Sections.lifeKLine.arcLabel ? (
+                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                        {compactCopy(reportV4Sections.lifeKLine.arcLabel, 30)}
                       </div>
-                      <div className="intro-copy mt-2">{item.description}</div>
-                    </Link>
-                  ))}
+                    ) : null}
+                  </div>
+
+                  {reportV4Sections.lifeKLine.summary ? (
+                    <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {compactCopy(reportV4Sections.lifeKLine.summary, 108)}
+                    </p>
+                  ) : null}
+
+                  {reportV4Sections.lifeKLine.latestMetrics.length > 0 ? (
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {reportV4Sections.lifeKLine.latestMetrics.map((item) => {
+                        const toneClasses = getLifeKLineMetricToneClasses(item.tone);
+
+                        return (
+                          <div key={item.label} className={`rounded-[1.2rem] border px-4 py-3 ${toneClasses.card}`}>
+                            <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
+                              {item.label}
+                            </div>
+                            <div className={`mt-2 text-base font-bold ${toneClasses.value}`}>{item.value}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : null}
+
+                  {result.klineData && result.klineData.length > 0 ? (
+                    <div className="mt-4 rounded-[1.5rem] border border-[color:var(--line)] bg-white/84 p-3">
+                      <Suspense fallback={<ChartSkeleton />}>
+                        <FortuneChart data={result.klineData} height={320} />
+                      </Suspense>
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                      暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
+                    </div>
+                  )}
                 </div>
+                <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
+              </div>
+
+              <div id="overview" className="mt-6">
+                <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
+              </div>
+
+              <div className="mt-5">
+                <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
+              </div>
+
+              <div id="scenario" className="mt-5">
+                <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
+              </div>
+
+              <div className="mt-5 grid gap-4 xl:grid-cols-2">
+                <ReportActionBoard section={reportV4Sections.actionBoard} />
+                <ReportValidationPanel section={reportV4Sections.validationLayer} />
+              </div>
+
+              <div className="mt-5 grid gap-4 xl:grid-cols-3">
+                {[
+                  pastValidationBlock,
+                  presentDiagnosisBlock,
+                  futureGuidanceBlock,
+                ].map((section, index) => (
+                  <div
+                    key={section.eyebrow}
+                    className={`rounded-[1.6rem] border px-5 py-5 ${
+                      index === 0
+                        ? 'border-emerald-200 bg-emerald-50/70'
+                        : index === 1
+                        ? 'border-[color:var(--line)] bg-white/82'
+                        : 'border-amber-200 bg-amber-50/75'
+                    }`}
+                  >
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+                      {section.eyebrow}
+                    </div>
+                    <div className="mt-3 text-base font-bold leading-7 text-[color:var(--ink)]">
+                      {section.headline}
+                    </div>
+                    <div className="mt-4 grid gap-3">
+                      {section.evidence.map((item) => (
+                        <div key={item} className="rounded-2xl bg-white/88 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className={`mt-5 rounded-[1.5rem] border px-4 py-4 ${
@@ -797,12 +1026,22 @@ export default async function ResultPage({ params }: PageProps) {
                       ? 'bg-white text-emerald-700'
                       : 'bg-slate-100 text-[color:var(--muted)]'
                   }`}>
-                    {isEnhancementPending
+                    {qualityAudit
+                      ? `质量 ${qualityAudit.overallScore || '--'} / ${qualityAudit.grade || 'B'}`
+                      : isEnhancementPending
                       ? '稳定版已可阅读'
                       : result.llmUsed
                       ? '深度版已送达'
                       : '当前为稳定可读版'}
                   </span>
+                  <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                    {`当前阶段 ${currentStageLadderItem.shortLabel}`}
+                  </span>
+                  {qualityAudit?.targetAchieved ? (
+                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      已达到 S级目标
+                    </span>
+                  ) : null}
                   {upgradeStatusLabel ? (
                     <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                       {upgradeStatusLabel}
@@ -810,35 +1049,71 @@ export default async function ResultPage({ params }: PageProps) {
                   ) : null}
                 </div>
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-                  {enhancementStatusMessage}
+                  {qualityAudit?.summary || enhancementStatusMessage}
                 </div>
-              </div>
-
-              {qualityAudit ? (
-                <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/75 px-4 py-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                      {`质量 ${qualityAudit.overallScore || '--'} / ${qualityAudit.grade || 'B'}`}
-                    </span>
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                      qualityAudit.targetAchieved ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'
-                    }`}>
-                      {qualityAudit.targetAchieved
-                        ? '已达到 95 分 S级目标'
-                        : `距离 ${qualityAudit.targetScore || 95} 分 S级目标仍需增强`}
-                    </span>
+                <div className="mt-4 rounded-[1.25rem] border border-white/70 bg-white/78 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告升级路径</div>
+                      <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">
+                        {`你现在拿到的是${currentStageLadderItem.label}。`}
+                      </div>
+                    </div>
+                    {nextStageLadderItem ? (
+                      <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                        {`下一阶段 ${nextStageLadderItem.shortLabel}`}
+                      </div>
+                    ) : (
+                      <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        已到当前最高阶段
+                      </div>
+                    )}
                   </div>
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-                    {qualityAudit.summary}
+                  <div className="mt-4 grid gap-3 md:grid-cols-3">
+                    {reportStageLadder.map((item) => (
+                      <div
+                        key={item.key}
+                        data-stage-key={item.key}
+                        className={`rounded-[1.1rem] border px-4 py-4 ${
+                          item.status === 'current'
+                            ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
+                            : item.status === 'completed'
+                            ? 'border-emerald-200 bg-emerald-50/80'
+                            : 'border-[color:var(--line)] bg-slate-50/90'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                          <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                            item.status === 'current'
+                              ? 'bg-white text-[color:var(--accent-strong)]'
+                              : item.status === 'completed'
+                              ? 'bg-white text-emerald-700'
+                              : 'bg-white text-[color:var(--muted)]'
+                          }`}>
+                            {item.status === 'current' ? '当前' : item.status === 'completed' ? '已完成' : '待解锁'}
+                          </span>
+                        </div>
+                        <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+                          {item.description}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  {upgradeJob?.status ? (
-                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-                      {`${upgradeStatusLabel}，已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次。`}
-                      {upgradeJob.nextRunAt ? ` 下一次计划时间 ${upgradeJob.nextRunAt}。` : ''}
+                  {nextStageLadderItem ? (
+                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <span className="font-semibold text-[color:var(--accent-strong)]">下一阶段：</span>
+                      {`${nextStageLadderItem.label}会补足${nextStageLadderItem.description.replace(/^会补足/, '')}`}
                     </div>
                   ) : null}
                 </div>
-              ) : null}
+                {upgradeJob?.status ? (
+                  <div className="mt-3 text-xs text-[color:var(--muted)]">
+                    {`${upgradeStatusLabel}，已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次。`}
+                    {upgradeJob.nextRunAt ? ` 下一次计划时间 ${upgradeJob.nextRunAt}。` : ''}
+                  </div>
+                ) : null}
+              </div>
 
               {canManage ? (
                 <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/78 px-4 py-4">
@@ -874,83 +1149,13 @@ export default async function ResultPage({ params }: PageProps) {
                 ))}
               </div>
 
-              <div className="mt-6 grid gap-3 md:grid-cols-[1.08fr_0.92fr]">
-                <div className="rounded-[1.5rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">决策摘要</div>
-                    <span className="rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                      {decisionWindowLabel}
-                    </span>
-                  </div>
-                  <div className="mt-2 text-lg font-bold leading-8 text-[color:var(--ink)]">
-                    {decisionHeadline}
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {decisionEvidence.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white/78 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-3 rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-                    {nextFocusSummary}
-                  </div>
-                </div>
 
-                <div className="rounded-[1.5rem] bg-white/82 px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">现在怎么做</div>
-                  <div className="mt-3 grid gap-3">
-                    <div className="rounded-2xl bg-[rgba(178,149,93,0.1)] px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">现在先做</div>
-                      <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{decisionNowAction}</div>
-                    </div>
-                    <div className="rounded-2xl bg-rose-50 px-4 py-3">
-                      <div className="text-[11px] uppercase tracking-[0.18em] text-rose-500">先别做</div>
-                      <div className="mt-2 text-xs leading-6 text-rose-800">{decisionAvoidAction}</div>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-col gap-3">
-                    <Link
-                      href={`/chat?reportId=${encodeURIComponent(id)}`}
-                      className="action-primary action-main justify-between"
-                    >
-                      进入结构追问
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="#subscription"
-                      className="action-secondary justify-between"
-                    >
-                      开启月度更新
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href="/analyze"
-                      className="action-secondary justify-between"
-                    >
-                      再次生成一份
-                      <ArrowRight className="h-4 w-4" />
-                    </Link>
-                  </div>
-                  <div className="intro-copy mt-4">默认私密，开启后仍以匿名方式分享。</div>
+              <div className="mt-6 soft-card rounded-[1.75rem] p-5">
+                <div className="flex items-center gap-3">
+                  <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
+                  <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
                 </div>
-              </div>
-
-              <div className="mt-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                    分批呈现
-                  </span>
-                  {upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status) ? (
-                    <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
-                      后台增强中
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-                  {stagedReadingHint}
-                </div>
-                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <div className="mt-4 grid gap-3 lg:grid-cols-[0.96fr_1.04fr]">
                   <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -962,7 +1167,7 @@ export default async function ResultPage({ params }: PageProps) {
                     </div>
                   </div>
                   <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">继续展开</div>
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">后面再展开</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {deferredSectionNames.map((item) => (
                         <span key={item} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
@@ -977,25 +1182,6 @@ export default async function ResultPage({ params }: PageProps) {
           </div>
 
           <div className="grid gap-4">
-            <div className="soft-card rounded-[1.75rem] p-5">
-              <div className="font-semibold text-[color:var(--ink)]">分享与可见性</div>
-              <p className="intro-copy mt-2">默认私密，开启后外部用户仅能通过匿名链接查看。</p>
-              <div className="mt-4">
-                <ResultPublicControls
-                  reportId={id}
-                  initialIsPublic={result.isPublic}
-                  canManage={canManage}
-                  publicName={publicName}
-                  reportVersion={result.reportVersion || 'v1'}
-                  deliveryTierLabel={deliveryTierLabel}
-                  reasoningModeLabel={reasoningModeLabel}
-                  summary={currentStageSummary}
-                  nextFocusSummary={nextFocusSummary}
-                  highlights={reportHighlights}
-                />
-              </div>
-            </div>
-
             <ReportEnginePanel
               reportId={id}
               canManage={canManage}
@@ -1021,40 +1207,23 @@ export default async function ResultPage({ params }: PageProps) {
                 reportId={id}
                 compact
                 title="这份报告的升级与更新"
-                description="这里直接看订阅状态、升级进度和最近更新。"
+                description="查看这份报告后续的升级进度、月度提醒和订阅状态，避免结果停留在一次性生成。"
                 initialAuthenticated={updatesPanelInitialAuthenticated}
                 initialSummary={updatesPanelInitialSummary}
               />
             ) : null}
 
-            {reportActions.map((item) => {
-              const Icon = item.icon;
-              return (
-                <div key={item.title} className="soft-card rounded-[1.75rem] p-5">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="font-semibold text-[color:var(--ink)]">{item.title}</div>
-                </div>
-                  <p className="intro-copy mt-3">{item.description}</p>
-                </div>
-              );
-            })}
-
             {stateVectorCards.length > 0 && (
               <div className="soft-card rounded-[1.75rem] p-5">
-              <div className="flex items-center gap-3">
-                <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
-                <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
-              </div>
-                <p className="intro-copy mt-2">看时机、环境和关系，判断推进阻力与放大效应。</p>
+                <div className="flex items-center gap-3">
+                  <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
+                  <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
+                </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {stateVectorCards.map((item) => (
                     <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                       <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value.toFixed(1)}</div>
-                      <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.detail}</div>
                     </div>
                   ))}
                 </div>
@@ -1088,57 +1257,29 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
             )}
 
-            <div className="soft-card rounded-[1.75rem] p-5">
-              <div className="flex items-center gap-3">
-                <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
-                <div className="font-semibold text-[color:var(--ink)]">阅读路径</div>
-              </div>
-              <div className="mt-3 space-y-3">
-                {[
-                  '先看总览和核心结构',
-                  '再看五行分布与趋势图',
-                  '最后进入结构追问或再次生成一份',
-                ].map((item) => (
-                  <div key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ReportEventCapture
+              reportId={id}
+              suggestions={result.actionSuggestions || []}
+              pastEventTemplates={result.analysis?.pastEventTemplates || []}
+            />
 
-            <ReportEventCapture reportId={id} suggestions={result.actionSuggestions || []} />
-
-            {canManage && (
-              <div className="soft-card rounded-[1.75rem] p-5">
-                <div className="font-semibold text-[color:var(--ink)]">这份报告的验证状态</div>
-                <p className="intro-copy mt-2">{validationInsights.summary}</p>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  {[
-                    { label: '已验证准确', value: validationInsights.accurateCount },
-                    { label: '已记录偏差', value: validationInsights.driftCount },
-                    { label: '待验证', value: validationInsights.pendingCount },
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
-                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-                      <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {canManage && validationInsights.totalLinkedEvents > 0 && (
-              <div className="soft-card rounded-[1.75rem] p-5">
-                <div className="font-semibold text-[color:var(--ink)]">纠偏优先级</div>
-                <p className="intro-copy mt-2">{correctionInsight.summary}</p>
-                <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
-                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">更可能的原因</div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
-                </div>
-              </div>
-            )}
           </div>
         </section>
+
+        <div className="mt-6">
+          <ResultPublicControls
+            reportId={id}
+            initialIsPublic={result.isPublic}
+            canManage={canManage}
+            publicName={publicName}
+            reportVersion={result.reportVersion || 'v1'}
+            deliveryTierLabel={deliveryTierLabel}
+            reasoningModeLabel={reasoningModeLabel}
+            summary={currentStageSummary}
+            nextFocusSummary={nextFocusSummary}
+            highlights={reportHighlights}
+          />
+        </div>
 
         {/* LLM 状态提示 */}
         <div className="mx-auto mb-6 flex max-w-6xl flex-col gap-4">
@@ -1213,8 +1354,8 @@ export default async function ResultPage({ params }: PageProps) {
 
         <ResultDeferredSection
           id="validation"
-          title="可信报告与验证区块正在整理"
-          description="核心结论已经优先显示。可信度、验证和纠偏区块会继续补齐后展开，不需要重复刷新。"
+          title="可信报告与验证"
+          description="把这份报告放回真实事件中持续验证，帮助你区分哪些判断已经落地，哪些还需要校正。"
           delayMs={0}
         >
           <Suspense fallback={<ReportSkeleton />}>
@@ -1225,8 +1366,8 @@ export default async function ResultPage({ params }: PageProps) {
         <div className="mt-16">
           <ResultDeferredSection
             id="premium"
-            title="专项服务区块正在载入"
-            description="专项模拟、断事和事件复盘会在主报告后继续展开，避免一上来被整页信息压住。"
+            title="专项服务"
+            description="当主报告已经指出方向，这里承接更聚焦的专项判断和深度服务需求。"
             delayMs={180}
           >
             <div className="scroll-mt-28">
@@ -1244,8 +1385,8 @@ export default async function ResultPage({ params }: PageProps) {
         <div className="mt-16">
           <ResultDeferredSection
             id="subscription"
-            title="订阅与更新区块正在载入"
-            description="月度更新、订阅入口和增强跟踪会继续补上，先看主报告不影响判断。"
+            title="订阅与更新"
+            description="把后续月度提醒、升级增强和邮件留存接回这份主报告，方便你持续复访。"
             delayMs={320}
           >
             <div className="scroll-mt-28">
@@ -1263,28 +1404,12 @@ export default async function ResultPage({ params }: PageProps) {
           </ResultDeferredSection>
         </div>
 
-        {result.klineData && result.klineData.length > 0 && (
-          <div className="mt-12">
-            <ResultDeferredSection
-              id="trend"
-              title="趋势图正在载入"
-              description="人生K线和趋势图会在首屏判断后继续显示，核心判断不会因此延后。"
-              delayMs={480}
-            >
-              <div className="scroll-mt-28">
-                <Suspense fallback={<ChartSkeleton />}>
-                  <FortuneChart data={result.klineData} />
-                </Suspense>
-              </div>
-            </ResultDeferredSection>
-          </div>
-        )}
 
         <div className="mt-16">
           <ResultDeferredSection
             id="next-step"
-            title="下一步行动区块正在载入"
-            description="系统先给你核心判断，再继续补齐后续动作、验证提醒和延伸阅读路径。"
+            title="下一步行动"
+            description="把这份报告转成接下来最值得执行、验证和复盘的几个动作，而不是停在阅读层。"
             delayMs={620}
           >
             <div className="scroll-mt-28">
@@ -1304,45 +1429,24 @@ export default async function ResultPage({ params }: PageProps) {
           <SurfaceJourneyPanel
             journey={reportJourney}
             title="这份主测算已经接到工具和内容系统"
-            description="综合报告负责定主轴，小工具负责拆具体问题，文章和案例负责沉淀理解与说服力。你不需要在这些入口之间来回断开。"
+            description="从主报告继续通往单项工具、专题阅读和后续动作，让这份结果成为长期工作的起点。"
           />
         </div>
 
         <div className="mt-16">
           <ToolRecommendations
-            report={{
-              id,
-              userId: result.basic.userId,
-              name: result.basic.name,
-              birthDate: (result.basic as { birthDate?: string }).birthDate || '',
-              birthTime: (result.basic as { birthTime?: string }).birthTime || '',
-              birthPlace: (result.basic as { birthPlace?: string }).birthPlace,
-              timezone: (result.basic as { timezone?: number }).timezone || 8,
-              gender: (result.basic as { gender?: 'male' | 'female' }).gender || 'male',
-              bazi: result.basic as any,
-              fiveElements: result.fiveElements,
-              tenGods: result.tenGods,
-              pattern: result.pattern,
-              fortune: result.fortune,
-              advice: result.advice,
-              evidence: result.evidence,
-              analysis: result.analysis,
-              klineData: result.klineData || undefined,
-              dayun: result.dayun,
-              shenSha: result.shenSha,
-              reportVersion: result.reportVersion,
-              isPublic: result.isPublic,
-            }}
+            report={experienceReport}
             page={`/result/${id}`}
             title="推荐单项工具"
-            description="综合报告先看全局，再用单项工具把某一件事继续拆深，最容易形成复访和持续判断。"
+            description="根据这份主报告的结构和当前重点，优先给出最值得继续细化的单项工具。"
+            enableQuickStart
           />
         </div>
 
         <div className="mt-16">
           <ResultDeferredSection
-            title="延伸内容区块正在载入"
-            description="相关内容和进一步阅读会在主报告后继续展开，先把这份结果读清楚更重要。"
+            title="延伸内容"
+            description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
             delayMs={760}
           >
             <RelatedContent />

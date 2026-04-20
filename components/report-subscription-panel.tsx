@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowRight, BellRing, Mail, RefreshCcw, Sparkles, Stars } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { buildChatHref } from '@/lib/chat-entry';
 
 type MonthlyHighlight = {
   label: string;
@@ -117,9 +118,9 @@ export default function ReportSubscriptionPanel({
             让这份报告持续生长，
             <span className="font-serif text-[color:var(--accent-strong)]">而不是一次看完就结束。</span>
           </h2>
-          <p className="intro-copy mt-4">
-            这份报告先给你当前结论，长期价值来自后续窗口变化和关键节点提醒。
-          </p>
+          <div className="intro-copy mt-3 max-w-3xl">
+            报告不是一次性结论，订阅的价值在于把月度窗口、升级结果和后续追问串成长期判断关系。
+          </div>
 
           <div className="mt-5 flex flex-wrap gap-2">
             <span className="product-chip">
@@ -143,9 +144,6 @@ export default function ReportSubscriptionPanel({
                   <div key={item.label} className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="mt-1 text-xs leading-6 text-[color:var(--accent-strong)]">{item.theme}</div>
-                    <div className="mt-2 text-[11px] uppercase tracking-[0.16em] text-[color:var(--muted)]">
-                      {item.status === 'push' ? '适合推进' : item.status === 'steady' ? '适合稳步布局' : '适合谨慎收缩'}
-                    </div>
                   </div>
                 ))}
               </div>
@@ -163,7 +161,6 @@ export default function ReportSubscriptionPanel({
                     </div>
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </div>
-                  <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
                 </div>
               );
             })}
@@ -175,11 +172,6 @@ export default function ReportSubscriptionPanel({
           <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
             {canManage ? '订阅你的月度更新与升级提醒' : '订阅站点更新并了解更多节律内容'}
           </div>
-          <p className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-            {canManage
-              ? '让系统在关键变化出现时主动通知你，比反复刷新更高效。'
-              : '公开页只是一部分，建立自己的节律档案会更有价值。'}
-          </p>
 
           <form onSubmit={handleSubscribe} className="mt-5">
             <div className="relative">
@@ -206,7 +198,13 @@ export default function ReportSubscriptionPanel({
 
           <div className="mt-5 grid gap-3">
             <Link
-              href={canManage ? `/chat?reportId=${encodeURIComponent(reportId)}` : '/analyze'}
+              href={canManage
+                ? buildChatHref({
+                    reportId,
+                    question: '请围绕这份报告继续追问，优先告诉我接下来一个月最该推进的动作，以及最需要提前防的风险点。',
+                    source: 'report_subscription_panel',
+                  })
+                : '/analyze'}
               onClick={() => {
                 void trackClientEvent({
                   eventName: 'result_cta_clicked',

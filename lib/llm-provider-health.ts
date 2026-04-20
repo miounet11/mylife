@@ -1,3 +1,4 @@
+import { getDefaultModel } from '@/lib/env';
 import { analyticsOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 
@@ -254,6 +255,15 @@ export function deriveModelHealthSnapshots(params: {
   });
 }
 
+function resolveRescueModel(models: string[]) {
+  const configuredDefault = getDefaultModel();
+  if (configuredDefault && models.includes(configuredDefault)) {
+    return configuredDefault;
+  }
+
+  return models.find((model) => model !== 'auto') || models[0] || '';
+}
+
 export function buildModelExecutionPlan(params: {
   models: string[];
   snapshots: ModelHealthSnapshot[];
@@ -273,8 +283,16 @@ export function buildModelExecutionPlan(params: {
   let ordered = [...healthy, ...degraded, ...probes];
 
   if (!ordered.length) {
-    const fullyOpen = params.snapshots.every((item) => item.state === 'open');
-    if (!fullyOpen) {
+    const fullyOpen = params.snapshots.length > 0 && params.snapshots.every((item) => item.state === 'open');
+    if (fullyOpen) {
+      const rescueModel = resolveRescueModel(params.models);
+      const rescueSnapshot = params.snapshots.find((item) => item.model === rescueModel);
+      if (rescueSnapshot) {
+        ordered = [rescueSnapshot];
+      }
+    }
+
+    if (!ordered.length && !fullyOpen) {
       ordered = [...params.snapshots]
         .sort((left, right) => {
           const leftTime = left.reopenAt ? new Date(left.reopenAt).getTime() : now.getTime();
@@ -385,8 +403,15 @@ export function computeAttemptTimeouts(totalBudgetMs: number, attemptCount: numb
   return budgets;
 }
 
-export function assessScopeProviderHealth(models: string[], scope: LlmScope) {
-  const plan = buildExecutionPlan(models, scope);
+export function assessScopeProviderHealth(
+  models: string[],
+  scope: LlmScope,
+  precomputedPlan?: {
+    orderedModels: string[];
+    snapshots: ModelHealthSnapshot[];
+  }
+) {
+  const plan = precomputedPlan || buildExecutionPlan(models, scope);
   const globalPlan = buildExecutionPlan(models);
   return {
     shouldDefer: shouldDeferForScopeSnapshots(plan.snapshots || [], globalPlan.snapshots || []),

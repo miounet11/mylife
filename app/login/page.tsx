@@ -28,15 +28,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="space-y-5">
             <div className="section-label">账号体系</div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              把一次游客访问，
-              <span className="font-serif text-[color:var(--accent-strong)]">变成可持续沉淀的用户关系。</span>
+              邮箱登录
             </h1>
-            <p className="intro-copy">
-              邮箱登录会把你的分析结果、历史记录、事件管理和订阅状态绑定到正式账号。管理员邮箱还可以直接进入内容后台维护知识、案例和 SEO 实体页。
-            </p>
-            <div className="intro-panel">
-              完成两步：获取验证码 → 验证并登录。
-            </div>
           </div>
 
           <LoginFlow nextHref={nextHref} />

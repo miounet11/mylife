@@ -48,9 +48,7 @@ export default function PaipanEntryShell({ compact = false }: PaipanEntryShellPr
               填完必要信息，
               <span className="font-serif text-[color:var(--accent-strong)]">直接进入下一界面。</span>
             </h1>
-            <p className="text-sm leading-6 text-[color:var(--muted)]">
-              页面审美和站内其他内容页保持一致，录入区只保留真正影响判断的字段，重点优化填写流程本身，而不是再堆说明。
-            </p>
+            <p className="intro-copy">录入区只保留真正影响判断的字段，重点优化填写流程本身。</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
@@ -62,7 +60,7 @@ export default function PaipanEntryShell({ compact = false }: PaipanEntryShellPr
                     <Icon className="h-4.5 w-4.5" />
                   </div>
                   <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                  <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
+                  <p className="intro-copy mt-2">{item.description}</p>
                 </div>
               );
             })}

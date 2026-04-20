@@ -7,6 +7,8 @@ import { DEFAULT_CASE_TYPE_ID, buildLunarArrFromBirthday, padPart, type PaipanIn
 interface InstantPaipanCardProps {
   sex: 0 | 1;
   onConfirm: (payload: PaipanInfoData) => void;
+  disabled?: boolean;
+  submitting?: boolean;
 }
 
 interface ClockState {
@@ -16,6 +18,14 @@ interface ClockState {
   hourDeg: number;
   minuteDeg: number;
 }
+
+const CLOCK_PLACEHOLDER: ClockState = {
+  datetime: '---- --:--',
+  lunarText: '加载中',
+  bazi: ['—', '—', '—', '—', '—', '—', '—', '—'],
+  hourDeg: 0,
+  minuteDeg: 0,
+};
 
 function buildClockState() {
   const now = new Date();
@@ -49,10 +59,17 @@ function buildClockState() {
   };
 }
 
-export default function InstantPaipanCard({ sex, onConfirm }: InstantPaipanCardProps) {
-  const [clockState, setClockState] = useState<ClockState>(buildClockState);
+export default function InstantPaipanCard({ sex, onConfirm, disabled = false, submitting = false }: InstantPaipanCardProps) {
+  const [clockState, setClockState] = useState<ClockState>(CLOCK_PLACEHOLDER);
+  const [isReady, setIsReady] = useState(false);
+  const [pendingConfirm, setPendingConfirm] = useState(false);
+  const isProcessing = submitting || pendingConfirm;
+  const canSubmit = isReady && !disabled && !isProcessing;
 
   useEffect(() => {
+    setClockState(buildClockState());
+    setIsReady(true);
+
     const timer = window.setInterval(() => {
       setClockState(buildClockState());
     }, 60000);
@@ -60,10 +77,23 @@ export default function InstantPaipanCard({ sex, onConfirm }: InstantPaipanCardP
     return () => window.clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (!submitting) {
+      setPendingConfirm(false);
+    }
+  }, [submitting]);
+
   return (
     <button
       type="button"
-      onClick={() =>
+      disabled={!canSubmit}
+      aria-busy={isProcessing}
+      onClick={() => {
+        if (!canSubmit) {
+          return;
+        }
+
+        setPendingConfirm(true);
         onConfirm({
           guid: '',
           type: 0,
@@ -79,9 +109,9 @@ export default function InstantPaipanCard({ sex, onConfirm }: InstantPaipanCardP
           hw: 0,
           isSave: false,
           xls: 0,
-        })
-      }
-      className="flex w-full items-center justify-between rounded-[30px] bg-white px-6 py-4 text-left shadow-[0_8px_24px_rgba(16,16,16,0.06)]"
+        });
+      }}
+      className="flex w-full items-center justify-between rounded-[30px] bg-white px-6 py-4 text-left shadow-[0_8px_24px_rgba(16,16,16,0.06)] transition disabled:cursor-not-allowed disabled:opacity-80"
     >
       <div className="relative h-[90px] w-[90px] shrink-0 rounded-full border border-[rgba(178,149,93,0.35)] bg-[radial-gradient(circle_at_center,#fffdf7_0%,#f8f2e4_70%,#f1e7d3_100%)]">
         <div className="absolute inset-[8px] rounded-full border border-[rgba(178,149,93,0.25)]" />
@@ -111,10 +141,16 @@ export default function InstantPaipanCard({ sex, onConfirm }: InstantPaipanCardP
 
       <div className="ml-6 min-w-0 flex-1 text-right">
         <div className="inline-flex rounded-full border border-[rgba(178,149,93,1)] px-4 py-1 text-[14px] text-[#b2955d]">
-          即时起局
+          {isProcessing ? '正在起局' : isReady ? '即时起局（独立入口）' : '正在校准当前时刻'}
         </div>
-        <div className="mt-3 text-[12px] text-[#7b7b7b]">农历：{clockState.lunarText}</div>
+        <div className="mt-3 text-[12px] leading-6 text-[#7b7b7b]">
+          {isProcessing ? '正在生成当前时刻判断，请不要重复点击。' : '按当前时刻直接起局，不代替出生信息录入流程。'}
+        </div>
+        <div className="mt-2 text-[12px] text-[#7b7b7b]">农历：{clockState.lunarText}</div>
         <div className="mt-1 text-[12px] text-[#7b7b7b]">公历：{clockState.datetime}</div>
+        <div className="mt-2 text-[11px] text-[#a7a7a7]">
+          {isProcessing ? '已锁定本次提交，等待结果返回。' : canSubmit ? '点击后将跳过上方出生信息，直接用此刻时间生成判断。' : '当前入口暂不可用，请稍候。'}
+        </div>
       </div>
     </button>
   );

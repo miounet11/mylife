@@ -7,7 +7,7 @@ import { Mail, Sparkles } from 'lucide-react';
 export default function NewsletterSignup({
   source = 'site',
   title = '订阅站点更新',
-  description = '接收新的结构解读文章、公开案例和关键功能更新。',
+  description = '',
 }: {
   source?: string;
   title?: string;
@@ -55,7 +55,7 @@ export default function NewsletterSignup({
         邮箱订阅
       </div>
       <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">{title}</h2>
-      <p className="intro-copy mt-2 max-w-2xl">{description}</p>
+      {description ? <p className="intro-copy mt-2 max-w-2xl text-sm text-[color:var(--muted)]">{description}</p> : null}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 md:flex-row">
         <div className="relative flex-1">
@@ -80,8 +80,7 @@ export default function NewsletterSignup({
       {message && <p className="mt-3 text-sm text-emerald-700">{message}</p>}
       {error && <p className="mt-3 text-sm text-rose-700">{error}</p>}
 
-      <div className="intro-copy mt-4">
-        需要管理订阅状态？
+      <div className="mt-4 text-sm text-[color:var(--ink)]">
         <Link href="/updates" className="action-secondary ml-2 inline-flex">
           进入订阅管理
         </Link>

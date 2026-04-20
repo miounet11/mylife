@@ -3,27 +3,22 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Bell, Check, X, Calendar, Clock, AlertTriangle, TrendingUp, Heart, Users, Edit, Trash2 } from 'lucide-react';
+import { Bell, Check, Calendar, Clock, AlertTriangle, Edit, Sparkles, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDateTime } from '@/lib/utils';
+import {
+  formatEventDateKey,
+  getEstimatedPastEventPrompt,
+  type EventViewModel,
+} from '@/lib/event-view';
+import type { DisasterWarning } from '@/lib/user-types';
 
-interface Event {
-  id: string;
-  date: Date;
-  title: string;
-  type: 'career' | 'wealth' | 'marriage' | 'health' | 'family';
-  impact: 'positive' | 'negative' | 'neutral';
-  description: string;
-  reminder?: {
-    enabled: boolean;
-    advanceDays: number;
-    method: 'app' | 'email' | 'sms';
-  };
+type Event = EventViewModel & {
   predictionAccuracy?: boolean;
   wasAccurate?: boolean;
   dateRange?: string;
   severity?: 'low' | 'medium' | 'high' | 'critical';
-}
+};
 
 interface EventCardProps {
   event: Event;
@@ -41,6 +36,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
     marriage: '❤️',
     health: '💪',
     family: '👥',
+    other: '📌',
   };
 
   const typeLabels = {
@@ -49,6 +45,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
     marriage: '感情',
     health: '健康',
     family: '家庭',
+    other: '其他',
   };
 
   const impactColors = {
@@ -96,6 +93,11 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
                     已提醒
                   </span>
                 )}
+                {event.isEstimatedPastEvent && (
+                  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
+                    日期待补
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -136,7 +138,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
         <div className="flex items-center space-x-3 mb-3 text-sm text-gray-600">
           <div className="flex items-center space-x-1">
             <Calendar className="w-4 h-4" />
-            <span>{formatDateTime(event.date)}</span>
+            <span>{event.dateKey ? formatEventDateKey(event.dateKey) : formatDateTime(event.date)}</span>
           </div>
           {event.dateRange && (
             <>
@@ -148,6 +150,15 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
             </>
           )}
         </div>
+
+        {event.isEstimatedPastEvent && (
+          <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+            <div className="flex items-start space-x-2">
+              <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
+              <div>{getEstimatedPastEventPrompt(event)}</div>
+            </div>
+          </div>
+        )}
 
         {/* 严重程度 */}
         {event.severity && (
@@ -208,7 +219,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
 }
 
 // 化灾预警卡片
-export function DisasterWarningCard({ warning }: { warning: any }) {
+export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
   const severityColors: Record<string, string> = {
     low: 'border-yellow-400 bg-yellow-50',
     medium: 'border-orange-400 bg-orange-50',

@@ -1,8 +1,19 @@
+import {
+  getDefaultModel,
+  getModelFallbackChainEnv,
+  getReportModelFallbackChainEnv,
+  getReportNarrativeModelFallbackChainEnv,
+} from '@/lib/env';
+
 export type LlmFallbackScope = 'report' | 'agent' | 'chat' | 'content';
 
-const DEFAULT_MODEL_CHAIN = ['grok-420-fast', 'gpt-5.2', 'auto'] as const;
-const DEFAULT_REPORT_MODEL_CHAIN = ['auto', 'grok-420-fast'] as const;
-const DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN = ['gpt-5.2', 'auto'] as const;
+const PRIMARY_REASONING_MODEL = 'gpt-5.4';
+const FALLBACK_REASONING_MODEL = 'gpt-5.2-codex';
+const FAST_CONTENT_MODEL = 'grok-420-fast';
+
+const DEFAULT_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, FAST_CONTENT_MODEL, 'auto'] as const;
+const DEFAULT_REPORT_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, 'auto'] as const;
+const DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, 'auto'] as const;
 
 function normalizeModel(value?: string | null) {
   const model = (value || '').trim();
@@ -25,7 +36,7 @@ function dedupeModels(models: Array<string | null | undefined>) {
 
 function getDefaultChain(scope?: LlmFallbackScope) {
   const configuredScopeChain = scope === 'report'
-    ? (process.env.REPORT_MODEL_FALLBACK_CHAIN || '')
+    ? getReportModelFallbackChainEnv()
         .split(',')
         .map((item) => item.trim())
         .filter(Boolean)
@@ -34,7 +45,7 @@ function getDefaultChain(scope?: LlmFallbackScope) {
     return configuredScopeChain;
   }
 
-  const configuredChain = (process.env.MODEL_FALLBACK_CHAIN || '')
+  const configuredChain = getModelFallbackChainEnv()
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);
@@ -46,9 +57,9 @@ function getDefaultChain(scope?: LlmFallbackScope) {
     return [...DEFAULT_REPORT_MODEL_CHAIN];
   }
 
-  const defaultModel = normalizeModel(process.env.DEFAULT_MODEL);
+  const defaultModel = normalizeModel(getDefaultModel());
   return defaultModel && defaultModel !== 'auto'
-    ? [defaultModel, 'gpt-5.2', 'auto']
+    ? dedupeModels([defaultModel, PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, FAST_CONTENT_MODEL, 'auto'])
     : [...DEFAULT_MODEL_CHAIN];
 }
 
@@ -58,7 +69,7 @@ export function getModelFallbackChain(preferredModel?: string | null, scope?: Ll
 }
 
 export function getReportNarrativeFallbackChain(preferredModel?: string | null) {
-  const configuredChain = (process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN || '')
+  const configuredChain = getReportNarrativeModelFallbackChainEnv()
     .split(',')
     .map((item) => item.trim())
     .filter(Boolean);

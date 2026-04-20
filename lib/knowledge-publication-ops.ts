@@ -1,4 +1,8 @@
 import {
+  getKnowledgeSynthesisAllowedTypesEnv,
+  getKnowledgeSynthesisPublishBatchSize,
+} from '@/lib/env';
+import {
   listManagedContentEntries,
   saveManagedContentEntry,
   type ManagedContentEntry,
@@ -21,7 +25,7 @@ function uniqueStrings(values: string[]) {
 }
 
 function parseAllowedSynthesisTypes() {
-  const raw = `${process.env.KNOWLEDGE_SYNTHESIS_ALLOWED_TYPES || ''}`.trim();
+  const raw = getKnowledgeSynthesisAllowedTypesEnv();
   if (!raw) {
     return ['topic-overview', 'concept-glossary', 'book-path', 'book-ladder'];
   }
@@ -88,7 +92,7 @@ export function listKnowledgePublishCandidates(params?: {
   limit?: number;
 }) {
   const allowedTypes = new Set(parseAllowedSynthesisTypes());
-  const limit = params?.limit ?? Number(process.env.KNOWLEDGE_SYNTHESIS_PUBLISH_BATCH_SIZE || 4);
+  const limit = params?.limit ?? getKnowledgeSynthesisPublishBatchSize();
 
   const eligibleEntries = listManagedContentEntries()
     .filter((entry) => entry.contentType === 'knowledge')

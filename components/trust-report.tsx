@@ -312,7 +312,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
     ? Number(strongestElement[1]?.strength || 0) - Number(weakestElement[1]?.strength || 0)
     : 0;
   const balanceLevel = getBalanceLevel(elementDelta);
-  const klineInsight = buildKlineInsight(result.klineData || []);
+  const klineInsight = buildKlineInsight(result.klineData || [], resolveKlineAnchorYear(result));
   const decisionSummary = buildDecisionSummary({
     patternType: pattern.type || '命局未定',
     currentDaYun: fortune.currentDaYun || '',
@@ -541,7 +541,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <InsightCard
                     label="推荐动作"
                     value={activeScenario.actionLabel}
-                    detail="不是抽象标签，而是这个阶段更适合采取的动作姿态。"
+                    detail=""
                   />
                 </div>
               </div>
@@ -588,7 +588,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div key={item.key} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
                   <div className="mt-3 text-lg font-bold leading-8 text-[color:var(--ink)]">{item.headline}</div>
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.detail}</div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {item.tags.map((tag) => (
                       <span key={tag} className="rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
@@ -695,9 +694,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             <MetricTile label="喜神" value={(advice.xiShen || []).join('、') || '需结合行运节奏继续确认'} />
             <MetricTile label="忌神" value={(advice.jiShen || []).join('、') || '需结合现实反馈持续校正'} />
             <MetricTile label="当前运势交互" value={fortune.interaction || '需结合当前大运与流年联动判断'} />
-            <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
-              {pattern.description || '当前报告已给出结构判断，建议继续结合下方推导链与阶段节奏理解其落点。'}
-            </div>
           </CardContent>
         </Card>
       </div>
@@ -717,7 +713,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <span className={`h-3 w-3 rounded-full ${item.accent}`} />
                   <div className="font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </div>
-                <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {item.values.length > 0 ? item.values.map((value) => (
                     <span key={value} className="rounded-full bg-slate-50 px-3 py-1 text-sm font-medium text-[color:var(--ink)]">
@@ -727,7 +722,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     <span className="rounded-full bg-slate-50 px-3 py-1 text-sm text-[color:var(--muted)]">显性权重较低</span>
                   )}
                 </div>
-                <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.summary}</div>
               </section>
             ))}
           </CardContent>
@@ -749,8 +743,8 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             ))}
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <InsightCard label="决策主战场" value={klineInsight.bestTrack} detail={klineInsight.bestTrackNote} />
-              <InsightCard label="需要收敛的板块" value={klineInsight.riskTrack} detail={klineInsight.riskTrackNote} />
+              <InsightCard label="决策主战场" value={klineInsight.bestTrack} detail="" />
+              <InsightCard label="需要收敛的板块" value={klineInsight.riskTrack} detail="" />
               <InsightCard label="顺势条件" value={balanceLevel.title} detail={balanceLevel.description} />
               <InsightCard label="下一年提醒" value={fortune.nextYear || '建议结合下一阶段窗口提前布局'} detail="把下一步提前写成时间窗口，而不是等事件发生后再解释。" />
             </div>
@@ -882,15 +876,12 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       {mapDayunQuality(item.quality)}
                     </span>
                   </div>
-                  <div className="mt-2 text-xs text-[color:var(--muted)]">
-                    {item.startAge}-{item.endAge}岁 / {item.startYear}-{item.endYear}年
-                  </div>
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
+                <div className="mt-2 text-xs text-[color:var(--muted)]">
+                  {item.startAge}-{item.endAge}岁 / {item.startYear}-{item.endYear}年
+                </div>
                 </div>
               )) : (
-                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
-                  当前报告未返回完整大运序列，但运势摘要已经写入上文。
-                </div>
+                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm text-[color:var(--muted)]">暂无完整大运序列</div>
               )}
             </div>
 
@@ -898,13 +889,13 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               <TrendCard
                 title="未来上升更明显"
                 value={klineInsight.bestTrack}
-                description={klineInsight.bestTrackNote}
+                description=""
                 icon={<TrendingUp className="h-4 w-4" />}
               />
               <TrendCard
                 title="未来需要控节奏"
                 value={klineInsight.riskTrack}
-                description={klineInsight.riskTrackNote}
+                description=""
                 icon={<Scale className="h-4 w-4" />}
               />
             </div>
@@ -940,7 +931,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="font-semibold text-[color:var(--ink)]">{item.name}</div>
                       <div className="text-xs text-[color:var(--muted)]">{mapPillarName(item.pillar)}</div>
                     </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
                   </div>
                 ))}
               </div>
@@ -960,9 +950,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 {celebrities.slice(0, 2).map((item) => (
                   <div key={item.name} className="rounded-[1.5rem] bg-slate-50 p-4">
                     <div className="font-semibold text-[color:var(--ink)]">{item.name || '参考案例'}</div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                      {(item.similar || []).join('、') || '命局结构存在一定参考相似性。'}
-                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">{(item.similar || []).join('、') || '结构相似'}</div>
                     <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.lesson || '该参考案例已纳入样本，但当前未展开更细的经验拆解。'}</div>
                   </div>
                 ))}
@@ -993,7 +981,6 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="mt-3 text-xl font-black text-[color:var(--ink)]">{item.score}</div>
                   <div className="mt-1 text-xs text-[color:var(--muted)]">{item.element}月令倾向</div>
                   <div className="mt-3 text-sm font-medium text-[color:var(--ink)]">{item.theme}</div>
-                  <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                 </div>
               ))}
             </div>
@@ -1030,7 +1017,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
                     <InsightCard label="板块评分" value={`${item.score}/100`} detail={item.whyNow} />
-                    <InsightCard label="当前动作" value={item.nowAction} detail="把建议落成能执行的动作，而不是停在判断层。" />
+                    <InsightCard label="当前动作" value={item.nowAction} detail="" />
                   </div>
 
                   <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
@@ -1121,11 +1108,8 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   </div>
                   <div className="mt-4 text-xs leading-6 text-[color:var(--ink)]">{item.headline}</div>
                   <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                    <InsightCard label="最强主线" value={item.dominantTrack} detail="这一年更值得重点配置资源的方向。" />
-                    <InsightCard label="压力位" value={item.pressureTrack} detail="这一年需要留缓冲和验证的板块。" />
-                  </div>
-                  <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--muted)]">
-                    {item.advice}
+                    <InsightCard label="最强主线" value={item.dominantTrack} detail="" />
+                    <InsightCard label="压力位" value={item.pressureTrack} detail="" />
                   </div>
                 </div>
               ))}
@@ -1357,7 +1341,7 @@ function InsightCard({ label, value, detail }: { label: string; value: string; d
     <div className="rounded-[1.5rem] bg-slate-50 p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{detail}</div>
+      {detail ? <div className="mt-2 text-xs text-[color:var(--muted)]">{detail}</div> : null}
     </div>
   );
 }
@@ -1380,7 +1364,7 @@ function TrendCard({
         {title}
       </div>
       <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{description}</div>
+      {description ? <div className="mt-2 text-xs text-[color:var(--muted)]">{description}</div> : null}
     </div>
   );
 }
@@ -1420,7 +1404,7 @@ function AdviceSection({
       {points.length > 0 && (
         <div className="mt-4 grid gap-3">
           {points.map((item, index) => (
-            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
               {item}
             </div>
           ))}
@@ -1538,7 +1522,27 @@ function formatRate(value?: number) {
   return `${Math.round(value)}%`;
 }
 
-function buildKlineInsight(data: Array<{ year: number; career: number; wealth: number; marriage: number; health: number }>) {
+function resolveKlineAnchorYear(result: ReportResult) {
+  const currentLiuNian = result.fortune?.currentLiuNian || '';
+  const liuNianYear = currentLiuNian.match(/\d{4}/)?.[0];
+  if (liuNianYear) {
+    return Number(liuNianYear);
+  }
+
+  const currentDayun = result.dayun?.currentDayun;
+  if (currentDayun?.startYear) {
+    return currentDayun.startYear;
+  }
+
+  const sortedYears = (result.klineData || [])
+    .map((item) => item.year)
+    .filter((year) => Number.isFinite(year))
+    .sort((left, right) => left - right);
+
+  return sortedYears.length > 0 ? sortedYears[Math.max(0, sortedYears.length - 5)] : undefined;
+}
+
+function buildKlineInsight(data: Array<{ year: number; career: number; wealth: number; marriage: number; health: number }>, anchorYear?: number) {
   if (!data || data.length === 0) {
     return {
       bestTrack: '以当前阶段为主',
@@ -1548,8 +1552,7 @@ function buildKlineInsight(data: Array<{ year: number; career: number; wealth: n
     };
   }
 
-  const currentYear = new Date().getFullYear();
-  const futureData = data.filter((item) => item.year >= currentYear).slice(0, 5);
+  const futureData = anchorYear ? data.filter((item) => item.year >= anchorYear).slice(0, 5) : [];
   const source = futureData.length > 0 ? futureData : data.slice(-5);
   const metrics = [
     { key: 'career', label: '事业' },
