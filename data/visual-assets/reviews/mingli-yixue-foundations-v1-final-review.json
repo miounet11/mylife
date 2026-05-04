@@ -1,0 +1,202 @@
+[
+  {
+    "id": "MY01-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY01-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY02-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY02-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY02-003",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY02-004",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY03-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY03-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY03-003",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY03-004",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY04-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY04-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY04-003",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY05-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY05-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY05-003",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY05-004",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY06-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY06-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY06-003",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY08-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY08-002",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY09-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY10-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  },
+  {
+    "id": "MY11-001",
+    "status": "approved",
+    "score": 94,
+    "errors": [],
+    "note": "Approved after auto QA: server PNG exists, no blocking error codes, narrative complete, educational non-deterministic prompt contract retained. Provider returned smaller-than-requested dimensions but aspect ratio and file size are acceptable for current server publishing.",
+    "reviewer": "codex_visual_reviewer"
+  }
+]

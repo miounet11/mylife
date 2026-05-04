@@ -34,6 +34,7 @@ import {
   hasTacitKnowledgeInput,
   type TacitKnowledgeInput,
 } from '@/lib/tacit-knowledge';
+import { appendSearchParamsToHref } from '@/lib/source-url';
 
 const SETTING_MIDNIGHT_KEY = 'setting_midnight';
 const DEMO_COUNT_KEY = 'demoCount';
@@ -339,6 +340,10 @@ export default function FortuneForm({
     ? maskEmail(sessionState.user.email)
     : '';
   const hasEmailDelivery = Boolean(verifiedEmail);
+  const activeSource = returnSource?.trim() || '';
+  const inferredToolSlug = returnHref?.startsWith('/tools/')
+    ? returnHref.replace('/tools/', '').split(/[?#]/)[0] || null
+    : null;
 
   useEffect(() => {
     if (hasTacitContext) {
@@ -377,6 +382,8 @@ export default function FortuneForm({
         has_known_location: hasKnownLocation,
         has_known_birth_hour: hasKnownBirthHour,
         use_solar_time: useSolarTime,
+        source: activeSource || 'direct',
+        tool_slug: inferredToolSlug,
       });
 
       const controller = new AbortController();
@@ -409,6 +416,8 @@ export default function FortuneForm({
           hw: payload.hw,
           typeId: payload.typeId,
           isSave: payload.isSave,
+          source: activeSource || null,
+          toolSlug: inferredToolSlug,
         }),
       });
 
@@ -518,6 +527,8 @@ export default function FortuneForm({
               target_achieved: !!event.quality?.targetAchieved,
               upgrade_queued: !!event.upgrade?.queued,
               upgrade_status: event.upgrade?.status || 'none',
+              source: activeSource || 'direct',
+              tool_slug: inferredToolSlug,
             });
           }
         }
@@ -549,7 +560,15 @@ export default function FortuneForm({
       });
       await wait(220);
       analyzeRequestRef.current = null;
-      router.push(returnHref || `/result/${completedReportId}`);
+      router.push(
+        returnHref
+          ? appendSearchParamsToHref(`${returnHref}#tool-runner`, {
+              source: activeSource || undefined,
+              reportId: completedReportId,
+              ready: '1',
+            })
+          : appendSearchParamsToHref(`/result/${completedReportId}`, { source: activeSource || undefined })
+      );
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') {
         setError('已取消本次判断，你可以继续修改信息后重新提交');
@@ -669,47 +688,47 @@ export default function FortuneForm({
     <>
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[1120px]">
         <div className="grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(320px,0.92fr)] xl:items-start">
-          <div className="rounded-[30px] bg-white px-5 py-7 shadow-[0_18px_50px_rgba(16,16,16,0.08)] md:px-[56px] md:py-[52px]">
-            <div className="space-y-[22px]">
-              <div className="space-y-3">
+          <div className="soft-card rounded-[1.75rem] px-5 py-6 md:px-8 md:py-8">
+            <div className="space-y-5">
+              <div className="space-y-2">
                 <div className="section-label">填写出生信息</div>
-                <h2 className="text-3xl font-black text-[#2f271f] md:text-4xl">先补齐必要信息，再进入结果页</h2>
-                <p className="text-sm leading-7 text-[#6a6356]">
-                  先把姓名、性别、出生时间和出生地点补齐，再进入正式判断。支持信息会放在辅助区域帮助你校准，不再和主输入抢位置。
+                <h2 className="text-2xl font-black text-[color:var(--ink)] md:text-3xl">先补齐必要信息，再进入结果页</h2>
+                <p className="text-sm leading-7 text-[color:var(--muted)]">
+                  只需要先确认姓名、性别、出生时间和出生地点。其他补充项不阻塞提交，可以后面继续完善。
                 </p>
               </div>
 
-              <div className={`rounded-[18px] px-4 py-4 text-[14px] leading-7 ${hasEmailDelivery ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-[#ece7da] bg-white text-[#6a6356]'}`}>
-                <div className={`font-semibold ${hasEmailDelivery ? 'text-emerald-800' : 'text-[#3f392f]'}`}>结果通知</div>
-                <div className="mt-2">
+              <div className={`rounded-[1.1rem] border px-4 py-3 text-sm leading-6 ${hasEmailDelivery ? 'border-emerald-200 bg-emerald-50 text-emerald-800' : 'border-[color:var(--line)] bg-white/72 text-[color:var(--muted)]'}`}>
+                <div className={`font-semibold ${hasEmailDelivery ? 'text-emerald-800' : 'text-[color:var(--ink)]'}`}>结果通知</div>
+                <div className="mt-1">
                   {hasEmailDelivery ? `报告完成后邮件发送到 ${verifiedEmail}` : '生成完成后会直接进入结果页；如已保存，也可在判断记录中回看'}
                 </div>
               </div>
 
               {returnHref && returnLabel ? (
-                <div className="rounded-[18px] border border-amber-200 bg-amber-50 px-4 py-4 text-[14px] leading-7 text-amber-900">
+                <div className="rounded-[1.1rem] border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-900">
                   <div className="font-semibold">当前目标</div>
-                  <div className="mt-2">
+                  <div className="mt-1">
                     你是从“{returnLabel}”回来补综合判断的。当前这一步完成后，会直接带你回到原来的工具继续使用。
                     {returnSource ? ` 来源：${returnSource}` : ''}
                   </div>
                 </div>
               ) : null}
 
-              <label className="block rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4">
-                <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">命主姓名</div>
+              <label className="block rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4">
+                <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">命主姓名</div>
                 <input
                   value={infoData.username}
                   onChange={(event) => setInfoData((current) => ({ ...current, username: event.target.value }))}
                   placeholder="可填写本人、家人或案例对象姓名"
                   maxLength={30}
-                  className="mt-3 h-[46px] w-full rounded-[12px] border border-[#ececec] bg-white px-4 text-[16px] text-[#444444] outline-none placeholder:text-[#c3b9aa]"
+                  className="smooth-input mt-3 h-12 w-full rounded-xl border border-[color:var(--line)] bg-white px-4 text-base text-[color:var(--ink)] outline-none placeholder:text-[#c3b9aa]"
                 />
               </label>
 
               <div className="grid gap-4 md:grid-cols-[0.88fr_1.12fr]">
-                <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-[#444444]">
-                  <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">性别</div>
+                <div className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 text-[color:var(--ink)]">
+                  <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">性别</div>
                   <div className="mt-3 inline-flex rounded-full border border-[#ece7da] bg-white p-1">
                     {[
                       { label: '男', value: 1 as 0 | 1 },
@@ -720,7 +739,7 @@ export default function FortuneForm({
                         type="button"
                         onClick={() => setInfoData((current) => ({ ...current, sex: item.value }))}
                         className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
-                          infoData.sex === item.value ? 'bg-[#b2955d] text-white' : 'text-[#6a6356]'
+                          infoData.sex === item.value ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--muted)]'
                         }`}
                       >
                         {item.label}
@@ -729,9 +748,9 @@ export default function FortuneForm({
                   </div>
                 </div>
 
-                <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-[#444444]">
-                  <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">出生信息模式</div>
-                  <div className="mt-3 flex overflow-hidden rounded-[20px] border border-[#ece7da] bg-white shadow-[0_1px_5px_rgba(0,0,0,0.07)]">
+                <div className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 text-[color:var(--ink)]">
+                  <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">出生信息模式</div>
+                  <div className="mt-3 flex overflow-hidden rounded-full border border-[color:var(--line)] bg-white">
                     {[
                       { label: '公历', value: 0 as 0 | 1 | 2 },
                       { label: '农历', value: 1 as 0 | 1 | 2 },
@@ -745,7 +764,7 @@ export default function FortuneForm({
                           setShowDatetime(true);
                         }}
                         className={`px-5 py-2 text-sm font-semibold ${
-                          datetimeIndex === item.value ? 'bg-[#b2955d] text-white' : 'text-[#444444]'
+                          datetimeIndex === item.value ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--ink)]'
                         }`}
                       >
                         {item.label}
@@ -762,13 +781,13 @@ export default function FortuneForm({
                     setDatetimeIndex(datetimeIndexReal);
                     setShowDatetime(true);
                   }}
-                  className="rounded-[22px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-left transition hover:-translate-y-0.5"
+                  className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 text-left transition hover:border-[color:var(--accent)]"
                 >
-                  <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">出生时间</div>
-                  <div className="mt-3 text-lg font-semibold text-[#2f271f]">{birthLabel}</div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-sm leading-6 text-[#6a6356]">
+                  <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">出生时间</div>
+                  <div className="mt-3 text-lg font-semibold text-[color:var(--ink)]">{birthLabel}</div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-sm leading-6 text-[color:var(--muted)]">
                     <span>点击确认公历、农历或四柱录入。</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${timeConfirmed ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'bg-white text-[#9a927f]'}`}>
+                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${timeConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-white text-[color:var(--muted)]'}`}>
                       {timeConfirmed ? '已确认' : '待确认'}
                     </span>
                   </div>
@@ -777,22 +796,22 @@ export default function FortuneForm({
                 <button
                   type="button"
                   onClick={() => setShowAddress(true)}
-                  className="rounded-[22px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-left transition hover:-translate-y-0.5"
+                  className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 text-left transition hover:border-[color:var(--accent)]"
                 >
-                  <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">出生地点</div>
-                  <div className="mt-3 text-lg font-semibold text-[#2f271f]">{addressLabel}</div>
-                  <div className="mt-2 flex items-center justify-between gap-3 text-sm leading-6 text-[#6a6356]">
+                  <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">出生地点</div>
+                  <div className="mt-3 text-lg font-semibold text-[color:var(--ink)]">{addressLabel}</div>
+                  <div className="mt-2 flex items-center justify-between gap-3 text-sm leading-6 text-[color:var(--muted)]">
                     <span>地点会影响真太阳时修正和环境判断。</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${locationConfirmed ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'bg-white text-[#9a927f]'}`}>
+                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${locationConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-white text-[color:var(--muted)]'}`}>
                       {locationConfirmed ? '已确认' : '待确认'}
                     </span>
                   </div>
                 </button>
               </div>
 
-              <div className="hidden rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 md:block">
-                <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">案例分类</div>
-                <div className="mt-2 text-sm leading-6 text-[#6a6356]">当前前台只有默认分类，它不会阻塞提交；真正需要先确认的是出生时间与出生地点。</div>
+              <div className="hidden rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 md:block">
+                <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">判断主题</div>
+                <div className="mt-2 text-sm leading-6 text-[color:var(--muted)]">这一步不会阻塞提交，只用于帮助系统理解你最关心的问题线。</div>
                 <div className="mt-3 flex flex-wrap gap-3">
                   {caseTypes.map((item) => (
                     <button
@@ -801,8 +820,8 @@ export default function FortuneForm({
                       onClick={() => setInfoData((current) => ({ ...current, typeId: item.id }))}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                         infoData.typeId === item.id
-                          ? 'border-[#d7c29b] bg-[#f5ecda] text-[#8b6a2f]'
-                          : 'border-[#e8e1d3] bg-white text-[#6a6356]'
+                          ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
+                          : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
                       }`}
                     >
                       {item.name}
@@ -811,19 +830,19 @@ export default function FortuneForm({
                 </div>
               </div>
 
-              <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4">
+              <div className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div>
-                    <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">时间修正与保存</div>
-                    <div className="mt-1 text-sm leading-6 text-[#6a6356]">默认分类已锁定，继续按需要开启时间修正并决定是否保存本次结果。</div>
+                    <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">时间修正与保存</div>
+                    <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">默认使用真太阳时；只在明确知道夏令时或早晚子时需要调整时改动。</div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm text-[#444444]">保存</span>
+                    <span className="text-sm text-[color:var(--ink)]">保存</span>
                     <button
                       type="button"
                       onClick={() => setInfoData((current) => ({ ...current, isSave: !current.isSave }))}
                       className={`relative h-[28px] w-[46px] rounded-full transition ${
-                        infoData.isSave ? 'bg-[#b2955d]' : 'bg-[#d6d6d6]'
+                        infoData.isSave ? 'bg-[color:var(--accent)]' : 'bg-[#d6d6d6]'
                       }`}
                     >
                       <span
@@ -859,8 +878,8 @@ export default function FortuneForm({
                       }}
                       className={`rounded-full border px-4 py-2 text-sm font-semibold transition ${
                         item.value === 1
-                          ? 'border-[#d7c29b] bg-[#f5ecda] text-[#8b6a2f]'
-                          : 'border-[#e8e1d3] bg-white text-[#6a6356]'
+                          ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
+                          : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
                       }`}
                     >
                       {item.name}
@@ -883,37 +902,37 @@ export default function FortuneForm({
                 variant="analyze"
               />
 
-              <div className="rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 xl:hidden">
+              <div className="rounded-[1.1rem] border border-[color:var(--line)] bg-slate-50/70 px-4 py-4 xl:hidden">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-[15px] font-semibold text-[#3f392f]">提交前快速核对</div>
                     <div className="mt-1 text-[13px] leading-6 text-[#6a6356]">移动端先看一张总览，详细解释放到结果页继续展开。</div>
                   </div>
-                  <div className="rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-[#b2955d]">
+                  <div className="rounded-full bg-white px-3 py-1 text-sm font-semibold text-[color:var(--accent-strong)]">
                     {readinessScore}%
                   </div>
                 </div>
                 <div className="mt-4 grid gap-2">
                   {entryReadiness.map((item) => (
-                    <div key={item.label} className="flex items-start justify-between gap-3 rounded-[14px] bg-white/90 px-4 py-3">
+                    <div key={item.label} className="flex items-start justify-between gap-3 rounded-xl bg-white/90 px-4 py-3">
                       <div>
-                        <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">{item.label}</div>
-                        <div className="mt-1 text-[14px] font-semibold text-[#3f392f]">{item.value}</div>
+                        <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                        <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">{item.value}</div>
                       </div>
-                      <span className={`mt-0.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
+                      <span className={`mt-0.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
                         {item.done ? '完成' : '待确认'}
                       </span>
                     </div>
                   ))}
                 </div>
-                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[14px] leading-7 text-[#4b4439]">
+                <div className="mt-3 rounded-xl bg-white/90 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
                   {nextHint}
                 </div>
-                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
-                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">移动端提问方式</div>
-                  <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{caseTypeGuidance.focus}</div>
+                <div className="mt-3 rounded-xl bg-white/90 px-4 py-3">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">移动端提问方式</div>
+                  <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{caseTypeGuidance.focus}</div>
                 </div>
-                <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[13px] leading-6 text-[#6a6356]">
+                <div className="mt-3 rounded-xl bg-white/90 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
                   真太阳时：{infoData.unknowhour === 1 ? '未知（需选时辰）' : infoData.sunTime} · 地点：{addressLabel}
                 </div>
               </div>
@@ -927,7 +946,7 @@ export default function FortuneForm({
               <button
                 type="submit"
                 disabled={!canSubmit}
-                className={`flex h-[63px] w-full items-center justify-center rounded-full font-serif text-[18px] font-bold transition ${canSubmit ? 'bg-black text-[#f7d3a1]' : 'bg-[#d8d2c6] text-[#7c7467]'}`}
+                className={`flex h-14 w-full items-center justify-center rounded-full text-base font-bold transition ${canSubmit ? 'bg-[color:var(--ink)] text-white' : 'bg-[#d8d2c6] text-[#7c7467]'}`}
               >
                 {submitLabel}
               </button>
@@ -946,83 +965,83 @@ export default function FortuneForm({
           </div>
 
           <div className="space-y-4 xl:sticky xl:top-24">
-            <div className="hidden rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 xl:block">
+            <div className="hidden rounded-[1.2rem] border border-[color:var(--line)] bg-white/74 px-4 py-4 xl:block">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <div className="text-[15px] font-semibold text-[#3f392f]">录入完成度</div>
-                  <div className="mt-1 text-[13px] leading-6 text-[#6a6356]">这里看的是流程确认，不是信息完美度。哪怕暂时未知，也要先在弹窗里明确确认一次。</div>
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">录入完成度</div>
+                  <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">这里看流程确认，不是信息完美度；暂时未知也可以明确确认后提交。</div>
                 </div>
-                <div className="rounded-full bg-white px-3 py-1 text-[13px] font-semibold text-[#b2955d]">
+                <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-sm font-semibold text-[color:var(--accent-strong)]">
                   {readinessScore}%
                 </div>
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
                 {entryReadiness.map((item) => (
-                  <div key={item.label} className="rounded-[14px] bg-white/90 px-4 py-3">
+                  <div key={item.label} className="rounded-xl bg-slate-50/82 px-4 py-3">
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">{item.label}</div>
-                      <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
-                        {item.done ? '已增强' : '待补强'}
+                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                      <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
+                        {item.done ? '已确认' : '待确认'}
                       </div>
                     </div>
-                    <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{item.value}</div>
+                    <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{item.value}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            <div className="hidden rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 xl:block">
-              <div className="text-[15px] font-semibold text-[#3f392f]">本次更适合这样问</div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[14px] leading-7 text-[#4b4439]">
+            <div className="hidden rounded-[1.2rem] border border-[color:var(--line)] bg-white/74 px-4 py-4 xl:block">
+              <div className="text-sm font-semibold text-[color:var(--ink)]">本次更适合这样问</div>
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
                 {caseTypeGuidance.headline}
               </div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
-                <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">提问方式</div>
-                <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{caseTypeGuidance.focus}</div>
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">提问方式</div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{caseTypeGuidance.focus}</div>
               </div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
-                <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">当前下一步</div>
-                <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{nextHint}</div>
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">当前下一步</div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{nextHint}</div>
               </div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3">
-                <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">避开问题</div>
-                <div className="mt-2 text-[14px] leading-7 text-[#4b4439]">{caseTypeGuidance.avoid}</div>
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3">
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">避开问题</div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{caseTypeGuidance.avoid}</div>
               </div>
             </div>
 
-            <div className="hidden rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-sm leading-7 text-[#6a6356] xl:block">
-              <div className="text-[13px] font-semibold tracking-[0.16em] text-[#9a927f]">时间与环境校准</div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[#3f392f]">
+            <div className="hidden rounded-[1.2rem] border border-[color:var(--line)] bg-white/74 px-4 py-4 text-sm leading-7 text-[color:var(--muted)] xl:block">
+              <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">时间与环境校准</div>
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3 text-[color:var(--ink)]">
                 真太阳时：{infoData.unknowhour === 1 ? '未知（需选时辰）' : infoData.sunTime}
               </div>
-              <div className="mt-3 rounded-[14px] bg-white/90 px-4 py-3 text-[#3f392f]">
+              <div className="mt-3 rounded-xl bg-slate-50/82 px-4 py-3 text-[color:var(--ink)]">
                 地址经纬：{latitudeLabel ? `${latitudeLabel} ` : ''}{longitudeLabel}
               </div>
             </div>
 
-            <div className="hidden rounded-[18px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4 text-[14px] leading-7 text-[#6a6356] xl:block">
+            <div className="hidden rounded-[1.2rem] border border-[color:var(--line)] bg-white/74 px-4 py-4 text-sm leading-7 text-[color:var(--muted)] xl:block">
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="font-semibold text-[#3f392f]">本次建盘协议</div>
+                <div className="font-semibold text-[color:var(--ink)]">本次建盘协议</div>
                 {hasTacitContext ? (
-                  <span className="rounded-full bg-[#f5ecda] px-3 py-1 text-[12px] font-semibold text-[#8b6a2f]">已补充默会信息</span>
+                  <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">已补充默会信息</span>
                 ) : null}
               </div>
               <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-1">
-                <div className="rounded-[14px] bg-white/90 px-4 py-3">
-                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">判断主题</div>
-                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{selectedCaseType}</div>
+                <div className="rounded-xl bg-slate-50/82 px-4 py-3">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">判断主题</div>
+                  <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{selectedCaseType}</div>
                 </div>
-                <div className="rounded-[14px] bg-white/90 px-4 py-3">
-                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">出生信息模式</div>
-                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{birthLabel}</div>
+                <div className="rounded-xl bg-slate-50/82 px-4 py-3">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">出生信息模式</div>
+                  <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{birthLabel}</div>
                 </div>
-                <div className="rounded-[14px] bg-white/90 px-4 py-3">
-                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">环境坐标</div>
-                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">{addressLabel}</div>
+                <div className="rounded-xl bg-slate-50/82 px-4 py-3">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">环境坐标</div>
+                  <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{addressLabel}</div>
                 </div>
-                <div className="rounded-[14px] bg-white/90 px-4 py-3">
-                  <div className="text-[12px] tracking-[0.18em] text-[#9a927f]">时间修正</div>
-                  <div className="mt-2 text-[15px] font-semibold text-[#3f392f]">
+                <div className="rounded-xl bg-slate-50/82 px-4 py-3">
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">时间修正</div>
+                  <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">
                     {setTimeInfo[1].value ? '真太阳时开启' : '按钟表时间'}
                     {setTimeInfo[0].value ? ' · 夏令时已启用' : ''}
                   </div>
@@ -1030,7 +1049,7 @@ export default function FortuneForm({
               </div>
             </div>
 
-            <div className="hidden rounded-[18px] border border-[#ececec] bg-[#fafafa] px-4 py-4 text-[14px] leading-7 text-[#6d6d6d] xl:block">
+            <div className="hidden rounded-[1.2rem] border border-[color:var(--line)] bg-white/58 px-4 py-4 text-sm leading-7 text-[color:var(--muted)] xl:block">
               输出：主结构、当前阶段、环境提示、行动建议
             </div>
           </div>
@@ -1047,11 +1066,11 @@ export default function FortuneForm({
           />
 
           <div className="space-y-4">
-            <div className="rounded-[20px] bg-white px-4 py-4 text-[13px] leading-7 text-[#8a8a8a] shadow-[0_8px_24px_rgba(16,16,16,0.05)]">
+            <div className="rounded-[1.2rem] border border-[color:var(--line)] bg-white/74 px-4 py-4 text-xs leading-7 text-[color:var(--muted)]">
               独立入口：这里走的是“当前时刻直接起局”，和上方出生信息录入是两条不同流程。桌面端保留在底部，避免和主填写区抢层级。
             </div>
 
-            <div className="flex min-h-[42px] items-center justify-center rounded-[20px] bg-white px-4 py-4 text-[12px] text-[#c2c2c2] shadow-[0_8px_24px_rgba(16,16,16,0.05)]">
+            <div className="flex min-h-[42px] items-center justify-center rounded-[1.2rem] border border-[color:var(--line)] bg-white/58 px-4 py-4 text-xs text-[#9a927f]">
               <AlertCircle className="mr-[5px] h-[16px] w-[16px]" />
               <span>平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考</span>
             </div>

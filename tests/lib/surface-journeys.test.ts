@@ -36,10 +36,11 @@ describe('surface journeys', () => {
       },
     } as unknown as FortuneRecord;
 
-    const journey = buildJourneyForReport(report);
+    const journey = buildJourneyForReport(report, { source: 'knowledge_article:career-plan-source-context' });
     expect(journey.toolCards.length).toBeGreaterThan(0);
     expect(journey.knowledgeCards.length).toBeGreaterThan(0);
     expect(journey.caseCards.length).toBeGreaterThan(0);
+    expect(journey.toolCards[0]?.href).toContain('source=');
   });
 
   test('buildJourneyForContent respects manual related slugs before inferred pool', () => {

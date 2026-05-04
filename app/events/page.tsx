@@ -8,9 +8,14 @@ import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, Clock3, Filter, Grid
 import type { ReactNode } from 'react';
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
+import ResultCtaLink from '@/components/result-cta-link';
+import RetentionResumePanel from '@/components/retention-resume-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { buildChatHref } from '@/lib/chat-entry';
+import { buildSourceCtaStrategy } from '@/lib/source-cta';
+import { appendSourceToHref } from '@/lib/source-url';
 import { formatLocalDateKey, getTodayLocalDateKey } from '@/lib/utils';
 import {
   formatEventQueueDateKey,
@@ -91,6 +96,8 @@ export default function EventsPage() {
 function EventsPageContent() {
   const searchParams = useSearchParams();
   const focusedReportId = searchParams.get('reportId') || '';
+  const pageSource = 'events_page';
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const shouldOpenCreate = searchParams.get('create') === '1';
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [loading, setLoading] = useState(true);
@@ -195,6 +202,21 @@ function EventsPageContent() {
       pendingCount: unresolved.length,
     };
   }, [validationAnchorMs, workbenchEvents]);
+  const topOverdueEvent = validationWorkbench.overduePending[0];
+  const topDriftEvent = validationWorkbench.driftEvents[0];
+  const topUpcomingEvent = validationWorkbench.upcomingValidation[0];
+  const eventsResumeChatHref = buildChatHref({
+    reportId: topDriftEvent?.fortuneAnalysis?.reportId || topOverdueEvent?.fortuneAnalysis?.reportId || focusedReportId || undefined,
+    eventId: topDriftEvent?.id || topOverdueEvent?.id || undefined,
+    question: topDriftEvent
+      ? '请围绕这条已经出现偏差的事件继续做纠偏分析，并告诉我接下来最应该修哪一层判断。'
+      : topOverdueEvent
+        ? '请结合这条已过期待验证的事件，告诉我现在最应该回收什么反馈，以及为什么。'
+        : '请结合我事件中心里正在跟踪的节点，告诉我现在最值得优先推进或验证的是哪一件事，为什么？',
+    source: topDriftEvent ? 'events_drift_queue' : pageSource,
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
+  });
 
   const openCreateForm = () => {
     setEditingEventId(null);
@@ -363,7 +385,20 @@ function EventsPageContent() {
   return (
     <div className="page-shell">
       <AnalyticsPageView eventName="events_page_viewed" page="/events" meta={{ focusedReportId: focusedReportId || null }} />
-      <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
+      <SiteHeader
+        ctaHref="/analyze"
+        ctaLabel="重新判断"
+        ctaAnalytics={{
+          page: '/events',
+          target: 'events_header_analyze',
+          meta: {
+            source: pageSource,
+            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+            sourceFamily: sourceCtaStrategy.sourceFamily,
+            focusedReportId: focusedReportId || null,
+          },
+        }}
+      />
 
       <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
         <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
@@ -383,22 +418,52 @@ function EventsPageContent() {
               <button onClick={openCreateForm} className="action-primary action-main" type="button">
                 创建事件
               </button>
-              <Link href={focusedReportId ? `/result/${encodeURIComponent(focusedReportId)}` : '/analyze'} className="action-secondary">
+              <ResultCtaLink
+                href={focusedReportId ? appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource) : '/analyze'}
+                page="/events"
+                target={focusedReportId ? 'events_hero_report' : 'events_hero_analyze'}
+                className="action-secondary"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'events_hero',
+                  reportId: focusedReportId || null,
+                }}
+              >
                 {focusedReportId ? '返回关联报告' : '去生成一份报告'}
-              </Link>
-              <Link
+              </ResultCtaLink>
+              <ResultCtaLink
                 href={buildChatHref({
                   reportId: focusedReportId || undefined,
                   question: '请结合我事件中心里正在跟踪的这些节点，帮我判断：接下来最值得优先推进或验证的是哪一件事，为什么？',
-                  source: 'events_page',
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
                 })}
+                page="/events"
+                target="events_hero_chat"
                 className="action-secondary"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'events_hero',
+                  reportId: focusedReportId || null,
+                }}
               >
                 进入结构追问
-              </Link>
+              </ResultCtaLink>
             </div>
           </div>
         </section>
+
+        <ProductSurfaceRolePanel
+          surface="events"
+          title="事件页先处理验证和纠偏"
+          description="这里不是单纯日历，而是把真实反馈接回报告质量，让系统知道哪些判断成立，哪些需要修正。"
+          compact
+        />
 
         {error && (
           <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -416,18 +481,36 @@ function EventsPageContent() {
               <div className="space-y-2">
                 <div className="action-guide">快速操作</div>
                 <div className="action-strip flex flex-wrap gap-3">
-                <Link
-                  href={`/result/${encodeURIComponent(focusedReportId)}`}
+                <ResultCtaLink
+                  href={appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource)}
+                  page="/events"
+                  target="events_focus_report"
                   className="action-secondary"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'events_focus_mode',
+                    reportId: focusedReportId,
+                  }}
                 >
                   返回关联报告
-                </Link>
-                <Link
+                </ResultCtaLink>
+                <ResultCtaLink
                   href="/events"
+                  page="/events"
+                  target="events_focus_all_events"
                   className="action-secondary"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'events_focus_mode',
+                    reportId: focusedReportId,
+                  }}
                 >
                   查看全部事件
-                </Link>
+                </ResultCtaLink>
                 </div>
               </div>
             </div>
@@ -435,7 +518,58 @@ function EventsPageContent() {
         )}
 
         {!loading && (
-          <section className="glass-panel rounded-[2rem] p-6">
+          <RetentionResumePanel
+            page="/events"
+            source={pageSource}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
+            title={topDriftEvent ? '先纠偏最关键的一条事件样本' : topOverdueEvent ? '先补回最该确认结果的事件' : '围绕下一条事件继续推进'}
+            description={topDriftEvent
+              ? '事件页最有价值的动作不是继续浏览，而是直接恢复到最关键的偏差样本，判断问题出在时机、执行、环境还是输入。'
+              : topOverdueEvent
+                ? '先回收已经过期但还没确认结果的事件反馈，把“准 / 偏”状态补回来，才能让后续报告越来越准。'
+                : '如果当前没有明显待修样本，就围绕最近将发生的节点继续追问，让事件工作台真正变成持续使用入口。'}
+            stats={[
+              { label: '已过期待验证', value: validationWorkbench.overduePending.length, helper: '最该先回收结果的事件' },
+              { label: '偏差样本', value: validationWorkbench.driftEvents.length, helper: '已确认要纠偏的事件' },
+              { label: '未来待验证', value: validationWorkbench.upcomingValidation.length, helper: '即将进入验证期的节点' },
+            ]}
+            actions={[
+              {
+                href: eventsResumeChatHref,
+                label: topDriftEvent ? '恢复纠偏分析' : '恢复事件追问',
+                target: topDriftEvent ? 'retention_resume_drift_chat' : 'retention_resume_events_chat',
+                meta: {
+                  reportId: topDriftEvent?.fortuneAnalysis?.reportId || topOverdueEvent?.fortuneAnalysis?.reportId || focusedReportId || null,
+                  eventId: topDriftEvent?.id || topOverdueEvent?.id || null,
+                  driftCount: validationWorkbench.driftEvents.length,
+                  overduePendingCount: validationWorkbench.overduePending.length,
+                },
+              },
+              {
+                href: topOverdueEvent
+                  ? appendSourceToHref(`/events${topOverdueEvent.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(topOverdueEvent.fortuneAnalysis.reportId)}` : ''}`, pageSource)
+                  : appendSourceToHref('/events', pageSource),
+                label: topOverdueEvent ? '补回验证结果' : '查看全部事件',
+                target: 'retention_resume_events_queue',
+                meta: { overduePendingCount: validationWorkbench.overduePending.length },
+              },
+              {
+                href: topUpcomingEvent?.fortuneAnalysis?.reportId
+                  ? appendSourceToHref(`/result/${encodeURIComponent(topUpcomingEvent.fortuneAnalysis.reportId)}`, pageSource)
+                  : focusedReportId
+                    ? appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource)
+                    : '/analyze',
+                label: topUpcomingEvent?.fortuneAnalysis?.reportId || focusedReportId ? '回到关联报告' : '去生成一份报告',
+                target: topUpcomingEvent?.fortuneAnalysis?.reportId || focusedReportId ? 'retention_resume_report' : 'retention_resume_analyze',
+                meta: { reportId: topUpcomingEvent?.fortuneAnalysis?.reportId || focusedReportId || null },
+              },
+            ]}
+          />
+        )}
+
+        {!loading && (
+          <section id="validation-workbench" className="glass-panel scroll-mt-28 rounded-[2rem] p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="section-label">
@@ -498,18 +632,30 @@ function EventsPageContent() {
                     actionSlot={
                       <div className="flex flex-wrap gap-2">
                         {event.fortuneAnalysis?.reportId ? (
-                          <Link
+                          <ResultCtaLink
                             href={buildChatHref({
                               reportId: event.fortuneAnalysis.reportId,
                               eventId: event.id,
                               question: '请围绕这条已经出现偏差的事件做纠偏分析：这次偏差更像时机问题、执行问题、环境问题，还是输入判断失真？',
                               source: 'events_drift_queue',
+                              ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                              sourceFamily: sourceCtaStrategy.sourceFamily,
                             })}
+                            page="/events"
+                            target="events_drift_queue_chat"
                             className="inline-flex items-center gap-2 rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]"
+                            meta={{
+                              source: 'events_drift_queue',
+                              ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                              sourceFamily: sourceCtaStrategy.sourceFamily,
+                              surface: 'events_drift_queue',
+                              eventId: event.id,
+                              reportId: event.fortuneAnalysis.reportId,
+                            }}
                           >
                             进入纠偏分析
                             <ArrowRight className="h-3.5 w-3.5" />
-                          </Link>
+                          </ResultCtaLink>
                         ) : null}
                         <button
                           type="button"
@@ -536,12 +682,22 @@ function EventsPageContent() {
                     actionSlot={
                       <div className="flex flex-wrap gap-2">
                         {event.fortuneAnalysis?.reportId ? (
-                          <Link
-                            href={`/result/${encodeURIComponent(event.fortuneAnalysis.reportId)}`}
+                          <ResultCtaLink
+                            href={appendSourceToHref(`/result/${encodeURIComponent(event.fortuneAnalysis.reportId)}`, pageSource)}
+                            page="/events"
+                            target="events_upcoming_report"
                             className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                            meta={{
+                              source: pageSource,
+                              ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                              sourceFamily: sourceCtaStrategy.sourceFamily,
+                              surface: 'events_upcoming_queue',
+                              eventId: event.id,
+                              reportId: event.fortuneAnalysis.reportId,
+                            }}
                           >
                             查看关联报告
-                          </Link>
+                          </ResultCtaLink>
                         ) : null}
                         <button
                           type="button"
@@ -649,6 +805,9 @@ function EventsPageContent() {
                 onDelete={handleDelete}
                 onToggleReminder={handleToggleReminder}
                 onMarkAccuracy={handleMarkAccuracy}
+                source={pageSource}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
               />
             </div>
           </div>
@@ -660,6 +819,9 @@ function EventsPageContent() {
             onDelete={handleDelete}
             onToggleReminder={handleToggleReminder}
             onMarkAccuracy={handleMarkAccuracy}
+            source={pageSource}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
           />
         )}
       </main>

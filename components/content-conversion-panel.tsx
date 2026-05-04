@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { ArrowRight, LockKeyhole, Sparkles, Target } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { buildChatHref } from '@/lib/chat-entry';
+import { appendSourceToHref } from '@/lib/source-url';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 
@@ -12,18 +13,27 @@ export default function ContentConversionPanel({
   page,
   contentLabel,
   contentTitle,
+  source,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   tool: ToolDefinition;
   page: string;
   contentLabel: string;
   contentTitle: string;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const premiumLabel = getPremiumServiceLabel(tool.premiumServiceKey || 'event-verdict');
   const contentFollowupQuestion = `我刚看完这篇${contentLabel}《${contentTitle}》，请围绕“${tool.shortTitle}”帮我判断：如果把这个问题落到我自己身上，最该先看哪一层，下一步最值得先做什么？`;
+  const toolHref = appendSourceToHref(`/tools/${tool.slug}`, source);
   const contentChatHref = buildChatHref({
     intent: tool.chatIntent || tool.slug,
     question: contentFollowupQuestion,
     source: 'content_conversion_panel',
+    ctaStrategyKey,
+    sourceFamily,
   });
 
   return (
@@ -80,7 +90,7 @@ export default function ContentConversionPanel({
 
           <div className="mt-5 flex flex-wrap gap-3">
             <Link
-              href={`/tools/${tool.slug}`}
+              href={toolHref}
               onClick={() => {
                 void trackClientEvent({
                   eventName: 'result_cta_clicked',
@@ -89,6 +99,9 @@ export default function ContentConversionPanel({
                     target: 'content_primary_tool',
                     source: 'content_conversion_panel',
                     toolSlug: tool.slug,
+                    contentSource: source || null,
+                    ctaStrategyKey: ctaStrategyKey || null,
+                    sourceFamily: sourceFamily || null,
                   },
                 });
               }}
@@ -108,6 +121,9 @@ export default function ContentConversionPanel({
                     source: 'content_conversion_panel',
                     toolSlug: tool.slug,
                     contentType: contentLabel,
+                    contentSource: source || null,
+                    ctaStrategyKey: ctaStrategyKey || null,
+                    sourceFamily: sourceFamily || null,
                   },
                 });
               }}

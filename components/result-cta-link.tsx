@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { trackReportJourneyEvent } from '@/lib/report-journey-client';
 
 export default function ResultCtaLink({
   href,
@@ -20,6 +21,13 @@ export default function ResultCtaLink({
   meta?: Record<string, unknown>;
 }) {
   const onClick = () => {
+    const reportId = typeof meta?.reportId === 'string' ? meta.reportId : '';
+    const workflowId = typeof meta?.workflowId === 'string' ? meta.workflowId : '';
+    const layerKey = typeof meta?.layerKey === 'string' ? meta.layerKey : '';
+    const category = typeof meta?.category === 'string' ? meta.category : '';
+    const toolSlug = typeof meta?.toolSlug === 'string' ? meta.toolSlug : '';
+    const source = typeof meta?.source === 'string' ? meta.source : '';
+
     void trackClientEvent({
       eventName: 'result_cta_clicked',
       page,
@@ -28,6 +36,23 @@ export default function ResultCtaLink({
         ...meta,
       },
     });
+
+    if (reportId && workflowId) {
+      void trackReportJourneyEvent({
+        reportId,
+        workflowId,
+        layerKey,
+        actionTarget: target,
+        category,
+        toolSlug,
+        source,
+        href,
+        meta: {
+          page,
+          ...meta,
+        },
+      });
+    }
   };
 
   if (href.startsWith('#')) {

@@ -2,18 +2,11 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import {
-  ArrowRight,
-  Bot,
   CalendarClock,
   Compass,
-  LineChart,
-  LockKeyhole,
-  ScrollText,
-  Sparkles,
 } from 'lucide-react';
 
 // 动态导入以减少首屏加载
@@ -33,6 +26,9 @@ interface PageProps {
   params: Promise<{
     id: string;
   }>;
+  searchParams?: Promise<{
+    source?: string;
+  }>;
 }
 
 import {
@@ -48,6 +44,7 @@ import ResultPublicControls from '@/components/result-public-controls';
 import ReportEnginePanel from '@/components/report-engine-panel';
 import ReportPremiumServices from '@/components/report-premium-services';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
 import ToolRecommendations from '@/components/tool-recommendations';
@@ -62,6 +59,7 @@ import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import ReportNextActions from '@/components/report/report-next-actions';
+import ReportReadingPath from '@/components/report/report-reading-path';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
 import { calculateDayun } from '@/lib/dayun-calculator';
@@ -91,6 +89,9 @@ import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
 import { buildChatHref, buildReportFollowupQuestion } from '@/lib/chat-entry';
+import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
+import { buildLayeredReportJourney } from '@/lib/report-journey-router';
+import type { ReferenceIntelligencePack } from '@/lib/reference-intelligence';
 
 function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -278,7 +279,7 @@ function buildFutureGuidanceBlock(params: {
 
 function buildFortuneRecordForExperience(params: {
   id: string;
-  result: Awaited<ReturnType<typeof getResult>>;
+  result: NonNullable<Awaited<ReturnType<typeof getResult>>>;
 }): FortuneRecord {
   const { id, result } = params;
 
@@ -507,7 +508,8 @@ async function getResult(reportId: string) {
       qualityAudit: analysis.qualityAudit,
       versionLineage: analysis.versionLineage?.length
         ? analysis.versionLineage
-        : [createLineageEntry(analysis, fortuneData.reportVersion || 'v1')].filter(Boolean),
+        : [createLineageEntry(analysis, fortuneData.reportVersion || 'v1')]
+            .filter((entry): entry is NonNullable<ReturnType<typeof createLineageEntry>> => !!entry),
       upgradeJob: reportUpgradeJobOperations.getByReportId(reportId) || undefined,
       orchestration: analysis.orchestration,
       loop: analysis.loop as Record<string, unknown> | undefined,
@@ -573,8 +575,12 @@ async function getResult(reportId: string) {
   }
 }
 
-export default async function ResultPage({ params }: PageProps) {
+export default async function ResultPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const entrySource = resolvedSearchParams.source?.trim() || '';
+  const sourceContext = getSourceContext(entrySource);
+  const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
   const result = await getResult(id);
   const currentUserId = await getCurrentUserId();
 
@@ -588,7 +594,7 @@ export default async function ResultPage({ params }: PageProps) {
     email_verified?: number;
   } | null : null;
   const updatesPanelInitialAuthenticated = !!currentUserRecord?.email && currentUserRecord?.email_verified === 1;
-  const updatesPanelInitialSummary: UpdatesStatusSummary = canManage && updatesPanelInitialAuthenticated
+  const updatesPanelInitialSummary: UpdatesStatusSummary = canManage
     ? buildUpdatesSummary({
         userId: currentUserId!,
         email: currentUserRecord?.email,
@@ -776,7 +782,18 @@ export default async function ResultPage({ params }: PageProps) {
     topMonthlyWindows,
   });
   const experienceReport = buildFortuneRecordForExperience({ id, result });
-  const reportJourney = buildJourneyForReport(experienceReport);
+  const reportJourney = buildJourneyForReport(experienceReport, { source: entrySource || null });
+  const layeredReportJourney = buildLayeredReportJourney({
+    report: experienceReport,
+    quality: qualityAudit || null,
+    validation: validationInsights,
+    source: entrySource || `result_report:${id}`,
+  });
+  const primaryToolRoute = layeredReportJourney.categoryRoutes[0] || null;
+  const reportJourneyCopy = buildSourceJourneyCopy(entrySource, {
+    title: '这份主测算已经接到工具和内容系统',
+    description: '从主报告继续通往单项工具、专题阅读和后续动作，让这份结果成为长期工作的起点。',
+  });
   const worldYiSignalText = [
     result.pattern?.type,
     currentStageSummary,
@@ -792,10 +809,17 @@ export default async function ResultPage({ params }: PageProps) {
     actionSuggestions: result.actionSuggestions,
     defaultQuestion: result.analysis?.summary || result.analysis?.opening || decisionNowAction,
   });
+  const reportChatSource = entrySource.startsWith('lifecycle_report_followup')
+    ? entrySource
+    : entrySource
+      ? `result_report_followup:${entrySource}`
+      : 'result_report_followup';
   const reportChatHref = buildChatHref({
     reportId: id,
     question: reportFollowupQuestion,
-    source: 'result_report_followup',
+    source: reportChatSource,
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
   });
   const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
   const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
@@ -846,41 +870,29 @@ export default async function ResultPage({ params }: PageProps) {
           reportVersion: result.reportVersion || 'v1',
           reasoningMode: result.reasoningMode || 'engine',
           pattern: result.pattern?.type || '',
+          source: entrySource || null,
         }}
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
         <section className="mb-10 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
-          <div className="glass-panel relative overflow-hidden rounded-[2.25rem] p-6 md:p-8">
-            <div className="absolute inset-x-0 top-0 h-1 bg-[linear-gradient(90deg,var(--accent),var(--warm),#d97706)]" />
-            <div className="absolute -right-12 top-8 h-44 w-44 rounded-full bg-[rgba(178,149,93,0.16)] blur-3xl" />
-            <div className="absolute left-8 top-24 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.16)] blur-3xl" />
-
-            <div className="relative">
+          <div className="glass-panel rounded-[1.75rem] p-5 md:p-6">
+            <div>
               <div className="section-label">个人结构总览</div>
 
-              <div className="mt-5 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--muted)]">
                 {isEnhancementPending ? (
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-800">
+                  <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">
                     深度增强补强中
                   </span>
                 ) : null}
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {result.llmUsed ? 'LLM 深度增强' : '结构化整合输出'}
-                </span>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {reasoningModeLabel}
-                </span>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {`报告 ${result.reportVersion || 'v1'}`}
-                </span>
-                <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {deliveryTierLabel}
+                <span>
+                  {`${result.llmUsed ? 'LLM 深度增强' : '结构化整合输出'} · ${reasoningModeLabel} · 报告 ${result.reportVersion || 'v1'} · ${deliveryTierLabel}`}
                 </span>
               </div>
 
-              <h1 className="mt-5 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
+              <h1 className="mt-4 max-w-4xl text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
                 {reportV4Sections.cockpit.headline || `${publicName}当前最重要的，`}
               </h1>
 
@@ -892,6 +904,20 @@ export default async function ResultPage({ params }: PageProps) {
                   eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
                   guidedPaths={worldYiGuidedPaths.slice(0, 3)}
                   followupQuestion={reportFollowupQuestion}
+                  sourceGuidance={entrySource ? sourceContext.reportHeadline : undefined}
+                  chatLabel={sourceCtaStrategy.reportSecondaryLabel}
+                  eventsLabel={sourceCtaStrategy.reportEventLabel}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
+                />
+              </div>
+
+              <div className="mt-5">
+                <ReportReadingPath
+                  route={layeredReportJourney}
+                  reportId={id}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
               </div>
 
@@ -900,66 +926,91 @@ export default async function ResultPage({ params }: PageProps) {
                   reportId={id}
                   chatHref={reportChatHref}
                   eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
+                  deepReportHref={layeredReportJourney.primaryAction.href}
+                  toolHref={primaryToolRoute?.href}
                   actionSuggestionCount={result.actionSuggestions?.length || 0}
                   pastEventTemplateCount={result.analysis?.pastEventTemplates?.length || 0}
                   followupQuestion={reportFollowupQuestion}
+                  title={entrySource ? `先接住“${sourceContext.shortLabel}”带回来的这次回访` : undefined}
+                  description={entrySource ? sourceContext.reportDescription : undefined}
+                  deepReportLabel={layeredReportJourney.primaryAction.label}
+                  toolLabel={primaryToolRoute ? `进入${primaryToolRoute.categoryLabel}` : undefined}
+                  chatLabel={sourceCtaStrategy.reportPrimaryLabel}
+                  eventLabel={sourceCtaStrategy.reportEventLabel}
+                  pastEventLabel={sourceCtaStrategy.reportPastEventLabel}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
               </div>
 
 
-              <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                <div className="soft-card rounded-[1.75rem] p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
+              <details id="deep-report" className="mt-6 rounded-[1.35rem] border border-[color:var(--line)] bg-white/64 p-4 open:bg-white/84">
+                <summary className="cursor-pointer list-none">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
-                      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
-                      <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">
-                        {reportV4Sections.lifeKLine.headline || '人生长弧线'}
-                      </h3>
+                      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">深入报告</div>
+                      <h2 className="mt-2 text-xl font-black text-[color:var(--ink)] md:text-2xl">展开结构证据、趋势和场景细节</h2>
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
+                        首屏先看总览和三步动作；需要细节时再展开这里，减少单个结果页的信息噪音。
+                      </p>
                     </div>
-                    {reportV4Sections.lifeKLine.arcLabel ? (
-                      <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                        {compactCopy(reportV4Sections.lifeKLine.arcLabel, 30)}
+                    <span className="rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm font-semibold text-[color:var(--ink)]">展开深入内容</span>
+                  </div>
+                </summary>
+
+                <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
+                  <div className="soft-card rounded-[1.35rem] p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
+                        <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">
+                          {reportV4Sections.lifeKLine.headline || '人生长弧线'}
+                        </h3>
+                      </div>
+                      {reportV4Sections.lifeKLine.arcLabel ? (
+                        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                          {compactCopy(reportV4Sections.lifeKLine.arcLabel, 30)}
+                        </div>
+                      ) : null}
+                    </div>
+
+                    {reportV4Sections.lifeKLine.summary ? (
+                      <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                        {compactCopy(reportV4Sections.lifeKLine.summary, 108)}
+                      </p>
+                    ) : null}
+
+                    {reportV4Sections.lifeKLine.latestMetrics.length > 0 ? (
+                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                        {reportV4Sections.lifeKLine.latestMetrics.map((item) => {
+                          const toneClasses = getLifeKLineMetricToneClasses(item.tone);
+
+                          return (
+                            <div key={item.label} className={`rounded-[1.2rem] border px-4 py-3 ${toneClasses.card}`}>
+                              <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
+                                {item.label}
+                              </div>
+                              <div className={`mt-2 text-base font-bold ${toneClasses.value}`}>{item.value}</div>
+                            </div>
+                          );
+                        })}
                       </div>
                     ) : null}
+
+                    {result.klineData && result.klineData.length > 0 ? (
+                      <div className="mt-4 rounded-[1.15rem] border border-[color:var(--line)] bg-white/84 p-3">
+                        <Suspense fallback={<ChartSkeleton />}>
+                          <FortuneChart data={result.klineData} height={320} />
+                        </Suspense>
+                      </div>
+                    ) : (
+                      <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                        暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
+                      </div>
+                    )}
                   </div>
-
-                  {reportV4Sections.lifeKLine.summary ? (
-                    <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                      {compactCopy(reportV4Sections.lifeKLine.summary, 108)}
-                    </p>
-                  ) : null}
-
-                  {reportV4Sections.lifeKLine.latestMetrics.length > 0 ? (
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {reportV4Sections.lifeKLine.latestMetrics.map((item) => {
-                        const toneClasses = getLifeKLineMetricToneClasses(item.tone);
-
-                        return (
-                          <div key={item.label} className={`rounded-[1.2rem] border px-4 py-3 ${toneClasses.card}`}>
-                            <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
-                              {item.label}
-                            </div>
-                            <div className={`mt-2 text-base font-bold ${toneClasses.value}`}>{item.value}</div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : null}
-
-                  {result.klineData && result.klineData.length > 0 ? (
-                    <div className="mt-4 rounded-[1.5rem] border border-[color:var(--line)] bg-white/84 p-3">
-                      <Suspense fallback={<ChartSkeleton />}>
-                        <FortuneChart data={result.klineData} height={320} />
-                      </Suspense>
-                    </div>
-                  ) : (
-                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                      暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
-                    </div>
-                  )}
+                  <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
                 </div>
-                <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
-              </div>
 
               <div id="overview" className="mt-6">
                 <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
@@ -983,10 +1034,10 @@ export default async function ResultPage({ params }: PageProps) {
                   pastValidationBlock,
                   presentDiagnosisBlock,
                   futureGuidanceBlock,
-                ].map((section, index) => (
-                  <div
-                    key={section.eyebrow}
-                    className={`rounded-[1.6rem] border px-5 py-5 ${
+                  ].map((section, index) => (
+                    <div
+                      key={section.eyebrow}
+                    className={`rounded-[1.25rem] border px-5 py-5 ${
                       index === 0
                         ? 'border-emerald-200 bg-emerald-50/70'
                         : index === 1
@@ -1011,7 +1062,7 @@ export default async function ResultPage({ params }: PageProps) {
                 ))}
               </div>
 
-              <div className={`mt-5 rounded-[1.5rem] border px-4 py-4 ${
+              <div className={`mt-5 rounded-[1.25rem] border px-4 py-4 ${
                 isEnhancementPending
                   ? 'border-amber-200 bg-amber-50/80'
                   : result.llmUsed
@@ -1051,7 +1102,7 @@ export default async function ResultPage({ params }: PageProps) {
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {qualityAudit?.summary || enhancementStatusMessage}
                 </div>
-                <div className="mt-4 rounded-[1.25rem] border border-white/70 bg-white/78 p-4">
+                <div className="mt-4 rounded-[1.1rem] border border-white/70 bg-white/78 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告升级路径</div>
@@ -1116,7 +1167,7 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
 
               {canManage ? (
-                <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-white/78 px-4 py-4">
+                <div className="mt-5 rounded-[1.25rem] border border-[color:var(--line)] bg-white/78 px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${feedbackHeroTone}`}>
                       {feedbackHeroLabel}
@@ -1142,7 +1193,7 @@ export default async function ResultPage({ params }: PageProps) {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {reportHighlights.map((item) => (
-                  <div key={item.label} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={item.label} className="rounded-[1.1rem] bg-white/80 px-4 py-4">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                     <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
                   </div>
@@ -1150,13 +1201,13 @@ export default async function ResultPage({ params }: PageProps) {
               </div>
 
 
-              <div className="mt-6 soft-card rounded-[1.75rem] p-5">
+              <div className="mt-6 soft-card rounded-[1.35rem] p-5">
                 <div className="flex items-center gap-3">
                   <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
                   <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-[0.96fr_1.04fr]">
-                  <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                  <div className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {coreSectionNames.map((item) => (
@@ -1166,7 +1217,7 @@ export default async function ResultPage({ params }: PageProps) {
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                  <div className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">后面再展开</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {deferredSectionNames.map((item) => (
@@ -1178,6 +1229,7 @@ export default async function ResultPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+              </details>
             </div>
           </div>
 
@@ -1210,25 +1262,27 @@ export default async function ResultPage({ params }: PageProps) {
                 description="查看这份报告后续的升级进度、月度提醒和订阅状态，避免结果停留在一次性生成。"
                 initialAuthenticated={updatesPanelInitialAuthenticated}
                 initialSummary={updatesPanelInitialSummary}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
               />
             ) : null}
 
             {stateVectorCards.length > 0 && (
-              <div className="soft-card rounded-[1.75rem] p-5">
+              <div className="soft-card rounded-[1.35rem] p-5">
                 <div className="flex items-center gap-3">
                   <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
                   <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {stateVectorCards.map((item) => (
-                    <div key={item.label} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div key={item.label} className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                       <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value.toFixed(1)}</div>
                     </div>
                   ))}
                 </div>
                 {referenceAuthority ? (
-                  <div className="mt-4 rounded-[1.4rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
+                  <div className="mt-4 rounded-[1.1rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                         {`参考权威度 ${referenceAuthority.authorityScore}`}
@@ -1261,10 +1315,20 @@ export default async function ResultPage({ params }: PageProps) {
               reportId={id}
               suggestions={result.actionSuggestions || []}
               pastEventTemplates={result.analysis?.pastEventTemplates || []}
+              ctaStrategyKey={sourceCtaStrategy.strategyKey}
+              sourceFamily={sourceCtaStrategy.sourceFamily}
             />
 
           </div>
         </section>
+
+        <ProductSurfaceRolePanel
+          surface="result"
+          className="mb-10"
+          title="结果页先解决阅读顺序，再进入深入判断"
+          description="这一页不把所有命理内容一次性摊开，而是先让用户看懂主判断和下一步动作，再按追问、工具、事件验证逐层深入。"
+          compact
+        />
 
         <div className="mt-6">
           <ResultPublicControls
@@ -1279,77 +1343,6 @@ export default async function ResultPage({ params }: PageProps) {
             nextFocusSummary={nextFocusSummary}
             highlights={reportHighlights}
           />
-        </div>
-
-        {/* LLM 状态提示 */}
-        <div className="mx-auto mb-6 flex max-w-6xl flex-col gap-4">
-          <div className="flex justify-end">
-            {result.llmUsed ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs text-emerald-700">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                AI 深度解析
-              </span>
-            ) : (
-              <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
-                isEnhancementPending
-                  ? 'border-amber-200 bg-amber-50 text-amber-800'
-                  : 'border-slate-200 bg-slate-50 text-slate-500'
-              }`}>
-                <span className={`h-1.5 w-1.5 rounded-full ${
-                  isEnhancementPending ? 'bg-amber-500' : 'bg-slate-400'
-                }`}></span>
-                {isEnhancementPending ? '稳定版已出，深度增强中' : '基础引擎解析'}
-              </span>
-            )}
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs ${
-              (result.reportVersion || 'v1') === CURRENT_REPORT_VERSION
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-amber-200 bg-amber-50 text-amber-700'
-            }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${
-                (result.reportVersion || 'v1') === CURRENT_REPORT_VERSION ? 'bg-emerald-500' : 'bg-amber-500'
-              }`}></span>
-              {`报告 ${result.reportVersion || 'v1'}`}
-            </span>
-          </div>
-
-          <div className="scrollbar-none overflow-x-auto">
-            <div className="flex min-w-max gap-3">
-                  {[
-                  { href: '#overview', label: '总览', icon: Sparkles },
-                  { href: '#scenario', label: '场景', icon: ArrowRight },
-                  { href: '#expert', label: '专家', icon: ScrollText },
-                  { href: '#agentic', label: '并发层', icon: Bot },
-                  { href: '#pillars', label: '结构盘', icon: Compass },
-                  { href: '#engine', label: '引擎', icon: Bot },
-                  { href: '#elements', label: '五行', icon: LineChart },
-                  { href: '#windows', label: '窗口', icon: CalendarClock },
-                  { href: '#playbook', label: '执行', icon: Bot },
-                  { href: '#roadmap', label: '路线图', icon: Compass },
-                  { href: '#trajectory', label: '三年', icon: LineChart },
-                  { href: '#confidence', label: '可信度', icon: LockKeyhole },
-                  { href: '#validation', label: '验证', icon: LockKeyhole },
-                  { href: '#correction', label: '纠偏', icon: Compass },
-                  { href: '#premium', label: '专项', icon: Sparkles },
-                  { href: '#subscription', label: '订阅', icon: Sparkles },
-                  { href: '#advice', label: '建议', icon: ScrollText },
-                  { href: '#trend', label: '趋势', icon: CalendarClock },
-                  { href: '#next-step', label: '下一步', icon: ArrowRight },
-                ].map((item) => {
-                const Icon = item.icon;
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="product-chip"
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
         </div>
 
         <ResultDeferredSection
@@ -1377,6 +1370,8 @@ export default async function ResultPage({ params }: PageProps) {
                 offers={premiumServiceOffers}
                 initialEmail={initialPremiumEmail}
                 initialRequests={initialPremiumRequests}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
               />
             </div>
           </ResultDeferredSection>
@@ -1399,6 +1394,8 @@ export default async function ResultPage({ params }: PageProps) {
                 targetAchieved={qualityAudit?.targetAchieved}
                 upgradeStatusLabel={upgradeStatusLabel}
                 monthlyHighlights={topMonthlyWindows}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
               />
             </div>
           </ResultDeferredSection>
@@ -1419,6 +1416,8 @@ export default async function ResultPage({ params }: PageProps) {
                   hasPendingValidation={validationInsights.pendingCount > 0}
                   hasDrift={validationInsights.driftCount > 0}
                   canManage={canManage}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
               </Suspense>
             </div>
@@ -1428,8 +1427,9 @@ export default async function ResultPage({ params }: PageProps) {
         <div className="mt-16">
           <SurfaceJourneyPanel
             journey={reportJourney}
-            title="这份主测算已经接到工具和内容系统"
-            description="从主报告继续通往单项工具、专题阅读和后续动作，让这份结果成为长期工作的起点。"
+            title={reportJourneyCopy.title}
+            description={reportJourneyCopy.description}
+            badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
           />
         </div>
 
@@ -1440,6 +1440,9 @@ export default async function ResultPage({ params }: PageProps) {
             title="推荐单项工具"
             description="根据这份主报告的结构和当前重点，优先给出最值得继续细化的单项工具。"
             enableQuickStart
+            source={entrySource || `result_report:${id}`}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
           />
         </div>
 
@@ -1449,7 +1452,7 @@ export default async function ResultPage({ params }: PageProps) {
             description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
             delayMs={760}
           >
-            <RelatedContent />
+            <RelatedContent source={entrySource || `result_report:${id}`} />
           </ResultDeferredSection>
         </div>
       </main>
@@ -1487,24 +1490,7 @@ function GuideSkeleton() {
 function readReferenceIntelligence(contextSignals: unknown) {
   const record = (contextSignals || {}) as {
     referenceIntelligence?: {
-      pack?: {
-        authority?: {
-          sourceCount?: number;
-          classicBookCount?: number;
-          authorityScore?: number;
-        };
-        dimensions?: {
-          tianShi?: { signals?: string[] };
-          diLi?: { signals?: string[] };
-          renHe?: { signals?: string[] };
-        };
-        modelDirectives?: string[];
-        stateVectorAdjustment?: {
-          tianShiDelta?: number;
-          diLiDelta?: number;
-          renHeDelta?: number;
-        };
-      };
+      pack?: ReferenceIntelligencePack;
       overlay?: Record<string, unknown>;
     };
   };

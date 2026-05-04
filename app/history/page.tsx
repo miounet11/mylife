@@ -5,11 +5,16 @@ import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, ChevronRight, Clock,
 import { useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
+import ResultCtaLink from '@/components/result-cta-link';
+import RetentionResumePanel from '@/components/retention-resume-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolHistoryPanel from '@/components/tool-history-panel';
 import { buildChatHref } from '@/lib/chat-entry';
+import { buildSourceCtaStrategy } from '@/lib/source-cta';
+import { appendSourceToHref } from '@/lib/source-url';
 import {
   formatEventDateKey,
   getEventViewSortTime,
@@ -112,6 +117,8 @@ export default function HistoryPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
   const [reviewAnchorMs, setReviewAnchorMs] = useState<number | null>(null);
+  const pageSource = 'history_page';
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
 
   useEffect(() => {
     setReviewAnchorMs(Date.now());
@@ -197,11 +204,37 @@ export default function HistoryPage() {
       linkedReportCount: linkedReportIds.size,
     };
   }, [events, reviewAnchorMs]);
+  const topOverdueEvent = reviewWorkbench.overduePending[0];
+  const topDriftEvent = reviewWorkbench.driftEvents[0];
+  const latestReportCard = reportCards[0];
+  const historyResumeChatHref = buildChatHref({
+    reportId: topDriftEvent?.fortuneAnalysis?.reportId || latestReportCard?.id || undefined,
+    eventId: topDriftEvent?.id || undefined,
+    question: topDriftEvent
+      ? '请围绕这条已经出现偏差的历史事件继续做纠偏分析，并告诉我这次最应该修哪一层判断。'
+      : '请根据我历史里的报告、事件和偏差样本，直接告诉我现在最值得先复盘的一条主线，以及为什么要从它开始。',
+    source: topDriftEvent ? 'history_drift_review' : pageSource,
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
+  });
 
   return (
     <div className="page-shell">
       <AnalyticsPageView eventName="history_page_viewed" page="/history" meta={{ reports: reportCards.length, events: events.length }} />
-      <SiteHeader ctaHref="/analyze" ctaLabel="新建分析" />
+      <SiteHeader
+        ctaHref="/analyze"
+        ctaLabel="新建分析"
+        ctaAnalytics={{
+          page: '/history',
+          target: 'history_header_analyze',
+          meta: {
+            source: pageSource,
+            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+            sourceFamily: sourceCtaStrategy.sourceFamily,
+            reportCount: reportCards.length,
+          },
+        }}
+      />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
         <PublicSurfaceHero
@@ -215,18 +248,59 @@ export default function HistoryPage() {
           description="把已经生成的报告、事件和追问记录放回同一个复盘工作台，方便你持续校准判断。"
           hint="建议先回看最关键的一份报告，再补充已经发生的事件，最后带上下文继续追问。"
           actions={[
-            <Link key="events" href="/events" className="action-primary action-main">进入事件页</Link>,
-            <Link
+            <ResultCtaLink
+              key="events"
+              href={appendSourceToHref('/events', pageSource)}
+              page="/history"
+              target="history_hero_events"
+              className="action-primary action-main"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'history_hero',
+                pendingCount: reviewWorkbench.pendingCount,
+              }}
+            >
+              进入事件页
+            </ResultCtaLink>,
+            <ResultCtaLink
               key="chat"
               href={buildChatHref({
                 question: '请根据我历史里的报告、事件和偏差样本，帮我判断：现在最值得优先复盘哪一条主线，为什么？',
-                source: 'history_page',
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
               })}
+              page="/history"
+              target="history_hero_chat"
               className="action-secondary"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'history_hero',
+                pendingCount: reviewWorkbench.pendingCount,
+                driftCount: reviewWorkbench.driftCount,
+              }}
             >
               继续追问
-            </Link>,
-            <Link key="analyze" href="/analyze" className="action-secondary">新建分析</Link>,
+            </ResultCtaLink>,
+            <ResultCtaLink
+              key="analyze"
+              href="/analyze"
+              page="/history"
+              target="history_hero_analyze"
+              className="action-secondary"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'history_hero',
+              }}
+            >
+              新建分析
+            </ResultCtaLink>,
           ]}
           highlights={[
             { body: '先回看最关键的一份报告' },
@@ -234,6 +308,14 @@ export default function HistoryPage() {
             { body: '对偏差样本做纠偏分析' },
             { body: '再带着上下文继续问 AI' },
           ]}
+        />
+
+        <ProductSurfaceRolePanel
+          surface="history"
+          className="mb-8 mt-8"
+          title="历史页先处理待验证和偏差样本"
+          description="历史不是归档列表，而是把过去的报告与现实事件转成下一轮判断质量提升。"
+          compact
         />
 
         <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -251,6 +333,55 @@ export default function HistoryPage() {
             </div>
           ))}
         </section>
+
+        {!isLoading ? (
+          <div className="mb-8">
+            <RetentionResumePanel
+              page="/history"
+              source={pageSource}
+              ctaStrategyKey={sourceCtaStrategy.strategyKey}
+              sourceFamily={sourceCtaStrategy.sourceFamily}
+              title={topDriftEvent ? '先把最关键的偏差样本纠回来' : topOverdueEvent ? '先把最该回收的验证结果补回来' : '从最近一份报告继续复盘'}
+              description={topDriftEvent
+                ? '历史页最有价值的不是回看列表，而是直接恢复到那条已经出现偏差的样本，把结构、阶段、触发条件和执行动作拆开重判。'
+                : topOverdueEvent
+                  ? '先把已过期但还没确认结果的事件补回反馈，再决定哪些判断应该继续放大，哪些要进入纠偏分析。'
+                  : '如果当前没有强烈的待修样本，最好的下一步就是从最近一份报告恢复追问，把历史记录重新接成行动路径。'}
+              stats={[
+                { label: '待验证', value: reviewWorkbench.pendingCount, helper: '还没回收真实结果' },
+                { label: '待纠偏', value: reviewWorkbench.driftCount, helper: '已确认存在偏差' },
+                { label: '已联动报告', value: reviewWorkbench.linkedReportCount, helper: '进入验证链路的报告' },
+              ]}
+              actions={[
+                {
+                  href: historyResumeChatHref,
+                  label: topDriftEvent ? '恢复纠偏分析' : '恢复复盘追问',
+                  target: topDriftEvent ? 'retention_resume_drift_chat' : 'retention_resume_history_chat',
+                  meta: {
+                    reportId: topDriftEvent?.fortuneAnalysis?.reportId || latestReportCard?.id || null,
+                    eventId: topDriftEvent?.id || null,
+                    driftCount: reviewWorkbench.driftCount,
+                    pendingCount: reviewWorkbench.pendingCount,
+                  },
+                },
+                {
+                  href: topOverdueEvent
+                    ? appendSourceToHref(`/events${topOverdueEvent.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(topOverdueEvent.fortuneAnalysis.reportId)}` : ''}`, pageSource)
+                    : appendSourceToHref('/events', pageSource),
+                  label: topOverdueEvent ? '补回验证结果' : '进入事件页',
+                  target: 'retention_resume_events',
+                  meta: { overduePendingCount: reviewWorkbench.overduePending.length },
+                },
+                {
+                  href: latestReportCard ? appendSourceToHref(`/result/${latestReportCard.id}`, pageSource) : '/analyze',
+                  label: latestReportCard ? '打开最近报告' : '新建一份分析',
+                  target: latestReportCard ? 'retention_resume_latest_report' : 'retention_resume_analyze',
+                  meta: { reportId: latestReportCard?.id || null },
+                },
+              ]}
+            />
+          </div>
+        ) : null}
 
         <div className="mb-8">
           <ToolHistoryPanel
@@ -291,13 +422,39 @@ export default function HistoryPage() {
                       {event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm || event.description || '回到事件页补回验证结果。'}
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
-                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="action-secondary">
+                      <ResultCtaLink
+                        href={appendSourceToHref(`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`, pageSource)}
+                        page="/history"
+                        target="history_overdue_event_queue"
+                        className="action-secondary"
+                        meta={{
+                          source: pageSource,
+                          ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                          sourceFamily: sourceCtaStrategy.sourceFamily,
+                          surface: 'history_overdue_panel',
+                          eventId: event.id,
+                          reportId: event.fortuneAnalysis?.reportId || null,
+                        }}
+                      >
                         打开事件页
-                      </Link>
+                      </ResultCtaLink>
                       {event.fortuneAnalysis?.reportId ? (
-                        <Link href={`/result/${event.fortuneAnalysis.reportId}`} className="action-secondary">
+                        <ResultCtaLink
+                          href={appendSourceToHref(`/result/${event.fortuneAnalysis.reportId}`, pageSource)}
+                          page="/history"
+                          target="history_overdue_report"
+                          className="action-secondary"
+                          meta={{
+                            source: pageSource,
+                            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                            sourceFamily: sourceCtaStrategy.sourceFamily,
+                            surface: 'history_overdue_panel',
+                            eventId: event.id,
+                            reportId: event.fortuneAnalysis.reportId,
+                          }}
+                        >
                           回到关联报告
-                        </Link>
+                        </ResultCtaLink>
                       ) : null}
                     </div>
                   </div>
@@ -322,21 +479,46 @@ export default function HistoryPage() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-3">
                       {event.fortuneAnalysis?.reportId ? (
-                        <Link
+                        <ResultCtaLink
                           href={buildChatHref({
                             reportId: event.fortuneAnalysis.reportId,
                             eventId: event.id,
                             question: '请围绕这条偏差事件继续做纠偏分析，告诉我这次最该修的是结构判断、阶段判断、环境判断，还是执行动作。',
                             source: 'history_drift_review',
+                            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                            sourceFamily: sourceCtaStrategy.sourceFamily,
                           })}
+                          page="/history"
+                          target="history_drift_panel_chat"
                           className="action-primary"
+                          meta={{
+                            source: 'history_drift_review',
+                            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                            sourceFamily: sourceCtaStrategy.sourceFamily,
+                            surface: 'history_drift_panel',
+                            eventId: event.id,
+                            reportId: event.fortuneAnalysis.reportId,
+                          }}
                         >
                           进入纠偏分析
-                        </Link>
+                        </ResultCtaLink>
                       ) : null}
-                      <Link href={`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`} className="action-secondary">
+                      <ResultCtaLink
+                        href={appendSourceToHref(`/events${event.fortuneAnalysis?.reportId ? `?reportId=${encodeURIComponent(event.fortuneAnalysis.reportId)}` : ''}`, pageSource)}
+                        page="/history"
+                        target="history_drift_panel_events"
+                        className="action-secondary"
+                        meta={{
+                          source: pageSource,
+                          ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                          sourceFamily: sourceCtaStrategy.sourceFamily,
+                          surface: 'history_drift_panel',
+                          eventId: event.id,
+                          reportId: event.fortuneAnalysis?.reportId || null,
+                        }}
+                      >
                         查看事件详情
-                      </Link>
+                      </ResultCtaLink>
                     </div>
                   </div>
                 ))}
@@ -352,10 +534,21 @@ export default function HistoryPage() {
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">报告</div>
               <div className="mt-2 text-sm text-[color:var(--muted)]">{`已进入验证链路 ${reviewWorkbench.linkedReportCount} 份`}</div>
             </div>
-            <Link href="/analyze" className="action-primary">
+            <ResultCtaLink
+              href="/analyze"
+              page="/history"
+              target="history_reports_analyze"
+              className="action-primary"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'history_reports_section',
+              }}
+            >
               新建一份分析
               <ArrowRight className="h-4 w-4" />
-            </Link>
+            </ResultCtaLink>
           </div>
 
           {isLoading ? (
@@ -367,7 +560,20 @@ export default function HistoryPage() {
           ) : reportCards.length > 0 ? (
             <div className="space-y-4">
               {reportCards.map((item) => (
-                <Link href={`/result/${item.id}`} key={item.id} className="block">
+                <ResultCtaLink
+                  href={appendSourceToHref(`/result/${item.id}`, pageSource)}
+                  key={item.id}
+                  page="/history"
+                  target="history_report_card"
+                  className="block"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'history_report_list',
+                    reportId: item.id,
+                  }}
+                >
                   <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white px-5 py-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]">
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0">
@@ -410,7 +616,7 @@ export default function HistoryPage() {
                       </div>
                     </div>
                   </div>
-                </Link>
+                </ResultCtaLink>
               ))}
             </div>
           ) : (
@@ -419,9 +625,20 @@ export default function HistoryPage() {
                 <Clock className="h-8 w-8 text-slate-400" />
               </div>
               <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">还没有分析历史</h2>
-              <Link href="/analyze" className="action-primary mt-6">
+              <ResultCtaLink
+                href="/analyze"
+                page="/history"
+                target="history_empty_analyze"
+                className="action-primary mt-6"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'history_empty_state',
+                }}
+              >
                 开始第一次判断
-              </Link>
+              </ResultCtaLink>
             </div>
           )}
         </section>

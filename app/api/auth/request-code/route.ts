@@ -24,12 +24,13 @@ export async function POST(request: NextRequest) {
       const deliveryResult = await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
 
       if (!deliveryResult?.success) {
-        trackServerEvent({
-          eventName: 'email_delivery_failed',
-          page: '/login',
-          meta: {
-            channel: 'auth_code',
-            emailDomain: result.email.split('@')[1] || '',
+      trackServerEvent({
+        eventName: 'email_delivery_failed',
+        page: '/login',
+        userAgent: request.headers.get('user-agent'),
+        meta: {
+          channel: 'auth_code',
+          emailDomain: result.email.split('@')[1] || '',
             reason: deliveryResult?.message || 'unknown',
           },
         });
@@ -43,6 +44,7 @@ export async function POST(request: NextRequest) {
       trackServerEvent({
         eventName: 'email_delivery_succeeded',
         page: '/login',
+        userAgent: request.headers.get('user-agent'),
         meta: {
           channel: 'auth_code',
           emailDomain: result.email.split('@')[1] || '',
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       eventName: 'auth_code_requested',
       page: '/login',
+      userAgent: request.headers.get('user-agent'),
       meta: {
         emailDomain: result.email.split('@')[1] || '',
         deliveryConfigured: emailConfigured,

@@ -9,6 +9,8 @@ interface NextStepGuideProps {
   hasPendingValidation?: boolean;
   hasDrift?: boolean;
   canManage?: boolean;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }
 
 export default function NextStepGuide({
@@ -16,6 +18,8 @@ export default function NextStepGuide({
   hasPendingValidation = false,
   hasDrift = false,
   canManage = false,
+  ctaStrategyKey,
+  sourceFamily,
 }: NextStepGuideProps) {
   const followupQuestion = hasDrift
     ? '这份报告已经出现偏差样本，请按结构、阶段、环境、动作四层帮我复盘：这次偏差更像时机问题、执行问题、环境问题，还是输入判断失真？'
@@ -30,6 +34,8 @@ export default function NextStepGuide({
         reportId: reportId || undefined,
         question: followupQuestion,
         source: 'next_step_guide',
+        ctaStrategyKey,
+        sourceFamily,
       }),
       label: hasDrift ? '进入纠偏追问' : '进入结构追问',
       icon: Bot,

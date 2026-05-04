@@ -16,10 +16,16 @@ Use this skill for:
 ## Workflow
 
 1. Update tool metadata first.
-2. Reuse shared rendering components.
-3. Preserve persistence and context inheritance.
-4. Validate with tool tests, lint, and build.
+2. Route execution changes through `lib/tool-run-orchestrator.ts`.
+3. Keep tool workflow policy in `data/workflows/tool-run-v1.json`.
+4. Preserve deterministic fallback before enabling or changing LLM enhancement.
+5. Keep auto QA and conversion scoring in the shared orchestrator, not per-tool pages.
+6. Reuse shared rendering components.
+7. Preserve persistence and context inheritance.
+8. Validate with tool tests, lint, and build.
 
 ## Read
 
 - `../life-kline-growth-engine/references/tool-system.md`
+- `../../../../lib/tool-run-orchestrator.ts`
+- `../../../../data/workflows/tool-run-v1.json`

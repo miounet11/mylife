@@ -402,7 +402,6 @@ async function enhanceWithLLM(
     const reportSnapshots = llmHealth.snapshots || [];
     if (
       (llmHealth.shouldDefer && !hasRunnableModelsForSnapshots(reportSnapshots))
-      || shouldConservativelyDeferForSnapshots(reportSnapshots)
     ) {
       await onProgress?.({
         type: 'model-failed',

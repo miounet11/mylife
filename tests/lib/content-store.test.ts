@@ -235,6 +235,16 @@ describe('content store public knowledge visibility', () => {
       expect(journeyMeta.relatedKnowledgeSlugs).toContain('career-structure-related-knowledge');
       expect(journeyMeta.relatedCaseSlugs).toContain('career-structure-related-case');
       expect(entry?.meta?.journeyAutomation).toBe('auto');
+      expect(entry?.meta?.visualAssets).toEqual(expect.objectContaining({
+        cover: expect.any(String),
+      }));
+      expect(entry?.meta?.geoOptimization).toEqual(expect.objectContaining({
+        geoReady: true,
+        answerSummary: expect.stringContaining('事业'),
+        searchIntents: expect.arrayContaining([expect.stringContaining('岗位结构和升职窗口')]),
+        entityKeywords: expect.arrayContaining(['人生K线', '世界易']),
+        audienceQuestions: expect.any(Array),
+      }));
     } finally {
       deleteManagedContentEntry(id);
       deleteManagedContentEntry(relatedKnowledgeId);
@@ -320,13 +330,66 @@ describe('content store public knowledge visibility', () => {
       const journeyMeta = getManagedContentJourneyMeta(entry);
 
       expect(result.refreshedCount).toBeGreaterThan(0);
-      expect(entry?.meta?.contentVersion).toBe('content-v2');
+      expect(entry?.meta?.contentVersion).toBe('content-v3');
       expect(entry?.meta?.journeyAutomation).toBe('auto');
       expect(journeyMeta.relatedToolSlugs.length).toBeGreaterThan(0);
       expect(journeyMeta.relatedCaseSlugs).toContain('legacy-refresh-related-case');
+      expect(entry?.meta?.visualAssets).toEqual(expect.objectContaining({
+        cover: expect.any(String),
+      }));
+      expect(entry?.meta?.geoOptimization).toEqual(expect.objectContaining({
+        geoReady: true,
+        entityKeywords: expect.arrayContaining(['人生K线', '世界易']),
+      }));
     } finally {
       deleteManagedContentEntry(knowledgeId);
       deleteManagedContentEntry(caseId);
+    }
+  });
+
+  test('preserves manually bound visual assets when saving content', () => {
+    const id = 'content_test_manual_visual_assets';
+
+    try {
+      saveManagedContentEntry({
+        id,
+        contentType: 'knowledge',
+        subtype: null,
+        slug: 'manual-visual-assets-knowledge',
+        title: '五行基础图解',
+        name: null,
+        excerpt: '围绕五行相生相克和报告阅读建立视觉说明。',
+        category: '命理基础',
+        readTime: '5 分钟',
+        tags: ['五行', '命理', '相生相克'],
+        featured: false,
+        seoTitle: '五行基础图解',
+        seoDescription: '五行基础图解描述。',
+        sections: [
+          { title: 'A', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'B', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'C', paragraphs: ['内容完整。', '内容完整。'] },
+          { title: 'D', paragraphs: ['内容完整。', '内容完整。'] },
+        ],
+        status: 'published',
+        source: 'cms',
+        meta: {
+          visualAssets: {
+            hero: 'MY03-001',
+            cover: 'MY03-001',
+            inline: ['MY03-002'],
+          },
+        },
+      }, 'test_user');
+
+      const entry = getManagedContentEntryBySlug('knowledge', 'manual-visual-assets-knowledge');
+      expect(entry?.meta?.visualAssets).toEqual({
+        hero: 'MY03-001',
+        cover: 'MY03-001',
+        inline: ['MY03-002'],
+      });
+    } finally {
+      deleteManagedContentEntry(id);
     }
   });
 });

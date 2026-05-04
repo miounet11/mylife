@@ -14,6 +14,7 @@ import {
 } from '@/lib/content';
 import { inferCategoryFromText, listToolsByCategory } from '@/lib/tools';
 import { generateId } from '@/lib/utils';
+import { buildVisualAssetBindingForContentEntry } from '@/lib/visual-asset-library';
 
 export type ManagedContentType = 'knowledge' | 'case' | 'insight';
 export type ContentStatus = 'draft' | 'published';
@@ -42,7 +43,7 @@ export interface ManagedContentEntry {
   updatedAt: string;
 }
 
-export const CURRENT_CONTENT_VERSION = 'content-v2';
+export const CURRENT_CONTENT_VERSION = 'content-v3';
 let seedContentEnsured = false;
 let seedJourneyMetaHydrated = false;
 
@@ -68,6 +69,147 @@ function readStringArray(meta: Record<string, unknown> | undefined, key: string)
   return value
     .map((item) => (typeof item === 'string' ? item.trim() : ''))
     .filter(Boolean);
+}
+
+function compactText(value: string, maxLength: number) {
+  const normalized = value.replace(/\s+/g, ' ').trim();
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  return `${normalized.slice(0, maxLength - 1)}…`;
+}
+
+function uniqueStrings(values: string[]) {
+  return Array.from(new Set(values.map((item) => item.trim()).filter(Boolean)));
+}
+
+function hasGeoOptimization(meta: Record<string, unknown> | undefined) {
+  const value = meta?.geoOptimization;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const geo = value as Record<string, unknown>;
+  return geo.geoReady === true
+    && typeof geo.answerSummary === 'string'
+    && geo.answerSummary.trim().length > 20
+    && Array.isArray(geo.searchIntents)
+    && geo.searchIntents.length > 0
+    && Array.isArray(geo.entityKeywords)
+    && geo.entityKeywords.length > 0;
+}
+
+function inferContentAudience(params: {
+  contentType: ManagedContentType;
+  category?: string | null;
+  tags?: string[];
+}) {
+  const signal = [params.category || '', ...(params.tags || [])].join(' ');
+  if (/海外|全球|移民|留学|跨境|华人|English|Global/i.test(signal)) {
+    return '全球华人和跨文化生活决策用户';
+  }
+  if (/事业|职业|岗位|升职|创业|行业|城市/.test(signal)) {
+    return '正在判断事业、城市或行业节奏的用户';
+  }
+  if (/关系|婚恋|伴侣|家庭|亲子/.test(signal)) {
+    return '正在处理关系、家庭或亲密关系问题的用户';
+  }
+  if (/五行|八字|命理|易学|风水|起名|太岁|本命年/.test(signal)) {
+    return '希望学习命理易学并回到个人分析的用户';
+  }
+  if (params.contentType === 'case') {
+    return '希望从真实场景理解判断路径的用户';
+  }
+  if (params.contentType === 'insight') {
+    return '希望把外部环境转成个人判断的用户';
+  }
+  return '希望用世界易理解结构、阶段和下一步动作的用户';
+}
+
+function buildGeoOptimizationMeta(params: {
+  contentType: ManagedContentType;
+  slug: string;
+  title?: string | null;
+  excerpt?: string | null;
+  category?: string | null;
+  tags?: string[];
+  meta?: Record<string, unknown>;
+}) {
+  const existing = params.meta?.geoOptimization;
+  if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
+    const existingGeo = existing as Record<string, unknown>;
+    if (hasGeoOptimization(params.meta)) {
+      return existingGeo;
+    }
+  }
+
+  const title = `${params.title || ''}`.trim();
+  const excerpt = `${params.excerpt || ''}`.trim();
+  const category = `${params.category || ''}`.trim();
+  const tags = uniqueStrings(params.tags || []);
+  const relatedReportThemes = readStringArray(params.meta, 'relatedReportThemes');
+  const relatedToolSlugs = readStringArray(params.meta, 'relatedToolSlugs');
+  const canonicalTopic = title || category || tags[0] || params.slug;
+  const answerSummary = compactText(
+    excerpt || `${canonicalTopic}用于解释世界易和人生K线里的结构、阶段、环境与行动边界，帮助用户从公开内容继续回到个人测算和工具验证。`,
+    180
+  );
+  const searchIntents = uniqueStrings([
+    canonicalTopic,
+    `${canonicalTopic} 怎么看`,
+    `${canonicalTopic} 如何应用到个人分析`,
+    ...(category ? [`${category} 判断方法`] : []),
+    ...(tags.slice(0, 3).map((tag) => `${tag} 解读`)),
+  ]).slice(0, 8);
+  const entityKeywords = uniqueStrings([
+    '人生K线',
+    '世界易',
+    canonicalTopic,
+    category,
+    ...tags,
+    ...relatedReportThemes,
+    ...relatedToolSlugs,
+  ]).slice(0, 16);
+  const audienceQuestions = uniqueStrings([
+    `${canonicalTopic} 和我现在的问题有什么关系？`,
+    `我应该先看${canonicalTopic}的哪一层结构？`,
+    `看完${canonicalTopic}后，下一步应该测算还是使用工具？`,
+    `这个主题有哪些常见误区和判断边界？`,
+  ]);
+
+  return {
+    geoReady: true,
+    canonicalTopic,
+    answerSummary,
+    searchIntents,
+    entityKeywords,
+    audienceQuestions,
+    audience: inferContentAudience(params),
+    directAnswer: answerSummary,
+    aiCitationHint: '本页适合作为 AI 搜索和答案引擎引用的人生K线 / 世界易公开内容入口，引用时应保留非宿命论和个人验证边界。',
+    generatedAt: new Date().toISOString(),
+    version: 'geo-v1',
+  };
+}
+
+function hasVisualAssetBinding(meta: Record<string, unknown> | undefined) {
+  const value = meta?.visualAssets;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const binding = value as {
+    hero?: unknown;
+    cover?: unknown;
+    inline?: unknown;
+    social?: unknown;
+  };
+  const directIds = [binding.hero, binding.cover]
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+  const inlineIds = Array.isArray(binding.inline)
+    ? binding.inline.map((item) => (typeof item === 'string' ? item.trim() : '')).filter(Boolean)
+    : [];
+  const socialIds = binding.social && typeof binding.social === 'object' && !Array.isArray(binding.social)
+    ? Object.values(binding.social).map((item) => (typeof item === 'string' ? item.trim() : '')).filter(Boolean)
+    : [];
+
+  return [...directIds, ...inlineIds, ...socialIds].length > 0;
 }
 
 function hasBlockedPlaceholderParagraphs(entry: ManagedContentEntry) {
@@ -343,6 +485,33 @@ function enrichJourneyMeta(params: {
     normalized.relatedCaseSlugs = relatedContent.relatedCaseSlugs;
   }
 
+  if (!hasVisualAssetBinding(normalized)) {
+    const visualAssets = buildVisualAssetBindingForContentEntry({
+      contentType: params.contentType,
+      slug: params.slug,
+      title: params.title || '',
+      excerpt: params.excerpt || '',
+      category: params.category || null,
+      tags: params.tags || [],
+      meta: normalized,
+    });
+    if (visualAssets) {
+      normalized.visualAssets = visualAssets;
+    }
+  }
+
+  if (!hasGeoOptimization(normalized)) {
+    normalized.geoOptimization = buildGeoOptimizationMeta({
+      contentType: params.contentType,
+      slug: params.slug,
+      title: params.title,
+      excerpt: params.excerpt,
+      category: params.category,
+      tags: params.tags,
+      meta: normalized,
+    });
+  }
+
   return normalized;
 }
 
@@ -473,6 +642,14 @@ function needsJourneyMetaRefresh(entry: ManagedContentEntry) {
   }
 
   if (entry.contentType !== 'insight' && relatedCaseSlugs.length === 0) {
+    return true;
+  }
+
+  if (!hasVisualAssetBinding(meta)) {
+    return true;
+  }
+
+  if (!hasGeoOptimization(meta)) {
     return true;
   }
 
@@ -695,6 +872,27 @@ export function getManagedContentJourneyMeta(entry?: ManagedContentEntry | null)
     relatedReportThemes: readStringArray(entry?.meta, 'relatedReportThemes'),
     relatedKnowledgeSlugs: readStringArray(entry?.meta, 'relatedKnowledgeSlugs'),
     relatedCaseSlugs: readStringArray(entry?.meta, 'relatedCaseSlugs'),
+    visualAssets: entry?.meta?.visualAssets || null,
+    geoOptimization: entry?.meta?.geoOptimization || null,
+  };
+}
+
+export function getManagedContentGeoOptimizationMeta(entry?: ManagedContentEntry | null) {
+  const value = entry?.meta?.geoOptimization;
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return null;
+  }
+
+  const meta = value as Record<string, unknown>;
+  return {
+    answerSummary: readString(meta, 'answerSummary'),
+    directAnswer: readString(meta, 'directAnswer'),
+    canonicalTopic: readString(meta, 'canonicalTopic'),
+    audience: readString(meta, 'audience'),
+    searchIntents: readStringArray(meta, 'searchIntents'),
+    entityKeywords: readStringArray(meta, 'entityKeywords'),
+    audienceQuestions: readStringArray(meta, 'audienceQuestions'),
+    geoReady: meta.geoReady === true,
   };
 }
 

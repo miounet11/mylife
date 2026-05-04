@@ -2,6 +2,8 @@ const mockAnalyticsRawQuery = jest.fn();
 const mockContentSchedulerRunListRecent = jest.fn();
 const mockContentSchedulerRunCreate = jest.fn();
 const mockContentSignalListRecent = jest.fn();
+const mockSystemLockAcquire = jest.fn();
+const mockSystemLockRelease = jest.fn();
 const mockListManagedContentEntries = jest.fn();
 const mockRefreshManagedContentJourneyMetadata = jest.fn();
 const mockSaveManagedContentEntry = jest.fn();
@@ -18,6 +20,10 @@ jest.mock('@/lib/database', () => ({
   },
   contentSignalOperations: {
     listRecent: (...args: unknown[]) => mockContentSignalListRecent(...args),
+  },
+  systemLockOperations: {
+    acquire: (...args: unknown[]) => mockSystemLockAcquire(...args),
+    release: (...args: unknown[]) => mockSystemLockRelease(...args),
   },
 }));
 
@@ -107,6 +113,8 @@ beforeEach(() => {
     return run;
   });
   mockContentSignalListRecent.mockImplementation((limit = 20) => mockSignals.slice(0, limit));
+  mockSystemLockAcquire.mockReturnValue(true);
+  mockSystemLockRelease.mockReturnValue({ changes: 1 });
   mockListManagedContentEntries.mockImplementation(() => mockEntries);
   mockRefreshManagedContentJourneyMetadata.mockReturnValue({ refreshedCount: 0 });
   mockSaveManagedContentEntry.mockImplementation((entry: ManagedContentEntry) => {
@@ -337,7 +345,9 @@ describe('content ops snapshot', () => {
           ],
           status: 'published',
           source: 'agent-llm:auto-ops',
-          meta: {},
+          meta: {
+            schedulePublishedAt: '2026-03-13T01:00:00.000Z',
+          },
           createdBy: 'system',
           updatedBy: 'system',
           createdAt: '2026-03-13 01:00:00',
@@ -401,6 +411,90 @@ describe('content ops snapshot', () => {
     expect(state.draftReserveCount).toBe(1);
     expect(state.needsDraftReplenishment).toBe(false);
     expect(state.nextPublishSlotLabel).toBe('15:00');
+  });
+
+  it('does not count metadata-only published entry updates as same-day publication', () => {
+    const state = buildContentSchedulerState({
+      entries: [
+        buildReadyDraftEntry({
+          id: 'published-old',
+          slug: 'published-old',
+          title: '旧发布内容',
+          status: 'published',
+          createdAt: '2026-03-11T02:00:00.000Z',
+          updatedAt: '2026-03-13T02:00:00.000Z',
+          meta: {
+            schedulePublishedAt: '2026-03-11T02:00:00.000Z',
+          },
+        }),
+        buildReadyDraftEntry({
+          id: 'draft-new',
+          slug: 'draft-new',
+          title: '今日待发布草稿',
+          status: 'draft',
+          createdAt: '2026-03-13T01:00:00.000Z',
+          updatedAt: '2026-03-13T01:00:00.000Z',
+        }),
+      ],
+      runs: [],
+      now: new Date('2026-03-13T02:30:00.000Z'),
+      config: {
+        timezoneOffsetMinutes: 480,
+        publishHours: [10, 15, 20],
+        dailyPublishLimit: 3,
+        minPublishGapMinutes: 180,
+        draftReserveTarget: 3,
+        draftBatchSize: 2,
+        generateCooldownMinutes: 240,
+        radarRefreshMaxAgeHours: 4,
+      },
+    });
+
+    expect(state.publishedToday).toBe(0);
+    expect(state.canPublishNow).toBe(true);
+    expect(state.lastPublishedAt).toBe('2026-03-11T02:00:00.000Z');
+  });
+
+  it('does not let knowledge synthesis auto-publish consume scheduler publish quota', () => {
+    const state = buildContentSchedulerState({
+      entries: [
+        buildReadyDraftEntry({
+          id: 'knowledge-synthesis-published',
+          slug: 'knowledge-synthesis-published',
+          title: '知识合成已发布内容',
+          status: 'published',
+          source: 'knowledge-synthesis:topic-overview',
+          createdAt: '2026-03-11T02:00:00.000Z',
+          updatedAt: '2026-03-13T02:00:00.000Z',
+          meta: {
+            autoPublishedAt: '2026-03-13T02:00:00.000Z',
+          },
+        }),
+        buildReadyDraftEntry({
+          id: 'scheduler-draft',
+          slug: 'scheduler-draft',
+          title: '调度器待发布草稿',
+          status: 'draft',
+          createdAt: '2026-03-13T01:00:00.000Z',
+          updatedAt: '2026-03-13T01:00:00.000Z',
+        }),
+      ],
+      runs: [],
+      now: new Date('2026-03-13T02:30:00.000Z'),
+      config: {
+        timezoneOffsetMinutes: 480,
+        publishHours: [10, 15, 20],
+        dailyPublishLimit: 1,
+        minPublishGapMinutes: 180,
+        draftReserveTarget: 3,
+        draftBatchSize: 2,
+        generateCooldownMinutes: 240,
+        radarRefreshMaxAgeHours: 4,
+      },
+    });
+
+    expect(state.publishedToday).toBe(0);
+    expect(state.canPublishNow).toBe(true);
   });
 
   it('ranks scheduled publish candidates by real conversion feedback', () => {
@@ -633,6 +727,22 @@ describe('content ops snapshot', () => {
 });
 
 describe('content scheduler cycle', () => {
+  it('skips overlapping live scheduler cycles when the lock is already held', async () => {
+    mockSystemLockAcquire.mockReturnValue(false);
+
+    const result = await runContentSchedulerCycle({ trigger: 'cron' });
+
+    expect(result).toMatchObject({
+      success: true,
+      generatedCount: 0,
+      publishedCount: 0,
+      reason: '已有内容调度任务正在执行，本轮跳过以避免重复生成和重叠发布',
+    });
+    expect(mockGenerateManagedContentDrafts).not.toHaveBeenCalled();
+    expect(mockSaveManagedContentEntry).not.toHaveBeenCalled();
+    expect(mockSystemLockRelease).not.toHaveBeenCalled();
+  });
+
   it('publishes more than one ready draft in a single open publish window', async () => {
     jest.useFakeTimers().setSystemTime(new Date('2026-03-13T02:30:00.000Z'));
     process.env.CONTENT_SCHEDULER_PUBLISH_HOURS = '10,15,20';

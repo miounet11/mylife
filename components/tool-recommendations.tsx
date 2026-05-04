@@ -10,12 +10,18 @@ export default function ToolRecommendations({
   title = '推荐工具',
   description = '',
   enableQuickStart = false,
+  source,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   report?: FortuneRecord | null;
   page: string;
   title?: string;
   description?: string;
   enableQuickStart?: boolean;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const items = buildToolRecommendations({
     report,
@@ -62,7 +68,7 @@ export default function ToolRecommendations({
               </div>
             </div>
           </div>
-          <ToolRunner toolSlug={primaryItem.tool.slug} reportId={report.id} />
+          <ToolRunner toolSlug={primaryItem.tool.slug} reportId={report.id} entrySource={source || ''} />
         </div>
       ) : null}
 
@@ -74,6 +80,9 @@ export default function ToolRecommendations({
             toolSlug={tool.slug}
             category={tool.category}
             page={page}
+            source={source}
+            ctaStrategyKey={ctaStrategyKey}
+            sourceFamily={sourceFamily}
             className="block rounded-[1.6rem] border border-[color:var(--line)] bg-white/80 p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>

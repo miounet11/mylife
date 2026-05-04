@@ -1,5 +1,5 @@
 import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/lib/content-generation';
-import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations } from '@/lib/database';
+import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations, systemLockOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
   refreshManagedContentJourneyMetadata,
@@ -1095,6 +1095,39 @@ function buildWeakLaneGenerationContract(params: {
   };
 }
 
+function shouldBypassSchedulerLock(mode: ContentSchedulerExecutionMode) {
+  return mode === 'validate' || process.env.CONTENT_SCHEDULER_DISABLE_LOCK === '1';
+}
+
+async function withContentSchedulerLock<T>(
+  params: {
+    trigger: 'cron' | 'manual';
+    mode: ContentSchedulerExecutionMode;
+    cycleRunId?: string;
+  },
+  run: () => Promise<T>
+): Promise<T | null> {
+  if (shouldBypassSchedulerLock(params.mode)) {
+    return run();
+  }
+
+  const owner = params.cycleRunId || `scheduler-${generateId()}`;
+  const acquired = systemLockOperations.acquire('content_scheduler_cycle', owner, 1000 * 60 * 25, {
+    trigger: params.trigger,
+    mode: params.mode,
+  });
+
+  if (!acquired) {
+    return null;
+  }
+
+  try {
+    return await run();
+  } finally {
+    systemLockOperations.release('content_scheduler_cycle', owner);
+  }
+}
+
 function buildContentDecisionSamples(params: {
   candidates: EvaluatedScheduledPublishCandidate[];
   publishedEntry?: ManagedContentEntry | null;
@@ -1202,10 +1235,39 @@ function parseUtcDate(value?: string) {
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
+function getEntryPublishedDate(entry: ManagedContentEntry) {
+  const meta = entry.meta || {};
+  const candidates = [
+    readMetaString(meta, 'schedulePublishedAt'),
+    readMetaString(meta, 'autoPublishedAt'),
+    readMetaString(meta, 'publishedAt'),
+    entry.source === 'seed' ? entry.createdAt : '',
+    entry.createdAt,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = parseUtcDate(candidate);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return null;
+}
+
+function getEntryScheduledPublishedDate(entry: ManagedContentEntry) {
+  return parseUtcDate(readMetaString(entry.meta || {}, 'schedulePublishedAt'));
+}
+
 function minutesBetween(now: Date, value?: string) {
   const parsed = parseUtcDate(value);
   if (!parsed) return null;
   return Math.max(0, Math.round((now.getTime() - parsed.getTime()) / 60_000));
+}
+
+function minutesBetweenDates(now: Date, value?: Date | null) {
+  if (!value) return null;
+  return Math.max(0, Math.round((now.getTime() - value.getTime()) / 60_000));
 }
 
 function parsePositiveNumber(value: string | undefined, fallback: number, minimum: number) {
@@ -1471,15 +1533,18 @@ export function buildContentSchedulerState(params: {
   const draftReserveCount = params.entries.filter((entry) => entry.status === 'draft').length;
   const publishedToday = params.entries.filter((entry) => (
     entry.status === 'published' &&
-    localDateKey(parseUtcDate(entry.updatedAt) || now, config.timezoneOffsetMinutes) === todayKey
+    localDateKey(getEntryScheduledPublishedDate(entry) || new Date(0), config.timezoneOffsetMinutes) === todayKey
   )).length;
-  const lastPublishedAt = params.entries
+  const lastPublishedDate = params.entries
     .filter((entry) => entry.status === 'published')
-    .sort((left, right) => (parseUtcDate(right.updatedAt)?.getTime() || 0) - (parseUtcDate(left.updatedAt)?.getTime() || 0))[0]?.updatedAt;
+    .map((entry) => getEntryScheduledPublishedDate(entry))
+    .filter((date): date is Date => !!date)
+    .sort((left, right) => right.getTime() - left.getTime())[0] || null;
+  const lastPublishedAt = lastPublishedDate?.toISOString();
   const lastGeneratedAt = params.runs
     .filter((run) => run.status === 'success' && (run.generatedCount || 0) > 0)
     .sort((left, right) => (parseUtcDate(right.createdAt)?.getTime() || 0) - (parseUtcDate(left.createdAt)?.getTime() || 0))[0]?.createdAt;
-  const minutesSinceLastPublish = minutesBetween(now, lastPublishedAt);
+  const minutesSinceLastPublish = minutesBetweenDates(now, lastPublishedDate);
   const minutesSinceLastGenerate = minutesBetween(now, lastGeneratedAt);
   const publishWindowOpen = config.publishHours.includes(localHour(now, config.timezoneOffsetMinutes));
   const canPublishNow = publishWindowOpen &&
@@ -1961,6 +2026,43 @@ export async function runContentSchedulerCycle(params?: {
 }) {
   const trigger = params?.trigger || 'cron';
   const mode = params?.mode || 'live';
+  const lockedResult = await withContentSchedulerLock({
+    trigger,
+    mode,
+    cycleRunId: params?.cycleRunId,
+  }, () => runContentSchedulerCycleUnlocked({
+    trigger,
+    mode,
+    cycleRunId: params?.cycleRunId,
+  }));
+
+  if (lockedResult) {
+    return lockedResult;
+  }
+
+  const opsSnapshot = getContentOpsSnapshot();
+  return {
+    success: true,
+    generatedCount: 0,
+    publishedCount: 0,
+    publishedEntry: null,
+    generatedTitles: [],
+    reason: '已有内容调度任务正在执行，本轮跳过以避免重复生成和重叠发布',
+    radarRefreshed: false,
+    scheduler: getContentSchedulerOverview(),
+    opsSnapshot,
+    preview: null,
+    decisionLedgerSummary: summarizeWorldYiContentDecisionLedger(),
+  };
+}
+
+async function runContentSchedulerCycleUnlocked(params: {
+  trigger: 'cron' | 'manual';
+  mode: ContentSchedulerExecutionMode;
+  cycleRunId?: string;
+}) {
+  const trigger = params.trigger;
+  const mode = params.mode;
   const validationMode = mode === 'validate';
   const journeyRefresh = validationMode
     ? { refreshedCount: 0 }

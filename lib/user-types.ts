@@ -715,6 +715,21 @@ export interface AnalyticsEventRecord {
   createdAt?: string;
 }
 
+export interface ReportJourneyEventRecord {
+  id: string;
+  userId: string;
+  reportId: string;
+  workflowId: string;
+  layerKey: string;
+  actionTarget: string;
+  category?: string;
+  toolSlug?: string;
+  source?: string;
+  href?: string;
+  meta?: Record<string, unknown>;
+  createdAt?: string;
+}
+
 export interface ContentSignalRecord {
   id: string;
   sourceId: string;

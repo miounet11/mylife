@@ -75,6 +75,46 @@ describe('env helpers', () => {
     expect(getOpenAgentRuntimeModel()).toBe('gpt-5.4-mini');
   });
 
+  it('uses grok primary and auto fallbacks for model helpers by default', async () => {
+    delete process.env.DEFAULT_MODEL;
+    delete process.env.OPEN_AGENT_RUNTIME_MODEL;
+    delete process.env.MODEL_FALLBACK_CHAIN;
+    delete process.env.REPORT_MODEL_FALLBACK_CHAIN;
+    delete process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN;
+    delete process.env.CONTENT_GENERATION_MODEL;
+    delete process.env.CONTENT_GENERATION_MODEL_FALLBACK_CHAIN;
+    delete process.env.VISUAL_ASSET_API_BASE_URL;
+    delete process.env.VISUAL_ASSET_DEFAULT_MODEL;
+    delete process.env.VISUAL_ASSET_CORE_MODEL;
+    delete process.env.VISUAL_ASSET_NARRATIVE_MODEL;
+
+    const {
+      getDefaultModel,
+      getOpenAgentRuntimeModel,
+      getModelFallbackChainEnv,
+      getReportModelFallbackChainEnv,
+      getReportNarrativeModelFallbackChainEnv,
+      getContentGenerationModel,
+      getContentGenerationModelFallbackChainRaw,
+      getVisualAssetApiBaseUrl,
+      getVisualAssetDefaultModel,
+      getVisualAssetCoreModel,
+      getVisualAssetNarrativeModel,
+    } = await import('@/lib/env');
+
+    expect(getDefaultModel()).toBe('grok-420-fast');
+    expect(getOpenAgentRuntimeModel()).toBe('grok-420-fast');
+    expect(getModelFallbackChainEnv()).toBe('auto');
+    expect(getReportModelFallbackChainEnv()).toBe('auto');
+    expect(getReportNarrativeModelFallbackChainEnv()).toBe('auto');
+    expect(getContentGenerationModel()).toBe('grok-420-fast');
+    expect(getContentGenerationModelFallbackChainRaw()).toBe('auto');
+    expect(getVisualAssetApiBaseUrl()).toBe('https://www.gemiai.top/v1');
+    expect(getVisualAssetDefaultModel()).toBe('gpt-image-2');
+    expect(getVisualAssetCoreModel()).toBe('gpt-image-2-pro');
+    expect(getVisualAssetNarrativeModel()).toBe('grok-420-fast');
+  });
+
   it('deduplicates system health tokens and evaluates radar flags', async () => {
     process.env.SYSTEM_HEALTH_TOKEN = 'health-token';
     process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN = 'knowledge-token';

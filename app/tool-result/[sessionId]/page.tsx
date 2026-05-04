@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowRight, Bot, ScrollText, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
@@ -22,13 +23,19 @@ import { buildJourneyForTool } from '@/lib/surface-journeys';
 import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition } from '@/lib/tools';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { buildChatHref } from '@/lib/chat-entry';
+import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 
 export default async function ToolResultPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ sessionId: string }>;
+  searchParams?: Promise<{ source?: string }>;
 }) {
   const { sessionId } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const entrySource = resolvedSearchParams.source?.trim() || '';
+  const sourceContext = getSourceContext(entrySource);
   const currentUserId = await getCurrentUserId();
   const session = toolSessionOperations.getById(sessionId);
   if (!session || !currentUserId || session.userId !== currentUserId) {
@@ -44,23 +51,45 @@ export default async function ToolResultPage({
   const recentSessions = toolSessionOperations.listByUser(currentUserId, 6);
   const memory = summarizeToolSessions(recentSessions, report, 6);
   const result = (session.result || {}) as Record<string, unknown>;
+  const sessionMeta = (session.meta || {}) as Record<string, any>;
+  const llmEnhancement = sessionMeta.llmEnhancement || {};
+  const deepDiveSections = Array.isArray(llmEnhancement.deepDiveSections)
+    ? llmEnhancement.deepDiveSections.filter((item: any) => item?.heading && item?.body).slice(0, 5)
+    : [];
+  const quality = sessionMeta.quality || null;
+  const conversion = sessionMeta.conversion || null;
   const premiumOffer = buildToolPremiumOffer(tool);
   const bundle = getToolBundleForSlug(tool.slug);
-  const journey = buildJourneyForTool(tool);
+  const journey = buildJourneyForTool(tool, { source: entrySource || null });
+  const toolResultJourneyCopy = buildSourceJourneyCopy(entrySource, {
+    title: '这次结果已经和主测算、工具、内容全部串起来',
+    description: '回到综合报告、继续下钻工具，或直接读相关文章与案例。',
+  });
   const toolFollowupQuestion = `请围绕“${tool.shortTitle}”这次结果继续深问，按结构、阶段、环境、动作四层拆解：这条建议为什么成立，我现在该先推进什么，最需要防什么误判？`;
+  const toolChatSource = entrySource.startsWith('lifecycle_tool_interest')
+    ? entrySource
+    : entrySource
+      ? `tool_result_followup:${entrySource}`
+      : 'tool_result_followup';
+  const sourceCtaStrategy = buildSourceCtaStrategy(entrySource || `tool_detail:${tool.slug}`);
   const toolChatHref = buildChatHref({
     reportId: report?.id || null,
     intent: tool.chatIntent || null,
     question: toolFollowupQuestion,
-    source: 'tool_result_followup',
+    source: toolChatSource,
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
   });
+  const reportHref = report
+    ? `/result/${encodeURIComponent(report.id)}${entrySource ? `?source=${encodeURIComponent(entrySource)}` : ''}`
+    : '/profile';
 
   return (
     <div className="page-shell">
       <AnalyticsPageView
         eventName="tool_result_viewed"
         page={`/tool-result/${session.id}`}
-        meta={{ toolSlug: tool.slug, category: tool.category, reportId: session.reportId || null }}
+        meta={{ toolSlug: tool.slug, category: tool.category, reportId: session.reportId || null, source: entrySource || null }}
       />
       <SiteHeader ctaHref="/tools" ctaLabel="更多工具" />
 
@@ -75,7 +104,9 @@ export default async function ToolResultPage({
               {String(result.headline || `${tool.shortTitle}结果已生成`)}
             </h1>
             <p className="intro-copy">{String(result.summary || tool.valuePromise)}</p>
-            <div className="intro-panel">优先动作：继续深问，或回到综合判断。</div>
+            <div className="intro-panel">
+              {entrySource ? sourceContext.toolDescription : '优先动作：继续深问，或回到综合判断。'}
+            </div>
             <div className="space-y-2">
               <div className="action-guide">快速操作</div>
               <div className="action-strip flex flex-wrap gap-3">
@@ -86,7 +117,7 @@ export default async function ToolResultPage({
                   <Bot className="mr-1 h-4 w-4" />
                   继续深问
                 </Link>
-                <Link href={report ? `/result/${report.id}` : '/profile'} className="action-secondary">返回综合判断</Link>
+                <Link href={reportHref} className="action-secondary">返回综合判断</Link>
                 <Link href="/tools" className="action-secondary">继续做别的工具</Link>
               </div>
             </div>
@@ -99,6 +130,14 @@ export default async function ToolResultPage({
             <ResultCard title="为什么推荐你做它" value={String(result.whyItMatches || '它和你当前报告主轴更接近。')} />
           </div>
         </section>
+
+        <ProductSurfaceRolePanel
+          surface="toolResult"
+          className="mt-10"
+          title="工具结果必须接回长期判断闭环"
+          description="一次工具结果只解决一个细分问题，读完后要继续深问、返回综合报告或进入一个下一工具，不能在这里断掉。"
+          compact
+        />
 
         <section className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
@@ -136,7 +175,7 @@ export default async function ToolResultPage({
                 <Bot className="mr-2 h-4 w-4" />
                 继续深问
               </Link>
-              <Link href={report ? `/result/${report.id}` : '/profile'} className="action-secondary">
+              <Link href={reportHref} className="action-secondary">
                 返回综合判断
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
@@ -144,6 +183,45 @@ export default async function ToolResultPage({
             </div>
           </div>
         </section>
+
+        {deepDiveSections.length > 0 ? (
+          <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              深度解释
+            </div>
+            <div className="mt-5 grid gap-4 md:grid-cols-3">
+              {deepDiveSections.map((section: { heading: string; body: string }) => (
+                <div key={section.heading} className="rounded-[1.5rem] bg-white/82 p-5">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">{section.heading}</div>
+                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{section.body}</div>
+                </div>
+              ))}
+            </div>
+            {llmEnhancement.conversionBridge ? (
+              <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-slate-50 px-5 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                {String(llmEnhancement.conversionBridge)}
+              </div>
+            ) : null}
+          </section>
+        ) : null}
+
+        {quality || conversion ? (
+          <section className="mt-10 grid gap-4 md:grid-cols-2">
+            {quality ? (
+              <ResultCard
+                title="自动质检"
+                value={`结果质量 ${String(quality.grade || 'B')}，评分 ${String(quality.score || 0)}。系统已检查行动建议、风险提醒、证据链和非决定论边界。`}
+              />
+            ) : null}
+            {conversion ? (
+              <ResultCard
+                title="承接强度"
+                value={`后续承接为 ${String(conversion.tier || 'medium')}，建议下一步：${String(conversion.nextBestAction || '继续深问')}。`}
+              />
+            ) : null}
+          </section>
+        ) : null}
 
         {memory ? (
           <section className="mt-10">
@@ -199,13 +277,20 @@ export default async function ToolResultPage({
         <section className="mt-10">
           <SurfaceJourneyPanel
             journey={journey}
-            title="这次结果已经和主测算、工具、内容全部串起来"
-            description="回到综合报告、继续下钻工具，或直接读相关文章与案例。"
+            title={toolResultJourneyCopy.title}
+            description={toolResultJourneyCopy.description}
+            badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
           />
         </section>
 
         <section className="mt-10">
-          <ToolPremiumDepthPanel tool={tool} offer={premiumOffer} reportId={report?.id} />
+          <ToolPremiumDepthPanel
+            tool={tool}
+            offer={premiumOffer}
+            reportId={report?.id}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
+          />
         </section>
 
         <section className="mt-10">
@@ -224,6 +309,9 @@ export default async function ToolResultPage({
             page={`/tool-result/${session.id}`}
             title="继续下钻"
             description="一个看主问题，一个看窗口，一个看动作。"
+            source={entrySource || `tool_result_followup:${tool.slug}`}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
           />
         </section>
       </main>

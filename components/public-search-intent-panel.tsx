@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ArrowRight, Compass, Search, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { appendSourceToHref } from '@/lib/source-url';
 
 export default function PublicSearchIntentPanel({
   page,
@@ -11,6 +12,12 @@ export default function PublicSearchIntentPanel({
   analyzeHref = '/analyze',
   toolHref,
   caseHref,
+  source,
+  analyzeLabel,
+  toolLabel,
+  caseLabel,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   page: string;
   title: string;
@@ -18,25 +25,31 @@ export default function PublicSearchIntentPanel({
   analyzeHref?: string;
   toolHref?: string;
   caseHref?: string;
+  source?: string;
+  analyzeLabel?: string;
+  toolLabel?: string;
+  caseLabel?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const actions = [
     {
-      href: analyzeHref,
-      label: '先测我的情况',
+      href: appendSourceToHref(analyzeHref, source),
+      label: analyzeLabel || '先测我的情况',
       tone: 'primary' as const,
       target: 'search_intent_analyze',
       helper: '把搜索里的泛问题转成你的个人结构判断。',
     },
     toolHref ? {
-      href: toolHref,
-      label: '直接进对应工具',
+      href: appendSourceToHref(toolHref, source),
+      label: toolLabel || '直接进对应工具',
       tone: 'secondary' as const,
       target: 'search_intent_tool',
       helper: '如果你的问题已经非常具体，直接进入对应工具更快。',
     } : null,
     caseHref ? {
-      href: caseHref,
-      label: '看相近案例',
+      href: appendSourceToHref(caseHref, source),
+      label: caseLabel || '看相近案例',
       tone: 'secondary' as const,
       target: 'search_intent_case',
       helper: '先看别人怎么落地，再回来判断自己。',
@@ -105,6 +118,9 @@ export default function PublicSearchIntentPanel({
                     meta: {
                       target: action.target,
                       source: 'public_search_intent_panel',
+                      attributionSource: source || null,
+                      ctaStrategyKey: ctaStrategyKey || null,
+                      sourceFamily: sourceFamily || null,
                     },
                   });
                 }}

@@ -4,10 +4,13 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import VisualAssetCard from '@/components/visual-asset-card';
+import VisualAssetFeature from '@/components/visual-asset-feature';
 import { getCaseStudies, getEntityInsights, isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { getContentLocalePresentation, getLocaleAnchorId, type ContentLocaleGroupKey } from '@/lib/content-locale';
 import { listKnowledgeTopicHubs } from '@/lib/knowledge-network-feed';
@@ -17,6 +20,7 @@ import {
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
 import { getFeaturedTools } from '@/lib/tools';
+import { getVisualAssetById } from '@/lib/visual-asset-library';
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
@@ -61,6 +65,11 @@ const worldYiKnowledgePowerLinks = [
 
 export default function KnowledgePage() {
   const worldYiStats = getWorldYiPublicStats();
+  const mingliMapImage = getVisualAssetById('MY01-001') || getVisualAssetById('PWY01-008');
+  const fiveElementsImage = getVisualAssetById('MY03-001') || getVisualAssetById('PWY01-008');
+  const visualArticleImage = getVisualAssetById('PWY01-012');
+  const taiSuiImage = getVisualAssetById('MY06-002') || getVisualAssetById('PWY01-010');
+  const benMingNianImage = getVisualAssetById('MY06-003') || getVisualAssetById('PWY01-011');
   const localeGroups = new Map<ContentLocaleGroupKey, {
     groupLabel: string;
     groupDescription: string;
@@ -182,6 +191,19 @@ export default function KnowledgePage() {
           ]}
         />
 
+        <ProductSurfaceRolePanel
+          surface="knowledge"
+          className="mt-8"
+          title="知识库先帮用户建立读法，再把问题接回个人判断"
+          compact
+        />
+
+        {mingliMapImage ? (
+          <section className="mt-10">
+            <VisualAssetFeature asset={mingliMapImage} label="命理易学总览图" />
+          </section>
+        ) : null}
+
         <section className="mt-8">
           <ContentCardLink
             href="/world-yi"
@@ -275,6 +297,17 @@ export default function KnowledgePage() {
           </div>
         </section>
 
+        {(taiSuiImage || benMingNianImage) ? (
+          <section className="mt-10">
+            <div className="section-label">传播图入口</div>
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              {[taiSuiImage, benMingNianImage].filter(Boolean).map((asset) => (
+                <VisualAssetCard key={asset!.id} asset={asset!} />
+              ))}
+            </div>
+          </section>
+        ) : null}
+
         <PublicEvidencePanel
           page="/knowledge"
           title="把知识层接到工具、案例和环境洞察"
@@ -284,6 +317,18 @@ export default function KnowledgePage() {
           caseItems={caseItems}
           insightItems={insightItems}
         />
+
+        {fiveElementsImage ? (
+          <section className="mt-10">
+            <VisualAssetFeature asset={fiveElementsImage} label="五行基础结构图" reverse />
+          </section>
+        ) : null}
+
+        {visualArticleImage ? (
+          <section className="mt-10">
+            <VisualAssetFeature asset={visualArticleImage} label="图片文章说明图" reverse />
+          </section>
+        ) : null}
 
         <section className="mt-10 grid gap-4 md:grid-cols-2">
           {topicHubs.length > 0 ? topicHubs.map((hub) => (

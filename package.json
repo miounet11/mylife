@@ -48,8 +48,18 @@
     "system:requests": "node scripts/request-window.js",
     "system:retro": "node scripts/report-retro.js",
     "system:upgrade-compare": "node scripts/upgrade-behavior-compare.js",
+    "system:site-quality:checks": "node scripts/site-quality-validation-checks.js",
     "system:site-quality": "node --import tsx scripts/site-quality-governor.ts",
-    "system:report-eval": "tsx scripts/report-demand-eval.ts"
+    "system:report-eval": "tsx scripts/report-demand-eval.ts",
+    "visual:import": "tsx scripts/visual-assets/import-manifest.ts",
+    "visual:request-images": "tsx scripts/visual-assets/request-images.ts",
+    "visual:narratives": "tsx scripts/visual-assets/generate-narratives.ts",
+    "visual:run": "tsx scripts/visual-assets/run-workflow.ts",
+    "visual:status": "tsx scripts/visual-assets/status.ts",
+    "visual:qa": "tsx scripts/visual-assets/qa-assets.ts",
+    "visual:review": "tsx scripts/visual-assets/review-asset.ts",
+    "visual:review-batch": "tsx scripts/visual-assets/review-batch.ts",
+    "visual:set-output": "tsx scripts/visual-assets/set-output.ts"
   },
   "dependencies": {
     "@codeany/open-agent-sdk": "github:codeany-ai/open-agent-sdk-typescript#366438d2ef94775a4515301bcf8a58ab866c1731",

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { appendSourceToHref } from '@/lib/source-url';
 
 export default function ToolCardLink({
   href,
@@ -11,6 +12,9 @@ export default function ToolCardLink({
   category,
   className,
   children,
+  source,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   href: string;
   toolSlug: string;
@@ -18,10 +22,14 @@ export default function ToolCardLink({
   category: string;
   className?: string;
   children: ReactNode;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
+  const resolvedHref = appendSourceToHref(href, source);
   return (
     <Link
-      href={href}
+      href={resolvedHref}
       onClick={() => {
         void trackClientEvent({
           eventName: 'tool_card_clicked',
@@ -29,7 +37,10 @@ export default function ToolCardLink({
           meta: {
             toolSlug,
             category,
-            target: href,
+            target: resolvedHref,
+            source: source || null,
+            ctaStrategyKey: ctaStrategyKey || null,
+            sourceFamily: sourceFamily || null,
           },
         });
       }}

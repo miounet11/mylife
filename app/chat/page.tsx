@@ -3,12 +3,14 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { Compass, Layers3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import UpdatesStatusPanelWithQuery from '@/components/updates-status-panel-with-query';
 import { listChatIntentPresets, getChatIntentPreset } from '@/lib/chat-intent';
 import { buildChatHref } from '@/lib/chat-entry';
+import { appendSourceToHref } from '@/lib/source-url';
 
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   loading: () => <ChatSkeleton />,
@@ -27,6 +29,8 @@ interface ChatPageProps {
     intent?: string;
     question?: string;
     source?: string;
+    ctaStrategyKey?: string;
+    sourceFamily?: string;
   }>;
 }
 
@@ -37,10 +41,16 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const intent = resolvedSearchParams.intent?.trim() || '';
   const question = resolvedSearchParams.question?.trim() || '';
   const source = resolvedSearchParams.source?.trim() || '';
+  const ctaStrategyKey = resolvedSearchParams.ctaStrategyKey?.trim() || '';
+  const sourceFamily = resolvedSearchParams.sourceFamily?.trim() || '';
+  const reportHref = reportId ? appendSourceToHref(`/result/${encodeURIComponent(reportId)}`, source) : '/profile';
+  const eventsHref = reportId
+    ? appendSourceToHref(`/events?reportId=${encodeURIComponent(reportId)}`, source)
+    : appendSourceToHref('/events', source);
   const intentPreset = getChatIntentPreset(intent);
   const powerLinks = [
-    { label: reportId ? '返回当前结果页' : '返回我的档案', href: reportId ? `/result/${encodeURIComponent(reportId)}` : '/profile' },
-    { label: '管理关联事件', href: reportId ? `/events?reportId=${encodeURIComponent(reportId)}` : '/events' },
+    { label: reportId ? '返回当前结果页' : '返回我的档案', href: reportHref },
+    { label: '管理关联事件', href: eventsHref },
     { label: '方法论入口', href: '/knowledge/world-yi-methodology' },
   ];
   const scopeTags = [
@@ -54,6 +64,9 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       reportId: reportId || undefined,
       eventId: eventId || undefined,
       intent: item.key,
+      source: source || undefined,
+      ctaStrategyKey: ctaStrategyKey || undefined,
+      sourceFamily: sourceFamily || undefined,
     }),
   }));
 
@@ -68,6 +81,8 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
           eventId: eventId || null,
           intent: intentPreset?.key || null,
           source: source || null,
+          ctaStrategyKey: ctaStrategyKey || null,
+          sourceFamily: sourceFamily || null,
           prefilledQuestion: question ? 'yes' : 'no',
         }}
       />
@@ -94,12 +109,19 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
               <Link key="chat-workbench" href="#chat-workbench" className="action-primary action-main">
                 立即开始追问
               </Link>,
-              <Link key="report-or-profile" href={reportId ? `/result/${encodeURIComponent(reportId)}` : '/profile'} className="action-secondary">
+              <Link key="report-or-profile" href={reportHref} className="action-secondary">
                 {reportId ? '返回当前报告' : '查看我的档案'}
               </Link>,
             ]}
             highlights={scopeTags.map((item) => ({ body: item }))}
             highlightsColumns="md:grid-cols-3"
+          />
+
+          <ProductSurfaceRolePanel
+            surface="chat"
+            title="追问页只处理一个关键问题"
+            description="这里承接报告、工具和事件上下文，把用户下一轮问题收敛成清晰动作，而不是重新变成泛问答入口。"
+            compact
           />
 
           <section className="grid gap-6 xl:grid-cols-[1.22fr_0.78fr] xl:items-start">

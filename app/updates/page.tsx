@@ -8,6 +8,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, reportUpgradeJobOperations, userLifecycleEmailRunOperations } from '@/lib/database';
 import { getAuthSession } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 export const metadata = {
   title: '邮件更新与订阅管理 | 人生K线',
@@ -18,10 +19,21 @@ export const metadata = {
   },
 };
 
-export default async function UpdatesPage() {
+export default async function UpdatesPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{
+    source?: string;
+  }>;
+}) {
+  const resolvedSearchParams = searchParams ? await searchParams : {};
+  const source = resolvedSearchParams.source?.trim() || '';
+  const analyzeHref = source ? `/analyze?source=${encodeURIComponent(source)}` : '/analyze';
   const session = await getAuthSession();
-  const currentUserId = session.user?.id || null;
+  const sessionUserId = await getCurrentUserId();
+  const currentUserId = session.user?.id || sessionUserId || null;
   const currentEmail = session.user?.email || null;
+  const hasSessionContext = !!currentUserId;
   const subscription = currentEmail ? emailSubscriptionOperations.getByEmail(currentEmail) : null;
   const reports = currentUserId ? fortuneOperations.getByUserId(currentUserId).slice(0, 3) : [];
   const upgradeJobs = currentUserId ? reportUpgradeJobOperations.listByUserId(currentUserId, 12) : [];
@@ -58,9 +70,10 @@ export default async function UpdatesPage() {
           hasEmail: !!session.user?.email,
           hasSubscription: !!subscription,
           reportCount: reports.length,
+          source: source || 'updates_page',
         }}
       />
-      <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
+      <SiteHeader ctaHref={analyzeHref} ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <PublicSurfaceHero
@@ -74,10 +87,10 @@ export default async function UpdatesPage() {
           description="这里负责查看订阅、报告升级和后续提醒，让结果不是一次性页面，而是可以持续回访。"
           hint="如果你还没有生成过报告，先完成一次分析，再回来开启更有上下文的更新。"
           actions={[
-            <Link key="my-updates" href={session.authenticated ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
-              {session.authenticated ? '查看我的更新' : '先登录查看'}
+            <Link key="my-updates" href={hasSessionContext ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
+              {hasSessionContext ? '查看我的更新' : '先登录查看'}
             </Link>,
-            <Link key="analyze" href="/analyze" className="action-secondary">开始分析</Link>,
+            <Link key="analyze" href={analyzeHref} className="action-secondary">开始分析</Link>,
           ]}
           highlights={[
             { body: '查询订阅状态' },
@@ -95,12 +108,12 @@ export default async function UpdatesPage() {
             </div>
             <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">我的更新</h2>
 
-            {session.authenticated && session.user ? (
+            {hasSessionContext ? (
               <div className="mt-6 space-y-6">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <StatusMetric
                     label="当前登录邮箱"
-                    value={session.user.email || '未绑定'}
+                    value={currentEmail || '未绑定'}
                     helper={subscription?.status === 'active' ? '已激活' : '未激活'}
                     tone="neutral"
                   />
@@ -243,7 +256,7 @@ export default async function UpdatesPage() {
 
         <section className="mt-12">
           <NewsletterSignup
-            source="updates_page"
+            source={source || 'updates_page'}
             title="订阅更新"
             description="把知识、案例和产品更新接回邮箱，方便你在报告生成后继续收到后续内容。"
           />

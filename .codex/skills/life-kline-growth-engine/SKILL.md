@@ -21,17 +21,25 @@ Use this skill when the task touches any of these:
 - cross-surface journey logic lives in `lib/surface-journeys.ts`
 - content entries auto-enrich journey metadata in `lib/content-store.ts`
 - core UI surfaces already render journey panels and tool conversion panels
+- Mingli analysis has a repo-owned workflow contract at `data/workflows/mingli-analysis-v1.json`
+- Tool execution has a repo-owned workflow contract at `data/workflows/tool-run-v1.json`
+- Tool runs are orchestrated through `lib/tool-run-orchestrator.ts`, not directly inside API routes
+- Tool runs now support deterministic summary + optional `grok-420-fast` LLM enhancement + auto QA + conversion scoring
+- Report generation attaches `analysis.workflow` snapshots via `lib/analysis-workflow.ts`
 
 ## First Checks
 
 1. Read `lib/tools.ts` if the task changes tool definitions, sequencing, premium copy, or featured tools.
-2. Read `lib/surface-journeys.ts` if the task changes cross-linking or recommendation paths.
-3. Read `lib/content-store.ts` if the task changes content save/publish behavior or auto journey metadata.
-4. Read the page/component that renders the affected surface before editing.
+2. Read `lib/tool-run-orchestrator.ts` if the task changes tool execution, memory, session meta, or future LLM enhancement.
+3. Read `lib/analysis-workflow.ts` and `data/workflows/mingli-analysis-v1.json` if the task changes report pipeline structure.
+4. Read `lib/surface-journeys.ts` if the task changes cross-linking or recommendation paths.
+5. Read `lib/content-store.ts` if the task changes content save/publish behavior or auto journey metadata.
+6. Read the page/component that renders the affected surface before editing.
 
 ## Edit Rules
 
 - Keep the 120 tools config-driven. Do not fork into 120 separate implementations.
+- Keep execution logic inside shared orchestrators where possible; API routes should validate transport and delegate.
 - Prefer improving shared metadata and shared rendering over page-by-page duplication.
 - If a content/report/tool surface should recommend another surface, route that through `lib/surface-journeys.ts` when possible.
 - If a content item needs report/tool linkage, prefer automatic metadata enrichment first; only add manual overrides when automation would clearly fail.
@@ -40,6 +48,9 @@ Use this skill when the task touches any of these:
 ## Key Files
 
 - `lib/tools.ts`
+- `lib/tool-run-orchestrator.ts`
+- `lib/analysis-workflow.ts`
+- `lib/workflow-contract.ts`
 - `lib/tool-context.ts`
 - `lib/content-store.ts`
 - `lib/surface-journeys.ts`

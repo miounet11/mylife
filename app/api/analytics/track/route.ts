@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId,
+      userAgent: request.headers.get('user-agent'),
       eventName,
       page,
       meta,

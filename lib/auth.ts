@@ -73,15 +73,31 @@ function updateUserLoginState(userId: string, email: string) {
   });
 }
 
+const USER_ID_MERGE_TABLES = [
+  'fortunes',
+  'events',
+  'questions',
+  'enhancements',
+  'sessions',
+  'analytics_events',
+  'report_journey_events',
+  'content_generation_jobs',
+  'report_upgrade_jobs',
+  'report_monthly_digest_runs',
+  'user_lifecycle_email_runs',
+  'premium_service_requests',
+  'tool_sessions',
+] as const;
+
 function mergeGuestDataIntoUser(guestUserId: string, targetUserId: string) {
   if (!guestUserId || !targetUserId || guestUserId === targetUserId) {
     return;
   }
 
   const transaction = db.transaction(() => {
-    db.prepare(`UPDATE fortunes SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
-    db.prepare(`UPDATE events SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
-    db.prepare(`UPDATE questions SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
+    for (const tableName of USER_ID_MERGE_TABLES) {
+      db.prepare(`UPDATE ${tableName} SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
+    }
 
     const targetPreference = db.prepare(`SELECT id FROM preferences WHERE user_id = ? LIMIT 1`).get(targetUserId) as { id: string } | undefined;
     if (targetPreference) {
@@ -90,8 +106,6 @@ function mergeGuestDataIntoUser(guestUserId: string, targetUserId: string) {
       db.prepare(`UPDATE preferences SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
     }
 
-    db.prepare(`UPDATE enhancements SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
-    db.prepare(`UPDATE sessions SET user_id = ? WHERE user_id = ?`).run(targetUserId, guestUserId);
     db.prepare(`DELETE FROM users WHERE id = ? AND id != ?`).run(guestUserId, targetUserId);
   });
 

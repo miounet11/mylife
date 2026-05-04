@@ -10,6 +10,9 @@ jest.mock('@/lib/database', () => ({
     getById: jest.fn(),
     update: jest.fn(),
   },
+  analyticsOperations: {
+    rawQuery: jest.fn(),
+  },
   reportUpgradeJobOperations: {
     enqueue: jest.fn(),
     getByReportId: jest.fn(),
@@ -32,7 +35,7 @@ jest.mock('@/lib/email', () => ({
 }));
 
 jest.mock('@/lib/llm-model-fallback', () => ({
-  getModelFallbackChain: jest.fn(() => ['grok-420-fast', 'gpt-5.2', 'auto']),
+  getModelFallbackChain: jest.fn(() => ['grok-420-fast', 'auto']),
 }));
 
 jest.mock('@/lib/llm-provider-health', () => ({
@@ -57,13 +60,14 @@ jest.mock('@/lib/report-version-lineage', () => ({
   withReportVersionLineage: jest.fn(({ nextAnalysis }) => nextAnalysis),
 }));
 
-import { fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
+import { analyticsOperations, fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
 import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
 import { regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
 import { enqueueReportUpgrade, processNextReportUpgradeJob, processReportUpgradeBatch } from '@/lib/report-upgrade-jobs';
 
 const mockedFortuneOperations = fortuneOperations as jest.Mocked<typeof fortuneOperations>;
 const mockedReportUpgradeJobOperations = reportUpgradeJobOperations as jest.Mocked<typeof reportUpgradeJobOperations>;
+const mockedAnalyticsOperations = analyticsOperations as jest.Mocked<typeof analyticsOperations>;
 const mockedAssessScopeProviderHealth = assessScopeProviderHealth as jest.MockedFunction<typeof assessScopeProviderHealth>;
 const mockedHasRunnableModelsForSnapshots = hasRunnableModelsForSnapshots as jest.MockedFunction<typeof hasRunnableModelsForSnapshots>;
 const mockedRegenerateReportFromRecord = regenerateReportFromRecord as jest.MockedFunction<typeof regenerateReportFromRecord>;
@@ -73,6 +77,7 @@ describe('report upgrade jobs', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockedReportUpgradeJobOperations.getByReportId.mockReturnValue(null);
+    mockedAnalyticsOperations.rawQuery.mockReturnValue([]);
     mockedReportUpgradeJobOperations.listRunnablePending.mockReturnValue([]);
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReset();
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue(null as any);
@@ -438,7 +443,7 @@ describe('report upgrade jobs', () => {
             rankPenalty: 0,
           },
           {
-            model: 'gpt-5.2',
+            model: 'auto',
             defaultOrder: 1,
             state: 'half-open',
             attempts: 1,
@@ -448,20 +453,6 @@ describe('report upgrade jobs', () => {
             failureRate: 1,
             avgLatencyMs: 5000,
             consecutiveFailures: 1,
-            rankPenalty: 0,
-          },
-          {
-            model: 'auto',
-            defaultOrder: 2,
-            state: 'open',
-            attempts: 2,
-            successes: 0,
-            failures: 2,
-            successRate: 0,
-            failureRate: 1,
-            avgLatencyMs: 2500,
-            consecutiveFailures: 2,
-            reopenAt: '2026-03-15T09:51:29.666Z',
             rankPenalty: 0,
           },
         ],

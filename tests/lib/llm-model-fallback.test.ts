@@ -32,12 +32,12 @@ describe('llm model fallback', () => {
     jest.resetModules();
   });
 
-  it('defaults to reasoning-first general chain', async () => {
-    process.env.DEFAULT_MODEL = 'auto';
+  it('defaults to grok primary with auto fallback for the general chain', async () => {
+    delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['gpt-5.4', 'gpt-5.2-codex', 'grok-420-fast', 'auto']);
+    expect(getModelFallbackChain()).toEqual(['grok-420-fast', 'auto']);
   });
 
   it('lets an explicit preferred model lead while keeping fallback chain', async () => {
@@ -45,59 +45,71 @@ describe('llm model fallback', () => {
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain('grok-420-fast')).toEqual(['grok-420-fast', 'gpt-5.4', 'gpt-5.2-codex', 'auto']);
+    expect(getModelFallbackChain('grok-420-fast')).toEqual(['grok-420-fast', 'auto']);
   });
 
   it('uses explicit fallback chain when configured', async () => {
-    process.env.DEFAULT_MODEL = 'auto';
-    process.env.MODEL_FALLBACK_CHAIN = 'grok-420-fast, gpt-5.2, auto';
+    process.env.DEFAULT_MODEL = 'grok-420-fast';
+    process.env.MODEL_FALLBACK_CHAIN = 'auto';
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['grok-420-fast', 'gpt-5.2', 'auto']);
-    expect(getModelFallbackChain('gpt-5.2')).toEqual(['gpt-5.2', 'grok-420-fast', 'auto']);
+    expect(getModelFallbackChain()).toEqual(['grok-420-fast', 'auto']);
+    expect(getModelFallbackChain('grok-420-fast')).toEqual(['grok-420-fast', 'auto']);
   });
 
-  it('uses a reasoning-first default chain for report scope', async () => {
-    process.env.DEFAULT_MODEL = 'auto';
+  it('uses grok primary with auto fallback for report scope by default', async () => {
+    delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
     delete process.env.REPORT_MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain(undefined, 'report')).toEqual(['gpt-5.4', 'gpt-5.2-codex', 'auto']);
-    expect(getModelFallbackChain('auto', 'report')).toEqual(['auto', 'gpt-5.4', 'gpt-5.2-codex']);
+    expect(getModelFallbackChain(undefined, 'report')).toEqual(['grok-420-fast', 'auto']);
+    expect(getModelFallbackChain('auto', 'report')).toEqual(['auto', 'grok-420-fast']);
   });
 
   it('lets report scope use its own configured fallback chain', async () => {
-    process.env.DEFAULT_MODEL = 'auto';
-    process.env.MODEL_FALLBACK_CHAIN = 'grok-420-fast, gpt-5.2, auto';
-    process.env.REPORT_MODEL_FALLBACK_CHAIN = 'auto, grok-420-fast';
-
-    const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain(undefined, 'report')).toEqual(['auto', 'grok-420-fast']);
-    expect(getModelFallbackChain(undefined, 'chat')).toEqual(['grok-420-fast', 'gpt-5.2', 'auto']);
-  });
-
-  it('keeps report scope independent from a broken default model', async () => {
     process.env.DEFAULT_MODEL = 'grok-420-fast';
-    process.env.REPORT_MODEL_FALLBACK_CHAIN = 'gpt-5.4, gpt-5.2-codex, auto';
+    process.env.MODEL_FALLBACK_CHAIN = 'auto';
+    process.env.REPORT_MODEL_FALLBACK_CHAIN = 'auto';
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain(undefined, 'report')).toEqual(['gpt-5.4', 'gpt-5.2-codex', 'auto']);
-    expect(getModelFallbackChain('grok-420-fast', 'report')).toEqual(['grok-420-fast', 'gpt-5.4', 'gpt-5.2-codex', 'auto']);
+    expect(getModelFallbackChain(undefined, 'report')).toEqual(['grok-420-fast', 'auto']);
+    expect(getModelFallbackChain('grok-420-fast', 'report')).toEqual(['grok-420-fast', 'auto']);
+    expect(getModelFallbackChain('grok-420-fast', 'chat')).toEqual(['grok-420-fast', 'auto']);
   });
 
-  it('uses a reasoning-first narrative chain for report followup by default', async () => {
+  it('keeps report scope independent from a configured global chain', async () => {
+    process.env.DEFAULT_MODEL = 'grok-420-fast';
+    process.env.MODEL_FALLBACK_CHAIN = 'legacy-model, auto';
+    process.env.REPORT_MODEL_FALLBACK_CHAIN = 'auto';
+
+    const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getModelFallbackChain(undefined, 'report')).toEqual(['grok-420-fast', 'auto']);
+    expect(getModelFallbackChain('grok-420-fast', 'report')).toEqual(['grok-420-fast', 'auto']);
+  });
+
+  it('uses grok primary with auto fallback for report narrative followup by default', async () => {
     delete process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN;
 
     const { getReportNarrativeFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getReportNarrativeFallbackChain()).toEqual(['gpt-5.4', 'gpt-5.2-codex', 'auto']);
-    expect(getReportNarrativeFallbackChain('gpt-5.2-codex')).toEqual(['gpt-5.2-codex', 'gpt-5.4', 'auto']);
+    expect(getReportNarrativeFallbackChain()).toEqual(['grok-420-fast', 'auto']);
+    expect(getReportNarrativeFallbackChain('grok-420-fast')).toEqual(['grok-420-fast', 'auto']);
+  });
+
+  it('normalizes legacy codex model ids to compatible reasoning ids', async () => {
+    process.env.DEFAULT_MODEL = 'gpt-5.2-codex';
+    delete process.env.MODEL_FALLBACK_CHAIN;
+
+    const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
+    expect(getModelFallbackChain()).toEqual(['gpt-5.2', 'auto']);
   });
 
   it('lets narrative followup use its own configured chain', async () => {
-    process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN = 'auto, gpt-5.2';
+    process.env.DEFAULT_MODEL = 'grok-420-fast';
+    process.env.REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN = 'auto';
 
     const { getReportNarrativeFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getReportNarrativeFallbackChain()).toEqual(['auto', 'gpt-5.2']);
+    expect(getReportNarrativeFallbackChain()).toEqual(['grok-420-fast', 'auto']);
+    expect(getReportNarrativeFallbackChain('grok-420-fast')).toEqual(['grok-420-fast', 'auto']);
   });
 });

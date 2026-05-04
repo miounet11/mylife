@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-04-13T07:48:30.932Z",
+  "generatedAt": "2026-05-04T21:43:12.379Z",
   "windowMinutes": 1440,
   "feedbackSync": {
     "scannedCount": 50,
@@ -7,214 +7,111 @@
     "failedCount": 0
   },
   "analytics": {
-    "totalEvents": 3956,
+    "totalEvents": 617,
     "activeSessions": 15,
-    "uniqueSubmitters": 7,
-    "uniqueCompleters": 7,
-    "uniqueReportViewers": 7,
+    "uniqueSubmitters": 3,
+    "uniqueCompleters": 3,
+    "completedEvents": 3,
+    "uniqueReportViewers": 2,
     "topEvents": [
       {
         "eventName": "llm_model_attempt",
-        "count": 2250
+        "count": 264
       },
       {
         "eventName": "llm_model_circuit_changed",
-        "count": 1566
+        "count": 207
       },
       {
         "eventName": "home_page_viewed",
-        "count": 24
+        "count": 37
+      },
+      {
+        "eventName": "email_delivery_succeeded",
+        "count": 31
       },
       {
         "eventName": "analyze_page_viewed",
-        "count": 11
+        "count": 13
       },
       {
-        "eventName": "report_viewed",
+        "eventName": "knowledge_article_viewed",
         "count": 10
       },
       {
-        "eventName": "chat_completed",
-        "count": 8
-      },
-      {
-        "eventName": "analyze_completed",
-        "count": 7
-      },
-      {
-        "eventName": "report_generated",
-        "count": 7
-      },
-      {
-        "eventName": "analyze_submitted",
-        "count": 7
-      },
-      {
-        "eventName": "chat_context_loaded",
-        "count": 7
-      },
-      {
         "eventName": "tool_detail_viewed",
-        "count": 7
+        "count": 9
       },
       {
         "eventName": "knowledge_page_viewed",
-        "count": 6
+        "count": 8
       },
       {
-        "eventName": "chat_page_viewed",
-        "count": 6
+        "eventName": "chat_completed",
+        "count": 4
+      },
+      {
+        "eventName": "report_viewed",
+        "count": 4
       },
       {
         "eventName": "tools_page_viewed",
-        "count": 5
+        "count": 4
       },
       {
-        "eventName": "profile_page_viewed",
-        "count": 5
+        "eventName": "chat_page_viewed",
+        "count": 3
+      },
+      {
+        "eventName": "chat_context_loaded",
+        "count": 3
+      },
+      {
+        "eventName": "analyze_completed",
+        "count": 3
+      },
+      {
+        "eventName": "report_generated",
+        "count": 3
       }
     ],
     "missingSessionPageViews": 0
   },
   "reports": {
-    "total": 7,
-    "realLikely": 5,
+    "total": 3,
+    "realLikely": 1,
     "likelyTest": 2,
-    "viewedDistinct": 7,
-    "basicCount": 1,
-    "llmCount": 0,
-    "fallbackCompleted": 7,
-    "fallbackRate": 100,
-    "basicRate": 14,
-    "llmRate": 0,
-    "conservativeCount": 1,
-    "conservativeRate": 14,
-    "verifyWarnCount": 4,
-    "verifyFailCount": 1
+    "viewedDistinct": 2,
+    "basicCount": 2,
+    "llmCount": 1,
+    "fallbackCompleted": 2,
+    "fallbackRate": 67,
+    "basicRate": 67,
+    "llmRate": 33,
+    "conservativeCount": 2,
+    "conservativeRate": 67,
+    "verifyWarnCount": 2,
+    "verifyFailCount": 0
   },
   "realReportCards": [
     {
-      "id": "report_1776062166479_stmgsf7gd",
-      "userId": "user_1776061991610-ezl4cu1m3",
-      "name": "朋友",
-      "birthPlace": "广东省 广州市 白云区",
+      "id": "report_1777888816352_b0a2wqglr",
+      "userId": "guest_1777888625877-1o7gdp2wy",
+      "name": "李嘉文",
+      "birthPlace": "山东省 青岛市 市南区",
       "reportVersion": "v3",
-      "createdAt": "2026-04-13 06:36:06",
-      "updatedAt": "2026-04-13T07:48:30.660Z",
-      "llmUsed": false,
-      "reasoningMode": "deterministic-expert",
-      "score": 81,
-      "grade": "A",
-      "deliveryTier": "enhanced",
-      "targetAchieved": false,
-      "verifyVerdict": "PASS",
-      "verifyScore": 100,
-      "reliabilityStatus": "passed",
-      "reliabilityScore": 100,
-      "linkedEvents": 0,
-      "accurateCount": 0,
-      "driftCount": 0,
-      "pendingCount": 0,
-      "correctionLevel": "healthy",
-      "likelyTest": false,
-      "viewed": true
-    },
-    {
-      "id": "report_1776009234019_lx1kfzotf",
-      "userId": "guest_1776009093075-3p7ljqzn1",
-      "name": "彭姝然",
-      "birthPlace": "江西省 赣州市",
-      "reportVersion": "v3",
-      "createdAt": "2026-04-12 15:53:54",
-      "updatedAt": "2026-04-13T07:48:30.639Z",
+      "createdAt": "2026-05-04 10:00:16",
+      "updatedAt": "2026-05-04T21:43:12.164Z",
       "llmUsed": false,
       "reasoningMode": "deterministic-expert",
       "score": 78,
-      "grade": "B",
-      "deliveryTier": "enhanced",
-      "targetAchieved": false,
-      "verifyVerdict": "WARN",
-      "verifyScore": 88,
-      "reliabilityStatus": "passed",
-      "reliabilityScore": 82,
-      "linkedEvents": 0,
-      "accurateCount": 0,
-      "driftCount": 0,
-      "pendingCount": 0,
-      "correctionLevel": "healthy",
-      "likelyTest": false,
-      "viewed": true
-    },
-    {
-      "id": "report_1775998028473_prflvn8ve",
-      "userId": "guest_1775997933549-lu2nkhqsh",
-      "name": "京海鸣",
-      "birthPlace": "江西省 吉安市",
-      "reportVersion": "v3",
-      "createdAt": "2026-04-12 12:47:08",
-      "updatedAt": "2026-04-13T07:48:30.667Z",
-      "llmUsed": false,
-      "reasoningMode": "deterministic-expert",
-      "score": 78,
-      "grade": "B",
-      "deliveryTier": "enhanced",
-      "targetAchieved": false,
-      "verifyVerdict": "WARN",
-      "verifyScore": 88,
-      "reliabilityStatus": "passed",
-      "reliabilityScore": 82,
-      "linkedEvents": 0,
-      "accurateCount": 0,
-      "driftCount": 0,
-      "pendingCount": 0,
-      "correctionLevel": "healthy",
-      "likelyTest": false,
-      "viewed": true
-    },
-    {
-      "id": "report_1775989838351_vw2gskl8f",
-      "userId": "guest_1775989790878-02de59awn",
-      "name": "meng",
-      "birthPlace": "北京",
-      "reportVersion": "v3",
-      "createdAt": "2026-04-12 10:30:38",
-      "updatedAt": "2026-04-13T07:48:30.626Z",
-      "llmUsed": false,
-      "reasoningMode": "parallel-agents",
-      "score": 79,
       "grade": "B",
       "deliveryTier": "basic",
       "targetAchieved": false,
-      "verifyVerdict": "FAIL",
-      "verifyScore": 76,
-      "reliabilityStatus": "conservative",
-      "reliabilityScore": 32,
-      "linkedEvents": 0,
-      "accurateCount": 0,
-      "driftCount": 0,
-      "pendingCount": 0,
-      "correctionLevel": "healthy",
-      "likelyTest": false,
-      "viewed": true
-    },
-    {
-      "id": "report_1775983481276_xip2e9r9p",
-      "userId": "guest_1775983412142-oaiog7nc8",
-      "name": "戴睿",
-      "birthPlace": "吉林省 四平市",
-      "reportVersion": "v3",
-      "createdAt": "2026-04-12 08:44:41",
-      "updatedAt": "2026-04-13T07:48:30.675Z",
-      "llmUsed": false,
-      "reasoningMode": "deterministic-expert",
-      "score": 78,
-      "grade": "B",
-      "deliveryTier": "enhanced",
-      "targetAchieved": false,
       "verifyVerdict": "WARN",
       "verifyScore": 88,
-      "reliabilityStatus": "passed",
-      "reliabilityScore": 82,
+      "reliabilityStatus": "conservative",
+      "reliabilityScore": 49,
       "linkedEvents": 0,
       "accurateCount": 0,
       "driftCount": 0,
@@ -226,17 +123,43 @@
   ],
   "testReportCards": [
     {
-      "id": "report_1776004140369_b5ab03myu",
-      "userId": "guest_1776004076656-g4d8inr0g",
-      "name": "kk",
-      "birthPlace": "北京",
+      "id": "report_1777906900951_xupbi1tfk",
+      "userId": "guest_1777906806709-w30ub204x",
+      "name": "案例1",
+      "birthPlace": "新加坡",
       "reportVersion": "v3",
-      "createdAt": "2026-04-12 14:29:00",
-      "updatedAt": "2026-04-13T07:48:30.664Z",
+      "createdAt": "2026-05-04 15:01:40",
+      "updatedAt": "2026-05-04T21:43:12.170Z",
       "llmUsed": false,
       "reasoningMode": "deterministic-expert",
-      "score": 79,
+      "score": 78,
       "grade": "B",
+      "deliveryTier": "basic",
+      "targetAchieved": false,
+      "verifyVerdict": "WARN",
+      "verifyScore": 88,
+      "reliabilityStatus": "conservative",
+      "reliabilityScore": 49,
+      "linkedEvents": 0,
+      "accurateCount": 0,
+      "driftCount": 0,
+      "pendingCount": 0,
+      "correctionLevel": "healthy",
+      "likelyTest": true,
+      "viewed": true
+    },
+    {
+      "id": "report_1777890215891_mbfbpj9km",
+      "userId": "guest_1777890156609-noc8ljtd1",
+      "name": "案例1",
+      "birthPlace": "北京",
+      "reportVersion": "v3",
+      "createdAt": "2026-05-04 10:23:35",
+      "updatedAt": "2026-05-04T21:43:12.195Z",
+      "llmUsed": true,
+      "reasoningMode": "deterministic-expert",
+      "score": 94,
+      "grade": "S",
       "deliveryTier": "enhanced",
       "targetAchieved": false,
       "verifyVerdict": "PASS",
@@ -249,192 +172,166 @@
       "pendingCount": 0,
       "correctionLevel": "healthy",
       "likelyTest": true,
-      "viewed": true
-    },
-    {
-      "id": "report_1775997067348_sndjv5vxa",
-      "userId": "guest_1775996951045-d14snbb0r",
-      "name": "案例1",
-      "birthPlace": "山东省 潍坊市",
-      "reportVersion": "v3",
-      "createdAt": "2026-04-12 12:31:07",
-      "updatedAt": "2026-04-13T07:48:30.671Z",
-      "llmUsed": false,
-      "reasoningMode": "deterministic-expert",
-      "score": 78,
-      "grade": "B",
-      "deliveryTier": "enhanced",
-      "targetAchieved": false,
-      "verifyVerdict": "WARN",
-      "verifyScore": 88,
-      "reliabilityStatus": "passed",
-      "reliabilityScore": 82,
-      "linkedEvents": 0,
-      "accurateCount": 0,
-      "driftCount": 0,
-      "pendingCount": 0,
-      "correctionLevel": "healthy",
-      "likelyTest": true,
-      "viewed": true
+      "viewed": false
     }
   ],
   "activeSessions": [
     {
-      "sessionId": "user_1776061991610-ezl4cu1m3",
+      "sessionId": "guest_1777906806709-w30ub204x",
       "homeViewed": 0,
       "analyzeViewed": 0,
       "submitted": 1,
       "completed": 1,
       "reportViewed": 0,
       "chatCompleted": 0,
-      "lastAt": "2026-04-13 06:47:57"
+      "lastAt": "2026-05-04 15:01:40"
     },
     {
-      "sessionId": "guest_1776009093075-3p7ljqzn1",
+      "sessionId": "guest_1777890156609-noc8ljtd1",
       "homeViewed": 0,
       "analyzeViewed": 0,
       "submitted": 1,
       "completed": 1,
       "reportViewed": 0,
       "chatCompleted": 0,
-      "lastAt": "2026-04-12 15:53:54"
+      "lastAt": "2026-05-04 10:23:35"
     },
     {
-      "sessionId": "guest_1776004076656-g4d8inr0g",
+      "sessionId": "guest_1777888625877-1o7gdp2wy",
       "homeViewed": 0,
       "analyzeViewed": 0,
       "submitted": 1,
       "completed": 1,
       "reportViewed": 0,
       "chatCompleted": 0,
-      "lastAt": "2026-04-12 14:29:00"
+      "lastAt": "2026-05-04 10:00:17"
     },
     {
-      "sessionId": "guest_1775997933549-lu2nkhqsh",
-      "homeViewed": 0,
-      "analyzeViewed": 0,
-      "submitted": 1,
-      "completed": 1,
-      "reportViewed": 0,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 12:47:08"
-    },
-    {
-      "sessionId": "guest_1775996951045-d14snbb0r",
-      "homeViewed": 0,
-      "analyzeViewed": 0,
-      "submitted": 1,
-      "completed": 1,
-      "reportViewed": 0,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 12:31:07"
-    },
-    {
-      "sessionId": "guest_1775989790878-02de59awn",
-      "homeViewed": 0,
-      "analyzeViewed": 0,
-      "submitted": 1,
-      "completed": 1,
-      "reportViewed": 0,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 10:30:38"
-    },
-    {
-      "sessionId": "guest_1775983412142-oaiog7nc8",
-      "homeViewed": 0,
-      "analyzeViewed": 0,
-      "submitted": 1,
-      "completed": 1,
-      "reportViewed": 0,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 08:44:41"
-    },
-    {
-      "sessionId": "218.107.35.214",
-      "homeViewed": 2,
-      "analyzeViewed": 2,
+      "sessionId": "2409:891f:2860:a654:7581:9ef3:7c14:f68f",
+      "homeViewed": 4,
+      "analyzeViewed": 1,
       "submitted": 0,
       "completed": 0,
       "reportViewed": 3,
-      "chatCompleted": 6,
-      "lastAt": "2026-04-12 16:14:57"
-    },
-    {
-      "sessionId": "203.10.97.121",
-      "homeViewed": 1,
-      "analyzeViewed": 0,
-      "submitted": 0,
-      "completed": 0,
-      "reportViewed": 2,
       "chatCompleted": 1,
-      "lastAt": "2026-04-12 10:32:04"
+      "lastAt": "2026-05-04 10:01:55"
     },
     {
-      "sessionId": "77.93.89.4",
-      "homeViewed": 1,
-      "analyzeViewed": 1,
-      "submitted": 0,
-      "completed": 0,
-      "reportViewed": 1,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-13 06:36:20"
-    },
-    {
-      "sessionId": "103.129.54.209",
-      "homeViewed": 0,
+      "sessionId": "219.74.65.207",
+      "homeViewed": 2,
       "analyzeViewed": 0,
       "submitted": 0,
       "completed": 0,
       "reportViewed": 1,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 14:29:02"
+      "chatCompleted": 3,
+      "lastAt": "2026-05-04 16:04:04"
     },
     {
-      "sessionId": "2001:da8:2002:4100:2057:d491:7ca5:cdf6",
-      "homeViewed": 2,
-      "analyzeViewed": 2,
-      "submitted": 0,
-      "completed": 0,
-      "reportViewed": 1,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 12:47:51"
-    },
-    {
-      "sessionId": "222.175.104.101",
-      "homeViewed": 1,
-      "analyzeViewed": 1,
-      "submitted": 0,
-      "completed": 0,
-      "reportViewed": 1,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 12:32:09"
-    },
-    {
-      "sessionId": "117.136.120.109",
-      "homeViewed": 1,
-      "analyzeViewed": 2,
-      "submitted": 0,
-      "completed": 0,
-      "reportViewed": 1,
-      "chatCompleted": 0,
-      "lastAt": "2026-04-12 08:45:14"
-    },
-    {
-      "sessionId": "61.50.133.164",
+      "sessionId": "82.180.161.252",
       "homeViewed": 1,
       "analyzeViewed": 0,
       "submitted": 0,
       "completed": 0,
       "reportViewed": 0,
       "chatCompleted": 0,
-      "lastAt": "2026-04-13 07:23:15"
+      "lastAt": "2026-05-04 20:56:29"
+    },
+    {
+      "sessionId": "106.8.139.196",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 20:24:03"
+    },
+    {
+      "sessionId": "124.239.12.178",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 20:22:17"
+    },
+    {
+      "sessionId": "124.239.12.34",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 20:21:04"
+    },
+    {
+      "sessionId": "116.132.255.183",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 20:11:01"
+    },
+    {
+      "sessionId": "116.179.33.18",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 19:32:35"
+    },
+    {
+      "sessionId": "111.60.110.153",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 18:29:12"
+    },
+    {
+      "sessionId": "2406:da14:aba:9200:47a9:d9bb:474b:c84",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 17:37:18"
+    },
+    {
+      "sessionId": "87.83.109.74",
+      "homeViewed": 4,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 17:12:52"
+    },
+    {
+      "sessionId": "152.67.211.31",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-04 15:40:50"
     }
   ],
   "failureHotspots": [],
   "recommendations": [
     "页面浏览埋点 session 已基本串通，最近窗口可以作为正式复盘口径。",
-    "最近 7 次测算回退到了引擎输出，优先跟踪 LLM 健康、增强质量与保守交付比例。",
-    "当前有 1 份报告被 reliability guard 压到保守交付，应优先复盘 verify 失败或弱增强样本。",
-    "把最近 5 份真实报告纳入版本评估名单，优先看 viewed=1、basic、WARN/FAIL 与 driftCount>0 的样本。"
+    "最近 2 次测算回退到了引擎输出，优先跟踪 LLM 健康、增强质量与保守交付比例。",
+    "当前有 2 份报告被 reliability guard 压到保守交付，应优先复盘 verify 失败或弱增强样本。",
+    "把最近 1 份真实报告纳入版本评估名单，优先看 viewed=1、basic、WARN/FAIL 与 driftCount>0 的样本。"
   ]
 }

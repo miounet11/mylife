@@ -1,0 +1,50 @@
+{
+  "id": "tool-run-v1",
+  "name": "Life Kline 120 Tool Run Workflow",
+  "description": "Repository-owned workflow contract for single-purpose tool execution, memory inheritance, persistence, journey handoff and premium conversion.",
+  "runtime": {
+    "maxAttempts": 2,
+    "retryBaseDelayMs": 800,
+    "retryMaxDelayMs": 6000,
+    "deterministicTimeoutMs": 5000,
+    "llmEnhancementEnabled": true,
+    "llmTimeoutMs": 12000,
+    "llmMaxTokens": 1200,
+    "llmModel": "grok-420-fast",
+    "llmModelChain": ["grok-420-fast", "auto"]
+  },
+  "stages": [
+    "validate-tool",
+    "load-report",
+    "load-memory",
+    "deterministic-summary",
+    "llm-enhancement",
+    "auto-qa",
+    "conversion-scoring",
+    "persist-session",
+    "journey-handoff",
+    "complete"
+  ],
+  "qualityPolicy": {
+    "mustRequireReportContext": true,
+    "mustInheritRecentToolMemory": true,
+    "mustPersistEveryCompletedRun": true,
+    "mustExposeNextTools": true,
+    "mustAttachPremiumConversion": true,
+    "mustAutoQaEnhancedResult": true,
+    "mustScoreConversionReadiness": true,
+    "mustAvoidDeterministicFateClaims": true,
+    "mustKeep120ToolsConfigDriven": true
+  },
+  "memoryPolicy": {
+    "recentSessionLimit": 6,
+    "inheritSessionLimit": 4,
+    "focusAreaLimit": 4
+  },
+  "observability": {
+    "trackStarted": true,
+    "trackCompleted": true,
+    "trackFailed": true,
+    "includeWorkflowSnapshotInSessionMeta": true
+  }
+}

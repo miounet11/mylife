@@ -2,25 +2,29 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getAuthSession();
-    if (!session.authenticated || !session.user?.id) {
+    const currentUserId = await getCurrentUserId();
+    const userId = session.user?.id || currentUserId || '';
+    if (!userId) {
       return NextResponse.json({
         success: true,
         authenticated: false,
+        hasSessionContext: false,
         data: null,
       });
     }
 
-    const userId = session.user.id;
-    const email = session.user.email || '';
+    const email = session.user?.email || '';
     const requestedReportId = request.nextUrl.searchParams.get('reportId') || '';
 
     return NextResponse.json({
       success: true,
-      authenticated: true,
+      authenticated: !!session.authenticated,
+      hasSessionContext: true,
       data: buildUpdatesSummary({
         userId,
         email,

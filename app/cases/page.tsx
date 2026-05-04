@@ -4,6 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
@@ -159,6 +160,13 @@ export default function CasesPage() {
             { body: '关系推进与风险节奏' },
           ]}
           highlightsColumns="md:grid-cols-3"
+        />
+
+        <ProductSurfaceRolePanel
+          surface="cases"
+          className="mt-8"
+          title="案例库先降低理解门槛，再把用户带回自己的问题"
+          compact
         />
 
         <section className="mt-8">

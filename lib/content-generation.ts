@@ -1073,6 +1073,10 @@ function buildTypePrompt(
     '文风要克制、专业、清楚，避免浮夸营销、神神叨叨、绝对化宿命论。',
     '内容需要自然承接“用户继续填写生日并进入个人分析”的动作，但不能写成硬广。',
     '写作前先依据“为什么有效、遵循什么框架、如何应用到当前主题”的顺序组织内容。',
+    '必须同时考虑 SEO 和 GEO（Generative Engine Optimization）：标题和 SEO 描述要能覆盖真实搜索意图；正文第一屏要给出可被 AI 答案引擎提取的直接回答；每篇内容都要有明确实体词、用户问题、判断边界和下一步动作。',
+    '不要为了 SEO 堆关键词。关键词必须自然进入标题、摘要、小节标题、首段和结尾承接。',
+    '每篇内容至少回答 3 类问题：这个主题是什么、普通用户最容易误解什么、看完后如何回到个人测算或对应工具验证。',
+    '正文不得泄露内部工程词，例如 GEO、SEO、转化、内容自动化、平台策略、流量承接；这些只作为写作策略，不作为面向用户的文本。',
     languageRule,
     marketRule,
     localeRule,
@@ -1123,6 +1127,10 @@ function buildTypePrompt(
     seoTitle: english ? 'SEO title' : 'SEO标题',
     seoDescription: english ? 'SEO description' : 'SEO描述',
     sections: [
+      {
+        title: english ? 'Direct answer' : '直接回答',
+        paragraphs: english ? ['A concise direct answer that can stand alone in AI search results.', 'Clarify the practical boundary and why personal context still matters.'] : ['用一段话直接回答这个主题的核心问题，便于搜索和 AI 答案引擎提取。', '说明这个回答的适用边界，以及为什么还需要回到个人测算或工具验证。'],
+      },
       {
         title: english ? 'Section title' : '小节标题',
         paragraphs: english ? ['Paragraph one', 'Paragraph two'] : ['第一段', '第二段'],

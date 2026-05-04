@@ -21,6 +21,8 @@ export default function ReportSubscriptionPanel({
   targetAchieved,
   upgradeStatusLabel,
   monthlyHighlights,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   reportId: string;
   canManage: boolean;
@@ -30,6 +32,8 @@ export default function ReportSubscriptionPanel({
   targetAchieved?: boolean;
   upgradeStatusLabel?: string;
   monthlyHighlights: MonthlyHighlight[];
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -203,6 +207,8 @@ export default function ReportSubscriptionPanel({
                     reportId,
                     question: '请围绕这份报告继续追问，优先告诉我接下来一个月最该推进的动作，以及最需要提前防的风险点。',
                     source: 'report_subscription_panel',
+                    ctaStrategyKey,
+                    sourceFamily,
                   })
                 : '/analyze'}
               onClick={() => {
@@ -213,6 +219,8 @@ export default function ReportSubscriptionPanel({
                     reportId,
                     target: canManage ? 'chat' : 'analyze',
                     source: 'report_subscription_panel',
+                    ctaStrategyKey: ctaStrategyKey || null,
+                    sourceFamily: sourceFamily || null,
                   },
                 });
               }}

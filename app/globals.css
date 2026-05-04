@@ -3,17 +3,17 @@
 @tailwind utilities;
 
 :root {
-  --bg: #f5ecde;
-  --surface: rgba(255, 250, 242, 0.86);
-  --surface-strong: #fffdf8;
+  --bg: #f6efe5;
+  --surface: rgba(255, 252, 247, 0.82);
+  --surface-strong: rgba(255, 255, 255, 0.92);
   --ink: #221a12;
   --muted: #7d6b59;
-  --line: rgba(122, 95, 58, 0.16);
+  --line: rgba(122, 95, 58, 0.14);
   --accent: #b2955d;
   --accent-strong: #8b7346;
-  --accent-soft: rgba(178, 149, 93, 0.16);
+  --accent-soft: rgba(178, 149, 93, 0.12);
   --warm: #d0a06a;
-  --shadow-soft: 0 20px 50px rgba(47, 32, 14, 0.08);
+  --shadow-soft: 0 10px 28px rgba(47, 32, 14, 0.05);
   --font-sans: 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
   --font-serif: 'Baskerville', 'Times New Roman', 'Source Han Serif SC', 'Songti SC', serif;
 }
@@ -24,10 +24,7 @@ html {
 
 body {
   min-height: 100vh;
-  background:
-    radial-gradient(circle at top left, rgba(178, 149, 93, 0.16), transparent 26%),
-    radial-gradient(circle at top right, rgba(31, 23, 15, 0.05), transparent 24%),
-    linear-gradient(180deg, #fbf5ea 0%, #f5ecde 45%, #f0e4d4 100%);
+  background: linear-gradient(180deg, #fbf7f0 0%, #f6efe5 55%, #f1e6d7 100%);
   color: var(--ink);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -35,15 +32,7 @@ body {
 
 body::before {
   content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.18) 1px, transparent 1px);
-  background-size: 32px 32px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.5), transparent 85%);
-  opacity: 0.25;
+  display: none;
 }
 
 @layer base {
@@ -80,29 +69,18 @@ body::before {
   .page-shell::before {
     content: '';
     position: fixed;
-    inset: -18% -12% auto auto;
-    width: 34rem;
-    height: 34rem;
+    inset: -22rem -18rem auto auto;
+    width: 42rem;
+    height: 42rem;
     pointer-events: none;
-    background:
-      radial-gradient(circle at 42% 42%, rgba(178, 149, 93, 0.2), transparent 36%),
-      conic-gradient(from 140deg, rgba(34, 26, 18, 0.1), transparent, rgba(208, 160, 106, 0.22), transparent);
+    background: radial-gradient(circle, rgba(178, 149, 93, 0.1), transparent 64%);
     border-radius: 999px;
-    filter: blur(6px);
-    opacity: 0.72;
+    opacity: 0.55;
     z-index: -1;
   }
 
   .page-shell::after {
-    content: '';
-    position: fixed;
-    inset: auto auto -24% -18%;
-    width: 40rem;
-    height: 40rem;
-    pointer-events: none;
-    background: radial-gradient(circle, rgba(139, 115, 70, 0.14), transparent 62%);
-    border-radius: 999px;
-    z-index: -1;
+    content: none;
   }
 
   .page-frame {
@@ -111,44 +89,44 @@ body::before {
 
   .glass-panel {
     background: var(--surface);
-    border: 1px solid rgba(255, 249, 240, 0.82);
+    border: 1px solid var(--line);
     box-shadow: var(--shadow-soft);
-    backdrop-filter: blur(18px);
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+    backdrop-filter: blur(10px);
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
   }
 
   .soft-card {
     background: var(--surface-strong);
     border: 1px solid var(--line);
     box-shadow: var(--shadow-soft);
-    transition: transform 220ms ease, box-shadow 220ms ease, border-color 220ms ease, background-color 220ms ease;
+    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
   }
 
   .product-panel {
     @apply rounded-[1.5rem] border;
-    background: rgba(255, 252, 246, 0.9);
-    border-color: rgba(139, 115, 70, 0.14);
-    box-shadow: 0 18px 42px rgba(47, 32, 14, 0.08);
+    background: rgba(255, 255, 255, 0.88);
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
   }
 
   .product-panel-strong {
     @apply rounded-[1.6rem] border;
-    background: rgba(255, 253, 248, 0.96);
-    border-color: rgba(139, 115, 70, 0.12);
-    box-shadow: 0 20px 48px rgba(47, 32, 14, 0.1);
+    background: rgba(255, 255, 255, 0.94);
+    border-color: var(--line);
+    box-shadow: var(--shadow-soft);
   }
 
   .product-subtle {
     @apply rounded-[1.2rem] border;
-    background: rgba(247, 240, 228, 0.9);
-    border-color: rgba(139, 115, 70, 0.12);
+    background: rgba(250, 246, 239, 0.9);
+    border-color: var(--line);
   }
 
   .product-chip {
-    @apply inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold;
-    background: rgba(250, 245, 237, 0.98);
+    @apply inline-flex items-center gap-2 rounded-full px-2.5 py-1 text-xs font-semibold;
+    background: rgba(255, 255, 255, 0.76);
     color: var(--ink);
-    border: 1px solid rgba(139, 115, 70, 0.12);
+    border: 1px solid var(--line);
   }
 
   .product-kicker {
@@ -161,54 +139,50 @@ body::before {
   }
 
   .section-label {
-    @apply inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em];
-    background: rgba(255, 250, 243, 0.8);
+    @apply inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.18em];
     color: var(--accent-strong);
-    border: 1px solid rgba(178, 149, 93, 0.16);
   }
 
   .hero-stat {
-    @apply rounded-3xl px-5 py-4;
-    background: rgba(255, 250, 243, 0.76);
-    border: 1px solid rgba(255, 249, 240, 0.84);
-    box-shadow: 0 14px 32px rgba(47, 32, 14, 0.06);
+    @apply rounded-2xl px-4 py-3;
+    background: rgba(255, 255, 255, 0.72);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-soft);
   }
 
   .action-primary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-bold text-white transition;
     background: linear-gradient(135deg, var(--accent), var(--accent-strong));
-    box-shadow: 0 16px 36px rgba(178, 149, 93, 0.28);
-    border: 2px solid rgba(139, 115, 70, 0.25);
-    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+    box-shadow: 0 10px 22px rgba(178, 149, 93, 0.18);
+    border: 1px solid rgba(139, 115, 70, 0.22);
+    transition: box-shadow 180ms ease, filter 180ms ease;
   }
 
   .action-primary:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 20px 40px rgba(178, 149, 93, 0.34);
+    box-shadow: 0 12px 26px rgba(178, 149, 93, 0.24);
   }
 
   .action-secondary {
     @apply inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold transition;
-    background: rgba(255, 255, 255, 0.9);
+    background: rgba(255, 255, 255, 0.72);
     color: var(--ink);
-    border: 2px solid rgba(139, 115, 70, 0.2);
-    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+    border: 1px solid var(--line);
+    transition: border-color 180ms ease, background-color 180ms ease;
   }
 
   .action-secondary:hover {
-    transform: translateY(-1px);
-    border-color: rgba(178, 149, 93, 0.5);
+    border-color: rgba(178, 149, 93, 0.42);
     background: rgba(255, 255, 255, 1);
   }
 
   .action-main {
-    box-shadow: 0 22px 46px rgba(178, 149, 93, 0.36);
+    box-shadow: 0 12px 26px rgba(178, 149, 93, 0.22);
   }
 
   .action-strip {
-    @apply rounded-[1.2rem] border p-3;
-    background: rgba(255, 255, 255, 0.62);
-    border-color: rgba(139, 115, 70, 0.16);
+    @apply rounded-[1.1rem] border p-2;
+    background: rgba(255, 255, 255, 0.52);
+    border-color: var(--line);
   }
 
   .action-guide {
@@ -224,8 +198,8 @@ body::before {
 
   .intro-panel {
     @apply rounded-[1.2rem] border px-4 py-3 text-sm leading-7;
-    background: rgba(247, 240, 228, 0.82);
-    border-color: rgba(139, 115, 70, 0.14);
+    background: rgba(250, 246, 239, 0.82);
+    border-color: var(--line);
     color: var(--muted);
   }
 
@@ -237,8 +211,8 @@ body::before {
 
   .hero-hint {
     @apply rounded-[1.2rem] border px-4 py-3 text-sm leading-7;
-    background: rgba(247, 240, 228, 0.86);
-    border-color: rgba(139, 115, 70, 0.14);
+    background: rgba(250, 246, 239, 0.86);
+    border-color: var(--line);
     color: var(--muted);
     max-width: 42rem;
   }
@@ -265,13 +239,6 @@ body::before {
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
-  }
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .glass-panel:hover,
-  .soft-card:hover {
-    transform: translateY(-1px);
   }
 }
 

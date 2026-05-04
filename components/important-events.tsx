@@ -1,10 +1,11 @@
 'use client';
 
-import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Bell, Calendar, Clock, Edit, Plus, Sparkles, Trash2 } from 'lucide-react';
+import ResultCtaLink from '@/components/result-cta-link';
 import { buildChatHref } from '@/lib/chat-entry';
 import type { EventViewModel } from '@/lib/event-view';
+import { appendSourceToHref } from '@/lib/source-url';
 import {
   formatEventDateKey,
   getEstimatedPastEventPrompt,
@@ -23,6 +24,9 @@ interface ImportantEventsProps {
   onDelete?: (eventId: string) => void;
   onToggleReminder?: (eventId: string) => void;
   onMarkAccuracy?: (eventId: string, wasAccurate: boolean) => void;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }
 
 const typeMeta = {
@@ -47,6 +51,9 @@ export default function ImportantEvents({
   onDelete,
   onToggleReminder,
   onMarkAccuracy,
+  source,
+  ctaStrategyKey,
+  sourceFamily,
 }: ImportantEventsProps) {
   const sortedEvents = [...events].sort((a, b) => getEventViewSortTime(a) - getEventViewSortTime(b));
 
@@ -80,6 +87,9 @@ export default function ImportantEvents({
                 onDelete={onDelete}
                 onToggleReminder={onToggleReminder}
                 onMarkAccuracy={onMarkAccuracy}
+                source={source}
+                ctaStrategyKey={ctaStrategyKey}
+                sourceFamily={sourceFamily}
               />
             ))}
           </div>
@@ -99,12 +109,18 @@ function EventRow({
   onDelete,
   onToggleReminder,
   onMarkAccuracy,
+  source,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   event: Event;
   onEdit?: (event: Event) => void;
   onDelete?: (eventId: string) => void;
   onToggleReminder?: (eventId: string) => void;
   onMarkAccuracy?: (eventId: string, wasAccurate: boolean) => void;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const type = typeMeta[event.type];
   const impact = impactMeta[event.impact];
@@ -192,24 +208,46 @@ function EventRow({
 
           {event.fortuneAnalysis?.reportId && (
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                href={`/result/${event.fortuneAnalysis.reportId}`}
+              <ResultCtaLink
+                href={appendSourceToHref(`/result/${event.fortuneAnalysis.reportId}`, source)}
+                page={source === 'profile_page' ? '/profile' : source === 'events_page' ? '/events' : '/history'}
+                target="important_event_report"
                 className="action-secondary min-h-0 px-4 py-2 text-xs"
+                meta={{
+                  source: source || null,
+                  ctaStrategyKey: ctaStrategyKey || null,
+                  sourceFamily: sourceFamily || null,
+                  surface: 'important_events',
+                  eventId: event.id,
+                  reportId: event.fortuneAnalysis.reportId,
+                }}
               >
                 查看关联报告
-              </Link>
+              </ResultCtaLink>
               {event.userFeedback?.wasAccurate === false && (
-                <Link
+                <ResultCtaLink
                   href={buildChatHref({
                     reportId: event.fortuneAnalysis.reportId,
                     eventId: event.id,
                     question: '这条事件已经被我标记为存在偏差，请结合原判断和实际结果，帮我拆开看偏差更可能出在结构、阶段、触发条件还是执行动作，并给我一个纠偏后的下一步方案。',
                     source: 'important_events_drift',
+                    ctaStrategyKey,
+                    sourceFamily,
                   })}
+                  page={source === 'profile_page' ? '/profile' : source === 'events_page' ? '/events' : '/history'}
+                  target="important_event_drift_chat"
                   className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700"
+                  meta={{
+                    source: 'important_events_drift',
+                    ctaStrategyKey: ctaStrategyKey || null,
+                    sourceFamily: sourceFamily || null,
+                    surface: 'important_events',
+                    eventId: event.id,
+                    reportId: event.fortuneAnalysis.reportId,
+                  }}
                 >
                   进入纠偏分析
-                </Link>
+                </ResultCtaLink>
               )}
               {event.isEstimatedPastEvent && onEdit && (
                 <button

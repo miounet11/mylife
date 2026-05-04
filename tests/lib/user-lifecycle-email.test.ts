@@ -70,10 +70,32 @@ const mockedUserOperations = userOperations as jest.Mocked<typeof userOperations
 const mockedDeliverMailWithRetry = deliverMailWithRetry as jest.MockedFunction<typeof deliverMailWithRetry>;
 const mockedSendUserLifecycleEmail = sendUserLifecycleEmail as jest.MockedFunction<typeof sendUserLifecycleEmail>;
 
+function mockLifecycleAnalytics(params?: {
+  recentBehaviorRows?: Array<Record<string, unknown>>;
+  toolInterestRows?: Array<Record<string, unknown>>;
+  lastActivityAt?: string | null;
+}) {
+  mockedAnalyticsOperations.rawQuery.mockImplementation((sql: string) => {
+    if (sql.includes("event_name = 'tool_detail_viewed'")) {
+      return (params?.toolInterestRows || []) as any;
+    }
+
+    if (sql.includes('SELECT event_name, page, meta, created_at')) {
+      return (params?.recentBehaviorRows || []) as any;
+    }
+
+    if (sql.includes('SELECT created_at')) {
+      return params?.lastActivityAt ? [{ created_at: params.lastActivityAt }] as any : [] as any;
+    }
+
+    return [] as any;
+  });
+}
+
 describe('user lifecycle email cycle', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockedAnalyticsOperations.rawQuery.mockReturnValue([]);
+    mockLifecycleAnalytics();
     mockedEventOperations.getByUserId.mockReturnValue([]);
     mockedFortuneOperations.getByUserId.mockReturnValue([]);
     mockedQuestionOperations.getByUserId.mockReturnValue([]);
@@ -240,9 +262,29 @@ describe('user lifecycle email cycle', () => {
         createdAt: '2026-04-10T00:00:00.000Z',
       },
     ] as any);
-    mockedAnalyticsOperations.rawQuery.mockReturnValue([
-      { created_at: '2026-04-10T10:00:00.000Z' },
-    ] as any);
+    mockLifecycleAnalytics({
+      recentBehaviorRows: [
+        {
+          event_name: 'report_viewed',
+          page: '/result/report_5',
+          meta: JSON.stringify({
+            source: 'knowledge_article:career-plan',
+            deviceType: 'mobile',
+          }),
+          created_at: '2026-04-19T10:00:00.000Z',
+        },
+        {
+          event_name: 'report_viewed',
+          page: '/result/report_5',
+          meta: JSON.stringify({
+            source: 'knowledge_article:career-plan',
+            deviceType: 'mobile',
+          }),
+          created_at: '2026-04-18T10:00:00.000Z',
+        },
+      ],
+      lastActivityAt: '2026-04-19T10:00:00.000Z',
+    });
 
     await runUserLifecycleEmailCycle({
       trigger: 'manual',
@@ -257,9 +299,21 @@ describe('user lifecycle email cycle', () => {
       expect.objectContaining({
         stageKey: 'report_day2_no_followup',
         reportId: 'report_5',
-        primaryCtaHref: expect.stringContaining('lifecycle_report_followup'),
+        subject: expect.stringContaining('移动端'),
+        intro: expect.stringContaining('移动端'),
+        detail: expect.stringContaining('继续追问承接仍然偏弱'),
+        primaryCtaHref: expect.stringContaining('source=lifecycle_report_followup%3Aknowledge_article%3Acareer-plan'),
+        secondaryCtaHref: expect.stringContaining('/result/report_5?source=lifecycle_report_followup%3Aknowledge_article%3Acareer-plan'),
       })
     );
+    expect(mockedLifecycleRuns.create).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: 'report_day2_no_followup',
+      meta: expect.objectContaining({
+        lastSource: 'knowledge_article:career-plan',
+        lastDeviceType: 'mobile',
+        recentReportToChatRate: 0,
+      }),
+    }));
   });
 
   it('routes tool-interest users back to the same tool when they viewed but did not run it', async () => {
@@ -280,20 +334,37 @@ describe('user lifecycle email cycle', () => {
         createdAt: '2026-04-12T00:00:00.000Z',
       },
     ] as any);
-    mockedAnalyticsOperations.rawQuery.mockImplementation((sql: string) => {
-      if (sql.includes("event_name = 'tool_detail_viewed'")) {
-        return [
-          {
-            page: '/tools/career-role-fit',
-            meta: JSON.stringify({ toolSlug: 'career-role-fit' }),
-            created_at: '2026-04-18T00:00:00.000Z',
-          },
-        ] as any;
-      }
-
-      return [
-        { created_at: '2026-04-19T10:00:00.000Z' },
-      ] as any;
+    mockLifecycleAnalytics({
+      recentBehaviorRows: [
+        {
+          event_name: 'tool_detail_viewed',
+          page: '/tools/career-role-fit',
+          meta: JSON.stringify({
+            toolSlug: 'career-role-fit',
+            source: 'knowledge_article:career-plan',
+            deviceType: 'mobile',
+          }),
+          created_at: '2026-04-19T10:00:00.000Z',
+        },
+        {
+          event_name: 'tool_detail_viewed',
+          page: '/tools/career-role-fit',
+          meta: JSON.stringify({
+            toolSlug: 'career-role-fit',
+            source: 'knowledge_article:career-plan',
+            deviceType: 'mobile',
+          }),
+          created_at: '2026-04-18T09:00:00.000Z',
+        },
+      ],
+      toolInterestRows: [
+        {
+          page: '/tools/career-role-fit',
+          meta: JSON.stringify({ toolSlug: 'career-role-fit' }),
+          created_at: '2026-04-18T00:00:00.000Z',
+        },
+      ],
+      lastActivityAt: '2026-04-19T10:00:00.000Z',
     });
     mockedToolSessionOperations.listByUser.mockReturnValue([] as any);
     mockedLifecycleRuns.getByStageAndEmail.mockImplementation((stageKey) => (
@@ -320,8 +391,19 @@ describe('user lifecycle email cycle', () => {
       expect.objectContaining({
         stageKey: 'tool_interest_day1_no_run:career-role-fit',
         reportId: 'report_6',
-        primaryCtaHref: expect.stringContaining('/tools/career-role-fit?source=lifecycle_tool_interest'),
+        intro: expect.stringContaining('移动端'),
+        detail: expect.stringContaining('详情到开跑在移动端仍有明显摩擦'),
+        primaryCtaHref: expect.stringContaining('/tools/career-role-fit?source=lifecycle_tool_interest%3Aknowledge_article%3Acareer-plan'),
+        secondaryCtaHref: expect.stringContaining('source=lifecycle_tool_interest_secondary%3Aknowledge_article%3Acareer-plan'),
       })
     );
+    expect(mockedLifecycleRuns.create).toHaveBeenCalledWith(expect.objectContaining({
+      stageKey: 'tool_interest_day1_no_run:career-role-fit',
+      meta: expect.objectContaining({
+        lastSource: 'knowledge_article:career-plan',
+        lastDeviceType: 'mobile',
+        recentToolToRunRate: 0,
+      }),
+    }));
   });
 });

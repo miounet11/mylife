@@ -2,7 +2,7 @@ jest.mock('@/lib/agentic-report/llm-client', () => ({
   callJsonLLM: jest.fn(),
 }));
 jest.mock('@/lib/llm-model-fallback', () => ({
-  getModelFallbackChain: jest.fn(() => ['gpt-5.2', 'auto']),
+  getModelFallbackChain: jest.fn(() => ['grok-420-fast', 'auto']),
 }));
 jest.mock('@/lib/llm-provider-health', () => ({
   assessScopeProviderHealth: jest.fn(() => ({

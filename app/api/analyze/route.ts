@@ -4,6 +4,7 @@ import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
 import { deliverMailWithRetry, isEmailDeliveryConfigured, sendReportReadyEmail } from '@/lib/email';
 import { trackServerEvent } from '@/lib/analytics';
 import { CURRENT_REPORT_VERSION, generateVersionedReport } from '@/lib/report-pipeline';
+import { buildAnalysisWorkflowSnapshot, loadMingliAnalysisWorkflow } from '@/lib/analysis-workflow';
 import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
 import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
@@ -34,6 +35,8 @@ type AnalyzeInput = {
   useDaylightSaving?: boolean;
   useSeparateZiHour?: boolean;
   tacitContext?: Record<string, unknown>;
+  source?: string | null;
+  toolSlug?: string | null;
 };
 
 type StreamStageEvent = {
@@ -87,8 +90,11 @@ type AnalyzeStageRef = {
 
 export async function POST(request: NextRequest) {
   const requestStartedAt = Date.now();
+  const userAgent = request.headers.get('user-agent');
   const stageRef: AnalyzeStageRef = { current: 'received' };
   let clientKey = 'unknown';
+  let source = '';
+  let toolSlug = '';
   try {
     clientKey = getClientKey(request);
     const rateLimit = checkRateLimit(`analyze:${clientKey}`, RATE_LIMITS.analyze);
@@ -100,6 +106,8 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await request.json() as AnalyzeInput;
+    source = typeof data.source === 'string' ? data.source.trim() : '';
+    toolSlug = typeof data.toolSlug === 'string' ? data.toolSlug.trim() : '';
     const validation = validateAnalyzeRequest(data);
     if (!validation.valid) {
       return NextResponse.json(
@@ -114,12 +122,14 @@ export async function POST(request: NextRequest) {
       return streamAnalyze(data, {
         requestStartedAt,
         clientKey,
+        userAgent,
       });
     }
 
     const execution = await executeAnalyze(data, {
       requestStartedAt,
       requestMode: 'json',
+      userAgent,
       stageRef,
     });
     return NextResponse.json({
@@ -149,6 +159,7 @@ export async function POST(request: NextRequest) {
     console.error('[API] 命理分析失败:', error);
     trackServerEvent({
       sessionId: clientKey,
+      userAgent,
       eventName: 'analyze_failed',
       page: '/analyze',
       meta: {
@@ -156,6 +167,8 @@ export async function POST(request: NextRequest) {
         durationMs: Date.now() - requestStartedAt,
         error: error instanceof Error ? error.message : 'unknown',
         requestMode: 'json',
+        source: source || null,
+        toolSlug: toolSlug || null,
       },
     });
     return NextResponse.json(
@@ -170,6 +183,7 @@ async function streamAnalyze(
   context: {
     requestStartedAt: number;
     clientKey: string;
+    userAgent?: string | null;
   }
 ) {
   const encoder = new TextEncoder();
@@ -213,6 +227,7 @@ async function streamAnalyze(
         const execution = await executeAnalyze(data, {
           requestStartedAt: context.requestStartedAt,
           requestMode: 'stream',
+          userAgent: context.userAgent,
           stageRef,
           onStage: (event) => send(event),
         });
@@ -247,6 +262,7 @@ async function streamAnalyze(
         console.error('[API] 流式命理分析失败:', error);
         trackServerEvent({
           sessionId: context.clientKey,
+          userAgent: context.userAgent,
           eventName: 'analyze_failed',
           page: '/analyze',
           meta: {
@@ -254,6 +270,8 @@ async function streamAnalyze(
             durationMs: Date.now() - context.requestStartedAt,
             error: error instanceof Error ? error.message : 'unknown',
             requestMode: 'stream',
+            source: data.source || null,
+            toolSlug: data.toolSlug || null,
           },
         });
         send({
@@ -282,6 +300,7 @@ async function executeAnalyze(
   options?: {
     requestStartedAt?: number;
     requestMode?: 'json' | 'stream';
+    userAgent?: string | null;
     stageRef?: AnalyzeStageRef;
     onStage?: (event: StreamStageEvent) => void;
   }
@@ -294,10 +313,14 @@ async function executeAnalyze(
   };
 
   const userId = await getOrCreateGuestUserId();
+  const analysisWorkflow = loadMingliAnalysisWorkflow();
+  const analysisWorkflowSnapshot = buildAnalysisWorkflowSnapshot(analysisWorkflow);
   const recentToolSessions = toolSessionOperations.listByUser(userId, 8);
   const tacitContext = sanitizeTacitKnowledgeInput(data.tacitContext);
   const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
   const tacitSignals = buildTacitKnowledgeFocusTags(tacitContext);
+  const source = typeof data.source === 'string' ? data.source.trim() : '';
+  const toolSlug = typeof data.toolSlug === 'string' ? data.toolSlug.trim() : '';
   const timing = resolveEffectiveTiming(data);
   const timezone = (data.timezone as number) || 8;
   const useSeparateZiHour = Boolean(data.useSeparateZiHour);
@@ -340,6 +363,10 @@ async function executeAnalyze(
   });
 
   const toolMemory = summarizeToolSessions(recentToolSessions, null, 5);
+  finalResult.analysis = {
+    ...(finalResult.analysis || {}),
+    workflow: analysisWorkflowSnapshot,
+  };
   if (toolMemory) {
     finalResult.analysis = {
       ...(finalResult.analysis || {}),
@@ -433,6 +460,7 @@ async function executeAnalyze(
   trackServerEvent({
     userId,
     sessionId: userId,
+    userAgent: options?.userAgent,
     eventName: 'analyze_submitted',
     page: '/analyze',
     meta: {
@@ -449,12 +477,15 @@ async function executeAnalyze(
       useDaylightSaving: !!data.useDaylightSaving,
       useSeparateZiHour: !!data.useSeparateZiHour,
       tacitSignalCount: tacitSignals.length,
+      source: source || 'direct',
+      toolSlug: toolSlug || undefined,
     },
   });
 
   trackServerEvent({
     userId,
     sessionId: userId,
+    userAgent: options?.userAgent,
     eventName: 'report_generated',
     page: `/result/${reportId}`,
     meta: {
@@ -468,11 +499,14 @@ async function executeAnalyze(
       deliveryTier: finalResult.analysis?.qualityAudit?.deliveryTier || 'basic',
       expertTargetAchieved: !!finalResult.analysis?.qualityAudit?.targetAchieved,
       upgradeQueued: queuedUpgrade.queued,
+      source: source || 'direct',
+      toolSlug: toolSlug || undefined,
     },
   });
   trackServerEvent({
     userId,
     sessionId: userId,
+    userAgent: options?.userAgent,
     eventName: 'analyze_completed',
     page: `/result/${reportId}`,
     meta: {
@@ -497,6 +531,8 @@ async function executeAnalyze(
         ? finalResult.analysis.orchestration.failed.length
         : 0,
       tacitSignalCount: tacitSignals.length,
+      source: source || 'direct',
+      toolSlug: toolSlug || undefined,
     },
   });
 

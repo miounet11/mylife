@@ -1,7 +1,17 @@
 // PM2配置文件
-const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS === '1';
-const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '0';
-const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '0';
+const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS !== '0';
+const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '1';
+const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '1';
+const cronEnv = {
+  CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
+  CONTENT_SCHEDULER_CRON_TOKEN: 'life-kline-scheduler-local-2026',
+  CONTENT_GENERATION_CRON_TOKEN: 'life-kline-content-generation-local-2026',
+  KNOWLEDGE_ACQUISITION_CRON_TOKEN: 'life-kline-knowledge-local-2026',
+  REPORT_UPGRADE_CRON_TOKEN: 'life-kline-upgrade-local-2026',
+  REPORT_MONTHLY_DIGEST_CRON_TOKEN: 'life-kline-monthly-digest-local-2026',
+  EMAIL_RETRY_CRON_TOKEN: 'life-kline-email-retry-local-2026',
+  USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
+};
 
 const nextApp = {
   name: 'life-kline-next',
@@ -14,10 +24,13 @@ const nextApp = {
     NODE_ENV: 'production',
     PORT: 3000,
     ENABLE_AGENTIC_PIPELINE: enableAgenticPipeline,
-    DEFAULT_MODEL: 'gpt-5.4',
-    MODEL_FALLBACK_CHAIN: 'gpt-5.4,gpt-5.2-codex,grok-420-fast,auto',
-    REPORT_MODEL_FALLBACK_CHAIN: 'gpt-5.4,gpt-5.2-codex,auto',
-    REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN: 'gpt-5.4,gpt-5.2-codex,auto',
+    DEFAULT_MODEL: 'grok-420-fast',
+    OPEN_AGENT_RUNTIME_MODEL: 'grok-420-fast',
+    CONTENT_GENERATION_MODEL: 'grok-420-fast',
+    MODEL_FALLBACK_CHAIN: 'auto',
+    REPORT_MODEL_FALLBACK_CHAIN: 'auto',
+    REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN: 'auto',
+    CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto',
     OPEN_AGENT_RUNTIME_ENABLED: openAgentRuntimeEnabled,
     LLM_HEALTH_WINDOW_MINUTES: '30',
     LLM_CIRCUIT_OPEN_MIN_ATTEMPTS: '6',
@@ -28,7 +41,7 @@ const nextApp = {
     LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES: '2',
     LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK: '2',
     LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES: '9',
-    CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
+    ...cronEnv,
     CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
     CONTENT_RADAR_INTERVAL_MS: '2700000',
     CONTENT_RADAR_REQUEST_TIMEOUT_MS: '60000',
@@ -59,7 +72,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       EMAIL_RETRY_ENABLED: '1',
-      EMAIL_RETRY_CRON_TOKEN: 'life-kline-email-retry-local-2026',
+      EMAIL_RETRY_CRON_TOKEN: cronEnv.EMAIL_RETRY_CRON_TOKEN,
       EMAIL_RETRY_RUN_URL: 'http://127.0.0.1:3000/api/admin/email/retry/cron',
       EMAIL_RETRY_INTERVAL_MS: '120000',
       EMAIL_RETRY_BATCH_SIZE: '5',
@@ -88,7 +101,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       CONTENT_RADAR_ENABLED: '1',
-      CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
+      CONTENT_RADAR_CRON_TOKEN: cronEnv.CONTENT_RADAR_CRON_TOKEN,
       CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
       CONTENT_RADAR_INTERVAL_MS: '2700000',
       CONTENT_RADAR_REQUEST_TIMEOUT_MS: '60000',
@@ -116,7 +129,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       CONTENT_GENERATION_ENABLED: '1',
-      CONTENT_GENERATION_CRON_TOKEN: 'life-kline-content-generation-local-2026',
+      CONTENT_GENERATION_CRON_TOKEN: cronEnv.CONTENT_GENERATION_CRON_TOKEN,
       CONTENT_GENERATION_JOB_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/generate/cron',
       CONTENT_GENERATION_JOB_INTERVAL_MS: '60000',
       CONTENT_GENERATION_JOB_REQUEST_TIMEOUT_MS: '900000',
@@ -144,11 +157,11 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       CONTENT_SCHEDULER_ENABLED: '1',
-      CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
-      CONTENT_SCHEDULER_CRON_TOKEN: 'life-kline-scheduler-local-2026',
+      CONTENT_RADAR_CRON_TOKEN: cronEnv.CONTENT_RADAR_CRON_TOKEN,
+      CONTENT_SCHEDULER_CRON_TOKEN: cronEnv.CONTENT_SCHEDULER_CRON_TOKEN,
       CONTENT_SCHEDULER_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/scheduler/cron',
       CONTENT_SCHEDULER_INTERVAL_MS: '1200000',
-      CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS: '60000',
+      CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS: '900000',
       CONTENT_SCHEDULER_STARTUP_DELAY_MS: '20000',
       CONTENT_SCHEDULER_RETRY_DELAY_MS: '60000',
       CONTENT_SCHEDULER_TIMEZONE_OFFSET_MINUTES: '480',
@@ -182,7 +195,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       KNOWLEDGE_ACQUISITION_ENABLED: '1',
-      KNOWLEDGE_ACQUISITION_CRON_TOKEN: 'life-kline-knowledge-local-2026',
+      KNOWLEDGE_ACQUISITION_CRON_TOKEN: cronEnv.KNOWLEDGE_ACQUISITION_CRON_TOKEN,
       KNOWLEDGE_ACQUISITION_RUN_URL: 'http://127.0.0.1:3000/api/admin/knowledge/sources/cron',
       KNOWLEDGE_ACQUISITION_INTERVAL_MS: '1800000',
       KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS: '180000',
@@ -220,14 +233,14 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       REPORT_UPGRADE_ENABLED: '1',
-      REPORT_UPGRADE_CRON_TOKEN: 'life-kline-upgrade-local-2026',
+      REPORT_UPGRADE_CRON_TOKEN: cronEnv.REPORT_UPGRADE_CRON_TOKEN,
       REPORT_UPGRADE_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-upgrade/cron',
       REPORT_UPGRADE_INTERVAL_MS: '180000',
       REPORT_UPGRADE_BATCH_SIZE: '2',
       REPORT_UPGRADE_REQUEST_TIMEOUT_MS: '60000',
       REPORT_UPGRADE_STARTUP_DELAY_MS: '20000',
       REPORT_UPGRADE_RETRY_DELAY_MS: '60000',
-      REPORT_MONTHLY_DIGEST_CRON_TOKEN: 'life-kline-monthly-digest-local-2026',
+      REPORT_MONTHLY_DIGEST_CRON_TOKEN: cronEnv.REPORT_MONTHLY_DIGEST_CRON_TOKEN,
       REPORT_MONTHLY_DIGEST_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-monthly-digest/cron',
       REPORT_MONTHLY_DIGEST_INTERVAL_MS: '21600000',
       REPORT_MONTHLY_DIGEST_BATCH_SIZE: '20',
@@ -251,7 +264,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       USER_LIFECYCLE_EMAIL_ENABLED: '1',
-      USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
+      USER_LIFECYCLE_EMAIL_CRON_TOKEN: cronEnv.USER_LIFECYCLE_EMAIL_CRON_TOKEN,
       USER_LIFECYCLE_EMAIL_RUN_URL: 'http://127.0.0.1:3000/api/admin/email/lifecycle/cron',
       USER_LIFECYCLE_EMAIL_INTERVAL_MS: '21600000',
       USER_LIFECYCLE_EMAIL_BATCH_SIZE: '25',
@@ -275,7 +288,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       REPORT_MONTHLY_DIGEST_ENABLED: '1',
-      REPORT_MONTHLY_DIGEST_CRON_TOKEN: 'life-kline-monthly-digest-local-2026',
+      REPORT_MONTHLY_DIGEST_CRON_TOKEN: cronEnv.REPORT_MONTHLY_DIGEST_CRON_TOKEN,
       REPORT_MONTHLY_DIGEST_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-monthly-digest/cron',
       REPORT_MONTHLY_DIGEST_INTERVAL_MS: '21600000',
       REPORT_MONTHLY_DIGEST_BATCH_SIZE: '20',

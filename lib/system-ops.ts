@@ -113,6 +113,7 @@ export function getSystemOpsSnapshot(params?: {
   mode?: 'full' | 'summary';
   knowledgeRunStaleMs?: number;
   contentGenerateStaleMinutes?: number;
+  contentPublishStaleMinutes?: number;
 }) : SystemOpsSnapshot {
   const mode = params?.mode || 'full';
   const summaryMode = mode === 'summary';
@@ -175,6 +176,8 @@ export function getSystemOpsSnapshot(params?: {
       getContentSchedulerGenerateCooldownMinutes() * 2,
       360
     );
+  const contentPublishStaleMinutes = params?.contentPublishStaleMinutes
+    ?? 36 * 60;
 
   if (scheduler.draftReserveCount <= 0 && scheduler.needsDraftReplenishment) {
     contentSeverity = 'critical';
@@ -187,6 +190,14 @@ export function getSystemOpsSnapshot(params?: {
   if (scheduler.needsDraftReplenishment && (scheduler.minutesSinceLastGenerate || 0) >= contentGenerateStaleMinutes) {
     contentSeverity = maxSeverity([contentSeverity, scheduler.draftReserveCount <= 0 ? 'critical' : 'warning']);
     contentBlockers.push(`内容补稿已超过 ${scheduler.minutesSinceLastGenerate} 分钟未恢复。`);
+  }
+
+  if (
+    scheduler.draftReserveCount > 0
+    && (scheduler.minutesSinceLastPublish || 0) >= contentPublishStaleMinutes
+  ) {
+    contentSeverity = maxSeverity([contentSeverity, 'critical']);
+    contentBlockers.push(`内容发布已超过 ${scheduler.minutesSinceLastPublish} 分钟没有推进，请检查 PM2 后台 worker 或 cron 调度。`);
   }
 
   if (!summaryMode && contentOps.generationQueue.length === 0) {

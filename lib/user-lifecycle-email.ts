@@ -15,6 +15,7 @@ import { backfillEmailSubscriptionsFromUsers } from '@/lib/subscription-backfill
 import { formatLocalDateKey, generateId } from '@/lib/utils';
 import type { FortuneRecord } from '@/lib/user-types';
 import { buildChatHref } from '@/lib/chat-entry';
+import { buildSourceCtaStrategy } from '@/lib/source-context';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
 type LifecycleTrigger = 'cron' | 'manual';
@@ -44,6 +45,17 @@ type LifecycleCandidate = {
   subject: string;
   bullets: string[];
   meta?: Record<string, unknown>;
+};
+
+type LifecycleBehaviorContext = {
+  lastSource?: string | null;
+  lastPage?: string | null;
+  lastDeviceType?: string | null;
+  lastToolSlug?: string | null;
+  lastActivityAt?: string | null;
+  recentReportToChatRate?: number | null;
+  recentToolToRunRate?: number | null;
+  recentAuthVerifyRate?: number | null;
 };
 
 const STAGES: LifecycleStageDefinition[] = [
@@ -108,6 +120,83 @@ function parseLifecycleMeta(value?: string | null) {
   } catch {
     return {};
   }
+}
+
+function mapLifecycleDeviceLabel(deviceType?: string | null) {
+  if (deviceType === 'mobile') return '移动端';
+  if (deviceType === 'desktop') return '桌面端';
+  if (deviceType === 'tablet') return '平板';
+  return '当前这端';
+}
+
+function getRecentLifecycleBehaviorContext(userId: string): LifecycleBehaviorContext {
+  const rows = analyticsOperations.rawQuery(`
+    SELECT event_name, page, meta, created_at
+    FROM analytics_events
+    WHERE user_id = ?
+      AND event_name NOT IN ('email_delivery_succeeded', 'email_delivery_failed', 'email_retry_enqueued', 'email_retry_processed')
+    ORDER BY datetime(created_at) DESC
+    LIMIT 60
+  `, [userId]) as Array<{
+    event_name: string;
+    page?: string | null;
+    meta?: string | null;
+    created_at?: string | null;
+  }>;
+
+  if (!rows.length) {
+    return {};
+  }
+
+  let lastSource = '';
+  let lastPage = '';
+  let lastDeviceType = '';
+  let lastToolSlug = '';
+  let lastActivityAt = rows[0]?.created_at || null;
+  let reportViews = 0;
+  let chatCompleted = 0;
+  let toolDetailViews = 0;
+  let toolRuns = 0;
+  let authRequested = 0;
+  let authVerified = 0;
+
+  for (const row of rows) {
+    const meta = parseLifecycleMeta(row.meta);
+    const source = typeof meta.source === 'string' ? meta.source.trim() : '';
+    const deviceType = typeof meta.deviceType === 'string' ? meta.deviceType.trim() : '';
+    const toolSlug = typeof meta.toolSlug === 'string' ? meta.toolSlug.trim() : '';
+
+    if (!lastSource && source) {
+      lastSource = source;
+    }
+    if (!lastPage && row.page) {
+      lastPage = row.page;
+    }
+    if (!lastDeviceType && deviceType) {
+      lastDeviceType = deviceType;
+    }
+    if (!lastToolSlug && toolSlug) {
+      lastToolSlug = toolSlug;
+    }
+
+    if (row.event_name === 'report_viewed') reportViews += 1;
+    if (row.event_name === 'chat_completed') chatCompleted += 1;
+    if (row.event_name === 'tool_detail_viewed') toolDetailViews += 1;
+    if (row.event_name === 'tool_run_started') toolRuns += 1;
+    if (row.event_name === 'auth_code_requested') authRequested += 1;
+    if (row.event_name === 'auth_verified') authVerified += 1;
+  }
+
+  return {
+    lastSource: lastSource || null,
+    lastPage: lastPage || null,
+    lastDeviceType: lastDeviceType || null,
+    lastToolSlug: lastToolSlug || null,
+    lastActivityAt,
+    recentReportToChatRate: reportViews > 0 ? Math.round((chatCompleted / reportViews) * 100) : null,
+    recentToolToRunRate: toolDetailViews > 0 ? Math.round((toolRuns / toolDetailViews) * 100) : null,
+    recentAuthVerifyRate: authRequested > 0 ? Math.round((authVerified / authRequested) * 100) : null,
+  };
 }
 
 function getReportFollowupSummary(userId: string, reportId: string) {
@@ -219,6 +308,7 @@ function buildReportNoFollowupCandidate(params: {
   email: string;
   name: string;
   now: Date;
+  behavior: LifecycleBehaviorContext;
 }) {
   const report = hasFirstReport(params.userId);
   if (!report) {
@@ -235,6 +325,12 @@ function buildReportNoFollowupCandidate(params: {
     return null;
   }
 
+  const source = params.behavior.lastSource
+    ? `lifecycle_report_followup:${params.behavior.lastSource}`
+    : 'lifecycle_report_followup';
+  const sourceCtaStrategy = buildSourceCtaStrategy(source);
+  const deviceLabel = mapLifecycleDeviceLabel(params.behavior.lastDeviceType);
+  const reportToChatRate = params.behavior.recentReportToChatRate;
   return {
     stage: STAGES[1],
     userId: params.userId,
@@ -246,14 +342,20 @@ function buildReportNoFollowupCandidate(params: {
     primaryCtaHref: buildChatHref({
       reportId: report.id,
       question: '请围绕我这份已经生成的报告，按结构、阶段、环境、动作四层继续拆解：我现在最该先推进什么，为什么，最需要防什么偏差？',
-      source: 'lifecycle_report_followup',
+      source,
+      ctaStrategyKey: sourceCtaStrategy.strategyKey,
+      sourceFamily: sourceCtaStrategy.sourceFamily,
     }),
     secondaryCtaLabel: '回到结果页',
-    secondaryCtaHref: `/result/${encodeURIComponent(report.id)}`,
-    intro: '你的报告已经生成，但还没有形成后续动作。',
-    detail: '单看结果页很容易停在“看过了”，但真正带来留存的，是继续问、继续验证、继续把结论落成事件和工具动作。',
+    secondaryCtaHref: `/result/${encodeURIComponent(report.id)}?source=${encodeURIComponent(source)}`,
+    intro: `${deviceLabel}上这份报告已经生成，但还没有形成后续动作。`,
+    detail: reportToChatRate !== null && reportToChatRate < 35
+      ? `最近真实行为里，结果页后的继续追问承接仍然偏弱，尤其在${deviceLabel}更容易停在“看过了”。现在最值得做的是直接围绕这份报告问一个最卡的问题，把结论推进成下一步动作。`
+      : '单看结果页很容易停在“看过了”，但真正带来留存的，是继续问、继续验证、继续把结论落成事件和工具动作。',
     previewText: '你的报告已经生成，但还没有形成聊天、工具或事件上的后续动作。',
-    subject: '这份报告还差一步，别停在只看结果',
+    subject: reportToChatRate !== null && reportToChatRate < 35
+      ? `${deviceLabel}上的这份报告还差一步，别停在只看结果`
+      : '这份报告还差一步，别停在只看结果',
     bullets: [
       '从结果页继续问一个最卡你的问题，通常比重新测一次更有价值。',
       '把过去已发生的节点存成事件，后续准确度和方法才会越来越可用。',
@@ -262,6 +364,9 @@ function buildReportNoFollowupCandidate(params: {
     meta: {
       reportId: report.id,
       hoursSinceReportCreated: Math.round(hoursSinceReportCreated),
+      lastSource: params.behavior.lastSource || null,
+      lastDeviceType: params.behavior.lastDeviceType || null,
+      recentReportToChatRate: reportToChatRate,
     },
   } satisfies LifecycleCandidate;
 }
@@ -271,6 +376,7 @@ function buildToolInterestNoRunCandidate(params: {
   email: string;
   name: string;
   now: Date;
+  behavior: LifecycleBehaviorContext;
 }) {
   const report = hasFirstReport(params.userId);
   if (!report) {
@@ -288,8 +394,12 @@ function buildToolInterestNoRunCandidate(params: {
   }
 
   const tool = interest.tool as ToolDefinition;
+  const source = `lifecycle_tool_interest:${params.behavior.lastSource || tool.slug}`;
+  const sourceCtaStrategy = buildSourceCtaStrategy(source);
+  const deviceLabel = mapLifecycleDeviceLabel(params.behavior.lastDeviceType);
+  const toolRunRate = params.behavior.recentToolToRunRate;
   const sourceParams = new URLSearchParams({
-    source: 'lifecycle_tool_interest',
+    source,
   });
   const toolHref = `/tools/${encodeURIComponent(tool.slug)}?${sourceParams.toString()}`;
 
@@ -310,10 +420,14 @@ function buildToolInterestNoRunCandidate(params: {
       reportId: report.id,
       intent: tool.chatIntent || tool.slug,
       question: `我之前看过“${tool.shortTitle}”，但还没有真正开始。请结合我的报告判断：这个工具现在最适合解决什么问题，开跑前我应该先想清楚什么？`,
-      source: 'lifecycle_tool_interest_secondary',
+      source: `lifecycle_tool_interest_secondary:${params.behavior.lastSource || tool.slug}`,
+      ctaStrategyKey: sourceCtaStrategy.strategyKey,
+      sourceFamily: sourceCtaStrategy.sourceFamily,
     }),
-    intro: `你最近看过“${tool.shortTitle}”，但还没有真正开始。`,
-    detail: '最近数据里，工具浏览在上升，但很多用户停在“看过工具介绍”没有进入实际测算。你已经有报告底盘，现在最值得做的是回到上次感兴趣的工具，把它跑完并拿到一个可执行结论。',
+    intro: `你最近在${deviceLabel}看过“${tool.shortTitle}”，但还没有真正开始。`,
+    detail: toolRunRate !== null && toolRunRate < 35
+      ? `最近真实行为里，工具详情到开跑在${deviceLabel}仍有明显摩擦。你已经有报告底盘，现在最值得做的是回到上次感兴趣的工具，把它跑完并拿到一个可执行结论。`
+      : '最近数据里，工具浏览在上升，但很多用户停在“看过工具介绍”没有进入实际测算。你已经有报告底盘，现在最值得做的是回到上次感兴趣的工具，把它跑完并拿到一个可执行结论。',
     previewText: `你最近看过“${tool.shortTitle}”，但还没有开始运行。`,
     subject: `继续完成上次感兴趣的${tool.shortTitle}`,
     bullets: [
@@ -326,6 +440,9 @@ function buildToolInterestNoRunCandidate(params: {
       toolSlug: tool.slug,
       viewedAt: interest.viewedAt,
       hoursSinceViewed: Math.round(hoursSinceViewed),
+      lastSource: params.behavior.lastSource || null,
+      lastDeviceType: params.behavior.lastDeviceType || null,
+      recentToolToRunRate: toolRunRate,
     },
   } satisfies LifecycleCandidate;
 }
@@ -335,6 +452,7 @@ function buildInactiveReactivationCandidate(params: {
   email: string;
   name: string;
   now: Date;
+  behavior: LifecycleBehaviorContext;
 }) {
   const lastActivityAt = getLastUserActivityAt(params.userId);
   const inactiveDays = getDaysSince(lastActivityAt, params.now);
@@ -344,6 +462,8 @@ function buildInactiveReactivationCandidate(params: {
 
   const report = hasFirstReport(params.userId);
   const weekKey = getCurrentLifecycleWeekKey(params.now);
+  const deviceLabel = mapLifecycleDeviceLabel(params.behavior.lastDeviceType);
+  const source = `lifecycle_reactivation:${params.behavior.lastSource || 'updates'}`;
 
   if (report) {
     return {
@@ -357,10 +477,10 @@ function buildInactiveReactivationCandidate(params: {
       report,
       reasons: ['inactive_with_report'],
       primaryCtaLabel: '回看我的报告',
-      primaryCtaHref: `/result/${encodeURIComponent(report.id)}`,
+      primaryCtaHref: `/result/${encodeURIComponent(report.id)}?source=${encodeURIComponent(source)}`,
       secondaryCtaLabel: '进入更新中心',
-      secondaryCtaHref: '/updates',
-      intro: '这几天你还没有回来继续使用。',
+      secondaryCtaHref: `/updates?source=${encodeURIComponent(source)}`,
+      intro: `这几天你还没有在${deviceLabel}回来继续使用。`,
       detail: '最近真实趋势里，用户不是没进站，而是进来后没有继续走到聊天和回访。你已经有底盘报告，现在最值得做的是回来完成一次有上下文的回看。',
       previewText: '你已经有报告，但最近 7 天没有继续回访。',
       subject: '回来看一眼你的报告，别让判断断在半路',
@@ -373,6 +493,8 @@ function buildInactiveReactivationCandidate(params: {
         reportId: report.id,
         inactiveDays: Math.floor(inactiveDays),
         lastActivityAt,
+        lastSource: params.behavior.lastSource || null,
+        lastDeviceType: params.behavior.lastDeviceType || null,
       },
     } satisfies LifecycleCandidate;
   }
@@ -388,10 +510,10 @@ function buildInactiveReactivationCandidate(params: {
     report: null,
     reasons: ['inactive_without_report'],
     primaryCtaLabel: '重新开始分析',
-    primaryCtaHref: '/analyze',
+    primaryCtaHref: `/analyze?source=${encodeURIComponent(source)}`,
     secondaryCtaLabel: '进入更新中心',
-    secondaryCtaHref: '/updates',
-    intro: '这几天你还没有继续使用。',
+    secondaryCtaHref: `/updates?source=${encodeURIComponent(source)}`,
+    intro: `这几天你还没有在${deviceLabel}继续使用。`,
     detail: '如果上次只是浏览了内容但没有完成分析，现在最值得回来的动作仍然是先完成第一份结果。没有个人底盘，后续提醒很难真正帮助你。',
     previewText: '最近 7 天你还没有继续使用，建议回来完成第一次分析。',
     subject: '回来继续一步，把第一次分析真正做完',
@@ -402,6 +524,8 @@ function buildInactiveReactivationCandidate(params: {
     meta: {
       inactiveDays: Math.floor(inactiveDays),
       lastActivityAt,
+      lastSource: params.behavior.lastSource || null,
+      lastDeviceType: params.behavior.lastDeviceType || null,
     },
   } satisfies LifecycleCandidate;
 }
@@ -413,11 +537,12 @@ function buildLifecycleCandidates(params: {
   createdAt?: string | null;
   now: Date;
 }) {
+  const behavior = getRecentLifecycleBehaviorContext(params.userId);
   return [
     buildSignupNoReportCandidate(params),
-    buildReportNoFollowupCandidate(params),
-    buildToolInterestNoRunCandidate(params),
-    buildInactiveReactivationCandidate(params),
+    buildReportNoFollowupCandidate({ ...params, behavior }),
+    buildToolInterestNoRunCandidate({ ...params, behavior }),
+    buildInactiveReactivationCandidate({ ...params, behavior }),
   ].filter((item): item is LifecycleCandidate => !!item);
 }
 

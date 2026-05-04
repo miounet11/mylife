@@ -299,8 +299,8 @@ function computeReportAttemptTimeouts(phase: PhaseKey, totalBudgetMs: number, at
 
   const weights = phase === 'structure'
     ? attemptCount === 2
-      ? [0.74, 0.26]
-      : [0.66, 0.22, 0.12]
+      ? [0.82, 0.18]
+      : [0.78, 0.16, 0.06]
     : attemptCount === 2
       ? [0.7, 0.3]
       : [0.6, 0.24, 0.16];

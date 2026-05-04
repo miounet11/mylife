@@ -4,6 +4,7 @@ import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/c
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
 import { normalizeAlternateLanguagePaths } from '@/lib/public-content-seo';
 import { listToolCategories, listToolDefinitions } from '@/lib/tools';
+import { getApprovedVisualAssets } from '@/lib/visual-asset-library';
 import { worldYiPublicRoutes } from '@/lib/world-yi-public-stats';
 
 const SITE_URL = 'https://www.life-kline.com';
@@ -46,6 +47,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const knowledgeTopics = listKnowledgeTopicHubRoutes();
   const toolCategories = listToolCategories();
   const tools = listToolDefinitions();
+  const visualAssets = getApprovedVisualAssets();
   const staticRoutes: MetadataRoute.Sitemap = [
     createSitemapEntry('/', {
       lastModified: new Date(),
@@ -89,6 +91,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.82,
     }),
+    createSitemapEntry('/visual-assets', {
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.78,
+    }),
     ...toolCategories.map((category) => createSitemapEntry(`/tools/category/${category.key}`, {
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -123,6 +130,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'monthly',
       priority: 0.68,
+    })),
+    ...visualAssets.map((asset) => createSitemapEntry(`/visual-assets/${asset.slug}`, {
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: asset.slug === 'content-system-map' ? 0.74 : 0.66,
     })),
   ];
 

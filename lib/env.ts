@@ -25,6 +25,10 @@ export function getApiBaseUrl() {
   return readString('API_BASE_URL', 'https://ttqq.inping.com/v1');
 }
 
+export function getVisualAssetApiBaseUrl() {
+  return readString('VISUAL_ASSET_API_BASE_URL', 'https://www.gemiai.top/v1');
+}
+
 export function normalizeApiKey(value?: string | null) {
   const key = (value || '').trim();
   if (!key || key === 'dummy_key') return null;
@@ -35,8 +39,16 @@ export function getApiKey() {
   return normalizeApiKey(process.env.OPENAI_API_KEY) || normalizeApiKey(process.env.API_KEY);
 }
 
+export function getVisualAssetApiKey() {
+  return (
+    normalizeApiKey(process.env.VISUAL_ASSET_API_KEY)
+    || normalizeApiKey(process.env.OPENAI_API_KEY)
+    || normalizeApiKey(process.env.API_KEY)
+  );
+}
+
 export function getDefaultModel() {
-  return readString('DEFAULT_MODEL', 'auto');
+  return readString('DEFAULT_MODEL', 'grok-420-fast');
 }
 
 export function getGoogleAnalyticsId() {
@@ -126,7 +138,7 @@ export function isOpenAgentRuntimeEnabled() {
 }
 
 export function getOpenAgentRuntimeModel() {
-  return readString('OPEN_AGENT_RUNTIME_MODEL', 'gpt-5.4');
+  return readString('OPEN_AGENT_RUNTIME_MODEL', 'grok-420-fast');
 }
 
 export function getOpenAgentRuntimeMaxRetries() {
@@ -150,15 +162,15 @@ export function isContentRadarAutoPublishEnabled() {
 }
 
 export function getModelFallbackChainEnv() {
-  return readString('MODEL_FALLBACK_CHAIN');
+  return readString('MODEL_FALLBACK_CHAIN', 'auto');
 }
 
 export function getReportModelFallbackChainEnv() {
-  return readString('REPORT_MODEL_FALLBACK_CHAIN');
+  return readString('REPORT_MODEL_FALLBACK_CHAIN', 'auto');
 }
 
 export function getReportNarrativeModelFallbackChainEnv() {
-  return readString('REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN');
+  return readString('REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN', 'auto');
 }
 
 export function getKnowledgeSynthesisAllowedTypesEnv() {
@@ -205,8 +217,28 @@ export function getContentGenerationModel() {
   return readString('CONTENT_GENERATION_MODEL', 'grok-420-fast');
 }
 
+export function getVisualAssetDefaultModel() {
+  return readString('VISUAL_ASSET_DEFAULT_MODEL', 'gpt-image-2');
+}
+
+export function getVisualAssetCoreModel() {
+  return readString('VISUAL_ASSET_CORE_MODEL', 'gpt-image-2-pro');
+}
+
+export function getVisualAssetNarrativeModel() {
+  return readString('VISUAL_ASSET_NARRATIVE_MODEL', getContentGenerationModel());
+}
+
+export function getVisualAssetConcurrencyLimit() {
+  return readNumber('VISUAL_ASSET_CONCURRENCY_LIMIT', 6, 1);
+}
+
+export function getVisualAssetGenerationTimeoutMs() {
+  return readNumber('VISUAL_ASSET_GENERATION_TIMEOUT_MS', 1000 * 60 * 3, 30_000);
+}
+
 export function getContentGenerationModelFallbackChainRaw() {
-  return readString('CONTENT_GENERATION_MODEL_FALLBACK_CHAIN');
+  return readString('CONTENT_GENERATION_MODEL_FALLBACK_CHAIN', 'auto');
 }
 
 export function getContentGenerationMaxTokens() {

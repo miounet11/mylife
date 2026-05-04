@@ -74,7 +74,14 @@ function formatChatTime(value: Date | null) {
   return `${String(value.getHours()).padStart(2, '0')}:${String(value.getMinutes()).padStart(2, '0')}`;
 }
 
-function buildScopedChatHref(params: { reportId?: string; eventId?: string; intent?: string }) {
+function buildScopedChatHref(params: {
+  reportId?: string;
+  eventId?: string;
+  intent?: string;
+  source?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
+}) {
   return buildChatHref(params);
 }
 
@@ -83,6 +90,9 @@ export default function AIAssistantChat() {
   const reportId = searchParams.get('reportId') || '';
   const eventId = searchParams.get('eventId') || '';
   const intent = searchParams.get('intent') || '';
+  const source = searchParams.get('source') || '';
+  const ctaStrategyKey = searchParams.get('ctaStrategyKey') || '';
+  const sourceFamily = searchParams.get('sourceFamily') || '';
   const prefilledQuestion = searchParams.get('question') || '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [context, setContext] = useState<ChatContextState | null>(null);
@@ -112,12 +122,18 @@ export default function AIAssistantChat() {
       reportId: reportId || context?.report?.id || undefined,
       eventId: eventId || context?.focusedEvent?.id || undefined,
       intent: item.key,
+      source: source || undefined,
+      ctaStrategyKey: ctaStrategyKey || undefined,
+      sourceFamily: sourceFamily || undefined,
     }),
   }));
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
     eventId: eventId || context?.focusedEvent?.id || undefined,
     intent: intent || undefined,
+    source: source || undefined,
+    ctaStrategyKey: ctaStrategyKey || undefined,
+    sourceFamily: sourceFamily || undefined,
   };
   const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
   const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
@@ -139,6 +155,9 @@ export default function AIAssistantChat() {
       if (reportId) queryParams.set('reportId', reportId);
       if (eventId) queryParams.set('eventId', eventId);
       if (intent) queryParams.set('intent', intent);
+      if (source) queryParams.set('source', source);
+      if (ctaStrategyKey) queryParams.set('ctaStrategyKey', ctaStrategyKey);
+      if (sourceFamily) queryParams.set('sourceFamily', sourceFamily);
       const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
       const response = await fetch(`/api/chat${query}`, { cache: 'no-store' });
       const data = await response.json();
@@ -185,7 +204,7 @@ export default function AIAssistantChat() {
   useEffect(() => {
     initialScrollDoneRef.current = false;
     void fetchHistoryRef.current(true);
-  }, [reportId, eventId, intent]);
+  }, [reportId, eventId, intent, source, ctaStrategyKey, sourceFamily]);
 
   useEffect(() => {
     const node = messagesScrollerRef.current;
@@ -254,6 +273,9 @@ export default function AIAssistantChat() {
           reportId: context?.report?.id || reportId || null,
           eventId: context?.focusedEvent?.id || eventId || null,
           intent: intent || null,
+          source: source || null,
+          ctaStrategyKey: ctaStrategyKey || null,
+          sourceFamily: sourceFamily || null,
         },
       }),
     }).catch(() => undefined);
@@ -483,9 +505,11 @@ export default function AIAssistantChat() {
       reminderMethod: 'app',
       source: 'chat_message',
       page: '/chat',
+      attributionSource: source || undefined,
       fortuneAnalysis: {
         source: 'chat_message',
         reportId: context?.report?.id || reportId || undefined,
+        attributionSource: source || undefined,
         suggestionKey: item.key,
         reason: item.reason,
         title: item.title,
@@ -510,6 +534,7 @@ export default function AIAssistantChat() {
       reminderMethod: 'app',
       source: 'chat_message',
       page: '/chat',
+      attributionSource: source || undefined,
     });
   };
 
@@ -1073,7 +1098,7 @@ function MessageBubble({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">兜底模式</span>
+            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">稳定版</span>
           )}
           {message.regenerated ? (
             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">已重生成</span>
@@ -1086,7 +1111,11 @@ function MessageBubble({
           <ChatMarkdown content={message.content} />
         </div>
         <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-[color:var(--muted)]">
-          <span>{message.llmUsed ? '结合当前报告与对话内容生成' : '当前为简化回答'}</span>
+          <span>
+            {message.llmUsed
+              ? '结合当前报告与对话内容生成'
+              : '上游模型不稳定，当前先展示稳定版结构回复；稍后可点重生成补全深度。'}
+          </span>
           <div className="flex flex-wrap items-center gap-2">
             <span>{time}</span>
             <button

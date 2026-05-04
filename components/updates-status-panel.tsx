@@ -15,6 +15,8 @@ export default function UpdatesStatusPanel({
   compact = false,
   initialSummary,
   initialAuthenticated,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   reportId?: string;
   title?: string;
@@ -22,13 +24,14 @@ export default function UpdatesStatusPanel({
   compact?: boolean;
   initialSummary?: UpdatesSummary;
   initialAuthenticated?: boolean;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const derivedReportId = reportId || '';
   const hasInitialState = initialSummary !== undefined || initialAuthenticated !== undefined;
   const didHydrateRef = useRef(false);
   const [loading, setLoading] = useState(!hasInitialState);
   const [error, setError] = useState('');
-  const [authenticated, setAuthenticated] = useState(!!initialAuthenticated);
   const [summary, setSummary] = useState<UpdatesSummary>(initialSummary ?? null);
 
   useEffect(() => {
@@ -54,20 +57,17 @@ export default function UpdatesStatusPanel({
         if (!response.ok || !data.success) {
           if (!cancelled) {
             setError(data.error || '加载更新状态失败');
-            setAuthenticated(false);
             setSummary(null);
           }
           return;
         }
 
         if (!cancelled) {
-          setAuthenticated(!!data.authenticated);
           setSummary(data.data || null);
         }
       } catch {
         if (!cancelled) {
           setError('网络异常，加载更新状态失败');
-          setAuthenticated(false);
           setSummary(null);
         }
       } finally {
@@ -90,8 +90,9 @@ export default function UpdatesStatusPanel({
   const focusDigestStatus = focusReport?.digest?.status || '';
   const focusDigestLabel = focusReport?.digest?.cycleKey || summary?.latestDigest?.cycleKey || '暂无';
   const latestLifecycle = summary?.recentLifecycleEmails?.[0] || null;
-  const ctaHref = authenticated ? '/updates' : '/login?next=%2Fupdates';
-  const ctaLabel = authenticated ? '进入更新中心' : '登录查看更新';
+  const hasSessionSummary = !!summary;
+  const ctaHref = hasSessionSummary ? '/updates' : '/login?next=%2Fupdates';
+  const ctaLabel = hasSessionSummary ? '进入更新中心' : '登录查看更新';
   const focusStatus = useMemo(() => {
     if (focusUpgradeStatus === 'running') return '后台增强进行中';
     if (focusUpgradeStatus === 'pending' || focusUpgradeStatus === 'retry') return '后台排队增强中';
@@ -128,9 +129,9 @@ export default function UpdatesStatusPanel({
         <div className="mt-4 rounded-[1.4rem] bg-rose-50 px-4 py-4 text-xs leading-6 text-rose-700">
           {error}
         </div>
-      ) : !authenticated ? (
+      ) : !summary ? (
         <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
-          登录后查看
+          暂无本机报告记录。生成报告后，这里会显示升级、更新和继续入口。
         </div>
       ) : (
         <>
@@ -186,6 +187,8 @@ export default function UpdatesStatusPanel({
                   reportId: focusReport.id,
                   question: '请围绕这份报告的当前升级进度和最近状态继续追问，告诉我现在最该回看哪一层，以及下一步最值得做什么。',
                   source: 'updates_status_panel',
+                  ctaStrategyKey,
+                  sourceFamily,
                 })}
                 className="action-secondary"
               >

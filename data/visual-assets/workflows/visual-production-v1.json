@@ -1,0 +1,59 @@
+{
+  "id": "visual-production-v1",
+  "name": "Life Kline Visual Asset Production Workflow",
+  "description": "Repository-owned workflow contract for image, narrative, QA, correction, storage and future R2 publication.",
+  "runtime": {
+    "maxConcurrentImageJobs": 20,
+    "maxConcurrentNarrativeJobs": 4,
+    "maxAttempts": 2,
+    "retryBaseDelayMs": 1500,
+    "retryMaxDelayMs": 15000,
+    "stallTimeoutMs": 180000
+  },
+  "stages": {
+    "importManifest": true,
+    "generateImages": true,
+    "downloadToServer": true,
+    "generateNarratives": true,
+    "qaSnapshot": true,
+    "publishToR2": false
+  },
+  "providers": {
+    "image": {
+      "baseUrlEnv": "VISUAL_ASSET_API_BASE_URL",
+      "apiKeyEnv": "VISUAL_ASSET_API_KEY",
+      "defaultModel": "gpt-image-2",
+      "coreModel": "gpt-image-2-pro"
+    },
+    "narrative": {
+      "baseUrlEnv": "API_BASE_URL",
+      "apiKeyEnv": "OPENAI_API_KEY",
+      "defaultModel": "grok-420-fast"
+    }
+  },
+  "qualityPolicy": {
+    "brandSignatureCanvasShare": "4-7%",
+    "mustContainReadableText": true,
+    "mustStoreOnServer": true,
+    "mustGenerateNarrative": true,
+    "mustKeepProviderUrlForTraceability": true,
+    "mustAvoidGenericTemplateRepetition": true,
+    "requiresHumanReviewBeforePublish": true
+  },
+  "promptContract": [
+    "Use the full image generation capability: layered scenes, diagrams, cards, arrows, timelines, symbolic objects and useful details.",
+    "Keep 世界易 / 人生K线 / www.life-kline.com as a compact lower-right or bottom signature; it must never dominate the canvas.",
+    "Render title, explanation labels and brand/domain directly in the generated image; do not rely on SVG or HTML overlays.",
+    "Each image in a batch must have a distinct composition silhouette while sharing the same brand palette.",
+    "Sensitive metaphysics topics must stay educational, non-fear-based and non-deterministic."
+  ],
+  "storage": {
+    "localPublicRoot": "public/images/visual-assets",
+    "publicUrlPrefix": "/images/visual-assets",
+    "futureR2": {
+      "enabled": false,
+      "bucketEnv": "R2_VISUAL_ASSET_BUCKET",
+      "publicBaseUrlEnv": "R2_VISUAL_ASSET_PUBLIC_BASE_URL"
+    }
+  }
+}

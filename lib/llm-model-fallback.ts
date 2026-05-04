@@ -7,17 +7,23 @@ import {
 
 export type LlmFallbackScope = 'report' | 'agent' | 'chat' | 'content';
 
-const PRIMARY_REASONING_MODEL = 'gpt-5.4';
-const FALLBACK_REASONING_MODEL = 'gpt-5.2-codex';
-const FAST_CONTENT_MODEL = 'grok-420-fast';
+const PRIMARY_TEXT_MODEL = 'grok-420-fast';
 
-const DEFAULT_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, FAST_CONTENT_MODEL, 'auto'] as const;
-const DEFAULT_REPORT_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, 'auto'] as const;
-const DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN = [PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, 'auto'] as const;
+const MODEL_COMPATIBILITY_ALIASES: Record<string, string> = {
+  'gpt-5.2-codex': 'gpt-5.2',
+};
+
+const DEFAULT_MODEL_CHAIN = [PRIMARY_TEXT_MODEL, 'auto'] as const;
+const DEFAULT_REPORT_MODEL_CHAIN = [PRIMARY_TEXT_MODEL, 'auto'] as const;
+const DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN = [PRIMARY_TEXT_MODEL, 'auto'] as const;
 
 function normalizeModel(value?: string | null) {
   const model = (value || '').trim();
-  return model || null;
+  if (!model) {
+    return null;
+  }
+
+  return MODEL_COMPATIBILITY_ALIASES[model.toLowerCase()] || model;
 }
 
 function dedupeModels(models: Array<string | null | undefined>) {
@@ -35,6 +41,7 @@ function dedupeModels(models: Array<string | null | undefined>) {
 }
 
 function getDefaultChain(scope?: LlmFallbackScope) {
+  const defaultModel = normalizeModel(getDefaultModel());
   const configuredScopeChain = scope === 'report'
     ? getReportModelFallbackChainEnv()
         .split(',')
@@ -42,7 +49,9 @@ function getDefaultChain(scope?: LlmFallbackScope) {
         .filter(Boolean)
     : [];
   if (configuredScopeChain.length > 0) {
-    return configuredScopeChain;
+    return defaultModel && defaultModel !== 'auto'
+      ? dedupeModels([defaultModel, ...configuredScopeChain])
+      : configuredScopeChain;
   }
 
   const configuredChain = getModelFallbackChainEnv()
@@ -50,16 +59,17 @@ function getDefaultChain(scope?: LlmFallbackScope) {
     .map((item) => item.trim())
     .filter(Boolean);
   if (configuredChain.length > 0) {
-    return configuredChain;
+    return defaultModel && defaultModel !== 'auto'
+      ? dedupeModels([defaultModel, ...configuredChain])
+      : configuredChain;
   }
 
   if (scope === 'report') {
     return [...DEFAULT_REPORT_MODEL_CHAIN];
   }
 
-  const defaultModel = normalizeModel(getDefaultModel());
   return defaultModel && defaultModel !== 'auto'
-    ? dedupeModels([defaultModel, PRIMARY_REASONING_MODEL, FALLBACK_REASONING_MODEL, FAST_CONTENT_MODEL, 'auto'])
+    ? dedupeModels([defaultModel, 'auto'])
     : [...DEFAULT_MODEL_CHAIN];
 }
 
@@ -74,8 +84,11 @@ export function getReportNarrativeFallbackChain(preferredModel?: string | null) 
     .map((item) => item.trim())
     .filter(Boolean);
 
+  const defaultModel = normalizeModel(getDefaultModel());
   const defaultChain = configuredChain.length > 0
-    ? configuredChain
+    ? defaultModel && defaultModel !== 'auto'
+      ? dedupeModels([defaultModel, ...configuredChain])
+      : configuredChain
     : [...DEFAULT_REPORT_NARRATIVE_MODEL_CHAIN];
 
   return dedupeModels(preferredModel ? [preferredModel, ...defaultChain] : defaultChain);

@@ -5,6 +5,7 @@ describe('llm provider health immediate open failures', () => {
   test('treats provider cooling and upstream forbidden as immediate-open failures', () => {
     expect(isImmediateOpenFailure('Error', '403 {"error":"token_cooling","message":"Grok token cooling"}')).toBe(true);
     expect(isImmediateOpenFailure('Error', '403 {"error":"upstream_forbidden","upstream_reason":"blocked_user"}')).toBe(true);
+    expect(isImmediateOpenFailure('Error', `500 {"detail":"The 'gpt-5.2-codex' model is not supported when using Codex with a ChatGPT account."}`)).toBe(true);
   });
 
   test('treats repeated aborts and timeouts as immediate-open failures', () => {

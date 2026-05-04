@@ -4,6 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import VisualAssetFeature from '@/components/visual-asset-feature';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
@@ -11,6 +12,7 @@ import {
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { getVisualAssetById } from '@/lib/visual-asset-library';
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
@@ -122,6 +124,8 @@ export default function WorldYiPage() {
     .filter((entry) => entry.slug.startsWith('world-yi-'))
     .slice(0, 3);
   const publicationStageLabel = getPublicationStageLabel(worldYiStats.publicationMode);
+  const worldYiMethodImage = getVisualAssetById('PWY01-002');
+  const boundaryImage = getVisualAssetById('PWY01-007');
   const worldYiScaleCards = [
     { label: '当前公开总量', value: `${worldYiStats.publicContentCount} 篇` },
     { label: '当前发布阶段', value: publicationStageLabel },
@@ -197,6 +201,12 @@ export default function WorldYiPage() {
           highlights={motherPropositions}
         />
 
+        {worldYiMethodImage ? (
+          <div className="mt-10">
+            <VisualAssetFeature asset={worldYiMethodImage} label="世界易方法总图" />
+          </div>
+        ) : null}
+
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
           <div className="glass-panel rounded-[2rem] p-6 md:p-8">
             <div className="section-label">
@@ -228,6 +238,12 @@ export default function WorldYiPage() {
             </div>
           </div>
         </section>
+
+        {boundaryImage ? (
+          <div className="mt-10">
+            <VisualAssetFeature asset={boundaryImage} label="安全边界图" reverse />
+          </div>
+        ) : null}
 
         <section className="mt-12 grid gap-4 lg:grid-cols-3">
           <ContentCardLink

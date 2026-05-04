@@ -8,22 +8,27 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolCardLink from '@/components/tool-card-link';
 import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
+import { appendSourceToHref, buildSourceCtaStrategy, buildSourceJourneyCopy } from '@/lib/source-context';
 import {
   getCaseStudyBySlug,
   getEntityInsights,
   getKnowledgeArticles,
   getManagedContentEntryBySlug,
+  getManagedContentGeoOptimizationMeta,
   getManagedContentJourneyMeta,
   listPublishedManagedContentEntriesByType,
 } from '@/lib/content-store';
 import { buildJourneyForContent } from '@/lib/surface-journeys';
 import { getToolDefinition } from '@/lib/tools';
+import { getVisualAssetsForContentEntry } from '@/lib/visual-asset-library';
 import {
   createArticleSchema,
   createBreadcrumbSchema,
@@ -43,6 +48,8 @@ export async function generateMetadata({ params }: PageProps) {
   if (!item) {
     return { title: '案例未找到 | 人生K线' };
   }
+  const visualAssets = managedEntry ? getVisualAssetsForContentEntry(managedEntry, 1) : [];
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
 
   return createPublicContentMetadata({
     title: item.seoTitle,
@@ -50,6 +57,20 @@ export async function generateMetadata({ params }: PageProps) {
     path: `/cases/${item.slug}`,
     type: 'article',
     locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
+    keywords: item.tags,
+    images: visualAssets.map((asset) => ({
+      url: asset.publicUrl,
+      alt: asset.altText,
+      width: asset.ratio === '4:5' ? 1280 : 2048,
+      height: asset.ratio === '4:5' ? 1600 : 1152,
+    })),
+    publishedTime: managedEntry?.createdAt,
+    modifiedTime: managedEntry?.updatedAt,
+    section: item.scenario,
+    tags: item.tags,
+    answerSummary: geoMeta?.answerSummary || item.excerpt,
+    searchIntents: geoMeta?.searchIntents,
+    entityKeywords: geoMeta?.entityKeywords,
   });
 }
 
@@ -99,13 +120,30 @@ export default async function CaseDetailPage({ params }: PageProps) {
     { name: '案例库', path: '/cases' },
     { name: item.title, path: `/cases/${item.slug}` },
   ];
+  const visualAssets = getVisualAssetsForContentEntry(managedEntry, 3);
+  const primaryVisualAsset = visualAssets[0] || null;
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
   const schemas = [
     createArticleSchema({
       headline: item.seoTitle,
       description: item.seoDescription,
       path: `/cases/${item.slug}`,
       articleSection: item.scenario,
-      keywords: item.tags,
+      keywords: [...item.tags, ...(geoMeta?.entityKeywords || [])],
+      image: primaryVisualAsset ? [{
+        url: primaryVisualAsset.publicUrl,
+        alt: primaryVisualAsset.altText,
+        width: primaryVisualAsset.ratio === '4:5' ? 1280 : 2048,
+        height: primaryVisualAsset.ratio === '4:5' ? 1600 : 1152,
+      }] : undefined,
+      datePublished: managedEntry.createdAt,
+      dateModified: managedEntry.updatedAt,
+      inLanguage: locale || 'zh-CN',
+      abstract: geoMeta?.answerSummary || item.excerpt,
+      about: geoMeta?.entityKeywords || item.tags,
+      mentions: geoMeta?.searchIntents,
+      audience: geoMeta?.audience,
+      mainEntityName: geoMeta?.canonicalTopic || item.title,
     }),
     createBreadcrumbSchema(breadcrumbItems),
   ];
@@ -116,6 +154,14 @@ export default async function CaseDetailPage({ params }: PageProps) {
     category: item.scenario,
     contentType: 'case',
     slug: item.slug,
+  }, {
+    source: `case_article:${item.slug}`,
+  });
+  const pageSource = `case_article:${item.slug}`;
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
+  const journeyCopy = buildSourceJourneyCopy(pageSource, {
+    title: '相关入口',
+    description: '把这篇案例接回对应的方法、工具和后续动作入口，避免只停留在围观别人的结果。',
   });
   const journeyMeta = getManagedContentJourneyMeta(managedEntry);
   const pageSignals = [item.title, item.excerpt, item.scenario, ...item.tags];
@@ -186,10 +232,11 @@ export default async function CaseDetailPage({ params }: PageProps) {
               )}
               excerpt={item.excerpt}
               hint="先看完案例关键信息，再进入分析页验证自己的结构与阶段。"
+              actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
-                <Link key="cases" href="/cases" className="action-secondary">返回案例库</Link>,
-                <Link key="hub" href={caseHubHref} className="action-secondary">{caseHubLabel}</Link>,
+                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="action-primary action-main">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <Link key="cases" href={appendSourceToHref('/cases', pageSource)} className="action-secondary">返回案例库</Link>,
+                <Link key="hub" href={appendSourceToHref(caseHubHref, pageSource)} className="action-secondary">{caseHubLabel}</Link>,
               ]}
             />
 
@@ -208,6 +255,23 @@ export default async function CaseDetailPage({ params }: PageProps) {
               ))}
             </div>
 
+            <ProductSurfaceRolePanel
+              surface="caseArticle"
+              className="mt-10"
+              title="案例读完后要回到自己的结构验证"
+              description="案例详情页不能只让用户围观别人，而是把场景拆成结构、阶段、环境和动作，再引导用户验证自己是否相似。"
+              compact
+            />
+
+            <ContentVisualAssetPanel
+              assets={visualAssets}
+              page={`/cases/${item.slug}`}
+              source={pageSource}
+              contentLabel="案例"
+              contentTitle={item.title}
+              className="mt-10"
+            />
+
             {relatedCases.length > 0 ? (
               <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">同类案例继续阅读</div>
@@ -216,6 +280,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     <ContentCardLink
                       key={entry.slug}
                       href={`/cases/${entry.slug}`}
+                      source={pageSource}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
                       page={`/cases/${item.slug}`}
                       meta={{
                         surfaceKey: `case_article:${item.slug}`,
@@ -239,8 +306,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
             <section className="mt-10">
               <SurfaceJourneyPanel
                 journey={journey}
-                title="相关入口"
-                description="把这篇案例接回对应的方法、工具和后续动作入口，避免只停留在围观别人的结果。"
+                title={journeyCopy.title}
+                description={journeyCopy.description}
+                badge="案例文章来源 · 已保留"
               />
             </section>
           </article>
@@ -268,6 +336,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   page={`/cases/${item.slug}`}
                   contentLabel="案例"
                   contentTitle={item.title}
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
                 <ToolPremiumRequestPanel tool={primaryTool} page={`/cases/${item.slug}`} />
               </>
@@ -286,6 +357,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     toolSlug={tool.slug}
                     category={tool.category}
                     page={`/cases/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
@@ -307,6 +381,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   <ContentCardLink
                     key={entry.slug}
                     href={`/knowledge/${entry.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/cases/${item.slug}`}
                     meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `knowledge_article:${entry.slug}`, contentType: 'knowledge' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -330,6 +407,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                   <ContentCardLink
                     key={entry.slug}
                     href={`/insights/${entry.type}/${entry.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/cases/${item.slug}`}
                     meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `insight_article:${entry.slug}`, contentType: 'insight' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -348,6 +428,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
               <div className="mt-4 space-y-4">
                 <ContentCardLink
                   href={caseMethodHref}
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/cases/${item.slug}`}
                   meta={{
                     surfaceKey: `case_article:${item.slug}`,
@@ -361,6 +444,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                 </ContentCardLink>
                 <ContentCardLink
                   href={methodologyHref}
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/cases/${item.slug}`}
                   meta={{
                     surfaceKey: `case_article:${item.slug}`,
@@ -374,6 +460,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                 </ContentCardLink>
                 <ContentCardLink
                   href={caseHubHref}
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/cases/${item.slug}`}
                   meta={{
                     surfaceKey: `case_article:${item.slug}`,
@@ -387,6 +476,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
                 </ContentCardLink>
                 <ContentCardLink
                   href="/world-yi/book"
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/cases/${item.slug}`}
                   meta={{
                     surfaceKey: `case_article:${item.slug}`,

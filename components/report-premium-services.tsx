@@ -26,12 +26,16 @@ export default function ReportPremiumServices({
   offers,
   initialEmail = '',
   initialRequests = [],
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   reportId: string;
   canManage: boolean;
   offers: PremiumServiceOffer[];
   initialEmail?: string;
   initialRequests?: PremiumServiceRequestRecord[];
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   const [selectedServiceKey, setSelectedServiceKey] = useState<PremiumServiceKey>(offers[0]?.key || 'event-simulation');
   const [contactName, setContactName] = useState('');
@@ -190,7 +194,7 @@ export default function ReportPremiumServices({
 
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
-                  href={mapPrimaryHref(offer, reportId, canManage)}
+                  href={mapPrimaryHref(offer, reportId, canManage, ctaStrategyKey, sourceFamily)}
                   onClick={() => {
                     void trackClientEvent({
                       eventName: 'result_cta_clicked',
@@ -210,7 +214,7 @@ export default function ReportPremiumServices({
                 </Link>
 
                 <Link
-                  href={mapSecondaryHref(offer.key, reportId, canManage)}
+                  href={mapSecondaryHref(offer.key, reportId, canManage, ctaStrategyKey, sourceFamily)}
                   onClick={() => {
                     void trackClientEvent({
                       eventName: 'result_cta_clicked',
@@ -345,7 +349,13 @@ export default function ReportPremiumServices({
   );
 }
 
-function mapSecondaryHref(key: PremiumServiceOffer['key'], reportId: string, canManage: boolean) {
+function mapSecondaryHref(
+  key: PremiumServiceOffer['key'],
+  reportId: string,
+  canManage: boolean,
+  ctaStrategyKey?: string,
+  sourceFamily?: string
+) {
   if (!canManage) {
     return '/analyze';
   }
@@ -362,11 +372,19 @@ function mapSecondaryHref(key: PremiumServiceOffer['key'], reportId: string, can
         reportId,
         question: '请围绕这份报告继续做结构追问，重点帮我判断：当前这件事更该推进、观察还是收手，前置条件是什么？',
         source: 'report_premium_services_secondary',
+        ctaStrategyKey,
+        sourceFamily,
       });
   }
 }
 
-function mapPrimaryHref(offer: PremiumServiceOffer, reportId: string, canManage: boolean) {
+function mapPrimaryHref(
+  offer: PremiumServiceOffer,
+  reportId: string,
+  canManage: boolean,
+  ctaStrategyKey?: string,
+  sourceFamily?: string
+) {
   if (!canManage) {
     return '/analyze';
   }
@@ -376,6 +394,8 @@ function mapPrimaryHref(offer: PremiumServiceOffer, reportId: string, canManage:
     intent: offer.key,
     question: `请围绕我这份报告继续评估“${offer.title}”这个专项方向：现在是否适合启动，最该先补什么条件，推进过程中最需要防什么风险？`,
     source: 'report_premium_services_primary',
+    ctaStrategyKey,
+    sourceFamily,
   });
 }
 

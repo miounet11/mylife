@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       sessionId: currentUserId || result.user?.id,
       eventName: 'auth_verified',
       page: '/login',
+      userAgent: request.headers.get('user-agent'),
       meta: {
         emailDomain: email.split('@')[1] || '',
       },

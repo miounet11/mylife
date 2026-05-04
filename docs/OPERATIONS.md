@@ -38,6 +38,12 @@ npm run start
 pm2 startOrReload ecosystem.config.js
 ```
 
+默认会启动主应用和后台 worker。只有在排障时明确需要只跑主应用，才使用：
+
+```bash
+ENABLE_BACKGROUND_WORKERS=0 pm2 startOrReload ecosystem.config.js
+```
+
 ### 查看状态
 
 ```bash
@@ -157,8 +163,13 @@ pm2 status
 - `API_BASE_URL`
 - `OPENAI_API_KEY`
 - `API_KEY`
-- `DEFAULT_MODEL`
-- `MODEL_FALLBACK_CHAIN`
+- `DEFAULT_MODEL`：默认 `grok-420-fast`
+- `OPEN_AGENT_RUNTIME_MODEL`：默认 `grok-420-fast`
+- `CONTENT_GENERATION_MODEL`：默认 `grok-420-fast`
+- `MODEL_FALLBACK_CHAIN`：默认 `auto`
+- `REPORT_MODEL_FALLBACK_CHAIN`：默认 `auto`
+- `REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN`：默认 `auto`
+- `CONTENT_GENERATION_MODEL_FALLBACK_CHAIN`：默认 `auto`
 
 ### 模型健康与熔断
 

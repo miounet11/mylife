@@ -22,14 +22,14 @@ describe('content generation helpers', () => {
   it('prefers explicit content generation models for long-form drafts', () => {
     process.env = {
       ...originalEnv,
-      CONTENT_GENERATION_MODEL: 'auto',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto,grok-420-fast',
+      CONTENT_GENERATION_MODEL: 'grok-420-fast',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto',
       CONTENT_GENERATION_MAX_TOKENS: '2600',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual({
-      model: 'auto',
-      modelChain: ['auto', 'grok-420-fast'],
+      model: 'grok-420-fast',
+      modelChain: ['grok-420-fast', 'auto'],
       maxTokens: 2600,
       disableHealthReorder: true,
     });
@@ -38,10 +38,12 @@ describe('content generation helpers', () => {
   it('defaults socratic and segmented generation to enabled', () => {
     process.env = {
       ...originalEnv,
-      CONTENT_GENERATION_MODEL: 'auto',
     };
 
-    expect(resolveContentGenerationLlmConfig().model).toBe('auto');
+    expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
+      model: 'grok-420-fast',
+      modelChain: ['grok-420-fast', 'auto'],
+    }));
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',
     }, 'knowledge', null).system).toContain('苏格拉底式');

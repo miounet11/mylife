@@ -11,6 +11,8 @@ export function buildChatHref(params: {
   intent?: string | null;
   question?: string | null;
   source?: string | null;
+  ctaStrategyKey?: string | null;
+  sourceFamily?: string | null;
 }) {
   const query = new URLSearchParams();
   const reportId = cleanQueryValue(params.reportId);
@@ -18,12 +20,16 @@ export function buildChatHref(params: {
   const intent = cleanQueryValue(params.intent);
   const question = cleanQueryValue(params.question);
   const source = cleanQueryValue(params.source);
+  const ctaStrategyKey = cleanQueryValue(params.ctaStrategyKey);
+  const sourceFamily = cleanQueryValue(params.sourceFamily);
 
   if (reportId) query.set('reportId', reportId);
   if (eventId) query.set('eventId', eventId);
   if (intent) query.set('intent', intent);
   if (question) query.set('question', question);
   if (source) query.set('source', source);
+  if (ctaStrategyKey) query.set('ctaStrategyKey', ctaStrategyKey);
+  if (sourceFamily) query.set('sourceFamily', sourceFamily);
 
   const serialized = query.toString();
   return serialized ? `/chat?${serialized}` : '/chat';

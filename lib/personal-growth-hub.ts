@@ -1,7 +1,8 @@
 import { buildPremiumServiceOffers, getPremiumServiceLabel } from '@/lib/report-premium-services';
+import type { MonthlyWindow, ReportCorrectionInsight, ScenarioView } from '@/lib/report-v2';
 import { buildPersonalizedJourney } from '@/lib/surface-journeys';
 import { buildToolRecommendations, getToolDefinition, type ToolDefinition } from '@/lib/tools';
-import type { FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
+import type { FortuneRecord, ReportJourneyEventRecord, ToolSessionRecord } from '@/lib/user-types';
 
 export interface PersonalGrowthHubSummary {
   heading: string;
@@ -37,19 +38,34 @@ export interface PersonalGrowthHubSummary {
 function pickRecommendedTools(params: {
   report?: FortuneRecord | null;
   toolSessions?: ToolSessionRecord[];
+  journeyEvents?: ReportJourneyEventRecord[];
 }) {
+  const latestJourneyTool = params.journeyEvents
+    ?.map((event) => event.toolSlug ? getToolDefinition(event.toolSlug) : null)
+    .find((tool): tool is ToolDefinition => !!tool) || null;
   const latestTool = params.toolSessions?.[0]?.toolSlug
     ? getToolDefinition(params.toolSessions[0].toolSlug)
     : null;
   const recommended = buildToolRecommendations({
     report: params.report,
-    recentSessions: params.toolSessions || [],
+    recentSessions: (params.toolSessions || []).map((session) => ({
+      id: session.id,
+      userId: session.userId,
+      reportId: session.reportId,
+      toolSlug: session.toolSlug,
+      status: session.status,
+      input: (session.input || {}) as Record<string, unknown>,
+      result: (session.result || {}) as any,
+      meta: session.meta,
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+    })),
     limit: 3,
   })
     .map((item) => getToolDefinition(item.slug))
     .filter((item): item is ToolDefinition => !!item);
 
-  const deduped = [latestTool, ...recommended]
+  const deduped = [latestJourneyTool, latestTool, ...recommended]
     .filter((item, index, array): item is ToolDefinition => !!item && array.findIndex((candidate) => candidate?.slug === item.slug) === index);
 
   return {
@@ -61,28 +77,42 @@ function pickRecommendedTools(params: {
 export function buildPersonalGrowthHub(params: {
   reports?: FortuneRecord[];
   toolSessions?: ToolSessionRecord[];
+  journeyEvents?: ReportJourneyEventRecord[];
 }): PersonalGrowthHubSummary {
   const latestReport = (params.reports || [])[0] || null;
   const latestToolSessions = params.toolSessions || [];
+  const latestJourneyEvents = params.journeyEvents || [];
+  const latestJourneyCategory = latestJourneyEvents.find((event) => event.category)?.category || '';
+  const latestJourneyToolSlug = latestJourneyEvents.find((event) => event.toolSlug)?.toolSlug || '';
   const latestTool = latestToolSessions[0]?.toolSlug ? getToolDefinition(latestToolSessions[0].toolSlug) : null;
-  const hasPersonalSignal = !!latestReport || latestToolSessions.length > 0;
+  const hasPersonalSignal = !!latestReport || latestToolSessions.length > 0 || latestJourneyEvents.length > 0;
   const journeySummary = buildPersonalizedJourney(params);
   const { primaryTool, secondaryTool } = pickRecommendedTools({
     report: latestReport,
     toolSessions: latestToolSessions,
+    journeyEvents: latestJourneyEvents,
   });
+  const reportExperience = latestReport as (FortuneRecord & {
+    scenarioViews?: ScenarioView[];
+    monthlyWindows?: MonthlyWindow[];
+  }) | null;
+  const correctionInsight = latestReport?.analysis?.feedbackLoop?.correctionInsight as ReportCorrectionInsight | undefined;
   const premiumOffer = latestReport
     ? buildPremiumServiceOffers({
-      scenarioViews: latestReport.scenarioViews || [],
-      monthlyWindows: latestReport.monthlyWindows || [],
-      correctionInsight: latestReport.analysis?.feedbackLoop?.correctionInsight,
+      scenarioViews: reportExperience?.scenarioViews || [],
+      monthlyWindows: reportExperience?.monthlyWindows || [],
+      correctionInsight,
     })[0] || null
     : null;
 
   const focusLine = latestReport
-    ? `最近的主轴更接近“${latestReport.pattern?.type || '综合判断'}”，最稳的动作不是重新泛问，而是沿着主问题继续下钻。`
+    ? latestJourneyToolSlug && primaryTool?.slug === latestJourneyToolSlug
+      ? `你最近已经主动点进“${primaryTool.shortTitle}”，系统会优先承接这个专项选择，而不是重新泛推。`
+      : `最近的主轴更接近“${latestReport.pattern?.type || '综合判断'}”，最稳的动作不是重新泛问，而是沿着主问题继续下钻。`
     : latestTool
       ? `最近已经开始做“${latestTool.shortTitle}”，现在应该把单点判断接回综合报告和更深承接。`
+      : latestJourneyCategory
+        ? `最近的路径选择集中在“${latestJourneyCategory}”，下一步应先接回这个专项，而不是重新浏览。`
       : '还没有形成稳定路径，先做综合测算，再选一个高频工具建立第一次可复用判断。';
   const urgencyLine = premiumOffer
     ? `当前最值得推进的付费承接是 ${premiumOffer.title}，因为它能把“知道一点”升级成“真正能做决定”。`

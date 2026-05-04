@@ -15,6 +15,7 @@ import {
   type ToolDefinition,
   type ToolCategoryKey,
 } from '@/lib/tools';
+import { appendSourceToHref } from '@/lib/source-url';
 
 export interface JourneyCard {
   href: string;
@@ -129,7 +130,25 @@ function buildReportCard(category: ToolCategoryKey | null): JourneyCard {
   };
 }
 
-export function buildJourneyForTool(tool: ToolDefinition): SurfaceJourney {
+function withJourneySource(journey: SurfaceJourney, rawSource?: string | null): SurfaceJourney {
+  if (!rawSource) {
+    return journey;
+  }
+
+  const mapCard = (card: JourneyCard): JourneyCard => ({
+    ...card,
+    href: appendSourceToHref(card.href, rawSource),
+  });
+
+  return {
+    reportCard: mapCard(journey.reportCard),
+    toolCards: journey.toolCards.map(mapCard),
+    knowledgeCards: journey.knowledgeCards.map(mapCard),
+    caseCards: journey.caseCards.map(mapCard),
+  };
+}
+
+export function buildJourneyForTool(tool: ToolDefinition, options?: { source?: string | null }): SurfaceJourney {
   const category = tool.category;
   const signalText = `${tool.title} ${tool.description} ${tool.hook} ${tool.relatedReportThemes.join(' ')}`;
   const tools = tool.nextToolSlugs
@@ -155,15 +174,16 @@ export function buildJourneyForTool(tool: ToolDefinition): SurfaceJourney {
     preferredReportThemes: tool.relatedReportThemes,
   });
 
-  return {
+  const journey = {
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
   };
+  return withJourneySource(journey, options?.source);
 }
 
-export function buildJourneyForReport(report: FortuneRecord): SurfaceJourney {
+export function buildJourneyForReport(report: FortuneRecord, options?: { source?: string | null }): SurfaceJourney {
   const signalText = [
     report.analysis?.opening,
     report.analysis?.explanation,
@@ -193,7 +213,7 @@ export function buildJourneyForReport(report: FortuneRecord): SurfaceJourney {
     preferredReportThemes: [report.pattern?.type || '', report.advice?.overall || ''].filter(Boolean),
   });
 
-  return {
+  const journey = {
     reportCard: {
       href: `/result/${report.id}`,
       title: '这份综合报告就是总底盘',
@@ -204,6 +224,7 @@ export function buildJourneyForReport(report: FortuneRecord): SurfaceJourney {
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
   };
+  return withJourneySource(journey, options?.source);
 }
 
 export function buildJourneyForContent(params: {
@@ -213,7 +234,7 @@ export function buildJourneyForContent(params: {
   category?: string | null;
   contentType: 'knowledge' | 'case';
   slug: string;
-}): SurfaceJourney {
+}, options?: { source?: string | null }): SurfaceJourney {
   const signalText = `${params.title} ${params.excerpt} ${(params.tags || []).join(' ')} ${params.category || ''}`;
   const category = inferCategoryFromText(signalText);
   const entry = getManagedContentEntryBySlug(params.contentType, params.slug);
@@ -241,12 +262,77 @@ export function buildJourneyForContent(params: {
     preferredReportThemes: journeyMeta.relatedReportThemes,
   });
 
-  return {
+  const journey = {
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
   };
+
+  return withJourneySource(journey, options?.source);
+}
+
+export function buildJourneyForVisualAsset(params: {
+  title: string;
+  description: string;
+  narrativeExcerpt: string;
+  module: string;
+  slug: string;
+  relatedToolSlugs?: string[];
+  relatedReportThemes?: string[];
+  targetRoutes?: string[];
+  source?: string | null;
+}): SurfaceJourney {
+  const signalText = [
+    params.title,
+    params.description,
+    params.narrativeExcerpt,
+    params.module,
+    ...(params.relatedReportThemes || []),
+    ...(params.targetRoutes || []),
+  ].join(' ');
+  const inferredCategory = inferCategoryFromText(signalText);
+  const fallbackCategory: ToolCategoryKey = params.module === 'CONTENT'
+    ? 'career'
+    : params.module === 'SOCIAL'
+      ? 'timing'
+      : params.module === 'MINGLI'
+        ? 'application'
+        : 'career';
+  const category = inferredCategory || fallbackCategory;
+  const directTools = (params.relatedToolSlugs || [])
+    .map((slug) => getToolDefinition(slug))
+    .filter((item): item is ToolDefinition => !!item);
+  const tools = [
+    ...directTools,
+    ...listToolsByCategory(category),
+  ].filter((item, index, array) => array.findIndex((candidate) => candidate.slug === item.slug) === index).slice(0, 4);
+  const preferredToolSlug = tools[0]?.slug;
+  const knowledge = pickContentEntries({
+    contentType: 'knowledge',
+    category,
+    signalText,
+    limit: 3,
+    preferredToolSlug,
+    preferredReportThemes: params.relatedReportThemes || [],
+  });
+  const cases = pickContentEntries({
+    contentType: 'case',
+    category,
+    signalText,
+    limit: 3,
+    preferredToolSlug,
+    preferredReportThemes: params.relatedReportThemes || [],
+  });
+
+  const journey = {
+    reportCard: buildReportCard(category),
+    toolCards: tools.map(mapToolCard),
+    knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
+    caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
+  };
+
+  return withJourneySource(journey, params.source || null);
 }
 
 export function buildPersonalizedJourney(params: {

@@ -1,0 +1,45 @@
+{
+  "id": "mingli-analysis-v1",
+  "name": "Life Kline Mingli Analysis Workflow",
+  "description": "Repository-owned workflow contract for Bazi engine, report LLM, agentic review, persistence, tool memory and growth handoff.",
+  "runtime": {
+    "maxAttempts": 2,
+    "retryBaseDelayMs": 1200,
+    "retryMaxDelayMs": 12000,
+    "stageTimeoutMs": {
+      "engine": 8000,
+      "llm": 180000,
+      "agentic": 13000,
+      "merge": 8000,
+      "persist": 8000
+    }
+  },
+  "stages": [
+    "received",
+    "solar-time",
+    "engine",
+    "llm",
+    "agentic",
+    "merge",
+    "tool-memory",
+    "tacit-context",
+    "persist",
+    "upgrade-queue",
+    "complete"
+  ],
+  "qualityPolicy": {
+    "mustUseDeterministicEngine": true,
+    "llmIsEnhancementNotSourceOfTruth": true,
+    "agenticMayBeSkippedWhenProviderUnhealthy": true,
+    "mustApplyReliabilityGuard": true,
+    "mustPersistLineage": true,
+    "mustAttachToolMemoryWhenAvailable": true,
+    "mustAvoidDeterministicFateClaims": true
+  },
+  "observability": {
+    "trackStageEvents": true,
+    "trackProviderFallbacks": true,
+    "trackQualityAudit": true,
+    "trackUpgradeQueue": true
+  }
+}

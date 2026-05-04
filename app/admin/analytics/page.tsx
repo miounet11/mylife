@@ -1,13 +1,18 @@
 import Link from 'next/link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import { buildAdminActionItems, buildAdminOperatingInsight } from '@/lib/admin-analytics-insights';
+import { mapCtaSourceFamilyLabel, mapCtaStrategyLabel } from '@/lib/cta-strategy';
+import { buildAdminActionItems, buildAdminOperatingInsight, type AdminAnalyticsSnapshot } from '@/lib/admin-analytics-insights';
 import { getAdminQualityWorkboard } from '@/lib/admin-quality-workboard';
 import { requireAdminUser } from '@/lib/auth';
 import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
-import { analyticsOperations } from '@/lib/database';
+import { analyticsOperations, reportJourneyEventOperations } from '@/lib/database';
 import { toKnowledgeEditorialCandidate } from '@/lib/knowledge-editorial';
+import { getProductExperienceAnalyticsSnapshot } from '@/lib/product-experience-analytics';
+import { listRealUserReportUpgradeCandidates } from '@/lib/real-user-report-upgrades';
+import { formatAttributionSourceLabel } from '@/lib/source-attribution';
 import { listToolDefinitions } from '@/lib/tools';
+import { formatDateTime } from '@/lib/utils';
 import { getMailDebugConfig, verifyMailConnection } from '@/mail';
 
 export const dynamic = 'force-dynamic';
@@ -31,6 +36,9 @@ const statLabels: Array<{ key: keyof ReturnType<typeof analyticsOperations.getOv
 export default async function AdminAnalyticsPage() {
   await requireAdminUser('/admin/analytics');
   const overview = analyticsOperations.getOverview();
+  const reportJourney = reportJourneyEventOperations.getAnalyticsSnapshot(30);
+  const productExperience = getProductExperienceAnalyticsSnapshot(30);
+  const realUserUpgradeCandidates = listRealUserReportUpgradeCandidates(7, 8);
   const {
     totals,
     eventsLast7d,
@@ -58,10 +66,20 @@ export default async function AdminAnalyticsPage() {
     userRegistrationSummary,
     weeklyUserGrowth = [],
     weeklyProductUsage = [],
+    weeklyDeviceMix = [],
+    weeklySourceTrend = [],
+    sourceFunnel = [],
+    sourceDeviceFunnel = [],
+    deviceMeasurementSummary,
+    deviceFunnelBreakdown = [],
     dailyProductUsage = [],
     sessionStrength30d,
+    identityContinuity,
+    lifecycleRecall,
     recentBehaviorShift,
+    recentSourceShift = [],
     systemHealth,
+    ctaStrategyBreakdown = [],
   } = overview;
   const emailDeliveryRows = analyticsOperations.rawQuery(`
     SELECT event_name, page, meta, created_at
@@ -649,7 +667,7 @@ export default async function AdminAnalyticsPage() {
     })
     .sort((left, right) => right.priorityScore - left.priorityScore || right.detailViews - left.detailViews)
     .slice(0, 10);
-  const operatingInsight = buildAdminOperatingInsight({
+  const adminInsightSnapshot = {
     totals,
     pendingValidationBuckets,
     driftReasonBreakdown,
@@ -657,18 +675,24 @@ export default async function AdminAnalyticsPage() {
     journeyFunnel,
     reasoningModeBreakdown,
     chatActionBreakdown,
-  });
-  const actionItems = buildAdminActionItems({
-    totals,
-    pendingValidationBuckets,
-    driftReasonBreakdown,
-    reportVersionBreakdown,
-    journeyFunnel,
-    reasoningModeBreakdown,
-    chatActionBreakdown,
-  });
+    deviceMeasurementSummary,
+    deviceFunnelBreakdown,
+    recentBehaviorShift,
+    lifecycleRecall,
+    sourceFunnel,
+    sourceDeviceFunnel,
+  } as AdminAnalyticsSnapshot;
+  const operatingInsight = buildAdminOperatingInsight(adminInsightSnapshot);
+  const actionItems = buildAdminActionItems(adminInsightSnapshot);
   const last7DailyOps = dailyProductUsage.slice(0, 7);
   const dailyOpsSummary = summarizeDailyOps(last7DailyOps);
+  const recentWeeklyDeviceMix = weeklyDeviceMix.filter((item) => item.productEvents > 0 || item.verifiedUsers > 0 || item.sessions > 0).slice(0, 15);
+  const visibleDeviceFunnelBreakdown = deviceFunnelBreakdown.slice(0, 5);
+  const visibleDeviceBehaviorShift = (recentBehaviorShift?.byDevice || []).slice(0, 5);
+  const visibleWeeklySourceTrend = weeklySourceTrend.slice(0, 20);
+  const visibleRecentSourceShift = recentSourceShift
+    .filter((item) => item.sampleState !== 'sparse')
+    .slice(0, 6);
   const qualityWorkboard = getAdminQualityWorkboard();
   const toolJourneyGapBreakdown = qualityWorkboard.prioritizedToolJourneyGaps.slice(0, 10);
   const unifiedToolRepairQueue = qualityWorkboard.prioritizedToolFixes
@@ -724,6 +748,138 @@ export default async function AdminAnalyticsPage() {
                 <div className="mt-2 intro-copy">{item.helper}</div>
               </div>
             ))}
+          </div>
+        </section>
+
+        <section id="product-experience-path-dashboard" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">产品体验路径看板</div>
+              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">每个页面是否完成自己的产品任务</div>
+              <div className="mt-2 intro-copy">
+                基于近 {productExperience.days} 天 `analytics_events`，把页面角色、成功指标和真实动作放到同一张表，避免只看 PV 不知道哪里断。
+              </div>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-4 lg:w-[34rem]">
+              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                浏览 {productExperience.totals.views}
+              </div>
+              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                主动作 {productExperience.totals.primaryActions}
+              </div>
+              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                总动作 {productExperience.totals.totalActions}
+              </div>
+              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                健康 {productExperience.totals.healthy}/{productExperience.totals.surfaces}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 xl:grid-cols-2">
+            {productExperience.rows.map((item) => (
+              <div key={item.surface} className="rounded-[1.6rem] bg-white/76 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.surface}</div>
+                    <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.label}</div>
+                  </div>
+                  <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.health)}`}>
+                    {mapHealthLabel(item.health)}
+                  </div>
+                </div>
+
+                <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">浏览</div>
+                    <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.views}</div>
+                  </div>
+                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">主动作</div>
+                    <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.primaryActions}</div>
+                  </div>
+                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">后续</div>
+                    <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.nextStepActions}</div>
+                  </div>
+                  <div className="rounded-[1.1rem] bg-[color:var(--accent-soft)] px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--accent-strong)]">转化</div>
+                    <div className="mt-1 text-xl font-black text-[color:var(--accent-strong)]">{item.conversionRate}%</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                  <span className="font-semibold text-[color:var(--ink)]">成功指标：</span>
+                  {item.successMetric}
+                </div>
+                <div className="mt-3 rounded-[1.2rem] bg-white px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+                  <span className="font-semibold text-[color:var(--accent-strong)]">下一步：</span>
+                  {item.action}
+                </div>
+                <div className="mt-3 text-xs text-[color:var(--muted)]">
+                  最近信号：{formatStableTimestamp(item.latestAt)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="real-user-report-upgrade-priority" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <div className="text-sm font-semibold text-[color:var(--muted)]">真实用户升级优先级</div>
+              <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">先修已被真实用户看过的 basic / LLM 失败报告</div>
+              <div className="mt-2 intro-copy">
+                近 7 天真实查看样本会自动进入报告升级候选池，优先级按已查看、basic、未用 LLM、低质量分综合排序。
+              </div>
+            </div>
+            <MetricBadge value={realUserUpgradeCandidates.length} label="候选" />
+          </div>
+
+          <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            {realUserUpgradeCandidates.length > 0 ? realUserUpgradeCandidates.map((item) => (
+              <Link
+                key={item.report.id}
+                href={`/result/${item.report.id}`}
+                className="rounded-[1.5rem] bg-white/78 p-5 transition hover:bg-white"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <div className="text-sm font-black text-[color:var(--ink)]">{item.report.name}</div>
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">{item.report.id}</div>
+                  </div>
+                  <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                    {item.priorityScore} 分
+                  </div>
+                </div>
+                <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">查看</div>
+                    <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.viewedCount}</div>
+                  </div>
+                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">质量</div>
+                    <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
+                      {item.report.analysis?.qualityAudit?.grade || 'C'} / {item.report.analysis?.qualityAudit?.overallScore || 0}
+                    </div>
+                  </div>
+                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">层级</div>
+                    <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
+                      {item.report.analysis?.qualityAudit?.deliveryTier || 'basic'}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4 text-xs leading-6 text-[color:var(--muted)]">
+                  {item.reasons.join(' · ')}
+                </div>
+                <div className="mt-2 text-xs text-[color:var(--muted)]">
+                  最近查看：{formatStableTimestamp(item.latestViewedAt)}
+                </div>
+              </Link>
+            )) : (
+              <CompactEmptyState title="暂无真实用户升级候选" detail="近 7 天没有已查看且需要升级的真实报告，或候选已经达到目标质量。" />
+            )}
           </div>
         </section>
 
@@ -786,6 +942,47 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">身份连续性</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看游客行为是否正确并入已验证用户</div>
+                </div>
+                <MetricBadge value={identityContinuity?.authGuestMappings || 0} label="映射" />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">guest analytics</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.guestAnalyticsEvents || 0}</div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">当前仍挂在 guest 身份上的行为总量。</div>
+                </div>
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">可回填</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.recoverableGuestAnalyticsEvents || 0}</div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">
+                    {`已有 auth_verified 映射，可安全修复 ${identityContinuity?.recoverableRate || 0}% 的 guest analytics。`}
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">孤儿 guest analytics</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.orphanGuestAnalyticsEvents || 0}</div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">已经找不到对应用户的 guest 行为，不能直接归因到注册用户。</div>
+                </div>
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">其他孤儿记录</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
+                    {(identityContinuity?.orphanGuestToolSessions || 0)
+                      + (identityContinuity?.orphanGuestSessions || 0)
+                      + (identityContinuity?.orphanGuestPremiumRequests || 0)
+                      + (identityContinuity?.orphanGuestUpgradeJobs || 0)}
+                  </div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">
+                    {`工具 ${identityContinuity?.orphanGuestToolSessions || 0} · 会话 ${identityContinuity?.orphanGuestSessions || 0} · 专项 ${identityContinuity?.orphanGuestPremiumRequests || 0} · 升级 ${identityContinuity?.orphanGuestUpgradeJobs || 0}`}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div>
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -861,6 +1058,126 @@ export default async function AdminAnalyticsPage() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 周设备分布</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪一端在带来使用和验证注册</div>
+                </div>
+                <MetricBadge value={recentWeeklyDeviceMix.length} label="行" />
+              </div>
+              <div className="mt-4 overflow-x-auto">
+                <table className="min-w-full border-separate border-spacing-y-2">
+                  <thead>
+                    <tr className="text-left text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">
+                      <th className="px-3 py-2">周</th>
+                      <th className="px-3 py-2">设备</th>
+                      <th className="px-3 py-2">产品事件</th>
+                      <th className="px-3 py-2">会话</th>
+                      <th className="px-3 py-2">已验证注册</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {recentWeeklyDeviceMix.length > 0 ? recentWeeklyDeviceMix.map((item) => (
+                      <tr key={`${item.weekStart}:${item.deviceType}`} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                        <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
+                        <td className="px-3 py-3">{mapDeviceTypeLabel(item.deviceType)}</td>
+                        <td className="px-3 py-3">{item.productEvents}</td>
+                        <td className="px-3 py-3">{item.sessions}</td>
+                        <td className="px-3 py-3">{item.verifiedUsers}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={5}>
+                          当前设备维度样本还不够，随着新埋点进入后这里会显示移动端、桌面端与其他设备的周趋势。
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">设备测量质量</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">先确认设备样本够不够支撑判断</div>
+                </div>
+                <MetricBadge value={deviceMeasurementSummary?.currentWindow?.coverageRate || 0} label="%覆盖" />
+              </div>
+              <div className="mt-3 intro-copy">
+                {deviceMeasurementSummary?.note || '设备埋点还在持续累积，覆盖率上来后再用它做更细的设备经营判断。'}
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">最近 3 天设备事件覆盖</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
+                    {`${deviceMeasurementSummary?.currentWindow?.knownDeviceEvents || 0}/${deviceMeasurementSummary?.currentWindow?.totalEvents || 0}`}
+                  </div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">
+                    覆盖率 {deviceMeasurementSummary?.currentWindow?.coverageRate || 0}%。
+                  </div>
+                </div>
+                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">最近 3 天设备会话覆盖</div>
+                  <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
+                    {`${deviceMeasurementSummary?.currentWindow?.knownDeviceSessions || 0}/${deviceMeasurementSummary?.currentWindow?.sessions || 0}`}
+                  </div>
+                  <div className="mt-2 text-xs text-[color:var(--muted)]">
+                    覆盖率 {deviceMeasurementSummary?.currentWindow?.sessionCoverageRate || 0}%。
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 grid gap-3">
+                {(deviceMeasurementSummary?.weeklyCoverage || []).length ? deviceMeasurementSummary.weeklyCoverage.map((item) => (
+                  <div key={item.deviceType} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSampleTone(item.sampleState)}`}>
+                        {mapSampleLabel(item.sampleState)}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`近 7 周有数据周数 ${item.weeksWithData}，会话 ${item.sessions}，产品事件 ${item.productEvents}，已验证注册 ${item.verifiedUsers}。`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无设备覆盖质量样本" detail="设备埋点还在进入历史窗口，等更多真实流量到来后这里会更稳定。" />
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">设备漏斗诊断</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪端的结果页、工具页或注册链路最弱</div>
+                </div>
+                <MetricBadge value={visibleDeviceFunnelBreakdown.length} label="设备" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {visibleDeviceFunnelBreakdown.length ? visibleDeviceFunnelBreakdown.map((item) => (
+                  <div key={item.deviceType} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSampleTone(item.sampleState)}`}>
+                        {mapSampleLabel(item.sampleState)}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`结果页到聊天 ${item.reportToChatSessions}/${item.reportSessions} = ${item.reportToChatRate}% · 结果页到事件 ${item.reportToEventSessions}/${item.reportSessions} = ${item.reportToEventRate}% · 工具详情到开跑 ${item.toolToRunSessions}/${item.toolDetailSessions} = ${item.toolToRunRate}% · 请求验证码到完成验证 ${item.authVerifiedSessions}/${item.authRequestSessions} = ${item.authVerifyRate}%。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">{item.qualityNote}</div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无设备漏斗样本" detail="设备样本还不够，先继续观察并让更多新流量进入这个统计窗口。" />
+                )}
               </div>
             </div>
           </div>
@@ -1010,6 +1327,342 @@ export default async function AdminAnalyticsPage() {
                     <CompactEmptyState title="暂无链路变化样本" detail="等关键会话链路样本更多后再看。" />
                   )}
                 </div>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-[color:var(--muted)]">最近几天来源变化</div>
+                <MetricBadge value={visibleRecentSourceShift.length} label="来源" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {visibleRecentSourceShift.length ? visibleRecentSourceShift.map((item) => (
+                  <div key={item.source} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{formatAttributionSourceLabel(item.source)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
+                        {formatSourceShiftDelta(item)}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`最近 analyze ${item.current.analyzeSessions}，前段 ${item.previous.analyzeSessions}；结果页 ${item.current.reportViewSessions} vs ${item.previous.reportViewSessions}；结果页到聊天 ${item.current.viewToChatRate}% vs ${item.previous.viewToChatRate}%；结果页到工具 ${item.current.viewToToolRunRate}% vs ${item.previous.viewToToolRunRate}%。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {item.sampleState === 'enough'
+                        ? '来源样本已够，可以直接判断这条 GEO / SEO 来源的短周期趋势。'
+                        : '来源样本偏低，先看方向，再继续积累。'}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无来源变化样本" detail="近几天来源样本还不够，等更多真实来源进入后，这里会直接告诉你是哪类入口在涨或在掉。" />
+                )}
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-[color:var(--muted)]">最近几天设备变化</div>
+                <MetricBadge value={visibleDeviceBehaviorShift.length} label="设备" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {visibleDeviceBehaviorShift.length ? visibleDeviceBehaviorShift.map((item) => (
+                  <div key={item.deviceType} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
+                        {formatDeviceShiftDelta(item)}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`最近产品事件 ${item.current.productEvents}，前段 ${item.previous.productEvents}；结果页到聊天 ${item.current.reportToChatRate}% vs ${item.previous.reportToChatRate}%；工具到开跑 ${item.current.toolToRunRate}% vs ${item.previous.toolToRunRate}%；验证码完成 ${item.current.authVerifyRate}% vs ${item.previous.authVerifyRate}%。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {item.sampleState === 'enough'
+                        ? '样本已够，可以直接按这端判断趋势。'
+                        : item.sampleState === 'low'
+                          ? '样本偏低，先看方向，再继续积累。'
+                          : '样本太少，暂时只当信号，不当结论。'}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无设备变化样本" detail="新设备埋点样本再多一点后，这里会更明确告诉你最近是哪端在变。" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">来源主漏斗</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪类来源真正把人带到报告后的下一步</div>
+                </div>
+                <MetricBadge value={sourceFunnel.length} label="来源" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {sourceFunnel.length ? sourceFunnel.slice(0, 6).map((item) => (
+                  <div key={`source-funnel:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{formatAttributionSourceLabel(item.source)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.viewToChatRate >= 35 ? 'healthy' : item.viewToChatRate >= 15 ? 'warning' : 'critical')}`}>
+                        {`${item.viewToChatRate}% 聊天`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`analyze ${item.analyzeSessions} -> report ${item.reportsGenerated}（${item.analyzeToReportRate}%） -> view ${item.reportViewSessions}（${item.reportToViewRate}%） -> chat ${item.chatSessions}（${item.viewToChatRate}%） -> tool run ${item.toolRunSessions}（${item.viewToToolRunRate}%）。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`最近动作：${formatStableTimestamp(item.latestAt)}`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无来源主漏斗样本" detail="近 30 天来源链路样本还不够，后续会在这里直接显示哪条来源最能带来真实使用。" />
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 周来源趋势</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看 GEO / SEO 来源是持续增长，还是只带来一次性访问</div>
+                </div>
+                <MetricBadge value={visibleWeeklySourceTrend.length} label="行" />
+              </div>
+              <div className="mt-4 overflow-hidden rounded-[1.4rem] border border-slate-200/70">
+                <table className="min-w-full divide-y divide-slate-200/70 text-left">
+                  <thead className="bg-slate-50/80 text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">
+                    <tr>
+                      <th className="px-3 py-2">周</th>
+                      <th className="px-3 py-2">来源</th>
+                      <th className="px-3 py-2">分析/结果</th>
+                      <th className="px-3 py-2">聊天/工具</th>
+                      <th className="px-3 py-2">率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleWeeklySourceTrend.length ? visibleWeeklySourceTrend.map((item) => (
+                      <tr key={`${item.weekStart}:${item.source}`} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                        <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
+                        <td className="px-3 py-3">{formatAttributionSourceLabel(item.source)}</td>
+                        <td className="px-3 py-3">{`${item.analyzeSessions}/${item.reportViewSessions}`}</td>
+                        <td className="px-3 py-3">{`${item.chatSessions}/${item.toolRunSessions}`}</td>
+                        <td className="px-3 py-3">{`${item.reportToViewRate}% -> ${item.viewToChatRate}%`}</td>
+                      </tr>
+                    )) : (
+                      <tr>
+                        <td className="px-3 py-4 text-sm text-[color:var(--muted)]" colSpan={5}>
+                          暂无最近 7 周来源趋势数据。
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">来源 CTA 策略表现</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪类来源话术真正把用户带进聊天和下一步</div>
+                </div>
+                <MetricBadge value={ctaStrategyBreakdown.length} label="策略" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {ctaStrategyBreakdown.length ? ctaStrategyBreakdown.map((item) => (
+                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{mapCtaStrategyLabel(item.strategyKey)}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">{mapCtaSourceFamilyLabel(item.sourceFamily)}</div>
+                      </div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 50 ? 'healthy' : item.chatCompletionRate >= 25 ? 'warning' : 'critical')}`}>
+                        {`${item.chatCompletionRate}% 完成`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`CTA ${item.clicks} -> 聊天页 ${item.chatPageViews}（${item.clickToChatRate}%） -> 完成 ${item.chatCompleted}（${item.chatCompletionRate}%）；工具卡 ${item.toolCardClicks}；内容卡 ${item.contentCardClicks}。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">{`最近动作：${formatStableTimestamp(item.latestAt)}`}</div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无策略表现样本" detail="等来源差异化 CTA 再积累一些真实点击后，这里会直接显示哪套承接话术最有效。" />
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">来源 × 设备漏斗</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪条来源在具体设备端最容易掉下去</div>
+                </div>
+                <MetricBadge value={sourceDeviceFunnel.length} label="组合" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {sourceDeviceFunnel.length ? sourceDeviceFunnel.slice(0, 6).map((item) => (
+                  <div key={`source-device-funnel:${item.source}:${item.deviceType}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{`${formatAttributionSourceLabel(item.source)} · ${mapDeviceTypeLabel(item.deviceType)}`}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.viewToChatRate >= 35 ? 'healthy' : item.viewToChatRate >= 15 ? 'warning' : 'critical')}`}>
+                        {`${item.viewToChatRate}% 聊天`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {`analyze ${item.analyzeSessions} -> report ${item.reportsGenerated}（${item.analyzeToReportRate}%） -> view ${item.reportViewSessions}（${item.reportToViewRate}%） -> chat ${item.chatSessions}（${item.viewToChatRate}%） -> tool run ${item.toolRunSessions}（${item.viewToToolRunRate}%）。`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无来源与设备组合样本" detail="等更多真实来源流量进入后，这里会直接告诉你哪条来源在移动端或桌面端最弱。" />
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜报告后追问</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看提醒邮件有没有把用户真正带回聊天</div>
+                </div>
+                <MetricBadge value={lifecycleRecall?.reportFollowup?.length || 0} label="报告" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {lifecycleRecall?.reportFollowup?.length ? lifecycleRecall.reportFollowup.map((item) => (
+                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">
+                        {`报告 ${item.reportId.slice(0, 12)}`}
+                      </div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
+                        {`${item.chatCompleted}/${item.chatPageViews} 完成`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`已发送 ${item.sent}，聊天页 ${item.chatPageViews}（${item.chatPageViewRate}%），完成 ${item.chatCompleted}（${item.chatCompletionRate}%），沉淀事件 ${item.chatEventsSaved}（${item.chatToEventRate}%）。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`最近动作：${formatStableTimestamp(item.latestAt)}`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无报告追问召回样本" detail="等生命周期邮件继续发出并回流后，这里会显示从提醒到聊天完成的真实效果。" />
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜工具兴趣回流</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看工具提醒有没有把浏览兴趣变成实际开跑</div>
+                </div>
+                <MetricBadge value={lifecycleRecall?.toolInterest?.length || 0} label="工具" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {lifecycleRecall?.toolInterest?.length ? lifecycleRecall.toolInterest.map((item) => (
+                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">
+                        {getToolDisplayTitle(item.toolSlug)}
+                      </div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.sentToRunRate >= 35 ? 'healthy' : item.sentToRunRate >= 15 ? 'warning' : 'critical')}`}>
+                        {`${item.runStarts}/${item.sent} 开跑`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`已发送 ${item.sent}，详情访问 ${item.detailViews}，开跑 ${item.runStarts}（sent->run ${item.sentToRunRate}% / detail->run ${item.detailToRunRate}%），结果页 ${item.resultViews}（${item.runToResultRate}%）。`}
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`最近动作：${formatStableTimestamp(item.latestAt)}`}
+                    </div>
+                </div>
+              )) : (
+                  <CompactEmptyState title="暂无工具兴趣回流样本" detail="等工具兴趣提醒进一步触发和回流后，这里会显示从提醒到开跑的真实效果。" />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-2">
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜报告按来源/设备</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪类入口和哪一端更容易把用户带回聊天</div>
+                </div>
+                <MetricBadge value={(lifecycleRecall?.reportFollowupBySource?.length || 0) + (lifecycleRecall?.reportFollowupByDevice?.length || 0)} label="分组" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {(lifecycleRecall?.reportFollowupBySource?.length || 0) > 0 ? lifecycleRecall!.reportFollowupBySource!.slice(0, 4).map((item) => (
+                  <div key={`report-source:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleSourceLabel(item.source)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
+                        {`${item.chatCompleted}/${item.chatPageViews} 完成`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`已发送 ${item.sent}，聊天页 ${item.chatPageViews}（${item.chatPageViewRate}%），完成 ${item.chatCompletionRate}% ，沉淀事件 ${item.chatToEventRate}%。`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无报告召回来路分组样本" detail="需要继续积累邮件召回样本，才能看清哪类内容来源更适合带回聊天。" />
+                )}
+                {(lifecycleRecall?.reportFollowupByDevice?.length || 0) > 0 ? lifecycleRecall!.reportFollowupByDevice!.slice(0, 4).map((item) => (
+                  <div key={`report-device:${item.deviceType}`} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
+                        {`${item.chatCompletionRate}% 完成`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`发送 ${item.sent}，聊天页 ${item.chatPageViewRate}% ，完成 ${item.chatCompletionRate}% ，沉淀事件 ${item.chatToEventRate}%。`}
+                    </div>
+                  </div>
+                )) : null}
+              </div>
+            </div>
+
+            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜工具按来源/设备</div>
+                  <div className="mt-1 text-xl font-black text-[color:var(--ink)]">看哪类入口和哪一端更容易把兴趣带回真实开跑</div>
+                </div>
+                <MetricBadge value={(lifecycleRecall?.toolInterestBySource?.length || 0) + (lifecycleRecall?.toolInterestByDevice?.length || 0)} label="分组" />
+              </div>
+              <div className="mt-4 grid gap-3">
+                {(lifecycleRecall?.toolInterestBySource?.length || 0) > 0 ? lifecycleRecall!.toolInterestBySource!.slice(0, 4).map((item) => (
+                  <div key={`tool-source:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleSourceLabel(item.source)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.sentToRunRate >= 35 ? 'healthy' : item.sentToRunRate >= 15 ? 'warning' : 'critical')}`}>
+                        {`${item.runStarts}/${item.sent} 开跑`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`已发送 ${item.sent}，详情访问 ${item.detailViews}，sent->run ${item.sentToRunRate}% ，run->result ${item.runToResultRate}%。`}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无工具召回来路分组样本" detail="继续积累工具召回样本后，这里会看清哪类内容来源更能带回真实开跑。" />
+                )}
+                {(lifecycleRecall?.toolInterestByDevice?.length || 0) > 0 ? lifecycleRecall!.toolInterestByDevice!.slice(0, 4).map((item) => (
+                  <div key={`tool-device:${item.deviceType}`} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
+                      <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.sentToRunRate >= 35 ? 'healthy' : item.sentToRunRate >= 15 ? 'warning' : 'critical')}`}>
+                        {`${item.sentToRunRate}% 开跑`}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs text-[color:var(--muted)]">
+                      {`发送 ${item.sent}，详情访问 ${item.detailViews}，开跑 ${item.sentToRunRate}% ，结果 ${item.runToResultRate}%。`}
+                    </div>
+                  </div>
+                )) : null}
               </div>
             </div>
           </div>
@@ -1174,6 +1827,132 @@ export default async function AdminAnalyticsPage() {
               )) : (
                 <CompactEmptyState title="暂无核心漏斗" detail="等结果页、聊天和事件沉淀链路继续积累后再看。" />
               )}
+            </div>
+          </div>
+
+          <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--muted)]">报告分层旅程漏斗</div>
+                <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">首报 → 深报 → 专项 → 验证的真实点击路径</div>
+                <div className="mt-2 intro-copy">
+                  基于 `report_journey_events` 近 30 天样本，专门观察用户从第一份报告继续深入、进入专项工具和回到验证层的路径。
+                </div>
+              </div>
+              <div className="grid gap-2 sm:grid-cols-3 lg:w-[28rem]">
+                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                  事件 {reportJourney.totalEvents}
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                  报告 {reportJourney.uniqueReports}
+                </div>
+                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                  用户 {reportJourney.uniqueUsers}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+              <div className="rounded-[1.6rem] bg-white/72 p-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-semibold text-[color:var(--muted)]">分层漏斗</div>
+                  <MetricBadge value={reportJourney.funnel.length} label="层" />
+                </div>
+                <div className="mt-4 grid gap-3">
+                  {reportJourney.funnel.length > 0 ? reportJourney.funnel.map((item) => (
+                    <div key={item.key} className="rounded-[1.3rem] bg-slate-50 px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
+                          <div className="mt-1 text-xs text-[color:var(--muted)]">{mapReportJourneyLayerAdvice(item.key)}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
+                          <div className="text-xs text-[color:var(--muted)]">{item.share}%</div>
+                        </div>
+                      </div>
+                    </div>
+                  )) : (
+                    <CompactEmptyState title="暂无报告分层旅程样本" detail="结果页分层路径被点击后，这里会显示首报、深报、专项和验证的真实走向。" />
+                  )}
+                </div>
+              </div>
+
+              <div className="grid gap-5">
+                <div className="rounded-[1.6rem] bg-white/72 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--muted)]">热门专项方向</div>
+                    <MetricBadge value={reportJourney.categories.length} label="类" />
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {reportJourney.categories.length > 0 ? reportJourney.categories.slice(0, 5).map((item) => (
+                      <div key={item.category} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReportJourneyCategoryLabel(item.category)}</div>
+                          <div className="text-xs text-[color:var(--muted)]">{`${item.count} / ${item.share}%`}</div>
+                        </div>
+                      </div>
+                    )) : (
+                      <CompactEmptyState title="暂无专项方向" detail="用户点击专项推荐后，这里会显示事业、财富、关系等方向偏好。" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-[1.6rem] bg-white/72 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="text-sm font-semibold text-[color:var(--muted)]">热门承接工具</div>
+                    <MetricBadge value={reportJourney.tools.length} label="工具" />
+                  </div>
+                  <div className="mt-4 grid gap-3">
+                    {reportJourney.tools.length > 0 ? reportJourney.tools.slice(0, 5).map((item) => (
+                      <div key={item.toolSlug} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <div className="text-sm font-semibold text-[color:var(--ink)]">{getToolDisplayTitle(item.toolSlug)}</div>
+                            <div className="mt-1 text-xs text-[color:var(--muted)]">{item.toolSlug}</div>
+                          </div>
+                          <div className="text-xs text-[color:var(--muted)]">{`${item.count} / ${item.share}%`}</div>
+                        </div>
+                      </div>
+                    )) : (
+                      <CompactEmptyState title="暂无承接工具" detail="专项工具点击累积后，这里会显示最能承接报告用户的工具。" />
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-5 rounded-[1.6rem] bg-white/72 p-5">
+              <div className="flex items-center justify-between gap-3">
+                <div className="text-sm font-semibold text-[color:var(--muted)]">最近分层点击</div>
+                <MetricBadge value={reportJourney.latestEvents.length} label="条" />
+              </div>
+              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                {reportJourney.latestEvents.length > 0 ? reportJourney.latestEvents.slice(0, 6).map((item) => (
+                  <div key={item.id} className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReportJourneyActionLabel(item.actionTarget)}</div>
+                        <div className="mt-1 text-xs text-[color:var(--muted)]">
+                          {`${item.reportId.slice(0, 12)} · ${item.layerKey || 'unknown'}`}
+                        </div>
+                      </div>
+                      <div className="text-right text-xs text-[color:var(--muted)]">
+                        {formatStableTimestamp(item.createdAt)}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                      {[
+                        item.category ? mapReportJourneyCategoryLabel(item.category) : null,
+                        item.toolSlug ? getToolDisplayTitle(item.toolSlug) : null,
+                        item.source || null,
+                      ].filter(Boolean).join(' · ') || '未记录额外上下文'}
+                    </div>
+                  </div>
+                )) : (
+                  <CompactEmptyState title="暂无最近分层点击" detail="当用户点击结果页分层路径、专项推荐或验证入口后，这里会显示最近动作。" />
+                )}
+              </div>
             </div>
           </div>
 
@@ -2155,6 +2934,40 @@ function mapSourceLabel(source: string) {
   return '手动创建';
 }
 
+function mapLifecycleSourceLabel(source: string) {
+  return formatAttributionSourceLabel(source);
+}
+
+function mapReportJourneyLayerAdvice(layerKey: string) {
+  if (layerKey === 'first-report') return '用户仍在首报总览层，需要首屏结论和下一步足够清晰。';
+  if (layerKey === 'deep-report') return '用户愿意继续看证据层，重点优化结构解释和阶段窗口。';
+  if (layerKey === 'category-report') return '用户已进入专项选择，重点看工具承接和开跑率。';
+  if (layerKey === 'event-validation') return '用户回到验证闭环，重点看纠偏与复盘是否可执行。';
+  return '未知分层动作，需要检查埋点 meta 或工作流配置。';
+}
+
+function mapReportJourneyCategoryLabel(category: string) {
+  if (category === 'career') return '事业专项';
+  if (category === 'wealth') return '财富专项';
+  if (category === 'relationship') return '关系专项';
+  if (category === 'health') return '健康专项';
+  if (category === 'family') return '家庭专项';
+  if (category === 'migration') return '迁移专项';
+  if (category === 'timing') return '时机专项';
+  if (category === 'application') return '应用专项';
+  return category;
+}
+
+function mapReportJourneyActionLabel(actionTarget: string) {
+  if (actionTarget === 'report_journey_deep_report') return '继续看深入报告';
+  if (actionTarget === 'report_journey_deep_report_basic') return '查看稳定版深度解释';
+  if (actionTarget === 'report_journey_validation') return '处理报告纠偏';
+  if (actionTarget === 'report_journey_primary_category') return '进入首选专项';
+  if (actionTarget === 'report_journey_secondary_category') return '进入备选专项';
+  if (actionTarget.startsWith('report_journey_layer_')) return '点击分层阅读卡片';
+  return actionTarget;
+}
+
 function CompactEmptyState({ title, detail }: { title: string; detail: string }) {
   return (
     <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
@@ -2170,6 +2983,24 @@ function MetricBadge({ value, label }: { value: number | string; label: string }
       {value} {label}
     </div>
   );
+}
+
+function formatStableTimestamp(value?: string | null) {
+  if (!value) {
+    return '--';
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return formatDateTime(parsed);
+}
+
+function getToolDisplayTitle(toolSlug: string) {
+  const tool = listToolDefinitions().find((item) => item.slug === toolSlug);
+  return tool?.shortTitle || tool?.title || toolSlug;
 }
 
 function mapPremiumServiceLabel(serviceKey: string) {
@@ -2299,6 +3130,26 @@ function mapTrendTone(direction: string) {
   return 'bg-slate-100 text-slate-700';
 }
 
+function mapSampleLabel(sampleState: string) {
+  if (sampleState === 'enough') return '样本可用';
+  if (sampleState === 'low') return '样本偏低';
+  return '样本稀薄';
+}
+
+function mapSampleTone(sampleState: string) {
+  if (sampleState === 'enough') return 'bg-emerald-50 text-emerald-700';
+  if (sampleState === 'low') return 'bg-amber-50 text-amber-700';
+  return 'bg-slate-100 text-slate-700';
+}
+
+function mapDeviceTypeLabel(deviceType: string) {
+  if (deviceType === 'mobile') return '移动端';
+  if (deviceType === 'desktop') return '桌面端';
+  if (deviceType === 'tablet') return '平板';
+  if (deviceType === 'bot') return '爬虫 / 机器人';
+  return '未知';
+}
+
 function formatTrendDelta(delta: number, pctChange?: number | null) {
   const signedDelta = delta > 0 ? `+${delta}` : `${delta}`;
   if (pctChange === null || pctChange === undefined) {
@@ -2306,6 +3157,50 @@ function formatTrendDelta(delta: number, pctChange?: number | null) {
   }
   const signedPct = pctChange > 0 ? `+${pctChange}%` : `${pctChange}%`;
   return `${signedDelta} / ${signedPct}`;
+}
+
+function formatDeviceShiftDelta(item: {
+  productEventsDelta: number;
+  reportToChatRateDelta: number;
+  toolToRunRateDelta: number;
+  authVerifyRateDelta: number;
+}) {
+  const parts: string[] = [];
+  if (item.productEventsDelta !== 0) {
+    parts.push(`事件 ${item.productEventsDelta > 0 ? '+' : ''}${item.productEventsDelta}`);
+  }
+  if (item.reportToChatRateDelta !== 0) {
+    parts.push(`聊转 ${item.reportToChatRateDelta > 0 ? '+' : ''}${item.reportToChatRateDelta}pt`);
+  }
+  if (item.toolToRunRateDelta !== 0) {
+    parts.push(`工具 ${item.toolToRunRateDelta > 0 ? '+' : ''}${item.toolToRunRateDelta}pt`);
+  }
+  if (item.authVerifyRateDelta !== 0) {
+    parts.push(`验证 ${item.authVerifyRateDelta > 0 ? '+' : ''}${item.authVerifyRateDelta}pt`);
+  }
+  return parts.join(' · ') || '无明显变化';
+}
+
+function formatSourceShiftDelta(item: {
+  analyzeSessionsDelta: number;
+  reportViewSessionsDelta: number;
+  viewToChatRateDelta: number;
+  viewToToolRunRateDelta: number;
+}) {
+  const parts: string[] = [];
+  if (item.analyzeSessionsDelta !== 0) {
+    parts.push(`分析 ${item.analyzeSessionsDelta > 0 ? '+' : ''}${item.analyzeSessionsDelta}`);
+  }
+  if (item.reportViewSessionsDelta !== 0) {
+    parts.push(`结果 ${item.reportViewSessionsDelta > 0 ? '+' : ''}${item.reportViewSessionsDelta}`);
+  }
+  if (item.viewToChatRateDelta !== 0) {
+    parts.push(`聊天 ${item.viewToChatRateDelta > 0 ? '+' : ''}${item.viewToChatRateDelta}pt`);
+  }
+  if (item.viewToToolRunRateDelta !== 0) {
+    parts.push(`工具 ${item.viewToToolRunRateDelta > 0 ? '+' : ''}${item.viewToToolRunRateDelta}pt`);
+  }
+  return parts.join(' · ') || '无明显变化';
 }
 
 function mapEmailRetryStatusLabel(status: string) {

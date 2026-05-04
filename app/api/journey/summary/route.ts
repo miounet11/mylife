@@ -1,29 +1,36 @@
 import { NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
-import { fortuneOperations, toolSessionOperations } from '@/lib/database';
+import { fortuneOperations, reportJourneyEventOperations, toolSessionOperations } from '@/lib/database';
 import { buildPersonalGrowthHub } from '@/lib/personal-growth-hub';
 import { buildPersonalizedJourney } from '@/lib/surface-journeys';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 export async function GET() {
   try {
     const session = await getAuthSession();
     const authenticated = !!session.authenticated && !!session.user?.id;
-    const reports = authenticated && session.user?.id ? fortuneOperations.getByUserId(session.user.id) || [] : [];
-    const toolSessions = authenticated && session.user?.id ? toolSessionOperations.listByUser(session.user.id, 10) || [] : [];
+    const currentUserId = await getCurrentUserId();
+    const userId = session.user?.id || currentUserId || null;
+    const hasSessionContext = !!userId;
+    const reports = userId ? fortuneOperations.getByUserId(userId) || [] : [];
+    const toolSessions = userId ? toolSessionOperations.listByUser(userId, 10) || [] : [];
+    const journeyEvents = userId ? reportJourneyEventOperations.listByUser(userId, 20) || [] : [];
     const summary = buildPersonalizedJourney({
       reports: reports as any,
       toolSessions: toolSessions as any,
     });
-    const growthHub = authenticated
+    const growthHub = hasSessionContext
       ? buildPersonalGrowthHub({
         reports: reports as any,
         toolSessions: toolSessions as any,
+        journeyEvents,
       })
       : null;
 
     return NextResponse.json({
       success: true,
       authenticated,
+      hasSessionContext,
       data: {
         ...summary,
         growthHub,

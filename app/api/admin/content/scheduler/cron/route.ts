@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getContentSchedulerCronToken } from '@/lib/env';
 import { runContentSchedulerCycle } from '@/lib/content-ops';
 
-export const maxDuration = 30;
+export const maxDuration = 900;
 
 function isAuthorized(request: NextRequest) {
   const expected = getContentSchedulerCronToken();

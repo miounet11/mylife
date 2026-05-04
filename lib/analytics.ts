@@ -1,4 +1,5 @@
 import { analyticsOperations } from '@/lib/database';
+import { resolveDeviceProfile } from '@/lib/device-profile';
 import type { AnalyticsEventRecord } from '@/lib/user-types';
 import { generateId } from '@/lib/utils';
 
@@ -64,6 +65,7 @@ interface TrackEventInput {
   page?: string;
   meta?: Record<string, unknown>;
   forwardToGoogleAnalytics?: boolean;
+  userAgent?: string | null;
 }
 
 async function queueGoogleAnalyticsForward(input: {
@@ -83,13 +85,23 @@ async function queueGoogleAnalyticsForward(input: {
 
 export function trackServerEvent(input: TrackEventInput) {
   try {
+    const baseMeta = input.meta || {};
+    const deviceProfile = input.userAgent ? resolveDeviceProfile(input.userAgent) : null;
+    const meta = deviceProfile
+      ? {
+          ...baseMeta,
+          deviceType: typeof baseMeta.deviceType === 'string' ? baseMeta.deviceType : deviceProfile.deviceType,
+          os: typeof baseMeta.os === 'string' ? baseMeta.os : deviceProfile.os,
+          browser: typeof baseMeta.browser === 'string' ? baseMeta.browser : deviceProfile.browser,
+        }
+      : baseMeta;
     const payload: AnalyticsEventRecord = {
       id: `evt_${generateId()}`,
       userId: input.userId || undefined,
       sessionId: input.sessionId || undefined,
       eventName: input.eventName,
       page: input.page,
-      meta: input.meta || {},
+      meta,
     };
 
     analyticsOperations.create(payload);
@@ -99,7 +111,7 @@ export function trackServerEvent(input: TrackEventInput) {
         userId: input.userId,
         sessionId: input.sessionId,
         page: input.page,
-        meta: input.meta,
+        meta,
       });
     }
   } catch (error) {

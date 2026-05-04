@@ -36,6 +36,16 @@ describe('report pipeline analyze agent keys', () => {
     })).toBe(false);
   });
 
+  it('keeps analyze agentic disabled when agent scope has no runnable models', () => {
+    expect(shouldRunAnalyzeAgentic({
+      source: 'analyze',
+      llmUsed: false,
+      deferredByProviderHealth: false,
+      agentScopeHealthDeferred: true,
+      agentScopeSnapshotsConservative: true,
+    })).toBe(false);
+  });
+
   it('builds a focused fallback narrative when llm enhancement is unavailable', () => {
     const narrative = buildDeterministicFallbackNarrative({
       basic: {

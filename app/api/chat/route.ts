@@ -16,8 +16,8 @@ import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import {
   assessScopeProviderHealth,
-  computeAttemptTimeouts,
   getDynamicModelExecutionPlan,
+  isImmediateOpenFailure,
   recordModelAttempt,
   shouldConservativelyDeferForSnapshots,
   summarizeModelExecutionPlan,
@@ -60,6 +60,69 @@ type TimelineMessage = QuestionRow & {
   role: 'user' | 'assistant';
   content: string;
 };
+
+function computeChatAttemptTimeouts(totalBudgetMs: number, attemptCount: number) {
+  if (attemptCount <= 0) return [];
+  if (attemptCount === 1) return [totalBudgetMs];
+
+  const weights = attemptCount === 2
+    ? [0.84, 0.16]
+    : [0.78, 0.16, 0.06];
+  const fallbackWeight = 1 / attemptCount;
+  const minBudget = Math.max(1000, Math.floor(totalBudgetMs * 0.08));
+  const budgets: number[] = [];
+  let consumed = 0;
+
+  for (let index = 0; index < attemptCount; index += 1) {
+    const remainingSlots = attemptCount - index;
+    const remainingBudget = totalBudgetMs - consumed;
+    if (index === attemptCount - 1) {
+      budgets.push(Math.max(minBudget, remainingBudget));
+      break;
+    }
+
+    const rawBudget = Math.floor(totalBudgetMs * (weights[index] || fallbackWeight));
+    const reservedForTail = minBudget * (remainingSlots - 1);
+    const budget = Math.max(minBudget, Math.min(rawBudget, remainingBudget - reservedForTail));
+    budgets.push(budget);
+    consumed += budget;
+  }
+
+  return budgets;
+}
+
+function classifyChatFallbackReason(params: {
+  providerHealthGate?: boolean;
+  modelCandidates: string[];
+  failures: Array<{ errorType?: string; errorMessage?: string }>;
+}) {
+  if (params.providerHealthGate && params.modelCandidates.length === 0) {
+    return 'provider_health_gate';
+  }
+
+  if (!params.failures.length) {
+    return 'all_models_failed';
+  }
+
+  if (params.failures.some((item) => isImmediateOpenFailure(item.errorType, item.errorMessage))) {
+    const combined = params.failures
+      .map((item) => `${item.errorType || ''} ${item.errorMessage || ''}`.toLowerCase())
+      .join(' ');
+    if (
+      combined.includes('model is not supported')
+      || combined.includes('unsupported model')
+      || combined.includes('not supported when using codex with a chatgpt account')
+    ) {
+      return 'unsupported_model';
+    }
+    if (combined.includes('request was aborted') || combined.includes('timeout') || combined.includes('timed out')) {
+      return 'timeout_abort';
+    }
+    return 'provider_unstable';
+  }
+
+  return 'all_models_failed';
+}
 
 async function generateAIResponse(
   question: string,
@@ -110,6 +173,7 @@ async function generateAIResponse(
     const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
     const providerHealth = assessScopeProviderHealth(baseChain, 'chat', plan);
     const modelCandidates = plan.orderedModels;
+    const failures: Array<{ errorType?: string; errorMessage?: string }> = [];
     if (
       (providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || []))
       && modelCandidates.length === 0
@@ -117,11 +181,15 @@ async function generateAIResponse(
       return {
         answer: fallbackAnswer,
         llmUsed: false,
-        fallbackReason: 'provider_health_gate',
+        fallbackReason: classifyChatFallbackReason({
+          providerHealthGate: true,
+          modelCandidates,
+          failures,
+        }),
       };
     }
     const planSummary = summarizeModelExecutionPlan(plan);
-    const attemptTimeouts = computeAttemptTimeouts(CHAT_LLM_TIMEOUT_MS, modelCandidates.length);
+    const attemptTimeouts = computeChatAttemptTimeouts(CHAT_LLM_TIMEOUT_MS, modelCandidates.length);
     const deadlineAt = Date.now() + CHAT_LLM_TIMEOUT_MS;
     console.log(
       `[LLM Chat] planner ${planSummary.label} ` +
@@ -182,6 +250,10 @@ async function generateAIResponse(
           fallbackReason: undefined,
         };
       } catch (error) {
+        failures.push({
+          errorType: error instanceof Error ? error.name || 'error' : 'error',
+          errorMessage: error instanceof Error ? error.message : String(error),
+        });
         recordModelAttempt({
           model,
           scope: 'chat',
@@ -200,7 +272,11 @@ async function generateAIResponse(
     return {
       answer: fallbackAnswer,
       llmUsed: false,
-      fallbackReason: 'all_models_failed',
+      fallbackReason: classifyChatFallbackReason({
+        providerHealthGate: providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || []),
+        modelCandidates,
+        failures,
+      }),
     };
   } catch (error) {
     console.error('[LLM Chat] Generation Error:', error);
@@ -215,10 +291,14 @@ async function generateAIResponse(
 function trackChatCompleted(params: {
   userId: string;
   sessionId?: string | null;
+  userAgent?: string | null;
   action: 'ask' | 'regenerate' | 'edit' | 'delete' | 'load';
   reportId?: string | null;
   eventId?: string | null;
   intent?: ChatIntent | null;
+  source?: string | null;
+  ctaStrategyKey?: string | null;
+  sourceFamily?: string | null;
   llmUsed?: boolean;
   durationMs: number;
   fallbackReason?: string;
@@ -230,6 +310,7 @@ function trackChatCompleted(params: {
   trackServerEvent({
     userId: params.userId,
     sessionId: params.sessionId || params.userId,
+    userAgent: params.userAgent,
     eventName: 'chat_completed',
     page: '/chat',
     meta: {
@@ -237,6 +318,9 @@ function trackChatCompleted(params: {
       reportId: params.reportId || null,
       eventId: params.eventId || null,
       intent: params.intent || null,
+      source: params.source || null,
+      ctaStrategyKey: params.ctaStrategyKey || null,
+      sourceFamily: params.sourceFamily || null,
       llmUsed: params.llmUsed,
       durationMs: params.durationMs,
       fallbackReason: params.fallbackReason || null,
@@ -251,16 +335,21 @@ function trackChatCompleted(params: {
 function trackChatFailed(params: {
   userId?: string | null;
   sessionId?: string | null;
+  userAgent?: string | null;
   action: 'ask' | 'regenerate' | 'edit' | 'delete' | 'load';
   reportId?: string | null;
   eventId?: string | null;
   intent?: ChatIntent | null;
+  source?: string | null;
+  ctaStrategyKey?: string | null;
+  sourceFamily?: string | null;
   durationMs: number;
   error: unknown;
 }) {
   trackServerEvent({
     userId: params.userId || undefined,
     sessionId: params.sessionId || params.userId || undefined,
+    userAgent: params.userAgent,
     eventName: 'chat_failed',
     page: '/chat',
     meta: {
@@ -268,6 +357,9 @@ function trackChatFailed(params: {
       reportId: params.reportId || null,
       eventId: params.eventId || null,
       intent: params.intent || null,
+      source: params.source || null,
+      ctaStrategyKey: params.ctaStrategyKey || null,
+      sourceFamily: params.sourceFamily || null,
       durationMs: params.durationMs,
       error: params.error instanceof Error ? params.error.message : 'unknown',
     },
@@ -320,9 +412,11 @@ function buildFallbackChatAnswer(
       ].join('\n');
     default:
       return [
-        '先给你一个基于当前报告的结构化回答框架。',
-        `当前主线在 ${topScenario}，更适合围绕 ${bestWindow} 做关键动作，同时对 ${riskWindow} 保持保守。`,
-        '如果你愿意把问题再说具体一点，例如补上时间点、对象或你最担心的风险，我可以继续把回答收窄到更可执行的层级。',
+        '当前上游模型不稳定，先给你稳定版结构回复，避免让追问中断。',
+        `1）判断依据：这次先沿用你报告里的主线“${topScenario}”，不要脱离原报告另起一套解释。`,
+        `2）当前阶段：更适合围绕 ${bestWindow} 做小步验证，不建议在信息不足时一次性押重。`,
+        `3）风险提醒：${riskWindow} 更容易出现节奏过急、反馈反复或执行成本升高，先保守处理。`,
+        `4）下一步：请把问题再压成一句“对象 + 时间点 + 最担心的风险”，例如“我在 6 月前要不要换岗，最怕收入断档”。模型恢复后可以点重生成拿更完整版本。`,
       ].join('\n');
   }
 }
@@ -443,6 +537,24 @@ function resolveRequestedIntent(request: NextRequest, bodyIntent?: string) {
   return normalizeChatIntent(bodyIntent || url.searchParams.get('intent'));
 }
 
+function resolveRequestedSource(request: NextRequest, bodySource?: string) {
+  const url = new URL(request.url);
+  const source = `${bodySource || url.searchParams.get('source') || ''}`.trim();
+  return source || undefined;
+}
+
+function resolveRequestedCtaStrategyKey(request: NextRequest, bodyCtaStrategyKey?: string) {
+  const url = new URL(request.url);
+  const ctaStrategyKey = `${bodyCtaStrategyKey || url.searchParams.get('ctaStrategyKey') || ''}`.trim();
+  return ctaStrategyKey || undefined;
+}
+
+function resolveRequestedSourceFamily(request: NextRequest, bodySourceFamily?: string) {
+  const url = new URL(request.url);
+  const sourceFamily = `${bodySourceFamily || url.searchParams.get('sourceFamily') || ''}`.trim();
+  return sourceFamily || undefined;
+}
+
 function getChatReport(userId: string, requestedReportId?: string) {
   if (requestedReportId) {
     const report = fortuneOperations.getById(requestedReportId);
@@ -510,11 +622,15 @@ function getScopedChatRows(
 
 export async function POST(request: NextRequest) {
   const requestStartedAt = Date.now();
+  const userAgent = request.headers.get('user-agent');
   let userId = '';
   let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
+  let requestedSource: string | undefined;
+  let requestedCtaStrategyKey: string | undefined;
+  let requestedSourceFamily: string | undefined;
   try {
     const clientKey = getClientKey(request);
     sessionId = clientKey;
@@ -534,6 +650,9 @@ export async function POST(request: NextRequest) {
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
     requestedIntent = resolveRequestedIntent(request, typeof data?.intent === 'string' ? data.intent : undefined);
+    requestedSource = resolveRequestedSource(request, typeof data?.source === 'string' ? data.source : undefined);
+    requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request, typeof data?.ctaStrategyKey === 'string' ? data.ctaStrategyKey : undefined);
+    requestedSourceFamily = resolveRequestedSourceFamily(request, typeof data?.sourceFamily === 'string' ? data.sourceFamily : undefined);
 
     const questionErr = validateQuestion(question);
     if (questionErr) {
@@ -596,6 +715,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId,
+      userAgent,
       eventName: 'chat_message_sent',
       page: '/chat',
       meta: {
@@ -607,15 +727,22 @@ export async function POST(request: NextRequest) {
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
+        source: requestedSource || null,
+        ctaStrategyKey: requestedCtaStrategyKey || null,
+        sourceFamily: requestedSourceFamily || null,
       },
     });
     trackChatCompleted({
       userId,
       sessionId,
+      userAgent,
       action: 'ask',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       llmUsed,
       durationMs: Date.now() - requestStartedAt,
       fallbackReason,
@@ -637,10 +764,14 @@ export async function POST(request: NextRequest) {
     trackChatFailed({
       userId,
       sessionId,
+      userAgent,
       action: 'ask',
       reportId: requestedReportId,
       eventId: requestedEventId,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       error,
     });
@@ -653,11 +784,15 @@ export async function POST(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   const requestStartedAt = Date.now();
+  const userAgent = request.headers.get('user-agent');
   let userId = '';
   let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
+  let requestedSource: string | undefined;
+  let requestedCtaStrategyKey: string | undefined;
+  let requestedSourceFamily: string | undefined;
   let trackedAction: 'regenerate' | 'edit' = 'edit';
   try {
     const clientKey = getClientKey(request);
@@ -678,6 +813,9 @@ export async function PATCH(request: NextRequest) {
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
     requestedIntent = resolveRequestedIntent(request, typeof data?.intent === 'string' ? data.intent : undefined);
+    requestedSource = resolveRequestedSource(request, typeof data?.source === 'string' ? data.source : undefined);
+    requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request, typeof data?.ctaStrategyKey === 'string' ? data.ctaStrategyKey : undefined);
+    requestedSourceFamily = resolveRequestedSourceFamily(request, typeof data?.sourceFamily === 'string' ? data.sourceFamily : undefined);
     const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
     const targetIndex = findMessageIndex(rows, messageId);
 
@@ -736,6 +874,7 @@ export async function PATCH(request: NextRequest) {
       trackServerEvent({
         userId,
         sessionId,
+        userAgent,
         eventName: 'chat_message_sent',
         page: '/chat',
         meta: {
@@ -747,15 +886,22 @@ export async function PATCH(request: NextRequest) {
           fallbackReason: fallbackReason || null,
           truncatedCount: trailingIds.length,
           intent: requestedIntent || null,
+          source: requestedSource || null,
+          ctaStrategyKey: requestedCtaStrategyKey || null,
+          sourceFamily: requestedSourceFamily || null,
         },
       });
       trackChatCompleted({
         userId,
         sessionId,
+        userAgent,
         action: 'regenerate',
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
+        source: requestedSource || null,
+        ctaStrategyKey: requestedCtaStrategyKey || null,
+        sourceFamily: requestedSourceFamily || null,
         llmUsed,
         durationMs: Date.now() - requestStartedAt,
         fallbackReason,
@@ -853,6 +999,7 @@ export async function PATCH(request: NextRequest) {
       trackServerEvent({
         userId,
         sessionId,
+        userAgent,
         eventName: 'chat_message_sent',
         page: '/chat',
         meta: {
@@ -864,15 +1011,22 @@ export async function PATCH(request: NextRequest) {
           fallbackReason: fallbackReason || null,
           truncatedCount: trailingIds.length,
           intent: requestedIntent || null,
+          source: requestedSource || null,
+          ctaStrategyKey: requestedCtaStrategyKey || null,
+          sourceFamily: requestedSourceFamily || null,
         },
       });
       trackChatCompleted({
         userId,
         sessionId,
+        userAgent,
         action: 'edit',
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
+        source: requestedSource || null,
+        ctaStrategyKey: requestedCtaStrategyKey || null,
+        sourceFamily: requestedSourceFamily || null,
         llmUsed,
         durationMs: Date.now() - requestStartedAt,
         fallbackReason,
@@ -897,10 +1051,14 @@ export async function PATCH(request: NextRequest) {
     trackChatFailed({
       userId,
       sessionId,
+      userAgent,
       action: trackedAction,
       reportId: requestedReportId,
       eventId: requestedEventId,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       error,
     });
@@ -913,11 +1071,15 @@ export async function PATCH(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   const requestStartedAt = Date.now();
+  const userAgent = request.headers.get('user-agent');
   let userId = '';
   let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
+  let requestedSource: string | undefined;
+  let requestedCtaStrategyKey: string | undefined;
+  let requestedSourceFamily: string | undefined;
   try {
     sessionId = getClientKey(request);
     const data = await request.json();
@@ -926,6 +1088,9 @@ export async function DELETE(request: NextRequest) {
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
     requestedIntent = resolveRequestedIntent(request, typeof data?.intent === 'string' ? data.intent : undefined);
+    requestedSource = resolveRequestedSource(request, typeof data?.source === 'string' ? data.source : undefined);
+    requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request, typeof data?.ctaStrategyKey === 'string' ? data.ctaStrategyKey : undefined);
+    requestedSourceFamily = resolveRequestedSourceFamily(request, typeof data?.sourceFamily === 'string' ? data.sourceFamily : undefined);
     const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
     const targetIndex = findMessageIndex(rows, messageId);
 
@@ -951,6 +1116,7 @@ export async function DELETE(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId,
+      userAgent,
       eventName: 'chat_message_sent',
       page: '/chat',
       meta: {
@@ -960,15 +1126,22 @@ export async function DELETE(request: NextRequest) {
           durationMs: Date.now() - requestStartedAt,
           deletedCount: allIds.length,
           intent: requestedIntent || null,
+          source: requestedSource || null,
+          ctaStrategyKey: requestedCtaStrategyKey || null,
+          sourceFamily: requestedSourceFamily || null,
         },
       });
     trackChatCompleted({
       userId,
       sessionId,
+      userAgent,
       action: 'delete',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       deletedCount: allIds.length,
       truncatedCount: trailingIds.length,
@@ -987,10 +1160,14 @@ export async function DELETE(request: NextRequest) {
     trackChatFailed({
       userId,
       sessionId,
+      userAgent,
       action: 'delete',
       reportId: requestedReportId,
       eventId: requestedEventId,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       error,
     });
@@ -1003,17 +1180,24 @@ export async function DELETE(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   const requestStartedAt = Date.now();
+  const userAgent = request.headers.get('user-agent');
   let userId = '';
   let sessionId = '';
   let requestedIntent: ChatIntent | undefined;
   let requestedReportId: string | undefined;
   let requestedEventId: string | undefined;
+  let requestedSource: string | undefined;
+  let requestedCtaStrategyKey: string | undefined;
+  let requestedSourceFamily: string | undefined;
   try {
     sessionId = getClientKey(request);
     userId = await getOrCreateGuestUserId();
     requestedReportId = resolveRequestedReportId(request);
     requestedEventId = resolveRequestedEventId(request);
     requestedIntent = resolveRequestedIntent(request);
+    requestedSource = resolveRequestedSource(request);
+    requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request);
+    requestedSourceFamily = resolveRequestedSourceFamily(request);
     const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
     const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
     const history = toHistoryPayload(rows);
@@ -1021,6 +1205,7 @@ export async function GET(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId,
+      userAgent,
       eventName: 'chat_context_loaded',
       page: '/chat',
       meta: {
@@ -1030,15 +1215,22 @@ export async function GET(request: NextRequest) {
         historyCount: history.length,
         recentEvents: context.recentEvents.length,
         intent: requestedIntent || null,
+        source: requestedSource || null,
+        ctaStrategyKey: requestedCtaStrategyKey || null,
+        sourceFamily: requestedSourceFamily || null,
       },
     });
     trackChatCompleted({
       userId,
       sessionId,
+      userAgent,
       action: 'load',
       reportId: context.report?.id || null,
       eventId: context.focusedEvent?.id || null,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       historyCount: history.length,
     });
@@ -1056,10 +1248,14 @@ export async function GET(request: NextRequest) {
     trackChatFailed({
       userId,
       sessionId,
+      userAgent,
       action: 'load',
       reportId: requestedReportId,
       eventId: requestedEventId,
       intent: requestedIntent || null,
+      source: requestedSource || null,
+      ctaStrategyKey: requestedCtaStrategyKey || null,
+      sourceFamily: requestedSourceFamily || null,
       durationMs: Date.now() - requestStartedAt,
       error,
     });

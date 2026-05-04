@@ -2,6 +2,10 @@ jest.mock('@/lib/auth', () => ({
   getAuthSession: jest.fn(),
 }));
 
+jest.mock('@/lib/user-utils', () => ({
+  getCurrentUserId: jest.fn(),
+}));
+
 jest.mock('@/lib/database', () => ({
   eventOperations: {
     getByUserId: jest.fn(),
@@ -20,8 +24,10 @@ jest.mock('@/lib/database', () => ({
 import { GET } from '@/app/api/history/route';
 import { getAuthSession } from '@/lib/auth';
 import { eventOperations, fortuneOperations, toolSessionOperations, userOperations } from '@/lib/database';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 const mockedGetAuthSession = getAuthSession as jest.MockedFunction<typeof getAuthSession>;
+const mockedGetCurrentUserId = getCurrentUserId as jest.MockedFunction<typeof getCurrentUserId>;
 const mockedEventOperations = eventOperations as jest.Mocked<typeof eventOperations>;
 const mockedFortuneOperations = fortuneOperations as jest.Mocked<typeof fortuneOperations>;
 const mockedToolSessionOperations = toolSessionOperations as jest.Mocked<typeof toolSessionOperations>;
@@ -30,6 +36,7 @@ const mockedUserOperations = userOperations as jest.Mocked<typeof userOperations
 describe('GET /api/history', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockedGetCurrentUserId.mockResolvedValue(null);
   });
 
   it('returns normalized events for authenticated users', async () => {
@@ -81,11 +88,23 @@ describe('GET /api/history', () => {
     ]);
   });
 
-  it('returns empty normalized collections when not authenticated', async () => {
+  it('returns current guest session data when not authenticated', async () => {
     mockedGetAuthSession.mockResolvedValue({
       authenticated: false,
       user: null,
     } as any);
+    mockedGetCurrentUserId.mockResolvedValue('guest_history_1');
+    mockedUserOperations.getById.mockReturnValue({
+      id: 'guest_history_1',
+      name: '游客用户',
+    } as any);
+    mockedFortuneOperations.getByUserId.mockReturnValue([
+      { id: 'report_guest_1', userId: 'guest_history_1' } as any,
+    ]);
+    mockedEventOperations.getByUserId.mockReturnValue([]);
+    mockedToolSessionOperations.listByUser.mockReturnValue([
+      { id: 'tool_guest_1', userId: 'guest_history_1' } as any,
+    ]);
 
     const response = await GET();
     const payload = await response.json();
@@ -93,7 +112,25 @@ describe('GET /api/history', () => {
     expect(response.status).toBe(200);
     expect(payload.success).toBe(true);
     expect(payload.authenticated).toBe(false);
+    expect(payload.user.id).toBe('guest_history_1');
+    expect(payload.fortunes).toEqual([{ id: 'report_guest_1', userId: 'guest_history_1' }]);
+    expect(payload.toolSessions).toEqual([{ id: 'tool_guest_1', userId: 'guest_history_1' }]);
     expect(payload.events).toEqual([]);
+  });
+
+  it('returns empty normalized collections when no session exists', async () => {
+    mockedGetAuthSession.mockResolvedValue({
+      authenticated: false,
+      user: null,
+    } as any);
+    mockedGetCurrentUserId.mockResolvedValue(null);
+
+    const response = await GET();
+    const payload = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(payload.success).toBe(true);
+    expect(payload.authenticated).toBe(false);
     expect(payload.fortunes).toEqual([]);
     expect(payload.toolSessions).toEqual([]);
   });

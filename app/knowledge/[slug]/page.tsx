@@ -8,18 +8,22 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicSearchIntentPanel from '@/components/public-search-intent-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolCardLink from '@/components/tool-card-link';
 import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
+import { appendSourceToHref, buildSourceCtaStrategy, buildSourceJourneyCopy } from '@/lib/source-context';
 import {
   getCaseStudies,
   getEntityInsights,
   getKnowledgeArticleBySlug,
   getManagedContentEntryBySlug,
+  getManagedContentGeoOptimizationMeta,
   getManagedContentJourneyMeta,
   isPublicKnowledgeEntry,
   listPublishedManagedContentEntriesByType,
@@ -28,6 +32,7 @@ import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial
 import { getKnowledgeTopicHubBySlug, getRelatedKnowledgeEntries } from '@/lib/knowledge-network-feed';
 import { buildJourneyForContent } from '@/lib/surface-journeys';
 import { getToolDefinition } from '@/lib/tools';
+import { getVisualAssetsForContentEntry } from '@/lib/visual-asset-library';
 import {
   createArticleSchema,
   createBreadcrumbSchema,
@@ -49,6 +54,8 @@ export async function generateMetadata({ params }: PageProps) {
       title: '文章未找到 | 人生K线',
     };
   }
+  const visualAssets = managedEntry ? getVisualAssetsForContentEntry(managedEntry, 1) : [];
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
 
   return createPublicContentMetadata({
     title: article.seoTitle,
@@ -56,6 +63,20 @@ export async function generateMetadata({ params }: PageProps) {
     path: `/knowledge/${article.slug}`,
     type: 'article',
     locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
+    keywords: article.tags,
+    images: visualAssets.map((asset) => ({
+      url: asset.publicUrl,
+      alt: asset.altText,
+      width: asset.ratio === '4:5' ? 1280 : 2048,
+      height: asset.ratio === '4:5' ? 1600 : 1152,
+    })),
+    publishedTime: managedEntry?.createdAt,
+    modifiedTime: managedEntry?.updatedAt,
+    section: article.category,
+    tags: article.tags,
+    answerSummary: geoMeta?.answerSummary || article.excerpt,
+    searchIntents: geoMeta?.searchIntents,
+    entityKeywords: geoMeta?.entityKeywords,
   });
 }
 
@@ -135,13 +156,30 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
     ...(topicHub ? [{ name: `${topicHub.topicName}专题地图`, path: `/knowledge/topics/${topicHub.topicSlug}` }] : []),
     { name: article.title, path: `/knowledge/${article.slug}` },
   ];
+  const visualAssets = getVisualAssetsForContentEntry(managedEntry, 3);
+  const primaryVisualAsset = visualAssets[0] || null;
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
   const schemas = [
     createArticleSchema({
       headline: article.seoTitle,
       description: article.seoDescription,
       path: `/knowledge/${article.slug}`,
       articleSection: article.category,
-      keywords: article.tags,
+      keywords: [...article.tags, ...(geoMeta?.entityKeywords || [])],
+      image: primaryVisualAsset ? [{
+        url: primaryVisualAsset.publicUrl,
+        alt: primaryVisualAsset.altText,
+        width: primaryVisualAsset.ratio === '4:5' ? 1280 : 2048,
+        height: primaryVisualAsset.ratio === '4:5' ? 1600 : 1152,
+      }] : undefined,
+      datePublished: managedEntry.createdAt,
+      dateModified: managedEntry.updatedAt,
+      inLanguage: locale || 'zh-CN',
+      abstract: geoMeta?.answerSummary || article.excerpt,
+      about: geoMeta?.entityKeywords || article.tags,
+      mentions: geoMeta?.searchIntents,
+      audience: geoMeta?.audience,
+      mainEntityName: geoMeta?.canonicalTopic || article.title,
     }),
     createBreadcrumbSchema(breadcrumbItems),
   ];
@@ -152,6 +190,14 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
     category: article.category,
     contentType: 'knowledge',
     slug: article.slug,
+  }, {
+    source: `knowledge_article:${article.slug}`,
+  });
+  const pageSource = `knowledge_article:${article.slug}`;
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
+  const journeyCopy = buildSourceJourneyCopy(pageSource, {
+    title: '相关入口',
+    description: '把这篇文章接回专题、工具和后续动作入口，帮助你从理解方法继续走向个人判断。',
   });
   const journeyMeta = getManagedContentJourneyMeta(managedEntry);
   const pageSignals = [article.title, article.excerpt, article.category, ...article.tags, ...(topicHub ? [topicHub.topicName, ...topicHub.relatedTopicNames] : [])];
@@ -225,10 +271,11 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               )}
               excerpt={article.excerpt}
               hint="建议先读完本页摘要，再开始个人分析，避免信息跳转过早。"
+              actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
-                <Link key="knowledge" href="/knowledge" className="action-secondary">返回知识库</Link>,
-                ...(topicHub ? [<Link key="topic" href={`/knowledge/topics/${topicHub.topicSlug}`} className="action-secondary">查看专题地图</Link>] : []),
+                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="action-primary action-main">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <Link key="knowledge" href={appendSourceToHref('/knowledge', pageSource)} className="action-secondary">返回知识库</Link>,
+                ...(topicHub ? [<Link key="topic" href={appendSourceToHref(`/knowledge/topics/${topicHub.topicSlug}`, pageSource)} className="action-secondary">查看专题地图</Link>] : []),
               ]}
             />
 
@@ -239,6 +286,12 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 queryIntent={queryIntent}
                 toolHref={primaryTool ? `/tools/${primaryTool.slug}` : undefined}
                 caseHref={primaryCase ? `/cases/${primaryCase.slug}` : undefined}
+                source={pageSource}
+                analyzeLabel={sourceCtaStrategy.searchAnalyzeLabel}
+                toolLabel={sourceCtaStrategy.searchToolLabel}
+                caseLabel={sourceCtaStrategy.searchCaseLabel}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
               />
             </div>
 
@@ -257,6 +310,23 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ))}
             </div>
 
+            <ProductSurfaceRolePanel
+              surface="knowledgeArticle"
+              className="mt-10"
+              title="文章读完后要知道下一步验证什么"
+              description="知识详情页的目标不是让用户停在解释层，而是把一个概念接到个人测算、专题、工具和案例路径。"
+              compact
+            />
+
+            <ContentVisualAssetPanel
+              assets={visualAssets}
+              page={`/knowledge/${article.slug}`}
+              source={pageSource}
+              contentLabel="知识文章"
+              contentTitle={article.title}
+              className="mt-10"
+            />
+
             {topicHub ? (
               <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">所属专题路径</div>
@@ -264,6 +334,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 <p className="intro-copy mt-3">这篇文章已进入稳定专题节点，可直接回专题继续扩展。</p>
                 <ContentCardLink
                   href={`/knowledge/topics/${topicHub.topicSlug}`}
+                  source={pageSource}
                   page={`/knowledge/${article.slug}`}
                   meta={{
                     surfaceKey: `knowledge_article:${article.slug}`,
@@ -281,8 +352,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             <section className="mt-10">
               <SurfaceJourneyPanel
                 journey={journey}
-                title="相关入口"
-                description="把这篇文章接回专题、工具和后续动作入口，帮助你从理解方法继续走向个人判断。"
+                title={journeyCopy.title}
+                description={journeyCopy.description}
+                badge="知识文章来源 · 已保留"
               />
             </section>
           </article>
@@ -310,6 +382,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   page={`/knowledge/${article.slug}`}
                   contentLabel="文章"
                   contentTitle={article.title}
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
                 <ToolPremiumRequestPanel tool={primaryTool} page={`/knowledge/${article.slug}`} />
               </>
@@ -328,6 +403,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     toolSlug={tool.slug}
                     category={tool.category}
                     page={`/knowledge/${article.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
@@ -349,6 +427,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.slug}
                     href={`/cases/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -372,6 +453,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.slug}
                     href={`/insights/${item.type}/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -391,7 +475,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <div className="text-sm font-semibold text-[color:var(--muted)]">
                     {isWorldYiEnglishArticle ? 'World Yi Reading Path' : '世界易阅读路径'}
                   </div>
-                  <Link href={isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi'} className="action-secondary mt-3 inline-flex">
+                  <Link href={appendSourceToHref(isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi', pageSource)} className="action-secondary mt-3 inline-flex">
                     {isWorldYiEnglishArticle ? 'Back to World Yi English Gateway' : '先回世界易总入口'}
                     <ArrowLeft className="h-4 w-4 rotate-180" />
                   </Link>
@@ -400,6 +484,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                       <ContentCardLink
                         key={item.slug}
                         href={`/knowledge/${item.slug}`}
+                        source={pageSource}
+                        ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                        sourceFamily={sourceCtaStrategy.sourceFamily}
                         page={`/knowledge/${article.slug}`}
                         meta={{
                           surfaceKey: `world_yi_series:${article.slug}`,
@@ -422,7 +509,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ) : (
                 <>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">世界易入口</div>
-                  <Link href="/world-yi" className="action-secondary mt-4 inline-flex">
+                  <Link href={appendSourceToHref('/world-yi', pageSource)} className="action-secondary mt-4 inline-flex">
                     进入世界易总入口
                     <ArrowLeft className="h-4 w-4 rotate-180" />
                   </Link>
@@ -432,6 +519,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                         <ContentCardLink
                           key={item.slug}
                           href={`/knowledge/${item.slug}`}
+                          source={pageSource}
+                          ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                          sourceFamily={sourceCtaStrategy.sourceFamily}
                           page={`/knowledge/${article.slug}`}
                           meta={{
                             surfaceKey: `knowledge_article:${article.slug}`,
@@ -472,6 +562,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.entry.slug}
                     href={`/knowledge/${item.entry.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{
                       surfaceKey: `knowledge_article:${article.slug}`,
@@ -493,6 +586,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.slug}
                     href={`/knowledge/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{
                       surfaceKey: `knowledge_article:${article.slug}`,

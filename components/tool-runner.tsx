@@ -5,7 +5,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { getRememberedClientAttribution } from '@/lib/client-attribution';
+import { getRememberedClientAttribution, type ClientAttributionRecord } from '@/lib/client-attribution';
 
 export default function ToolRunner({
   toolSlug,
@@ -16,6 +16,7 @@ export default function ToolRunner({
   examples = [],
   analyzeHref = '/analyze',
   hasReport = true,
+  entrySource = '',
 }: {
   toolSlug: string;
   reportId?: string;
@@ -25,12 +26,32 @@ export default function ToolRunner({
   examples?: string[];
   analyzeHref?: string;
   hasReport?: boolean;
+  entrySource?: string;
 }) {
   const router = useRouter();
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const noteLength = note.trim().length;
+
+  const buildAttribution = (): ClientAttributionRecord | null => {
+    const remembered = getRememberedClientAttribution();
+    if (remembered) {
+      return remembered;
+    }
+
+    if (!entrySource) {
+      return null;
+    }
+
+    return {
+      eventName: 'tool_detail_viewed',
+      page: `/tools/${toolSlug}`,
+      source: entrySource,
+      toolSlug,
+      timestamp: new Date().toISOString(),
+    };
+  };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -52,7 +73,7 @@ export default function ToolRunner({
 
     setSubmitting(true);
     setError('');
-    const attribution = getRememberedClientAttribution();
+    const attribution = buildAttribution();
     void trackClientEvent({
       eventName: 'tool_run_started',
       page: `/tools/${toolSlug}`,
@@ -60,6 +81,7 @@ export default function ToolRunner({
         toolSlug,
         reportId: reportId || null,
         noteLength: note.trim().length,
+        source: entrySource || attribution?.source || null,
         attributionSource: attribution?.source || null,
         attributionTarget: attribution?.target || null,
       },
@@ -99,7 +121,10 @@ export default function ToolRunner({
         return;
       }
 
-      router.push(`/tool-result/${payload.data.sessionId}`);
+      const resultHref = entrySource
+        ? `/tool-result/${payload.data.sessionId}?source=${encodeURIComponent(entrySource)}`
+        : `/tool-result/${payload.data.sessionId}`;
+      router.push(resultHref);
     } catch {
       setError('网络异常，暂时无法运行工具');
       void trackClientEvent({

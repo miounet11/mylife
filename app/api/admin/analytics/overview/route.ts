@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { buildAdminActionItems, buildAdminOperatingInsight } from '@/lib/admin-analytics-insights';
 import { getAuthSession } from '@/lib/auth';
-import { analyticsOperations } from '@/lib/database';
+import { analyticsOperations, reportJourneyEventOperations } from '@/lib/database';
 import { getKnowledgeOpsSnapshot } from '@/lib/knowledge-ops';
+import { getProductExperienceAnalyticsSnapshot } from '@/lib/product-experience-analytics';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,8 @@ export async function GET() {
 
     const overview = analyticsOperations.getOverview();
     const knowledgeOps = getKnowledgeOpsSnapshot();
+    const reportJourney = reportJourneyEventOperations.getAnalyticsSnapshot(30);
+    const productExperience = getProductExperienceAnalyticsSnapshot(30);
     const insights = {
       operatingInsight: buildAdminOperatingInsight({
         totals: overview.totals,
@@ -44,6 +47,8 @@ export async function GET() {
       data: {
         ...overview,
         knowledgeOps,
+        reportJourney,
+        productExperience,
         insights,
       },
       timestamp: new Date().toISOString(),

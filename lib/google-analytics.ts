@@ -21,7 +21,7 @@ const FORWARDED_ANALYTICS_EVENTS = new Set<AnalyticsEventName>([
 const EVENT_PARAM_ALLOWLIST: Partial<Record<AnalyticsEventName, string[]>> = {
   content_card_clicked: ['surfaceKey', 'targetSurfaceKey', 'contentType', 'series', 'slug', 'href', 'locale', 'market'],
   content_quick_analyze_started: ['surface', 'contentType', 'slug', 'title'],
-  chat_followup_clicked: ['question', 'reportId', 'eventId', 'intent'],
+  chat_followup_clicked: ['question', 'reportId', 'eventId', 'intent', 'source', 'ctaStrategyKey', 'sourceFamily'],
   report_upgrade_requested: ['reportId', 'source', 'reason', 'status'],
   report_viewed: ['reportId', 'isPublic', 'reportVersion', 'reasoningMode', 'pattern'],
   report_event_saved_from_result: ['reportId', 'eventType', 'source'],

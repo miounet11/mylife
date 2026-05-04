@@ -1,0 +1,63 @@
+{
+  "id": "report-journey-v1",
+  "name": "Life Kline Layered Report Journey Workflow",
+  "description": "Best-practice contract for the user journey from birth-data intake to first report, deep report, category-specific custom reports, validation, and retention.",
+  "runtime": {
+    "maxPrimaryCtasPerLayer": 1,
+    "maxSecondaryCtasPerLayer": 3,
+    "firstReportTargetReadSeconds": 30,
+    "deepReportTargetReadMinutes": 6,
+    "categoryReportTargetReadMinutes": 4,
+    "generationProgressHeartbeatMs": 1200,
+    "resumeExistingReportWindowMinutes": 30
+  },
+  "stages": [
+    "pre-intake-trust",
+    "birth-intake",
+    "intent-intake",
+    "generation-handoff",
+    "first-report",
+    "guided-reading",
+    "deep-report",
+    "category-routing",
+    "custom-report-or-tool",
+    "event-validation",
+    "retention-loop"
+  ],
+  "qualityPolicy": {
+    "mustUseProgressiveDisclosure": true,
+    "mustExplainSensitiveFieldsInline": true,
+    "mustSupportUnknownBirthHour": true,
+    "mustSupportUnknownBirthPlace": true,
+    "mustShowRecoverableGenerationState": true,
+    "mustKeepFirstReportActionableWithin30Seconds": true,
+    "mustSeparateConclusionEvidenceAndUncertainty": true,
+    "mustRouteToOnePrimaryNextLayer": true,
+    "mustPreserveDeterministicMingliFoundation": true,
+    "mustAvoidFearBasedConversion": true,
+    "mustPersistJourneySignals": true,
+    "mustAttachValidationAndCorrectionLoop": true
+  },
+  "memoryPolicy": {
+    "persistBirthDataReadiness": true,
+    "persistEntrySource": true,
+    "persistPrimaryLifeDomain": true,
+    "persistFirstReportCta": true,
+    "persistDeepReportCta": true,
+    "persistCategoryRoute": true,
+    "persistToolAndCustomReportSessions": true,
+    "persistEventValidationFeedback": true
+  },
+  "observability": {
+    "trackIntakeStarted": true,
+    "trackBirthDataReadiness": true,
+    "trackGenerationInterrupted": true,
+    "trackFirstReportViewed": true,
+    "trackFirstReportPrimaryCta": true,
+    "trackDeepReportViewed": true,
+    "trackCategoryRouteSelected": true,
+    "trackCustomReportStarted": true,
+    "trackValidationSubmitted": true,
+    "trackSubscriptionOrReturnLoop": true
+  }
+}

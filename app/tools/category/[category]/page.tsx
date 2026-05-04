@@ -18,6 +18,7 @@ import {
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
+import { toolProblemLineGuides } from '@/lib/product-experience';
 import { listToolCategories, listToolsByCategory, type ToolCategoryKey } from '@/lib/tools';
 
 export async function generateMetadata({
@@ -63,6 +64,7 @@ export default async function ToolCategoryPage({
   }
 
   const tools = listToolsByCategory(category as ToolCategoryKey);
+  const problemLineGuide = toolProblemLineGuides[categoryInfo.key as keyof typeof toolProblemLineGuides];
   const matchesCategorySignal = createContentSignalMatcher([
     categoryInfo.title,
     categoryInfo.headline,
@@ -119,7 +121,9 @@ export default async function ToolCategoryPage({
           )}
           title={categoryInfo.headline}
           description={categoryInfo.description}
-          hint="这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。"
+          hint={problemLineGuide
+            ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
+            : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
           actions={[
             <Link key="tools" href="/tools" className="action-primary action-main">
               回到工具中心
@@ -134,6 +138,28 @@ export default async function ToolCategoryPage({
           ]}
           highlightsColumns="md:grid-cols-3"
         />
+
+        {problemLineGuide ? (
+          <section className="mt-8 glass-panel rounded-[1.75rem] p-5 md:p-6">
+            <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+              <div>
+                <div className="section-label">问题线规则</div>
+                <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">先确认问题线，再选择一个工具</h2>
+                <p className="intro-copy mt-3">{problemLineGuide.prompt}</p>
+              </div>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-[1.25rem] bg-white/78 p-4">
+                  <div className="text-xs font-semibold tracking-[0.18em] text-[color:var(--muted)]">第一步</div>
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{problemLineGuide.firstStep}</div>
+                </div>
+                <div className="rounded-[1.25rem] bg-[color:var(--accent-soft)] p-4">
+                  <div className="text-xs font-semibold tracking-[0.18em] text-[color:var(--accent-strong)]">下一步</div>
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--accent-strong)]">{problemLineGuide.nextStep}</div>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <PublicEvidencePanel
           page={`/tools/category/${categoryInfo.key}`}

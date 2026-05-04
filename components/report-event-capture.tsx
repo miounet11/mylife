@@ -14,6 +14,8 @@ import {
 interface ReportEventCaptureProps {
   reportId: string;
   suggestions: ReportActionSuggestion[];
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
   pastEventTemplates?: Array<{
     key: string;
     title: string;
@@ -25,7 +27,13 @@ interface ReportEventCaptureProps {
   }>;
 }
 
-export default function ReportEventCapture({ reportId, suggestions, pastEventTemplates = [] }: ReportEventCaptureProps) {
+export default function ReportEventCapture({
+  reportId,
+  suggestions,
+  ctaStrategyKey,
+  sourceFamily,
+  pastEventTemplates = [],
+}: ReportEventCaptureProps) {
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [savedKeys, setSavedKeys] = useState<string[]>([]);
   const [error, setError] = useState('');
@@ -241,6 +249,8 @@ export default function ReportEventCapture({ reportId, suggestions, pastEventTem
             reportId,
             question: '请结合我刚刚记录或确认过的这些事件，帮我继续复盘这份报告：哪些判断已经被验证，哪些地方还需要继续观察？',
             source: 'report_event_capture',
+            ctaStrategyKey,
+            sourceFamily,
           })}
           onClick={() => {
             void trackClientEvent({
@@ -250,6 +260,8 @@ export default function ReportEventCapture({ reportId, suggestions, pastEventTem
                 reportId,
                 target: 'chat',
                 source: 'report_event_capture',
+                ctaStrategyKey: ctaStrategyKey || null,
+                sourceFamily: sourceFamily || null,
               },
             });
           }}

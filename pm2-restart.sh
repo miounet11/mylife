@@ -1,3 +1,8 @@
 #!/bin/bash
+set -euo pipefail
+
 export NODE_ENV=production
-pm2 restart life-kline-next || pm2 start ecosystem.config.js
+export ENABLE_BACKGROUND_WORKERS="${ENABLE_BACKGROUND_WORKERS:-1}"
+
+pm2 startOrReload ecosystem.config.js
+pm2 status

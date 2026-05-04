@@ -223,6 +223,24 @@ describe('system ops snapshot', () => {
     expect(snapshot.blockers.some((item) => item.includes('知识采集锁'))).toBe(true);
   });
 
+  it('escalates to critical when content publishing stalls despite available drafts', () => {
+    mockedGetContentSchedulerOverview.mockReturnValueOnce({
+      ...baseScheduler,
+      draftReserveCount: 120,
+      needsDraftReplenishment: false,
+      minutesSinceLastPublish: 2400,
+      minutesSinceLastGenerate: 120,
+    });
+
+    const snapshot = getSystemOpsSnapshot({
+      contentPublishStaleMinutes: 1440,
+    });
+
+    expect(snapshot.severity).toBe('critical');
+    expect(snapshot.services.content.severity).toBe('critical');
+    expect(snapshot.services.content.blockers.some((item) => item.includes('内容发布已超过 2400 分钟没有推进'))).toBe(true);
+  });
+
   it('uses lightweight summary mode without loading full analytics, content, or knowledge snapshots', () => {
     const snapshot = getSystemOpsSnapshot({ mode: 'summary' });
 

@@ -8,8 +8,9 @@ import {
   listPublishedManagedContentEntriesByType,
 } from '@/lib/content-store';
 import { getEntityTypeLabel } from '@/lib/content';
+import { appendSourceToHref } from '@/lib/source-url';
 
-export default function RelatedContent() {
+export default function RelatedContent({ source }: { source?: string }) {
   const worldYiArticles = listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-'))
     .slice(0, 3);
@@ -28,16 +29,16 @@ export default function RelatedContent() {
           </div>
         </div>
         <div className="flex gap-3">
-          <Link href="/world-yi" className="action-secondary">
+          <Link href={appendSourceToHref('/world-yi', source)} className="action-secondary">
             查看世界易
           </Link>
-          <Link href="/knowledge" className="action-secondary">
+          <Link href={appendSourceToHref('/knowledge', source)} className="action-secondary">
             查看知识库
           </Link>
-          <Link href="/insights" className="action-secondary">
+          <Link href={appendSourceToHref('/insights', source)} className="action-secondary">
             查看洞察中心
           </Link>
-          <Link href="/cases" className="action-secondary">
+          <Link href={appendSourceToHref('/cases', source)} className="action-secondary">
             查看案例库
           </Link>
         </div>
@@ -45,7 +46,7 @@ export default function RelatedContent() {
 
         <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr_0.95fr]">
           <div className="grid gap-4">
-            <Link href="/world-yi" className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+            <Link href={appendSourceToHref('/world-yi', source)} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易总入口</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">先进入母体系，再读方法、案例和环境观察</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">
@@ -54,7 +55,7 @@ export default function RelatedContent() {
               </div>
             </Link>
             {articles.map((article) => (
-              <Link key={article.slug} href={`/knowledge/${article.slug}`} className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+              <Link key={article.slug} href={appendSourceToHref(`/knowledge/${article.slug}`, source)} className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{article.category}</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{article.title}</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">
@@ -69,7 +70,7 @@ export default function RelatedContent() {
           {insights.map((item) => (
             <Link
               key={item.slug}
-              href={`/insights/${item.type}/${item.slug}`}
+              href={appendSourceToHref(`/insights/${item.type}/${item.slug}`, source)}
               className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
             >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{getEntityTypeLabel(item.type)}</div>
@@ -84,7 +85,7 @@ export default function RelatedContent() {
 
         <div className="grid gap-4">
           {cases.map((item) => (
-            <Link key={item.slug} href={`/cases/${item.slug}`} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+            <Link key={item.slug} href={appendSourceToHref(`/cases/${item.slug}`, source)} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">

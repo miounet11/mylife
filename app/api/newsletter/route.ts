@@ -32,6 +32,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const userAgent = request.headers.get('user-agent');
     const body = await request.json();
     const email = `${body.email || ''}`;
     const source = `${body.source || 'site'}`;
@@ -54,6 +55,7 @@ export async function POST(request: NextRequest) {
           trackServerEvent({
             eventName: 'email_delivery_succeeded',
             page: '/updates',
+            userAgent,
             meta: {
               channel: 'newsletter_confirmation',
               emailDomain: email.split('@')[1] || '',
@@ -66,6 +68,7 @@ export async function POST(request: NextRequest) {
         trackServerEvent({
           eventName: 'email_delivery_failed',
           page: '/updates',
+          userAgent,
           meta: {
             channel: 'newsletter_confirmation',
             emailDomain: email.split('@')[1] || '',
@@ -78,6 +81,7 @@ export async function POST(request: NextRequest) {
         trackServerEvent({
           eventName: 'email_delivery_failed',
           page: '/updates',
+          userAgent,
           meta: {
             channel: 'newsletter_confirmation',
             emailDomain: email.split('@')[1] || '',
@@ -91,6 +95,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       eventName: 'newsletter_subscribed',
       page: '/updates',
+      userAgent,
       meta: {
         source,
         emailDomain: email.split('@')[1] || '',

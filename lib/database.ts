@@ -1,13 +1,16 @@
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
+import { resolveCtaSourceFamilyFromMeta, type CtaStrategyBreakdownRow } from '@/lib/cta-strategy';
 import { getReportUpgradeLockMinutes } from '@/lib/env';
 import path from 'path';
+import { normalizeAttributionSource } from '@/lib/source-attribution';
 import type {
   UserRecord,
   FortuneRecord,
   EventRecord,
   QuestionRecord,
   AnalyticsEventRecord,
+  ReportJourneyEventRecord,
   ContentSignalRecord,
   ContentRadarRunRecord,
   ContentSchedulerRunRecord,
@@ -20,6 +23,7 @@ import type {
   ToolSessionRecord,
 } from './user-types';
 import { normalizeEventTransportRecord } from './event-view';
+import { buildReportJourneyAnalyticsSnapshot } from '@/lib/report-journey-analytics';
 
 interface RawFortuneRow {
   id: string;
@@ -53,6 +57,21 @@ interface RawAnalyticsEventRow {
   session_id?: string | null;
   event_name: string;
   page?: string | null;
+  meta?: string | null;
+  created_at?: string;
+}
+
+interface RawReportJourneyEventRow {
+  id: string;
+  user_id: string;
+  report_id: string;
+  workflow_id: string;
+  layer_key: string;
+  action_target: string;
+  category?: string | null;
+  tool_slug?: string | null;
+  source?: string | null;
+  href?: string | null;
   meta?: string | null;
   created_at?: string;
 }
@@ -111,6 +130,16 @@ interface RawContentGenerationJobRow {
   next_run_at?: string | null;
   locked_at?: string | null;
   last_error?: string | null;
+  meta?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface RawSystemLockRow {
+  key: string;
+  owner: string;
+  locked_at: string;
+  expires_at: string;
   meta?: string | null;
   created_at?: string;
   updated_at?: string;
@@ -227,6 +256,96 @@ interface RawToolSessionRow {
   meta?: string | null;
   created_at?: string;
   updated_at?: string;
+}
+
+interface RawVisualAssetRow {
+  id: string;
+  asset_type: string;
+  module: string;
+  batch_id?: string | null;
+  slug: string;
+  title: string;
+  description?: string | null;
+  prompt: string;
+  negative_prompt?: string | null;
+  model: string;
+  size: string;
+  ratio: string;
+  quality: string;
+  source_image_ids?: string | null;
+  brand_reference_ids?: string | null;
+  output_path?: string | null;
+  public_url?: string | null;
+  alt_text?: string | null;
+  overlay_copy_simplified?: string | null;
+  overlay_copy_traditional?: string | null;
+  overlay_copy_english?: string | null;
+  narrative_title?: string | null;
+  narrative_excerpt?: string | null;
+  narrative_sections?: string | null;
+  target_routes?: string | null;
+  related_content_slugs?: string | null;
+  related_tool_slugs?: string | null;
+  related_report_themes?: string | null;
+  status: string;
+  qa_status: string;
+  qa_score?: number | null;
+  qa_notes?: string | null;
+  correction_count?: number | null;
+  latest_error_code?: string | null;
+  version?: number | null;
+  meta?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface RawVisualAssetBatchRow {
+  id: string;
+  name: string;
+  library_key: string;
+  module?: string | null;
+  target_count: number;
+  status: string;
+  model: string;
+  brand_pack_id?: string | null;
+  manifest_path?: string | null;
+  generated_count?: number | null;
+  approved_count?: number | null;
+  rejected_count?: number | null;
+  correction_count?: number | null;
+  meta?: string | null;
+  created_by?: string | null;
+  updated_by?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface RawVisualAssetReviewRow {
+  id: string;
+  asset_id: string;
+  review_type: string;
+  status: string;
+  score?: number | null;
+  error_codes?: string | null;
+  notes?: string | null;
+  reviewer?: string | null;
+  created_at?: string;
+}
+
+interface RawVisualAssetCorrectionRow {
+  id: string;
+  asset_id: string;
+  correction_round: number;
+  error_codes: string;
+  original_prompt: string;
+  corrected_prompt: string;
+  original_output_path?: string | null;
+  corrected_output_path?: string | null;
+  status: string;
+  created_by?: string | null;
+  created_at?: string;
 }
 
 function parseJson<T>(value: string | null | undefined, fallback: T): T {
@@ -358,6 +477,7 @@ const PRODUCT_ANALYTICS_EXCLUDED_EVENTS = [
   'auth_verified',
   'newsletter_subscribed',
 ] as const;
+const PRODUCT_ANALYTICS_EXCLUDED_EVENT_SET = new Set<string>(PRODUCT_ANALYTICS_EXCLUDED_EVENTS);
 const PRODUCT_ANALYTICS_EXCLUDED_EVENTS_SQL = PRODUCT_ANALYTICS_EXCLUDED_EVENTS
   .map((eventName) => `'${eventName.replace(/'/g, "''")}'`)
   .join(', ');
@@ -394,12 +514,771 @@ const RECENT_BEHAVIOR_TRACKED_EVENTS = [
 const RECENT_BEHAVIOR_TRACKED_EVENTS_SQL = RECENT_BEHAVIOR_TRACKED_EVENTS
   .map((eventName) => `('${eventName.replace(/'/g, "''")}')`)
   .join(', ');
+const DEVICE_TYPES = ['mobile', 'desktop', 'tablet', 'bot', 'unknown'] as const;
+
+type DeviceType = typeof DEVICE_TYPES[number];
+
+type DeviceWindowMetricAccumulator = {
+  productEvents: number;
+  productSessions: Set<string>;
+  reportViews: number;
+  reportSessions: Set<string>;
+  chatCompletedCount: number;
+  chatCompletedSessions: Set<string>;
+  reportEventSessions: Set<string>;
+  toolDetailSessions: Set<string>;
+  toolRuns: number;
+  toolRunSessions: Set<string>;
+  authRequestSessions: Set<string>;
+  authVerifiedCount: number;
+  authVerifiedSessions: Set<string>;
+};
+
+type DeviceWindowMetricRow = {
+  deviceType: DeviceType;
+  productEvents: number;
+  sessions: number;
+  reportViews: number;
+  reportSessions: number;
+  chatCompleted: number;
+  reportToChatSessions: number;
+  reportToChatRate: number;
+  reportToEventSessions: number;
+  reportToEventRate: number;
+  toolDetailSessions: number;
+  toolRuns: number;
+  toolToRunSessions: number;
+  toolToRunRate: number;
+  authRequestSessions: number;
+  authVerified: number;
+  authVerifiedSessions: number;
+  authVerifyRate: number;
+  sampleVolume: number;
+  sampleState: 'enough' | 'low' | 'sparse';
+};
+
+type DeviceCoverageSnapshot = {
+  totalEvents: number;
+  knownDeviceEvents: number;
+  unknownDeviceEvents: number;
+  coverageRate: number;
+  sessions: number;
+  knownDeviceSessions: number;
+  unknownDeviceSessions: number;
+  sessionCoverageRate: number;
+};
+
+type SourceFunnelAccumulator = {
+  source: string;
+  analyzeSessions: Set<string>;
+  reportIds: Set<string>;
+  reportViewSessions: Set<string>;
+  chatSessions: Set<string>;
+  toolRunSessions: Set<string>;
+  latestAt?: string | null;
+};
+
+type SourceDeviceFunnelAccumulator = {
+  source: string;
+  deviceType: DeviceType;
+  analyzeSessions: Set<string>;
+  reportIds: Set<string>;
+  reportViewSessions: Set<string>;
+  chatSessions: Set<string>;
+  toolRunSessions: Set<string>;
+  latestAt?: string | null;
+};
+
+type SourceFunnelRow = {
+  source: string;
+  analyzeSessions: number;
+  reportsGenerated: number;
+  reportViewSessions: number;
+  chatSessions: number;
+  toolRunSessions: number;
+  analyzeToReportRate: number;
+  reportToViewRate: number;
+  viewToChatRate: number;
+  viewToToolRunRate: number;
+  latestAt?: string | null;
+};
+
+type SourceDeviceFunnelRow = SourceFunnelRow & {
+  deviceType: DeviceType;
+};
+
+type SourceTrendAccumulator = {
+  source: string;
+  weekStart: string;
+  weekLabel: string;
+  analyzeSessions: Set<string>;
+  reportIds: Set<string>;
+  reportViewSessions: Set<string>;
+  chatSessions: Set<string>;
+  toolRunSessions: Set<string>;
+  latestAt?: string | null;
+};
+
+type SourceTrendRow = SourceFunnelRow & {
+  weekStart: string;
+  weekLabel: string;
+};
+
+type SourceShiftRow = {
+  source: string;
+  current: SourceFunnelRow;
+  previous: SourceFunnelRow;
+  analyzeSessionsDelta: number;
+  reportViewSessionsDelta: number;
+  viewToChatRateDelta: number;
+  viewToToolRunRateDelta: number;
+  deltaMagnitude: number;
+  direction: 'up' | 'down' | 'flat';
+  sampleState: 'enough' | 'low' | 'sparse';
+};
+
+type CtaStrategyBreakdownAccumulator = Omit<CtaStrategyBreakdownRow, 'clickToChatRate' | 'chatCompletionRate'>;
+
+type SourceResolvedAnalyticsRow = {
+  row: RawAnalyticsEventRow;
+  meta: Record<string, unknown>;
+  source: string;
+  sessionId: string;
+  reportId: string;
+  deviceType: DeviceType;
+};
 
 function toRoundedDecimal(value: number, digits = 2) {
   if (!Number.isFinite(value)) {
     return 0;
   }
   return Number(value.toFixed(digits));
+}
+
+function normalizeDeviceType(value: unknown): DeviceType {
+  if (value === 'mobile' || value === 'desktop' || value === 'tablet' || value === 'bot') {
+    return value;
+  }
+  return 'unknown';
+}
+
+function extractDeviceTypeFromMeta(meta?: string | null): DeviceType {
+  const parsed = parseJson<Record<string, unknown>>(meta, {});
+  return normalizeDeviceType(parsed.deviceType);
+}
+
+function isLocalAnalyticsPage(page?: string | null) {
+  const normalized = `${page || ''}`.toLowerCase();
+  return normalized.includes('127.0.0.1') || normalized.includes('localhost');
+}
+
+function isProductAnalyticsRow(row: Pick<RawAnalyticsEventRow, 'event_name' | 'page'>) {
+  return !PRODUCT_ANALYTICS_EXCLUDED_EVENT_SET.has(row.event_name) && !isLocalAnalyticsPage(row.page);
+}
+
+function createEmptyDeviceWindowMetricAccumulator(): DeviceWindowMetricAccumulator {
+  return {
+    productEvents: 0,
+    productSessions: new Set<string>(),
+    reportViews: 0,
+    reportSessions: new Set<string>(),
+    chatCompletedCount: 0,
+    chatCompletedSessions: new Set<string>(),
+    reportEventSessions: new Set<string>(),
+    toolDetailSessions: new Set<string>(),
+    toolRuns: 0,
+    toolRunSessions: new Set<string>(),
+    authRequestSessions: new Set<string>(),
+    authVerifiedCount: 0,
+    authVerifiedSessions: new Set<string>(),
+  };
+}
+
+function createDeviceWindowAccumulatorMap() {
+  const buckets = {} as Record<DeviceType, DeviceWindowMetricAccumulator>;
+  for (const deviceType of DEVICE_TYPES) {
+    buckets[deviceType] = createEmptyDeviceWindowMetricAccumulator();
+  }
+  return buckets;
+}
+
+function resolveSessionDeviceTypeMap(rows: Array<Pick<RawAnalyticsEventRow, 'session_id' | 'meta'>>) {
+  const map = new Map<string, DeviceType>();
+
+  for (const row of rows) {
+    const sessionId = `${row.session_id || ''}`.trim();
+    if (!sessionId) {
+      continue;
+    }
+
+    const current = map.get(sessionId);
+    const next = extractDeviceTypeFromMeta(row.meta);
+    if (!current || current === 'unknown' || next !== 'unknown') {
+      map.set(sessionId, next);
+    }
+  }
+
+  return map;
+}
+
+function resolveAnalyticsRowDeviceType(
+  row: Pick<RawAnalyticsEventRow, 'session_id' | 'meta'>,
+  sessionDeviceMap: Map<string, DeviceType>
+) {
+  const sessionId = `${row.session_id || ''}`.trim();
+  if (sessionId) {
+    return sessionDeviceMap.get(sessionId) || extractDeviceTypeFromMeta(row.meta);
+  }
+
+  return extractDeviceTypeFromMeta(row.meta);
+}
+
+function countSharedSessions(left: Set<string>, right: Set<string>) {
+  const [smaller, larger] = left.size <= right.size ? [left, right] : [right, left];
+  let count = 0;
+  for (const sessionId of smaller) {
+    if (larger.has(sessionId)) {
+      count += 1;
+    }
+  }
+  return count;
+}
+
+function calculatePercentRate(numerator: number, denominator: number) {
+  return denominator > 0 ? Math.round((numerator / denominator) * 100) : 0;
+}
+
+function mapDeviceTypeLabelForSummary(deviceType: DeviceType) {
+  if (deviceType === 'mobile') return '移动端';
+  if (deviceType === 'desktop') return '桌面端';
+  if (deviceType === 'tablet') return '平板';
+  if (deviceType === 'bot') return '机器人';
+  return '未知设备';
+}
+
+function deriveDeviceSampleState(params: {
+  productEvents: number;
+  reportSessions: number;
+  toolDetailSessions: number;
+  authRequestSessions: number;
+  authVerified: number;
+}) {
+  const sampleVolume =
+    params.productEvents
+    + params.reportSessions
+    + params.toolDetailSessions
+    + params.authRequestSessions
+    + params.authVerified;
+
+  if (
+    sampleVolume >= 30
+    || params.reportSessions >= 8
+    || params.toolDetailSessions >= 8
+    || params.authRequestSessions >= 6
+  ) {
+    return 'enough' as const;
+  }
+
+  if (
+    sampleVolume >= 10
+    || params.reportSessions >= 3
+    || params.toolDetailSessions >= 3
+    || params.authRequestSessions >= 2
+  ) {
+    return 'low' as const;
+  }
+
+  return 'sparse' as const;
+}
+
+function buildDeviceWindowMetrics(rows: RawAnalyticsEventRow[]): DeviceWindowMetricRow[] {
+  const sessionDeviceMap = resolveSessionDeviceTypeMap(rows);
+  const buckets = createDeviceWindowAccumulatorMap();
+
+  for (const row of rows) {
+    const deviceType = resolveAnalyticsRowDeviceType(row, sessionDeviceMap);
+    const sessionId = `${row.session_id || ''}`.trim();
+    const bucket = buckets[deviceType];
+
+    if (isProductAnalyticsRow(row)) {
+      bucket.productEvents += 1;
+      if (sessionId) {
+        bucket.productSessions.add(sessionId);
+      }
+    }
+
+    if (row.event_name === 'report_viewed') {
+      bucket.reportViews += 1;
+      if (sessionId) {
+        bucket.reportSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (row.event_name === 'chat_completed') {
+      bucket.chatCompletedCount += 1;
+      if (sessionId) {
+        bucket.chatCompletedSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (
+      row.event_name === 'chat_event_saved'
+      || row.event_name === 'event_created'
+      || row.event_name === 'report_event_saved_from_result'
+      || row.event_name === 'report_past_event_saved_from_result'
+    ) {
+      if (sessionId) {
+        bucket.reportEventSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (row.event_name === 'tool_detail_viewed') {
+      if (sessionId) {
+        bucket.toolDetailSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (row.event_name === 'tool_run_started') {
+      bucket.toolRuns += 1;
+      if (sessionId) {
+        bucket.toolRunSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (row.event_name === 'auth_code_requested') {
+      if (sessionId) {
+        bucket.authRequestSessions.add(sessionId);
+      }
+      continue;
+    }
+
+    if (row.event_name === 'auth_verified') {
+      bucket.authVerifiedCount += 1;
+      if (sessionId) {
+        bucket.authVerifiedSessions.add(sessionId);
+      }
+    }
+  }
+
+  return DEVICE_TYPES.map((deviceType) => {
+    const bucket = buckets[deviceType];
+    const reportSessions = bucket.reportSessions.size;
+    const toolDetailSessions = bucket.toolDetailSessions.size;
+    const authRequestSessions = bucket.authRequestSessions.size;
+    const reportToChatSessions = countSharedSessions(bucket.reportSessions, bucket.chatCompletedSessions);
+    const reportToEventSessions = countSharedSessions(bucket.reportSessions, bucket.reportEventSessions);
+    const toolToRunSessions = countSharedSessions(bucket.toolDetailSessions, bucket.toolRunSessions);
+    const authVerifiedSessions = countSharedSessions(bucket.authRequestSessions, bucket.authVerifiedSessions);
+    const sampleState = deriveDeviceSampleState({
+      productEvents: bucket.productEvents,
+      reportSessions,
+      toolDetailSessions,
+      authRequestSessions,
+      authVerified: bucket.authVerifiedCount,
+    });
+    const sampleVolume =
+      bucket.productEvents
+      + reportSessions
+      + toolDetailSessions
+      + authRequestSessions
+      + bucket.authVerifiedCount;
+
+    return {
+      deviceType,
+      productEvents: bucket.productEvents,
+      sessions: bucket.productSessions.size,
+      reportViews: bucket.reportViews,
+      reportSessions,
+      chatCompleted: bucket.chatCompletedCount,
+      reportToChatSessions,
+      reportToChatRate: calculatePercentRate(reportToChatSessions, reportSessions),
+      reportToEventSessions,
+      reportToEventRate: calculatePercentRate(reportToEventSessions, reportSessions),
+      toolDetailSessions,
+      toolRuns: bucket.toolRuns,
+      toolToRunSessions,
+      toolToRunRate: calculatePercentRate(toolToRunSessions, toolDetailSessions),
+      authRequestSessions,
+      authVerified: bucket.authVerifiedCount,
+      authVerifiedSessions,
+      authVerifyRate: calculatePercentRate(authVerifiedSessions, authRequestSessions),
+      sampleVolume,
+      sampleState,
+    };
+  });
+}
+
+function createSourceFunnelAccumulator(source: string): SourceFunnelAccumulator {
+  return {
+    source,
+    analyzeSessions: new Set<string>(),
+    reportIds: new Set<string>(),
+    reportViewSessions: new Set<string>(),
+    chatSessions: new Set<string>(),
+    toolRunSessions: new Set<string>(),
+    latestAt: null,
+  };
+}
+
+function createSourceDeviceFunnelAccumulator(source: string, deviceType: DeviceType): SourceDeviceFunnelAccumulator {
+  return {
+    source,
+    deviceType,
+    analyzeSessions: new Set<string>(),
+    reportIds: new Set<string>(),
+    reportViewSessions: new Set<string>(),
+    chatSessions: new Set<string>(),
+    toolRunSessions: new Set<string>(),
+    latestAt: null,
+  };
+}
+
+function resolveSourceAnalyticsRows(rows: RawAnalyticsEventRow[]): SourceResolvedAnalyticsRow[] {
+  const sessionDeviceMap = resolveSessionDeviceTypeMap(rows);
+  const reportSourceMap = new Map<string, string>();
+  const sessionSourceMap = new Map<string, string>();
+
+  const rememberSessionSource = (sessionId: string, source: string) => {
+    const current = sessionSourceMap.get(sessionId);
+    if (!current || current === 'direct' || current === 'unknown') {
+      sessionSourceMap.set(sessionId, source);
+    }
+  };
+
+  for (const row of rows) {
+    const meta = parseJson<Record<string, unknown>>(row.meta, {});
+    const rawSource = typeof meta.source === 'string' ? meta.source.trim() : '';
+    if (!rawSource) {
+      continue;
+    }
+
+    const source = normalizeAttributionSource(rawSource);
+    const sessionId = `${row.session_id || ''}`.trim();
+    const reportId = typeof meta.reportId === 'string' ? meta.reportId.trim() : '';
+
+    if (reportId) {
+      reportSourceMap.set(reportId, source);
+    }
+    if (sessionId) {
+      rememberSessionSource(sessionId, source);
+    }
+  }
+
+  return rows.map((row) => {
+    const meta = parseJson<Record<string, unknown>>(row.meta, {});
+    const rawSource = typeof meta.source === 'string' ? meta.source : '';
+    const sessionId = `${row.session_id || ''}`.trim();
+    const reportId = typeof meta.reportId === 'string' ? meta.reportId.trim() : '';
+    const source = normalizeAttributionSource(
+      rawSource
+      || (reportId ? reportSourceMap.get(reportId) : '')
+      || (sessionId ? sessionSourceMap.get(sessionId) : '')
+      || ''
+    );
+
+    if (reportId && rawSource) {
+      reportSourceMap.set(reportId, source);
+    }
+    if (sessionId) {
+      rememberSessionSource(sessionId, source);
+    }
+
+    return {
+      row,
+      meta,
+      source,
+      sessionId,
+      reportId,
+      deviceType: resolveAnalyticsRowDeviceType(row, sessionDeviceMap),
+    };
+  });
+}
+
+function populateSourceFunnelAccumulators(
+  rows: SourceResolvedAnalyticsRow[],
+  options?: {
+    sourceBuckets?: Record<string, SourceFunnelAccumulator>;
+    sourceDeviceBuckets?: Record<string, SourceDeviceFunnelAccumulator>;
+  }
+) {
+  const sourceBuckets = options?.sourceBuckets || {};
+  const sourceDeviceBuckets = options?.sourceDeviceBuckets || {};
+
+  const ensureSourceBucket = (source: string) => {
+    if (!sourceBuckets[source]) {
+      sourceBuckets[source] = createSourceFunnelAccumulator(source);
+    }
+    return sourceBuckets[source];
+  };
+
+  const ensureSourceDeviceBucket = (source: string, deviceType: DeviceType) => {
+    const key = `${source}::${deviceType}`;
+    if (!sourceDeviceBuckets[key]) {
+      sourceDeviceBuckets[key] = createSourceDeviceFunnelAccumulator(source, deviceType);
+    }
+    return sourceDeviceBuckets[key];
+  };
+
+  for (const resolved of rows) {
+    const { row, source, sessionId, reportId, deviceType } = resolved;
+    const bucket = ensureSourceBucket(source);
+    const deviceBucket = ensureSourceDeviceBucket(source, deviceType);
+
+    if (row.event_name === 'analyze_submitted' && sessionId) {
+      bucket.analyzeSessions.add(sessionId);
+      deviceBucket.analyzeSessions.add(sessionId);
+    }
+
+    if (row.event_name === 'report_generated' && reportId) {
+      bucket.reportIds.add(reportId);
+      deviceBucket.reportIds.add(reportId);
+    }
+
+    if (row.event_name === 'report_viewed' && sessionId) {
+      bucket.reportViewSessions.add(sessionId);
+      deviceBucket.reportViewSessions.add(sessionId);
+    }
+
+    if ((row.event_name === 'chat_completed' || row.event_name === 'chat_message_sent') && sessionId) {
+      bucket.chatSessions.add(sessionId);
+      deviceBucket.chatSessions.add(sessionId);
+    }
+
+    if (row.event_name === 'tool_run_started' && sessionId) {
+      bucket.toolRunSessions.add(sessionId);
+      deviceBucket.toolRunSessions.add(sessionId);
+    }
+
+    bucket.latestAt = row.created_at || bucket.latestAt;
+    deviceBucket.latestAt = row.created_at || deviceBucket.latestAt;
+  }
+
+  return { sourceBuckets, sourceDeviceBuckets };
+}
+
+function sourceFunnelAccumulatorToRow(bucket: SourceFunnelAccumulator): SourceFunnelRow {
+  const analyzeSessions = bucket.analyzeSessions.size;
+  const reportsGenerated = bucket.reportIds.size;
+  const reportViewSessions = bucket.reportViewSessions.size;
+  const chatSessions = bucket.chatSessions.size;
+  const toolRunSessions = bucket.toolRunSessions.size;
+
+  return {
+    source: bucket.source,
+    analyzeSessions,
+    reportsGenerated,
+    reportViewSessions,
+    chatSessions,
+    toolRunSessions,
+    analyzeToReportRate: calculatePercentRate(reportsGenerated, analyzeSessions),
+    reportToViewRate: calculatePercentRate(reportViewSessions, reportsGenerated),
+    viewToChatRate: calculatePercentRate(chatSessions, reportViewSessions),
+    viewToToolRunRate: calculatePercentRate(toolRunSessions, reportViewSessions),
+    latestAt: bucket.latestAt || null,
+  };
+}
+
+function buildSourceFunnelRows(rows: RawAnalyticsEventRow[]) {
+  const { sourceBuckets, sourceDeviceBuckets } = populateSourceFunnelAccumulators(resolveSourceAnalyticsRows(rows));
+
+  const sourceFunnel = Object.values(sourceBuckets)
+    .map((bucket) => sourceFunnelAccumulatorToRow(bucket))
+    .filter((item) => item.analyzeSessions > 0 || item.reportsGenerated > 0 || item.reportViewSessions > 0)
+    .sort((left, right) => right.analyzeSessions - left.analyzeSessions || right.reportViewSessions - left.reportViewSessions)
+    .slice(0, 12);
+
+  const sourceDeviceFunnel = Object.values(sourceDeviceBuckets)
+    .map((bucket) => {
+      const base = sourceFunnelAccumulatorToRow(bucket);
+      return {
+        ...base,
+        deviceType: bucket.deviceType,
+      };
+    })
+    .filter((item) => item.analyzeSessions > 0 || item.reportsGenerated > 0 || item.reportViewSessions > 0)
+    .sort((left, right) => right.analyzeSessions - left.analyzeSessions || right.reportViewSessions - left.reportViewSessions)
+    .slice(0, 20);
+
+  return { sourceFunnel, sourceDeviceFunnel };
+}
+
+function getWeekStartValue(value?: string | null) {
+  const normalized = `${value || ''}`.slice(0, 10);
+  const parsed = new Date(`${normalized}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  const day = parsed.getUTCDay();
+  const daysSinceMonday = (day + 6) % 7;
+  parsed.setUTCDate(parsed.getUTCDate() - daysSinceMonday);
+  return parsed.toISOString().slice(0, 10);
+}
+
+function formatWeekLabel(weekStart: string) {
+  const parsed = new Date(`${weekStart}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.getTime())) {
+    return weekStart;
+  }
+
+  const yearStart = new Date(Date.UTC(parsed.getUTCFullYear(), 0, 1));
+  const dayOfYear = Math.floor((parsed.getTime() - yearStart.getTime()) / 86400000) + 1;
+  const weekNumber = Math.ceil((dayOfYear + ((yearStart.getUTCDay() + 6) % 7)) / 7);
+  return `${parsed.getUTCFullYear()}-W${String(weekNumber).padStart(2, '0')}`;
+}
+
+function buildSourceWeeklyTrendRows(rows: RawAnalyticsEventRow[]) {
+  const resolvedRows = resolveSourceAnalyticsRows(rows);
+  const { sourceFunnel } = buildSourceFunnelRows(rows);
+  const topSourceSet = new Set(
+    sourceFunnel
+      .filter((item) => item.analyzeSessions > 0 || item.reportViewSessions > 0)
+      .slice(0, 8)
+      .map((item) => item.source)
+  );
+  const buckets: Record<string, SourceTrendAccumulator> = {};
+
+  const ensureBucket = (source: string, weekStart: string) => {
+    const key = `${weekStart}::${source}`;
+    if (!buckets[key]) {
+      buckets[key] = {
+        source,
+        weekStart,
+        weekLabel: formatWeekLabel(weekStart),
+        analyzeSessions: new Set<string>(),
+        reportIds: new Set<string>(),
+        reportViewSessions: new Set<string>(),
+        chatSessions: new Set<string>(),
+        toolRunSessions: new Set<string>(),
+        latestAt: null,
+      };
+    }
+    return buckets[key];
+  };
+
+  for (const resolved of resolvedRows) {
+    const { row, source: resolvedSource, sessionId, reportId } = resolved;
+    const weekStart = getWeekStartValue(row.created_at);
+    if (!weekStart) {
+      continue;
+    }
+    const source = topSourceSet.size === 0 || topSourceSet.has(resolvedSource) ? resolvedSource : 'other';
+    const bucket = ensureBucket(source, weekStart);
+
+    if (row.event_name === 'analyze_submitted' && sessionId) {
+      bucket.analyzeSessions.add(sessionId);
+    }
+    if (row.event_name === 'report_generated' && reportId) {
+      bucket.reportIds.add(reportId);
+    }
+    if (row.event_name === 'report_viewed' && sessionId) {
+      bucket.reportViewSessions.add(sessionId);
+    }
+    if ((row.event_name === 'chat_completed' || row.event_name === 'chat_message_sent') && sessionId) {
+      bucket.chatSessions.add(sessionId);
+    }
+    if (row.event_name === 'tool_run_started' && sessionId) {
+      bucket.toolRunSessions.add(sessionId);
+    }
+
+    bucket.latestAt = row.created_at || bucket.latestAt;
+  }
+
+  return Object.values(buckets)
+    .map((bucket) => ({
+      ...sourceFunnelAccumulatorToRow(bucket),
+      weekStart: bucket.weekStart,
+      weekLabel: bucket.weekLabel,
+    }))
+    .filter((item) => item.analyzeSessions > 0 || item.reportsGenerated > 0 || item.reportViewSessions > 0 || item.chatSessions > 0 || item.toolRunSessions > 0)
+    .sort((left, right) => right.weekStart.localeCompare(left.weekStart) || right.analyzeSessions - left.analyzeSessions || right.reportViewSessions - left.reportViewSessions)
+    .slice(0, 56);
+}
+
+function deriveSourceShiftSampleState(current: SourceFunnelRow, previous: SourceFunnelRow) {
+  const sampleVolume =
+    current.analyzeSessions
+    + current.reportViewSessions
+    + current.chatSessions
+    + current.toolRunSessions
+    + previous.analyzeSessions
+    + previous.reportViewSessions
+    + previous.chatSessions
+    + previous.toolRunSessions;
+
+  if (sampleVolume >= 20 || current.reportViewSessions + previous.reportViewSessions >= 8) {
+    return 'enough' as const;
+  }
+  if (sampleVolume >= 8 || current.reportViewSessions + previous.reportViewSessions >= 3) {
+    return 'low' as const;
+  }
+  return 'sparse' as const;
+}
+
+function buildRecentSourceShiftRows(currentRows: RawAnalyticsEventRow[], previousRows: RawAnalyticsEventRow[]) {
+  const current = buildSourceFunnelRows(currentRows).sourceFunnel;
+  const previous = buildSourceFunnelRows(previousRows).sourceFunnel;
+  const sourceSet = new Set<string>([
+    ...current.map((item) => item.source),
+    ...previous.map((item) => item.source),
+  ]);
+  const currentMap = new Map(current.map((item) => [item.source, item]));
+  const previousMap = new Map(previous.map((item) => [item.source, item]));
+
+  const emptyRow = (source: string): SourceFunnelRow => ({
+    source,
+    analyzeSessions: 0,
+    reportsGenerated: 0,
+    reportViewSessions: 0,
+    chatSessions: 0,
+    toolRunSessions: 0,
+    analyzeToReportRate: 0,
+    reportToViewRate: 0,
+    viewToChatRate: 0,
+    viewToToolRunRate: 0,
+    latestAt: null,
+  });
+
+  return Array.from(sourceSet)
+    .map((source) => {
+      const currentRow = currentMap.get(source) || emptyRow(source);
+      const previousRow = previousMap.get(source) || emptyRow(source);
+      const analyzeSessionsDelta = currentRow.analyzeSessions - previousRow.analyzeSessions;
+      const reportViewSessionsDelta = currentRow.reportViewSessions - previousRow.reportViewSessions;
+      const viewToChatRateDelta = currentRow.viewToChatRate - previousRow.viewToChatRate;
+      const viewToToolRunRateDelta = currentRow.viewToToolRunRate - previousRow.viewToToolRunRate;
+      const deltaMagnitude =
+        Math.abs(analyzeSessionsDelta)
+        + Math.abs(reportViewSessionsDelta)
+        + Math.abs(viewToChatRateDelta)
+        + Math.abs(viewToToolRunRateDelta);
+      const direction = analyzeSessionsDelta > 0 || reportViewSessionsDelta > 0 || viewToChatRateDelta > 0 || viewToToolRunRateDelta > 0
+        ? 'up'
+        : analyzeSessionsDelta < 0 || reportViewSessionsDelta < 0 || viewToChatRateDelta < 0 || viewToToolRunRateDelta < 0
+          ? 'down'
+          : 'flat';
+
+      return {
+        source,
+        current: currentRow,
+        previous: previousRow,
+        analyzeSessionsDelta,
+        reportViewSessionsDelta,
+        viewToChatRateDelta,
+        viewToToolRunRateDelta,
+        deltaMagnitude,
+        direction,
+        sampleState: deriveSourceShiftSampleState(currentRow, previousRow),
+      } satisfies SourceShiftRow;
+    })
+    .filter((item) => item.current.analyzeSessions > 0 || item.current.reportViewSessions > 0 || item.previous.analyzeSessions > 0 || item.previous.reportViewSessions > 0)
+    .sort((left, right) => right.deltaMagnitude - left.deltaMagnitude || right.current.analyzeSessions - left.current.analyzeSessions)
+    .slice(0, 12);
 }
 
 function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
@@ -437,6 +1316,23 @@ function mapAnalyticsEventRow(row: RawAnalyticsEventRow): AnalyticsEventRecord {
     sessionId: row.session_id || undefined,
     eventName: row.event_name,
     page: row.page || undefined,
+    meta: parseJson(row.meta, {}),
+    createdAt: row.created_at,
+  };
+}
+
+function mapReportJourneyEventRow(row: RawReportJourneyEventRow): ReportJourneyEventRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    reportId: row.report_id,
+    workflowId: row.workflow_id,
+    layerKey: row.layer_key,
+    actionTarget: row.action_target,
+    category: row.category || undefined,
+    toolSlug: row.tool_slug || undefined,
+    source: row.source || undefined,
+    href: row.href || undefined,
     meta: parseJson(row.meta, {}),
     createdAt: row.created_at,
   };
@@ -913,6 +1809,25 @@ export function initializeDatabase() {
   `);
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS report_journey_events (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      report_id TEXT NOT NULL,
+      workflow_id TEXT NOT NULL,
+      layer_key TEXT NOT NULL,
+      action_target TEXT NOT NULL,
+      category TEXT,
+      tool_slug TEXT,
+      source TEXT,
+      href TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (report_id) REFERENCES fortunes(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS content_signals (
       id TEXT PRIMARY KEY,
       source_id TEXT NOT NULL,
@@ -974,6 +1889,18 @@ export function initializeDatabase() {
       next_run_at TEXT,
       locked_at TEXT,
       last_error TEXT,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS system_locks (
+      key TEXT PRIMARY KEY,
+      owner TEXT NOT NULL,
+      locked_at TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
       meta JSON,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
@@ -1083,6 +2010,107 @@ export function initializeDatabase() {
     )
   `);
 
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS visual_asset_batches (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      library_key TEXT NOT NULL,
+      module TEXT,
+      target_count INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'planned',
+      model TEXT NOT NULL DEFAULT 'gpt-image-2',
+      brand_pack_id TEXT,
+      manifest_path TEXT,
+      generated_count INTEGER DEFAULT 0,
+      approved_count INTEGER DEFAULT 0,
+      rejected_count INTEGER DEFAULT 0,
+      correction_count INTEGER DEFAULT 0,
+      meta JSON,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS visual_assets (
+      id TEXT PRIMARY KEY,
+      asset_type TEXT NOT NULL,
+      module TEXT NOT NULL,
+      batch_id TEXT,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      description TEXT,
+      prompt TEXT NOT NULL,
+      negative_prompt TEXT,
+      model TEXT NOT NULL DEFAULT 'gpt-image-2',
+      size TEXT NOT NULL,
+      ratio TEXT NOT NULL,
+      quality TEXT NOT NULL DEFAULT 'medium',
+      source_image_ids JSON,
+      brand_reference_ids JSON,
+      output_path TEXT,
+      public_url TEXT,
+      alt_text TEXT,
+      overlay_copy_simplified TEXT,
+      overlay_copy_traditional TEXT,
+      overlay_copy_english TEXT,
+      narrative_title TEXT,
+      narrative_excerpt TEXT,
+      narrative_sections JSON,
+      target_routes JSON,
+      related_content_slugs JSON,
+      related_tool_slugs JSON,
+      related_report_themes JSON,
+      status TEXT NOT NULL DEFAULT 'planned',
+      qa_status TEXT NOT NULL DEFAULT 'pending',
+      qa_score INTEGER DEFAULT 0,
+      qa_notes JSON,
+      correction_count INTEGER DEFAULT 0,
+      latest_error_code TEXT,
+      version INTEGER DEFAULT 1,
+      meta JSON,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (batch_id) REFERENCES visual_asset_batches(id) ON DELETE SET NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS visual_asset_reviews (
+      id TEXT PRIMARY KEY,
+      asset_id TEXT NOT NULL,
+      review_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      score INTEGER DEFAULT 0,
+      error_codes JSON,
+      notes JSON,
+      reviewer TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(asset_id) REFERENCES visual_assets(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS visual_asset_corrections (
+      id TEXT PRIMARY KEY,
+      asset_id TEXT NOT NULL,
+      correction_round INTEGER NOT NULL,
+      error_codes JSON NOT NULL,
+      original_prompt TEXT NOT NULL,
+      corrected_prompt TEXT NOT NULL,
+      original_output_path TEXT,
+      corrected_output_path TEXT,
+      status TEXT NOT NULL DEFAULT 'planned',
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(asset_id) REFERENCES visual_assets(id) ON DELETE CASCADE
+    )
+  `);
+
   // 索引
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -1099,6 +2127,10 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_analytics_events_name ON analytics_events(event_name);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_created_at ON analytics_events(created_at);
     CREATE INDEX IF NOT EXISTS idx_analytics_events_user_id ON analytics_events(user_id);
+    CREATE INDEX IF NOT EXISTS idx_report_journey_events_report_id ON report_journey_events(report_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_report_journey_events_user_id ON report_journey_events(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_report_journey_events_layer ON report_journey_events(layer_key, created_at);
+    CREATE INDEX IF NOT EXISTS idx_report_journey_events_category ON report_journey_events(category, created_at);
     CREATE INDEX IF NOT EXISTS idx_content_signals_source_id ON content_signals(source_id);
     CREATE INDEX IF NOT EXISTS idx_content_signals_created_at ON content_signals(created_at);
     CREATE INDEX IF NOT EXISTS idx_content_radar_runs_source_id ON content_radar_runs(source_id);
@@ -1106,6 +2138,7 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_content_scheduler_runs_created_at ON content_scheduler_runs(created_at);
     CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_status_next_run ON content_generation_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_user_created_at ON content_generation_jobs(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_system_locks_expires_at ON system_locks(expires_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_status_next_run ON report_upgrade_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_report_id ON report_upgrade_jobs(report_id);
     CREATE INDEX IF NOT EXISTS idx_report_monthly_digest_runs_cycle ON report_monthly_digest_runs(cycle_key, status);
@@ -1119,6 +2152,13 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_tool_sessions_user_id ON tool_sessions(user_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_tool_sessions_tool_slug ON tool_sessions(tool_slug, created_at);
     CREATE INDEX IF NOT EXISTS idx_tool_sessions_report_id ON tool_sessions(report_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_visual_assets_batch_id ON visual_assets(batch_id);
+    CREATE INDEX IF NOT EXISTS idx_visual_assets_module_status ON visual_assets(module, status);
+    CREATE INDEX IF NOT EXISTS idx_visual_assets_status_qa ON visual_assets(status, qa_status);
+    CREATE INDEX IF NOT EXISTS idx_visual_assets_slug ON visual_assets(slug);
+    CREATE INDEX IF NOT EXISTS idx_visual_asset_batches_status ON visual_asset_batches(status, created_at);
+    CREATE INDEX IF NOT EXISTS idx_visual_asset_reviews_asset_id ON visual_asset_reviews(asset_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_visual_asset_corrections_asset_id ON visual_asset_corrections(asset_id, created_at);
   `);
 }
 
@@ -1686,6 +2726,7 @@ export const analyticsOperations = {
       count: number;
       lastSeenAt?: string;
     }> = {};
+    const ctaStrategyBuckets: Record<string, CtaStrategyBreakdownAccumulator> = {};
     const journeyCounts: Record<string, { key: string; label: string; count: number }> = {
       home_page_viewed: { key: 'home_page_viewed', label: '首页访问', count: 0 },
       analyze_page_viewed: { key: 'analyze_page_viewed', label: '分析页访问', count: 0 },
@@ -1719,6 +2760,7 @@ export const analyticsOperations = {
       priorityScore: number;
     }> = [];
     const recentLlmWindowMs = 24 * 60 * 60 * 1000;
+    const ctaStrategyWindowMs = 30 * 24 * 60 * 60 * 1000;
     let recentLlmAttempts = 0;
     let recentLlmSuccesses = 0;
     let recentLlmFailures = 0;
@@ -1805,6 +2847,7 @@ export const analyticsOperations = {
     for (const row of analyticsRows) {
       const meta = parseJson<Record<string, unknown>>(row.meta, {});
       const eventName = row.event_name;
+      const createdAtMs = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
 
       if (journeyCounts[eventName]) {
         journeyCounts[eventName].count += 1;
@@ -1838,6 +2881,54 @@ export const analyticsOperations = {
           };
         }
         ctaBuckets[rawTarget].count += 1;
+      }
+
+      if (
+        Number.isFinite(createdAtMs)
+        && nowTime - createdAtMs <= ctaStrategyWindowMs
+        && (
+          eventName === 'result_cta_clicked'
+          || eventName === 'chat_page_viewed'
+          || eventName === 'chat_completed'
+          || eventName === 'tool_card_clicked'
+          || eventName === 'content_card_clicked'
+        )
+      ) {
+        const strategyKey = typeof meta.ctaStrategyKey === 'string' ? meta.ctaStrategyKey.trim() : '';
+        if (strategyKey) {
+          const sourceFamily = resolveCtaSourceFamilyFromMeta(meta);
+          const key = `${strategyKey}:${sourceFamily}`;
+          if (!ctaStrategyBuckets[key]) {
+            ctaStrategyBuckets[key] = {
+              key,
+              strategyKey,
+              sourceFamily,
+              clicks: 0,
+              chatPageViews: 0,
+              chatCompleted: 0,
+              toolCardClicks: 0,
+              contentCardClicks: 0,
+              latestAt: row.created_at || null,
+            };
+          }
+
+          if (eventName === 'result_cta_clicked') {
+            ctaStrategyBuckets[key].clicks += 1;
+          }
+          if (eventName === 'chat_page_viewed') {
+            ctaStrategyBuckets[key].chatPageViews += 1;
+          }
+          if (eventName === 'chat_completed') {
+            ctaStrategyBuckets[key].chatCompleted += 1;
+          }
+          if (eventName === 'tool_card_clicked') {
+            ctaStrategyBuckets[key].toolCardClicks += 1;
+          }
+          if (eventName === 'content_card_clicked') {
+            ctaStrategyBuckets[key].contentCardClicks += 1;
+          }
+          ctaStrategyBuckets[key].latestAt = row.created_at || ctaStrategyBuckets[key].latestAt;
+        }
       }
 
       if (eventName === 'chat_message_sent') {
@@ -1892,7 +2983,6 @@ export const analyticsOperations = {
       if (eventName === 'llm_model_attempt') {
         const model = typeof meta.model === 'string' ? meta.model : '';
         const scope = typeof meta.scope === 'string' ? meta.scope : 'unknown';
-        const createdAtMs = row.created_at ? new Date(row.created_at).getTime() : Number.NaN;
         if (model) {
           if (!llmModelBuckets[model]) {
             llmModelBuckets[model] = {
@@ -2145,6 +3235,266 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
       chatMessages: number;
       eventsCreated: number;
     }>;
+    const weeklyDeviceMix = db.prepare(`
+      WITH RECURSIVE weeks(week_start) AS (
+        SELECT date('now', '-6 days', 'weekday 1', '-42 days')
+        UNION ALL
+        SELECT date(week_start, '+7 days')
+        FROM weeks
+        WHERE week_start < date('now', '-6 days', 'weekday 1')
+      ),
+      product_usage AS (
+        SELECT
+          date(created_at, '-6 days', 'weekday 1') AS week_start,
+          COALESCE(NULLIF(trim(json_extract(meta, '$.deviceType')), ''), 'unknown') AS device_type,
+          COUNT(*) AS product_events,
+          COUNT(DISTINCT CASE WHEN session_id IS NOT NULL AND trim(session_id) <> '' THEN session_id END) AS sessions
+        FROM analytics_events
+        WHERE datetime(created_at) >= datetime('now', '-49 days')
+${PRODUCT_ANALYTICS_FILTER_SQL}
+        GROUP BY date(created_at, '-6 days', 'weekday 1'), COALESCE(NULLIF(trim(json_extract(meta, '$.deviceType')), ''), 'unknown')
+      ),
+      registrations AS (
+        SELECT
+          date(a.created_at, '-6 days', 'weekday 1') AS week_start,
+          COALESCE(NULLIF(trim(json_extract(a.meta, '$.deviceType')), ''), 'unknown') AS device_type,
+          COUNT(*) AS auth_verified_count
+        FROM analytics_events a
+        WHERE a.event_name = 'auth_verified'
+          AND datetime(a.created_at) >= datetime('now', '-49 days')
+        GROUP BY date(a.created_at, '-6 days', 'weekday 1'), COALESCE(NULLIF(trim(json_extract(a.meta, '$.deviceType')), ''), 'unknown')
+      )
+      SELECT
+        weeks.week_start AS weekStart,
+        strftime('%Y-W%W', weeks.week_start) AS weekLabel,
+        device.device_type AS deviceType,
+        COALESCE(product_usage.product_events, 0) AS productEvents,
+        COALESCE(product_usage.sessions, 0) AS sessions,
+        COALESCE(registrations.auth_verified_count, 0) AS verifiedUsers
+      FROM weeks
+      CROSS JOIN (
+        SELECT 'mobile' AS device_type
+        UNION ALL SELECT 'desktop'
+        UNION ALL SELECT 'tablet'
+        UNION ALL SELECT 'bot'
+        UNION ALL SELECT 'unknown'
+      ) AS device
+      LEFT JOIN product_usage
+        ON product_usage.week_start = weeks.week_start
+       AND product_usage.device_type = device.device_type
+      LEFT JOIN registrations
+        ON registrations.week_start = weeks.week_start
+       AND registrations.device_type = device.device_type
+      ORDER BY weeks.week_start DESC,
+        CASE device.device_type
+          WHEN 'mobile' THEN 0
+          WHEN 'desktop' THEN 1
+          WHEN 'tablet' THEN 2
+          WHEN 'bot' THEN 3
+          ELSE 4
+        END ASC
+    `).all() as Array<{
+      weekStart: string;
+      weekLabel: string;
+      deviceType: string;
+      productEvents: number;
+      sessions: number;
+      verifiedUsers: number;
+    }>;
+    const recentBehaviorShiftWindow = {
+      currentStart: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
+      currentEnd: db.prepare(`SELECT date('now') AS value`).get() as { value: string },
+      previousStart: db.prepare(`SELECT date('now', '-6 days') AS value`).get() as { value: string },
+      previousEnd: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
+    };
+    const recentDeviceWindowRows = db.prepare(`
+      SELECT event_name, page, meta, session_id, created_at
+      FROM analytics_events
+      WHERE date(created_at) >= date('now', '-6 days')
+        AND date(created_at) < date('now')
+        AND (
+          event_name IN (
+            'report_viewed',
+            'chat_completed',
+            'chat_event_saved',
+            'event_created',
+            'report_event_saved_from_result',
+            'report_past_event_saved_from_result',
+            'tool_detail_viewed',
+            'tool_run_started',
+            'auth_code_requested',
+            'auth_verified'
+          )
+          OR (
+            event_name NOT IN (${PRODUCT_ANALYTICS_EXCLUDED_EVENTS_SQL})
+            AND COALESCE(page, '') NOT LIKE '%127.0.0.1%'
+            AND COALESCE(page, '') NOT LIKE '%localhost%'
+          )
+        )
+    `).all() as RawAnalyticsEventRow[];
+    const currentDeviceWindowRows = recentDeviceWindowRows.filter((row) => {
+      const createdAt = `${row.created_at || ''}`;
+      return createdAt >= recentBehaviorShiftWindow.currentStart.value && createdAt < recentBehaviorShiftWindow.currentEnd.value;
+    });
+    const previousDeviceWindowRows = recentDeviceWindowRows.filter((row) => {
+      const createdAt = `${row.created_at || ''}`;
+      return createdAt >= recentBehaviorShiftWindow.previousStart.value && createdAt < recentBehaviorShiftWindow.previousEnd.value;
+    });
+    const currentDeviceWindowMetrics = buildDeviceWindowMetrics(currentDeviceWindowRows);
+    const previousDeviceWindowMetrics = buildDeviceWindowMetrics(previousDeviceWindowRows);
+    const currentDeviceMetricMap = new Map(currentDeviceWindowMetrics.map((item) => [item.deviceType, item]));
+    const previousDeviceMetricMap = new Map(previousDeviceWindowMetrics.map((item) => [item.deviceType, item]));
+    const emptyDeviceMetricMap = new Map(buildDeviceWindowMetrics([]).map((item) => [item.deviceType, item]));
+    const currentDeviceCoverage = currentDeviceWindowRows.reduce<DeviceCoverageSnapshot>((accumulator, row) => {
+      const deviceType = extractDeviceTypeFromMeta(row.meta);
+      accumulator.totalEvents += 1;
+      if (deviceType === 'unknown') {
+        accumulator.unknownDeviceEvents += 1;
+      } else {
+        accumulator.knownDeviceEvents += 1;
+      }
+      return accumulator;
+    }, {
+      totalEvents: 0,
+      knownDeviceEvents: 0,
+      unknownDeviceEvents: 0,
+      coverageRate: 0,
+      sessions: 0,
+      knownDeviceSessions: 0,
+      unknownDeviceSessions: 0,
+      sessionCoverageRate: 0,
+    });
+    const currentDeviceSessionMap = resolveSessionDeviceTypeMap(currentDeviceWindowRows);
+    currentDeviceCoverage.sessions = currentDeviceSessionMap.size;
+    currentDeviceCoverage.knownDeviceSessions = Array.from(currentDeviceSessionMap.values())
+      .filter((deviceType) => deviceType !== 'unknown')
+      .length;
+    currentDeviceCoverage.unknownDeviceSessions = currentDeviceCoverage.sessions - currentDeviceCoverage.knownDeviceSessions;
+    currentDeviceCoverage.coverageRate = calculatePercentRate(
+      currentDeviceCoverage.knownDeviceEvents,
+      currentDeviceCoverage.totalEvents
+    );
+    currentDeviceCoverage.sessionCoverageRate = calculatePercentRate(
+      currentDeviceCoverage.knownDeviceSessions,
+      currentDeviceCoverage.sessions
+    );
+    const recentBehaviorShiftByDevice = DEVICE_TYPES.map((deviceType) => {
+      const current = currentDeviceMetricMap.get(deviceType) || emptyDeviceMetricMap.get(deviceType)!;
+      const previous = previousDeviceMetricMap.get(deviceType) || emptyDeviceMetricMap.get(deviceType)!;
+      const productEventsDelta = current.productEvents - previous.productEvents;
+      const reportToChatRateDelta = current.reportToChatRate - previous.reportToChatRate;
+      const toolToRunRateDelta = current.toolToRunRate - previous.toolToRunRate;
+      const authVerifyRateDelta = current.authVerifyRate - previous.authVerifyRate;
+      const deltaMagnitude = Math.abs(productEventsDelta) + Math.abs(reportToChatRateDelta) + Math.abs(toolToRunRateDelta) + Math.abs(authVerifyRateDelta);
+      const direction = productEventsDelta > 0
+        ? 'up'
+        : productEventsDelta < 0
+          ? 'down'
+          : reportToChatRateDelta > 0 || toolToRunRateDelta > 0 || authVerifyRateDelta > 0
+            ? 'up'
+            : reportToChatRateDelta < 0 || toolToRunRateDelta < 0 || authVerifyRateDelta < 0
+              ? 'down'
+              : 'flat';
+
+      return {
+        deviceType,
+        current,
+        previous,
+        productEventsDelta,
+        reportToChatRateDelta,
+        toolToRunRateDelta,
+        authVerifyRateDelta,
+        deltaMagnitude,
+        direction,
+        sampleState: current.sampleState === 'enough' || previous.sampleState === 'enough'
+          ? 'enough'
+          : current.sampleState === 'low' || previous.sampleState === 'low'
+            ? 'low'
+            : 'sparse',
+      };
+    })
+      .filter((item) => item.current.sampleVolume > 0 || item.previous.sampleVolume > 0)
+      .sort((left, right) => right.deltaMagnitude - left.deltaMagnitude);
+    const deviceFunnelBreakdown = currentDeviceWindowMetrics
+      .map((item) => ({
+        ...item,
+        qualityNote:
+          item.sampleState === 'enough'
+            ? '设备样本已够，可直接判断这条链路。'
+            : item.sampleState === 'low'
+              ? '设备样本偏低，先看方向，再继续累积样本。'
+              : '当前设备样本太少，先不要据此做大结论。',
+      }))
+      .filter((item) => item.sampleVolume > 0)
+      .sort((left, right) => right.sampleVolume - left.sampleVolume);
+    const sourceTrendRows = db.prepare(`
+      SELECT event_name, page, meta, session_id, created_at
+      FROM analytics_events
+      WHERE datetime(created_at) >= datetime('now', '-49 days')
+        AND event_name IN (
+          'analyze_submitted',
+          'report_generated',
+          'report_viewed',
+          'chat_message_sent',
+          'chat_completed',
+          'tool_run_started'
+        )
+        AND COALESCE(page, '') NOT LIKE '%127.0.0.1%'
+        AND COALESCE(page, '') NOT LIKE '%localhost%'
+      ORDER BY datetime(created_at) ASC
+      LIMIT 10000
+    `).all() as RawAnalyticsEventRow[];
+    const weeklySourceTrend = buildSourceWeeklyTrendRows(sourceTrendRows);
+    const recentSourceShift = buildRecentSourceShiftRows(currentDeviceWindowRows, previousDeviceWindowRows);
+    const weeklyDeviceEngagement = weeklyDeviceMix.reduce<Record<string, {
+      deviceType: string;
+      weeksWithData: number;
+      productEvents: number;
+      sessions: number;
+      verifiedUsers: number;
+    }>>((accumulator, row) => {
+      const deviceType = normalizeDeviceType(row.deviceType);
+      if (!accumulator[deviceType]) {
+        accumulator[deviceType] = {
+          deviceType,
+          weeksWithData: 0,
+          productEvents: 0,
+          sessions: 0,
+          verifiedUsers: 0,
+        };
+      }
+
+      if (row.productEvents > 0 || row.sessions > 0 || row.verifiedUsers > 0) {
+        accumulator[deviceType].weeksWithData += 1;
+      }
+      accumulator[deviceType].productEvents += row.productEvents;
+      accumulator[deviceType].sessions += row.sessions;
+      accumulator[deviceType].verifiedUsers += row.verifiedUsers;
+      return accumulator;
+    }, {});
+    const deviceMeasurementSummary = {
+      currentWindow: currentDeviceCoverage,
+      weeklyCoverage: DEVICE_TYPES.map((deviceType) => {
+        const item = weeklyDeviceEngagement[deviceType] || {
+          deviceType,
+          weeksWithData: 0,
+          productEvents: 0,
+          sessions: 0,
+          verifiedUsers: 0,
+        };
+        return {
+          ...item,
+          sampleState: item.weeksWithData >= 3 || item.sessions >= 15
+            ? 'enough'
+            : item.weeksWithData >= 1 || item.sessions >= 5
+              ? 'low'
+              : 'sparse',
+        };
+      }),
+      note: currentDeviceCoverage.coverageRate >= 60
+        ? '最近 3 天设备埋点覆盖已进入可用区间，可以开始判断移动端、桌面端和注册链路差异。'
+        : '最近 3 天设备埋点覆盖仍偏低，先把它当成前瞻性监测，不要过度解读历史对比。',
+    };
     const dailyProductUsage = db.prepare(`
       WITH RECURSIVE days(day) AS (
         SELECT date('now')
@@ -2258,12 +3608,6 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
         : 0,
       sessionTableCount: sessionsTableCountRow.count,
       usingSessionProxy: sessionsTableCountRow.count === 0,
-    };
-    const recentBehaviorShiftWindow = {
-      currentStart: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
-      currentEnd: db.prepare(`SELECT date('now') AS value`).get() as { value: string },
-      previousStart: db.prepare(`SELECT date('now', '-6 days') AS value`).get() as { value: string },
-      previousEnd: db.prepare(`SELECT date('now', '-3 days') AS value`).get() as { value: string },
     };
     const recentBehaviorShiftSummary = db.prepare(`
       WITH usage_current AS (
@@ -2737,6 +4081,19 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
     if (reportToChatDelta < 0) {
       recentBehaviorShiftWarnings.push(`结果页到聊天的会话转化下降 ${Math.abs(reportToChatDelta)} 个点，报告页后续动作承接变弱。`);
     }
+    const strongestDeviceShift = recentBehaviorShiftByDevice[0];
+    if (strongestDeviceShift && strongestDeviceShift.sampleState !== 'sparse') {
+      if (strongestDeviceShift.productEventsDelta < 0) {
+        recentBehaviorShiftWarnings.push(
+          `${mapDeviceTypeLabelForSummary(strongestDeviceShift.deviceType)}近 3 天产品事件减少 ${Math.abs(strongestDeviceShift.productEventsDelta)}，这是最近设备层最明显的回落点。`
+        );
+      }
+      if (strongestDeviceShift.productEventsDelta > 0) {
+        recentBehaviorShiftSignals.push(
+          `${mapDeviceTypeLabelForSummary(strongestDeviceShift.deviceType)}近 3 天产品事件增加 ${strongestDeviceShift.productEventsDelta}，最近增量主要集中在这端。`
+        );
+      }
+    }
 
     const recentBehaviorShift = {
       window: {
@@ -2749,9 +4106,567 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
       keyMetrics: recentBehaviorShiftKeyMetrics,
       topChanges: recentBehaviorShiftTopChanges,
       funnel: recentBehaviorShiftFunnel,
+      byDevice: recentBehaviorShiftByDevice,
       signals: recentBehaviorShiftSignals.slice(0, 4),
       warnings: recentBehaviorShiftWarnings.slice(0, 4),
     };
+    const identityContinuityRaw = db.prepare(`
+      WITH auth_mappings AS (
+        SELECT
+          session_id AS guest_session_id,
+          user_id AS verified_user_id,
+          MIN(created_at) AS first_auth_at
+        FROM analytics_events
+        WHERE event_name = 'auth_verified'
+          AND session_id LIKE 'guest_%'
+          AND user_id LIKE 'user_%'
+        GROUP BY session_id, user_id
+      )
+      SELECT
+        (SELECT COUNT(*) FROM analytics_events WHERE user_id LIKE 'guest_%') AS guestAnalyticsEvents,
+        (SELECT COUNT(*) FROM analytics_events ae LEFT JOIN users u ON ae.user_id = u.id WHERE ae.user_id LIKE 'guest_%' AND u.id IS NULL) AS orphanGuestAnalyticsEvents,
+        (SELECT COUNT(*) FROM analytics_events ae WHERE ae.user_id LIKE 'guest_%' AND EXISTS (
+          SELECT 1 FROM auth_mappings am WHERE am.guest_session_id = ae.user_id
+        )) AS recoverableGuestAnalyticsEvents,
+        (SELECT COUNT(*) FROM auth_mappings) AS authGuestMappings,
+        (SELECT COUNT(*) FROM tool_sessions ts LEFT JOIN users u ON ts.user_id = u.id WHERE ts.user_id LIKE 'guest_%' AND u.id IS NULL) AS orphanGuestToolSessions,
+        (SELECT COUNT(*) FROM sessions s LEFT JOIN users u ON s.user_id = u.id WHERE s.user_id LIKE 'guest_%' AND u.id IS NULL) AS orphanGuestSessions,
+        (SELECT COUNT(*) FROM premium_service_requests r LEFT JOIN users u ON r.user_id = u.id WHERE r.user_id LIKE 'guest_%' AND u.id IS NULL) AS orphanGuestPremiumRequests,
+        (SELECT COUNT(*) FROM report_upgrade_jobs r LEFT JOIN users u ON r.user_id = u.id WHERE r.user_id LIKE 'guest_%' AND u.id IS NULL) AS orphanGuestUpgradeJobs
+    `).get() as {
+      guestAnalyticsEvents: number;
+      orphanGuestAnalyticsEvents: number;
+      recoverableGuestAnalyticsEvents: number;
+      authGuestMappings: number;
+      orphanGuestToolSessions: number;
+      orphanGuestSessions: number;
+      orphanGuestPremiumRequests: number;
+      orphanGuestUpgradeJobs: number;
+    };
+    const identityContinuity = {
+      guestAnalyticsEvents: identityContinuityRaw.guestAnalyticsEvents || 0,
+      orphanGuestAnalyticsEvents: identityContinuityRaw.orphanGuestAnalyticsEvents || 0,
+      recoverableGuestAnalyticsEvents: identityContinuityRaw.recoverableGuestAnalyticsEvents || 0,
+      authGuestMappings: identityContinuityRaw.authGuestMappings || 0,
+      orphanGuestToolSessions: identityContinuityRaw.orphanGuestToolSessions || 0,
+      orphanGuestSessions: identityContinuityRaw.orphanGuestSessions || 0,
+      orphanGuestPremiumRequests: identityContinuityRaw.orphanGuestPremiumRequests || 0,
+      orphanGuestUpgradeJobs: identityContinuityRaw.orphanGuestUpgradeJobs || 0,
+      recoverableRate: (identityContinuityRaw.guestAnalyticsEvents || 0) > 0
+        ? Math.round(((identityContinuityRaw.recoverableGuestAnalyticsEvents || 0) / (identityContinuityRaw.guestAnalyticsEvents || 1)) * 100)
+        : 0,
+    };
+    const lifecycleRecallRows = db.prepare(`
+      SELECT
+        stage_key,
+        status,
+        report_id,
+        meta,
+        created_at
+      FROM user_lifecycle_email_runs
+      WHERE datetime(created_at) >= datetime('now', '-30 days')
+      ORDER BY datetime(created_at) DESC
+      LIMIT 500
+    `).all() as Array<{
+      stage_key?: string | null;
+      status?: string | null;
+      report_id?: string | null;
+      meta?: string | null;
+      created_at?: string | null;
+    }>;
+    const lifecycleRecallRowsByStage = lifecycleRecallRows.reduce<Record<string, Array<{
+      stage_key?: string | null;
+      status?: string | null;
+      report_id?: string | null;
+      meta?: string | null;
+      created_at?: string | null;
+    }>>>((accumulator, row) => {
+      const stageKey = `${row.stage_key || ''}`.trim();
+      if (!stageKey) {
+        return accumulator;
+      }
+
+      if (!accumulator[stageKey]) {
+        accumulator[stageKey] = [];
+      }
+      accumulator[stageKey].push(row);
+      return accumulator;
+    }, {});
+    const lifecycleReportFollowupRuns = Object.entries(lifecycleRecallRowsByStage)
+      .filter(([stageKey]) => stageKey.startsWith('report_day2_no_followup'))
+      .flatMap(([, rows]) => rows);
+    const lifecycleToolInterestRuns = Object.entries(lifecycleRecallRowsByStage)
+      .filter(([stageKey]) => stageKey.startsWith('tool_interest_day1_no_run'))
+      .flatMap(([, rows]) => rows);
+    const lifecycleReportFollowupReportIds = Array.from(new Set(
+      lifecycleReportFollowupRuns
+        .map((row) => `${row.report_id || ''}`.trim())
+        .filter(Boolean)
+    ));
+    const lifecycleToolInterestSlugs = Array.from(new Set(
+      lifecycleToolInterestRuns
+        .map((row) => {
+          const stageKey = `${row.stage_key || ''}`.trim();
+          const stageMatch = stageKey.match(/^tool_interest_day1_no_run:(.+)$/);
+          if (stageMatch?.[1]) {
+            return stageMatch[1].trim();
+          }
+          const meta = parseJson<Record<string, unknown>>(row.meta, {});
+          return typeof meta.toolSlug === 'string' ? meta.toolSlug.trim() : '';
+        })
+        .filter(Boolean)
+    ));
+    const lifecycleReportChatRows = lifecycleReportFollowupReportIds.length > 0
+      ? db.prepare(`
+          SELECT event_name, meta, created_at
+          FROM analytics_events
+          WHERE datetime(created_at) >= datetime('now', '-30 days')
+            AND event_name IN ('chat_page_viewed', 'chat_completed', 'chat_event_saved')
+            AND json_extract(meta, '$.reportId') IN (${lifecycleReportFollowupReportIds.map(() => '?').join(', ')})
+          ORDER BY datetime(created_at) DESC
+          LIMIT 1000
+        `).all(...lifecycleReportFollowupReportIds) as Array<{
+          event_name: string;
+          meta?: string | null;
+          created_at?: string | null;
+        }>
+      : [];
+    const lifecycleToolRunRows = lifecycleToolInterestSlugs.length > 0
+      ? db.prepare(`
+          SELECT event_name, meta, created_at
+          FROM analytics_events
+          WHERE datetime(created_at) >= datetime('now', '-30 days')
+            AND event_name IN ('tool_detail_viewed', 'tool_run_started', 'tool_result_viewed')
+            AND json_extract(meta, '$.toolSlug') IN (${lifecycleToolInterestSlugs.map(() => '?').join(', ')})
+          ORDER BY datetime(created_at) DESC
+          LIMIT 1000
+        `).all(...lifecycleToolInterestSlugs) as Array<{
+          event_name: string;
+          meta?: string | null;
+          created_at?: string | null;
+        }>
+      : [];
+    const lifecycleReportFollowupBreakdown = lifecycleReportFollowupRuns.reduce<Record<string, {
+      key: string;
+      reportId: string;
+      sent: number;
+      errors: number;
+      chatPageViews: number;
+      chatCompleted: number;
+      chatEventsSaved: number;
+      latestAt?: string | null;
+    }>>((accumulator, row) => {
+      const reportId = `${row.report_id || ''}`.trim();
+      if (!reportId) {
+        return accumulator;
+      }
+
+      if (!accumulator[reportId]) {
+        accumulator[reportId] = {
+          key: reportId,
+          reportId,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.status === 'sent') {
+        accumulator[reportId].sent += 1;
+      }
+      if (row.status === 'error') {
+        accumulator[reportId].errors += 1;
+      }
+      accumulator[reportId].latestAt = row.created_at || accumulator[reportId].latestAt;
+      return accumulator;
+    }, {});
+    const lifecycleReportFollowupSourceBreakdown: Record<string, {
+      key: string;
+      source: string;
+      sent: number;
+      errors: number;
+      chatPageViews: number;
+      chatCompleted: number;
+      chatEventsSaved: number;
+      latestAt?: string | null;
+    }> = {};
+    const lifecycleReportFollowupDeviceBreakdown: Record<string, {
+      key: string;
+      deviceType: string;
+      sent: number;
+      errors: number;
+      chatPageViews: number;
+      chatCompleted: number;
+      chatEventsSaved: number;
+      latestAt?: string | null;
+    }> = {};
+    for (const row of lifecycleReportFollowupRuns) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const source = typeof meta.lastSource === 'string' && meta.lastSource.trim()
+        ? meta.lastSource.trim()
+        : 'unknown';
+      const deviceType = typeof meta.lastDeviceType === 'string' && meta.lastDeviceType.trim()
+        ? meta.lastDeviceType.trim()
+        : 'unknown';
+
+      if (!lifecycleReportFollowupSourceBreakdown[source]) {
+        lifecycleReportFollowupSourceBreakdown[source] = {
+          key: source,
+          source,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleReportFollowupDeviceBreakdown[deviceType]) {
+        lifecycleReportFollowupDeviceBreakdown[deviceType] = {
+          key: deviceType,
+          deviceType,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.status === 'sent') {
+        lifecycleReportFollowupSourceBreakdown[source].sent += 1;
+        lifecycleReportFollowupDeviceBreakdown[deviceType].sent += 1;
+      }
+      if (row.status === 'error') {
+        lifecycleReportFollowupSourceBreakdown[source].errors += 1;
+        lifecycleReportFollowupDeviceBreakdown[deviceType].errors += 1;
+      }
+      lifecycleReportFollowupSourceBreakdown[source].latestAt = row.created_at || lifecycleReportFollowupSourceBreakdown[source].latestAt;
+      lifecycleReportFollowupDeviceBreakdown[deviceType].latestAt = row.created_at || lifecycleReportFollowupDeviceBreakdown[deviceType].latestAt;
+    }
+    for (const row of lifecycleReportChatRows) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const source = typeof meta.source === 'string' ? meta.source : '';
+      const reportId = typeof meta.reportId === 'string' ? meta.reportId.trim() : '';
+      if (!reportId || !source.startsWith('lifecycle_report_followup')) {
+        continue;
+      }
+      const lifecycleSource = source.replace(/^lifecycle_report_followup:?/, '').trim() || 'unknown';
+      const deviceType = typeof meta.deviceType === 'string' && meta.deviceType.trim()
+        ? meta.deviceType.trim()
+        : 'unknown';
+      if (!lifecycleReportFollowupBreakdown[reportId]) {
+        lifecycleReportFollowupBreakdown[reportId] = {
+          key: reportId,
+          reportId,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleReportFollowupSourceBreakdown[lifecycleSource]) {
+        lifecycleReportFollowupSourceBreakdown[lifecycleSource] = {
+          key: lifecycleSource,
+          source: lifecycleSource,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleReportFollowupDeviceBreakdown[deviceType]) {
+        lifecycleReportFollowupDeviceBreakdown[deviceType] = {
+          key: deviceType,
+          deviceType,
+          sent: 0,
+          errors: 0,
+          chatPageViews: 0,
+          chatCompleted: 0,
+          chatEventsSaved: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.event_name === 'chat_page_viewed') {
+        lifecycleReportFollowupBreakdown[reportId].chatPageViews += 1;
+        lifecycleReportFollowupSourceBreakdown[lifecycleSource].chatPageViews += 1;
+        lifecycleReportFollowupDeviceBreakdown[deviceType].chatPageViews += 1;
+      }
+      if (row.event_name === 'chat_completed') {
+        lifecycleReportFollowupBreakdown[reportId].chatCompleted += 1;
+        lifecycleReportFollowupSourceBreakdown[lifecycleSource].chatCompleted += 1;
+        lifecycleReportFollowupDeviceBreakdown[deviceType].chatCompleted += 1;
+      }
+      if (row.event_name === 'chat_event_saved') {
+        lifecycleReportFollowupBreakdown[reportId].chatEventsSaved += 1;
+        lifecycleReportFollowupSourceBreakdown[lifecycleSource].chatEventsSaved += 1;
+        lifecycleReportFollowupDeviceBreakdown[deviceType].chatEventsSaved += 1;
+      }
+      lifecycleReportFollowupBreakdown[reportId].latestAt = row.created_at || lifecycleReportFollowupBreakdown[reportId].latestAt;
+      lifecycleReportFollowupSourceBreakdown[lifecycleSource].latestAt = row.created_at || lifecycleReportFollowupSourceBreakdown[lifecycleSource].latestAt;
+      lifecycleReportFollowupDeviceBreakdown[deviceType].latestAt = row.created_at || lifecycleReportFollowupDeviceBreakdown[deviceType].latestAt;
+    }
+    const lifecycleToolInterestBreakdown = lifecycleToolInterestRuns.reduce<Record<string, {
+      key: string;
+      toolSlug: string;
+      sent: number;
+      errors: number;
+      detailViews: number;
+      runStarts: number;
+      resultViews: number;
+      latestAt?: string | null;
+    }>>((accumulator, row) => {
+      const stageKey = `${row.stage_key || ''}`.trim();
+      const stageMatch = stageKey.match(/^tool_interest_day1_no_run:(.+)$/);
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const toolSlug = `${stageMatch?.[1] || (typeof meta.toolSlug === 'string' ? meta.toolSlug : '')}`.trim();
+      if (!toolSlug) {
+        return accumulator;
+      }
+
+      if (!accumulator[toolSlug]) {
+        accumulator[toolSlug] = {
+          key: toolSlug,
+          toolSlug,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.status === 'sent') {
+        accumulator[toolSlug].sent += 1;
+      }
+      if (row.status === 'error') {
+        accumulator[toolSlug].errors += 1;
+      }
+      accumulator[toolSlug].latestAt = row.created_at || accumulator[toolSlug].latestAt;
+      return accumulator;
+    }, {});
+    const lifecycleToolInterestSourceBreakdown: Record<string, {
+      key: string;
+      source: string;
+      sent: number;
+      errors: number;
+      detailViews: number;
+      runStarts: number;
+      resultViews: number;
+      latestAt?: string | null;
+    }> = {};
+    const lifecycleToolInterestDeviceBreakdown: Record<string, {
+      key: string;
+      deviceType: string;
+      sent: number;
+      errors: number;
+      detailViews: number;
+      runStarts: number;
+      resultViews: number;
+      latestAt?: string | null;
+    }> = {};
+    for (const row of lifecycleToolInterestRuns) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const source = typeof meta.lastSource === 'string' && meta.lastSource.trim()
+        ? meta.lastSource.trim()
+        : 'unknown';
+      const deviceType = typeof meta.lastDeviceType === 'string' && meta.lastDeviceType.trim()
+        ? meta.lastDeviceType.trim()
+        : 'unknown';
+
+      if (!lifecycleToolInterestSourceBreakdown[source]) {
+        lifecycleToolInterestSourceBreakdown[source] = {
+          key: source,
+          source,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleToolInterestDeviceBreakdown[deviceType]) {
+        lifecycleToolInterestDeviceBreakdown[deviceType] = {
+          key: deviceType,
+          deviceType,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.status === 'sent') {
+        lifecycleToolInterestSourceBreakdown[source].sent += 1;
+        lifecycleToolInterestDeviceBreakdown[deviceType].sent += 1;
+      }
+      if (row.status === 'error') {
+        lifecycleToolInterestSourceBreakdown[source].errors += 1;
+        lifecycleToolInterestDeviceBreakdown[deviceType].errors += 1;
+      }
+      lifecycleToolInterestSourceBreakdown[source].latestAt = row.created_at || lifecycleToolInterestSourceBreakdown[source].latestAt;
+      lifecycleToolInterestDeviceBreakdown[deviceType].latestAt = row.created_at || lifecycleToolInterestDeviceBreakdown[deviceType].latestAt;
+    }
+    for (const row of lifecycleToolRunRows) {
+      const meta = parseJson<Record<string, unknown>>(row.meta, {});
+      const toolSlug = typeof meta.toolSlug === 'string' ? meta.toolSlug.trim() : '';
+      const attribution = meta.attribution && typeof meta.attribution === 'object' ? meta.attribution as Record<string, unknown> : {};
+      const source = typeof meta.source === 'string'
+        ? meta.source
+        : typeof attribution.source === 'string'
+          ? attribution.source
+          : '';
+      if (!toolSlug || !source.startsWith('lifecycle_tool_interest')) {
+        continue;
+      }
+      const lifecycleSource = source.replace(/^lifecycle_tool_interest:?/, '').trim() || 'unknown';
+      const deviceType = typeof meta.deviceType === 'string' && meta.deviceType.trim()
+        ? meta.deviceType.trim()
+        : 'unknown';
+      if (!lifecycleToolInterestBreakdown[toolSlug]) {
+        lifecycleToolInterestBreakdown[toolSlug] = {
+          key: toolSlug,
+          toolSlug,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleToolInterestSourceBreakdown[lifecycleSource]) {
+        lifecycleToolInterestSourceBreakdown[lifecycleSource] = {
+          key: lifecycleSource,
+          source: lifecycleSource,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+      if (!lifecycleToolInterestDeviceBreakdown[deviceType]) {
+        lifecycleToolInterestDeviceBreakdown[deviceType] = {
+          key: deviceType,
+          deviceType,
+          sent: 0,
+          errors: 0,
+          detailViews: 0,
+          runStarts: 0,
+          resultViews: 0,
+          latestAt: row.created_at || null,
+        };
+      }
+
+      if (row.event_name === 'tool_detail_viewed') {
+        lifecycleToolInterestBreakdown[toolSlug].detailViews += 1;
+        lifecycleToolInterestSourceBreakdown[lifecycleSource].detailViews += 1;
+        lifecycleToolInterestDeviceBreakdown[deviceType].detailViews += 1;
+      }
+      if (row.event_name === 'tool_run_started') {
+        lifecycleToolInterestBreakdown[toolSlug].runStarts += 1;
+        lifecycleToolInterestSourceBreakdown[lifecycleSource].runStarts += 1;
+        lifecycleToolInterestDeviceBreakdown[deviceType].runStarts += 1;
+      }
+      if (row.event_name === 'tool_result_viewed') {
+        lifecycleToolInterestBreakdown[toolSlug].resultViews += 1;
+        lifecycleToolInterestSourceBreakdown[lifecycleSource].resultViews += 1;
+        lifecycleToolInterestDeviceBreakdown[deviceType].resultViews += 1;
+      }
+      lifecycleToolInterestBreakdown[toolSlug].latestAt = row.created_at || lifecycleToolInterestBreakdown[toolSlug].latestAt;
+      lifecycleToolInterestSourceBreakdown[lifecycleSource].latestAt = row.created_at || lifecycleToolInterestSourceBreakdown[lifecycleSource].latestAt;
+      lifecycleToolInterestDeviceBreakdown[deviceType].latestAt = row.created_at || lifecycleToolInterestDeviceBreakdown[deviceType].latestAt;
+    }
+    const lifecycleRecall = {
+      reportFollowup: Object.values(lifecycleReportFollowupBreakdown)
+        .map((item) => ({
+          ...item,
+          chatPageViewRate: item.sent > 0 ? Math.round((item.chatPageViews / item.sent) * 100) : 0,
+          chatCompletionRate: item.chatPageViews > 0 ? Math.round((item.chatCompleted / item.chatPageViews) * 100) : 0,
+          chatToEventRate: item.chatCompleted > 0 ? Math.round((item.chatEventsSaved / item.chatCompleted) * 100) : 0,
+        }))
+        .sort((left, right) => right.chatCompleted - left.chatCompleted || right.sent - left.sent)
+        .slice(0, 10),
+      toolInterest: Object.values(lifecycleToolInterestBreakdown)
+        .map((item) => ({
+          ...item,
+          detailToRunRate: item.detailViews > 0 ? Math.round((item.runStarts / item.detailViews) * 100) : 0,
+          sentToRunRate: item.sent > 0 ? Math.round((item.runStarts / item.sent) * 100) : 0,
+          runToResultRate: item.runStarts > 0 ? Math.round((item.resultViews / item.runStarts) * 100) : 0,
+        }))
+        .sort((left, right) => right.runStarts - left.runStarts || right.sent - left.sent)
+        .slice(0, 10),
+      reportFollowupBySource: Object.values(lifecycleReportFollowupSourceBreakdown)
+        .map((item) => ({
+          ...item,
+          chatPageViewRate: item.sent > 0 ? Math.round((item.chatPageViews / item.sent) * 100) : 0,
+          chatCompletionRate: item.chatPageViews > 0 ? Math.round((item.chatCompleted / item.chatPageViews) * 100) : 0,
+          chatToEventRate: item.chatCompleted > 0 ? Math.round((item.chatEventsSaved / item.chatCompleted) * 100) : 0,
+        }))
+        .sort((left, right) => right.chatCompleted - left.chatCompleted || right.sent - left.sent)
+        .slice(0, 10),
+      reportFollowupByDevice: Object.values(lifecycleReportFollowupDeviceBreakdown)
+        .map((item) => ({
+          ...item,
+          chatPageViewRate: item.sent > 0 ? Math.round((item.chatPageViews / item.sent) * 100) : 0,
+          chatCompletionRate: item.chatPageViews > 0 ? Math.round((item.chatCompleted / item.chatPageViews) * 100) : 0,
+          chatToEventRate: item.chatCompleted > 0 ? Math.round((item.chatEventsSaved / item.chatCompleted) * 100) : 0,
+        }))
+        .sort((left, right) => right.chatCompleted - left.chatCompleted || right.sent - left.sent)
+        .slice(0, 10),
+      toolInterestBySource: Object.values(lifecycleToolInterestSourceBreakdown)
+        .map((item) => ({
+          ...item,
+          detailToRunRate: item.detailViews > 0 ? Math.round((item.runStarts / item.detailViews) * 100) : 0,
+          sentToRunRate: item.sent > 0 ? Math.round((item.runStarts / item.sent) * 100) : 0,
+          runToResultRate: item.runStarts > 0 ? Math.round((item.resultViews / item.runStarts) * 100) : 0,
+        }))
+        .sort((left, right) => right.runStarts - left.runStarts || right.sent - left.sent)
+        .slice(0, 10),
+      toolInterestByDevice: Object.values(lifecycleToolInterestDeviceBreakdown)
+        .map((item) => ({
+          ...item,
+          detailToRunRate: item.detailViews > 0 ? Math.round((item.runStarts / item.detailViews) * 100) : 0,
+          sentToRunRate: item.sent > 0 ? Math.round((item.runStarts / item.sent) * 100) : 0,
+          runToResultRate: item.runStarts > 0 ? Math.round((item.resultViews / item.runStarts) * 100) : 0,
+        }))
+        .sort((left, right) => right.runStarts - left.runStarts || right.sent - left.sent)
+        .slice(0, 10),
+    };
+    const sourceFunnelRows = db.prepare(`
+      SELECT event_name, page, meta, session_id, created_at
+      FROM analytics_events
+      WHERE datetime(created_at) >= datetime('now', '-30 days')
+        AND event_name IN (
+          'analyze_submitted',
+          'report_generated',
+          'report_viewed',
+          'chat_message_sent',
+          'chat_completed',
+          'tool_run_started',
+          'tool_result_viewed'
+        )
+        AND COALESCE(page, '') NOT LIKE '%127.0.0.1%'
+        AND COALESCE(page, '') NOT LIKE '%localhost%'
+      ORDER BY datetime(created_at) ASC
+      LIMIT 6000
+    `).all() as RawAnalyticsEventRow[];
+    const sourceFunnel = buildSourceFunnelRows(sourceFunnelRows);
     const totalPageViews = Object.values(pageViewBuckets).reduce((sum, item) => sum + item.count, 0);
     const totalAnalyzeSubmissions = journeyCounts.analyze_submitted.count || 0;
     const totalChatActions = Object.values(chatActionBuckets).reduce((sum, item) => sum + item.count, 0);
@@ -3031,6 +4946,14 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
         .sort((left, right) => right.count - left.count),
       ctaBreakdown: Object.values(ctaBuckets)
         .sort((left, right) => right.count - left.count),
+      ctaStrategyBreakdown: Object.values(ctaStrategyBuckets)
+        .map((item) => ({
+          ...item,
+          clickToChatRate: item.clicks > 0 ? Math.round((item.chatPageViews / item.clicks) * 100) : 0,
+          chatCompletionRate: item.chatPageViews > 0 ? Math.round((item.chatCompleted / item.chatPageViews) * 100) : 0,
+        }))
+        .sort((left, right) => (right.chatCompleted + right.toolCardClicks + right.contentCardClicks) - (left.chatCompleted + left.toolCardClicks + left.contentCardClicks))
+        .slice(0, 12),
       chatActionBreakdown: Object.values(chatActionBuckets)
         .map((item) => ({
           ...item,
@@ -3079,17 +5002,101 @@ ${PRODUCT_ANALYTICS_FILTER_SQL}
         eventsPerSession: item.sessions > 0 ? toRoundedDecimal(item.productEvents / item.sessions) : 0,
         eventsPerActiveKey: item.activeKeys > 0 ? toRoundedDecimal(item.productEvents / item.activeKeys) : 0,
       })),
+      weeklyDeviceMix,
+      weeklySourceTrend,
+      sourceFunnel: sourceFunnel.sourceFunnel,
+      sourceDeviceFunnel: sourceFunnel.sourceDeviceFunnel,
+      deviceMeasurementSummary,
+      deviceFunnelBreakdown,
       dailyProductUsage: dailyProductUsage.map((item) => ({
         ...item,
         eventsPerSession: item.sessions > 0 ? toRoundedDecimal(item.productEvents / item.sessions) : 0,
       })),
       sessionStrength30d,
+      identityContinuity,
+      lifecycleRecall,
       recentBehaviorShift,
+      recentSourceShift,
       systemHealth,
       journeyFunnel: Object.values(journeyCounts),
       eventsLast7d,
       recentEvents: analyticsOperations.listRecent(12),
     };
+  },
+};
+
+export const reportJourneyEventOperations = {
+  create: (event: ReportJourneyEventRecord) => {
+    return db.prepare(`
+      INSERT INTO report_journey_events (
+        id, user_id, report_id, workflow_id, layer_key, action_target, category, tool_slug, source, href, meta
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      event.id,
+      event.userId,
+      event.reportId,
+      event.workflowId,
+      event.layerKey,
+      event.actionTarget,
+      event.category || null,
+      event.toolSlug || null,
+      event.source || null,
+      event.href || null,
+      JSON.stringify(event.meta || {})
+    );
+  },
+
+  listByReport: (reportId: string, limit = 50) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_journey_events
+      WHERE report_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(reportId, limit) as RawReportJourneyEventRow[];
+
+    return rows.map(mapReportJourneyEventRow);
+  },
+
+  listByUser: (userId: string, limit = 80) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_journey_events
+      WHERE user_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(userId, limit) as RawReportJourneyEventRow[];
+
+    return rows.map(mapReportJourneyEventRow);
+  },
+
+  getLatestByReport: (reportId: string) => {
+    const row = db.prepare(`
+      SELECT * FROM report_journey_events
+      WHERE report_id = ?
+      ORDER BY datetime(created_at) DESC
+      LIMIT 1
+    `).get(reportId) as RawReportJourneyEventRow | undefined;
+
+    return row ? mapReportJourneyEventRow(row) : null;
+  },
+
+  listRecent: (limit = 200) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_journey_events
+      ORDER BY datetime(created_at) DESC
+      LIMIT ?
+    `).all(limit) as RawReportJourneyEventRow[];
+
+    return rows.map(mapReportJourneyEventRow);
+  },
+
+  getAnalyticsSnapshot: (days = 30) => {
+    const rows = db.prepare(`
+      SELECT * FROM report_journey_events
+      WHERE datetime(created_at) >= datetime('now', ?)
+      ORDER BY datetime(created_at) DESC
+    `).all(`-${days} days`) as RawReportJourneyEventRow[];
+
+    return buildReportJourneyAnalyticsSnapshot(rows.map(mapReportJourneyEventRow));
   },
 };
 
@@ -3217,6 +5224,64 @@ export const contentSchedulerRunOperations = {
     `).all(limit) as RawContentSchedulerRunRow[];
 
     return rows.map(mapContentSchedulerRunRow);
+  },
+};
+
+export const systemLockOperations = {
+  acquire: (key: string, owner: string, ttlMs: number, meta?: Record<string, unknown>) => {
+    const now = new Date();
+    const nowIso = now.toISOString();
+    const expiresAt = new Date(now.getTime() + Math.max(1000, ttlMs)).toISOString();
+
+    const result = db.prepare(`
+      INSERT INTO system_locks (key, owner, locked_at, expires_at, meta, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(key) DO UPDATE SET
+        owner = excluded.owner,
+        locked_at = excluded.locked_at,
+        expires_at = excluded.expires_at,
+        meta = excluded.meta,
+        updated_at = excluded.updated_at
+      WHERE datetime(system_locks.expires_at) <= datetime(?)
+    `).run(
+      key,
+      owner,
+      nowIso,
+      expiresAt,
+      JSON.stringify(meta || {}),
+      nowIso,
+      nowIso
+    );
+
+    return result.changes > 0;
+  },
+
+  release: (key: string, owner: string) => {
+    return db.prepare(`
+      DELETE FROM system_locks
+      WHERE key = ? AND owner = ?
+    `).run(key, owner);
+  },
+
+  get: (key: string) => {
+    const row = db.prepare(`
+      SELECT * FROM system_locks
+      WHERE key = ?
+    `).get(key) as RawSystemLockRow | undefined;
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      key: row.key,
+      owner: row.owner,
+      lockedAt: row.locked_at,
+      expiresAt: row.expires_at,
+      meta: parseJson(row.meta, {}),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
   },
 };
 

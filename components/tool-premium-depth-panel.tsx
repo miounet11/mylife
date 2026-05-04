@@ -10,10 +10,14 @@ export default function ToolPremiumDepthPanel({
   tool,
   offer,
   reportId,
+  ctaStrategyKey,
+  sourceFamily,
 }: {
   tool: ToolDefinition;
   offer: ToolPremiumOffer;
   reportId?: string;
+  ctaStrategyKey?: string;
+  sourceFamily?: string;
 }) {
   return (
     <section className="glass-panel rounded-[2rem] p-6 md:p-8">
@@ -45,6 +49,8 @@ export default function ToolPremiumDepthPanel({
                 intent: tool.chatIntent || undefined,
                 question: `请围绕“${tool.shortTitle}”继续深问，告诉我如果要进入深测，现在最该先确认的结构、阶段和风险点是什么？`,
                 source: 'tool_premium_depth_panel',
+                ctaStrategyKey,
+                sourceFamily,
               })}
               className="action-primary"
             >

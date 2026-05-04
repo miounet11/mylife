@@ -6,6 +6,7 @@ import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
 import ContentCardLink from '@/components/content-card-link';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -15,7 +16,10 @@ import {
   getEntityInsightByTypeAndSlug,
   getEntityInsightsByType,
   getKnowledgeArticles,
+  getManagedContentEntryBySlug,
+  getManagedContentGeoOptimizationMeta,
 } from '@/lib/content-store';
+import { appendSourceToHref, buildSourceCtaStrategy } from '@/lib/source-context';
 import { entityTypeLabels, type EntityInsightType } from '@/lib/content';
 import {
   createArticleSchema,
@@ -23,6 +27,7 @@ import {
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
 import { getFeaturedTools } from '@/lib/tools';
+import { getVisualAssetsForContentEntry } from '@/lib/visual-asset-library';
 
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
@@ -36,12 +41,30 @@ export async function generateMetadata({ params }: PageProps) {
   if (!insight) {
     return { title: '洞察未找到 | 人生K线' };
   }
+  const managedEntry = getManagedContentEntryBySlug('insight', insight.slug);
+  const visualAssets = managedEntry ? getVisualAssetsForContentEntry(managedEntry, 1) : [];
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
 
   return createPublicContentMetadata({
     title: insight.seoTitle,
     description: insight.seoDescription,
     path: `/insights/${insight.type}/${insight.slug}`,
     type: 'article',
+    locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
+    keywords: insight.tags,
+    images: visualAssets.map((asset) => ({
+      url: asset.publicUrl,
+      alt: asset.altText,
+      width: asset.ratio === '4:5' ? 1280 : 2048,
+      height: asset.ratio === '4:5' ? 1600 : 1152,
+    })),
+    publishedTime: managedEntry?.createdAt,
+    modifiedTime: managedEntry?.updatedAt,
+    section: entityTypeLabels[insight.type],
+    tags: insight.tags,
+    answerSummary: geoMeta?.answerSummary || insight.excerpt,
+    searchIntents: geoMeta?.searchIntents,
+    entityKeywords: geoMeta?.entityKeywords,
   });
 }
 
@@ -49,6 +72,10 @@ export default async function InsightDetailPage({ params }: PageProps) {
   const { type, slug } = await params;
   const insight = getEntityInsightByTypeAndSlug(type, slug);
   if (!insight) notFound();
+  const managedEntry = getManagedContentEntryBySlug('insight', insight.slug);
+  const locale = typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : '';
+  const pageSource = `insight_article:${insight.type}:${insight.slug}`;
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
 
   const related = getEntityInsightsByType(insight.type as EntityInsightType)
     .filter((item) => item.slug !== insight.slug)
@@ -78,13 +105,30 @@ export default async function InsightDetailPage({ params }: PageProps) {
   const caseItems = getCaseStudies()
     .filter((item) => matchesPageSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
     .slice(0, 2);
+  const visualAssets = managedEntry ? getVisualAssetsForContentEntry(managedEntry, 3) : [];
+  const primaryVisualAsset = visualAssets[0] || null;
+  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
   const schemas = [
     createArticleSchema({
       headline: insight.seoTitle,
       description: insight.seoDescription,
       path: `/insights/${insight.type}/${insight.slug}`,
       articleSection: entityTypeLabels[insight.type],
-      keywords: insight.tags,
+      keywords: [...insight.tags, ...(geoMeta?.entityKeywords || [])],
+      image: primaryVisualAsset ? [{
+        url: primaryVisualAsset.publicUrl,
+        alt: primaryVisualAsset.altText,
+        width: primaryVisualAsset.ratio === '4:5' ? 1280 : 2048,
+        height: primaryVisualAsset.ratio === '4:5' ? 1600 : 1152,
+      }] : undefined,
+      datePublished: managedEntry?.createdAt,
+      dateModified: managedEntry?.updatedAt,
+      inLanguage: locale || 'zh-CN',
+      abstract: geoMeta?.answerSummary || insight.excerpt,
+      about: geoMeta?.entityKeywords || insight.tags,
+      mentions: geoMeta?.searchIntents,
+      audience: geoMeta?.audience,
+      mainEntityName: geoMeta?.canonicalTopic || insight.name || insight.title,
     }),
     createBreadcrumbSchema(breadcrumbItems),
   ];
@@ -136,9 +180,10 @@ export default async function InsightDetailPage({ params }: PageProps) {
               meta={<>{insight.name}</>}
               excerpt={insight.excerpt}
               hint="先看当前洞察结论，再回到分析页验证你自己的结构与窗口。"
+              actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
-                <Link key="insights" href="/insights" className="action-secondary">返回洞察中心</Link>,
+                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="action-primary action-main">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <Link key="insights" href={appendSourceToHref('/insights', pageSource)} className="action-secondary">返回洞察中心</Link>,
               ]}
             />
 
@@ -157,6 +202,15 @@ export default async function InsightDetailPage({ params }: PageProps) {
               ))}
             </div>
 
+            <ContentVisualAssetPanel
+              assets={visualAssets}
+              page={`/insights/${insight.type}/${insight.slug}`}
+              source={pageSource}
+              contentLabel="洞察"
+              contentTitle={insight.title}
+              className="mt-10"
+            />
+
             {otherTypes.length > 0 ? (
               <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">跨实体继续追踪</div>
@@ -165,6 +219,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     <ContentCardLink
                       key={`${entry.type}-${entry.slug}`}
                       href={`/insights/${entry.type}/${entry.slug}`}
+                      source={pageSource}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
                       page={`/insights/${insight.type}/${insight.slug}`}
                       meta={{
                         surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
@@ -218,6 +275,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     toolSlug={tool.slug}
                     category={tool.category}
                     page={`/insights/${insight.type}/${insight.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
@@ -239,6 +299,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.slug}
                     href={`/knowledge/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
                     meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `knowledge_article:${item.slug}`, contentType: 'knowledge' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -262,6 +325,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   <ContentCardLink
                     key={item.slug}
                     href={`/cases/${item.slug}`}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
                     meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
                     className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
@@ -280,6 +346,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
               <div className="mt-4 space-y-4">
                 <ContentCardLink
                   href="/knowledge/world-yi-environment-method"
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
                     surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
@@ -293,6 +362,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                 </ContentCardLink>
                 <ContentCardLink
                   href="/knowledge/world-yi-judgment-crisis"
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
                     surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
@@ -306,6 +378,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                 </ContentCardLink>
                 <ContentCardLink
                   href="/world-yi"
+                  source={pageSource}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
                     surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
@@ -328,6 +403,9 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     <ContentCardLink
                       key={item.slug}
                       href={`/insights/${item.type}/${item.slug}`}
+                      source={pageSource}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
                       page={`/insights/${insight.type}/${insight.slug}`}
                       meta={{
                         surfaceKey: `insight_article:${insight.type}:${insight.slug}`,

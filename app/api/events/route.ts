@@ -12,6 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
     const userId = await getOrCreateGuestUserId();
+    const userAgent = request.headers.get('user-agent');
     const source = typeof data.source === 'string' ? data.source : 'manual';
 
     // 完整输入验证
@@ -47,6 +48,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId: userId,
+      userAgent,
       eventName: 'event_created',
       page: '/events',
       meta: {
@@ -62,6 +64,7 @@ export async function POST(request: NextRequest) {
       trackServerEvent({
         userId,
         sessionId: userId,
+        userAgent,
         eventName: 'report_event_saved_from_result',
         page: typeof data.page === 'string' ? data.page : '/result',
         meta: {
@@ -77,12 +80,14 @@ export async function POST(request: NextRequest) {
       trackServerEvent({
         userId,
         sessionId: userId,
+        userAgent,
         eventName: 'chat_event_saved',
         page: typeof data.page === 'string' ? data.page : '/chat',
         meta: {
           eventId,
           type: data.type,
           reportId: data.fortuneAnalysis?.reportId || null,
+          source: typeof data.attributionSource === 'string' ? data.attributionSource : null,
         },
       });
     }
@@ -110,6 +115,7 @@ export async function POST(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const userId = await getOrCreateGuestUserId();
+    const userAgent = request.headers.get('user-agent');
     const data = await request.json();
     const eventId = data.id;
 
@@ -158,6 +164,7 @@ export async function PATCH(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId: userId,
+      userAgent,
       eventName: 'event_updated',
       page: '/events',
       meta: {
@@ -170,6 +177,7 @@ export async function PATCH(request: NextRequest) {
       trackServerEvent({
         userId,
         sessionId: userId,
+        userAgent,
         eventName: 'event_feedback_recorded',
         page: '/events',
         meta: {
@@ -203,6 +211,7 @@ export async function PATCH(request: NextRequest) {
 export async function DELETE(request: NextRequest) {
   try {
     const userId = await getOrCreateGuestUserId();
+    const userAgent = request.headers.get('user-agent');
     const { searchParams } = new URL(request.url);
     const eventId = searchParams.get('id');
 
@@ -227,6 +236,7 @@ export async function DELETE(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId: userId,
+      userAgent,
       eventName: 'event_deleted',
       page: '/events',
       meta: {

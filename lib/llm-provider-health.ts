@@ -146,6 +146,9 @@ export function isImmediateOpenFailure(errorType?: string, errorMessage?: string
     combined.includes('token_cooling')
     || combined.includes('upstream_forbidden')
     || combined.includes('blocked_user')
+    || combined.includes('model is not supported')
+    || combined.includes('not supported when using codex with a chatgpt account')
+    || combined.includes('unsupported model')
     || combined.includes('gateway_error')
     || normalizedType === 'aborterror'
     || combined.includes('request was aborted')

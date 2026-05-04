@@ -175,11 +175,11 @@ export function getWorldYiPublicationReserveFloor() {
 export function buildWorldYiPublicationReserveSignal(lanes: PublicationLaneSummary[]) {
   const minQueuedTargetsPerLane = getWorldYiPublicationReserveFloor();
   const queuedTargetsPerLane = lanes.reduce((accumulator, lane) => {
-    accumulator[lane.key] = lane.queueLength + lane.promoteQueueLength;
+    accumulator[lane.key] = lane.queueLength + lane.promoteQueueLength + lane.readyPromoteCount;
     return accumulator;
   }, {} as Record<LaneKey, number>);
   const weakLaneKeys = lanes
-    .filter((lane) => queuedTargetsPerLane[lane.key] < minQueuedTargetsPerLane)
+    .filter((lane) => lane.missingCount > 0 && queuedTargetsPerLane[lane.key] < minQueuedTargetsPerLane)
     .map((lane) => lane.key);
 
   return {

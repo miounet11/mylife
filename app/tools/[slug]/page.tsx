@@ -5,6 +5,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Bot, Layers3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -24,6 +25,8 @@ import ToolRunner from '@/components/tool-runner';
 import { getAuthSession } from '@/lib/auth';
 import { buildChatHref } from '@/lib/chat-entry';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
+import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
+import { getCurrentUserId } from '@/lib/user-utils';
 import { buildJourneyForTool } from '@/lib/surface-journeys';
 import {
   createBreadcrumbSchema,
@@ -63,7 +66,7 @@ export default async function ToolDetailPage({
   searchParams,
 }: {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ source?: string }>;
+  searchParams?: Promise<{ source?: string; reportId?: string; ready?: string }>;
 }) {
   const { slug } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
@@ -74,27 +77,45 @@ export default async function ToolDetailPage({
 
   const session = await getAuthSession();
   const authenticated = !!session.authenticated && !!session.user?.id;
-  const userId = authenticated && session.user?.id ? session.user.id : null;
-  const report = userId ? fortuneOperations.getByUserId(userId)[0] || null : null;
+  const currentUserId = await getCurrentUserId();
+  const userId = session.user?.id || currentUserId || null;
+  const requestedReportId = resolvedSearchParams.reportId?.trim() || '';
+  const requestedReport = requestedReportId ? fortuneOperations.getById(requestedReportId) : null;
+  const latestReport = userId ? fortuneOperations.getByUserId(userId)[0] || null : null;
+  const report = requestedReport && userId && requestedReport.userId === userId
+    ? requestedReport
+    : latestReport;
   const recentSessions = userId ? toolSessionOperations.listByUser(userId, 5) : [];
   const memory = summarizeToolSessions(recentSessions, report, 5);
   const premiumOffer = buildToolPremiumOffer(tool);
   const bundle = getToolBundleForSlug(tool.slug);
-  const journey = buildJourneyForTool(tool);
   const entrySource = resolvedSearchParams.source?.trim() || '';
-  const analyzeEntryHref = `/analyze?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}&toolSlug=${encodeURIComponent(tool.slug)}&source=tool_detail`;
+  const sourceContext = getSourceContext(entrySource);
+  const sourceCtaStrategy = buildSourceCtaStrategy(entrySource || `tool_detail:${tool.slug}`);
+  const journey = buildJourneyForTool(tool, { source: entrySource || null });
+  const toolJourneyCopy = buildSourceJourneyCopy(entrySource, {
+    title: '下一步',
+    description: '先完成当前单项判断，再顺着相关内容、升级服务和后续动作，把问题继续往下拆。',
+  });
+  const analyzeSource = entrySource ? `tool_detail:${entrySource}` : 'tool_detail';
+  const analyzeEntryHref = `/analyze?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}&toolSlug=${encodeURIComponent(tool.slug)}&source=${encodeURIComponent(analyzeSource)}`;
+  const returningFromAnalyze = resolvedSearchParams.ready === '1' && !!report;
   const toolChatQuestion = `请围绕“${tool.shortTitle}”继续拆解：如果把这个问题落到我自己身上，现在更该推进、观察还是收手，先看哪一层，下一步最值得先做什么？`;
   const toolPrimaryChatHref = buildChatHref({
     reportId: report?.id,
     intent: tool.chatIntent || tool.slug,
     question: toolChatQuestion,
     source: 'tool_detail_primary_chat',
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
   });
   const toolRunnerChatHref = buildChatHref({
     reportId: report?.id,
     intent: tool.chatIntent || tool.slug,
     question: toolChatQuestion,
     source: 'tool_detail_runner_tip_chat',
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
   });
   const runnerExamples = Array.from(new Set([
     tool.rightQuestion,
@@ -145,7 +166,8 @@ export default async function ToolDetailPage({
               )}
               title={tool.title}
               description={tool.hook}
-              hint="先跑免费版，再决定是否进入深测。"
+              hint={entrySource ? sourceContext.toolDescription : '先跑免费版，再决定是否进入深测。'}
+              actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
                 <ResultCtaLink
                   key="start"
@@ -155,7 +177,7 @@ export default async function ToolDetailPage({
                   className="action-primary action-main"
                   meta={{ toolSlug: tool.slug, category: tool.category, source: report ? 'tool_detail_runner' : 'tool_detail_analyze_gate' }}
                 >
-                  {report ? '立即开始这个工具' : '先生成综合报告再开始'}
+                  {report ? sourceCtaStrategy.toolPrimaryLabel : '先生成综合报告再开始'}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </ResultCtaLink>,
                 <ResultCtaLink
@@ -164,11 +186,17 @@ export default async function ToolDetailPage({
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_primary_chat"
                   className="action-secondary"
-                  meta={{ toolSlug: tool.slug, category: tool.category, chatIntent: tool.chatIntent || null }}
+                  meta={{
+                    toolSlug: tool.slug,
+                    category: tool.category,
+                    chatIntent: tool.chatIntent || null,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
                 >
                   <span className="inline-flex items-center gap-2">
                     <Bot className="h-4 w-4" />
-                    先去结构追问
+                    {sourceCtaStrategy.toolChatLabel}
                   </span>
                 </ResultCtaLink>,
                 <Link key="category" href={`/tools/category/${tool.category}`} className="action-secondary">返回该分类</Link>,
@@ -196,6 +224,11 @@ export default async function ToolDetailPage({
                 快速开始
               </div>
               <div className="mt-4 grid gap-3">
+                {returningFromAnalyze ? (
+                  <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50/85 p-4 text-xs leading-6 text-emerald-800">
+                    综合报告已经接回当前工具，可以直接在下方运行，不需要重新填写生辰。
+                  </div>
+                ) : null}
                 <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                   当前触发：{tool.triggerMoment}
                 </div>
@@ -227,6 +260,14 @@ export default async function ToolDetailPage({
           </div>
         </section>
 
+        <ProductSurfaceRolePanel
+          surface="toolDetail"
+          className="mt-10"
+          title="工具详情页先判断是否适合运行"
+          description="用户进入工具页时，最重要的是确认当前问题是否匹配、是否已有综合报告上下文，然后只运行一个工具。"
+          compact
+        />
+
         <section id="tool-runner" className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
           <ToolRunner
             toolSlug={tool.slug}
@@ -237,6 +278,7 @@ export default async function ToolDetailPage({
             examples={runnerExamples}
             analyzeHref={analyzeEntryHref}
             hasReport={!!report}
+            entrySource={entrySource}
           />
 
           <div className="glass-panel rounded-[2rem] p-6">
@@ -245,6 +287,11 @@ export default async function ToolDetailPage({
               输出项目
             </div>
             <div className="mt-4 grid gap-3">
+              {entrySource ? (
+                <div className="rounded-[1.25rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  {`${sourceContext.guidanceLabel}：${sourceContext.toolHeadline}`}
+                </div>
+              ) : null}
               <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 免费版输出：{tool.freeOutputFields.join('、')}
               </div>
@@ -353,13 +400,20 @@ export default async function ToolDetailPage({
         <section className="mt-10">
           <SurfaceJourneyPanel
             journey={journey}
-            title="下一步"
-            description="先完成当前单项判断，再顺着相关内容、升级服务和后续动作，把问题继续往下拆。"
+            title={toolJourneyCopy.title}
+            description={toolJourneyCopy.description}
+            badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
           />
         </section>
 
         <section className="mt-10">
-          <ToolPremiumDepthPanel tool={tool} offer={premiumOffer} reportId={report?.id} />
+          <ToolPremiumDepthPanel
+            tool={tool}
+            offer={premiumOffer}
+            reportId={report?.id}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
+          />
         </section>
 
         <section className="mt-10">
@@ -378,6 +432,9 @@ export default async function ToolDetailPage({
             page={`/tools/${tool.slug}`}
             title="下一步推荐"
             description="结合你当前的工具结果和已有报告，优先推荐最适合继续推进的关联工具与阅读路径。"
+            source={entrySource || `tool_detail:${tool.slug}`}
+            ctaStrategyKey={sourceCtaStrategy.strategyKey}
+            sourceFamily={sourceCtaStrategy.sourceFamily}
           />
         </section>
       </main>

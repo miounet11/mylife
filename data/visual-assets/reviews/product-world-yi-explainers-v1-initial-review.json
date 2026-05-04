@@ -1,0 +1,28 @@
+[
+  {
+    "id": "PWY01-001",
+    "status": "approved",
+    "score": 88,
+    "note": "产品宇宙结构清楚，品牌占比合理，可作为首批说明图使用；仍需接受供应商尺寸偏小 warning。"
+  },
+  {
+    "id": "PWY01-003",
+    "status": "approved",
+    "score": 86,
+    "note": "第一份报告路径表达清晰，适合用于测算到首屏报告的说明；小字不作为核心阅读内容。"
+  },
+  {
+    "id": "PWY01-004",
+    "status": "approved",
+    "score": 86,
+    "note": "深入报告到细分类报告的层级关系清楚，CTA 和品牌位置合理。"
+  },
+  {
+    "id": "PWY01-002",
+    "status": "needs_correction",
+    "score": 72,
+    "errors": ["TEXT_ARTIFACTS_DENSE_MICROCOPY", "GENERATED_TEXT_TOO_DENSE"],
+    "note": "主体六步轮盘可用，但侧栏和辅助模块生成了过多小字；v2 需要只保留大标题、六个短标签和品牌签名。",
+    "queueCorrection": true
+  }
+]

@@ -7,13 +7,18 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze-workspace';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
+import VisualAssetFeature from '@/components/visual-asset-feature';
 import { getAuthSession } from '@/lib/auth';
+import { getCurrentUserId } from '@/lib/user-utils';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 import { getToolDefinition } from '@/lib/tools';
+import { getVisualAssetById } from '@/lib/visual-asset-library';
+import { analyzeOutcomeCards } from '@/lib/product-experience';
 
 export const metadata = {
   title: '开始判断 | 人生K线',
@@ -46,16 +51,21 @@ export default async function AnalyzeEntryPage({
   const worldYiStats = getWorldYiPublicStats();
   const session = await getAuthSession();
   const initialAuthenticated = !!session.authenticated && !!session.user?.id;
-  const initialSummary = initialAuthenticated && session.user?.id
+  const currentUserId = await getCurrentUserId();
+  const activeUserId = session.user?.id || currentUserId || null;
+  const initialSummary = activeUserId
     ? buildUpdatesSummary({
-        userId: session.user.id,
+        userId: activeUserId,
         email: session.user.email,
       })
     : null;
+  const firstReportImage = getVisualAssetById('PWY01-003');
+  const birthTimeImage = getVisualAssetById('MY05-002') || getVisualAssetById('PWY01-009');
+  const baziStructureImage = getVisualAssetById('MY05-001');
 
   return (
     <div className="page-shell">
-      <AnalyticsPageView eventName="analyze_page_viewed" page="/analyze" meta={{ surfaceKey: 'workspace' }} />
+      <AnalyticsPageView eventName="analyze_page_viewed" page="/analyze" meta={{ surfaceKey: 'workspace', source: source || null, toolSlug: toolSlug || null }} />
       <SiteHeader ctaHref="#analyze-workspace" ctaLabel="开始填写" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
@@ -86,17 +96,34 @@ export default async function AnalyzeEntryPage({
           ]}
         />
 
+        <ProductSurfaceRolePanel
+          surface="analyze"
+          className="mt-8"
+          title="这个页面只负责把第一份报告生成出来"
+        />
+
+        {birthTimeImage ? (
+          <section className="mt-8">
+            <VisualAssetFeature asset={birthTimeImage} label="填写信息说明图" />
+          </section>
+        ) : null}
+
+        {baziStructureImage ? (
+          <section className="mt-8">
+            <VisualAssetFeature asset={baziStructureImage} label="四柱八字结构图" reverse />
+          </section>
+        ) : null}
+
         <section className="mb-8 mt-8">
           <div className="grid gap-4 lg:grid-cols-[1.02fr_0.98fr]">
-            <div className="soft-card rounded-[1.75rem] p-6">
+            <div className="soft-card rounded-[1.5rem] p-5">
               <div className="section-label">结果面板</div>
               <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">结果面板</h2>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {[
-                  { label: '分析顺序', value: '结构 → 阶段 → 环境 → 动作' },
-                  { label: '时间基准', value: '真太阳时优先' },
-                  { label: '当前公开案例', value: `${worldYiStats.publicCaseCount} 篇` },
-                  { label: '公开知识入口', value: `${worldYiStats.publicKnowledgeCount} 篇` },
+                  ...analyzeOutcomeCards,
+                  { label: '公开案例', value: `${worldYiStats.publicCaseCount} 篇` },
+                  { label: '知识入口', value: `${worldYiStats.publicKnowledgeCount} 篇` },
                 ].map((item) => (
                   <div key={item.label} className="rounded-[1.25rem] bg-white/82 p-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
@@ -106,7 +133,7 @@ export default async function AnalyzeEntryPage({
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-6">
+            <div className="soft-card rounded-[1.5rem] p-5">
               <div className="section-label">辅助入口</div>
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
                 {analyzePowerLinks.map((item) => (
@@ -138,7 +165,13 @@ export default async function AnalyzeEntryPage({
           />
         </div>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        {firstReportImage ? (
+          <section className="mt-10">
+            <VisualAssetFeature asset={firstReportImage} label="第一份报告路径图" reverse />
+          </section>
+        ) : null}
+
+        <section className="mt-10 glass-panel rounded-[1.75rem] p-5 md:p-6">
           <div className="grid gap-6 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
             <div>
               <div className="section-label">后续入口</div>
@@ -146,7 +179,7 @@ export default async function AnalyzeEntryPage({
             </div>
             <div className="grid gap-3 md:grid-cols-2">
               {['事业与财富', '关系与家庭', '恢复与健康', '迁移与出国'].map((item) => (
-                <Link key={item} href="/tools" className="action-secondary rounded-[1.25rem] p-4 text-sm font-semibold text-[color:var(--ink)] transition hover:-translate-y-0.5">
+                <Link key={item} href="/tools" className="action-secondary rounded-[1.25rem] p-4 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)]">
                   {item}
                 </Link>
               ))}

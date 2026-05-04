@@ -1,6 +1,13 @@
 import fs from 'fs';
 import path from 'path';
 import { getAdminQualityWorkboard } from '@/lib/admin-quality-workboard';
+import {
+  compareStrongCtaStrategies,
+  compareWeakCtaStrategies,
+  isRetentionWorkbenchSourceFamily,
+  mapCtaSourceFamilyLabel,
+  type CtaStrategyBreakdownRow,
+} from '@/lib/cta-strategy';
 import { analyticsOperations } from '@/lib/database';
 import { buildReportRetroSnapshot } from '@/lib/report-retro';
 import { getSystemOpsSnapshot } from '@/lib/system-ops';
@@ -12,6 +19,7 @@ import {
 } from '@/lib/world-yi-autonomous-state';
 
 const SNAPSHOT_FILE = path.join(process.cwd(), 'data', 'runtime', 'site-quality-governor.snapshot.json');
+const VALIDATION_CHECKS_FILE = path.join(process.cwd(), 'data', 'runtime', 'site-quality-validation-checks.snapshot.json');
 const DEFAULT_RETRO_WINDOW_MINUTES = 24 * 60;
 const DEFAULT_PRIORITY_LIMIT = 10;
 const CHECK_SCORE_CAP_WITHOUT_EVIDENCE = 75;
@@ -126,6 +134,17 @@ function ensureRuntimeDir() {
   fs.mkdirSync(path.dirname(SNAPSHOT_FILE), { recursive: true });
 }
 
+function readPersistedValidationChecks() {
+  try {
+    const payload = JSON.parse(fs.readFileSync(VALIDATION_CHECKS_FILE, 'utf8')) as {
+      checks?: SiteQualityCheckResult[];
+    };
+    return Array.isArray(payload?.checks) ? payload.checks : [];
+  } catch {
+    return [];
+  }
+}
+
 function clampScore(score: number) {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
@@ -211,7 +230,23 @@ function buildInteractionSummary(params: {
   reportToEvent?: { currentRate: number; rateDelta: number } | null;
   toolToRun?: { currentRate: number; rateDelta: number } | null;
   topToolGap?: { slug: string } | null;
+  topWeakDevice?: { deviceType: string; weakestRate: number; authVerifyRate: number; toolToRunRate: number; reportToChatRate: number } | null;
+  weakRecallReportSource?: { source: string; chatCompletionRate: number } | null;
+  weakRecallToolSource?: { source: string; sentToRunRate: number } | null;
+  weakRetentionWorkbenchSource?: { sourceFamily: string; clickToChatRate: number; chatCompletionRate: number } | null;
 }) {
+  if (isWeakRetentionWorkbenchItem(params.weakRetentionWorkbenchSource as CtaStrategyBreakdownRow | null)) {
+    return `复访工作台里的“${mapCtaSourceFamilyLabel(params.weakRetentionWorkbenchSource?.sourceFamily || '')}”还没把回访用户接成继续使用，档案/历史/事件页应该直接恢复上一条任务。`;
+  }
+  if ((params.weakRecallReportSource?.chatCompletionRate || 100) < 25) {
+    return `生命周期报告召回里的“${params.weakRecallReportSource?.source}”回流后仍接不住聊天，召回链路还没形成真正复访。`;
+  }
+  if ((params.weakRecallToolSource?.sentToRunRate || 100) < 20) {
+    return `生命周期工具召回里的“${params.weakRecallToolSource?.source}”回流后仍停在看工具，没有形成实际开跑。`;
+  }
+  if ((params.topWeakDevice?.weakestRate || 100) < 20) {
+    return `${mapDeviceLabel(params.topWeakDevice?.deviceType)}已经出现明显设备侧断点，应该先按设备修最弱链路。`;
+  }
   if ((params.reportToChat?.rateDelta || 0) < 0) {
     return `结果页到聊天的承接在下降，报告不是没流量，而是“继续问下去”的动作不够近。`;
   }
@@ -255,6 +290,51 @@ function buildDevEfficiencySummary(params: {
   return '开发效率基础不错，但还要继续把“评估证据”接进每轮迭代的默认流程。';
 }
 
+function mapDeviceLabel(deviceType?: string | null) {
+  if (deviceType === 'mobile') return '移动端';
+  if (deviceType === 'desktop') return '桌面端';
+  if (deviceType === 'tablet') return '平板';
+  if (deviceType === 'bot') return '机器人';
+  return '未知设备';
+}
+
+function mapAttributionSourceLabel(source?: string | null) {
+  const normalized = `${source || ''}`.trim();
+  if (!normalized) return '直接访问';
+  if (normalized.startsWith('knowledge_article:')) return `知识文章 · ${normalized.replace('knowledge_article:', '')}`;
+  if (normalized.startsWith('case_article:')) return `案例文章 · ${normalized.replace('case_article:', '')}`;
+  if (normalized.startsWith('tool_detail')) return '工具详情页';
+  if (normalized.startsWith('lifecycle_report_followup:')) return `报告召回 · ${mapAttributionSourceLabel(normalized.replace(/^lifecycle_report_followup:/, ''))}`;
+  if (normalized.startsWith('lifecycle_tool_interest:')) return `工具召回 · ${mapAttributionSourceLabel(normalized.replace(/^lifecycle_tool_interest:/, ''))}`;
+  if (normalized === 'updates_page') return '更新中心';
+  if (normalized === 'direct') return '直接访问';
+  return normalized;
+}
+
+function getCtaStrategyItems(items?: CtaStrategyBreakdownRow[]) {
+  return (items || []).filter((item) => item.clicks > 0 || item.chatPageViews > 0);
+}
+
+function buildRetentionWorkbenchAction(sourceFamily: string) {
+  if (sourceFamily === 'profile_page') {
+    return '把最近报告、最近聊天和“接着问”的恢复入口压到档案页第一屏，不要让回访用户先看静态资料再决定。';
+  }
+  if (sourceFamily === 'history_page') {
+    return '把待纠偏样本、最近漂移和“继续纠偏这条判断”的 CTA 聚合到历史页上半屏，避免用户停在记录列表。';
+  }
+  if (sourceFamily === 'events_page') {
+    return '把临近事件、过期待验证事件和“围绕这个节点继续判断”的 CTA 前移到事件工作台顶部，直接带入聊天上下文。';
+  }
+  return '把复访用户最需要恢复的任务前移到第一屏，避免回访再次退化成浏览。';
+}
+
+function isWeakRetentionWorkbenchItem(item?: CtaStrategyBreakdownRow | null) {
+  if (!item || !isRetentionWorkbenchSourceFamily(item.sourceFamily)) {
+    return false;
+  }
+  return item.chatCompletionRate < 40 || item.clickToChatRate < 60;
+}
+
 export function buildSiteQualityGovernorSnapshot(params?: {
   retroWindowMinutes?: number;
   validationChecks?: SiteQualityCheckResult[];
@@ -262,7 +342,10 @@ export function buildSiteQualityGovernorSnapshot(params?: {
 }) : SiteQualityGovernorSnapshot {
   const retroWindowMinutes = Math.max(60, Math.floor(params?.retroWindowMinutes || DEFAULT_RETRO_WINDOW_MINUTES));
   const priorityLimit = Math.max(4, Math.min(20, Math.floor(params?.priorityLimit || DEFAULT_PRIORITY_LIMIT)));
-  const validationChecks = (params?.validationChecks || []).map((item) => ({
+  const inputValidationChecks = params?.validationChecks?.length
+    ? params.validationChecks
+    : readPersistedValidationChecks();
+  const validationChecks = inputValidationChecks.map((item) => ({
     ...item,
     label: item.label || item.key,
     status: item.status || 'unknown',
@@ -321,6 +404,19 @@ export function buildSiteQualityGovernorSnapshot(params?: {
       source: 'report-retro',
     });
   }
+  const deviceCoverageRate = overview.deviceMeasurementSummary?.currentWindow?.coverageRate || 0;
+  if (deviceCoverageRate > 0 && deviceCoverageRate < 60) {
+    compatibilityScore -= Math.min(12, Math.round((60 - deviceCoverageRate) / 4));
+    pushPriority(priorityQueue, {
+      key: 'compatibility-device-coverage',
+      dimension: 'compatibility',
+      severity: deviceCoverageRate < 35 ? 'critical' : 'warning',
+      title: '设备埋点覆盖率还不够支撑稳定经营判断',
+      detail: `最近 3 天设备事件覆盖率只有 ${deviceCoverageRate}% ，设备趋势和按端漏斗仍容易失真。`,
+      action: '继续把关键首屏、注册、结果页、工具页埋点统一挂上 device profile，先保证经营判断口径稳定。',
+      source: 'analytics.deviceMeasurementSummary',
+    });
+  }
   compatibilityScore = clampScore(compatibilityScore);
   const compatibilityEvidence = uniqueStrings([
     validationChecks.length > 0
@@ -330,6 +426,7 @@ export function buildSiteQualityGovernorSnapshot(params?: {
     retro.analytics.missingSessionPageViews > 0
       ? `缺 session 页面浏览 ${retro.analytics.missingSessionPageViews} 条`
       : '页面浏览埋点 session 基本串通',
+    deviceCoverageRate > 0 ? `最近设备事件覆盖率 ${deviceCoverageRate}%` : '最近没有设备覆盖率样本',
   ]);
   if (failedChecks.length === 0 && retro.analytics.missingSessionPageViews === 0 && validationChecks.length > 0) {
     wins.push('构建校验与页面埋点目前没有明显兼容性红旗。');
@@ -421,8 +518,88 @@ export function buildSiteQualityGovernorSnapshot(params?: {
   const reportToChat = overview.recentBehaviorShift?.funnel?.find((item) => item.key === 'report_to_chat') || null;
   const reportToEvent = overview.recentBehaviorShift?.funnel?.find((item) => item.key === 'report_to_event') || null;
   const toolToRun = overview.recentBehaviorShift?.funnel?.find((item) => item.key === 'tool_to_run') || null;
+  const topWeakDevice = (overview.deviceFunnelBreakdown || [])
+    .filter((item) => item.sampleState !== 'sparse')
+    .map((item) => ({
+      deviceType: item.deviceType,
+      weakestRate: Math.min(item.reportToChatRate, item.toolToRunRate, item.authVerifyRate),
+      authVerifyRate: item.authVerifyRate,
+      toolToRunRate: item.toolToRunRate,
+      reportToChatRate: item.reportToChatRate,
+    }))
+    .sort((left, right) => left.weakestRate - right.weakestRate)[0];
+  const weakRecallReportSource = (overview.lifecycleRecall?.reportFollowupBySource || [])
+    .filter((item) => item.sent >= 2)
+    .sort((left, right) => left.chatCompletionRate - right.chatCompletionRate || right.sent - left.sent)[0];
+  const weakRecallToolSource = (overview.lifecycleRecall?.toolInterestBySource || [])
+    .filter((item) => item.sent >= 2)
+    .sort((left, right) => left.sentToRunRate - right.sentToRunRate || right.sent - left.sent)[0];
+  const retentionWorkbenchStrategies = getCtaStrategyItems(overview.ctaStrategyBreakdown)
+    .filter((item) => item.strategyKey === 'retention_workbench_resume' && isRetentionWorkbenchSourceFamily(item.sourceFamily));
+  const weakRetentionWorkbenchSource = [...retentionWorkbenchStrategies]
+    .sort(compareWeakCtaStrategies)[0];
+  const strongRetentionWorkbenchSource = [...retentionWorkbenchStrategies]
+    .sort(compareStrongCtaStrategies)[0];
+  const weakestSourceFunnel = (overview.sourceFunnel || [])
+    .filter((item) => item.analyzeSessions >= 2)
+    .sort((left, right) => left.viewToChatRate - right.viewToChatRate || right.analyzeSessions - left.analyzeSessions)[0];
+  const weakestSourceDeviceFunnel = (overview.sourceDeviceFunnel || [])
+    .filter((item) => item.analyzeSessions >= 2)
+    .sort((left, right) => left.viewToChatRate - right.viewToChatRate || right.analyzeSessions - left.analyzeSessions)[0];
+  const strongestSourceShift = (overview.recentSourceShift || [])
+    .filter((item) => item.sampleState !== 'sparse')
+    .sort((left, right) => {
+      const rightMagnitude =
+        Math.abs(right.analyzeSessionsDelta)
+        + Math.abs(right.reportViewSessionsDelta)
+        + Math.abs(right.viewToChatRateDelta)
+        + Math.abs(right.viewToToolRunRateDelta);
+      const leftMagnitude =
+        Math.abs(left.analyzeSessionsDelta)
+        + Math.abs(left.reportViewSessionsDelta)
+        + Math.abs(left.viewToChatRateDelta)
+        + Math.abs(left.viewToToolRunRateDelta);
+      return rightMagnitude - leftMagnitude;
+    })[0];
+  const weakestWeeklySource = (overview.weeklySourceTrend || [])
+    .filter((item) => item.analyzeSessions >= 2)
+    .sort((left, right) => left.viewToChatRate - right.viewToChatRate || right.analyzeSessions - left.analyzeSessions)[0];
   const topToolGap = workboard.prioritizedToolJourneyGaps[0];
   const topBouncePage = workboard.prioritizedBouncePages[0];
+  if (isWeakRetentionWorkbenchItem(weakRetentionWorkbenchSource)) {
+    interactionScore -= weakRetentionWorkbenchSource!.chatCompletionRate < 25 ? 12 : 6;
+    if (weakRetentionWorkbenchSource!.clickToChatRate < 50) {
+      interactionScore -= 6;
+    }
+  }
+  if ((weakRecallReportSource?.chatCompletionRate || 100) < 25) {
+    interactionScore -= 12;
+  } else if ((weakRecallReportSource?.chatCompletionRate || 100) < 40) {
+    interactionScore -= 6;
+  }
+  if ((weakRecallToolSource?.sentToRunRate || 100) < 20) {
+    interactionScore -= 10;
+  } else if ((weakRecallToolSource?.sentToRunRate || 100) < 35) {
+    interactionScore -= 5;
+  }
+  if ((weakestSourceFunnel?.viewToChatRate || 100) < 20) {
+    interactionScore -= 12;
+  } else if ((weakestSourceFunnel?.viewToChatRate || 100) < 35) {
+    interactionScore -= 6;
+  }
+  if (strongestSourceShift?.direction === 'down') {
+    interactionScore -= strongestSourceShift.sampleState === 'enough' ? 10 : 5;
+  }
+  if ((weakestWeeklySource?.viewToChatRate || 100) < 20) {
+    interactionScore -= 10;
+  } else if ((weakestWeeklySource?.viewToChatRate || 100) < 35) {
+    interactionScore -= 5;
+  }
+  if ((topWeakDevice?.weakestRate || 100) < 20) {
+    interactionScore -= 12;
+  } else if ((topWeakDevice?.weakestRate || 100) < 35) {
+    interactionScore -= 6;
+  }
   if ((reportToChat?.currentRate || 100) < 20) {
     interactionScore -= 22;
   } else if ((reportToChat?.currentRate || 100) < 35) {
@@ -465,6 +642,86 @@ export function buildSiteQualityGovernorSnapshot(params?: {
       source: 'recentBehaviorShift.funnel',
     });
   }
+  retentionWorkbenchStrategies
+    .filter((item) => isWeakRetentionWorkbenchItem(item))
+    .slice(0, 3)
+    .forEach((item) => {
+      pushPriority(priorityQueue, {
+        key: `interaction-retention-workbench-${item.sourceFamily}`,
+        dimension: 'interaction_logic',
+        severity: item.chatCompletionRate < 20 || item.clickToChatRate < 35 ? 'critical' : 'warning',
+        title: `复访工作台里的${mapCtaSourceFamilyLabel(item.sourceFamily)}没有接住继续使用`,
+        detail: `${mapCtaSourceFamilyLabel(item.sourceFamily)}当前 CTA ${item.clicks} -> 聊天页 ${item.chatPageViews}（${item.clickToChatRate}%） -> 完成 ${item.chatCompleted}（${item.chatCompletionRate}%）。`,
+        action: buildRetentionWorkbenchAction(item.sourceFamily),
+        source: 'analytics.ctaStrategyBreakdown',
+      });
+    });
+  if (weakRecallReportSource && weakRecallReportSource.chatCompletionRate < 35) {
+    pushPriority(priorityQueue, {
+      key: `interaction-lifecycle-report-source-${weakRecallReportSource.source}`,
+      dimension: 'interaction_logic',
+      severity: weakRecallReportSource.chatCompletionRate < 20 ? 'critical' : 'warning',
+      title: '报告召回里的弱来源没有被接住',
+      detail: `来源“${weakRecallReportSource.source}”的报告召回聊天完成率只有 ${weakRecallReportSource.chatCompletionRate}%。`,
+      action: '重写这类来源用户的邮件主题、首屏文案和结果页继续追问承接，让 GEO/SEO 回流不是回来看一眼就走。',
+      source: 'analytics.lifecycleRecall.reportFollowupBySource',
+    });
+  }
+  if (weakRecallToolSource && weakRecallToolSource.sentToRunRate < 30) {
+    pushPriority(priorityQueue, {
+      key: `interaction-lifecycle-tool-source-${weakRecallToolSource.source}`,
+      dimension: 'interaction_logic',
+      severity: weakRecallToolSource.sentToRunRate < 15 ? 'critical' : 'warning',
+      title: '工具召回里的弱来源没有形成开跑',
+      detail: `来源“${weakRecallToolSource.source}”的工具召回 sent -> run 只有 ${weakRecallToolSource.sentToRunRate}%。`,
+      action: '优先修这类内容来源回流后的工具首屏、示例问题和直接运行承接，不要让邮件只带回浏览不带回使用。',
+      source: 'analytics.lifecycleRecall.toolInterestBySource',
+    });
+  }
+  if (weakestSourceFunnel && weakestSourceFunnel.viewToChatRate < 30) {
+    pushPriority(priorityQueue, {
+      key: `interaction-source-funnel-${weakestSourceFunnel.source}`,
+      dimension: 'interaction_logic',
+      severity: weakestSourceFunnel.viewToChatRate < 15 ? 'critical' : 'warning',
+      title: '主来源漏斗存在明确弱来源',
+      detail: `来源“${mapAttributionSourceLabel(weakestSourceFunnel.source)}”当前 analyze ${weakestSourceFunnel.analyzeSessions}，结果页查看率 ${weakestSourceFunnel.reportToViewRate}% ，结果页 -> 聊天仅 ${weakestSourceFunnel.viewToChatRate}%。`,
+      action: '按这个来源重写 analyze 完成后的结果页首屏承接、继续提问文案与工具引导，不要让高意向来源在结果页掉下去。',
+      source: 'analytics.sourceFunnel',
+    });
+  }
+  if (weakestSourceDeviceFunnel && weakestSourceDeviceFunnel.viewToChatRate < 25) {
+    pushPriority(priorityQueue, {
+      key: `interaction-source-device-funnel-${weakestSourceDeviceFunnel.source}-${weakestSourceDeviceFunnel.deviceType}`,
+      dimension: 'interaction_logic',
+      severity: weakestSourceDeviceFunnel.viewToChatRate < 12 ? 'critical' : 'warning',
+      title: '来源与设备组合出现二级断点',
+      detail: `${mapDeviceLabel(weakestSourceDeviceFunnel.deviceType)}上的“${mapAttributionSourceLabel(weakestSourceDeviceFunnel.source)}”结果页 -> 聊天只有 ${weakestSourceDeviceFunnel.viewToChatRate}%。`,
+      action: '按设备单独检查这类来源用户的首屏 CTA、排版顺序和继续追问按钮位置，优先修移动端高意图来源。',
+      source: 'analytics.sourceDeviceFunnel',
+    });
+  }
+  if (strongestSourceShift && strongestSourceShift.direction === 'down') {
+    pushPriority(priorityQueue, {
+      key: `interaction-source-shift-${strongestSourceShift.source}`,
+      dimension: 'interaction_logic',
+      severity: strongestSourceShift.sampleState === 'enough' && strongestSourceShift.viewToChatRateDelta < -10 ? 'critical' : 'warning',
+      title: '最近几天有具体来源在回落',
+      detail: `来源“${mapAttributionSourceLabel(strongestSourceShift.source)}”最近 analyze ${strongestSourceShift.analyzeSessionsDelta > 0 ? '+' : ''}${strongestSourceShift.analyzeSessionsDelta}，结果页查看 ${strongestSourceShift.reportViewSessionsDelta > 0 ? '+' : ''}${strongestSourceShift.reportViewSessionsDelta}，结果页 -> 聊天 ${strongestSourceShift.viewToChatRateDelta > 0 ? '+' : ''}${strongestSourceShift.viewToChatRateDelta}pt。`,
+      action: '先不要泛化改全站，按这个来源重写入口落点、结果页第一屏追问理由和回流邮件文案，确认短周期指标止跌后再继续放量。',
+      source: 'analytics.recentSourceShift',
+    });
+  }
+  if (weakestWeeklySource && weakestWeeklySource.viewToChatRate < 30) {
+    pushPriority(priorityQueue, {
+      key: `interaction-weekly-source-${weakestWeeklySource.source}`,
+      dimension: 'interaction_logic',
+      severity: weakestWeeklySource.viewToChatRate < 15 ? 'critical' : 'warning',
+      title: '来源周趋势显示持续承接不足',
+      detail: `来源“${mapAttributionSourceLabel(weakestWeeklySource.source)}”在 ${weakestWeeklySource.weekLabel} analyze ${weakestWeeklySource.analyzeSessions}，结果页 -> 聊天只有 ${weakestWeeklySource.viewToChatRate}%。`,
+      action: '把这类 GEO/SEO 来源的内容承诺、测算入口、结果页首屏和后续召回统一成一条旅程，避免持续获得流量但无法形成复访。',
+      source: 'analytics.weeklySourceTrend',
+    });
+  }
   if ((reportToEvent?.rateDelta || 0) < 0 || (reportToEvent?.currentRate || 100) < 15) {
     pushPriority(priorityQueue, {
       key: 'interaction-report-to-event',
@@ -480,13 +737,34 @@ export function buildSiteQualityGovernorSnapshot(params?: {
     pushPriority(priorityQueue, {
       key: `interaction-tool-run-${topToolGap?.slug || 'overall'}`,
       dimension: 'interaction_logic',
-      severity: (toolToRun?.currentRate || 0) < 15 ? 'critical' : 'warning',
+      severity: (toolToRun?.currentRate || 0) < 15 || ['start_cta', 'cta_to_run'].includes(topToolGap?.gapType || '') ? 'critical' : 'warning',
       title: '工具页 detail -> run 摩擦过高',
       detail: topToolGap
         ? `${topToolGap.slug} 当前暴露的主断点是 ${topToolGap.gapType}，优先级 ${topToolGap.priorityScore}。`
         : `最近完整 3 天工具详情会话 -> 工具开跑只有 ${toolToRun?.currentRate || 0}%。`,
       action: topToolGap?.action || '降低工具启动门槛，提供示例问题、直接运行兜底，以及更强的“这个工具到底替你解决什么”首屏说明。',
       source: topToolGap ? 'admin-quality-workboard' : 'recentBehaviorShift.funnel',
+    });
+  }
+  if (topWeakDevice && topWeakDevice.weakestRate < 35) {
+    const weakestLinkLabel = topWeakDevice.authVerifyRate <= topWeakDevice.toolToRunRate
+      && topWeakDevice.authVerifyRate <= topWeakDevice.reportToChatRate
+      ? '注册完成'
+      : topWeakDevice.toolToRunRate <= topWeakDevice.reportToChatRate
+        ? '工具启动'
+        : '结果页追问';
+    pushPriority(priorityQueue, {
+      key: `interaction-device-${topWeakDevice.deviceType}`,
+      dimension: 'interaction_logic',
+      severity: topWeakDevice.weakestRate < 20 ? 'critical' : 'warning',
+      title: `${mapDeviceLabel(topWeakDevice.deviceType)}出现设备侧主断点`,
+      detail: `${mapDeviceLabel(topWeakDevice.deviceType)}当前最弱链路是${weakestLinkLabel}，最低转化只有 ${topWeakDevice.weakestRate}%。`,
+      action: weakestLinkLabel === '注册完成'
+        ? '优先检查这端验证码输入、提交反馈和验证完成后的跳转承接，避免高意向注册在设备端被卡死。'
+        : weakestLinkLabel === '工具启动'
+          ? '优先检查这端工具首屏 CTA、输入门槛和提交后反馈，避免“看了但没跑”。'
+          : '优先检查这端结果页首屏 CTA、追问文案和聊天入口位置，避免报告被看完后没有下一步。',
+      source: 'analytics.deviceFunnelBreakdown',
     });
   }
   if ((topBouncePage?.views || 0) >= 10 && (topBouncePage?.bounceRate || 0) >= 70) {
@@ -501,11 +779,23 @@ export function buildSiteQualityGovernorSnapshot(params?: {
     });
   }
   const interactionEvidence = uniqueStrings([
+    weakRetentionWorkbenchSource ? `复访工作台弱入口 ${mapCtaSourceFamilyLabel(weakRetentionWorkbenchSource.sourceFamily)} / CTA->chat ${weakRetentionWorkbenchSource.clickToChatRate}% / 完成 ${weakRetentionWorkbenchSource.chatCompletionRate}%` : null,
+    strongRetentionWorkbenchSource ? `复访工作台最强入口 ${mapCtaSourceFamilyLabel(strongRetentionWorkbenchSource.sourceFamily)} / CTA->chat ${strongRetentionWorkbenchSource.clickToChatRate}% / 完成 ${strongRetentionWorkbenchSource.chatCompletionRate}%` : null,
+    weakRecallReportSource ? `报告召回弱来源 ${weakRecallReportSource.source} / 聊天完成 ${weakRecallReportSource.chatCompletionRate}%` : null,
+    weakRecallToolSource ? `工具召回弱来源 ${weakRecallToolSource.source} / sent->run ${weakRecallToolSource.sentToRunRate}%` : null,
+    weakestSourceFunnel ? `主来源漏斗弱来源 ${weakestSourceFunnel.source} / view->chat ${weakestSourceFunnel.viewToChatRate}%` : null,
+    weakestSourceDeviceFunnel ? `来源设备断点 ${weakestSourceDeviceFunnel.source} @ ${mapDeviceLabel(weakestSourceDeviceFunnel.deviceType)} / view->chat ${weakestSourceDeviceFunnel.viewToChatRate}%` : null,
+    strongestSourceShift ? `短期来源变化 ${strongestSourceShift.source} / ${strongestSourceShift.direction} / chat ${strongestSourceShift.viewToChatRateDelta >= 0 ? '+' : ''}${strongestSourceShift.viewToChatRateDelta}pt` : null,
+    weakestWeeklySource ? `周来源弱承接 ${weakestWeeklySource.source} / view->chat ${weakestWeeklySource.viewToChatRate}%` : null,
     reportToChat ? `结果页 -> 聊天 ${reportToChat.currentRate}% (${reportToChat.rateDelta >= 0 ? '+' : ''}${reportToChat.rateDelta})` : null,
     reportToEvent ? `结果页 -> 事件 ${reportToEvent.currentRate}% (${reportToEvent.rateDelta >= 0 ? '+' : ''}${reportToEvent.rateDelta})` : null,
     toolToRun ? `工具详情 -> 开跑 ${toolToRun.currentRate}% (${toolToRun.rateDelta >= 0 ? '+' : ''}${toolToRun.rateDelta})` : null,
+    topWeakDevice ? `${mapDeviceLabel(topWeakDevice.deviceType)}最弱链路 ${topWeakDevice.weakestRate}%` : null,
     topToolGap ? `头号工具断点 ${topToolGap.slug} / ${topToolGap.gapType}` : null,
   ]);
+  if (strongRetentionWorkbenchSource && strongRetentionWorkbenchSource.chatCompletionRate >= 50 && strongRetentionWorkbenchSource.clickToChatRate >= 60) {
+    wins.push(`复访工作台在${mapCtaSourceFamilyLabel(strongRetentionWorkbenchSource.sourceFamily)}上已经能稳定把回访带回聊天。`);
+  }
   if ((overview.recentBehaviorShift?.signals || []).length > 0) {
     wins.push(...overview.recentBehaviorShift.signals.slice(0, 2));
   }
@@ -658,7 +948,11 @@ export function buildSiteQualityGovernorSnapshot(params?: {
         reportToChat,
         reportToEvent,
         toolToRun,
+        topWeakDevice: topWeakDevice || null,
         topToolGap: topToolGap || null,
+        weakRecallReportSource: weakRecallReportSource || null,
+        weakRecallToolSource: weakRecallToolSource || null,
+        weakRetentionWorkbenchSource: weakRetentionWorkbenchSource || null,
       }),
       evidence: interactionEvidence,
     },
@@ -686,13 +980,26 @@ export function buildSiteQualityGovernorSnapshot(params?: {
   );
   const status = statusFromScore(overallScore);
   const weakestDimension = [...dimensions].sort((left, right) => left.score - right.score)[0];
-  const sortedPriorityQueue = [...priorityQueue]
+  const sortedPriorityCandidates = [...priorityQueue]
     .sort((left, right) => {
       const severityDelta = prioritySeverityRank(right.severity) - prioritySeverityRank(left.severity);
       if (severityDelta !== 0) return severityDelta;
       return left.dimension.localeCompare(right.dimension);
-    })
-    .slice(0, priorityLimit);
+    });
+  const guaranteedDimensionItems: SiteQualityPriorityItem[] = [];
+  const guaranteedDimensions = new Set<SiteQualityDimensionKey>();
+  for (const item of sortedPriorityCandidates) {
+    if (guaranteedDimensions.has(item.dimension)) {
+      continue;
+    }
+    guaranteedDimensionItems.push(item);
+    guaranteedDimensions.add(item.dimension);
+  }
+  const selectedPriorityKeys = new Set(guaranteedDimensionItems.map((item) => item.key));
+  const sortedPriorityQueue = [
+    ...guaranteedDimensionItems,
+    ...sortedPriorityCandidates.filter((item) => !selectedPriorityKeys.has(item.key)),
+  ].slice(0, priorityLimit);
   const risks = sortedPriorityQueue
     .slice(0, 6)
     .map((item) => `${item.title}：${item.detail}`);
@@ -792,6 +1099,15 @@ export function writeSiteQualityGovernorSnapshot(snapshot: SiteQualityGovernorSn
   ensureRuntimeDir();
   fs.writeFileSync(SNAPSHOT_FILE, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
   return snapshot;
+}
+
+export function writeSiteQualityValidationChecksSnapshot(checks: SiteQualityCheckResult[]) {
+  ensureRuntimeDir();
+  fs.writeFileSync(VALIDATION_CHECKS_FILE, `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    checks,
+  }, null, 2)}\n`, 'utf8');
+  return checks;
 }
 
 export function refreshSiteQualityGovernorSnapshot(params?: {

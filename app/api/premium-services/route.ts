@@ -38,10 +38,12 @@ function trackEmailDelivery(params: {
   email: string;
   serviceKey: string;
   message?: string;
+  userAgent?: string | null;
 }) {
   trackServerEvent({
     eventName: params.success ? 'email_delivery_succeeded' : 'email_delivery_failed',
     page: params.page,
+    userAgent: params.userAgent,
     meta: {
       channel: params.channel,
       emailDomain: params.email.split('@')[1] || '',
@@ -76,6 +78,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const userId = await getOrCreateGuestUserId();
+    const userAgent = request.headers.get('user-agent');
     const body = await request.json();
     const reportId = typeof body?.reportId === 'string' ? body.reportId.trim() : '';
     const serviceKey = normalizeChatIntent(typeof body?.serviceKey === 'string' ? body.serviceKey : undefined);
@@ -142,6 +145,7 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       userId,
       sessionId: userId,
+      userAgent,
       eventName: 'premium_service_requested',
       page: reportId ? `/result/${reportId}` : '/result',
       meta: {
@@ -176,6 +180,7 @@ export async function POST(request: NextRequest) {
             email: contactValue,
             serviceKey,
             message: deliveryResult?.message || '',
+            userAgent,
           });
           if (!deliveryResult?.success) {
             queueEmailDeliveryJob({
@@ -219,6 +224,7 @@ export async function POST(request: NextRequest) {
             email: contactValue,
             serviceKey,
             message: error instanceof Error ? error.message : 'unknown',
+            userAgent,
           });
         });
       }
@@ -242,6 +248,7 @@ export async function POST(request: NextRequest) {
             email: adminEmails[0],
             serviceKey,
             message: deliveryResult?.message || '',
+            userAgent,
           });
           if (!deliveryResult?.success) {
             queueEmailDeliveryJob({
@@ -287,6 +294,7 @@ export async function POST(request: NextRequest) {
             email: adminEmails[0],
             serviceKey,
             message: error instanceof Error ? error.message : 'unknown',
+            userAgent,
           });
         });
       }

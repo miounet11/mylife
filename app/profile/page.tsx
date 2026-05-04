@@ -9,9 +9,14 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
+import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
+import ResultCtaLink from '@/components/result-cta-link';
+import RetentionResumePanel from '@/components/retention-resume-panel';
 import ToolHistoryPanel from '@/components/tool-history-panel';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
+import { buildSourceCtaStrategy } from '@/lib/source-cta';
+import { appendSourceToHref } from '@/lib/source-url';
 import { toEventViewModels, type EventTransportRecord } from '@/lib/event-view';
 
 // 动态导入
@@ -128,6 +133,16 @@ export default function ProfilePage() {
 
   const latestFortune = fortunes[0] as any;
   const latestResultId = latestFortune?.id;
+  const pageSource = 'profile_page';
+  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
+  const latestReportHref = latestResultId ? appendSourceToHref(`/result/${latestResultId}`, pageSource) : '/analyze';
+  const profileChatHref = buildChatHref({
+    reportId: latestResultId || undefined,
+    question: '请根据我的档案、最近报告和事件记录，帮我判断：当前最值得优先推进的一条主线是什么，为什么？',
+    source: pageSource,
+    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+    sourceFamily: sourceCtaStrategy.sourceFamily,
+  });
   const hasProfileData = hasProfileContent({
     user,
     fortunes,
@@ -147,7 +162,20 @@ export default function ProfilePage() {
           hasSubscription: !!updatesSummary?.subscription,
         }}
       />
-      <SiteHeader ctaHref="/chat" ctaLabel="继续追问" />
+      <SiteHeader
+        ctaHref={profileChatHref}
+        ctaLabel="继续追问"
+        ctaAnalytics={{
+          page: '/profile',
+          target: 'profile_header_chat',
+          meta: {
+            source: pageSource,
+            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+            sourceFamily: sourceCtaStrategy.sourceFamily,
+            reportId: latestResultId || null,
+          },
+        }}
+      />
 
       <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
         <section className="mb-8 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
@@ -163,20 +191,51 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <div className="action-guide">快速操作</div>
               <div className="action-strip flex flex-wrap gap-3">
-                <Link href={latestResultId ? `/result/${latestResultId}` : '/analyze'} className="action-primary action-main">
+                <ResultCtaLink
+                  href={latestReportHref}
+                  page="/profile"
+                  target={latestResultId ? 'profile_hero_latest_report' : 'profile_hero_analyze'}
+                  className="action-primary action-main"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_hero',
+                    reportId: latestResultId || null,
+                  }}
+                >
                   {latestResultId ? '打开最新报告' : '开始分析'}
-                </Link>
-                <Link
-                  href={buildChatHref({
-                    reportId: latestResultId || undefined,
-                    question: '请根据我的档案、最近报告和事件记录，帮我判断：当前最值得优先推进的一条主线是什么，为什么？',
-                    source: 'profile_page',
-                  })}
+                </ResultCtaLink>
+                <ResultCtaLink
+                  href={profileChatHref}
+                  page="/profile"
+                  target="profile_hero_chat"
                   className="action-secondary"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_hero',
+                    reportId: latestResultId || null,
+                  }}
                 >
                   继续追问
-                </Link>
-                <Link href="/events" className="action-secondary">管理事件</Link>
+                </ResultCtaLink>
+                <ResultCtaLink
+                  href={appendSourceToHref('/events', pageSource)}
+                  page="/profile"
+                  target="profile_hero_events"
+                  className="action-secondary"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_hero',
+                    eventCount: mappedEvents.length,
+                  }}
+                >
+                  管理事件
+                </ResultCtaLink>
               </div>
             </div>
           </div>
@@ -192,6 +251,14 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+
+        <ProductSurfaceRolePanel
+          surface="profile"
+          className="mb-8"
+          title="档案页先恢复任务，不做静态资料堆叠"
+          description="用户回到这里时，最重要的是续接最新报告、工具历史和事件反馈，而不是重新理解整套系统。"
+          compact
+        />
 
         <div className="space-y-8">
           {error && (
@@ -226,18 +293,135 @@ export default function ProfilePage() {
                     reportId: latestResultId || undefined,
                     question: '请结合我的档案信息继续做结构追问，告诉我当前最值得先做的一步动作和最需要防的误判。',
                     source: 'profile_actions',
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
                   })}
                   label="继续追问"
                   icon={Bot}
+                  page="/profile"
+                  target="profile_actions_chat"
+                  meta={{
+                    source: 'profile_actions',
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    reportId: latestResultId || null,
+                  }}
                 />
-                <ProfileAction href="/tools" label="工具中心" icon={Sparkles} />
-                <ProfileAction href="/events" label="管理事件" icon={CalendarClock} />
-                <ProfileAction href="/history" label="查看历史" icon={History} />
-                <ProfileAction href={user?.email ? '/updates' : '/login'} label={user?.email ? '管理订阅' : '绑定邮箱'} icon={Sparkles} />
-                <ProfileAction href={latestResultId ? `/result/${latestResultId}` : '/analyze'} label={latestResultId ? '查看最新报告' : '开始分析'} icon={ArrowRight} />
+                <ProfileAction
+                  href={appendSourceToHref('/tools', pageSource)}
+                  label="工具中心"
+                  icon={Sparkles}
+                  page="/profile"
+                  target="profile_actions_tools"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                />
+                <ProfileAction
+                  href={appendSourceToHref('/events', pageSource)}
+                  label="管理事件"
+                  icon={CalendarClock}
+                  page="/profile"
+                  target="profile_actions_events"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    eventCount: mappedEvents.length,
+                  }}
+                />
+                <ProfileAction
+                  href={appendSourceToHref('/history', pageSource)}
+                  label="查看历史"
+                  icon={History}
+                  page="/profile"
+                  target="profile_actions_history"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    reportCount: fortunes.length,
+                  }}
+                />
+                <ProfileAction
+                  href={user?.email ? '/updates' : '/login'}
+                  label={user?.email ? '管理订阅' : '绑定邮箱'}
+                  icon={Sparkles}
+                  page="/profile"
+                  target={user?.email ? 'profile_actions_updates' : 'profile_actions_login'}
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    hasSubscription: !!updatesSummary?.subscription,
+                  }}
+                />
+                <ProfileAction
+                  href={latestReportHref}
+                  label={latestResultId ? '查看最新报告' : '开始分析'}
+                  icon={ArrowRight}
+                  page="/profile"
+                  target={latestResultId ? 'profile_actions_latest_report' : 'profile_actions_analyze'}
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    reportId: latestResultId || null,
+                  }}
+                />
               </div>
             </div>
           </section>
+
+          {!loading && (
+            <RetentionResumePanel
+              page="/profile"
+              source={pageSource}
+              ctaStrategyKey={sourceCtaStrategy.strategyKey}
+              sourceFamily={sourceCtaStrategy.sourceFamily}
+              title={latestResultId ? '接着你的最新报告继续推进' : '先生成第一份个人底盘'}
+              description={latestResultId
+                ? '档案页的价值不是静态查看，而是直接恢复上次没完成的判断任务。先接回聊天，再回到报告和事件验证，不要重新从零浏览。'
+                : '还没有报告时，档案页不能形成复访闭环。先完成第一份分析，再让报告、事件、工具和邮件召回形成连续路径。'}
+              stats={[
+                { label: '历史报告', value: fortunes.length, helper: '可恢复的判断底盘' },
+                { label: '关键事件', value: mappedEvents.length, helper: '可验证和纠偏的节点' },
+                { label: '订阅状态', value: updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活', helper: updatesSummary?.email || '尚未绑定邮箱' },
+              ]}
+              actions={[
+                {
+                  href: buildChatHref({
+                    reportId: latestResultId || undefined,
+                    question: '请基于我的个人档案、最新报告、事件记录和工具历史，直接告诉我现在最该恢复推进的一个任务是什么，并给我一个三步行动顺序。',
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }),
+                  label: latestResultId ? '恢复上次任务' : '先问如何建立档案',
+                  target: 'retention_resume_chat',
+                  meta: {
+                    reportId: latestResultId || null,
+                    profileReportCount: fortunes.length,
+                    profileEventCount: mappedEvents.length,
+                  },
+                },
+                {
+                  href: latestReportHref,
+                  label: latestResultId ? '打开最新报告' : '开始第一份分析',
+                  target: latestResultId ? 'retention_resume_latest_report' : 'retention_resume_analyze',
+                  meta: { reportId: latestResultId || null },
+                },
+                {
+                  href: appendSourceToHref('/events', pageSource),
+                  label: '进入事件验证',
+                  target: 'retention_resume_events',
+                  meta: { eventCount: mappedEvents.length },
+                },
+              ]}
+            />
+          )}
 
           <ToolHistoryPanel
             compact
@@ -259,13 +443,22 @@ export default function ProfilePage() {
                   <div className="text-lg font-bold text-[color:var(--ink)]">我的更新状态</div>
                 </div>
               </div>
-              <Link
+              <ResultCtaLink
                 href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
+                page="/profile"
+                target={user?.email ? 'profile_updates_center' : 'profile_updates_login'}
                 className="action-secondary"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'profile_updates_status',
+                  hasSubscription: !!updatesSummary?.subscription,
+                }}
               >
                 {user?.email ? '进入更新中心' : '登录查看更新'}
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </ResultCtaLink>
             </div>
 
             <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -307,13 +500,22 @@ export default function ProfilePage() {
                       : '当前还没有最近报告。'}
                   </div>
                   {updatesSummary?.latestReport?.id ? (
-                    <Link
-                      href={`/result/${updatesSummary.latestReport.id}`}
+                    <ResultCtaLink
+                      href={appendSourceToHref(`/result/${updatesSummary.latestReport.id}`, pageSource)}
+                      page="/profile"
+                      target="profile_updates_latest_report"
                       className="action-secondary mt-3"
+                      meta={{
+                        source: pageSource,
+                        ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                        sourceFamily: sourceCtaStrategy.sourceFamily,
+                        surface: 'profile_updates_status',
+                        reportId: updatesSummary.latestReport.id,
+                      }}
                     >
                       打开最新报告
                       <ArrowRight className="h-4 w-4" />
-                    </Link>
+                    </ResultCtaLink>
                   ) : null}
                 </div>
 
@@ -333,9 +535,20 @@ export default function ProfilePage() {
           {!loading && !hasProfileData && (
             <section className="glass-panel rounded-[2rem] p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
-              <Link href="/analyze" className="action-primary mt-6">
+              <ResultCtaLink
+                href="/analyze"
+                page="/profile"
+                target="profile_empty_analyze"
+                className="action-primary mt-6"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'profile_empty_state',
+                }}
+              >
                 开始第一次分析
-              </Link>
+              </ResultCtaLink>
             </section>
           )}
 
@@ -365,7 +578,16 @@ export default function ProfilePage() {
             {/* 右侧：重要事件 */}
             <div className="lg:col-span-1">
               <Suspense fallback={<EventsSkeleton />}>
-                {loading ? <EventsSkeleton /> : <ImportantEvents events={mappedEvents} />}
+                {loading ? (
+                  <EventsSkeleton />
+                ) : (
+                  <ImportantEvents
+                    events={mappedEvents}
+                    source={pageSource}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
+                  />
+                )}
               </Suspense>
             </div>
           </div>
@@ -411,19 +633,28 @@ function ProfileAction({
   href,
   label,
   icon: Icon,
+  page,
+  target,
+  meta,
 }: {
   href: string;
   label: string;
   icon: typeof Bot;
+  page: string;
+  target: string;
+  meta?: Record<string, unknown>;
 }) {
   return (
-    <Link
+    <ResultCtaLink
       href={href}
+      page={page}
+      target={target}
       className="action-secondary"
+      meta={meta}
     >
       <Icon className="h-4 w-4" />
       {label}
-    </Link>
+    </ResultCtaLink>
   );
 }
 

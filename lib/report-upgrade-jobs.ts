@@ -513,6 +513,11 @@ async function notifyUpgradeCompleted(params: {
 }
 
 export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SIZE) {
+  const { enqueueRealUserReportUpgradeCandidates } = await import('@/lib/real-user-report-upgrades');
+  const realUserQueue = enqueueRealUserReportUpgradeCandidates({
+    windowDays: 7,
+    limit,
+  });
   const providerHealth = assessReportProviderHealth();
   const jobs: Array<{
     processed: boolean;
@@ -530,6 +535,7 @@ export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SI
           processed: false,
           processedCount: 0,
           reason: providerHealth.shouldDefer ? 'provider_unhealthy' : (result.reason || 'empty'),
+          realUserQueue,
           jobs,
         };
       }
@@ -544,6 +550,7 @@ export async function processReportUpgradeBatch(limit: number = DEFAULT_BATCH_SI
   return {
     processed: jobs.length > 0,
     processedCount: jobs.length,
+    realUserQueue,
     jobs,
   };
 }

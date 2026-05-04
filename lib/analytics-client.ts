@@ -1,5 +1,6 @@
 import type { AnalyticsEventName } from '@/lib/analytics';
 import { rememberClientAttribution } from '@/lib/client-attribution';
+import { resolveDeviceProfile } from '@/lib/device-profile';
 import { forwardAnalyticsEventToGoogleAnalytics } from '@/lib/google-analytics';
 
 export async function trackClientEvent(input: {
@@ -7,16 +8,30 @@ export async function trackClientEvent(input: {
   page?: string;
   meta?: Record<string, unknown>;
 }) {
+  const deviceProfile = typeof navigator !== 'undefined'
+    ? resolveDeviceProfile(navigator.userAgent)
+    : { deviceType: 'unknown', os: 'unknown', browser: 'unknown' };
+  const enrichedMeta = {
+    ...(input.meta || {}),
+    ...deviceProfile,
+  };
+
   if ([
     'result_cta_clicked',
     'content_card_clicked',
     'tool_card_clicked',
     'content_quick_analyze_started',
   ].includes(input.eventName)) {
-    rememberClientAttribution(input);
+    rememberClientAttribution({
+      ...input,
+      meta: enrichedMeta,
+    });
   }
 
-  forwardAnalyticsEventToGoogleAnalytics(input);
+  forwardAnalyticsEventToGoogleAnalytics({
+    ...input,
+    meta: enrichedMeta,
+  });
 
   try {
     await fetch('/api/analytics/track', {
@@ -27,7 +42,7 @@ export async function trackClientEvent(input: {
       body: JSON.stringify({
         eventName: input.eventName,
         page: input.page,
-        meta: input.meta || {},
+        meta: enrichedMeta,
       }),
       keepalive: true,
     });
