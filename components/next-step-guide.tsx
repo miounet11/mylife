@@ -39,6 +39,7 @@ export default function NextStepGuide({
       }),
       label: hasDrift ? '进入纠偏追问' : '进入结构追问',
       icon: Bot,
+      highlight: hasDrift,
     },
     {
       title: hasPendingValidation ? '回收这份报告的验证结果' : '把窗口期落到事件里',
@@ -48,6 +49,7 @@ export default function NextStepGuide({
       href: reportId ? `/events?reportId=${encodeURIComponent(reportId)}${hasPendingValidation ? '' : '&create=1'}` : '/events',
       label: hasPendingValidation ? '打开验证工作台' : '为这份报告建事件',
       icon: CalendarClock,
+      highlight: hasPendingValidation,
     },
     {
       title: '沉淀成长期档案',
@@ -55,6 +57,7 @@ export default function NextStepGuide({
       href: '/profile',
       label: '查看我的档案',
       icon: FolderHeart,
+      highlight: false,
     },
     {
       title: canManage ? '开启月度更新与升级提醒' : '建立你自己的长期节律档案',
@@ -64,55 +67,85 @@ export default function NextStepGuide({
       href: canManage ? '/updates' : '/analyze',
       label: canManage ? '管理订阅与邮件更新' : '开始我的判断',
       icon: Sparkles,
+      highlight: false,
     },
   ];
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-        <div className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-5">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+        <div className="grid gap-6 lg:grid-cols-[0.78fr_1.22fr]">
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <Sparkles className="h-3 w-3" />
               完成报告后的动作设计
             </div>
-            <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-5xl">
-              真正降低流失，
-              <span className="font-serif text-[color:var(--accent-strong)]">关键在报告之后。</span>
+            <h2 className="text-xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-2xl">
+              真正降低流失，<br />
+              <span className="text-[color:var(--brand-strong)]">关键在报告之后</span>
             </h2>
 
-            <div className="space-y-3">
+            <div className="mt-3 space-y-1.5">
               {[
-                '先追问一条最关键的判断。',
-                '再把重要节点落地到事件。',
-                '再建立月度回访与升级提醒。',
-                '最终形成持续复访的个人档案。',
-              ].map((item) => (
-                <div key={item} className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                  <CheckCircle2 className="h-4 w-4 text-[color:var(--accent)]" />
-                  {item}
+                '先追问一条最关键的判断',
+                '再把重要节点落地到事件',
+                '再建立月度回访与升级提醒',
+                '最终形成持续复访的个人档案',
+              ].map((item, index) => (
+                <div
+                  key={item}
+                  className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5"
+                >
+                  <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <CheckCircle2 className="h-3 w-3 shrink-0 text-[color:var(--brand)]" />
+                  <span className="text-[color:var(--ink-2)]">{item}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:grid-cols-2">
             {nextActions.map((action) => {
               const Icon = action.icon;
               return (
-                <div key={action.title} className="soft-card rounded-[1.75rem] p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                      <Icon className="h-5 w-5" />
+                <div
+                  key={action.title}
+                  className={`rounded-[var(--radius)] border p-4 transition ${
+                    action.highlight
+                      ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]'
+                      : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]'
+                  }`}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div
+                      className={`flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] ${
+                        action.highlight
+                          ? 'border border-[color:var(--signal)] bg-[color:var(--paper)] text-[color:var(--signal-strong)]'
+                          : 'border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <Link href={action.href} className="product-chip">
-                      推荐
-                    </Link>
+                    {action.highlight ? (
+                      <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                        重要
+                      </span>
+                    ) : null}
                   </div>
-                  <h3 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{action.title}</h3>
-                  <Link href={action.href} className="action-secondary mt-5">
+                  <h3 className="mt-3 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                    {action.title}
+                  </h3>
+                  <p className="mt-1.5 text-xs leading-5 text-[color:var(--ink-4)]">
+                    {action.description}
+                  </p>
+                  <Link
+                    href={action.href}
+                    className="mt-3 inline-flex h-8 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-2.5 text-xs font-bold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+                  >
                     {action.label}
-                    <ArrowRight className="h-4 w-4" />
+                    <ArrowRight className="h-3 w-3" />
                   </Link>
                 </div>
               );

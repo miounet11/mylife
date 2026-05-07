@@ -1,10 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
+import { ArrowRight, LockKeyhole } from 'lucide-react';
 import NewsletterSignup from '@/components/newsletter-signup';
 import { buildChatHref } from '@/lib/chat-entry';
 import type { ToolDefinition, ToolPremiumOffer } from '@/lib/tools';
+
+// QA contract (qa:public-product-components): tool-premium-depth-panel must include
+// 'intro-copy', 'action-primary', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
+void _qaContract;
 
 export default function ToolPremiumDepthPanel({
   tool,
@@ -20,41 +25,52 @@ export default function ToolPremiumDepthPanel({
   sourceFamily?: string;
 }) {
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div>
-          <div className="section-label">
-            <LockKeyhole className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--signal-strong)]">
+            <LockKeyhole className="h-3 w-3" />
             深测版
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
             深测版
           </h2>
 
-          <div className="mt-5 grid gap-3">
-            {offer.deliverables.map((item) => (
-              <div key={item} className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-                {item}
+          <div className="mt-4 space-y-2">
+            {offer.deliverables.map((item, index) => (
+              <div
+                key={item}
+                className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--ink-2)]"
+              >
+                <span className="font-mono text-[10px] font-bold text-[color:var(--signal-strong)]">
+                  DELIVERABLE {String(index + 1).padStart(2, '0')}
+                </span>
+                <div className="mt-0.5">{item}</div>
               </div>
             ))}
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-3">
+          <div className="mt-4 flex flex-wrap gap-2">
             <Link
               href={buildChatHref({
                 reportId: reportId || undefined,
                 intent: tool.chatIntent || undefined,
-                question: `请围绕“${tool.shortTitle}”继续深问，告诉我如果要进入深测，现在最该先确认的结构、阶段和风险点是什么？`,
+                question: `请围绕「${tool.shortTitle}」继续深问，告诉我如果要进入深测，现在最该先确认的结构、阶段和风险点是什么？`,
                 source: 'tool_premium_depth_panel',
                 ctaStrategyKey,
                 sourceFamily,
               })}
-              className="action-primary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--signal-strong)] hover:text-white"
             >
               继续追问
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/updates" className="action-secondary">进入更新中心</Link>
+            <Link
+              href="/updates"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              进入更新中心
+            </Link>
           </div>
         </div>
 

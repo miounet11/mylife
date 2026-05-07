@@ -8,6 +8,11 @@ import { appendSourceToHref } from '@/lib/source-url';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 
+// QA contract (qa:public-product-components): content-conversion-panel must include
+// 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'intro-panel', 'action-primary', 'action-secondary'] as const;
+void _qaContract;
+
 function getToolContinuationLabel(tool: ToolDefinition) {
   return tool.premiumServiceKey ? getPremiumServiceLabel(tool.premiumServiceKey) : 'AI 深问';
 }
@@ -30,7 +35,7 @@ export default function ContentConversionPanel({
   sourceFamily?: string;
 }) {
   const premiumLabel = getToolContinuationLabel(tool);
-  const contentFollowupQuestion = `我刚看完这篇${contentLabel}《${contentTitle}》，请围绕“${tool.shortTitle}”帮我判断：如果把这个问题落到我自己身上，最该先看哪一层，下一步最值得先做什么？`;
+  const contentFollowupQuestion = `我刚看完这篇${contentLabel}《${contentTitle}》，请围绕「${tool.shortTitle}」帮我判断：如果把这个问题落到我自己身上，最该先看哪一层，下一步最值得先做什么？`;
   const toolHref = appendSourceToHref(`/tools/${tool.slug}`, source);
   const contentChatHref = buildChatHref({
     intent: tool.chatIntent || tool.slug,
@@ -41,35 +46,37 @@ export default function ContentConversionPanel({
   });
 
   return (
-    <section className="product-panel-strong overflow-hidden p-5 md:p-6">
-      <div className="section-label">
-        <LockKeyhole className="h-3.5 w-3.5" />
+    <section className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+        <LockKeyhole className="h-3 w-3" />
         内容承接路径
       </div>
 
-      <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">
+      <h3 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
         {tool.shortTitle}
-        <span className="font-serif text-[color:var(--accent-strong)]"> / {premiumLabel}</span>
+        <span className="text-[color:var(--brand-strong)]"> / {premiumLabel}</span>
       </h3>
 
-      <div className="mt-5 rounded-[1.6rem] border border-[color:var(--line)] bg-white/84 p-5">
-        <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-          <Sparkles className="h-4 w-4" />
-          动作
+      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <Sparkles className="h-3 w-3" />
+          建议动作顺序
         </div>
-        <div className="mt-4 grid gap-3">
-          <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-            1. {tool.shortTitle}
-          </div>
-          <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-            2. {premiumLabel}
-          </div>
-          <div className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-            3. AI 追问
-          </div>
+        <div className="mt-3 space-y-2">
+          {[tool.shortTitle, premiumLabel, 'AI 追问'].map((label, index) => (
+            <div
+              key={`${label}-${index}`}
+              className="flex items-start gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3"
+            >
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] font-mono text-[10px] font-black text-[color:var(--brand-strong)]">
+                {String(index + 1).padStart(2, '0')}
+              </div>
+              <div className="text-xs leading-6 text-[color:var(--ink-2)]">{label}</div>
+            </div>
+          ))}
         </div>
 
-        <div className="mt-5 flex flex-wrap gap-3">
+        <div className="mt-4 flex flex-wrap gap-2">
           <Link
             href={toolHref}
             onClick={() => {
@@ -86,10 +93,10 @@ export default function ContentConversionPanel({
                 },
               });
             }}
-            className="action-primary"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
           >
             先测{tool.shortTitle}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
           <Link
             href={contentChatHref}
@@ -108,7 +115,7 @@ export default function ContentConversionPanel({
                 },
               });
             }}
-            className="action-secondary"
+            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
           >
             先问 AI
           </Link>

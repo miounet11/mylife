@@ -25,11 +25,12 @@ interface KLineChartProps {
   height?: number;
 }
 
+// 决策台四色：事业=brand / 财富=env / 关系=alert / 健康=signal
 const series = [
-  { key: 'career', label: '事业', color: '#b2955d' },
-  { key: 'wealth', label: '财富', color: '#0284c7' },
-  { key: 'marriage', label: '关系', color: '#e11d48' },
-  { key: 'health', label: '健康', color: '#d97706' },
+  { key: 'career', label: '事业', color: '#0b5f55' },
+  { key: 'wealth', label: '财富', color: '#315f84' },
+  { key: 'marriage', label: '关系', color: '#bd4c42' },
+  { key: 'health', label: '健康', color: '#a87f2c' },
 ] as const;
 
 export default function FortuneKLineChart({ data, showLegend = true, height = 380 }: KLineChartProps) {
@@ -38,10 +39,14 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
 
   if (chartData.length === 0) {
     return (
-      <div className="soft-card w-full rounded-[2rem] p-6 md:p-8">
-        <div className="section-label">阶段趋势</div>
-        <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">人生运势曲线</h3>
-        <div className="mt-6 rounded-[1.5rem] bg-slate-50 px-5 py-8 text-sm text-[color:var(--ink)]">
+      <div className="w-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+        <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+          阶段趋势
+        </div>
+        <h3 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+          人生运势曲线
+        </h3>
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-6 text-sm text-[color:var(--ink-4)]">
           暂无趋势图数据
         </div>
       </div>
@@ -49,21 +54,31 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
   }
 
   return (
-    <div className="soft-card w-full rounded-[2rem] p-6 md:p-8">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+    <div className="w-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <div className="section-label">阶段趋势</div>
-          <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">人生运势曲线</h3>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            阶段趋势
+          </div>
+          <h3 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+            人生运势曲线
+          </h3>
         </div>
 
         {latest && (
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[320px]">
+          <div className="grid gap-2 sm:grid-cols-2 lg:w-[320px]">
             {series.map((item) => (
-              <div key={item.key} className="rounded-[1.25rem] bg-slate-50 px-4 py-3">
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-                <div className="mt-1 text-lg font-bold text-[color:var(--ink)]">
+              <div
+                key={item.key}
+                className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2"
+              >
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <span className="inline-block h-2 w-2 rounded-full" style={{ background: item.color }} />
+                  {item.label}
+                </div>
+                <div className="mt-1 font-mono text-base font-black tabular-nums text-[color:var(--ink-1)]">
                   {latest[item.key]}
-                  <span className="ml-1 text-sm font-medium text-[color:var(--muted)]">/100</span>
+                  <span className="ml-0.5 font-mono text-xs font-semibold text-[color:var(--ink-5)]">/100</span>
                 </div>
               </div>
             ))}
@@ -71,21 +86,25 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
         )}
       </div>
 
-      <div className="mt-8 h-[380px]">
+      <div className="mt-6">
         <ResponsiveContainer width="100%" height={height}>
           <LineChart data={chartData} margin={{ left: 4, right: 12, top: 8, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#d8e0e8" />
-            <XAxis dataKey="year" stroke="#60708c" fontSize={12} tickFormatter={(value) => `${value}`} />
-            <YAxis stroke="#60708c" fontSize={12} domain={[0, 100]} />
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(22, 33, 29, 0.08)" />
+            <XAxis dataKey="year" stroke="#8b9690" fontSize={11} tickFormatter={(value) => `${value}`} />
+            <YAxis stroke="#8b9690" fontSize={11} domain={[0, 100]} />
             <Tooltip
               contentStyle={{
-                backgroundColor: '#fffdf9',
-                borderRadius: '18px',
-                border: '1px solid rgba(96, 112, 140, 0.16)',
-                boxShadow: '0 18px 40px rgba(23, 32, 51, 0.08)',
+                backgroundColor: '#ffffff',
+                borderRadius: '6px',
+                border: '1px solid rgba(22, 33, 29, 0.16)',
+                boxShadow: '0 4px 16px rgba(22, 33, 29, 0.08)',
+                fontFamily: 'JetBrains Mono, SF Mono, Menlo, monospace',
+                fontVariantNumeric: 'tabular-nums',
+                fontSize: '12px',
               }}
+              labelStyle={{ color: '#16211d', fontWeight: 700 }}
             />
-            {showLegend && <Legend verticalAlign="top" height={36} iconType="circle" />}
+            {showLegend && <Legend verticalAlign="top" height={32} iconType="circle" wrapperStyle={{ fontSize: '12px', fontWeight: 600 }} />}
             {series.map((item) => (
               <Line
                 key={item.key}
@@ -93,7 +112,7 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
                 dataKey={item.key}
                 name={item.label}
                 stroke={item.color}
-                strokeWidth={3}
+                strokeWidth={2.2}
                 dot={{ fill: item.color, strokeWidth: 0, r: 3 }}
                 activeDot={{ r: 5 }}
               />
@@ -101,7 +120,6 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
           </LineChart>
         </ResponsiveContainer>
       </div>
-
     </div>
   );
 }
