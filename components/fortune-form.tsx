@@ -689,29 +689,40 @@ export default function FortuneForm({
     <>
       <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[1040px]">
         <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
-          <div className="soft-card rounded-[1rem] px-3 py-3 md:rounded-[1.25rem] md:px-5 md:py-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-3 md:px-5 md:py-5">
             <div className="space-y-2.5 md:space-y-3.5">
               <div className="hidden space-y-1.5 md:block">
-                <div className="section-label">填写出生信息</div>
-                <h2 className="text-xl font-black text-[color:var(--ink)] md:text-2xl">先确认时间和地点</h2>
-                <p className="text-sm leading-6 text-[color:var(--muted)]">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                  填写出生信息
+                </div>
+                <h2 className="text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
+                  先确认时间和地点
+                </h2>
+                <p className="text-sm leading-6 text-[color:var(--ink-3)]">
                   生成报告前只需要补齐这几项，其他内容后面再展开。
                 </p>
               </div>
 
               {hasEmailDelivery ? (
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm leading-6 text-emerald-800">
-                <div className={`font-semibold ${hasEmailDelivery ? 'text-emerald-800' : 'text-[color:var(--ink)]'}`}>结果通知</div>
-                <div className="mt-1">报告完成后邮件发送到 {verifiedEmail}</div>
-              </div>
+                <div className="rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.06)] px-3 py-2 text-xs leading-5">
+                  <div className="font-mono font-bold uppercase tracking-wider text-[color:var(--data-up)]">
+                    结果通知
+                  </div>
+                  <div className="mt-0.5 text-[color:var(--ink-2)]">
+                    报告完成后邮件发送到{' '}
+                    <span className="font-mono text-[color:var(--data-up)]">{verifiedEmail}</span>
+                  </div>
+                </div>
               ) : null}
 
               {returnHref && returnLabel ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm leading-6 text-amber-900">
-                  <div className="font-semibold">当前目标</div>
-                  <div className="mt-1">
-                    你是从“{returnLabel}”回来补综合判断的。当前这一步完成后，会直接带你回到原来的工具继续使用。
-                    {returnSource ? ` 来源：${returnSource}` : ''}
+                <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5">
+                  <div className="font-mono font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                    当前目标
+                  </div>
+                  <div className="mt-0.5 text-[color:var(--ink-2)]">
+                    你是从「{returnLabel}」回来补综合判断的，完成后会带你回到原来的工具继续。
+                    {returnSource ? <span className="ml-1 font-mono text-[color:var(--ink-5)]">· {returnSource}</span> : ''}
                   </div>
                 </div>
               ) : null}
@@ -806,7 +817,7 @@ export default function FortuneForm({
                   onChange={(event) => setInfoData((current) => ({ ...current, username: event.target.value }))}
                   placeholder="可填写本人、家人或案例对象姓名"
                   maxLength={30}
-                  className="smooth-input mt-1.5 h-10 w-full rounded-lg border border-[color:var(--line)] bg-white px-3 text-base text-[color:var(--ink)] outline-none placeholder:text-[#c3b9aa] md:mt-2 md:h-11"
+                  className="mt-1.5 h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-base text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)] md:mt-2 md:h-11"
                 />
               </label>
 

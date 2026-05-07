@@ -370,53 +370,59 @@ export default function FortuneProgress({
 
   return (
     <div className="mx-auto w-full max-w-2xl">
-      <div className="glass-panel overflow-hidden rounded-[2rem] p-6 md:p-8">
-        <div className="grid gap-8 md:grid-cols-[0.88fr_1.12fr] md:items-start">
-          <div className="space-y-5">
-            <div className="section-label">分析进行中</div>
+      <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+        <div className="grid gap-6 md:grid-cols-[0.88fr_1.12fr] md:items-start">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              分析进行中
+            </div>
             <div>
-              <h3 className="text-3xl font-black text-[color:var(--ink)]">
+              <h3 className="text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
                 {isComplete ? completionHeading : '报告正在生成'}
               </h3>
-              <p className="mt-3 text-sm text-[color:var(--muted)]">
+              <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
                 {isComplete ? completionDescription : '状态持续更新'}
               </p>
             </div>
 
-            <div className="inline-flex items-end gap-2">
-              <span className="text-5xl font-black text-[color:var(--accent-strong)]">{progressLabel}</span>
-              <span className="pb-1 text-lg font-semibold text-[color:var(--muted)]">%</span>
+            <div className="inline-flex items-baseline gap-1.5">
+              <span className="font-mono text-4xl font-black tabular-nums text-[color:var(--brand-strong)] md:text-5xl">
+                {progressLabel}
+              </span>
+              <span className="font-mono text-base font-semibold text-[color:var(--ink-4)]">%</span>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-white/85 p-4">
-                <div className="flex items-center gap-2 text-xs tracking-[0.16em] text-[color:var(--muted)]">
-                  <Clock3 className="h-3.5 w-3.5" />
+            <div className="grid gap-2 sm:grid-cols-2">
+              <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <Clock3 className="h-3 w-3" />
                   已等待
                 </div>
-                <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{elapsedLabel}</div>
+                <div className="mt-1 font-mono text-base font-bold tabular-nums text-[color:var(--ink-1)]">
+                  {elapsedLabel}
+                </div>
               </div>
-              <div className="rounded-[1.5rem] bg-white/85 p-4">
-                <div className="flex items-center gap-2 text-xs tracking-[0.16em] text-[color:var(--muted)]">
-                  <Sparkles className="h-3.5 w-3.5" />
+              <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <Sparkles className="h-3 w-3" />
                   当前节奏
                 </div>
-                <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">
+                <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
                   {finalStatusLabel}
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 disabled={!onCancel || isComplete}
                 onClick={onCancel}
-                className="action-secondary py-2 disabled:cursor-not-allowed disabled:opacity-50"
+                className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 返回修改信息
               </button>
-              <div className="inline-flex items-center rounded-full bg-[color:var(--accent-soft)] px-4 py-2 text-sm font-medium text-[color:var(--accent-strong)]">
+              <div className="inline-flex h-8 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-3 text-xs font-semibold text-[color:var(--brand-strong)]">
                 {isComplete
                   ? completionMeta?.upgradeQueued
                     ? '先看结果，后台增强'
