@@ -1,13 +1,19 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Compass, Sparkles } from 'lucide-react';
+import { ArrowLeft, Compass, MessageSquareText, Sparkles } from 'lucide-react';
+
 import AnalyticsPageView from '@/components/analytics-page-view';
-import PriorityDisclosure from '@/components/priority-disclosure';
-import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import UpdatesStatusPanelWithQuery from '@/components/updates-status-panel-with-query';
+
+import { Card } from '@/components/ui/card';
+import { Eyebrow } from '@/components/ui/eyebrow';
+import { Inline } from '@/components/ui/inline';
+import { Stack } from '@/components/ui/stack';
+import { Tag } from '@/components/ui/tag';
+
 import { listChatIntentPresets, getChatIntentPreset } from '@/lib/chat-intent';
 import { buildChatHref } from '@/lib/chat-entry';
 import { appendSourceToHref } from '@/lib/source-url';
@@ -16,7 +22,7 @@ const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), 
   loading: () => <ChatSkeleton />,
 });
 
-const doctrineCards = [
+const doctrineCards: Array<[string, string]> = [
   ['结构锚点', '先钉住这次问题到底卡在结构、阶段还是环境。'],
   ['阶段窗口', '尽量把问题放到一个明确时间段里再问。'],
   ['动作结论', '每轮追问最后都收敛成先做什么。'],
@@ -43,21 +49,13 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const source = resolvedSearchParams.source?.trim() || '';
   const ctaStrategyKey = resolvedSearchParams.ctaStrategyKey?.trim() || '';
   const sourceFamily = resolvedSearchParams.sourceFamily?.trim() || '';
-  const reportHref = reportId ? appendSourceToHref(`/result/${encodeURIComponent(reportId)}`, source) : '/profile';
+  const reportHref = reportId
+    ? appendSourceToHref(`/result/${encodeURIComponent(reportId)}`, source)
+    : '/profile';
   const eventsHref = reportId
     ? appendSourceToHref(`/events?reportId=${encodeURIComponent(reportId)}`, source)
     : appendSourceToHref('/events', source);
   const intentPreset = getChatIntentPreset(intent);
-  const powerLinks = [
-    { label: reportId ? '返回当前结果页' : '返回我的档案', href: reportHref },
-    { label: '管理关联事件', href: eventsHref },
-    { label: '使用方法', href: '/docs/structured-chat' },
-  ];
-  const scopeTags = [
-    reportId ? `已绑定报告 ${reportId.slice(0, 8)}` : '',
-    eventId ? `已绑定事件 ${eventId.slice(0, 8)}` : '',
-    intentPreset ? `当前专项：${intentPreset.entryLabel}` : '当前模式：自由结构追问',
-  ].filter(Boolean);
   const scopedIntentLinks = listChatIntentPresets().map((item) => ({
     ...item,
     href: buildChatHref({
@@ -88,108 +86,138 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
-        <div className="space-y-5">
-          <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="section-label">
-                <Sparkles className="h-3.5 w-3.5" />
-                世界易结构追问入口
-              </div>
-              <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-                直接把当前问题问清楚
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        {/* HERO 区 */}
+        <section className="mb-5 md:mb-6">
+          <Inline justify="between" align="end" wrap className="gap-4">
+            <Stack gap={3}>
+              <Eyebrow icon={<MessageSquareText className="h-3 w-3" />}>
+                结构追问 · 收敛成动作
+              </Eyebrow>
+              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+                {intentPreset ? `${intentPreset.entryLabel}` : '直接把当前问题问清楚'}
               </h1>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {scopeTags.map((item) => (
-                  <span key={item} className="signal-pill">{item}</span>
-                ))}
-              </div>
-            </div>
-            <Link href={reportHref} className="action-secondary shrink-0">
+              <Inline gap={2} wrap>
+                {reportId && (
+                  <Tag tone="brand" variant="soft" size="sm">
+                    报告 <span className="ml-1 font-mono">{reportId.slice(0, 8)}</span>
+                  </Tag>
+                )}
+                {eventId && (
+                  <Tag tone="env" variant="soft" size="sm">
+                    事件 <span className="ml-1 font-mono">{eventId.slice(0, 8)}</span>
+                  </Tag>
+                )}
+                <Tag tone={intentPreset ? 'signal' : 'default'} variant="soft" size="sm">
+                  {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
+                </Tag>
+              </Inline>
+            </Stack>
+
+            <Link
+              href={reportHref}
+              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              <ArrowLeft className="h-4 w-4" />
               {reportId ? '返回当前报告' : '查看我的档案'}
             </Link>
-          </section>
+          </Inline>
+        </section>
 
-          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] xl:items-start">
-            <div id="chat-workbench" className="glass-panel overflow-hidden rounded-xl">
+        {/* 双栏：聊天主区 + 右侧专项切换 */}
+        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] xl:items-start">
+          <Card variant="raised" padding="none" className="overflow-hidden">
+            <div id="chat-workbench">
               <AIAssistantChat />
             </div>
+          </Card>
 
-            <div className="space-y-4 xl:sticky xl:top-24">
-              <PriorityDisclosure
-                label="辅助入口"
-                title="回看报告、事件和专项"
-                description="追问主工作台优先；这些入口需要时再展开。"
-                defaultOpen
-              >
-                <div className="grid gap-3">
-                  {powerLinks.map((item) => (
-                    <Link key={item.href} href={item.href} className="action-secondary justify-start">
-                      {item.label}
+          <Stack gap={4} className="xl:sticky xl:top-32">
+            {/* 切换专项 */}
+            <Card variant="default" padding="md">
+              <Eyebrow icon={<Compass className="h-3 w-3" />} className="mb-3">
+                切换专项
+              </Eyebrow>
+              <Stack gap={1}>
+                {scopedIntentLinks.map((item) => {
+                  const active = item.key === intentPreset?.key;
+                  return (
+                    <Link
+                      key={item.key}
+                      href={item.href}
+                      className={
+                        active
+                          ? 'block rounded-[var(--radius)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-3 py-2 text-sm font-bold text-[color:var(--brand-strong)]'
+                          : 'block rounded-[var(--radius)] px-3 py-2 text-sm font-semibold text-[color:var(--ink-3)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]'
+                      }
+                    >
+                      {item.entryLabel}
                     </Link>
-                  ))}
-                </div>
-                <div className="mt-4 border-t border-[color:var(--line)] pt-4">
-                  <div className="section-label">
-                    <Compass className="h-3.5 w-3.5" />
-                    切换专项
-                  </div>
-                  <div className="mt-3 grid gap-2">
-                    {scopedIntentLinks.map((item) => (
-                      <Link
-                        key={item.key}
-                        href={item.href}
-                        className={`rounded-lg px-3 py-3 text-sm font-semibold transition hover:border-[color:var(--accent)] ${
-                          item.key === intentPreset?.key
-                            ? 'static-card bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                            : 'interactive-card text-[color:var(--ink)]'
-                        }`}
-                      >
-                        {item.entryLabel}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              </PriorityDisclosure>
+                  );
+                })}
+              </Stack>
+            </Card>
 
-              <PriorityDisclosure
-                label="后续更新"
-                title="报告升级和提醒状态"
-                description="只在需要管理订阅或更新记录时展开。"
-              >
-                <Suspense fallback={<ChatUpdatePanelSkeleton />}>
-                  <UpdatesStatusPanelWithQuery
-                    compact
-                    title="后续更新"
-                    description="查看报告升级、月度提醒和订阅状态，避免追问脱离当前上下文。"
-                  />
-                </Suspense>
-              </PriorityDisclosure>
-            </div>
-          </section>
+            {/* 辅助入口 */}
+            <Card variant="sunken" padding="md">
+              <Eyebrow tone="muted" className="mb-3">辅助入口</Eyebrow>
+              <Stack gap={2}>
+                <Link
+                  href={reportHref}
+                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+                >
+                  {reportId ? '返回当前结果页' : '返回我的档案'}
+                  <span className="text-[color:var(--ink-5)]">→</span>
+                </Link>
+                <Link
+                  href={eventsHref}
+                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+                >
+                  管理关联事件
+                  <span className="text-[color:var(--ink-5)]">→</span>
+                </Link>
+                <Link
+                  href="/docs/structured-chat"
+                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+                >
+                  使用方法
+                  <span className="text-[color:var(--ink-5)]">→</span>
+                </Link>
+              </Stack>
+            </Card>
 
-          <ProductSurfaceRolePanel
-            surface="chat"
-            title="追问页只处理一个关键问题"
-            description="这里承接报告、工具和事件上下文，把用户下一轮问题收敛成清晰动作，而不是重新变成泛问答入口。"
-            compact
-          />
-
-          <PriorityDisclosure
-            label="追问规则"
-            title="需要说明时再看"
-            description="结构锚点、阶段窗口和动作结论已经内化到聊天流程里，不再默认占据首屏。"
-          >
-            <div className="grid gap-3 md:grid-cols-3">
-              {doctrineCards.map(([title, description]) => (
-                <div key={title} className="rounded-[1.25rem] bg-white/82 px-4 py-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{title}</div>
-                  <div className="mt-2 text-sm text-[color:var(--ink)]">{description}</div>
-                </div>
-              ))}
-            </div>
-          </PriorityDisclosure>
+            {/* 后续更新 */}
+            <Suspense fallback={<ChatUpdatePanelSkeleton />}>
+              <UpdatesStatusPanelWithQuery
+                compact
+                title="后续更新"
+                description="查看报告升级、月度提醒和订阅状态。"
+              />
+            </Suspense>
+          </Stack>
         </div>
+
+        {/* 追问规则（折叠到下方） */}
+        <section className="mt-10">
+          <Eyebrow tone="muted" icon={<Sparkles className="h-3 w-3" />} className="mb-4">
+            追问的三个原则
+          </Eyebrow>
+          <div className="grid gap-3 md:grid-cols-3">
+            {doctrineCards.map(([title, description], index) => (
+              <Card key={title} variant="default" padding="md">
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <h3 className="text-sm font-bold text-[color:var(--ink-1)]">{title}</h3>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
+                  {description}
+                </p>
+              </Card>
+            ))}
+          </div>
+        </section>
       </main>
 
       <SiteFooter />
@@ -199,14 +227,16 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
 
 function ChatSkeleton() {
   return (
-    <div className="space-y-4 p-6">
-      <div className="h-16 animate-pulse rounded-[1.5rem] bg-slate-200" />
-      <div className="h-96 animate-pulse rounded-[1.75rem] bg-slate-200" />
-      <div className="h-16 animate-pulse rounded-[1.5rem] bg-slate-200" />
+    <div className="space-y-3 p-5">
+      <div className="h-12 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+      <div className="h-80 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+      <div className="h-12 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
     </div>
   );
 }
 
 function ChatUpdatePanelSkeleton() {
-  return <div className="h-52 animate-pulse rounded-[1.75rem] bg-slate-200" />;
+  return (
+    <div className="h-40 animate-pulse rounded-[var(--radius-md)] bg-[color:var(--bg-sunken)]" />
+  );
 }
