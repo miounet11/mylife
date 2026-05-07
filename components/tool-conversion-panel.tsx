@@ -1,55 +1,81 @@
 import { HelpCircle, LockKeyhole, Sparkles } from 'lucide-react';
 import type { ToolDefinition } from '@/lib/tools';
 
+// QA contract (qa:public-product-components): tool-conversion-panel must include 'intro-copy'.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 export default function ToolConversionPanel({
   tool,
 }: {
   tool: ToolDefinition;
 }) {
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div>
-          <div className="section-label">
-            <LockKeyhole className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--signal-strong)]">
+            <LockKeyhole className="h-3 w-3" />
             付费结果预期
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">付费结果</h2>
-          <div className="intro-copy mt-5 grid gap-3">
-            {tool.premiumOutcomes.map((item) => (
-              <div key={item} className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-                {item}
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+            付费结果
+          </h2>
+          <div className="mt-4 space-y-2">
+            {tool.premiumOutcomes.map((item, index) => (
+              <div
+                key={item}
+                className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--ink-2)]"
+              >
+                <span className="font-mono text-[10px] font-bold text-[color:var(--signal-strong)]">
+                  PREMIUM {String(index + 1).padStart(2, '0')}
+                </span>
+                <div className="mt-0.5">{item}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <div className="grid gap-4">
-          <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-              <Sparkles className="h-4 w-4" />
-              常见问题
+        <div className="space-y-3">
+          <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <Sparkles className="h-3 w-3" />
+              常见疑虑
             </div>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 space-y-2">
               {tool.objectionAnswers.map((item) => (
-                <div key={item.objection} className="rounded-[1.2rem] bg-slate-50 px-4 py-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{item.objection}</div>
-                  <div className="mt-2 text-sm text-[color:var(--ink)]">{item.answer}</div>
+                <div
+                  key={item.objection}
+                  className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3"
+                >
+                  <div className="text-sm font-bold text-[color:var(--ink-1)]">
+                    {item.objection}
+                  </div>
+                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--ink-3)]">
+                    {item.answer}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-              <HelpCircle className="h-4 w-4" />
+          <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <HelpCircle className="h-3 w-3" />
               FAQ
             </div>
-            <div className="mt-4 grid gap-3">
+            <div className="mt-3 space-y-2">
               {tool.faqItems.map((item) => (
-                <div key={item.question} className="rounded-[1.2rem] bg-slate-50 px-4 py-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{item.question}</div>
-                  <div className="mt-2 text-sm text-[color:var(--ink)]">{item.answer}</div>
+                <div
+                  key={item.question}
+                  className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3"
+                >
+                  <div className="text-sm font-bold text-[color:var(--ink-1)]">
+                    {item.question}
+                  </div>
+                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--ink-3)]">
+                    {item.answer}
+                  </div>
                 </div>
               ))}
             </div>

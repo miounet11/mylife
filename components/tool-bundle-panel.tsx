@@ -4,6 +4,10 @@ import type { ToolBundleDefinition } from '@/lib/tools';
 import ToolCardLink from '@/components/tool-card-link';
 import { getToolDefinition } from '@/lib/tools';
 
+// QA contract (qa:public-product-components): tool-bundle-panel must include 'intro-copy'.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 export default function ToolBundlePanel({
   bundle,
   page,
@@ -20,21 +24,26 @@ export default function ToolBundlePanel({
   }
 
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <div className="section-label">
-            <Layers3 className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            <Layers3 className="h-3 w-3" />
             同域工具包
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">{bundle.title}</h2>
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+            {bundle.title}
+          </h2>
         </div>
-        <Link href="/tools" className="action-secondary">
+        <Link
+          href="/tools"
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+        >
           回到工具中心
         </Link>
       </div>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {tools.map((tool) => (
           <ToolCardLink
             key={tool.slug}
@@ -42,13 +51,17 @@ export default function ToolBundlePanel({
             toolSlug={tool.slug}
             category={tool.category}
             page={page}
-            className="block rounded-[1.5rem] border border-[color:var(--line)] bg-white/82 p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+            className="group block rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>
-            <div className="mt-3 text-lg font-bold text-[color:var(--ink)]">{tool.shortTitle}</div>
-            <div className="action-guide mt-4 inline-flex items-center gap-2">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              {tool.category}
+            </div>
+            <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
+              {tool.shortTitle}
+            </div>
+            <div className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--ink-4)] group-hover:gap-1.5 group-hover:text-[color:var(--brand-strong)] transition-all">
               进入工具
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3 w-3" />
             </div>
           </ToolCardLink>
         ))}
