@@ -919,8 +919,8 @@ export default function AIAssistantChat() {
           {!loadingHistory && messages.length === 0 && !context && (
             <div className="space-y-4 rounded-xl bg-white/75 p-4 md:p-5">
               <div>
-                <div className="section-label">
-                  <Sparkles className="h-3.5 w-3.5" />
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                  <Sparkles className="h-3 w-3" />
                   推荐追问
                 </div>
               </div>
@@ -971,7 +971,7 @@ export default function AIAssistantChat() {
           <button
             type="button"
             onClick={() => scrollToBottom('smooth')}
-            className="action-secondary absolute bottom-4 right-4 bg-white/95 py-2 shadow-[0_18px_36px_rgba(23,32,51,0.14)]"
+            className="absolute bottom-4 right-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] shadow-[var(--shadow-card)] transition hover:border-[color:var(--brand)]"
           >
             <ArrowDown className="h-4 w-4" />
             回到最新消息
@@ -1090,7 +1090,7 @@ function ContextCard({
     <div className="space-y-3 rounded-xl border border-[color:var(--line)] bg-white/78 p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Compass className="h-3.5 w-3.5" />
             这次世界易追问
           </div>
@@ -1100,7 +1100,7 @@ function ContextCard({
         </div>
         <Link
           href={context.report ? `/result/${context.report.id}` : '/events'}
-          className="action-secondary py-2"
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
         >
           {context.report ? '返回报告' : '查看事件'}
           <ArrowRight className="h-4 w-4" />

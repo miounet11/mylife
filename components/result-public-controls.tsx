@@ -497,7 +497,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleShare()}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <Share2 className="h-4 w-4" />
           系统分享
@@ -506,7 +506,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleCopy(activeShareUrl, 'active', isPublic ? '已复制结果链接' : '已复制判断入口')}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <Copy className="h-4 w-4" />
           {copiedKey === 'active' ? '已复制链接' : isPublic ? '复制结果链接' : '复制判断入口'}
@@ -515,7 +515,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={handleOpenX}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <ExternalLink className="h-4 w-4" />
           分享到 X.com
@@ -524,7 +524,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleExportImage()}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <Download className="h-4 w-4" />
           导出分享长图
@@ -533,7 +533,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={handleExportDocument}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <FileText className="h-4 w-4" />
           导出文档 / PDF
@@ -542,7 +542,7 @@ export default function ResultPublicControls({
         <button
           type="button"
           onClick={() => void handleCopy(analyzeUrl, 'analyze', '已复制判断入口')}
-          className="action-secondary"
+          className="inline-flex h-10 items-center justify-center gap-2 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
           <Copy className="h-4 w-4" />
           {copiedKey === 'analyze' ? '已复制入口' : '复制判断入口'}

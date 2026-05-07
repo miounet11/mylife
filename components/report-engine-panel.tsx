@@ -268,7 +268,7 @@ export default function ReportEnginePanel({
   };
 
   return (
-    <div className="soft-card rounded-[1.75rem] p-5">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
       <div className="flex items-center gap-3">
         <Sparkles className="h-5 w-5 text-[color:var(--accent-strong)]" />
         <div className="font-semibold text-[color:var(--ink)]">报告引擎版本</div>
