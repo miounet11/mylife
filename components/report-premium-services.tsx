@@ -130,69 +130,83 @@ export default function ReportPremiumServices({
   };
 
   return (
-    <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-5 md:p-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-3xl">
-          <div className="section-label">付费深度增强</div>
-          <h2 className="mt-4 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--signal-strong)]">
+            <Sparkles className="h-3 w-3" />
+            付费深度增强
+          </div>
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
             深度专项服务
           </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+            把当前报告与一件具体事件锁定在一起，由系统接力推进。
+          </p>
         </div>
 
-        <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-4 py-4 text-sm text-[color:var(--ink)] lg:max-w-sm">
-          先锁定一件具体事件
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-5 text-[color:var(--ink-4)] lg:max-w-sm">
+          <span className="font-mono font-bold text-[color:var(--signal-strong)]">REQUIRED</span>{' '}
+          先锁定一件具体事件，再选专项类型
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 xl:grid-cols-2">
+      <div className="mt-5 grid gap-3 xl:grid-cols-2">
         {offers.map((offer) => {
           const Icon = iconMap[offer.key];
           return (
-            <div key={offer.key} className="soft-card rounded-[1.75rem] p-5">
+            <div
+              key={offer.key}
+              className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4"
+            >
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                    <Icon className="h-5 w-5" />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]">
+                    <Icon className="h-4 w-4" />
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-[color:var(--ink)]">{offer.title}</div>
-                    <div className="mt-1 text-xs text-[color:var(--muted)]">{offer.tagline}</div>
+                    <div className="text-sm font-bold text-[color:var(--ink-1)]">{offer.title}</div>
+                    <div className="mt-0.5 text-xs text-[color:var(--ink-4)]">{offer.tagline}</div>
                   </div>
                 </div>
-                <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--accent-strong)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                   {offer.badge}
                 </span>
               </div>
 
-              <div className="mt-4 rounded-[1.4rem] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]">
                 {offer.featuredSignal}
               </div>
 
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">适合这类用户</div>
-                  <div className="mt-3 grid gap-2">
+              <div className="mt-3 grid gap-2 md:grid-cols-2">
+                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    适合
+                  </div>
+                  <div className="mt-1.5 space-y-1">
                     {offer.fitFor.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-3 py-2 text-sm leading-6 text-[color:var(--ink)]">
-                        {item}
+                      <div key={item} className="text-xs leading-5 text-[color:var(--ink-3)]">
+                        · {item}
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
-                  <div className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">用户能拿到什么</div>
-                  <div className="mt-3 grid gap-2">
+                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    交付
+                  </div>
+                  <div className="mt-1.5 space-y-1">
                     {offer.deliverables.map((item) => (
-                      <div key={item} className="rounded-2xl bg-white px-3 py-2 text-sm leading-6 text-[color:var(--ink)]">
-                        {item}
+                      <div key={item} className="text-xs leading-5 text-[color:var(--ink-3)]">
+                        · {item}
                       </div>
                     ))}
                   </div>
                 </div>
               </div>
 
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-4 flex flex-wrap gap-2">
                 <Link
                   href={mapPrimaryHref(offer, reportId, canManage, ctaStrategyKey, sourceFamily)}
                   onClick={() => {
@@ -207,7 +221,7 @@ export default function ReportPremiumServices({
                       },
                     });
                   }}
-                  className="action-secondary inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] hover:bg-[color:var(--signal-strong)] hover:text-white"
                 >
                   {canManage ? offer.primaryCtaLabel : '生成我的专属报告'}
                   <ArrowRight className="h-4 w-4" />
@@ -226,7 +240,7 @@ export default function ReportPremiumServices({
                       },
                     });
                   }}
-                  className="action-secondary"
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
                 >
                   {offer.secondaryCtaLabel}
                   <ArrowRight className="h-4 w-4" />
@@ -236,10 +250,9 @@ export default function ReportPremiumServices({
                   <button
                     type="button"
                     onClick={() => handlePrefill(offer.key)}
-                    className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[color:var(--accent-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--accent-strong)]"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 text-sm font-semibold text-[color:var(--signal-strong)] hover:bg-[color:var(--signal)] hover:text-[color:var(--ink-1)]"
                   >
                     提交需求单
-                    <ArrowRight className="h-4 w-4" />
                   </button>
                 ) : null}
               </div>
