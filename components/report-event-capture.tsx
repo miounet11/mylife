@@ -162,80 +162,129 @@ export default function ReportEventCapture({
   }
 
   return (
-    <div id="result-event-capture" className="soft-card rounded-[1.75rem] p-5">
+    <div
+      id="result-event-capture"
+      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
+    >
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-          <CalendarPlus className="h-5 w-5" />
+        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]">
+          <CalendarPlus className="h-4 w-4" />
         </div>
         <div>
-          <div className="font-semibold text-[color:var(--ink)]">把报告判断落成事件</div>
-          <div className="intro-copy mt-1">先把关键建议存成事件，再回到聊天页或结果页做后续复盘。</div>
+          <div className="text-base font-bold text-[color:var(--ink-1)]">把报告判断落成事件</div>
+          <div className="mt-1 text-xs leading-5 text-[color:var(--ink-4)]">
+            先把关键建议存成事件，再回到聊天页或结果页做后续复盘。
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3">
+      <div className="mt-4 grid gap-2.5">
         {suggestions.map((item) => {
           const isSaved = savedKeys.includes(item.key);
           return (
-            <div key={item.key} className="rounded-[1.5rem] bg-slate-50 p-4">
+            <div
+              key={item.key}
+              className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
+            >
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                  <div className="mt-1 text-xs text-[color:var(--muted)]">
-                    {item.date} · {mapEventTypeLabel(item.type)} · {mapImpactLabel(item.impact)}
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-[color:var(--ink-1)]">{item.title}</div>
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 font-mono text-[10px] tabular-nums text-[color:var(--ink-5)]">
+                    <span>{item.date}</span>
+                    <span>·</span>
+                    <span>{mapEventTypeLabel(item.type)}</span>
+                    <span>·</span>
+                    <span>{mapImpactLabel(item.impact)}</span>
                   </div>
                 </div>
                 <button
                   type="button"
                   onClick={() => void saveSuggestion(item)}
                   disabled={isSaved || savingKey === item.key}
-                  className="action-secondary min-h-0 shrink-0 px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-60"
+                  className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--radius)] border px-3 text-xs font-bold transition disabled:cursor-not-allowed ${
+                    isSaved
+                      ? 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
+                      : 'border-[color:var(--hairline-strong)] bg-[color:var(--paper)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)] disabled:opacity-50'
+                  }`}
                 >
-                  {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
-                  {isSaved ? '已保存' : savingKey === item.key ? '保存中...' : '存为事件'}
+                  {isSaved ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                  {isSaved ? '已保存' : savingKey === item.key ? '保存中…' : '存为事件'}
                 </button>
               </div>
-              <div className="mt-3 text-sm text-[color:var(--ink)]">{item.description}</div>
-              <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.reason}</div>
+              <div className="mt-2 text-xs leading-5 text-[color:var(--ink-2)]">
+                {item.description}
+              </div>
+              <div className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]">
+                {item.reason}
+              </div>
             </div>
           );
         })}
       </div>
 
-      {error && <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>}
+      {error && (
+        <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
+          {error}
+        </div>
+      )}
 
       {pastEventTemplates.length > 0 ? (
-        <div className="mt-6">
-          <div className="font-semibold text-[color:var(--ink)]">回看过去是否发生过这些节点</div>
-          <div className="mt-1 text-sm text-[color:var(--muted)]">
+        <div className="mt-5">
+          <div className="text-sm font-bold text-[color:var(--ink-1)]">回看过去是否发生过这些节点</div>
+          <div className="mt-1 text-xs leading-5 text-[color:var(--ink-4)]">
             如果其中某条确实发生过，直接存下来。系统会先按今天建一条历史样本，后续你再补真实日期。
           </div>
-          <div className="mt-4 grid gap-3">
+          <div className="mt-3 grid gap-2.5">
             {pastEventTemplates.map((item) => {
               const isSaved = savedKeys.includes(item.key);
               return (
-                <div key={item.key} className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-4">
+                <div
+                  key={item.key}
+                  className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4"
+                >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                      <div className="mt-1 flex flex-wrap gap-2 text-[11px] text-[color:var(--muted)]">
-                        <span>{mapEventTypeLabel(item.type)}</span>
-                        {item.occurrenceWindow ? <span>{item.occurrenceWindow}</span> : null}
-                        <span>{item.confidenceLabel === 'high' ? '高概率印证点' : '中概率印证点'}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="text-sm font-bold text-[color:var(--ink-1)]">{item.title}</div>
+                      <div className="mt-1 flex flex-wrap gap-1.5">
+                        <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] font-semibold text-[color:var(--ink-4)]">
+                          {mapEventTypeLabel(item.type)}
+                        </span>
+                        {item.occurrenceWindow ? (
+                          <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] tabular-nums text-[color:var(--ink-4)]">
+                            {item.occurrenceWindow}
+                          </span>
+                        ) : null}
+                        <span
+                          className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 text-[10px] font-bold ${
+                            item.confidenceLabel === 'high'
+                              ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
+                              : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] text-[color:var(--ink-4)]'
+                          }`}
+                        >
+                          {item.confidenceLabel === 'high' ? '高概率' : '中概率'}
+                        </span>
                       </div>
                     </div>
                     <button
                       type="button"
                       onClick={() => void savePastTemplate(item)}
                       disabled={isSaved || savingKey === item.key}
-                      className="action-secondary min-h-0 shrink-0 px-4 py-2 text-xs disabled:cursor-not-allowed disabled:opacity-60"
+                      className={`inline-flex h-8 shrink-0 items-center gap-1.5 rounded-[var(--radius)] border px-3 text-xs font-bold transition disabled:cursor-not-allowed ${
+                        isSaved
+                          ? 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
+                          : 'border-[color:var(--hairline-strong)] bg-[color:var(--paper)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)] disabled:opacity-50'
+                      }`}
                     >
-                      {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
-                      {isSaved ? '已记为发生过' : savingKey === item.key ? '保存中...' : '这条发生过'}
+                      {isSaved ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                      {isSaved ? '已记为发生过' : savingKey === item.key ? '保存中…' : '这条发生过'}
                     </button>
                   </div>
-                  <div className="mt-3 text-sm text-[color:var(--ink)]">{item.description}</div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.reason}</div>
+                  <div className="mt-2 text-xs leading-5 text-[color:var(--ink-2)]">
+                    {item.description}
+                  </div>
+                  <div className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]">
+                    {item.reason}
+                  </div>
                 </div>
               );
             })}
@@ -243,7 +292,7 @@ export default function ReportEventCapture({
         </div>
       ) : null}
 
-      <div className="mt-4 flex flex-wrap gap-3">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Link
           href={buildChatHref({
             reportId,
@@ -265,7 +314,7 @@ export default function ReportEventCapture({
               },
             });
           }}
-          className="action-secondary inline-flex items-center gap-2 rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-4 py-3 text-sm font-semibold text-white"
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
         >
           去 AI 深问这份报告
           <ArrowRight className="h-4 w-4" />
@@ -283,7 +332,7 @@ export default function ReportEventCapture({
               },
             });
           }}
-          className="action-secondary"
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
         >
           查看事件中心
           <ArrowRight className="h-4 w-4" />

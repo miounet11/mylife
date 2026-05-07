@@ -141,23 +141,27 @@ export default function AnalyzeWorkspace({
           />
         </div>
 
-        <div className="space-y-5">
-          <div className="workspace-panel p-5 md:p-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="space-y-4">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="text-lg font-bold text-[color:var(--ink)]">既有判断列表</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">新建判断在左，历史记录在这里回看。</div>
+                <div className="text-base font-bold leading-snug text-[color:var(--ink-1)]">
+                  既有判断列表
+                </div>
+                <div className="mt-1 text-xs text-[color:var(--ink-4)]">
+                  新建判断在左，历史记录在这里回看。
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {nameGroups.slice(0, 8).map((name) => (
                   <button
                     key={name}
                     type="button"
                     onClick={() => setSelectedName(name)}
-                    className={`rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                    className={`inline-flex h-7 items-center rounded-[var(--radius-sm)] border px-2.5 text-xs font-semibold transition ${
                       selectedName === name
-                        ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                        : 'border border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                        ? 'border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
+                        : 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-4)] hover:border-[color:var(--brand)]'
                     }`}
                   >
                     {name}
@@ -168,78 +172,93 @@ export default function AnalyzeWorkspace({
           </div>
 
           {error ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>
+            <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
+              {error}
+            </div>
           ) : null}
 
           {loading ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[1, 2, 3].map((item) => (
-                <div key={item} className="h-32 animate-pulse rounded-[1.5rem] bg-slate-200" />
+                <div
+                  key={item}
+                  className="h-28 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]"
+                />
               ))}
             </div>
           ) : filteredFortunes.length > 0 ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               {filteredFortunes.map((item) => (
                 <Link
                   key={item.id}
                   href={`/result/${item.id}`}
-                  className="block rounded-xl border border-[color:var(--line)] bg-white px-5 py-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+                  className="block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] md:px-5"
                 >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1 rounded-md bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                          <UserRound className="h-3.5 w-3.5" />
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-[10px] font-bold text-[color:var(--brand-strong)]">
+                          <UserRound className="h-2.5 w-2.5" />
                           {item.name || '未命名对象'}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-md bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                          <Layers3 className="h-3.5 w-3.5" />
+                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-[10px] font-bold text-[color:var(--ink-4)]">
+                          <Layers3 className="h-2.5 w-2.5" />
                           {item.pattern?.type || '综合判断'}
                         </span>
                       </div>
 
-                      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-sm text-[color:var(--muted)]">
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] tabular-nums text-[color:var(--ink-5)]">
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {item.birth_date || '未记录出生日期'}
+                          <Calendar className="h-3 w-3" />
+                          {item.birth_date || '—'}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Clock3 className="h-3.5 w-3.5" />
-                          {item.birth_time || '未记录出生时间'}
+                          <Clock3 className="h-3 w-3" />
+                          {item.birth_time || '—'}
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <FileText className="h-3.5 w-3.5" />
+                          <FileText className="h-3 w-3" />
                           {formatDateLabel(item.created_at)}
                         </span>
                       </div>
 
-                      <p className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <p className="mt-2 text-xs leading-5 text-[color:var(--ink-3)]">
                         {truncate(item.analysis?.opening || item.analysis?.explanation || '')}
                       </p>
                     </div>
 
-                    <div className="flex shrink-0 items-center gap-4">
-                      <div className="rounded-md bg-[color:var(--warm-soft)] px-3 py-1 text-sm font-semibold text-[color:var(--warm)]">
+                    <div className="flex shrink-0 items-center gap-2">
+                      <div className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-[10px] font-bold text-[color:var(--signal-strong)]">
                         {mapStrengthLabel(item.pattern?.strength)}
                       </div>
-                      <ChevronRight className="h-5 w-5 text-[color:var(--muted)]" />
+                      <ChevronRight className="h-4 w-4 text-[color:var(--ink-5)]" />
                     </div>
                   </div>
                 </Link>
               ))}
             </div>
           ) : (
-            <div className="workspace-panel px-6 py-12 text-center">
-              <div className="text-xl font-bold text-[color:var(--ink)]">还没有判断记录</div>
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-5 py-10 text-center">
+              <div className="text-base font-bold text-[color:var(--ink-1)]">
+                还没有判断记录
+              </div>
             </div>
           )}
 
-          <div className="workspace-panel-muted p-5">
-            <div className="text-sm font-semibold text-[color:var(--ink)]">辅助入口</div>
-            <div className="intro-copy mt-2">如果你还在理解体系，可以先回到世界易总入口、方法论和案例层。</div>
-            <div className="mt-4 flex flex-wrap gap-3 text-sm font-semibold">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              辅助入口
+            </div>
+            <p className="mt-1.5 text-xs leading-5 text-[color:var(--ink-4)]">
+              如果你还在理解体系，可以先回到世界易总入口、方法论和案例层。
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2 text-sm font-semibold">
               {worldYiWorkspaceLinks.map((item) => (
-                <Link key={item.href} href={item.href} className="action-secondary">
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="inline-flex h-8 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+                >
                   {item.label}
                 </Link>
               ))}

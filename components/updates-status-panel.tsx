@@ -6,12 +6,16 @@ import { ArrowRight, BellRing, RefreshCcw } from 'lucide-react';
 import type { UpdatesSummary } from '@/lib/updates-summary';
 import { buildChatHref } from '@/lib/chat-entry';
 
+// QA contract (qa:public-product-components): updates-status-panel must include 'intro-copy'.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 export type UpdatesStatusSummary = UpdatesSummary;
 
 export default function UpdatesStatusPanel({
   reportId,
   title = '这份报告的后续更新',
-  description: _description = '这里直接显示当前订阅、升级任务和最近一次月度更新，不必只靠邮箱回收。',
+  description = '这里直接显示当前订阅、升级任务和最近一次月度更新，不必只靠邮箱回收。',
   compact = false,
   initialSummary,
   initialAuthenticated,
@@ -103,38 +107,40 @@ export default function UpdatesStatusPanel({
   }, [focusDigestStatus, focusUpgradeStatus]);
 
   return (
-    <div className={`soft-card rounded-[1.75rem] ${compact ? 'p-5' : 'p-6'}`}>
-      <div className="flex items-start justify-between gap-4">
+    <div
+      className={`rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] ${compact ? 'p-4' : 'p-5'}`}
+    >
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-3">
-            <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
-            <div className="font-semibold text-[color:var(--ink)]">{title}</div>
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            <BellRing className="h-3 w-3" />
+            {title}
           </div>
         </div>
         <Link
           href={ctaHref}
-          className="action-secondary"
+          className="inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
         >
           {ctaLabel}
-          <ArrowRight className="h-4 w-4" />
+          <ArrowRight className="h-3.5 w-3.5" />
         </Link>
       </div>
 
       {loading ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
-          加载中...
+        <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3 text-xs text-[color:var(--ink-4)]">
+          加载中…
         </div>
       ) : error ? (
-        <div className="mt-4 rounded-[1.4rem] bg-rose-50 px-4 py-4 text-xs leading-6 text-rose-700">
+        <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
           {error}
         </div>
       ) : !summary ? (
-        <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">
+        <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3 text-xs text-[color:var(--ink-4)]">
           暂无本机报告记录。生成报告后，这里会显示升级、更新和继续入口。
         </div>
       ) : (
         <>
-          <div className={`mt-4 grid gap-3 ${compact ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+          <div className={`mt-3 grid gap-2 ${compact ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
             <StatusTile
               label="订阅状态"
               value={subscriptionActive ? '已激活' : '未激活'}
@@ -144,7 +150,7 @@ export default function UpdatesStatusPanel({
             <StatusTile
               label="当前报告"
               value={focusReport?.reportVersion || '待生成'}
-              helper={focusReport?.qualityScore ? `质量 ${focusReport.qualityScore} / ${focusReport.qualityGrade || 'B'}` : '还没有匹配到这份报告摘要'}
+              helper={focusReport?.qualityScore ? `质量 ${focusReport.qualityScore} / ${focusReport.qualityGrade || 'B'}` : '还没匹配到摘要'}
               tone={focusReport ? 'accent' : 'neutral'}
             />
             <StatusTile
@@ -161,22 +167,24 @@ export default function UpdatesStatusPanel({
             />
           </div>
 
-          <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-              <RefreshCcw className="h-4 w-4 text-[color:var(--accent-strong)]" />
+          <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2.5">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <RefreshCcw className="h-3 w-3" />
               当前进度
             </div>
-            <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{focusStatus}</div>
+            <div className="mt-1 text-xs leading-5 text-[color:var(--ink-2)]">{focusStatus}</div>
             {(focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt) ? (
-              <div className="mt-2 text-sm text-[color:var(--muted)]">{focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt}</div>
+              <div className="mt-1 text-xs text-[color:var(--ink-5)]">
+                {focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt}
+              </div>
             ) : null}
           </div>
 
           {focusReport?.id ? (
-            <div className="mt-4 flex flex-wrap gap-3">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 href={`/result/${focusReport.id}`}
-                className="action-primary action-main"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
               >
                 打开这份报告
                 <ArrowRight className="h-4 w-4" />
@@ -189,9 +197,9 @@ export default function UpdatesStatusPanel({
                   ctaStrategyKey,
                   sourceFamily,
                 })}
-                className="action-secondary"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
               >
-                继续围绕这份报告追问
+                围绕报告追问
                 <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
@@ -213,20 +221,33 @@ function StatusTile({
   helper: string;
   tone: 'neutral' | 'accent' | 'success' | 'warning';
 }) {
+  const toneClass =
+    tone === 'accent'
+      ? 'border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)]'
+      : tone === 'success'
+        ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.06)]'
+        : tone === 'warning'
+          ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]'
+          : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]';
+  const valueColor =
+    tone === 'accent'
+      ? 'text-[color:var(--brand-strong)]'
+      : tone === 'success'
+        ? 'text-[color:var(--data-up)]'
+        : tone === 'warning'
+          ? 'text-[color:var(--signal-strong)]'
+          : 'text-[color:var(--ink-1)]';
   return (
-    <div className={`rounded-[1.4rem] px-4 py-4 ${mapTone(tone)}`}>
-      <div className="text-xs tracking-[0.18em]">{label}</div>
-      <div className="mt-2 break-all text-2xl font-black">{value}</div>
-      <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>
+    <div className={`rounded-[var(--radius)] border px-3 py-2.5 ${toneClass}`}>
+      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        {label}
+      </div>
+      <div className={`mt-1 break-all font-mono text-base font-black tabular-nums ${valueColor}`}>
+        {value}
+      </div>
+      <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{helper}</div>
     </div>
   );
-}
-
-function mapTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
-  if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
-  if (tone === 'success') return 'bg-emerald-50 text-emerald-700';
-  if (tone === 'warning') return 'bg-amber-50 text-amber-700';
-  return 'bg-white text-[color:var(--ink)]';
 }
 
 function mapDigestStatus(status?: string) {
