@@ -1240,24 +1240,24 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 function ReportSkeleton() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <div className="h-64 bg-gray-200 rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-gray-200 rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-gray-200 rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-gray-200 rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-gray-200 rounded-xl animate-pulse"></div>
+      <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
     </div>
   );
 }
 
 function ChartSkeleton() {
   return (
-    <div className="h-64 bg-gray-200 rounded-xl animate-pulse"></div>
+    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
   );
 }
 
 function GuideSkeleton() {
   return (
-    <div className="h-64 bg-gray-200 rounded-xl animate-pulse"></div>
+    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
   );
 }
 

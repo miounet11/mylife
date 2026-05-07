@@ -33,7 +33,7 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
         <CardTitle>
           <div className="flex items-center space-x-3">
             <span className="text-3xl">🌊</span>
-            <span className="text-2xl font-bold text-gray-900">五行分析</span>
+            <span className="text-2xl font-bold text-[color:var(--ink-1)]">五行分析</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -60,8 +60,8 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
 
         {/* 分析总结 */}
         <div className="mt-8 bg-gradient-to-r from-purple-100 to-blue-100 rounded-xl p-6">
-          <h4 className="text-lg font-bold text-gray-900 mb-3">五行分析总结</h4>
-          <div className="space-y-2 text-sm text-gray-700">
+          <h4 className="text-lg font-bold text-[color:var(--ink-1)] mb-3">五行分析总结</h4>
+          <div className="space-y-2 text-sm text-[color:var(--ink-3)]">
             {elements.map((element) => {
               if (element.strength >= 25) {
                 return (
@@ -97,8 +97,8 @@ function ElementBar({ element, maxStrength }: any) {
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <span className="text-2xl">{element.icon}</span>
-          <span className="font-semibold text-gray-900">{element.name}</span>
-          <span className="text-sm text-gray-600">({element.strength}%)</span>
+          <span className="font-semibold text-[color:var(--ink-1)]">{element.name}</span>
+          <span className="text-sm text-[color:var(--ink-4)]">({element.strength}%)</span>
         </div>
         <span className={cn(
           "text-xs font-bold px-2 py-1 rounded",
@@ -111,7 +111,7 @@ function ElementBar({ element, maxStrength }: any) {
           {isWeak && '弱'}
         </span>
       </div>
-      <div className="h-4 bg-gray-200 rounded-full overflow-hidden">
+      <div className="h-4 bg-[color:var(--bg-sunken)] rounded-full overflow-hidden">
         <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
@@ -139,7 +139,7 @@ function ElementCard({ element }: any) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center space-x-2">
           <span className="text-2xl">{element.icon}</span>
-          <span className="font-bold text-gray-900">{element.name}</span>
+          <span className="font-bold text-[color:var(--ink-1)]">{element.name}</span>
         </div>
         <span className={cn(
           "text-xs font-bold px-2 py-1 rounded",
@@ -152,7 +152,7 @@ function ElementCard({ element }: any) {
       </div>
 
       {/* 描述 */}
-      <p className="text-sm text-gray-600 mb-3">{element.description}</p>
+      <p className="text-sm text-[color:var(--ink-4)] mb-3">{element.description}</p>
 
       {/* 状态指示 */}
       <div className="flex items-center space-x-2 text-xs">
@@ -170,14 +170,14 @@ function ElementCard({ element }: any) {
         )}
         {isWeak && (
           <>
-            <span className="text-orange-600">!</span>
-            <span className="text-orange-700 font-medium">偏弱</span>
+            <span className="text-[color:var(--signal-strong)]">!</span>
+            <span className="text-[color:var(--signal-strong)] font-medium">偏弱</span>
           </>
         )}
-        <span className="text-gray-500">建议：</span>
+        <span className="text-[color:var(--ink-5)]">建议：</span>
         {isStrong && <span className="text-[color:var(--data-up)]">保持现状</span>}
         {element.quality === 'medium' && <span className="text-[color:var(--env)]">平衡调节</span>}
-        {isWeak && <span className="text-orange-600">宜补宜扶</span>}
+        {isWeak && <span className="text-[color:var(--signal-strong)]">宜补宜扶</span>}
       </div>
     </div>
   );

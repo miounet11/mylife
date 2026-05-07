@@ -63,8 +63,8 @@ export interface StateVectorDashboardProps {
 const WUXING_COLORS = {
   wood: { bg: 'bg-[color:var(--data-up)]', text: 'text-[color:var(--data-up)]', label: '木' },
   fire: { bg: 'bg-[color:var(--alert)]', text: 'text-[color:var(--alert)]', label: '火' },
-  earth: { bg: 'bg-yellow-500', text: 'text-yellow-600', label: '土' },
-  metal: { bg: 'bg-gray-400', text: 'text-gray-600', label: '金' },
+  earth: { bg: 'bg-[color:var(--signal)]', text: 'text-[color:var(--signal-strong)]', label: '土' },
+  metal: { bg: 'bg-[color:var(--ink-5)]', text: 'text-[color:var(--ink-4)]', label: '金' },
   water: { bg: 'bg-[color:var(--env)]', text: 'text-[color:var(--env)]', label: '水' },
 };
 
@@ -84,13 +84,13 @@ const ElementBar: React.FC<{
       <span className={`w-6 text-sm font-medium ${config.text}`}>
         {config.label}
       </span>
-      <div className="flex-1 h-3 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+      <div className="flex-1 h-3 bg-[color:var(--bg-sunken)] rounded-full overflow-hidden">
         <div
           className={`h-full ${config.bg} rounded-full transition-all duration-500`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="w-10 text-xs text-gray-500 dark:text-gray-400 text-right">
+      <span className="w-10 text-xs text-[color:var(--ink-5)] text-right">
         {value.toFixed(0)}%
       </span>
     </div>
@@ -126,7 +126,7 @@ const ScoreBadge: React.FC<{
         {score.toFixed(0)}
       </div>
       {label && (
-        <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
+        <span className="text-xs text-[color:var(--ink-5)]">{label}</span>
       )}
     </div>
   );
@@ -143,12 +143,12 @@ const ElementTags: React.FC<{
   if (!elements || elements.length === 0) return null;
 
   const tagClass = variant === 'positive'
-    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)] dark:bg-emerald-900/30 dark:text-emerald-400'
-    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)] dark:bg-rose-900/30 dark:text-rose-400';
+    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)]'
+    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)]';
 
   return (
     <div>
-      <span className="text-xs text-gray-500 dark:text-gray-400 block mb-1">{title}</span>
+      <span className="text-xs text-[color:var(--ink-5)] block mb-1">{title}</span>
       <div className="flex flex-wrap gap-1">
         {elements.map((el, i) => (
           <span key={i} className={`px-2 py-0.5 rounded text-xs font-medium ${tagClass}`}>
@@ -172,8 +172,8 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
 }) => {
   if (!stateVector) {
     return (
-      <div className={`p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+      <div className={`p-4 rounded-lg bg-[color:var(--bg-elevated)] ${className}`}>
+        <p className="text-[color:var(--ink-5)] text-sm text-center">
           状态向量数据加载中...
         </p>
       </div>
@@ -183,7 +183,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
   const { comprehensive, elemental, tenGod, structure } = stateVector;
 
   return (
-    <div className={`rounded-xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-xl bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* 标题栏 */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -204,11 +204,11 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
             />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <span className="text-sm font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)]">
                   {comprehensive.level?.name || '未知等级'}
                 </span>
               </div>
-              <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
+              <p className="text-xs text-[color:var(--ink-5)] line-clamp-2">
                 {comprehensive.level?.description || ''}
               </p>
             </div>
@@ -219,11 +219,11 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
         {elemental && !compact && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">
                 五行能量分布
               </span>
               {elemental.balance_score !== undefined && (
-                <span className="text-xs text-gray-500 dark:text-gray-400">
+                <span className="text-xs text-[color:var(--ink-5)]">
                   平衡度: {elemental.balance_score.toFixed(0)}分
                 </span>
               )}
@@ -246,7 +246,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
               )}
             </div>
             {elemental.climate?.description && (
-              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400 italic">
+              <p className="mt-2 text-xs text-[color:var(--ink-5)] italic">
                 调候: {elemental.climate.description}
               </p>
             )}
@@ -255,22 +255,22 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
 
         {/* 十神功能层 */}
         {tenGod && !compact && (
-          <div className="grid grid-cols-3 gap-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+          <div className="grid grid-cols-3 gap-3 p-3 bg-[color:var(--bg-elevated)] rounded-lg">
             <div className="text-center">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block">主导角色</span>
-              <span className="text-sm font-medium text-indigo-600 dark:text-indigo-400">
+              <span className="text-xs text-[color:var(--ink-5)] block">主导角色</span>
+              <span className="text-sm font-medium text-indigo-600">
                 {tenGod.dominant_role || '无'}
               </span>
             </div>
             <div className="text-center">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block">流通效率</span>
-              <span className="text-sm font-medium text-[color:var(--data-up)] dark:text-green-400">
+              <span className="text-xs text-[color:var(--ink-5)] block">流通效率</span>
+              <span className="text-sm font-medium text-[color:var(--data-up)]">
                 {tenGod.structure_efficiency?.toFixed(0) || 0}分
               </span>
             </div>
             <div className="text-center">
-              <span className="text-xs text-gray-500 dark:text-gray-400 block">冲突指数</span>
-              <span className="text-sm font-medium text-[color:var(--alert)] dark:text-red-400">
+              <span className="text-xs text-[color:var(--ink-5)] block">冲突指数</span>
+              <span className="text-sm font-medium text-[color:var(--alert)]">
                 {tenGod.conflict_index?.toFixed(0) || 0}
               </span>
             </div>
@@ -283,13 +283,13 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
             <div className="flex items-center justify-between mb-2">
               {structure.body_strength?.level_info?.name && (
                 <span className="text-sm">
-                  日主: <span className="font-medium text-gray-900 dark:text-gray-100">
+                  日主: <span className="font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)]">
                     {structure.body_strength.level_info.name}
                   </span>
                 </span>
               )}
               {structure.pattern?.info?.name && (
-                <span className="text-xs text-[color:var(--brand-strong)] dark:text-purple-400 bg-[color:var(--brand-soft-2)] dark:bg-purple-900/30 px-2 py-0.5 rounded">
+                <span className="text-xs text-[color:var(--brand-strong)] bg-[color:var(--brand-soft-2)] px-2 py-0.5 rounded">
                   {structure.pattern.info.name}
                 </span>
               )}
@@ -325,14 +325,14 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
         {comprehensive && !compact && (
           <div className="grid grid-cols-2 gap-3">
             {comprehensive.strengths && comprehensive.strengths.length > 0 && (
-              <div className="p-2 bg-[rgba(47,125,82,0.08)] dark:bg-emerald-900/20 rounded-lg">
-                <span className="text-xs text-[color:var(--data-up)] dark:text-emerald-400 font-medium block mb-1">
+              <div className="p-2 bg-[rgba(47,125,82,0.08)] rounded-lg">
+                <span className="text-xs text-[color:var(--data-up)] font-medium block mb-1">
                   优势
                 </span>
-                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                <ul className="text-xs text-[color:var(--ink-4)] space-y-1">
                   {comprehensive.strengths.slice(0, 3).map((s, i) => (
                     <li key={i} className="flex items-start gap-1">
-                      <span className="text-emerald-500">✓</span>
+                      <span className="text-[color:var(--data-up)]">✓</span>
                       <span className="line-clamp-1">{s}</span>
                     </li>
                   ))}
@@ -340,14 +340,14 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
               </div>
             )}
             {comprehensive.weaknesses && comprehensive.weaknesses.length > 0 && (
-              <div className="p-2 bg-[color:var(--alert-soft)] dark:bg-rose-900/20 rounded-lg">
-                <span className="text-xs text-[color:var(--alert)] dark:text-rose-400 font-medium block mb-1">
+              <div className="p-2 bg-[color:var(--alert-soft)] rounded-lg">
+                <span className="text-xs text-[color:var(--alert)] font-medium block mb-1">
                   弱势
                 </span>
-                <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                <ul className="text-xs text-[color:var(--ink-4)] space-y-1">
                   {comprehensive.weaknesses.slice(0, 3).map((w, i) => (
                     <li key={i} className="flex items-start gap-1">
-                      <span className="text-rose-500">!</span>
+                      <span className="text-[color:var(--alert)]">!</span>
                       <span className="line-clamp-1">{w}</span>
                     </li>
                   ))}

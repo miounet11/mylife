@@ -69,8 +69,8 @@ const CustomTooltip: React.FC<{
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+    <div className="bg-[color:var(--paper)] p-3 rounded-[var(--radius)] border border-[color:var(--hairline)]">
+      <p className="text-sm font-medium text-[color:var(--ink-3)] mb-2">
         {label}
       </p>
       {payload.map((entry, index) => {
@@ -84,8 +84,8 @@ const CustomTooltip: React.FC<{
               className="w-3 h-3 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-gray-600 dark:text-gray-400">{entry.name}:</span>
-            <span className="font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-[color:var(--ink-4)]">{entry.name}:</span>
+            <span className="font-medium text-[color:var(--ink-1)]">
               {(entry.value * 100).toFixed(1)}%
             </span>
           </div>
@@ -193,8 +193,8 @@ export const EventProbabilityCurve: React.FC<EventProbabilityCurveProps> = ({
 
   if (!series || series.length === 0) {
     return (
-      <div className={`p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+      <div className={`p-4 rounded-lg bg-[color:var(--bg-elevated)] ${className}`}>
+        <p className="text-[color:var(--ink-5)] text-sm text-center">
           概率曲线数据加载中...
         </p>
       </div>
@@ -202,7 +202,7 @@ export const EventProbabilityCurve: React.FC<EventProbabilityCurveProps> = ({
   }
 
   return (
-    <div className={`rounded-xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-xl bg-[color:var(--paper)] shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -313,8 +313,8 @@ export const EventProbabilityCurve: React.FC<EventProbabilityCurveProps> = ({
         </ResponsiveContainer>
 
         {/* Legend explanation */}
-        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
-          <p className="text-xs text-gray-500 dark:text-gray-400">
+        <div className="mt-4 pt-3 border-t border-[color:var(--hairline)]">
+          <p className="text-xs text-[color:var(--ink-5)]">
             曲线显示各类事件发生的概率趋势。阴影区域表示置信区间，虚线标记当前年龄。概率基于多维状态向量和天时因子综合计算。
           </p>
         </div>

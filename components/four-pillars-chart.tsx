@@ -28,23 +28,23 @@ export default function FourPillarsChart({ pillars, birthDate, birthTime }: Four
         <CardTitle>
           <div className="flex items-center space-x-3">
             <span className="text-3xl">🔮</span>
-            <span className="text-2xl font-bold text-gray-900">四柱结构</span>
+            <span className="text-2xl font-bold text-[color:var(--ink-1)]">四柱结构</span>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent>
         {/* 出生信息 */}
-        <div className="mb-6 bg-white rounded-lg p-4 border border-gray-200">
+        <div className="mb-6 bg-white rounded-lg p-4 border border-[color:var(--hairline)]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <div className="text-xs text-gray-500 mb-1">出生日期</div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-xs text-[color:var(--ink-5)] mb-1">出生日期</div>
+              <div className="text-sm font-semibold text-[color:var(--ink-1)]">
                 {formatDateTime(birthDate)}
               </div>
             </div>
             <div>
-              <div className="text-xs text-gray-500 mb-1">出生时间</div>
-              <div className="text-sm font-semibold text-gray-900">
+              <div className="text-xs text-[color:var(--ink-5)] mb-1">出生时间</div>
+              <div className="text-sm font-semibold text-[color:var(--ink-1)]">
                 {birthTime}
               </div>
             </div>
@@ -74,7 +74,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
   const wuxingIcon = getWuxingIcon(wuxing);
 
   return (
-    <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden hover:shadow-xl transition transform hover:scale-105">
+    <div className="bg-white rounded-lg border-2 border-[color:var(--hairline)] overflow-hidden hover:shadow-xl transition transform hover:scale-105">
       {/* 柱头 */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3">
         <div className="text-center">
@@ -88,7 +88,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
         <div className="flex items-center justify-center space-x-4 mb-4">
           {/* 天干 */}
           <div className="flex-1">
-            <div className="text-xs text-gray-500 mb-1">天干</div>
+            <div className="text-xs text-[color:var(--ink-5)] mb-1">天干</div>
             <div 
               className={cn(
                 "text-3xl font-bold p-3 rounded-lg",
@@ -101,25 +101,25 @@ function PillarCard({ pillar, name, palace, index }: any) {
 
           {/* 地支 */}
           <div className="flex-1">
-            <div className="text-xs text-gray-500 mb-1">地支</div>
-            <div className="text-3xl font-bold text-gray-900 p-3 rounded-lg bg-gray-50">
+            <div className="text-xs text-[color:var(--ink-5)] mb-1">地支</div>
+            <div className="text-3xl font-bold text-[color:var(--ink-1)] p-3 rounded-lg bg-[color:var(--bg-elevated)]">
               {pillar.earthlyBranch}
             </div>
           </div>
         </div>
 
         {/* 五行 */}
-        <div className="mb-4 p-2 bg-gray-50 rounded-lg">
+        <div className="mb-4 p-2 bg-[color:var(--bg-elevated)] rounded-lg">
           <div className="flex items-center space-x-2">
             <span className="text-2xl">{wuxingIcon}</span>
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-[color:var(--ink-3)]">
               {wuxing === 'wood' && '木'}
               {wuxing === 'fire' && '火'}
               {wuxing === 'earth' && '土'}
               {wuxing === 'metal' && '金'}
               {wuxing === 'water' && '水'}
             </span>
-            <span className="text-xs text-gray-500 ml-auto">
+            <span className="text-xs text-[color:var(--ink-5)] ml-auto">
               {getWuxing(pillar.celestialStem) === 'wood' && '木'}
               {getWuxing(pillar.celestialStem) === 'fire' && '火'}
               {getWuxing(pillar.celestialStem) === 'earth' && '土'}
@@ -131,16 +131,16 @@ function PillarCard({ pillar, name, palace, index }: any) {
 
         {/* 纳音 */}
         <div className="mb-4 p-2 bg-gradient-to-r from-yellow-50 to-orange-50 rounded-lg">
-          <div className="text-xs text-gray-500 mb-1">纳音</div>
-          <div className="text-sm font-semibold text-gray-900">
+          <div className="text-xs text-[color:var(--ink-5)] mb-1">纳音</div>
+          <div className="text-sm font-semibold text-[color:var(--ink-1)]">
             {pillar.nayin}
           </div>
         </div>
 
         {/* 藏干 */}
         {pillar.hiddenStems && pillar.hiddenStems.length > 0 && (
-          <div className="p-2 bg-gray-50 rounded-lg">
-            <div className="text-xs text-gray-500 mb-2">藏干</div>
+          <div className="p-2 bg-[color:var(--bg-elevated)] rounded-lg">
+            <div className="text-xs text-[color:var(--ink-5)] mb-2">藏干</div>
             <div className="flex flex-wrap gap-2">
               {pillar.hiddenStems.map((stem: string, i: number) => {
                 const hiddenWuxing = getWuxing(stem);
@@ -148,11 +148,11 @@ function PillarCard({ pillar, name, palace, index }: any) {
                 return (
                   <span 
                     key={i} 
-                    className="flex items-center space-x-1 bg-white px-2 py-1 rounded-md border border-gray-200 text-sm"
+                    className="flex items-center space-x-1 bg-white px-2 py-1 rounded-md border border-[color:var(--hairline)] text-sm"
                   >
                     <span>{hiddenWuxingIcon}</span>
                     <span>{stem}</span>
-                    <span className="text-xs text-gray-500">
+                    <span className="text-xs text-[color:var(--ink-5)]">
                       {getWuxing(stem) === 'wood' && '木'}
                       {getWuxing(stem) === 'fire' && '火'}
                       {getWuxing(stem) === 'earth' && '土'}

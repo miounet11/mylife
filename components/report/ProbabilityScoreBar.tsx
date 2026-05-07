@@ -43,32 +43,32 @@ export interface ProbabilityScoreBarProps {
 const LEVEL_CONFIG = {
   excellent: {
     color: 'bg-gradient-to-r from-green-400 to-emerald-500',
-    textColor: 'text-[color:var(--data-up)] dark:text-emerald-400',
-    bgColor: 'bg-[rgba(47,125,82,0.08)] dark:bg-emerald-900/20',
+    textColor: 'text-[color:var(--data-up)]',
+    bgColor: 'bg-[rgba(47,125,82,0.08)]',
     label: '大吉',
   },
   good: {
     color: 'bg-gradient-to-r from-blue-400 to-indigo-500',
-    textColor: 'text-[color:var(--env)] dark:text-blue-400',
-    bgColor: 'bg-[color:var(--env-soft)] dark:bg-blue-900/20',
+    textColor: 'text-[color:var(--env)]',
+    bgColor: 'bg-[color:var(--env-soft)]',
     label: '吉',
   },
   neutral: {
     color: 'bg-gradient-to-r from-gray-400 to-slate-500',
-    textColor: 'text-gray-600 dark:text-gray-400',
-    bgColor: 'bg-gray-50 dark:bg-gray-700/20',
+    textColor: 'text-[color:var(--ink-4)]',
+    bgColor: 'bg-[color:var(--bg-elevated)]',
     label: '平',
   },
   caution: {
     color: 'bg-gradient-to-r from-yellow-400 to-orange-500',
-    textColor: 'text-orange-600 dark:text-orange-400',
-    bgColor: 'bg-orange-50 dark:bg-orange-900/20',
+    textColor: 'text-[color:var(--signal-strong)]',
+    bgColor: 'bg-[color:var(--signal-soft)]',
     label: '需谨慎',
   },
   challenging: {
     color: 'bg-gradient-to-r from-red-400 to-rose-500',
-    textColor: 'text-[color:var(--alert)] dark:text-rose-400',
-    bgColor: 'bg-[color:var(--alert-soft)] dark:bg-rose-900/20',
+    textColor: 'text-[color:var(--alert)]',
+    bgColor: 'bg-[color:var(--alert-soft)]',
     label: '需努力',
   },
 };
@@ -99,11 +99,11 @@ const ConfidenceBar: React.FC<{
       <div className="w-full">
         {label && (
           <div className="flex justify-between items-center mb-1">
-            <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-            <span className="text-xs text-gray-400">--</span>
+            <span className="text-xs text-[color:var(--ink-5)]">{label}</span>
+            <span className="text-xs text-[color:var(--ink-5)]">--</span>
           </div>
         )}
-        <div className={`w-full ${size === 'sm' ? 'h-2' : 'h-3'} bg-gray-200 dark:bg-gray-700 rounded-full`} />
+        <div className={`w-full ${size === 'sm' ? 'h-2' : 'h-3'} bg-[color:var(--bg-sunken)] rounded-full`} />
       </div>
     );
   }
@@ -116,7 +116,7 @@ const ConfidenceBar: React.FC<{
   const getColor = (value: number) => {
     if (value >= 0.7) return 'bg-[color:var(--data-up)]';
     if (value >= 0.5) return 'bg-[color:var(--env)]';
-    if (value >= 0.3) return 'bg-yellow-500';
+    if (value >= 0.3) return 'bg-[color:var(--signal)]';
     return 'bg-[color:var(--alert)]';
   };
 
@@ -126,19 +126,19 @@ const ConfidenceBar: React.FC<{
     <div className="w-full">
       {label && (
         <div className="flex justify-between items-center mb-1">
-          <span className="text-xs text-gray-500 dark:text-gray-400">{label}</span>
-          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+          <span className="text-xs text-[color:var(--ink-5)]">{label}</span>
+          <span className="text-xs font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">
             {centerPercent.toFixed(0)}%
-            <span className="text-gray-400 dark:text-gray-500 ml-1">
+            <span className="text-[color:var(--ink-5)][color:var(--ink-5)] ml-1">
               ({lowerPercent.toFixed(0)}-{upperPercent.toFixed(0)}%)
             </span>
           </span>
         </div>
       )}
-      <div className={`relative w-full ${barHeight} bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden`}>
+      <div className={`relative w-full ${barHeight} bg-[color:var(--bg-sunken)] rounded-full overflow-hidden`}>
         {/* Confidence interval range (lighter) */}
         <div
-          className="absolute h-full bg-gray-300 dark:bg-gray-600 rounded-full opacity-50"
+          className="absolute h-full bg-[color:var(--hairline-strong)] rounded-full opacity-50"
           style={{
             left: `${lowerPercent}%`,
             width: `${upperPercent - lowerPercent}%`,
@@ -151,7 +151,7 @@ const ConfidenceBar: React.FC<{
         />
         {/* Center marker */}
         <div
-          className="absolute top-0 h-full w-0.5 bg-white dark:bg-gray-200 opacity-80"
+          className="absolute top-0 h-full w-0.5 bg-white[color:var(--bg-sunken)] opacity-80"
           style={{ left: `${centerPercent}%` }}
         />
       </div>
@@ -167,8 +167,8 @@ const FactorBadge: React.FC<{
 }> = ({ factor }) => {
   const isPositive = factor.effect > 0;
   const colorClass = isPositive
-    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)] dark:bg-emerald-900/30 dark:text-emerald-400'
-    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)] dark:bg-rose-900/30 dark:text-rose-400';
+    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)]'
+    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)]';
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>
@@ -193,11 +193,11 @@ const EventCard: React.FC<{
   const config = EVENT_LABELS[eventKey] || { label: event.label || eventKey, icon: '📊' };
 
   return (
-    <div className={`${compact ? 'p-2' : 'p-3'} bg-white dark:bg-gray-700/50 rounded-lg border border-gray-100 dark:border-gray-600`}>
+    <div className={`${compact ? 'p-2' : 'p-3'} bg-white rounded-lg border border-[color:var(--hairline)]`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-base">{config.icon}</span>
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{config.label}</span>
-        <span className="ml-auto text-lg font-bold text-gray-900 dark:text-gray-100">
+        <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">{config.label}</span>
+        <span className="ml-auto text-lg font-bold text-[color:var(--ink-1)][color:var(--bg-elevated)]">
           {event.score ?? '--'}
         </span>
       </div>
@@ -226,8 +226,8 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
 }) => {
   if (!fortuneWindow && !eventProbabilities) {
     return (
-      <div className={`p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+      <div className={`p-4 rounded-lg bg-[color:var(--bg-elevated)] ${className}`}>
+        <p className="text-[color:var(--ink-5)] text-sm text-center">
           概率数据加载中...
         </p>
       </div>
@@ -237,7 +237,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
   const levelConfig = fortuneWindow?.level ? LEVEL_CONFIG[fortuneWindow.level] : null;
 
   return (
-    <div className={`rounded-xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-xl bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className={`px-4 py-3 ${levelConfig?.color || 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -250,18 +250,18 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
       <div className={`p-4 ${compact ? 'space-y-3' : 'space-y-5'}`}>
         {/* Fortune Window */}
         {fortuneWindow && (
-          <div className={`p-4 rounded-lg ${levelConfig?.bgColor || 'bg-gray-50 dark:bg-gray-700/50'}`}>
+          <div className={`p-4 rounded-lg ${levelConfig?.bgColor || 'bg-[color:var(--bg-elevated)]'}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 rounded-full ${levelConfig?.color || 'bg-gray-400'} flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
+                <div className={`w-14 h-14 rounded-full ${levelConfig?.color || 'bg-[color:var(--ink-5)]'} flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
                   {fortuneWindow.score}
                 </div>
                 <div>
-                  <span className={`text-lg font-semibold ${levelConfig?.textColor || 'text-gray-700'}`}>
+                  <span className={`text-lg font-semibold ${levelConfig?.textColor || 'text-[color:var(--ink-3)]'}`}>
                     {levelConfig?.label || '未知'}
                   </span>
                   {fortuneWindow.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-xs text-[color:var(--ink-5)] mt-0.5">
                       {fortuneWindow.description}
                     </p>
                   )}
@@ -277,8 +277,8 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
 
             {/* Factors */}
             {fortuneWindow.factors && fortuneWindow.factors.length > 0 && !compact && (
-              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600">
-                <span className="text-xs text-gray-500 dark:text-gray-400 block mb-2">影响因素</span>
+              <div className="mt-3 pt-3 border-t border-[color:var(--hairline)]">
+                <span className="text-xs text-[color:var(--ink-5)] block mb-2">影响因素</span>
                 <div className="flex flex-wrap gap-1">
                   {fortuneWindow.factors.map((f, i) => (
                     <FactorBadge key={i} factor={f} />
@@ -292,7 +292,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
         {/* Event Probabilities */}
         {eventProbabilities && Object.keys(eventProbabilities).length > 0 && (
           <div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-2">
+            <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)] block mb-2">
               事件概率分析
             </span>
             <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'} gap-2`}>

@@ -94,8 +94,8 @@ const CustomTooltip: React.FC<{
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-white dark:bg-gray-800 p-3 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 max-w-xs">
-      <p className="font-medium text-gray-900 dark:text-gray-100 mb-2">
+    <div className="bg-white[color:var(--bg-sunken)] p-3 rounded-lg shadow-lg border border-[color:var(--hairline)][color:var(--hairline-strong)] max-w-xs">
+      <p className="font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)] mb-2">
         {payload[0]?.payload?.subject}
       </p>
       {payload.map((entry, index) => (
@@ -108,7 +108,7 @@ const CustomTooltip: React.FC<{
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-gray-600 dark:text-gray-400">{entry.name}</span>
+            <span className="text-[color:var(--ink-4)][color:var(--ink-5)]">{entry.name}</span>
           </div>
           <span className="font-medium" style={{ color: entry.color }}>
             {entry.value?.toFixed(0)}
@@ -132,8 +132,8 @@ const LayerToggle: React.FC<{
       onClick={onToggle}
       className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
         isActive
-          ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900'
-          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'
+          ? 'bg-[color:var(--ink-1)] text-white'
+          : 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)]'
       }`}
     >
       <span
@@ -228,8 +228,8 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
 
   if (!layers || layers.length === 0) {
     return (
-      <div className={`p-4 rounded-lg bg-gray-50 dark:bg-gray-800/50 ${className}`}>
-        <p className="text-gray-500 dark:text-gray-400 text-sm text-center">
+      <div className={`p-4 rounded-lg bg-[color:var(--bg-elevated)] ${className}`}>
+        <p className="text-[color:var(--ink-5)][color:var(--ink-5)] text-sm text-center">
           雷达图数据加载中...
         </p>
       </div>
@@ -250,7 +250,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: layer.color }}
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">
+              <span className="text-sm text-[color:var(--ink-3)][color:var(--ink-6)]">
                 {layer.name}
               </span>
             </div>
@@ -260,7 +260,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
   };
 
   return (
-    <div className={`rounded-xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-xl bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -297,7 +297,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
             <PolarGrid
               stroke="#e5e7eb"
               strokeDasharray="3 3"
-              className="dark:stroke-gray-600"
+              className=""
             />
 
             {/* Angle Axis (Dimension Labels) */}
@@ -308,7 +308,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
                 fontSize: sizeConfig.fontSize,
                 fontWeight: 500,
               }}
-              className="dark:fill-gray-400"
+              className=""
             />
 
             {/* Radius Axis (Score Scale) */}
@@ -320,7 +320,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
                 fontSize: sizeConfig.fontSize - 2,
               }}
               tickCount={5}
-              className="dark:fill-gray-500"
+              className=""
             />
 
             {/* Tooltip */}
@@ -359,12 +359,12 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
         </ResponsiveContainer>
 
         {/* Footer Description */}
-        <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+        <div className="mt-4 pt-3 border-t border-[color:var(--hairline)][color:var(--hairline-strong)]">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600" />
+            <div className="inline-flex items-center gap-2 text-xs text-[color:var(--ink-5)][color:var(--ink-5)]">
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
               <span>多维状态向量分析 · v1.4.0</span>
-              <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent dark:via-gray-600" />
+              <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
             </div>
           </div>
         </div>

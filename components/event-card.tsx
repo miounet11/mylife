@@ -238,7 +238,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
 // 化灾预警卡片
 export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
   const severityColors: Record<string, string> = {
-    low: 'border-yellow-400 bg-yellow-50',
+    low: 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]',
     medium: 'border-orange-400 bg-orange-50',
     high: 'border-[color:var(--alert)] bg-[color:var(--alert-soft)]',
     critical: 'border-red-600 bg-[rgba(189,76,66,0.16)]',
@@ -253,21 +253,21 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
         {/* 标题 */}
         <div className="flex items-start space-x-3 mb-3">
           <div className="flex-shrink-0">
-            <AlertTriangle className="w-6 h-6 text-orange-600" />
+            <AlertTriangle className="w-6 h-6 text-[color:var(--signal-strong)]" />
           </div>
           <div className="flex-1">
-            <h4 className="font-bold text-gray-900 text-lg mb-1">
+            <h4 className="font-bold text-[color:var(--ink-1)] text-lg mb-1">
               ⚠️ {warning.type}化灾预警
             </h4>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-[color:var(--ink-4)]">
               {warning.fortunePrediction.description}
             </p>
           </div>
         </div>
 
         {/* 时间范围 */}
-        <div className="mb-3 p-2 bg-white rounded border border-gray-200">
-          <div className="flex items-center space-x-2 text-sm text-gray-600">
+        <div className="mb-3 p-2 bg-white rounded border border-[color:var(--hairline)]">
+          <div className="flex items-center space-x-2 text-sm text-[color:var(--ink-4)]">
             <Calendar className="w-4 h-4" />
             <span>
               {warning.startDate} 至 {warning.endDate}
@@ -277,13 +277,13 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
 
         {/* 严重程度 */}
         <div className="flex items-center space-x-2 mb-3">
-          <span className="text-sm text-gray-600">严重程度：</span>
+          <span className="text-sm text-[color:var(--ink-4)]">严重程度：</span>
           <span className={cn(
             "text-sm font-bold px-3 py-1 rounded-full",
             warning.severity === 'critical' && 'bg-[color:var(--alert)] text-white',
             warning.severity === 'high' && 'bg-[color:var(--alert)] text-white',
             warning.severity === 'medium' && 'bg-orange-500 text-white',
-            warning.severity === 'low' && 'bg-yellow-500 text-white'
+            warning.severity === 'low' && 'bg-[color:var(--signal)] text-white'
           )}>
             {warning.severity === 'critical' && '严重'}
             {warning.severity === 'high' && '高'}
@@ -312,31 +312,31 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
 
           {/* 短期措施 */}
           <div className="p-3 bg-orange-50 rounded-lg border border-orange-200">
-            <h5 className="font-semibold text-orange-900 mb-2 flex items-center">
+            <h5 className="font-semibold text-[color:var(--signal-strong)] mb-2 flex items-center">
               <span>⚠️</span>
               <span className="ml-2">短期措施</span>
             </h5>
             <ul className="space-y-1">
               {warning.protectionMeasures.shortTerm.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
-                  <span className="text-orange-600 mr-2 mt-1">✓</span>
-                  <span className="text-sm text-orange-900">{measure}</span>
+                  <span className="text-[color:var(--signal-strong)] mr-2 mt-1">✓</span>
+                  <span className="text-sm text-[color:var(--signal-strong)]">{measure}</span>
                 </li>
               ))}
             </ul>
           </div>
 
           {/* 长期措施 */}
-          <div className="p-3 bg-yellow-50 rounded-lg border border-yellow-200">
-            <h5 className="font-semibold text-yellow-900 mb-2 flex items-center">
+          <div className="p-3 bg-[color:var(--signal-soft)] rounded-[var(--radius)] border border-[color:var(--signal)]">
+            <h5 className="font-semibold text-[color:var(--signal-strong)] mb-2 flex items-center">
               <span>📅</span>
               <span className="ml-2">长期措施</span>
             </h5>
             <ul className="space-y-1">
               {warning.protectionMeasures.longTerm.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
-                  <span className="text-yellow-600 mr-2 mt-1">✓</span>
-                  <span className="text-sm text-yellow-900">{measure}</span>
+                  <span className="text-[color:var(--signal-strong)] mr-2 mt-1">✓</span>
+                  <span className="text-sm text-[color:var(--signal-strong)]">{measure}</span>
                 </li>
               ))}
             </ul>

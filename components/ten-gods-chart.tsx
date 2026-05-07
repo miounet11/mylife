@@ -31,7 +31,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
         <CardTitle>
           <div className="flex items-center space-x-3">
             <span className="text-3xl">🎭</span>
-            <span className="text-2xl font-bold text-gray-900">十神配置</span>
+            <span className="text-2xl font-bold text-[color:var(--ink-1)]">十神配置</span>
           </div>
         </CardTitle>
       </CardHeader>
@@ -61,12 +61,12 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
               green: 'bg-[color:var(--data-up)] text-white border-[color:var(--data-up)]',
               blue: 'bg-[color:var(--env)] text-white border-[color:var(--env)]',
               red: 'bg-[color:var(--alert)] text-white border-[color:var(--alert)]',
-              yellow: 'from-yellow-500 to-yellow-600 text-gray-900 border-yellow-500',
+              yellow: 'bg-[color:var(--signal)] text-[color:var(--ink-1)] border-[color:var(--signal)]',
             };
 
             return (
               <div key={category.key}>
-                <h4 className="text-sm font-semibold text-gray-500 mb-2">{category.name}</h4>
+                <h4 className="text-sm font-semibold text-[color:var(--ink-5)] mb-2">{category.name}</h4>
                 <div className="flex flex-wrap gap-2">
                   {gods.map((god, index) => (
                     <GodBadge
@@ -79,7 +79,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
                     />
                   ))}
                   {gods.length === 0 && (
-                    <span className="text-sm text-gray-400 italic">无配置</span>
+                    <span className="text-sm text-[color:var(--ink-5)] italic">无配置</span>
                   )}
                 </div>
               </div>
@@ -89,15 +89,15 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
 
         {/* 十神解读 */}
         <div className="mt-6 pt-6 border-t-2 border-[color:var(--brand-soft-2)]">
-          <h4 className="font-bold text-gray-900 mb-4 text-lg">十神解读</h4>
+          <h4 className="font-bold text-[color:var(--ink-1)] mb-4 text-lg">十神解读</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {getGodDescriptions().map((desc, index) => (
-              <div key={index} className="bg-white rounded-lg p-4 border border-gray-200">
+              <div key={index} className="bg-white rounded-lg p-4 border border-[color:var(--hairline)]">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-xl">{desc.icon}</span>
-                  <span className="font-semibold text-gray-900">{desc.god}</span>
+                  <span className="font-semibold text-[color:var(--ink-1)]">{desc.god}</span>
                 </div>
-                <p className="text-sm text-gray-600">{desc.description}</p>
+                <p className="text-sm text-[color:var(--ink-4)]">{desc.description}</p>
               </div>
             ))}
           </div>
@@ -105,12 +105,12 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
 
         {/* 建议 */}
         <div className="mt-6 p-4 bg-[color:var(--brand-soft)] rounded-[var(--radius)] border border-[color:var(--brand-soft-2)]">
-          <h4 className="font-bold text-gray-900 mb-3">根据十神的建议</h4>
+          <h4 className="font-bold text-[color:var(--ink-1)] mb-3">根据十神的建议</h4>
           <div className="space-y-2">
             {generateGodAdvice(tenGods).map((advice, index) => (
               <div key={index} className="flex items-start space-x-2">
                 <span className="text-[color:var(--data-up)] mt-1">✓</span>
-                <span className="text-sm text-gray-700">{advice}</span>
+                <span className="text-sm text-[color:var(--ink-3)]">{advice}</span>
               </div>
             ))}
           </div>
