@@ -19,9 +19,9 @@ const typeMeta = {
 };
 
 const impactClass = {
-  positive: 'bg-emerald-500',
-  negative: 'bg-rose-500',
-  neutral: 'bg-amber-500',
+  positive: 'bg-[color:var(--data-up)]',
+  negative: 'bg-[color:var(--alert)]',
+  neutral: 'bg-[color:var(--signal)]',
 };
 
 export default function EventCalendar({ events = [] }: EventCalendarProps) {
@@ -42,15 +42,15 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
     return (
       <div className="h-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
         <div className="flex items-center justify-between">
-          <div className="inline-flex h-10 w-10 rounded-full bg-slate-100" />
+          <div className="inline-flex h-10 w-10 rounded-full bg-[color:var(--bg-sunken)]" />
           <div className="text-center">
             <h2 className="text-2xl font-black text-[color:var(--ink)]">事件日历</h2>
             <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
           </div>
-          <div className="inline-flex h-10 w-10 rounded-full bg-slate-100" />
+          <div className="inline-flex h-10 w-10 rounded-full bg-[color:var(--bg-sunken)]" />
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] bg-slate-50 p-4 text-sm text-[color:var(--muted)]">
+        <div className="mt-6 rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--muted)]">
           正在定位最值得先查看的月份...
         </div>
       </div>
@@ -69,7 +69,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCurrentDate(addMonths(resolvedCurrentDate, -1))}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] transition hover:bg-[color:var(--hairline-strong)]"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
@@ -79,7 +79,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
         </div>
         <button
           onClick={() => setCurrentDate(addMonths(resolvedCurrentDate, 1))}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-700 transition hover:bg-slate-200"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] transition hover:bg-[color:var(--hairline-strong)]"
         >
           <ChevronRight className="h-4 w-4" />
         </button>
@@ -115,7 +115,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
               }`}
             >
               <div className="flex h-full flex-col justify-between">
-                <div className={`text-sm font-semibold ${isSelected || isCurrent ? 'text-[color:var(--ink)]' : 'text-slate-700'}`}>
+                <div className={`text-sm font-semibold ${isSelected || isCurrent ? 'text-[color:var(--ink)]' : 'text-[color:var(--ink-3)]'}`}>
                   {format(day, 'd')}
                 </div>
                 {dayEvents.length > 0 && (
@@ -131,7 +131,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
         })}
       </div>
 
-      <div className="mt-6 rounded-[1.5rem] bg-slate-50 p-4">
+      <div className="mt-6 rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
         <div className="text-sm font-semibold text-[color:var(--ink)]">
           {selectedDate ? `${format(selectedDate, 'M月d日')} 的事件` : '选择一个日期查看详情'}
         </div>
@@ -150,7 +150,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                       </div>
                       <div className="mt-1 text-sm text-[color:var(--ink)]">{event.description || '暂无说明'}</div>
                       {event.fortuneAnalysis?.reason && (
-                        <div className="mt-2 rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+                        <div className="mt-2 rounded-2xl bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
                           {event.fortuneAnalysis.reason}
                         </div>
                       )}
@@ -160,10 +160,10 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                         </div>
                       )}
                       {event.userFeedback?.wasAccurate === true && (
-                        <div className="mt-2 text-xs font-medium text-emerald-700">已验证准确</div>
+                        <div className="mt-2 text-xs font-medium text-[color:var(--data-up)]">已验证准确</div>
                       )}
                       {event.userFeedback?.wasAccurate === false && (
-                        <div className="mt-2 text-xs font-medium text-rose-700">已标记偏差</div>
+                        <div className="mt-2 text-xs font-medium text-[color:var(--alert)]">已标记偏差</div>
                       )}
                     </div>
                   </div>

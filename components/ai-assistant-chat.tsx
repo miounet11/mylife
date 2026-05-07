@@ -858,16 +858,16 @@ export default function AIAssistantChat() {
 
           <div className="flex flex-wrap gap-2">
             {reportId || context?.report?.id ? (
-              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
+              <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
                 已绑定报告
               </span>
             ) : null}
             {eventId || context?.focusedEvent?.id ? (
-              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
+              <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
                 已绑定事件
               </span>
             ) : null}
-            <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
+            <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
               {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
             </span>
           </div>
@@ -884,7 +884,7 @@ export default function AIAssistantChat() {
                 key={item.key}
                 href={item.href}
                 className={`rounded-lg px-3 py-2 text-sm transition hover:-translate-y-0.5 ${
-                  item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
+                  item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-[color:var(--bg-elevated)] text-[color:var(--ink)]'
                 }`}
               >
                 <div>{item.entryLabel}</div>
@@ -909,7 +909,7 @@ export default function AIAssistantChat() {
           )}
 
           {error && (
-            <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="rounded-2xl border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
               {error}
             </div>
           )}
@@ -1131,7 +1131,7 @@ function ContextCard({
       ) : null}
 
       {(context.recentEvents.length > 0 || context.report) ? (
-        <details className="rounded-lg border border-[color:var(--line)] bg-slate-50">
+        <details className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
             上下文详情
             <CalendarClock className="h-4 w-4" />
@@ -1155,15 +1155,15 @@ function ContextCard({
       ) : null}
 
       {context.validationSummary?.headline && (
-        <div className="rounded-[1.5rem] bg-slate-50 p-4">
+        <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最近反馈</div>
           <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{context.validationSummary.headline}</div>
         </div>
       )}
 
       {context.focusedEvent && (
-        <div className="rounded-[1.5rem] border border-rose-200 bg-rose-50/70 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">本次重点问题</div>
+        <div className="rounded-[1.5rem] border border-[color:var(--alert)] bg-[color:var(--alert-soft)]/70 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--alert)]">本次重点问题</div>
           <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{context.focusedEvent.title}</div>
           <div className="mt-2 text-sm text-[color:var(--ink)]">
             {context.focusedEvent.reason || context.focusedEvent.notes || '当前对话应优先围绕这条已出现偏差的事件做纠偏分析。'}
@@ -1172,8 +1172,8 @@ function ContextCard({
       )}
 
       {context.correctionPrompts.length > 0 && (
-        <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/70 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-amber-700">建议先问</div>
+        <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/70 p-4">
+          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--signal-strong)]">建议先问</div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {context.correctionPrompts.map((item) => (
               <CorrectionPromptButton
@@ -1209,9 +1209,9 @@ function ContextCard({
                       type="button"
                       onClick={() => onSaveSuggestedEvent(item)}
                       disabled={disabled || isSaved || savingEventKey === eventKey}
-                      className="inline-flex shrink-0 items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                      {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
+                      {isSaved ? <CheckCircle2 className="h-4 w-4 text-[color:var(--data-up)]" /> : null}
                       {isSaved ? '已保存' : savingEventKey === eventKey ? '保存中...' : '记下来'}
                     </button>
                   </div>
@@ -1334,7 +1334,7 @@ function MaterialEvidenceComposer({
           type="button"
           onClick={onAddText}
           disabled={disabled || isAdding || materials.length >= maxMaterialCount}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-[color:var(--bg-elevated)] px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
           title="添加摘要"
         >
           <Plus className="h-4 w-4" />
@@ -1351,14 +1351,14 @@ function MaterialEvidenceComposer({
       ) : null}
 
       <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[color:var(--muted)]">
-        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 font-semibold">
+        <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--bg-elevated)] px-2.5 py-1 font-semibold">
           <ShieldCheck className="h-3.5 w-3.5" />
           先遮挡证件号、住址、手机号
         </span>
         {selectedKind === 'legal_document' ? (
-          <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700">文书只做结构阅读</span>
+          <span className="rounded-full bg-[color:var(--signal-soft)] px-2.5 py-1 font-semibold text-[color:var(--signal-strong)]">文书只做结构阅读</span>
         ) : null}
-        {error ? <span className="font-semibold text-amber-700">{error}</span> : null}
+        {error ? <span className="font-semibold text-[color:var(--signal-strong)]">{error}</span> : null}
       </div>
     </div>
   );
@@ -1399,7 +1399,7 @@ function MaterialChip({
         <button
           type="button"
           onClick={() => onRemove(material.id)}
-          className="rounded-full p-1 text-[color:var(--muted)] transition hover:bg-slate-100 hover:text-[color:var(--ink)]"
+          className="rounded-full p-1 text-[color:var(--muted)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink)]"
           aria-label={`移除${material.label}`}
         >
           <X className="h-3.5 w-3.5" />
@@ -1573,13 +1573,13 @@ function MessageBubble({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">稳定版</span>
+            <span className="rounded-full bg-[rgba(201,161,74,0.16)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--signal-strong)]">稳定版</span>
           )}
           {message.regenerated ? (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">已重生成</span>
+            <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">已重生成</span>
           ) : null}
           {message.edited ? (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">源问题已编辑</span>
+            <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">源问题已编辑</span>
           ) : null}
         </div>
         <div className="mt-3">
@@ -1597,7 +1597,7 @@ function MessageBubble({
               type="button"
               onClick={() => onRegenerate(message.id)}
               disabled={isActing}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RotateCcw className="h-4 w-4" />
               {isActing ? '处理中...' : '重生成'}
@@ -1607,16 +1607,16 @@ function MessageBubble({
                 type="button"
                 onClick={() => onSaveEvent(previousUserQuestion, message.content, message.id)}
                 disabled={isSaving || isSaved}
-                className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {isSaved ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : null}
+                {isSaved ? <CheckCircle2 className="h-4 w-4 text-[color:var(--data-up)]" /> : null}
                 {isSaved ? '已记下' : isSaving ? '保存中...' : '记提醒'}
               </button>
             )}
             <button
               type="button"
               onClick={() => onCopy(message.id, message.content)}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)]"
+              className="inline-flex items-center gap-2 rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 font-semibold text-[color:var(--ink)]"
             >
               <Copy className="h-4 w-4" />
               {copied ? '已复制' : '复制'}
@@ -1625,7 +1625,7 @@ function MessageBubble({
               type="button"
               onClick={() => onDelete(message.id)}
               disabled={isActing}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <Trash2 className="h-4 w-4" />
               删除
@@ -1667,7 +1667,7 @@ function CorrectionPromptButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[1.5rem] border border-amber-200 bg-white px-4 py-4 text-left transition hover:border-amber-300 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[1.5rem] border border-[color:var(--signal)] bg-white px-4 py-4 text-left transition hover:border-[color:var(--signal)] hover:bg-[color:var(--signal-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-sm font-semibold leading-7 text-[color:var(--ink)]">{question}</div>
       <div className="mt-2 text-xs text-[color:var(--muted)]">{helper}</div>

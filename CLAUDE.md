@@ -1,315 +1,232 @@
-# life-kline-next - 人生K线图 AI 命理分析平台
+# CLAUDE.md
 
-> 最后更新：2026-02-24 22:18:52
-> 项目状态：✅ 核心功能完成，生产环境运行中
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
----
-
-## 变更记录 (Changelog)
-
-### 2026-02-24
-- ✅ 初始化 AI 上下文文档系统
-- ✅ 完成项目架构扫描与模块识别
-- ✅ 生成根级与模块级文档结构
+> 项目：life-kline-next（人生K线图，命理 SaaS 主仓库）
+> 框架：Next.js 15 App Router + React 19 + TypeScript + better-sqlite3
+> 生产入口：https://www.life-kline.com，PM2 多进程托管
 
 ---
 
-## 项目愿景
+## 1. 常用命令
 
-life-kline-next 是一个基于 Next.js 15 构建的现代化命理分析平台，致力于将传统八字命理学与现代 AI 技术深度融合。通过精准的天文历法计算（真太阳时修正）、权威的命理分析引擎、以及 AI 大语言模型的深度解读，为用户提供专业、可信、个性化的人生决策辅助工具。
-
-核心目标：
-- **精准性**：毫秒级四柱排盘，真太阳时修正，分钟级节气判定
-- **专业性**：基于滴天髓、三命通会等传统命理理论，600+ 条大师话术库
-- **智能化**：AI 驱动的个性化解读，持续对话系统，长期用户档案管理
-- **可信度**：数据支撑、古籍引用、名人案例对比，建立用户信任
-
----
-
-## 技术栈概览
-
-### 核心框架
-- **Next.js 15.0.0** - React 服务端渲染框架（App Router）
-- **React 19.0.0** - UI 组件库
-- **TypeScript 5** - 类型安全开发
-
-### 数据层
-- **better-sqlite3** - 本地 SQLite 数据库（WAL 模式）
-- **lunar-javascript** - 农历与八字排盘核心库
-
-### AI 集成
-- **OpenAI SDK** - LLM 深度解析（支持自定义 API 端点）
-
-### UI 与样式
-- **Tailwind CSS 3.4** - 原子化 CSS 框架
-- **Recharts 3.7** - 数据可视化图表
-- **Lucide React** - 图标库
-
-### 部署与运维
-- **PM2** - Node.js 进程管理
-- **Nginx** - 反向代理与静态资源服务
-
----
-
-## 架构总览
-
-### 模块结构图
-
-```mermaid
-graph TD
-    A["(根) life-kline-next"] --> B["app/"];
-    B --> C["pages (路由)"];
-    B --> D["api/ (后端接口)"];
-    A --> E["components/"];
-    E --> F["UI 组件"];
-    E --> G["业务组件"];
-    A --> H["lib/"];
-    H --> I["命理引擎"];
-    H --> J["数据库操作"];
-    H --> K["工具函数"];
-    A --> L["data/"];
-    L --> M["SQLite 数据库"];
-
-    click C "./app/CLAUDE.md" "查看 app 路由模块"
-    click D "./app/api/CLAUDE.md" "查看 API 模块"
-    click E "./components/CLAUDE.md" "查看组件模块"
-    click H "./lib/CLAUDE.md" "查看核心库模块"
-```
-
-### 系统架构层次
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                    用户界面层 (UI)                        │
-│  Next.js Pages + React Components + Tailwind CSS        │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│                   业务逻辑层 (BLL)                        │
-│  API Routes + Fortune Engine + LLM Integration          │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│                   数据访问层 (DAL)                        │
-│  Database Operations + SQLite (better-sqlite3)          │
-└─────────────────────────────────────────────────────────┘
-                            ↓
-┌─────────────────────────────────────────────────────────┐
-│                   核心引擎层 (Core)                       │
-│  Bazi Analyzer + Solar Time + Lunar Calendar            │
-└─────────────────────────────────────────────────────────┘
-```
-
----
-
-## 模块索引
-
-| 模块路径 | 职责描述 | 关键文件 | 文档链接 |
-|---------|---------|---------|---------|
-| `app/` | Next.js 路由与页面 | page.tsx, layout.tsx | [查看详情](./app/CLAUDE.md) |
-| `app/api/` | RESTful API 接口 | analyze/route.ts, chat/route.ts | [查看详情](./app/api/CLAUDE.md) |
-| `components/` | React UI 组件 | fortune-form.tsx, ai-assistant-chat.tsx | [查看详情](./components/CLAUDE.md) |
-| `lib/` | 核心业务逻辑库 | fortune-engine.ts, database.ts, llm.ts | [查看详情](./lib/CLAUDE.md) |
-| `data/` | SQLite 数据库文件 | lifekline.db | - |
-
----
-
-## 运行与开发
-
-### 环境要求
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-- SQLite3 支持
-
-### 本地开发
+### 开发与质量
 
 ```bash
-# 安装依赖
-npm install
-
-# 启动开发服务器
-npm run dev
-
-# 访问 http://localhost:3000
+npm install                # 同步 package-lock.json；postinstall 会准备 open-agent SDK
+npm run dev                # Next.js 本地开发服（默认 3000 端口）
+npm run dev:clean          # 清掉 .next 缓存后再启（卡住时用）
+npm run lint               # next lint，全仓 eslint
+npm run test               # 一次性跑 Jest
+npm run test:watch         # 监听模式
+npm run build              # 调用 scripts/build-with-static-retention.js（保留 .next/static 防止旧页面 404）
+npm run start              # 生产模式（需要 build 产物）
 ```
 
-### 生产构建
+### 跑单个测试
+
+测试根目录是 `tests/` 与 `lib/`，匹配 `**/__tests__/**/*.test.ts` 与 `**/tests/**/*.test.ts`。
 
 ```bash
-# 构建生产版本
-npm run build
-
-# 启动生产服务器
-npm start
-
-# 或使用 PM2 管理
-pm2 start ecosystem.config.js
+npx jest tests/lib/chat-context.test.ts                    # 单文件
+npx jest -t "should handle fallback"                        # 按用例名
+npx jest --testPathPattern report-                          # 按路径模式
 ```
 
-### 环境变量
+注意：`jest.config.js` 把 `diagnostics: false`，TS 类型错误不会让测试失败，只看运行时断言。
 
-创建 `.env.local` 文件：
+### 质量门禁脚本（QA）
+
+`package.json` 里以 `qa:*` 开头的脚本是上线前的硬性 gate：
 
 ```bash
-# OpenAI API 配置（可选，用于 LLM 深度解析）
-OPENAI_API_KEY=your_api_key_here
-API_BASE_URL=https://api.openai.com/v1
-DEFAULT_MODEL=gpt-4
-
-# 数据库路径（默认：./data/lifekline.db）
-DATABASE_PATH=./data/lifekline.db
+npm run qa:tools-runtime              # 校验 tools 目录工具运行时一致
+npm run qa:public-surfaces            # 校验公共界面 labels / heroes / world-yi / 产品组件
+npm run qa:admin-surfaces             # 校验后台产品组件
+npm run qa:public-surface-labels      # 单独校验文案
+npm run qa:public-surface-heroes      # 单独校验首屏
 ```
 
----
+加新页面或 hero 时基本一定会触发其中一个，按报错信息回去补 manifest/component 注册。
 
-## 测试策略
+### 系统健康与运营观测
 
-### 当前测试覆盖
-- ⚠️ 单元测试：未实现
-- ⚠️ 集成测试：未实现
-- ✅ 手动测试：核心流程已验证
-
-### 测试建议
-1. **命理引擎测试**：验证四柱排盘、五行分析、用神判断的准确性
-2. **真太阳时测试**：验证不同经纬度的时间修正计算
-3. **API 接口测试**：验证 /api/analyze、/api/chat 等接口的响应
-4. **数据库操作测试**：验证 CRUD 操作的正确性
-
-### 测试文件位置（建议）
-```
-tests/
-├── unit/
-│   ├── fortune-engine.test.ts
-│   ├── bazi-analyzer.test.ts
-│   └── solar-time.test.ts
-├── integration/
-│   ├── api-analyze.test.ts
-│   └── database.test.ts
-└── e2e/
-    └── user-flow.test.ts
+```bash
+npm run system:health                                # /api/admin/system/health 快照
+npm run system:requests                              # 最近请求窗口
+npm run system:retro -- 1440 --save                  # 24h 报告复盘，落盘到 data/runtime
+npm run system:upgrade-compare -- --days=7 --save    # 升级行为三窗口对比（pre / initialPost / current）
+npm run system:site-quality -- --save                # 站点质量治理快照（兼容/稳定/交互/效率四维）
+npm run system:report-eval                           # 报告需求评估
+npm run knowledge:status                             # 知识获取状态
+npm run growth:status / wave2:status / global:status # 公共增长三波次状态
+npm run email:lifecycle                              # 触发用户生命周期邮件循环
 ```
 
----
+`system:upgrade-compare` 输出按 `Focus signals → Improving / Worsening` 排版，不要把 `perReportViewRate`、`llmAttemptPerCompletedRate` 当作转化率读，它们以事件次数为分母可超过 100%。
 
-## 编码规范
+### 内容系统脚本
 
-### TypeScript 规范
-- 严格模式启用（`strict: true`）
-- 优先使用接口（interface）定义类型
-- 避免使用 `any`，使用 `unknown` 或具体类型
-- 导出类型定义到 `lib/user-types.ts`
+`growth:*` / `autoresearch:*` / `publication:*` / `visual:*` 是内容生成、晋升、视觉资产生产的全套子命令，详见 `package.json` 与 `docs/content-automation-system-v1.md`。
 
-### React 组件规范
-- 优先使用函数组件 + Hooks
-- 客户端组件标记 `'use client'`
-- 服务端组件默认（无需标记）
-- Props 类型定义使用 interface
+### PM2
 
-### 文件命名规范
-- 组件文件：kebab-case（如 `fortune-form.tsx`）
-- 工具函数：kebab-case（如 `solar-time.ts`）
-- 类型定义：kebab-case（如 `user-types.ts`）
-- API 路由：`route.ts`（Next.js 约定）
+```bash
+pm2 startOrReload ecosystem.config.js                # 启动主应用 + 全部后台 worker
+ENABLE_BACKGROUND_WORKERS=0 pm2 startOrReload ...    # 仅主应用，排障用
+pm2 status / pm2 logs life-kline-next
+```
 
-### 代码组织
-- 一个文件一个主要导出
-- 相关工具函数放在同一文件
-- 复杂逻辑拆分为独立模块
-- 避免循环依赖
+参见 `docs/OPERATIONS.md`。
 
 ---
 
-## AI 使用指引
+## 2. 架构总览（Big Picture）
 
-### 与 AI 协作的最佳实践
+### 2.1 报告生成主链（牵一发而动全身）
 
-1. **理解项目上下文**
-   - 阅读本文档了解项目架构
-   - 查看模块级 CLAUDE.md 了解具体实现
-   - 参考 README.md 与 docs 下当前文档了解业务逻辑
+下面这条链是产品的核心，改动其中任何一个文件都要把整条链当作同一组件考虑：
 
-2. **修改代码前**
-   - 先阅读相关模块文档
-   - 理解现有实现逻辑
-   - 确认修改不会破坏现有功能
+```
+app/api/analyze/route.ts
+   └── lib/report-pipeline.ts
+         ├── lib/fortune-engine.ts        # 四柱/五行/十神/格局/运势/基础建议（确定性）
+         ├── lib/llm.ts                   # 结构化与正文增强
+         ├── lib/agentic-report/*         # 并发多 Agent：职业、关系、健康、策略、时空、人生K线
+         ├── mergeLLMResult               # 合并 engine + LLM + agent + 上下文
+         ├── lib/report-quality.ts        # 质量分 / 等级 / 交付层级
+         └── lib/report-version-lineage.ts # 版本、引擎构建、升级来源
+```
 
-3. **添加新功能**
-   - 遵循现有架构模式
-   - 更新相关文档
-   - 添加必要的类型定义
+落盘到 `fortunes` 表的 `analysis` JSON 字段（含 `pipelineVersion`）。`analyze` 路由还负责速率控制、流式进度、埋点、自动入升级重算队列。当前主报告版本是 `v3`。
 
-4. **调试问题**
-   - 检查浏览器控制台错误
-   - 查看服务端日志（`pm2 logs`）
-   - 验证数据库状态（SQLite 查询）
+### 2.2 LLM 模型与熔断
 
-### 常见任务指引
+- 模型 fallback 链由环境变量驱动：`DEFAULT_MODEL` → `MODEL_FALLBACK_CHAIN`（生产链：`grok-420-fast → gpt-5.2 → auto`）。
+- `lib/llm-provider-configs.ts` 管理 provider（image/article 两种用途），`lib/llm-provider-health.ts` 维护健康窗口（默认 30min）。
+- 熔断阈值由 `LLM_CIRCUIT_*` 系列环境变量控制：连续失败 4 次或失败率 70% 触发 OPEN，恢复需要连续 2 次成功，冷却 8-9 分钟。
+- 报告链使用独立的 `REPORT_MODEL_FALLBACK_CHAIN` / `REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN`，与内容生成 `CONTENT_GENERATION_MODEL_FALLBACK_CHAIN` 隔离。
 
-#### 添加新的 API 接口
-1. 在 `app/api/` 下创建新目录
-2. 创建 `route.ts` 文件
-3. 实现 GET/POST/PUT/DELETE 方法
-4. 更新 `app/api/CLAUDE.md` 文档
+### 2.3 数据访问分层
 
-#### 添加新的页面
-1. 在 `app/` 下创建新目录
-2. 创建 `page.tsx` 文件
-3. 实现页面组件
-4. 更新 `app/CLAUDE.md` 文档
+- `lib/database.ts`（约 24 万字符）是 SQLite 单例 + schema + 所有低层读写的入口，新增表/字段都从这里加，且必须保留对老库的兼容。
+- `lib/repositories/`（base / user / fortune / event）封装了仓储模式，新业务读写优先放这里。
+- `lib/services/`（fortune-analyzer.service.ts / pillar-calculator.service.ts + analyzers/ generators/）是业务服务层。
+- `lib/content-store.ts`、`lib/content-ops.ts`、`lib/knowledge-base-store.ts` 是内容/知识系统的状态机。
 
-#### 修改命理分析逻辑
-1. 编辑 `lib/fortune-engine.ts`
-2. 更新相关类型定义 `lib/user-types.ts`
-3. 测试分析结果准确性
-4. 更新 `lib/CLAUDE.md` 文档
+### 2.4 PM2 多进程架构
 
----
+`ecosystem.config.js` 定义 7 个进程，`life-kline-next` 是主应用，其余都是后台 daemon：
 
-## 全局规范
+| 进程 | 脚本 | 职责 |
+|---|---|---|
+| life-kline-next | `next start` | 主应用 |
+| life-kline-radar | `scripts/content-radar-daemon.js` | 抓热点 |
+| life-kline-scheduler | `scripts/content-scheduler-daemon.js` | 内容自动排期 |
+| life-kline-report-upgrader | `scripts/report-upgrade-daemon.js` | 老报告升级重算 |
+| life-kline-monthly-digest | `scripts/report-monthly-digest-daemon.js` | 月度更新 |
+| life-kline-user-lifecycle-email | `scripts/user-lifecycle-email-daemon.js` | 生命周期邮件 |
+| life-kline-email-retry | `scripts/email-retry-daemon.js` | 邮件重试队列 |
 
-### 数据库规范
-- 使用 SQLite WAL 模式提高并发性能
-- JSON 字段存储复杂对象（bazi, fiveElements 等）
-- 外键约束确保数据完整性
-- 索引优化查询性能
+每个 daemon 通过 `*_CRON_TOKEN` 调用主应用的 `/api/admin/.../cron` 端点，token 在 `ecosystem.config.js` 里硬编码（生产环境中需要重新生成）。
 
-### API 规范
-- RESTful 风格接口设计
-- 统一响应格式：`{ success: boolean, data?: any, error?: string }`
-- 错误处理：返回适当的 HTTP 状态码
-- 请求验证：检查必要参数
+### 2.5 安全 middleware
 
-### 安全规范
-- 不在客户端暴露敏感信息
-- API Key 存储在环境变量
-- 用户输入验证与清理
-- SQL 注入防护（使用参数化查询）
+`middleware.ts` 注入 CSP / HSTS / X-Frame-Options 等头部，`matcher` 排除了 `/api`、`/_next`、`*.*` 静态资源。修改 CSP 时注意 `script-src` 已放开 `unsafe-eval` 与 `unsafe-inline`（GTM 需要）。
 
-### 性能规范
-- 图片优化：使用 Next.js Image 组件
-- 代码分割：动态导入大型组件
-- 缓存策略：静态资源 CDN 缓存
-- 数据库查询优化：使用索引
+### 2.6 内容与运营闭环
+
+```
+内容雷达 (content-radar) → 调度器 (content-scheduler) → 内容生成 (content-generation)
+   → 前台落地 (knowledge/cases/insights/world-yi) → 转化埋点 → 后台漏斗 (admin/analytics)
+```
+
+`world-yi` 是知识体系子产品（见 `docs/world-yi-*`），`growth:*`、`autoresearch:*`、`publication:*` 三套脚本驱动其发布流。
 
 ---
 
-## 相关文档
+## 3. 关键约定
 
-- [README](./README.md) - 当前项目总览与入口说明
-- [系统架构](./docs/ARCHITECTURE.md) - 当前架构、主链路与数据流
-- [开发指南](./docs/DEVELOPMENT.md) - 当前开发流程与约定
-- [运维指南](./docs/OPERATIONS.md) - 部署、PM2、监控与排障
+### 3.1 路径别名
+
+`tsconfig.json` 设了 `@/* → ./*`，跨目录 import 一律用 `@/lib/...` 而不是相对路径。Jest 也按此映射。
+
+### 3.2 命名
+
+- 组件文件 `kebab-case.tsx`；React 组件名 `PascalCase`；函数/变量 `camelCase`。
+- API 路由按 Next.js 约定 `app/api/.../route.ts`。
+- 类型集中在 `lib/user-types.ts` 与各 `*.types.ts` / `lib/services/types.ts`。
+
+### 3.3 客户端 vs 服务端
+
+- Server Component 是默认；用了 hook / 浏览器 API 才标 `'use client'`。
+- 包含 SQLite 调用的模块只能在服务端运行；`server-only` 包已在依赖里。
+
+### 3.4 数据库迁移
+
+- 不要写独立 migration 文件，schema 演进逻辑都写在 `lib/database.ts` 的初始化路径里，自动检测列是否存在再 ALTER。
+- `data/lifekline.db*` 是本地运行态，不进 git（`.gitignore` 已忽略）。
+- 仓库里 `fix-*.js`（fix-db.js、fix-analysis-db.js 等）是历史一次性修复脚本，新问题不要往里加，写新的临时脚本或在 `database.ts` 初始化里处理。
+
+### 3.5 测试
+
+- 30+ 个测试集中在 `tests/lib/`，主要覆盖 `lib/` 下的纯逻辑模块（chat-context、report-v2、knowledge-*、content-ops、rate-limit、profile-page 等）。
+- `ts-jest` 关闭了类型诊断，所以测试只验证运行时行为；类型问题靠 `npm run lint` 和 IDE 兜底。
+- 加新测试时按 `tests/lib/<模块名>.test.ts` 放置即可被自动发现。
 
 ---
 
-## 快速链接
+## 4. 环境变量
 
-- 🏠 [首页](/) - 用户入口
-- 📊 [命理排盘](/analyze) - 八字分析
-- 💬 [AI 咨询](/chat) - 智能对话
-- 📅 [日历择吉](/events) - 事件管理
-- 👤 [用户档案](/profile) - 个人中心
+`.env.example` 列出全部生产用变量，主要分组：
+
+- **Auth / Email**：`AUTH_SHOW_CODE`、`ADMIN_EMAILS`、`MAIL_SMTP_*`、`MAIL_FROM*`、`RESEND_API_KEY`（fallback）
+- **LLM 主链**：`DEFAULT_MODEL`、`MODEL_FALLBACK_CHAIN`、`API_BASE_URL`、`OPENAI_API_KEY`
+- **LLM 熔断**：`LLM_HEALTH_WINDOW_MINUTES`、`LLM_CIRCUIT_*`
+- **视觉资产**：`VISUAL_ASSET_API_BASE_URL`、`VISUAL_ASSET_DEFAULT_MODEL`（gpt-image-2）、`VISUAL_ASSET_*_MODEL`
+- **内容系统**：`CONTENT_RADAR_*`、`CONTENT_SCHEDULER_*`、`CONTENT_GENERATION_*`、`KNOWLEDGE_ACQUISITION_*`、`KNOWLEDGE_SYNTHESIS_*`
+- **GA**：`NEXT_PUBLIC_GOOGLE_ANALYTICS_ID`、`GA4_API_SECRET`
+- **公网入口**：`NEXT_PUBLIC_APP_URL`
+
+本地用 `.env.local`（不进 git），生产由 `ecosystem.config.js` 的 `env` 块直接注入。
 
 ---
 
-**注意**：本文档由 AI 自动生成并维护。如有疑问或需要更新，请联系项目维护者。
+## 5. 模块索引
+
+| 路径 | 内容 | 进一步文档 |
+|---|---|---|
+| `app/` | 页面与 API 路由（含 admin、world-yi、tools、knowledge、cases、insights、updates、profile） | `app/CLAUDE.md` |
+| `app/api/` | 后端 API（admin、analytics、analyze、auth、chat、events、enhancements、fortune、history、journey、newsletter、premium-services、profile、reminders、report-journey、runtime、tools、updates） | `app/api/CLAUDE.md` |
+| `components/` | UI 组件，`components/report/` 是报告专用，`components/ui/` 是基础 primitive | `components/CLAUDE.md` |
+| `lib/` | 业务核心；136+ 文件 | `lib/CLAUDE.md` |
+| `lib/repositories/` | 仓储模式（base / user / fortune / event） | - |
+| `lib/services/` | 服务层（fortune-analyzer、pillar-calculator + analyzers/ generators/） | - |
+| `lib/agentic-report/` | 并发 Agent 报告链 | - |
+| `scripts/` | PM2 daemon 与一次性 CLI（npm scripts 大多指向这里） | - |
+| `tests/lib/` | Jest 测试 | - |
+| `data/` | SQLite + runtime 状态（git 忽略） | - |
+| `docs/` | 当前有效产品/架构/运营文档（`ARCHITECTURE.md` / `DEVELOPMENT.md` / `OPERATIONS.md` 是真源） | - |
+
+---
+
+## 6. 协作文件优先级
+
+仓库里有多份协作指令：
+
+- `AGENTS.md` — 简洁版仓库指南（结构、命令、风格、测试、提交）
+- `CLAUDE.md` — 本文，给 Claude Code 看
+- `clavue.md` / `bbc.md` / `jiancha.md` / `CODEX_REPORT_RETRO.md` — 历史 / 其他 Agent 的临时笔记
+
+冲突时以 `docs/` 下的正式文档为准；`README.md` 是入口；本文是扎实的开发上下文索引。
+
+---
+
+## 7. 修改前的快速 checklist
+
+1. 是否动到报告主链（§2.1）？动了的话同步检查 fortune-engine / llm / agentic-report / report-pipeline / quality / lineage。
+2. 是否新加表/列？去 `lib/database.ts` 初始化路径加兼容逻辑，**不要**新建独立 migration。
+3. 是否动到公开界面或后台组件？跑 `npm run qa:public-surfaces` 与 `npm run qa:admin-surfaces`。
+4. 是否动到 LLM 调用？检查 fallback 链与熔断配置是否需要同步。
+5. 是否动到环境变量？同步更新 `.env.example` 和 `ecosystem.config.js`。
+6. 提交前：`npm run lint && npm run test && npm run build`。

@@ -285,7 +285,7 @@ export default function ReportPremiumServices({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
-              <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                 <div className="font-semibold">{selectedOffer?.title}</div>
                 <div className="mt-1 text-[color:var(--muted)]">{selectedOffer?.tagline}</div>
               </div>
@@ -328,8 +328,8 @@ export default function ReportPremiumServices({
               </button>
             </form>
 
-            {message ? <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-            {error ? <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+            {message ? <div className="mt-4 rounded-2xl bg-[rgba(47,125,82,0.08)] px-4 py-3 text-sm text-[color:var(--data-up)]">{message}</div> : null}
+            {error ? <div className="mt-4 rounded-2xl bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
           </div>
 
           <div className="soft-card rounded-[1.75rem] p-5">
@@ -337,7 +337,7 @@ export default function ReportPremiumServices({
 
             <div className="mt-4 grid gap-3">
               {requests.length > 0 ? requests.map((item) => (
-                <div key={item.id} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div key={item.id} className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{getPremiumServiceLabel(item.serviceKey)}</div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mapRequestStatusClass(item.status)}`}>
@@ -352,7 +352,7 @@ export default function ReportPremiumServices({
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--muted)]">暂无专项需求</div>
+                <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">暂无专项需求</div>
               )}
             </div>
           </div>
@@ -432,15 +432,15 @@ function mapRequestStatusLabel(status: PremiumServiceRequestRecord['status']) {
 function mapRequestStatusClass(status: PremiumServiceRequestRecord['status']) {
   switch (status) {
     case 'contacted':
-      return 'bg-sky-50 text-sky-700';
+      return 'bg-[color:var(--env-soft)] text-[color:var(--env)]';
     case 'in_progress':
-      return 'bg-amber-50 text-amber-800';
+      return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
     case 'delivered':
-      return 'bg-emerald-50 text-emerald-700';
+      return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
     case 'closed':
-      return 'bg-slate-100 text-slate-700';
+      return 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)]';
     case 'cancelled':
-      return 'bg-rose-50 text-rose-700';
+      return 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]';
     default:
       return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   }

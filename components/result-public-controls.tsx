@@ -486,7 +486,7 @@ export default function ResultPublicControls({
                 </div>
               )}
             </div>
-            <div className="mt-3 break-all rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+            <div className="mt-3 break-all rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
               {activeShareUrl}
             </div>
           </div>
@@ -561,7 +561,7 @@ export default function ResultPublicControls({
         )}
       </div>
 
-      <div className="rounded-[1.4rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+      <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
         {message || (isPublic ? '当前公开' : '当前私密')}
       </div>
     </div>

@@ -250,7 +250,7 @@ export default async function ToolResultPage({
                     ))}
                   </div>
                   {llmEnhancement.conversionBridge ? (
-                    <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-slate-50 px-5 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                    <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-5 py-4 text-sm leading-7 text-[color:var(--ink)]">
                       {String(llmEnhancement.conversionBridge)}
                     </div>
                   ) : null}

@@ -734,7 +734,7 @@ export default function FortuneForm({
                     setDatetimeIndex(datetimeIndexReal);
                     setShowDatetime(true);
                   }}
-                  className="rounded-lg border border-[color:var(--line)] bg-slate-50/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-xl md:py-3"
+                  className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-xl md:py-3"
                 >
                   <div className="text-xs font-semibold text-[color:var(--muted)]">出生时间</div>
                   <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{birthLabel}</div>
@@ -749,7 +749,7 @@ export default function FortuneForm({
                 <button
                   type="button"
                   onClick={() => setShowAddress(true)}
-                  className="rounded-lg border border-[color:var(--line)] bg-slate-50/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-xl md:py-3"
+                  className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-xl md:py-3"
                 >
                   <div className="text-xs font-semibold text-[color:var(--muted)]">出生地点</div>
                   <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{addressLabel}</div>
@@ -763,7 +763,7 @@ export default function FortuneForm({
               </div>
 
               <div className="grid gap-2.5 md:grid-cols-[0.88fr_1.12fr] md:gap-3">
-                <div className="rounded-lg border border-[color:var(--line)] bg-slate-50/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-xl md:py-3">
+                <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-xl md:py-3">
                   <div className="text-xs font-semibold text-[color:var(--muted)]">性别</div>
                   <div className="mt-1.5 inline-flex rounded-full border border-[#ece7da] bg-white p-1 md:mt-2">
                     {[
@@ -784,7 +784,7 @@ export default function FortuneForm({
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-[color:var(--line)] bg-slate-50/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-xl md:py-3">
+                <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-xl md:py-3">
                   <div className="text-xs font-semibold text-[color:var(--muted)]">出生信息模式</div>
                   <div className="mt-1.5 flex overflow-hidden rounded-full border border-[color:var(--line)] bg-white p-1 md:mt-2">
                     {[
@@ -810,7 +810,7 @@ export default function FortuneForm({
                 </div>
               </div>
 
-              <label className="block rounded-lg border border-[color:var(--line)] bg-slate-50/70 px-3 py-2.5 md:rounded-xl md:py-3">
+              <label className="block rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 md:rounded-xl md:py-3">
                 <div className="text-xs font-semibold text-[color:var(--muted)]">命主姓名</div>
                 <input
                   value={infoData.username}
@@ -842,7 +842,7 @@ export default function FortuneForm({
                 className="shadow-none md:block"
               >
                 <div className="grid gap-3">
-                  <div className="rounded-xl border border-[color:var(--line)] bg-slate-50/70 px-3 py-3">
+                  <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
                     <div className="text-xs font-semibold text-[color:var(--muted)]">判断主题</div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {caseTypes.map((item) => (
@@ -862,7 +862,7 @@ export default function FortuneForm({
                     </div>
                   </div>
 
-                  <div className="rounded-xl border border-[color:var(--line)] bg-slate-50/70 px-3 py-3">
+                  <div className="rounded-xl border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
                     <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                       <div>
                         <div className="text-xs font-semibold text-[color:var(--muted)]">时间修正与保存</div>
@@ -952,7 +952,7 @@ export default function FortuneForm({
               </div>
               <div className="mt-3 grid gap-2">
                 {entryReadiness.map((item) => (
-                  <div key={item.label} className="rounded-lg bg-slate-50/82 px-3 py-2">
+                  <div key={item.label} className="rounded-lg bg-[color:var(--bg-elevated)]/82 px-3 py-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-xs text-[color:var(--muted)]">{item.label}</div>
                       <div className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${item.done ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[#f3f3f3] text-[#8a8a8a]'}`}>
@@ -973,15 +973,15 @@ export default function FortuneForm({
                 ) : null}
               </div>
               <div className="mt-3 grid gap-2">
-                <div className="rounded-lg bg-slate-50/82 px-3 py-2">
+                <div className="rounded-lg bg-[color:var(--bg-elevated)]/82 px-3 py-2">
                   <div className="text-xs text-[color:var(--muted)]">出生时间</div>
                   <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">{birthLabel}</div>
                 </div>
-                <div className="rounded-lg bg-slate-50/82 px-3 py-2">
+                <div className="rounded-lg bg-[color:var(--bg-elevated)]/82 px-3 py-2">
                   <div className="text-xs text-[color:var(--muted)]">出生地点</div>
                   <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">{addressLabel}</div>
                 </div>
-                <div className="rounded-lg bg-slate-50/82 px-3 py-2">
+                <div className="rounded-lg bg-[color:var(--bg-elevated)]/82 px-3 py-2">
                   <div className="text-xs text-[color:var(--muted)]">真太阳时</div>
                   <div className="mt-1 text-sm font-semibold text-[color:var(--ink)]">
                     {infoData.unknowhour === 1 ? '未知（需选时辰）' : infoData.sunTime}

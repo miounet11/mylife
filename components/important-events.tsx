@@ -39,9 +39,9 @@ const typeMeta = {
 };
 
 const impactMeta = {
-  positive: { label: '积极', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  negative: { label: '风险', className: 'bg-rose-50 text-rose-700 border-rose-200' },
-  neutral: { label: '中性', className: 'bg-slate-100 text-slate-700 border-slate-200' },
+  positive: { label: '积极', className: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)] border-[rgba(47,125,82,0.20)]' },
+  negative: { label: '风险', className: 'bg-[color:var(--alert-soft)] text-[color:var(--alert)] border-[color:var(--alert)]' },
+  neutral: { label: '中性', className: 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] border-[color:var(--hairline-strong)]' },
 };
 
 export default function ImportantEvents({
@@ -94,7 +94,7 @@ export default function ImportantEvents({
             ))}
           </div>
         ) : (
-          <div className="rounded-[1.75rem] border border-dashed border-[color:var(--line)] bg-slate-50 px-6 py-12 text-center">
+          <div className="rounded-[1.75rem] border border-dashed border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-6 py-12 text-center">
             <div className="text-base font-semibold text-[color:var(--ink)]">还没有重要事件</div>
           </div>
         )}
@@ -135,7 +135,7 @@ function EventRow({
             <span className="rounded-full border px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">{type.label}</span>
             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${impact.className}`}>{impact.label}</span>
             {event.reminder?.enabled && (
-              <span className="rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">提醒已开启</span>
+              <span className="rounded-full border border-[color:var(--env)] bg-[color:var(--env-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--env)]">提醒已开启</span>
             )}
             {event.fortuneAnalysis?.source === 'result_report' && (
               <span className="rounded-full border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
@@ -143,22 +143,22 @@ function EventRow({
               </span>
             )}
             {event.fortuneAnalysis?.source === 'chat_message' && (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+              <span className="rounded-full border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--signal-strong)]">
                 来自聊天结论
               </span>
             )}
             {event.userFeedback?.wasAccurate === true && (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+              <span className="rounded-full border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
                 已验证准确
               </span>
             )}
             {event.userFeedback?.wasAccurate === false && (
-              <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">
+              <span className="rounded-full border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--alert)]">
                 已标记偏差
               </span>
             )}
             {event.isEstimatedPastEvent && (
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+              <span className="rounded-full border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--signal-strong)]">
                 日期待补
               </span>
             )}
@@ -178,7 +178,7 @@ function EventRow({
           </div>
 
           {event.isEstimatedPastEvent && (
-            <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="mt-4 rounded-2xl border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
               <div className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
@@ -199,7 +199,7 @@ function EventRow({
                 </div>
               )}
               {event.followUpAdvice?.shortTerm && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
                   {event.followUpAdvice.shortTerm}
                 </div>
               )}
@@ -236,7 +236,7 @@ function EventRow({
                   })}
                   page={source === 'profile_page' ? '/profile' : source === 'events_page' ? '/events' : '/history'}
                   target="important_event_drift_chat"
-                  className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-semibold text-rose-700"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-4 py-2 text-xs font-semibold text-[color:var(--alert)]"
                   meta={{
                     source: 'important_events_drift',
                     ctaStrategyKey: ctaStrategyKey || null,
@@ -253,7 +253,7 @@ function EventRow({
                 <button
                   type="button"
                   onClick={() => onEdit(event)}
-                  className="inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-2 text-xs font-semibold text-amber-700"
+                  className="inline-flex items-center gap-2 rounded-full border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-2 text-xs font-semibold text-[color:var(--signal-strong)]"
                 >
                   补真实日期
                 </button>
@@ -262,7 +262,7 @@ function EventRow({
           )}
 
           {(event.userFeedback?.wasAccurate !== undefined || event.userFeedback?.userNotes) && (
-            <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+            <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
               <span className="font-semibold text-[color:var(--ink)]">验证结果：</span>
               {event.userFeedback?.wasAccurate === true && '这次判断已被记录为准确。'}
               {event.userFeedback?.wasAccurate === false && '这次判断已被记录为存在偏差。'}
@@ -273,7 +273,7 @@ function EventRow({
           {(event.reminder?.enabled || event.predictionAccuracy !== undefined) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {event.reminder?.enabled && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--muted)]">
+                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
                   {event.reminder.method === 'app' && '应用通知'}
                   {event.reminder.method === 'email' && '邮件提醒'}
                   {event.reminder.method === 'sms' && '短信提醒'}
@@ -281,8 +281,8 @@ function EventRow({
                 </div>
               )}
               {event.predictionAccuracy !== undefined && (
-                <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-[color:var(--muted)]">
-                  报告预测：<span className={event.wasAccurate ? 'font-semibold text-emerald-700' : 'font-semibold text-rose-700'}>{event.wasAccurate ? '准确' : '待验证/不准确'}</span>
+                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
+                  报告预测：<span className={event.wasAccurate ? 'font-semibold text-[color:var(--data-up)]' : 'font-semibold text-[color:var(--alert)]'}>{event.wasAccurate ? '准确' : '待验证/不准确'}</span>
                 </div>
               )}
             </div>
@@ -294,7 +294,7 @@ function EventRow({
             <button
               onClick={() => onToggleReminder(event.id)}
               className={`inline-flex h-10 w-10 items-center justify-center rounded-full transition ${
-                event.reminder?.enabled ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-slate-100 text-slate-600'
+                event.reminder?.enabled ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]'
               }`}
               title={event.reminder?.enabled ? '关闭提醒' : '开启提醒'}
             >
@@ -304,7 +304,7 @@ function EventRow({
           {onMarkAccuracy && (
             <button
               onClick={() => onMarkAccuracy(event.id, true)}
-              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-emerald-50 px-3 text-xs font-semibold text-emerald-700 transition hover:bg-emerald-100"
+              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-[rgba(47,125,82,0.08)] px-3 text-xs font-semibold text-[color:var(--data-up)] transition hover:bg-[rgba(47,125,82,0.12)]"
               title="标记为准确"
             >
               准
@@ -313,7 +313,7 @@ function EventRow({
           {onMarkAccuracy && (
             <button
               onClick={() => onMarkAccuracy(event.id, false)}
-              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-rose-50 px-3 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+              className="inline-flex h-10 min-w-10 items-center justify-center rounded-full bg-[color:var(--alert-soft)] px-3 text-xs font-semibold text-[color:var(--alert)] transition hover:bg-[rgba(189,76,66,0.16)]"
               title="标记为存在偏差"
             >
               偏
@@ -322,7 +322,7 @@ function EventRow({
           {onEdit && (
             <button
               onClick={() => onEdit(event)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)] transition hover:bg-[color:var(--hairline-strong)]"
               title="编辑"
             >
               <Edit className="h-4 w-4" />
@@ -331,7 +331,7 @@ function EventRow({
           {onDelete && (
             <button
               onClick={() => onDelete(event.id)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-rose-100 hover:text-rose-700"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)] transition hover:bg-[rgba(189,76,66,0.16)] hover:text-[color:var(--alert)]"
               title="删除"
             >
               <Trash2 className="h-4 w-4" />

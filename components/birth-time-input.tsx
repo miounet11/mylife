@@ -81,7 +81,7 @@ function getPeriodStyle(period: string) {
     case 'evening':
       return 'bg-[linear-gradient(135deg,#c4b5fd,#818cf8)] text-[#312e81]';
     default:
-      return 'bg-slate-100 text-slate-700';
+      return 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)]';
   }
 }
 
@@ -267,7 +267,7 @@ export default function BirthTimeInput({
           ) : null}
         </div>
         {error ? (
-          <div className="mt-2 text-xs text-red-600">{error}</div>
+          <div className="mt-2 text-xs text-[color:var(--alert)]">{error}</div>
         ) : (
           <div className="mt-2 text-xs text-[color:var(--muted)]">
             如果只知道大概区间，先选时辰也可以；系统会再结合出生地做真太阳时修正。

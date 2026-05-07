@@ -240,8 +240,8 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
   const severityColors: Record<string, string> = {
     low: 'border-yellow-400 bg-yellow-50',
     medium: 'border-orange-400 bg-orange-50',
-    high: 'border-red-400 bg-red-50',
-    critical: 'border-red-600 bg-red-100',
+    high: 'border-[color:var(--alert)] bg-[color:var(--alert-soft)]',
+    critical: 'border-red-600 bg-[rgba(189,76,66,0.16)]',
   };
 
   return (
@@ -280,8 +280,8 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
           <span className="text-sm text-gray-600">严重程度：</span>
           <span className={cn(
             "text-sm font-bold px-3 py-1 rounded-full",
-            warning.severity === 'critical' && 'bg-red-600 text-white',
-            warning.severity === 'high' && 'bg-red-500 text-white',
+            warning.severity === 'critical' && 'bg-[color:var(--alert)] text-white',
+            warning.severity === 'high' && 'bg-[color:var(--alert)] text-white',
             warning.severity === 'medium' && 'bg-orange-500 text-white',
             warning.severity === 'low' && 'bg-yellow-500 text-white'
           )}>
@@ -295,16 +295,16 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
         {/* 防护措施 */}
         <div className="space-y-3">
           {/* 立即措施 */}
-          <div className="p-3 bg-red-50 rounded-lg border border-red-200">
-            <h5 className="font-semibold text-red-900 mb-2 flex items-center">
+          <div className="p-3 bg-[color:var(--alert-soft)] rounded-lg border border-[color:var(--alert)]">
+            <h5 className="font-semibold text-[color:var(--alert)] mb-2 flex items-center">
               <span>🚨</span>
               <span className="ml-2">立即采取的措施</span>
             </h5>
             <ul className="space-y-1">
               {warning.protectionMeasures.immediate.map((measure: string, i: number) => (
                 <li key={i} className="flex items-start">
-                  <span className="text-green-600 mr-2 mt-1">✓</span>
-                  <span className="text-sm text-red-900">{measure}</span>
+                  <span className="text-[color:var(--data-up)] mr-2 mt-1">✓</span>
+                  <span className="text-sm text-[color:var(--alert)]">{measure}</span>
                 </li>
               ))}
             </ul>
@@ -343,8 +343,8 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
           </div>
 
           {/* 增运建议 */}
-          <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-            <h5 className="font-semibold text-purple-900 mb-2 flex items-center">
+          <div className="p-3 bg-[color:var(--brand-soft)] rounded-lg border border-[color:var(--brand-soft-2)]">
+            <h5 className="font-semibold text-[color:var(--brand-deep)] mb-2 flex items-center">
               <span>✨</span>
               <span className="ml-2">增运建议</span>
             </h5>
@@ -352,12 +352,12 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
               {/* 仪式 */}
               {warning.protectionMeasures.fortuneEnhancements.rituals.length > 0 && (
                 <div className="flex items-start">
-                  <span className="text-purple-600 mr-2 mt-1">🔥</span>
+                  <span className="text-[color:var(--brand-strong)] mr-2 mt-1">🔥</span>
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-purple-900">仪式</span>
+                    <span className="text-sm font-medium text-[color:var(--brand-deep)]">仪式</span>
                     <div className="mt-1 space-x-1">
                       {warning.protectionMeasures.fortuneEnhancements.rituals.map((ritual: string, i: number) => (
-                        <span key={i} className="text-xs text-purple-700">· {ritual}</span>
+                        <span key={i} className="text-xs text-[color:var(--brand-strong)]">· {ritual}</span>
                       ))}
                     </div>
                   </div>
@@ -367,12 +367,12 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
               {/* 护身符 */}
               {warning.protectionMeasures.fortuneEnhancements.amulets.length > 0 && (
                 <div className="flex items-start">
-                  <span className="text-purple-600 mr-2 mt-1">🛡️</span>
+                  <span className="text-[color:var(--brand-strong)] mr-2 mt-1">🛡️</span>
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-purple-900">护身符</span>
+                    <span className="text-sm font-medium text-[color:var(--brand-deep)]">护身符</span>
                     <div className="mt-1 space-x-1">
                       {warning.protectionMeasures.fortuneEnhancements.amulets.map((amulet: string, i: number) => (
-                        <span key={i} className="text-xs text-purple-700">· {amulet}</span>
+                        <span key={i} className="text-xs text-[color:var(--brand-strong)]">· {amulet}</span>
                       ))}
                     </div>
                   </div>
@@ -382,12 +382,12 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
               {/* 颜色 */}
               {warning.protectionMeasures.fortuneEnhancements.colors.length > 0 && (
                 <div className="flex items-start">
-                  <span className="text-purple-600 mr-2 mt-1">🎨</span>
+                  <span className="text-[color:var(--brand-strong)] mr-2 mt-1">🎨</span>
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-purple-900">颜色</span>
+                    <span className="text-sm font-medium text-[color:var(--brand-deep)]">颜色</span>
                     <div className="mt-1 space-x-1">
                       {warning.protectionMeasures.fortuneEnhancements.colors.map((color: string, i: number) => (
-                        <span key={i} className="text-xs text-purple-700">· 宜穿{color}系衣物</span>
+                        <span key={i} className="text-xs text-[color:var(--brand-strong)]">· 宜穿{color}系衣物</span>
                       ))}
                     </div>
                   </div>
@@ -397,12 +397,12 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
               {/* 方位 */}
               {warning.protectionMeasures.fortuneEnhancements.directions.length > 0 && (
                 <div className="flex items-start">
-                  <span className="text-purple-600 mr-2 mt-1">🧭</span>
+                  <span className="text-[color:var(--brand-strong)] mr-2 mt-1">🧭</span>
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-purple-900">方位</span>
+                    <span className="text-sm font-medium text-[color:var(--brand-deep)]">方位</span>
                     <div className="mt-1 space-x-1">
                       {warning.protectionMeasures.fortuneEnhancements.directions.map((direction: string, i: number) => (
-                        <span key={i} className="text-xs text-purple-700">· 宜往{direction}发展</span>
+                        <span key={i} className="text-xs text-[color:var(--brand-strong)]">· 宜往{direction}发展</span>
                       ))}
                     </div>
                   </div>
@@ -412,12 +412,12 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
               {/* 吉日 */}
               {warning.protectionMeasures.fortuneEnhancements.dates && warning.protectionMeasures.fortuneEnhancements.dates.length > 0 && (
                 <div className="flex items-start">
-                  <span className="text-purple-600 mr-2 mt-1">📅</span>
+                  <span className="text-[color:var(--brand-strong)] mr-2 mt-1">📅</span>
                   <div className="flex-1">
-                    <span className="text-sm font-medium text-purple-900">吉日</span>
+                    <span className="text-sm font-medium text-[color:var(--brand-deep)]">吉日</span>
                     <div className="mt-1 space-x-1">
                       {warning.protectionMeasures.fortuneEnhancements.dates.map((date: Date, i: number) => (
-                        <span key={i} className="text-xs text-purple-700">· {formatDateTime(date)}</span>
+                        <span key={i} className="text-xs text-[color:var(--brand-strong)]">· {formatDateTime(date)}</span>
                       ))}
                     </div>
                   </div>

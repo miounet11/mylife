@@ -382,7 +382,7 @@ export default function CasesPage() {
                           '必须把环境变量说出来',
                           '最后回到一个现实动作',
                         ].map((item) => (
-                          <div key={item} className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[1.2rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}

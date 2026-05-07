@@ -573,10 +573,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     : '当前已经拿到深度增强版，可直接按完整路径阅读。';
   const feedbackLevel = correctionInsight.level || 'healthy';
   const feedbackHeroTone = feedbackLevel === 'action'
-    ? 'bg-rose-50 text-rose-700 border-rose-200'
+    ? 'bg-[color:var(--alert-soft)] text-[color:var(--alert)] border-[color:var(--alert)]'
     : feedbackLevel === 'watch'
-      ? 'bg-amber-50 text-amber-800 border-amber-200'
-      : 'bg-emerald-50 text-emerald-700 border-emerald-200';
+      ? 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)] border-[color:var(--signal)]'
+      : 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)] border-[rgba(47,125,82,0.20)]';
   const feedbackHeroLabel = feedbackLevel === 'action'
     ? '需要纠偏'
     : feedbackLevel === 'watch'
@@ -645,7 +645,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--muted)]">
                 {isEnhancementPending ? (
-                  <span className="rounded-full bg-amber-50 px-3 py-1 text-amber-800">
+                  <span className="rounded-full bg-[color:var(--signal-soft)] px-3 py-1 text-[color:var(--signal-strong)]">
                     深度增强补强中
                   </span>
                 ) : null}
@@ -730,7 +730,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         </h3>
                       </div>
                       {reportV4Sections.lifeKLine.arcLabel ? (
-                        <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                        <div className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                           {compactCopy(reportV4Sections.lifeKLine.arcLabel, 30)}
                         </div>
                       ) : null}
@@ -766,7 +766,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         </Suspense>
                       </div>
                     ) : (
-                      <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                      <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                         暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
                       </div>
                     )}
@@ -801,10 +801,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       key={section.eyebrow}
                     className={`rounded-[1.25rem] border px-5 py-5 ${
                       index === 0
-                        ? 'border-emerald-200 bg-emerald-50/70'
+                        ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
                         : index === 1
                         ? 'border-[color:var(--line)] bg-white/82'
-                        : 'border-amber-200 bg-amber-50/75'
+                        : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/75'
                     }`}
                   >
                     <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
@@ -826,18 +826,18 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               <div className={`mt-5 rounded-[1.25rem] border px-4 py-4 ${
                 isEnhancementPending
-                  ? 'border-amber-200 bg-amber-50/80'
+                  ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80'
                   : result.llmUsed
-                  ? 'border-emerald-200 bg-emerald-50/70'
+                  ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
                   : 'border-[color:var(--line)] bg-white/75'
               }`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                     isEnhancementPending
-                      ? 'bg-white text-amber-800'
+                      ? 'bg-white text-[color:var(--signal-strong)]'
                       : result.llmUsed
-                      ? 'bg-white text-emerald-700'
-                      : 'bg-slate-100 text-[color:var(--muted)]'
+                      ? 'bg-white text-[color:var(--data-up)]'
+                      : 'bg-[color:var(--bg-sunken)] text-[color:var(--muted)]'
                   }`}>
                     {qualityAudit
                       ? `质量 ${qualityAudit.overallScore || '--'} / ${qualityAudit.grade || 'B'}`
@@ -851,7 +851,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     {`当前阶段 ${currentStageLadderItem.shortLabel}`}
                   </span>
                   {qualityAudit?.targetAchieved ? (
-                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                    <span className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
                       已达到 S级目标
                     </span>
                   ) : null}
@@ -877,7 +877,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         {`下一阶段 ${nextStageLadderItem.shortLabel}`}
                       </div>
                     ) : (
-                      <div className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                      <div className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
                         已到当前最高阶段
                       </div>
                     )}
@@ -891,8 +891,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                           item.status === 'current'
                             ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
                             : item.status === 'completed'
-                            ? 'border-emerald-200 bg-emerald-50/80'
-                            : 'border-[color:var(--line)] bg-slate-50/90'
+                            ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/80'
+                            : 'border-[color:var(--line)] bg-[color:var(--bg-elevated)]/90'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-2">
@@ -901,7 +901,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                             item.status === 'current'
                               ? 'bg-white text-[color:var(--accent-strong)]'
                               : item.status === 'completed'
-                              ? 'bg-white text-emerald-700'
+                              ? 'bg-white text-[color:var(--data-up)]'
                               : 'bg-white text-[color:var(--muted)]'
                           }`}>
                             {item.status === 'current' ? '当前' : item.status === 'completed' ? '已完成' : '待解锁'}
@@ -914,7 +914,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     ))}
                   </div>
                   {nextStageLadderItem ? (
-                    <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       <span className="font-semibold text-[color:var(--accent-strong)]">下一阶段：</span>
                       {`${nextStageLadderItem.label}会补足${nextStageLadderItem.description.replace(/^会补足/, '')}`}
                     </div>
@@ -934,20 +934,20 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${feedbackHeroTone}`}>
                       {feedbackHeroLabel}
                     </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                       {`关联事件 ${validationInsights.totalLinkedEvents || 0}`}
                     </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                       {`待验证 ${validationInsights.pendingCount || 0}`}
                     </span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                       {`偏差 ${validationInsights.driftCount || 0}`}
                     </span>
                   </div>
                   <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                     {validationInsights.summary}
                   </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                  <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {correctionInsight.summary}
                   </div>
                 </div>
@@ -969,7 +969,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-[0.96fr_1.04fr]">
-                  <div className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
+                  <div className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {coreSectionNames.map((item) => (
@@ -979,7 +979,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
+                  <div className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">后面再展开</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {deferredSectionNames.map((item) => (
@@ -1037,7 +1037,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {stateVectorCards.map((item) => (
-                    <div key={item.label} className="rounded-[1.1rem] bg-slate-50 px-4 py-4">
+                    <div key={item.label} className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                       <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value.toFixed(1)}</div>
                     </div>

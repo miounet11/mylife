@@ -52,7 +52,7 @@ export default function Error({
   return (
     <div className="page-shell flex items-center justify-center px-4">
       <div className="glass-panel w-full max-w-2xl rounded-[2rem] p-8 md:p-10">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-50 text-red-600">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--alert-soft)] text-[color:var(--alert)]">
           <AlertTriangle className="h-8 w-8" />
         </div>
         <h2 className="mt-6 text-3xl font-black text-[color:var(--ink)]">页面临时出错了</h2>
