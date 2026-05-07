@@ -226,7 +226,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
                   </ToolCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
                 )}
               </div>
             </div>
@@ -243,13 +243,13 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     href={`/cases/${item.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
                     meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
                 )}
               </div>
             </div>
@@ -266,13 +266,13 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     href={`/insights/${item.type}/${item.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
                     meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
                 )}
               </div>
             </div>

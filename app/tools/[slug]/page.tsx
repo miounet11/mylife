@@ -304,7 +304,7 @@ export default async function ToolDetailPage({
             </div>
             <div className="mt-4 grid gap-3">
               {returningFromAnalyze ? (
-                <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50/85 p-4 text-xs leading-6 text-emerald-800">
+                <div className="rounded-[1.25rem] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/85 p-4 text-xs leading-6 text-[color:var(--data-up)]">
                   综合报告已经接回当前工具，可以直接运行。
                 </div>
               ) : null}
@@ -314,7 +314,7 @@ export default async function ToolDetailPage({
                 </div>
               ) : null}
               {!report && !imageUploadChatHref ? (
-                <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50/80 p-4 text-xs leading-6 text-amber-900">
+                <div className="rounded-[1.25rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
                   这个工具会读取你的综合报告来判断结构与阶段。先完成一次综合判断，再回来运行。
                 </div>
               ) : null}
@@ -442,7 +442,7 @@ export default async function ToolDetailPage({
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">社交内容只导向一次免费测算</h2>
                       <div className="mt-4 grid gap-3">
                         {growthProfile.socialHooks.map((item) => (
-                          <div key={item} className="rounded-[1.25rem] border border-[color:var(--line)] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[1.25rem] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}

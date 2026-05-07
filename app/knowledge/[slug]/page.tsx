@@ -412,7 +412,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
                   </ToolCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
                 )}
               </div>
             </div>
@@ -432,13 +432,13 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
                 )}
               </div>
             </div>
@@ -458,13 +458,13 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/knowledge/${article.slug}`}
                     meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
                 )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
+                  <div className="rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
                 )}
               </div>
             </div>
@@ -498,7 +498,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                           tags: item.tags,
                           series: 'world-yi',
                         }}
-                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                         <div className="intro-copy mt-2">{item.excerpt}</div>
@@ -533,7 +533,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                             tags: item.tags,
                             series: 'world-yi',
                         }}
-                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       </ContentCardLink>
@@ -577,7 +577,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                       topicName: item.topicName,
                       synthesisType: item.synthesisType,
                     }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
                   </ContentCardLink>
@@ -599,7 +599,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                       category: item.category,
                       tags: item.tags,
                     }}
-                    className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                    className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                   >
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>

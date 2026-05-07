@@ -583,10 +583,10 @@ function EventsPageContent() {
                 </h2>
               </div>
               <div className="grid gap-3 sm:grid-cols-4">
-                <WorkbenchStat label="已过期待验证" value={validationWorkbench.overduePending.length} tone="bg-rose-50 text-rose-700" />
-                <WorkbenchStat label="已记录偏差" value={validationWorkbench.driftEvents.length} tone="bg-amber-50 text-amber-700" />
-                <WorkbenchStat label="未来待验证" value={validationWorkbench.upcomingValidation.length} tone="bg-slate-50 text-slate-700" />
-                <WorkbenchStat label="已验证准确" value={validationWorkbench.accurateCount} tone="bg-emerald-50 text-emerald-700" />
+                <WorkbenchStat label="已过期待验证" value={validationWorkbench.overduePending.length} tone="bg-[color:var(--alert-soft)] text-[color:var(--alert)]" />
+                <WorkbenchStat label="已记录偏差" value={validationWorkbench.driftEvents.length} tone="bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]" />
+                <WorkbenchStat label="未来待验证" value={validationWorkbench.upcomingValidation.length} tone="bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]" />
+                <WorkbenchStat label="已验证准确" value={validationWorkbench.accurateCount} tone="bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]" />
               </div>
             </div>
 
@@ -605,14 +605,14 @@ function EventsPageContent() {
                         <button
                           type="button"
                           onClick={() => void handleMarkAccuracy(event.id, true)}
-                          className="rounded-full bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-700"
+                          className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-2 text-xs font-semibold text-[color:var(--data-up)]"
                         >
                           记为准确
                         </button>
                         <button
                           type="button"
                           onClick={() => void handleMarkAccuracy(event.id, false)}
-                          className="rounded-full bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700"
+                          className="rounded-full bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]"
                         >
                           记录偏差
                         </button>
@@ -704,7 +704,7 @@ function EventsPageContent() {
                         <button
                           type="button"
                           onClick={openCreateForm}
-                          className="rounded-full bg-slate-100 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]"
+                          className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-2 text-xs font-semibold text-[color:var(--muted)]"
                         >
                           新增配套事件
                         </button>
@@ -781,7 +781,7 @@ function EventsPageContent() {
             </select>
           </div>
           <div className="flex-1 relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[color:var(--ink-5)]" />
             <input
               type="text"
               value={keyword}
@@ -796,7 +796,7 @@ function EventsPageContent() {
           <EventsSkeleton />
         ) : view === 'calendar' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-white rounded-xl border border-slate-200 overflow-hidden">
+            <div className="lg:col-span-1 bg-white rounded-xl border border-[color:var(--hairline-strong)] overflow-hidden">
               <EventCalendar events={filteredEvents} />
             </div>
             <div className="lg:col-span-2">
@@ -860,7 +860,7 @@ function EventsPageContent() {
                 }
 
                 return (
-                  <div className="md:col-span-2 rounded-[1.25rem] border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+                  <div className="md:col-span-2 rounded-[1.25rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-4 text-sm text-[color:var(--signal-strong)]">
                     <div className="font-semibold">这条历史印证还在使用暂估日期</div>
                     <div className="mt-1 leading-6">{getEstimatedPastEventPrompt(editingEvent)}</div>
                   </div>
@@ -931,7 +931,7 @@ function EventsPageContent() {
                   type="checkbox"
                   checked={form.reminderEnabled}
                   onChange={(e) => setForm((prev) => ({ ...prev, reminderEnabled: e.target.checked }))}
-                  className="h-4 w-4 rounded border-slate-300 text-[color:var(--accent)] focus:ring-[color:var(--accent)]"
+                  className="h-4 w-4 rounded border-[color:var(--hairline-strong)] text-[color:var(--accent)] focus:ring-[color:var(--accent)]"
                 />
                 保存并启用提醒
               </label>
@@ -960,8 +960,8 @@ function EventsPageContent() {
         <div
           className={`fixed right-4 top-20 z-[60] rounded-full px-4 py-3 text-sm font-medium shadow-[0_16px_34px_rgba(23,32,51,0.12)] ${
             toast.type === 'success'
-              ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-              : 'bg-rose-50 border border-rose-200 text-rose-700'
+              ? 'bg-[rgba(47,125,82,0.08)] border border-[rgba(47,125,82,0.20)] text-[color:var(--data-up)]'
+              : 'bg-[color:var(--alert-soft)] border border-[color:var(--alert)] text-[color:var(--alert)]'
           }`}
         >
           {toast.message}
@@ -1003,9 +1003,9 @@ function EventsPageFallback() {
 function CalendarSkeleton() {
   return (
     <div className="p-4 space-y-4">
-      <div className="h-64 bg-slate-200 rounded-lg animate-pulse"></div>
-      <div className="h-64 bg-slate-200 rounded-lg animate-pulse"></div>
-      <div className="h-64 bg-slate-200 rounded-lg animate-pulse"></div>
+      <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
+      <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
+      <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
     </div>
   );
 }
@@ -1014,7 +1014,7 @@ function EventsSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-32 bg-slate-200 rounded-xl animate-pulse"></div>
+        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
       ))}
     </div>
   );
@@ -1041,7 +1041,7 @@ function WorkbenchPanel({
   empty: string;
 }) {
   return (
-    <div className="rounded-[1.75rem] bg-slate-50 p-4">
+    <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
         {icon}
         {title}

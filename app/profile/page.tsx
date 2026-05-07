@@ -610,8 +610,8 @@ export default function ProfilePage() {
 function ProfileSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="h-96 bg-slate-200 rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-slate-200 rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
     </div>
   );
 }
@@ -620,7 +620,7 @@ function EventsSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-32 bg-slate-200 rounded-xl animate-pulse"></div>
+        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
       ))}
     </div>
   );
@@ -628,9 +628,9 @@ function EventsSkeleton() {
 
 function ChartSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <div className="h-6 bg-slate-200 rounded-lg animate-pulse mb-4"></div>
-      <div className="h-64 bg-slate-200 rounded-lg animate-pulse"></div>
+    <div className="bg-white rounded-xl border border-[color:var(--hairline-strong)] p-6">
+      <div className="h-6 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse mb-4"></div>
+      <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
     </div>
   );
 }
@@ -686,8 +686,8 @@ function ProfileStatusTile({
 
 function mapProfileStatusTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
   if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
-  if (tone === 'success') return 'bg-emerald-50 text-emerald-700';
-  if (tone === 'warning') return 'bg-amber-50 text-amber-700';
+  if (tone === 'success') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
+  if (tone === 'warning') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
   return 'bg-white text-[color:var(--ink)]';
 }
 

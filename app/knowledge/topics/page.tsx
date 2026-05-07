@@ -239,7 +239,7 @@ export default function KnowledgeTopicsPage() {
                         href={`/cases/${item.slug}`}
                         page="/knowledge/topics"
                         meta={{ surfaceKey: 'knowledge_topics_page_evidence', targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                         <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -262,7 +262,7 @@ export default function KnowledgeTopicsPage() {
                         href={`/insights/${item.type}/${item.slug}`}
                         page="/knowledge/topics"
                         meta={{ surfaceKey: 'knowledge_topics_page_evidence', targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                        className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
+                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                         <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>

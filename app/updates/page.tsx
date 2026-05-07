@@ -215,7 +215,7 @@ export default async function UpdatesPage({
                       )}
                     </div>
 
-                    <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--muted)]">邮箱与订阅</div>
+                    <div className="mt-4 rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">邮箱与订阅</div>
                   </div>
                 </div>
 
@@ -309,8 +309,8 @@ function StatusMetric({
 
 function mapMetricTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
   if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
-  if (tone === 'success') return 'bg-emerald-50 text-emerald-700';
-  if (tone === 'warning') return 'bg-amber-50 text-amber-700';
+  if (tone === 'success') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
+  if (tone === 'warning') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
   return 'bg-white text-[color:var(--ink)]';
 }
 
@@ -346,8 +346,8 @@ function mapLifecycleStageLabel(stageKey?: string | null) {
 }
 
 function mapDigestTone(status?: string) {
-  if (status === 'sent') return 'bg-emerald-50 text-emerald-700';
-  if (status === 'error') return 'bg-rose-50 text-rose-700';
-  if (status === 'skipped') return 'bg-amber-50 text-amber-700';
-  return 'bg-slate-100 text-slate-700';
+  if (status === 'sent') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
+  if (status === 'error') return 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]';
+  if (status === 'skipped') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
+  return 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)]';
 }

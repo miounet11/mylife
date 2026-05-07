@@ -122,14 +122,14 @@ export default function WorldYiMatrixPage() {
                   <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                     {batch.phase}
                   </span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                  <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                     {batch.targetCount} 篇
                   </span>
                 </div>
                 <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">{batch.title}</h3>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {batch.focus.map((item) => (
-                    <span key={item} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
+                    <span key={item} className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
                       {item}
                     </span>
                   ))}
