@@ -571,7 +571,7 @@ function EventsPageContent() {
         )}
 
         {!loading && (
-          <section id="validation-workbench" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md scroll-mt-28 rounded-[2rem] p-6">
+          <section id="validation-workbench" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md scroll-mt-28 rounded-[var(--radius-md)] p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -796,7 +796,7 @@ function EventsPageContent() {
           <EventsSkeleton />
         ) : view === 'calendar' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-white rounded-xl border border-[color:var(--hairline-strong)] overflow-hidden">
+            <div className="lg:col-span-1 bg-white rounded-[var(--radius)] border border-[color:var(--hairline-strong)] overflow-hidden">
               <EventCalendar events={filteredEvents} />
             </div>
             <div className="lg:col-span-2">
@@ -833,7 +833,7 @@ function EventsPageContent() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,18,14,0.45)] p-4 backdrop-blur-sm" onClick={closeForm}>
           <div
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[var(--radius-md)]"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmitForm} className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 md:p-6">
@@ -1014,7 +1014,7 @@ function EventsSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
+        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-[var(--radius)] animate-pulse"></div>
       ))}
     </div>
   );

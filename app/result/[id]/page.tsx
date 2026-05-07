@@ -766,7 +766,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         </Suspense>
                       </div>
                     ) : (
-                      <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                      <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                         暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
                       </div>
                     )}
@@ -815,7 +815,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     </div>
                     <div className="mt-4 grid gap-3">
                       {section.evidence.map((item) => (
-                        <div key={item} className="rounded-2xl bg-white/88 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                        <div key={item} className="rounded-[var(--radius)] bg-white/88 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                           {item}
                         </div>
                       ))}
@@ -914,7 +914,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     ))}
                   </div>
                   {nextStageLadderItem ? (
-                    <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       <span className="font-semibold text-[color:var(--accent-strong)]">下一阶段：</span>
                       {`${nextStageLadderItem.label}会补足${nextStageLadderItem.description.replace(/^会补足/, '')}`}
                     </div>
@@ -947,7 +947,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                     {validationInsights.summary}
                   </div>
-                  <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {correctionInsight.summary}
                   </div>
                 </div>
@@ -1240,24 +1240,24 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 function ReportSkeleton() {
   return (
     <div className="max-w-5xl mx-auto space-y-8">
-      <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+      <div className="h-64 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
     </div>
   );
 }
 
 function ChartSkeleton() {
   return (
-    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
   );
 }
 
 function GuideSkeleton() {
   return (
-    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-xl animate-pulse"></div>
+    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
   );
 }
 

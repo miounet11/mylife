@@ -138,7 +138,7 @@ export default function WorldYiPublishPage() {
           highlightsColumns="grid-cols-1"
         />
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             当前运行态
@@ -165,7 +165,7 @@ export default function WorldYiPublishPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Globe2 className="h-3.5 w-3.5" />
             会公开发布的层
@@ -195,7 +195,7 @@ export default function WorldYiPublishPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <FileText className="h-3.5 w-3.5" />
               不会直接原样发布的层
@@ -207,7 +207,7 @@ export default function WorldYiPublishPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               当前最合理的发布策略

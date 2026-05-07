@@ -205,7 +205,7 @@ export default function CasesPage() {
                           locale,
                           market,
                         }}
-                        className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
+                        className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 transition hover:-translate-y-0.5"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                           <span>{item.category}</span>
@@ -360,7 +360,7 @@ export default function CasesPage() {
                             }}
                             className="rounded-[1.6rem] bg-white/84 p-5 transition hover:-translate-y-0.5"
                           >
-                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                            <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                               <Icon className="h-5 w-5" />
                             </div>
                             <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>

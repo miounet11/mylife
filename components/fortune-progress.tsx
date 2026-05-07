@@ -432,14 +432,14 @@ export default function FortuneProgress({
             </div>
 
             {isSlow ? (
-              <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/90 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/90 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
                 <div className="font-semibold text-[color:var(--signal-strong)]">等待较长</div>
                 <div className="mt-2">{deliveryHint}</div>
               </div>
             ) : null}
 
             {summary ? (
-              <div className="rounded-[1.5rem] bg-[rgba(201,125,58,0.1)] p-4">
+              <div className="rounded-[var(--radius-md)] bg-[rgba(201,125,58,0.1)] p-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
                   <Stars className="h-4 w-4" />
                   本次判断已锁定输入
@@ -486,7 +486,7 @@ export default function FortuneProgress({
               />
             </div>
 
-            <div className="rounded-[1.5rem] bg-white/85 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/85 p-5">
               <div className="text-sm font-semibold text-[color:var(--ink)]">阶段</div>
               <div className="mt-2 text-base font-semibold leading-7 text-[color:var(--ink)]">
                 {serverStage?.label || steps[currentStep].name}
@@ -495,22 +495,22 @@ export default function FortuneProgress({
                 {serverStage?.detail || steps[currentStep].detail}
               </div>
               {nextStep ? (
-                <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+                <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                   下一步：{nextStep.name}
                 </div>
               ) : (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-[rgba(47,125,82,0.08)] px-4 py-3 text-xs font-semibold text-[color:var(--data-up)]">
+                <div className="mt-3 inline-flex items-center gap-2 rounded-[var(--radius)] bg-[rgba(47,125,82,0.08)] px-4 py-3 text-xs font-semibold text-[color:var(--data-up)]">
                   <CheckCircle2 className="h-4 w-4" />
                   结果已经准备好，正在进入报告页
                 </div>
               )}
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/60 bg-white/70 p-4 text-sm text-[color:var(--muted)]">
+            <div className="rounded-[var(--radius-md)] border border-white/60 bg-white/70 p-4 text-sm text-[color:var(--muted)]">
               {finalStageMessage}
             </div>
 
-            <div className="rounded-[1.5rem] border border-white/70 bg-white/82 p-4">
+            <div className="rounded-[var(--radius-md)] border border-white/70 bg-white/82 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold tracking-[0.16em] text-[color:var(--muted)]">
@@ -534,10 +534,10 @@ export default function FortuneProgress({
                   return (
                     <div
                       key={task.key}
-                      className={`rounded-2xl border px-3 py-3 transition ${getAgentStatusClass(task.status)}`}
+                      className={`rounded-[var(--radius)] border px-3 py-3 transition ${getAgentStatusClass(task.status)}`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius)] bg-white/80">
                           {task.status === 'running' ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : task.status === 'done' ? (
@@ -561,13 +561,13 @@ export default function FortuneProgress({
             </div>
 
             {isSlow ? (
-              <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
                 {slowHint}
               </div>
             ) : null}
 
             {isComplete && completionMeta?.upgradeQueued ? (
-              <div className="rounded-[1.5rem] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                 {backgroundUpgradeLabel || '后台增强任务已建立'}
                 {typeof completionMeta.upgradeAttempts === 'number' && typeof completionMeta.upgradeMaxAttempts === 'number'
                   ? `，当前重试进度 ${completionMeta.upgradeAttempts} / ${completionMeta.upgradeMaxAttempts}。`
@@ -579,7 +579,7 @@ export default function FortuneProgress({
               {steps.map((step, index) => (
                 <div
                   key={step.name}
-                  className={`rounded-2xl px-4 py-3 text-sm transition ${
+                  className={`rounded-[var(--radius)] px-4 py-3 text-sm transition ${
                     index < currentStep
                       ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
                       : index === currentStep

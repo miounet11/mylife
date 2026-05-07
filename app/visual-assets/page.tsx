@@ -153,7 +153,7 @@ export default function VisualAssetsPage() {
               { label: '主题模块', value: `${groupedAssets.length} 组` },
               { label: '深度解读', value: `${visualAssets.length} 篇` },
             ].map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                 <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{item.label}</div>
                 <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
               </div>
@@ -177,7 +177,7 @@ export default function VisualAssetsPage() {
               <Link
                 key={group.key}
                 href={group.href}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{group.title}</div>

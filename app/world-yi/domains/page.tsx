@@ -139,7 +139,7 @@ export default function WorldYiDomainsPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <LibraryBig className="h-3.5 w-3.5" />
               结构联动
@@ -163,7 +163,7 @@ export default function WorldYiDomainsPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">

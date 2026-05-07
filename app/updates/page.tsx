@@ -152,7 +152,7 @@ export default async function UpdatesPage({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-xl p-4 md:p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <RefreshCcw className="h-5 w-5 text-[color:var(--accent-strong)]" />
                       <div className="font-semibold text-[color:var(--ink)]">我的报告更新</div>
@@ -187,7 +187,7 @@ export default async function UpdatesPage({
                     </div>
                   </div>
 
-                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-xl p-4 md:p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <ScrollText className="h-5 w-5 text-[color:var(--warm)]" />
                       <div className="font-semibold text-[color:var(--ink)]">最近提醒记录</div>
@@ -249,7 +249,7 @@ export default async function UpdatesPage({
                 </PriorityDisclosure>
               </div>
             ) : (
-              <div className="mt-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-5 py-5">
+              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/80 px-5 py-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">登录后可查看自己的更新中心</div>
                 <div className="mt-4">
                   <Link

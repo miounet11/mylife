@@ -621,7 +621,7 @@ export default function BirthTimeModal({
           </div>
 
           <div className="flex-1 overflow-y-auto px-4 py-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-[color:var(--accent-soft)] px-3 py-2.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-2.5">
               <div className="text-xs font-semibold text-[color:var(--accent-strong)]">
                 默认滚轮选择，确认后回填主表单
               </div>
@@ -639,7 +639,7 @@ export default function BirthTimeModal({
                   <summary className="cursor-pointer list-none rounded-full bg-white/82 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
                     录入说明
                   </summary>
-                  <div className="absolute right-0 top-9 z-30 w-[260px] rounded-xl border border-[color:var(--line)] bg-white p-3 text-xs leading-5 text-[color:var(--muted)] shadow-[0_14px_34px_rgba(24,41,35,0.12)]">
+                  <div className="absolute right-0 top-9 z-30 w-[260px] rounded-[var(--radius)] border border-[color:var(--line)] bg-white p-3 text-xs leading-5 text-[color:var(--muted)] shadow-[0_14px_34px_rgba(24,41,35,0.12)]">
                     支持公历、农历和四柱。暂不知道具体时间时，开启“时间不确定”即可。
                   </div>
                 </details>
@@ -647,7 +647,7 @@ export default function BirthTimeModal({
             </div>
 
             {activeTab === 0 && manualOpen ? (
-              <div className="mt-3 flex items-center gap-2 rounded-xl border border-[color:var(--line)] bg-white/86 p-2">
+              <div className="mt-3 flex items-center gap-2 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/86 p-2">
                 <input
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
@@ -677,7 +677,7 @@ export default function BirthTimeModal({
               </button>
             ) : null}
 
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-xl border border-[color:var(--line)] bg-white/78 px-3 py-2.5">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 px-3 py-2.5">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--ink)]">时间不确定</div>
                 <div className="mt-0.5 text-xs text-[color:var(--muted)]">
@@ -716,7 +716,7 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('tg');
                       }}
-                      className={`flex h-[54px] items-center justify-center rounded-xl text-[24px] font-bold ${
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
                         item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--accent)] text-white'
                       }`}
                     >
@@ -733,7 +733,7 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('dz');
                       }}
-                      className={`flex h-[54px] items-center justify-center rounded-xl text-[24px] font-bold ${
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
                         item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--warm)] text-white'
                       }`}
                     >
@@ -750,7 +750,7 @@ export default function BirthTimeModal({
                     <div key={item}>{item}</div>
                   ))}
                 </div>
-                <div className="relative mt-1 rounded-xl border border-[color:var(--line)] bg-white/82 px-1">
+                <div className="relative mt-1 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/82 px-1">
                   <div className="pointer-events-none absolute inset-x-1 top-1/2 z-10 h-[46px] -translate-y-1/2 rounded-lg bg-[color:var(--accent-soft)]" />
                   <div className={`relative z-20 grid gap-0 ${unknownTimeSelected ? 'grid-cols-3' : 'grid-cols-5'}`}>
                     <PickerWheelColumn compact hideLabel showHighlight={false} label="年" options={activeTab === 0 ? solarYearOptions : lunarYearOptions} value={activeTab === 0 ? solarState.year : lunarState.year} onChange={(value) => {
@@ -804,7 +804,7 @@ export default function BirthTimeModal({
                 {error}
               </div>
             ) : null}
-            <div className="mb-3 rounded-xl bg-[color:var(--accent-soft)] px-3 py-2 text-[13px] text-[color:var(--muted)]">
+            <div className="mb-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-2 text-[13px] text-[color:var(--muted)]">
               当前预览：<span className="font-semibold text-[color:var(--ink)]">{currentPreview}</span>
             </div>
 

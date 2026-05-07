@@ -208,7 +208,7 @@ export default function WorldYiPage() {
         ) : null}
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Compass className="h-3.5 w-3.5" />
               六层引力模型
@@ -223,7 +223,7 @@ export default function WorldYiPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
               五大学理基础
@@ -277,7 +277,7 @@ export default function WorldYiPage() {
           </ContentCardLink>
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -288,7 +288,7 @@ export default function WorldYiPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {worldYiScaleCards.map((item) => (
-                <div key={item.label} className="rounded-[1.5rem] bg-white/82 p-5 shadow-[0_10px_26px_rgba(23,32,51,0.05)]">
+                <div key={item.label} className="rounded-[var(--radius-md)] bg-white/82 p-5 shadow-[0_10px_26px_rgba(23,32,51,0.05)]">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
                 </div>
@@ -297,7 +297,7 @@ export default function WorldYiPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -308,7 +308,7 @@ export default function WorldYiPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {worldYiRoadmapSummary.tracks.map((item) => (
-                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">目标内容量</div>
                   <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.targetCount} 篇</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">{item.label}</div>
@@ -383,7 +383,7 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-domains',
             }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Compass className="h-3.5 w-3.5" />
@@ -418,7 +418,7 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-book',
             }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <BookOpen className="h-3.5 w-3.5" />
@@ -453,7 +453,7 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-matrix',
             }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
@@ -519,7 +519,7 @@ export default function WorldYiPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">案例层</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">案例</h2>
             <div className="mt-5 space-y-3">
@@ -544,7 +544,7 @@ export default function WorldYiPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">观察层</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">观察</h2>
             <div className="mt-5 space-y-3">

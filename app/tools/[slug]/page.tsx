@@ -289,7 +289,7 @@ export default async function ToolDetailPage({
 
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
             {growthProfile ? (
-              <div className="mb-5 rounded-[1.5rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4">
+              <div className="mb-5 rounded-[var(--radius-md)] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4">
                 <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">冷启动转化路径</div>
                 <div className="mt-3 grid gap-2 text-xs leading-6 text-[color:var(--ink)]">
                   <div>1. 免费测算先给结构判断和一个动作。</div>
@@ -381,7 +381,7 @@ export default async function ToolDetailPage({
                 ['优先帮你', tool.valuePromise],
                 ['正确问法', tool.rightQuestion],
               ].map(([title, description]) => (
-                <div key={title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                <div key={title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                   <div className="text-base font-bold text-[color:var(--ink)]">{title}</div>
                   <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{description}</div>
                 </div>
@@ -411,13 +411,13 @@ export default async function ToolDetailPage({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {tool.freeInsights.slice(0, 2).map((item) => (
-                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">免费先看</div>
                     <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
                   </div>
                 ))}
                 {tool.premiumModules.slice(0, 2).map((item) => (
-                  <div key={item} className="rounded-[1.5rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
                     <div className="text-sm font-semibold text-[color:var(--accent-strong)]">深测再展开</div>
                     <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
                   </div>
@@ -425,7 +425,7 @@ export default async function ToolDetailPage({
               </div>
 
               {growthProfile ? (
-                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
                   <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">GEO 问答与社交分发</div>
                   <div className="mt-5 grid gap-5 lg:grid-cols-2">
                     <div>
@@ -463,7 +463,7 @@ export default async function ToolDetailPage({
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   {tool.faqItems.slice(0, 4).map((item) => (
-                    <div key={item.question} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                    <div key={item.question} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                       <div className="text-base font-bold text-[color:var(--ink)]">{item.question}</div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item.answer}</div>
                     </div>
@@ -479,7 +479,7 @@ export default async function ToolDetailPage({
                 badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
               />
               {growthProfile ? (
-                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
                   <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">升级路径</div>
                   <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
                     免费结果之后，优先转深测报告和留资复访

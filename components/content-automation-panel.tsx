@@ -699,7 +699,7 @@ export default function ContentAutomationPanel({
   };
 
   return (
-    <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+    <div className="glass-panel rounded-[var(--radius-md)] p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">内容自动化</div>
@@ -760,7 +760,7 @@ export default function ContentAutomationPanel({
       {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
 
       {loading || !snapshot ? (
-        <div className="mt-6 rounded-[1.5rem] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
+        <div className="mt-6 rounded-[var(--radius-md)] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
       ) : (
         <div className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-4 xl:grid-cols-8">
@@ -782,7 +782,7 @@ export default function ContentAutomationPanel({
                 { label: '自动发布', value: scheduler.canPublishNow ? '可执行' : '未满足' },
               ] : []),
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
               </div>
@@ -877,7 +877,7 @@ export default function ContentAutomationPanel({
                     {autonomous.openAgent.latestContentAnalysis?.plan.laneContracts.length ? (
                       <div className="mt-3 grid gap-2">
                         {autonomous.openAgent.latestContentAnalysis.plan.laneContracts.slice(0, 2).map((item) => (
-                          <div key={`${item.lane}-${item.targetKeys.join('-')}`} className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
+                          <div key={`${item.lane}-${item.targetKeys.join('-')}`} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
                             <div className="font-semibold">{item.lane} lane 补位合同</div>
                             <div className="mt-1 text-[color:var(--muted)]">{item.targetKeys.join(' / ')}</div>
                           </div>
@@ -911,7 +911,7 @@ export default function ContentAutomationPanel({
                         { label: '建议', value: openAgentOpsTriage?.plan.recommendedActions.length || 0 },
                         { label: '策略差异', value: openAgentOpsTriage?.plan.policyDiffs.length || 0 },
                       ].map((item) => (
-                        <div key={item.label} className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3">
+                        <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">
                           <div className="text-[10px] font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.value}</div>
                         </div>
@@ -935,14 +935,14 @@ export default function ContentAutomationPanel({
                         { label: '优先报告', value: reportReliabilityReview?.plan.priorityReports.length || 0 },
                         { label: '建议', value: reportReliabilityReview?.plan.recommendedActions.length || 0 },
                       ].map((item) => (
-                        <div key={item.label} className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3">
+                        <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">
                           <div className="text-[10px] font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.value}</div>
                         </div>
                       ))}
                     </div>
                     {reportReliabilityReview?.application?.autoExecuted ? (
-                      <div className="mt-3 rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
+                      <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
                         已自动处理：排队升级 {reportReliabilityQueuedCount} 份，反馈同步 {reportReliabilitySyncedCount} 份。
                       </div>
                     ) : null}
@@ -976,12 +976,12 @@ export default function ContentAutomationPanel({
                     </div>
                     <div className="mt-3 grid gap-2">
                       {autonomous.openAgent.policySignalApplications.length > 0 ? autonomous.openAgent.policySignalApplications.map((item) => (
-                        <div key={`${item.path}-${item.signal}`} className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
+                        <div key={`${item.path}-${item.signal}`} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
                           <div className="font-semibold">{item.path}</div>
                           <div className="mt-1 text-[color:var(--muted)]">{String(item.previousValue)} → {String(item.nextValue)}</div>
                         </div>
                       )) : (
-                        <div className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--muted)]">
+                        <div className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--muted)]">
                           最新 content analysis 没有改写策略值，当前 effective policy 与持久化策略一致。
                         </div>
                       )}
@@ -1224,13 +1224,13 @@ export default function ContentAutomationPanel({
                       </div>
                     </div>
                     <div className="mt-3 grid grid-cols-3 gap-3 text-xs text-[color:var(--ink)]">
-                      <div className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3">publish {autonomous.runtime.contentDecisionLedger.latestDecisionMix.publishCount}</div>
-                      <div className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3">ready {autonomous.runtime.contentDecisionLedger.latestDecisionMix.readyCount}</div>
-                      <div className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3">blocked {autonomous.runtime.contentDecisionLedger.latestDecisionMix.blockedCount}</div>
+                      <div className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">publish {autonomous.runtime.contentDecisionLedger.latestDecisionMix.publishCount}</div>
+                      <div className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">ready {autonomous.runtime.contentDecisionLedger.latestDecisionMix.readyCount}</div>
+                      <div className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">blocked {autonomous.runtime.contentDecisionLedger.latestDecisionMix.blockedCount}</div>
                     </div>
                     <div className="mt-3 grid gap-2">
                       {autonomous.runtime.contentDecisionLedger.topBlockedReasons.slice(0, 4).map((item) => (
-                        <div key={item.reason} className="rounded-2xl bg-rose-50 px-3 py-3 text-xs text-rose-700">
+                        <div key={item.reason} className="rounded-[var(--radius)] bg-rose-50 px-3 py-3 text-xs text-rose-700">
                           {item.reason} · {item.count}
                         </div>
                       ))}
@@ -1246,7 +1246,7 @@ export default function ContentAutomationPanel({
                     </div>
                     <div className="mt-3 grid gap-2">
                       {autonomous.openAgent.backlog.slice(0, 4).map((item) => (
-                        <div key={item.id} className="rounded-2xl bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
+                        <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3 text-xs text-[color:var(--ink)]">
                           <div className="font-semibold">{item.priority} · {item.title}</div>
                           <div className="mt-1 text-[color:var(--muted)]">{item.status} · {formatDateTime(item.lastSeenAt)}</div>
                         </div>
@@ -1323,7 +1323,7 @@ export default function ContentAutomationPanel({
           </div>
 
           {recentTitles.length > 0 && (
-            <div className="rounded-[1.5rem] bg-white/70 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/70 p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">本轮已执行内容</div>
               <div className="mt-3 grid gap-2">
                 {recentTitles.map((title) => (

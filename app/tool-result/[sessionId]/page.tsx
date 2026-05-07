@@ -135,7 +135,7 @@ export default async function ToolResultPage({
         </section>
 
         <section className="mt-8 grid gap-8 xl:grid-cols-[1fr_1fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <ScrollText className="h-3.5 w-3.5" />
               免费结果摘要
@@ -149,7 +149,7 @@ export default async function ToolResultPage({
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               下一步承接
@@ -181,7 +181,7 @@ export default async function ToolResultPage({
 
         {growthProfile ? (
           <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LockKeyhole className="h-3.5 w-3.5" />
                 免费结果之后
@@ -243,14 +243,14 @@ export default async function ToolResultPage({
                   </div>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
                     {deepDiveSections.map((section: { heading: string; body: string }) => (
-                      <div key={section.heading} className="rounded-[1.5rem] bg-white/82 p-5">
+                      <div key={section.heading} className="rounded-[var(--radius-md)] bg-white/82 p-5">
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{section.heading}</div>
                         <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{section.body}</div>
                       </div>
                     ))}
                   </div>
                   {llmEnhancement.conversionBridge ? (
-                    <div className="mt-5 rounded-[1.5rem] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-5 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                    <div className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-5 py-4 text-sm leading-7 text-[color:var(--ink)]">
                       {String(llmEnhancement.conversionBridge)}
                     </div>
                   ) : null}
@@ -286,13 +286,13 @@ export default async function ToolResultPage({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {tool.freeInsights.map((item) => (
-                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">这次免费已回答</div>
                     <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-3">{item}</div>
                   </div>
                 ))}
                 {tool.premiumModules.map((item) => (
-                  <div key={item} className="rounded-[1.5rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
                     <div className="text-sm font-semibold text-[color:var(--accent-strong)]">继续付费可展开</div>
                     <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
                   </div>

@@ -36,7 +36,7 @@ export default function ChatMarkdown({ content }: { content: string }) {
             </a>
           ),
           table: ({ children }) => (
-            <div className="mt-4 overflow-x-auto rounded-2xl border border-[color:var(--line)]">
+            <div className="mt-4 overflow-x-auto rounded-[var(--radius)] border border-[color:var(--line)]">
               <table className="min-w-full border-collapse bg-white text-left text-sm">{children}</table>
             </div>
           ),

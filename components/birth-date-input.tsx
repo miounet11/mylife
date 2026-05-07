@@ -91,7 +91,7 @@ const SegmentInput = forwardRef<HTMLInputElement, SegmentInputProps>(function Se
         maxLength={maxLength}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+        className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
       />
     </label>
   );
@@ -146,7 +146,7 @@ export default function BirthDateInput({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <CalendarDays className="h-4 w-4 text-[color:var(--warm)]" />
           公历出生日期
@@ -188,7 +188,7 @@ export default function BirthDateInput({
             commitDate(parsed);
           }}
           placeholder="例如 1998-08-08"
-          className="mt-3 w-full rounded-2xl border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-4 py-3 text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+          className="mt-3 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-4 py-3 text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
         />
 
         <div className="mt-3 grid grid-cols-3 gap-3">
@@ -244,7 +244,7 @@ export default function BirthDateInput({
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] bg-[color:var(--accent-soft)] px-4 py-3">
+      <div className="rounded-[var(--radius-md)] bg-[color:var(--accent-soft)] px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--accent-strong)]">
           <CheckCircle2 className="h-4 w-4" />
           已识别日期

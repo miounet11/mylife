@@ -71,7 +71,7 @@ export const QuickStatsBar: React.FC<QuickStatsBarProps> = ({
   const yearsToFeak = peakAge && currentAge ? peakAge - currentAge : null;
 
   return (
-    <div className={`relative overflow-hidden rounded-xl bg-gradient-to-r from-white via-neutral-50 to-white border border-[#d4af37]/20 ${className}`}>
+    <div className={`relative overflow-hidden rounded-[var(--radius)] bg-gradient-to-r from-white via-neutral-50 to-white border border-[#d4af37]/20 ${className}`}>
       {/* Top decorative line */}
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#d4af37] via-[#663399] to-[#d4af37]" />
 

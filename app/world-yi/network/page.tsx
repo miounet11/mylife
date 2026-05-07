@@ -103,7 +103,7 @@ export default function WorldYiNetworkPage() {
                 }}
                 className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   <Icon className="h-5 w-5" />
                 </div>
                 <h2 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
@@ -112,7 +112,7 @@ export default function WorldYiNetworkPage() {
           })}
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Compass className="h-3.5 w-3.5" />
             六域分科图
@@ -139,7 +139,7 @@ export default function WorldYiNetworkPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               生活应用图
@@ -157,7 +157,7 @@ export default function WorldYiNetworkPage() {
                     series: 'world-yi-applications',
                     topicName: group.title,
                   }}
-                  className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{group.title}</div>
                 </ContentCardLink>
@@ -165,7 +165,7 @@ export default function WorldYiNetworkPage() {
           </div>
           </section>
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Globe2 className="h-3.5 w-3.5" />
               全球与英文图
@@ -180,7 +180,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-global',
                 }}
-                className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">全球华人专题网络</div>
               </ContentCardLink>
@@ -193,7 +193,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-en',
                 }}
-                className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">English Track Network</div>
               </ContentCardLink>
@@ -201,7 +201,7 @@ export default function WorldYiNetworkPage() {
           </section>
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             环境观察图
@@ -223,7 +223,7 @@ export default function WorldYiNetworkPage() {
                   series: 'world-yi-insights',
                   topicName: title,
                 }}
-                className="rounded-[1.5rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
               </ContentCardLink>

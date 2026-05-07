@@ -434,7 +434,7 @@ export default function ProfilePage() {
             />
           </PriorityDisclosure>
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 md:p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
@@ -539,7 +539,7 @@ export default function ProfilePage() {
           />
 
           {!loading && !hasProfileData && (
-            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-8 text-center">
+            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
               <ResultCtaLink
                 href="/analyze"
@@ -610,8 +610,8 @@ export default function ProfilePage() {
 function ProfileSkeleton() {
   return (
     <div className="space-y-8">
-      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
-      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-[var(--radius)] animate-pulse"></div>
+      <div className="h-96 bg-[color:var(--hairline-strong)] rounded-[var(--radius)] animate-pulse"></div>
     </div>
   );
 }
@@ -620,7 +620,7 @@ function EventsSkeleton() {
   return (
     <div className="space-y-4">
       {[1, 2, 3, 4].map((i) => (
-        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-xl animate-pulse"></div>
+        <div key={i} className="h-32 bg-[color:var(--hairline-strong)] rounded-[var(--radius)] animate-pulse"></div>
       ))}
     </div>
   );
@@ -628,7 +628,7 @@ function EventsSkeleton() {
 
 function ChartSkeleton() {
   return (
-    <div className="bg-white rounded-xl border border-[color:var(--hairline-strong)] p-6">
+    <div className="bg-white rounded-[var(--radius)] border border-[color:var(--hairline-strong)] p-6">
       <div className="h-6 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse mb-4"></div>
       <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
     </div>

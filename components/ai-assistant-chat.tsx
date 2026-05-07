@@ -848,7 +848,7 @@ export default function AIAssistantChat() {
       <div className="border-b border-white/60 bg-white/70 p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
               <Bot className="h-5 w-5" />
             </div>
             <div>
@@ -909,7 +909,7 @@ export default function AIAssistantChat() {
           )}
 
           {error && (
-            <div className="rounded-2xl border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
+            <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
               {error}
             </div>
           )}
@@ -917,7 +917,7 @@ export default function AIAssistantChat() {
           {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
           {!loadingHistory && messages.length === 0 && !context && (
-            <div className="space-y-4 rounded-xl bg-white/75 p-4 md:p-5">
+            <div className="space-y-4 rounded-[var(--radius)] bg-white/75 p-4 md:p-5">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3 w-3" />
@@ -962,7 +962,7 @@ export default function AIAssistantChat() {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="rounded-[1.5rem] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
+              <div className="rounded-[var(--radius-md)] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
             </div>
           )}
         </div>
@@ -1042,7 +1042,7 @@ export default function AIAssistantChat() {
                 }}
                 placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
                 rows={2}
-                className="min-h-[56px] w-full resize-none rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+                className="min-h-[56px] w-full resize-none rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
                 disabled={isTyping}
               />
               <div className="mt-2 flex flex-wrap items-center gap-2 px-1 text-xs text-[color:var(--muted)]">
@@ -1087,7 +1087,7 @@ function ContextCard({
   const recommendedQuestions = (intentPreset ? Array.from(new Set([...intentPreset.questions, ...context.suggestedPrompts])) : context.suggestedPrompts).slice(0, 2);
 
   return (
-    <div className="space-y-3 rounded-xl border border-[color:var(--line)] bg-white/78 p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
+    <div className="space-y-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -1155,14 +1155,14 @@ function ContextCard({
       ) : null}
 
       {context.validationSummary?.headline && (
-        <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
+        <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最近反馈</div>
           <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{context.validationSummary.headline}</div>
         </div>
       )}
 
       {context.focusedEvent && (
-        <div className="rounded-[1.5rem] border border-[color:var(--alert)] bg-[color:var(--alert-soft)]/70 p-4">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)]/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--alert)]">本次重点问题</div>
           <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{context.focusedEvent.title}</div>
           <div className="mt-2 text-sm text-[color:var(--ink)]">
@@ -1172,7 +1172,7 @@ function ContextCard({
       )}
 
       {context.correctionPrompts.length > 0 && (
-        <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/70 p-4">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/70 p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--signal-strong)]">建议先问</div>
           <div className="mt-4 grid gap-3 md:grid-cols-2">
             {context.correctionPrompts.map((item) => (
@@ -1189,7 +1189,7 @@ function ContextCard({
       )}
 
       {context.suggestedEventDrafts.length > 0 && (
-        <div className="rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-[rgba(178,149,93,0.08)] p-4">
+        <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--line)] bg-[rgba(178,149,93,0.08)] p-4">
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">可以顺手记下的提醒</div>
           <div className="mt-3 grid gap-3">
             {context.suggestedEventDrafts.slice(0, 2).map((item) => {
@@ -1197,7 +1197,7 @@ function ContextCard({
               const isSaved = savedEventKeys.includes(eventKey);
 
               return (
-                <div key={item.key} className="rounded-2xl bg-white px-4 py-3">
+                <div key={item.key} className="rounded-[var(--radius)] bg-white px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -1260,7 +1260,7 @@ function MaterialEvidenceComposer({
   const imageCount = materials.filter((item) => item.hasImage).length;
 
   return (
-    <div className="rounded-xl border border-[color:var(--line)] bg-white/86 p-3">
+    <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/86 p-3">
       <input
         ref={fileInputRef}
         type="file"
@@ -1479,7 +1479,7 @@ function MessageBubble({
                 value={editingContent}
                 onChange={(event) => onEditingContentChange(event.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-2xl border border-white/20 bg-white/12 px-4 py-3 text-xs leading-6 text-white outline-none placeholder:text-white/60"
+                className="w-full resize-none rounded-[var(--radius)] border border-white/20 bg-white/12 px-4 py-3 text-xs leading-6 text-white outline-none placeholder:text-white/60"
                 placeholder="修改你的问题"
               />
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1643,7 +1643,7 @@ function QuickQuestionButton({ question, onClick, disabled = false }: QuickQuest
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4 text-left text-xs leading-6 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-4 text-left text-xs leading-6 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">结构化追问</div>
       <div className="mt-2">{question}</div>
@@ -1667,7 +1667,7 @@ function CorrectionPromptButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[1.5rem] border border-[color:var(--signal)] bg-white px-4 py-4 text-left transition hover:border-[color:var(--signal)] hover:bg-[color:var(--signal-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-white px-4 py-4 text-left transition hover:border-[color:var(--signal)] hover:bg-[color:var(--signal-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-sm font-semibold leading-7 text-[color:var(--ink)]">{question}</div>
       <div className="mt-2 text-xs text-[color:var(--muted)]">{helper}</div>

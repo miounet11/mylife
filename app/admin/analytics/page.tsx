@@ -751,7 +751,7 @@ export default async function AdminAnalyticsPage() {
           </div>
         </section>
 
-        <section id="product-experience-path-dashboard" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section id="product-experience-path-dashboard" className="mt-10 glass-panel rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="text-sm font-semibold text-[color:var(--muted)]">产品体验路径看板</div>
@@ -824,7 +824,7 @@ export default async function AdminAnalyticsPage() {
           </div>
         </section>
 
-        <section id="real-user-report-upgrade-priority" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section id="real-user-report-upgrade-priority" className="mt-10 glass-panel rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="text-sm font-semibold text-[color:var(--muted)]">真实用户升级优先级</div>
@@ -883,7 +883,7 @@ export default async function AdminAnalyticsPage() {
           </div>
         </section>
 
-        <section id="daily-ops-table" className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section id="daily-ops-table" className="mt-10 glass-panel rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div>
               <div className="text-sm font-semibold text-[color:var(--muted)]">增长与使用强度</div>
@@ -1257,7 +1257,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">最近下滑点</div>
                 <div className="mt-3 grid gap-3">
                   {recentBehaviorShift?.warnings?.length ? recentBehaviorShift.warnings.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-xs leading-6 text-rose-700">
+                    <div key={item} className="rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-rose-700">
                       {item}
                     </div>
                   )) : (
@@ -1270,7 +1270,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">最近变好点</div>
                 <div className="mt-3 grid gap-3">
                   {recentBehaviorShift?.signals?.length ? recentBehaviorShift.signals.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white/85 px-4 py-3 text-xs leading-6 text-emerald-700">
+                    <div key={item} className="rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-emerald-700">
                       {item}
                     </div>
                   )) : (
@@ -1669,7 +1669,7 @@ export default async function AdminAnalyticsPage() {
         </section>
 
         <section className="mt-10 grid gap-6 xl:grid-cols-[0.92fr_1.08fr]">
-          <div id="system-health-overview" className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
+          <div id="system-health-overview" className="glass-panel rounded-[var(--radius-md)] p-6 xl:col-span-2">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">系统状态总览</div>
@@ -1702,7 +1702,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">当前主要卡点</div>
                 <div className="mt-3 grid gap-3">
                   {systemHealth?.blockers?.length ? systemHealth.blockers.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-rose-700">
+                    <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-xs leading-6 text-rose-700">
                       {item}
                     </div>
                   )) : (
@@ -1715,7 +1715,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">健康信号</div>
                 <div className="mt-3 grid gap-3">
                   {systemHealth?.healthySignals?.length ? systemHealth.healthySignals.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-xs leading-6 text-emerald-700">
+                    <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-xs leading-6 text-emerald-700">
                       {item}
                     </div>
                   )) : (
@@ -1726,7 +1726,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">当前经营判断</div>
               <MetricBadge value={operatingInsight.priorities.length + operatingInsight.risks.length} label="判断项" />
@@ -1740,7 +1740,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先事项</div>
                 <div className="mt-3 grid gap-3">
                   {operatingInsight.priorities.length > 0 ? operatingInsight.priorities.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   )) : (
@@ -1752,7 +1752,7 @@ export default async function AdminAnalyticsPage() {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">当前风险</div>
                 <div className="mt-3 grid gap-3">
                   {operatingInsight.risks.length > 0 ? operatingInsight.risks.map((item) => (
-                    <div key={item} className="rounded-2xl bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   )) : (
@@ -1763,7 +1763,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">本周执行动作</div>
               <MetricBadge value={actionItems.length} label="动作" />
@@ -1783,7 +1783,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="text-sm font-semibold text-[color:var(--muted)]">验证闭环概览</div>
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               {[
@@ -1811,7 +1811,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">核心漏斗</div>
               <MetricBadge value={journeyFunnel.length} label="步骤" />
@@ -1830,7 +1830,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6 xl:col-span-2">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">报告分层旅程漏斗</div>
@@ -1956,7 +1956,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">近 7 日关键行为</div>
               <MetricBadge value={eventsLast7d.length} label="事件类" />
@@ -1975,7 +1975,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">页面访问结构</div>
               <MetricBadge value={pageViewBreakdown.length} label="页面" />
@@ -1997,7 +1997,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">分析入口偏好</div>
               <MetricBadge value={analyzeOptionBreakdown.length} label="入口" />
@@ -2019,7 +2019,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">事件来源验证拆解</div>
               <MetricBadge value={sourceBreakdown.length} label="来源" />
@@ -2044,7 +2044,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">推理层覆盖</div>
               <MetricBadge value={reasoningModeBreakdown.length} label="模式" />
@@ -2066,7 +2066,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">模型健康与熔断</div>
               <MetricBadge value={modelHealthBreakdown.length} label="模型" />
@@ -2115,7 +2115,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">当前故障热点</div>
               <MetricBadge value={llmFailureHotspots.length} label="热点" />
@@ -2143,7 +2143,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">接口健康</div>
               <MetricBadge value={routeHealthBreakdown.length} label="接口" />
@@ -2173,7 +2173,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">业务失败热点</div>
               <MetricBadge value={requestFailureHotspots.length} label="热点" />
@@ -2198,7 +2198,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">邮件系统状态</div>
               <MetricBadge value={emailDeliverySummary.success + emailDeliverySummary.failed} label="近 7 日投递" />
@@ -2300,7 +2300,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">用户转化卡点</div>
               <MetricBadge value={funnelDiagnostics.length} label="断点" />
@@ -2326,7 +2326,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">归因转化热点</div>
               <MetricBadge value={attributedConversionBreakdown.length} label="热点" />
@@ -2344,8 +2344,8 @@ export default async function AdminAnalyticsPage() {
                     </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">工具运行 {item.toolRuns}</div>
-                    <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">专项提交 {item.premiumRequests}</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">工具运行 {item.toolRuns}</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">专项提交 {item.premiumRequests}</div>
                   </div>
                 </div>
               )) : (
@@ -2354,7 +2354,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">回流承接效果</div>
@@ -2385,9 +2385,9 @@ export default async function AdminAnalyticsPage() {
                     <div>沉淀事件 {item.chatEventsSaved}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
-                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">点击到聊天 {item.ctaToChatRate}%</div>
-                    <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">聊天完成 {item.chatCompletionRate}%</div>
-                    <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-700">聊天到事件 {item.chatToEventRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">点击到聊天 {item.ctaToChatRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">聊天完成 {item.chatCompletionRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-emerald-50 px-4 py-3 text-emerald-700">聊天到事件 {item.chatToEventRate}%</div>
                   </div>
                 </div>
               )) : (
@@ -2396,7 +2396,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">今日优先修复内容</div>
@@ -2425,7 +2425,7 @@ export default async function AdminAnalyticsPage() {
                       <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">跳出 {item.bounceRate}%</div>
                     </div>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
                   <div className="mt-2 intro-copy">{item.reason}</div>
@@ -2436,7 +2436,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">今日优先修复工具</div>
@@ -2469,7 +2469,7 @@ export default async function AdminAnalyticsPage() {
                       <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">专项 {item.premiumRate}%</div>
                     </div>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
                   <div className="mt-2 intro-copy">{item.reason}</div>
@@ -2480,7 +2480,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">内容质量预警</div>
               <MetricBadge value={contentQualityBreakdown.length} label="页面" />
@@ -2513,7 +2513,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">工具质量预警</div>
               <MetricBadge value={toolQualityBreakdown.length} label="工具" />
@@ -2548,7 +2548,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">高跳出页面</div>
               <MetricBadge value={bounceBreakdown.length} label="页面" />
@@ -2578,7 +2578,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">专项服务与用户跟进</div>
               <MetricBadge value={recentPremiumRequests.length} label="最新需求" />
@@ -2616,7 +2616,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">聊天动作结构</div>
               <MetricBadge value={chatActionBreakdown.length} label="动作" />
@@ -2638,7 +2638,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">结果页 CTA 表现</div>
               <MetricBadge value={ctaBreakdown.length} label="CTA" />
@@ -2657,7 +2657,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">工具成交漏斗</div>
               <MetricBadge value={toolFunnelBreakdown.length} label="工具" />
@@ -2678,8 +2678,8 @@ export default async function AdminAnalyticsPage() {
                     <div>专项 {item.premiumRequests}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开跑 {item.viewToRunRate}%</div>
-                    <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.resultToPremiumRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开跑 {item.viewToRunRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.resultToPremiumRate}%</div>
                   </div>
                 </div>
               )) : (
@@ -2688,7 +2688,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">工具漏斗断点工单</div>
               <MetricBadge value={toolJourneyGapBreakdown.length} label="工单" />
@@ -2717,7 +2717,7 @@ export default async function AdminAnalyticsPage() {
                     <div>点击到开跑 {item.ctaToRunRate}%</div>
                     <div>失败 {item.runFailureRate}%</div>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
+                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
                 </div>
               )) : (
                 <CompactEmptyState title="暂无工具断点工单" detail="等工具漏斗样本足够后再定位主断点。" />
@@ -2725,7 +2725,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 xl:col-span-2">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6 xl:col-span-2">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">统一工具修复队列</div>
               <MetricBadge value={unifiedToolRepairQueue.length} label="工具" />
@@ -2759,10 +2759,10 @@ export default async function AdminAnalyticsPage() {
                     <div>开跑 {item.runRate}%</div>
                     <div>专项 {item.premiumRate}%</div>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
-                  <div className="mt-2 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                  <div className="mt-2 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {item.gapAction}
                   </div>
                   <div className="mt-2 intro-copy">
@@ -2775,7 +2775,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">工具首屏链路健康</div>
               <MetricBadge value={toolJourneyHealthRows.length} label="工具" />
@@ -2802,9 +2802,9 @@ export default async function AdminAnalyticsPage() {
                     <div>失败 {item.runFailures}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
-                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开始 {item.ctaStartRate}%</div>
-                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">开始到开跑 {item.ctaToRunRate}%</div>
-                    <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.premiumRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开始 {item.ctaStartRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">开始到开跑 {item.ctaToRunRate}%</div>
+                    <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.premiumRate}%</div>
                   </div>
                   <div className="mt-2 intro-copy">
                     {diagnoseToolJourneyHealth(item)}
@@ -2816,7 +2816,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">偏差原因分布</div>
               <MetricBadge value={driftReasonBreakdown.length} label="原因" />
@@ -2841,7 +2841,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">待验证回收队列</div>
               <MetricBadge value={followupQueue.length} label="事件" />
@@ -2879,7 +2879,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">报告版本结构</div>
               <MetricBadge value={reportVersionBreakdown.length} label="版本" />
@@ -2901,7 +2901,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="glass-panel rounded-[var(--radius-md)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div className="text-sm font-semibold text-[color:var(--muted)]">最近埋点明细</div>
               <MetricBadge value={recentEvents.length} label="事件" />

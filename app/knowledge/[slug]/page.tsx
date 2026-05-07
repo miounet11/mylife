@@ -238,7 +238,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
-          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs

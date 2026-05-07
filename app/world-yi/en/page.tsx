@@ -138,7 +138,7 @@ export default function WorldYiEnglishPage() {
           highlights={pillars}
         />
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             Why it matters now
@@ -149,7 +149,7 @@ export default function WorldYiEnglishPage() {
               ['AI era rewards judgment.', 'The rarest skill is no longer collecting answers, but ordering them.'],
               ['World Yi rebuilds order.', 'It asks: what is your structure, what stage are you in, what environment are you facing, and what should you do next?'],
             ].map(([title, description]) => (
-              <div key={title} className="rounded-[1.5rem] bg-white/80 p-5">
+              <div key={title} className="rounded-[var(--radius-md)] bg-white/80 p-5">
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
                 <div className="mt-3 text-sm font-semibold text-[color:var(--ink)]">{description}</div>
               </div>
@@ -199,7 +199,7 @@ export default function WorldYiEnglishPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">English Topic Tracks</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Topic Tracks</h2>
             <div className="mt-5 grid gap-4">
@@ -215,7 +215,7 @@ export default function WorldYiEnglishPage() {
                     locale: 'en',
                     series: 'world-yi-en',
                   }}
-                  className="rounded-[1.5rem] bg-white/80 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
                   <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function WorldYiEnglishPage() {
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">English Cases</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">Cases</h2>
             <div className="mt-5 space-y-4">
@@ -246,7 +246,7 @@ export default function WorldYiEnglishPage() {
                     locale: 'en',
                     series: 'world-yi-en',
                   }}
-                  className="block rounded-[1.5rem] bg-white/80 p-5 transition hover:bg-white"
+                  className="block rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
                 </ContentCardLink>

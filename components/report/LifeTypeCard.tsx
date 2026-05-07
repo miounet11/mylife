@@ -145,7 +145,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
   if (compact) {
     return (
       <div
-        className={`rounded-xl p-4 bg-gradient-to-r ${typeInfo.bgClass} border border-white/20 backdrop-blur-sm ${className}`}
+        className={`rounded-[var(--radius)] p-4 bg-gradient-to-r ${typeInfo.bgClass} border border-white/20 backdrop-blur-sm ${className}`}
       >
         <div className="flex items-center gap-3">
           <span className="text-3xl">{typeInfo.emoji}</span>
@@ -166,7 +166,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
 
   return (
     <div
-      className={`relative rounded-2xl overflow-hidden ${typeInfo.borderGlow} shadow-2xl ${className}`}
+      className={`relative rounded-[var(--radius)] overflow-hidden ${typeInfo.borderGlow} shadow-2xl ${className}`}
     >
       {/* Animated Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${typeInfo.bgClass}`} />
@@ -197,7 +197,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
         {/* Hero Section - Type Display */}
         <div className="flex items-center gap-5 mb-6">
           <div
-            className="w-20 h-20 md:w-24 md:h-24 rounded-2xl flex items-center justify-center text-4xl md:text-5xl shadow-lg"
+            className="w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius)] flex items-center justify-center text-4xl md:text-5xl shadow-lg"
             style={{ backgroundColor: `${typeInfo.color}30`, border: `2px solid ${typeInfo.color}50` }}
           >
             {typeInfo.emoji}
@@ -222,7 +222,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
 
         {/* Quote - Dramatic Display */}
         <blockquote
-          className="relative mb-6 p-5 rounded-xl backdrop-blur-sm"
+          className="relative mb-6 p-5 rounded-[var(--radius)] backdrop-blur-sm"
           style={{ backgroundColor: 'rgba(0,0,0,0.3)', borderLeft: `4px solid ${typeInfo.color}` }}
         >
 	          <p className="text-xl md:text-2xl text-white/95 font-medium italic leading-relaxed">
@@ -234,7 +234,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
         {/* Turning Point - Visual Emphasis */}
         {data.currentPhase?.turningPoint && (
           <div
-            className="flex items-center gap-5 p-5 rounded-xl mb-6"
+            className="flex items-center gap-5 p-5 rounded-[var(--radius)] mb-6"
             style={{ backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             <div className="text-center">
@@ -258,7 +258,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
         {/* Current Phase Display */}
         {phaseInfo && data.currentPhase && (
           <div
-            className="p-5 rounded-xl"
+            className="p-5 rounded-[var(--radius)]"
             style={{ backgroundColor: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
           >
             <div className="flex items-center gap-2 mb-3">

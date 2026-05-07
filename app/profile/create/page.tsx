@@ -22,7 +22,7 @@ export default function CreateProfilePage() {
             </h1>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2">
               <ActionCard
                 icon={FolderHeart}
@@ -63,7 +63,7 @@ function ActionCard({
 }) {
   return (
     <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
-      <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+      <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
         <Icon className="h-5 w-5" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{title}</h2>

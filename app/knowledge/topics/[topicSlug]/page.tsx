@@ -108,7 +108,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
-          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs
@@ -140,11 +140,11 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
             />
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">内容层次</div>
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{hub.synthesisTypes.join('、')}</div>
               </div>
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">相邻主题</div>
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {hub.relatedTopicNames.length ? hub.relatedTopicNames.join('、') : '当前仍在继续扩写中'}
@@ -154,7 +154,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
 
             <div className="mt-8 space-y-4">
               {hub.entries.map((item, index) => (
-                <section key={item.entry.slug} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                <section key={item.entry.slug} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
                     路径 {index + 1} · {item.synthesisType || item.entry.category || '知识内容'}
                   </div>

@@ -237,7 +237,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
   const levelConfig = fortuneWindow?.level ? LEVEL_CONFIG[fortuneWindow.level] : null;
 
   return (
-    <div className={`rounded-xl bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className={`px-4 py-3 ${levelConfig?.color || 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
         <h3 className="text-white font-semibold flex items-center gap-2">

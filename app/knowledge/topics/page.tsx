@@ -123,7 +123,7 @@ export default function KnowledgeTopicsPage() {
               href={`/knowledge/topics/${hub.topicSlug}`}
               page="/knowledge/topics"
               meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: `knowledge_topic:${hub.topicSlug}`, contentType: 'knowledge', topicName: hub.topicName }}
-              className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
+              className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 transition hover:-translate-y-0.5"
             >
               <div className="flex items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                 <Network className="h-3.5 w-3.5" />
@@ -159,7 +159,7 @@ export default function KnowledgeTopicsPage() {
               series: 'world-yi-network',
               version: 'v1.0.0.1',
             }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-xl p-5 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[var(--radius)] p-5 transition hover:-translate-y-0.5"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
@@ -191,7 +191,7 @@ export default function KnowledgeTopicsPage() {
             title="把专题地图接到工具、案例和环境洞察"
             description="补充路径默认收起，不抢专题列表。"
           >
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-5">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               延伸路径与证据
@@ -287,7 +287,7 @@ export default function KnowledgeTopicsPage() {
                 href="/knowledge"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">知识库</h2>
@@ -301,7 +301,7 @@ export default function KnowledgeTopicsPage() {
                 href="/cases"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">案例库</h2>
@@ -315,7 +315,7 @@ export default function KnowledgeTopicsPage() {
                 href="/world-yi/network"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'world_yi_network_page', contentType: 'knowledge', series: 'world-yi-network' }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">世界易网络</h2>

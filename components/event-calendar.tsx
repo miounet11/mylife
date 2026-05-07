@@ -50,7 +50,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
           <div className="inline-flex h-10 w-10 rounded-full bg-[color:var(--bg-sunken)]" />
         </div>
 
-        <div className="mt-6 rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--muted)]">
+        <div className="mt-6 rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--muted)]">
           正在定位最值得先查看的月份...
         </div>
       </div>
@@ -131,7 +131,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
         })}
       </div>
 
-      <div className="mt-6 rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
+      <div className="mt-6 rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
         <div className="text-sm font-semibold text-[color:var(--ink)]">
           {selectedDate ? `${format(selectedDate, 'M月d日')} 的事件` : '选择一个日期查看详情'}
         </div>
@@ -150,7 +150,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                       </div>
                       <div className="mt-1 text-sm text-[color:var(--ink)]">{event.description || '暂无说明'}</div>
                       {event.fortuneAnalysis?.reason && (
-                        <div className="mt-2 rounded-2xl bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+                        <div className="mt-2 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
                           {event.fortuneAnalysis.reason}
                         </div>
                       )}

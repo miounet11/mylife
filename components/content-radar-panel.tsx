@@ -190,7 +190,7 @@ export default function ContentRadarPanel({
   };
 
   return (
-    <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+    <div className="glass-panel rounded-[var(--radius-md)] p-6 md:p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <div className="text-sm font-semibold text-[color:var(--muted)]">内容雷达</div>
@@ -223,7 +223,7 @@ export default function ContentRadarPanel({
       {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
 
       {loading ? (
-        <div className="mt-6 rounded-[1.5rem] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
+        <div className="mt-6 rounded-[var(--radius-md)] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
       ) : (
         <div className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-4">
@@ -233,7 +233,7 @@ export default function ContentRadarPanel({
               { label: '数据源', value: sources.length },
               { label: '最近执行', value: runs[0]?.status === 'success' ? '成功' : runs[0]?.status === 'error' ? '失败' : '暂无' },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
               </div>
@@ -242,7 +242,7 @@ export default function ContentRadarPanel({
 
           <div className="grid gap-4 md:grid-cols-3">
             {sources.map((source) => (
-              <div key={source.id} className="soft-card rounded-[1.5rem] p-5">
+              <div key={source.id} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">{source.label}</div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{source.platform} · {source.type}</div>
                 <div className="mt-2 break-all text-xs text-[color:var(--muted)]">{source.url}</div>

@@ -112,7 +112,7 @@ export default function WorldYiGlobalPage() {
           highlightsColumns="grid-cols-1"
         />
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
             全球入口
@@ -123,7 +123,7 @@ export default function WorldYiGlobalPage() {
               ['环境'],
               ['动作'],
             ].map(([title]) => (
-              <div key={title} className="rounded-[1.5rem] bg-white/80 p-5">
+              <div key={title} className="rounded-[var(--radius-md)] bg-white/80 p-5">
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
               </div>
             ))}
@@ -202,7 +202,7 @@ export default function WorldYiGlobalPage() {
           </div>
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">全球案例层</div>
@@ -227,7 +227,7 @@ export default function WorldYiGlobalPage() {
                     tags: item.tags,
                     series: 'world-yi-global',
                   }}
-                  className="rounded-[1.5rem] bg-white/80 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>

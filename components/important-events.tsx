@@ -178,7 +178,7 @@ function EventRow({
           </div>
 
           {event.isEstimatedPastEvent && (
-            <div className="mt-4 rounded-2xl border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
+            <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
               <div className="flex items-start gap-2">
                 <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
                 <div>
@@ -194,12 +194,12 @@ function EventRow({
           {(event.fortuneAnalysis?.reason || event.followUpAdvice?.shortTerm) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {event.fortuneAnalysis?.reason && (
-                <div className="rounded-2xl bg-[rgba(178,149,93,0.08)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius)] bg-[rgba(178,149,93,0.08)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                   {event.fortuneAnalysis.reason}
                 </div>
               )}
               {event.followUpAdvice?.shortTerm && (
-                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
                   {event.followUpAdvice.shortTerm}
                 </div>
               )}
@@ -262,7 +262,7 @@ function EventRow({
           )}
 
           {(event.userFeedback?.wasAccurate !== undefined || event.userFeedback?.userNotes) && (
-            <div className="mt-4 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
+            <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
               <span className="font-semibold text-[color:var(--ink)]">验证结果：</span>
               {event.userFeedback?.wasAccurate === true && '这次判断已被记录为准确。'}
               {event.userFeedback?.wasAccurate === false && '这次判断已被记录为存在偏差。'}
@@ -273,7 +273,7 @@ function EventRow({
           {(event.reminder?.enabled || event.predictionAccuracy !== undefined) && (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {event.reminder?.enabled && (
-                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
+                <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
                   {event.reminder.method === 'app' && '应用通知'}
                   {event.reminder.method === 'email' && '邮件提醒'}
                   {event.reminder.method === 'sms' && '短信提醒'}
@@ -281,7 +281,7 @@ function EventRow({
                 </div>
               )}
               {event.predictionAccuracy !== undefined && (
-                <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
+                <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--muted)]">
                   报告预测：<span className={event.wasAccurate ? 'font-semibold text-[color:var(--data-up)]' : 'font-semibold text-[color:var(--alert)]'}>{event.wasAccurate ? '准确' : '待验证/不准确'}</span>
                 </div>
               )}

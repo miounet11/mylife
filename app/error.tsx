@@ -51,7 +51,7 @@ export default function Error({
 
   return (
     <div className="page-shell flex items-center justify-center px-4">
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-2xl rounded-[2rem] p-8 md:p-10">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-2xl rounded-[var(--radius-md)] p-8 md:p-10">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--alert-soft)] text-[color:var(--alert)]">
           <AlertTriangle className="h-8 w-8" />
         </div>

@@ -228,7 +228,7 @@ export default function AdminPremiumServiceConsole() {
         ))}
       </div>
 
-      <div className="glass-panel rounded-[2rem] p-6">
+      <div className="glass-panel rounded-[var(--radius-md)] p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <div className="text-sm font-semibold text-[color:var(--ink)]">专项需求跟进台</div>
@@ -276,8 +276,8 @@ export default function AdminPremiumServiceConsole() {
           </div>
         </div>
 
-        {message ? <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-        {error ? <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {message ? <div className="mt-4 rounded-[var(--radius)] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
+        {error ? <div className="mt-4 rounded-[var(--radius)] bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
 
         <div className="mt-6 grid gap-4">
           {loading ? (

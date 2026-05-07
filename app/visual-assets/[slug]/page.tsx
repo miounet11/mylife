@@ -265,7 +265,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Compass className="h-3.5 w-3.5" />
                 世界易解释
@@ -285,7 +285,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Route className="h-3.5 w-3.5" />
                 世界易五步读图
@@ -305,7 +305,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Wrench className="h-3.5 w-3.5" />
                 对应工具
@@ -334,7 +334,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <BookOpen className="h-3.5 w-3.5" />
                 配套解读文章
@@ -378,7 +378,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           />
 
           {relatedVisualAssets.length > 0 ? (
-            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LibraryBig className="h-3.5 w-3.5" />
                 同主题继续看

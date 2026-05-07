@@ -101,7 +101,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
   }
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1a1a2e]/95 via-[#16213e] to-[#1a1a2e]/95 ${className}`}>
+    <div className={`relative overflow-hidden rounded-[var(--radius)] bg-gradient-to-br from-[#1a1a2e]/95 via-[#16213e] to-[#1a1a2e]/95 ${className}`}>
       {/* 顶部装饰线 */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#d4af37] via-[#663399] to-[#d4af37]" />
 
@@ -122,7 +122,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {/* 日主五行 */}
           {dayMasterInfo && (
-            <div className={`rounded-xl p-3 border ${dayMasterInfo.info.bgColor} ${WUXING_COLORS[dayMasterInfo.element]?.borderColor || 'border-neutral-200'}`}>
+            <div className={`rounded-[var(--radius)] p-3 border ${dayMasterInfo.info.bgColor} ${WUXING_COLORS[dayMasterInfo.element]?.borderColor || 'border-neutral-200'}`}>
               <div className="text-xs text-neutral-500 mb-1.5">日主五行</div>
               <div className="flex items-center gap-2">
                 <span className="text-2xl">{dayMasterInfo.info.emoji}</span>
@@ -144,7 +144,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
           {/* 用神喜忌 */}
           {usefulElements.length > 0 && (
-            <div className="rounded-xl p-3 bg-gradient-to-br from-[#663399]/10 to-[#663399]/5 border border-[#663399]/20">
+            <div className="rounded-[var(--radius)] p-3 bg-gradient-to-br from-[#663399]/10 to-[#663399]/5 border border-[#663399]/20">
               <div className="text-xs text-neutral-500 mb-1.5">用神五行</div>
               <div className="flex flex-wrap gap-1.5">
                 {usefulElements.map((element, idx) => {
@@ -168,7 +168,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
           {/* 核心特质 */}
           {characterSummary && (
-            <div className="rounded-xl p-3 bg-gradient-to-br from-white to-neutral-50 border border-neutral-200">
+            <div className="rounded-[var(--radius)] p-3 bg-gradient-to-br from-white to-neutral-50 border border-neutral-200">
               <div className="text-xs text-neutral-500 mb-1.5">核心特质</div>
               <div className="text-sm font-medium text-[#1a1a2e] leading-snug line-clamp-2">
                 {characterSummary.slice(0, 30)}
@@ -179,7 +179,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
           {/* 人生巅峰 */}
           {peakYear && yearsToPeak !== null && (
-            <div className={`rounded-xl p-3 border ${
+            <div className={`rounded-[var(--radius)] p-3 border ${
               yearsToPeak > 0
                 ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-[rgba(47,125,82,0.20)]'
                 : yearsToPeak < 0
@@ -215,7 +215,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
           {/* 如果没有巅峰数据但有低谷数据 */}
           {!peakYear && troughYear && yearsToTrough !== null && yearsToTrough > 0 && yearsToTrough < 10 && (
-            <div className="rounded-xl p-3 bg-gradient-to-br from-rose-50 to-orange-50 border border-[color:var(--alert)]">
+            <div className="rounded-[var(--radius)] p-3 bg-gradient-to-br from-rose-50 to-orange-50 border border-[color:var(--alert)]">
               <div className="text-xs text-neutral-500 mb-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3 text-[color:var(--alert)]" />
                 注意调整期

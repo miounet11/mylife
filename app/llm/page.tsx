@@ -40,7 +40,7 @@ export default async function LlmSettingsPage({
               { label: '文章默认', value: 'grok-420-fast', helper: '保留现有模型链' },
               { label: '兜底', value: 'Env Provider', helper: '旧配置继续可用' },
             ].map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
                 <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">{item.helper}</div>

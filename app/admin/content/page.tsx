@@ -43,7 +43,7 @@ export default async function AdminContentPage() {
               { label: '主动作', value: '批量协同编排', helper: '一批内容一次性挂到同一条测算路径里' },
               { label: '主结果', value: '内容编辑器', helper: '生成后立刻精修、发布和补联动字段' },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
                 <div className="mt-2 intro-copy">{item.helper}</div>

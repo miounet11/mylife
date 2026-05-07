@@ -320,7 +320,7 @@ export default function ReportPremiumServices({
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder={`请直接写清楚你最想解决的具体事情，例如：${selectedOffer?.title}里，我最想知道的是什么？`}
-                className="min-h-[150px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
+                className="min-h-[150px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
               />
 
               <button
@@ -332,8 +332,8 @@ export default function ReportPremiumServices({
               </button>
             </form>
 
-            {message ? <div className="mt-4 rounded-2xl bg-[rgba(47,125,82,0.08)] px-4 py-3 text-sm text-[color:var(--data-up)]">{message}</div> : null}
-            {error ? <div className="mt-4 rounded-2xl bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
+            {message ? <div className="mt-4 rounded-[var(--radius)] bg-[rgba(47,125,82,0.08)] px-4 py-3 text-sm text-[color:var(--data-up)]">{message}</div> : null}
+            {error ? <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
           </div>
 
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">

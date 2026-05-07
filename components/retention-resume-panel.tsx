@@ -43,7 +43,7 @@ export default function RetentionResumePanel({
   const [primaryAction, ...secondaryActions] = actions;
 
   return (
-    <section className="rounded-xl border border-[rgba(18,125,111,0.22)] bg-[color:var(--accent-strong)] p-4 text-white shadow-[0_18px_42px_rgba(11,95,85,0.16)] md:p-5">
+    <section className="rounded-[var(--radius)] border border-[rgba(18,125,111,0.22)] bg-[color:var(--accent-strong)] p-4 text-white shadow-[0_18px_42px_rgba(11,95,85,0.16)] md:p-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-stretch">
         <div className="space-y-3">
           <div className="inline-flex rounded-md bg-white/12 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-white/82">

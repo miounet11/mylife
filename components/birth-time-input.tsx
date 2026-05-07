@@ -121,7 +121,7 @@ export default function BirthTimeInput({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <Clock3 className="h-4 w-4 text-[color:var(--warm)]" />
           钟表时间
@@ -155,7 +155,7 @@ export default function BirthTimeInput({
               commitTime(parsed.hour, parsed.minute, value.second ?? 0);
             }}
             placeholder="例如 14:30"
-            className="w-full rounded-2xl border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-4 py-3 text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[rgba(246,241,232,0.55)] px-4 py-3 text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
           />
 
           <label className="block">
@@ -197,7 +197,7 @@ export default function BirthTimeInput({
 
                 commitTime(value.hour, value.minute, Number(secondText));
               }}
-              className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
             />
           </label>
         </div>
@@ -213,7 +213,7 @@ export default function BirthTimeInput({
                   setSmartInput(`${formatPart(option.midHour)}:00`);
                   commitTime(option.midHour, 0, value.second ?? 0);
                 }}
-                className={`rounded-2xl border px-3 py-3 text-left transition ${
+                className={`rounded-[var(--radius)] border px-3 py-3 text-left transition ${
  isSelected
                     ? `${getPeriodStyle(option.period)} border-transparent shadow-[0_16px_30px_rgba(23,32,51,0.12)]`
                     : 'border-[color:var(--line)] bg-white hover:-translate-y-0.5'
@@ -253,7 +253,7 @@ export default function BirthTimeInput({
         </div>
       </div>
 
-      <div className="rounded-[1.5rem] bg-[rgba(201,125,58,0.1)] px-4 py-3">
+      <div className="rounded-[var(--radius-md)] bg-[rgba(201,125,58,0.1)] px-4 py-3">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <Sparkles className="h-4 w-4 text-[color:var(--warm)]" />
           当前识别

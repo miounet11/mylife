@@ -468,13 +468,13 @@ export default function ResultPublicControls({
             </div>
           </div>
 
-          <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-4">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
               <QrCode className="h-4 w-4 text-[color:var(--accent-strong)]" />
               {isPublic ? '扫码查看结果' : '扫码进入入口'}
             </div>
             <div className="mt-3 text-sm text-[color:var(--ink)]">{posterFooter}</div>
-            <div className="mt-4 flex justify-center rounded-[1.5rem] bg-[rgba(246,241,232,0.7)] p-4">
+            <div className="mt-4 flex justify-center rounded-[var(--radius-md)] bg-[rgba(246,241,232,0.7)] p-4">
               {qrCodeDataUrl ? (
                 <Image
                   src={qrCodeDataUrl}
@@ -482,15 +482,15 @@ export default function ResultPublicControls({
                   width={176}
                   height={176}
                   unoptimized
-                  className="h-44 w-44 rounded-2xl bg-white p-3"
+                  className="h-44 w-44 rounded-[var(--radius)] bg-white p-3"
                 />
               ) : (
-                <div className="flex h-44 w-44 items-center justify-center rounded-2xl bg-white text-sm text-[color:var(--muted)]">
+                <div className="flex h-44 w-44 items-center justify-center rounded-[var(--radius)] bg-white text-sm text-[color:var(--muted)]">
                   生成中...
                 </div>
               )}
             </div>
-            <div className="mt-3 break-all rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
+            <div className="mt-3 break-all rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
               {activeShareUrl}
             </div>
           </div>
