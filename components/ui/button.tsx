@@ -1,71 +1,102 @@
-// Button组件 - 通用按钮组件
+// 决策台 · 按钮
+// 取代旧 utility：action-primary / action-secondary / action-main
+// API：保持旧 variant 名兼容；建议新代码用 primary | secondary | ghost | signal | danger
+// spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md §4.1
+
 import * as React from 'react';
-import { cn } from '@/lib/utils';
 import { Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+type ButtonVariant =
+  | 'primary'    // 主行动（墨绿）
+  | 'secondary'  // 次行动（白底）
+  | 'ghost'      // 透明（仅文字）
+  | 'signal'     // 高价值行动（金色，付费/升级专用）
+  | 'danger'     // 危险（赤色）
+  // 旧值兼容
+  | 'default' | 'outline' | 'gradient';
+
+type ButtonSize = 'sm' | 'md' | 'lg' | 'xl';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'default' | 'primary' | 'secondary' | 'outline' | 'ghost' | 'gradient';
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  variant?: ButtonVariant;
+  size?: ButtonSize;
   loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  fullWidth?: boolean;
 }
 
+const variantMap: Record<ButtonVariant, string> = {
+  primary:
+    'bg-[color:var(--brand-strong)] text-white border border-[color:var(--brand-deep)] hover:bg-[color:var(--brand-deep)]',
+  secondary:
+    'bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
+  ghost:
+    'bg-transparent text-[color:var(--ink-3)] border border-transparent hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+  signal:
+    'bg-[color:var(--signal)] text-[color:var(--ink-1)] border border-[color:var(--signal-strong)] hover:bg-[color:var(--signal-strong)] hover:text-white',
+  danger:
+    'bg-[color:var(--alert)] text-white border border-[color:var(--alert)] hover:opacity-92',
+  // 旧值兼容映射
+  default:
+    'bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
+  outline:
+    'bg-transparent text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)]',
+  gradient:
+    'bg-[linear-gradient(135deg,var(--ink-1),var(--brand-deep))] text-white border border-transparent hover:opacity-95',
+};
+
+const sizeMap: Record<ButtonSize, string> = {
+  sm: 'h-8 px-3 text-xs',
+  md: 'h-10 px-4 text-sm',
+  lg: 'h-11 px-5 text-base',
+  xl: 'h-12 px-6 text-md',
+};
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({
-    className,
-    variant = 'default',
-    size = 'md',
-    loading = false,
-    leftIcon,
-    rightIcon,
-    children,
-    disabled,
-    ...props
-  },
-  ref
+  (
+    {
+      className,
+      variant = 'primary',
+      size = 'md',
+      loading = false,
+      leftIcon,
+      rightIcon,
+      fullWidth = false,
+      children,
+      disabled,
+      type = 'button',
+      ...props
+    },
+    ref,
   ) => {
-    const variantStyles = {
-      default: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
-      primary: 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(178,149,93,0.24)]',
-      secondary: 'bg-slate-700 text-white border border-slate-700 hover:bg-slate-800',
-      outline: 'bg-white text-[color:var(--ink)] border border-[color:var(--line)] hover:bg-slate-50',
-      ghost: 'bg-transparent text-[color:var(--ink)] hover:bg-white/70',
-      gradient: 'bg-[linear-gradient(135deg,var(--ink),var(--accent-strong))] text-white border border-transparent hover:opacity-95 shadow-[0_16px_34px_rgba(23,32,51,0.18)]',
-    };
-
-    const sizeStyles = {
-      sm: 'px-3 py-1.5 text-sm',
-      md: 'px-4 py-2 text-base',
-      lg: 'px-6 py-3 text-lg',
-      xl: 'px-8 py-4 text-xl',
-    };
-
-    const disabledStyles = disabled || loading
-      ? 'opacity-50 cursor-not-allowed'
-      : 'cursor-pointer transition-colors';
-
+    const isDisabled = disabled || loading;
     return (
       <button
         ref={ref}
+        type={type}
         className={cn(
-          'flex items-center justify-center rounded-full font-semibold',
-          variantStyles[variant],
-          sizeStyles[size],
-          disabledStyles,
-          className
+          'inline-flex items-center justify-center gap-2 rounded-[var(--radius)] font-semibold whitespace-nowrap transition',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] focus-visible:ring-offset-2',
+          variantMap[variant],
+          sizeMap[size],
+          fullWidth && 'w-full',
+          isDisabled ? 'opacity-50 cursor-not-allowed' : 'active:translate-y-px',
+          className,
         )}
-        disabled={disabled || loading}
+        disabled={isDisabled}
         {...props}
       >
-        {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-        {leftIcon && <span className="mr-2">{leftIcon}</span>}
+        {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+        {!loading && leftIcon}
         {children}
-        {rightIcon && <span className="ml-2">{rightIcon}</span>}
+        {!loading && rightIcon}
       </button>
     );
-  }
+  },
 );
 Button.displayName = 'Button';
 
 export { Button };
+export type { ButtonProps, ButtonVariant, ButtonSize };
