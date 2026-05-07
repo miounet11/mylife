@@ -2,29 +2,35 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock4, FileText, ServerCog, Sparkles } from 'lucide-react';
+
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze-workspace';
-import PriorityDisclosure from '@/components/priority-disclosure';
-import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
-import VisualAssetFeature from '@/components/visual-asset-feature';
+
+import { Card } from '@/components/ui/card';
+import { Eyebrow } from '@/components/ui/eyebrow';
+import { Inline } from '@/components/ui/inline';
+import { Lede } from '@/components/ui/lede';
+import { Stack } from '@/components/ui/stack';
+import { Stat } from '@/components/ui/stat';
+import { Tag } from '@/components/ui/tag';
+
 import { getAuthSession } from '@/lib/auth';
 import { getCurrentUserId } from '@/lib/user-utils';
+import { fortuneOperations } from '@/lib/database';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 import { getToolDefinition } from '@/lib/tools';
-import { getVisualAssetById } from '@/lib/visual-asset-library';
 import {
-  analyzeOutcomeCards,
   productBenchmarkSignals,
   productReasoningTraceSteps,
 } from '@/lib/product-experience';
 
 export const metadata = {
-  title: '开始判断 | 人生K线',
+  title: '判断工作台 | 人生K线',
   description: '用世界易的判断框架录入出生信息，先看结构、阶段与环境，再进入你的个人结果页。',
   robots: {
     index: false,
@@ -32,12 +38,19 @@ export const metadata = {
   },
 };
 
-const analyzePowerLinks = [
-  { label: '公开案例库', href: '/cases' },
-  { label: '工具中心', href: '/tools' },
-  { label: '知识体系入口', href: '/knowledge' },
-  { label: '世界易总入口', href: '/world-yi' },
-];
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'grok-420-fast';
+const FALLBACK_CHAIN = process.env.MODEL_FALLBACK_CHAIN || 'auto,gpt-5.2';
+
+function formatRelative(iso?: string | Date): string {
+  if (!iso) return '';
+  const d = typeof iso === 'string' ? new Date(iso) : iso;
+  const diff = Date.now() - d.getTime();
+  if (diff < 60_000) return '刚刚';
+  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)} 分钟前`;
+  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)} 小时前`;
+  if (diff < 7 * 86_400_000) return `${Math.floor(diff / 86_400_000)} 天前`;
+  return d.toISOString().slice(0, 10);
+}
 
 export default async function AnalyzeEntryPage({
   searchParams,
@@ -62,188 +75,274 @@ export default async function AnalyzeEntryPage({
         email: session.user?.email,
       })
     : null;
-  const firstReportImage = getVisualAssetById('PWY01-003');
-  const birthTimeImage = getVisualAssetById('MY05-002') || getVisualAssetById('PWY01-009');
-  const baziStructureImage = getVisualAssetById('MY05-001');
+
+  const userReports = activeUserId ? fortuneOperations.getByUserId(activeUserId) : [];
+  const recentReports = userReports.slice(0, 3);
+  const totalUserReports = userReports.length;
 
   return (
     <div className="page-shell">
-      <AnalyticsPageView eventName="analyze_page_viewed" page="/analyze" meta={{ surfaceKey: 'workspace', source: source || null, toolSlug: toolSlug || null }} />
+      <AnalyticsPageView
+        eventName="analyze_page_viewed"
+        page="/analyze"
+        meta={{ surfaceKey: 'workspace', source: source || null, toolSlug: toolSlug || null }}
+      />
       <SiteHeader ctaHref="#analyze-workspace" ctaLabel="开始填写" />
 
-      <main className="page-frame py-3 pb-16 md:py-5 md:pb-20">
-        <section className="mb-2 md:mb-3">
-          <div className="hidden section-label md:inline-flex">
-            <Sparkles className="h-3.5 w-3.5" />
-            填写出生信息
-          </div>
-          <div className="grid gap-2 md:mt-2 lg:grid-cols-[minmax(0,0.9fr)_minmax(260px,0.36fr)] lg:items-end">
-            <div className="max-w-3xl">
-              <h1 className="text-2xl font-black leading-tight text-[color:var(--ink)] md:text-5xl">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        {/* HERO 区 */}
+        <section className="mb-6 md:mb-8">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end">
+            <Stack gap={3}>
+              <Eyebrow icon={<Sparkles className="h-3 w-3" />}>判断工作台</Eyebrow>
+              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
                 填出生信息，
-                <span className="text-[color:var(--accent-strong)]">生成第一份判断报告</span>
+                <span className="text-[color:var(--brand-strong)]">生成第一份判断报告</span>
               </h1>
-            </div>
-            <div className="hidden workspace-panel-muted p-3 lg:block">
-              <Link href="/docs/birth-info" className="text-sm font-bold text-[color:var(--accent-strong)]">
+              <Lede>
+                用真太阳时校正与世界易判断框架，先得到结构、阶段与环境总览，再决定下一步路径。
+              </Lede>
+              {returnTool && (
+                <Card variant="signal" padding="sm">
+                  <Inline gap={2}>
+                    <Tag tone="signal" variant="solid" size="sm">
+                      回流路径
+                    </Tag>
+                    <span className="text-sm font-semibold text-[color:var(--ink-2)]">
+                      完成后回到：{returnTool.shortTitle}
+                    </span>
+                  </Inline>
+                </Card>
+              )}
+            </Stack>
+
+            <Inline gap={2} wrap justify="end" className="lg:justify-end">
+              <Link
+                href="/docs/birth-info"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+              >
+                <Clock4 className="h-3.5 w-3.5" />
                 填写 tips
               </Link>
-              {returnTool ? (
-                <div className="mt-2 rounded-lg bg-[color:var(--accent-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--accent-strong)]">
-                  完成后回到：{returnTool.shortTitle}
-                </div>
-              ) : null}
-            </div>
+              <Link
+                href="/docs/true-solar-time"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                真太阳时
+              </Link>
+              <Link
+                href="/docs/read-first-report"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                报告读法
+              </Link>
+            </Inline>
           </div>
         </section>
 
-        <div id="analyze-workspace" className="scroll-mt-28">
-          <AnalyzeWorkspace
-            returnHref={returnTool ? `/tools/${returnTool.slug}` : undefined}
-            returnLabel={returnTool ? `回到${returnTool.shortTitle}` : undefined}
-            returnSource={source || undefined}
-          />
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          <Link href="/docs/birth-info" className="action-secondary min-h-0 px-3 py-2 text-xs">
-            出生信息
-          </Link>
-          <Link href="/docs/true-solar-time" className="action-secondary min-h-0 px-3 py-2 text-xs">
-            真太阳时
-          </Link>
-          <Link href="/docs/read-first-report" className="action-secondary min-h-0 px-3 py-2 text-xs">
-            报告读法
-          </Link>
-        </div>
-
-        <PriorityDisclosure
-          label="提交后"
-          title="结果内容和辅助入口"
-          description="先完成录入；报告、案例、工具和方法论在这里展开。"
-          className="mt-6"
+        {/* 双栏 dashboard：左主区表单 / 右副区状态 */}
+        <div
+          id="analyze-workspace"
+          className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)] lg:items-start"
         >
-          <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-            <div className="workspace-panel p-5 md:p-6">
-              <div className="section-label">提交后得到什么</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {[
-                  ...analyzeOutcomeCards,
-                  { label: '公开案例', value: `${worldYiStats.publicCaseCount} 篇` },
-                  { label: '知识入口', value: `${worldYiStats.publicKnowledgeCount} 篇` },
-                ].map((item) => (
-                  <div key={item.label} className="metric-tile">
-                    <div className="text-xs font-semibold text-[color:var(--muted)]">{item.label}</div>
-                    <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
+          {/* 左主区 */}
+          <Card variant="raised" padding="md" className="border-[color:var(--brand-soft-2)]">
+            <AnalyzeWorkspace
+              returnHref={returnTool ? `/tools/${returnTool.slug}` : undefined}
+              returnLabel={returnTool ? `回到${returnTool.shortTitle}` : undefined}
+              returnSource={source || undefined}
+            />
+          </Card>
+
+          {/* 右副区：模型状态 + 最近报告 + 系统能力 */}
+          <Stack gap={4} className="lg:sticky lg:top-32">
+            {/* 模型状态 */}
+            <Card variant="default" padding="md">
+              <Inline justify="between" align="start" className="mb-3">
+                <Eyebrow icon={<ServerCog className="h-3 w-3" />}>判断引擎</Eyebrow>
+                <Tag tone="up" size="xs" variant="soft">
+                  RUNNING
+                </Tag>
+              </Inline>
+              <Stack gap={3}>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    主模型
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="workspace-panel-muted p-5 md:p-6">
-              <div className="section-label">辅助入口</div>
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                {analyzePowerLinks.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="action-secondary px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="workspace-panel p-5 md:p-6">
-              <div className="section-label">可追溯推理链路</div>
-              <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">不是直接给结论，而是保留每一步判断来源</h2>
-              <div className="mt-5 grid gap-3">
-                {productReasoningTraceSteps.map((step, index) => (
-                  <div key={step.key} className="rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-xs font-black text-[color:var(--accent-strong)]">
-                        {index + 1}
-                      </div>
-                      <div className="text-sm font-bold text-[color:var(--ink)]">{step.title}</div>
-                    </div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{step.description}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="workspace-panel-muted p-5 md:p-6">
-              <div className="section-label">验证型报告定位</div>
-              <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">用事件和选项判断压缩泛泛而谈</h2>
-              <div className="mt-5 grid gap-3">
-                {productBenchmarkSignals.map((item) => (
-                  <div key={item.label} className="metric-tile bg-white/80">
-                    <div className="text-xs font-semibold text-[color:var(--muted)]">{item.label}</div>
-                    <div className="mt-2 text-sm font-bold leading-6 text-[color:var(--ink)]">{item.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </PriorityDisclosure>
-
-        <section className="mt-8">
-          <ProductSurfaceRolePanel
-            surface="analyze"
-            title="这个页面只负责生成第一份报告"
-            compact
-          />
-        </section>
-
-        <section className="mt-8">
-          <UpdatesStatusPanel
-            title="已有进度"
-            description="如果你之前已经生成过报告、开启过升级或收到过月度提醒，这里会把最近状态接回当前分析流程。"
-            initialAuthenticated={initialAuthenticated}
-            initialSummary={initialSummary}
-            compact
-          />
-        </section>
-
-        <section className="mt-10">
-          <PriorityDisclosure
-            label="填写说明与后续入口"
-            title="需要解释时再展开"
-            description="图片说明、方法论和专项工具都不再默认占据录入页主流程。"
-          >
-            <div className="space-y-5">
-              {birthTimeImage ? (
-                <VisualAssetFeature asset={birthTimeImage} label="填写信息说明图" />
-              ) : null}
-
-              {baziStructureImage ? (
-                <VisualAssetFeature asset={baziStructureImage} label="四柱八字结构图" reverse />
-              ) : null}
-
-              {firstReportImage ? (
-                <VisualAssetFeature asset={firstReportImage} label="第一份报告路径图" reverse />
-              ) : null}
-
-              <div className="workspace-panel p-5 md:p-6">
-                <div className="grid gap-6 lg:grid-cols-[0.96fr_1.04fr] lg:items-center">
-                  <div>
-                    <div className="section-label">后续入口</div>
-                    <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)]">报告完成后再拆专项问题</h2>
-                  </div>
-                  <div className="grid gap-3 md:grid-cols-2">
-                    {['事业与财富', '关系与家庭', '恢复与健康', '迁移与出国'].map((item) => (
-                      <Link key={item} href="/tools" className="action-secondary p-4 text-sm font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)]">
-                        {item}
-                      </Link>
-                    ))}
+                  <div className="mt-1 font-mono text-sm font-bold text-[color:var(--ink-1)]">
+                    {DEFAULT_MODEL}
                   </div>
                 </div>
-              </div>
-            </div>
-          </PriorityDisclosure>
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    Fallback 链
+                  </div>
+                  <div className="mt-1 font-mono text-xs text-[color:var(--ink-3)] break-all">
+                    {FALLBACK_CHAIN}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Stat label="报告版本" value="v3" size="sm" />
+                  <div className="h-8 w-px bg-[color:var(--hairline)]" />
+                  <Stat label="时间精度" value="真太阳" size="sm" />
+                </div>
+              </Stack>
+            </Card>
+
+            {/* 最近报告 */}
+            {totalUserReports > 0 && (
+              <Card variant="default" padding="md">
+                <Inline justify="between" align="center" className="mb-3">
+                  <Eyebrow>最近报告</Eyebrow>
+                  <Link
+                    href="/history"
+                    className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                  >
+                    全部 ({totalUserReports}) →
+                  </Link>
+                </Inline>
+                <Stack gap={2}>
+                  {recentReports.map((report) => (
+                    <Link
+                      key={report.id}
+                      href={`/result/${report.id}`}
+                      className="group block border-l-2 border-[color:var(--hairline)] pl-3 py-1 hover:border-[color:var(--brand)]"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-bold leading-snug text-[color:var(--ink-2)] truncate">
+                          {report.name || '未命名'}
+                        </span>
+                        <Tag tone="default" variant="soft" size="xs">
+                          <span className="font-mono">{report.reportVersion || 'v1'}</span>
+                        </Tag>
+                      </div>
+                      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[color:var(--ink-5)]">
+                        <span className="font-mono tabular-nums">
+                          {formatRelative((report as any).updatedAt || (report as any).createdAt)}
+                        </span>
+                        <span>·</span>
+                        <span className="font-mono">{report.birthDate}</span>
+                      </div>
+                    </Link>
+                  ))}
+                </Stack>
+              </Card>
+            )}
+
+            {/* 系统能力 */}
+            <Card variant="sunken" padding="md">
+              <Eyebrow tone="muted" className="mb-3">系统能力</Eyebrow>
+              <Stack gap={2}>
+                <Inline justify="between" align="baseline">
+                  <span className="text-xs text-[color:var(--ink-4)]">公开案例库</span>
+                  <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--ink-2)]">
+                    {worldYiStats.publicCaseCount}
+                  </span>
+                </Inline>
+                <Inline justify="between" align="baseline">
+                  <span className="text-xs text-[color:var(--ink-4)]">知识入口</span>
+                  <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--ink-2)]">
+                    {worldYiStats.publicKnowledgeCount}
+                  </span>
+                </Inline>
+                <Inline justify="between" align="baseline">
+                  <span className="text-xs text-[color:var(--ink-4)]">大师话术库</span>
+                  <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--ink-2)]">
+                    600+
+                  </span>
+                </Inline>
+              </Stack>
+            </Card>
+          </Stack>
+        </div>
+
+        {/* 已有进度（已登录） */}
+        {initialAuthenticated && (
+          <section className="mt-8">
+            <UpdatesStatusPanel
+              title="已有进度"
+              description="如果你之前已经生成过报告、开启过升级或收到过月度提醒，这里会把最近状态接回当前分析流程。"
+              initialAuthenticated={initialAuthenticated}
+              initialSummary={initialSummary}
+              compact
+            />
+          </section>
+        )}
+
+        {/* 推理链路（折叠到下方，不抢主流程） */}
+        <section className="mt-10 md:mt-12">
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card variant="default" padding="lg">
+              <Eyebrow className="mb-3">可追溯推理链路</Eyebrow>
+              <h2 className="text-lg font-black leading-tight text-[color:var(--ink-1)]">
+                不是直接给结论，<br />
+                而是保留每一步判断来源
+              </h2>
+              <Stack gap={3} className="mt-5">
+                {productReasoningTraceSteps.map((step, index) => (
+                  <div key={step.key} className="flex gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] font-mono text-xs font-black text-[color:var(--brand-strong)]">
+                      {index + 1}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-bold leading-tight text-[color:var(--ink-2)]">
+                        {step.title}
+                      </div>
+                      <div className="mt-1 text-xs leading-6 text-[color:var(--ink-4)]">
+                        {step.description}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </Stack>
+            </Card>
+
+            <Card variant="default" padding="lg">
+              <Eyebrow className="mb-3">验证型报告定位</Eyebrow>
+              <h2 className="text-lg font-black leading-tight text-[color:var(--ink-1)]">
+                用事件和选项判断，<br />
+                压缩泛泛而谈
+              </h2>
+              <Stack gap={3} className="mt-5">
+                {productBenchmarkSignals.map((item) => (
+                  <div
+                    key={item.label}
+                    className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2"
+                  >
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                      {item.label}
+                    </div>
+                    <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
+                      {item.value}
+                    </div>
+                  </div>
+                ))}
+              </Stack>
+            </Card>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-3">
+            <Link
+              href="/cases"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+            >
+              公开案例库 <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/tools"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+            >
+              工具中心 <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/world-yi"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+            >
+              世界易系统 <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </section>
       </main>
 
