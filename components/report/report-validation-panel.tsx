@@ -22,19 +22,19 @@ function compactList(items: string[] | undefined, fallback: string, limit = 3, m
 function toneClasses(tone?: ReportValidationSection['tone']) {
   if (tone === 'high') {
     return {
-      chip: 'bg-emerald-100 text-emerald-700',
-      panel: 'border-emerald-200 bg-emerald-50/70',
+      chip: 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
+      panel: 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.06)]',
     };
   }
   if (tone === 'watch') {
     return {
-      chip: 'bg-amber-100 text-amber-800',
-      panel: 'border-amber-200 bg-amber-50/75',
+      chip: 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]',
+      panel: 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]',
     };
   }
   return {
-    chip: 'bg-sky-100 text-sky-800',
-    panel: 'border-sky-200 bg-sky-50/70',
+    chip: 'border-[color:var(--env)] bg-[color:var(--env-soft)] text-[color:var(--env)]',
+    panel: 'border-[color:var(--env)] bg-[color:var(--env-soft)]',
   };
 }
 
@@ -53,32 +53,51 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
   const tone = toneClasses(section.tone);
 
   return (
-    <section className="soft-card rounded-[1.75rem] p-5" aria-label="验证与可信层">
+    <section
+      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
+      aria-label="验证与可信层"
+    >
       <div className="flex flex-wrap items-center gap-2">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">验证与可信层</div>
-        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${tone.chip}`}>{confidenceLabel}</span>
+        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          验证与可信层
+        </div>
+        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-[10px] font-bold uppercase tracking-wider ${tone.chip}`}>
+          {confidenceLabel}
+        </span>
       </div>
 
-      <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">先信主轴，再用事件持续校正</h3>
-      <p className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{summary}</p>
+      <h3 className="mt-2 text-base font-black leading-snug text-[color:var(--ink-1)] md:text-lg">
+        先信主轴，再用事件持续校正
+      </h3>
+      <p className="mt-1.5 text-xs leading-5 text-[color:var(--ink-3)]">{summary}</p>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        <article className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50/70 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">高可信点</div>
-          <ul className="mt-2 grid gap-2">
+      <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
+        <article className="rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.06)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--data-up)]">
+            高可信点
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {highConfidencePoints.map((item) => (
-              <li key={item} className="rounded-xl bg-white/85 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}
           </ul>
         </article>
 
-        <article className="rounded-[1.2rem] border border-amber-200 bg-amber-50/75 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-800">敏感点</div>
-          <ul className="mt-2 grid gap-2">
+        <article className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+            敏感点
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {sensitivePoints.map((item) => (
-              <li key={item} className="rounded-xl bg-white/88 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}
@@ -87,17 +106,24 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
       </div>
 
       {correctionSummary ? (
-        <div className={`mt-3 rounded-[1.2rem] border px-4 py-3 text-xs leading-6 text-[color:var(--ink)] ${tone.panel}`}>
-          <span className="font-semibold text-[color:var(--muted)]">纠偏提示：</span>
-          {correctionSummary}
+        <div className={`mt-2.5 rounded-[var(--radius)] border px-3 py-2.5 text-xs leading-5 ${tone.panel}`}>
+          <span className="font-mono text-[10px] font-bold uppercase tracking-wider opacity-80">
+            纠偏提示
+          </span>
+          <div className="mt-0.5 text-[color:var(--ink-2)]">{correctionSummary}</div>
         </div>
       ) : null}
 
-      <div className="mt-3 rounded-[1.2rem] border border-[color:var(--line)] bg-white/84 px-4 py-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">事件提示</div>
-        <ul className="mt-2 grid gap-2">
+      <div className="mt-2.5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
+        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          事件提示
+        </div>
+        <ul className="mt-2 space-y-1.5">
           {eventPrompts.map((item) => (
-            <li key={item} className="rounded-xl bg-slate-50 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+            <li
+              key={item}
+              className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+            >
               {item}
             </li>
           ))}

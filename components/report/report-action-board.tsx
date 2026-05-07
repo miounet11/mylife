@@ -27,53 +27,80 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
   const focusSummary = compactCopy(section.focusSummary, 108);
 
   return (
-    <section className="soft-card rounded-[1.75rem] p-5" aria-label="行动执行板">
-      <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">行动执行板</div>
-      <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">现在、30天、90天，按顺序推进</h3>
+    <section
+      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
+      aria-label="行动执行板"
+    >
+      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        行动执行板
+      </div>
+      <h3 className="mt-1.5 text-base font-black leading-snug text-[color:var(--ink-1)] md:text-lg">
+        现在、30 天、90 天，按顺序推进
+      </h3>
 
       {focusSummary ? (
-        <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{focusSummary}</p>
+        <p className="mt-2 text-xs leading-5 text-[color:var(--ink-4)]">{focusSummary}</p>
       ) : null}
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <article className="rounded-[1.2rem] border border-emerald-200 bg-emerald-50/70 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-700">现在</div>
-          <ul className="mt-2 grid gap-2">
+      <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+        <article className="rounded-[var(--radius)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.06)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--data-up)]">
+            NOW · 现在
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {now.map((item) => (
-              <li key={item} className="rounded-xl bg-white/85 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}
           </ul>
         </article>
 
-        <article className="rounded-[1.2rem] border border-sky-200 bg-sky-50/70 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-700">30 天</div>
-          <ul className="mt-2 grid gap-2">
+        <article className="rounded-[var(--radius)] border border-[color:var(--env)] bg-[color:var(--env-soft)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--env)]">
+            30D
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {next30Days.map((item) => (
-              <li key={item} className="rounded-xl bg-white/85 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}
           </ul>
         </article>
 
-        <article className="rounded-[1.2rem] border border-[color:var(--line)] bg-white/84 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">90 天</div>
-          <ul className="mt-2 grid gap-2">
+        <article className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+            90D
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {next90Days.map((item) => (
-              <li key={item} className="rounded-xl bg-slate-50 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}
           </ul>
         </article>
 
-        <article className="rounded-[1.2rem] border border-rose-200 bg-rose-50/70 px-4 py-4">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-rose-700">先别做</div>
-          <ul className="mt-2 grid gap-2">
+        <article className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--alert)]">
+            AVOID · 先别做
+          </div>
+          <ul className="mt-2 space-y-1.5">
             {avoidList.map((item) => (
-              <li key={item} className="rounded-xl bg-white/88 px-3 py-2 text-xs leading-6 text-[color:var(--ink)]">
+              <li
+                key={item}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]"
+              >
                 {item}
               </li>
             ))}

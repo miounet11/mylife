@@ -12,11 +12,11 @@ function compactCopy(value?: string, maxLength = 92) {
 }
 
 function stanceTone(stance: ReportCurrentStateSection['stance']) {
-  if (stance === 'push') return 'border-emerald-200 bg-emerald-50 text-emerald-800';
-  if (stance === 'hold') return 'border-slate-200 bg-slate-50 text-slate-700';
-  if (stance === 'adjust') return 'border-sky-200 bg-sky-50 text-sky-800';
-  if (stance === 'recover') return 'border-amber-200 bg-amber-50 text-amber-900';
-  return 'border-[color:var(--line)] bg-white text-[color:var(--ink)]';
+  if (stance === 'push') return 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
+  if (stance === 'hold') return 'border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
+  if (stance === 'adjust') return 'border-[color:var(--env)] bg-[color:var(--env-soft)] text-[color:var(--env)]';
+  if (stance === 'recover') return 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
+  return 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)]';
 }
 
 function fallbackStanceLabel(stance: ReportCurrentStateSection['stance']) {
@@ -34,36 +34,49 @@ export default function ReportCurrentState({ section }: ReportCurrentStateProps)
   const usageNote = compactCopy(section.usageNote, 84);
 
   return (
-    <section className="soft-card rounded-[1.75rem] p-5" aria-label="当前运行状态">
+    <section
+      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
+      aria-label="当前运行状态"
+    >
       <div className="flex flex-wrap items-center gap-2">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">当前操作系统</div>
-        <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${stanceTone(section.stance)}`}>
+        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          当前操作系统
+        </div>
+        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-[10px] font-bold uppercase tracking-wider ${stanceTone(section.stance)}`}>
           {compactCopy(section.stanceLabel, 18) || fallbackStanceLabel(section.stance)}
         </span>
       </div>
 
-      <h2 className="mt-3 text-xl font-bold leading-8 text-[color:var(--ink)]">{headline}</h2>
+      <h2 className="mt-2 text-lg font-bold leading-7 text-[color:var(--ink-1)] md:text-xl">{headline}</h2>
 
       {summary ? (
-        <p className="mt-2 text-sm leading-7 text-[color:var(--ink)]">{summary}</p>
+        <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">{summary}</p>
       ) : null}
 
       {evidence.length > 0 ? (
-        <ul className="mt-4 grid gap-2" aria-label="当前状态证据">
+        <ul className="mt-3 space-y-1.5" aria-label="当前状态证据">
           {evidence.map((item) => (
-            <li key={item} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+            <li
+              key={item}
+              className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]"
+            >
               {item}
             </li>
           ))}
         </ul>
       ) : (
-        <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+        <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-5)]">
           当前证据项较少，先按驾驶舱的优先动作推进并持续记录反馈。
         </div>
       )}
 
-      <div className="mt-4 rounded-2xl border border-[color:var(--line)] bg-white/84 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-        {usageNote || '使用方式：本段用于校准当前节奏，不替代后续验证和复盘。'}
+      <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-4)]">
+        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          USAGE
+        </span>
+        <div className="mt-0.5">
+          {usageNote || '使用方式：本段用于校准当前节奏，不替代后续验证和复盘。'}
+        </div>
       </div>
     </section>
   );

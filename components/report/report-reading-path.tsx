@@ -10,10 +10,10 @@ const layerIcons = {
 } as const;
 
 function statusClasses(status: ReportJourneyLayerStatus) {
-  if (status === 'current') return 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
-  if (status === 'next') return 'border-emerald-200 bg-emerald-50/80 text-emerald-800';
-  if (status === 'watch') return 'border-amber-200 bg-amber-50/80 text-amber-900';
-  return 'border-[color:var(--line)] bg-white/84 text-[color:var(--ink)]';
+  if (status === 'current') return 'border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]';
+  if (status === 'next') return 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
+  if (status === 'watch') return 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
+  return 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] text-[color:var(--ink-2)]';
 }
 
 export default function ReportReadingPath({
@@ -28,17 +28,19 @@ export default function ReportReadingPath({
   sourceFamily?: string;
 }) {
   return (
-    <section className="rounded-[1.35rem] border border-[color:var(--line)] bg-white/72 p-4">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-3xl">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-            <Route className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            <Route className="h-3 w-3" />
             分层阅读路径
           </div>
-          <h2 className="mt-3 text-xl font-black text-[color:var(--ink)] md:text-2xl">{route.headline}</h2>
-          <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{route.summary}</p>
+          <h2 className="mt-2 text-lg font-black leading-snug text-[color:var(--ink-1)] md:text-xl">
+            {route.headline}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">{route.summary}</p>
           {route.correctionHint ? (
-            <div className="mt-3 rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-3 text-xs leading-6 text-amber-900">
+            <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--signal-strong)]">
               {route.correctionHint}
             </div>
           ) : null}
@@ -49,7 +51,7 @@ export default function ReportReadingPath({
             href={route.primaryAction.href}
             page={`/result/${reportId}`}
             target={route.primaryAction.target}
-            className="action-primary action-main justify-between"
+            className="inline-flex h-10 w-full items-center justify-between gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
             meta={{
               reportId,
               workflowId: route.workflowId,
@@ -61,11 +63,13 @@ export default function ReportReadingPath({
             {route.primaryAction.label}
             <ArrowRight className="h-4 w-4" />
           </ResultCtaLink>
-          <div className="mt-2 text-xs leading-5 text-[color:var(--muted)]">{route.primaryAction.description}</div>
+          <div className="mt-1.5 text-[10px] leading-4 text-[color:var(--ink-5)]">
+            {route.primaryAction.description}
+          </div>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+      <div className="mt-4 grid gap-2.5 md:grid-cols-2 xl:grid-cols-4">
         {route.layers.map((layer) => {
           const Icon = layerIcons[layer.key];
           return (
@@ -74,7 +78,7 @@ export default function ReportReadingPath({
               href={layer.href}
               page={`/result/${reportId}`}
               target={`report_journey_layer_${layer.key}`}
-              className={`rounded-[1.1rem] border px-4 py-3.5 transition hover:border-[color:var(--accent)] ${statusClasses(layer.status)}`}
+              className={`rounded-[var(--radius)] border px-3 py-3 transition hover:border-[color:var(--brand)] ${statusClasses(layer.status)}`}
               meta={{
                 reportId,
                 workflowId: route.workflowId,
@@ -84,32 +88,34 @@ export default function ReportReadingPath({
                 sourceFamily: sourceFamily || null,
               }}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 text-sm font-bold">
-                  <Icon className="h-4 w-4" />
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-sm font-bold">
+                  <Icon className="h-3.5 w-3.5" />
                   {layer.title}
                 </div>
-                <span className="rounded-full bg-white/78 px-2.5 py-1 text-[11px] font-semibold">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider">
                   {layer.badge}
                 </span>
               </div>
-              <p className="mt-3 text-xs leading-6 opacity-85">{layer.description}</p>
+              <p className="mt-2 text-xs leading-5 opacity-85">{layer.description}</p>
             </ResultCtaLink>
           );
         })}
       </div>
 
       {route.categoryRoutes.length > 0 ? (
-        <div className="mt-4 rounded-[1.1rem] bg-slate-50/80 px-4 py-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">专项推荐顺序</div>
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            专项推荐顺序
+          </div>
+          <div className="mt-2.5 grid gap-2 md:grid-cols-3">
             {route.categoryRoutes.map((item) => (
               <ResultCtaLink
                 key={item.toolSlug}
                 href={item.href}
                 page={`/result/${reportId}`}
                 target={item.primary ? 'report_journey_primary_category' : 'report_journey_secondary_category'}
-                className="rounded-[1rem] border border-[color:var(--line)] bg-white px-4 py-3.5 transition hover:border-[color:var(--accent)]"
+                className="group rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 transition hover:border-[color:var(--brand)]"
                 meta={{
                   reportId,
                   workflowId: route.workflowId,
@@ -120,12 +126,14 @@ export default function ReportReadingPath({
                   sourceFamily: sourceFamily || null,
                 }}
               >
-                <div className="text-[11px] font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.categoryLabel}</div>
-                <div className="mt-2 flex items-center justify-between gap-3 text-sm font-bold text-[color:var(--ink)]">
-                  <span>{item.toolTitle}</span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[color:var(--accent-strong)]" />
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  {item.categoryLabel}
                 </div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
+                <div className="mt-1 flex items-center justify-between gap-2 text-sm font-bold text-[color:var(--ink-1)]">
+                  <span className="truncate">{item.toolTitle}</span>
+                  <ArrowRight className="h-3 w-3 shrink-0 text-[color:var(--ink-5)] transition group-hover:text-[color:var(--brand-strong)]" />
+                </div>
+                <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
               </ResultCtaLink>
             ))}
           </div>
