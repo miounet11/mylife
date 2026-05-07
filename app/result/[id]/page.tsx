@@ -53,6 +53,8 @@ import type { UpdatesStatusSummary } from '@/components/updates-status-panel';
 import RelatedContent from '@/components/related-content';
 import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
+import { ReportCover } from '@/components/report/report-cover';
+import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
 import ReportCurrentState from '@/components/report/report-current-state';
 import ReportRhythmTimeline from '@/components/report/report-rhythm-timeline';
@@ -876,7 +878,29 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
 
-      <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        <ReportSurface>
+          <ReportCover
+            userName={publicName}
+            birthIso={
+              result.basic && (result.basic as any).birthDate
+                ? `${(result.basic as any).birthDate}${
+                    (result.basic as any).birthTime ? ' ' + (result.basic as any).birthTime : ''
+                  }`
+                : undefined
+            }
+            birthLocation={(result.basic as any)?.birthPlace || undefined}
+            pillarSummary={
+              result.basic && (result.basic as any).year && (result.basic as any).month
+                ? `${(result.basic as any).year} ${(result.basic as any).month} ${(result.basic as any).day} ${(result.basic as any).hour}`
+                : undefined
+            }
+            reportId={id}
+            reportVersion={result.reportVersion || 'v1'}
+            pipelineVersion={(result.analysis as any)?.pipelineVersion || undefined}
+            qualityTier={deliveryTierLabel}
+            className="mb-6"
+          />
         <section className="mb-10 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
           <div className="glass-panel rounded-[1.75rem] p-5 md:p-6">
             <div>
@@ -1467,6 +1491,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             <RelatedContent source={entrySource || `result_report:${id}`} />
           </ResultDeferredSection>
         </div>
+        </ReportSurface>
       </main>
 
       <SiteFooter />
