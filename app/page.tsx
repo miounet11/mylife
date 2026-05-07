@@ -3,17 +3,21 @@ export const revalidate = 0;
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { ArrowRight, BookOpen, CalendarClock, Compass, Globe2, Layers3, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, BookOpenText, Clock4, Compass, Sparkles } from 'lucide-react';
+
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import PersonalGrowthPanel from '@/components/personal-growth-panel';
-import PriorityDisclosure from '@/components/priority-disclosure';
-import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolCardLink from '@/components/tool-card-link';
-import UpdatesStatusPanel from '@/components/updates-status-panel';
+import { Card } from '@/components/ui/card';
+import { Eyebrow } from '@/components/ui/eyebrow';
+import { Inline } from '@/components/ui/inline';
+import { Lede } from '@/components/ui/lede';
+import { Stack } from '@/components/ui/stack';
+import { Stat } from '@/components/ui/stat';
+import { Tag } from '@/components/ui/tag';
 import { getFeaturedCaseStudies } from '@/lib/content-store';
 import { getAuthSession } from '@/lib/auth';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
@@ -21,14 +25,8 @@ import { getCurrentUserId } from '@/lib/user-utils';
 import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
 import { buildPersonalGrowthHub } from '@/lib/personal-growth-hub';
 import { createPublicContentMetadata } from '@/lib/public-content-seo';
-import { buildPersonalizedJourney } from '@/lib/surface-journeys';
 import { getPriorityGrowthTools, getToolGrowthProfile } from '@/lib/tools';
-import { buildUpdatesSummary } from '@/lib/updates-summary';
-import {
-  productActivationPath,
-  productPurposePaths,
-  productTrustSignals,
-} from '@/lib/product-experience';
+import { productTrustSignals } from '@/lib/product-experience';
 
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
@@ -37,7 +35,8 @@ const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
 export const metadata = {
   ...createPublicContentMetadata({
     title: '人生K线 | 看清你的结构、阶段、环境与下一步动作',
-    description: '基于真太阳时校正与世界易判断框架，输出结构、阶段、环境和行动建议，帮助用户在复杂现实里重建判断秩序。',
+    description:
+      '基于真太阳时校正与世界易判断框架，输出结构、阶段、环境和行动建议，帮助用户在复杂现实里重建判断秩序。',
     path: '/',
     type: 'website',
     languages: {
@@ -49,38 +48,15 @@ export const metadata = {
   keywords: ['真太阳时', '世界易', '判断系统', '人生决策', '结构分析', '阶段判断'],
 };
 
-const iconMap = {
-  birth: CalendarClock,
-  overview: Compass,
-  deepen: Sparkles,
-  tool: ShieldCheck,
-  validate: ShieldCheck,
-  learn: BookOpen,
-  system: Globe2,
-  visual: Layers3,
-} as const;
-
 export default async function HomePage() {
   const featuredArticles = listFeaturedKnowledgeEditorialEntries(2);
   const featuredCases = getFeaturedCaseStudies(2);
   const session = await getAuthSession();
-  const initialAuthenticated = !!session.authenticated && !!session.user?.id;
   const currentUserId = await getCurrentUserId();
   const activeUserId = session.user?.id || currentUserId || null;
   const initialReports = activeUserId ? fortuneOperations.getByUserId(activeUserId) : [];
   const initialToolSessions = activeUserId ? toolSessionOperations.listByUser(activeUserId, 10) : [];
   const hasPersonalHistory = initialReports.length > 0 || initialToolSessions.length > 0;
-  const shouldRenderPersonalGrowthPanel = hasPersonalHistory;
-  const initialSummary = activeUserId
-    ? buildUpdatesSummary({
-        userId: activeUserId,
-        email: session.user?.email,
-      })
-    : null;
-  const personalizedJourney = buildPersonalizedJourney({
-    reports: initialReports as any,
-    toolSessions: initialToolSessions as any,
-  });
   const priorityGrowthTools = getPriorityGrowthTools();
   const personalGrowthHub = buildPersonalGrowthHub({
     reports: initialReports as any,
@@ -93,145 +69,167 @@ export default async function HomePage() {
       <SiteHeader ctaHref="#analysis-form" ctaLabel="立即开始" />
 
       <main>
-        <section className="page-frame py-3 md:py-5" id="analysis-form">
-          <div className="mb-2 flex flex-col gap-2 md:mb-3 md:flex-row md:items-end md:justify-between">
-            <div className="max-w-3xl">
-              <div className="hidden section-label md:inline-flex">
-                <Sparkles className="h-3.5 w-3.5" />
-                填写出生信息
-              </div>
-              <h1 className="text-2xl font-black leading-tight text-[color:var(--ink)] md:mt-2 md:text-5xl">
-                填出生信息，生成
-                <span className="text-[color:var(--accent-strong)]">人生结构总览</span>
+        {/* ─────────────────────────────────────────────
+           段 1：HERO + 表单（决策台风入口）
+           ───────────────────────────────────────────── */}
+        <section className="page-frame pt-6 md:pt-10" id="analysis-form">
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
+            <Stack gap={4}>
+              <Eyebrow icon={<Sparkles className="h-3 w-3" />}>
+                判断系统 · 决策台版本
+              </Eyebrow>
+              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+                看清你的<span className="text-[color:var(--brand-strong)]">结构、阶段、环境</span>
+                <br className="hidden md:block" />
+                与下一步动作
               </h1>
-              <p className="mt-1 text-sm leading-6 text-[color:var(--muted)] md:mt-2 md:text-base">
-                输入出生时间和地点，先得到一页可读的结构、阶段与下一步判断。
-              </p>
+              <Lede size="lg">
+                输入出生时间和地点，先得到一页可读的结构、阶段与下一步判断；
+                再决定是否进一步追问、记录事件或获取深度报告。
+              </Lede>
+
+              <Inline gap={2} wrap>
+                {productTrustSignals.slice(0, 3).map((label) => (
+                  <Tag key={label} tone="brand" variant="soft">
+                    {label}
+                  </Tag>
+                ))}
+              </Inline>
+
+              <Inline gap={3} wrap className="pt-1">
+                <Link
+                  href="/docs/quick-start"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  使用方法
+                </Link>
+                <Link
+                  href="/docs/birth-info"
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
+                >
+                  <Clock4 className="h-4 w-4" />
+                  填写 tips
+                </Link>
+              </Inline>
+            </Stack>
+
+            <Card variant="raised" padding="md" className="border-[color:var(--brand-soft-2)]">
+              <FortuneForm returnSource="home_direct" />
+            </Card>
+          </div>
+        </section>
+
+        {/* ─────────────────────────────────────────────
+           段 2：价值证明（4 个 stat 横排，决策台核心）
+           ───────────────────────────────────────────── */}
+        <section className="page-frame mt-10 md:mt-14">
+          <Card variant="default" padding="lg" className="bg-[color:var(--bg-elevated)]">
+            <Eyebrow tone="muted" className="mb-4">
+              判断系统的当前状态
+            </Eyebrow>
+            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
+              <Stat
+                label="主报告版本"
+                value="v3"
+                hint="多 Agent 并发链路"
+                size="lg"
+              />
+              <Stat
+                label="模型 fallback"
+                value="3 层"
+                hint="grok-420-fast → gpt-5.2 → auto"
+                size="lg"
+              />
+              <Stat
+                label="时间精度"
+                value="真太阳"
+                hint="经纬度 + 节气分钟级"
+                size="lg"
+              />
+              <Stat
+                label="话术库"
+                value="600+"
+                hint="基于滴天髓·三命通会"
+                size="lg"
+              />
             </div>
-            <div className="hidden flex-wrap gap-2 md:flex md:justify-end">
-              {productTrustSignals.slice(0, 3).map((label) => (
-                <div key={label} className="signal-pill">
-                  {label}
-                </div>
-              ))}
+          </Card>
+        </section>
+
+        {/* ─────────────────────────────────────────────
+           段 3：高意图工具（仅在有时显示，金色铁律）
+           ───────────────────────────────────────────── */}
+        {priorityGrowthTools.length > 0 && (
+          <section className="page-frame mt-10 md:mt-14">
+            <div className="mb-5 flex items-end justify-between gap-4">
+              <div>
+                <Eyebrow tone="signal" icon={<Sparkles className="h-3 w-3" />}>
+                  免费高意图工具
+                </Eyebrow>
+                <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)] md:text-2xl">
+                  不想先填完整报告？直接做这两个测试
+                </h2>
+              </div>
+              <Link
+                href="/tools"
+                className="inline-flex shrink-0 items-center gap-1.5 text-sm font-semibold text-[color:var(--brand-strong)] hover:text-[color:var(--brand-deep)]"
+              >
+                全部工具
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
-          </div>
 
-          <div className="workspace-panel border-[rgba(18,125,111,0.28)] p-1.5 shadow-[0_14px_36px_rgba(11,95,85,0.10)] md:p-3">
-            <FortuneForm returnSource="home_direct" />
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Link href="/docs/quick-start" className="action-secondary min-h-0 px-3 py-2 text-xs">
-              使用方法
-            </Link>
-            <Link href="/docs/birth-info" className="action-secondary min-h-0 px-3 py-2 text-xs">
-              填写 tips
-            </Link>
-          </div>
-
-          <PriorityDisclosure
-            label="生成后"
-            title="再看报告、追问和工具"
-            description="这些路径不占用首屏，填完信息后再选择。"
-            className="mt-4"
-          >
-            <div className="grid gap-3 md:grid-cols-3">
-              {productActivationPath.slice(0, 3).map((step, index) => {
-                const Icon = iconMap[step.icon];
+            <div className="grid gap-4 md:grid-cols-2">
+              {priorityGrowthTools.map((tool) => {
+                const growthProfile = getToolGrowthProfile(tool.slug);
                 return (
-                  <Link key={step.title} href={step.href} className="interactive-card rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="route-index">0{index + 1}</div>
-                      <Icon className="h-4 w-4 text-[color:var(--accent-strong)]" />
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page="/"
+                    source={`home_priority_growth:${tool.slug}`}
+                    className="group block rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-px hover:shadow-[var(--shadow-pop)]"
+                  >
+                    <Eyebrow tone="signal" className="mb-3">
+                      {growthProfile?.heroEyebrow || tool.themeLabel}
+                    </Eyebrow>
+                    <h3 className="text-lg font-black leading-tight text-[color:var(--ink-1)]">
+                      {tool.shortTitle}
+                    </h3>
+                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-[color:var(--ink-4)]">
+                      {growthProfile?.heroSubtitle || tool.description}
+                    </p>
+                    <div className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[color:var(--signal-strong)] group-hover:gap-2 transition-all">
+                      {growthProfile?.primaryCtaLabel || '开始免费测算'}
+                      <ArrowRight className="h-4 w-4" />
                     </div>
-                    <div className="mt-3 text-base font-semibold text-[color:var(--ink)]">{step.title}</div>
-                  </Link>
+                  </ToolCardLink>
                 );
               })}
             </div>
-          </PriorityDisclosure>
-        </section>
-
-        {priorityGrowthTools.length > 0 ? (
-          <section className="page-frame pb-4 md:pb-6">
-            <div className="rounded-[2rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-5 md:p-7">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div className="max-w-3xl">
-                  <div className="section-label">
-                    <Sparkles className="h-3.5 w-3.5" />
-                    免费高意图工具
-                  </div>
-                  <h2 className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)] md:text-3xl">
-                    不想先填完整报告，也可以直接做这两个测试
-                  </h2>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
-                    年度窗口和手相上传先给免费结构结果，再接回综合判断、继续深问和深测承接。
-                  </p>
-                </div>
-                <Link href="/tools" className="action-secondary shrink-0">
-                  查看全部工具
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                {priorityGrowthTools.map((tool) => {
-                  const growthProfile = getToolGrowthProfile(tool.slug);
-                  return (
-                    <ToolCardLink
-                      key={tool.slug}
-                      href={`/tools/${tool.slug}`}
-                      toolSlug={tool.slug}
-                      category={tool.category}
-                      page="/"
-                      source={`home_priority_growth:${tool.slug}`}
-                      className="block rounded-[1.5rem] border border-[color:var(--accent)] bg-white/86 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
-                    >
-                      <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">
-                        {growthProfile?.heroEyebrow || tool.themeLabel}
-                      </div>
-                      <h3 className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
-                        {tool.shortTitle}
-                      </h3>
-                      <p className="mt-3 line-clamp-3 text-sm leading-7 text-[color:var(--muted)]">
-                        {growthProfile?.heroSubtitle || tool.description}
-                      </p>
-                      <div className="action-guide mt-4 inline-flex items-center gap-2">
-                        {growthProfile?.primaryCtaLabel || '开始免费测算'}
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                    </ToolCardLink>
-                  );
-                })}
-              </div>
-            </div>
           </section>
-        ) : null}
+        )}
 
-        <section className="page-frame pb-4 md:pb-6">
-          <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
-            <UpdatesStatusPanel
-              title="最近记录与更新"
-              description="如果你不是第一次来，这里会接住之前的报告、升级和提醒状态，方便你直接续上。"
-              initialAuthenticated={initialAuthenticated}
-              initialSummary={initialSummary}
-              compact
-            />
-
-            <div className="soft-card rounded-[1.75rem] p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-                <div>
-                  <div className="section-label">新内容</div>
-                  <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">最近值得看的内容</h2>
-                </div>
-                <Link href="/knowledge" className="action-secondary shrink-0">
-                  全部知识
-                  <ArrowRight className="h-4 w-4" />
+        {/* ─────────────────────────────────────────────
+           段 4：三栏内容入口（知识 / 案例 / 系统）
+           ───────────────────────────────────────────── */}
+        <section className="page-frame mt-10 md:mt-14">
+          <div className="grid gap-4 md:grid-cols-3">
+            {/* 知识 */}
+            <Card variant="default" padding="lg">
+              <Inline justify="between" align="center" className="mb-4">
+                <Eyebrow>知识</Eyebrow>
+                <Link
+                  href="/knowledge"
+                  className="text-xs font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                >
+                  全部 →
                 </Link>
-              </div>
-
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              </Inline>
+              <Stack gap={3}>
                 {featuredArticles.map((item) => (
                   <ContentCardLink
                     key={item.entry.slug}
@@ -248,15 +246,31 @@ export default async function HomePage() {
                       synthesisType: item.synthesisType,
                       editorialTier: item.editorialTier,
                     }}
-                    className="rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                    className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 hover:border-[color:var(--brand)]"
                   >
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                       {item.topicName || item.entry.category}
                     </div>
-                    <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{item.entry.title}</div>
+                    <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
+                      {item.entry.title}
+                    </div>
                   </ContentCardLink>
                 ))}
+              </Stack>
+            </Card>
 
+            {/* 案例 */}
+            <Card variant="default" padding="lg">
+              <Inline justify="between" align="center" className="mb-4">
+                <Eyebrow>案例</Eyebrow>
+                <Link
+                  href="/cases"
+                  className="text-xs font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                >
+                  全部 →
+                </Link>
+              </Inline>
+              <Stack gap={3}>
                 {featuredCases.map((item) => (
                   <ContentCardLink
                     key={item.slug}
@@ -270,63 +284,68 @@ export default async function HomePage() {
                       category: item.scenario,
                       tags: item.tags,
                     }}
-                    className="rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                    className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 hover:border-[color:var(--brand)]"
                   >
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
-                    <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{item.title}</div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                      {item.scenario}
+                    </div>
+                    <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
+                      {item.title}
+                    </div>
                   </ContentCardLink>
                 ))}
-              </div>
-            </div>
+              </Stack>
+            </Card>
+
+            {/* 系统 */}
+            <Card variant="default" padding="lg">
+              <Inline justify="between" align="center" className="mb-4">
+                <Eyebrow>系统</Eyebrow>
+                <Link
+                  href="/world-yi"
+                  className="text-xs font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                >
+                  全部 →
+                </Link>
+              </Inline>
+              <Stack gap={3}>
+                <Link
+                  href="/world-yi"
+                  className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 hover:border-[color:var(--brand)]"
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    World Yi
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
+                    世界易系统总览：把判断、阶段、行动组织成一套现代框架
+                  </div>
+                </Link>
+                <Link
+                  href="/insights"
+                  className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 hover:border-[color:var(--brand)]"
+                >
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    Insights
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
+                    系统洞察：判断系统在不同决策场景中的工作方式
+                  </div>
+                </Link>
+              </Stack>
+            </Card>
           </div>
         </section>
 
-        <section className="page-frame py-6 md:py-8">
-          <ProductSurfaceRolePanel
-            surface="home"
-            title="首页只承担第一步：让用户快速开始"
-            description="首屏直接给出生辰输入和最短路径，学习、工具、世界易、图片说明全部作为后续分流，避免新用户一进来就失去方向。"
-            compact
-          />
-        </section>
-
-        {shouldRenderPersonalGrowthPanel ? (
-          <section className="page-frame py-6 md:py-8">
+        {/* ─────────────────────────────────────────────
+           段 5：个人增长（条件渲染）
+           ───────────────────────────────────────────── */}
+        {hasPersonalHistory && (
+          <section className="page-frame mt-10 md:mt-14">
             <PersonalGrowthPanel summary={personalGrowthHub} page="/" />
           </section>
-        ) : null}
+        )}
 
-        <section className="page-frame space-y-4 py-6 pb-16 md:py-8 md:pb-20">
-          <PriorityDisclosure
-            label="更多路径"
-            title="暂时不填写时，再打开这些入口"
-            description="这些是补充路径，不再占用首页主视线。"
-          >
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {productPurposePaths.slice(1).map((item) => {
-                const Icon = iconMap[item.icon];
-                return (
-                  <Link key={item.title} href={item.href} className="interactive-card p-5">
-                    <div className="flex items-center justify-between gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-[color:var(--muted)]" />
-                    </div>
-                    <h3 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{item.title}</h3>
-                    <div className="action-guide mt-5">{item.action}</div>
-                  </Link>
-                );
-              })}
-            </div>
-          </PriorityDisclosure>
-
-          <SurfaceJourneyPanel
-            journey={personalizedJourney.journey}
-            title={personalizedJourney.heading}
-            description="按你当前所处阶段，把公开内容、工具和行动入口重新排成一条更顺的下一步路径。"
-          />
-        </section>
+        <div className="h-12 md:h-16" />
       </main>
 
       <SiteFooter />
@@ -336,13 +355,13 @@ export default async function HomePage() {
 
 function FormSkeleton() {
   return (
-    <div className="mx-auto max-w-4xl rounded-[1.75rem] bg-white/80 p-6 shadow-[0_10px_28px_rgba(23,32,51,0.06)]">
-      <div className="space-y-4">
-        <div className="h-12 animate-pulse rounded-2xl bg-slate-200" />
-        <div className="h-12 animate-pulse rounded-2xl bg-slate-200" />
-        <div className="h-12 animate-pulse rounded-2xl bg-slate-200" />
-        <div className="h-20 animate-pulse rounded-2xl bg-slate-200" />
-        <div className="h-14 animate-pulse rounded-full bg-slate-300" />
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5">
+      <div className="space-y-3">
+        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-16 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-11 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
       </div>
     </div>
   );
