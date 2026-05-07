@@ -48,10 +48,10 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
     other: '其他',
   };
 
-  const impactColors = {
-    positive: 'border-green-400 bg-green-50',
-    negative: 'border-red-400 bg-red-50',
-    neutral: 'border-gray-400 bg-gray-50',
+  const impactBorderColors: Record<'positive' | 'negative' | 'neutral', string> = {
+    positive: 'border-l-[color:var(--data-up)]',
+    negative: 'border-l-[color:var(--data-down)]',
+    neutral: 'border-l-[color:var(--ink-5)]',
   };
 
   const impactLabels = {
@@ -61,160 +61,177 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
   };
 
   return (
-    <Card className={cn(
-      'transition-all duration-200 hover:shadow-xl',
-      isHovered && 'scale-105',
-      impactColors[event.impact]
-    )}>
-      <CardContent className="p-4">
-        {/* 事件头部 */}
-        <div className="flex items-start justify-between mb-3">
-          <div className="flex items-center space-x-3">
-            <span className="text-2xl">{typeIcons[event.type]}</span>
-            <div className="flex-1">
-              <h4 className="font-bold text-gray-900 text-lg">{event.title}</h4>
-              <div className="flex items-center space-x-2 mt-1">
-                <span className="text-xs px-2 py-1 rounded-full bg-purple-100 text-purple-700 font-medium">
-                  {typeLabels[event.type]}
+    <div
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      className={cn(
+        'rounded-[var(--radius-md)] border border-[color:var(--hairline)] border-l-4 bg-[color:var(--paper)] p-4 transition',
+        impactBorderColors[event.impact],
+        isHovered && 'shadow-[var(--shadow-card)]',
+      )}
+    >
+      {/* 事件头部 */}
+      <div className="mb-3 flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-start gap-2.5">
+          <span className="text-xl leading-none">{typeIcons[event.type]}</span>
+          <div className="flex-1 min-w-0">
+            <h4 className="text-base font-bold leading-snug text-[color:var(--ink-1)]">
+              {event.title}
+            </h4>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-1.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
+                {typeLabels[event.type]}
+              </span>
+              {event.impact === 'positive' && (
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] px-1.5 text-[10px] font-bold text-[color:var(--data-up)]">
+                  {impactLabels[event.impact]}
                 </span>
-                {event.impact === 'positive' && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 font-medium">
-                    {impactLabels[event.impact]}
-                  </span>
-                )}
-                {event.impact === 'negative' && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700 font-medium">
-                    {impactLabels[event.impact]}
-                  </span>
-                )}
-                {event.reminder?.enabled && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-700 font-medium">
-                    <Bell className="w-3 h-3 inline mr-1" />
-                    已提醒
-                  </span>
-                )}
-                {event.isEstimatedPastEvent && (
-                  <span className="text-xs px-2 py-1 rounded-full bg-amber-100 text-amber-700 font-medium">
-                    日期待补
-                  </span>
-                )}
-              </div>
+              )}
+              {event.impact === 'negative' && (
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(189,76,66,0.20)] bg-[rgba(189,76,66,0.08)] px-1.5 text-[10px] font-bold text-[color:var(--data-down)]">
+                  {impactLabels[event.impact]}
+                </span>
+              )}
+              {event.reminder?.enabled && (
+                <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--env)] bg-[color:var(--env-soft)] px-1.5 text-[10px] font-bold text-[color:var(--env)]">
+                  <Bell className="h-2.5 w-2.5" />
+                  已提醒
+                </span>
+              )}
+              {event.isEstimatedPastEvent && (
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-1.5 text-[10px] font-bold text-[color:var(--signal-strong)]">
+                  日期待补
+                </span>
+              )}
             </div>
-          </div>
-
-          {/* 操作按钮 */}
-          <div className="flex items-center space-x-1">
-            {onToggleReminder && (
-              <button
-                onClick={() => onToggleReminder(event.id)}
-                className="p-2 hover:bg-purple-100 rounded-lg transition"
-                title={event.reminder?.enabled ? '关闭提醒' : '开启提醒'}
-              >
-                <Bell className={`w-4 h-4 ${event.reminder?.enabled ? 'text-purple-600' : 'text-gray-400'}`} />
-              </button>
-            )}
-            {onEdit && (
-              <button
-                onClick={() => onEdit(event)}
-                className="p-2 hover:bg-purple-100 rounded-lg transition"
-                title="编辑"
-              >
-                <Edit className="w-4 h-4 text-gray-600" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                onClick={() => onDelete(event.id)}
-                className="p-2 hover:bg-red-100 rounded-lg transition"
-                title="删除"
-              >
-                <Trash2 className="w-4 h-4 text-gray-600" />
-              </button>
-            )}
           </div>
         </div>
 
-        {/* 日期和时间 */}
-        <div className="flex items-center space-x-3 mb-3 text-sm text-gray-600">
-          <div className="flex items-center space-x-1">
-            <Calendar className="w-4 h-4" />
-            <span>{event.dateKey ? formatEventDateKey(event.dateKey) : formatDateTime(event.date)}</span>
-          </div>
-          {event.dateRange && (
-            <>
-              <span className="text-gray-400">·</span>
-              <div className="flex items-center space-x-1">
-                <Clock className="w-4 h-4" />
-                <span>{event.dateRange}</span>
-              </div>
-            </>
+        {/* 操作按钮 */}
+        <div className="flex shrink-0 items-center gap-0.5">
+          {onToggleReminder && (
+            <button
+              onClick={() => onToggleReminder(event.id)}
+              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--ink-4)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--brand-strong)]"
+              title={event.reminder?.enabled ? '关闭提醒' : '开启提醒'}
+            >
+              <Bell
+                className={cn(
+                  'h-3.5 w-3.5',
+                  event.reminder?.enabled && 'text-[color:var(--brand-strong)]',
+                )}
+              />
+            </button>
+          )}
+          {onEdit && (
+            <button
+              onClick={() => onEdit(event)}
+              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--ink-4)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--brand-strong)]"
+              title="编辑"
+            >
+              <Edit className="h-3.5 w-3.5" />
+            </button>
+          )}
+          {onDelete && (
+            <button
+              onClick={() => onDelete(event.id)}
+              className="flex h-7 w-7 items-center justify-center rounded-[var(--radius-sm)] text-[color:var(--ink-4)] transition hover:bg-[color:var(--alert-soft)] hover:text-[color:var(--alert)]"
+              title="删除"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           )}
         </div>
+      </div>
 
-        {event.isEstimatedPastEvent && (
-          <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
-            <div className="flex items-start space-x-2">
-              <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
-              <div>{getEstimatedPastEventPrompt(event)}</div>
+      {/* 日期和时间 */}
+      <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs tabular-nums text-[color:var(--ink-4)]">
+        <div className="inline-flex items-center gap-1">
+          <Calendar className="h-3 w-3" />
+          <span>{event.dateKey ? formatEventDateKey(event.dateKey) : formatDateTime(event.date)}</span>
+        </div>
+        {event.dateRange && (
+          <>
+            <span className="text-[color:var(--ink-6)]">·</span>
+            <div className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              <span>{event.dateRange}</span>
             </div>
-          </div>
+          </>
         )}
+      </div>
 
-        {/* 严重程度 */}
-        {event.severity && (
-          <div className="mb-3">
-            <div className="flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4 text-orange-600" />
-              <span className="text-sm font-medium text-gray-900">
-                {event.severity === 'critical' && '严重'}
-                {event.severity === 'high' && '高'}
-                {event.severity === 'medium' && '中等'}
-                {event.severity === 'low' && '轻'}
+      {event.isEstimatedPastEvent && (
+        <div className="mb-3 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--signal-strong)]">
+          <div className="flex items-start gap-1.5">
+            <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div>{getEstimatedPastEventPrompt(event)}</div>
+          </div>
+        </div>
+      )}
+
+      {/* 严重程度 */}
+      {event.severity && (
+        <div className="mb-3 flex items-center gap-1.5">
+          <AlertTriangle className="h-3.5 w-3.5 text-[color:var(--alert)]" />
+          <span className="text-xs font-bold text-[color:var(--ink-2)]">
+            {event.severity === 'critical' && '严重'}
+            {event.severity === 'high' && '高'}
+            {event.severity === 'medium' && '中等'}
+            {event.severity === 'low' && '轻'}
+          </span>
+        </div>
+      )}
+
+      {/* 描述 */}
+      <p className="mb-3 text-sm leading-6 text-[color:var(--ink-3)]">{event.description}</p>
+
+      {/* 预测准确度 */}
+      {event.predictionAccuracy !== undefined && (
+        <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-[color:var(--ink-5)]">
+          <Check
+            className={cn(
+              'h-3 w-3',
+              event.wasAccurate
+                ? 'text-[color:var(--data-up)]'
+                : 'text-[color:var(--data-down)]',
+            )}
+          />
+          <span>报告预测</span>
+          <span className="text-[color:var(--ink-6)]">·</span>
+          <span
+            className={cn(
+              'font-bold',
+              event.wasAccurate
+                ? 'text-[color:var(--data-up)]'
+                : 'text-[color:var(--data-down)]',
+            )}
+          >
+            {event.wasAccurate ? '准确' : '不准确'}
+          </span>
+        </div>
+      )}
+
+      {/* 提醒信息 */}
+      {event.reminder?.enabled && (
+        <div className="mt-3 border-t border-[color:var(--hairline)] pt-3">
+          <div className="flex items-center justify-between gap-3 text-xs text-[color:var(--ink-4)]">
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Bell className="h-3.5 w-3.5 shrink-0 text-[color:var(--brand-strong)]" />
+              <span className="truncate">
+                已设置（{event.reminder.method}，提前 {event.reminder.advanceDays} 分钟）
               </span>
             </div>
+            <button
+              onClick={() => onToggleReminder?.(event.id)}
+              className="shrink-0 font-semibold text-[color:var(--brand-strong)] hover:text-[color:var(--brand-deep)]"
+            >
+              关闭
+            </button>
           </div>
-        )}
-
-        {/* 描述 */}
-        <p className="text-gray-700 text-sm leading-relaxed mb-3">
-          {event.description}
-        </p>
-
-        {/* 预测准确度 */}
-        {event.predictionAccuracy !== undefined && (
-          <div className="flex items-center space-x-2 text-xs text-gray-600">
-            <span className="flex items-center space-x-1">
-              <Check className={`w-3 h-3 ${event.wasAccurate ? 'text-green-600' : 'text-red-600'}`} />
-              <span>报告预测</span>
-            </span>
-            <span>·</span>
-            <span className="font-semibold">
-              {event.wasAccurate ? '准确' : '不准确'}
-            </span>
-          </div>
-        )}
-
-        {/* 提醒信息 */}
-        {event.reminder?.enabled && (
-          <div className="mt-3 pt-3 border-t border-gray-200">
-            <div className="flex items-center justify-between text-xs text-gray-600">
-              <div className="flex items-center space-x-2">
-                <Bell className="w-4 h-4 text-purple-600" />
-                <span>
-                  已设置提醒（{event.reminder.method}，提前{event.reminder.advanceDays}分钟）
-                </span>
-              </div>
-              <button
-                onClick={() => onToggleReminder?.(event.id)}
-                className="text-purple-600 hover:text-purple-700 font-medium"
-              >
-                关闭
-              </button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+        </div>
+      )}
+    </div>
   );
 }
 
