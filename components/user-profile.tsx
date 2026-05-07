@@ -50,34 +50,36 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
       : '--';
 
   return (
-    <div className="soft-card overflow-hidden rounded-[2rem]">
-      <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(178,149,93,0.12),rgba(208,160,106,0.12))] p-6 md:p-8">
-        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-[1.5rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-2xl font-bold text-white shadow-[0_16px_30px_rgba(178,149,93,0.26)]">
+    <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+      <div className="border-b border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5 md:p-6">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-md)] bg-[color:var(--brand-strong)] text-lg font-black text-white">
               {displayName?.charAt(0) || '用'}
             </div>
             <div>
-              <h2 className="text-2xl font-black text-[color:var(--ink)]">{displayName}</h2>
-              <p className="mt-1 text-sm text-[color:var(--muted)]">
+              <h2 className="text-xl font-black leading-tight text-[color:var(--ink-1)]">
+                {displayName}
+              </h2>
+              <p className="mt-0.5 font-mono text-xs tabular-nums text-[color:var(--ink-4)]">
                 {displayGender} · {displayAge}岁 · {displayPlace}
               </p>
             </div>
           </div>
-          <span className="inline-flex rounded-full border border-[color:var(--line)] bg-white/80 px-4 py-2 text-xs font-semibold text-[color:var(--muted)]">
+          <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
             {accountLabel}
           </span>
         </div>
       </div>
 
-      <div className="p-6 md:p-8">
-        <div className="grid gap-4 md:grid-cols-3">
+      <div className="p-5 md:p-6">
+        <div className="grid gap-3 md:grid-cols-3">
           <MetricCard label="日主" value={dayMaster} />
           <MetricCard label="格局" value={pattern} />
           <MetricCard label="当前大运" value={dayun} />
         </div>
 
-        <div className="mt-6 grid gap-5 md:grid-cols-2">
+        <div className="mt-5 grid gap-3 md:grid-cols-2">
           <InfoCard
             title="出生信息"
             rows={[
@@ -90,9 +92,9 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
             title="使用数据"
             rows={[
               ['账号状态', accountValue],
-              ['使用天数', `${usageDays}天`],
-              ['分析次数', `${fortunes.length}次`],
-              ['保存事件', `${eventCount}个`],
+              ['使用天数', `${usageDays}`],
+              ['分析次数', `${fortunes.length}`],
+              ['保存事件', `${eventCount}`],
             ]}
           />
         </div>
@@ -103,22 +105,33 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
 
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-5">
-      <div className="text-sm font-semibold text-[color:var(--muted)]">{label}</div>
-      <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{value}</div>
+    <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        {label}
+      </div>
+      <div className="mt-1.5 font-mono text-lg font-black tabular-nums text-[color:var(--ink-1)]">
+        {value}
+      </div>
     </div>
   );
 }
 
 function InfoCard({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-5">
-      <div className="font-semibold text-[color:var(--ink)]">{title}</div>
-      <div className="mt-4 space-y-3">
+    <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        {title}
+      </div>
+      <div className="mt-3 space-y-1.5">
         {rows.map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between gap-4 text-sm">
-            <span className="text-[color:var(--muted)]">{label}</span>
-            <span className="font-semibold text-[color:var(--ink)]">{value}</span>
+          <div
+            key={label}
+            className="flex items-center justify-between gap-3 border-b border-[color:var(--hairline)] py-1 text-xs last:border-b-0"
+          >
+            <span className="text-[color:var(--ink-4)]">{label}</span>
+            <span className="font-mono font-bold tabular-nums text-[color:var(--ink-1)]">
+              {value}
+            </span>
           </div>
         ))}
       </div>

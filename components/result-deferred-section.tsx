@@ -107,17 +107,19 @@ export default function ResultDeferredSection({
       id={id}
       ref={sectionRef}
       aria-busy="true"
-      className="soft-card rounded-[1.75rem] p-5"
+      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
     >
-      <div className="flex items-center gap-3">
-        <LoaderCircle className="h-5 w-5 animate-spin text-[color:var(--accent-strong)]" />
-        <div className="font-semibold text-[color:var(--ink)]">{title}</div>
+      <div className="flex items-center gap-2">
+        <LoaderCircle className="h-4 w-4 animate-spin text-[color:var(--brand-strong)]" />
+        <div className="text-sm font-bold text-[color:var(--ink-1)]">{title}</div>
       </div>
-      {description ? <div className="intro-copy mt-2 text-sm text-[color:var(--muted)]">{description}</div> : null}
-      <div className="mt-4 space-y-3">
-        <div className="h-4 rounded-full bg-slate-100" />
-        <div className="h-4 w-11/12 rounded-full bg-slate-100" />
-        <div className="h-20 rounded-[1.25rem] bg-slate-50" />
+      {description ? (
+        <div className="mt-2 text-xs leading-5 text-[color:var(--ink-4)]">{description}</div>
+      ) : null}
+      <div className="mt-3 space-y-2">
+        <div className="h-3 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-3 w-11/12 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]" />
+        <div className="h-16 rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
       </div>
     </section>
   );

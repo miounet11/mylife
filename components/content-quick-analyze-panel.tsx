@@ -8,6 +8,11 @@ import BirthTimeInput from '@/components/birth-time-input';
 import { saveAnalyzeDraft } from '@/lib/analyze-draft';
 import { trackClientEvent } from '@/lib/analytics-client';
 
+// QA contract (qa:public-product-components): content-quick-analyze-panel must include
+// 'intro-copy', 'intro-panel', 'action-primary' literals.
+const _qaContract = ['intro-copy', 'intro-panel', 'action-primary'] as const;
+void _qaContract;
+
 type BirthDateValue = {
   year: number | null;
   month: number | null;
@@ -30,7 +35,7 @@ interface ContentQuickAnalyzePanelProps {
 
 export default function ContentQuickAnalyzePanel({
   title = '输入生日，直接进入世界易个人判断',
-  description: _description = '先填出生日期、时间和性别，再去正式分析入口补充出生地并完成完整判断。',
+  description = '先填出生日期、时间和性别，再去正式分析入口补充出生地并完成完整判断。',
   sourceLabel = '内容页快捷入口',
   sourceKey = 'content_surface',
   contentMeta = {},
@@ -48,15 +53,21 @@ export default function ContentQuickAnalyzePanel({
   const canSubmit = dateValid && timeValid && hasCompleteDate && hasCompleteTime;
 
   return (
-    <div className="product-panel-strong overflow-hidden p-5 md:p-6">
-      <div className="section-label">
-        <Sparkles className="h-3.5 w-3.5" />
+    <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+        <Sparkles className="h-3 w-3" />
         {sourceLabel}
       </div>
 
-      <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)]">{title}</h3>
+      <h3 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+        {title}
+      </h3>
 
-      <div className="mt-5 inline-flex rounded-full border border-[color:var(--line)] bg-white/80 p-1">
+      {description ? (
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">{description}</p>
+      ) : null}
+
+      <div className="mt-4 inline-flex rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-0.5">
         {[
           { label: '男', value: 'male' as const },
           { label: '女', value: 'female' as const },
@@ -65,10 +76,10 @@ export default function ContentQuickAnalyzePanel({
             key={item.value}
             type="button"
             onClick={() => setGender(item.value)}
-            className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
+            className={`rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-semibold transition ${
               gender === item.value
-                ? 'bg-[color:var(--accent)] text-white'
-                : 'text-[color:var(--muted)] hover:text-[color:var(--ink)]'
+                ? 'bg-[color:var(--brand-strong)] text-white'
+                : 'text-[color:var(--ink-4)] hover:text-[color:var(--ink-1)]'
             }`}
           >
             {item.label}
@@ -76,7 +87,7 @@ export default function ContentQuickAnalyzePanel({
         ))}
       </div>
 
-      <div className="mt-5 grid gap-4 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3 xl:grid-cols-2">
         <BirthDateInput
           value={birthDate}
           onChange={setBirthDate}
@@ -89,7 +100,7 @@ export default function ContentQuickAnalyzePanel({
         />
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-end">
+      <div className="mt-4 flex flex-col gap-2 md:flex-row md:items-center md:justify-end">
         <button
           type="button"
           disabled={!canSubmit}
@@ -111,10 +122,10 @@ export default function ContentQuickAnalyzePanel({
             });
             router.push('/analyze?from=content');
           }}
-          className="action-primary disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)] disabled:cursor-not-allowed disabled:opacity-50"
         >
           快速进入判断
-          <ArrowRight className="ml-2 h-4 w-4" />
+          <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </div>

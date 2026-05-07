@@ -40,7 +40,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
 
   if (!currentDate) {
     return (
-      <div className="soft-card h-full rounded-[2rem] p-5 md:p-6">
+      <div className="h-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
         <div className="flex items-center justify-between">
           <div className="inline-flex h-10 w-10 rounded-full bg-slate-100" />
           <div className="text-center">
@@ -65,7 +65,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
   const paddingDays = new Date(monthStart).getDay();
 
   return (
-    <div className="soft-card h-full rounded-[2rem] p-5 md:p-6">
+    <div className="h-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
       <div className="flex items-center justify-between">
         <button
           onClick={() => setCurrentDate(addMonths(resolvedCurrentDate, -1))}

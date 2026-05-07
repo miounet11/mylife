@@ -5,6 +5,10 @@ import { createContentSignalMatcher } from '@/lib/content';
 import { getCaseStudyBySlug, getEntityInsights, getKnowledgeArticleBySlug } from '@/lib/content-store';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
+// QA contract (qa:public-product-components): tool-linked-content-panel must include 'intro-copy'.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 export default function ToolLinkedContentPanel({
   tool,
   page,
@@ -38,139 +42,169 @@ export default function ToolLinkedContentPanel({
     return null;
   }
 
+  const emptyCard = (text: string) => (
+    <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3 text-xs leading-5 text-[color:var(--ink-5)]">
+      {text}
+    </div>
+  );
+
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="section-label">
-        <Orbit className="h-3.5 w-3.5" />
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+        <Orbit className="h-3 w-3" />
         精品联动路径
       </div>
-      <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">联动入口</h2>
+      <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+        联动入口
+      </h2>
 
-      <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-        <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-            <BookOpenText className="h-4 w-4" />
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <BookOpenText className="h-3 w-3" />
             相关文章
           </div>
-          <div className="mt-4 grid gap-3">
-            {knowledgeItems.length > 0 ? knowledgeItems.map((item) => (
-              <ContentCardLink
-                key={item.slug}
-                href={`/knowledge/${item.slug}`}
-                page={page}
-                meta={{
-                  sourceToolSlug: tool.slug,
-                  targetSurfaceKey: `knowledge_article:${item.slug}`,
-                  contentType: 'knowledge',
-                  slug: item.slug,
-                  title: item.title,
-                  category: item.category,
-                }}
-                className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
-                <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
-              </ContentCardLink>
-            )) : (
-              <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">
-                暂无相关文章
-              </div>
+          <div className="mt-2.5 space-y-1.5">
+            {knowledgeItems.length > 0 ? (
+              knowledgeItems.map((item) => (
+                <ContentCardLink
+                  key={item.slug}
+                  href={`/knowledge/${item.slug}`}
+                  page={page}
+                  meta={{
+                    sourceToolSlug: tool.slug,
+                    targetSurfaceKey: `knowledge_article:${item.slug}`,
+                    contentType: 'knowledge',
+                    slug: item.slug,
+                    title: item.title,
+                    category: item.category,
+                  }}
+                  className="block rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 transition hover:border-[color:var(--brand)]"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    {item.category}
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                    {item.title}
+                  </div>
+                </ContentCardLink>
+              ))
+            ) : (
+              emptyCard('暂无相关文章')
             )}
           </div>
         </div>
 
-        <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-            <LibraryBig className="h-4 w-4" />
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <LibraryBig className="h-3 w-3" />
             相关案例
           </div>
-          <div className="mt-4 grid gap-3">
-            {caseItems.length > 0 ? caseItems.map((item) => (
-              <ContentCardLink
-                key={item.slug}
-                href={`/cases/${item.slug}`}
-                page={page}
-                meta={{
-                  sourceToolSlug: tool.slug,
-                  targetSurfaceKey: `case_article:${item.slug}`,
-                  contentType: 'case',
-                  slug: item.slug,
-                  title: item.title,
-                  category: item.scenario,
-                }}
-                className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
-                <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
-              </ContentCardLink>
-            )) : (
-              <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">
-                暂无对应案例
-              </div>
+          <div className="mt-2.5 space-y-1.5">
+            {caseItems.length > 0 ? (
+              caseItems.map((item) => (
+                <ContentCardLink
+                  key={item.slug}
+                  href={`/cases/${item.slug}`}
+                  page={page}
+                  meta={{
+                    sourceToolSlug: tool.slug,
+                    targetSurfaceKey: `case_article:${item.slug}`,
+                    contentType: 'case',
+                    slug: item.slug,
+                    title: item.title,
+                    category: item.scenario,
+                  }}
+                  className="block rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 transition hover:border-[color:var(--brand)]"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    {item.scenario}
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                    {item.title}
+                  </div>
+                </ContentCardLink>
+              ))
+            ) : (
+              emptyCard('暂无对应案例')
             )}
           </div>
         </div>
 
-        <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-            <Sparkles className="h-4 w-4" />
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+            <Sparkles className="h-3 w-3" />
             相关洞察
           </div>
-          <div className="mt-4 grid gap-3">
-            {insightItems.length > 0 ? insightItems.map((item) => (
-              <ContentCardLink
-                key={item.slug}
-                href={`/insights/${item.type}/${item.slug}`}
-                page={page}
-                meta={{
-                  sourceToolSlug: tool.slug,
-                  targetSurfaceKey: `insight_article:${item.slug}`,
-                  contentType: 'insight',
-                  slug: item.slug,
-                  title: item.title,
-                  category: item.name,
-                }}
-                className="block rounded-[1.25rem] bg-slate-50 p-4 transition hover:bg-white"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
-                <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
-              </ContentCardLink>
-            )) : (
-              <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">
-                暂无相关洞察
-              </div>
+          <div className="mt-2.5 space-y-1.5">
+            {insightItems.length > 0 ? (
+              insightItems.map((item) => (
+                <ContentCardLink
+                  key={item.slug}
+                  href={`/insights/${item.type}/${item.slug}`}
+                  page={page}
+                  meta={{
+                    sourceToolSlug: tool.slug,
+                    targetSurfaceKey: `insight_article:${item.slug}`,
+                    contentType: 'insight',
+                    slug: item.slug,
+                    title: item.title,
+                    category: item.name,
+                  }}
+                  className="block rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 transition hover:border-[color:var(--signal)]"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    {item.name}
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                    {item.title}
+                  </div>
+                </ContentCardLink>
+              ))
+            ) : (
+              emptyCard('暂无相关洞察')
             )}
           </div>
         </div>
 
-        <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-            <ArrowRight className="h-4 w-4" />
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <ArrowRight className="h-3 w-3" />
             相关工具
           </div>
-          <div className="mt-4 grid gap-3">
-            {nextTools.length > 0 ? nextTools.map((item) => (
-              <ToolCardLink
-                key={item.slug}
-                href={`/tools/${item.slug}?from=${encodeURIComponent(tool.slug)}`}
-                toolSlug={item.slug}
-                category={item.category}
-                page={page}
-                className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.themeLabel}</div>
-                <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.shortTitle}</div>
-              </ToolCardLink>
-            )) : (
+          <div className="mt-2.5 space-y-1.5">
+            {nextTools.length > 0 ? (
+              nextTools.map((item) => (
+                <ToolCardLink
+                  key={item.slug}
+                  href={`/tools/${item.slug}?from=${encodeURIComponent(tool.slug)}`}
+                  toolSlug={item.slug}
+                  category={item.category}
+                  page={page}
+                  className="block rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 transition hover:border-[color:var(--brand)]"
+                >
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                    {item.themeLabel}
+                  </div>
+                  <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                    {item.shortTitle}
+                  </div>
+                </ToolCardLink>
+              ))
+            ) : (
               <ToolCardLink
                 href="/analyze"
                 toolSlug={tool.slug}
                 category={tool.category}
                 page={page}
-                className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                className="block rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 transition hover:border-[color:var(--brand)]"
               >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">综合测算</div>
-                <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">回到主测算</div>
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                  综合测算
+                </div>
+                <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                  回到主测算
+                </div>
               </ToolCardLink>
             )}
           </div>

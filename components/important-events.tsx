@@ -212,7 +212,7 @@ function EventRow({
                 href={appendSourceToHref(`/result/${event.fortuneAnalysis.reportId}`, source)}
                 page={source === 'profile_page' ? '/profile' : source === 'events_page' ? '/events' : '/history'}
                 target="important_event_report"
-                className="action-secondary min-h-0 px-4 py-2 text-xs"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
                 meta={{
                   source: source || null,
                   ctaStrategyKey: ctaStrategyKey || null,

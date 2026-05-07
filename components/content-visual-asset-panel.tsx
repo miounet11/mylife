@@ -59,13 +59,15 @@ export default function ContentVisualAssetPanel({
   const [primary, ...secondary] = assets;
 
   return (
-    <section className={`rounded-[2rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.94),rgba(244,235,221,0.78))] p-5 shadow-[0_18px_46px_rgba(47,32,14,0.07)] ${className}`}>
-      <div className="section-label">
-        <ImageIcon className="h-3.5 w-3.5" />
+    <section
+      className={`rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 ${className}`}
+    >
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+        <ImageIcon className="h-3 w-3" />
         视觉说明
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
         <ContentCardLink
           href={`/visual-assets/${primary.slug}`}
           page={page}
@@ -77,9 +79,11 @@ export default function ContentVisualAssetPanel({
             assetId: primary.id,
             assetModule: primary.module,
           }}
-          className={primary.ratio === '4:5'
-            ? 'mx-auto block max-h-[560px] max-w-[420px] overflow-hidden rounded-[1.5rem] bg-[#f7efe2] shadow-[0_18px_44px_rgba(47,32,14,0.12)]'
-            : 'block overflow-hidden rounded-[1.5rem] bg-[#f7efe2] shadow-[0_18px_44px_rgba(47,32,14,0.12)]'}
+          className={
+            primary.ratio === '4:5'
+              ? 'mx-auto block max-h-[560px] max-w-[420px] overflow-hidden rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]'
+              : 'block overflow-hidden rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]'
+          }
         >
           <Image
             src={primary.publicUrl}
@@ -87,15 +91,25 @@ export default function ContentVisualAssetPanel({
             width={primary.ratio === '4:5' ? 960 : 1280}
             height={primary.ratio === '4:5' ? 1200 : 720}
             sizes={primary.ratio === '4:5' ? '(min-width: 1024px) 420px, 90vw' : '(min-width: 1024px) 48vw, 90vw'}
-            className={primary.ratio === '4:5' ? 'h-full w-full object-cover' : 'aspect-video h-full w-full object-cover'}
+            className={
+              primary.ratio === '4:5'
+                ? 'h-full w-full object-cover'
+                : 'aspect-video h-full w-full object-cover'
+            }
           />
         </ContentCardLink>
 
         <div>
-          <div className="product-kicker">{primary.id} · {moduleLabels[primary.module]}</div>
-          <h2 className="mt-3 text-3xl font-black leading-tight text-[color:var(--ink)]">{primary.title}</h2>
-          <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{buildAssetExplanation(primary, contentLabel, contentTitle)}</p>
-          <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{primary.narrativeExcerpt}</p>
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            {primary.id} · {moduleLabels[primary.module]}
+          </div>
+          <h2 className="mt-1.5 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+            {primary.title}
+          </h2>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
+            {buildAssetExplanation(primary, contentLabel, contentTitle)}
+          </p>
+          <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">{primary.narrativeExcerpt}</p>
           <ContentCardLink
             href={`/visual-assets/${primary.slug}`}
             page={page}
@@ -106,7 +120,7 @@ export default function ContentVisualAssetPanel({
               contentType: 'visual_asset',
               assetId: primary.id,
             }}
-            className="action-primary mt-5 inline-flex"
+            className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
           >
             查看图片解读
             <ArrowRight className="h-4 w-4" />
@@ -115,7 +129,7 @@ export default function ContentVisualAssetPanel({
       </div>
 
       {secondary.length > 0 ? (
-        <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="mt-4 grid gap-2.5 md:grid-cols-2">
           {secondary.map((asset) => (
             <ContentCardLink
               key={asset.id}
@@ -129,9 +143,9 @@ export default function ContentVisualAssetPanel({
                 assetId: asset.id,
                 assetModule: asset.module,
               }}
-              className="grid grid-cols-[7.5rem_1fr] gap-3 rounded-[1.35rem] border border-[color:var(--line)] bg-white/78 p-3 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+              className="grid grid-cols-[7.5rem_1fr] gap-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-2.5 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
             >
-              <div className="aspect-video overflow-hidden rounded-[1rem] bg-[#f7efe2]">
+              <div className="aspect-video overflow-hidden rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]">
                 <Image
                   src={asset.publicUrl}
                   alt={asset.altText}
@@ -142,11 +156,13 @@ export default function ContentVisualAssetPanel({
                 />
               </div>
               <div>
-                <div className="flex items-center gap-1 text-xs font-bold tracking-[0.14em] text-[color:var(--muted)]">
-                  <Sparkles className="h-3 w-3" />
+                <div className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <Sparkles className="h-2.5 w-2.5" />
                   {moduleLabels[asset.module]}
                 </div>
-                <div className="mt-2 text-sm font-black leading-5 text-[color:var(--ink)]">{asset.title}</div>
+                <div className="mt-1.5 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                  {asset.title}
+                </div>
               </div>
             </ContentCardLink>
           ))}

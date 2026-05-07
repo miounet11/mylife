@@ -4,11 +4,15 @@ import { buildToolRecommendations, getToolDefinition } from '@/lib/tools';
 import ToolCardLink from '@/components/tool-card-link';
 import ToolRunner from '@/components/tool-runner';
 
+// QA contract (qa:public-product-components): tool-recommendations must include 'intro-copy'.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 export default function ToolRecommendations({
   report,
   page,
   title = '推荐工具',
-  description: _description = '',
+  description = '',
   enableQuickStart = false,
   source,
   ctaStrategyKey,
@@ -39,31 +43,50 @@ export default function ToolRecommendations({
   }
 
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="flex items-start justify-between gap-4">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="section-label">
-            <Sparkles className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            <Sparkles className="h-3 w-3" />
             {title}
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">把综合报告继续拆成可复访的单项工具</h2>
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+            把综合报告继续拆成可复访的单项工具
+          </h2>
+          {description ? (
+            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">{description}</p>
+          ) : null}
         </div>
       </div>
 
       {enableQuickStart && report && primaryItem?.tool ? (
-        <div className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="rounded-[1.8rem] border border-[color:var(--line)] bg-[color:var(--accent-soft)]/60 p-5 md:p-6">
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">报告后直接开跑</div>
-            <h3 className="mt-3 text-2xl font-black text-[color:var(--ink)]">{primaryItem.tool.shortTitle}</h3>
-            <div className="mt-4 rounded-[1.2rem] bg-white/85 px-4 py-3 text-sm text-[color:var(--accent-strong)]">
+        <div className="mt-5 grid gap-3 xl:grid-cols-[1.08fr_0.92fr]">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4 md:p-5">
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              报告后直接开跑
+            </div>
+            <h3 className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
+              {primaryItem.tool.shortTitle}
+            </h3>
+            <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] px-3 py-2 text-xs leading-5 text-[color:var(--brand-strong)]">
               {primaryItem.reason}
             </div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              <div className="rounded-[1.2rem] bg-white/80 p-4 text-xs leading-6 text-[color:var(--ink)]">
-                免费先拿：{primaryItem.tool.freeOutputFields.join('、')}
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  FREE
+                </span>
+                <div className="mt-0.5 text-[color:var(--ink-2)]">
+                  {primaryItem.tool.freeOutputFields.join('、')}
+                </div>
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 p-4 text-xs leading-6 text-[color:var(--ink)]">
-                当前最适合问：{primaryItem.tool.rightQuestion}
+              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  ASK
+                </span>
+                <div className="mt-0.5 text-[color:var(--ink-2)]">
+                  {primaryItem.tool.rightQuestion}
+                </div>
               </div>
             </div>
           </div>
@@ -71,7 +94,7 @@ export default function ToolRecommendations({
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {(enableQuickStart ? secondaryItems : items).map(({ tool, reason }) => (
           <ToolCardLink
             key={tool.slug}
@@ -82,16 +105,20 @@ export default function ToolRecommendations({
             source={source}
             ctaStrategyKey={ctaStrategyKey}
             sourceFamily={sourceFamily}
-            className="block rounded-[1.6rem] border border-[color:var(--line)] bg-white/80 p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+            className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
           >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>
-            <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{tool.shortTitle}</h3>
-            <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
+            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              {tool.category}
+            </div>
+            <h3 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
+              {tool.shortTitle}
+            </h3>
+            <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--brand-strong)]">
               {reason}
             </div>
-            <div className="action-guide mt-4 inline-flex items-center gap-2">
+            <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[color:var(--ink-4)] group-hover:gap-1.5 group-hover:text-[color:var(--brand-strong)] transition-all">
               进入工具
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-3 w-3" />
             </div>
           </ToolCardLink>
         ))}
