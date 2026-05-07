@@ -134,23 +134,26 @@ export default function KnowledgePage() {
       <AnalyticsPageView eventName="knowledge_page_viewed" page="/knowledge" meta={{ surfaceKey: 'knowledge_page', contentType: 'knowledge' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <BookOpen className="h-3 w-3" />
               知识库
             </div>
-            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-              直接读文章
+            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+              系统化阅读 · <span className="text-[color:var(--brand-strong)]">真太阳时与世界易</span>
             </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+              围绕真太阳时校正、结构判断、报告阅读和决策应用建立的可积累知识体系。
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <ContentCardLink
               href="/docs"
               page="/knowledge"
               meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'docs_index', contentType: 'docs' }}
-              className="action-secondary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
             >
               <FileQuestion className="h-4 w-4" />
               Docs
@@ -159,16 +162,16 @@ export default function KnowledgePage() {
               href="/knowledge/topics"
               page="/knowledge"
               meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge' }}
-              className="action-primary action-main"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
             >
-              查看专题地图
+              专题地图
               <ArrowRight className="h-4 w-4" />
             </ContentCardLink>
             <ContentCardLink
               href="/analyze"
               page="/knowledge"
               meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
-              className="action-secondary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
             >
               回到分析入口
             </ContentCardLink>
@@ -176,15 +179,17 @@ export default function KnowledgePage() {
         </section>
 
         <section className="mt-6 space-y-5">
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {groupedKnowledgeEntries.map((group) => (
               <a
                 key={group.groupKey}
                 href={`#${getLocaleAnchorId(group.groupKey)}`}
-                className="product-chip"
+                className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 text-xs font-semibold text-[color:var(--ink-2)] hover:border-[color:var(--brand)]"
               >
                 {group.groupLabel}
-                <span className="text-xs text-[color:var(--muted)]">{group.entries.length} 篇</span>
+                <span className="font-mono tabular-nums text-[10px] text-[color:var(--ink-5)]">
+                  {group.entries.length}
+                </span>
               </a>
             ))}
           </div>
