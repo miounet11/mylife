@@ -246,7 +246,7 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
 
   return (
     <Card className={cn(
-      'transition-all duration-200 hover:shadow-xl',
+      'transition-all duration-200 hover:shadow-[var(--shadow-pop)]',
       severityColors[warning.severity || 'medium']
     )}>
       <CardContent className="p-4">

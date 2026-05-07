@@ -202,7 +202,7 @@ export const EventProbabilityCurve: React.FC<EventProbabilityCurveProps> = ({
   }
 
   return (
-    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)] shadow-[var(--shadow-card)] overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-violet-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">

@@ -127,9 +127,9 @@ const ConfidenceBar: React.FC<{
       {label && (
         <div className="flex justify-between items-center mb-1">
           <span className="text-xs text-[color:var(--ink-5)]">{label}</span>
-          <span className="text-xs font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">
+          <span className="text-xs font-medium text-[color:var(--ink-3)]">
             {centerPercent.toFixed(0)}%
-            <span className="text-[color:var(--ink-5)][color:var(--ink-5)] ml-1">
+            <span className="text-[color:var(--ink-5)] ml-1">
               ({lowerPercent.toFixed(0)}-{upperPercent.toFixed(0)}%)
             </span>
           </span>
@@ -151,7 +151,7 @@ const ConfidenceBar: React.FC<{
         />
         {/* Center marker */}
         <div
-          className="absolute top-0 h-full w-0.5 bg-[color:var(--paper)][color:var(--bg-sunken)] opacity-80"
+          className="absolute top-0 h-full w-0.5 bg-[color:var(--paper)] opacity-80"
           style={{ left: `${centerPercent}%` }}
         />
       </div>
@@ -196,8 +196,8 @@ const EventCard: React.FC<{
     <div className={`${compact ? 'p-2' : 'p-3'} bg-[color:var(--paper)] rounded-lg border border-[color:var(--hairline)]`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-base">{config.icon}</span>
-        <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">{config.label}</span>
-        <span className="ml-auto text-lg font-bold text-[color:var(--ink-1)][color:var(--bg-elevated)]">
+        <span className="text-sm font-medium text-[color:var(--ink-3)]">{config.label}</span>
+        <span className="ml-auto text-lg font-bold text-[color:var(--ink-1)]">
           {event.score ?? '--'}
         </span>
       </div>
@@ -237,7 +237,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
   const levelConfig = fortuneWindow?.level ? LEVEL_CONFIG[fortuneWindow.level] : null;
 
   return (
-    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)][color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)] shadow-[var(--shadow-card)] overflow-hidden ${className}`}>
       {/* Header */}
       <div className={`px-4 py-3 ${levelConfig?.color || 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -253,7 +253,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
           <div className={`p-4 rounded-lg ${levelConfig?.bgColor || 'bg-[color:var(--bg-elevated)]'}`}>
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-3">
-                <div className={`w-14 h-14 rounded-full ${levelConfig?.color || 'bg-[color:var(--ink-5)]'} flex items-center justify-center text-white font-bold text-xl shadow-lg`}>
+                <div className={`w-14 h-14 rounded-full ${levelConfig?.color || 'bg-[color:var(--ink-5)]'} flex items-center justify-center text-white font-bold text-xl shadow-[var(--shadow-card)]`}>
                   {fortuneWindow.score}
                 </div>
                 <div>
@@ -292,7 +292,7 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
         {/* Event Probabilities */}
         {eventProbabilities && Object.keys(eventProbabilities).length > 0 && (
           <div>
-            <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)] block mb-2">
+            <span className="text-sm font-medium text-[color:var(--ink-3)] block mb-2">
               事件概率分析
             </span>
             <div className={`grid ${compact ? 'grid-cols-2' : 'grid-cols-2 lg:grid-cols-4'} gap-2`}>

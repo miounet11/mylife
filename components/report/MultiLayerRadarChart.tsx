@@ -94,8 +94,8 @@ const CustomTooltip: React.FC<{
   if (!active || !payload || payload.length === 0) return null;
 
   return (
-    <div className="bg-[color:var(--paper)][color:var(--bg-sunken)] p-3 rounded-lg shadow-lg border border-[color:var(--hairline)][color:var(--hairline-strong)] max-w-xs">
-      <p className="font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)] mb-2">
+    <div className="bg-[color:var(--paper)] p-3 rounded-lg shadow-[var(--shadow-card)] border border-[color:var(--hairline)] max-w-xs">
+      <p className="font-medium text-[color:var(--ink-1)] mb-2">
         {payload[0]?.payload?.subject}
       </p>
       {payload.map((entry, index) => (
@@ -108,7 +108,7 @@ const CustomTooltip: React.FC<{
               className="w-2 h-2 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-[color:var(--ink-4)][color:var(--ink-5)]">{entry.name}</span>
+            <span className="text-[color:var(--ink-4)]">{entry.name}</span>
           </div>
           <span className="font-medium" style={{ color: entry.color }}>
             {entry.value?.toFixed(0)}
@@ -229,7 +229,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
   if (!layers || layers.length === 0) {
     return (
       <div className={`p-4 rounded-lg bg-[color:var(--bg-elevated)] ${className}`}>
-        <p className="text-[color:var(--ink-5)][color:var(--ink-5)] text-sm text-center">
+        <p className="text-[color:var(--ink-5)] text-sm text-center">
           雷达图数据加载中...
         </p>
       </div>
@@ -250,7 +250,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: layer.color }}
               />
-              <span className="text-sm text-[color:var(--ink-3)][color:var(--ink-6)]">
+              <span className="text-sm text-[color:var(--ink-3)]">
                 {layer.name}
               </span>
             </div>
@@ -260,7 +260,7 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
   };
 
   return (
-    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)][color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)] shadow-[var(--shadow-card)] overflow-hidden ${className}`}>
       {/* Header */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -359,9 +359,9 @@ export const MultiLayerRadarChart: React.FC<MultiLayerRadarChartProps> = ({
         </ResponsiveContainer>
 
         {/* Footer Description */}
-        <div className="mt-4 pt-3 border-t border-[color:var(--hairline)][color:var(--hairline-strong)]">
+        <div className="mt-4 pt-3 border-t border-[color:var(--hairline)]">
           <div className="text-center">
-            <div className="inline-flex items-center gap-2 text-xs text-[color:var(--ink-5)][color:var(--ink-5)]">
+            <div className="inline-flex items-center gap-2 text-xs text-[color:var(--ink-5)]">
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />
               <span>多维状态向量分析 · v1.4.0</span>
               <div className="w-16 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent" />

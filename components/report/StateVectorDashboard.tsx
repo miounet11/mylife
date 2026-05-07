@@ -121,7 +121,7 @@ const ScoreBadge: React.FC<{
   return (
     <div className="flex flex-col items-center gap-1">
       <div
-        className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${getScoreColor(score)} flex items-center justify-center font-bold shadow-lg`}
+        className={`${sizeClasses[size]} rounded-full bg-gradient-to-br ${getScoreColor(score)} flex items-center justify-center font-bold shadow-[var(--shadow-card)]`}
       >
         {score.toFixed(0)}
       </div>
@@ -183,7 +183,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
   const { comprehensive, elemental, tenGod, structure } = stateVector;
 
   return (
-    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)][color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)] shadow-[var(--shadow-card)] overflow-hidden ${className}`}>
       {/* 标题栏 */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
@@ -204,7 +204,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
             />
             <div className="flex-1">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-sm font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)]">
+                <span className="text-sm font-medium text-[color:var(--ink-1)]">
                   {comprehensive.level?.name || '未知等级'}
                 </span>
               </div>
@@ -219,7 +219,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
         {elemental && !compact && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">
+              <span className="text-sm font-medium text-[color:var(--ink-3)]">
                 五行能量分布
               </span>
               {elemental.balance_score !== undefined && (
@@ -283,7 +283,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
             <div className="flex items-center justify-between mb-2">
               {structure.body_strength?.level_info?.name && (
                 <span className="text-sm">
-                  日主: <span className="font-medium text-[color:var(--ink-1)][color:var(--bg-elevated)]">
+                  日主: <span className="font-medium text-[color:var(--ink-1)]">
                     {structure.body_strength.level_info.name}
                   </span>
                 </span>

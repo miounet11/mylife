@@ -74,7 +74,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
   const wuxingIcon = getWuxingIcon(wuxing);
 
   return (
-    <div className="bg-[color:var(--paper)] rounded-lg border-2 border-[color:var(--hairline)] overflow-hidden hover:shadow-xl transition transform hover:scale-105">
+    <div className="bg-[color:var(--paper)] rounded-lg border-2 border-[color:var(--hairline)] overflow-hidden hover:shadow-[var(--shadow-pop)] transition transform hover:scale-105">
       {/* 柱头 */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3">
         <div className="text-center">

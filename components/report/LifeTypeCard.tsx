@@ -166,7 +166,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
 
   return (
     <div
-      className={`relative rounded-[var(--radius)] overflow-hidden ${typeInfo.borderGlow} shadow-2xl ${className}`}
+      className={`relative rounded-[var(--radius)] overflow-hidden ${typeInfo.borderGlow} shadow-[var(--shadow-pop)] ${className}`}
     >
       {/* Animated Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${typeInfo.bgClass}`} />
@@ -197,7 +197,7 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
         {/* Hero Section - Type Display */}
         <div className="flex items-center gap-5 mb-6">
           <div
-            className="w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius)] flex items-center justify-center text-4xl md:text-5xl shadow-lg"
+            className="w-20 h-20 md:w-24 md:h-24 rounded-[var(--radius)] flex items-center justify-center text-4xl md:text-5xl shadow-[var(--shadow-card)]"
             style={{ backgroundColor: `${typeInfo.color}30`, border: `2px solid ${typeInfo.color}50` }}
           >
             {typeInfo.emoji}
