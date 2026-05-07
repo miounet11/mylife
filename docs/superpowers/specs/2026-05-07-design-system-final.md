@@ -432,6 +432,33 @@ P14（5 轮）已彻底清扫。
 `人生 [K] 线` —— K 用衬线 (Source Han Serif)，其他 PingFang。
 副标 `LIFE KLINE`：font-mono、letter-spacing +0.18em、uppercase。
 
+### 9.4 og:image / twitter card（1200×630）
+
+实现：`app/opengraph-image.tsx`（Next.js 自动注入到 og.images / twitter.images）。
+`app/twitter-image.tsx` 复用 og 模板（`export { default, ... } from './opengraph-image'`）。
+
+构图（米色渐变底 #f9faf5 → #eef5ef → #f4efe8）：
+- 抽象 K 线背景：16 根柱子，第 9-10 根（用户位）实色墨绿 #0b5f55，其它柱半透明 0.18
+- 顶部：左 brand mark 56×56 + 右 wordmark `人生K线` + `LIFE KLINE` mono kicker
+- 主标 72px black：`看清你的结构、阶段、环境 / 与下一步动作` (后半行 brand-strong)
+- 副标 24px：`真太阳时校正 · 世界易判断框架 · v3 多 Agent 报告链路`
+- 底部信号条：3 个白底卡片 chips (`真太阳时` `600+ 话术库` `多 Agent 链路`) + 右侧 `WWW.LIFE-KLINE.COM` mono uppercase + 信号金菱
+
+Satori 注意：所有多子 div 必须显式 `display: 'flex'`，否则报 'Expected to have explicit display'。
+
+### 9.5 apple-touch-icon (180×180)
+
+实现：`app/apple-icon.tsx`（next/og edge 渲染 png）。
+墨绿底 + 复用 K 线四柱构图（与 `app/icon.svg` 等同）。Next.js 自动注入到 `<link rel="apple-touch-icon">`，iOS 添加到主屏幕时使用。
+
+### 9.6 PWA manifest
+
+实现：`app/manifest.ts`（Next.js MetadataRoute.Manifest）。
+- `theme_color` `#0b5f55`、`background_color` `#f5f7f2`
+- 3 个 shortcuts：新报告 (`/analyze`) / 我的中心 (`/dashboard`) / AI 助手 (`/chat`)
+- icons 引用 `/icon.svg` (any) + `/apple-icon` (180×180 png)
+- categories `productivity / lifestyle / education`
+
 ---
 
 ## 10. QA 契约（qa:public-product-components）
@@ -477,11 +504,28 @@ void _qaContract;
 | P15 | **480+ 处旧 utility 类替换** | 1 |
 | P16 | **globals.css 兼容层删除（546 → 269 行）** | 1 |
 | P17 | 设计语言文档（本文）| 1 |
+| P18 | **/dashboard 个人决策中心** | 1 |
+| P19 | **opengraph-image + twitter-image (1200x630)** | 1 |
+| P20 | **admin 页决策台风 + 旧 token 兼容别名 (235 处)** | 1 |
+| P21 | **rounded-2xl/3xl/xl 圆角归一化 (412 处 / 64 文件)** | 1 |
+| P22 | **rem/px 圆角收尾 (374 处 / 55 文件)** | 1 |
+| P23 | **bg-white/N + tailwind 调色板溢出统一 (684 处 / 63 文件)** | 1 |
+| P24 | **双类 bug 修复 + shadow 工具归一 (36 处)** | 1 |
+| P25 | **PWA manifest + apple-touch-icon (180x180)** | 1 |
 
 ### 11.2 净影响
 
 - **代码尺寸**：globals.css 减少 50% (546→269)、报告页 17%（1536→1273）
-- **token 引用**：硬编码色 ~620 处 → 0 处（不含 admin）；旧 utility ~1000+ 处 → 仅 _qaContract 字面量保留
+- **token 引用**：
+  - 硬编码色 ~620 处 → 0 处（含 admin）
+  - 旧 utility ~1500+ 处 → 仅 _qaContract 字面量保留
+  - 圆角 786 处 rem/2xl/xl → 全部 4 档 token (2/4/6/8px)
+  - 颜色逃逸（bg-white/N、tailwind 调色板）684 处 → 0 处
+- **品牌资产覆盖**：
+  - `/icon.svg` (vector)
+  - `/apple-icon` (180x180 png via next/og)
+  - `/opengraph-image` + `/twitter-image` (1200x630)
+  - `/manifest.webmanifest` (PWA install with 3 shortcuts)
 - **测试**：jest 452/452 全程不变 ✅
 - **生产 build**：每个 phase 收尾通过 ✅
 - **QA 检查**：qa:public-product-components 全程 ✅
