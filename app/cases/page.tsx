@@ -122,23 +122,26 @@ export default function CasesPage() {
       <AnalyticsPageView eventName="cases_page_viewed" page="/cases" meta={{ surfaceKey: 'cases_page', contentType: 'case' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <Layers3 className="h-3 w-3" />
               场景化案例
             </div>
-            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-              先找和你相近的真实场景
+            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+              先找和你相近的<span className="text-[color:var(--brand-strong)]">真实场景</span>
             </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+              升学、事业、婚恋、迁移——通过真实判断案例理解系统能解决什么问题。
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <ContentCardLink
               href="/analyze"
               page="/cases"
               meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'analyze_page', contentType: 'case' }}
-              className="action-primary action-main"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
             >
               开始分析
               <ArrowRight className="h-4 w-4" />
@@ -147,7 +150,7 @@ export default function CasesPage() {
               href="/world-yi/global/cases"
               page="/cases"
               meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'world_yi_global_cases', contentType: 'case' }}
-              className="action-secondary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
             >
               看全球案例
             </ContentCardLink>
@@ -155,7 +158,7 @@ export default function CasesPage() {
               href="/docs/read-first-report"
               page="/cases"
               meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'docs_read_first_report', contentType: 'docs' }}
-              className="action-secondary"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
             >
               <BookOpenText className="h-4 w-4" />
               使用方法
