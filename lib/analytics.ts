@@ -7,6 +7,7 @@ export type AnalyticsEventName =
   | 'home_page_viewed'
   | 'analyze_page_viewed'
   | 'chat_page_viewed'
+  | 'dashboard_page_viewed'
   | 'events_page_viewed'
   | 'profile_page_viewed'
   | 'history_page_viewed'
