@@ -831,7 +831,7 @@ function EventsPageContent() {
       <SiteFooter />
 
       {showForm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4 backdrop-blur-sm" onClick={closeForm}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,18,14,0.45)] p-4 backdrop-blur-sm" onClick={closeForm}>
           <div
             className="glass-panel w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]"
             onClick={(e) => e.stopPropagation()}

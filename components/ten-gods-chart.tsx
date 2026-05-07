@@ -26,7 +26,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
   ];
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300">
+    <Card className="border border-[color:var(--hairline)] bg-[color:var(--paper)]">
       <CardHeader>
         <CardTitle>
           <div className="flex items-center space-x-3">
@@ -37,7 +37,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
       </CardHeader>
       <CardContent>
         {/* 日主 */}
-        <div className="mb-6 p-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg text-white">
+        <div className="mb-6 p-4 bg-[color:var(--brand-strong)] rounded-[var(--radius)] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <span className="text-3xl">👤</span>
@@ -57,10 +57,10 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
           {categories.map((category) => {
             const gods = tenGods[category.key as keyof TenGod] as string[];
             const colorMap = {
-              purple: 'from-purple-500 to-purple-600 text-white border-purple-500',
-              green: 'from-green-500 to-green-600 text-white border-green-500',
-              blue: 'from-blue-500 to-blue-600 text-white border-blue-500',
-              red: 'from-red-500 to-red-600 text-white border-red-500',
+              purple: 'bg-[color:var(--brand-strong)] text-white border-[color:var(--brand)]',
+              green: 'bg-[color:var(--data-up)] text-white border-[color:var(--data-up)]',
+              blue: 'bg-[color:var(--env)] text-white border-[color:var(--env)]',
+              red: 'bg-[color:var(--alert)] text-white border-[color:var(--alert)]',
               yellow: 'from-yellow-500 to-yellow-600 text-gray-900 border-yellow-500',
             };
 
@@ -104,7 +104,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
         </div>
 
         {/* 建议 */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-[color:var(--brand-soft-2)]">
+        <div className="mt-6 p-4 bg-[color:var(--brand-soft)] rounded-[var(--radius)] border border-[color:var(--brand-soft-2)]">
           <h4 className="font-bold text-gray-900 mb-3">根据十神的建议</h4>
           <div className="space-y-2">
             {generateGodAdvice(tenGods).map((advice, index) => (

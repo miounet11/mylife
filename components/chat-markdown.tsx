@@ -44,7 +44,7 @@ export default function ChatMarkdown({ content }: { content: string }) {
           th: ({ children }) => <th className="border-b border-[color:var(--line)] px-3 py-2 font-semibold text-[color:var(--ink)]">{children}</th>,
           td: ({ children }) => <td className="border-b border-[color:var(--line)] px-3 py-2 align-top text-[color:var(--ink)]">{children}</td>,
           pre: ({ children }) => (
-            <pre className="mt-4 overflow-x-auto rounded-2xl bg-slate-950 px-4 py-4 text-[13px] leading-6 text-slate-100">{children}</pre>
+            <pre className="mt-4 overflow-x-auto rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[#0e1714] px-4 py-4 font-mono text-[13px] leading-6 text-[#d8dfd9]">{children}</pre>
           ),
           code: ({ className, children }) => {
             const value = String(children).replace(/\n$/, '');

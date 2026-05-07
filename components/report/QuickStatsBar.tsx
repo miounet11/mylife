@@ -20,11 +20,11 @@ interface QuickStatsBarProps {
 const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
   switch (trend) {
     case 'up':
-      return <TrendingUp className="w-4 h-4 text-emerald-500" />;
+      return <TrendingUp className="w-4 h-4 text-[color:var(--data-up)]" />;
     case 'down':
-      return <TrendingDown className="w-4 h-4 text-rose-500" />;
+      return <TrendingDown className="w-4 h-4 text-[color:var(--alert)]" />;
     default:
-      return <Minus className="w-4 h-4 text-amber-500" />;
+      return <Minus className="w-4 h-4 text-[color:var(--data-flat)]" />;
   }
 };
 

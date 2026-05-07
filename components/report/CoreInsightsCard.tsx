@@ -22,7 +22,7 @@ interface CoreInsightsCardProps {
 // 天干五行映射
 const TIANGAN_WUXING: Record<string, { element: string; emoji: string; color: string; bgColor: string }> = {
   '甲': { element: '木', emoji: '🌲', color: 'text-[color:var(--data-up)]', bgColor: 'bg-[rgba(47,125,82,0.12)]' },
-  '乙': { element: '木', emoji: '🌿', color: 'text-emerald-500', bgColor: 'bg-[rgba(47,125,82,0.08)]' },
+  '乙': { element: '木', emoji: '🌿', color: 'text-[color:var(--data-up)]', bgColor: 'bg-[rgba(47,125,82,0.08)]' },
   '丙': { element: '火', emoji: '🔥', color: 'text-[color:var(--alert)]', bgColor: 'bg-[rgba(189,76,66,0.16)]' },
   '丁': { element: '火', emoji: '🕯️', color: 'text-orange-600', bgColor: 'bg-orange-50' },
   '戊': { element: '土', emoji: '⛰️', color: 'text-[color:var(--signal-strong)]', bgColor: 'bg-[rgba(201,161,74,0.16)]' },
@@ -217,7 +217,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
           {!peakYear && troughYear && yearsToTrough !== null && yearsToTrough > 0 && yearsToTrough < 10 && (
             <div className="rounded-xl p-3 bg-gradient-to-br from-rose-50 to-orange-50 border border-[color:var(--alert)]">
               <div className="text-xs text-neutral-500 mb-1.5 flex items-center gap-1">
-                <AlertCircle className="w-3 h-3 text-rose-500" />
+                <AlertCircle className="w-3 h-3 text-[color:var(--alert)]" />
                 注意调整期
               </div>
               <div className="flex items-center gap-2">

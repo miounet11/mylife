@@ -23,7 +23,7 @@ export default function FourPillarsChart({ pillars, birthDate, birthTime }: Four
   const palaceNames = ['祖上运', '父母宫', '夫妻宫', '子女宫'];
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300">
+    <Card className="border border-[color:var(--hairline)] bg-[color:var(--paper)]">
       <CardHeader>
         <CardTitle>
           <div className="flex items-center space-x-3">

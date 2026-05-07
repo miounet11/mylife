@@ -28,7 +28,7 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
   const maxStrength = Math.max(...elements.map(e => e.strength));
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-2 border-purple-300">
+    <Card className="border border-[color:var(--hairline)] bg-[color:var(--paper)]">
       <CardHeader>
         <CardTitle>
           <div className="flex items-center space-x-3">

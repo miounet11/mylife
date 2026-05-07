@@ -42,7 +42,7 @@ function TrustSignal({ icon, label, value, delay }: any) {
     >
       <div className="flex items-center justify-center mb-3">
         <span className="text-3xl">{icon}</span>
-        <div className="h-px flex-1 bg-purple-200 mx-3"></div>
+        <div className="h-px flex-1 bg-[color:var(--hairline)] mx-3"></div>
         <span className="text-sm text-gray-600 font-medium">{label}</span>
       </div>
       <div className="text-center">
