@@ -1,5 +1,6 @@
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
-import { listToolDefinitions } from '@/lib/tools';
+import { productDocs } from '@/lib/product-docs';
+import { getPriorityGrowthTools, listToolDefinitions } from '@/lib/tools';
 import { getApprovedVisualAssets } from '@/lib/visual-asset-library';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,13 @@ export function GET() {
   const knowledgeArticles = getKnowledgeArticles().slice(0, 18);
   const caseStudies = getCaseStudies().slice(0, 12);
   const insights = getEntityInsights().slice(0, 12);
-  const tools = listToolDefinitions().slice(0, 24);
+  const allTools = listToolDefinitions();
+  const priorityTools = getPriorityGrowthTools();
+  const priorityToolSlugs = priorityTools.map((tool) => tool.slug);
+  const tools = [
+    ...priorityTools,
+    ...allTools.filter((tool) => !priorityToolSlugs.includes(tool.slug)),
+  ].slice(0, 24);
   const visualAssets = getApprovedVisualAssets(24);
   const body = [
     '# 人生K线 / Life Kline',
@@ -28,7 +35,12 @@ export function GET() {
     line('案例库', 'https://www.life-kline.com/cases', '真实场景案例，说明结构、时位、环境和行动路径。'),
     line('洞察中心', 'https://www.life-kline.com/insights', '行业、城市和组织节奏等实体内容。'),
     line('工具中心', 'https://www.life-kline.com/tools', '把综合报告拆成单项工具和可执行问题。'),
+    line('Docs', 'https://www.life-kline.com/docs', '产品使用方法、报告读法、工具流程、隐私安全和边界说明。'),
     line('世界易图片说明库', 'https://www.life-kline.com/visual-assets', '产品、命理易学、工具、报告和传播图片的配套解读。'),
+    '',
+    '## Product Docs',
+    '',
+    ...productDocs.map((doc) => line(doc.title, `https://www.life-kline.com/docs/${doc.slug}`, doc.summary)),
     '',
     '## Key Tools',
     '',

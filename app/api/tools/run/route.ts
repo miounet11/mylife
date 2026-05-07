@@ -62,8 +62,13 @@ export async function POST(request: NextRequest) {
     trackServerEvent({
       userAgent: request.headers.get('user-agent'),
       eventName: 'tool_run_started',
-      page: '/tools',
+      page: requestedToolSlug ? `/tools/${requestedToolSlug}` : '/tools',
       meta: {
+        phase: 'server_failed',
+        confirmed: false,
+        toolSlug: requestedToolSlug || null,
+        source: typeof requestedAttribution?.source === 'string' ? requestedAttribution.source : null,
+        attribution: requestedAttribution || null,
         failed: true,
         error: message,
       },

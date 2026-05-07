@@ -300,17 +300,17 @@ function computeReportAttemptTimeouts(phase: PhaseKey, totalBudgetMs: number, at
   const weights = phase === 'structure'
     ? attemptCount === 2
       ? [0.82, 0.18]
-      : [0.78, 0.16, 0.06]
+      : [0.62, 0.2, 0.18]
     : attemptCount === 2
       ? [0.7, 0.3]
-      : [0.6, 0.24, 0.16];
+      : [0.5, 0.25, 0.25];
 
   return computeAttemptTimeoutsWithWeights(totalBudgetMs, attemptCount, weights);
 }
 
 function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: number, weights: number[]) {
   const fallbackWeight = 1 / attemptCount;
-  const minBudget = Math.max(1200, Math.floor(totalBudgetMs * 0.08));
+  const minBudget = Math.max(2500, Math.floor(totalBudgetMs * 0.12));
   const budgets: number[] = [];
   let consumed = 0;
 

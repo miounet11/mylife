@@ -69,17 +69,17 @@ export default function PersonalGrowthPanel({
             </div>
             <div className="mt-4 grid gap-3">
               {summary.secondaryTool ? (
-                <TrackedLink href={summary.secondaryTool.href} page={page} target="personal_growth_secondary_tool" className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-white">
+                <TrackedLink href={summary.secondaryTool.href} page={page} target="personal_growth_secondary_tool" className="interactive-card rounded-[1.2rem] px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
                   补一个工具：{summary.secondaryTool.title}
                 </TrackedLink>
               ) : null}
               {summary.knowledgeCard ? (
-                <TrackedLink href={summary.knowledgeCard.href} page={page} target="personal_growth_knowledge" className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-white">
+                <TrackedLink href={summary.knowledgeCard.href} page={page} target="personal_growth_knowledge" className="interactive-card rounded-[1.2rem] px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
                   读相关文章：{summary.knowledgeCard.title}
                 </TrackedLink>
               ) : null}
               {summary.caseCard ? (
-                <TrackedLink href={summary.caseCard.href} page={page} target="personal_growth_case" className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)] transition hover:bg-white">
+                <TrackedLink href={summary.caseCard.href} page={page} target="personal_growth_case" className="interactive-card rounded-[1.2rem] px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
                   看相关案例：{summary.caseCard.title}
                 </TrackedLink>
               ) : null}

@@ -32,7 +32,7 @@ describe('product experience map', () => {
   test('documents the key product surfaces', () => {
     expect(getSurfaceRole('home')?.primaryAction).toBe('开始测算');
     expect(getSurfaceRole('result')?.layoutRule).toContain('深入折叠');
-    expect(getSurfaceRole('tools')?.job).toContain('120 个工具');
+    expect(getSurfaceRole('tools')?.job).toContain('工具');
     expect(getSurfaceRole('profile')?.interactionRule).toContain('续接');
     expect(getSurfaceRole('history')?.readingOrder).toContain('待纠偏');
   });

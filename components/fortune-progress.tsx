@@ -1,6 +1,17 @@
 'use client';
 
-import { CheckCircle2, Clock3, MapPin, Sparkles, Stars, UserRound } from 'lucide-react';
+import {
+  Bot,
+  CheckCircle2,
+  Clock3,
+  GitMerge,
+  Loader2,
+  MapPin,
+  RadioTower,
+  Sparkles,
+  Stars,
+  UserRound,
+} from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { describeReportDeliveryStage } from '@/lib/report-quality';
 
@@ -39,6 +50,134 @@ const reassuranceMessages = [
   '阶段持续更新',
   '结构与动作生成中',
 ];
+
+const stageOrder = ['received', 'solar-time', 'engine', 'llm', 'agentic', 'merge', 'persist', 'complete'] as const;
+
+type AnalyzeStage = (typeof stageOrder)[number];
+
+type AgentTaskStatus = 'waiting' | 'running' | 'done';
+
+type AgentTaskKey = 'input' | 'solar' | 'engine' | 'enhance' | 'fusion';
+
+interface AgentTaskDefinition {
+  key: AgentTaskKey;
+  title: string;
+  detail: string;
+  startStage: AnalyzeStage;
+  doneStage: AnalyzeStage;
+  icon: typeof Bot;
+}
+
+const agentTaskDefinitions: AgentTaskDefinition[] = [
+  {
+    key: 'input',
+    title: '信息锁定 Agent',
+    detail: '出生信息、地点和参数已进入任务上下文',
+    startStage: 'received',
+    doneStage: 'solar-time',
+    icon: RadioTower,
+  },
+  {
+    key: 'solar',
+    title: '真太阳时修正 Agent',
+    detail: '按时区、经纬度和校正规则生成时间底座',
+    startStage: 'solar-time',
+    doneStage: 'engine',
+    icon: Clock3,
+  },
+  {
+    key: 'engine',
+    title: '命局结构引擎',
+    detail: '计算四柱、五行、十神、格局和阶段信号',
+    startStage: 'engine',
+    doneStage: 'llm',
+    icon: Stars,
+  },
+  {
+    key: 'enhance',
+    title: '解释增强 Agent',
+    detail: '把结构判断整理成主题、风险和行动建议',
+    startStage: 'llm',
+    doneStage: 'agentic',
+    icon: Bot,
+  },
+  {
+    key: 'fusion',
+    title: '结果融合/保存',
+    detail: '合并专家结论，保存报告并准备跳转',
+    startStage: 'agentic',
+    doneStage: 'complete',
+    icon: GitMerge,
+  },
+];
+
+function getStageRank(stage?: string | null) {
+  const index = stageOrder.findIndex((item) => item === stage);
+  return index === -1 ? 0 : index;
+}
+
+function getAgentTaskStatus({
+  startStage,
+  doneStage,
+  currentStage,
+  displayProgress,
+  isComplete,
+}: {
+  startStage: AnalyzeStage;
+  doneStage: AnalyzeStage;
+  currentStage?: string | null;
+  displayProgress: number;
+  isComplete: boolean;
+}): AgentTaskStatus {
+  if (isComplete) {
+    return 'done';
+  }
+
+  const startRank = getStageRank(startStage);
+  const doneRank = getStageRank(doneStage);
+
+  if (!currentStage) {
+    const fallbackStep = steps.find((step) => displayProgress <= step.target) || steps[steps.length - 1];
+    const fallbackIndex = steps.indexOf(fallbackStep);
+    return fallbackIndex > startRank ? 'done' : fallbackIndex === startRank ? 'running' : 'waiting';
+  }
+
+  const currentRank = getStageRank(currentStage);
+
+  if (currentRank >= doneRank) {
+    return 'done';
+  }
+
+  if (currentRank >= startRank) {
+    return 'running';
+  }
+
+  return 'waiting';
+}
+
+function getAgentStatusLabel(status: AgentTaskStatus) {
+  if (status === 'done') {
+    return '已完成';
+  }
+
+  if (status === 'running') {
+    return '工作中';
+  }
+
+  return '等待中';
+}
+
+function getAgentStatusClass(status: AgentTaskStatus) {
+  if (status === 'done') {
+    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  }
+
+  if (status === 'running') {
+    return 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
+  }
+
+  return 'border-[color:var(--line)] bg-white/70 text-[color:var(--muted)]';
+}
 
 interface FortuneProgressSummary {
   name: string;
@@ -205,6 +344,29 @@ export default function FortuneProgress({
         : `${deliveryStage.label}整理完成。`
     : reassuranceMessages[messageIndex];
   const deliveryHint = buildDeliveryHint(deliverySupport);
+  const agentTasks = agentTaskDefinitions.map((task) => ({
+    ...task,
+    status: getAgentTaskStatus({
+      startStage: task.startStage,
+      doneStage: task.doneStage,
+      currentStage: serverStage?.stage,
+      displayProgress,
+      isComplete,
+    }),
+  }));
+  const runningAgentTask = agentTasks.find((task) => task.status === 'running');
+  const doneAgentTaskCount = agentTasks.filter((task) => task.status === 'done').length;
+  const agentWorkbenchHeadline = isComplete
+    ? completionMeta?.upgradeQueued
+      ? '报告已保存，后台继续增强'
+      : '报告任务已完成'
+    : serverStage?.stage === 'agentic' || serverStage?.stage === 'merge'
+      ? '并发专家 Agent 正在融合结果'
+      : serverStage?.stage === 'persist' || serverStage?.stage === 'complete'
+        ? '结果融合/保存中'
+        : runningAgentTask
+        ? `${runningAgentTask.title}正在工作`
+        : '后台 Agent 任务队列已启动';
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -340,6 +502,56 @@ export default function FortuneProgress({
 
             <div className="rounded-[1.5rem] border border-white/60 bg-white/70 p-4 text-sm text-[color:var(--muted)]">
               {finalStageMessage}
+            </div>
+
+            <div className="rounded-[1.5rem] border border-white/70 bg-white/82 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="flex items-center gap-2 text-xs font-bold tracking-[0.16em] text-[color:var(--muted)]">
+                    <Bot className="h-3.5 w-3.5" />
+                    后台工作台
+                  </div>
+                  <div className="mt-2 text-sm font-black text-[color:var(--ink)]">
+                    {agentWorkbenchHeadline}
+                  </div>
+                </div>
+                <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--accent-strong)]">
+                  {doneAgentTaskCount}/{agentTasks.length}
+                </div>
+              </div>
+              <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
+                按当前阶段推断，不展示内部私有数据。
+              </div>
+              <div className="mt-4 space-y-2">
+                {agentTasks.map((task) => {
+                  const Icon = task.icon;
+                  return (
+                    <div
+                      key={task.key}
+                      className={`rounded-2xl border px-3 py-3 transition ${getAgentStatusClass(task.status)}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-white/80">
+                          {task.status === 'running' ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : task.status === 'done' ? (
+                            <CheckCircle2 className="h-4 w-4" />
+                          ) : (
+                            <Icon className="h-4 w-4" />
+                          )}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="text-sm font-bold text-[color:var(--ink)]">{task.title}</div>
+                            <div className="shrink-0 text-xs font-bold">{getAgentStatusLabel(task.status)}</div>
+                          </div>
+                          <div className="mt-1 text-xs leading-5 opacity-80">{task.detail}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {isSlow ? (

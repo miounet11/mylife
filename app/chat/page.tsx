@@ -1,10 +1,10 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { Compass, Layers3, Sparkles } from 'lucide-react';
+import { Compass, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import UpdatesStatusPanelWithQuery from '@/components/updates-status-panel-with-query';
@@ -51,7 +51,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const powerLinks = [
     { label: reportId ? '返回当前结果页' : '返回我的档案', href: reportHref },
     { label: '管理关联事件', href: eventsHref },
-    { label: '方法论入口', href: '/knowledge/world-yi-methodology' },
+    { label: '使用方法', href: '/docs/structured-chat' },
   ];
   const scopeTags = [
     reportId ? `已绑定报告 ${reportId.slice(0, 8)}` : '',
@@ -88,34 +88,85 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
-      <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
-        <div className="space-y-6">
-          <PublicSurfaceHero
-            label={(
-              <>
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        <div className="space-y-5">
+          <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="section-label">
                 <Sparkles className="h-3.5 w-3.5" />
                 世界易结构追问入口
-              </>
-            )}
-            title={(
-              <>
-                把报告里的关键结论继续问深，
-                <span className="font-serif text-[color:var(--accent-strong)]">让下一步动作更清楚。</span>
-              </>
-            )}
-            description="这里不是重新开始一次泛问答，而是围绕你当前的报告、事件和窗口继续追问，让行动结论更清楚。"
-            hint="先选一个专项，或者直接追问当前最想推进的问题；如果还没有个人结果，先回到分析入口完成判断。"
-            actions={[
-              <Link key="chat-workbench" href="#chat-workbench" className="action-primary action-main">
-                立即开始追问
-              </Link>,
-              <Link key="report-or-profile" href={reportHref} className="action-secondary">
-                {reportId ? '返回当前报告' : '查看我的档案'}
-              </Link>,
-            ]}
-            highlights={scopeTags.map((item) => ({ body: item }))}
-            highlightsColumns="md:grid-cols-3"
-          />
+              </div>
+              <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+                直接把当前问题问清楚
+              </h1>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {scopeTags.map((item) => (
+                  <span key={item} className="signal-pill">{item}</span>
+                ))}
+              </div>
+            </div>
+            <Link href={reportHref} className="action-secondary shrink-0">
+              {reportId ? '返回当前报告' : '查看我的档案'}
+            </Link>
+          </section>
+
+          <section className="grid gap-4 xl:grid-cols-[minmax(0,1.35fr)_minmax(280px,0.65fr)] xl:items-start">
+            <div id="chat-workbench" className="glass-panel overflow-hidden rounded-xl">
+              <AIAssistantChat />
+            </div>
+
+            <div className="space-y-4 xl:sticky xl:top-24">
+              <PriorityDisclosure
+                label="辅助入口"
+                title="回看报告、事件和专项"
+                description="追问主工作台优先；这些入口需要时再展开。"
+                defaultOpen
+              >
+                <div className="grid gap-3">
+                  {powerLinks.map((item) => (
+                    <Link key={item.href} href={item.href} className="action-secondary justify-start">
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+                <div className="mt-4 border-t border-[color:var(--line)] pt-4">
+                  <div className="section-label">
+                    <Compass className="h-3.5 w-3.5" />
+                    切换专项
+                  </div>
+                  <div className="mt-3 grid gap-2">
+                    {scopedIntentLinks.map((item) => (
+                      <Link
+                        key={item.key}
+                        href={item.href}
+                        className={`rounded-lg px-3 py-3 text-sm font-semibold transition hover:border-[color:var(--accent)] ${
+                          item.key === intentPreset?.key
+                            ? 'static-card bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
+                            : 'interactive-card text-[color:var(--ink)]'
+                        }`}
+                      >
+                        {item.entryLabel}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </PriorityDisclosure>
+
+              <PriorityDisclosure
+                label="后续更新"
+                title="报告升级和提醒状态"
+                description="只在需要管理订阅或更新记录时展开。"
+              >
+                <Suspense fallback={<ChatUpdatePanelSkeleton />}>
+                  <UpdatesStatusPanelWithQuery
+                    compact
+                    title="后续更新"
+                    description="查看报告升级、月度提醒和订阅状态，避免追问脱离当前上下文。"
+                  />
+                </Suspense>
+              </PriorityDisclosure>
+            </div>
+          </section>
 
           <ProductSurfaceRolePanel
             surface="chat"
@@ -124,64 +175,20 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
             compact
           />
 
-          <section className="grid gap-6 xl:grid-cols-[1.22fr_0.78fr] xl:items-start">
-            <div id="chat-workbench" className="glass-panel overflow-hidden rounded-[2rem]">
-              <AIAssistantChat />
+          <PriorityDisclosure
+            label="追问规则"
+            title="需要说明时再看"
+            description="结构锚点、阶段窗口和动作结论已经内化到聊天流程里，不再默认占据首屏。"
+          >
+            <div className="grid gap-3 md:grid-cols-3">
+              {doctrineCards.map(([title, description]) => (
+                <div key={title} className="rounded-[1.25rem] bg-white/82 px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink)]">{title}</div>
+                  <div className="mt-2 text-sm text-[color:var(--ink)]">{description}</div>
+                </div>
+              ))}
             </div>
-
-            <div className="space-y-4">
-              <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,255,255,0.94),rgba(244,237,226,0.92))] p-5 shadow-[0_18px_36px_rgba(23,32,51,0.06)]">
-                <div className="section-label">
-                  <Layers3 className="h-3.5 w-3.5" />
-                  功能
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {doctrineCards.map(([title, description]) => (
-                    <div key={title} className="rounded-[1.25rem] bg-white/82 px-4 py-4">
-                      <div className="text-sm font-semibold text-[color:var(--ink)]">{title}</div>
-                      <div className="mt-2 text-sm text-[color:var(--ink)]">{description}</div>
-                    </div>
-                  ))}
-                </div>
-                <div className="action-guide mt-4">辅助入口</div>
-                <div className="action-strip mt-2 flex flex-wrap gap-3 text-sm font-semibold">
-                  {powerLinks.map((item) => (
-                    <Link key={item.href} href={item.href} className="action-secondary">
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white/78 p-5 shadow-[0_18px_36px_rgba(23,32,51,0.05)]">
-                <div className="section-label">
-                  <Compass className="h-3.5 w-3.5" />
-                  切换专项
-                </div>
-                <div className="mt-4 grid gap-3">
-                  {scopedIntentLinks.map((item) => (
-                    <Link
-                      key={item.key}
-                      href={item.href}
-                      className={`rounded-[1.35rem] px-4 py-4 transition hover:-translate-y-0.5 ${
-                        item.key === intentPreset?.key ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
-                      }`}
-                    >
-                      <div className="text-sm font-semibold">{item.entryLabel}</div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-
-              <Suspense fallback={<ChatUpdatePanelSkeleton />}>
-                <UpdatesStatusPanelWithQuery
-                  compact
-                  title="后续更新"
-                  description="查看报告升级、月度提醒和订阅状态，避免追问脱离当前上下文。"
-                />
-              </Suspense>
-            </div>
-          </section>
+          </PriorityDisclosure>
         </div>
       </main>
 

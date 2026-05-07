@@ -138,7 +138,7 @@ export function isOpenAgentRuntimeEnabled() {
 }
 
 export function getOpenAgentRuntimeModel() {
-  return readString('OPEN_AGENT_RUNTIME_MODEL', 'grok-420-fast');
+  return 'grok-420-fast';
 }
 
 export function getOpenAgentRuntimeMaxRetries() {
@@ -162,15 +162,15 @@ export function isContentRadarAutoPublishEnabled() {
 }
 
 export function getModelFallbackChainEnv() {
-  return readString('MODEL_FALLBACK_CHAIN', 'auto');
+  return readString('MODEL_FALLBACK_CHAIN', 'auto,gpt-5.2');
 }
 
 export function getReportModelFallbackChainEnv() {
-  return readString('REPORT_MODEL_FALLBACK_CHAIN', 'auto');
+  return readString('REPORT_MODEL_FALLBACK_CHAIN', getModelFallbackChainEnv());
 }
 
 export function getReportNarrativeModelFallbackChainEnv() {
-  return readString('REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN', 'auto');
+  return readString('REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN', getModelFallbackChainEnv());
 }
 
 export function getKnowledgeSynthesisAllowedTypesEnv() {
@@ -233,12 +233,28 @@ export function getVisualAssetConcurrencyLimit() {
   return readNumber('VISUAL_ASSET_CONCURRENCY_LIMIT', 6, 1);
 }
 
+export function getVisualAssetNarrativeConcurrencyLimit() {
+  return readNumber('VISUAL_ASSET_NARRATIVE_CONCURRENCY_LIMIT', 4, 1);
+}
+
 export function getVisualAssetGenerationTimeoutMs() {
   return readNumber('VISUAL_ASSET_GENERATION_TIMEOUT_MS', 1000 * 60 * 3, 30_000);
 }
 
+export function getVisualAssetRunStatusLimit() {
+  return readNumber('VISUAL_ASSET_RUN_STATUS_LIMIT', 500, 1);
+}
+
+export function getVisualAssetWorkflowSnapshotItemLimit() {
+  return readNumber('VISUAL_ASSET_WORKFLOW_SNAPSHOT_ITEM_LIMIT', 80, 0);
+}
+
+export function isVisualAssetWorkflowSnapshotIncludeItemsEnabled() {
+  return readBooleanFlag('VISUAL_ASSET_WORKFLOW_SNAPSHOT_INCLUDE_ITEMS', true);
+}
+
 export function getContentGenerationModelFallbackChainRaw() {
-  return readString('CONTENT_GENERATION_MODEL_FALLBACK_CHAIN', 'auto');
+  return readString('CONTENT_GENERATION_MODEL_FALLBACK_CHAIN', getModelFallbackChainEnv());
 }
 
 export function getContentGenerationMaxTokens() {

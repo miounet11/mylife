@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { VisualAssetLibraryItem } from '@/lib/visual-asset-library';
@@ -12,14 +13,15 @@ export default function VisualAssetCard({ asset, compact = false }: VisualAssetC
   return (
     <Link
       href={`/visual-assets/${asset.slug}`}
-      className="group block overflow-hidden rounded-[1.75rem] border border-[color:var(--line)] bg-white/86 shadow-[0_18px_46px_rgba(47,32,14,0.08)] transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+      className="interactive-card group overflow-hidden rounded-[1.75rem]"
     >
-      <div className={asset.ratio === '4:5' ? 'mx-auto aspect-[4/5] max-h-[520px] overflow-hidden bg-[#f7efe2]' : 'aspect-video overflow-hidden bg-[#f7efe2]'}>
-        <img
+      <div className={asset.ratio === '4:5' ? 'relative mx-auto aspect-[4/5] max-h-[520px] overflow-hidden bg-[#f7efe2]' : 'relative aspect-video overflow-hidden bg-[#f7efe2]'}>
+        <Image
           src={asset.publicUrl}
           alt={asset.altText}
-          loading="lazy"
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.025]"
+          fill
+          sizes={compact ? '(min-width: 1024px) 25vw, 50vw' : '(min-width: 1024px) 33vw, 100vw'}
+          className="object-cover transition duration-500 group-hover:scale-[1.025]"
         />
       </div>
       <div className={compact ? 'p-4' : 'p-5'}>

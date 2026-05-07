@@ -1683,7 +1683,7 @@ export async function runWorldYiOpenAgentSiteGovernorReview() {
       prompt,
       maxTurns: 10,
       allowedTools: ['Read', 'Glob', 'Grep'],
-      appendSystemPrompt: '你当前扮演站点站长。必须读取��定文件后，基于真实运行证据输出全站治理优先级，覆盖 SEO、内容质量、用户反馈、性能、转化和功能机会。',
+      appendSystemPrompt: '你当前扮演站点站长。必须读取指定文件后，基于真实运行证据输出全站治理优先级，覆盖 SEO、内容质量、用户反馈、性能、转化和功能机会。',
     });
     const answer = normalizeAgentText(result.text);
     const usedTools = collectUsedTools(result.messages || []);

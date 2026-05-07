@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFeaturedTools, listToolCategories, listToolDefinitions } from '@/lib/tools';
+import { getFeaturedTools, getPriorityGrowthTools, listToolCategories, listToolDefinitions } from '@/lib/tools';
 
 export async function GET() {
   return NextResponse.json({
@@ -7,6 +7,7 @@ export async function GET() {
     data: {
       categories: listToolCategories(),
       featured: getFeaturedTools(10),
+      priorityGrowthTools: getPriorityGrowthTools(),
       tools: listToolDefinitions(),
     },
     timestamp: new Date().toISOString(),

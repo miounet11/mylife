@@ -2,7 +2,6 @@ import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-d
 import { buildFallbackAgentResults } from '@/lib/agentic-report/build-fallback-agent-results';
 import { createAgenticContext } from '@/lib/agentic-report/create-agentic-context';
 import { callJsonLLM } from '@/lib/agentic-report/llm-client';
-import { getDefaultModel } from '@/lib/env';
 import { mergeAgentResults } from '@/lib/agentic-report/merge-agent-results';
 import { buildAgentPrompt } from '@/lib/agentic-report/prompts/agents';
 import { runParallelAgents } from '@/lib/agentic-report/run-parallel-agents';
@@ -72,7 +71,7 @@ export async function runAgenticPipeline(params: {
       referenceCorpus,
     },
   });
-  const keys = params.agentKeys || CORE_AGENT_KEYS;
+  const keys = params.agentKeys || [...CORE_AGENT_KEYS];
 
   if (params.enabled === false) {
     return buildDeterministicFallbackPipelineResult({
@@ -83,7 +82,7 @@ export async function runAgenticPipeline(params: {
   }
 
   const agentScopeHealth = assessScopeProviderHealth(
-    getModelFallbackChain(getDefaultModel()),
+    getModelFallbackChain(undefined, 'agent'),
     'agent'
   );
   if (!hasRunnableModelsForSnapshots(agentScopeHealth.snapshots)) {

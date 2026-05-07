@@ -1,15 +1,11 @@
 import OpenAI from 'openai';
 import { db } from '@/lib/database';
 import {
-  getApiBaseUrl,
-  getApiKey,
-  getVisualAssetApiBaseUrl,
-  getVisualAssetApiKey,
   getVisualAssetCoreModel,
   getVisualAssetDefaultModel,
-  getVisualAssetGenerationTimeoutMs,
   getVisualAssetNarrativeModel,
 } from '@/lib/env';
+import { resolveRuntimeLlmProviders } from '@/lib/llm-provider-configs';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import { generateId } from '@/lib/utils';
 
@@ -1057,86 +1053,116 @@ export function runVisualAssetAutoQa(asset: VisualAssetRecord, params?: VisualAs
 }
 
 export async function requestVisualAssetImage(asset: VisualAssetRecord) {
-  const apiKey = getVisualAssetApiKey();
-  if (!apiKey) {
-    throw new Error('VISUAL_ASSET_API_KEY is not configured');
+  const providers = resolveRuntimeLlmProviders('image');
+  if (providers.length === 0) {
+    throw new Error('No image LLM provider is configured');
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: getVisualAssetApiBaseUrl(),
-    timeout: getVisualAssetGenerationTimeoutMs(),
-    maxRetries: 0,
-  });
+  let lastError: unknown = null;
+  for (const provider of providers) {
+    const client = new OpenAI({
+      apiKey: provider.apiKey,
+      baseURL: provider.baseUrl,
+      timeout: provider.timeoutMs,
+      maxRetries: provider.maxRetries,
+    });
 
-  const completion = await createOpenAiCompatibleChatCompletion(client, {
-    model: asset.model || getVisualAssetDefaultModel(),
-    messages: [
-      {
-        role: 'system',
-        content: 'You generate image assets for Life Kline / World Yi. Return only JSON with image_url or b64_json when available.',
-      },
-      {
-        role: 'user',
-        content: asset.prompt,
-      },
-    ],
-    maxTokens: 1200,
-    temperature: 0.2,
-  });
+    try {
+      const completion = await createOpenAiCompatibleChatCompletion(client, {
+        model: provider.model || asset.model || getVisualAssetDefaultModel(),
+        messages: [
+          {
+            role: 'system',
+            content: 'You generate image assets for Life Kline / World Yi. Return only JSON with image_url or b64_json when available.',
+          },
+          {
+            role: 'user',
+            content: asset.prompt,
+          },
+        ],
+        maxTokens: 1200,
+        temperature: 0.2,
+      });
 
-  const content = completion.choices?.[0]?.message?.content?.trim() || '';
-  return {
-    raw: content,
-    parsed: parseJson<Record<string, unknown>>(content, {}),
-  };
+      const content = completion.choices?.[0]?.message?.content?.trim() || '';
+      return {
+        raw: content,
+        parsed: parseJson<Record<string, unknown>>(content, {}),
+        provider: {
+          id: provider.id,
+          name: provider.name,
+          source: provider.source,
+          model: provider.model,
+          baseUrl: provider.baseUrl,
+        },
+      };
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Visual Asset] image provider failed: ${provider.id} model=${provider.model}`, error instanceof Error ? error.message : error);
+    }
+  }
+
+  throw lastError instanceof Error ? lastError : new Error('All image LLM providers failed');
 }
 
 export async function generateVisualAssetNarrative(asset: VisualAssetRecord) {
-  const apiKey = getApiKey();
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY or API_KEY is not configured');
+  const providers = resolveRuntimeLlmProviders('article');
+  if (providers.length === 0) {
+    throw new Error('No article LLM provider is configured');
   }
 
-  const client = new OpenAI({
-    apiKey,
-    baseURL: getApiBaseUrl(),
-    timeout: 45_000,
-    maxRetries: 0,
-  });
+  let content = '';
+  let lastError: unknown = null;
+  for (const provider of providers) {
+    const client = new OpenAI({
+      apiKey: provider.apiKey,
+      baseURL: provider.baseUrl,
+      timeout: provider.timeoutMs,
+      maxRetries: provider.maxRetries,
+    });
 
-  const completion = await createOpenAiCompatibleChatCompletion(client, {
-    model: getVisualAssetNarrativeModel(),
-    messages: [
-      {
-        role: 'system',
-        content: [
-          '你为人生K线 / 世界易图片资产生成配套中文解读文章。',
-          '输出严格 JSON：{"title":string,"excerpt":string,"sections":[{"heading":string,"body":string}]}。',
-          '内容必须现代、克制、非恐吓、非决定论，并导向结构、时位、环境、动作、风险。',
-        ].join('\n'),
-      },
-      {
-        role: 'user',
-        content: JSON.stringify({
-          id: asset.id,
-          title: asset.title,
-          description: asset.description,
-          prompt: asset.prompt,
-          overlayCopySimplified: asset.overlayCopySimplified,
-          overlayCopyTraditional: asset.overlayCopyTraditional,
-          targetRoutes: asset.targetRoutes,
-          relatedReportThemes: asset.relatedReportThemes,
-          meta: asset.meta,
-        }, null, 2),
-      },
-    ],
-    maxTokens: 1200,
-    temperature: 0.45,
-    responseFormat: { type: 'json_object' },
-  });
-
-  const content = completion.choices?.[0]?.message?.content?.trim() || '';
+    try {
+      const completion = await createOpenAiCompatibleChatCompletion(client, {
+        model: provider.model || getVisualAssetNarrativeModel(),
+        messages: [
+          {
+            role: 'system',
+            content: [
+              '你为人生K线 / 世界易图片资产生成配套中文解读文章。',
+              '输出严格 JSON：{"title":string,"excerpt":string,"sections":[{"heading":string,"body":string}]}。',
+              '内容必须现代、克制、非恐吓、非决定论，并导向结构、时位、环境、动作、风险。',
+            ].join('\n'),
+          },
+          {
+            role: 'user',
+            content: JSON.stringify({
+              id: asset.id,
+              title: asset.title,
+              description: asset.description,
+              prompt: asset.prompt,
+              overlayCopySimplified: asset.overlayCopySimplified,
+              overlayCopyTraditional: asset.overlayCopyTraditional,
+              targetRoutes: asset.targetRoutes,
+              relatedReportThemes: asset.relatedReportThemes,
+              meta: asset.meta,
+            }, null, 2),
+          },
+        ],
+        maxTokens: 1200,
+        temperature: 0.45,
+        responseFormat: { type: 'json_object' },
+      });
+      content = completion.choices?.[0]?.message?.content?.trim() || '';
+      if (content) break;
+      lastError = new Error(`EMPTY_NARRATIVE:${provider.id}`);
+    } catch (error) {
+      lastError = error;
+      console.warn(`[Visual Asset] narrative provider failed: ${provider.id} model=${provider.model}`, error instanceof Error ? error.message : error);
+    }
+  }
+  if (!content && lastError) {
+    throw lastError instanceof Error ? lastError : new Error('All article LLM providers failed');
+  }
   const parsed = parseJson<{
     title?: string;
     excerpt?: string;

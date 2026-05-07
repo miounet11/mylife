@@ -236,7 +236,7 @@ export function getAnalyzeEntryProgress({
   const readinessScore = Math.round((entryReadiness.filter((item) => item.done).length / entryReadiness.length) * 100);
   const canSubmit = timeConfirmed && locationConfirmed;
   const nextHint = !timeConfirmed
-    ? '先确认出生时间；如果暂时不知道时辰，也请在弹窗里明确选择“未知时辰”。'
+    ? '先确认出生时间；如果暂时不知道具体时分，也请在弹窗里开启“时间不确定”。'
     : !locationConfirmed
       ? '再确认出生地点；如果只能按北京时间处理，也请在地点弹窗里明确确认一次。'
       : !hasKnownLocation

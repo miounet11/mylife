@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
+import { resolveRuntimeLlmProviders, type RuntimeLlmProvider } from '@/lib/llm-provider-configs';
 import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
 import {
   createOpenAiCompatibleChatCompletion,
@@ -114,21 +115,33 @@ export async function callJsonLLM<T>(params: {
   disableHealthReorder?: boolean;
   reasoningEffort?: OpenAiCompatibleReasoningEffort;
 }): Promise<T | null> {
-  const apiKey = getApiKey();
   const traceLabel = params.traceLabel || 'agent';
-  if (!apiKey) {
+  const timeoutMs = params.timeoutMs || 8000;
+  const scope = params.scope || 'agent';
+  const configuredProviders = scope === 'content' ? resolveRuntimeLlmProviders('article') : [];
+  const envApiKey = getApiKey();
+  const providers: RuntimeLlmProvider[] = configuredProviders.length
+    ? configuredProviders.map((provider) => ({ ...provider, timeoutMs }))
+    : envApiKey
+      ? [{
+          id: 'env_agentic',
+          name: 'Env Agentic Provider',
+          purpose: 'article',
+          baseUrl: getApiBaseUrl(),
+          apiKey: envApiKey,
+          model: params.model || getDefaultModel(),
+          priority: 10_000,
+          timeoutMs,
+          maxRetries: 0,
+          source: 'env',
+        }]
+      : [];
+
+  if (providers.length === 0) {
     console.warn(`[Agentic LLM] ${traceLabel} missing API key, skip request.`);
     return null;
   }
 
-  const timeoutMs = params.timeoutMs || 8000;
-  const scope = params.scope || 'agent';
-  const client = new OpenAI({
-    apiKey,
-    baseURL: getApiBaseUrl(),
-    timeout: timeoutMs,
-    maxRetries: 0,
-  });
   const baseModelChain = params.modelChain?.length
     ? uniqueModels(params.modelChain)
     : getModelFallbackChain(params.model || getDefaultModel());
@@ -138,7 +151,9 @@ export async function callJsonLLM<T>(params: {
         snapshots: [],
       }
     : getDynamicModelExecutionPlan(baseModelChain, scope);
-  const modelCandidates = plan.orderedModels;
+  const modelCandidates = configuredProviders.length && scope === 'content'
+    ? uniqueModels(providers.map((provider) => provider.model))
+    : plan.orderedModels;
   const planSummary = params.disableHealthReorder
     ? {
         ordered: baseModelChain,
@@ -162,12 +177,23 @@ export async function callJsonLLM<T>(params: {
   try {
     let lastError: unknown = null;
 
-    for (const [index, model] of modelCandidates.entries()) {
+    const attempts = configuredProviders.length && scope === 'content'
+      ? providers.map((provider) => ({ provider, model: provider.model }))
+      : modelCandidates.map((model) => ({ provider: providers[0], model }));
+
+    for (const [index, attempt] of attempts.entries()) {
+      const { provider, model } = attempt;
       const remainingBudget = deadlineAt - Date.now();
       if (remainingBudget < 900) {
         break;
       }
 
+      const client = new OpenAI({
+        apiKey: provider.apiKey,
+        baseURL: provider.baseUrl,
+        timeout: timeoutMs,
+        maxRetries: provider.maxRetries,
+      });
       const controller = new AbortController();
       const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
       const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
@@ -245,7 +271,7 @@ export async function callJsonLLM<T>(params: {
           traceLabel,
         });
         console.error(
-          `[Agentic LLM] ${traceLabel} model=${model} request failed: ${classifyError(error)}`
+          `[Agentic LLM] ${traceLabel} provider=${provider.id} model=${model} request failed: ${classifyError(error)}`
           + `${typeof (error as Error & { status?: number }).status === 'number' ? ` status=${(error as Error & { status?: number }).status}` : ''}`
           + `${(error as Error & { code?: string }).code ? ` code=${(error as Error & { code?: string }).code}` : ''}`
           + `${(error as Error).message ? ` message=${truncateForLog((error as Error).message, 180)}` : ''}`

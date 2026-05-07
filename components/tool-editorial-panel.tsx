@@ -22,10 +22,6 @@ export default function ToolEditorialPanel({
         </span>
       </div>
 
-      <div className="intro-copy mt-4 max-w-3xl">
-        这里给出为什么这个工具值得优先看，以及它最适合解决哪类核心判断问题。
-      </div>
-
       <div className="mt-6 grid gap-4 xl:grid-cols-3">
         <div className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/82 p-5">
           <div className="text-sm font-semibold text-[color:var(--ink)]">工具亮点</div>

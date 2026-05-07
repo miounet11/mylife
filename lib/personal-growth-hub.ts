@@ -114,10 +114,13 @@ export function buildPersonalGrowthHub(params: {
       : latestJourneyCategory
         ? `最近的路径选择集中在“${latestJourneyCategory}”，下一步应先接回这个专项，而不是重新浏览。`
       : '还没有形成稳定路径，先做综合测算，再选一个高频工具建立第一次可复用判断。';
+  const primaryToolContinuationLabel = primaryTool?.premiumServiceKey
+    ? getPremiumServiceLabel(primaryTool.premiumServiceKey)
+    : 'AI 深问';
   const urgencyLine = premiumOffer
     ? `当前最值得推进的付费承接是 ${premiumOffer.title}，因为它能把“知道一点”升级成“真正能做决定”。`
     : primaryTool
-      ? `当前最自然的付费承接是 ${getPremiumServiceLabel(primaryTool.premiumServiceKey || 'event-verdict')}，因为免费层已经能先帮你缩窄问题。`
+      ? `当前最自然的继续承接是 ${primaryToolContinuationLabel}，因为免费层已经能先帮你缩窄问题。`
       : '先建立一次可复用的个人判断记录，后面所有工具和内容才会越用越准。';
 
   return {
@@ -136,7 +139,7 @@ export function buildPersonalGrowthHub(params: {
       hook: primaryTool.hook,
       freeValueLine: primaryTool.freeValueLine,
       paidValueLine: primaryTool.paidValueLine,
-      premiumServiceLabel: getPremiumServiceLabel(primaryTool.premiumServiceKey || 'event-verdict'),
+      premiumServiceLabel: primaryToolContinuationLabel,
     } : null,
     secondaryTool: secondaryTool ? {
       slug: secondaryTool.slug,

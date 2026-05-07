@@ -1,11 +1,11 @@
 export const revalidate = 3600;
 
 import Link from 'next/link';
-import { ArrowRight, Compass, Layers3, Sparkles } from 'lucide-react';
+import { ArrowRight, Compass, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolBundlePanel from '@/components/tool-bundle-panel';
@@ -20,13 +20,13 @@ import {
   createItemListSchema,
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
-import { getFeaturedTools, listToolBundles, listToolCategories, listToolDefinitions } from '@/lib/tools';
+import { getFeaturedTools, getPriorityGrowthTools, getToolGrowthProfile, listToolBundles, listToolCategories, listToolDefinitions } from '@/lib/tools';
 import { getVisualAssetById } from '@/lib/visual-asset-library';
 
 export function generateMetadata() {
   return createPublicContentMetadata({
     title: '单项测试工具中心 | 人生K线',
-    description: '把世界易综合报告拆成 120 个单项测试工具，围绕六域、阶段窗口和生活应用建立可复访的个人化工具矩阵。',
+    description: '把世界易综合报告拆成单项测试工具，围绕六域、阶段窗口和生活应用建立可复访的个人化工具矩阵。',
     path: '/tools',
     type: 'website',
     languages: {
@@ -39,6 +39,7 @@ export function generateMetadata() {
 export default function ToolsPage() {
   const categories = listToolCategories();
   const featured = getFeaturedTools(12);
+  const priorityGrowthTools = getPriorityGrowthTools();
   const allTools = listToolDefinitions();
   const bundles = listToolBundles();
   const toolMatrixImage = getVisualAssetById('PWY01-005');
@@ -58,7 +59,7 @@ export default function ToolsPage() {
   const schemas = [
     createCollectionPageSchema({
       headline: '世界易工具中心',
-      description: '把世界易综合报告拆成 120 个单项测试工具，围绕六域、阶段窗口和生活应用建立可复访的个人化工具矩阵。',
+      description: `把世界易综合报告拆成 ${allTools.length} 个单项测试工具，围绕六域、阶段窗口和生活应用建立可复访的个人化工具矩阵。`,
       path: '/tools',
       keywords: ['世界易工具', '单项测试工具', '职业测试', '财富测试', '关系测试'],
     }),
@@ -94,81 +95,102 @@ export default function ToolsPage() {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="先做综合判断" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
-              <Layers3 className="h-3.5 w-3.5" />
-              世界易工具中心
-            </>
-          )}
-          title="先选问题线，再进工具"
-          description="工具中心不再让用户从 120 个工具里乱点。先按当前最卡的一条问题线进入，再由系统推荐少量下一步。"
-          hint="如果你还没有做过综合判断，建议先建立个人底盘；如果已经有报告，就直接选下面最接近的问题线。"
-          actions={[
-            <Link key="analyze" href="/analyze" className="action-primary action-main">
-              先建立个人底盘
-              <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>,
-            <Link key="categories" href="#problem-lines" className="action-secondary">按问题线选择</Link>,
-          ]}
-          highlights={[
-            { body: '先分流' },
-            { body: '少量推荐' },
-            { body: '承接报告' },
-            { body: '可复访' },
-          ]}
-        />
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        {priorityGrowthTools.length > 0 ? (
+          <section className="scroll-mt-28 rounded-[2rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-5 md:p-7">
+            <div className="section-label">
+              <Sparkles className="h-3.5 w-3.5" />
+              SEO/GEO 冷启动工具
+            </div>
+            <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+              <div className="max-w-3xl">
+                <h1 className="text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+                  先把高意图用户带进一次免费测算
+                </h1>
+                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)] md:text-base">
+                  第一阶段优先用年度窗口和手相上传承接搜索、AI 回答页和社交流量：免费给结构结果，再引导保存、复访、深测报告或人工复核。
+                </p>
+              </div>
+              <Link href="/analyze" className="action-secondary shrink-0">
+                先建立个人底盘
+              </Link>
+            </div>
+            <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              {priorityGrowthTools.map((tool) => {
+                const growthProfile = getToolGrowthProfile(tool.slug);
+                return (
+                  <ToolCardLink
+                    key={tool.slug}
+                    href={`/tools/${tool.slug}`}
+                    toolSlug={tool.slug}
+                    category={tool.category}
+                    page="/tools"
+                    className="block rounded-[1.5rem] border border-[color:var(--accent)] bg-white/86 p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
+                  >
+                    <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">
+                      {growthProfile?.stageLabel || tool.category}
+                    </div>
+                    <h2 className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
+                      {tool.shortTitle}
+                    </h2>
+                    <p className="mt-3 line-clamp-3 text-sm leading-7 text-[color:var(--muted)]">
+                      {growthProfile?.heroSubtitle || tool.description}
+                    </p>
+                    <div className="mt-4 grid gap-2 text-xs leading-6 text-[color:var(--ink)]">
+                      {(growthProfile?.freeValueBullets || tool.freeInsights).slice(0, 2).map((item) => (
+                        <div key={item} className="rounded-xl bg-[color:var(--accent-soft)] px-3 py-2">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="action-guide mt-4 inline-flex items-center gap-2">
+                      {growthProfile?.primaryCtaLabel || '开始免费测算'}
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
+                  </ToolCardLink>
+                );
+              })}
+            </div>
+          </section>
+        ) : null}
 
-        <ProductSurfaceRolePanel
-          surface="tools"
-          className="mt-8"
-          title="工具中心先收敛问题线，再推荐少量首轮工具"
-          compact
-        />
-
-        <section className="mt-10 grid gap-4 md:grid-cols-3">
-          {toolEntryModes.map((mode) => (
-            <Link key={mode.key} href={mode.href} className="soft-card rounded-[1.4rem] p-5 transition hover:border-[color:var(--accent)]">
-              <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{mode.action}</div>
-              <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{mode.title}</h2>
-              <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{mode.description}</p>
-            </Link>
-          ))}
-        </section>
-
-        <section id="problem-lines" className="mt-10 scroll-mt-28">
+        <section id="problem-lines" className="mt-8 scroll-mt-28">
           <div className="section-label">
             <Compass className="h-3.5 w-3.5" />
-            第一步
+            世界易工具中心
           </div>
-          <div className="mt-3 max-w-3xl">
-            <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">你现在最想解决哪一类问题？</h2>
-            <p className="intro-copy mt-3">
-              先选一条主线。不要同时点很多工具，主线确定后再进入对应工具组，系统会继续给出下一步。
-            </p>
+          <div className="mt-3 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <h1 className="text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+                先选你最卡的一条问题线
+              </h1>
+            </div>
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <Link href="/analyze" className="action-primary action-main shrink-0">
+                先建立个人底盘
+                <ArrowRight className="ml-1 h-4 w-4" />
+              </Link>
+              <Link href="/docs/use-tools" className="action-secondary shrink-0">
+                使用方法
+              </Link>
+            </div>
           </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {categories.map((category) => (
               <Link
                 key={category.key}
                 href={`/tools/category/${category.key}`}
-	                className="glass-panel rounded-[1.5rem] p-5 transition hover:border-[color:var(--accent)]"
-	              >
-	                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{category.count} 个工具 · 一条问题线</div>
-	                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{category.title}</h2>
-	                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
-	                  {toolProblemLineGuides[category.key]?.prompt || category.description}
-	                </p>
-	                <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
-	                  {toolProblemLineGuides[category.key]?.firstStep || category.headline}
-	                </div>
-	                {toolProblemLineGuides[category.key]?.nextStep ? (
-	                  <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
-	                    {toolProblemLineGuides[category.key].nextStep}
-	                  </div>
-	                ) : null}
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                className="interactive-card rounded-xl p-4"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{category.count} 个工具 · 一条问题线</div>
+                <h2 className="mt-2 text-xl font-bold text-[color:var(--ink)]">{category.title}</h2>
+                <p className="mt-2 line-clamp-2 text-sm leading-6 text-[color:var(--muted)]">
+                  {toolProblemLineGuides[category.key]?.prompt || category.description}
+                </p>
+                <div className="mt-3 rounded-lg bg-[color:var(--accent-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--accent-strong)]">
+                  {toolProblemLineGuides[category.key]?.firstStep || category.headline}
+                </div>
+                <div className="action-guide mt-3 inline-flex items-center gap-2">
                   进入这一条线
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -177,45 +199,76 @@ export default function ToolsPage() {
           </div>
         </section>
 
-        <section className="mt-10">
-          <div className="section-label">
-            <Sparkles className="h-3.5 w-3.5" />
-            第二步
-          </div>
-          <div className="mt-3 max-w-3xl">
-            <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">如果没有头绪，先做这几个</h2>
-            <p className="intro-copy mt-3">
-              这里不展示全部工具，只放最容易承接主报告、最适合作为第一轮细分判断的工具。
-            </p>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {featured.slice(0, 6).map((tool) => (
-              <ToolCardLink
-                key={tool.slug}
-                href={`/tools/${tool.slug}`}
-                toolSlug={tool.slug}
-                category={tool.category}
-                page="/tools"
-	                className="block rounded-[1.5rem] border border-[color:var(--line)] bg-white/82 p-5 transition hover:border-[color:var(--accent)]"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>
-                <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{tool.shortTitle}</h3>
-                <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{tool.valuePromise}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {tool.hookKeywords.slice(0, 3).map((keyword) => (
-                    <span key={keyword} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                      {keyword}
-                    </span>
-                  ))}
-                </div>
-              </ToolCardLink>
-            ))}
-          </div>
+        <section className="mt-8">
+          <PriorityDisclosure
+            label="其他进入方式"
+            title="已经有明确路径时再展开"
+            description="这些入口保留给老用户和带来源任务的用户，不默认挤占问题线选择。"
+          >
+            <div className="grid gap-4 md:grid-cols-3">
+              {toolEntryModes.map((mode) => (
+                <Link key={mode.key} href={mode.href} className="interactive-card rounded-[1.4rem] p-5">
+                  <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{mode.action}</div>
+                  <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{mode.title}</h2>
+                  <p className="mt-2 text-sm leading-7 text-[color:var(--muted)]">{mode.description}</p>
+                </Link>
+              ))}
+            </div>
+          </PriorityDisclosure>
         </section>
+
+        <section className="mt-8">
+          <PriorityDisclosure
+            label={(
+              <span className="inline-flex items-center gap-2">
+                <Sparkles className="h-3.5 w-3.5" />
+                第二步
+              </span>
+            )}
+            title="如果没有头绪，先做这几个"
+            description="默认先选问题线；这些工具作为兜底入口，不再平铺抢首屏。"
+          >
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {featured.slice(0, 6).map((tool) => (
+                <ToolCardLink
+                  key={tool.slug}
+                  href={`/tools/${tool.slug}`}
+                  toolSlug={tool.slug}
+                  category={tool.category}
+                  page="/tools"
+                  className="block rounded-xl border border-[color:var(--line)] bg-white/82 p-4 transition hover:border-[color:var(--accent)]"
+                >
+                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.category}</div>
+                  <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">{tool.shortTitle}</h3>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {tool.hookKeywords.slice(0, 3).map((keyword) => (
+                      <span key={keyword} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                        {keyword}
+                      </span>
+                    ))}
+                  </div>
+                </ToolCardLink>
+              ))}
+            </div>
+          </PriorityDisclosure>
+        </section>
+
+        <ProductSurfaceRolePanel
+          surface="tools"
+          className="mt-8"
+          title="工具中心先收敛问题线，再推荐少量首轮工具"
+          compact
+        />
 
         {toolMatrixImage ? (
           <section className="mt-10">
-            <VisualAssetFeature asset={toolMatrixImage} label="工具矩阵说明图" />
+            <PriorityDisclosure
+              label="工具矩阵说明"
+              title={`${allTools.length} 个工具的完整结构`}
+              description="需要理解工具体系时再展开，默认不打断选问题线。"
+            >
+              <VisualAssetFeature asset={toolMatrixImage} label="工具矩阵说明图" />
+            </PriorityDisclosure>
           </section>
         ) : null}
 
@@ -229,11 +282,21 @@ export default function ToolsPage() {
           insightItems={insightItems}
         />
 
-        <section className="mt-10 space-y-6">
-          {bundles.slice(0, 2).map((bundle) => (
-            <ToolBundlePanel key={bundle.slug} bundle={bundle} page="/tools" />
-          ))}
-        </section>
+        {bundles.length > 0 ? (
+          <section className="mt-10">
+            <PriorityDisclosure
+              label="工具包"
+              title="同域工具组合"
+              description="问题线选定后再看工具包，不默认展开完整矩阵。"
+            >
+              <div className="space-y-6">
+                {bundles.slice(0, 2).map((bundle) => (
+                  <ToolBundlePanel key={bundle.slug} bundle={bundle} page="/tools" />
+                ))}
+              </div>
+            </PriorityDisclosure>
+          </section>
+        ) : null}
       </main>
 
       <SiteFooter />

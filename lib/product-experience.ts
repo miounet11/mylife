@@ -280,7 +280,7 @@ export const productSurfaceRoles: ProductSurfaceRole[] = [
   {
     surface: 'tools',
     label: '工具页',
-    job: '把 120 个工具收敛成问题线，减少乱点。',
+    job: '把工具矩阵收敛成问题线，减少乱点。',
     primaryAction: '选择一条问题线',
     secondaryAction: '推荐少量首轮工具，并接回报告和内容证据。',
     layoutRule: '先分类分流，再展示少量推荐，不展示完整大清单。',
@@ -588,17 +588,60 @@ export const productSurfaceRoles: ProductSurfaceRole[] = [
 ];
 
 export const productTrustSignals = [
-  '只需确认时间和地点',
-  '先出一页可读总览',
-  '深入内容可逐层展开',
+  '可追溯推理链路',
+  '过去事件可回测',
+  '多专家协同校验',
   '工具和事件持续复访',
 ] as const;
 
 export const analyzeOutcomeCards = [
-  { label: '分析顺序', value: '结构 -> 阶段 -> 环境 -> 动作' },
-  { label: '时间基准', value: '真太阳时优先' },
-  { label: '首份结果', value: '先看一页总览' },
-  { label: '后续路径', value: '追问 / 工具 / 验证' },
+  { label: '分析顺序', value: '排盘 -> 结构 -> 阶段 -> 事件 -> 动作' },
+  { label: '时间基准', value: '真太阳时与大运流年' },
+  { label: '首份结果', value: '一页总览 + 推理轨迹' },
+  { label: '后续路径', value: '追问 / 工具 / 事件验证' },
+] as const;
+
+export const productReasoningTraceSteps = [
+  {
+    key: 'chart-foundation',
+    title: '命盘底座',
+    description: '先校正出生时间、地点和真太阳时，再生成四柱、五行、十神、神煞与大运基础。',
+  },
+  {
+    key: 'structure-diagnosis',
+    title: '结构定性',
+    description: '判断日主强弱、格局、用神忌神和当前承压点，避免直接进入模板化结论。',
+  },
+  {
+    key: 'timing-window',
+    title: '阶段定位',
+    description: '把大运、流年和人生 K 线对齐，识别当前更像上升、回撤、蓄势还是转折。',
+  },
+  {
+    key: 'expert-cross-check',
+    title: '专家交叉校验',
+    description: '事业财富、关系家庭、健康生活、策略行动等专家视角并行复核，降低单一解释偏差。',
+  },
+  {
+    key: 'validation-loop',
+    title: '现实回测',
+    description: '把过去事件、未来节点和用户反馈沉淀成验证样本，让报告可以被纠偏和升级。',
+  },
+] as const;
+
+export const productBenchmarkSignals = [
+  {
+    label: '不是模板报告',
+    value: '每份结果保留结构、阶段、证据和动作链路',
+  },
+  {
+    label: '可做事件回测',
+    value: '用过去年份和现实事件验证判断是否命中',
+  },
+  {
+    label: '面向选择判断',
+    value: '后续接入选项评分模式，按候选答案逐项给出判断依据',
+  },
 ] as const;
 
 export const toolEntryModes = [

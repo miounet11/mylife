@@ -10,6 +10,7 @@ import {
   type ReportReasoningMode,
 } from '@/lib/report-reasoning-mode';
 import { describeReportDeliveryStage } from '@/lib/report-quality';
+import { productReasoningTraceSteps } from '@/lib/product-experience';
 
 type EngineBuilds = {
   core: string;
@@ -289,6 +290,21 @@ export default function ReportEnginePanel({
       </div>
 
       <div className="mt-4 rounded-[1.4rem] bg-slate-50 px-4 py-4 text-sm text-[color:var(--ink)]">{description}</div>
+
+      <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">
+        <div className="text-sm font-semibold text-[color:var(--ink)]">本报告推理链路</div>
+        <div className="mt-3 grid gap-2">
+          {productReasoningTraceSteps.map((step, index) => (
+            <div key={step.key} className="rounded-2xl bg-slate-50 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+                <span className="text-[color:var(--accent-strong)]">{index + 1}</span>
+                <span>{step.title}</span>
+              </div>
+              <div className="mt-1 text-xs leading-6 text-[color:var(--muted)]">{step.description}</div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {upgradeJob?.status && ['pending', 'running', 'retry', 'failed', 'completed'].includes(upgradeJob.status) ? (
         <div className="mt-4 rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-4">

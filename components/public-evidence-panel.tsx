@@ -1,5 +1,6 @@
 import { BookOpenText, Compass, LibraryBig, Sparkles } from 'lucide-react';
 import ContentCardLink from '@/components/content-card-link';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ToolCardLink from '@/components/tool-card-link';
 import type { ToolDefinition } from '@/lib/tools';
 
@@ -26,7 +27,7 @@ export default function PublicEvidencePanel({
   page,
   sectionLabel = '延伸路径与证据',
   title,
-  description,
+  description: _description,
   surfaceKey,
   toolItems,
   knowledgeItems,
@@ -43,28 +44,25 @@ export default function PublicEvidencePanel({
   caseItems?: CaseItem[];
   insightItems?: InsightItem[];
 }) {
-  const visibleColumnCount = [toolItems, knowledgeItems, caseItems, insightItems].filter((items) => !!items).length;
+  const visibleColumnCount = [toolItems, knowledgeItems, caseItems, insightItems].filter((items) => !!items?.length).length;
   const columnClassName = visibleColumnCount >= 4 ? 'xl:grid-cols-4' : 'xl:grid-cols-3';
+
+  if (visibleColumnCount === 0) {
+    return null;
+  }
 
   return (
     <section className="mt-10">
-      <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-        <div className="section-label">
-          <Sparkles className="h-3.5 w-3.5" />
-          {sectionLabel}
-        </div>
-        <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">{title}</h2>
-        <div className="intro-copy mt-3 max-w-3xl">{description}</div>
-
+      <PriorityDisclosure label={sectionLabel} title={title}>
         <div className={`mt-6 grid gap-6 ${columnClassName}`}>
-          {toolItems ? (
+          {toolItems?.length ? (
             <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Compass className="h-4 w-4" />
                 相关工具
               </div>
               <div className="mt-4 grid gap-3">
-                {toolItems.length > 0 ? toolItems.map((tool) => (
+                {toolItems.map((tool) => (
                   <ToolCardLink
                     key={tool.slug}
                     href={`/tools/${tool.slug}`}
@@ -76,21 +74,19 @@ export default function PublicEvidencePanel({
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
                   </ToolCardLink>
-                )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
-                )}
+                ))}
               </div>
             </div>
           ) : null}
 
-          {knowledgeItems ? (
+          {knowledgeItems?.length ? (
             <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <BookOpenText className="h-4 w-4" />
                 相关知识
               </div>
               <div className="mt-4 grid gap-3">
-                {knowledgeItems.length > 0 ? knowledgeItems.map((item) => (
+                {knowledgeItems.map((item) => (
                   <ContentCardLink
                     key={item.slug}
                     href={`/knowledge/${item.slug}`}
@@ -101,21 +97,19 @@ export default function PublicEvidencePanel({
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
-                )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应知识内容</div>
-                )}
+                ))}
               </div>
             </div>
           ) : null}
 
-          {caseItems ? (
+          {caseItems?.length ? (
             <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <LibraryBig className="h-4 w-4" />
                 相关案例
               </div>
               <div className="mt-4 grid gap-3">
-                {caseItems.length > 0 ? caseItems.map((item) => (
+                {caseItems.map((item) => (
                   <ContentCardLink
                     key={item.slug}
                     href={`/cases/${item.slug}`}
@@ -126,21 +120,19 @@ export default function PublicEvidencePanel({
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
-                )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
-                )}
+                ))}
               </div>
             </div>
           ) : null}
 
-          {insightItems ? (
+          {insightItems?.length ? (
             <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Sparkles className="h-4 w-4" />
                 相关洞察
               </div>
               <div className="mt-4 grid gap-3">
-                {insightItems.length > 0 ? insightItems.map((item) => (
+                {insightItems.map((item) => (
                   <ContentCardLink
                     key={item.slug}
                     href={`/insights/${item.type}/${item.slug}`}
@@ -151,14 +143,12 @@ export default function PublicEvidencePanel({
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
                   </ContentCardLink>
-                )) : (
-                  <div className="rounded-[1.25rem] bg-slate-50 p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
-                )}
+                ))}
               </div>
             </div>
           ) : null}
         </div>
-      </div>
+      </PriorityDisclosure>
     </section>
   );
 }

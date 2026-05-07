@@ -45,7 +45,7 @@ export function listRealUserReportUpgradeCandidates(windowDays = 7, limit = 12):
   }>;
 
   return viewedRows
-    .map((row) => {
+    .map((row): RealUserReportUpgradeCandidate | null => {
       const reportId = `${row.report_id || ''}`.trim();
       const report = reportId ? fortuneOperations.getById(reportId) : null;
       if (!report || isLikelyTestReportName(report.name)) {

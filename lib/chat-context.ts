@@ -253,6 +253,9 @@ export function buildChatExperienceContext(params: {
       intentPreset?.key === 'meihua-enhancement'
         ? '回答时优先聚焦近 7 天到 30 天的短周期变化。'
         : '',
+      intentPreset?.key === 'home-layout-diagnosis'
+        ? '回答时优先基于用户上传户型图做问题清单、因果链、优先级和低成本调整；方向缺失必须说明结构假设和判断边界。'
+        : '',
       recentEvents.length > 0
         ? `用户最近事件：${recentEvents.map((item) => `${item.date} ${item.title}`).join('；')}。`
         : '当前还没有已记录的现实事件，可提醒用户把关键节点存成事件，后续复盘。',

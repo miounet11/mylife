@@ -11,7 +11,7 @@ export type UpdatesStatusSummary = UpdatesSummary;
 export default function UpdatesStatusPanel({
   reportId,
   title = '这份报告的后续更新',
-  description = '这里直接显示当前订阅、升级任务和最近一次月度更新，不必只靠邮箱回收。',
+  description: _description = '这里直接显示当前订阅、升级任务和最近一次月度更新，不必只靠邮箱回收。',
   compact = false,
   initialSummary,
   initialAuthenticated,
@@ -110,7 +110,6 @@ export default function UpdatesStatusPanel({
             <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
             <div className="font-semibold text-[color:var(--ink)]">{title}</div>
           </div>
-          {description ? <div className="intro-copy mt-2 text-sm text-[color:var(--muted)]">{description}</div> : null}
         </div>
         <Link
           href={ctaHref}

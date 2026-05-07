@@ -3,12 +3,14 @@ import type { FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
 import {
   buildJourneyForContent,
   buildJourneyForReport,
+  buildJourneyForTool,
   buildPersonalizedJourney,
 } from '@/lib/surface-journeys';
 import {
   deleteManagedContentEntry,
   saveManagedContentEntry,
 } from '@/lib/content-store';
+import { getToolDefinition } from '@/lib/tools';
 
 describe('surface journeys', () => {
   test('buildJourneyForReport returns linked tools and content cards', () => {
@@ -41,6 +43,17 @@ describe('surface journeys', () => {
     expect(journey.knowledgeCards.length).toBeGreaterThan(0);
     expect(journey.caseCards.length).toBeGreaterThan(0);
     expect(journey.toolCards[0]?.href).toContain('source=');
+  });
+
+  test('shared journeys expose at least two related items per content column when inventory exists', () => {
+    const tool = getToolDefinition('application-palmistry-reading') || getToolDefinition('career-timing-window');
+
+    expect(tool).toBeTruthy();
+    const journey = buildJourneyForTool(tool!);
+
+    expect(journey.toolCards.length).toBeGreaterThanOrEqual(2);
+    expect(journey.knowledgeCards.length).toBeGreaterThanOrEqual(2);
+    expect(journey.caseCards.length).toBeGreaterThanOrEqual(2);
   });
 
   test('buildJourneyForContent respects manual related slugs before inferred pool', () => {

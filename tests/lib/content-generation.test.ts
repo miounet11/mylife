@@ -1,17 +1,26 @@
 import {
   buildReasoningPlanPrompt,
+  generateManagedContentDrafts,
   getEffectiveContentGenerationTimeoutMs,
   isAutomatedGrowthPlatform,
   normalizeGeneratedContentDraft,
   resolveContentGenerationLlmConfig,
   sanitizeContentSlug,
 } from '@/lib/content-generation';
+import { callJsonLLM } from '@/lib/agentic-report/llm-client';
+
+jest.mock('@/lib/agentic-report/llm-client', () => ({
+  callJsonLLM: jest.fn(),
+}));
+
+const mockedCallJsonLLM = callJsonLLM as jest.MockedFunction<typeof callJsonLLM>;
 
 describe('content generation helpers', () => {
   const originalEnv = process.env;
 
   afterEach(() => {
     process.env = originalEnv;
+    mockedCallJsonLLM.mockReset();
   });
 
   it('sanitizes english slug and falls back when unavailable', () => {
@@ -23,16 +32,31 @@ describe('content generation helpers', () => {
     process.env = {
       ...originalEnv,
       CONTENT_GENERATION_MODEL: 'grok-420-fast',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto,gpt-5.2',
       CONTENT_GENERATION_MAX_TOKENS: '2600',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual({
       model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto'],
+      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
       maxTokens: 2600,
       disableHealthReorder: true,
     });
+  });
+
+  it('keeps content generation on the unified chain even when legacy env values exist', () => {
+    process.env = {
+      ...originalEnv,
+      DEFAULT_MODEL: 'gpt-5.4',
+      MODEL_FALLBACK_CHAIN: 'gpt-5.4,gpt-5.2-codex,grok-420-fast,auto',
+      CONTENT_GENERATION_MODEL: 'gpt-5.4',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4,grok-420-fast,auto',
+    };
+
+    expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
+      model: 'grok-420-fast',
+      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
+    }));
   });
 
   it('defaults socratic and segmented generation to enabled', () => {
@@ -42,7 +66,7 @@ describe('content generation helpers', () => {
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
       model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto'],
+      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
     }));
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',
@@ -62,8 +86,8 @@ describe('content generation helpers', () => {
       CONTENT_GENERATION_TIMEOUT_MS: '32000',
     };
 
-    expect(getEffectiveContentGenerationTimeoutMs({ platform: 'public-growth' })).toBe(8000);
-    expect(getEffectiveContentGenerationTimeoutMs({ platform: 'seo' })).toBe(32000);
+    expect(getEffectiveContentGenerationTimeoutMs({ topic: '测试主题', platform: 'public-growth' })).toBe(8000);
+    expect(getEffectiveContentGenerationTimeoutMs({ topic: '测试主题', platform: 'seo' })).toBe(32000);
   });
 
   it('builds socratic reasoning prompts before long-form writing', () => {
@@ -79,6 +103,42 @@ describe('content generation helpers', () => {
     expect(prompt.user).toContain('请先完成一份内容推理方案');
     expect(prompt.user).toContain('sectionGoals');
     expect(prompt.user).toContain('conversionBridge');
+  });
+
+  it('uses the content LLM scope for generated drafts', async () => {
+    process.env = {
+      ...originalEnv,
+      CONTENT_GENERATION_SOCRATIC_ENABLED: '0',
+      CONTENT_GENERATION_SEGMENTED_ENABLED: '0',
+      CONTENT_GENERATION_TIMEOUT_MS: '32000',
+    };
+    mockedCallJsonLLM.mockResolvedValueOnce({
+      title: '海外华人怎么看流年节奏',
+      slug: 'overseas-chinese-year-rhythm',
+      excerpt: '这是一篇面向海外华人的流年节奏说明，用来解释为什么应当把命理语言翻译成生活决策变量。',
+      seoTitle: '海外华人流年节奏怎么看',
+      seoDescription: '用可理解的方式解释海外华人如何参考流年节奏，但不把它当成确定命运。',
+      tags: ['海外华人', '流年', '决策'],
+      sections: [
+        { title: '先看现实问题', paragraphs: ['海外用户真正关心的是迁居、工作和家庭节奏如何互相影响。', '命理内容必须先回到现实问题，避免直接给出结论。'] },
+        { title: '再看时间窗口', paragraphs: ['时间窗口适合用来提示观察重点，而不是替代现实判断。', '用户可以把它当成复盘和排序工具。'] },
+        { title: '最后落到行动', paragraphs: ['内容需要给出可验证的下一步动作。', '这样公开文章才有真实使用价值。'] },
+        { title: '边界必须清楚', paragraphs: ['所有判断都应避免确定性承诺。', '用户仍然需要结合真实条件判断。'] },
+      ],
+    } as never);
+
+    const result = await generateManagedContentDrafts({
+      topic: '海外华人怎么看流年节奏',
+      platform: 'seo',
+      contentType: 'knowledge',
+      status: 'draft',
+    });
+
+    expect(result.llmSucceededCount).toBe(1);
+    expect(mockedCallJsonLLM).toHaveBeenCalledWith(expect.objectContaining({
+      traceLabel: 'content:knowledge',
+      scope: 'content',
+    }));
   });
 
   it('normalizes incomplete generated content into a valid draft', () => {

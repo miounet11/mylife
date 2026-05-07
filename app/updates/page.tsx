@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { BellRing, RefreshCcw, ScrollText, Sparkles } from 'lucide-react';
+import { BellRing, BookOpenText, RefreshCcw, ScrollText, Sparkles } from 'lucide-react';
 import NewsletterManager from '@/components/newsletter-manager';
 import NewsletterSignup from '@/components/newsletter-signup';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, reportUpgradeJobOperations, userLifecycleEmailRunOperations } from '@/lib/database';
 import { getAuthSession } from '@/lib/auth';
 import { getCurrentUserId } from '@/lib/user-utils';
@@ -75,41 +75,37 @@ export default async function UpdatesPage({
       />
       <SiteHeader ctaHref={analyzeHref} ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
               邮件与留存
-            </>
-          )}
-          title="更新中心"
-          description="这里负责查看订阅、报告升级和后续提醒，让结果不是一次性页面，而是可以持续回访。"
-          hint="如果你还没有生成过报告，先完成一次分析，再回来开启更有上下文的更新。"
-          actions={[
-            <Link key="my-updates" href={hasSessionContext ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
+            </div>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">更新中心</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link href={hasSessionContext ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
               {hasSessionContext ? '查看我的更新' : '先登录查看'}
-            </Link>,
-            <Link key="analyze" href={analyzeHref} className="action-secondary">开始分析</Link>,
-          ]}
-          highlights={[
-            { body: '查询订阅状态' },
-            { body: '恢复内容更新' },
-            { body: '一键退订邮件' },
-          ]}
-          highlightsColumns="md:grid-cols-3"
-        />
+            </Link>
+            <Link href={analyzeHref} className="action-secondary">开始分析</Link>
+            <Link href="/docs/updates-subscription" className="action-secondary">
+              <BookOpenText className="h-4 w-4" />
+              使用方法
+            </Link>
+          </div>
+        </section>
 
-        <section className="mt-10">
-          <div id="my-updates-center" className="glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-5">
+          <div id="my-updates-center" className="glass-panel rounded-xl p-4 md:p-6">
             <div className="section-label">
               <BellRing className="h-3.5 w-3.5" />
               我的更新中心
             </div>
-            <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">我的更新</h2>
+            <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">我的更新</h2>
 
             {hasSessionContext ? (
-              <div className="mt-6 space-y-6">
+              <div className="mt-5 space-y-5">
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <StatusMetric
                     label="当前登录邮箱"
@@ -138,7 +134,7 @@ export default async function UpdatesPage({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="soft-card rounded-[1.75rem] p-6">
+                  <div className="soft-card rounded-xl p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <RefreshCcw className="h-5 w-5 text-[color:var(--accent-strong)]" />
                       <div className="font-semibold text-[color:var(--ink)]">我的报告更新</div>
@@ -173,7 +169,7 @@ export default async function UpdatesPage({
                     </div>
                   </div>
 
-                  <div className="soft-card rounded-[1.75rem] p-6">
+                  <div className="soft-card rounded-xl p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <ScrollText className="h-5 w-5 text-[color:var(--warm)]" />
                       <div className="font-semibold text-[color:var(--ink)]">最近提醒记录</div>
@@ -205,12 +201,12 @@ export default async function UpdatesPage({
                   </div>
                 </div>
 
-                <div className="soft-card rounded-[1.75rem] p-6">
-                  <div className="flex items-center gap-3">
-                    <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
-                    <div className="font-semibold text-[color:var(--ink)]">生命周期提醒</div>
-                  </div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <PriorityDisclosure
+                  label="生命周期提醒"
+                  title="注册、报告和召回提醒记录"
+                  description="不是用户进入更新页的第一任务，默认收起。"
+                >
+                  <div className="grid gap-3 md:grid-cols-2">
                     {lifecycleRuns.length > 0 ? lifecycleRuns.map((item) => (
                       <div key={item.id} className="rounded-[1.4rem] bg-white px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
@@ -232,7 +228,7 @@ export default async function UpdatesPage({
                       </div>
                     )}
                   </div>
-                </div>
+                </PriorityDisclosure>
               </div>
             ) : (
               <div className="mt-6 rounded-[1.5rem] border border-[color:var(--line)] bg-white/80 px-5 py-5">
@@ -250,16 +246,21 @@ export default async function UpdatesPage({
           </div>
         </section>
 
-        <section className="mt-10">
-          <NewsletterManager />
-        </section>
-
-        <section className="mt-12">
-          <NewsletterSignup
-            source={source || 'updates_page'}
-            title="订阅更新"
-            description="把知识、案例和产品更新接回邮箱，方便你在报告生成后继续收到后续内容。"
-          />
+        <section className="mt-8">
+          <PriorityDisclosure
+            label="邮箱与订阅"
+            title="订阅、恢复或退订邮件"
+            description="放在更新状态之后，避免抢占已登录用户的更新中心。"
+          >
+            <div className="space-y-5">
+              <NewsletterManager />
+              <NewsletterSignup
+                source={source || 'updates_page'}
+                title="订阅更新"
+                description="把知识、案例和产品更新接回邮箱，方便你在报告生成后继续收到后续内容。"
+              />
+            </div>
+          </PriorityDisclosure>
         </section>
       </main>
 

@@ -44,6 +44,7 @@ jest.mock('@/lib/llm-provider-health', () => ({
     snapshots: [],
   })),
   hasRunnableModelsForSnapshots: jest.fn(() => true),
+  shouldConservativelyDeferForSnapshots: jest.fn(() => false),
 }));
 
 jest.mock('@/lib/report-quality', () => ({
@@ -61,7 +62,11 @@ jest.mock('@/lib/report-version-lineage', () => ({
 }));
 
 import { analyticsOperations, fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
-import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
+import {
+  assessScopeProviderHealth,
+  hasRunnableModelsForSnapshots,
+  shouldConservativelyDeferForSnapshots,
+} from '@/lib/llm-provider-health';
 import { regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
 import { enqueueReportUpgrade, processNextReportUpgradeJob, processReportUpgradeBatch } from '@/lib/report-upgrade-jobs';
 
@@ -70,6 +75,7 @@ const mockedReportUpgradeJobOperations = reportUpgradeJobOperations as jest.Mock
 const mockedAnalyticsOperations = analyticsOperations as jest.Mocked<typeof analyticsOperations>;
 const mockedAssessScopeProviderHealth = assessScopeProviderHealth as jest.MockedFunction<typeof assessScopeProviderHealth>;
 const mockedHasRunnableModelsForSnapshots = hasRunnableModelsForSnapshots as jest.MockedFunction<typeof hasRunnableModelsForSnapshots>;
+const mockedShouldConservativelyDeferForSnapshots = shouldConservativelyDeferForSnapshots as jest.MockedFunction<typeof shouldConservativelyDeferForSnapshots>;
 const mockedRegenerateReportFromRecord = regenerateReportFromRecord as jest.MockedFunction<typeof regenerateReportFromRecord>;
 const mockedRepairStoredReportNarrative = repairStoredReportNarrative as jest.MockedFunction<typeof repairStoredReportNarrative>;
 
@@ -91,6 +97,8 @@ describe('report upgrade jobs', () => {
     });
     mockedHasRunnableModelsForSnapshots.mockReset();
     mockedHasRunnableModelsForSnapshots.mockReturnValue(true);
+    mockedShouldConservativelyDeferForSnapshots.mockReset();
+    mockedShouldConservativelyDeferForSnapshots.mockReturnValue(false);
   });
 
   it('enqueues a pending upgrade when providers are healthy', () => {
@@ -130,7 +138,7 @@ describe('report upgrade jobs', () => {
       expect.objectContaining({
         reportId: 'report_pending',
         status: 'pending',
-        lastError: null,
+        lastError: undefined,
       })
     );
   });
@@ -685,7 +693,91 @@ describe('report upgrade jobs', () => {
         lastError: 'PROVIDER_UNHEALTHY',
         meta: expect.objectContaining({
           deferredForProvider: true,
+          providerDeferralCount: 1,
+          providerDeferMs: expect.any(Number),
           repairOnlyApplied: true,
+        }),
+      })
+    );
+  });
+
+  it('backs off repeated provider deferrals for background upgrades', async () => {
+    mockedAssessScopeProviderHealth.mockReturnValue({
+      shouldDefer: true,
+      snapshots: [
+        {
+          model: 'grok-420-fast',
+          defaultOrder: 0,
+          state: 'open',
+          attempts: 8,
+          successes: 0,
+          failures: 8,
+          successRate: 0,
+          failureRate: 1,
+          avgLatencyMs: 4200,
+          consecutiveFailures: 8,
+          rankPenalty: 1000,
+        },
+      ],
+    } as any);
+    mockedHasRunnableModelsForSnapshots.mockReturnValue(false);
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue({
+      id: 'job_provider_backoff',
+      reportId: 'report_provider_backoff',
+      userId: 'user_provider_backoff',
+      status: 'running',
+      attempts: 1,
+      maxAttempts: 6,
+      targetScore: 95,
+      lastScore: 78,
+      bestScore: 78,
+      bestGrade: 'B',
+      meta: {
+        providerDeferralCount: 2,
+      },
+    } as any);
+    mockedFortuneOperations.getById.mockReturnValue({
+      id: 'report_provider_backoff',
+      userId: 'user_provider_backoff',
+      name: '李嘉文',
+      birthDate: '1990-01-01',
+      birthTime: '08:00',
+      birthPlace: '北京',
+      timezone: 8,
+      gender: 'male',
+      bazi: {},
+      fiveElements: {},
+      tenGods: {},
+      pattern: {},
+      fortune: {},
+      advice: {},
+      evidence: {},
+      reportVersion: 'v3',
+      analysis: {
+        qualityAudit: {
+          overallScore: 78,
+          grade: 'B',
+          deliveryTier: 'basic',
+          targetAchieved: false,
+        },
+      },
+    } as any);
+
+    const result = await processNextReportUpgradeJob();
+
+    expect(result).toMatchObject({
+      processed: true,
+      status: 'retry',
+      reason: 'provider_unhealthy',
+    });
+    expect(mockedRegenerateReportFromRecord).not.toHaveBeenCalled();
+    expect(mockedReportUpgradeJobOperations.markDeferred).toHaveBeenCalledWith(
+      'job_provider_backoff',
+      expect.objectContaining({
+        lastError: 'PROVIDER_UNHEALTHY',
+        meta: expect.objectContaining({
+          providerDeferralCount: 3,
+          providerDeferMs: expect.any(Number),
         }),
       })
     );

@@ -59,7 +59,10 @@
     "visual:qa": "tsx scripts/visual-assets/qa-assets.ts",
     "visual:review": "tsx scripts/visual-assets/review-asset.ts",
     "visual:review-batch": "tsx scripts/visual-assets/review-batch.ts",
-    "visual:set-output": "tsx scripts/visual-assets/set-output.ts"
+    "visual:set-output": "tsx scripts/visual-assets/set-output.ts",
+    "visual:home-layout:manifest": "tsx scripts/visual-assets/generate-home-layout-diagnosis-manifest.ts",
+    "visual:palmistry:manifest": "tsx scripts/visual-assets/generate-palmistry-manifest.ts",
+    "visual:mingli-seo-geo:manifest": "tsx scripts/visual-assets/generate-mingli-seo-geo-expansion-manifest.ts"
   },
   "dependencies": {
     "@codeany/open-agent-sdk": "github:codeany-ai/open-agent-sdk-typescript#366438d2ef94775a4515301bcf8a58ab866c1731",

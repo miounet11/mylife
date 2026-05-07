@@ -17,6 +17,13 @@ import {
   type VisualAssetStatus,
 } from '@/lib/visual-assets';
 import {
+  getVisualAssetConcurrencyLimit,
+  getVisualAssetNarrativeConcurrencyLimit,
+  getVisualAssetRunStatusLimit,
+  getVisualAssetWorkflowSnapshotItemLimit,
+  isVisualAssetWorkflowSnapshotIncludeItemsEnabled,
+} from '@/lib/env';
+import {
   DEFAULT_VISUAL_ASSET_WORKFLOW_PATH,
   loadVisualAssetWorkflow,
   type VisualAssetWorkflow,
@@ -31,6 +38,8 @@ export type VisualAssetRunOptions = {
   limit?: number;
   reset?: boolean;
   stages?: Array<'import' | 'images' | 'narratives' | 'snapshot'>;
+  snapshotLimit?: number;
+  includeSnapshotItems?: boolean;
 };
 
 export type VisualAssetRunEvent = {
@@ -87,6 +96,18 @@ function shouldRunStage(options: VisualAssetRunOptions, stage: 'import' | 'image
 
 function clampLimit(value: number | undefined, fallback: number) {
   return Number.isFinite(value) && Number(value) > 0 ? Math.round(Number(value)) : fallback;
+}
+
+function resolveSnapshotLimit(value?: number) {
+  return clampLimit(value, getVisualAssetRunStatusLimit());
+}
+
+function resolveImageConcurrency(workflow: VisualAssetWorkflow) {
+  return Math.min(getVisualAssetConcurrencyLimit(), workflow.runtime.maxConcurrentImageJobs);
+}
+
+function resolveNarrativeConcurrency(workflow: VisualAssetWorkflow) {
+  return Math.min(getVisualAssetNarrativeConcurrencyLimit(), workflow.runtime.maxConcurrentNarrativeJobs);
 }
 
 function filterAssetsByIds(assets: VisualAssetRecord[], assetIds?: string[]) {
@@ -458,7 +479,7 @@ export async function generateVisualAssetNarrativeWithWorkflow(
 }
 
 export function summarizeVisualAssetBatch(batchId: string, limit = 500) {
-  const assets = listVisualAssets({ batchId, limit });
+  const assets = listVisualAssets({ batchId, limit: clampLimit(limit, getVisualAssetRunStatusLimit()) });
   const countBy = (selector: (asset: VisualAssetRecord) => string | null | undefined) => (
     assets.reduce<Record<string, number>>((acc, asset) => {
       const key = selector(asset) || 'none';
@@ -476,7 +497,7 @@ export function summarizeVisualAssetBatch(batchId: string, limit = 500) {
     generatedImages: assets.filter((asset) => Boolean(asset.publicUrl)).length,
     localImages: assets.filter((asset) => Boolean(asset.outputPath)).length,
     narrativesComplete: assets.filter((asset) => asset.narrativeSections.length > 0).length,
-    items: assets.map((asset) => ({
+    items: assets.slice(0, getVisualAssetWorkflowSnapshotItemLimit()).map((asset) => ({
       id: asset.id,
       title: asset.title,
       status: asset.status,
@@ -495,6 +516,8 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
   const startedAt = nowIso();
   const manifest = readManifest(options.manifestPath);
   const batchId = options.batchId || manifest.batch.id;
+  const snapshotLimit = resolveSnapshotLimit(options.snapshotLimit);
+  const includeSnapshotItems = options.includeSnapshotItems ?? isVisualAssetWorkflowSnapshotIncludeItemsEnabled();
 
   recorder.push({
     stage: 'workflow',
@@ -547,6 +570,7 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
   }
 
   if (workflow.stages.generateImages && shouldRunStage(options, 'images')) {
+    const imageConcurrency = resolveImageConcurrency(workflow);
     const assets = filterAssetsByIds(
       listVisualAssets({
         batchId,
@@ -558,11 +582,11 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
     recorder.push({
       stage: 'images',
       event: 'started',
-      meta: { count: assets.length, concurrency: workflow.runtime.maxConcurrentImageJobs },
+      meta: { count: assets.length, concurrency: imageConcurrency },
     });
     const results = await mapWithConcurrency(
       assets,
-      workflow.runtime.maxConcurrentImageJobs,
+      imageConcurrency,
       async (asset) => {
         const result = await generateVisualAssetImageWithWorkflow(workflow, asset, recorder.push);
         recorder.push({
@@ -587,6 +611,7 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
   }
 
   if (workflow.stages.generateNarratives && shouldRunStage(options, 'narratives')) {
+    const narrativeConcurrency = resolveNarrativeConcurrency(workflow);
     const assets = listVisualAssets({
       batchId,
       limit: Math.max(manifest.assets.length || 50, clampLimit(options.limit, manifest.assets.length || 50)),
@@ -597,11 +622,11 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
     recorder.push({
       stage: 'narratives',
       event: 'started',
-      meta: { count: assets.length, concurrency: workflow.runtime.maxConcurrentNarrativeJobs },
+      meta: { count: assets.length, concurrency: narrativeConcurrency },
     });
     const results = await mapWithConcurrency(
       assets,
-      workflow.runtime.maxConcurrentNarrativeJobs,
+      narrativeConcurrency,
       async (asset) => {
         const result = await generateVisualAssetNarrativeWithWorkflow(workflow, asset, recorder.push);
         recorder.push({
@@ -624,7 +649,10 @@ export async function runVisualAssetWorkflow(options: VisualAssetRunOptions): Pr
     });
   }
 
-  const summary = summarizeVisualAssetBatch(batchId);
+  const summary = summarizeVisualAssetBatch(batchId, snapshotLimit);
+  if (!includeSnapshotItems) {
+    summary.items = [];
+  }
   recorder.push({
     stage: 'snapshot',
     event: 'completed',

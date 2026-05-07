@@ -16,8 +16,7 @@ import {
 import { getPremiumServiceAlertEmails } from '@/lib/env';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { generateId } from '@/lib/utils';
-import { getPremiumServiceLabel } from '@/lib/report-premium-services';
-import { normalizeChatIntent } from '@/lib/chat-intent';
+import { getPremiumServiceLabel, normalizePremiumServiceKey } from '@/lib/report-premium-services';
 
 function normalizeContactValue(value?: string | null) {
   return `${value || ''}`.trim();
@@ -81,7 +80,7 @@ export async function POST(request: NextRequest) {
     const userAgent = request.headers.get('user-agent');
     const body = await request.json();
     const reportId = typeof body?.reportId === 'string' ? body.reportId.trim() : '';
-    const serviceKey = normalizeChatIntent(typeof body?.serviceKey === 'string' ? body.serviceKey : undefined);
+    const serviceKey = normalizePremiumServiceKey(typeof body?.serviceKey === 'string' ? body.serviceKey : undefined);
     const toolSlug = typeof body?.toolSlug === 'string' ? body.toolSlug.trim() : '';
     const question = `${body?.question || ''}`.trim();
     const contactName = `${body?.contactName || ''}`.trim();

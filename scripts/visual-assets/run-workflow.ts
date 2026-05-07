@@ -13,6 +13,12 @@ function parseLimit() {
   return Number.isFinite(value) && Number(value) > 0 ? Math.round(Number(value)) : undefined;
 }
 
+function parseSnapshotLimit() {
+  const raw = parseStringArg('snapshot-limit');
+  const value = raw ? Number(raw) : undefined;
+  return Number.isFinite(value) && Number(value) > 0 ? Math.round(Number(value)) : undefined;
+}
+
 function parseBooleanFlag(name: string) {
   return process.argv.includes(`--${name}`);
 }
@@ -39,6 +45,8 @@ async function main() {
     limit: parseLimit(),
     reset: parseBooleanFlag('reset'),
     stages: parseStages(),
+    snapshotLimit: parseSnapshotLimit(),
+    includeSnapshotItems: !parseBooleanFlag('no-snapshot-items'),
   });
 
   console.log(JSON.stringify(result, null, 2));

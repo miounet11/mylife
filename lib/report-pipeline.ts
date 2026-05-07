@@ -1,7 +1,7 @@
 import { analyzeFortune } from '@/lib/fortune-engine';
 import { createAgenticContext, runAgenticPipeline } from '@/lib/agentic-report';
 import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-definitions';
-import { getDefaultModel, isAgenticPipelineEnabled } from '@/lib/env';
+import { isAgenticPipelineEnabled } from '@/lib/env';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import {
   assessScopeProviderHealth,
@@ -15,8 +15,8 @@ import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import { parseLocalDate } from '@/lib/utils';
 
-const ANALYZE_LLM_CORE_TIMEOUT_MS = 12000;
-const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 3200;
+const ANALYZE_LLM_CORE_TIMEOUT_MS = 18000;
+const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 6000;
 const ENABLE_AGENTIC_PIPELINE = isAgenticPipelineEnabled();
 const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
@@ -27,8 +27,8 @@ const ANALYZE_FALLBACK_AGENT_KEYS: CoreAgentKey[] = [
   'kline_narrative',
   'strategy_advisor',
 ];
-const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 13000;
-const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 12000;
+const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 18000;
+const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 17000;
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {
@@ -191,7 +191,7 @@ export async function generateVersionedReport(params: {
       : '当前直接进入并发专家 Agent 阶段，优先保证结果稳定交付。',
   });
   const agentScopeHealth = assessScopeProviderHealth(
-    getModelFallbackChain(getDefaultModel()),
+    getModelFallbackChain(undefined, 'agent'),
     'agent'
   );
   const shouldRunAgentic = shouldRunAnalyzeAgentic({

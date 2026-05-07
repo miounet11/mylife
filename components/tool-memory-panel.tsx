@@ -5,7 +5,7 @@ import type { ToolMemorySummary } from '@/lib/tool-context';
 export default function ToolMemoryPanel({
   memory,
   title = '你的历史上下文',
-  description = '',
+  description: _description = '',
 }: {
   memory: ToolMemorySummary | null;
   title?: string;
@@ -24,7 +24,6 @@ export default function ToolMemoryPanel({
             {title}
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">历史上下文</h2>
-          {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
       </div>
 

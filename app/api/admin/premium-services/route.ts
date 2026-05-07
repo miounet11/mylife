@@ -8,7 +8,7 @@ import {
   sendPremiumServiceStatusUpdateEmail,
 } from '@/lib/email';
 import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
-import { getPremiumServiceLabel } from '@/lib/report-premium-services';
+import { getPremiumServiceLabel, isPremiumServiceKey } from '@/lib/report-premium-services';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
 
 function looksLikeEmail(value?: string | null) {
@@ -24,7 +24,7 @@ function isValidPriority(value: string): value is NonNullable<PremiumServiceRequ
 }
 
 function isValidServiceKey(value: string): value is PremiumServiceRequestRecord['serviceKey'] {
-  return ['event-simulation', 'event-verdict', 'event-review', 'meihua-enhancement'].includes(value);
+  return isPremiumServiceKey(value);
 }
 
 function mapStatusLabel(status: PremiumServiceRequestRecord['status']) {

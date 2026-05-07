@@ -3,7 +3,7 @@ export const revalidate = 3600;
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpenText, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
@@ -111,7 +111,7 @@ export default async function ToolCategoryPage({
       />
       <SiteHeader ctaHref="/tools" ctaLabel="回到工具中心" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
         <PublicSurfaceHero
           label={(
             <>
@@ -130,6 +130,10 @@ export default async function ToolCategoryPage({
               <ArrowRight className="ml-1 h-4 w-4" />
             </Link>,
             <Link key="analyze" href="/analyze" className="action-secondary">先做综合判断</Link>,
+            <Link key="docs" href="/docs/use-tools" className="action-secondary">
+              <BookOpenText className="h-4 w-4" />
+              使用方法
+            </Link>,
           ]}
           highlights={[
             { body: `${tools.length} 个工具` },
@@ -140,12 +144,11 @@ export default async function ToolCategoryPage({
         />
 
         {problemLineGuide ? (
-          <section className="mt-8 glass-panel rounded-[1.75rem] p-5 md:p-6">
+          <section className="mt-5 glass-panel rounded-xl p-4 md:p-5">
             <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
               <div>
                 <div className="section-label">问题线规则</div>
-                <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)] md:text-3xl">先确认问题线，再选择一个工具</h2>
-                <p className="intro-copy mt-3">{problemLineGuide.prompt}</p>
+                <h2 className="mt-2 text-2xl font-black text-[color:var(--ink)]">先确认问题线，再选择一个工具</h2>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-[1.25rem] bg-white/78 p-4">
@@ -161,6 +164,29 @@ export default async function ToolCategoryPage({
           </section>
         ) : null}
 
+        <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {tools.map((tool) => (
+            <ToolCardLink
+              key={tool.slug}
+              href={`/tools/${tool.slug}`}
+              toolSlug={tool.slug}
+              category={tool.category}
+              page={`/tools/category/${categoryInfo.key}`}
+              className="block rounded-xl border border-[color:var(--line)] bg-white/82 p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+            >
+              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
+              <h2 className="mt-2 text-lg font-bold leading-snug text-[color:var(--ink)]">{tool.title}</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tool.hookKeywords.slice(0, 3).map((keyword) => (
+                  <span key={keyword} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                    {keyword}
+                  </span>
+                ))}
+              </div>
+            </ToolCardLink>
+          ))}
+        </section>
+
         <PublicEvidencePanel
           page={`/tools/category/${categoryInfo.key}`}
           title="把这组工具接到内容证据层"
@@ -170,32 +196,6 @@ export default async function ToolCategoryPage({
           caseItems={caseItems}
           insightItems={insightItems}
         />
-
-        <section className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {tools.map((tool) => (
-            <ToolCardLink
-              key={tool.slug}
-              href={`/tools/${tool.slug}`}
-              toolSlug={tool.slug}
-              category={tool.category}
-              page={`/tools/category/${categoryInfo.key}`}
-              className="block rounded-[1.75rem] border border-[color:var(--line)] bg-white/82 p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
-            >
-              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
-              <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{tool.title}</h2>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {tool.hookKeywords.slice(0, 3).map((keyword) => (
-                  <span key={keyword} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-              <div className="mt-4 rounded-[1.2rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
-                {tool.caseStories[0]?.outcome || tool.shortTitle}
-              </div>
-            </ToolCardLink>
-          ))}
-        </section>
       </main>
 
       <SiteFooter />

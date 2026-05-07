@@ -72,7 +72,7 @@ describe('env helpers', () => {
     expect(isAutonomousGrowthMonthlyDigestEnabled()).toBe(false);
     expect(isAutonomousGrowthEmailRetryEnabled()).toBe(true);
     expect(isOpenAgentRuntimeEnabled()).toBe(true);
-    expect(getOpenAgentRuntimeModel()).toBe('gpt-5.4-mini');
+    expect(getOpenAgentRuntimeModel()).toBe('grok-420-fast');
   });
 
   it('uses grok primary and auto fallbacks for model helpers by default', async () => {
@@ -104,11 +104,11 @@ describe('env helpers', () => {
 
     expect(getDefaultModel()).toBe('grok-420-fast');
     expect(getOpenAgentRuntimeModel()).toBe('grok-420-fast');
-    expect(getModelFallbackChainEnv()).toBe('auto');
-    expect(getReportModelFallbackChainEnv()).toBe('auto');
-    expect(getReportNarrativeModelFallbackChainEnv()).toBe('auto');
+    expect(getModelFallbackChainEnv()).toBe('auto,gpt-5.2');
+    expect(getReportModelFallbackChainEnv()).toBe('auto,gpt-5.2');
+    expect(getReportNarrativeModelFallbackChainEnv()).toBe('auto,gpt-5.2');
     expect(getContentGenerationModel()).toBe('grok-420-fast');
-    expect(getContentGenerationModelFallbackChainRaw()).toBe('auto');
+    expect(getContentGenerationModelFallbackChainRaw()).toBe('auto,gpt-5.2');
     expect(getVisualAssetApiBaseUrl()).toBe('https://www.gemiai.top/v1');
     expect(getVisualAssetDefaultModel()).toBe('gpt-image-2');
     expect(getVisualAssetCoreModel()).toBe('gpt-image-2-pro');

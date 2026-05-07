@@ -6,6 +6,7 @@ import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { generateId } from '@/lib/utils';
 import { loadWorkflowContract, type LifeKlineWorkflowContract } from '@/lib/workflow-contract';
 import type { FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
+import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 
 export const TOOL_RUN_WORKFLOW_PATH = 'data/workflows/tool-run-v1.json';
 
@@ -217,8 +218,8 @@ async function enhanceToolResultWithLlm(params: {
   const raw = await callJsonLLM<RawToolLlmEnhancement>({
     system: buildToolEnhancementSystemPrompt(),
     user: buildToolEnhancementUserPrompt(params),
-    model: readString(runtime.llmModel, 'grok-420-fast'),
-    modelChain: readStringArray(runtime.llmModelChain),
+    model: getModelFallbackChain(undefined, 'agent')[0],
+    modelChain: getModelFallbackChain(undefined, 'agent'),
     timeoutMs: readNumber(runtime.llmTimeoutMs, 12_000, 1000),
     maxTokens: readNumber(runtime.llmMaxTokens, 1200, 400),
     temperature: 0.45,
@@ -399,10 +400,13 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     eventName: 'tool_run_started',
     page: `/tools/${tool.slug}`,
     meta: {
+      phase: 'server_confirmed',
+      confirmed: true,
       workflowId: workflow.id,
       toolSlug: tool.slug,
       reportId: report.id,
       category: tool.category,
+      source: typeof input.attribution?.source === 'string' ? input.attribution.source : null,
       attribution: input.attribution || null,
     },
   });

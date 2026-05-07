@@ -1,8 +1,35 @@
 import { parseVisualAssetWorkflow } from '@/lib/visual-asset-workflow';
-import { readImageBase64FromProviderResponse, readImageUrlFromProviderResponse } from '@/lib/visual-asset-orchestrator';
+import {
+  readImageBase64FromProviderResponse,
+  readImageUrlFromProviderResponse,
+  runVisualAssetWorkflow,
+} from '@/lib/visual-asset-orchestrator';
 import { buildVisualAssetPrompt, evaluateVisualAssetAutoQa } from '@/lib/visual-assets';
 
+jest.mock('@/lib/visual-assets', () => {
+  const actual = jest.requireActual('@/lib/visual-assets');
+  return {
+    ...actual,
+    importVisualAssetManifest: jest.fn(() => ({ importedCount: 0, assets: [] })),
+    listVisualAssets: jest.fn(() => []),
+    requestVisualAssetImage: jest.fn(),
+    runVisualAssetAutoQa: jest.fn(),
+    updateVisualAssetStatus: jest.fn(),
+  };
+});
+
 describe('visual asset workflow', () => {
+  const originalEnv = process.env;
+
+  beforeEach(() => {
+    process.env = { ...originalEnv };
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    process.env = originalEnv;
+  });
+
   it('parses workflow defaults and typed runtime settings', () => {
     const workflow = parseVisualAssetWorkflow({
       id: 'custom-workflow',
@@ -115,5 +142,60 @@ describe('visual asset workflow', () => {
     expect(qa.errorCodes).not.toContain('IMAGE_ASPECT_RATIO_MISMATCH');
     expect(qa.warnings).toContain('IMAGE_SIZE_LOWER_THAN_REQUESTED');
     expect(qa.status).toBe('needs_review');
+  });
+
+  it('runs workflow image stage with env-limited concurrency', async () => {
+    process.env.VISUAL_ASSET_CONCURRENCY_LIMIT = '2';
+    process.env.VISUAL_ASSET_WORKFLOW_SNAPSHOT_INCLUDE_ITEMS = '0';
+    const visualAssets = await import('@/lib/visual-assets');
+    const records = Array.from({ length: 5 }, (_, index) => ({
+      id: `visual_${index}`,
+      assetType: 'test',
+      module: 'TEST',
+      batchId: 'batch',
+      slug: `visual-${index}`,
+      title: `Visual ${index}`,
+      prompt: 'Required in-image text www.life-kline.com 4-7% non-deterministic',
+      negativePrompt: '',
+      model: 'gpt-image-2',
+      size: '2048x1152',
+      ratio: '16:9',
+      quality: 'medium',
+      sourceImageIds: [],
+      brandReferenceIds: [],
+      narrativeSections: [],
+      targetRoutes: [],
+      relatedContentSlugs: [],
+      relatedToolSlugs: [],
+      relatedReportThemes: [],
+      status: 'prompt_ready',
+      qaStatus: 'pending',
+      qaScore: 0,
+      qaNotes: {},
+      correctionCount: 0,
+      version: 1,
+      meta: {},
+    }));
+    (visualAssets.listVisualAssets as jest.Mock).mockReturnValue(records);
+    (visualAssets.requestVisualAssetImage as jest.Mock).mockResolvedValue({ parsed: {}, raw: '{}' });
+    (visualAssets.updateVisualAssetStatus as jest.Mock).mockImplementation((id: string, params: Record<string, unknown>) => ({
+      ...records.find((record) => record.id === id),
+      ...params,
+    }));
+
+    const result = await runVisualAssetWorkflow({
+      manifestPath: 'data/visual-assets/manifests/home-layout-diagnosis-200-v1.json',
+      stages: ['images', 'snapshot'],
+      batchId: 'batch',
+      limit: 5,
+      snapshotLimit: 5,
+      includeSnapshotItems: false,
+    });
+
+    expect(result.events.find((event) => event.stage === 'images' && event.event === 'started')?.meta).toMatchObject({
+      count: 5,
+      concurrency: 2,
+    });
+    expect(result.summary.items).toEqual([]);
   });
 });

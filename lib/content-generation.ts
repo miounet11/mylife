@@ -4,12 +4,11 @@ import type { ContentSection } from '@/lib/content';
 import type { ContentStatus, ManagedContentType } from '@/lib/content-store';
 import {
   getContentGenerationMaxTokens,
-  getContentGenerationModel,
-  getContentGenerationModelFallbackChainRaw,
   getContentGenerationTimeoutMs,
   isContentGenerationSegmentedEnabled,
   isContentGenerationSocraticEnabled,
 } from '@/lib/env';
+import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 
 export type ContentGenerationMode = 'single' | 'cluster';
 export type ContentGenerationLocale = 'zh-CN' | 'zh-TW' | 'zh-HK' | 'zh-SG' | 'zh-MY' | 'zh-US' | 'en-US' | 'en-GB' | 'en-SG';
@@ -102,26 +101,12 @@ function uniqueStrings(values: string[]) {
   return [...new Set(values.map((item) => item.trim()).filter(Boolean))];
 }
 
-function parseModelChain(value: string | undefined, fallback: string[]) {
-  const normalized = `${value || ''}`
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-
-  const merged = normalized.length ? normalized : fallback;
-  return [...new Set(merged)];
-}
-
 export function resolveContentGenerationLlmConfig() {
-  const model = getContentGenerationModel();
-  const modelChain = parseModelChain(
-    getContentGenerationModelFallbackChainRaw(),
-    [model]
-  );
+  const modelChain = getModelFallbackChain(undefined, 'content');
 
   return {
-    model,
-    modelChain: modelChain.includes(model) ? modelChain : [model, ...modelChain],
+    model: modelChain[0] || 'grok-420-fast',
+    modelChain,
     maxTokens: getContentGenerationMaxTokens(),
     disableHealthReorder: true,
   };
@@ -1238,7 +1223,7 @@ async function generateSegmentedDraft(
     model: llmConfig.model,
     modelChain: llmConfig.modelChain,
     traceLabel: `content-frame:${contentType}`,
-    scope: 'agent',
+    scope: 'content',
     disableHealthReorder: llmConfig.disableHealthReorder,
   });
 
@@ -1256,7 +1241,7 @@ async function generateSegmentedDraft(
       model: llmConfig.model,
       modelChain: llmConfig.modelChain,
       traceLabel: `content-section:${contentType}:${index + 1}`,
-      scope: 'agent',
+      scope: 'content',
       disableHealthReorder: llmConfig.disableHealthReorder,
     });
 
@@ -1307,7 +1292,7 @@ async function generateDraftForType(
           model: llmConfig.model,
           modelChain: llmConfig.modelChain,
           traceLabel: `content-plan:${contentType}`,
-          scope: 'agent',
+          scope: 'content',
           disableHealthReorder: llmConfig.disableHealthReorder,
         }),
         input,
@@ -1335,7 +1320,7 @@ async function generateDraftForType(
           model: llmConfig.model,
           modelChain: llmConfig.modelChain,
           traceLabel: `content:${contentType}`,
-          scope: 'agent',
+          scope: 'content',
           disableHealthReorder: llmConfig.disableHealthReorder,
         });
       })();

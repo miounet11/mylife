@@ -46,7 +46,7 @@ export default function RelatedContent({ source }: { source?: string }) {
 
         <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr_0.95fr]">
           <div className="grid gap-4">
-            <Link href={appendSourceToHref('/world-yi', source)} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+            <Link href={appendSourceToHref('/world-yi', source)} className="interactive-card rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易总入口</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">先进入母体系，再读方法、案例和环境观察</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">
@@ -55,7 +55,7 @@ export default function RelatedContent({ source }: { source?: string }) {
               </div>
             </Link>
             {articles.map((article) => (
-              <Link key={article.slug} href={appendSourceToHref(`/knowledge/${article.slug}`, source)} className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+              <Link key={article.slug} href={appendSourceToHref(`/knowledge/${article.slug}`, source)} className="interactive-card rounded-[1.75rem] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{article.category}</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{article.title}</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">
@@ -71,7 +71,7 @@ export default function RelatedContent({ source }: { source?: string }) {
             <Link
               key={item.slug}
               href={appendSourceToHref(`/insights/${item.type}/${item.slug}`, source)}
-              className="soft-card rounded-[1.75rem] p-5 transition hover:-translate-y-0.5"
+              className="interactive-card rounded-[1.75rem] p-5"
             >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{getEntityTypeLabel(item.type)}</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
@@ -85,7 +85,7 @@ export default function RelatedContent({ source }: { source?: string }) {
 
         <div className="grid gap-4">
           {cases.map((item) => (
-            <Link key={item.slug} href={appendSourceToHref(`/cases/${item.slug}`, source)} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+            <Link key={item.slug} href={appendSourceToHref(`/cases/${item.slug}`, source)} className="interactive-card rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
               <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
               <div className="action-guide mt-4 inline-flex items-center gap-2">

@@ -41,7 +41,7 @@ function formatDate(value?: string) {
 export default function ToolHistoryPanel({
   compact = false,
   title = '工具历史',
-  description = '',
+  description: _description = '',
 }: {
   compact?: boolean;
   title?: string;
@@ -86,7 +86,6 @@ export default function ToolHistoryPanel({
             <Sparkles className="h-3.5 w-3.5" />
             {title}
           </div>
-          {description ? <p className="intro-copy mt-3 text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
         <Link href="/tools" className="action-secondary">
           全部工具

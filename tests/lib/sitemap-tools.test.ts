@@ -18,4 +18,13 @@ describe('sitemap tools coverage', () => {
     expect(urls).toContain('https://www.life-kline.com/visual-assets');
     expect(urls).toContain('https://www.life-kline.com/visual-assets/content-system-map');
   });
+
+  test('includes product docs routes', () => {
+    const entries = sitemap();
+    const urls = entries.map((item) => item.url);
+
+    expect(urls).toContain('https://www.life-kline.com/docs');
+    expect(urls).toContain('https://www.life-kline.com/docs/quick-start');
+    expect(urls).toContain('https://www.life-kline.com/docs/privacy-safety');
+  });
 });

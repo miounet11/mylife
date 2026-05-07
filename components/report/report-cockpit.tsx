@@ -167,7 +167,7 @@ export default function ReportCockpit({
             </div>
             <div className="mt-4 grid gap-3">
               {guidedPaths.map((item) => (
-                <Link key={item.href} href={item.href} className="rounded-[1rem] bg-slate-50/82 px-4 py-3 transition hover:bg-white">
+                <Link key={item.href} href={item.href} className="interactive-card rounded-[1rem] px-4 py-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                     <ArrowRight className="h-4 w-4 text-[color:var(--accent-strong)]" />

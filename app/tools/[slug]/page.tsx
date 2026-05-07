@@ -5,8 +5,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, Bot, Layers3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
@@ -35,7 +35,7 @@ import {
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
 import { summarizeToolSessions } from '@/lib/tool-context';
-import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition } from '@/lib/tools';
+import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
 
 export async function generateMetadata({
   params,
@@ -53,11 +53,17 @@ export async function generateMetadata({
     });
   }
 
+  const growthProfile = getToolGrowthProfile(tool.slug);
+
   return createPublicContentMetadata({
-    title: `${tool.title} | 人生K线工具中心`,
-    description: `${tool.description}。适合：${tool.targetUser}。`,
+    title: growthProfile?.seoTitle || `${tool.title} | 人生K线工具中心`,
+    description: growthProfile?.seoDescription || `${tool.description}。适合：${tool.targetUser}。`,
     path: `/tools/${tool.slug}`,
     type: 'website',
+    keywords: growthProfile?.keywords || [tool.title, tool.shortTitle, ...tool.hookKeywords],
+    answerSummary: growthProfile?.heroSubtitle,
+    searchIntents: growthProfile?.geoQuestions,
+    entityKeywords: growthProfile?.keywords,
   });
 }
 
@@ -88,11 +94,34 @@ export default async function ToolDetailPage({
   const recentSessions = userId ? toolSessionOperations.listByUser(userId, 5) : [];
   const memory = summarizeToolSessions(recentSessions, report, 5);
   const premiumOffer = buildToolPremiumOffer(tool);
+  const growthProfile = getToolGrowthProfile(tool.slug);
   const bundle = getToolBundleForSlug(tool.slug);
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource || `tool_detail:${tool.slug}`);
   const journey = buildJourneyForTool(tool, { source: entrySource || null });
+  const imageUploadChatHref = tool.chatIntent === 'palmistry-reading'
+    ? buildChatHref({
+      intent: 'palmistry-reading',
+      question: '请基于我上传的手相照片，只按可见掌纹、掌丘、手型和照片质量做相学文化观察，并说明哪些地方不能判断。',
+      source: entrySource || `tool_detail:${tool.slug}`,
+      ctaStrategyKey: sourceCtaStrategy.strategyKey,
+      sourceFamily: sourceCtaStrategy.sourceFamily,
+    })
+    : tool.chatIntent === 'home-layout-diagnosis'
+      ? buildChatHref({
+        intent: 'home-layout-diagnosis',
+        question: '请基于我上传的户型图，只按可见结构做户型问题诊断，并给出低成本调整优先级。',
+        source: entrySource || `tool_detail:${tool.slug}`,
+        ctaStrategyKey: sourceCtaStrategy.strategyKey,
+        sourceFamily: sourceCtaStrategy.sourceFamily,
+      })
+      : '';
+  const imageUploadPrimaryLabel = tool.chatIntent === 'palmistry-reading'
+    ? '上传手相照片开始'
+    : tool.chatIntent === 'home-layout-diagnosis'
+      ? '上传户型图开始'
+      : '';
   const toolJourneyCopy = buildSourceJourneyCopy(entrySource, {
     title: '下一步',
     description: '先完成当前单项判断，再顺着相关内容、升级服务和后续动作，把问题继续往下拆。',
@@ -101,14 +130,6 @@ export default async function ToolDetailPage({
   const analyzeEntryHref = `/analyze?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}&toolSlug=${encodeURIComponent(tool.slug)}&source=${encodeURIComponent(analyzeSource)}`;
   const returningFromAnalyze = resolvedSearchParams.ready === '1' && !!report;
   const toolChatQuestion = `请围绕“${tool.shortTitle}”继续拆解：如果把这个问题落到我自己身上，现在更该推进、观察还是收手，先看哪一层，下一步最值得先做什么？`;
-  const toolPrimaryChatHref = buildChatHref({
-    reportId: report?.id,
-    intent: tool.chatIntent || tool.slug,
-    question: toolChatQuestion,
-    source: 'tool_detail_primary_chat',
-    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-    sourceFamily: sourceCtaStrategy.sourceFamily,
-  });
   const toolRunnerChatHref = buildChatHref({
     reportId: report?.id,
     intent: tool.chatIntent || tool.slug,
@@ -132,7 +153,7 @@ export default async function ToolDetailPage({
     createBreadcrumbSchema([
       { name: '首页', path: '/' },
       { name: '工具中心', path: '/tools' },
-      { name: tool.title, path: `/tools/${tool.slug}` },
+      { name: growthProfile?.heroEyebrow || tool.title, path: `/tools/${tool.slug}` },
     ]),
     createItemListSchema(
       `${tool.title}常见问题`,
@@ -154,144 +175,138 @@ export default async function ToolDetailPage({
       />
       <SiteHeader ctaHref="/tools" ctaLabel="工具中心" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <section className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-          <div className="space-y-4">
-            <PublicSurfaceHero
-              label={(
-                <>
-                  <Layers3 className="h-3.5 w-3.5" />
-                  {tool.themeLabel}
-                </>
-              )}
-              title={tool.title}
-              description={tool.hook}
-              hint={entrySource ? sourceContext.toolDescription : '先跑免费版，再决定是否进入深测。'}
-              actionLabel={sourceCtaStrategy.actionGuide}
-              actions={[
-                <ResultCtaLink
-                  key="start"
-                  href={report ? '#tool-runner' : analyzeEntryHref}
-                  page={`/tools/${tool.slug}`}
-                  target="tool_detail_primary_start"
-                  className="action-primary action-main"
-                  meta={{ toolSlug: tool.slug, category: tool.category, source: report ? 'tool_detail_runner' : 'tool_detail_analyze_gate' }}
-                >
-                  {report ? sourceCtaStrategy.toolPrimaryLabel : '先生成综合报告再开始'}
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </ResultCtaLink>,
-                <ResultCtaLink
-                  key="chat"
-                  href={toolPrimaryChatHref}
-                  page={`/tools/${tool.slug}`}
-                  target="tool_detail_primary_chat"
-                  className="action-secondary"
-                  meta={{
-                    toolSlug: tool.slug,
-                    category: tool.category,
-                    chatIntent: tool.chatIntent || null,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                  }}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <Bot className="h-4 w-4" />
-                    {sourceCtaStrategy.toolChatLabel}
-                  </span>
-                </ResultCtaLink>,
-                <Link key="category" href={`/tools/category/${tool.category}`} className="action-secondary">返回该分类</Link>,
-              ]}
-              highlights={[
-                { title: '适合人群', body: tool.targetUser },
-                { title: '优先帮你', body: tool.valuePromise },
-                { title: '当前触发', body: tool.triggerMoment },
-                { title: '免费先拿', body: tool.freeValueLine },
-              ]}
-            />
-            <div className="flex flex-wrap gap-2">
-              {tool.hookKeywords.map((keyword) => (
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-4xl">
+            <div className="section-label">
+              <Layers3 className="h-3.5 w-3.5" />
+              {growthProfile?.heroEyebrow || tool.themeLabel}
+            </div>
+            {growthProfile ? (
+              <div className="mt-3 inline-flex rounded-full border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--accent-strong)]">
+                {growthProfile.stageLabel}
+              </div>
+            ) : null}
+            <h1 className="mt-3 text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
+              {growthProfile?.seoTitle.replace(/ \| 人生K线工具$/, '') || tool.title}
+            </h1>
+            <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)] md:text-lg">
+              {growthProfile?.heroSubtitle || tool.description}
+            </p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {(growthProfile?.keywords || tool.hookKeywords).map((keyword) => (
                 <span key={keyword} className="product-chip text-[color:var(--muted)]">
                   {keyword}
                 </span>
               ))}
             </div>
           </div>
-
-          <div className="space-y-4">
-            <div className="glass-panel rounded-[2rem] p-6">
-              <div className="section-label">
-                <Sparkles className="h-3.5 w-3.5" />
-                快速开始
-              </div>
-              <div className="mt-4 grid gap-3">
-                {returningFromAnalyze ? (
-                  <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50/85 p-4 text-xs leading-6 text-emerald-800">
-                    综合报告已经接回当前工具，可以直接在下方运行，不需要重新填写生辰。
-                  </div>
-                ) : null}
-                <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
-                  当前触发：{tool.triggerMoment}
-                </div>
-                <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
-                  免费先拿：{tool.freeValueLine}
-                </div>
-                <div className="rounded-[1.25rem] bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
-                  深测差异：{tool.paidValueLine}
-                </div>
-                {!report ? (
-                  <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50/80 p-4 text-xs leading-6 text-amber-900">
-                    这个工具会读取你的综合报告来判断结构与阶段。你现在可以先完成一次综合判断，回来后再直接运行，不会白走流程。
-                  </div>
-                ) : null}
-              </div>
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                ['错误问法', tool.wrongQuestion],
-                ['正确问法', tool.rightQuestion],
-              ].map(([title, description]) => (
-                <div key={title} className="soft-card rounded-[1.75rem] p-5">
-                  <div className="text-base font-bold text-[color:var(--ink)]">{title}</div>
-                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{description}</div>
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <ResultCtaLink
+              href={imageUploadChatHref || (report ? '#tool-runner' : analyzeEntryHref)}
+              page={`/tools/${tool.slug}`}
+              target="tool_detail_primary_start"
+              className="action-primary action-main"
+              meta={{ toolSlug: tool.slug, category: tool.category, source: imageUploadChatHref ? 'tool_detail_image_upload_chat' : report ? 'tool_detail_runner' : 'tool_detail_analyze_gate' }}
+            >
+              {growthProfile?.primaryCtaLabel || imageUploadPrimaryLabel || (report ? sourceCtaStrategy.toolPrimaryLabel : '先生成综合报告再开始')}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </ResultCtaLink>
+            <Link href={`/tools/category/${tool.category}`} className="action-secondary">返回该分类</Link>
+            <Link href="/docs/use-tools" className="action-secondary">使用方法</Link>
           </div>
         </section>
 
-        <ProductSurfaceRolePanel
-          surface="toolDetail"
-          className="mt-10"
-          title="工具详情页先判断是否适合运行"
-          description="用户进入工具页时，最重要的是确认当前问题是否匹配、是否已有综合报告上下文，然后只运行一个工具。"
-          compact
-        />
+        {growthProfile ? (
+          <section className="mt-6 grid gap-4 md:grid-cols-3">
+            {growthProfile.freeValueBullets.map((item) => (
+              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-sm leading-7 text-[color:var(--ink)]">
+                {item}
+              </div>
+            ))}
+          </section>
+        ) : null}
 
-        <section id="tool-runner" className="mt-10 grid gap-8 xl:grid-cols-[1fr_1fr]">
-          <ToolRunner
-            toolSlug={tool.slug}
-            reportId={report?.id}
-            promptHint={tool.promptHint}
-            signaturePromise={tool.signaturePromise}
-            decisionLens={tool.decisionLens}
-            examples={runnerExamples}
-            analyzeHref={analyzeEntryHref}
-            hasReport={!!report}
-            entrySource={entrySource}
-          />
+        <section id="tool-runner" className="mt-6 grid gap-8 xl:grid-cols-[1fr_1fr]">
+          {imageUploadChatHref ? (
+            <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white/82 p-5">
+              <div className="section-label">
+                <Bot className="h-3.5 w-3.5" />
+                图片上传入口
+              </div>
+              <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">直接上传图片测算</h2>
+              <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">
+                这个工具不需要先生成综合报告。进入聊天页后，系统会自动切到对应图片类型，并按当前专项边界处理上传内容。
+              </p>
+              <div className="mt-5 grid gap-3">
+                <ResultCtaLink
+                  href={imageUploadChatHref}
+                  page={`/tools/${tool.slug}`}
+                  target="tool_detail_image_upload_panel"
+                  className="action-primary action-main"
+                  meta={{ toolSlug: tool.slug, category: tool.category, chatIntent: tool.chatIntent || null }}
+                >
+                  {imageUploadPrimaryLabel || '上传图片测算'}
+                  <ArrowRight className="h-4 w-4" />
+                </ResultCtaLink>
+                <div className="static-card rounded-[1.2rem] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+                  手相只做可见掌纹、掌丘、手型和照片质量的相学文化观察；户型只做可见结构、动线、采光、收纳和形势问题诊断。
+                </div>
+              </div>
+            </div>
+          ) : (
+            <ToolRunner
+              toolSlug={tool.slug}
+              reportId={report?.id}
+              promptHint={tool.promptHint}
+              signaturePromise={tool.signaturePromise}
+              decisionLens={tool.decisionLens}
+              examples={runnerExamples}
+              analyzeHref={analyzeEntryHref}
+              hasReport={!!report}
+              entrySource={entrySource}
+            />
+          )}
 
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="workspace-panel p-6">
+            {growthProfile ? (
+              <div className="mb-5 rounded-[1.5rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">冷启动转化路径</div>
+                <div className="mt-3 grid gap-2 text-xs leading-6 text-[color:var(--ink)]">
+                  <div>1. 免费测算先给结构判断和一个动作。</div>
+                  <div>2. 结果页引导保存邮箱、历史记录和深测报告。</div>
+                  <div>3. 通过 FAQ / 案例 / 社交问题回流到同一个工具。</div>
+                </div>
+              </div>
+            ) : null}
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
-              输出项目
+              运行前确认
             </div>
             <div className="mt-4 grid gap-3">
+              {returningFromAnalyze ? (
+                <div className="rounded-[1.25rem] border border-emerald-200 bg-emerald-50/85 p-4 text-xs leading-6 text-emerald-800">
+                  综合报告已经接回当前工具，可以直接运行。
+                </div>
+              ) : null}
               {entrySource ? (
                 <div className="rounded-[1.25rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                   {`${sourceContext.guidanceLabel}：${sourceContext.toolHeadline}`}
                 </div>
               ) : null}
+              {!report && !imageUploadChatHref ? (
+                <div className="rounded-[1.25rem] border border-amber-200 bg-amber-50/80 p-4 text-xs leading-6 text-amber-900">
+                  这个工具会读取你的综合报告来判断结构与阶段。先完成一次综合判断，再回来运行。
+                </div>
+              ) : null}
+              {imageUploadChatHref ? (
+                <div className="rounded-[1.25rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  这个工具支持直接上传图片测算。点击“上传图片测算”会进入聊天页，并自动切到对应图片类型。
+                </div>
+              ) : null}
+              <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+                当前触发：{tool.triggerMoment}
+              </div>
               <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 免费版输出：{tool.freeOutputFields.join('、')}
               </div>
@@ -310,7 +325,7 @@ export default async function ToolDetailPage({
                   返回该分类
                 </ResultCtaLink>
                 <ResultCtaLink
-                  href={toolRunnerChatHref}
+                  href={imageUploadChatHref || toolRunnerChatHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_runner_tip_chat"
                   className="action-secondary"
@@ -318,7 +333,7 @@ export default async function ToolDetailPage({
                 >
                   <span className="inline-flex items-center gap-2">
                     <Bot className="h-4 w-4" />
-                    进入结构追问
+                    {imageUploadChatHref ? '上传图片测算' : '进入结构追问'}
                   </span>
                 </ResultCtaLink>
                 <ResultCtaLink
@@ -335,107 +350,150 @@ export default async function ToolDetailPage({
           </div>
         </section>
 
-        {authenticated && memory ? (
-          <section className="mt-10">
-            <ToolMemoryPanel memory={memory} />
-          </section>
-        ) : null}
-
-        {tool.featuredBadge ? (
-          <section className="mt-10">
-            <ToolEditorialPanel tool={tool} />
-          </section>
-        ) : null}
-
-        <section className="mt-10">
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {tool.freeInsights.slice(0, 2).map((item) => (
-              <div key={item} className="soft-card rounded-[1.5rem] p-5">
-                <div className="text-sm font-semibold text-[color:var(--ink)]">免费先看</div>
-                <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
-              </div>
-            ))}
-            {tool.premiumModules.slice(0, 2).map((item) => (
-              <div key={item} className="rounded-[1.5rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
-                <div className="text-sm font-semibold text-[color:var(--accent-strong)]">深测再展开</div>
-                <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
-              </div>
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-10">
-          <ToolCaseStoriesPanel tool={tool} />
-        </section>
-
-        <section className="mt-10">
-          <ToolConversionPanel tool={tool} />
-        </section>
-
-        <section className="mt-10">
-          <ToolLinkedContentPanel tool={tool} page={`/tools/${tool.slug}`} />
-        </section>
-
-        <section id="faq" className="mt-10">
-          <div className="glass-panel rounded-[2rem] p-6">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
-              常见问题
-            </div>
-            <div className="mt-4 grid gap-4 md:grid-cols-2">
-              {tool.faqItems.slice(0, 4).map((item) => (
-                <div key={item.question} className="soft-card rounded-[1.5rem] p-5">
-                  <div className="text-base font-bold text-[color:var(--ink)]">{item.question}</div>
-                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item.answer}</div>
+        <section className="mt-8">
+          <PriorityDisclosure
+            label="问法说明"
+            title="适合人群、错误问法和正确问法"
+            description={entrySource ? sourceContext.toolDescription : '需要确认这个工具是否匹配当前问题时再展开。'}
+          >
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+              {[
+                ['适合人群', tool.targetUser],
+                ['优先帮你', tool.valuePromise],
+                ['正确问法', tool.rightQuestion],
+              ].map(([title, description]) => (
+                <div key={title} className="soft-card rounded-[1.5rem] p-5">
+                  <div className="text-base font-bold text-[color:var(--ink)]">{title}</div>
+                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{description}</div>
                 </div>
               ))}
             </div>
-          </div>
+          </PriorityDisclosure>
         </section>
 
-        <section className="mt-10">
-          <ToolJourneyPanel tool={tool} />
-        </section>
+        <ProductSurfaceRolePanel
+          surface="toolDetail"
+          className="mt-8"
+          title="工具详情页先判断是否适合运行"
+          description="用户进入工具页时，最重要的是确认当前问题是否匹配、是否已有综合报告上下文，然后只运行一个工具。"
+          compact
+        />
 
-        <section className="mt-10">
-          <SurfaceJourneyPanel
-            journey={journey}
-            title={toolJourneyCopy.title}
-            description={toolJourneyCopy.description}
-            badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
-          />
-        </section>
+        <section className="mt-10 space-y-4">
+          <PriorityDisclosure
+            label="更多内容"
+            title="案例、FAQ、推荐和升级入口"
+            description="这些内容在运行工具之后才有价值，默认收起。"
+            defaultOpen
+          >
+            <div className="space-y-8">
+              {authenticated && memory ? <ToolMemoryPanel memory={memory} /> : null}
+              {tool.featuredBadge ? <ToolEditorialPanel tool={tool} /> : null}
 
-        <section className="mt-10">
-          <ToolPremiumDepthPanel
-            tool={tool}
-            offer={premiumOffer}
-            reportId={report?.id}
-            ctaStrategyKey={sourceCtaStrategy.strategyKey}
-            sourceFamily={sourceCtaStrategy.sourceFamily}
-          />
-        </section>
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {tool.freeInsights.slice(0, 2).map((item) => (
+                  <div key={item} className="soft-card rounded-[1.5rem] p-5">
+                    <div className="text-sm font-semibold text-[color:var(--ink)]">免费先看</div>
+                    <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
+                  </div>
+                ))}
+                {tool.premiumModules.slice(0, 2).map((item) => (
+                  <div key={item} className="rounded-[1.5rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
+                    <div className="text-sm font-semibold text-[color:var(--accent-strong)]">深测再展开</div>
+                    <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
+                  </div>
+                ))}
+              </div>
 
-        <section className="mt-10">
-          <ToolPremiumRequestPanel tool={tool} reportId={report?.id} page={`/tools/${tool.slug}`} />
-        </section>
+              {growthProfile ? (
+                <section className="glass-panel rounded-[2rem] p-6 md:p-8">
+                  <div className="section-label">GEO 问答与社交分发</div>
+                  <div className="mt-5 grid gap-5 lg:grid-cols-2">
+                    <div>
+                      <h2 className="text-2xl font-black text-[color:var(--ink)]">搜索和 AI 回答页要覆盖的问题</h2>
+                      <div className="mt-4 grid gap-3">
+                        {growthProfile.geoQuestions.map((item) => (
+                          <div key={item} className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-black text-[color:var(--ink)]">社交内容只导向一次免费测算</h2>
+                      <div className="mt-4 grid gap-3">
+                        {growthProfile.socialHooks.map((item) => (
+                          <div key={item} className="rounded-[1.25rem] border border-[color:var(--line)] bg-slate-50 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              ) : null}
 
-        {bundle ? (
-          <section className="mt-10">
-            <ToolBundlePanel bundle={bundle} page={`/tools/${tool.slug}`} />
-          </section>
-        ) : null}
+              <ToolCaseStoriesPanel tool={tool} />
+              <ToolConversionPanel tool={tool} />
+              <ToolLinkedContentPanel tool={tool} page={`/tools/${tool.slug}`} />
 
-        <section className="mt-10">
-          <ToolRecommendations
-            report={report}
-            page={`/tools/${tool.slug}`}
-            title="下一步推荐"
-            description="结合你当前的工具结果和已有报告，优先推荐最适合继续推进的关联工具与阅读路径。"
-            source={entrySource || `tool_detail:${tool.slug}`}
-            ctaStrategyKey={sourceCtaStrategy.strategyKey}
-            sourceFamily={sourceCtaStrategy.sourceFamily}
-          />
+              <div id="faq" className="workspace-panel p-6">
+                <div className="section-label">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  常见问题
+                </div>
+                <div className="mt-4 grid gap-4 md:grid-cols-2">
+                  {tool.faqItems.slice(0, 4).map((item) => (
+                    <div key={item.question} className="soft-card rounded-[1.5rem] p-5">
+                      <div className="text-base font-bold text-[color:var(--ink)]">{item.question}</div>
+                      <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item.answer}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <ToolJourneyPanel tool={tool} />
+              <SurfaceJourneyPanel
+                journey={journey}
+                title={toolJourneyCopy.title}
+                description={toolJourneyCopy.description}
+                badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
+              />
+              {growthProfile ? (
+                <section className="glass-panel rounded-[2rem] p-6 md:p-8">
+                  <div className="section-label">升级路径</div>
+                  <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
+                    免费结果之后，优先转深测报告和留资复访
+                  </h2>
+                  <div className="mt-5 grid gap-3 md:grid-cols-3">
+                    {growthProfile.upgradeBullets.map((item) => (
+                      <div key={item} className="rounded-[1.25rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              ) : null}
+              <ToolPremiumDepthPanel
+                tool={tool}
+                offer={premiumOffer}
+                reportId={report?.id}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
+              />
+              <ToolPremiumRequestPanel tool={tool} reportId={report?.id} page={`/tools/${tool.slug}`} />
+              {bundle ? <ToolBundlePanel bundle={bundle} page={`/tools/${tool.slug}`} /> : null}
+              <ToolRecommendations
+                report={report}
+                page={`/tools/${tool.slug}`}
+                title="下一步推荐"
+                description="结合你当前的工具结果和已有报告，优先推荐最适合继续推进的关联工具与阅读路径。"
+                source={entrySource || `tool_detail:${tool.slug}`}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
+              />
+            </div>
+          </PriorityDisclosure>
         </section>
       </main>
 

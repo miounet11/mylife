@@ -2,8 +2,9 @@ import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
+import { listProductDocRoutes } from '@/lib/product-docs';
 import { normalizeAlternateLanguagePaths } from '@/lib/public-content-seo';
-import { listToolCategories, listToolDefinitions } from '@/lib/tools';
+import { getToolGrowthProfile, listToolCategories, listToolDefinitions } from '@/lib/tools';
 import { getApprovedVisualAssets } from '@/lib/visual-asset-library';
 import { worldYiPublicRoutes } from '@/lib/world-yi-public-stats';
 
@@ -48,6 +49,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const toolCategories = listToolCategories();
   const tools = listToolDefinitions();
   const visualAssets = getApprovedVisualAssets();
+  const docs = listProductDocRoutes();
   const staticRoutes: MetadataRoute.Sitemap = [
     createSitemapEntry('/', {
       lastModified: new Date(),
@@ -91,6 +93,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.82,
     }),
+    createSitemapEntry('/docs', {
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.82,
+    }),
+    ...docs.map((path) => createSitemapEntry(path, {
+      lastModified: new Date(),
+      changeFrequency: 'monthly',
+      priority: path === '/docs/quick-start' ? 0.76 : 0.7,
+    })),
     createSitemapEntry('/visual-assets', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -101,11 +113,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly',
       priority: 0.74,
     })),
-    ...tools.map((tool) => createSitemapEntry(`/tools/${tool.slug}`, {
-      lastModified: new Date(),
-      changeFrequency: 'weekly',
-      priority: 0.68,
-    })),
+    ...tools.map((tool) => {
+      const growthProfile = getToolGrowthProfile(tool.slug);
+      return createSitemapEntry(`/tools/${tool.slug}`, {
+        lastModified: new Date(),
+        changeFrequency: growthProfile ? 'daily' : 'weekly',
+        priority: growthProfile ? 0.82 : 0.68,
+      });
+    }),
     ...worldYiPublicRoutes.map((path) => createSitemapEntry(path, {
       lastModified: new Date(),
       changeFrequency: 'weekly',

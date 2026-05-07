@@ -3,12 +3,12 @@
 
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
+import { ArrowRight, BellRing, BookOpenText, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
@@ -177,117 +177,142 @@ export default function ProfilePage() {
         }}
       />
 
-      <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
-        <section className="mb-8 grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-5">
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        <section className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
               我的档案
             </div>
-            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              你的判断轨迹，不只是一份记录，
-              <span className="font-serif text-[color:var(--accent-strong)]">更是下一步的导航。</span>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+              恢复你的下一步
             </h1>
-            <div className="space-y-2">
-              <div className="action-guide">快速操作</div>
-              <div className="action-strip flex flex-wrap gap-3">
-                <ResultCtaLink
-                  href={latestReportHref}
-                  page="/profile"
-                  target={latestResultId ? 'profile_hero_latest_report' : 'profile_hero_analyze'}
-                  className="action-primary action-main"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_hero',
-                    reportId: latestResultId || null,
-                  }}
-                >
-                  {latestResultId ? '打开最新报告' : '开始分析'}
-                </ResultCtaLink>
-                <ResultCtaLink
-                  href={profileChatHref}
-                  page="/profile"
-                  target="profile_hero_chat"
-                  className="action-secondary"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_hero',
-                    reportId: latestResultId || null,
-                  }}
-                >
-                  继续追问
-                </ResultCtaLink>
-                <ResultCtaLink
-                  href={appendSourceToHref('/events', pageSource)}
-                  page="/profile"
-                  target="profile_hero_events"
-                  className="action-secondary"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_hero',
-                    eventCount: mappedEvents.length,
-                  }}
-                >
-                  管理事件
-                </ResultCtaLink>
-              </div>
-            </div>
           </div>
-
-          <div className="glass-panel rounded-[2rem] p-6">
-            <div className="text-sm font-semibold text-[color:var(--muted)]">功能</div>
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {['查看阶段趋势图', '回顾最近分析结果', '继续进入结构追问', '把节点落到事件管理'].map((item) => (
-                <div key={item} className="rounded-2xl bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
-                  {item}
-                </div>
-              ))}
-            </div>
+          <div className="flex flex-wrap gap-3">
+            <ResultCtaLink
+              href={latestReportHref}
+              page="/profile"
+              target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
+              className="action-primary action-main"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+                reportId: latestResultId || null,
+              }}
+            >
+              {latestResultId ? '打开最新报告' : '开始分析'}
+            </ResultCtaLink>
+            <ResultCtaLink
+              href={profileChatHref}
+              page="/profile"
+              target="profile_header_chat"
+              className="action-secondary"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+                reportId: latestResultId || null,
+              }}
+            >
+              继续追问
+            </ResultCtaLink>
+            <ResultCtaLink
+              href="/docs/profile-history"
+              page="/profile"
+              target="profile_header_docs"
+              className="action-secondary"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+              }}
+            >
+              <BookOpenText className="h-4 w-4" />
+              使用方法
+            </ResultCtaLink>
           </div>
         </section>
 
-        <ProductSurfaceRolePanel
-          surface="profile"
-          className="mb-8"
-          title="档案页先恢复任务，不做静态资料堆叠"
-          description="用户回到这里时，最重要的是续接最新报告、工具历史和事件反馈，而不是重新理解整套系统。"
-          compact
-        />
-
-        <div className="space-y-8">
+        <div className="space-y-5">
           {error && (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
 
-          <section className="grid gap-4 md:grid-cols-4">
+          <section className="grid gap-3 md:grid-cols-4">
             {[
               { label: '累计分析', value: `${fortunes.length}`, helper: '已沉淀的判断结果' },
               { label: '关键事件', value: `${mappedEvents.length}`, helper: '可回访的节点记录' },
               { label: '趋势年份', value: `${chartData.length || 0}`, helper: '可查看阶段波动' },
               { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, helper: '最近一次分析结果' },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="soft-card rounded-xl p-4">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
-                <div className="mt-1 text-sm text-[color:var(--muted)]">{item.helper}</div>
               </div>
             ))}
           </section>
 
-          <section className="glass-panel rounded-[1.75rem] p-5">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="text-lg font-bold text-[color:var(--ink)]">继续操作</div>
-              </div>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {!loading && (
+            <RetentionResumePanel
+              page="/profile"
+              source={pageSource}
+              ctaStrategyKey={sourceCtaStrategy.strategyKey}
+              sourceFamily={sourceCtaStrategy.sourceFamily}
+              title={latestResultId ? '接着你的最新报告继续推进' : '先生成第一份个人底盘'}
+              description={latestResultId
+                ? '档案页的价值不是静态查看，而是直接恢复上次没完成的判断任务。先接回聊天，再回到报告和事件验证，不要重新从零浏览。'
+                : '还没有报告时，档案页不能形成复访闭环。先完成第一份分析，再让报告、事件、工具和邮件召回形成连续路径。'}
+              stats={[
+                { label: '历史报告', value: fortunes.length, helper: '可恢复的判断底盘' },
+                { label: '关键事件', value: mappedEvents.length, helper: '可验证和纠偏的节点' },
+                { label: '订阅状态', value: updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活', helper: updatesSummary?.email || '尚未绑定邮箱' },
+              ]}
+              actions={[
+                {
+                  href: buildChatHref({
+                    reportId: latestResultId || undefined,
+                    question: '请基于我的个人档案、最新报告、事件记录和工具历史，直接告诉我现在最该恢复推进的一个任务是什么，并给我一个三步行动顺序。',
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }),
+                  label: latestResultId ? '恢复上次任务' : '先问如何建立档案',
+                  target: 'retention_resume_chat',
+                  meta: {
+                    reportId: latestResultId || null,
+                    profileReportCount: fortunes.length,
+                    profileEventCount: mappedEvents.length,
+                  },
+                },
+                {
+                  href: latestReportHref,
+                  label: latestResultId ? '打开最新报告' : '开始第一份分析',
+                  target: latestResultId ? 'retention_resume_latest_report' : 'retention_resume_analyze',
+                  meta: { reportId: latestResultId || null },
+                },
+                {
+                  href: appendSourceToHref('/events', pageSource),
+                  label: '进入事件验证',
+                  target: 'retention_resume_events',
+                  meta: { eventCount: mappedEvents.length },
+                },
+              ]}
+            />
+          )}
+
+          <section>
+            <PriorityDisclosure
+              label="继续操作"
+              title="工具、事件、历史和订阅"
+              description="主动作已经放在顶部；低频入口默认收起。"
+            >
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <ProfileAction
                   href={buildChatHref({
                     reportId: latestResultId || undefined,
@@ -372,56 +397,8 @@ export default function ProfilePage() {
                   }}
                 />
               </div>
-            </div>
+            </PriorityDisclosure>
           </section>
-
-          {!loading && (
-            <RetentionResumePanel
-              page="/profile"
-              source={pageSource}
-              ctaStrategyKey={sourceCtaStrategy.strategyKey}
-              sourceFamily={sourceCtaStrategy.sourceFamily}
-              title={latestResultId ? '接着你的最新报告继续推进' : '先生成第一份个人底盘'}
-              description={latestResultId
-                ? '档案页的价值不是静态查看，而是直接恢复上次没完成的判断任务。先接回聊天，再回到报告和事件验证，不要重新从零浏览。'
-                : '还没有报告时，档案页不能形成复访闭环。先完成第一份分析，再让报告、事件、工具和邮件召回形成连续路径。'}
-              stats={[
-                { label: '历史报告', value: fortunes.length, helper: '可恢复的判断底盘' },
-                { label: '关键事件', value: mappedEvents.length, helper: '可验证和纠偏的节点' },
-                { label: '订阅状态', value: updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活', helper: updatesSummary?.email || '尚未绑定邮箱' },
-              ]}
-              actions={[
-                {
-                  href: buildChatHref({
-                    reportId: latestResultId || undefined,
-                    question: '请基于我的个人档案、最新报告、事件记录和工具历史，直接告诉我现在最该恢复推进的一个任务是什么，并给我一个三步行动顺序。',
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                  }),
-                  label: latestResultId ? '恢复上次任务' : '先问如何建立档案',
-                  target: 'retention_resume_chat',
-                  meta: {
-                    reportId: latestResultId || null,
-                    profileReportCount: fortunes.length,
-                    profileEventCount: mappedEvents.length,
-                  },
-                },
-                {
-                  href: latestReportHref,
-                  label: latestResultId ? '打开最新报告' : '开始第一份分析',
-                  target: latestResultId ? 'retention_resume_latest_report' : 'retention_resume_analyze',
-                  meta: { reportId: latestResultId || null },
-                },
-                {
-                  href: appendSourceToHref('/events', pageSource),
-                  label: '进入事件验证',
-                  target: 'retention_resume_events',
-                  meta: { eventCount: mappedEvents.length },
-                },
-              ]}
-            />
-          )}
 
           <ToolHistoryPanel
             compact
@@ -429,13 +406,20 @@ export default function ProfilePage() {
             description="最近做过的聚焦判断会沉淀在这里，方便继续深问与复访。"
           />
 
-          <PersonalJourneyHub
-            title="你的主测算、工具和文章已经开始形成个人路径"
-            description="这里会把主报告、工具结果和阅读记录接回一条持续复访的个人路径，不再是分散的单次页面。"
-            page="/profile"
-          />
+          <PriorityDisclosure
+            label="个人路径"
+            title="工具、文章和案例推荐"
+            description="用户先恢复任务，再展开推荐路径。"
+            defaultOpen
+          >
+            <PersonalJourneyHub
+              title="你的主测算、工具和文章已经开始形成个人路径"
+              description="这里会把主报告、工具结果和阅读记录接回一条持续复访的个人路径，不再是分散的单次页面。"
+              page="/profile"
+            />
+          </PriorityDisclosure>
 
-          <section className="glass-panel rounded-[1.75rem] p-5">
+          <section className="glass-panel rounded-xl p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
@@ -531,6 +515,13 @@ export default function ProfilePage() {
               </div>
             ) : null}
           </section>
+
+          <ProductSurfaceRolePanel
+            surface="profile"
+            title="档案页先恢复任务，不做静态资料堆叠"
+            description="用户回到这里时，最重要的是续接最新报告、工具历史和事件反馈，而不是重新理解整套系统。"
+            compact
+          />
 
           {!loading && !hasProfileData && (
             <section className="glass-panel rounded-[2rem] p-8 text-center">

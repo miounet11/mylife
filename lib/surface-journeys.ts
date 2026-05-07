@@ -130,6 +130,92 @@ function buildReportCard(category: ToolCategoryKey | null): JourneyCard {
   };
 }
 
+function pickFallbackCards<T>(current: T[], fallback: T[], limit: number, keyOf: (item: T) => string) {
+  const seen = new Set(current.map(keyOf));
+  const merged = [...current];
+
+  for (const item of fallback) {
+    if (merged.length >= limit) break;
+    const key = keyOf(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+
+  return merged.slice(0, limit);
+}
+
+function ensureToolCards(cards: JourneyCard[], category: ToolCategoryKey | null, limit = 3) {
+  const fallbackCategory = category || 'career';
+  const categoryFilled = pickFallbackCards(
+    cards,
+    listToolsByCategory(fallbackCategory).map(mapToolCard),
+    limit,
+    (item) => item.href
+  );
+  return pickFallbackCards(
+    categoryFilled,
+    listToolsByCategory('career').map(mapToolCard),
+    limit,
+    (item) => item.href
+  );
+}
+
+function ensureKnowledgeCards(cards: JourneyCard[], category: ToolCategoryKey | null, signalText: string, limit = 3) {
+  const fallbackCategory = category || 'career';
+  const fallback = pickContentEntries({
+    contentType: 'knowledge',
+    category: fallbackCategory,
+    signalText: `${signalText} ${categoryKeywords[fallbackCategory].join(' ')}`,
+    limit,
+  }).map((entry) => mapEntryCard(entry, 'knowledge'));
+  const categoryFilled = pickFallbackCards(cards, fallback, limit, (item) => item.href);
+  const broadFallback = pickContentEntries({
+    contentType: 'knowledge',
+    category: 'career',
+    signalText: `${signalText} 事业 工作 岗位`,
+    limit,
+  }).map((entry) => mapEntryCard(entry, 'knowledge'));
+  const broadFilled = pickFallbackCards(categoryFilled, broadFallback, limit, (item) => item.href);
+  const publishedFallback = listPublishedManagedContentEntriesByType('knowledge')
+    .filter((entry) => isPublicKnowledgeEntry(entry))
+    .map((entry) => mapEntryCard(entry, 'knowledge'));
+  return pickFallbackCards(broadFilled, publishedFallback, limit, (item) => item.href);
+}
+
+function ensureCaseCards(cards: JourneyCard[], category: ToolCategoryKey | null, signalText: string, limit = 3) {
+  const fallbackCategory = category || 'career';
+  const fallback = pickContentEntries({
+    contentType: 'case',
+    category: fallbackCategory,
+    signalText: `${signalText} ${categoryKeywords[fallbackCategory].join(' ')}`,
+    limit,
+  }).map((entry) => mapEntryCard(entry, 'case'));
+  const categoryFilled = pickFallbackCards(cards, fallback, limit, (item) => item.href);
+  const broadFallback = pickContentEntries({
+    contentType: 'case',
+    category: 'career',
+    signalText: `${signalText} 事业 工作 岗位`,
+    limit,
+  }).map((entry) => mapEntryCard(entry, 'case'));
+  const broadFilled = pickFallbackCards(categoryFilled, broadFallback, limit, (item) => item.href);
+  const publishedFallback = listPublishedManagedContentEntriesByType('case')
+    .map((entry) => mapEntryCard(entry, 'case'));
+  return pickFallbackCards(broadFilled, publishedFallback, limit, (item) => item.href);
+}
+
+function ensureJourneyDepth(journey: SurfaceJourney, params: {
+  category: ToolCategoryKey | null;
+  signalText: string;
+}): SurfaceJourney {
+  return {
+    reportCard: journey.reportCard,
+    toolCards: ensureToolCards(journey.toolCards, params.category),
+    knowledgeCards: ensureKnowledgeCards(journey.knowledgeCards, params.category, params.signalText),
+    caseCards: ensureCaseCards(journey.caseCards, params.category, params.signalText),
+  };
+}
+
 function withJourneySource(journey: SurfaceJourney, rawSource?: string | null): SurfaceJourney {
   if (!rawSource) {
     return journey;
@@ -174,12 +260,12 @@ export function buildJourneyForTool(tool: ToolDefinition, options?: { source?: s
     preferredReportThemes: tool.relatedReportThemes,
   });
 
-  const journey = {
+  const journey = ensureJourneyDepth({
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
-  };
+  }, { category, signalText });
   return withJourneySource(journey, options?.source);
 }
 
@@ -213,7 +299,7 @@ export function buildJourneyForReport(report: FortuneRecord, options?: { source?
     preferredReportThemes: [report.pattern?.type || '', report.advice?.overall || ''].filter(Boolean),
   });
 
-  const journey = {
+  const journey = ensureJourneyDepth({
     reportCard: {
       href: `/result/${report.id}`,
       title: '这份综合报告就是总底盘',
@@ -223,7 +309,7 @@ export function buildJourneyForReport(report: FortuneRecord, options?: { source?
     toolCards: recommendedTools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
-  };
+  }, { category, signalText });
   return withJourneySource(journey, options?.source);
 }
 
@@ -262,12 +348,12 @@ export function buildJourneyForContent(params: {
     preferredReportThemes: journeyMeta.relatedReportThemes,
   });
 
-  const journey = {
+  const journey = ensureJourneyDepth({
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
-  };
+  }, { category, signalText });
 
   return withJourneySource(journey, options?.source);
 }
@@ -325,12 +411,12 @@ export function buildJourneyForVisualAsset(params: {
     preferredReportThemes: params.relatedReportThemes || [],
   });
 
-  const journey = {
+  const journey = ensureJourneyDepth({
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
-  };
+  }, { category, signalText });
 
   return withJourneySource(journey, params.source || null);
 }
@@ -363,7 +449,7 @@ export function buildPersonalizedJourney(params: {
   return {
     heading: '先建立你的第一条协同路径',
     description: '第一次进入时，先做综合测算，再选一个高频工具，最后去读相关方法文章和案例，会比只看一个入口更有感觉。',
-    journey: {
+    journey: ensureJourneyDepth({
       reportCard: buildReportCard(fallbackCategory),
       toolCards: listToolsByCategory(fallbackCategory).slice(0, 3).map(mapToolCard),
       knowledgeCards: pickContentEntries({
@@ -378,6 +464,6 @@ export function buildPersonalizedJourney(params: {
         signalText: '事业 工作 岗位 升职',
         limit: 3,
       }).map((entry) => mapEntryCard(entry, 'case')),
-    },
+    }, { category: fallbackCategory, signalText: '事业 工作 岗位 升职' }),
   };
 }

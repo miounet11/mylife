@@ -8,7 +8,7 @@ export default function ToolRecommendations({
   report,
   page,
   title = '推荐工具',
-  description = '',
+  description: _description = '',
   enableQuickStart = false,
   source,
   ctaStrategyKey,
@@ -47,7 +47,6 @@ export default function ToolRecommendations({
             {title}
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">把综合报告继续拆成可复访的单项工具</h2>
-          {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
       </div>
 

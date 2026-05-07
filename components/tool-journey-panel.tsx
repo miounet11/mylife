@@ -16,7 +16,7 @@ const journeyReasonMap: Record<ToolDefinition['category'], string[]> = {
 export default function ToolJourneyPanel({
   tool,
   title = '推荐测算路径',
-  description = '',
+  description: _description = '',
 }: {
   tool: ToolDefinition;
   title?: string;
@@ -32,7 +32,6 @@ export default function ToolJourneyPanel({
         {title}
       </div>
       <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">测算路径</h2>
-      {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
 
       <div className="mt-6 grid gap-4 xl:grid-cols-4">
         {items.map((item, index) => (

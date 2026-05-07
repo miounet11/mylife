@@ -41,6 +41,7 @@ import {
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ResultPublicControls from '@/components/result-public-controls';
+import PublicReportInteractionPanel from '@/components/public-report-interaction-panel';
 import ReportEnginePanel from '@/components/report-engine-panel';
 import ReportPremiumServices from '@/components/report-premium-services';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
@@ -1329,6 +1330,17 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           description="这一页不把所有命理内容一次性摊开，而是先让用户看懂主判断和下一步动作，再按追问、工具、事件验证逐层深入。"
           compact
         />
+
+        <div className="mt-6">
+          <PublicReportInteractionPanel
+            reportId={id}
+            publicName={publicName}
+            canManage={canManage}
+            isPublic={result.isPublic}
+            reportChatHref={reportChatHref}
+            toolHref={primaryToolRoute?.href}
+          />
+        </div>
 
         <div className="mt-6">
           <ResultPublicControls

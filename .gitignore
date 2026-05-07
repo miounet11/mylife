@@ -25,6 +25,7 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .playwright-cli/*.log
+.playwright-cli/*.yml
 
 # Local reference assets
 image copy*.png
@@ -35,6 +36,7 @@ image copy*.png
 
 # Local workspace state
 .claude/
+.clavue/
 data/runtime/*.json
 data/runtime/*.lock
 data/lifekline.db

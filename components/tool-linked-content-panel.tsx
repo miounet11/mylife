@@ -45,9 +45,6 @@ export default function ToolLinkedContentPanel({
         精品联动路径
       </div>
       <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">联动入口</h2>
-      <div className="intro-copy mt-3 max-w-3xl">
-        一个工具不该单独停住，应该继续接到相关文章、案例和下一步工具，形成完整判断路径。
-      </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">

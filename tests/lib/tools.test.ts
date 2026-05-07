@@ -13,9 +13,9 @@ import {
 describe('tools catalog', () => {
   test('builds the full tool matrix', () => {
     const tools = listToolDefinitions();
-    expect(tools).toHaveLength(120);
-    expect(new Set(tools.map((item) => item.slug)).size).toBe(120);
-    expect(listToolCategories().map((item) => item.count)).toEqual([20, 20, 20, 15, 15, 15, 8, 7]);
+    expect(tools).toHaveLength(121);
+    expect(new Set(tools.map((item) => item.slug)).size).toBe(121);
+    expect(listToolCategories().map((item) => item.count)).toEqual([20, 20, 20, 15, 15, 15, 8, 8]);
     expect(tools.every((item) => item.hook.trim().length > 0)).toBe(true);
     expect(tools.every((item) => item.freeValueLine.trim().length > 0)).toBe(true);
     expect(tools.every((item) => item.paidValueLine.trim().length > 0)).toBe(true);
@@ -123,5 +123,32 @@ describe('tools catalog', () => {
     expect(bundle?.toolSlugs).toContain('career-role-fit');
     expect(offer.title).toContain('深测版');
     expect(offer.subscribeTags).toContain('tool:career-role-fit');
+  });
+
+  test('routes the home order tool to floor-plan diagnosis without premium-service leakage', () => {
+    const tool = getToolDefinition('application-home-order');
+
+    expect(tool).not.toBeNull();
+    expect(tool?.chatIntent).toBe('home-layout-diagnosis');
+    expect(tool?.premiumServiceKey).toBeUndefined();
+    expect(tool?.promptHint).toContain('上传户型图');
+    expect(tool?.freeValueLine).toContain('户型问题清单');
+    expect(tool?.paidValueLine).toContain('门线冲');
+    expect(tool?.hookKeywords).toContain('户型图');
+    expect(buildToolPremiumOffer(tool!).subscribeTags).toContain('tool:application-home-order');
+  });
+
+  test('routes the palmistry tool to palm photo observation without premium-service leakage', () => {
+    const tool = getToolDefinition('application-palmistry-reading');
+
+    expect(tool).not.toBeNull();
+    expect(tool?.chatIntent).toBe('palmistry-reading');
+    expect(tool?.premiumServiceKey).toBeUndefined();
+    expect(tool?.promptHint).toContain('上传手相照片');
+    expect(tool?.freeValueLine).toContain('图片可用性');
+    expect(tool?.paidValueLine).toContain('三大主线');
+    expect(tool?.hookKeywords).toContain('手相');
+    expect(tool?.hookKeywords).toContain('相学边界');
+    expect(buildToolPremiumOffer(tool!).subscribeTags).toContain('tool:application-palmistry-reading');
   });
 });

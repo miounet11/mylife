@@ -6,6 +6,22 @@ export type PremiumServiceKey =
   | 'event-review'
   | 'meihua-enhancement';
 
+export const PREMIUM_SERVICE_KEYS: PremiumServiceKey[] = [
+  'event-simulation',
+  'event-verdict',
+  'event-review',
+  'meihua-enhancement',
+];
+
+export function isPremiumServiceKey(value: string): value is PremiumServiceKey {
+  return PREMIUM_SERVICE_KEYS.includes(value as PremiumServiceKey);
+}
+
+export function normalizePremiumServiceKey(value?: string | null): PremiumServiceKey | undefined {
+  const normalized = `${value || ''}`.trim();
+  return isPremiumServiceKey(normalized) ? normalized : undefined;
+}
+
 export interface PremiumServiceOffer {
   key: PremiumServiceKey;
   badge: string;

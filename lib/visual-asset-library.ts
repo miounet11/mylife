@@ -113,10 +113,10 @@ export const approvedVisualAssets: VisualAssetLibraryItem[] = [
   {
     id: 'PWY01-005',
     slug: 'tool-center-120-matrix',
-    title: '120个工具矩阵',
+    title: '工具中心矩阵',
     description: '说明工具中心如何把报告里的问题拆成单项测算和行动建议。',
     publicUrl: `${visualAssetBase}/tool-center-120-matrix-v1.png`,
-    altText: '人生K线120个工具把报告问题拆成单项测算和行动建议的矩阵图',
+    altText: '人生K线工具中心把报告问题拆成单项测算和行动建议的矩阵图',
     ratio: '16:9',
     module: 'TOOLS',
     targetRoutes: ['/tools', '/result/[id]'],
@@ -125,7 +125,7 @@ export const approvedVisualAssets: VisualAssetLibraryItem[] = [
     narrativeTitle: '把大报告拆成可执行的小问题',
     narrativeExcerpt: '工具中心把综合报告里的复杂问题拆成可重复使用的单项工具，帮助用户从理解进入行动。',
     narrativeSections: [
-      { heading: '工具矩阵', body: '120 个工具按事业、关系、财富、风水、起名、复盘等方向组织。' },
+      { heading: '工具矩阵', body: '工具按事业、关系、财富、风水、起名、相学、复盘等方向组织。' },
       { heading: '使用逻辑', body: '先有综合报告，再用单项工具拆小问题，最后回到行动和记忆。' },
       { heading: '适用位置', body: '适合放在工具中心、结果页工具推荐和产品说明中。' },
     ],

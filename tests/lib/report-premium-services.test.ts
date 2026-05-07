@@ -1,4 +1,8 @@
-import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
+import {
+  buildPremiumServiceOffers,
+  isPremiumServiceKey,
+  normalizePremiumServiceKey,
+} from '@/lib/report-premium-services';
 import type { MonthlyWindow, ReportCorrectionInsight, ScenarioView } from '@/lib/report-v2';
 
 describe('buildPremiumServiceOffers', () => {
@@ -64,5 +68,12 @@ describe('buildPremiumServiceOffers', () => {
     expect(offers[0].featuredSignal).toContain('2026年04月');
     expect(offers[1].featuredSignal).toContain('事业板块当前更适合先收缩再择机推进');
     expect(offers[2].featuredSignal).toContain('近期更适合先复盘再决定是否继续投入');
+  });
+
+  it('does not treat non-premium chat intents as premium service keys', () => {
+    expect(isPremiumServiceKey('event-verdict')).toBe(true);
+    expect(normalizePremiumServiceKey(' event-review ')).toBe('event-review');
+    expect(isPremiumServiceKey('home-layout-diagnosis')).toBe(false);
+    expect(normalizePremiumServiceKey('home-layout-diagnosis')).toBeUndefined();
   });
 });

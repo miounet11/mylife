@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import type { VisualAssetLibraryItem } from '@/lib/visual-asset-library';
@@ -10,19 +11,20 @@ type VisualAssetFeatureProps = {
 
 export default function VisualAssetFeature({ asset, label = '视觉说明图', reverse = false }: VisualAssetFeatureProps) {
   return (
-    <section className="glass-panel overflow-hidden rounded-[2rem] p-4 md:p-5">
+    <section className="workspace-panel overflow-hidden p-4 md:p-5">
       <div className={`grid gap-5 lg:grid-cols-[1.08fr_0.92fr] lg:items-center ${reverse ? 'lg:[&>*:first-child]:order-2' : ''}`}>
         <Link
           href={`/visual-assets/${asset.slug}`}
           className={asset.ratio === '4:5'
-            ? 'mx-auto block max-h-[620px] max-w-[460px] overflow-hidden rounded-[1.6rem] bg-[#f7efe2]'
-            : 'block overflow-hidden rounded-[1.6rem] bg-[#f7efe2]'}
+            ? 'interactive-card relative mx-auto aspect-[4/5] max-h-[620px] w-full max-w-[460px] overflow-hidden rounded-lg bg-[#eef5ef]'
+            : 'interactive-card relative aspect-video overflow-hidden rounded-lg bg-[#eef5ef]'}
         >
-          <img
+          <Image
             src={asset.publicUrl}
             alt={asset.altText}
-            loading="lazy"
-            className={asset.ratio === '4:5' ? 'h-full w-full object-cover' : 'aspect-video h-full w-full object-cover'}
+            fill
+            sizes="(min-width: 1024px) 48vw, 100vw"
+            className="object-cover"
           />
         </Link>
 

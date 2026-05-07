@@ -8,6 +8,18 @@ import BirthTimeInput from '@/components/birth-time-input';
 import { saveAnalyzeDraft } from '@/lib/analyze-draft';
 import { trackClientEvent } from '@/lib/analytics-client';
 
+type BirthDateValue = {
+  year: number | null;
+  month: number | null;
+  day: number | null;
+};
+
+type BirthTimeValue = {
+  hour: number | null;
+  minute: number | null;
+  second: number | null;
+};
+
 interface ContentQuickAnalyzePanelProps {
   title?: string;
   description?: string;
@@ -18,7 +30,7 @@ interface ContentQuickAnalyzePanelProps {
 
 export default function ContentQuickAnalyzePanel({
   title = '输入生日，直接进入世界易个人判断',
-  description = '先填出生日期、时间和性别，再去正式分析入口补充出生地并完成完整判断。',
+  description: _description = '先填出生日期、时间和性别，再去正式分析入口补充出生地并完成完整判断。',
   sourceLabel = '内容页快捷入口',
   sourceKey = 'content_surface',
   contentMeta = {},
@@ -26,8 +38,8 @@ export default function ContentQuickAnalyzePanel({
   const router = useRouter();
   const pathname = usePathname();
   const [gender, setGender] = useState<'male' | 'female'>('male');
-  const [birthDate, setBirthDate] = useState({ year: null, month: null, day: null });
-  const [birthTime, setBirthTime] = useState({ hour: null, minute: null, second: null });
+  const [birthDate, setBirthDate] = useState<BirthDateValue>({ year: null, month: null, day: null });
+  const [birthTime, setBirthTime] = useState<BirthTimeValue>({ hour: null, minute: null, second: null });
   const [dateValid, setDateValid] = useState(false);
   const [timeValid, setTimeValid] = useState(false);
 
@@ -43,21 +55,6 @@ export default function ContentQuickAnalyzePanel({
       </div>
 
       <h3 className="mt-4 text-2xl font-black text-[color:var(--ink)]">{title}</h3>
-      {description ? <p className="intro-copy mt-3 text-sm text-[color:var(--muted)]">{description}</p> : null}
-
-      <div className="intro-panel mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {[
-          ['结构', '先看命局底座'],
-          ['阶段', '再看当前时位'],
-          ['环境', '把现实变量带进来'],
-          ['动作', '最后落到现实下一步'],
-        ].map(([titleText, body]) => (
-          <div key={titleText} className="rounded-[1.2rem] bg-white/78 px-4 py-4">
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{titleText}</div>
-            <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">{body}</div>
-          </div>
-        ))}
-      </div>
 
       <div className="mt-5 inline-flex rounded-full border border-[color:var(--line)] bg-white/80 p-1">
         {[
@@ -110,7 +107,7 @@ export default function ContentQuickAnalyzePanel({
               gender,
               birthDate: `${birthDate.year}-${String(birthDate.month).padStart(2, '0')}-${String(birthDate.day).padStart(2, '0')}`,
               birthTime: `${String(birthTime.hour).padStart(2, '0')}:${String(birthTime.minute).padStart(2, '0')}`,
-              birthSecond: birthTime.second,
+              birthSecond: birthTime.second ?? undefined,
             });
             router.push('/analyze?from=content');
           }}

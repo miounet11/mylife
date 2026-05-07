@@ -1,8 +1,10 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
-import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
+import { ArrowRight, Bot, LockKeyhole, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { buildChatHref } from '@/lib/chat-entry';
 import { getRememberedClientAttribution } from '@/lib/client-attribution';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
@@ -24,12 +26,19 @@ export default function ToolPremiumRequestPanel({
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const serviceKey = tool.premiumServiceKey || 'event-verdict';
-  const serviceLabel = getPremiumServiceLabel(serviceKey);
+  const serviceKey = tool.premiumServiceKey;
+  const serviceLabel = serviceKey ? getPremiumServiceLabel(serviceKey) : '';
+  const chatHref = buildChatHref({
+    reportId: reportId || undefined,
+    intent: tool.chatIntent || undefined,
+    question: `请围绕“${tool.shortTitle}”继续深问，只基于我补充的信息拆清楚问题、因果链、优先级和下一步动作。`,
+    source: 'tool_premium_request_panel',
+  });
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (submitting) return;
+    if (!serviceKey) return;
 
     if (question.trim().length < 8) {
       setError('请先写清楚你最想解决的一件事情。');
@@ -87,6 +96,48 @@ export default function ToolPremiumRequestPanel({
       setSubmitting(false);
     }
   };
+
+  if (!serviceKey) {
+    return (
+      <section className="glass-panel rounded-[2rem] p-6 md:p-8">
+        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+          <div>
+            <div className="section-label">
+              <LockKeyhole className="h-3.5 w-3.5" />
+              继续深问
+            </div>
+            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
+              回到结构追问
+            </h2>
+            <div className="intro-copy mt-3 text-sm text-[color:var(--muted)]">
+              这个工具当前不走人工专项表单，更适合继续上传资料或补充条件，让 AI 按可见信息把问题链拆清。
+            </div>
+          </div>
+
+          <div className="intro-panel rounded-[1.75rem] border border-[color:var(--line)] bg-white/84 p-5">
+            <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
+              <Bot className="h-4 w-4" />
+              下一步动作
+            </div>
+            <div className="mt-4 grid gap-3">
+              <div className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+                当前深测点：{tool.paidValueLine}
+              </div>
+              {tool.premiumModules.slice(0, 3).map((item) => (
+                <div key={item} className="rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+                  继续追问可展开：{item}
+                </div>
+              ))}
+            </div>
+            <Link href={chatHref} className="mt-5 inline-flex items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white">
+              进入 AI 结构追问
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="glass-panel rounded-[2rem] p-6 md:p-8">

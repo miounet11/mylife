@@ -3,14 +3,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { eventOperations, fortuneOperations, questionOperations, runInTransaction, toolSessionOperations } from '@/lib/database';
-import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
+import { getApiBaseUrl, getApiKey } from '@/lib/env';
 import { generateId } from '@/lib/utils';
 import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
 import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/chat-context';
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
-import { normalizeEventTransportRecords } from '@/lib/event-view';
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
 import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
@@ -27,10 +26,63 @@ import {
 export const maxDuration = 30;
 
 const CHAT_LLM_TIMEOUT_MS = 14000;
+const MAX_CHAT_MATERIALS = 4;
+const MAX_CHAT_IMAGE_BYTES = 1.8 * 1024 * 1024;
+
+const chatMaterialLabels: Record<ChatMaterialKind, string> = {
+  floor_plan: '户型图',
+  face_photo: '面相照片',
+  palm_photo: '手相照片',
+  handwriting: '字迹资料',
+  study_material: '学习材料',
+  scene_photo: '场景照片',
+  legal_document: '法院/合同文书',
+  other_document: '其他资料',
+};
 
 type HistoryMessage = {
   role: 'user' | 'assistant';
   content: string;
+};
+
+type ChatMaterialKind = 'floor_plan' | 'face_photo' | 'palm_photo' | 'handwriting' | 'study_material' | 'scene_photo' | 'legal_document' | 'other_document';
+
+type ChatCompletionTextPart = {
+  type: 'text';
+  text: string;
+};
+
+type ChatCompletionImagePart = {
+  type: 'image_url';
+  image_url: {
+    url: string;
+  };
+};
+
+type ChatCompletionContent = string | Array<ChatCompletionTextPart | ChatCompletionImagePart>;
+
+type ChatMaterialInput = {
+  id?: unknown;
+  kind?: unknown;
+  label?: unknown;
+  note?: unknown;
+  fileName?: unknown;
+  mimeType?: unknown;
+  size?: unknown;
+  dataUrl?: unknown;
+};
+
+type SanitizedChatMaterial = {
+  id: string;
+  kind: ChatMaterialKind;
+  label: string;
+  note: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  hasImage: boolean;
+  imageIncluded: boolean;
+  dataUrl?: string;
 };
 
 type QuestionRow = {
@@ -51,6 +103,8 @@ type QuestionRow = {
     intent?: ChatIntent | null;
     tacitContext?: Record<string, unknown> | null;
     tacitSummary?: string | null;
+    materials?: Array<Record<string, unknown>>;
+    materialSummary?: string | null;
   };
   createdAt?: string;
   created_at?: string;
@@ -60,6 +114,139 @@ type TimelineMessage = QuestionRow & {
   role: 'user' | 'assistant';
   content: string;
 };
+
+function clampChatText(value: unknown, maxLength: number) {
+  return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+}
+
+function isChatMaterialKind(value: unknown): value is ChatMaterialKind {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(chatMaterialLabels, value);
+}
+
+function parseImageDataUrl(value: unknown) {
+  const dataUrl = typeof value === 'string' ? value.trim() : '';
+  const match = dataUrl.match(/^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/=\s]+)$/i);
+  if (!match) {
+    return null;
+  }
+
+  const normalizedPayload = match[2].replace(/\s/g, '');
+  const estimatedBytes = Math.floor((normalizedPayload.length * 3) / 4);
+  if (estimatedBytes <= 0 || estimatedBytes > MAX_CHAT_IMAGE_BYTES) {
+    return null;
+  }
+
+  return {
+    dataUrl: `data:${match[1].toLowerCase()};base64,${normalizedPayload}`,
+    mimeType: match[1].toLowerCase(),
+    estimatedBytes,
+  };
+}
+
+function sanitizeChatMaterials(input: unknown): SanitizedChatMaterial[] {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .slice(0, MAX_CHAT_MATERIALS)
+    .map((item, index) => {
+      const raw = (item || {}) as ChatMaterialInput;
+      const kind = isChatMaterialKind(raw.kind) ? raw.kind : 'other_document';
+      const image = parseImageDataUrl(raw.dataUrl);
+      const rawMimeType = clampChatText(raw.mimeType, 80).toLowerCase();
+      const mimeType = image?.mimeType || rawMimeType;
+      const size = typeof raw.size === 'number' && Number.isFinite(raw.size) ? Math.max(0, Math.floor(raw.size)) : image?.estimatedBytes || 0;
+
+      return {
+        id: clampChatText(raw.id, 80) || `material_${index + 1}`,
+        kind,
+        label: clampChatText(raw.label, 40) || chatMaterialLabels[kind],
+        note: clampChatText(raw.note, 600),
+        fileName: clampChatText(raw.fileName, 160),
+        mimeType,
+        size,
+        hasImage: Boolean(image || mimeType.startsWith('image/')),
+        imageIncluded: Boolean(image),
+        dataUrl: image?.dataUrl,
+      };
+    })
+    .filter((item) => item.note || item.fileName || item.imageIncluded);
+}
+
+function buildSafeMaterialRecords(materials: SanitizedChatMaterial[]) {
+  return materials.map(({ dataUrl, ...item }) => item);
+}
+
+function buildMaterialSummary(materials: SanitizedChatMaterial[]) {
+  if (!materials.length) return '';
+
+  const lines = materials.map((item, index) => {
+    const parts = [
+      `${index + 1}. ${item.label}`,
+      item.fileName ? `文件：${item.fileName}` : '',
+      item.note ? `摘要：${item.note}` : '',
+      item.imageIncluded ? '图片已随本轮发送' : item.hasImage ? '图片过大或未随本轮发送，仅参考摘要' : '',
+    ].filter(Boolean);
+    return parts.join('；');
+  });
+
+  return [
+    '用户本轮补充资料维度：',
+    ...lines,
+  ].join('\n');
+}
+
+function buildUserContentWithMaterials(question: string, materialSummary: string, materials: SanitizedChatMaterial[]): ChatCompletionContent {
+  const imageMaterials = materials.filter((item) => item.imageIncluded && item.dataUrl).slice(0, 3);
+  const text = materialSummary ? `${question}\n\n${materialSummary}` : question;
+  if (!imageMaterials.length) {
+    return text;
+  }
+
+  return [
+    { type: 'text', text },
+    ...imageMaterials.map((item) => ({
+      type: 'image_url' as const,
+      image_url: {
+        url: item.dataUrl as string,
+      },
+    })),
+  ];
+}
+
+function hasImageContent(content: ChatCompletionContent) {
+  return Array.isArray(content) && content.some((item) => item.type === 'image_url');
+}
+
+function isLikelyImageContentUnsupported(error: unknown) {
+  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+  return (
+    message.includes('image_url')
+    || message.includes('image input')
+    || message.includes('vision')
+    || message.includes('multimodal')
+    || message.includes('content type')
+    || message.includes('invalid content')
+  );
+}
+
+function buildTextOnlyMessages(
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }>,
+  question: string,
+  materialSummary: string
+) {
+  return messages.map((message) => {
+    if (message.role !== 'user' || !hasImageContent(message.content)) {
+      return message;
+    }
+
+    return {
+      ...message,
+      content: materialSummary
+        ? `${question}\n\n${materialSummary}\n图片未进入当前模型，仅基于资料标签、文件名和用户摘要回答。`
+        : question,
+    };
+  });
+}
 
 function computeChatAttemptTimeouts(totalBudgetMs: number, attemptCount: number) {
   if (attemptCount <= 0) return [];
@@ -131,6 +318,8 @@ async function generateAIResponse(
   options?: {
     intent?: ChatIntent;
     context?: ChatExperienceContext;
+    materials?: SanitizedChatMaterial[];
+    materialSummary?: string;
   }
 ): Promise<{ answer: string; llmUsed: boolean; fallbackReason?: string }> {
   const apiKey = getApiKey();
@@ -151,7 +340,9 @@ async function generateAIResponse(
 
   const intentPrompt = getChatIntentSystemPrompt(options?.intent);
   const intentSummaryHint = getChatIntentSummaryHint(options?.intent);
-  const messages = [
+  const materialSummary = options?.materialSummary || buildMaterialSummary(options?.materials || []);
+  const userContent = buildUserContentWithMaterials(question, materialSummary, options?.materials || []);
+  const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
     {
       role: 'system',
       content: [
@@ -159,17 +350,25 @@ async function generateAIResponse(
         '你必须优先引用用户当前报告里的结构、用神、行运阶段、未来窗口和已记录现实事件，不要给空泛套话。',
         '每次回答都尽量包含：1）判断依据 2）当前阶段建议 3）风险提醒 4）若适合，建议把节点落成事件。',
         '若某结论受时辰或短期节奏影响较大，要明确提示不确定性。',
+        '若用户补充图片、字迹、学习材料、户型图或文书，只把它们作为辅助上下文：不要识别人脸身份，不要作医疗、法律、金融等确定性判断，不要复述敏感个人信息。',
+        '涉及法院文书、合同、诉讼材料时，只做结构化阅读、关键风险、下一步待核实问题，并明确重大事项应交由律师或专业人士处理。',
+        '面相、手相、字迹、场景图像不能作为唯一依据；回答必须回到结构、时间、事件和用户可执行动作。',
+        '涉及手相照片时，只做可见掌纹、掌丘、手型和照片质量的相学文化观察；不得判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数。',
+        '涉及户型图时，只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳、收纳与形势问题；方向和外局缺失时必须说明边界，不编造外部环境。',
         intentPrompt,
         contextSummary,
+        materialSummary,
         intentSummaryHint,
       ].join('\n'),
     },
     ...userHistory.map((item) => ({ role: item.role, content: item.content })),
-    { role: 'user', content: question },
+    { role: 'user', content: userContent },
   ];
+  let messages = baseMessages;
+  let textOnlyRetried = false;
 
   try {
-    const baseChain = getModelFallbackChain(getDefaultModel());
+    const baseChain = getModelFallbackChain(undefined, 'chat');
     const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
     const providerHealth = assessScopeProviderHealth(baseChain, 'chat', plan);
     const modelCandidates = plan.orderedModels;
@@ -196,7 +395,8 @@ async function generateAIResponse(
       `(base=${formatModelAttemptLabel(baseChain)})`
     );
 
-    for (const [index, model] of modelCandidates.entries()) {
+    for (let index = 0; index < modelCandidates.length; index += 1) {
+      const model = modelCandidates[index];
       const remainingBudget = deadlineAt - Date.now();
       if (remainingBudget < 900) {
         break;
@@ -209,7 +409,7 @@ async function generateAIResponse(
       try {
         const completion = await createOpenAiCompatibleChatCompletion(openai, {
           model,
-          messages: messages as Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+          messages,
           temperature: 0.7,
           maxTokens: 900,
           reasoningEffort: 'low',
@@ -250,6 +450,26 @@ async function generateAIResponse(
           fallbackReason: undefined,
         };
       } catch (error) {
+        if (!textOnlyRetried && hasImageContent(userContent) && isLikelyImageContentUnsupported(error)) {
+          textOnlyRetried = true;
+          messages = buildTextOnlyMessages(baseMessages, question, materialSummary);
+          failures.push({
+            errorType: 'image_content_unsupported',
+            errorMessage: error instanceof Error ? error.message : String(error),
+          });
+          recordModelAttempt({
+            model,
+            scope: 'chat',
+            success: false,
+            latencyMs: Date.now() - startedAt,
+            errorType: 'image_content_unsupported',
+            errorMessage: error instanceof Error ? error.message : String(error),
+            traceLabel: 'chat:main',
+          });
+          clearTimeout(timeoutId);
+          index -= 1;
+          continue;
+        }
         failures.push({
           errorType: error instanceof Error ? error.name || 'error' : 'error',
           errorMessage: error instanceof Error ? error.message : String(error),
@@ -304,6 +524,7 @@ function trackChatCompleted(params: {
   fallbackReason?: string;
   historyCount?: number;
   questionLength?: number;
+  materialCount?: number;
   truncatedCount?: number;
   deletedCount?: number;
 }) {
@@ -326,6 +547,7 @@ function trackChatCompleted(params: {
       fallbackReason: params.fallbackReason || null,
       historyCount: params.historyCount,
       questionLength: params.questionLength,
+      materialCount: params.materialCount,
       truncatedCount: params.truncatedCount,
       deletedCount: params.deletedCount,
     },
@@ -409,6 +631,24 @@ function buildFallbackChatAnswer(
         `这类问题不看长线空话，重点是接下来 7 天到 30 天的波动。当前更适合先观察对方信号和即时变数，再决定要不要在 ${bestWindow} 前后落动作。`,
         `如果现实已经逼近决策点，就先做最小动作验证，不要在 ${riskWindow} 一类承压节点重押。`,
         '你可以继续把问题缩成 A / B 两个选项，我会按短周期判断继续帮你收口。',
+      ].join('\n');
+    case 'palmistry-reading':
+      return [
+        '当前上游模型不稳定，先给你稳定版手相结构观察框架。',
+        'A 图片可用性：请确认手掌完整、掌心正对镜头、自然光、掌纹清晰，并补充左手/右手、惯用手和当前问题。照片不清时不要硬判。',
+        'B 可见结构：按三大主线（生命线、智慧线、感情线）、事业线/命运线、太阳线、水星线、婚姻线、掌丘饱满度、纹理连续性、分叉、岛纹、交叉纹、断续逐项观察。',
+        'C 文化解释：所有线名只作为传统相学术语使用，必须翻译成现实语言，例如节奏、表达、边界、压力承载和复盘习惯。',
+        'D 可执行建议：把观察转成沟通边界、工作节奏、休息恢复、记录复盘、21 天自我观察或重新拍照复测。',
+        'E 边界：不从手相判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数；健康线也不能解释为医学诊断。',
+      ].join('\n');
+    case 'home-layout-diagnosis':
+      return [
+        '当前上游模型不稳定，先给你稳定版户型结构诊断框架。',
+        'A 核心问题清单：请先确认入户门、阳台、厨房、卫生间、卧室、客厅、主要窗位和方向信息；如果方向不明，先按“上北下南，左西右东”做结构假设。',
+        'B 因果链：优先检查入户是否直冲公共区或卧室、客厅是否被通道化、卧室门线和床位是否受冲、卫生间是否贴近休息区、暗厅暗卫和收纳是否挤压动线。',
+        'C 优先级：先处理玄关缓冲和主通道，再处理卧室安稳，然后处理厨卫潮湿/噪音，最后处理收纳与软装。',
+        'D 低成本调整：用半高柜、地毯、窄屏风、门帘、床位避门线、强排风、门常闭、餐边柜和通道减物来降低冲、堵、湿、乱。',
+        'E 验证边界：连续观察 7-21 天的睡眠、潮湿、异味、杂乱感和动线顺畅度；本判断不替代建筑、消防、装修和物业专业意见。',
       ].join('\n');
     default:
       return [
@@ -518,6 +758,8 @@ function toHistoryPayload(rows: TimelineMessage[]) {
     responseToQuestionId: row.analysis?.responseToQuestionId || null,
     tacitContext: row.role === 'user' ? row.analysis?.tacitContext || null : null,
     tacitSummary: row.role === 'user' ? row.analysis?.tacitSummary || null : null,
+    materials: row.role === 'user' && Array.isArray(row.analysis?.materials) ? row.analysis.materials : [],
+    materialSummary: row.role === 'user' ? row.analysis?.materialSummary || null : null,
     timestamp: row.createdAt || row.created_at,
   }));
 }
@@ -573,7 +815,7 @@ function buildChatPayload(
   requestedIntent?: ChatIntent
 ) {
   const report = getChatReport(userId, requestedReportId);
-  const events = normalizeEventTransportRecords(eventOperations.getByUserId(userId).slice(0, 8));
+  const events = eventOperations.getByUserId(userId).slice(0, 8);
   const toolSessions = toolSessionOperations.listByUser(userId, 8);
 
   return buildChatExperienceContext({
@@ -646,6 +888,9 @@ export async function POST(request: NextRequest) {
     const question = (data?.question || '').trim();
     const tacitContext = sanitizeTacitKnowledgeInput(data?.tacitContext);
     const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
+    const materials = sanitizeChatMaterials(data?.materials);
+    const materialSummary = buildMaterialSummary(materials);
+    const safeMaterials = buildSafeMaterialRecords(materials);
     userId = await getOrCreateGuestUserId();
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
@@ -667,12 +912,15 @@ export async function POST(request: NextRequest) {
     const scopeEventId = context.focusedEvent?.id || requestedEventId;
     const previousRows = getScopedChatRows(userId, scopeReportId, scopeEventId, requestedIntent, 60);
     const userHistory = buildHistoryFromRows(previousRows).slice(-12);
-    const contextSummary = tacitSummary
-      ? `${context.summary}\n用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。`
-      : context.summary;
+    const contextSummary = [
+      context.summary,
+      tacitSummary ? `用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
+    ].filter(Boolean).join('\n');
     const { answer, llmUsed, fallbackReason } = await generateAIResponse(question, userHistory, contextSummary, {
       intent: requestedIntent,
       context,
+      materials,
+      materialSummary,
     });
     const turnId = generateId();
     const userMessageId = generateId();
@@ -692,6 +940,8 @@ export async function POST(request: NextRequest) {
         intent: requestedIntent || null,
         tacitContext: tacitContext || null,
         tacitSummary: tacitSummary || null,
+        materials: safeMaterials,
+        materialSummary: materialSummary || null,
       },
     });
 
@@ -712,6 +962,33 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const palmPhotoCount = materials.filter((item) => item.kind === 'palm_photo').length;
+    const imageMaterialCount = materials.filter((item) => item.imageIncluded).length;
+
+    if (requestedIntent === 'palmistry-reading' && palmPhotoCount > 0) {
+      trackServerEvent({
+        userId,
+        sessionId,
+        userAgent,
+        eventName: 'tool_image_upload_started',
+        page: '/chat',
+        meta: {
+          phase: 'server_confirmed',
+          confirmed: true,
+          toolSlug: 'application-palmistry-reading',
+          intent: requestedIntent,
+          source: requestedSource || null,
+          ctaStrategyKey: requestedCtaStrategyKey || null,
+          sourceFamily: requestedSourceFamily || null,
+          materialCount: materials.length,
+          palmPhotoCount,
+          imageMaterialCount,
+          reportId: context.report?.id || null,
+          eventId: context.focusedEvent?.id || null,
+        },
+      });
+    }
+
     trackServerEvent({
       userId,
       sessionId,
@@ -724,6 +1001,9 @@ export async function POST(request: NextRequest) {
         fallbackReason: fallbackReason || null,
         questionLength: question.length,
         tacitSignalCount: tacitContext ? 1 : 0,
+        materialCount: materials.length,
+        materialKinds: materials.map((item) => item.kind),
+        imageMaterialCount,
         reportId: context.report?.id || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
@@ -748,6 +1028,7 @@ export async function POST(request: NextRequest) {
       fallbackReason,
       historyCount: previousRows.length,
       questionLength: question.length,
+      materialCount: materials.length,
     });
 
     return NextResponse.json({
@@ -844,9 +1125,18 @@ export async function PATCH(request: NextRequest) {
       }
 
       const historyBefore = buildHistoryBeforeIndex(rows, userIndex);
-      const { answer, llmUsed, fallbackReason } = await generateAIResponse(userQuestion, historyBefore, context.summary, {
+      const existingMaterials = sanitizeChatMaterials(rows[userIndex].analysis?.materials || []);
+      const existingMaterialSummary = `${rows[userIndex].analysis?.materialSummary || ''}`.trim() || buildMaterialSummary(existingMaterials);
+      const userTacitSummary = `${rows[userIndex].analysis?.tacitSummary || ''}`.trim();
+      const regenerationContextSummary = [
+        context.summary,
+        userTacitSummary ? `用户本轮补充了一层默会信息：${userTacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
+      ].filter(Boolean).join('\n');
+      const { answer, llmUsed, fallbackReason } = await generateAIResponse(userQuestion, historyBefore, regenerationContextSummary, {
         intent: requestedIntent,
         context,
+        materials: existingMaterials,
+        materialSummary: existingMaterialSummary,
       });
       const trailingIds = rows.slice(targetIndex + 1).map((row) => row.id);
 
@@ -932,9 +1222,18 @@ export async function PATCH(request: NextRequest) {
 
       const assistantIndex = findPairedAssistantIndex(rows, targetIndex);
       const historyBefore = buildHistoryBeforeIndex(rows, targetIndex);
-      const { answer, llmUsed, fallbackReason } = await generateAIResponse(content, historyBefore, context.summary, {
+      const existingMaterials = sanitizeChatMaterials(target.analysis?.materials || []);
+      const existingMaterialSummary = `${target.analysis?.materialSummary || ''}`.trim() || buildMaterialSummary(existingMaterials);
+      const userTacitSummary = `${target.analysis?.tacitSummary || ''}`.trim();
+      const editContextSummary = [
+        context.summary,
+        userTacitSummary ? `用户本轮补充了一层默会信息：${userTacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
+      ].filter(Boolean).join('\n');
+      const { answer, llmUsed, fallbackReason } = await generateAIResponse(content, historyBefore, editContextSummary, {
         intent: requestedIntent,
         context,
+        materials: existingMaterials,
+        materialSummary: existingMaterialSummary,
       });
       const trailingStart = assistantIndex >= 0 ? assistantIndex + 1 : targetIndex + 1;
       const trailingIds = rows.slice(trailingStart).map((row) => row.id);

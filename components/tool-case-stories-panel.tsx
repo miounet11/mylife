@@ -4,7 +4,7 @@ import type { ToolDefinition } from '@/lib/tools';
 export default function ToolCaseStoriesPanel({
   tool,
   title = '案例',
-  description = '',
+  description: _description = '',
 }: {
   tool: ToolDefinition;
   title?: string;
@@ -23,7 +23,6 @@ export default function ToolCaseStoriesPanel({
             {title}
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">工具案例</h2>
-          {description ? <p className="intro-copy mt-3 max-w-3xl text-sm text-[color:var(--muted)]">{description}</p> : null}
         </div>
       </div>
 

@@ -3,7 +3,35 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowRight, Bot, CalendarClock, Check, CheckCircle2, Compass, Copy, Layers3, Pencil, RotateCcw, Send, Sparkles, Trash2, X } from 'lucide-react';
+import type { ChangeEvent, RefObject } from 'react';
+import {
+  ArrowDown,
+  ArrowRight,
+  Bot,
+  CalendarClock,
+  Check,
+  CheckCircle2,
+  Compass,
+  Copy,
+  FileText,
+  GraduationCap,
+  Hand,
+  Image as ImageIcon,
+  ImagePlus,
+  Paperclip,
+  Pencil,
+  PenLine,
+  Plus,
+  RotateCcw,
+  ScanFace,
+  ScrollText,
+  Send,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+  X,
+} from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   buildChatEventDraft,
   type ChatContextEvent,
@@ -12,6 +40,7 @@ import {
   type ChatReportContext,
 } from '@/lib/chat-context';
 import { getChatIntentPreset, listChatIntentPresets } from '@/lib/chat-intent';
+import { trackClientEvent } from '@/lib/analytics-client';
 import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
 import ChatMarkdown from '@/components/chat-markdown';
 import TacitKnowledgeComposer from '@/components/tacit-knowledge-composer';
@@ -39,7 +68,28 @@ interface ChatMessage {
   responseToQuestionId?: string | null;
   tacitContext?: TacitKnowledgeInput | null;
   tacitSummary?: string | null;
+  materials?: ChatMaterialDisplay[];
+  materialSummary?: string | null;
 }
+
+type ChatMaterialKind = 'floor_plan' | 'face_photo' | 'palm_photo' | 'handwriting' | 'study_material' | 'scene_photo' | 'legal_document' | 'other_document';
+
+type ChatMaterialDisplay = {
+  id: string;
+  kind: ChatMaterialKind;
+  label: string;
+  note?: string;
+  fileName?: string;
+  mimeType?: string;
+  size?: number;
+  hasImage?: boolean;
+  previewUrl?: string;
+  imageIncluded?: boolean;
+};
+
+type ChatMaterialDraft = ChatMaterialDisplay & {
+  dataUrl?: string;
+};
 
 type ChatContextReport = ChatReportContext;
 type SuggestedEventDraft = ReportActionSuggestion;
@@ -59,12 +109,107 @@ const defaultWorldYiQuestions = [
   '我现在最需要规避的误判是什么，为什么？',
 ];
 
-const chatDoctrineSteps = [
-  '先看结构',
-  '再看阶段',
-  '必须带环境',
-  '最后回到动作',
+const materialKindOptions: Array<{
+  kind: ChatMaterialKind;
+  label: string;
+  icon: LucideIcon;
+  accept: string;
+  placeholder: string;
+}> = [
+  {
+    kind: 'floor_plan',
+    label: '户型图',
+    icon: Compass,
+    accept: 'image/*',
+    placeholder: '方向/城市/居住人数/困扰点，例如睡眠、潮湿、动线乱',
+  },
+  {
+    kind: 'face_photo',
+    label: '面相',
+    icon: ScanFace,
+    accept: 'image/*',
+    placeholder: '正面/侧面、近期状态、想重点看哪件事',
+  },
+  {
+    kind: 'palm_photo',
+    label: '手相',
+    icon: Hand,
+    accept: 'image/*',
+    placeholder: '左/右手、掌纹清晰度、当前问题',
+  },
+  {
+    kind: 'handwriting',
+    label: '字迹',
+    icon: PenLine,
+    accept: 'image/*',
+    placeholder: '手写内容、书写场景、想观察的性格/状态',
+  },
+  {
+    kind: 'study_material',
+    label: '学习材料',
+    icon: GraduationCap,
+    accept: 'image/*,.pdf,.txt',
+    placeholder: '课程/成绩/学习计划摘要，最卡的点',
+  },
+  {
+    kind: 'scene_photo',
+    label: '场景照片',
+    icon: ImageIcon,
+    accept: 'image/*',
+    placeholder: '照片场景、时间、相关人物关系',
+  },
+  {
+    kind: 'legal_document',
+    label: '法院/合同',
+    icon: ScrollText,
+    accept: 'image/*,.pdf,.txt',
+    placeholder: '文书类型、争议点、关键条款；先打码',
+  },
+  {
+    kind: 'other_document',
+    label: '其他资料',
+    icon: FileText,
+    accept: 'image/*,.pdf,.txt',
+    placeholder: '资料来源、关键内容、希望判断的问题',
+  },
 ];
+
+const maxMaterialCount = 4;
+const maxInlineImageBytes = 1.8 * 1024 * 1024;
+
+function getMaterialOption(kind: ChatMaterialKind) {
+  return materialKindOptions.find((item) => item.kind === kind) || materialKindOptions[materialKindOptions.length - 1];
+}
+
+function formatFileSize(size?: number) {
+  if (!size || size <= 0) return '';
+  if (size < 1024 * 1024) {
+    return `${Math.max(1, Math.round(size / 1024))}KB`;
+  }
+  return `${(size / 1024 / 1024).toFixed(1)}MB`;
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === 'string' ? reader.result : '');
+    reader.onerror = () => reject(reader.error || new Error('读取文件失败'));
+    reader.readAsDataURL(file);
+  });
+}
+
+function toMaterialPayload(materials: ChatMaterialDraft[]) {
+  return materials.map((item) => ({
+    id: item.id,
+    kind: item.kind,
+    label: item.label,
+    note: item.note || '',
+    fileName: item.fileName || '',
+    mimeType: item.mimeType || '',
+    size: item.size || 0,
+    dataUrl: item.dataUrl || '',
+  }));
+}
 
 function formatChatTime(value: Date | null) {
   if (!value || Number.isNaN(value.getTime())) {
@@ -111,8 +256,14 @@ export default function AIAssistantChat() {
   const [tacitContext, setTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
   const [restoredTacitContext, setRestoredTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
   const [showTacitComposer, setShowTacitComposer] = useState(false);
+  const [materials, setMaterials] = useState<ChatMaterialDraft[]>([]);
+  const [selectedMaterialKind, setSelectedMaterialKind] = useState<ChatMaterialKind>('face_photo');
+  const [materialNote, setMaterialNote] = useState('');
+  const [isAddingMaterial, setIsAddingMaterial] = useState(false);
+  const [materialError, setMaterialError] = useState('');
   const messagesScrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const materialFileInputRef = useRef<HTMLInputElement>(null);
   const initialScrollDoneRef = useRef(false);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
   const intentPreset = getIntentPreset(intent);
@@ -135,6 +286,7 @@ export default function AIAssistantChat() {
     ctaStrategyKey: ctaStrategyKey || undefined,
     sourceFamily: sourceFamily || undefined,
   };
+  const isPalmistryUploadFlow = intent === 'palmistry-reading';
   const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
   const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
   const canRestoreTacit = hasTacitKnowledgeInput(restoredTacitContext) && !areTacitKnowledgeInputsEqual(restoredTacitContext, tacitContext);
@@ -179,6 +331,8 @@ export default function AIAssistantChat() {
         responseToQuestionId: item.responseToQuestionId || null,
         tacitContext: item.tacitContext || null,
         tacitSummary: item.tacitSummary || null,
+        materials: Array.isArray(item.materials) ? item.materials : [],
+        materialSummary: item.materialSummary || null,
       }));
       const latestTacitContext = findLatestScopedTacitContext(mapped);
 
@@ -243,6 +397,18 @@ export default function AIAssistantChat() {
   }, [input]);
 
   useEffect(() => {
+    const intendedMaterialKind: ChatMaterialKind | null = intent === 'home-layout-diagnosis'
+      ? 'floor_plan'
+      : intent === 'palmistry-reading'
+        ? 'palm_photo'
+        : null;
+    if (intendedMaterialKind && selectedMaterialKind !== intendedMaterialKind) {
+      setSelectedMaterialKind(intendedMaterialKind);
+      setMaterialError('');
+    }
+  }, [intent, selectedMaterialKind]);
+
+  useEffect(() => {
     if (prefilledQuestion && !input.trim() && messages.length === 0) {
       setInput(prefilledQuestion);
       return;
@@ -305,10 +471,106 @@ export default function AIAssistantChat() {
     }
   };
 
+  const handleMaterialFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+
+    if (materials.length >= maxMaterialCount) {
+      setMaterialError(`最多保留 ${maxMaterialCount} 份资料`);
+      return;
+    }
+
+    const option = getMaterialOption(selectedMaterialKind);
+    const isImage = file.type.startsWith('image/');
+    setIsAddingMaterial(true);
+    setMaterialError('');
+
+    try {
+      const dataUrl = isImage && file.size <= maxInlineImageBytes
+        ? await readFileAsDataUrl(file)
+        : '';
+      const note = materialNote.trim();
+      const material: ChatMaterialDraft = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        kind: option.kind,
+        label: option.label,
+        note,
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        size: file.size,
+        hasImage: isImage,
+        previewUrl: dataUrl || undefined,
+        imageIncluded: Boolean(dataUrl),
+        dataUrl,
+      };
+
+      setMaterials((current) => [...current, material]);
+      if (isPalmistryUploadFlow && material.kind === 'palm_photo') {
+        void trackClientEvent({
+          eventName: 'tool_image_upload_material_added',
+          page: '/chat',
+          meta: {
+            toolSlug: 'application-palmistry-reading',
+            intent,
+            source: source || null,
+            ctaStrategyKey: ctaStrategyKey || null,
+            sourceFamily: sourceFamily || null,
+            materialKind: material.kind,
+            imageIncluded: material.imageIncluded,
+            fileSize: material.size,
+            mimeType: material.mimeType,
+          },
+        });
+      }
+      setMaterialNote('');
+      if (isImage && !dataUrl) {
+        setMaterialError('图片过大，已保留资料标签和备注；可补充关键内容。');
+      }
+      if (!isImage && !note) {
+        setMaterialError('文书和材料不会直接上传原文，请补充关键摘要。');
+      }
+    } catch {
+      setMaterialError('资料读取失败，请换一张图片或补充文字摘要。');
+    } finally {
+      setIsAddingMaterial(false);
+    }
+  };
+
+  const handleAddTextMaterial = () => {
+    const note = materialNote.trim();
+    if (!note) {
+      setMaterialError('先写一句资料摘要');
+      return;
+    }
+    if (materials.length >= maxMaterialCount) {
+      setMaterialError(`最多保留 ${maxMaterialCount} 份资料`);
+      return;
+    }
+
+    const option = getMaterialOption(selectedMaterialKind);
+    setMaterials((current) => [
+      ...current,
+      {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        kind: option.kind,
+        label: option.label,
+        note,
+      },
+    ]);
+    setMaterialNote('');
+    setMaterialError('');
+  };
+
+  const handleRemoveMaterial = (materialId: string) => {
+    setMaterials((current) => current.filter((item) => item.id !== materialId));
+  };
+
   const sendQuestion = async (rawQuestion: string) => {
     if (isTyping || loadingHistory) return;
     const question = rawQuestion.trim();
     if (!question) return;
+    const materialSnapshot = materials;
 
     const userMessage: ChatMessage = {
       id: `${Date.now()}_user`,
@@ -317,14 +579,37 @@ export default function AIAssistantChat() {
       timestamp: null,
       tacitContext: hasTacitContext ? cloneTacitKnowledgeInput(tacitContext) : null,
       tacitSummary: tacitSummary || null,
+      materials: materialSnapshot.map(({ dataUrl, ...item }) => item),
     };
 
     setMessages((current) => [...current, userMessage]);
     setInput('');
+    setMaterials([]);
+    setMaterialNote('');
+    setMaterialError('');
     setIsTyping(true);
     setError('');
     setEditingMessageId(null);
     setRestoredTacitContext(cloneTacitKnowledgeInput(tacitContext));
+    const palmPhotoCount = materialSnapshot.filter((item) => item.kind === 'palm_photo').length;
+    if (isPalmistryUploadFlow && palmPhotoCount > 0) {
+      void trackClientEvent({
+        eventName: 'tool_image_upload_started',
+        page: '/chat',
+        meta: {
+          phase: 'client_intent',
+          confirmed: false,
+          toolSlug: 'application-palmistry-reading',
+          intent,
+          source: source || null,
+          ctaStrategyKey: ctaStrategyKey || null,
+          sourceFamily: sourceFamily || null,
+          materialCount: materialSnapshot.length,
+          palmPhotoCount,
+          imageMaterialCount: materialSnapshot.filter((item) => item.imageIncluded).length,
+        },
+      });
+    }
 
     try {
       const response = await fetch('/api/chat', {
@@ -333,12 +618,14 @@ export default function AIAssistantChat() {
         body: JSON.stringify({
           question,
           tacitContext,
+          materials: toMaterialPayload(materialSnapshot),
           ...scopePayload,
         }),
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
         setMessages((current) => current.filter((item) => item.id !== userMessage.id));
+        setMaterials(materialSnapshot);
         setError(data.error || 'AI 回复失败，请稍后重试');
         return;
       }
@@ -350,6 +637,7 @@ export default function AIAssistantChat() {
         event_id: eventId || context?.focusedEvent?.id || '',
         intent: intent || 'default',
         llm_used: !!data.llmUsed,
+        material_count: materialSnapshot.length,
       });
 
       if (!data.llmUsed) {
@@ -357,6 +645,7 @@ export default function AIAssistantChat() {
       }
     } catch {
       setMessages((current) => current.filter((item) => item.id !== userMessage.id));
+      setMaterials(materialSnapshot);
       setError('网络异常，AI 回复失败');
     } finally {
       setIsTyping(false);
@@ -556,10 +845,10 @@ export default function AIAssistantChat() {
 
   return (
     <div className="flex h-full flex-col bg-transparent">
-      <div className="border-b border-white/60 bg-white/70 p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="border-b border-white/60 bg-white/70 p-4 md:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
               <Bot className="h-5 w-5" />
             </div>
             <div>
@@ -569,60 +858,44 @@ export default function AIAssistantChat() {
 
           <div className="flex flex-wrap gap-2">
             {reportId || context?.report?.id ? (
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
                 已绑定报告
               </span>
             ) : null}
             {eventId || context?.focusedEvent?.id ? (
-              <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+              <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
                 已绑定事件
               </span>
             ) : null}
-            <span className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+            <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
               {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
             </span>
           </div>
         </div>
 
-        <div className="mt-4 grid gap-3 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
-          <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
-              <Layers3 className="h-3.5 w-3.5" />
-              当前追问顺序
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {chatDoctrineSteps.map((item) => (
-                <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
-                  {item}
-                </span>
-              ))}
-            </div>
-            {intentPreset ? (
-              <div className="mt-3 text-xs font-semibold text-[color:var(--accent-strong)]">{intentPreset.entryLabel}</div>
-            ) : null}
+        <details className="mt-3 rounded-lg border border-[color:var(--line)] bg-white/74">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
+            切换专项
+            <span className="text-[color:var(--accent-strong)]">{intentPreset?.entryLabel || '自由结构追问'}</span>
+          </summary>
+          <div className="grid gap-2 border-t border-[color:var(--line)] p-3 sm:grid-cols-2">
+            {scopedIntentLinks.map((item) => (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`rounded-lg px-3 py-2 text-sm transition hover:-translate-y-0.5 ${
+                  item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
+                }`}
+              >
+                <div>{item.entryLabel}</div>
+              </Link>
+            ))}
           </div>
-
-          <div className="rounded-[1.4rem] border border-[color:var(--line)] bg-white/84 px-4 py-3">
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专项切换</div>
-            <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              {scopedIntentLinks.map((item) => (
-                <Link
-                  key={item.key}
-                  href={item.href}
-                  className={`rounded-[1rem] px-3 py-3 text-sm transition hover:-translate-y-0.5 ${
-                    item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-slate-50 text-[color:var(--ink)]'
-                  }`}
-                >
-                  <div>{item.entryLabel}</div>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
+        </details>
       </div>
 
       <div className="relative flex-1">
-        <div ref={messagesScrollerRef} className="flex h-full flex-col space-y-4 overflow-y-auto p-5">
+        <div ref={messagesScrollerRef} className="flex h-full flex-col space-y-3 overflow-y-auto p-4 md:p-5">
           {context && (
             <ContextCard
               context={context}
@@ -643,18 +916,17 @@ export default function AIAssistantChat() {
 
           {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
-          {!loadingHistory && messages.length === 0 && (
-            <div className="space-y-6 rounded-[1.75rem] bg-white/75 p-6">
+          {!loadingHistory && messages.length === 0 && !context && (
+            <div className="space-y-4 rounded-xl bg-white/75 p-4 md:p-5">
               <div>
                 <div className="section-label">
                   <Sparkles className="h-3.5 w-3.5" />
-                  世界易推荐追问
+                  推荐追问
                 </div>
-                <h3 className="mt-4 text-2xl font-bold text-[color:var(--ink)]">先把问题压成一个可判断的结构问题</h3>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                {visibleQuickQuestions.map((question) => (
+              <div className="grid gap-2 md:grid-cols-2">
+                {visibleQuickQuestions.slice(0, 2).map((question) => (
                   <QuickQuestionButton
                     key={question}
                     question={question}
@@ -707,7 +979,7 @@ export default function AIAssistantChat() {
         ) : null}
       </div>
 
-      <div className="border-t border-white/60 bg-white/70 p-5">
+      <div className="border-t border-white/60 bg-white/70 p-4 md:p-5">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -715,6 +987,25 @@ export default function AIAssistantChat() {
           }}
           className="space-y-3"
         >
+          <MaterialEvidenceComposer
+            materials={materials}
+            selectedKind={selectedMaterialKind}
+            note={materialNote}
+            isAdding={isAddingMaterial}
+            error={materialError}
+            disabled={isTyping || loadingHistory}
+            fileInputRef={materialFileInputRef}
+            onKindChange={(kind) => {
+              setSelectedMaterialKind(kind);
+              setMaterialError('');
+            }}
+            onNoteChange={setMaterialNote}
+            onFileChange={handleMaterialFileChange}
+            onUploadClick={() => materialFileInputRef.current?.click()}
+            onAddText={handleAddTextMaterial}
+            onRemove={handleRemoveMaterial}
+          />
+
           <TacitKnowledgeComposer
             value={tacitContext}
             onChange={setTacitContext}
@@ -739,12 +1030,12 @@ export default function AIAssistantChat() {
             <div className="flex-1">
               <textarea
                 ref={inputRef}
-                value={input}
-                onChange={(event) => setInput(event.target.value)}
-                onKeyDown={(event) => {
+              value={input}
+              onChange={(event) => setInput(event.target.value)}
+              onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault();
-                    if (input.trim() && !isTyping) {
+                    if (input.trim() && !isTyping && !isAddingMaterial) {
                       void sendQuestion(input);
                     }
                   }
@@ -764,7 +1055,7 @@ export default function AIAssistantChat() {
             </div>
             <button
               type="submit"
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isTyping || isAddingMaterial}
               className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
@@ -793,15 +1084,17 @@ function ContextCard({
   savingEventKey: string | null;
   savedEventKeys: string[];
 }) {
+  const recommendedQuestions = (intentPreset ? Array.from(new Set([...intentPreset.questions, ...context.suggestedPrompts])) : context.suggestedPrompts).slice(0, 2);
+
   return (
-    <div className="space-y-4 rounded-[1.75rem] border border-[color:var(--line)] bg-white/78 p-5 shadow-[0_18px_36px_rgba(23,32,51,0.06)]">
+    <div className="space-y-3 rounded-xl border border-[color:var(--line)] bg-white/78 p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="section-label">
             <Compass className="h-3.5 w-3.5" />
             这次世界易追问
           </div>
-          <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">
+          <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">
             {context.report ? `已锚定报告 ${context.report.pattern} / ${context.report.currentDaYun}` : '当前对话未绑定具体报告'}
           </h3>
         </div>
@@ -817,66 +1110,49 @@ function ContextCard({
       {context.focusAreas.length > 0 && (
         <div className="flex flex-wrap gap-2">
           {context.focusAreas.map((item) => (
-            <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span key={item} className="rounded-md bg-[color:var(--accent-soft)] px-2.5 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {item}
             </span>
           ))}
         </div>
       )}
 
-      <div className="rounded-[1.5rem] bg-slate-50 p-4">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">本次追问路径</div>
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          {[
-            context.report ? `结构先围绕 ${context.report.pattern} 展开。` : '先给当前问题找一个明确结构锚点。',
-            context.report ? `阶段重点先看 ${context.report.currentDaYun} 与 ${context.report.bestWindow}。` : '尽量说明问题发生在哪个时间窗口。',
-            '把关系、城市、合作与现实压力一起带进来。',
-            '最后收敛成现在先做什么。',
-          ].map((item) => (
-            <div key={item} className="rounded-[1.2rem] bg-white px-4 py-3 text-sm leading-7 text-[color:var(--ink)]">
-              {item}
-            </div>
+      {recommendedQuestions.length > 0 ? (
+        <div className="grid gap-2 md:grid-cols-2">
+          {recommendedQuestions.map((question) => (
+            <QuickQuestionButton
+              key={question}
+              question={question}
+              onClick={() => onPromptClick(question)}
+              disabled={disabled}
+            />
           ))}
         </div>
-      </div>
+      ) : null}
 
-      <div className="grid gap-4 lg:grid-cols-[1.04fr_0.96fr]">
-        <div className="rounded-[1.5rem] bg-slate-50 p-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+      {(context.recentEvents.length > 0 || context.report) ? (
+        <details className="rounded-lg border border-[color:var(--line)] bg-slate-50">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
+            上下文详情
             <CalendarClock className="h-4 w-4" />
-            最近事件
-          </div>
-          <div className="mt-3 grid gap-3">
-            {context.recentEvents.length > 0 ? (
-              context.recentEvents.map((event) => (
-                <div key={event.id} className="rounded-2xl bg-white px-4 py-3">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
-                  <div className="mt-1 text-xs text-[color:var(--muted)]">
-                    {event.date} · {mapEventTypeLabel(event.type)} · {mapImpactLabel(event.impact)}
-                  </div>
-                  <div className="mt-2 text-xs font-medium text-[color:var(--muted)]">{mapValidationLabel(event.validationStatus)}</div>
+          </summary>
+          <div className="grid gap-3 border-t border-[color:var(--line)] p-3 md:grid-cols-2">
+            {context.report ? (
+              <div className="rounded-lg bg-white px-3 py-3 text-sm leading-6 text-[color:var(--ink)]">
+                {`结构 ${context.report.pattern}，阶段重点 ${context.report.currentDaYun} / ${context.report.bestWindow}。`}
+              </div>
+            ) : null}
+            {context.recentEvents.map((event) => (
+              <div key={event.id} className="rounded-lg bg-white px-3 py-3">
+                <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
+                <div className="mt-1 text-xs text-[color:var(--muted)]">
+                  {event.date} · {mapEventTypeLabel(event.type)} · {mapImpactLabel(event.impact)}
                 </div>
-              ))
-            ) : (
-              <div className="rounded-2xl bg-white px-4 py-3 text-sm text-[color:var(--muted)]">暂无事件记录</div>
-            )}
-          </div>
-        </div>
-
-        <div className="rounded-[1.5rem] bg-slate-50 p-4">
-          <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">推荐追问</div>
-          <div className="mt-3 grid gap-3">
-            {(intentPreset ? Array.from(new Set([...intentPreset.questions, ...context.suggestedPrompts])) : context.suggestedPrompts).slice(0, 3).map((question) => (
-              <QuickQuestionButton
-                key={question}
-                question={question}
-                onClick={() => onPromptClick(question)}
-                disabled={disabled}
-              />
+              </div>
             ))}
           </div>
-        </div>
-      </div>
+        </details>
+      ) : null}
 
       {context.validationSummary?.headline && (
         <div className="rounded-[1.5rem] bg-slate-50 p-4">
@@ -946,6 +1222,189 @@ function ContextCard({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+function MaterialEvidenceComposer({
+  materials,
+  selectedKind,
+  note,
+  isAdding,
+  error,
+  disabled,
+  fileInputRef,
+  onKindChange,
+  onNoteChange,
+  onFileChange,
+  onUploadClick,
+  onAddText,
+  onRemove,
+}: {
+  materials: ChatMaterialDraft[];
+  selectedKind: ChatMaterialKind;
+  note: string;
+  isAdding: boolean;
+  error: string;
+  disabled: boolean;
+  fileInputRef: RefObject<HTMLInputElement | null>;
+  onKindChange: (kind: ChatMaterialKind) => void;
+  onNoteChange: (value: string) => void;
+  onFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onUploadClick: () => void;
+  onAddText: () => void;
+  onRemove: (materialId: string) => void;
+}) {
+  const selected = getMaterialOption(selectedKind);
+  const SelectedIcon = selected.icon;
+  const imageCount = materials.filter((item) => item.hasImage).length;
+
+  return (
+    <div className="rounded-xl border border-[color:var(--line)] bg-white/86 p-3">
+      <input
+        ref={fileInputRef}
+        type="file"
+        className="hidden"
+        accept={selected.accept}
+        onChange={onFileChange}
+        disabled={disabled || isAdding}
+      />
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-2">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+            <Paperclip className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <div className="text-sm font-bold text-[color:var(--ink)]">资料维度</div>
+            <div className="text-xs text-[color:var(--muted)]">{materials.length} 份 · {imageCount} 张图片</div>
+          </div>
+        </div>
+        <Link href="/docs/structured-chat" className="text-xs font-semibold text-[color:var(--accent-strong)]">
+          Docs
+        </Link>
+      </div>
+
+      <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
+        {materialKindOptions.map((item) => {
+          const Icon = item.icon;
+          const active = item.kind === selectedKind;
+
+          return (
+            <button
+              key={item.kind}
+              type="button"
+              onClick={() => onKindChange(item.kind)}
+              disabled={disabled}
+              className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
+                active
+                  ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
+                  : 'border-[color:var(--line)] bg-white text-[color:var(--muted)] hover:border-[color:var(--accent)] hover:text-[color:var(--ink)]'
+              } disabled:cursor-not-allowed disabled:opacity-60`}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {item.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 grid gap-2 md:grid-cols-[minmax(0,1fr)_auto_auto]">
+        <div className="relative">
+          <SelectedIcon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--muted)]" />
+          <input
+            value={note}
+            onChange={(event) => onNoteChange(event.target.value)}
+            placeholder={selected.placeholder}
+            disabled={disabled}
+            className="h-11 w-full rounded-lg border border-[color:var(--line)] bg-white pl-9 pr-3 text-sm text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onUploadClick}
+          disabled={disabled || isAdding || materials.length >= maxMaterialCount}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[color:var(--line)] bg-white px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+          title="添加图片或文件"
+        >
+          <ImagePlus className="h-4 w-4" />
+          {isAdding ? '读取中' : '图片/文件'}
+        </button>
+        <button
+          type="button"
+          onClick={onAddText}
+          disabled={disabled || isAdding || materials.length >= maxMaterialCount}
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-slate-50 px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+          title="添加摘要"
+        >
+          <Plus className="h-4 w-4" />
+          摘要
+        </button>
+      </div>
+
+      {materials.length > 0 ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {materials.map((item) => (
+            <MaterialChip key={item.id} material={item} onRemove={onRemove} />
+          ))}
+        </div>
+      ) : null}
+
+      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px] leading-5 text-[color:var(--muted)]">
+        <span className="inline-flex items-center gap-1 rounded-full bg-slate-50 px-2.5 py-1 font-semibold">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          先遮挡证件号、住址、手机号
+        </span>
+        {selectedKind === 'legal_document' ? (
+          <span className="rounded-full bg-amber-50 px-2.5 py-1 font-semibold text-amber-700">文书只做结构阅读</span>
+        ) : null}
+        {error ? <span className="font-semibold text-amber-700">{error}</span> : null}
+      </div>
+    </div>
+  );
+}
+
+function MaterialChip({
+  material,
+  onRemove,
+  readOnly = false,
+}: {
+  material: ChatMaterialDisplay;
+  onRemove?: (materialId: string) => void;
+  readOnly?: boolean;
+}) {
+  const option = getMaterialOption(material.kind);
+  const Icon = option.icon;
+  const detail = [
+    material.fileName || material.note || '',
+    formatFileSize(material.size),
+    material.imageIncluded ? '已带图' : material.hasImage ? '图片摘要' : '',
+  ].filter(Boolean).join(' · ');
+
+  return (
+    <div className="group inline-flex max-w-full items-center gap-2 rounded-lg border border-[color:var(--line)] bg-white/88 px-2.5 py-2 text-xs text-[color:var(--ink)]">
+      {material.previewUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={material.previewUrl} alt={material.label} className="h-8 w-8 rounded-md object-cover" />
+      ) : (
+        <span className="flex h-8 w-8 items-center justify-center rounded-md bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+          <Icon className="h-4 w-4" />
+        </span>
+      )}
+      <span className="min-w-0">
+        <span className="block font-bold">{material.label}</span>
+        {detail ? <span className="block max-w-[14rem] truncate text-[11px] text-[color:var(--muted)]">{detail}</span> : null}
+      </span>
+      {!readOnly && onRemove ? (
+        <button
+          type="button"
+          onClick={() => onRemove(material.id)}
+          className="rounded-full p-1 text-[color:var(--muted)] transition hover:bg-slate-100 hover:text-[color:var(--ink)]"
+          aria-label={`移除${material.label}`}
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -1055,6 +1514,19 @@ function MessageBubble({
                   <div className="mt-1 text-white/82">{message.tacitSummary}</div>
                 </div>
               ) : null}
+              {message.materials?.length ? (
+                <div className="mt-3 rounded-[1rem] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                  <div className="font-semibold text-white">本轮资料</div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {message.materials.map((material) => (
+                      <span key={material.id} className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 font-semibold text-white/88">
+                        {material.label}{material.hasImage ? ' · 图片' : ''}
+                      </span>
+                    ))}
+                  </div>
+                  {message.materialSummary ? <div className="mt-2 text-white/82">{message.materialSummary}</div> : null}
+                </div>
+              ) : null}
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3 text-xs text-white/75">
                 <div className="flex items-center gap-2">
                   <span>{time}</span>
@@ -1063,6 +1535,9 @@ function MessageBubble({
                   ) : null}
                   {message.tacitSummary ? (
                     <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold text-white/88">已带默会信息</span>
+                  ) : null}
+                  {message.materials?.length ? (
+                    <span className="rounded-full border border-white/20 px-2 py-0.5 font-semibold text-white/88">已带资料</span>
                   ) : null}
                 </div>
                 <div className="flex items-center gap-2">

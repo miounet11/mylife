@@ -1,7 +1,6 @@
 import { trackServerEvent } from '@/lib/analytics';
 import { emailSubscriptionOperations, fortuneOperations, reportUpgradeJobOperations, userOperations } from '@/lib/database';
 import {
-  getDefaultModel,
   getReportUpgradeBatchSize,
   getReportUpgradeInitialDelayMs,
   getReportUpgradeMaxAttempts,
@@ -10,18 +9,24 @@ import {
 } from '@/lib/env';
 import { isEmailDeliveryConfigured, sendReportUpgradeReadyEmail } from '@/lib/email';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
-import { assessScopeProviderHealth, hasRunnableModelsForSnapshots } from '@/lib/llm-provider-health';
+import {
+  assessScopeProviderHealth,
+  hasRunnableModelsForSnapshots,
+  type ModelHealthSnapshot,
+  shouldConservativelyDeferForSnapshots,
+} from '@/lib/llm-provider-health';
 import { REPORT_EXPERT_TARGET_SCORE } from '@/lib/report-quality';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
 import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
-import type { FortuneAnalysisResult, FortuneRecord, ReportUpgradeJobRecord } from '@/lib/user-types';
+import type { FortuneAdvice, FortuneAnalysisResult, FortuneRecord, ReportUpgradeJobRecord } from '@/lib/user-types';
 
 const DEFAULT_MAX_ATTEMPTS = getReportUpgradeMaxAttempts();
 const INITIAL_DELAY_MS = getReportUpgradeInitialDelayMs();
 const RETRY_BASE_DELAY_MS = getReportUpgradeRetryDelayMs();
 const DEFAULT_BATCH_SIZE = getReportUpgradeBatchSize();
 const PROVIDER_DEFER_MS = getReportUpgradeProviderDeferMs();
+const PROVIDER_DEFER_MAX_MS = Math.max(PROVIDER_DEFER_MS, 1000 * 60 * 60 * 2);
 
 export function enqueueReportUpgrade(params: {
   report: FortuneRecord;
@@ -85,7 +90,7 @@ export function enqueueReportUpgrade(params: {
     bestScore,
     bestGrade: qualityAudit?.grade || existing?.bestGrade,
     nextRunAt,
-    lastError: deferredForProvider ? 'PROVIDER_UNHEALTHY' : null,
+    lastError: deferredForProvider ? 'PROVIDER_UNHEALTHY' : undefined,
     meta: {
       reason: params.reason || (deferredForProvider ? 'provider_unhealthy' : 'quality_gate'),
       reportVersion: params.report.reportVersion || 'v1',
@@ -177,7 +182,7 @@ export async function processNextReportUpgradeJob() {
         tenGods: repaired.tenGods || {},
         pattern: repaired.pattern,
         fortune: repaired.fortune,
-        advice: repaired.advice,
+        advice: toStoredFortuneAdvice(repaired.advice),
         evidence: repaired.evidence,
         analysis: repaired.analysis,
         klineData: repaired.klineData,
@@ -187,6 +192,7 @@ export async function processNextReportUpgradeJob() {
       });
     }
 
+    const providerDefer = buildProviderDefer(job.meta);
     reportUpgradeJobOperations.markDeferred(job.id, {
       lastScore: repairedApplied ? repairedAudit?.overallScore || previousScore : previousScore,
       bestScore: repairedApplied
@@ -200,11 +206,13 @@ export async function processNextReportUpgradeJob() {
             nextGrade: repairedAudit?.grade,
           })
         : (job.bestGrade || previousAudit?.grade),
-      nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
+      nextRunAt: new Date(Date.now() + providerDefer.delayMs).toISOString(),
       lastError: 'PROVIDER_UNHEALTHY',
       meta: {
         ...(job.meta || {}),
         deferredForProvider: true,
+        providerDeferralCount: providerDefer.count,
+        providerDeferMs: providerDefer.delayMs,
         repairOnlyApplied: repairedApplied,
         repairOnlyQualityScore: repairedAudit?.overallScore,
         providerHealth: providerHealth.summary,
@@ -246,7 +254,7 @@ export async function processNextReportUpgradeJob() {
         tenGods: result.tenGods || {},
         pattern: result.pattern,
         fortune: result.fortune,
-        advice: result.advice,
+        advice: toStoredFortuneAdvice(result.advice),
         evidence: result.evidence,
         analysis: result.analysis,
         klineData: result.klineData,
@@ -257,11 +265,12 @@ export async function processNextReportUpgradeJob() {
     }
 
     if (llmUnavailable && !newAudit?.targetAchieved) {
+      const providerDefer = buildProviderDefer(job.meta);
       reportUpgradeJobOperations.markDeferred(job.id, {
         lastScore: newScore,
         bestScore,
         bestGrade,
-        nextRunAt: new Date(Date.now() + PROVIDER_DEFER_MS).toISOString(),
+        nextRunAt: new Date(Date.now() + providerDefer.delayMs).toISOString(),
         lastError: deferredByProviderHealth ? 'PROVIDER_UNHEALTHY' : 'LLM_UNAVAILABLE',
         meta: {
           ...(job.meta || {}),
@@ -270,6 +279,8 @@ export async function processNextReportUpgradeJob() {
           llmUnavailable,
           improved,
           deferredByProviderHealth,
+          providerDeferralCount: providerDefer.count,
+          providerDeferMs: providerDefer.delayMs,
         },
       });
 
@@ -444,12 +455,12 @@ async function notifyUpgradeCompleted(params: {
   }
 
   const tags = Array.isArray(subscription.tags) ? subscription.tags : [];
-  const canNotify = tags.length === 0 || tags.some((tag) => [
+  const canNotify = tags.length === 0 || tags.some((tag: unknown) => [
     'report_upgrade',
     'monthly_report',
     'updates',
     'welcome',
-  ].includes(tag));
+  ].includes(`${tag}`));
 
   if (!canNotify) {
     return;
@@ -587,16 +598,32 @@ function computeRetryDelayMs(params: {
   return Math.max(60_000, Math.floor(base * attemptFactor));
 }
 
+function buildProviderDefer(meta?: Record<string, unknown>) {
+  const previousCount = Number(meta?.providerDeferralCount || 0);
+  const count = Number.isFinite(previousCount) ? previousCount + 1 : 1;
+  const delayMs = Math.min(
+    PROVIDER_DEFER_MAX_MS,
+    Math.max(PROVIDER_DEFER_MS, PROVIDER_DEFER_MS * Math.min(count, 6))
+  );
+
+  return {
+    count,
+    delayMs,
+  };
+}
+
 function assessReportProviderHealth() {
   const baseChain = getModelFallbackChain(undefined, 'report');
   const reportAssessment = assessScopeProviderHealth(baseChain, 'report');
   const agentAssessment = assessScopeProviderHealth(
-    getModelFallbackChain(getDefaultModel()),
+    getModelFallbackChain(undefined, 'agent'),
     'agent'
   );
   const reportSnapshots = reportAssessment.snapshots || [];
   const agentSnapshots = agentAssessment.snapshots || [];
+  const conservativeReportDefer = shouldConservativelyDeferForSnapshots(reportSnapshots);
   const shouldDefer = reportAssessment.shouldDefer
+    || conservativeReportDefer
     || !hasRunnableModelsForSnapshots(reportSnapshots);
 
   return {
@@ -604,6 +631,7 @@ function assessReportProviderHealth() {
     summary: {
       report: summarizeHealthSnapshots(reportSnapshots),
       agent: summarizeHealthSnapshots(agentSnapshots),
+      backgroundStrictDefer: conservativeReportDefer,
     },
   };
 }
@@ -617,6 +645,24 @@ function summarizeHealthSnapshots(snapshots: ModelHealthSnapshot[]) {
     attempts: item.attempts,
     avgLatencyMs: item.avgLatencyMs,
   }));
+}
+
+function toStoredFortuneAdvice(advice?: Partial<FortuneAdvice> | FortuneAnalysisResult['advice']): FortuneAdvice {
+  const safeAdvice = advice || {};
+
+  return {
+    career: safeAdvice.career || {} as FortuneAdvice['career'],
+    wealth: safeAdvice.wealth || {} as FortuneAdvice['wealth'],
+    marriage: safeAdvice.marriage || {} as FortuneAdvice['marriage'],
+    health: safeAdvice.health || {} as FortuneAdvice['health'],
+    colors: Array.isArray(safeAdvice.colors) ? safeAdvice.colors : [],
+    directions: Array.isArray(safeAdvice.directions) ? safeAdvice.directions : [],
+    timing: Array.isArray(safeAdvice.timing) ? safeAdvice.timing : [],
+    numbers: Array.isArray((safeAdvice as Partial<FortuneAdvice>).numbers) ? (safeAdvice as Partial<FortuneAdvice>).numbers! : [],
+    yongShen: Array.isArray((safeAdvice as Partial<FortuneAdvice>).yongShen) ? (safeAdvice as Partial<FortuneAdvice>).yongShen! : [],
+    jiShen: Array.isArray((safeAdvice as Partial<FortuneAdvice>).jiShen) ? (safeAdvice as Partial<FortuneAdvice>).jiShen! : [],
+    xiShen: Array.isArray((safeAdvice as Partial<FortuneAdvice>).xiShen) ? (safeAdvice as Partial<FortuneAdvice>).xiShen! : [],
+  };
 }
 
 function gradeByHigherScore(params: {
@@ -634,8 +680,8 @@ function shouldApplyProviderRepair(params: {
   current: FortuneRecord;
   repaired: FortuneRecord | FortuneAnalysisResult;
 }) {
-  const currentAnalysis = params.current.analysis || {};
-  const repairedAnalysis = params.repaired.analysis || {};
+  const currentAnalysis = (params.current.analysis || {}) as Partial<FortuneAnalysisResult['analysis']>;
+  const repairedAnalysis = (params.repaired.analysis || {}) as Partial<FortuneAnalysisResult['analysis']>;
   const currentSummary = `${currentAnalysis.summary || ''}`.trim();
   const repairedSummary = `${repairedAnalysis.summary || ''}`.trim();
   const currentExplanation = `${currentAnalysis.explanation || ''}`.trim();

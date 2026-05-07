@@ -1,12 +1,11 @@
-import Link from 'next/link';
-import { ArrowRight, Compass, Globe2, Layers3, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpenText, Compass, Globe2, Layers3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { getEntityInsights, getKnowledgeArticles, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
@@ -34,21 +33,9 @@ export const metadata = createPublicContentMetadata({
 export const dynamic = 'force-dynamic';
 
 const worldYiCasePowerLinks = [
-  {
-    title: '人生六域案例',
-    href: '/world-yi/domains',
-    icon: Compass,
-  },
-  {
-    title: '全球华人案例',
-    href: '/world-yi/global/cases',
-    icon: Globe2,
-  },
-  {
-    title: '英文案例路径',
-    href: '/world-yi/en/cases',
-    icon: Layers3,
-  },
+  { title: '人生六域案例', href: '/world-yi/domains', icon: Compass },
+  { title: '全球华人案例', href: '/world-yi/global/cases', icon: Globe2 },
+  { title: '英文案例路径', href: '/world-yi/en/cases', icon: Layers3 },
 ];
 
 export default function CasesPage() {
@@ -59,6 +46,7 @@ export default function CasesPage() {
     entries: ReturnType<typeof listPublishedManagedContentEntriesByType>;
   }>();
   const caseEntries = listPublishedManagedContentEntriesByType('case');
+
   caseEntries.forEach((entry) => {
     const locale = typeof entry.meta?.locale === 'string' ? entry.meta.locale : '';
     const market = typeof entry.meta?.market === 'string' ? entry.meta.market : '';
@@ -76,12 +64,10 @@ export default function CasesPage() {
       entries: [entry],
     });
   });
+
   const groupedCaseEntries = [...localeGroups.entries()]
     .sort((left, right) => left[1].sortOrder - right[1].sortOrder)
-    .map(([groupKey, group]) => ({
-      groupKey,
-      ...group,
-    }));
+    .map(([groupKey, group]) => ({ groupKey, ...group }));
   const worldYiCaseEntries = caseEntries.filter((entry) => entry.slug.startsWith('world-yi-'));
   const worldYiCaseMainCount = worldYiCaseEntries
     .filter((entry) => entry.meta?.series === 'world-yi')
@@ -136,200 +122,48 @@ export default function CasesPage() {
       <AnalyticsPageView eventName="cases_page_viewed" page="/cases" meta={{ surfaceKey: 'cases_page', contentType: 'case' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
               场景化案例
-            </>
-          )}
-          title="案例库"
-          description="用真实场景理解这套判断系统到底怎么落地，再决定要不要进入你自己的个人判断。"
-          hint="如果你已经看到和自己相近的问题类型，下一步就可以回到分析入口，把出生信息带进去。"
-          actions={[
-            <Link key="analyze" href="/analyze" className="action-primary action-main">
+            </div>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
+              先找和你相近的真实场景
+            </h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <ContentCardLink
+              href="/analyze"
+              page="/cases"
+              meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'analyze_page', contentType: 'case' }}
+              className="action-primary action-main"
+            >
               开始分析
               <ArrowRight className="h-4 w-4" />
-            </Link>,
-            <Link key="global-cases" href="/world-yi/global/cases" className="action-secondary">看全球案例</Link>,
-          ]}
-          highlights={[
-            { body: '升学与焦虑判断' },
-            { body: '职业换岗与时机窗口' },
-            { body: '关系推进与风险节奏' },
-          ]}
-          highlightsColumns="md:grid-cols-3"
-        />
-
-        <ProductSurfaceRolePanel
-          surface="cases"
-          className="mt-8"
-          title="案例库先降低理解门槛，再把用户带回自己的问题"
-          compact
-        />
-
-        <section className="mt-8">
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ContentCardLink
-              href="/world-yi"
-              page="/cases"
-              meta={{
-                surfaceKey: 'cases_page',
-                targetSurfaceKey: 'world_yi_page',
-                contentType: 'case',
-                series: 'world-yi',
-                version: 'v1.0.0.1',
-              }}
-              className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5"
-            >
-              <div className="section-label">
-                <Sparkles className="h-3.5 w-3.5" />
-                世界易案例观
-              </div>
-              <div className="mt-4 grid gap-5">
-                <div>
-                  <h2 className="text-3xl font-black text-[color:var(--ink)]">案例维度</h2>
-                  <div className="action-guide mt-5 inline-flex items-center gap-2">
-                    进入世界易总入口
-                    <ArrowRight className="h-4 w-4" />
-                  </div>
-                </div>
-                <div className="grid gap-3 md:grid-cols-2">
-                  {['先看结构', '再看时位', '必须带环境', '最后回到动作'].map((item) => (
-                    <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </div>
             </ContentCardLink>
-
             <ContentCardLink
-              href="/world-yi/matrix"
+              href="/world-yi/global/cases"
               page="/cases"
-              meta={{
-                surfaceKey: 'cases_page',
-                targetSurfaceKey: 'world_yi_matrix_page',
-                contentType: 'case',
-                series: 'world-yi-matrix',
-              }}
-              className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5"
+              meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'world_yi_global_cases', contentType: 'case' }}
+              className="action-secondary"
             >
-              <div className="section-label">
-                <Sparkles className="h-3.5 w-3.5" />
-                Batch 05
-              </div>
-              <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">案例分类</h2>
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                {['事业案例', '财富案例', '关系案例', '家庭案例', '迁移案例', '应用案例'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <div className="action-guide mt-5 inline-flex items-center gap-2">
-                查看内容矩阵
-                <ArrowRight className="h-4 w-4" />
-              </div>
+              看全球案例
+            </ContentCardLink>
+            <ContentCardLink
+              href="/docs/read-first-report"
+              page="/cases"
+              meta={{ surfaceKey: 'cases_page', targetSurfaceKey: 'docs_read_first_report', contentType: 'docs' }}
+              className="action-secondary"
+            >
+              <BookOpenText className="h-4 w-4" />
+              使用方法
             </ContentCardLink>
           </div>
         </section>
 
-        <section className="mt-10">
-          <div className="relative overflow-hidden rounded-[2.2rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(244,237,226,0.92))] p-6 shadow-[0_22px_60px_rgba(34,33,30,0.08)] md:p-8">
-            <div className="absolute -right-12 top-8 h-40 w-40 rounded-full bg-[rgba(178,149,93,0.14)] blur-3xl" />
-            <div className="absolute left-2 bottom-0 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.12)] blur-3xl" />
-
-            <div className="relative grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
-              <div className="space-y-5">
-                <div className="section-label">
-                  <Layers3 className="h-3.5 w-3.5" />
-                  世界易证据层
-                </div>
-                <h2 className="text-3xl font-black text-[color:var(--ink)] md:text-4xl">数据面板</h2>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {[
-                    { label: '当前公开世界易案例', value: `${worldYiCaseEntries.length} 篇` },
-                    { label: '中文主路径案例', value: `${worldYiCaseMainCount} 篇` },
-                    { label: '全球华人案例', value: `${worldYiCaseGlobalCount} 篇` },
-                    { label: '英文案例入口', value: `${worldYiCaseEnglishCount} 篇` },
-                    { label: '世界易公开知识支撑', value: `${worldYiKnowledgeCount} 篇` },
-                    { label: 'Batch 05 密度目标', value: `${caseDensityTarget} 篇` },
-                    { label: '案例库最终目标', value: `${worldYiRoadmapSummary.tracks.find((track) => track.key === 'cases')?.targetCount || 420} 篇` },
-                    { label: '世界易内容宇宙', value: `${worldYiRoadmapSummary.targetArticleCount} 篇` },
-                  ].map((item) => (
-                    <div key={item.label} className="rounded-[1.25rem] bg-white/82 p-4 shadow-[0_10px_24px_rgba(23,32,51,0.04)]">
-                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-                      <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="grid gap-4">
-                <div className="grid gap-4 md:grid-cols-3">
-                  {worldYiCasePowerLinks.map((item) => {
-                    const Icon = item.icon;
-
-                    return (
-                      <ContentCardLink
-                        key={item.href}
-                        href={item.href}
-                        page="/cases"
-                        meta={{
-                          surfaceKey: 'cases_page_world_yi_evidence',
-                          targetSurfaceKey: item.href.replace('/', '').replaceAll('/', '_'),
-                          contentType: 'case',
-                          series: 'world-yi',
-                          version: worldYiRoadmapSummary.version,
-                        }}
-                        className="rounded-[1.6rem] bg-white/84 p-5 transition hover:-translate-y-0.5"
-                      >
-                        <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                        <div className="action-guide mt-5 inline-flex items-center gap-2">
-                          进入案例层
-                          <ArrowRight className="h-4 w-4" />
-                        </div>
-                      </ContentCardLink>
-                    );
-                  })}
-                </div>
-
-                <div className="rounded-[1.75rem] bg-white/78 p-5">
-                  <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例纪律</div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">
-                    {[
-                      '先解释结构，不先下好坏结论',
-                      '必须交代用户所处阶段',
-                      '必须把环境变量说出来',
-                      '最后回到一个现实动作',
-                    ].map((item) => (
-                      <div key={item} className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <PublicEvidencePanel
-          page="/cases"
-          title="把案例层接到工具、知识和环境洞察"
-          description="案例不该只是让人看看就走。它应该继续接到相关工具、原理解释和环境洞察，让用户能从“别人发生了什么”走到“我该怎么判断”。"
-          surfaceKey="cases_page_evidence"
-          toolItems={toolItems}
-          knowledgeItems={knowledgeItems}
-          insightItems={insightItems}
-        />
-
-        <section className="mt-10 space-y-5">
+        <section className="mt-6 space-y-5">
           <div className="flex flex-wrap gap-3">
             {groupedCaseEntries.map((group) => (
               <a
@@ -346,11 +180,9 @@ export default function CasesPage() {
           <div className="space-y-8">
             {groupedCaseEntries.map((group) => (
               <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-24">
-                <div className="space-y-2">
-                  <div className="section-label">{group.groupLabel}</div>
-                </div>
+                <div className="section-label">{group.groupLabel}</div>
 
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {group.entries.map((item) => {
                     const locale = typeof item.meta?.locale === 'string' ? item.meta.locale : '';
                     const market = typeof item.meta?.market === 'string' ? item.meta.market : '';
@@ -370,15 +202,15 @@ export default function CasesPage() {
                           locale,
                           market,
                         }}
-                        className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                        className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                           <span>{item.category}</span>
                           <ContentLocaleBadge locale={locale} market={market} compact />
                         </div>
-                        <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-                        <div className="mt-3 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
-                        <div className="action-guide mt-5 inline-flex items-center gap-2">
+                        <h2 className="mt-3 text-xl font-bold leading-snug text-[color:var(--ink)]">{item.title}</h2>
+                        <div className="mt-2 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
+                        <div className="action-guide mt-4 inline-flex items-center gap-2">
                           查看案例
                           <ArrowRight className="h-4 w-4" />
                         </div>
@@ -391,50 +223,6 @@ export default function CasesPage() {
           </div>
         </section>
 
-        <section className="mt-12 grid gap-4 lg:grid-cols-3">
-          <ContentCardLink
-            href="/knowledge"
-            page="/cases"
-            meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              进入知识库
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/insights"
-            page="/cases"
-            meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              进入洞察中心
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/world-yi"
-            page="/cases"
-            meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'case', series: 'world-yi' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              回到世界易
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-        </section>
-
         <section className="mt-12">
           <ContentQuickAnalyzePanel
             sourceLabel="案例页转化"
@@ -443,6 +231,227 @@ export default function CasesPage() {
             title="个人分析"
             description="看完公开案例后，直接把自己的出生信息带进正式分析入口，判断你是否也处在相近结构里。"
           />
+        </section>
+
+        <section className="mt-10 space-y-4">
+          <ProductSurfaceRolePanel
+            surface="cases"
+            title="案例库先降低理解门槛，再把用户带回自己的问题"
+            compact
+          />
+
+          <PriorityDisclosure
+            label="案例系统说明"
+            title="案例观、分类和数据面板"
+            description="这些是证据和方法层，不默认挡在案例列表前面。"
+          >
+            <div className="space-y-5">
+              <div className="grid gap-4 lg:grid-cols-2">
+                <ContentCardLink
+                  href="/world-yi"
+                  page="/cases"
+                  meta={{
+                    surfaceKey: 'cases_page',
+                    targetSurfaceKey: 'world_yi_page',
+                    contentType: 'case',
+                    series: 'world-yi',
+                    version: 'v1.0.0.1',
+                  }}
+                  className="workspace-panel block p-6 transition hover:-translate-y-0.5"
+                >
+                  <div className="section-label">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    世界易案例观
+                  </div>
+                  <div className="mt-4 grid gap-5">
+                    <div>
+                      <h2 className="text-2xl font-black text-[color:var(--ink)]">案例维度</h2>
+                      <div className="action-guide mt-5 inline-flex items-center gap-2">
+                        进入世界易总入口
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 md:grid-cols-2">
+                      {['先看结构', '再看时位', '必须带环境', '最后回到动作'].map((item) => (
+                        <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </ContentCardLink>
+
+                <ContentCardLink
+                  href="/world-yi/matrix"
+                  page="/cases"
+                  meta={{
+                    surfaceKey: 'cases_page',
+                    targetSurfaceKey: 'world_yi_matrix_page',
+                    contentType: 'case',
+                    series: 'world-yi-matrix',
+                  }}
+                  className="workspace-panel block p-6 transition hover:-translate-y-0.5"
+                >
+                  <div className="section-label">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Batch 05
+                  </div>
+                  <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)]">案例分类</h2>
+                  <div className="mt-5 grid gap-3 md:grid-cols-2">
+                    {['事业案例', '财富案例', '关系案例', '家庭案例', '迁移案例', '应用案例'].map((item) => (
+                      <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="action-guide mt-5 inline-flex items-center gap-2">
+                    查看内容矩阵
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </ContentCardLink>
+              </div>
+
+              <div className="workspace-panel p-6 md:p-8">
+                <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
+                  <div className="space-y-5">
+                    <div className="section-label">
+                      <Layers3 className="h-3.5 w-3.5" />
+                      世界易证据层
+                    </div>
+                    <h2 className="text-2xl font-black text-[color:var(--ink)]">数据面板</h2>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        { label: '当前公开世界易案例', value: `${worldYiCaseEntries.length} 篇` },
+                        { label: '中文主路径案例', value: `${worldYiCaseMainCount} 篇` },
+                        { label: '全球华人案例', value: `${worldYiCaseGlobalCount} 篇` },
+                        { label: '英文案例入口', value: `${worldYiCaseEnglishCount} 篇` },
+                        { label: '世界易公开知识支撑', value: `${worldYiKnowledgeCount} 篇` },
+                        { label: 'Batch 05 密度目标', value: `${caseDensityTarget} 篇` },
+                        { label: '案例库最终目标', value: `${worldYiRoadmapSummary.tracks.find((track) => track.key === 'cases')?.targetCount || 420} 篇` },
+                        { label: '世界易内容宇宙', value: `${worldYiRoadmapSummary.targetArticleCount} 篇` },
+                      ].map((item) => (
+                        <div key={item.label} className="metric-tile">
+                          <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                          <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.value}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      {worldYiCasePowerLinks.map((item) => {
+                        const Icon = item.icon;
+
+                        return (
+                          <ContentCardLink
+                            key={item.href}
+                            href={item.href}
+                            page="/cases"
+                            meta={{
+                              surfaceKey: 'cases_page_world_yi_evidence',
+                              targetSurfaceKey: item.href.replace('/', '').replaceAll('/', '_'),
+                              contentType: 'case',
+                              series: 'world-yi',
+                              version: worldYiRoadmapSummary.version,
+                            }}
+                            className="rounded-[1.6rem] bg-white/84 p-5 transition hover:-translate-y-0.5"
+                          >
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
+                            <div className="action-guide mt-5 inline-flex items-center gap-2">
+                              进入案例层
+                              <ArrowRight className="h-4 w-4" />
+                            </div>
+                          </ContentCardLink>
+                        );
+                      })}
+                    </div>
+
+                    <div className="rounded-[1.75rem] bg-white/78 p-5">
+                      <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例纪律</div>
+                      <div className="mt-4 grid gap-3 md:grid-cols-2">
+                        {[
+                          '先解释结构，不先下好坏结论',
+                          '必须交代用户所处阶段',
+                          '必须把环境变量说出来',
+                          '最后回到一个现实动作',
+                        ].map((item) => (
+                          <div key={item} className="rounded-[1.2rem] bg-slate-50 px-4 py-4 text-sm font-semibold text-[color:var(--ink)]">
+                            {item}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </PriorityDisclosure>
+        </section>
+
+        <PublicEvidencePanel
+          page="/cases"
+          title="把案例层接到工具、知识和环境洞察"
+          description="案例不该只是让人看看就走。它应该继续接到相关工具、原理解释和环境洞察，让用户能从“别人发生了什么”走到“我该怎么判断”。"
+          surfaceKey="cases_page_evidence"
+          toolItems={toolItems}
+          knowledgeItems={knowledgeItems}
+          insightItems={insightItems}
+        />
+
+        <section className="mt-12">
+          <PriorityDisclosure
+            label="更多入口"
+            title="知识、洞察和世界易"
+            description="补充入口放在案例列表之后，不抢主阅读任务。"
+          >
+            <div className="grid gap-4 lg:grid-cols-3">
+              <ContentCardLink
+                href="/knowledge"
+                page="/cases"
+                meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
+                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
+                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
+                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                  进入知识库
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+
+              <ContentCardLink
+                href="/insights"
+                page="/cases"
+                meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
+                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
+                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
+                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                  进入洞察中心
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+
+              <ContentCardLink
+                href="/world-yi"
+                page="/cases"
+                meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'case', series: 'world-yi' }}
+                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
+                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易</h2>
+                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                  回到世界易
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+            </div>
+          </PriorityDisclosure>
         </section>
       </main>
 

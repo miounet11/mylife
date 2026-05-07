@@ -7,7 +7,7 @@ import { Mail, Sparkles } from 'lucide-react';
 export default function NewsletterSignup({
   source = 'site',
   title = '订阅站点更新',
-  description = '',
+  description: _description = '',
 }: {
   source?: string;
   title?: string;
@@ -55,7 +55,6 @@ export default function NewsletterSignup({
         邮箱订阅
       </div>
       <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">{title}</h2>
-      {description ? <p className="intro-copy mt-2 max-w-2xl text-sm text-[color:var(--muted)]">{description}</p> : null}
 
       <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3 md:flex-row">
         <div className="relative flex-1">

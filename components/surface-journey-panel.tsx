@@ -1,28 +1,25 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
-import { ArrowRight, BookOpen, FileBarChart2, FlaskConical, LibraryBig } from 'lucide-react';
+import { ArrowRight, BookOpen, FileBarChart2, FlaskConical } from 'lucide-react';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import type { SurfaceJourney } from '@/lib/surface-journeys';
 
 export default function SurfaceJourneyPanel({
   journey,
   title = '协同路径',
-  description = '',
+  description: _description = '',
   badge,
+  defaultOpen = true,
 }: {
   journey: SurfaceJourney;
   title?: string;
   description?: string;
   badge?: string;
+  defaultOpen?: boolean;
 }) {
   return (
-    <section className="glass-panel rounded-[1.75rem] p-5 md:p-6">
+    <PriorityDisclosure label="协同路径" title={title} defaultOpen={defaultOpen}>
       <div>
-        <div className="section-label">
-          <LibraryBig className="h-3.5 w-3.5" />
-          协同路径
-        </div>
-        <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">{title}</h2>
-        {description ? <p className="intro-copy mt-2 max-w-2xl text-sm text-[color:var(--muted)]">{description}</p> : null}
         {badge ? (
           <div className="mt-3 inline-flex rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
             {badge}
@@ -52,7 +49,7 @@ export default function SurfaceJourneyPanel({
           items={journey.caseCards}
         />
       </div>
-    </section>
+    </PriorityDisclosure>
   );
 }
 
@@ -73,15 +70,16 @@ function JourneyColumn({
       </div>
       <div className="mt-3 grid gap-2.5">
         {items.length > 0 ? items.slice(0, 2).map((item) => (
-          <Link key={`${heading}-${item.href}`} href={item.href} className="rounded-[1rem] bg-slate-50/78 px-3.5 py-3 transition hover:bg-white">
+          <Link key={`${heading}-${item.href}`} href={item.href} className="interactive-card rounded-[1rem] px-3.5 py-3">
             <div className="text-[10px] tracking-[0.16em] text-[color:var(--muted)]">{item.eyebrow}</div>
             <div className="mt-2 flex items-center justify-between gap-3 text-sm font-semibold text-[color:var(--ink)]">
               <span>{item.title}</span>
               <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[color:var(--muted)]" />
             </div>
+            <div className="mt-2 text-[10px] font-semibold text-[color:var(--accent-strong)]">点击进入</div>
           </Link>
         )) : (
-          <div className="rounded-[1rem] bg-slate-50/78 px-3.5 py-3 text-sm text-[color:var(--ink)]">
+          <div className="static-card rounded-[1rem] px-3.5 py-3 text-sm text-[color:var(--muted)]">
             暂无更多关联内容。
           </div>
         )}

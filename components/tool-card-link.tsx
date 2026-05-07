@@ -27,6 +27,7 @@ export default function ToolCardLink({
   sourceFamily?: string;
 }) {
   const resolvedHref = appendSourceToHref(href, source);
+  const resolvedClassName = className ? `${className} interactive-card` : 'interactive-card';
   return (
     <Link
       href={resolvedHref}
@@ -44,7 +45,7 @@ export default function ToolCardLink({
           },
         });
       }}
-      className={className}
+      className={resolvedClassName}
     >
       {children}
     </Link>

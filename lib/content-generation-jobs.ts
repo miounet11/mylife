@@ -69,7 +69,7 @@ function saveGeneratedEntries(entries: GeneratedManagedContentDraft[], userId: s
         meta: {
           contentGenerationJob: true,
         },
-      }, userId)
+      } as unknown as Omit<ManagedContentEntry, 'source' | 'createdAt' | 'updatedAt'> & { source?: string }, userId)
     )
     .filter((entry): entry is ManagedContentEntry => !!entry);
 }
@@ -106,7 +106,7 @@ export function enqueueContentGenerationJob(params: {
     id: `content_job_${generateId()}`,
     userId: params.userId,
     status: 'pending',
-    request: params.input as Record<string, unknown>,
+    request: params.input as unknown as Record<string, unknown>,
     result: {},
     generatedCount: 0,
     llmSucceededCount: 0,
@@ -141,7 +141,7 @@ export async function processNextContentGenerationJob() {
   }
 
   try {
-    const generated = await generateManagedContentDrafts(job.request as ContentGenerationInput);
+    const generated = await generateManagedContentDrafts(job.request as unknown as ContentGenerationInput);
     const savedEntries = saveGeneratedEntries(generated.entries, job.userId);
     const result = {
       entries: summarizeSavedEntries(savedEntries),

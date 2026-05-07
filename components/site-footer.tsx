@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { getPriorityGrowthToolLinks } from '@/lib/tools';
 
 const primaryFooterLinks = [
   { href: '/analyze', label: '开始判断' },
@@ -6,8 +7,11 @@ const primaryFooterLinks = [
   { href: '/events', label: '记录事件' },
 ];
 
+const priorityGrowthFooterLinks = getPriorityGrowthToolLinks('footer_priority_growth');
+
 const secondaryFooterLinks = [
   { href: '/tools', label: '工具中心' },
+  { href: '/docs', label: 'Docs' },
   { href: '/knowledge', label: '知识库' },
   { href: '/cases', label: '案例库' },
   { href: '/updates', label: '邮件更新' },
@@ -23,9 +27,6 @@ export default function SiteFooter() {
           <div className="section-label">下一步</div>
           <div className="space-y-3">
             <div className="text-2xl font-semibold text-[color:var(--ink)]">判断入口</div>
-            <p className="hero-description intro-copy text-sm">
-              如果你已经看过案例、知识或工具，下一步就是把出生信息补齐，直接进入个人判断结果页。
-            </p>
           </div>
           <div className="flex flex-wrap gap-3">
             {primaryFooterLinks.map((item, index) => (
@@ -34,11 +35,20 @@ export default function SiteFooter() {
               </Link>
             ))}
           </div>
+          <div className="rounded-[1.25rem] bg-white/72 p-4">
+            <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">热门免费工具</div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {priorityGrowthFooterLinks.map((item) => (
+                <Link key={item.href} href={item.href} className="action-secondary min-h-0 px-3 py-2 text-xs">
+                  {item.shortLabel === '2026 流年' ? '2026 流年免费测' : item.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
 
         <div className="soft-card rounded-[1.5rem] p-5">
           <div className="product-kicker">更多入口</div>
-          <div className="intro-copy mt-3">除了判断入口，还可以继续去工具、知识、案例和更新中心补全世界易路径。</div>
           <div className="mt-4 flex flex-wrap gap-3">
             {secondaryFooterLinks.map((item) => (
               <Link

@@ -78,6 +78,8 @@ export default function ToolRunner({
       eventName: 'tool_run_started',
       page: `/tools/${toolSlug}`,
       meta: {
+        phase: 'client_intent',
+        confirmed: false,
         toolSlug,
         reportId: reportId || null,
         noteLength: note.trim().length,

@@ -319,7 +319,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
                   <Link
                     key={tool.slug}
                     href={`/tools/${tool.slug}?source=visual_asset:${asset.slug}`}
-                    className="rounded-[1.35rem] border border-[color:var(--line)] bg-white/82 p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+                    className="interactive-card rounded-[1.35rem] p-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -356,7 +356,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               { icon: <LibraryBig className="h-5 w-5" />, title: '回到知识体系', body: '把图片中的概念接回知识库，继续阅读世界易和命理基础。', href: '/knowledge', cta: '看知识库' },
               { icon: <MousePointer2 className="h-5 w-5" />, title: '进入工具动作', body: '选择一个相关工具，把图里的结构转成一次单项判断。', href: relatedTools[0] ? `/tools/${relatedTools[0].slug}?source=visual_asset:${asset.slug}` : '/tools', cta: '进入工具' },
             ].map((item) => (
-              <Link key={item.title} href={item.href} className="glass-panel rounded-[1.75rem] p-5 transition hover:-translate-y-0.5">
+              <Link key={item.title} href={item.href} className="interactive-card rounded-[1.75rem] p-5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   {item.icon}
                 </div>
@@ -398,7 +398,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           <section className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/72 p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="product-kicker">当前服务器 URL</div>
+                <div className="product-kicker">图片链接</div>
                 <code className="mt-2 block break-all text-sm font-semibold text-[color:var(--ink)]">{asset.publicUrl}</code>
               </div>
               <div className="flex gap-2 text-[color:var(--accent-strong)]">

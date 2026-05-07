@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { trackServerEvent, type AnalyticsEventName } from '@/lib/analytics';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import { fortuneOperations } from '@/lib/database';
+import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
+import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
+import { getCurrentUserId } from '@/lib/user-utils';
 import { getClientKey } from '@/lib/rate-limit';
 
 const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
@@ -11,6 +14,8 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'profile_page_viewed',
   'history_page_viewed',
   'updates_page_viewed',
+  'docs_page_viewed',
+  'docs_article_viewed',
   'knowledge_page_viewed',
   'knowledge_article_viewed',
   'cases_page_viewed',
@@ -24,6 +29,8 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'tool_card_clicked',
   'content_quick_analyze_started',
   'tool_run_started',
+  'tool_image_upload_started',
+  'tool_image_upload_material_added',
   'tool_run_completed',
   'report_viewed',
   'chat_followup_clicked',
@@ -46,10 +53,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const userId = await getOrCreateGuestUserId();
+    const currentUserId = await getCurrentUserId();
     const sessionId = getClientKey(request);
     trackServerEvent({
-      userId,
+      userId: currentUserId || undefined,
       sessionId,
       userAgent: request.headers.get('user-agent'),
       eventName,
@@ -57,6 +64,10 @@ export async function POST(request: NextRequest) {
       meta,
       forwardToGoogleAnalytics: false,
     });
+
+    if (eventName === 'report_viewed') {
+      enqueueViewedReportUpgrade(meta);
+    }
 
     return NextResponse.json({
       success: true,
@@ -68,5 +79,44 @@ export async function POST(request: NextRequest) {
       { success: false, error: '埋点失败' },
       { status: 500 }
     );
+  }
+}
+
+function enqueueViewedReportUpgrade(meta: Record<string, unknown>) {
+  try {
+    const reportId = typeof meta.reportId === 'string' ? meta.reportId.trim() : '';
+    if (!reportId) {
+      return;
+    }
+
+    const report = fortuneOperations.getById(reportId);
+    if (!report || isLikelyTestReportName(report.name)) {
+      return;
+    }
+
+    const qualityAudit = report.analysis?.qualityAudit;
+    if (qualityAudit?.targetAchieved) {
+      return;
+    }
+
+    const deliveryTier = qualityAudit?.deliveryTier || 'basic';
+    const llmUsed = !!report.analysis?.llmUsed;
+    if (deliveryTier !== 'basic' && llmUsed) {
+      return;
+    }
+
+    enqueueReportUpgrade({
+      report,
+      reason: 'real_user_report_viewed',
+      meta: {
+        realUserPriority: true,
+        viewedFromAnalytics: true,
+        viewSource: typeof meta.source === 'string' ? meta.source : null,
+        deliveryTier,
+        llmUsed,
+      },
+    });
+  } catch (error) {
+    console.error('[Analytics] failed to enqueue viewed report upgrade:', error);
   }
 }

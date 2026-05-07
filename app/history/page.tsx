@@ -1,12 +1,10 @@
 'use client';
-
-import Link from 'next/link';
-import { AlertTriangle, ArrowRight, Calendar, CheckCircle2, ChevronRight, Clock, History, Sparkles, Target } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BookOpenText, Calendar, CheckCircle2, ChevronRight, Clock, History, Sparkles, Target } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
 import SiteFooter from '@/components/site-footer';
@@ -236,98 +234,75 @@ export default function HistoryPage() {
         }}
       />
 
-      <main className="page-frame py-8 pb-16 md:py-12 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+        <section className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="max-w-3xl">
+            <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
               复盘工作台
-            </>
-          )}
-          title="历史记录"
-          description="把已经生成的报告、事件和追问记录放回同一个复盘工作台，方便你持续校准判断。"
-          hint="建议先回看最关键的一份报告，再补充已经发生的事件，最后带上下文继续追问。"
-          actions={[
+            </div>
+            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">历史记录</h1>
+          </div>
+          <div className="flex flex-wrap gap-3">
             <ResultCtaLink
-              key="events"
               href={appendSourceToHref('/events', pageSource)}
               page="/history"
-              target="history_hero_events"
+              target="history_header_events"
               className="action-primary action-main"
               meta={{
                 source: pageSource,
                 ctaStrategyKey: sourceCtaStrategy.strategyKey,
                 sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'history_hero',
+                surface: 'history_header',
                 pendingCount: reviewWorkbench.pendingCount,
               }}
             >
               进入事件页
-            </ResultCtaLink>,
+            </ResultCtaLink>
             <ResultCtaLink
-              key="chat"
-              href={buildChatHref({
-                question: '请根据我历史里的报告、事件和偏差样本，帮我判断：现在最值得优先复盘哪一条主线，为什么？',
-                source: pageSource,
-                ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                sourceFamily: sourceCtaStrategy.sourceFamily,
-              })}
+              href={historyResumeChatHref}
               page="/history"
-              target="history_hero_chat"
+              target="history_header_chat"
               className="action-secondary"
               meta={{
                 source: pageSource,
                 ctaStrategyKey: sourceCtaStrategy.strategyKey,
                 sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'history_hero',
+                surface: 'history_header',
                 pendingCount: reviewWorkbench.pendingCount,
                 driftCount: reviewWorkbench.driftCount,
               }}
             >
               继续追问
-            </ResultCtaLink>,
+            </ResultCtaLink>
             <ResultCtaLink
-              key="analyze"
-              href="/analyze"
+              href="/docs/profile-history"
               page="/history"
-              target="history_hero_analyze"
+              target="history_header_docs"
               className="action-secondary"
               meta={{
                 source: pageSource,
                 ctaStrategyKey: sourceCtaStrategy.strategyKey,
                 sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'history_hero',
+                surface: 'history_header',
               }}
             >
-              新建分析
-            </ResultCtaLink>,
-          ]}
-          highlights={[
-            { body: '先回看最关键的一份报告' },
-            { body: '把已发生事件补回验证结果' },
-            { body: '对偏差样本做纠偏分析' },
-            { body: '再带着上下文继续问 AI' },
-          ]}
-        />
+              <BookOpenText className="h-4 w-4" />
+              使用方法
+            </ResultCtaLink>
+          </div>
+        </section>
 
-        <ProductSurfaceRolePanel
-          surface="history"
-          className="mb-8 mt-8"
-          title="历史页先处理待验证和偏差样本"
-          description="历史不是归档列表，而是把过去的报告与现实事件转成下一轮判断质量提升。"
-          compact
-        />
-
-        <section className="mb-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <section className="mb-5 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
           {[
             { label: '历史报告', value: reportCards.length, tone: 'text-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]' },
             { label: '验证准确', value: reviewWorkbench.accurateCount, tone: 'text-emerald-700 bg-emerald-50' },
             { label: '待验证', value: reviewWorkbench.pendingCount, tone: 'text-amber-700 bg-amber-50' },
             { label: '待纠偏', value: reviewWorkbench.driftCount, tone: 'text-rose-700 bg-rose-50' },
           ].map((item) => (
-            <div key={item.label} className="soft-card rounded-[1.75rem] p-5">
+            <div key={item.label} className="soft-card rounded-xl p-4">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-              <div className="mt-3 flex items-center gap-3">
+              <div className="mt-2 flex items-center gap-3">
                 <div className={`rounded-full px-3 py-1 text-sm font-semibold ${item.tone}`}>{item.value}</div>
               </div>
             </div>
@@ -335,7 +310,7 @@ export default function HistoryPage() {
         </section>
 
         {!isLoading ? (
-          <div className="mb-8">
+          <div className="mb-5">
             <RetentionResumePanel
               page="/history"
               source={pageSource}
@@ -383,20 +358,37 @@ export default function HistoryPage() {
           </div>
         ) : null}
 
-        <div className="mb-8">
+        <div className="mb-5">
           <ToolHistoryPanel
+            compact
             title="单项工具复访区"
             description="把做过的单项工具判断放回一起复看，方便你确认哪些问题已经验证、哪些还要继续追踪。"
           />
         </div>
 
-        <div className="mb-8">
-          <PersonalJourneyHub
-            title="后续入口"
-            description="根据你已经生成的报告和验证记录，继续安排最适合现在推进的内容、工具和追问入口。"
-            page="/history"
+        <section className="mb-5">
+          <PriorityDisclosure
+            label="后续入口"
+            title="内容、工具和追问推荐"
+            description="先完成历史复盘，再展开这些补充路径。"
+            defaultOpen
+          >
+            <PersonalJourneyHub
+              title="后续入口"
+              description="根据你已经生成的报告和验证记录，继续安排最适合现在推进的内容、工具和追问入口。"
+              page="/history"
+            />
+          </PriorityDisclosure>
+        </section>
+
+        <section className="mb-5">
+          <ProductSurfaceRolePanel
+            surface="history"
+            title="历史页先处理待验证和偏差样本"
+            description="历史不是归档列表，而是把过去的报告与现实事件转成下一轮判断质量提升。"
+            compact
           />
-        </div>
+        </section>
 
         {error ? (
           <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

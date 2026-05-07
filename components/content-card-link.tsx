@@ -25,10 +25,11 @@ export default function ContentCardLink({
   sourceFamily?: string;
 }) {
   const resolvedHref = appendSourceToHref(href, source);
+  const resolvedClassName = className ? `${className} interactive-card` : 'interactive-card';
   return (
     <Link
       href={resolvedHref}
-      className={className}
+      className={resolvedClassName}
       onClick={() => {
         void trackClientEvent({
           eventName: 'content_card_clicked',

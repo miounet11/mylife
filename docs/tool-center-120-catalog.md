@@ -1,11 +1,11 @@
-# 人生K线 120 个单项工具地址清单
+# 人生K线 121 个单项工具地址清单
 
 基址：`https://www.life-kline.com`
 
 工具中心总入口：
 - `https://www.life-kline.com/tools`
 
-当前工具总数：`120`
+当前工具总数：`121`
 
 ## 事业工具
 - 岗位匹配测试 | https://www.life-kline.com/tools/career-role-fit
@@ -142,6 +142,7 @@
 - 寻物复原测试 | https://www.life-kline.com/tools/application-lost-item
 - 家宅秩序测试 | https://www.life-kline.com/tools/application-home-order
 - 卧室恢复测试 | https://www.life-kline.com/tools/application-room-recovery
+- 手相上传测算 | https://www.life-kline.com/tools/application-palmistry-reading
 
 ## 说明
 - 所有工具详情页路径统一为：`/tools/[slug]`

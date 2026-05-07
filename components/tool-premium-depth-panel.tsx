@@ -30,9 +30,6 @@ export default function ToolPremiumDepthPanel({
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
             深测版
           </h2>
-          <div className="intro-copy mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
-            {offer.upgradeMoment}
-          </div>
 
           <div className="mt-5 grid gap-3">
             {offer.deliverables.map((item) => (

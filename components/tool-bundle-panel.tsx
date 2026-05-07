@@ -28,9 +28,6 @@ export default function ToolBundlePanel({
             同域工具包
           </div>
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">{bundle.title}</h2>
-          <div className="intro-copy mt-4 rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-3 text-sm text-[color:var(--accent-strong)]">
-            {bundle.valueHeadline}
-          </div>
         </div>
         <Link href="/tools" className="action-secondary">
           回到工具中心

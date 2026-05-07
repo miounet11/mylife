@@ -26,7 +26,7 @@ export default function RetentionResumePanel({
   sourceFamily,
   eyebrow = '继续上次任务',
   title,
-  description,
+  description: _description,
   stats,
   actions,
 }: {
@@ -43,18 +43,14 @@ export default function RetentionResumePanel({
   const [primaryAction, ...secondaryActions] = actions;
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] border border-[color:rgba(139,115,70,0.16)] bg-[linear-gradient(135deg,rgba(49,35,18,0.94),rgba(117,88,43,0.9))] p-5 text-white shadow-[0_24px_70px_rgba(47,32,14,0.14)] md:p-6">
-      <div className="pointer-events-none absolute -right-20 -top-24 h-56 w-56 rounded-full bg-white/14 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 left-1/3 h-56 w-56 rounded-full bg-amber-200/16 blur-3xl" />
-
-      <div className="relative grid gap-5 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-stretch">
-        <div className="space-y-4">
-          <div className="inline-flex rounded-full bg-white/12 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-amber-100">
+    <section className="rounded-xl border border-[rgba(18,125,111,0.22)] bg-[color:var(--accent-strong)] p-4 text-white shadow-[0_18px_42px_rgba(11,95,85,0.16)] md:p-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-stretch">
+        <div className="space-y-3">
+          <div className="inline-flex rounded-md bg-white/12 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-white/82">
             {eyebrow}
           </div>
           <div>
-            <h2 className="text-2xl font-black leading-tight md:text-3xl">{title}</h2>
-            <div className="mt-3 max-w-2xl text-sm font-medium leading-7 text-white/78">{description}</div>
+            <h2 className="text-2xl font-black leading-tight">{title}</h2>
           </div>
           {primaryAction ? (
             <div className="flex flex-wrap gap-3">
@@ -62,7 +58,7 @@ export default function RetentionResumePanel({
                 href={primaryAction.href}
                 page={page}
                 target={primaryAction.target}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-black text-[color:var(--ink)] shadow-[0_12px_30px_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-black text-[color:var(--ink)] shadow-[0_12px_30px_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5"
                 meta={{
                   source,
                   ctaStrategyKey,
@@ -81,7 +77,7 @@ export default function RetentionResumePanel({
                   href={action.href}
                   page={page}
                   target={action.target}
-                  className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/16"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/16"
                   meta={{
                     source,
                     ctaStrategyKey,
@@ -100,9 +96,9 @@ export default function RetentionResumePanel({
 
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
           {stats.map((item) => (
-            <div key={item.label} className="rounded-[1.35rem] border border-white/12 bg-white/10 px-4 py-4 backdrop-blur">
-              <div className="text-xs font-semibold tracking-[0.16em] text-amber-100/86">{item.label}</div>
-              <div className="mt-2 text-2xl font-black text-white">{item.value}</div>
+            <div key={item.label} className="rounded-lg border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+              <div className="text-xs font-semibold tracking-[0.16em] text-white/82">{item.label}</div>
+              <div className="mt-1 text-2xl font-black text-white">{item.value}</div>
               {item.helper ? <div className="mt-1 text-xs leading-5 text-white/68">{item.helper}</div> : null}
             </div>
           ))}

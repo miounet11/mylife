@@ -146,6 +146,28 @@ const completedMeta = analyzeRows
 const fallbackCompleted = completedMeta.filter((meta) => meta.fallbackToEngine === true).length;
 const basicReports = reports.filter((row) => row.deliveryTier === 'basic').length;
 const llmReports = reports.filter((row) => row.llmUsed).length;
+const realViewedReports = realReports.filter((row) => viewedReportIds.has(row.id));
+const realViewedBasicReports = realViewedReports.filter((row) => row.deliveryTier === 'basic');
+const realBasicReports = realReports.filter((row) => row.deliveryTier === 'basic');
+const realLlmReports = realReports.filter((row) => row.llmUsed);
+
+const upgradeRows = db.prepare(`
+  SELECT id, report_id, status, attempts, max_attempts, next_run_at, last_error, updated_at, meta
+  FROM report_upgrade_jobs
+  WHERE datetime(updated_at) >= datetime('now', ?)
+  ORDER BY datetime(updated_at) DESC
+  LIMIT 20
+`).all(sinceSql);
+
+const upgradeStatusCounts = upgradeRows.reduce((acc, row) => {
+  const key = row.status || 'unknown';
+  acc[key] = (acc[key] || 0) + 1;
+  return acc;
+}, {});
+const providerDeferredJobs = upgradeRows.filter((row) => {
+  const meta = parseMeta(row.meta);
+  return row.last_error === 'PROVIDER_UNHEALTHY' || meta.deferredForProvider === true;
+});
 
 const failureHotspots = analyzeFailedRows
   .map((row) => parseMeta(row.meta))
@@ -197,14 +219,42 @@ const summary = {
     viewedDistinct: viewedReportIds.size,
     basicCount: basicReports,
     llmCount: llmReports,
+    realViewedCount: realViewedReports.length,
+    realBasicCount: realBasicReports.length,
+    realViewedBasicCount: realViewedBasicReports.length,
+    realLlmCount: realLlmReports.length,
     fallbackCompleted,
     fallbackRate: toPercent(fallbackCompleted, completedMeta.length),
     basicRate: toPercent(basicReports, reports.length),
     llmRate: toPercent(llmReports, reports.length),
+    realViewedRate: toPercent(realViewedReports.length, realReports.length),
+    realBasicRate: toPercent(realBasicReports.length, realReports.length),
+    realViewedBasicRate: toPercent(realViewedBasicReports.length, realReports.length),
+    realLlmRate: toPercent(realLlmReports.length, realReports.length),
   },
   realReportCards,
+  realViewedBasicReportCards: realViewedBasicReports.slice(0, 12).map((row) => ({
+    ...row,
+    viewed: true,
+  })),
   testReportCards,
   activeSessions,
+  upgradeQueue: {
+    recentCount: upgradeRows.length,
+    statusCounts: upgradeStatusCounts,
+    providerDeferredCount: providerDeferredJobs.length,
+    recentProviderDeferred: providerDeferredJobs.slice(0, 8).map((row) => ({
+      id: row.id,
+      reportId: row.report_id,
+      status: row.status,
+      attempts: row.attempts || 0,
+      maxAttempts: row.max_attempts || 0,
+      nextRunAt: row.next_run_at,
+      lastError: row.last_error,
+      providerDeferralCount: Number(parseMeta(row.meta).providerDeferralCount || 0),
+      updatedAt: row.updated_at,
+    })),
+  },
   failureHotspots: [...failureHotspots.entries()]
     .sort((left, right) => right[1] - left[1])
     .map(([key, count]) => ({ key, count })),
@@ -246,6 +296,10 @@ function renderTextReport(payload) {
   lines.push(`- reports.realLikely: ${payload.reports.realLikely}`);
   lines.push(`- reports.likelyTest: ${payload.reports.likelyTest}`);
   lines.push(`- reports.viewedDistinct: ${payload.reports.viewedDistinct}`);
+  lines.push(`- reports.realViewed: ${payload.reports.realViewedCount} (${payload.reports.realViewedRate}%)`);
+  lines.push(`- reports.realBasic: ${payload.reports.realBasicCount} (${payload.reports.realBasicRate}%)`);
+  lines.push(`- reports.realViewedBasic: ${payload.reports.realViewedBasicCount} (${payload.reports.realViewedBasicRate}%)`);
+  lines.push(`- reports.realLlm: ${payload.reports.realLlmCount} (${payload.reports.realLlmRate}%)`);
   lines.push(`- reports.fallbackRate: ${payload.reports.fallbackRate}%`);
   lines.push(`- reports.basicRate: ${payload.reports.basicRate}%`);
   lines.push(`- reports.llmRate: ${payload.reports.llmRate}%`);
@@ -256,6 +310,13 @@ function renderTextReport(payload) {
     lines.push('- none');
   } else {
     payload.realReportCards.forEach((row) => lines.push(formatReportLine(row)));
+  }
+  lines.push('');
+  lines.push('## Viewed Real Basic Reports');
+  if (payload.realViewedBasicReportCards.length === 0) {
+    lines.push('- none');
+  } else {
+    payload.realViewedBasicReportCards.forEach((row) => lines.push(formatReportLine(row)));
   }
   lines.push('');
   lines.push('## Likely Test Reports');
@@ -277,6 +338,16 @@ function renderTextReport(payload) {
     lines.push('- none');
   } else {
     payload.failureHotspots.forEach((row) => lines.push(`- ${row.key} | count=${row.count}`));
+  }
+  lines.push('');
+  lines.push('## Upgrade Queue');
+  lines.push(`- recentJobs: ${payload.upgradeQueue.recentCount}`);
+  lines.push(`- statusCounts: ${JSON.stringify(payload.upgradeQueue.statusCounts)}`);
+  lines.push(`- providerDeferred: ${payload.upgradeQueue.providerDeferredCount}`);
+  if (payload.upgradeQueue.recentProviderDeferred.length > 0) {
+    payload.upgradeQueue.recentProviderDeferred.forEach((row) => {
+      lines.push(`- ${row.updatedAt} | ${row.reportId} | ${row.status} | attempts=${row.attempts}/${row.maxAttempts} | defer=${row.providerDeferralCount} | next=${row.nextRunAt || 'n/a'} | ${row.lastError || 'n/a'}`);
+    });
   }
   lines.push('');
   lines.push('## Recommendations');

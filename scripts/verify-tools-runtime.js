@@ -5,7 +5,7 @@ const http = require('http');
 const https = require('https');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const EXPECTED_TOOL_COUNT = Number(process.env.EXPECTED_TOOL_COUNT || 120);
+const EXPECTED_TOOL_COUNT = Number(process.env.EXPECTED_TOOL_COUNT || 121);
 const DOC_PATH = process.env.TOOL_DOC_PATH || 'docs/tool-center-120-catalog.md';
 
 function request(pathOrUrl) {

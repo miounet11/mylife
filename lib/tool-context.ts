@@ -16,12 +16,12 @@ export interface ToolMemorySummary {
 }
 
 export function summarizeToolSessions(
-  sessions: Array<ToolSessionRecord | null | undefined>,
+  sessions: Array<ToolSessionRecord<unknown> | null | undefined>,
   _report?: FortuneRecord | null,
   limit = 5
 ): ToolMemorySummary | null {
   const recentSessions = (sessions || [])
-    .filter((item): item is ToolSessionRecord => !!item && !!item.toolSlug)
+    .filter((item): item is ToolSessionRecord<unknown> => !!item && !!item.toolSlug)
     .slice(0, limit)
     .map((item) => {
       const meta = (item.meta || {}) as Record<string, unknown>;

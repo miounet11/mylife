@@ -397,6 +397,7 @@ export interface FortuneAnalysisResult {
     currentLiuNian: string;
     interaction: string;
     nextYear: string;
+    trend?: string;
   };
   
   // 个性化建议
@@ -408,6 +409,10 @@ export interface FortuneAnalysisResult {
     colors: string[];
     directions: string[];
     timing: string[];
+    numbers?: number[];
+    yongShen?: string[];
+    jiShen?: string[];
+    xiShen?: string[];
   };
   
   // 数据支撑
@@ -581,7 +586,7 @@ export interface CareerAdvice {
   general: string;
   specific: string[];
   timing: string;
-  avoid: string[];
+  avoid?: string[];
   direction: string;
   colors: string[];
 }
@@ -601,6 +606,7 @@ export interface MarriageAdvice {
   timing: string;
   direction: string;
   colors: string[];
+  avoid?: string[];
 }
 
 export interface HealthAdvice {
@@ -640,6 +646,7 @@ export interface FortuneAdvice {
   wealth: WealthAdvice;
   marriage: MarriageAdvice;
   health: HealthAdvice;
+  overall?: string;
   colors: string[];
   directions: string[];
   numbers: number[];
@@ -868,14 +875,14 @@ export interface PremiumServiceRequestRecord {
   updatedAt?: string;
 }
 
-export interface ToolSessionRecord {
+export interface ToolSessionRecord<Result = Record<string, unknown>> {
   id: string;
   userId: string;
   reportId?: string;
   toolSlug: string;
   status: 'completed' | 'locked';
   input?: Record<string, unknown>;
-  result?: Record<string, unknown>;
+  result?: Result;
   meta?: Record<string, unknown>;
   createdAt?: string;
   updatedAt?: string;

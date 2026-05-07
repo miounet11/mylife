@@ -11,7 +11,7 @@ import { createCollectionPageSchema, createPublicContentMetadata } from '@/lib/p
 
 export const metadata = createPublicContentMetadata({
   title: '世界易图片说明库 | 人生K线',
-  description: '人生K线与世界易的产品说明图、命理易学结构图、报告路径图、工具矩阵图和传播图，全部使用当前服务器静态路径。',
+  description: '人生K线与世界易的产品说明图、命理易学结构图、报告路径图、工具矩阵图和传播图。',
   path: '/visual-assets',
   type: 'website',
 });
@@ -130,13 +130,13 @@ export default function VisualAssetsPage() {
           <div className="space-y-5">
             <div className="section-label">
               <Images className="h-3.5 w-3.5" />
-              当前服务器图片库
+              精选图片说明
             </div>
             <h1 className="text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
               世界易图片说明库
             </h1>
             <p className="hero-description">
-              这里不是普通图库，而是人生K线 / 世界易的视觉说明系统。每张图都有服务器图片路径、深度解读文章、对应工具和测算入口，后续可以继续扩展到 R2。
+              用图片看懂人生K线 / 世界易的判断路径。每张图都配有深度解读、相关工具和测算入口。
             </p>
             <div className="flex flex-wrap gap-3">
               <Link href="/analyze" className="action-primary action-main">
@@ -149,9 +149,9 @@ export default function VisualAssetsPage() {
 
           <div className="grid gap-3 sm:grid-cols-3">
             {[
-              { label: '已批准', value: `${visualAssets.length} 张` },
-              { label: '入口模块', value: `${groupedAssets.length} 组` },
-              { label: '配套文章', value: `${visualAssets.length} 篇` },
+              { label: '精选图片', value: `${visualAssets.length} 张` },
+              { label: '主题模块', value: `${groupedAssets.length} 组` },
+              { label: '深度解读', value: `${visualAssets.length} 篇` },
             ].map((item) => (
               <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
                 <div className="product-kicker">{item.label}</div>

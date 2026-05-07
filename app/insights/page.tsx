@@ -3,6 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
+import PriorityDisclosure from '@/components/priority-disclosure';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
@@ -80,7 +81,7 @@ export default function InsightsPage() {
       <AnalyticsPageView eventName="insights_page_viewed" page="/insights" meta={{ surfaceKey: 'insights_page', contentType: 'insight' }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
+      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
         <PublicSurfaceHero
           label={(
             <>
@@ -124,7 +125,18 @@ export default function InsightsPage() {
           highlightsColumns="md:grid-cols-3"
         />
 
+        <section className="mt-6 space-y-8">
+          {insightTypes.map((type) => (
+            <TypeSection key={type} type={type} items={insightsByType[type]} />
+          ))}
+        </section>
+
         <section className="mt-8">
+          <PriorityDisclosure
+            label="环境主轴"
+            title="世界易环境观"
+            description="洞察列表优先，系统主轴默认收起。"
+          >
           <ContentCardLink
             href="/world-yi/insights"
             page="/insights"
@@ -135,7 +147,7 @@ export default function InsightsPage() {
               series: 'world-yi-insights',
               version: 'v1.0.0.1',
             }}
-            className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5"
+            className="glass-panel block rounded-xl p-5 transition hover:-translate-y-0.5"
           >
             <div className="section-label">
               <Sparkles className="h-3.5 w-3.5" />
@@ -158,6 +170,7 @@ export default function InsightsPage() {
               </div>
             </div>
           </ContentCardLink>
+          </PriorityDisclosure>
         </section>
 
         <PublicEvidencePanel
@@ -170,57 +183,59 @@ export default function InsightsPage() {
           caseItems={caseItems}
         />
 
-        <section className="mt-10 space-y-10">
-          {insightTypes.map((type) => (
-            <TypeSection key={type} type={type} items={insightsByType[type]} />
-          ))}
+        <section className="mt-8">
+          <PriorityDisclosure
+            label="更多入口"
+            title="知识、案例和环境主轴"
+            description="补充入口放到洞察列表之后。"
+          >
+            <div className="grid gap-3 lg:grid-cols-3">
+              <ContentCardLink
+                href="/knowledge"
+                page="/insights"
+                meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
+                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到原理层</div>
+                <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">知识库</h2>
+                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                  查看知识库
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+
+              <ContentCardLink
+                href="/cases"
+                page="/insights"
+                meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
+                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
+                <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">案例库</h2>
+                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                  查看案例库
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+
+              <ContentCardLink
+                href="/world-yi/insights"
+                page="/insights"
+                meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
+                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+              >
+                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母路径</div>
+                <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">环境主轴</h2>
+                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                  进入环境主轴
+                  <ArrowRight className="h-4 w-4" />
+                </div>
+              </ContentCardLink>
+            </div>
+          </PriorityDisclosure>
         </section>
 
-        <section className="mt-12 grid gap-4 lg:grid-cols-3">
-          <ContentCardLink
-            href="/knowledge"
-            page="/insights"
-            meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到原理层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              查看知识库
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/cases"
-            page="/insights"
-            meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              查看案例库
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/world-yi/insights"
-            page="/insights"
-            meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母路径</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境主轴</h2>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
-              进入环境主轴
-              <ArrowRight className="h-4 w-4" />
-            </div>
-          </ContentCardLink>
-        </section>
-
-        <section className="mt-12">
+        <section className="mt-8">
           <ContentQuickAnalyzePanel
             sourceLabel="洞察页转化"
             sourceKey="insights_page"
@@ -230,12 +245,18 @@ export default function InsightsPage() {
           />
         </section>
 
-        <section className="mt-12">
-          <NewsletterSignup
-            source="insights_page"
+        <section className="mt-8">
+          <PriorityDisclosure
+            label="订阅"
             title="订阅行业与城市洞察"
-            description="适合持续跟踪城市、行业和组织变化的人，把环境判断保持在最新状态。"
-          />
+            description="订阅入口默认收起，不抢阅读列表。"
+          >
+            <NewsletterSignup
+              source="insights_page"
+              title="订阅行业与城市洞察"
+              description="适合持续跟踪城市、行业和组织变化的人，把环境判断保持在最新状态。"
+            />
+          </PriorityDisclosure>
         </section>
       </main>
 
@@ -247,15 +268,15 @@ export default function InsightsPage() {
 function TypeSection({ type, items }: { type: EntityInsightType; items: ReturnType<typeof getEntityInsights> }) {
   return (
     <section>
-      <div className="mb-5 flex items-end justify-between gap-4">
+      <div className="mb-3 flex items-end justify-between gap-4">
         <div>
           <div className="section-label">{entityTypeLabels[type]}</div>
-          <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">{entityTypeLabels[type]}内容</h2>
+          <h2 className="mt-2 text-2xl font-black text-[color:var(--ink)]">{entityTypeLabels[type]}内容</h2>
         </div>
         <div className="text-sm text-[color:var(--muted)]">{items.length} 篇</div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {items.map((item) => (
           <ContentCardLink
             key={item.slug}
@@ -271,11 +292,11 @@ function TypeSection({ type, items }: { type: EntityInsightType; items: ReturnTy
               category: entityTypeLabels[type],
               tags: item.tags,
             }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
-            <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h3>
-            <div className="action-guide mt-5 inline-flex items-center gap-2">
+            <h3 className="mt-3 text-xl font-bold leading-snug text-[color:var(--ink)]">{item.title}</h3>
+            <div className="action-guide mt-4 inline-flex items-center gap-2">
               查看洞察
               <ArrowRight className="h-4 w-4" />
             </div>

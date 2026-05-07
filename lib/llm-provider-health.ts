@@ -2,7 +2,7 @@ import { getDefaultModel } from '@/lib/env';
 import { analyticsOperations } from '@/lib/database';
 import { generateId } from '@/lib/utils';
 
-export type LlmScope = 'report' | 'agent' | 'chat';
+export type LlmScope = 'report' | 'agent' | 'chat' | 'content';
 export type LlmCircuitState = 'closed' | 'degraded' | 'half-open' | 'open';
 
 export type ModelAttemptEvent = {
@@ -381,10 +381,10 @@ export function computeAttemptTimeouts(totalBudgetMs: number, attemptCount: numb
   const weights = attemptCount === 1
     ? [1]
     : attemptCount === 2
-    ? [0.78, 0.22]
-    : [0.7, 0.2, 0.1];
+    ? [0.72, 0.28]
+    : [0.58, 0.22, 0.2];
   const fallbackWeight = 1 / attemptCount;
-  const minBudget = Math.max(1200, Math.floor(totalBudgetMs * 0.1));
+  const minBudget = Math.max(2500, Math.floor(totalBudgetMs * 0.12));
   const budgets: number[] = [];
   let consumed = 0;
 

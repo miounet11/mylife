@@ -3,7 +3,7 @@
   "name": "Life Kline Visual Asset Production Workflow",
   "description": "Repository-owned workflow contract for image, narrative, QA, correction, storage and future R2 publication.",
   "runtime": {
-    "maxConcurrentImageJobs": 20,
+    "maxConcurrentImageJobs": 6,
     "maxConcurrentNarrativeJobs": 4,
     "maxAttempts": 2,
     "retryBaseDelayMs": 1500,

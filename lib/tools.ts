@@ -1,4 +1,5 @@
-import type { FortuneRecord, PremiumServiceRequestRecord } from '@/lib/user-types';
+import type { FortuneRecord, PremiumServiceRequestRecord, ToolSessionRecord as BaseToolSessionRecord } from '@/lib/user-types';
+import { isPremiumServiceKey } from '@/lib/report-premium-services';
 import {
   worldYiApplicationSurface,
   worldYiDomainSurfaces,
@@ -44,7 +45,7 @@ export interface ToolDefinition {
   relatedKnowledgeSlugs: string[];
   relatedCaseSlugs: string[];
   relatedReportThemes: string[];
-  chatIntent?: 'event-simulation' | 'event-verdict' | 'event-review' | 'meihua-enhancement';
+  chatIntent?: 'event-simulation' | 'event-verdict' | 'event-review' | 'meihua-enhancement' | 'palmistry-reading' | 'home-layout-diagnosis';
   premiumServiceKey?: PremiumServiceRequestRecord['serviceKey'];
   nextToolSlugs: string[];
   caseStories: ToolCaseStory[];
@@ -106,24 +107,49 @@ export interface ToolBundleDefinition {
   recommendedFor: string;
 }
 
-export interface ToolSessionRecord {
-  id: string;
-  userId: string;
-  reportId?: string;
-  toolSlug: string;
-  status: 'completed' | 'locked';
-  input: Record<string, unknown>;
-  result: ToolRunSummary;
-  meta?: Record<string, unknown>;
-  createdAt?: string;
-  updatedAt?: string;
+export interface ToolGrowthProfile {
+  slug: string;
+  stageLabel: string;
+  seoTitle: string;
+  seoDescription: string;
+  heroEyebrow: string;
+  heroSubtitle: string;
+  primaryCtaLabel: string;
+  secondaryCtaLabel: string;
+  freeValueBullets: string[];
+  upgradeBullets: string[];
+  geoQuestions: string[];
+  socialHooks: string[];
+  keywords: string[];
 }
+
+export type ToolSessionRecord = BaseToolSessionRecord<ToolRunSummary>;
 
 export interface ToolRecommendation {
   slug: string;
   reason: string;
   source: 'report' | 'history' | 'category' | 'default';
 }
+
+type ToolThemeTuple = [
+  string,
+  string,
+  string,
+  string,
+  string,
+  string,
+  string[],
+  ToolDefinition['chatIntent']?,
+  string?,
+  string?,
+  string?,
+  string?,
+  string?,
+  string?,
+  string[]?,
+  string[]?,
+  string[]?,
+];
 
 const categoryDefinitions: ToolCategoryDefinition[] = [
   {
@@ -184,7 +210,7 @@ const categoryLaunchLimits: Record<ToolCategoryKey, number> = {
   family: 15,
   migration: 15,
   timing: 8,
-  application: 7,
+  application: 8,
 };
 
 const categoryThemeMap: Record<ToolCategoryKey, Array<{
@@ -348,7 +374,8 @@ const categoryThemeMap: Record<ToolCategoryKey, Array<{
     ['timing-selection', '择时', '某件具体事什么时候做更顺', '有明确动作、短周期决策压力的人', '这件事到底什么时候做更顺？', '给出短周期动作窗口', ['应用', '窗口', '行动'], 'meihua-enhancement'],
     ['meeting-choice', '会面择时', '会面/谈判安排在哪个时段更合适', '临时会谈、面试、约谈用户', '最近哪次会面安排更合适？', '降低短周期误判', ['应用', '关系', '事业'], 'meihua-enhancement'],
     ['lost-item', '寻物复原', '丢失物品的高概率路径', '证件、文件、贵重物品丢失的人', '东西丢了，我最该从哪里找？', '通过环境与路径复原聚焦查找方向', ['应用', '环境', '路径'], 'event-verdict'],
-    ['home-order', '家宅秩序', '家里哪里最该先调整', '家里杂乱、情绪重、恢复差的人', '家里最该先调整哪个位置？', '把家宅调整转成恢复动作', ['应用', '环境', '恢复'], 'event-review'],
+    ['home-order', '家宅秩序', '家里哪里最该先调整', '家里杂乱、情绪重、恢复差的人', '上传户型图后，请只按可见结构诊断入户、动线、采光通风、厨卫、卧室安稳和收纳问题。', '把家宅问题转译成户型结构、动线与恢复系统问题', ['应用', '环境', '恢复', '户型'], 'home-layout-diagnosis', '家里最伤人的，不是小，而是乱冲乱堵。', '当你搬家、装修、租房或长期觉得家里动线乱、睡不好、潮湿、杂物越堆越多时，就该上传户型图先诊断结构问题。', '“这套房是不是风水不好？”', '这张户型图里，哪些结构问题最该先改，为什么？', '免费先给你户型问题清单、因果链、优先级和低成本调整。', '深测版会继续拆方向假设、动静分区、门线冲、采光通风、洁污分区和 7-21 天验证指标。', ['户型图', '家宅', '动线', '风水形势'], ['核心问题清单', '因果链与优先级', '低成本调整'], ['户型问题诊断图', '动线/采光/厨卫细拆', '7-21 天验证清单']],
+    ['palmistry-reading', '手相结构观察', '上传手相照片后观察掌纹结构', '想用手相照片做相学文化观察、但不想听宿命化断语的人', '上传手相照片后，请只按可见掌纹、掌丘、手型和照片质量做文化观察，并说明哪些地方不能判断。', '把手相问题转译成掌纹结构、表达节奏、边界和可执行复盘', ['应用', '相学', '手相', '掌纹'], 'palmistry-reading', '手相不是定命工具，只能作为掌纹结构和自我复盘的文化观察。', '当你想看生命线、智慧线、感情线、事业线、掌丘和手型，但又不希望被寿命、疾病、婚姻必然这类说法吓到时，就上传清晰手相照片。', '“我这只手是不是命不好？”', '这张手相照片里哪些掌纹结构值得观察，能转成哪些现实建议？', '免费先给你图片可用性、掌纹结构观察、文化解释和边界说明。', '深测版会继续拆三大主线、命运线/事业线、太阳线、掌丘分布、左右手差异和 21 天复看指标。', ['手相', '掌纹', '生命线', '智慧线', '感情线', '相学边界'], ['图片可用性检查', '掌纹与掌丘结构点', '边界化现实建议'], ['三大主线细拆', '掌丘/手型综合观察', '21 天复看与问题映射']],
     ['room-recovery', '卧室恢复', '卧室是否真的支持恢复', '睡不好、房间待不住的人', '卧室为什么没法让我恢复？', '识别空间干扰点', ['应用', '健康', '恢复'], 'event-review'],
     ['travel-choice', '出行判断', '今天/近期这趟行程值不值得去', '短期出行决策压力大的人', '这趟出行今天/近期值不值得去？', '短周期价值判断', ['应用', '短周期', '风险'], 'meihua-enhancement'],
     ['message-judgment', '消息真假', '一则消息是否值得信', '等待对方回复、消息判断的人', '这个消息我该不该当真？', '聚焦短周期判断倾向', ['应用', '关系', '风险'], 'meihua-enhancement'],
@@ -479,25 +506,7 @@ function buildCategoryProductCopy(
   }
 }
 
-function buildThemeTuple(category: ToolCategoryKey, tuple: [
-  string,
-  string,
-  string,
-  string,
-  string,
-  string,
-  string[],
-  ToolDefinition['chatIntent']?,
-  string?,
-  string?,
-  string?,
-  string?,
-  string?,
-  string?,
-  string[]?,
-  string[]?,
-  string[]?,
-]) {
+function buildThemeTuple(category: ToolCategoryKey, tuple: readonly unknown[]) {
   const [
     key,
     label,
@@ -516,7 +525,7 @@ function buildThemeTuple(category: ToolCategoryKey, tuple: [
     hookKeywords,
     freeInsights,
     premiumModules,
-  ] = tuple;
+  ] = tuple as ToolThemeTuple;
   const defaults = buildCategoryProductCopy(
     category,
     label,
@@ -551,7 +560,7 @@ function buildThemeTuple(category: ToolCategoryKey, tuple: [
 
 function mapIntentToPremiumService(intent?: ToolDefinition['chatIntent']) {
   if (!intent) return undefined;
-  return intent;
+  return isPremiumServiceKey(intent) ? intent : undefined;
 }
 
 function buildCaseStories(tool: ToolDefinition): ToolCaseStory[] {
@@ -1073,6 +1082,71 @@ function buildToolDefinitions(): ToolDefinition[] {
 
 const toolDefinitions = buildToolDefinitions();
 
+const toolGrowthProfiles: Record<string, ToolGrowthProfile> = {
+  'timing-yearly-window': {
+    slug: 'timing-yearly-window',
+    stageLabel: 'P0 SEO/GEO 冷启动工具',
+    seoTitle: '2026 流年测算与年度主窗口 | 人生K线工具',
+    seoDescription: '输入出生信息并结合综合报告，免费查看 2026 年度主窗口、推进节奏、风险提醒和深度流年报告升级入口。',
+    heroEyebrow: '2026 流年 / 年度窗口 / 八字节奏',
+    heroSubtitle: '适合想先看全年事业、关系、财富和恢复节奏的人。免费版先给年度主轴和一个立即动作，深测版再展开月份窗口、风险线和年度决策包。',
+    primaryCtaLabel: '免费测 2026 年度主窗口',
+    secondaryCtaLabel: '先看八字综合底盘',
+    freeValueBullets: [
+      '先判断 2026 更偏推进、观察还是收缩，不让用户停在泛泛生肖运势。',
+      '把年度节奏落到事业、关系、财富或恢复中的一个优先动作。',
+      '结果页保留邮箱保存和深测入口，方便 7/30 日复访。',
+    ],
+    upgradeBullets: [
+      '2026 月份窗口与关键节点拆解',
+      '年度风险线、止损线和替代窗口',
+      '事业/关系/财富专项决策包',
+    ],
+    geoQuestions: [
+      '2026 年流年测算应该先看什么？',
+      '八字年度报告和生肖运势有什么区别？',
+      '今年适合换工作、推进关系或做重大决定吗？',
+    ],
+    socialHooks: [
+      '2026 年不要只看生肖，先看你自己的年度主窗口。',
+      '同样是流年变化，有人适合冲，有人更该先守。',
+      '免费结果只告诉你主节奏，深测才会拆到月份和动作。',
+    ],
+    keywords: ['2026流年', '八字流年测算', '年度运势', 'BaZi annual luck', 'Chinese astrology 2026'],
+  },
+  'application-palmistry-reading': {
+    slug: 'application-palmistry-reading',
+    stageLabel: 'P0 图片上传测算入口',
+    seoTitle: '手相上传测算：生命线、智慧线、感情线结构观察 | 人生K线工具',
+    seoDescription: '上传手相照片，按可见掌纹、掌丘、手型和照片质量做相学文化观察；免费获得基础结构判断，支持深度手相报告和人工复核转化。',
+    heroEyebrow: '手相上传 / 掌纹结构 / 图片测算',
+    heroSubtitle: '用户不需要先懂相学。上传清晰掌纹照片后，先看图片可用性、三大主线和现实建议，避免寿命、疾病、婚姻必然这类吓人断语。',
+    primaryCtaLabel: '上传手相照片免费测',
+    secondaryCtaLabel: '查看手相深测能补什么',
+    freeValueBullets: [
+      '免费先检查图片质量、生命线/智慧线/感情线可见度和主要掌丘结构。',
+      '把掌纹观察转成边界、表达节奏和复盘建议，而不是宿命化断语。',
+      '天然适合小红书、短视频和图片搜索承接，用户动作简单。',
+    ],
+    upgradeBullets: [
+      '三大主线、事业线、太阳线和掌丘分布细拆',
+      '左右手差异、照片质量补拍建议和 21 天复看指标',
+      '深度手相报告或人工复核服务入口',
+    ],
+    geoQuestions: [
+      '手相照片上传后 AI 能看哪些内容？',
+      '生命线短是不是一定不好？',
+      '免费手相测算和深度手相报告差在哪里？',
+    ],
+    socialHooks: [
+      '手相照片先别急着断命，第一步其实是看图片够不够清楚。',
+      '生命线、智慧线、感情线能观察，但不能拿来吓自己。',
+      '上传一张手相图，先拿到可见结构和现实建议。',
+    ],
+    keywords: ['手相上传测算', '掌纹分析', '生命线', '智慧线', '感情线', 'palm reading upload'],
+  },
+};
+
 const toolBundleDefinitions: ToolBundleDefinition[] = [
   {
     slug: 'career-acceleration',
@@ -1124,6 +1198,28 @@ export function getToolDefinition(slug: string) {
   return toolDefinitions.find((item) => item.slug === slug) || null;
 }
 
+export function getToolGrowthProfile(slug: string) {
+  return toolGrowthProfiles[slug] || null;
+}
+
+export function getPriorityGrowthTools() {
+  return Object.values(toolGrowthProfiles)
+    .map((profile) => getToolDefinition(profile.slug))
+    .filter(Boolean) as ToolDefinition[];
+}
+
+export function getPriorityGrowthToolLinks(source: string) {
+  return getPriorityGrowthTools().map((tool) => ({
+    href: `/tools/${tool.slug}?source=${encodeURIComponent(source)}`,
+    label: getToolGrowthProfile(tool.slug)?.primaryCtaLabel || tool.shortTitle,
+    shortLabel: tool.slug === 'timing-yearly-window'
+      ? '2026 流年'
+      : tool.slug === 'application-palmistry-reading'
+        ? '手相上传'
+        : tool.shortTitle,
+  }));
+}
+
 export function listToolBundles() {
   return toolBundleDefinitions;
 }
@@ -1162,7 +1258,7 @@ export function inferCategoryFromText(text: string): ToolCategoryKey | null {
     { category: 'family', patterns: ['家庭', '父母', '孩子', '照护', '家里', 'family', 'parent'] },
     { category: 'migration', patterns: ['迁移', '移民', '出国', '回国', '城市', '海外', 'migration', 'overseas'] },
     { category: 'timing', patterns: ['窗口', '时机', '什么时候', '本月', '今年', '今天', '择时', 'timing'] },
-    { category: 'application', patterns: ['起名', '寻物', '家宅', '择日', '签约', '今日', 'quick', 'name'] },
+    { category: 'application', patterns: ['起名', '寻物', '家宅', '户型', '平面图', '风水', '手相', '掌纹', '相学', '择日', '签约', '今日', 'quick', 'name', 'floor plan', 'feng shui', 'palm', 'palmistry'] },
   ];
 
   const matched = rules.find((rule) => rule.patterns.some((pattern) => lowered.includes(pattern)));

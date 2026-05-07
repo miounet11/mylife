@@ -1896,6 +1896,26 @@ export function initializeDatabase() {
   `);
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS llm_provider_configs (
+      id TEXT PRIMARY KEY,
+      purpose TEXT NOT NULL,
+      name TEXT NOT NULL,
+      base_url TEXT NOT NULL,
+      model TEXT NOT NULL,
+      api_key TEXT,
+      priority INTEGER DEFAULT 100,
+      enabled INTEGER DEFAULT 1,
+      timeout_ms INTEGER,
+      max_retries INTEGER DEFAULT 0,
+      meta JSON,
+      created_by TEXT,
+      updated_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS system_locks (
       key TEXT PRIMARY KEY,
       owner TEXT NOT NULL,
@@ -2138,6 +2158,7 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_content_scheduler_runs_created_at ON content_scheduler_runs(created_at);
     CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_status_next_run ON content_generation_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_content_generation_jobs_user_created_at ON content_generation_jobs(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_llm_provider_configs_purpose_enabled ON llm_provider_configs(purpose, enabled, priority);
     CREATE INDEX IF NOT EXISTS idx_system_locks_expires_at ON system_locks(expires_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_status_next_run ON report_upgrade_jobs(status, next_run_at);
     CREATE INDEX IF NOT EXISTS idx_report_upgrade_jobs_report_id ON report_upgrade_jobs(report_id);
@@ -5492,7 +5513,7 @@ export const reportUpgradeJobOperations = {
             max_attempts = ?,
             next_run_at = ?,
             locked_at = NULL,
-            last_error = NULL,
+            last_error = ?,
             meta = ?,
             updated_at = ?
         WHERE report_id = ?
@@ -5502,6 +5523,7 @@ export const reportUpgradeJobOperations = {
         job.targetScore || 95,
         job.maxAttempts || 6,
         job.nextRunAt || now,
+        job.lastError || null,
         JSON.stringify(job.meta || {}),
         now,
         job.reportId
