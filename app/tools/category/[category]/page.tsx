@@ -111,11 +111,11 @@ export default async function ToolCategoryPage({
       />
       <SiteHeader ctaHref="/tools" ctaLabel="回到工具中心" />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <PublicSurfaceHero
           label={(
             <>
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles className="h-3 w-3" />
               {categoryInfo.title}
             </>
           )}
@@ -125,39 +125,65 @@ export default async function ToolCategoryPage({
             ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
             : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
           actions={[
-            <Link key="tools" href="/tools" className="action-primary action-main">
+            <Link
+              key="tools"
+              href="/tools"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+            >
               回到工具中心
-              <ArrowRight className="ml-1 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Link>,
-            <Link key="analyze" href="/analyze" className="action-secondary">先做综合判断</Link>,
-            <Link key="docs" href="/docs/use-tools" className="action-secondary">
+            <Link
+              key="analyze"
+              href="/analyze"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              先做综合判断
+            </Link>,
+            <Link
+              key="docs"
+              href="/docs/use-tools"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
               <BookOpenText className="h-4 w-4" />
               使用方法
             </Link>,
           ]}
           highlights={[
-            { body: `${tools.length} 个工具` },
-            { body: '综合判断' },
-            { body: '单项复测' },
+            { title: '工具数', body: `${tools.length} 个` },
+            { title: '前置', body: '综合判断' },
+            { title: '后续', body: '单项复测' },
           ]}
           highlightsColumns="md:grid-cols-3"
         />
 
         {problemLineGuide ? (
-          <section className="mt-5 glass-panel rounded-xl p-4 md:p-5">
-            <div className="grid gap-5 lg:grid-cols-[0.82fr_1.18fr] lg:items-start">
+          <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
+            <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
               <div>
-                <div className="section-label">问题线规则</div>
-                <h2 className="mt-2 text-2xl font-black text-[color:var(--ink)]">先确认问题线，再选择一个工具</h2>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                  问题线规则
+                </div>
+                <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)]">
+                  先确认问题线，再选择一个工具
+                </h2>
               </div>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-[1.25rem] bg-white/78 p-4">
-                  <div className="text-xs font-semibold tracking-[0.18em] text-[color:var(--muted)]">第一步</div>
-                  <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{problemLineGuide.firstStep}</div>
+                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    01 第一步
+                  </div>
+                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--ink-2)]">
+                    {problemLineGuide.firstStep}
+                  </div>
                 </div>
-                <div className="rounded-[1.25rem] bg-[color:var(--accent-soft)] p-4">
-                  <div className="text-xs font-semibold tracking-[0.18em] text-[color:var(--accent-strong)]">下一步</div>
-                  <div className="mt-2 text-sm leading-6 text-[color:var(--accent-strong)]">{problemLineGuide.nextStep}</div>
+                <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
+                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                    02 下一步
+                  </div>
+                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--brand-strong)]">
+                    {problemLineGuide.nextStep}
+                  </div>
                 </div>
               </div>
             </div>
@@ -172,13 +198,20 @@ export default async function ToolCategoryPage({
               toolSlug={tool.slug}
               category={tool.category}
               page={`/tools/category/${categoryInfo.key}`}
-              className="block rounded-xl border border-[color:var(--line)] bg-white/82 p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+              className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
             >
-              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
-              <h2 className="mt-2 text-lg font-bold leading-snug text-[color:var(--ink)]">{tool.title}</h2>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                {tool.themeLabel}
+              </div>
+              <h2 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
+                {tool.title}
+              </h2>
+              <div className="mt-3 flex flex-wrap gap-1.5">
                 {tool.hookKeywords.slice(0, 3).map((keyword) => (
-                  <span key={keyword} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                  <span
+                    key={keyword}
+                    className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+                  >
                     {keyword}
                   </span>
                 ))}
