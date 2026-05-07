@@ -400,29 +400,38 @@ function EventsPageContent() {
         }}
       />
 
-      <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
-        <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-5">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+      <main className="page-frame py-6 pb-16 space-y-6 md:py-8 md:pb-20">
+        <section className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <Sparkles className="h-3 w-3" />
               事件中心
             </div>
-            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              事件、提醒、验证
+            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+              事件 · 提醒 · 验证
             </h1>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
+              不是日历，是把真实反馈接回报告质量。
+            </p>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6">
-            <div className="action-guide">快速操作</div>
-            <div className="action-strip mt-3 flex flex-wrap gap-3">
-              <button onClick={openCreateForm} className="action-primary action-main" type="button">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+              快速操作
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                onClick={openCreateForm}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+                type="button"
+              >
                 创建事件
               </button>
               <ResultCtaLink
                 href={focusedReportId ? appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource) : '/analyze'}
                 page="/events"
                 target={focusedReportId ? 'events_hero_report' : 'events_hero_analyze'}
-                className="action-secondary"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -443,7 +452,7 @@ function EventsPageContent() {
                 })}
                 page="/events"
                 target="events_hero_chat"
-                className="action-secondary"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -458,15 +467,8 @@ function EventsPageContent() {
           </div>
         </section>
 
-        <ProductSurfaceRolePanel
-          surface="events"
-          title="事件页先处理验证和纠偏"
-          description="这里不是单纯日历，而是把真实反馈接回报告质量，让系统知道哪些判断成立，哪些需要修正。"
-          compact
-        />
-
         {error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--alert)]">
             {error}
           </div>
         )}
@@ -973,18 +975,21 @@ function EventsPageFallback() {
   return (
     <div className="page-shell">
       <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
-      <main className="page-frame py-8 pb-16 space-y-6 md:py-12 md:pb-20">
-        <section className="grid gap-6 lg:grid-cols-[0.72fr_1.28fr]">
-          <div className="space-y-5">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+      <main className="page-frame py-6 pb-16 space-y-6 md:py-8 md:pb-20">
+        <section className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
+          <div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <Sparkles className="h-3 w-3" />
               事件中心
             </div>
-            <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
-              事件、提醒、验证
+            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+              事件 · 提醒 · 验证
             </h1>
+            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
+              不是日历，是把真实反馈接回报告质量。
+            </p>
           </div>
-          <div className="glass-panel rounded-[2rem] p-6">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
             <EventsSkeleton />
           </div>
         </section>
