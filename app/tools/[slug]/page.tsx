@@ -177,51 +177,70 @@ export default async function ToolDetailPage({
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <section className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-4xl">
-            <div className="section-label">
-              <Layers3 className="h-3.5 w-3.5" />
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <Layers3 className="h-3 w-3" />
               {growthProfile?.heroEyebrow || tool.themeLabel}
             </div>
             {growthProfile ? (
-              <div className="mt-3 inline-flex rounded-full border border-[color:var(--accent)] bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--accent-strong)]">
+              <div className="mt-3 inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                 {growthProfile.stageLabel}
               </div>
             ) : null}
-            <h1 className="mt-3 text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
+            <h1 className="mt-3 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
               {growthProfile?.seoTitle.replace(/ \| 人生K线工具$/, '') || tool.title}
             </h1>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-[color:var(--muted)] md:text-lg">
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--ink-3)] md:text-base md:leading-7">
               {growthProfile?.heroSubtitle || tool.description}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {(growthProfile?.keywords || tool.hookKeywords).map((keyword) => (
-                <span key={keyword} className="product-chip text-[color:var(--muted)]">
+                <span
+                  key={keyword}
+                  className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-[11px] font-semibold text-[color:var(--ink-4)]"
+                >
                   {keyword}
                 </span>
               ))}
             </div>
           </div>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <ResultCtaLink
               href={imageUploadChatHref || (report ? '#tool-runner' : analyzeEntryHref)}
               page={`/tools/${tool.slug}`}
               target="tool_detail_primary_start"
-              className="action-primary action-main"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
               meta={{ toolSlug: tool.slug, category: tool.category, source: imageUploadChatHref ? 'tool_detail_image_upload_chat' : report ? 'tool_detail_runner' : 'tool_detail_analyze_gate' }}
             >
               {growthProfile?.primaryCtaLabel || imageUploadPrimaryLabel || (report ? sourceCtaStrategy.toolPrimaryLabel : '先生成综合报告再开始')}
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </ResultCtaLink>
-            <Link href={`/tools/category/${tool.category}`} className="action-secondary">返回该分类</Link>
-            <Link href="/docs/use-tools" className="action-secondary">使用方法</Link>
+            <Link
+              href={`/tools/category/${tool.category}`}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              返回该分类
+            </Link>
+            <Link
+              href="/docs/use-tools"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              使用方法
+            </Link>
           </div>
         </section>
 
         {growthProfile ? (
-          <section className="mt-6 grid gap-4 md:grid-cols-3">
-            {growthProfile.freeValueBullets.map((item) => (
-              <div key={item} className="soft-card rounded-[1.5rem] p-5 text-sm leading-7 text-[color:var(--ink)]">
-                {item}
+          <section className="mt-6 grid gap-3 md:grid-cols-3">
+            {growthProfile.freeValueBullets.map((item, index) => (
+              <div
+                key={item}
+                className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-4"
+              >
+                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                  FREE VALUE {String(index + 1).padStart(2, '0')}
+                </div>
+                <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">{item}</p>
               </div>
             ))}
           </section>
