@@ -177,85 +177,100 @@ export default function ProfilePage() {
         }}
       />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
-        <section className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
-              我的档案
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        <section className="mb-6 md:mb-8">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div className="max-w-3xl">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                <Sparkles className="h-3 w-3" />
+                我的档案
+              </div>
+              <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+                恢复你的<span className="text-[color:var(--brand-strong)]">下一步</span>
+              </h1>
             </div>
-            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-              恢复你的下一步
-            </h1>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <ResultCtaLink
-              href={latestReportHref}
-              page="/profile"
-              target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
-              className="action-primary action-main"
-              meta={{
-                source: pageSource,
-                ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'profile_header',
-                reportId: latestResultId || null,
-              }}
-            >
-              {latestResultId ? '打开最新报告' : '开始分析'}
-            </ResultCtaLink>
-            <ResultCtaLink
-              href={profileChatHref}
-              page="/profile"
-              target="profile_header_chat"
-              className="action-secondary"
-              meta={{
-                source: pageSource,
-                ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'profile_header',
-                reportId: latestResultId || null,
-              }}
-            >
-              继续追问
-            </ResultCtaLink>
-            <ResultCtaLink
-              href="/docs/profile-history"
-              page="/profile"
-              target="profile_header_docs"
-              className="action-secondary"
-              meta={{
-                source: pageSource,
-                ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                sourceFamily: sourceCtaStrategy.sourceFamily,
-                surface: 'profile_header',
-              }}
-            >
-              <BookOpenText className="h-4 w-4" />
-              使用方法
-            </ResultCtaLink>
+            <div className="flex flex-wrap gap-2">
+              <ResultCtaLink
+                href={latestReportHref}
+                page="/profile"
+                target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'profile_header',
+                  reportId: latestResultId || null,
+                }}
+              >
+                {latestResultId ? '打开最新报告' : '开始分析'}
+              </ResultCtaLink>
+              <ResultCtaLink
+                href={profileChatHref}
+                page="/profile"
+                target="profile_header_chat"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'profile_header',
+                  reportId: latestResultId || null,
+                }}
+              >
+                继续追问
+              </ResultCtaLink>
+              <ResultCtaLink
+                href="/docs/profile-history"
+                page="/profile"
+                target="profile_header_docs"
+                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                meta={{
+                  source: pageSource,
+                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                  sourceFamily: sourceCtaStrategy.sourceFamily,
+                  surface: 'profile_header',
+                }}
+              >
+                <BookOpenText className="h-4 w-4" />
+                使用方法
+              </ResultCtaLink>
+            </div>
           </div>
         </section>
 
         <div className="space-y-5">
           {error && (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--alert)]">
               {error}
             </div>
           )}
 
-          <section className="grid gap-3 md:grid-cols-4">
-            {[
-              { label: '累计分析', value: `${fortunes.length}`, helper: '已沉淀的判断结果' },
-              { label: '关键事件', value: `${mappedEvents.length}`, helper: '可回访的节点记录' },
-              { label: '趋势年份', value: `${chartData.length || 0}`, helper: '可查看阶段波动' },
-              { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, helper: '最近一次分析结果' },
-            ].map((item) => (
-              <div key={item.label} className="soft-card rounded-xl p-4">
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-                <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
-              </div>
-            ))}
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 md:p-5">
+            <div className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-5)]">
+              个人底盘指标
+            </div>
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              {[
+                { label: '累计分析', value: `${fortunes.length}`, mono: true },
+                { label: '关键事件', value: `${mappedEvents.length}`, mono: true },
+                { label: '趋势年份', value: `${chartData.length || 0}`, mono: true },
+                { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, mono: false },
+              ].map((item) => (
+                <div key={item.label} className="flex flex-col gap-1">
+                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    {item.label}
+                  </div>
+                  <div
+                    className={`text-xl font-black text-[color:var(--ink-1)] ${
+                      item.mono ? 'font-mono tabular-nums' : ''
+                    }`}
+                  >
+                    {item.value}
+                  </div>
+                </div>
+              ))}
+            </div>
           </section>
 
           {!loading && (
