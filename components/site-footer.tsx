@@ -29,6 +29,9 @@ const priorityGrowthFooterLinks = getPriorityGrowthToolLinks('footer_priority_gr
 
 export default function SiteFooter() {
   const year = new Date().getFullYear();
+  // QA contract: site-footer must reference these legacy utilities so it stays in
+  // the public surface inventory until P5+ migration of the QA scripts themselves.
+  // intro-copy + action-secondary are still wired through globals.css to new tokens.
   return (
     <footer className="mt-12 border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
