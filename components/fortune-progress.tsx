@@ -169,7 +169,7 @@ function getAgentStatusLabel(status: AgentTaskStatus) {
 
 function getAgentStatusClass(status: AgentTaskStatus) {
   if (status === 'done') {
-    return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    return 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
   }
 
   if (status === 'running') {
@@ -432,8 +432,8 @@ export default function FortuneProgress({
             </div>
 
             {isSlow ? (
-              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50/90 p-4 text-xs leading-6 text-amber-900">
-                <div className="font-semibold text-amber-800">等待较长</div>
+              <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/90 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
+                <div className="font-semibold text-[color:var(--signal-strong)]">等待较长</div>
                 <div className="mt-2">{deliveryHint}</div>
               </div>
             ) : null}
@@ -499,7 +499,7 @@ export default function FortuneProgress({
                   下一步：{nextStep.name}
                 </div>
               ) : (
-                <div className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-emerald-50 px-4 py-3 text-xs font-semibold text-emerald-700">
+                <div className="mt-3 inline-flex items-center gap-2 rounded-2xl bg-[rgba(47,125,82,0.08)] px-4 py-3 text-xs font-semibold text-[color:var(--data-up)]">
                   <CheckCircle2 className="h-4 w-4" />
                   结果已经准备好，正在进入报告页
                 </div>
@@ -561,7 +561,7 @@ export default function FortuneProgress({
             </div>
 
             {isSlow ? (
-              <div className="rounded-[1.5rem] border border-amber-200 bg-amber-50 p-4 text-xs leading-6 text-amber-800">
+              <div className="rounded-[1.5rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
                 {slowHint}
               </div>
             ) : null}

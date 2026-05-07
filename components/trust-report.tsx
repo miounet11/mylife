@@ -244,25 +244,25 @@ const tenGodGroupMeta = [
     key: 'output',
     title: '印比帮扶',
     description: '代表资源、学习、贵人、恢复力，是命局站稳脚跟的底盘。',
-    accent: 'bg-emerald-500',
+    accent: 'bg-[color:var(--data-up)]',
   },
   {
     key: 'controlled',
     title: '食伤表达',
     description: '代表输出、表达、创造、技能转化，是把能力变成影响力的路径。',
-    accent: 'bg-sky-500',
+    accent: 'bg-[color:var(--env)]',
   },
   {
     key: 'input',
     title: '财星落点',
     description: '代表现实回报、资源配置、商业转化，是结果兑现能力。',
-    accent: 'bg-amber-500',
+    accent: 'bg-[color:var(--signal)]',
   },
   {
     key: 'control',
     title: '官杀约束',
     description: '代表规则、责任、压力、职位要求，是外部秩序对个人的塑形。',
-    accent: 'bg-rose-500',
+    accent: 'bg-[color:var(--alert)]',
   },
 ] as const;
 
@@ -547,7 +547,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </div>
 
               <div className="grid gap-4">
-                <div className="rounded-[1.75rem] bg-slate-50 p-5">
+                <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先看点</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.focus.map((item) => (
@@ -558,7 +558,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   </div>
                 </div>
 
-                <div className="rounded-[1.75rem] bg-slate-50 p-5">
+                <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险提醒</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.risks.map((item) => (
@@ -590,7 +590,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="mt-3 text-lg font-bold leading-8 text-[color:var(--ink)]">{item.headline}</div>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {item.tags.map((tag) => (
-                      <span key={tag} className="rounded-full bg-slate-50 px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                      <span key={tag} className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
                         {tag}
                       </span>
                     ))}
@@ -635,7 +635,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     className={`relative rounded-[1.5rem] border p-4 text-center ${
                       isDayMaster
                         ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                        : 'border-[color:var(--line)] bg-slate-50'
+                        : 'border-[color:var(--line)] bg-[color:var(--bg-elevated)]'
                     }`}
                   >
                     {isDayMaster && (
@@ -664,7 +664,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
             <div className="grid gap-4 md:grid-cols-2">
               {pillarInsights.map((item) => (
-                <div key={`${item.label}-note`} className="rounded-[1.5rem] bg-slate-50 p-4">
+                <div key={`${item.label}-note`} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                   <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -715,11 +715,11 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {item.values.length > 0 ? item.values.map((value) => (
-                    <span key={value} className="rounded-full bg-slate-50 px-3 py-1 text-sm font-medium text-[color:var(--ink)]">
+                    <span key={value} className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 text-sm font-medium text-[color:var(--ink)]">
                       {value}
                     </span>
                   )) : (
-                    <span className="rounded-full bg-slate-50 px-3 py-1 text-sm text-[color:var(--muted)]">显性权重较低</span>
+                    <span className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 text-sm text-[color:var(--muted)]">显性权重较低</span>
                   )}
                 </div>
               </section>
@@ -736,7 +736,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             {reasoningSteps.map((step, index) => (
-              <div key={step} className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div key={step} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">Step {index + 1}</div>
                 <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{step}</div>
               </div>
@@ -809,7 +809,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     </div>
                     <div className="text-sm font-bold text-[color:var(--ink)]">{formatPercent(value?.strength)}</div>
                   </div>
-                  <div className="h-3 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-3 overflow-hidden rounded-full bg-[color:var(--bg-sunken)]">
                     <div
                       className={`h-full rounded-full bg-gradient-to-r ${meta.color}`}
                       style={{ width: `${Math.min(Number(value?.strength || 0), 100)}%` }}
@@ -881,7 +881,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 </div>
                 </div>
               )) : (
-                <div className="rounded-[1.5rem] bg-slate-50 p-4 text-sm text-[color:var(--muted)]">暂无完整大运序列</div>
+                <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--muted)]">暂无完整大运序列</div>
               )}
             </div>
 
@@ -911,7 +911,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
             {shenSha.summary && (
-              <div className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 {shenSha.summary}
               </div>
             )}
@@ -922,11 +922,11 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div key={`${item.name}-${item.pillar}`} className="rounded-[1.5rem] border border-[color:var(--line)] bg-white p-4">
                     <div className="flex items-center gap-3">
                       {item.type === 'auspicious' ? (
-                        <BadgeCheck className="h-5 w-5 text-emerald-600" />
+                        <BadgeCheck className="h-5 w-5 text-[color:var(--data-up)]" />
                       ) : item.type === 'inauspicious' ? (
-                        <BadgeAlert className="h-5 w-5 text-rose-600" />
+                        <BadgeAlert className="h-5 w-5 text-[color:var(--alert)]" />
                       ) : (
-                        <Sparkles className="h-5 w-5 text-amber-600" />
+                        <Sparkles className="h-5 w-5 text-[color:var(--signal-strong)]" />
                       )}
                       <div className="font-semibold text-[color:var(--ink)]">{item.name}</div>
                       <div className="text-xs text-[color:var(--muted)]">{mapPillarName(item.pillar)}</div>
@@ -948,7 +948,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             {celebrities.length > 0 && (
               <div className="grid gap-3">
                 {celebrities.slice(0, 2).map((item) => (
-                  <div key={item.name} className="rounded-[1.5rem] bg-slate-50 p-4">
+                  <div key={item.name} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                     <div className="font-semibold text-[color:var(--ink)]">{item.name || '参考案例'}</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">{(item.similar || []).join('、') || '结构相似'}</div>
                     <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.lesson || '该参考案例已纳入样本，但当前未展开更细的经验拆解。'}</div>
@@ -1020,7 +1020,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     <InsightCard label="当前动作" value={item.nowAction} detail="" />
                   </div>
 
-                  <div className="mt-4 rounded-[1.5rem] bg-slate-50 p-4">
+                  <div className="mt-4 rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">本阶段避免</div>
                     <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item.avoidAction}</div>
                   </div>
@@ -1059,7 +1059,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   </div>
 
                   <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+                    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">建议动作</div>
                       <div className="mt-3 grid gap-3">
                         {phase.actions.map((item) => (
@@ -1070,7 +1070,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       </div>
                     </div>
 
-                    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+                    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险控制</div>
                       <div className="mt-3 grid gap-3">
                         {phase.risks.map((item) => (
@@ -1136,7 +1136,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] bg-slate-50 p-4">
+                <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">稳定结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.stablePoints.map((item) => (
@@ -1147,7 +1147,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] bg-slate-50 p-4">
+                <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">敏感结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.sensitivePoints.map((item) => (
@@ -1169,7 +1169,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-              <div className="rounded-[1.75rem] bg-slate-50 p-5">
+              <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">时柱影响等级</div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSensitivityBadge(confidence.birthTimeSensitivity.level)}`}>
@@ -1179,7 +1179,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{confidence.birthTimeSensitivity.explanation}</div>
               </div>
 
-              <div className="rounded-[1.75rem] bg-slate-50 p-5">
+              <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最受影响的板块</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {confidence.birthTimeSensitivity.affectedAreas.map((item) => (
@@ -1217,7 +1217,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
             <div className="grid gap-3">
               {validationInsights.lessons.map((item) => (
-                <div key={item} className="rounded-[1.5rem] bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}
@@ -1235,15 +1235,15 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
-            <div className="rounded-[1.75rem] bg-slate-50 p-5">
+            <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">当前级别</div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
                   correctionInsight.level === 'action'
-                    ? 'bg-rose-50 text-rose-700'
+                    ? 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]'
                     : correctionInsight.level === 'watch'
-                      ? 'bg-amber-50 text-amber-700'
-                      : 'bg-emerald-50 text-emerald-700'
+                      ? 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
+                      : 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
                 }`}>
                   {correctionInsight.level === 'action' ? '立即纠偏' : correctionInsight.level === 'watch' ? '持续观察' : '整体健康'}
                 </span>
@@ -1253,7 +1253,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">纠偏动作</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.fixes.map((item) => (
@@ -1264,7 +1264,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">下一步检查点</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.checkpoints.map((item) => (
@@ -1291,7 +1291,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           />
           <AdviceSection
             title="事业推进"
-            accent="bg-sky-500"
+            accent="bg-[color:var(--env)]"
             summary={advice.career?.general || '事业板块建议优先围绕当前阶段节奏、岗位要求与自身强项配置资源。'}
             points={advice.career?.specific || []}
             extra={advice.career?.timing ? `时机把握：${advice.career.timing}` : ''}
@@ -1299,7 +1299,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           />
           <AdviceSection
             title="财富配置"
-            accent="bg-emerald-500"
+            accent="bg-[color:var(--data-up)]"
             summary={advice.wealth?.general || '财富板块建议优先看现金流安全边界、配置节奏与收益兑现路径。'}
             points={advice.wealth?.specific || []}
             extra={advice.wealth?.timing ? `配置节奏：${advice.wealth.timing}` : ''}
@@ -1307,7 +1307,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           />
           <AdviceSection
             title="关系经营"
-            accent="bg-rose-500"
+            accent="bg-[color:var(--alert)]"
             summary={advice.marriage?.general || '关系板块建议先看互动节奏、边界感与现实推进条件，再判断是否加速。'}
             points={advice.marriage?.specific || []}
             extra={advice.marriage?.timing ? `关系窗口：${advice.marriage.timing}` : ''}
@@ -1315,7 +1315,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           />
           <AdviceSection
             title="健康节奏"
-            accent="bg-amber-500"
+            accent="bg-[color:var(--signal)]"
             summary={advice.health?.general || '健康板块建议优先管理透支、恢复效率与长期节奏，不要等问题放大后再处理。'}
             points={advice.health?.specific || []}
             extra={advice.health?.timing ? `养护重点：${advice.health.timing}` : ''}
@@ -1338,7 +1338,7 @@ function MetricTile({ label, value, emphasis = false }: { label: string; value: 
 
 function InsightCard({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
       {detail ? <div className="mt-2 text-xs text-[color:var(--muted)]">{detail}</div> : null}
@@ -1358,7 +1358,7 @@ function TrendCard({
   icon: ReactNode;
 }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
         {icon}
         {title}
@@ -1371,7 +1371,7 @@ function TrendCard({
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{value}</div>
     </div>
@@ -1404,7 +1404,7 @@ function AdviceSection({
       {points.length > 0 && (
         <div className="mt-4 grid gap-3">
           {points.map((item, index) => (
-            <div key={`${title}-${index}`} className="rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+            <div key={`${title}-${index}`} className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
               {item}
             </div>
           ))}
@@ -1625,14 +1625,14 @@ function mapDayunQuality(quality: DayunInfo['quality']) {
 
 function mapDayunBadge(quality: DayunInfo['quality']) {
   const map: Record<DayunInfo['quality'], string> = {
-    excellent: 'bg-emerald-50 text-emerald-700',
+    excellent: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
     good: 'bg-teal-50 text-teal-700',
-    neutral: 'bg-slate-100 text-slate-600',
-    bad: 'bg-amber-50 text-amber-700',
-    poor: 'bg-rose-50 text-rose-700',
+    neutral: 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]',
+    bad: 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]',
+    poor: 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]',
   };
 
-  return map[quality] || 'bg-slate-100 text-slate-600';
+  return map[quality] || 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]';
 }
 
 function mapPillarName(pillar: ShenShaInfo['pillar']) {
@@ -1668,9 +1668,9 @@ function mapMonthlyStatus(status: MonthlyWindow['status']) {
 
 function mapScenarioBadge(status: 'push' | 'steady' | 'caution') {
   const map: Record<'push' | 'steady' | 'caution', string> = {
-    push: 'bg-emerald-50 text-emerald-700',
-    steady: 'bg-amber-50 text-amber-700',
-    caution: 'bg-rose-50 text-rose-700',
+    push: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
+    steady: 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]',
+    caution: 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]',
   };
 
   return map[status];
@@ -1678,10 +1678,10 @@ function mapScenarioBadge(status: 'push' | 'steady' | 'caution') {
 
 function mapPlaybookPriorityBadge(priority: DecisionPlaybookItem['priority']) {
   const map: Record<DecisionPlaybookItem['priority'], string> = {
-    P1: 'bg-emerald-50 text-emerald-700',
-    P2: 'bg-sky-50 text-sky-700',
-    P3: 'bg-amber-50 text-amber-700',
-    Observe: 'bg-slate-100 text-slate-700',
+    P1: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
+    P2: 'bg-[color:var(--env-soft)] text-[color:var(--env)]',
+    P3: 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]',
+    Observe: 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)]',
   };
 
   return map[priority];
@@ -1689,9 +1689,9 @@ function mapPlaybookPriorityBadge(priority: DecisionPlaybookItem['priority']) {
 
 function mapPlaybookStanceBadge(stance: DecisionPlaybookItem['stance']) {
   const map: Record<DecisionPlaybookItem['stance'], string> = {
-    advance: 'bg-emerald-50 text-emerald-700',
-    stabilize: 'bg-sky-50 text-sky-700',
-    guard: 'bg-rose-50 text-rose-700',
+    advance: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
+    stabilize: 'bg-[color:var(--env-soft)] text-[color:var(--env)]',
+    guard: 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]',
   };
 
   return map[stance];
@@ -1729,10 +1729,10 @@ function mapSensitivityLevel(level: ConfidenceAnalysis['birthTimeSensitivity']['
 
 function mapSensitivityBadge(level: ConfidenceAnalysis['birthTimeSensitivity']['level']) {
   const map: Record<ConfidenceAnalysis['birthTimeSensitivity']['level'], string> = {
-    low: 'bg-emerald-50 text-emerald-700',
-    medium: 'bg-amber-50 text-amber-700',
-    high: 'bg-rose-50 text-rose-700',
+    low: 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]',
+    medium: 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]',
+    high: 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]',
   };
 
-  return map[level] || 'bg-amber-50 text-amber-700';
+  return map[level] || 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
 }

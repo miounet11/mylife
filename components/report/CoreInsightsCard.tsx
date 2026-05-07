@@ -21,25 +21,25 @@ interface CoreInsightsCardProps {
 
 // 天干五行映射
 const TIANGAN_WUXING: Record<string, { element: string; emoji: string; color: string; bgColor: string }> = {
-  '甲': { element: '木', emoji: '🌲', color: 'text-emerald-600', bgColor: 'bg-emerald-100' },
-  '乙': { element: '木', emoji: '🌿', color: 'text-emerald-500', bgColor: 'bg-emerald-50' },
-  '丙': { element: '火', emoji: '🔥', color: 'text-red-600', bgColor: 'bg-red-100' },
+  '甲': { element: '木', emoji: '🌲', color: 'text-[color:var(--data-up)]', bgColor: 'bg-[rgba(47,125,82,0.12)]' },
+  '乙': { element: '木', emoji: '🌿', color: 'text-emerald-500', bgColor: 'bg-[rgba(47,125,82,0.08)]' },
+  '丙': { element: '火', emoji: '🔥', color: 'text-[color:var(--alert)]', bgColor: 'bg-[rgba(189,76,66,0.16)]' },
   '丁': { element: '火', emoji: '🕯️', color: 'text-orange-600', bgColor: 'bg-orange-50' },
-  '戊': { element: '土', emoji: '⛰️', color: 'text-amber-700', bgColor: 'bg-amber-100' },
+  '戊': { element: '土', emoji: '⛰️', color: 'text-[color:var(--signal-strong)]', bgColor: 'bg-[rgba(201,161,74,0.16)]' },
   '己': { element: '土', emoji: '🏜️', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
-  '庚': { element: '金', emoji: '⚔️', color: 'text-slate-600', bgColor: 'bg-slate-100' },
+  '庚': { element: '金', emoji: '⚔️', color: 'text-[color:var(--ink-4)]', bgColor: 'bg-[color:var(--bg-sunken)]' },
   '辛': { element: '金', emoji: '💎', color: 'text-gray-500', bgColor: 'bg-gray-50' },
-  '壬': { element: '水', emoji: '🌊', color: 'text-blue-600', bgColor: 'bg-blue-100' },
+  '壬': { element: '水', emoji: '🌊', color: 'text-[color:var(--env)]', bgColor: 'bg-[rgba(49,95,132,0.16)]' },
   '癸': { element: '水', emoji: '💧', color: 'text-cyan-600', bgColor: 'bg-cyan-50' },
 };
 
 // 五行颜色映射
 const WUXING_COLORS: Record<string, { color: string; bgColor: string; borderColor: string }> = {
-  '木': { color: 'text-emerald-600', bgColor: 'bg-emerald-50', borderColor: 'border-emerald-200' },
-  '火': { color: 'text-red-600', bgColor: 'bg-red-50', borderColor: 'border-red-200' },
-  '土': { color: 'text-amber-700', bgColor: 'bg-amber-50', borderColor: 'border-amber-200' },
-  '金': { color: 'text-slate-600', bgColor: 'bg-slate-50', borderColor: 'border-slate-200' },
-  '水': { color: 'text-blue-600', bgColor: 'bg-blue-50', borderColor: 'border-blue-200' },
+  '木': { color: 'text-[color:var(--data-up)]', bgColor: 'bg-[rgba(47,125,82,0.08)]', borderColor: 'border-[rgba(47,125,82,0.20)]' },
+  '火': { color: 'text-[color:var(--alert)]', bgColor: 'bg-[color:var(--alert-soft)]', borderColor: 'border-[color:var(--alert)]' },
+  '土': { color: 'text-[color:var(--signal-strong)]', bgColor: 'bg-[color:var(--signal-soft)]', borderColor: 'border-[color:var(--signal)]' },
+  '金': { color: 'text-[color:var(--ink-4)]', bgColor: 'bg-[color:var(--bg-elevated)]', borderColor: 'border-[color:var(--hairline-strong)]' },
+  '水': { color: 'text-[color:var(--env)]', bgColor: 'bg-[color:var(--env-soft)]', borderColor: 'border-[color:var(--env)]' },
 };
 
 // 五行图标
@@ -181,9 +181,9 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
           {peakYear && yearsToPeak !== null && (
             <div className={`rounded-xl p-3 border ${
               yearsToPeak > 0
-                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-emerald-200'
+                ? 'bg-gradient-to-br from-emerald-50 to-teal-50 border-[rgba(47,125,82,0.20)]'
                 : yearsToPeak < 0
-                  ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-amber-200'
+                  ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-[color:var(--signal)]'
                   : 'bg-gradient-to-br from-[#d4af37]/10 to-[#d4af37]/5 border-[#d4af37]/30'
             }`}>
               <div className="text-xs text-neutral-500 mb-1.5">
@@ -191,15 +191,15 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
               </div>
               <div className="flex items-center gap-2">
                 {yearsToPeak > 0 ? (
-                  <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  <TrendingUp className="w-5 h-5 text-[color:var(--data-up)]" />
                 ) : yearsToPeak < 0 ? (
-                  <ArrowDown className="w-5 h-5 text-amber-600" />
+                  <ArrowDown className="w-5 h-5 text-[color:var(--signal-strong)]" />
                 ) : (
                   <Sparkles className="w-5 h-5 text-[#d4af37]" />
                 )}
                 <div>
                   <div className={`text-lg font-bold ${
-                    yearsToPeak > 0 ? 'text-emerald-700' : yearsToPeak < 0 ? 'text-amber-700' : 'text-[#d4af37]'
+                    yearsToPeak > 0 ? 'text-[color:var(--data-up)]' : yearsToPeak < 0 ? 'text-[color:var(--signal-strong)]' : 'text-[#d4af37]'
                   }`}>
                     {yearsToPeak === 0 ? '今年' : `${Math.abs(yearsToPeak)}年`}
                     {yearsToPeak > 0 && <span className="text-xs ml-1">后</span>}
@@ -215,15 +215,15 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
           {/* 如果没有巅峰数据但有低谷数据 */}
           {!peakYear && troughYear && yearsToTrough !== null && yearsToTrough > 0 && yearsToTrough < 10 && (
-            <div className="rounded-xl p-3 bg-gradient-to-br from-rose-50 to-orange-50 border border-rose-200">
+            <div className="rounded-xl p-3 bg-gradient-to-br from-rose-50 to-orange-50 border border-[color:var(--alert)]">
               <div className="text-xs text-neutral-500 mb-1.5 flex items-center gap-1">
                 <AlertCircle className="w-3 h-3 text-rose-500" />
                 注意调整期
               </div>
               <div className="flex items-center gap-2">
-                <ArrowDown className="w-5 h-5 text-rose-600" />
+                <ArrowDown className="w-5 h-5 text-[color:var(--alert)]" />
                 <div>
-                  <div className="text-lg font-bold text-rose-700">
+                  <div className="text-lg font-bold text-[color:var(--alert)]">
                     {yearsToTrough}年<span className="text-xs ml-1">后</span>
                   </div>
                   <div className="text-[10px] text-neutral-400">

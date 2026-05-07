@@ -43,14 +43,14 @@ export interface ProbabilityScoreBarProps {
 const LEVEL_CONFIG = {
   excellent: {
     color: 'bg-gradient-to-r from-green-400 to-emerald-500',
-    textColor: 'text-emerald-600 dark:text-emerald-400',
-    bgColor: 'bg-emerald-50 dark:bg-emerald-900/20',
+    textColor: 'text-[color:var(--data-up)] dark:text-emerald-400',
+    bgColor: 'bg-[rgba(47,125,82,0.08)] dark:bg-emerald-900/20',
     label: '大吉',
   },
   good: {
     color: 'bg-gradient-to-r from-blue-400 to-indigo-500',
-    textColor: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-50 dark:bg-blue-900/20',
+    textColor: 'text-[color:var(--env)] dark:text-blue-400',
+    bgColor: 'bg-[color:var(--env-soft)] dark:bg-blue-900/20',
     label: '吉',
   },
   neutral: {
@@ -67,8 +67,8 @@ const LEVEL_CONFIG = {
   },
   challenging: {
     color: 'bg-gradient-to-r from-red-400 to-rose-500',
-    textColor: 'text-rose-600 dark:text-rose-400',
-    bgColor: 'bg-rose-50 dark:bg-rose-900/20',
+    textColor: 'text-[color:var(--alert)] dark:text-rose-400',
+    bgColor: 'bg-[color:var(--alert-soft)] dark:bg-rose-900/20',
     label: '需努力',
   },
 };
@@ -114,10 +114,10 @@ const ConfidenceBar: React.FC<{
   const upperPercent = (upper ?? center * 1.2) * 100;
 
   const getColor = (value: number) => {
-    if (value >= 0.7) return 'bg-emerald-500';
-    if (value >= 0.5) return 'bg-blue-500';
+    if (value >= 0.7) return 'bg-[color:var(--data-up)]';
+    if (value >= 0.5) return 'bg-[color:var(--env)]';
     if (value >= 0.3) return 'bg-yellow-500';
-    return 'bg-red-500';
+    return 'bg-[color:var(--alert)]';
   };
 
   const barHeight = size === 'sm' ? 'h-2' : 'h-3';
@@ -167,8 +167,8 @@ const FactorBadge: React.FC<{
 }> = ({ factor }) => {
   const isPositive = factor.effect > 0;
   const colorClass = isPositive
-    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
+    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)] dark:bg-emerald-900/30 dark:text-emerald-400'
+    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)] dark:bg-rose-900/30 dark:text-rose-400';
 
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-medium ${colorClass}`}>

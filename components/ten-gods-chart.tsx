@@ -88,7 +88,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
         </div>
 
         {/* 十神解读 */}
-        <div className="mt-6 pt-6 border-t-2 border-purple-200">
+        <div className="mt-6 pt-6 border-t-2 border-[color:var(--brand-soft-2)]">
           <h4 className="font-bold text-gray-900 mb-4 text-lg">十神解读</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {getGodDescriptions().map((desc, index) => (
@@ -104,12 +104,12 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
         </div>
 
         {/* 建议 */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-purple-200">
+        <div className="mt-6 p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border border-[color:var(--brand-soft-2)]">
           <h4 className="font-bold text-gray-900 mb-3">根据十神的建议</h4>
           <div className="space-y-2">
             {generateGodAdvice(tenGods).map((advice, index) => (
               <div key={index} className="flex items-start space-x-2">
-                <span className="text-green-600 mt-1">✓</span>
+                <span className="text-[color:var(--data-up)] mt-1">✓</span>
                 <span className="text-sm text-gray-700">{advice}</span>
               </div>
             ))}

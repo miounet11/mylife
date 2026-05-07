@@ -61,11 +61,11 @@ export interface StateVectorDashboardProps {
 
 // 五行颜色配置
 const WUXING_COLORS = {
-  wood: { bg: 'bg-green-500', text: 'text-green-600', label: '木' },
-  fire: { bg: 'bg-red-500', text: 'text-red-600', label: '火' },
+  wood: { bg: 'bg-[color:var(--data-up)]', text: 'text-[color:var(--data-up)]', label: '木' },
+  fire: { bg: 'bg-[color:var(--alert)]', text: 'text-[color:var(--alert)]', label: '火' },
   earth: { bg: 'bg-yellow-500', text: 'text-yellow-600', label: '土' },
   metal: { bg: 'bg-gray-400', text: 'text-gray-600', label: '金' },
-  water: { bg: 'bg-blue-500', text: 'text-blue-600', label: '水' },
+  water: { bg: 'bg-[color:var(--env)]', text: 'text-[color:var(--env)]', label: '水' },
 };
 
 /**
@@ -143,8 +143,8 @@ const ElementTags: React.FC<{
   if (!elements || elements.length === 0) return null;
 
   const tagClass = variant === 'positive'
-    ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-    : 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
+    ? 'bg-[rgba(47,125,82,0.12)] text-[color:var(--data-up)] dark:bg-emerald-900/30 dark:text-emerald-400'
+    : 'bg-[rgba(189,76,66,0.16)] text-[color:var(--alert)] dark:bg-rose-900/30 dark:text-rose-400';
 
   return (
     <div>
@@ -264,13 +264,13 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
             </div>
             <div className="text-center">
               <span className="text-xs text-gray-500 dark:text-gray-400 block">流通效率</span>
-              <span className="text-sm font-medium text-green-600 dark:text-green-400">
+              <span className="text-sm font-medium text-[color:var(--data-up)] dark:text-green-400">
                 {tenGod.structure_efficiency?.toFixed(0) || 0}分
               </span>
             </div>
             <div className="text-center">
               <span className="text-xs text-gray-500 dark:text-gray-400 block">冲突指数</span>
-              <span className="text-sm font-medium text-red-600 dark:text-red-400">
+              <span className="text-sm font-medium text-[color:var(--alert)] dark:text-red-400">
                 {tenGod.conflict_index?.toFixed(0) || 0}
               </span>
             </div>
@@ -289,7 +289,7 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
                 </span>
               )}
               {structure.pattern?.info?.name && (
-                <span className="text-xs text-purple-600 dark:text-purple-400 bg-purple-100 dark:bg-purple-900/30 px-2 py-0.5 rounded">
+                <span className="text-xs text-[color:var(--brand-strong)] dark:text-purple-400 bg-[color:var(--brand-soft-2)] dark:bg-purple-900/30 px-2 py-0.5 rounded">
                   {structure.pattern.info.name}
                 </span>
               )}
@@ -325,8 +325,8 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
         {comprehensive && !compact && (
           <div className="grid grid-cols-2 gap-3">
             {comprehensive.strengths && comprehensive.strengths.length > 0 && (
-              <div className="p-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg">
-                <span className="text-xs text-emerald-700 dark:text-emerald-400 font-medium block mb-1">
+              <div className="p-2 bg-[rgba(47,125,82,0.08)] dark:bg-emerald-900/20 rounded-lg">
+                <span className="text-xs text-[color:var(--data-up)] dark:text-emerald-400 font-medium block mb-1">
                   优势
                 </span>
                 <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
@@ -340,8 +340,8 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
               </div>
             )}
             {comprehensive.weaknesses && comprehensive.weaknesses.length > 0 && (
-              <div className="p-2 bg-rose-50 dark:bg-rose-900/20 rounded-lg">
-                <span className="text-xs text-rose-700 dark:text-rose-400 font-medium block mb-1">
+              <div className="p-2 bg-[color:var(--alert-soft)] dark:bg-rose-900/20 rounded-lg">
+                <span className="text-xs text-[color:var(--alert)] dark:text-rose-400 font-medium block mb-1">
                   弱势
                 </span>
                 <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">

@@ -34,7 +34,7 @@ function TrustSignal({ icon, label, value, delay }: any) {
   
   return (
     <div 
-      className="bg-white rounded-lg p-6 shadow-md border-2 border-purple-200 hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
+      className="bg-white rounded-lg p-6 shadow-md border-2 border-[color:var(--brand-soft-2)] hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
       style={{ 
         animation: `fadeInUp 0.5s ease-out ${delay}ms both`,
         opacity: isVisible ? 1 : 0,
@@ -46,7 +46,7 @@ function TrustSignal({ icon, label, value, delay }: any) {
         <span className="text-sm text-gray-600 font-medium">{label}</span>
       </div>
       <div className="text-center">
-        <div className="text-2xl font-bold text-purple-600 mb-1">{value}</div>
+        <div className="text-2xl font-bold text-[color:var(--brand-strong)] mb-1">{value}</div>
       </div>
     </div>
   );

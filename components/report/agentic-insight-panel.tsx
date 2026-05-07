@@ -110,7 +110,7 @@ export default function AgenticInsightPanel({
         {entries.length > 0 ? (
           <div className="mt-5 grid gap-4">
             {entries.map((item) => (
-              <div key={item.key} className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div key={item.key} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="font-semibold text-[color:var(--ink)]">{item.label}</div>
                   <div className="flex flex-wrap items-center justify-end gap-2">
@@ -119,7 +119,7 @@ export default function AgenticInsightPanel({
                         {item.windows[0].label}
                       </div>
                     ) : null}
-                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${item.source === 'llm' ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-800'}`}>
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${item.source === 'llm' ? 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]' : 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'}`}>
                       {item.source === 'llm' ? 'LLM返回' : '引擎回退'}
                     </div>
                   </div>
@@ -185,27 +185,27 @@ export default function AgenticInsightPanel({
         </div>
 
         {verify?.failedRules && verify.failedRules.length > 0 ? (
-          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-xs leading-6 text-amber-900">
+          <div className="mt-5 rounded-[1.5rem] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
             仍待继续修正的规则：{verify.failedRules.join('、')}
           </div>
         ) : null}
 
         {orchestration?.errors && orchestration.errors.length > 0 ? (
-          <div className="mt-5 rounded-[1.5rem] bg-amber-50 p-4 text-xs leading-6 text-amber-900">
+          <div className="mt-5 rounded-[1.5rem] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
             Agent 失败原因：{orchestration.errors.slice(0, 4).map((item) => `${AGENT_LABELS[item.key] || item.key} ${item.error}`).join('；')}
           </div>
         ) : null}
 
         {(conflicts.length > 0 || repairActions.length > 0) ? (
           <div className="mt-5 grid gap-4">
-            <div className="rounded-[1.5rem] bg-slate-50 p-4">
+            <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">审查结果</div>
               <div className="mt-2 text-base font-bold text-[color:var(--ink)]">
                 检测到 {conflicts.length} 个冲突，已规划 {repairActions.length} 个修复动作。
               </div>
             </div>
             {conflicts.slice(0, 2).map((item) => (
-              <div key={item.id || item.type} className="rounded-[1.5rem] bg-slate-50 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div key={item.id || item.type} className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 <span className="font-semibold">{item.type || '冲突'}</span>
                 {item.severity ? ` / ${item.severity}` : ''}：{item.explanation || '待补充说明'}
               </div>
@@ -238,7 +238,7 @@ function normalizeAgentEntry(key: string, value: unknown, source?: 'llm' | 'fall
 
 function SignalTile({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
       <div className="mt-2 intro-copy">{detail}</div>
@@ -248,7 +248,7 @@ function SignalTile({ label, value, detail }: { label: string; value: string; de
 
 function StatusTile({ label, value, detail }: { label: string; value: string; detail: string }) {
   return (
-    <div className="rounded-[1.5rem] bg-slate-50 p-4">
+    <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{value}</div>
       <div className="mt-2 intro-copy">{detail}</div>

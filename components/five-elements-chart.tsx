@@ -66,7 +66,7 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
               if (element.strength >= 25) {
                 return (
                   <div key={element.key} className="flex items-start space-x-2">
-                    <span className="text-green-600">✓</span>
+                    <span className="text-[color:var(--data-up)]">✓</span>
                     <span>
                       <strong>{element.name}旺</strong> - {element.description}
                     </span>
@@ -75,8 +75,8 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
               }
               return null;
             })}
-            <div className="pt-3 border-t-2 border-purple-200 mt-3">
-              <p className="text-purple-900 font-medium">
+            <div className="pt-3 border-t-2 border-[color:var(--brand-soft-2)] mt-3">
+              <p className="text-[color:var(--brand-deep)] font-medium">
                 {getSummary(elements)}
               </p>
             </div>
@@ -102,8 +102,8 @@ function ElementBar({ element, maxStrength }: any) {
         </div>
         <span className={cn(
           "text-xs font-bold px-2 py-1 rounded",
-          isStrong && "bg-green-500 text-white",
-          element.quality === 'medium' && "bg-blue-500 text-white",
+          isStrong && "bg-[color:var(--data-up)] text-white",
+          element.quality === 'medium' && "bg-[color:var(--env)] text-white",
           isWeak && "bg-orange-500 text-white"
         )}>
           {isStrong && '旺'}
@@ -131,8 +131,8 @@ function ElementCard({ element }: any) {
   return (
     <div className={cn(
       "bg-white rounded-xl p-4 shadow-md hover:shadow-xl transition transform hover:scale-105 border-2",
-      isStrong && "border-green-400",
-      element.quality === 'medium' && "border-blue-400",
+      isStrong && "border-[color:var(--data-up)]",
+      element.quality === 'medium' && "border-[color:var(--env)]",
       isWeak && "border-orange-400"
     )}>
       {/* 标题 */}
@@ -143,8 +143,8 @@ function ElementCard({ element }: any) {
         </div>
         <span className={cn(
           "text-xs font-bold px-2 py-1 rounded",
-          isStrong && "bg-green-500 text-white",
-          element.quality === 'medium' && "bg-blue-500 text-white",
+          isStrong && "bg-[color:var(--data-up)] text-white",
+          element.quality === 'medium' && "bg-[color:var(--env)] text-white",
           isWeak && "bg-orange-500 text-white"
         )}>
           {element.strength}%
@@ -158,14 +158,14 @@ function ElementCard({ element }: any) {
       <div className="flex items-center space-x-2 text-xs">
         {isStrong && (
           <>
-            <span className="text-green-600">✓</span>
-            <span className="text-green-700 font-medium">旺盛</span>
+            <span className="text-[color:var(--data-up)]">✓</span>
+            <span className="text-[color:var(--data-up)] font-medium">旺盛</span>
           </>
         )}
         {element.quality === 'medium' && (
           <>
-            <span className="text-blue-600">✓</span>
-            <span className="text-blue-700 font-medium">适中</span>
+            <span className="text-[color:var(--env)]">✓</span>
+            <span className="text-[color:var(--env)] font-medium">适中</span>
           </>
         )}
         {isWeak && (
@@ -175,8 +175,8 @@ function ElementCard({ element }: any) {
           </>
         )}
         <span className="text-gray-500">建议：</span>
-        {isStrong && <span className="text-green-600">保持现状</span>}
-        {element.quality === 'medium' && <span className="text-blue-600">平衡调节</span>}
+        {isStrong && <span className="text-[color:var(--data-up)]">保持现状</span>}
+        {element.quality === 'medium' && <span className="text-[color:var(--env)]">平衡调节</span>}
         {isWeak && <span className="text-orange-600">宜补宜扶</span>}
       </div>
     </div>

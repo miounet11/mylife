@@ -31,11 +31,11 @@ const TrendIcon = ({ trend }: { trend: 'up' | 'down' | 'stable' }) => {
 const getTrendLabel = (trend: 'up' | 'down' | 'stable') => {
   switch (trend) {
     case 'up':
-      return { text: '上升期', color: 'text-emerald-600', bg: 'bg-emerald-50' };
+      return { text: '上升期', color: 'text-[color:var(--data-up)]', bg: 'bg-[rgba(47,125,82,0.08)]' };
     case 'down':
-      return { text: '调整期', color: 'text-rose-600', bg: 'bg-rose-50' };
+      return { text: '调整期', color: 'text-[color:var(--alert)]', bg: 'bg-[color:var(--alert-soft)]' };
     default:
-      return { text: '平稳期', color: 'text-amber-600', bg: 'bg-amber-50' };
+      return { text: '平稳期', color: 'text-[color:var(--signal-strong)]', bg: 'bg-[color:var(--signal-soft)]' };
   }
 };
 
@@ -49,7 +49,7 @@ const getScoreColor = (score: number) => {
   if (score >= 8) return { text: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10' };
   if (score >= 6) return { text: 'text-[#663399]', bg: 'bg-[#663399]/10' };
   if (score >= 4) return { text: 'text-neutral-600', bg: 'bg-neutral-100' };
-  return { text: 'text-rose-600', bg: 'bg-rose-50' };
+  return { text: 'text-[color:var(--alert)]', bg: 'bg-[color:var(--alert-soft)]' };
 };
 
 export const QuickStatsBar: React.FC<QuickStatsBarProps> = ({

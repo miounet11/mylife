@@ -109,7 +109,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
   return (
     <div ref={ref} className="relative">
       <div className="relative">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--ink-5)]" />
         <input
           type="text"
           value={isOpen ? query : value?.fullName || ''}
@@ -127,7 +127,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
           <button
             type="button"
             onClick={() => handleSelect(null)}
-            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-slate-100 text-slate-500"
+            className="absolute right-3 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]"
             aria-label="清空出生地"
           >
             <X className="h-3.5 w-3.5" />
@@ -140,7 +140,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
           <MapPin className="h-3.5 w-3.5" />
           {value ? value.displayName : '未知地'}
         </span>
-        <span className="rounded-full bg-slate-100 px-3 py-1">
+        <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1">
           {value ? getTimezoneDisplay(value) : '北京时间'}
         </span>
       </div>
@@ -173,7 +173,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
                 ))}
               </div>
             ) : (
-              <div className="rounded-[1rem] bg-slate-50 px-4 py-5 text-sm text-[color:var(--muted)]">
+              <div className="rounded-[1rem] bg-[color:var(--bg-elevated)] px-4 py-5 text-sm text-[color:var(--muted)]">
                 没找到对应地点，试试输入更上一级行政区或英文城市名。
               </div>
             )
@@ -243,7 +243,7 @@ function LocationResultButton({
       className={`flex w-full items-center justify-between rounded-[1rem] border px-4 py-3 text-left transition ${
         active
           ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.1)]'
-          : 'border-[color:var(--line)] bg-white hover:bg-slate-50'
+          : 'border-[color:var(--line)] bg-white hover:bg-[color:var(--bg-elevated)]'
       }`}
     >
       <div className="min-w-0">
