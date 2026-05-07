@@ -221,7 +221,7 @@ export default function AdminPremiumServiceConsole() {
           { label: '当前打开', value: summary.totalOpen, tone: 'bg-white text-[color:var(--ink)]' },
           { label: '已处理完成', value: summary.totalHandled, tone: 'bg-emerald-50 text-emerald-700' },
         ].map((item) => (
-          <div key={item.label} className={`rounded-[1.5rem] px-5 py-5 ${item.tone}`}>
+          <div key={item.label} className={`rounded-[var(--radius-md)] px-5 py-5 ${item.tone}`}>
             <div className="text-xs tracking-[0.18em]">{item.label}</div>
             <div className="mt-2 text-3xl font-black">{item.value}</div>
           </div>
@@ -281,9 +281,9 @@ export default function AdminPremiumServiceConsole() {
 
         <div className="mt-6 grid gap-4">
           {loading ? (
-            <div className="rounded-[1.5rem] bg-slate-50 px-4 py-5 text-sm text-[color:var(--muted)]">正在加载专项需求...</div>
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-5 text-sm text-[color:var(--muted)]">正在加载专项需求...</div>
           ) : requests.length === 0 ? (
-            <div className="rounded-[1.5rem] bg-slate-50 px-4 py-5 text-sm text-[color:var(--muted)]">当前筛选条件下还没有专项需求。</div>
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-5 text-sm text-[color:var(--muted)]">当前筛选条件下还没有专项需求。</div>
           ) : requests.map((item) => {
             const draft = drafts[item.id] || {
               status: item.status,
@@ -303,7 +303,7 @@ export default function AdminPremiumServiceConsole() {
                       <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mapStatusClass(item.status)}`}>
                         {mapStatusLabel(item.status)}
                       </span>
-                      <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                      <span className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
                         {mapPriorityLabel(item.priority)}
                       </span>
                     </div>
@@ -326,14 +326,14 @@ export default function AdminPremiumServiceConsole() {
 
                 <div className="mt-4 grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
                   <div className="space-y-3">
-                    <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">用户问题</div>
                       <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">
                         {`${item.intake?.question || '未填写问题'}`}
                       </div>
                     </div>
 
-                    <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">联系方式</div>
                       <div className="mt-2 grid gap-2 text-xs leading-6 text-[color:var(--ink)]">
                         <div>称呼：{item.contactName || '未填写'}</div>
@@ -348,7 +348,7 @@ export default function AdminPremiumServiceConsole() {
                       <select
                         value={draft.status}
                         onChange={(event) => updateDraft(item.id, { status: event.target.value as PremiumServiceRequestRecord['status'] })}
-                        className="rounded-[1.2rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
                       >
                         <option value="new">新提交</option>
                         <option value="contacted">已跟进</option>
@@ -361,7 +361,7 @@ export default function AdminPremiumServiceConsole() {
                       <select
                         value={draft.priority}
                         onChange={(event) => updateDraft(item.id, { priority: event.target.value as PriorityValue })}
-                        className="rounded-[1.2rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
                       >
                         <option value="normal">普通优先级</option>
                         <option value="high">高优先级</option>
@@ -373,10 +373,10 @@ export default function AdminPremiumServiceConsole() {
                       value={draft.adminNote}
                       onChange={(event) => updateDraft(item.id, { adminNote: event.target.value })}
                       placeholder="写下这次跟进说明、判断重点或下一步动作"
-                      className="min-h-[120px] w-full rounded-[1.4rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+                      className="min-h-[120px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
                     />
 
-                    <label className="flex items-center gap-3 rounded-[1.2rem] bg-slate-50 px-4 py-3 text-sm text-[color:var(--ink)]">
+                    <label className="flex items-center gap-3 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
                       <input
                         type="checkbox"
                         checked={draft.notifyUser}
@@ -430,7 +430,7 @@ function mapStatusClass(status: PremiumServiceRequestRecord['status']) {
     case 'delivered':
       return 'bg-emerald-50 text-emerald-700';
     case 'closed':
-      return 'bg-slate-100 text-slate-700';
+      return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
     case 'cancelled':
       return 'bg-rose-50 text-rose-700';
     default:

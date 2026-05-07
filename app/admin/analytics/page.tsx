@@ -742,7 +742,7 @@ export default async function AdminAnalyticsPage() {
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {statLabels.map((item) => (
-              <div key={item.key} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.key} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{totals[item.key]}</div>
                 <div className="mt-2 intro-copy">{item.helper}</div>
@@ -761,16 +761,16 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
             <div className="grid gap-2 sm:grid-cols-4 lg:w-[34rem]">
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 浏览 {productExperience.totals.views}
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 主动作 {productExperience.totals.primaryActions}
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 总动作 {productExperience.totals.totalActions}
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 健康 {productExperience.totals.healthy}/{productExperience.totals.surfaces}
               </div>
             </div>
@@ -790,29 +790,29 @@ export default async function AdminAnalyticsPage() {
                 </div>
 
                 <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">浏览</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.views}</div>
                   </div>
-                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">主动作</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.primaryActions}</div>
                   </div>
-                  <div className="rounded-[1.1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">后续</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.nextStepActions}</div>
                   </div>
-                  <div className="rounded-[1.1rem] bg-[color:var(--accent-soft)] px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--accent-strong)]">转化</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--accent-strong)]">{item.conversionRate}%</div>
                   </div>
                 </div>
 
-                <div className="mt-4 rounded-[1.2rem] bg-slate-50 px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
                   <span className="font-semibold text-[color:var(--ink)]">成功指标：</span>
                   {item.successMetric}
                 </div>
-                <div className="mt-3 rounded-[1.2rem] bg-white px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+                <div className="mt-3 rounded-[var(--radius)] bg-white px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                   <span className="font-semibold text-[color:var(--accent-strong)]">下一步：</span>
                   {item.action}
                 </div>
@@ -841,7 +841,7 @@ export default async function AdminAnalyticsPage() {
               <Link
                 key={item.report.id}
                 href={`/result/${item.report.id}`}
-                className="rounded-[1.5rem] bg-white/78 p-5 transition hover:bg-white"
+                className="rounded-[var(--radius-md)] bg-white/78 p-5 transition hover:bg-white"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
@@ -853,17 +853,17 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">查看</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.viewedCount}</div>
                   </div>
-                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">质量</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
                       {item.report.analysis?.qualityAudit?.grade || 'C'} / {item.report.analysis?.qualityAudit?.overallScore || 0}
                     </div>
                   </div>
-                  <div className="rounded-[1rem] bg-slate-50 px-3 py-3">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
                     <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">层级</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
                       {item.report.analysis?.qualityAudit?.deliveryTier || 'basic'}
@@ -893,44 +893,44 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
             <div className="grid gap-2 sm:grid-cols-2 lg:w-[34rem]">
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 近 7 天产品事件：{dailyOpsSummary.totalProductEvents}
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 每会话事件数：{sessionStrength30d?.eventsPerSession || 0}
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 验证用户占比：{userRegistrationSummary?.verificationRate || 0}%
               </div>
-              <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                 近 7 天新增用户：{dailyOpsSummary.totalNewUsers}
               </div>
             </div>
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-4">
-            <div className="rounded-[1.5rem] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/82 p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">总用户</div>
               <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{userRegistrationSummary?.totalUsers || 0}</div>
               <div className="mt-2 intro-copy">
                 已验证 {userRegistrationSummary?.verifiedUsers || 0}，游客/未验证 {userRegistrationSummary?.guestUsers || 0}
               </div>
             </div>
-            <div className="rounded-[1.5rem] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/82 p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">近 30 天会话</div>
               <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{sessionStrength30d?.sessions || 0}</div>
               <div className="mt-2 intro-copy">
                 活跃键 {sessionStrength30d?.activeKeys || 0}，每活跃键 {sessionStrength30d?.eventsPerActiveKey || 0} 个核心行为
               </div>
             </div>
-            <div className="rounded-[1.5rem] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/82 p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">近 30 天核心事件</div>
               <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{sessionStrength30d?.coreEvents || 0}</div>
               <div className="mt-2 intro-copy">
                 已过滤 LLM 重试、邮件投递和同步噪音，只保留更接近用户真实使用的行为。
               </div>
             </div>
-            <div className="rounded-[1.5rem] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] bg-white/82 p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">会话口径说明</div>
               <div className="mt-2 text-lg font-black text-[color:var(--ink)]">
                 {sessionStrength30d?.usingSessionProxy ? '按 session_id 代理' : '已接真实会话表'}
@@ -951,24 +951,24 @@ export default async function AdminAnalyticsPage() {
                 <MetricBadge value={identityContinuity?.authGuestMappings || 0} label="映射" />
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">guest analytics</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.guestAnalyticsEvents || 0}</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">当前仍挂在 guest 身份上的行为总量。</div>
                 </div>
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">可回填</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.recoverableGuestAnalyticsEvents || 0}</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
                     {`已有 auth_verified 映射，可安全修复 ${identityContinuity?.recoverableRate || 0}% 的 guest analytics。`}
                   </div>
                 </div>
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">孤儿 guest analytics</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{identityContinuity?.orphanGuestAnalyticsEvents || 0}</div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">已经找不到对应用户的 guest 行为，不能直接归因到注册用户。</div>
                 </div>
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">其他孤儿记录</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
                     {(identityContinuity?.orphanGuestToolSessions || 0)
@@ -1003,7 +1003,7 @@ export default async function AdminAnalyticsPage() {
                   </thead>
                   <tbody>
                     {weeklyUserGrowth.length > 0 ? weeklyUserGrowth.map((item) => (
-                      <tr key={item.weekStart} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                      <tr key={item.weekStart} className="rounded-[var(--radius)] bg-white/82 text-sm text-[color:var(--ink)]">
                         <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
                         <td className="px-3 py-3">{item.newUsers}</td>
                         <td className="px-3 py-3">{item.guestNewUsers}</td>
@@ -1042,7 +1042,7 @@ export default async function AdminAnalyticsPage() {
                   </thead>
                   <tbody>
                     {weeklyProductUsage.length > 0 ? weeklyProductUsage.map((item) => (
-                      <tr key={item.weekStart} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                      <tr key={item.weekStart} className="rounded-[var(--radius)] bg-white/82 text-sm text-[color:var(--ink)]">
                         <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
                         <td className="px-3 py-3">{item.productEvents}</td>
                         <td className="px-3 py-3">{`${item.activeKeys}/${item.sessions}`}</td>
@@ -1082,7 +1082,7 @@ export default async function AdminAnalyticsPage() {
                   </thead>
                   <tbody>
                     {recentWeeklyDeviceMix.length > 0 ? recentWeeklyDeviceMix.map((item) => (
-                      <tr key={`${item.weekStart}:${item.deviceType}`} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                      <tr key={`${item.weekStart}:${item.deviceType}`} className="rounded-[var(--radius)] bg-white/82 text-sm text-[color:var(--ink)]">
                         <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
                         <td className="px-3 py-3">{mapDeviceTypeLabel(item.deviceType)}</td>
                         <td className="px-3 py-3">{item.productEvents}</td>
@@ -1115,7 +1115,7 @@ export default async function AdminAnalyticsPage() {
                 {deviceMeasurementSummary?.note || '设备埋点还在持续累积，覆盖率上来后再用它做更细的设备经营判断。'}
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">最近 3 天设备事件覆盖</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
                     {`${deviceMeasurementSummary?.currentWindow?.knownDeviceEvents || 0}/${deviceMeasurementSummary?.currentWindow?.totalEvents || 0}`}
@@ -1124,7 +1124,7 @@ export default async function AdminAnalyticsPage() {
                     覆盖率 {deviceMeasurementSummary?.currentWindow?.coverageRate || 0}%。
                   </div>
                 </div>
-                <div className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">最近 3 天设备会话覆盖</div>
                   <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">
                     {`${deviceMeasurementSummary?.currentWindow?.knownDeviceSessions || 0}/${deviceMeasurementSummary?.currentWindow?.sessions || 0}`}
@@ -1136,7 +1136,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {(deviceMeasurementSummary?.weeklyCoverage || []).length ? deviceMeasurementSummary.weeklyCoverage.map((item) => (
-                  <div key={item.deviceType} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                  <div key={item.deviceType} className="rounded-[var(--radius-md)] bg-white/85 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSampleTone(item.sampleState)}`}>
@@ -1163,7 +1163,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {visibleDeviceFunnelBreakdown.length ? visibleDeviceFunnelBreakdown.map((item) => (
-                  <div key={item.deviceType} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.deviceType} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSampleTone(item.sampleState)}`}>
@@ -1204,7 +1204,7 @@ export default async function AdminAnalyticsPage() {
                 </thead>
                 <tbody>
                   {dailyProductUsage.length > 0 ? dailyProductUsage.map((item) => (
-                    <tr key={item.day} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                    <tr key={item.day} className="rounded-[var(--radius)] bg-white/82 text-sm text-[color:var(--ink)]">
                       <td className="px-3 py-3 font-semibold">{item.day}</td>
                       <td className="px-3 py-3">{item.productEvents}</td>
                       <td className="px-3 py-3">{`${item.activeKeys}/${item.sessions}`}</td>
@@ -1239,7 +1239,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="grid gap-2 sm:grid-cols-2 lg:w-[30rem]">
                 {(recentBehaviorShift?.keyMetrics || []).slice(0, 4).map((item) => (
-                  <div key={item.key} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                  <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3">
                     <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
                     <div className="mt-2 flex items-end justify-between gap-3">
                       <div className="text-2xl font-black text-[color:var(--ink)]">{item.currentValue}</div>
@@ -1253,7 +1253,7 @@ export default async function AdminAnalyticsPage() {
             </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-rose-50/65 p-4">
+              <div className="rounded-[var(--radius-md)] bg-rose-50/65 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">最近下滑点</div>
                 <div className="mt-3 grid gap-3">
                   {recentBehaviorShift?.warnings?.length ? recentBehaviorShift.warnings.map((item) => (
@@ -1266,7 +1266,7 @@ export default async function AdminAnalyticsPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] bg-emerald-50/65 p-4">
+              <div className="rounded-[var(--radius-md)] bg-emerald-50/65 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">最近变好点</div>
                 <div className="mt-3 grid gap-3">
                   {recentBehaviorShift?.signals?.length ? recentBehaviorShift.signals.map((item) => (
@@ -1288,7 +1288,7 @@ export default async function AdminAnalyticsPage() {
                 </div>
                 <div className="mt-4 grid gap-3">
                   {recentBehaviorShift?.topChanges?.length ? recentBehaviorShift.topChanges.map((item) => (
-                    <div key={item.eventName} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div key={item.eventName} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
                         <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
@@ -1312,7 +1312,7 @@ export default async function AdminAnalyticsPage() {
                 </div>
                 <div className="mt-4 grid gap-3">
                   {recentBehaviorShift?.funnel?.length ? recentBehaviorShift.funnel.map((item) => (
-                    <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                    <div key={item.key} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                         <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
@@ -1337,7 +1337,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {visibleRecentSourceShift.length ? visibleRecentSourceShift.map((item) => (
-                  <div key={item.source} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.source} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{formatAttributionSourceLabel(item.source)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
@@ -1366,7 +1366,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {visibleDeviceBehaviorShift.length ? visibleDeviceBehaviorShift.map((item) => (
-                  <div key={item.deviceType} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.deviceType} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapTrendTone(item.direction)}`}>
@@ -1402,7 +1402,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {sourceFunnel.length ? sourceFunnel.slice(0, 6).map((item) => (
-                  <div key={`source-funnel:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={`source-funnel:${item.source}`} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{formatAttributionSourceLabel(item.source)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.viewToChatRate >= 35 ? 'healthy' : item.viewToChatRate >= 15 ? 'warning' : 'critical')}`}>
@@ -1430,9 +1430,9 @@ export default async function AdminAnalyticsPage() {
                 </div>
                 <MetricBadge value={visibleWeeklySourceTrend.length} label="行" />
               </div>
-              <div className="mt-4 overflow-hidden rounded-[1.4rem] border border-slate-200/70">
-                <table className="min-w-full divide-y divide-slate-200/70 text-left">
-                  <thead className="bg-slate-50/80 text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">
+              <div className="mt-4 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)]">
+                <table className="min-w-full divide-y divide-[color:var(--hairline)] text-left">
+                  <thead className="bg-[color:var(--bg-elevated)] text-xs uppercase tracking-[0.16em] text-[color:var(--muted)]">
                     <tr>
                       <th className="px-3 py-2">周</th>
                       <th className="px-3 py-2">来源</th>
@@ -1443,7 +1443,7 @@ export default async function AdminAnalyticsPage() {
                   </thead>
                   <tbody>
                     {visibleWeeklySourceTrend.length ? visibleWeeklySourceTrend.map((item) => (
-                      <tr key={`${item.weekStart}:${item.source}`} className="rounded-[1.1rem] bg-white/82 text-sm text-[color:var(--ink)]">
+                      <tr key={`${item.weekStart}:${item.source}`} className="rounded-[var(--radius)] bg-white/82 text-sm text-[color:var(--ink)]">
                         <td className="px-3 py-3 font-semibold">{item.weekLabel}</td>
                         <td className="px-3 py-3">{formatAttributionSourceLabel(item.source)}</td>
                         <td className="px-3 py-3">{`${item.analyzeSessions}/${item.reportViewSessions}`}</td>
@@ -1472,7 +1472,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {ctaStrategyBreakdown.length ? ctaStrategyBreakdown.map((item) => (
-                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{mapCtaStrategyLabel(item.strategyKey)}</div>
@@ -1503,7 +1503,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {sourceDeviceFunnel.length ? sourceDeviceFunnel.slice(0, 6).map((item) => (
-                  <div key={`source-device-funnel:${item.source}:${item.deviceType}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={`source-device-funnel:${item.source}:${item.deviceType}`} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{`${formatAttributionSourceLabel(item.source)} · ${mapDeviceTypeLabel(item.deviceType)}`}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.viewToChatRate >= 35 ? 'healthy' : item.viewToChatRate >= 15 ? 'warning' : 'critical')}`}>
@@ -1530,7 +1530,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {lifecycleRecall?.reportFollowup?.length ? lifecycleRecall.reportFollowup.map((item) => (
-                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">
                         {`报告 ${item.reportId.slice(0, 12)}`}
@@ -1562,7 +1562,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {lifecycleRecall?.toolInterest?.length ? lifecycleRecall.toolInterest.map((item) => (
-                  <div key={item.key} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">
                         {getToolDisplayTitle(item.toolSlug)}
@@ -1596,7 +1596,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {(lifecycleRecall?.reportFollowupBySource?.length || 0) > 0 ? lifecycleRecall!.reportFollowupBySource!.slice(0, 4).map((item) => (
-                  <div key={`report-source:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={`report-source:${item.source}`} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleSourceLabel(item.source)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
@@ -1611,7 +1611,7 @@ export default async function AdminAnalyticsPage() {
                   <CompactEmptyState title="暂无报告召回来路分组样本" detail="需要继续积累邮件召回样本，才能看清哪类内容来源更适合带回聊天。" />
                 )}
                 {(lifecycleRecall?.reportFollowupByDevice?.length || 0) > 0 ? lifecycleRecall!.reportFollowupByDevice!.slice(0, 4).map((item) => (
-                  <div key={`report-device:${item.deviceType}`} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                  <div key={`report-device:${item.deviceType}`} className="rounded-[var(--radius-md)] bg-white/85 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.chatCompletionRate >= 60 ? 'healthy' : item.chatCompletionRate >= 30 ? 'warning' : 'critical')}`}>
@@ -1636,7 +1636,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3">
                 {(lifecycleRecall?.toolInterestBySource?.length || 0) > 0 ? lifecycleRecall!.toolInterestBySource!.slice(0, 4).map((item) => (
-                  <div key={`tool-source:${item.source}`} className="rounded-[1.4rem] bg-slate-50 px-4 py-4">
+                  <div key={`tool-source:${item.source}`} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleSourceLabel(item.source)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.sentToRunRate >= 35 ? 'healthy' : item.sentToRunRate >= 15 ? 'warning' : 'critical')}`}>
@@ -1651,7 +1651,7 @@ export default async function AdminAnalyticsPage() {
                   <CompactEmptyState title="暂无工具召回来路分组样本" detail="继续积累工具召回样本后，这里会看清哪类内容来源更能带回真实开跑。" />
                 )}
                 {(lifecycleRecall?.toolInterestByDevice?.length || 0) > 0 ? lifecycleRecall!.toolInterestByDevice!.slice(0, 4).map((item) => (
-                  <div key={`tool-device:${item.deviceType}`} className="rounded-[1.4rem] bg-white/85 px-4 py-4">
+                  <div key={`tool-device:${item.deviceType}`} className="rounded-[var(--radius-md)] bg-white/85 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapDeviceTypeLabel(item.deviceType)}</div>
                       <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.sentToRunRate >= 35 ? 'healthy' : item.sentToRunRate >= 15 ? 'warning' : 'critical')}`}>
@@ -1688,7 +1688,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="grid gap-3 sm:grid-cols-2 xl:w-[28rem]">
                 {(systemHealth?.cards || []).map((item) => (
-                  <div key={item.key} className={`rounded-[1.4rem] px-4 py-4 ${mapHealthCardTone(item.tone)}`}>
+                  <div key={item.key} className={`rounded-[var(--radius-md)] px-4 py-4 ${mapHealthCardTone(item.tone)}`}>
                     <div className="text-xs tracking-[0.18em]">{item.label}</div>
                     <div className="mt-2 text-3xl font-black">{item.value}</div>
                     <div className="mt-2 intro-copy opacity-80">{item.helper}</div>
@@ -1698,7 +1698,7 @@ export default async function AdminAnalyticsPage() {
             </div>
 
             <div className="mt-5 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-rose-50/70 p-4">
+              <div className="rounded-[var(--radius-md)] bg-rose-50/70 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-rose-700">当前主要卡点</div>
                 <div className="mt-3 grid gap-3">
                   {systemHealth?.blockers?.length ? systemHealth.blockers.map((item) => (
@@ -1711,7 +1711,7 @@ export default async function AdminAnalyticsPage() {
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] bg-emerald-50/70 p-4">
+              <div className="rounded-[var(--radius-md)] bg-emerald-50/70 p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">健康信号</div>
                 <div className="mt-3 grid gap-3">
                   {systemHealth?.healthySignals?.length ? systemHealth.healthySignals.map((item) => (
@@ -1731,12 +1731,12 @@ export default async function AdminAnalyticsPage() {
               <div className="text-sm font-semibold text-[color:var(--muted)]">当前经营判断</div>
               <MetricBadge value={operatingInsight.priorities.length + operatingInsight.risks.length} label="判断项" />
             </div>
-            <div className="mt-4 rounded-[1.5rem] bg-white/80 px-4 py-5">
+            <div className="mt-4 rounded-[var(--radius-md)] bg-white/80 px-4 py-5">
               <div className="text-2xl font-black text-[color:var(--ink)]">{operatingInsight.headline}</div>
               <div className="mt-3 intro-copy">{operatingInsight.summary}</div>
             </div>
             <div className="mt-4 grid gap-4 lg:grid-cols-2">
-              <div className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先事项</div>
                 <div className="mt-3 grid gap-3">
                   {operatingInsight.priorities.length > 0 ? operatingInsight.priorities.map((item) => (
@@ -1748,7 +1748,7 @@ export default async function AdminAnalyticsPage() {
                   )}
                 </div>
               </div>
-              <div className="rounded-[1.5rem] bg-slate-50 p-4">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">当前风险</div>
                 <div className="mt-3 grid gap-3">
                   {operatingInsight.risks.length > 0 ? operatingInsight.risks.map((item) => (
@@ -1770,7 +1770,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {actionItems.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                     <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapActionTone(item.tone)}`}>
@@ -1789,21 +1789,21 @@ export default async function AdminAnalyticsPage() {
               {[
                 { label: '准确', value: totals.validation_accurate, tone: 'text-emerald-700 bg-emerald-50' },
                 { label: '偏差', value: totals.validation_drift, tone: 'text-rose-700 bg-rose-50' },
-                { label: '待验证', value: totals.validation_pending, tone: 'text-slate-700 bg-slate-50' },
+                { label: '待验证', value: totals.validation_pending, tone: 'text-[color:var(--ink-3)] bg-[color:var(--bg-elevated)]' },
               ].map((item) => (
-                <div key={item.label} className={`rounded-[1.4rem] px-4 py-5 ${item.tone}`}>
+                <div key={item.label} className={`rounded-[var(--radius-md)] px-4 py-5 ${item.tone}`}>
                   <div className="text-xs tracking-[0.18em]">{item.label}</div>
                   <div className="mt-2 text-3xl font-black">{item.value}</div>
                 </div>
               ))}
             </div>
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-5">
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">验证命中率</div>
                 <div className="mt-2 text-3xl font-black text-emerald-700">{validationAccuracyRate}%</div>
                 <div className="mt-2 intro-copy">只统计已经回收验证结果的事件。</div>
               </div>
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-5">
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">偏差率</div>
                 <div className="mt-2 text-3xl font-black text-rose-700">{driftRate}%</div>
                 <div className="mt-2 intro-copy">偏差并不等于报告失效，更常见是时机和执行跑偏。</div>
@@ -1818,7 +1818,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {journeyFunnel.length > 0 ? journeyFunnel.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
@@ -1840,13 +1840,13 @@ export default async function AdminAnalyticsPage() {
                 </div>
               </div>
               <div className="grid gap-2 sm:grid-cols-3 lg:w-[28rem]">
-                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                   事件 {reportJourney.totalEvents}
                 </div>
-                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                   报告 {reportJourney.uniqueReports}
                 </div>
-                <div className="rounded-[1.2rem] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-sm text-[color:var(--ink)]">
                   用户 {reportJourney.uniqueUsers}
                 </div>
               </div>
@@ -1860,7 +1860,7 @@ export default async function AdminAnalyticsPage() {
                 </div>
                 <div className="mt-4 grid gap-3">
                   {reportJourney.funnel.length > 0 ? reportJourney.funnel.map((item) => (
-                    <div key={item.key} className="rounded-[1.3rem] bg-slate-50 px-4 py-4">
+                    <div key={item.key} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <div>
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
@@ -1886,7 +1886,7 @@ export default async function AdminAnalyticsPage() {
                   </div>
                   <div className="mt-4 grid gap-3">
                     {reportJourney.categories.length > 0 ? reportJourney.categories.slice(0, 5).map((item) => (
-                      <div key={item.category} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                      <div key={item.category} className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReportJourneyCategoryLabel(item.category)}</div>
                           <div className="text-xs text-[color:var(--muted)]">{`${item.count} / ${item.share}%`}</div>
@@ -1905,7 +1905,7 @@ export default async function AdminAnalyticsPage() {
                   </div>
                   <div className="mt-4 grid gap-3">
                     {reportJourney.tools.length > 0 ? reportJourney.tools.slice(0, 5).map((item) => (
-                      <div key={item.toolSlug} className="rounded-[1.2rem] bg-slate-50 px-4 py-3">
+                      <div key={item.toolSlug} className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <div className="text-sm font-semibold text-[color:var(--ink)]">{getToolDisplayTitle(item.toolSlug)}</div>
@@ -1929,7 +1929,7 @@ export default async function AdminAnalyticsPage() {
               </div>
               <div className="mt-4 grid gap-3 lg:grid-cols-2">
                 {reportJourney.latestEvents.length > 0 ? reportJourney.latestEvents.slice(0, 6).map((item) => (
-                  <div key={item.id} className="rounded-[1.25rem] bg-slate-50 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReportJourneyActionLabel(item.actionTarget)}</div>
@@ -1963,7 +1963,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {eventsLast7d.length > 0 ? eventsLast7d.map((item) => (
-                <div key={item.eventName} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.eventName} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
@@ -1982,7 +1982,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {pageViewBreakdown.length > 0 ? pageViewBreakdown.map((item) => (
-                <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.page} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapPageLabel(item.page)}</div>
                     <div className="text-right">
@@ -2004,7 +2004,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {analyzeOptionBreakdown.length > 0 ? analyzeOptionBreakdown.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="text-right">
@@ -2026,7 +2026,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {sourceBreakdown.length > 0 ? sourceBreakdown.map((item) => (
-                <div key={item.source} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.source} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapSourceLabel(item.source)}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.total}</div>
@@ -2051,7 +2051,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {reasoningModeBreakdown.length > 0 ? reasoningModeBreakdown.map((item) => (
-                <div key={item.mode} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.mode} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapReasoningModeLabel(item.mode)}</div>
                     <div className="text-right">
@@ -2073,7 +2073,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {modelHealthBreakdown.length > 0 ? modelHealthBreakdown.map((item) => (
-                <div key={item.model} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.model} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.model}</div>
@@ -2122,7 +2122,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {llmFailureHotspots.length > 0 ? llmFailureHotspots.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
@@ -2150,7 +2150,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {routeHealthBreakdown.length > 0 ? routeHealthBreakdown.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.successRate < 85 ? 'warning' : 'healthy')}`}>
@@ -2180,7 +2180,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {requestFailureHotspots.length > 0 ? requestFailureHotspots.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
@@ -2204,7 +2204,7 @@ export default async function AdminAnalyticsPage() {
               <MetricBadge value={emailDeliverySummary.success + emailDeliverySummary.failed} label="近 7 日投递" />
             </div>
             <div className="mt-5 grid gap-4">
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <div className="text-sm font-semibold text-[color:var(--ink)]">SMTP 健康探测</div>
@@ -2230,11 +2230,11 @@ export default async function AdminAnalyticsPage() {
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-emerald-50 px-4 py-5 text-emerald-700">
+                <div className="rounded-[var(--radius-md)] bg-emerald-50 px-4 py-5 text-emerald-700">
                   <div className="text-xs tracking-[0.18em]">近 7 日发送成功</div>
                   <div className="mt-2 text-3xl font-black">{emailDeliverySummary.success}</div>
                 </div>
-                <div className="rounded-[1.4rem] bg-rose-50 px-4 py-5 text-rose-700">
+                <div className="rounded-[var(--radius-md)] bg-rose-50 px-4 py-5 text-rose-700">
                   <div className="text-xs tracking-[0.18em]">近 7 日发送失败</div>
                   <div className="mt-2 text-3xl font-black">{emailDeliverySummary.failed}</div>
                 </div>
@@ -2242,7 +2242,7 @@ export default async function AdminAnalyticsPage() {
 
               <div className="grid gap-3">
                 {emailChannelBreakdown.length > 0 ? emailChannelBreakdown.map((item) => (
-                  <div key={item.channel} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={item.channel} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{mapEmailChannelLabel(item.channel)}</div>
                       <div className="text-xs text-[color:var(--muted)]">{`成功 ${item.success} / 失败 ${item.failed}`}</div>
@@ -2257,7 +2257,7 @@ export default async function AdminAnalyticsPage() {
                 {emailDeliveryRows.filter((item) => item.event_name === 'email_delivery_failed').slice(0, 5).map((item, index) => {
                   const meta = parseMeta(item.meta);
                   return (
-                    <div key={`${item.created_at || 'unknown'}-${index}`} className="rounded-[1.4rem] bg-rose-50 px-4 py-4">
+                    <div key={`${item.created_at || 'unknown'}-${index}`} className="rounded-[var(--radius-md)] bg-rose-50 px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold text-rose-700">{mapEmailChannelLabel(typeof meta.channel === 'string' ? meta.channel : 'unknown')}</div>
                         <div className="text-xs text-rose-600">{item.created_at || '-'}</div>
@@ -2273,12 +2273,12 @@ export default async function AdminAnalyticsPage() {
                 <QueueMetric label="执行中" value={emailRetryQueue?.running || 0} tone="text-sky-700 bg-sky-50" />
                 <QueueMetric label="已送达" value={emailRetryQueue?.sent || 0} tone="text-emerald-700 bg-emerald-50" />
                 <QueueMetric label="最终失败" value={emailRetryQueue?.failed || 0} tone="text-rose-700 bg-rose-50" />
-                <QueueMetric label="已取消" value={emailRetryQueue?.cancelled || 0} tone="text-slate-700 bg-slate-50" />
+                <QueueMetric label="已取消" value={emailRetryQueue?.cancelled || 0} tone="text-[color:var(--ink-3)] bg-[color:var(--bg-elevated)]" />
               </div>
 
               <div className="grid gap-3">
                 {recentEmailRetryJobs.length > 0 ? recentEmailRetryJobs.map((item) => (
-                  <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{mapEmailChannelLabel(item.kind)}</div>
@@ -2307,7 +2307,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {funnelDiagnostics.length > 0 ? funnelDiagnostics.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.severity || 'neutral')}`}>
@@ -2333,7 +2333,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {attributedConversionBreakdown.length > 0 ? attributedConversionBreakdown.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.source}</div>
@@ -2344,7 +2344,7 @@ export default async function AdminAnalyticsPage() {
                     </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">工具运行 {item.toolRuns}</div>
+                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">工具运行 {item.toolRuns}</div>
                     <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">专项提交 {item.premiumRequests}</div>
                   </div>
                 </div>
@@ -2366,7 +2366,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {chatReturnBreakdown.length > 0 ? chatReturnBreakdown.map((item) => (
-                <div key={`chat-return-${item.key}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`chat-return-${item.key}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.source}</div>
@@ -2385,7 +2385,7 @@ export default async function AdminAnalyticsPage() {
                     <div>沉淀事件 {item.chatEventsSaved}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">点击到聊天 {item.ctaToChatRate}%</div>
+                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">点击到聊天 {item.ctaToChatRate}%</div>
                     <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">聊天完成 {item.chatCompletionRate}%</div>
                     <div className="rounded-2xl bg-emerald-50 px-4 py-3 text-emerald-700">聊天到事件 {item.chatToEventRate}%</div>
                   </div>
@@ -2408,7 +2408,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {prioritizedContentFixes.length > 0 ? prioritizedContentFixes.map((item, index) => (
-                <div key={`priority-content-${item.contentType}-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`priority-content-${item.contentType}-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${item.contentType}`}</div>
@@ -2421,8 +2421,8 @@ export default async function AdminAnalyticsPage() {
                       <div className={`rounded-full px-3 py-1 font-semibold ${mapHealthTone(item.priorityScore >= 120 ? 'critical' : item.priorityScore >= 90 ? 'warning' : 'healthy')}`}>
                         优先级 {item.priorityScore}
                       </div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">PV {item.views}</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">跳出 {item.bounceRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">PV {item.views}</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">跳出 {item.bounceRate}%</div>
                     </div>
                   </div>
                   <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
@@ -2448,7 +2448,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {prioritizedToolFixes.length > 0 ? prioritizedToolFixes.map((item, index) => (
-                <div key={`priority-tool-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`priority-tool-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · tool`}</div>
@@ -2461,12 +2461,12 @@ export default async function AdminAnalyticsPage() {
                       <div className={`rounded-full px-3 py-1 font-semibold ${mapHealthTone(item.priorityScore >= 120 ? 'critical' : item.priorityScore >= 90 ? 'warning' : 'healthy')}`}>
                         优先级 {item.priorityScore}
                       </div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">PV {item.detailViews}</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">首屏点击 {item.ctaStartRate}%</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">开跑 {item.runRate}%</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">点击到开跑 {item.ctaToRunRate}%</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">失败 {item.runFailureRate}%</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">专项 {item.premiumRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">PV {item.detailViews}</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">首屏点击 {item.ctaStartRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">开跑 {item.runRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">点击到开跑 {item.ctaToRunRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">失败 {item.runFailureRate}%</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">专项 {item.premiumRate}%</div>
                     </div>
                   </div>
                   <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
@@ -2487,7 +2487,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {contentQualityBreakdown.length > 0 ? contentQualityBreakdown.map((item) => (
-                <div key={`${item.contentType}-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`${item.contentType}-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -2520,7 +2520,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {toolQualityBreakdown.length > 0 ? toolQualityBreakdown.map((item) => (
-                <div key={item.slug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.slug} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -2555,7 +2555,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {bounceBreakdown.length > 0 ? bounceBreakdown.map((item) => (
-                <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.page} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapPageLabel(item.page)}</div>
                     <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapHealthTone(item.bounceRate >= 80 ? 'critical' : item.bounceRate >= 60 ? 'warning' : 'healthy')}`}>
@@ -2589,13 +2589,13 @@ export default async function AdminAnalyticsPage() {
                 <QueueMetric label="已跟进" value={premiumServiceStatus?.contacted || 0} tone="text-sky-700 bg-sky-50" />
                 <QueueMetric label="处理中" value={premiumServiceStatus?.in_progress || 0} tone="text-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]" />
                 <QueueMetric label="已交付" value={premiumServiceStatus?.delivered || 0} tone="text-emerald-700 bg-emerald-50" />
-                <QueueMetric label="已结束" value={premiumServiceStatus?.closed || 0} tone="text-slate-700 bg-slate-50" />
+                <QueueMetric label="已结束" value={premiumServiceStatus?.closed || 0} tone="text-[color:var(--ink-3)] bg-[color:var(--bg-elevated)]" />
                 <QueueMetric label="已取消" value={premiumServiceStatus?.cancelled || 0} tone="text-rose-700 bg-rose-50" />
               </div>
 
               <div className="grid gap-3">
                 {recentPremiumRequests.length > 0 ? recentPremiumRequests.map((item) => (
-                  <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{mapPremiumServiceLabel(item.serviceKey)}</div>
@@ -2623,7 +2623,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {chatActionBreakdown.length > 0 ? chatActionBreakdown.map((item) => (
-                <div key={item.action} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.action} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="text-right">
@@ -2645,7 +2645,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {ctaBreakdown.length > 0 ? ctaBreakdown.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.count}</div>
@@ -2664,7 +2664,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {toolFunnelBreakdown.length > 0 ? toolFunnelBreakdown.map((item) => (
-                <div key={item.toolSlug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.toolSlug} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.toolSlug}</div>
                     <div className="text-xs text-[color:var(--muted)]">
@@ -2678,7 +2678,7 @@ export default async function AdminAnalyticsPage() {
                     <div>专项 {item.premiumRequests}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-2 text-sm">
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">详情到开跑 {item.viewToRunRate}%</div>
+                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开跑 {item.viewToRunRate}%</div>
                     <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.resultToPremiumRate}%</div>
                   </div>
                 </div>
@@ -2698,7 +2698,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {toolJourneyGapBreakdown.length > 0 ? toolJourneyGapBreakdown.map((item, index) => (
-                <div key={`tool-gap-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`tool-gap-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${mapGapTypeLabel(item.gapType)}`}</div>
@@ -2717,7 +2717,7 @@ export default async function AdminAnalyticsPage() {
                     <div>点击到开跑 {item.ctaToRunRate}%</div>
                     <div>失败 {item.runFailureRate}%</div>
                   </div>
-                  <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
+                  <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
                 </div>
               )) : (
                 <CompactEmptyState title="暂无工具断点工单" detail="等工具漏斗样本足够后再定位主断点。" />
@@ -2735,7 +2735,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {unifiedToolRepairQueue.length > 0 ? unifiedToolRepairQueue.map((item, index) => (
-                <div key={`unified-tool-fix-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`unified-tool-fix-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div>
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · tool`}</div>
@@ -2748,8 +2748,8 @@ export default async function AdminAnalyticsPage() {
                       <div className={`rounded-full px-3 py-1 font-semibold ${mapHealthTone(item.combinedPriority >= 120 ? 'critical' : item.combinedPriority >= 90 ? 'warning' : 'healthy')}`}>
                         综合优先级 {item.combinedPriority}
                       </div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">质量优先级 {item.priorityScore}</div>
-                      <div className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">断点优先级 {item.gapPriorityScore}</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">质量优先级 {item.priorityScore}</div>
+                      <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">断点优先级 {item.gapPriorityScore}</div>
                     </div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-5 text-xs text-[color:var(--muted)]">
@@ -2762,7 +2762,7 @@ export default async function AdminAnalyticsPage() {
                   <div className="mt-3 rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
                     {item.action}
                   </div>
-                  <div className="mt-2 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                  <div className="mt-2 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                     {item.gapAction}
                   </div>
                   <div className="mt-2 intro-copy">
@@ -2785,7 +2785,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {toolJourneyHealthRows.length > 0 ? toolJourneyHealthRows.map((item) => (
-                <div key={`tool-journey-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={`tool-journey-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -2802,8 +2802,8 @@ export default async function AdminAnalyticsPage() {
                     <div>失败 {item.runFailures}</div>
                   </div>
                   <div className="mt-3 grid gap-3 sm:grid-cols-3 text-sm">
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">详情到开始 {item.ctaStartRate}%</div>
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-[color:var(--ink)]">开始到开跑 {item.ctaToRunRate}%</div>
+                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">详情到开始 {item.ctaStartRate}%</div>
+                    <div className="rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-[color:var(--ink)]">开始到开跑 {item.ctaToRunRate}%</div>
                     <div className="rounded-2xl bg-[color:var(--accent-soft)] px-4 py-3 text-[color:var(--accent-strong)]">结果到专项 {item.premiumRate}%</div>
                   </div>
                   <div className="mt-2 intro-copy">
@@ -2823,7 +2823,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {driftReasonBreakdown.length > 0 ? driftReasonBreakdown.map((item) => (
-                <div key={item.key} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <div className="text-right">
@@ -2849,14 +2849,14 @@ export default async function AdminAnalyticsPage() {
             <div className="mt-5 grid gap-4">
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <QueueMetric label="已过期待验证" value={pendingValidationBuckets.overdue} tone="text-rose-700 bg-rose-50" />
-                <QueueMetric label="未来待发生" value={pendingValidationBuckets.upcoming} tone="text-slate-700 bg-slate-50" />
+                <QueueMetric label="未来待发生" value={pendingValidationBuckets.upcoming} tone="text-[color:var(--ink-3)] bg-[color:var(--bg-elevated)]" />
                 <QueueMetric label="偏差待备注" value={pendingValidationBuckets.driftNeedsNotes} tone="text-amber-700 bg-amber-50" />
                 <QueueMetric label="偏差待纠偏" value={pendingValidationBuckets.driftReadyForCorrection} tone="text-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]" />
               </div>
 
               <div className="grid gap-3">
                 {followupQueue.length > 0 ? followupQueue.map((item) => (
-                  <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -2886,7 +2886,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {reportVersionBreakdown.length > 0 ? reportVersionBreakdown.map((item) => (
-                <div key={item.version} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.version} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.version}</div>
                     <div className="text-right">
@@ -2908,7 +2908,7 @@ export default async function AdminAnalyticsPage() {
             </div>
             <div className="mt-5 grid gap-3">
               {recentEvents.length > 0 ? recentEvents.map((item) => (
-                <div key={item.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={item.id} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapAnalyticsEventLabel(item.eventName)}</div>
                     <div className="text-xs text-[color:var(--muted)]">{item.createdAt || '-'}</div>
@@ -2970,7 +2970,7 @@ function mapReportJourneyActionLabel(actionTarget: string) {
 
 function CompactEmptyState({ title, detail }: { title: string; detail: string }) {
   return (
-    <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+    <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
       <div className="text-sm font-semibold text-[color:var(--ink)]">{title}</div>
       <div className="mt-2 text-xs text-[color:var(--muted)]">{detail}</div>
     </div>
@@ -2979,7 +2979,7 @@ function CompactEmptyState({ title, detail }: { title: string; detail: string })
 
 function MetricBadge({ value, label }: { value: number | string; label: string }) {
   return (
-    <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+    <div className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
       {value} {label}
     </div>
   );
@@ -3114,20 +3114,20 @@ function mapHealthTone(severity: string) {
   if (severity === 'critical') return 'bg-rose-50 text-rose-700';
   if (severity === 'warning') return 'bg-amber-50 text-amber-700';
   if (severity === 'healthy') return 'bg-emerald-50 text-emerald-700';
-  return 'bg-slate-100 text-slate-700';
+  return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
 }
 
 function mapHealthCardTone(severity: string) {
   if (severity === 'critical') return 'bg-rose-50 text-rose-700';
   if (severity === 'warning') return 'bg-amber-50 text-amber-700';
   if (severity === 'healthy') return 'bg-emerald-50 text-emerald-700';
-  return 'bg-slate-100 text-slate-700';
+  return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
 }
 
 function mapTrendTone(direction: string) {
   if (direction === 'up') return 'bg-emerald-50 text-emerald-700';
   if (direction === 'down') return 'bg-rose-50 text-rose-700';
-  return 'bg-slate-100 text-slate-700';
+  return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
 }
 
 function mapSampleLabel(sampleState: string) {
@@ -3139,7 +3139,7 @@ function mapSampleLabel(sampleState: string) {
 function mapSampleTone(sampleState: string) {
   if (sampleState === 'enough') return 'bg-emerald-50 text-emerald-700';
   if (sampleState === 'low') return 'bg-amber-50 text-amber-700';
-  return 'bg-slate-100 text-slate-700';
+  return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
 }
 
 function mapDeviceTypeLabel(deviceType: string) {
@@ -3215,7 +3215,7 @@ function mapEmailRetryStatusTone(status: string) {
   if (status === 'pending') return 'bg-amber-50 text-amber-700';
   if (status === 'running') return 'bg-sky-50 text-sky-700';
   if (status === 'sent') return 'bg-emerald-50 text-emerald-700';
-  if (status === 'cancelled') return 'bg-slate-100 text-slate-700';
+  if (status === 'cancelled') return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
   return 'bg-rose-50 text-rose-700';
 }
 
@@ -3232,14 +3232,14 @@ function mapPremiumStatusTone(status: string) {
   if (status === 'contacted') return 'bg-sky-50 text-sky-700';
   if (status === 'in_progress') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   if (status === 'delivered') return 'bg-emerald-50 text-emerald-700';
-  if (status === 'closed') return 'bg-slate-100 text-slate-700';
+  if (status === 'closed') return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
   if (status === 'cancelled') return 'bg-rose-50 text-rose-700';
   return 'bg-amber-50 text-amber-700';
 }
 
 function QueueMetric({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
-    <div className={`rounded-[1.4rem] px-4 py-5 ${tone}`}>
+    <div className={`rounded-[var(--radius-md)] px-4 py-5 ${tone}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 text-3xl font-black">{value}</div>
     </div>
@@ -3255,7 +3255,7 @@ function mapActionTone(tone: 'accent' | 'warning' | 'success' | 'neutral') {
     case 'success':
       return 'bg-emerald-50 text-emerald-700';
     default:
-      return 'bg-slate-100 text-slate-700';
+      return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
   }
 }
 

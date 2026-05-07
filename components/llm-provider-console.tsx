@@ -220,13 +220,13 @@ export default function LlmProviderConsole() {
       </div>
 
       <div className="space-y-5">
-        {loading ? <div className="soft-card rounded-[1.5rem] p-5">加载中...</div> : null}
+        {loading ? <div className="soft-card rounded-[var(--radius-md)] p-5">加载中...</div> : null}
         {(['image', 'article'] as ProviderPurpose[]).map((purpose) => (
           <div key={purpose} className="soft-card rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--muted)]">{purpose === 'image' ? '图片生成 Provider' : '文章生成 Provider'}</div>
             <div className="mt-4 grid gap-3">
               {grouped[purpose].map((provider) => (
-                <div key={provider.id} className="rounded-[1.25rem] border border-[color:var(--line)] bg-white p-4">
+                <div key={provider.id} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="text-base font-bold text-[color:var(--ink)]">{provider.name}</div>
@@ -241,7 +241,7 @@ export default function LlmProviderConsole() {
                   </div>
                 </div>
               ))}
-              {grouped[purpose].length === 0 ? <div className="rounded-xl bg-slate-50 p-4 text-sm text-[color:var(--muted)]">暂无配置</div> : null}
+              {grouped[purpose].length === 0 ? <div className="rounded-xl bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--muted)]">暂无配置</div> : null}
             </div>
           </div>
         ))}

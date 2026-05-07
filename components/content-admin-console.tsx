@@ -632,7 +632,7 @@ export default function ContentAdminConsole() {
               { label: '跳出页', value: workboard?.prioritizedBouncePages?.length || 0 },
               { label: '工具待修', value: workboard?.prioritizedToolFixes?.length || 0 },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
               </div>
@@ -641,9 +641,9 @@ export default function ContentAdminConsole() {
 
           <div className="mt-5 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedContentFixes?.length ? workboard.prioritizedContentFixes.slice(0, 6).map((item, index) => (
-              <div key={`${item.contentType}-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div key={`${item.contentType}-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${item.contentType}`}</div>
@@ -654,15 +654,15 @@ export default function ContentAdminConsole() {
                   </div>
                   <div className="flex flex-wrap gap-2 text-xs">
                     <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 font-semibold text-[color:var(--accent-strong)]">优先级 {item.priorityScore}</span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">PV {item.views}</span>
-                    <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-slate-700">跳出 {item.bounceRate}%</span>
+                    <span className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">PV {item.views}</span>
+                    <span className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 font-semibold text-[color:var(--ink-3)]">跳出 {item.bounceRate}%</span>
                   </div>
                 </div>
-                <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
+                <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
               </div>
             )) : (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">暂无内容修复样本</div>
               </div>
             )}
@@ -674,9 +674,9 @@ export default function ContentAdminConsole() {
           <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{workboard?.prioritizedBouncePages?.length || 0}</div>
           <div className="mt-4 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedBouncePages?.length ? workboard.prioritizedBouncePages.slice(0, 6).map((item) => (
-              <div key={item.page} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div key={item.page} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.page}</div>
                   <div className="text-xs font-semibold text-rose-700">{`跳出 ${item.bounceRate}%`}</div>
@@ -685,7 +685,7 @@ export default function ContentAdminConsole() {
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{item.action}</div>
               </div>
             )) : (
-              <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">暂无高跳出页样本</div>
               </div>
             )}
@@ -699,16 +699,16 @@ export default function ContentAdminConsole() {
             <div className="text-sm font-semibold text-[color:var(--muted)]">工具修复联动作战板</div>
             <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">工具修复板</div>
           </div>
-          <div className="rounded-[1.4rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs font-semibold text-[color:var(--accent-strong)]">
+          <div className="rounded-[var(--radius-md)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs font-semibold text-[color:var(--accent-strong)]">
             当前待修 {workboard?.prioritizedToolFixes?.length || 0} 个工具
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {workboardLoading ? (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
           ) : workboard?.prioritizedToolFixes?.length ? workboard.prioritizedToolFixes.slice(0, 6).map((item, index) => (
-            <div key={item.slug} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div key={item.slug} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · tool`}</div>
@@ -729,11 +729,11 @@ export default function ContentAdminConsole() {
                 <div>{`失败 ${item.runFailureRate}%`}</div>
                 <div>{`专项 ${item.premiumRate}%`}</div>
               </div>
-              <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
+              <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具修复样本</div>
             </div>
           )}
@@ -788,7 +788,7 @@ export default function ContentAdminConsole() {
             { label: '进行中', value: toolRepairWorkflow.filter((item) => item.status === 'in_progress').length },
             { label: '已验证', value: toolRepairWorkflow.filter((item) => item.status === 'verified').length },
           ].map((item) => (
-            <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+            <div key={item.label} className="soft-card rounded-[var(--radius-md)] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
               <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
             </div>
@@ -822,9 +822,9 @@ export default function ContentAdminConsole() {
 
         <div className="mt-5 grid gap-3">
           {workboardLoading ? (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">执行队列加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">执行队列加载中...</div>
           ) : filteredToolRepairWorkflow.length ? filteredToolRepairWorkflow.slice(0, 12).map((item) => (
-            <div key={`repair-flow-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div key={`repair-flow-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               {(() => {
                 const isSaving = repairSavingSlug === item.slug;
                 const ownerDraft = (repairOwnerDrafts[item.slug] || '').trim();
@@ -912,7 +912,7 @@ export default function ContentAdminConsole() {
               })()}
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无匹配工单</div>
             </div>
           )}
@@ -925,16 +925,16 @@ export default function ContentAdminConsole() {
             <div className="text-sm font-semibold text-[color:var(--muted)]">工具漏斗断点清单</div>
             <div className="mt-1 text-2xl font-black text-[color:var(--ink)]">漏斗断点清单</div>
           </div>
-          <div className="rounded-[1.4rem] bg-slate-100 px-4 py-3 text-xs font-semibold text-[color:var(--muted)]">
+          <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs font-semibold text-[color:var(--muted)]">
             当前断点 {workboard?.prioritizedToolJourneyGaps?.length || 0} 个
           </div>
         </div>
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {workboardLoading ? (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">漏斗断点加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">漏斗断点加载中...</div>
           ) : workboard?.prioritizedToolJourneyGaps?.length ? workboard.prioritizedToolJourneyGaps.slice(0, 8).map((item, index) => (
-            <div key={`tool-gap-${item.slug}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div key={`tool-gap-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${mapGapTypeLabel(item.gapType)}`}</div>
@@ -954,11 +954,11 @@ export default function ContentAdminConsole() {
                 <div>{`失败 ${item.runFailureRate}%`}</div>
                 <div>{`专项 ${item.premiumRate}%`}</div>
               </div>
-              <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
+              <div className="mt-3 rounded-2xl bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{item.action}</div>
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具漏斗样本</div>
             </div>
           )}
@@ -1025,13 +1025,13 @@ export default function ContentAdminConsole() {
 
         <div className="mt-4 flex flex-wrap gap-3">
           {bulkPresetTools.map((item) => (
-            <span key={item.slug} className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+            <span key={item.slug} className="rounded-full bg-[color:var(--bg-elevated)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
               {item.shortTitle}
             </span>
           ))}
         </div>
 
-        <div className="mt-5 rounded-[1.4rem] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
+        <div className="mt-5 rounded-[var(--radius-md)] bg-[color:var(--accent-soft)] px-4 py-3 text-xs leading-6 text-[color:var(--accent-strong)]">
           当前已选择 {selectedIds.length} 条内容
         </div>
       </div>
@@ -1063,7 +1063,7 @@ export default function ContentAdminConsole() {
               >
                 当前筛选全选 / 取消
               </button>
-              <div className="rounded-full bg-slate-100 px-4 py-2 text-sm text-[color:var(--muted)]">
+              <div className="rounded-full bg-[color:var(--bg-elevated)] px-4 py-2 text-sm text-[color:var(--muted)]">
                 已勾选 {selectedIds.length} 条
               </div>
             </div>
@@ -1199,7 +1199,7 @@ export default function ContentAdminConsole() {
           </Field>
         </div>
 
-        <div className="mt-4 rounded-[1.5rem] border border-dashed border-[color:var(--line)] bg-slate-50/80 p-5">
+        <div className="mt-4 rounded-[var(--radius-md)] border border-dashed border-[color:var(--line)] bg-[color:var(--bg-elevated)] p-5">
           <div className="text-sm font-semibold text-[color:var(--ink)]">协同编排字段</div>
 
           <div className="mt-4 grid gap-4 md:grid-cols-2">
@@ -1240,20 +1240,20 @@ export default function ContentAdminConsole() {
 
         <div className="mt-4 space-y-4">
           <Field label="摘要">
-            <textarea value={form.excerpt} onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))} className="min-h-[110px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <textarea value={form.excerpt} onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))} className="min-h-[110px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
           </Field>
           <Field label="SEO 标题">
             <input value={form.seoTitle} onChange={(event) => setForm((prev) => ({ ...prev, seoTitle: event.target.value }))} className="w-full rounded-2xl border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
           </Field>
           <Field label="SEO 描述">
-            <textarea value={form.seoDescription} onChange={(event) => setForm((prev) => ({ ...prev, seoDescription: event.target.value }))} className="min-h-[90px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <textarea value={form.seoDescription} onChange={(event) => setForm((prev) => ({ ...prev, seoDescription: event.target.value }))} className="min-h-[90px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
           </Field>
           <Field label="正文 Sections">
             <textarea
               value={form.sectionsText}
               onChange={(event) => setForm((prev) => ({ ...prev, sectionsText: event.target.value }))}
               placeholder={'每段 section 用如下格式：\n标题\n段落一\n段落二\n---\n下一个标题\n段落一'}
-              className="min-h-[260px] w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6"
+              className="min-h-[260px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6"
             />
           </Field>
         </div>

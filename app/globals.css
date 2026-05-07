@@ -70,6 +70,19 @@
   --radius:            4px;
   --radius-md:         6px;
   --radius-lg:         8px;
+
+  /* === 兼容别名（指向新 token，仅为旧组件不破图） ===
+     新代码请直接用 --ink-1..6 / --bg* / --hairline* / --brand* / --signal*。
+     这些别名只在新 token 出现 *之前* 写好的组件里被引用。 */
+  --ink:           var(--ink-2);
+  --muted:         var(--ink-4);
+  --line:          var(--hairline);
+  --accent:        var(--brand);
+  --accent-strong: var(--brand-strong);
+  --accent-soft:   var(--brand-soft);
+  --surface:       var(--bg-elevated);
+  --surface-strong:var(--paper);
+  --surface-soft:  var(--bg-sunken);
 }
 
 /* 报告深读模式（terminal mode）：仅作用于 [data-mode="terminal"] 容器内 */
@@ -103,6 +116,17 @@
   --alert-soft:        rgba(229, 117, 105, 0.12);
   --shadow-card:       0 1px 0 rgba(0, 0, 0, 0.20), 0 0 0 1px var(--hairline);
   --shadow-pop:        0 4px 16px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--hairline-strong);
+
+  /* === 兼容别名（terminal mode 同步） === */
+  --ink:           var(--ink-2);
+  --muted:         var(--ink-4);
+  --line:          var(--hairline);
+  --accent:        var(--brand);
+  --accent-strong: var(--brand-strong);
+  --accent-soft:   var(--brand-soft);
+  --surface:       var(--bg-elevated);
+  --surface-strong:var(--paper);
+  --surface-soft:  var(--bg-sunken);
 }
 
 html {
