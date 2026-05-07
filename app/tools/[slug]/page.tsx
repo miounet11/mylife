@@ -248,7 +248,7 @@ export default async function ToolDetailPage({
 
         <section id="tool-runner" className="mt-6 grid gap-8 xl:grid-cols-[1fr_1fr]">
           {imageUploadChatHref ? (
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Bot className="h-3.5 w-3.5" />
                 图片上传入口
@@ -323,13 +323,13 @@ export default async function ToolDetailPage({
                   这个工具支持直接上传图片测算。点击“上传图片测算”会进入聊天页，并自动切到对应图片类型。
                 </div>
               ) : null}
-              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 当前触发：{tool.triggerMoment}
               </div>
-              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 免费版输出：{tool.freeOutputFields.join('、')}
               </div>
-              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 深测会补：{tool.premiumOutputFields.join('、')}
               </div>
               <div className="text-xs font-bold text-[color:var(--brand-strong)] pt-2">更多入口</div>
@@ -432,7 +432,7 @@ export default async function ToolDetailPage({
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">搜索和 AI 回答页要覆盖的问题</h2>
                       <div className="mt-4 grid gap-3">
                         {growthProfile.geoQuestions.map((item) => (
-                          <div key={item} className="rounded-[var(--radius)] bg-white/82 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}

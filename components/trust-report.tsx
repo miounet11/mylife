@@ -449,11 +449,11 @@ export default function TrustReport({ result }: { result: ReportResult }) {
   return (
     <div className="mx-auto max-w-6xl space-y-8 pb-12">
       <Card id="overview" variant="gradient" className="relative overflow-hidden scroll-mt-28">
-        <div className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-white/10 blur-3xl" />
+        <div className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-[color:var(--paper)] blur-3xl" />
         <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
 
         <CardHeader className="relative z-10 pb-2">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white/80">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white/80">
             <ShieldCheck className="h-3.5 w-3.5" />
             EXPERT ENGINE REPORT
           </div>
@@ -470,7 +470,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
           <div className="grid gap-4 md:grid-cols-4">
             {quickStats.map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-white/10 px-4 py-4">
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-[color:var(--paper)] px-4 py-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
                 <div className="mt-2 text-lg font-bold text-white">{item.value}</div>
               </div>
@@ -479,7 +479,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
           <div className="grid gap-4 lg:grid-cols-3">
             {expertCards.map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-white/10 px-4 py-4">
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-[color:var(--paper)] px-4 py-4">
                 <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
                 <div className="mt-2 text-lg font-bold leading-8 text-white">{item.value}</div>
                 <div className="mt-2 text-xs leading-6 text-white/76">{item.detail}</div>
@@ -507,7 +507,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
                     selectedScenario === item.key
                       ? 'bg-[color:var(--accent-strong)] text-white'
-                      : 'border border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                      : 'border border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]'
                   }`}
                 >
                   {item.title}
@@ -551,7 +551,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先看点</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.focus.map((item) => (
-                      <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -562,7 +562,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险提醒</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.risks.map((item) => (
-                      <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -585,7 +585,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {expertInterpretation.map((item) => (
-                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
                   <div className="mt-3 text-lg font-bold leading-8 text-[color:var(--ink)]">{item.headline}</div>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -669,7 +669,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {item.notes.map((note) => (
-                      <span key={note} className="rounded-full bg-white px-3 py-1 text-xs text-[color:var(--ink)]">
+                      <span key={note} className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs text-[color:var(--ink)]">
                         {note}
                       </span>
                     ))}
@@ -869,7 +869,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
             <div className="grid gap-4 md:grid-cols-3">
               {visibleDayuns.length > 0 ? visibleDayuns.map((item) => (
-                <div key={`${item.ganZhi}-${item.startYear}`} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+                <div key={`${item.ganZhi}-${item.startYear}`} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-lg font-bold text-[color:var(--ink)]">{item.ganZhi}</div>
                     <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${mapDayunBadge(item.quality)}`}>
@@ -919,7 +919,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             {shenShaItems.length > 0 && (
               <div className="grid gap-3">
                 {shenShaItems.slice(0, 6).map((item) => (
-                  <div key={`${item.name}-${item.pillar}`} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+                  <div key={`${item.name}-${item.pillar}`} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                     <div className="flex items-center gap-3">
                       {item.type === 'auspicious' ? (
                         <BadgeCheck className="h-5 w-5 text-[color:var(--data-up)]" />
@@ -971,7 +971,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {monthlyWindows.map((item) => (
-                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                     <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${mapScenarioBadge(item.status)}`}>
@@ -999,7 +999,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {decisionPlaybook.map((item) => (
-                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
@@ -1042,7 +1042,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {yearlyRoadmap.map((phase) => (
-                <div key={phase.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
+                <div key={phase.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{phase.title}</div>
@@ -1063,7 +1063,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">建议动作</div>
                       <div className="mt-3 grid gap-3">
                         {phase.actions.map((item) => (
-                          <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -1074,7 +1074,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险控制</div>
                       <div className="mt-3 grid gap-3">
                         {phase.risks.map((item) => (
-                          <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -1099,7 +1099,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-3">
               {yearlyTrendSnapshots.map((item) => (
-                <div key={item.year} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.year} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-2xl font-black text-[color:var(--ink)]">{item.year}</div>
                     <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
@@ -1140,7 +1140,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">稳定结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.stablePoints.map((item) => (
-                      <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -1151,7 +1151,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">敏感结论</div>
                   <div className="mt-3 grid gap-3">
                     {confidence.sensitivePoints.map((item) => (
-                      <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -1183,7 +1183,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最受影响的板块</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {confidence.birthTimeSensitivity.affectedAreas.map((item) => (
-                    <span key={item} className="rounded-full bg-white px-3 py-2 text-sm font-medium text-[color:var(--ink)]">
+                    <span key={item} className="rounded-full bg-[color:var(--paper)] px-3 py-2 text-sm font-medium text-[color:var(--ink)]">
                       {item}
                     </span>
                   ))}
@@ -1249,7 +1249,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 </span>
               </div>
               <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.summary}</div>
-              <div className="mt-4 rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
+              <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">{correctionInsight.likelyCause}</div>
             </div>
 
             <div className="grid gap-4 lg:grid-cols-2">
@@ -1257,7 +1257,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">纠偏动作</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.fixes.map((item) => (
-                    <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -1268,7 +1268,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">下一步检查点</div>
                 <div className="mt-3 grid gap-3">
                   {correctionInsight.checkpoints.map((item) => (
-                    <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -1329,7 +1329,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
 
 function MetricTile({ label, value, emphasis = false }: { label: string; value: string; emphasis?: boolean }) {
   return (
-    <div className={`rounded-[var(--radius-md)] border px-4 py-4 ${emphasis ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]' : 'border-[color:var(--line)] bg-white'}`}>
+    <div className={`rounded-[var(--radius-md)] border px-4 py-4 ${emphasis ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]' : 'border-[color:var(--line)] bg-[color:var(--paper)]'}`}>
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className={`mt-2 ${emphasis ? 'text-xl' : 'text-base'} font-bold leading-8 text-[color:var(--ink)]`}>{value}</div>
     </div>

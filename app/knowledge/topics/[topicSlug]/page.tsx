@@ -243,7 +243,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     href={`/cases/${item.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
                     meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -266,7 +266,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                     href={`/insights/${item.type}/${item.slug}`}
                     page={`/knowledge/topics/${hub.topicSlug}`}
                     meta={{ surfaceKey: `knowledge_topic:${hub.topicSlug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>

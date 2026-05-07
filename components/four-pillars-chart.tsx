@@ -34,7 +34,7 @@ export default function FourPillarsChart({ pillars, birthDate, birthTime }: Four
       </CardHeader>
       <CardContent>
         {/* 出生信息 */}
-        <div className="mb-6 bg-white rounded-lg p-4 border border-[color:var(--hairline)]">
+        <div className="mb-6 bg-[color:var(--paper)] rounded-lg p-4 border border-[color:var(--hairline)]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <div className="text-xs text-[color:var(--ink-5)] mb-1">出生日期</div>
@@ -74,7 +74,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
   const wuxingIcon = getWuxingIcon(wuxing);
 
   return (
-    <div className="bg-white rounded-lg border-2 border-[color:var(--hairline)] overflow-hidden hover:shadow-xl transition transform hover:scale-105">
+    <div className="bg-[color:var(--paper)] rounded-lg border-2 border-[color:var(--hairline)] overflow-hidden hover:shadow-xl transition transform hover:scale-105">
       {/* 柱头 */}
       <div className="bg-gradient-to-r from-purple-600 to-blue-600 text-white p-3">
         <div className="text-center">
@@ -148,7 +148,7 @@ function PillarCard({ pillar, name, palace, index }: any) {
                 return (
                   <span 
                     key={i} 
-                    className="flex items-center space-x-1 bg-white px-2 py-1 rounded-md border border-[color:var(--hairline)] text-sm"
+                    className="flex items-center space-x-1 bg-[color:var(--paper)] px-2 py-1 rounded-md border border-[color:var(--hairline)] text-sm"
                   >
                     <span>{hiddenWuxingIcon}</span>
                     <span>{stem}</span>

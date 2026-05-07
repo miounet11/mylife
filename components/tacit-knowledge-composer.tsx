@@ -102,7 +102,7 @@ export default function TacitKnowledgeComposer({
             <button
               type="button"
               onClick={onRestore}
-              className={isAnalyze ? 'rounded-full border border-[#e6decf] bg-white px-3 py-2 text-[12px] font-semibold text-[#6a6356]' : 'rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]'}
+              className={isAnalyze ? 'rounded-full border border-[#e6decf] bg-[color:var(--paper)] px-3 py-2 text-[12px] font-semibold text-[#6a6356]' : 'rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]'}
             >
               {restoreLabel || '沿用上一轮'}
             </button>
@@ -111,7 +111,7 @@ export default function TacitKnowledgeComposer({
             <button
               type="button"
               onClick={onReset}
-              className={isAnalyze ? 'inline-flex items-center gap-1 rounded-full border border-[#e6decf] bg-white px-3 py-2 text-[12px] font-semibold text-[#6a6356]' : 'inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]'}
+              className={isAnalyze ? 'inline-flex items-center gap-1 rounded-full border border-[#e6decf] bg-[color:var(--paper)] px-3 py-2 text-[12px] font-semibold text-[#6a6356]' : 'inline-flex items-center gap-1 rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]'}
             >
               <RotateCcw className="h-3.5 w-3.5" />
               清空
@@ -120,7 +120,7 @@ export default function TacitKnowledgeComposer({
           <button
             type="button"
             onClick={() => onExpandedChange(!expanded)}
-            className={isAnalyze ? 'inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-semibold text-[#8b6a2f]' : 'inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]'}
+            className={isAnalyze ? 'inline-flex items-center gap-2 rounded-full bg-[color:var(--paper)] px-3 py-2 text-[12px] font-semibold text-[#8b6a2f]' : 'inline-flex items-center gap-2 rounded-full bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)]'}
           >
             {hasValue ? summaryLabel : collapsedLabel}
             {expanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -129,7 +129,7 @@ export default function TacitKnowledgeComposer({
       </div>
 
       {!expanded ? (
-        <div className={isAnalyze ? 'mt-4 rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'mt-3 rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
+        <div className={isAnalyze ? 'mt-4 rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'mt-3 rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
           {hasValue ? (
             <>
               <span className={isAnalyze ? 'font-semibold text-[#8b6a2f]' : 'font-semibold text-[color:var(--accent-strong)]'}>{summaryLabel}</span>
@@ -155,8 +155,8 @@ export default function TacitKnowledgeComposer({
                       type="button"
                       onClick={() => toggleTacitItem(key, item)}
                       className={isAnalyze
-                        ? `rounded-full px-3 py-2 text-[12px] font-semibold transition ${selected ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'border border-[#e6decf] bg-white text-[#6a6356]'}`
-                        : `rounded-full px-3 py-1.5 text-xs font-semibold transition ${selected ? 'bg-white text-[color:var(--accent-strong)]' : 'border border-[color:var(--line)] bg-transparent text-[color:var(--muted)]'}`}
+                        ? `rounded-full px-3 py-2 text-[12px] font-semibold transition ${selected ? 'bg-[#f5ecda] text-[#8b6a2f]' : 'border border-[#e6decf] bg-[color:var(--paper)] text-[#6a6356]'}`
+                        : `rounded-full px-3 py-1.5 text-xs font-semibold transition ${selected ? 'bg-[color:var(--paper)] text-[color:var(--accent-strong)]' : 'border border-[color:var(--line)] bg-transparent text-[color:var(--muted)]'}`}
                     >
                       {item}
                     </button>
@@ -170,7 +170,7 @@ export default function TacitKnowledgeComposer({
             {LEVELS.map(({ label, key }) => (
               <label
                 key={label}
-                className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}
+                className={isAnalyze ? 'rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-[color:var(--paper)] px-3 py-3 text-xs text-[color:var(--ink)]'}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span>{label}</span>
@@ -190,28 +190,28 @@ export default function TacitKnowledgeComposer({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
+            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-[color:var(--paper)] px-3 py-3 text-xs text-[color:var(--ink)]'}>
               <div className={isAnalyze ? 'text-[12px] tracking-[0.18em] text-[#9a927f]' : 'text-xs text-[color:var(--muted)]'}>最怕发生什么</div>
               <input
                 value={value.unsaidFear || ''}
                 onChange={(event) => updateText('unsaidFear', event.target.value, 80)}
                 placeholder={isAnalyze ? '例如：我一旦表态，就没有回旋了' : '最怕发生什么'}
-                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
+                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 text-sm text-[color:var(--ink)] outline-none'}
               />
             </label>
-            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
+            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-[color:var(--paper)] px-3 py-3 text-xs text-[color:var(--ink)]'}>
               <div className={isAnalyze ? 'text-[12px] tracking-[0.18em] text-[#9a927f]' : 'text-xs text-[color:var(--muted)]'}>一句说不清的补充</div>
               <input
                 value={value.freeNote || ''}
                 onChange={(event) => updateText('freeNote', event.target.value, 160)}
                 placeholder={isAnalyze ? '例如：不是没有答案，是身体已经先抗拒了' : '一句还说不清的补充'}
-                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
+                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 text-sm text-[color:var(--ink)] outline-none'}
               />
             </label>
           </div>
 
           {hasValue ? (
-            <div className={isAnalyze ? 'rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
+            <div className={isAnalyze ? 'rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
               <span className={isAnalyze ? 'font-semibold text-[#8b6a2f]' : 'font-semibold text-[color:var(--accent-strong)]'}>{summaryLabel}</span>
               {summary}
             </div>

@@ -34,7 +34,7 @@ function TrustSignal({ icon, label, value, delay }: any) {
   
   return (
     <div 
-      className="bg-white rounded-lg p-6 shadow-md border-2 border-[color:var(--brand-soft-2)] hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
+      className="bg-[color:var(--paper)] rounded-lg p-6 shadow-md border-2 border-[color:var(--brand-soft-2)] hover:shadow-xl transition transform hover:scale-105 cursor-pointer"
       style={{ 
         animation: `fadeInUp 0.5s ease-out ${delay}ms both`,
         opacity: isVisible ? 1 : 0,

@@ -273,7 +273,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
             />
 
             {relatedCases.length > 0 ? (
-              <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/70 p-5">
+              <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">同类案例继续阅读</div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   {relatedCases.map((entry) => (
@@ -293,7 +293,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                         category: entry.category,
                         tags: entry.tags,
                       }}
-                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
                       <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">{entry.excerpt}</div>
@@ -386,7 +386,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/cases/${item.slug}`}
                     meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `knowledge_article:${entry.slug}`, contentType: 'knowledge' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{entry.title}</div>
@@ -412,7 +412,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/cases/${item.slug}`}
                     meta={{ surfaceKey: `case_article:${item.slug}`, targetSurfaceKey: `insight_article:${entry.slug}`, contentType: 'insight' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.name}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{entry.title}</div>
@@ -438,7 +438,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     contentType: 'knowledge',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{caseMethodTitle}</div>
                 </ContentCardLink>
@@ -454,7 +454,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     contentType: 'knowledge',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{methodologyTitle}</div>
                 </ContentCardLink>
@@ -470,7 +470,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     contentType: 'case',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{caseHubLabel}</div>
                 </ContentCardLink>
@@ -486,7 +486,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                     contentType: 'knowledge',
                     series: 'world-yi-book',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">看世界易主书工程</div>
                 </ContentCardLink>

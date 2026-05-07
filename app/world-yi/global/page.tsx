@@ -123,7 +123,7 @@ export default function WorldYiGlobalPage() {
               ['环境'],
               ['动作'],
             ].map(([title]) => (
-              <div key={title} className="rounded-[var(--radius-md)] bg-white/80 p-5">
+              <div key={title} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
               </div>
             ))}
@@ -227,7 +227,7 @@ export default function WorldYiGlobalPage() {
                     tags: item.tags,
                     series: 'world-yi-global',
                   }}
-                  className="rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>

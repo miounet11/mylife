@@ -171,7 +171,7 @@ export default function WorldYiBookPage() {
                   href={item.href}
                   page="/world-yi/book"
                   meta={{ surfaceKey: 'world_yi_book_page_network', targetSurfaceKey: item.target, contentType: 'knowledge', series: item.series }}
-                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--paper)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -192,7 +192,7 @@ export default function WorldYiBookPage() {
                 '继续把书稿语言写进结果页和详情页',
                 '继续把 2000 篇内容矩阵挂回主书十卷',
               ].map((item) => (
-                <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}

@@ -163,7 +163,7 @@ export default function InsightsPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['天时', '地利', '人和', '环境会放大代价或优势'].map((item) => (
-                  <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}

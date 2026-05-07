@@ -111,7 +111,7 @@ export default function InstantPaipanCard({ sex, onConfirm, disabled = false, su
           xls: 0,
         });
       }}
-      className="flex w-full items-center justify-between rounded-[var(--radius-md)] bg-white px-6 py-4 text-left shadow-[0_8px_24px_rgba(16,16,16,0.06)] transition disabled:cursor-not-allowed disabled:opacity-80"
+      className="flex w-full items-center justify-between rounded-[var(--radius-md)] bg-[color:var(--paper)] px-6 py-4 text-left shadow-[0_8px_24px_rgba(16,16,16,0.06)] transition disabled:cursor-not-allowed disabled:opacity-80"
     >
       <div className="relative h-[90px] w-[90px] shrink-0 rounded-full border border-[rgba(178,149,93,0.35)] bg-[radial-gradient(circle_at_center,#fffdf7_0%,#f8f2e4_70%,#f1e7d3_100%)]">
         <div className="absolute inset-[8px] rounded-full border border-[rgba(178,149,93,0.25)]" />

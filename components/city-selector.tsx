@@ -120,7 +120,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
           onFocus={() => setIsOpen(true)}
           onKeyDown={handleKeyDown}
           placeholder="未知地 / 北京时间，或搜索市区县"
-          className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-11 py-3 text-sm text-[color:var(--ink)] outline-none transition focus:border-[color:var(--warm)] focus:ring-4 focus:ring-[rgba(201,125,58,0.12)]"
+          className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-11 py-3 text-sm text-[color:var(--ink)] outline-none transition focus:border-[color:var(--warm)] focus:ring-4 focus:ring-[rgba(201,125,58,0.12)]"
         />
 
         {(query || value) ? (
@@ -146,7 +146,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
       </div>
 
       {isOpen ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 rounded-[var(--radius)] border border-[color:var(--line)] bg-white p-3 shadow-[0_20px_48px_rgba(23,32,51,0.12)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+0.6rem)] z-30 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-3 shadow-[0_20px_48px_rgba(23,32,51,0.12)]">
           <button
             type="button"
             onClick={() => handleSelect(null)}
@@ -243,7 +243,7 @@ function LocationResultButton({
       className={`flex w-full items-center justify-between rounded-[var(--radius)] border px-4 py-3 text-left transition ${
  active
           ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.1)]'
-          : 'border-[color:var(--line)] bg-white hover:bg-[color:var(--bg-elevated)]'
+          : 'border-[color:var(--line)] bg-[color:var(--paper)] hover:bg-[color:var(--bg-elevated)]'
       }`}
     >
       <div className="min-w-0">

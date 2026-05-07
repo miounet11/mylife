@@ -176,7 +176,7 @@ function getAgentStatusClass(status: AgentTaskStatus) {
     return 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   }
 
-  return 'border-[color:var(--line)] bg-white/70 text-[color:var(--muted)]';
+  return 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]';
 }
 
 interface FortuneProgressSummary {
@@ -459,13 +459,13 @@ export default function FortuneProgress({
                   </div>
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
                     真太阳时 {summary.useSolarTime ? '开启' : '关闭'}
                   </span>
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
                     夏令时 {summary.useDaylightSaving ? '开启' : '关闭'}
                   </span>
-                  <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-medium text-[color:var(--muted)]">
                     早晚子时 {summary.useSeparateZiHour ? '开启' : '关闭'}
                   </span>
                 </div>
@@ -479,14 +479,14 @@ export default function FortuneProgress({
           </div>
 
           <div className="space-y-5">
-            <div className="overflow-hidden rounded-full bg-white/75">
+            <div className="overflow-hidden rounded-full bg-[color:var(--paper)]">
                 <div
                   className="h-4 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--warm))] transition-all duration-200"
                 style={{ width: `${displayProgress}%` }}
               />
             </div>
 
-            <div className="rounded-[var(--radius-md)] bg-white/85 p-5">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
               <div className="text-sm font-semibold text-[color:var(--ink)]">阶段</div>
               <div className="mt-2 text-base font-semibold leading-7 text-[color:var(--ink)]">
                 {serverStage?.label || steps[currentStep].name}
@@ -506,11 +506,11 @@ export default function FortuneProgress({
               )}
             </div>
 
-            <div className="rounded-[var(--radius-md)] border border-white/60 bg-white/70 p-4 text-sm text-[color:var(--muted)]">
+            <div className="rounded-[var(--radius-md)] border border-white/60 bg-[color:var(--paper)] p-4 text-sm text-[color:var(--muted)]">
               {finalStageMessage}
             </div>
 
-            <div className="rounded-[var(--radius-md)] border border-white/70 bg-white/82 p-4">
+            <div className="rounded-[var(--radius-md)] border border-white/70 bg-[color:var(--paper)] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold tracking-[0.16em] text-[color:var(--muted)]">
@@ -537,7 +537,7 @@ export default function FortuneProgress({
                       className={`rounded-[var(--radius)] border px-3 py-3 transition ${getAgentStatusClass(task.status)}`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius)] bg-white/80">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[color:var(--paper)]">
                           {task.status === 'running' ? (
                             <Loader2 className="h-4 w-4 animate-spin" />
                           ) : task.status === 'done' ? (
@@ -584,7 +584,7 @@ export default function FortuneProgress({
                       ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
                       : index === currentStep
                         ? 'bg-[color:var(--ink)] text-white'
-                        : 'bg-white/70 text-[color:var(--muted)]'
+                        : 'bg-[color:var(--paper)] text-[color:var(--muted)]'
                   }`}
                 >
                   <div className="font-semibold">{step.name}</div>

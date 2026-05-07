@@ -37,7 +37,7 @@ export default function ChatMarkdown({ content }: { content: string }) {
           ),
           table: ({ children }) => (
             <div className="mt-4 overflow-x-auto rounded-[var(--radius)] border border-[color:var(--line)]">
-              <table className="min-w-full border-collapse bg-white text-left text-sm">{children}</table>
+              <table className="min-w-full border-collapse bg-[color:var(--paper)] text-left text-sm">{children}</table>
             </div>
           ),
           thead: ({ children }) => <thead className="bg-[color:var(--bg-elevated)]">{children}</thead>,

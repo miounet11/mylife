@@ -207,7 +207,7 @@ export default function VisualAssetsPage() {
                     <Link
                       key={asset.id}
                       href={`/visual-assets/${asset.slug}`}
-                      className="grid grid-cols-[5.75rem_1fr] gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/76 p-3 transition hover:border-[color:var(--accent)]"
+                      className="grid grid-cols-[5.75rem_1fr] gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-3 transition hover:border-[color:var(--accent)]"
                     >
                       <div className="aspect-video overflow-hidden rounded-[var(--radius)] bg-[#f7efe2]">
                         <Image

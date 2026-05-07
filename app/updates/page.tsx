@@ -159,7 +159,7 @@ export default async function UpdatesPage({
                     </div>
                     <div className="mt-4 grid gap-3">
                       {reportCards.length > 0 ? reportCards.map(({ report, upgradeJob, latestDigest: reportDigest }) => (
-                        <div key={report.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
+                        <div key={report.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="text-xs font-semibold text-[color:var(--ink)]">{report.name || '我的报告'}</div>
@@ -180,7 +180,7 @@ export default async function UpdatesPage({
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                        <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                           暂无报告
                         </div>
                       )}
@@ -194,7 +194,7 @@ export default async function UpdatesPage({
                     </div>
                     <div className="mt-4 grid gap-3">
                       {digestRuns.length > 0 ? digestRuns.map((item) => (
-                        <div key={item.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
+                        <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-xs font-semibold text-[color:var(--ink)]">{item.cycleKey}</div>
                           <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
@@ -209,7 +209,7 @@ export default async function UpdatesPage({
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                        <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                           暂无记录
                         </div>
                       )}
@@ -226,7 +226,7 @@ export default async function UpdatesPage({
                 >
                   <div className="grid gap-3 md:grid-cols-2">
                     {lifecycleRuns.length > 0 ? lifecycleRuns.map((item) => (
-                      <div key={item.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
+                      <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleStageLabel(item.stageKey)}</div>
                           <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
@@ -241,7 +241,7 @@ export default async function UpdatesPage({
                         </div>
                       </div>
                     )) : (
-                      <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                      <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                         暂无生命周期提醒记录
                       </div>
                     )}
@@ -249,7 +249,7 @@ export default async function UpdatesPage({
                 </PriorityDisclosure>
               </div>
             ) : (
-              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/80 px-5 py-5">
+              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-5 py-5">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">登录后可查看自己的更新中心</div>
                 <div className="mt-4">
                   <Link
@@ -311,7 +311,7 @@ function mapMetricTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
   if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   if (tone === 'success') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
   if (tone === 'warning') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
-  return 'bg-white text-[color:var(--ink)]';
+  return 'bg-[color:var(--paper)] text-[color:var(--ink)]';
 }
 
 function mapUpgradeStatus(status?: string) {

@@ -121,7 +121,7 @@ export default function BirthTimeInput({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <Clock3 className="h-4 w-4 text-[color:var(--warm)]" />
           钟表时间
@@ -197,7 +197,7 @@ export default function BirthTimeInput({
 
                 commitTime(value.hour, value.minute, Number(secondText));
               }}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
             />
           </label>
         </div>
@@ -216,7 +216,7 @@ export default function BirthTimeInput({
                 className={`rounded-[var(--radius)] border px-3 py-3 text-left transition ${
  isSelected
                     ? `${getPeriodStyle(option.period)} border-transparent shadow-[0_16px_30px_rgba(23,32,51,0.12)]`
-                    : 'border-[color:var(--line)] bg-white hover:-translate-y-0.5'
+                    : 'border-[color:var(--line)] bg-[color:var(--paper)] hover:-translate-y-0.5'
                 }`}
               >
                 <div className="text-base font-bold">{option.name}</div>
@@ -259,7 +259,7 @@ export default function BirthTimeInput({
           当前识别
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-[color:var(--ink)]">
-          <span className="rounded-full bg-white/80 px-3 py-1 font-semibold">
+          <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 font-semibold">
             {value.hour !== null && value.minute !== null && value.second !== null
               ? `${formatPart(value.hour)}:${formatPart(value.minute)}:${formatPart(value.second)}`
               : '待填写'}

@@ -662,7 +662,7 @@ function EventsPageContent() {
                         <button
                           type="button"
                           onClick={() => void handleMarkAccuracy(event.id, false)}
-                          className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                          className="rounded-full bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
                         >
                           补充备注
                         </button>
@@ -688,7 +688,7 @@ function EventsPageContent() {
                             href={appendSourceToHref(`/result/${encodeURIComponent(event.fortuneAnalysis.reportId)}`, pageSource)}
                             page="/events"
                             target="events_upcoming_report"
-                            className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
+                            className="rounded-full bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]"
                             meta={{
                               source: pageSource,
                               ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -733,7 +733,7 @@ function EventsPageContent() {
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex p-1">
               <button
                 onClick={() => setView('calendar')}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-white'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-[color:var(--paper)]'}`}
               >
                 <span className="inline-flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
@@ -742,7 +742,7 @@ function EventsPageContent() {
               </button>
               <button
                 onClick={() => setView('list')}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'list' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-white'}`}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'list' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-[color:var(--paper)]'}`}
               >
                 <span className="inline-flex items-center gap-2">
                   <Grid className="h-4 w-4" />
@@ -769,7 +769,7 @@ function EventsPageContent() {
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as 'all' | EventType)}
-              className="transition focus:ring-2 focus:ring-[color:var(--brand-soft-2)] rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
+              className="transition focus:ring-2 focus:ring-[color:var(--brand-soft-2)] rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-sm text-[color:var(--ink)]"
             >
               <option value="all">全部类型</option>
               <option value="career">事业</option>
@@ -787,7 +787,7 @@ function EventsPageContent() {
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder="搜索事件标题或描述..."
-              className="w-full rounded-full border border-[color:var(--line)] bg-white py-3 pl-11 pr-4 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+              className="w-full rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] py-3 pl-11 pr-4 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
             />
           </div>
         </div>
@@ -796,7 +796,7 @@ function EventsPageContent() {
           <EventsSkeleton />
         ) : view === 'calendar' ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1 bg-white rounded-[var(--radius)] border border-[color:var(--hairline-strong)] overflow-hidden">
+            <div className="lg:col-span-1 bg-[color:var(--paper)] rounded-[var(--radius)] border border-[color:var(--hairline-strong)] overflow-hidden">
               <EventCalendar events={filteredEvents} />
             </div>
             <div className="lg:col-span-2">
@@ -871,12 +871,12 @@ function EventsPageContent() {
                 value={form.title}
                 onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="事件标题"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value as EventType }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="career">事业</option>
                 <option value="wealth">财富</option>
@@ -889,18 +889,18 @@ function EventsPageContent() {
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <input
                 type="time"
                 value={form.time}
                 onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.impact}
                 onChange={(e) => setForm((prev) => ({ ...prev, impact: e.target.value as ImpactType }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="positive">积极</option>
                 <option value="neutral">中性</option>
@@ -912,13 +912,13 @@ function EventsPageContent() {
                 value={form.reminderAdvanceDays}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderAdvanceDays: Number(e.target.value) || 0 }))}
                 placeholder="提前天数"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               />
               <select
                 value={form.reminderMethod}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderMethod: e.target.value as 'app' | 'email' | 'sms' }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               >
                 <option value="app">应用通知</option>
@@ -926,7 +926,7 @@ function EventsPageContent() {
                 <option value="sms">短信通知</option>
               </select>
 
-              <label className="md:col-span-2 flex items-center gap-3 rounded-[var(--radius)] bg-white/70 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <label className="md:col-span-2 flex items-center gap-3 rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]">
                 <input
                   type="checkbox"
                   checked={form.reminderEnabled}
@@ -940,7 +940,7 @@ function EventsPageContent() {
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="事件说明"
-                className="md:col-span-2 min-h-[130px] w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="md:col-span-2 min-h-[130px] w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <div className="md:col-span-2 flex justify-end border-t border-white/60 pt-2">
                 <button
@@ -1048,7 +1048,7 @@ function WorkbenchPanel({
       </div>
       <div className="mt-4 grid gap-3">
         {items.length > 0 ? items : (
-          <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+          <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
             {empty}
           </div>
         )}
@@ -1067,7 +1067,7 @@ function WorkbenchQueueItem({
   actionSlot: ReactNode;
 }) {
   return (
-    <div className="rounded-[var(--radius)] bg-white px-4 py-4">
+    <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>

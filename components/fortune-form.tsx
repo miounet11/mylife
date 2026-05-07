@@ -740,7 +740,7 @@ export default function FortuneForm({
                   <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{birthLabel}</div>
                   <div className="mt-1.5 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)] md:mt-2">
                     <span>点击选择</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${timeConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-white text-[color:var(--muted)]'}`}>
+                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${timeConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[color:var(--paper)] text-[color:var(--muted)]'}`}>
                       {timeConfirmed ? '已确认' : '待确认'}
                     </span>
                   </div>
@@ -755,7 +755,7 @@ export default function FortuneForm({
                   <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{addressLabel}</div>
                   <div className="mt-1.5 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)] md:mt-2">
                     <span>点击选择</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${locationConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-white text-[color:var(--muted)]'}`}>
+                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${locationConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[color:var(--paper)] text-[color:var(--muted)]'}`}>
                       {locationConfirmed ? '已确认' : '待确认'}
                     </span>
                   </div>
@@ -765,7 +765,7 @@ export default function FortuneForm({
               <div className="grid gap-2.5 md:grid-cols-[0.88fr_1.12fr] md:gap-3">
                 <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-[var(--radius)] md:py-3">
                   <div className="text-xs font-semibold text-[color:var(--muted)]">性别</div>
-                  <div className="mt-1.5 inline-flex rounded-full border border-[#ece7da] bg-white p-1 md:mt-2">
+                  <div className="mt-1.5 inline-flex rounded-full border border-[#ece7da] bg-[color:var(--paper)] p-1 md:mt-2">
                     {[
                       { label: '男', value: 1 as 0 | 1 },
                       { label: '女', value: 0 as 0 | 1 },
@@ -786,7 +786,7 @@ export default function FortuneForm({
 
                 <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-[var(--radius)] md:py-3">
                   <div className="text-xs font-semibold text-[color:var(--muted)]">出生信息模式</div>
-                  <div className="mt-1.5 flex overflow-hidden rounded-full border border-[color:var(--line)] bg-white p-1 md:mt-2">
+                  <div className="mt-1.5 flex overflow-hidden rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] p-1 md:mt-2">
                     {[
                       { label: '公历', value: 0 as 0 | 1 | 2 },
                       { label: '农历', value: 1 as 0 | 1 | 2 },
@@ -853,7 +853,7 @@ export default function FortuneForm({
                           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                             infoData.typeId === item.id
                               ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                              : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                              : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]'
                           }`}
                         >
                           {item.name}
@@ -878,7 +878,7 @@ export default function FortuneForm({
                           }`}
                         >
                           <span
-                            className={`absolute top-[2px] h-[24px] w-[24px] rounded-full bg-white transition ${
+                            className={`absolute top-[2px] h-[24px] w-[24px] rounded-full bg-[color:var(--paper)] transition ${
                               infoData.isSave ? 'left-[20px]' : 'left-[2px]'
                             }`}
                           />
@@ -911,7 +911,7 @@ export default function FortuneForm({
                           className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
                             item.value === 1
                               ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                              : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                              : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]'
                           }`}
                         >
                           {item.name}
@@ -940,7 +940,7 @@ export default function FortuneForm({
           </div>
 
           <div className="hidden space-y-3 xl:sticky xl:top-24 xl:block">
-            <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/74 px-3 py-3">
+            <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-3">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--ink)]">录入完成度</div>
@@ -965,7 +965,7 @@ export default function FortuneForm({
               </div>
             </div>
 
-            <div className="hidden rounded-[var(--radius)] border border-[color:var(--line)] bg-white/70 px-3 py-3 text-sm leading-6 text-[color:var(--muted)] xl:block">
+            <div className="hidden rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-3 text-sm leading-6 text-[color:var(--muted)] xl:block">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="font-semibold text-[color:var(--ink)]">当前摘要</div>
                 {hasTacitContext ? (
@@ -1008,7 +1008,7 @@ export default function FortuneForm({
                 }}
               />
 
-              <div className="flex min-h-[42px] items-center justify-center rounded-[var(--radius)] border border-[color:var(--line)] bg-white/58 px-4 py-4 text-xs text-[#9a927f]">
+              <div className="flex min-h-[42px] items-center justify-center rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4 text-xs text-[#9a927f]">
                 <AlertCircle className="mr-[5px] h-[16px] w-[16px]" />
                 <span>平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考</span>
               </div>

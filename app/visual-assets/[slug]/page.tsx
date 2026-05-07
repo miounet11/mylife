@@ -247,7 +247,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
                   { label: '核心用途', value: moduleLabels[asset.module] || asset.module },
                   { label: '推荐入口', value: asset.targetRoutes.slice(0, 3).join(' / ') || '/analyze' },
                 ].map((item) => (
-                  <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/76 p-4">
+                  <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                     <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{item.label}</div>
                     <div className="mt-2 text-sm font-bold leading-6 text-[color:var(--ink)]">{item.value}</div>
                   </div>
@@ -274,7 +274,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">{reading.description}</p>
               <div className="mt-6 grid gap-3 sm:grid-cols-2">
                 {reading.modules.map((item) => (
-                  <div key={item.title} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 p-4">
+                  <div key={item.title} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                     <div className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
                       <Boxes className="h-4 w-4 text-[color:var(--accent-strong)]" />
                       {item.title}
@@ -292,7 +292,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
               <div className="mt-6 grid gap-3">
                 {worldYiSteps.map((step, index) => (
-                  <div key={step.key} className="grid gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 p-4 sm:grid-cols-[4.5rem_1fr]">
+                  <div key={step.key} className="grid gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 sm:grid-cols-[4.5rem_1fr]">
                     <div className="flex items-center gap-2 text-sm font-black text-[color:var(--accent-strong)]">
                       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-xs">{index + 1}</span>
                       {step.key}
@@ -341,7 +341,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
               <div className="mt-5 space-y-4">
                 {asset.narrativeSections.map((section) => (
-                  <section key={section.heading} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 p-5">
+                  <section key={section.heading} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                     <h2 className="text-xl font-black text-[color:var(--ink)]">{section.heading}</h2>
                     <p className="mt-3 text-sm leading-7 text-[color:var(--muted)]">{section.body}</p>
                   </section>
@@ -395,7 +395,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
             </section>
           ) : null}
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/72 p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">图片链接</div>

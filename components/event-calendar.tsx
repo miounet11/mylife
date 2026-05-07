@@ -111,7 +111,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
                   ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
                   : isCurrent
                     ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.08)]'
-                    : 'border-[color:var(--line)] bg-white hover:border-[color:var(--accent)]'
+                    : 'border-[color:var(--line)] bg-[color:var(--paper)] hover:border-[color:var(--accent)]'
               }`}
             >
               <div className="flex h-full flex-col justify-between">
@@ -140,7 +140,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
           selectedEvents.length > 0 ? (
             <div className="mt-4 space-y-3">
               {selectedEvents.map((event) => (
-                <div key={event.id} className="rounded-[var(--radius)] bg-white px-4 py-3">
+                <div key={event.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3">
                   <div className="flex items-start gap-3">
                     <span className="text-xl">{typeMeta[event.type]}</span>
                     <div className="min-w-0 flex-1">

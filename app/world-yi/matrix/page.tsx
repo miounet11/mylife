@@ -117,7 +117,7 @@ export default function WorldYiMatrixPage() {
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">批次列表</h2>
           <div className="mt-6 grid gap-4 xl:grid-cols-2">
             {worldYiExecutionBatches.map((batch) => (
-              <div key={batch.phase} className="rounded-[var(--radius-md)] bg-white/80 p-6">
+              <div key={batch.phase} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                     {batch.phase}

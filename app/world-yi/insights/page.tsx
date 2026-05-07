@@ -133,7 +133,7 @@ export default function WorldYiInsightsPage() {
                 contentType: 'knowledge',
                 series: 'world-yi-insights',
               }}
-              className="block rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:bg-white"
+              className="block rounded-[var(--radius-md)] bg-[color:var(--paper)] p-6 transition hover:bg-[color:var(--paper)]"
             >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">优先知识</div>
               <div className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{knowledgeItems[0]?.title || '进入知识中心'}</div>
@@ -215,7 +215,7 @@ export default function WorldYiInsightsPage() {
                     tags: item.tags,
                     series: 'world-yi-insights',
                   }}
-                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--paper)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -243,7 +243,7 @@ export default function WorldYiInsightsPage() {
                     tags: item.tags,
                     series: 'world-yi-insights',
                   }}
-                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--paper)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>

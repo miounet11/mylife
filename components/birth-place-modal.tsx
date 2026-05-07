@@ -395,7 +395,7 @@ export default function BirthPlaceModal({
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex rounded-full border border-[color:var(--line)] bg-white/80 text-[13px]">
+            <div className="flex rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] text-[13px]">
               {TABS.map((item) => (
                 <button
                   key={item.id}
@@ -422,7 +422,7 @@ export default function BirthPlaceModal({
               onChange={(event) => setSearchValue(event.target.value)}
               onFocus={() => setShowSearchPopover(true)}
               placeholder="搜索全国城市及地区"
-              className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-white/86 pl-9 pr-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
+              className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] pl-9 pr-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
             />
             {showSearchPopover ? (
               <button
@@ -511,7 +511,7 @@ export default function BirthPlaceModal({
             )}
           </div>
 
-          <div className="relative z-10 mt-3 min-h-[30px] bg-white">
+          <div className="relative z-10 mt-3 min-h-[30px] bg-[color:var(--paper)]">
             {activeTab === 1 ? (
               <div className="flex items-center justify-end gap-2 text-[14px] text-[color:var(--ink)]">
                 <span>换算北京时间</span>
@@ -524,7 +524,7 @@ export default function BirthPlaceModal({
                   }`}
                 >
                   <span
-                    className={`absolute top-[2px] h-[20px] w-[20px] rounded-full bg-white transition ${
+                    className={`absolute top-[2px] h-[20px] w-[20px] rounded-full bg-[color:var(--paper)] transition ${
                       isBeijingTime ? 'left-[24px]' : 'left-[2px]'
                     }`}
                   />

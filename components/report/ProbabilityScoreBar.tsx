@@ -151,7 +151,7 @@ const ConfidenceBar: React.FC<{
         />
         {/* Center marker */}
         <div
-          className="absolute top-0 h-full w-0.5 bg-white[color:var(--bg-sunken)] opacity-80"
+          className="absolute top-0 h-full w-0.5 bg-[color:var(--paper)][color:var(--bg-sunken)] opacity-80"
           style={{ left: `${centerPercent}%` }}
         />
       </div>
@@ -193,7 +193,7 @@ const EventCard: React.FC<{
   const config = EVENT_LABELS[eventKey] || { label: event.label || eventKey, icon: '📊' };
 
   return (
-    <div className={`${compact ? 'p-2' : 'p-3'} bg-white rounded-lg border border-[color:var(--hairline)]`}>
+    <div className={`${compact ? 'p-2' : 'p-3'} bg-[color:var(--paper)] rounded-lg border border-[color:var(--hairline)]`}>
       <div className="flex items-center gap-2 mb-2">
         <span className="text-base">{config.icon}</span>
         <span className="text-sm font-medium text-[color:var(--ink-3)][color:var(--ink-6)]">{config.label}</span>
@@ -237,13 +237,13 @@ export const ProbabilityScoreBar: React.FC<ProbabilityScoreBarProps> = ({
   const levelConfig = fortuneWindow?.level ? LEVEL_CONFIG[fortuneWindow.level] : null;
 
   return (
-    <div className={`rounded-[var(--radius)] bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)][color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* Header */}
       <div className={`px-4 py-3 ${levelConfig?.color || 'bg-gradient-to-r from-indigo-500 to-purple-600'}`}>
         <h3 className="text-white font-semibold flex items-center gap-2">
           <span className="text-lg">🎯</span>
           {title}
-          <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">v1.4.0</span>
+          <span className="ml-auto text-xs bg-[color:var(--paper)] px-2 py-0.5 rounded-full">v1.4.0</span>
         </h3>
       </div>
 

@@ -155,7 +155,7 @@ export default function WorldYiDomainsPage() {
                   href={item.href}
                   page="/world-yi/domains"
                   meta={{ surfaceKey: 'world_yi_domains_page_network', targetSurfaceKey: item.target, contentType: 'knowledge', series: item.series }}
-                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--paper)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -178,7 +178,7 @@ export default function WorldYiDomainsPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['起名系统', '寻物复原', '择时窗口', '家宅恢复'].map((item) => (
-                  <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}

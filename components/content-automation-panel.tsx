@@ -310,13 +310,13 @@ type PolicyDiffRow = {
 function severityTone(severity: AlertSeverity) {
   switch (severity) {
     case 'critical':
-      return 'bg-rose-50 text-rose-700';
+      return 'bg-[color:var(--alert-soft)] text-[color:var(--data-down)]';
     case 'warning':
-      return 'bg-amber-50 text-amber-700';
+      return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
     case 'info':
-      return 'bg-sky-50 text-sky-700';
+      return 'bg-[color:var(--env-soft)] text-[color:var(--env)]';
     default:
-      return 'bg-white text-[color:var(--ink)]';
+      return 'bg-[color:var(--paper)] text-[color:var(--ink)]';
   }
 }
 
@@ -757,10 +757,10 @@ export default function ContentAutomationPanel({
       </div>
 
       {message && <p className="mt-4 text-sm text-[color:var(--accent-strong)]">{message}</p>}
-      {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[color:var(--data-down)]">{error}</p>}
 
       {loading || !snapshot ? (
-        <div className="mt-6 rounded-[var(--radius-md)] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
+        <div className="mt-6 rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 text-sm text-[color:var(--muted)]">加载中...</div>
       ) : (
         <div className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-4 xl:grid-cols-8">
@@ -806,7 +806,7 @@ export default function ContentAutomationPanel({
                       <div className={`${item.source ? 'mt-1' : 'mt-2'} text-xs leading-6`}>{item.detail}</div>
                     </div>
                   )) : (
-                    <div className="rounded-[var(--radius)] bg-emerald-50 px-4 py-4 text-sm text-emerald-700">
+                    <div className="rounded-[var(--radius)] bg-[color:rgba(47,125,82,0.10)] px-4 py-4 text-sm text-[color:var(--data-up)]">
                       当前没有显著异常，自治链路、内容分析与调度主线基本一致。
                     </div>
                   )}
@@ -817,7 +817,7 @@ export default function ContentAutomationPanel({
                 <div className="text-sm font-semibold text-[color:var(--muted)]">策略变更 Diff</div>
                 <div className="grid gap-3">
                   {policyDiffRows.length > 0 ? policyDiffRows.map((item) => (
-                    <div key={item.key} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                    <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                       <div className="mt-2 grid gap-2 text-xs text-[color:var(--muted)]">
                         <div>base：{item.previous}</div>
@@ -826,7 +826,7 @@ export default function ContentAutomationPanel({
                       </div>
                     </div>
                   )) : (
-                    <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">
+                    <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                       当前 effective policy 与 base policy 一致，没有新的运行态覆盖差异。
                     </div>
                   )}
@@ -840,7 +840,7 @@ export default function ContentAutomationPanel({
               <div className="space-y-4">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">自治总控状态</div>
                 <div className="grid gap-3">
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">统一控制入口</div>
@@ -864,7 +864,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
 
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">最新内容分析</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -887,7 +887,7 @@ export default function ContentAutomationPanel({
                     {autonomous.openAgent.latestContentAnalysis?.plan.blockedPatterns.length ? (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {autonomous.openAgent.latestContentAnalysis.plan.blockedPatterns.slice(0, 6).map((item) => (
-                          <span key={item} className="rounded-full bg-rose-50 px-3 py-1 text-xs text-rose-700">
+                          <span key={item} className="rounded-full bg-[color:var(--alert-soft)] px-3 py-1 text-xs text-[color:var(--data-down)]">
                             {item}
                           </span>
                         ))}
@@ -895,7 +895,7 @@ export default function ContentAutomationPanel({
                     ) : null}
                   </div>
 
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">最新运行分诊</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -919,7 +919,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
 
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">最新测算可靠性复审</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -953,7 +953,7 @@ export default function ContentAutomationPanel({
               <div className="space-y-4">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">Effective Policy</div>
                 <div className="grid gap-3">
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">当前策略覆盖</div>
                       <div className="text-xs text-[color:var(--muted)]">{autonomous.openAgent.policy.source}</div>
@@ -967,7 +967,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
 
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">策略信号应用</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -989,7 +989,7 @@ export default function ContentAutomationPanel({
                     {autonomous.openAgent.ignoredPolicySignals.length > 0 ? (
                       <div className="mt-3 flex flex-wrap gap-2">
                         {autonomous.openAgent.ignoredPolicySignals.map((item) => (
-                          <span key={item} className="rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">
+                          <span key={item} className="rounded-full bg-[color:var(--signal-soft)] px-3 py-1 text-xs text-[color:var(--signal-strong)]">
                             {item}
                           </span>
                         ))}
@@ -1006,7 +1006,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">OpenAgent 处置建议</div>
               <div className="grid gap-3 xl:grid-cols-2">
                 {recommendedActions.length > 0 ? recommendedActions.map((item, index) => (
-                  <div key={`${item.kind}-${item.title}-${index}`} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={`${item.kind}-${item.title}-${index}`} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       <div className="text-right">
@@ -1017,7 +1017,7 @@ export default function ContentAutomationPanel({
                     <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                     当前没有新增处置建议，继续按既有自治节奏运行即可。
                   </div>
                 )}
@@ -1030,7 +1030,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">测算可靠性优先报告</div>
               <div className="grid gap-3 xl:grid-cols-2">
                 {reportPriorityReports.length > 0 ? reportPriorityReports.map((item) => (
-                  <div key={item.reportId} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.reportId} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.name}</div>
                       <div className="text-right">
@@ -1044,7 +1044,7 @@ export default function ContentAutomationPanel({
                     <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                     当前没有新增的优先复核报告，继续按既有升级队列和反馈节奏运行即可。
                   </div>
                 )}
@@ -1057,7 +1057,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">高转化内容入口</div>
               <div className="grid gap-3">
                 {snapshot.topSurfaces.length > 0 ? snapshot.topSurfaces.map((item) => (
-                  <div key={item.key} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
@@ -1072,7 +1072,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无高转化入口</div>
                   </div>
                 )}
@@ -1083,7 +1083,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">下一轮优先扩张主题</div>
               <div className="grid gap-3">
                 {snapshot.generationQueue.map((item) => (
-                  <div key={item.key} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       <div className="text-right">
@@ -1104,7 +1104,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">内容覆盖缺口</div>
               <div className="grid gap-3">
                 {snapshot.clusterCoverage.slice(0, 6).map((item) => (
-                  <div key={item.key} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       <div className="text-xs text-[color:var(--muted)]">优先级 {item.priorityScore}</div>
@@ -1122,14 +1122,14 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">自动发布候选</div>
               <div className="grid gap-3">
                 {snapshot.autoPublishCandidates.length > 0 ? snapshot.autoPublishCandidates.map((item) => (
-                  <div key={item.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">
                       {item.slug} · {item.source} · 质量分 {item.score}
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无自动发布候选</div>
                   </div>
                 )}
@@ -1149,7 +1149,7 @@ export default function ContentAutomationPanel({
                     '发布排序会优先参考历史高转化内容类型与热点来源反馈',
                     `固定发布时间：${scheduler.publishHours.map((hour) => `${String(hour).padStart(2, '0')}:00`).join(' / ')}`,
                   ].map((item) => (
-                    <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+                    <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                       {item}
                     </div>
                   ))}
@@ -1160,7 +1160,7 @@ export default function ContentAutomationPanel({
                 <div className="text-sm font-semibold text-[color:var(--muted)]">最近计划任务记录</div>
                 <div className="grid gap-3">
                   {scheduler.recentRuns.length > 0 ? scheduler.recentRuns.map((item) => (
-                    <div key={item.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                    <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.reason || '计划任务记录'}</div>
                         <div className="text-xs text-[color:var(--muted)]">{item.createdAt || ''}</div>
@@ -1170,7 +1170,7 @@ export default function ContentAutomationPanel({
                       </div>
                     </div>
                   )) : (
-                    <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                    <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">暂无计划任务记录</div>
                       <div className="mt-2 text-xs text-[color:var(--muted)]">执行一次计划任务后，这里会显示补稿和发布结果。</div>
                     </div>
@@ -1186,7 +1186,7 @@ export default function ContentAutomationPanel({
                 <div className="text-sm font-semibold text-[color:var(--muted)]">最近自治周期</div>
                 <div className="grid gap-3">
                   {autonomous.runtime.recentCycles.length > 0 ? autonomous.runtime.recentCycles.slice(0, 4).map((item) => (
-                    <div key={item.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                    <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                       <div className="flex items-start justify-between gap-3">
                         <div>
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{item.summary}</div>
@@ -1194,7 +1194,7 @@ export default function ContentAutomationPanel({
                             开始 {formatDateTime(item.startedAt)} · 结束 {formatDateTime(item.finishedAt)}
                           </div>
                         </div>
-                        <div className={`text-xs font-semibold ${item.success ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        <div className={`text-xs font-semibold ${item.success ? 'text-[color:var(--data-up)]' : 'text-[color:var(--data-down)]'}`}>
                           {item.success ? 'success' : 'failed'}
                         </div>
                       </div>
@@ -1202,11 +1202,11 @@ export default function ContentAutomationPanel({
                         focusKeys：{item.openAgentFocusKeys?.join(' / ') || '无'}
                       </div>
                       {item.failedPhaseKeys.length > 0 ? (
-                        <div className="mt-2 text-xs text-rose-700">失败阶段：{item.failedPhaseKeys.join(' / ')}</div>
+                        <div className="mt-2 text-xs text-[color:var(--data-down)]">失败阶段：{item.failedPhaseKeys.join(' / ')}</div>
                       ) : null}
                     </div>
                   )) : (
-                    <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">
+                    <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">
                       暂无自治周期记录。
                     </div>
                   )}
@@ -1216,7 +1216,7 @@ export default function ContentAutomationPanel({
               <div className="space-y-4">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">阻断账本与复审焦点</div>
                 <div className="grid gap-3">
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">最新决策账本</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -1230,14 +1230,14 @@ export default function ContentAutomationPanel({
                     </div>
                     <div className="mt-3 grid gap-2">
                       {autonomous.runtime.contentDecisionLedger.topBlockedReasons.slice(0, 4).map((item) => (
-                        <div key={item.reason} className="rounded-[var(--radius)] bg-rose-50 px-3 py-3 text-xs text-rose-700">
+                        <div key={item.reason} className="rounded-[var(--radius)] bg-[color:var(--alert-soft)] px-3 py-3 text-xs text-[color:var(--data-down)]">
                           {item.reason} · {item.count}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">OpenAgent backlog</div>
                       <div className="text-xs text-[color:var(--muted)]">
@@ -1263,7 +1263,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">高转化内容归因</div>
               <div className="grid gap-3">
                 {snapshot.contentPerformance.length > 0 ? snapshot.contentPerformance.map((item) => (
-                  <div key={item.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -1281,7 +1281,7 @@ export default function ContentAutomationPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无内容归因数据</div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">等用户从内容页进入分析和工具后，这里再看真实承接表现。</div>
                   </div>
@@ -1293,7 +1293,7 @@ export default function ContentAutomationPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">热点源真实表现</div>
               <div className="grid gap-3">
                 {snapshot.radarSourcePerformance.length > 0 ? snapshot.radarSourcePerformance.map((item) => (
-                  <div key={item.sourceId} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={item.sourceId} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.sourceLabel}</div>
@@ -1314,7 +1314,7 @@ export default function ContentAutomationPanel({
                     )}
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无热点转化表现</div>
                   </div>
                 )}
@@ -1323,7 +1323,7 @@ export default function ContentAutomationPanel({
           </div>
 
           {recentTitles.length > 0 && (
-            <div className="rounded-[var(--radius-md)] bg-white/70 p-5">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">本轮已执行内容</div>
               <div className="mt-3 grid gap-2">
                 {recentTitles.map((title) => (

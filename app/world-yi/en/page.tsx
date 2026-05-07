@@ -149,7 +149,7 @@ export default function WorldYiEnglishPage() {
               ['AI era rewards judgment.', 'The rarest skill is no longer collecting answers, but ordering them.'],
               ['World Yi rebuilds order.', 'It asks: what is your structure, what stage are you in, what environment are you facing, and what should you do next?'],
             ].map(([title, description]) => (
-              <div key={title} className="rounded-[var(--radius-md)] bg-white/80 p-5">
+              <div key={title} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
                 <div className="mt-3 text-sm font-semibold text-[color:var(--ink)]">{description}</div>
               </div>
@@ -215,7 +215,7 @@ export default function WorldYiEnglishPage() {
                     locale: 'en',
                     series: 'world-yi-en',
                   }}
-                  className="rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
                   <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
@@ -246,7 +246,7 @@ export default function WorldYiEnglishPage() {
                     locale: 'en',
                     series: 'world-yi-en',
                   }}
-                  className="block rounded-[var(--radius-md)] bg-white/80 p-5 transition hover:bg-white"
+                  className="block rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
                 </ContentCardLink>

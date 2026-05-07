@@ -845,7 +845,7 @@ export default function AIAssistantChat() {
 
   return (
     <div className="flex h-full flex-col bg-transparent">
-      <div className="border-b border-white/60 bg-white/70 p-4 md:p-5">
+      <div className="border-b border-white/60 bg-[color:var(--paper)] p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
@@ -873,7 +873,7 @@ export default function AIAssistantChat() {
           </div>
         </div>
 
-        <details className="mt-3 rounded-lg border border-[color:var(--line)] bg-white/74">
+        <details className="mt-3 rounded-lg border border-[color:var(--line)] bg-[color:var(--paper)]">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
             切换专项
             <span className="text-[color:var(--accent-strong)]">{intentPreset?.entryLabel || '自由结构追问'}</span>
@@ -917,7 +917,7 @@ export default function AIAssistantChat() {
           {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
           {!loadingHistory && messages.length === 0 && !context && (
-            <div className="space-y-4 rounded-[var(--radius)] bg-white/75 p-4 md:p-5">
+            <div className="space-y-4 rounded-[var(--radius)] bg-[color:var(--paper)] p-4 md:p-5">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3 w-3" />
@@ -962,7 +962,7 @@ export default function AIAssistantChat() {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="rounded-[var(--radius-md)] bg-white px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
             </div>
           )}
         </div>
@@ -979,7 +979,7 @@ export default function AIAssistantChat() {
         ) : null}
       </div>
 
-      <div className="border-t border-white/60 bg-white/70 p-4 md:p-5">
+      <div className="border-t border-white/60 bg-[color:var(--paper)] p-4 md:p-5">
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -1042,7 +1042,7 @@ export default function AIAssistantChat() {
                 }}
                 placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
                 rows={2}
-                className="min-h-[56px] w-full resize-none rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+                className="min-h-[56px] w-full resize-none rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
                 disabled={isTyping}
               />
               <div className="mt-2 flex flex-wrap items-center gap-2 px-1 text-xs text-[color:var(--muted)]">
@@ -1087,7 +1087,7 @@ function ContextCard({
   const recommendedQuestions = (intentPreset ? Array.from(new Set([...intentPreset.questions, ...context.suggestedPrompts])) : context.suggestedPrompts).slice(0, 2);
 
   return (
-    <div className="space-y-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
+    <div className="space-y-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 shadow-[0_18px_36px_rgba(23,32,51,0.06)] md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -1138,12 +1138,12 @@ function ContextCard({
           </summary>
           <div className="grid gap-3 border-t border-[color:var(--line)] p-3 md:grid-cols-2">
             {context.report ? (
-              <div className="rounded-lg bg-white px-3 py-3 text-sm leading-6 text-[color:var(--ink)]">
+              <div className="rounded-lg bg-[color:var(--paper)] px-3 py-3 text-sm leading-6 text-[color:var(--ink)]">
                 {`结构 ${context.report.pattern}，阶段重点 ${context.report.currentDaYun} / ${context.report.bestWindow}。`}
               </div>
             ) : null}
             {context.recentEvents.map((event) => (
-              <div key={event.id} className="rounded-lg bg-white px-3 py-3">
+              <div key={event.id} className="rounded-lg bg-[color:var(--paper)] px-3 py-3">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>
                 <div className="mt-1 text-xs text-[color:var(--muted)]">
                   {event.date} · {mapEventTypeLabel(event.type)} · {mapImpactLabel(event.impact)}
@@ -1197,7 +1197,7 @@ function ContextCard({
               const isSaved = savedEventKeys.includes(eventKey);
 
               return (
-                <div key={item.key} className="rounded-[var(--radius)] bg-white px-4 py-3">
+                <div key={item.key} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -1260,7 +1260,7 @@ function MaterialEvidenceComposer({
   const imageCount = materials.filter((item) => item.hasImage).length;
 
   return (
-    <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white/86 p-3">
+    <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-3">
       <input
         ref={fileInputRef}
         type="file"
@@ -1299,7 +1299,7 @@ function MaterialEvidenceComposer({
               className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-semibold transition ${
                 active
                   ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                  : 'border-[color:var(--line)] bg-white text-[color:var(--muted)] hover:border-[color:var(--accent)] hover:text-[color:var(--ink)]'
+                  : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)] hover:border-[color:var(--accent)] hover:text-[color:var(--ink)]'
               } disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <Icon className="h-3.5 w-3.5" />
@@ -1317,14 +1317,14 @@ function MaterialEvidenceComposer({
             onChange={(event) => onNoteChange(event.target.value)}
             placeholder={selected.placeholder}
             disabled={disabled}
-            className="h-11 w-full rounded-lg border border-[color:var(--line)] bg-white pl-9 pr-3 text-sm text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+            className="h-11 w-full rounded-lg border border-[color:var(--line)] bg-[color:var(--paper)] pl-9 pr-3 text-sm text-[color:var(--ink)] outline-none transition placeholder:text-[color:var(--muted)] focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
           />
         </div>
         <button
           type="button"
           onClick={onUploadClick}
           disabled={disabled || isAdding || materials.length >= maxMaterialCount}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[color:var(--line)] bg-white px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-[color:var(--line)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink)] transition hover:border-[color:var(--accent)] disabled:cursor-not-allowed disabled:opacity-60"
           title="添加图片或文件"
         >
           <ImagePlus className="h-4 w-4" />
@@ -1382,7 +1382,7 @@ function MaterialChip({
   ].filter(Boolean).join(' · ');
 
   return (
-    <div className="group inline-flex max-w-full items-center gap-2 rounded-lg border border-[color:var(--line)] bg-white/88 px-2.5 py-2 text-xs text-[color:var(--ink)]">
+    <div className="group inline-flex max-w-full items-center gap-2 rounded-lg border border-[color:var(--line)] bg-[color:var(--paper)] px-2.5 py-2 text-xs text-[color:var(--ink)]">
       {material.previewUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={material.previewUrl} alt={material.label} className="h-8 w-8 rounded-md object-cover" />
@@ -1479,7 +1479,7 @@ function MessageBubble({
                 value={editingContent}
                 onChange={(event) => onEditingContentChange(event.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-[var(--radius)] border border-white/20 bg-white/12 px-4 py-3 text-xs leading-6 text-white outline-none placeholder:text-white/60"
+                className="w-full resize-none rounded-[var(--radius)] border border-white/20 bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-white outline-none placeholder:text-white/60"
                 placeholder="修改你的问题"
               />
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1497,7 +1497,7 @@ function MessageBubble({
                     type="button"
                     onClick={() => onSubmitEdit(message.id)}
                     disabled={isActing}
-                    className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-2 rounded-full bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Check className="h-3.5 w-3.5" />
                     {isActing ? '提交中...' : '重新提交'}
@@ -1509,17 +1509,17 @@ function MessageBubble({
             <>
               <p className="text-xs leading-6">{message.content}</p>
               {message.tacitSummary ? (
-                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-[color:var(--paper)] px-3 py-2.5 text-[11px] leading-6 text-white/90">
                   <div className="font-semibold text-white">本轮默会信息</div>
                   <div className="mt-1 text-white/82">{message.tacitSummary}</div>
                 </div>
               ) : null}
               {message.materials?.length ? (
-                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-[color:var(--paper)] px-3 py-2.5 text-[11px] leading-6 text-white/90">
                   <div className="font-semibold text-white">本轮资料</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {message.materials.map((material) => (
-                      <span key={material.id} className="rounded-full border border-white/20 bg-white/10 px-2.5 py-1 font-semibold text-white/88">
+                      <span key={material.id} className="rounded-full border border-white/20 bg-[color:var(--paper)] px-2.5 py-1 font-semibold text-white/88">
                         {material.label}{material.hasImage ? ' · 图片' : ''}
                       </span>
                     ))}
@@ -1569,7 +1569,7 @@ function MessageBubble({
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-3xl rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
+      <div className="max-w-3xl rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (
@@ -1643,7 +1643,7 @@ function QuickQuestionButton({ question, onClick, disabled = false }: QuickQuest
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-4 text-left text-xs leading-6 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4 text-left text-xs leading-6 text-[color:var(--ink)] transition hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">结构化追问</div>
       <div className="mt-2">{question}</div>
@@ -1667,7 +1667,7 @@ function CorrectionPromptButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-white px-4 py-4 text-left transition hover:border-[color:var(--signal)] hover:bg-[color:var(--signal-soft)] disabled:cursor-not-allowed disabled:opacity-60"
+      className="rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-4 py-4 text-left transition hover:border-[color:var(--signal)] hover:bg-[color:var(--signal-soft)] disabled:cursor-not-allowed disabled:opacity-60"
     >
       <div className="text-sm font-semibold leading-7 text-[color:var(--ink)]">{question}</div>
       <div className="mt-2 text-xs text-[color:var(--muted)]">{helper}</div>

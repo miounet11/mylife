@@ -305,12 +305,12 @@ export const LifeTypeCard: React.FC<LifeTypeCardProps> = ({
                 {shareCopies.map((copy, idx) => (
                   <div
                     key={idx}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors group"
+                    className="flex items-start gap-3 p-3 rounded-lg bg-[color:var(--paper)] hover:bg-[color:var(--paper)] transition-colors group"
                   >
                     <p className="flex-1 text-white/80 text-sm whitespace-pre-line">{copy.text}</p>
                     <button
                       onClick={() => handleCopy(copy.text, copy.type)}
-                      className="p-2 rounded-lg bg-white/10 hover:bg-white/20 transition-colors"
+                      className="p-2 rounded-lg bg-[color:var(--paper)] hover:bg-[color:var(--paper)] transition-colors"
                       title="复制"
                     >
                       {copied === copy.type ? (

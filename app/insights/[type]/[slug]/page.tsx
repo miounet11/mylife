@@ -212,7 +212,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
             />
 
             {otherTypes.length > 0 ? (
-              <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/70 p-5">
+              <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">跨实体继续追踪</div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   {otherTypes.map((entry) => (
@@ -234,7 +234,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                         category: entityTypeLabels[entry.type],
                         tags: entry.tags,
                       }}
-                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
                     </ContentCardLink>
@@ -304,7 +304,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
                     meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `knowledge_article:${item.slug}`, contentType: 'knowledge' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -330,7 +330,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
                     meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                     <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -356,7 +356,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     contentType: 'knowledge',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">世界易的环境方法</div>
                 </ContentCardLink>
@@ -372,7 +372,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     contentType: 'knowledge',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">AI 时代的判断危机</div>
                 </ContentCardLink>
@@ -388,7 +388,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     contentType: 'insight',
                     series: 'world-yi',
                   }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">回到世界易总入口</div>
                 </ContentCardLink>
@@ -418,7 +418,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                         category: entityTypeLabels[item.type],
                         tags: item.tags,
                       }}
-                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                      className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                     </ContentCardLink>

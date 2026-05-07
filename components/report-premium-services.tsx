@@ -299,13 +299,13 @@ export default function ReportPremiumServices({
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                   placeholder="称呼，可选"
-                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
                 />
                 <input
                   value={contactValue}
                   onChange={(event) => setContactValue(event.target.value)}
                   placeholder="邮箱 / 微信 / 手机号"
-                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
                 />
               </div>
 
@@ -313,14 +313,14 @@ export default function ReportPremiumServices({
                 value={preferredContact}
                 onChange={(event) => setPreferredContact(event.target.value)}
                 placeholder="偏好的联系渠道，例如邮箱、微信"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
               />
 
               <textarea
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
                 placeholder={`请直接写清楚你最想解决的具体事情，例如：${selectedOffer?.title}里，我最想知道的是什么？`}
-                className="min-h-[150px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
+                className="min-h-[150px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
               />
 
               <button

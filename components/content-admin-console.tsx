@@ -641,9 +641,9 @@ export default function ContentAdminConsole() {
 
           <div className="mt-5 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedContentFixes?.length ? workboard.prioritizedContentFixes.slice(0, 6).map((item, index) => (
-              <div key={`${item.contentType}-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+              <div key={`${item.contentType}-${item.slug}`} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${item.contentType}`}</div>
@@ -662,7 +662,7 @@ export default function ContentAdminConsole() {
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
               </div>
             )) : (
-              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">暂无内容修复样本</div>
               </div>
             )}
@@ -674,18 +674,18 @@ export default function ContentAdminConsole() {
           <div className="mt-2 text-3xl font-black text-[color:var(--ink)]">{workboard?.prioritizedBouncePages?.length || 0}</div>
           <div className="mt-4 grid gap-3">
             {workboardLoading ? (
-              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
             ) : workboard?.prioritizedBouncePages?.length ? workboard.prioritizedBouncePages.slice(0, 6).map((item) => (
-              <div key={item.page} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+              <div key={item.page} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.page}</div>
-                  <div className="text-xs font-semibold text-rose-700">{`跳出 ${item.bounceRate}%`}</div>
+                  <div className="text-xs font-semibold text-[color:var(--data-down)]">{`跳出 ${item.bounceRate}%`}</div>
                 </div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{`PV ${item.views}`}</div>
                 <div className="mt-2 text-xs text-[color:var(--muted)]">{item.action}</div>
               </div>
             )) : (
-              <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">暂无高跳出页样本</div>
               </div>
             )}
@@ -706,9 +706,9 @@ export default function ContentAdminConsole() {
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {workboardLoading ? (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">加载中...</div>
           ) : workboard?.prioritizedToolFixes?.length ? workboard.prioritizedToolFixes.slice(0, 6).map((item, index) => (
-            <div key={item.slug} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div key={item.slug} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · tool`}</div>
@@ -733,7 +733,7 @@ export default function ContentAdminConsole() {
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具修复样本</div>
             </div>
           )}
@@ -752,28 +752,28 @@ export default function ContentAdminConsole() {
             <button
               type="button"
               onClick={() => setRepairStatusFilter('all')}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'all' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-white text-[color:var(--ink)]'}`}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'all' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--ink)]'}`}
             >
               全部
             </button>
             <button
               type="button"
               onClick={() => setRepairStatusFilter('todo')}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'todo' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-white text-[color:var(--ink)]'}`}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'todo' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--ink)]'}`}
             >
               待修
             </button>
             <button
               type="button"
               onClick={() => setRepairStatusFilter('in_progress')}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'in_progress' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-white text-[color:var(--ink)]'}`}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'in_progress' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--ink)]'}`}
             >
               进行中
             </button>
             <button
               type="button"
               onClick={() => setRepairStatusFilter('verified')}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'verified' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-white text-[color:var(--ink)]'}`}
+              className={`rounded-full border px-3 py-1 text-xs font-semibold ${repairStatusFilter === 'verified' ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--ink)]'}`}
             >
               已验证
             </button>
@@ -800,12 +800,12 @@ export default function ContentAdminConsole() {
             value={repairOwnerFilter}
             onChange={(event) => setRepairOwnerFilter(event.target.value)}
             placeholder="负责人筛选（输入名字后可点只看我负责）"
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-2 text-xs"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-xs"
           />
           <select
             value={repairSortMode}
             onChange={(event) => setRepairSortMode(event.target.value as 'priority' | 'updated_at' | 'status')}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-2 text-xs"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-xs"
           >
             <option value="priority">按优先级排序</option>
             <option value="updated_at">按最近更新时间排序</option>
@@ -814,7 +814,7 @@ export default function ContentAdminConsole() {
           <button
             type="button"
             onClick={() => setRepairMineOnly((current) => !current)}
-            className={`rounded-[var(--radius)] border px-4 py-2 text-xs font-semibold ${repairMineOnly ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-white text-[color:var(--ink)]'}`}
+            className={`rounded-[var(--radius)] border px-4 py-2 text-xs font-semibold ${repairMineOnly ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--ink)]'}`}
           >
             {repairMineOnly ? '已开启只看我负责' : '只看我负责'}
           </button>
@@ -822,9 +822,9 @@ export default function ContentAdminConsole() {
 
         <div className="mt-5 grid gap-3">
           {workboardLoading ? (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">执行队列加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">执行队列加载中...</div>
           ) : filteredToolRepairWorkflow.length ? filteredToolRepairWorkflow.slice(0, 12).map((item) => (
-            <div key={`repair-flow-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div key={`repair-flow-${item.slug}`} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               {(() => {
                 const isSaving = repairSavingSlug === item.slug;
                 const ownerDraft = (repairOwnerDrafts[item.slug] || '').trim();
@@ -875,13 +875,13 @@ export default function ContentAdminConsole() {
                   value={repairOwnerDrafts[item.slug] || ''}
                   onChange={(event) => setRepairOwnerDrafts((current) => ({ ...current, [item.slug]: event.target.value }))}
                   placeholder="负责人（例如：内容组-A）"
-                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-2 text-xs"
+                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-xs"
                 />
                 <button
                   type="button"
                   onClick={() => saveRepairMeta(item.slug)}
                   disabled={!canSaveMeta}
-                  className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-xs font-semibold text-[color:var(--ink)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isSaving ? '保存中...' : '保存负责人与备注'}
                 </button>
@@ -890,7 +890,7 @@ export default function ContentAdminConsole() {
                   onChange={(event) => setRepairNotesDrafts((current) => ({ ...current, [item.slug]: event.target.value }))}
                   placeholder="修复备注：本次改了什么、预期修复哪个断点"
                   rows={3}
-                  className="md:col-span-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-2 text-xs"
+                  className="md:col-span-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-2 text-xs"
                 />
               </div>
 
@@ -912,7 +912,7 @@ export default function ContentAdminConsole() {
               })()}
             </div>
           )) : (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无匹配工单</div>
             </div>
           )}
@@ -932,9 +932,9 @@ export default function ContentAdminConsole() {
 
         <div className="mt-5 grid gap-3 md:grid-cols-2">
           {workboardLoading ? (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4 text-sm text-[color:var(--muted)]">漏斗断点加载中...</div>
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4 text-sm text-[color:var(--muted)]">漏斗断点加载中...</div>
           ) : workboard?.prioritizedToolJourneyGaps?.length ? workboard.prioritizedToolJourneyGaps.slice(0, 8).map((item, index) => (
-            <div key={`tool-gap-${item.slug}`} className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div key={`tool-gap-${item.slug}`} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{`#${index + 1} · ${mapGapTypeLabel(item.gapType)}`}</div>
@@ -958,7 +958,7 @@ export default function ContentAdminConsole() {
               <div className="mt-2 text-xs text-[color:var(--muted)]">{item.reason}</div>
             </div>
           )) : (
-            <div className="rounded-[var(--radius-md)] bg-white/80 px-4 py-4">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-4">
               <div className="text-sm font-semibold text-[color:var(--ink)]">暂无工具漏斗样本</div>
             </div>
           )}
@@ -989,7 +989,7 @@ export default function ContentAdminConsole() {
             <select
               value={bulkCategory}
               onChange={(event) => setBulkCategory(event.target.value as ToolCategoryKey)}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               {toolCategories.map((item) => (
                 <option key={item.key} value={item.key}>{item.title}</option>
@@ -1001,7 +1001,7 @@ export default function ContentAdminConsole() {
               value={bulkThemes}
               onChange={(event) => setBulkThemes(event.target.value)}
               placeholder="事业, 岗位, 恢复"
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             />
           </Field>
           <Field label="工具 Slugs">
@@ -1009,14 +1009,14 @@ export default function ContentAdminConsole() {
               value={bulkToolSlugs}
               onChange={(event) => setBulkToolSlugs(event.target.value)}
               placeholder="career-role-fit, health-recovery-window"
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             />
           </Field>
           <Field label="快捷动作">
             <button
               type="button"
               onClick={applyPresetCategory}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm font-semibold text-[color:var(--ink)]"
             >
               载入该分类推荐工具
             </button>
@@ -1102,7 +1102,7 @@ export default function ContentAdminConsole() {
                       <button
                         type="button"
                         onClick={() => remove(entry.id)}
-                        className="rounded-full border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700"
+                        className="rounded-full border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-sm font-semibold text-[color:var(--data-down)]"
                       >
                         删除
                       </button>
@@ -1134,7 +1134,7 @@ export default function ContentAdminConsole() {
             <select
               value={form.contentType}
               onChange={(event) => setForm((prev) => ({ ...prev, contentType: event.target.value as ContentType }))}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               <option value="knowledge">知识库</option>
               <option value="case">案例库</option>
@@ -1145,7 +1145,7 @@ export default function ContentAdminConsole() {
             <select
               value={form.status}
               onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as ContentStatus }))}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               <option value="draft">草稿</option>
               <option value="published">已发布</option>
@@ -1156,7 +1156,7 @@ export default function ContentAdminConsole() {
               <select
                 value={form.subtype}
                 onChange={(event) => setForm((prev) => ({ ...prev, subtype: event.target.value }))}
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
               >
                 <option value="industry">行业</option>
                 <option value="city">城市</option>
@@ -1165,7 +1165,7 @@ export default function ContentAdminConsole() {
             </Field>
           )}
           <Field label="精选推荐">
-            <label className="flex h-[52px] items-center rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]">
+            <label className="flex h-[52px] items-center rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]">
               <input
                 type="checkbox"
                 checked={form.featured}
@@ -1176,26 +1176,26 @@ export default function ContentAdminConsole() {
             </label>
           </Field>
           <Field label="Slug">
-            <input value={form.slug} onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <input value={form.slug} onChange={(event) => setForm((prev) => ({ ...prev, slug: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           <Field label="标题">
-            <input value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <input value={form.title} onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           {form.contentType === 'insight' && (
             <Field label="实体名称">
-              <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+              <input value={form.name} onChange={(event) => setForm((prev) => ({ ...prev, name: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
             </Field>
           )}
           <Field label={form.contentType === 'knowledge' ? '分类' : '场景 / 标签'}>
-            <input value={form.category} onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <input value={form.category} onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           {form.contentType === 'knowledge' && (
             <Field label="阅读时长">
-              <input value={form.readTime} onChange={(event) => setForm((prev) => ({ ...prev, readTime: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+              <input value={form.readTime} onChange={(event) => setForm((prev) => ({ ...prev, readTime: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
             </Field>
           )}
           <Field label="标签（逗号分隔）">
-            <input value={form.tags} onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <input value={form.tags} onChange={(event) => setForm((prev) => ({ ...prev, tags: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
         </div>
 
@@ -1208,7 +1208,7 @@ export default function ContentAdminConsole() {
                 value={form.relatedToolSlugs}
                 onChange={(event) => setForm((prev) => ({ ...prev, relatedToolSlugs: event.target.value }))}
                 placeholder="career-role-fit, relationship-pace-fit"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
               />
             </Field>
             <Field label="关联报告主轴">
@@ -1216,7 +1216,7 @@ export default function ContentAdminConsole() {
                 value={form.relatedReportThemes}
                 onChange={(event) => setForm((prev) => ({ ...prev, relatedReportThemes: event.target.value }))}
                 placeholder="事业, 岗位, 恢复, 迁移"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
               />
             </Field>
             <Field label="关联知识文章 Slugs">
@@ -1224,7 +1224,7 @@ export default function ContentAdminConsole() {
                 value={form.relatedKnowledgeSlugs}
                 onChange={(event) => setForm((prev) => ({ ...prev, relatedKnowledgeSlugs: event.target.value }))}
                 placeholder="world-yi-methodology, world-yi-relationship-order"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
               />
             </Field>
             <Field label="关联案例 Slugs">
@@ -1232,7 +1232,7 @@ export default function ContentAdminConsole() {
                 value={form.relatedCaseSlugs}
                 onChange={(event) => setForm((prev) => ({ ...prev, relatedCaseSlugs: event.target.value }))}
                 placeholder="world-yi-case-return-or-stay"
-                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
               />
             </Field>
           </div>
@@ -1240,26 +1240,26 @@ export default function ContentAdminConsole() {
 
         <div className="mt-4 space-y-4">
           <Field label="摘要">
-            <textarea value={form.excerpt} onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))} className="min-h-[110px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <textarea value={form.excerpt} onChange={(event) => setForm((prev) => ({ ...prev, excerpt: event.target.value }))} className="min-h-[110px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           <Field label="SEO 标题">
-            <input value={form.seoTitle} onChange={(event) => setForm((prev) => ({ ...prev, seoTitle: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <input value={form.seoTitle} onChange={(event) => setForm((prev) => ({ ...prev, seoTitle: event.target.value }))} className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           <Field label="SEO 描述">
-            <textarea value={form.seoDescription} onChange={(event) => setForm((prev) => ({ ...prev, seoDescription: event.target.value }))} className="min-h-[90px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm" />
+            <textarea value={form.seoDescription} onChange={(event) => setForm((prev) => ({ ...prev, seoDescription: event.target.value }))} className="min-h-[90px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm" />
           </Field>
           <Field label="正文 Sections">
             <textarea
               value={form.sectionsText}
               onChange={(event) => setForm((prev) => ({ ...prev, sectionsText: event.target.value }))}
               placeholder={'每段 section 用如下格式：\n标题\n段落一\n段落二\n---\n下一个标题\n段落一'}
-              className="min-h-[260px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6"
+              className="min-h-[260px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6"
             />
           </Field>
         </div>
 
-        {message && <p className="mt-4 text-sm text-emerald-700">{message}</p>}
-        {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+        {message && <p className="mt-4 text-sm text-[color:var(--data-up)]">{message}</p>}
+        {error && <p className="mt-4 text-sm text-[color:var(--data-down)]">{error}</p>}
 
         <button
           type="button"

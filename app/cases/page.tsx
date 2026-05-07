@@ -276,7 +276,7 @@ export default function CasesPage() {
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
                       {['先看结构', '再看时位', '必须带环境', '最后回到动作'].map((item) => (
-                        <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                        <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
                           {item}
                         </div>
                       ))}
@@ -302,7 +302,7 @@ export default function CasesPage() {
                   <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)]">案例分类</h2>
                   <div className="mt-5 grid gap-3 md:grid-cols-2">
                     {['事业案例', '财富案例', '关系案例', '家庭案例', '迁移案例', '应用案例'].map((item) => (
-                      <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -358,7 +358,7 @@ export default function CasesPage() {
                               series: 'world-yi',
                               version: worldYiRoadmapSummary.version,
                             }}
-                            className="rounded-[var(--radius-md)] bg-white/84 p-5 transition hover:-translate-y-0.5"
+                            className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
                           >
                             <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                               <Icon className="h-5 w-5" />
@@ -373,7 +373,7 @@ export default function CasesPage() {
                       })}
                     </div>
 
-                    <div className="rounded-[var(--radius-md)] bg-white/78 p-5">
+                    <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例纪律</div>
                       <div className="mt-4 grid gap-3 md:grid-cols-2">
                         {[

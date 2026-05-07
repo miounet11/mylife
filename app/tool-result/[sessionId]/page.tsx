@@ -142,7 +142,7 @@ export default async function ToolResultPage({
             </div>
             <div className="mt-5 grid gap-3">
               {Array.isArray(result.evidence) ? (result.evidence as string[]).map((item) => (
-                <div key={item} className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               )) : null}
@@ -156,7 +156,7 @@ export default async function ToolResultPage({
             </div>
             <div className="mt-5 grid gap-3">
               {Array.isArray(result.premiumPreview) ? (result.premiumPreview as string[]).map((item) => (
-                <div key={item} className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               )) : null}
@@ -243,7 +243,7 @@ export default async function ToolResultPage({
                   </div>
                   <div className="mt-5 grid gap-4 md:grid-cols-3">
                     {deepDiveSections.map((section: { heading: string; body: string }) => (
-                      <div key={section.heading} className="rounded-[var(--radius-md)] bg-white/82 p-5">
+                      <div key={section.heading} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{section.heading}</div>
                         <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{section.body}</div>
                       </div>

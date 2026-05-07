@@ -229,7 +229,7 @@ export default function ContentGenerationPanel({
           <select
             value={form.mode}
             onChange={(event) => setForm((prev) => ({ ...prev, mode: event.target.value as GenerateMode }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
           >
             <option value="single">单篇生成</option>
             <option value="cluster">一键生成知识 + 案例 + 洞察</option>
@@ -241,7 +241,7 @@ export default function ContentGenerationPanel({
             <select
               value={form.contentType}
               onChange={(event) => setForm((prev) => ({ ...prev, contentType: event.target.value as ContentType }))}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               <option value="knowledge">知识库</option>
               <option value="case">案例库</option>
@@ -253,7 +253,7 @@ export default function ContentGenerationPanel({
             <select
               value={form.subtype}
               onChange={(event) => setForm((prev) => ({ ...prev, subtype: event.target.value as InsightSubtype }))}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               <option value="industry">行业洞察</option>
               <option value="city">城市洞察</option>
@@ -267,7 +267,7 @@ export default function ContentGenerationPanel({
             <select
               value={form.subtype}
               onChange={(event) => setForm((prev) => ({ ...prev, subtype: event.target.value as InsightSubtype }))}
-              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             >
               <option value="industry">行业洞察</option>
               <option value="city">城市洞察</option>
@@ -280,7 +280,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.platform}
             onChange={(event) => setForm((prev) => ({ ...prev, platform: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="seo / 抖音 / 快手 / TikTok / X"
           />
         </Field>
@@ -289,7 +289,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.topic}
             onChange={(event) => setForm((prev) => ({ ...prev, topic: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="例如：2026 年换工作该怎么看时机"
           />
         </Field>
@@ -298,7 +298,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.angle}
             onChange={(event) => setForm((prev) => ({ ...prev, angle: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="例如：普通用户最容易踩的误区"
           />
         </Field>
@@ -307,7 +307,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.keywords}
             onChange={(event) => setForm((prev) => ({ ...prev, keywords: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="逗号分隔"
           />
         </Field>
@@ -316,7 +316,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.audience}
             onChange={(event) => setForm((prev) => ({ ...prev, audience: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="例如：25-35 岁职场用户"
           />
         </Field>
@@ -325,7 +325,7 @@ export default function ContentGenerationPanel({
           <input
             value={form.entityName}
             onChange={(event) => setForm((prev) => ({ ...prev, entityName: event.target.value }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
             placeholder="洞察类可填写城市 / 行业 / 公司名"
           />
         </Field>
@@ -334,7 +334,7 @@ export default function ContentGenerationPanel({
           <select
             value={form.status}
             onChange={(event) => setForm((prev) => ({ ...prev, status: event.target.value as ContentStatus }))}
-            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm"
+            className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm"
           >
             <option value="draft">草稿</option>
             <option value="published">已发布</option>
@@ -342,7 +342,7 @@ export default function ContentGenerationPanel({
         </Field>
 
         <Field label="精选推荐">
-          <label className="flex h-[52px] items-center rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]">
+          <label className="flex h-[52px] items-center rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]">
             <input
               type="checkbox"
               checked={form.featured}
@@ -359,16 +359,16 @@ export default function ContentGenerationPanel({
           <textarea
             value={form.sourceSignals}
             onChange={(event) => setForm((prev) => ({ ...prev, sourceSignals: event.target.value }))}
-            className="min-h-[110px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6"
+            className="min-h-[110px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6"
             placeholder="把你收集到的平台热词、评论区问题、选题备注直接贴进来"
           />
         </Field>
       </div>
 
       {message && <p className="mt-4 text-sm text-[color:var(--accent-strong)]">{message}</p>}
-      {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[color:var(--data-down)]">{error}</p>}
       {job && (
-        <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/80 p-4 text-sm text-[color:var(--ink)]">
+        <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 text-sm text-[color:var(--ink)]">
           <div className="font-semibold">任务状态：{job.status}</div>
           <div className="mt-1 text-[color:var(--muted)]">
             尝试 {job.attempts} / {job.maxAttempts}

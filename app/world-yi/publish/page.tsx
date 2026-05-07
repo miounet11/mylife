@@ -182,7 +182,7 @@ export default function WorldYiPublishPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-publish',
                 }}
-                className="rounded-[var(--radius-md)] bg-white/80 p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
                 <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function WorldYiPublishPage() {
             </div>
             <div className="mt-4 grid gap-3 text-sm text-[color:var(--ink)]">
               {['十卷主书 docs', '执行批次 / FAQ / 版本文档', '知识页 / 案例页 / 主题页 / 结果页'].map((item) => (
-                <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-4 font-semibold">{item}</div>
+                <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 font-semibold">{item}</div>
               ))}
             </div>
           </div>
@@ -214,7 +214,7 @@ export default function WorldYiPublishPage() {
             </div>
             <div className="mt-4 grid gap-3 text-sm text-[color:var(--ink)]">
               {['主书', '知识页', '案例页', '入口页', '持续发布队列'].map((item) => (
-                <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-4 font-semibold">{item}</div>
+                <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 font-semibold">{item}</div>
               ))}
             </div>
           </div>

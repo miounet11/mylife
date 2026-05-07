@@ -440,13 +440,13 @@ export default function ResultPublicControls({
           </div>
           <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-3 text-sm text-[color:var(--ink)]">{summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {reportVersion}
             </span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {deliveryTierLabel}
             </span>
-            <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {reasoningModeLabel}
             </span>
           </div>
@@ -455,12 +455,12 @@ export default function ResultPublicControls({
         <div className="grid gap-4 px-5 py-5 md:grid-cols-[1.08fr_0.92fr]">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">传播重点</div>
-            <div className="mt-3 rounded-[var(--radius)] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+            <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
               {nextFocusSummary}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {highlights.map((item) => (
-                <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+                <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                   <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{item.value}</div>
                 </div>
@@ -468,7 +468,7 @@ export default function ResultPublicControls({
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-4">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
             <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
               <QrCode className="h-4 w-4 text-[color:var(--accent-strong)]" />
               {isPublic ? '扫码查看结果' : '扫码进入入口'}
@@ -482,10 +482,10 @@ export default function ResultPublicControls({
                   width={176}
                   height={176}
                   unoptimized
-                  className="h-44 w-44 rounded-[var(--radius)] bg-white p-3"
+                  className="h-44 w-44 rounded-[var(--radius)] bg-[color:var(--paper)] p-3"
                 />
               ) : (
-                <div className="flex h-44 w-44 items-center justify-center rounded-[var(--radius)] bg-white text-sm text-[color:var(--muted)]">
+                <div className="flex h-44 w-44 items-center justify-center rounded-[var(--radius)] bg-[color:var(--paper)] text-sm text-[color:var(--muted)]">
                   生成中...
                 </div>
               )}

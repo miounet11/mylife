@@ -266,7 +266,7 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
         </div>
 
         {/* 时间范围 */}
-        <div className="mb-3 p-2 bg-white rounded border border-[color:var(--hairline)]">
+        <div className="mb-3 p-2 bg-[color:var(--paper)] rounded border border-[color:var(--hairline)]">
           <div className="flex items-center space-x-2 text-sm text-[color:var(--ink-4)]">
             <Calendar className="w-4 h-4" />
             <span>

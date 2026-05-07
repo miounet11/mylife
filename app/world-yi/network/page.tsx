@@ -129,7 +129,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-domains',
                 }}
-                className="rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{domain.shortTitle}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{domain.title}</h2>
@@ -157,7 +157,7 @@ export default function WorldYiNetworkPage() {
                     series: 'world-yi-applications',
                     topicName: group.title,
                   }}
-                  className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
                 >
                   <div className="text-lg font-bold text-[color:var(--ink)]">{group.title}</div>
                 </ContentCardLink>
@@ -180,7 +180,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-global',
                 }}
-                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">全球华人专题网络</div>
               </ContentCardLink>
@@ -193,7 +193,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-en',
                 }}
-                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">English Track Network</div>
               </ContentCardLink>
@@ -223,7 +223,7 @@ export default function WorldYiNetworkPage() {
                   series: 'world-yi-insights',
                   topicName: title,
                 }}
-                className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
               </ContentCardLink>

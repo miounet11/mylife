@@ -91,7 +91,7 @@ const SegmentInput = forwardRef<HTMLInputElement, SegmentInputProps>(function Se
         maxLength={maxLength}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+        className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-center text-base font-semibold text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
       />
     </label>
   );
@@ -146,7 +146,7 @@ export default function BirthDateInput({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <CalendarDays className="h-4 w-4 text-[color:var(--warm)]" />
           公历出生日期
@@ -255,13 +255,13 @@ export default function BirthDateInput({
               ? formatDateValue(value).replaceAll('-', ' / ')
               : '待填写'}
           </div>
-          <div className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-xs font-medium text-[color:var(--accent-strong)]">
+          <div className="inline-flex items-center gap-1 rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-medium text-[color:var(--accent-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             {value.year !== null && value.month !== null && value.day !== null ? '作为判断日期' : '填写后生效'}
           </div>
         </div>
         {error ? (
-          <div className="mt-2 text-xs text-red-600">{error}</div>
+          <div className="mt-2 text-xs text-[color:var(--data-down)]">{error}</div>
         ) : (
           <div className="mt-2 text-xs text-[color:var(--muted)]">
             如果只记得大概日期，请先核对出生证明或户籍记录后再提交。

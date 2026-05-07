@@ -87,7 +87,7 @@ export default function AgenticInsightPanel({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-6">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-6">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">专家解释层</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
           {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
@@ -119,7 +119,7 @@ export default function AgenticInsightPanel({
                   <div className="font-semibold text-[color:var(--ink)]">{item.label}</div>
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     {item.windows.length > 0 ? (
-                      <div className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
+                      <div className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                         {item.windows[0].label}
                       </div>
                     ) : null}
@@ -134,7 +134,7 @@ export default function AgenticInsightPanel({
                 {item.highlights.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {item.highlights.slice(0, 4).map((highlight) => (
-                      <span key={highlight} className="rounded-full bg-white px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
+                      <span key={highlight} className="rounded-full bg-[color:var(--paper)] px-3 py-2 text-xs font-semibold text-[color:var(--ink)]">
                         {highlight}
                       </span>
                     ))}
@@ -157,7 +157,7 @@ export default function AgenticInsightPanel({
         )}
       </section>
 
-      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-6">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-6">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">天时地利人和</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">把个人命局放回真实时空环境里判断。</div>
 

@@ -216,10 +216,10 @@ export default function AdminPremiumServiceConsole() {
     <div id="premium-service-console" className="space-y-6">
       <div className="grid gap-4 md:grid-cols-4">
         {[
-          { label: '待处理', value: summary.countsByStatus.new, tone: 'bg-amber-50 text-amber-800' },
-          { label: '处理中', value: summary.countsByStatus.in_progress, tone: 'bg-sky-50 text-sky-700' },
-          { label: '当前打开', value: summary.totalOpen, tone: 'bg-white text-[color:var(--ink)]' },
-          { label: '已处理完成', value: summary.totalHandled, tone: 'bg-emerald-50 text-emerald-700' },
+          { label: '待处理', value: summary.countsByStatus.new, tone: 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]' },
+          { label: '处理中', value: summary.countsByStatus.in_progress, tone: 'bg-[color:var(--env-soft)] text-[color:var(--env)]' },
+          { label: '当前打开', value: summary.totalOpen, tone: 'bg-[color:var(--paper)] text-[color:var(--ink)]' },
+          { label: '已处理完成', value: summary.totalHandled, tone: 'bg-[color:rgba(47,125,82,0.10)] text-[color:var(--data-up)]' },
         ].map((item) => (
           <div key={item.label} className={`rounded-[var(--radius-md)] px-5 py-5 ${item.tone}`}>
             <div className="text-xs tracking-[0.18em]">{item.label}</div>
@@ -276,8 +276,8 @@ export default function AdminPremiumServiceConsole() {
           </div>
         </div>
 
-        {message ? <div className="mt-4 rounded-[var(--radius)] bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-        {error ? <div className="mt-4 rounded-[var(--radius)] bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+        {message ? <div className="mt-4 rounded-[var(--radius)] bg-[color:rgba(47,125,82,0.10)] px-4 py-3 text-sm text-[color:var(--data-up)]">{message}</div> : null}
+        {error ? <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--data-down)]">{error}</div> : null}
 
         <div className="mt-6 grid gap-4">
           {loading ? (
@@ -348,7 +348,7 @@ export default function AdminPremiumServiceConsole() {
                       <select
                         value={draft.status}
                         onChange={(event) => updateDraft(item.id, { status: event.target.value as PremiumServiceRequestRecord['status'] })}
-                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]"
                       >
                         <option value="new">新提交</option>
                         <option value="contacted">已跟进</option>
@@ -361,7 +361,7 @@ export default function AdminPremiumServiceConsole() {
                       <select
                         value={draft.priority}
                         onChange={(event) => updateDraft(item.id, { priority: event.target.value as PriorityValue })}
-                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm text-[color:var(--ink)]"
+                        className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]"
                       >
                         <option value="normal">普通优先级</option>
                         <option value="high">高优先级</option>
@@ -373,7 +373,7 @@ export default function AdminPremiumServiceConsole() {
                       value={draft.adminNote}
                       onChange={(event) => updateDraft(item.id, { adminNote: event.target.value })}
                       placeholder="写下这次跟进说明、判断重点或下一步动作"
-                      className="min-h-[120px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+                      className="min-h-[120px] w-full rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
                     />
 
                     <label className="flex items-center gap-3 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
@@ -424,15 +424,15 @@ function mapStatusLabel(status: PremiumServiceRequestRecord['status']) {
 function mapStatusClass(status: PremiumServiceRequestRecord['status']) {
   switch (status) {
     case 'contacted':
-      return 'bg-sky-50 text-sky-700';
+      return 'bg-[color:var(--env-soft)] text-[color:var(--env)]';
     case 'in_progress':
-      return 'bg-amber-50 text-amber-800';
+      return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
     case 'delivered':
-      return 'bg-emerald-50 text-emerald-700';
+      return 'bg-[color:rgba(47,125,82,0.10)] text-[color:var(--data-up)]';
     case 'closed':
       return 'bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]';
     case 'cancelled':
-      return 'bg-rose-50 text-rose-700';
+      return 'bg-[color:var(--alert-soft)] text-[color:var(--data-down)]';
     default:
       return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   }

@@ -220,10 +220,10 @@ export default function ContentRadarPanel({
       </div>
 
       {message && <p className="mt-4 text-sm text-[color:var(--accent-strong)]">{message}</p>}
-      {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+      {error && <p className="mt-4 text-sm text-[color:var(--data-down)]">{error}</p>}
 
       {loading ? (
-        <div className="mt-6 rounded-[var(--radius-md)] bg-white/70 p-5 text-sm text-[color:var(--muted)]">加载中...</div>
+        <div className="mt-6 rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 text-sm text-[color:var(--muted)]">加载中...</div>
       ) : (
         <div className="mt-6 space-y-6">
           <div className="grid gap-4 md:grid-cols-4">
@@ -257,7 +257,7 @@ export default function ContentRadarPanel({
                 {signals.length > 0 ? signals.slice(0, 10).map((signal) => (
                   <div
                     key={signal.id}
-                    className="rounded-[var(--radius)] bg-white/80 px-4 py-4 transition hover:bg-white"
+                    className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -303,7 +303,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无热点信号</div>
                   </div>
                 )}
@@ -314,7 +314,7 @@ export default function ContentRadarPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">建议选题</div>
               <div className="grid gap-3">
                 {suggestions.length > 0 ? suggestions.slice(0, 8).map((item) => (
-                  <div key={`${item.sourceId}-${item.url}`} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div key={`${item.sourceId}-${item.url}`} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.suggestedTopic}</div>
                       <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{item.score}</div>
@@ -341,7 +341,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无建议选题</div>
                   </div>
                 )}
@@ -353,20 +353,20 @@ export default function ContentRadarPanel({
             <div className="text-sm font-semibold text-[color:var(--muted)]">最近执行记录</div>
             <div className="grid gap-3">
               {runs.length > 0 ? runs.slice(0, 8).map((run) => (
-                <div key={run.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                <div key={run.id} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{run.sourceLabel}</div>
-                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${run.status === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
+                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${run.status === 'success' ? 'bg-[color:rgba(47,125,82,0.10)] text-[color:var(--data-up)]' : 'bg-[color:var(--alert-soft)] text-[color:var(--data-down)]'}`}>
                       {run.status === 'success' ? '成功' : '失败'}
                     </div>
                   </div>
                   <div className="mt-2 text-xs text-[color:var(--muted)]">
                     抓取 {run.fetchedCount || 0} / 入库 {run.savedCount || 0} · {run.createdAt || ''}
                   </div>
-                  {run.error && <div className="mt-2 text-xs leading-6 text-rose-700">{run.error}</div>}
+                  {run.error && <div className="mt-2 text-xs leading-6 text-[color:var(--data-down)]">{run.error}</div>}
                 </div>
               )) : (
-                <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">暂无执行记录</div>
                 </div>
               )}

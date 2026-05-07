@@ -183,13 +183,13 @@ export const StateVectorDashboard: React.FC<StateVectorDashboardProps> = ({
   const { comprehensive, elemental, tenGod, structure } = stateVector;
 
   return (
-    <div className={`rounded-[var(--radius)] bg-white[color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
+    <div className={`rounded-[var(--radius)] bg-[color:var(--paper)][color:var(--bg-sunken)] shadow-lg overflow-hidden ${className}`}>
       {/* 标题栏 */}
       <div className="px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600">
         <h3 className="text-white font-semibold flex items-center gap-2">
           <span className="text-lg">⚛️</span>
           {title}
-          <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">v1.4.0</span>
+          <span className="ml-auto text-xs bg-[color:var(--paper)] px-2 py-0.5 rounded-full">v1.4.0</span>
         </h3>
       </div>
 

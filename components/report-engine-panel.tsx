@@ -295,7 +295,7 @@ export default function ReportEnginePanel({
 
       <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--ink)]">{description}</div>
 
-      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
         <div className="text-sm font-semibold text-[color:var(--ink)]">本报告推理链路</div>
         <div className="mt-3 grid gap-2">
           {productReasoningTraceSteps.map((step, index) => (
@@ -311,7 +311,7 @@ export default function ReportEnginePanel({
       </div>
 
       {upgradeJob?.status && ['pending', 'running', 'retry', 'failed', 'completed'].includes(upgradeJob.status) ? (
-        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-[color:var(--ink)]">后台专家增强任务</div>
             <div className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -335,7 +335,7 @@ export default function ReportEnginePanel({
         </div>
       ) : null}
 
-      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             {auditStatus === 'ready' ? (
@@ -373,7 +373,7 @@ export default function ReportEnginePanel({
       ) : null}
 
       {feedbackLoop?.validationInsights ? (
-        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-[color:var(--ink)]">反馈闭环</div>
             <div className={`rounded-full px-3 py-1 text-xs font-semibold ${feedbackBadgeClass}`}>
@@ -400,7 +400,7 @@ export default function ReportEnginePanel({
       ) : null}
 
       {lineage.length > 0 ? (
-        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-[color:var(--ink)]">版本演进记录</div>
             <div className="text-xs text-[color:var(--muted)]">{`已记录 ${lineage.length} 次生成`}</div>
@@ -422,13 +422,13 @@ export default function ReportEnginePanel({
                   </div>
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs">
-                  <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-[color:var(--ink)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-2.5 py-1 font-semibold text-[color:var(--ink)]">
                     {item.generatedFrom === 'upgrade' ? '升级生成' : '首次生成'}
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-[color:var(--ink)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-2.5 py-1 font-semibold text-[color:var(--ink)]">
                     {`质量 ${item.qualityScore || '--'} / ${item.qualityGrade || 'B'}`}
                   </span>
-                  <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-[color:var(--ink)]">
+                  <span className="rounded-full bg-[color:var(--paper)] px-2.5 py-1 font-semibold text-[color:var(--ink)]">
                     {item.reasoningMode === 'parallel-agents'
                       ? '并发专家协同'
                       : item.reasoningMode === 'deterministic-expert'
@@ -464,7 +464,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-[color:var(--signal-strong)]">当前需要重点关注</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.concerns.slice(0, 3).map((item) => (
-              <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-3 text-xs leading-6 text-[color:var(--signal-strong)]">
+              <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--signal-strong)]">
                 {item}
               </div>
             ))}
@@ -477,7 +477,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-[color:var(--alert)]">阻塞 S级交付的关键问题</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.blockingIssues.slice(0, 4).map((item) => (
-              <div key={item} className="rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--alert)]">
+              <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--alert)]">
                 {item}
               </div>
             ))}
@@ -490,7 +490,7 @@ export default function ReportEnginePanel({
           <div className="text-sm font-semibold text-[color:var(--ink)]">动作</div>
           <div className="mt-3 grid gap-2">
             {qualityAudit.recommendedActions.slice(0, 3).map((item) => (
-              <div key={item} className="rounded-[var(--radius)] bg-white px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
+              <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
                 {item}
               </div>
             ))}
@@ -500,7 +500,7 @@ export default function ReportEnginePanel({
 
       {canManage && needsUpgrade && (
         <div className="mt-4 space-y-3">
-          <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
+          <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
             <div className="text-sm font-semibold text-[color:var(--ink)]">选择升级方式</div>
             <div className="mt-4 grid gap-3">
               {[
@@ -550,7 +550,7 @@ export default function ReportEnginePanel({
 
 function VersionTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-[var(--radius)] bg-white px-4 py-4">
+    <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{value}</div>
     </div>

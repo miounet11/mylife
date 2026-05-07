@@ -237,7 +237,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
 
         {/* 日主分析简要 */}
         {dayMasterAnalysis && (
-          <div className="mt-3 p-3 rounded-lg bg-white/5 backdrop-blur-sm border border-white/10">
+          <div className="mt-3 p-3 rounded-lg bg-[color:var(--paper)] backdrop-blur-sm border border-white/10">
             <p className="text-xs text-white/70 leading-relaxed line-clamp-2">
               {dayMasterAnalysis.slice(0, 100)}
               {dayMasterAnalysis.length > 100 && '...'}

@@ -208,7 +208,7 @@ export const EventProbabilityCurve: React.FC<EventProbabilityCurveProps> = ({
         <h3 className="text-white font-semibold flex items-center gap-2">
           <span className="text-lg">📈</span>
           {title}
-          <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">v1.4.0</span>
+          <span className="ml-auto text-xs bg-[color:var(--paper)] px-2 py-0.5 rounded-full">v1.4.0</span>
         </h3>
       </div>
 

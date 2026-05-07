@@ -491,7 +491,7 @@ export default function ProfilePage() {
 
             {(updatesSummary?.latestReport || updatesSummary?.latestDigest) ? (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[var(--radius)] bg-white px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestReport
@@ -518,7 +518,7 @@ export default function ProfilePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-[var(--radius)] bg-white px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestDigest
@@ -628,7 +628,7 @@ function EventsSkeleton() {
 
 function ChartSkeleton() {
   return (
-    <div className="bg-white rounded-[var(--radius)] border border-[color:var(--hairline-strong)] p-6">
+    <div className="bg-[color:var(--paper)] rounded-[var(--radius)] border border-[color:var(--hairline-strong)] p-6">
       <div className="h-6 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse mb-4"></div>
       <div className="h-64 bg-[color:var(--hairline-strong)] rounded-lg animate-pulse"></div>
     </div>
@@ -688,7 +688,7 @@ function mapProfileStatusTone(tone: 'neutral' | 'accent' | 'success' | 'warning'
   if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
   if (tone === 'success') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
   if (tone === 'warning') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
-  return 'bg-white text-[color:var(--ink)]';
+  return 'bg-[color:var(--paper)] text-[color:var(--ink)]';
 }
 
 function mapDigestStatus(status?: string | null) {

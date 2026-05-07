@@ -46,7 +46,7 @@ export default function RetentionResumePanel({
     <section className="rounded-[var(--radius)] border border-[rgba(18,125,111,0.22)] bg-[color:var(--accent-strong)] p-4 text-white shadow-[0_18px_42px_rgba(11,95,85,0.16)] md:p-5">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-stretch">
         <div className="space-y-3">
-          <div className="inline-flex rounded-md bg-white/12 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-white/82">
+          <div className="inline-flex rounded-md bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold tracking-[0.16em] text-white/82">
             {eyebrow}
           </div>
           <div>
@@ -58,7 +58,7 @@ export default function RetentionResumePanel({
                 href={primaryAction.href}
                 page={page}
                 target={primaryAction.target}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-white px-5 py-3 text-sm font-black text-[color:var(--ink)] shadow-[0_12px_30px_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5"
+                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[color:var(--paper)] px-5 py-3 text-sm font-black text-[color:var(--ink)] shadow-[0_12px_30px_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5"
                 meta={{
                   source,
                   ctaStrategyKey,
@@ -77,7 +77,7 @@ export default function RetentionResumePanel({
                   href={action.href}
                   page={page}
                   target={action.target}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 bg-white/10 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-white/16"
+                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 bg-[color:var(--paper)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--paper)]"
                   meta={{
                     source,
                     ctaStrategyKey,
@@ -96,7 +96,7 @@ export default function RetentionResumePanel({
 
         <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
           {stats.map((item) => (
-            <div key={item.label} className="rounded-lg border border-white/12 bg-white/10 px-4 py-3 backdrop-blur">
+            <div key={item.label} className="rounded-lg border border-white/12 bg-[color:var(--paper)] px-4 py-3 backdrop-blur">
               <div className="text-xs font-semibold tracking-[0.16em] text-white/82">{item.label}</div>
               <div className="mt-1 text-2xl font-black text-white">{item.value}</div>
               {item.helper ? <div className="mt-1 text-xs leading-5 text-white/68">{item.helper}</div> : null}

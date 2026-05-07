@@ -171,7 +171,7 @@ export default function LlmProviderConsole() {
             <select
               value={form.purpose}
               onChange={(event) => setForm((current) => ({ ...current, purpose: event.target.value as ProviderPurpose }))}
-              className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2"
+              className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2"
             >
               <option value="image">图片生成</option>
               <option value="article">文章生成</option>
@@ -179,32 +179,32 @@ export default function LlmProviderConsole() {
           </label>
           <label className="text-sm font-semibold text-[color:var(--ink)]">
             名称
-            <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+            <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
           </label>
           <label className="text-sm font-semibold text-[color:var(--ink)]">
             Base URL
-            <input value={form.baseUrl} onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+            <input value={form.baseUrl} onChange={(event) => setForm((current) => ({ ...current, baseUrl: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
           </label>
           <label className="text-sm font-semibold text-[color:var(--ink)]">
             模型
-            <input value={form.model} onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+            <input value={form.model} onChange={(event) => setForm((current) => ({ ...current, model: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
           </label>
           <label className="text-sm font-semibold text-[color:var(--ink)]">
             API Key
-            <input type="password" value={form.apiKey} onChange={(event) => setForm((current) => ({ ...current, apiKey: event.target.value }))} placeholder="留空则保留原 key" className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+            <input type="password" value={form.apiKey} onChange={(event) => setForm((current) => ({ ...current, apiKey: event.target.value }))} placeholder="留空则保留原 key" className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
           </label>
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="text-sm font-semibold text-[color:var(--ink)]">
               优先级
-              <input value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+              <input value={form.priority} onChange={(event) => setForm((current) => ({ ...current, priority: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
             </label>
             <label className="text-sm font-semibold text-[color:var(--ink)]">
               超时 ms
-              <input value={form.timeoutMs} onChange={(event) => setForm((current) => ({ ...current, timeoutMs: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+              <input value={form.timeoutMs} onChange={(event) => setForm((current) => ({ ...current, timeoutMs: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
             </label>
             <label className="text-sm font-semibold text-[color:var(--ink)]">
               重试
-              <input value={form.maxRetries} onChange={(event) => setForm((current) => ({ ...current, maxRetries: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-3 py-2" />
+              <input value={form.maxRetries} onChange={(event) => setForm((current) => ({ ...current, maxRetries: event.target.value }))} className="mt-2 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2" />
             </label>
           </div>
           <label className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
@@ -214,8 +214,8 @@ export default function LlmProviderConsole() {
           <button type="button" onClick={saveProvider} disabled={saving} className="action-primary justify-center">
             {saving ? '保存中...' : '保存配置'}
           </button>
-          {message ? <div className="rounded-[var(--radius)] bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">{message}</div> : null}
-          {error ? <div className="rounded-[var(--radius)] bg-red-50 p-3 text-sm font-semibold text-red-700">{error}</div> : null}
+          {message ? <div className="rounded-[var(--radius)] bg-[color:rgba(47,125,82,0.10)] p-3 text-sm font-semibold text-[color:var(--data-up)]">{message}</div> : null}
+          {error ? <div className="rounded-[var(--radius)] bg-[color:var(--alert-soft)] p-3 text-sm font-semibold text-[color:var(--data-down)]">{error}</div> : null}
         </div>
       </div>
 
@@ -226,7 +226,7 @@ export default function LlmProviderConsole() {
             <div className="text-sm font-semibold text-[color:var(--muted)]">{purpose === 'image' ? '图片生成 Provider' : '文章生成 Provider'}</div>
             <div className="mt-4 grid gap-3">
               {grouped[purpose].map((provider) => (
-                <div key={provider.id} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-4">
+                <div key={provider.id} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
                       <div className="text-base font-bold text-[color:var(--ink)]">{provider.name}</div>

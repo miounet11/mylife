@@ -92,7 +92,7 @@ export default function TenGodsChart({ tenGods }: TenGodsChartProps) {
           <h4 className="font-bold text-[color:var(--ink-1)] mb-4 text-lg">十神解读</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {getGodDescriptions().map((desc, index) => (
-              <div key={index} className="bg-white rounded-lg p-4 border border-[color:var(--hairline)]">
+              <div key={index} className="bg-[color:var(--paper)] rounded-lg p-4 border border-[color:var(--hairline)]">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="text-xl">{desc.icon}</span>
                   <span className="font-semibold text-[color:var(--ink-1)]">{desc.god}</span>

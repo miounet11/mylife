@@ -39,7 +39,7 @@ export default function FiveElementsChart({ fiveElements }: FiveElementsChartPro
       </CardHeader>
       <CardContent>
         {/* 柱状图 */}
-        <div className="mb-8 bg-white rounded-[var(--radius)] p-6 shadow-md">
+        <div className="mb-8 bg-[color:var(--paper)] rounded-[var(--radius)] p-6 shadow-md">
           <div className="space-y-4">
             {elements.map((element) => (
               <ElementBar
@@ -130,7 +130,7 @@ function ElementCard({ element }: any) {
 
   return (
     <div className={cn(
-      "bg-white rounded-[var(--radius)] p-4 shadow-md hover:shadow-xl transition transform hover:scale-105 border-2",
+      "bg-[color:var(--paper)] rounded-[var(--radius)] p-4 shadow-md hover:shadow-xl transition transform hover:scale-105 border-2",
       isStrong && "border-[color:var(--data-up)]",
       element.quality === 'medium' && "border-[color:var(--env)]",
       isWeak && "border-orange-400"
