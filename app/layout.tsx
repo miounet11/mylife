@@ -41,18 +41,13 @@ export const metadata: Metadata = {
     siteName: '人生K线',
     title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
     description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
-    images: [
-      {
-        url: '/icon.svg',
-        alt: '人生K线',
-      },
-    ],
+    // images 由 app/opengraph-image.tsx 自动注入（1200x630 决策台风）
   },
   twitter: {
     card: 'summary_large_image',
     title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
     description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
-    images: ['/icon.svg'],
+    // images 由 app/twitter-image.tsx 自动注入（同 og 图）
   },
   other: {
     'geo.region': 'CN',
@@ -69,10 +64,7 @@ export const metadata: Metadata = {
       'max-video-preview': -1,
     },
   },
-  icons: {
-    icon: '/icon.svg',
-    apple: '/icon.svg',
-  },
+  // icons / manifest 由 app/icon.svg + app/apple-icon.tsx + app/manifest.ts 自动注入
 };
 
 export default function RootLayout({
