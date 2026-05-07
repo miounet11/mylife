@@ -249,7 +249,7 @@ export default async function ToolDetailPage({
         <section id="tool-runner" className="mt-6 grid gap-8 xl:grid-cols-[1fr_1fr]">
           {imageUploadChatHref ? (
             <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white/82 p-5">
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Bot className="h-3.5 w-3.5" />
                 图片上传入口
               </div>
@@ -262,13 +262,13 @@ export default async function ToolDetailPage({
                   href={imageUploadChatHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_image_upload_panel"
-                  className="action-primary action-main"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
                   meta={{ toolSlug: tool.slug, category: tool.category, chatIntent: tool.chatIntent || null }}
                 >
                   {imageUploadPrimaryLabel || '上传图片测算'}
                   <ArrowRight className="h-4 w-4" />
                 </ResultCtaLink>
-                <div className="static-card rounded-[1.2rem] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] rounded-[1.2rem] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
                   手相只做可见掌纹、掌丘、手型和照片质量的相学文化观察；户型只做可见结构、动线、采光、收纳和形势问题诊断。
                 </div>
               </div>
@@ -287,7 +287,7 @@ export default async function ToolDetailPage({
             />
           )}
 
-          <div className="workspace-panel p-6">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
             {growthProfile ? (
               <div className="mb-5 rounded-[1.5rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4">
                 <div className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--accent-strong)]">冷启动转化路径</div>
@@ -298,7 +298,7 @@ export default async function ToolDetailPage({
                 </div>
               </div>
             ) : null}
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               运行前确认
             </div>
@@ -332,13 +332,13 @@ export default async function ToolDetailPage({
               <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 深测会补：{tool.premiumOutputFields.join('、')}
               </div>
-              <div className="action-guide pt-2">更多入口</div>
-              <div className="action-strip flex flex-wrap gap-3 text-sm font-semibold">
+              <div className="text-xs font-bold text-[color:var(--brand-strong)] pt-2">更多入口</div>
+              <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex flex-wrap gap-3 text-sm font-semibold">
                 <ResultCtaLink
                   href={`/tools/category/${tool.category}`}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_runner_tip_category"
-                  className="action-secondary"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   meta={{ toolSlug: tool.slug, category: tool.category }}
                 >
                   返回该分类
@@ -347,7 +347,7 @@ export default async function ToolDetailPage({
                   href={imageUploadChatHref || toolRunnerChatHref}
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_runner_tip_chat"
-                  className="action-secondary"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   meta={{ toolSlug: tool.slug, category: tool.category, chatIntent: tool.chatIntent || null }}
                 >
                   <span className="inline-flex items-center gap-2">
@@ -359,7 +359,7 @@ export default async function ToolDetailPage({
                   href="/analyze"
                   page={`/tools/${tool.slug}`}
                   target="tool_detail_runner_tip_analyze"
-                  className="action-secondary"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   meta={{ toolSlug: tool.slug, category: tool.category }}
                 >
                   重新做综合判断
@@ -381,7 +381,7 @@ export default async function ToolDetailPage({
                 ['优先帮你', tool.valuePromise],
                 ['正确问法', tool.rightQuestion],
               ].map(([title, description]) => (
-                <div key={title} className="soft-card rounded-[1.5rem] p-5">
+                <div key={title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                   <div className="text-base font-bold text-[color:var(--ink)]">{title}</div>
                   <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{description}</div>
                 </div>
@@ -411,7 +411,7 @@ export default async function ToolDetailPage({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {tool.freeInsights.slice(0, 2).map((item) => (
-                  <div key={item} className="soft-card rounded-[1.5rem] p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">免费先看</div>
                     <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
                   </div>
@@ -425,8 +425,8 @@ export default async function ToolDetailPage({
               </div>
 
               {growthProfile ? (
-                <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-                  <div className="section-label">GEO 问答与社交分发</div>
+                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">GEO 问答与社交分发</div>
                   <div className="mt-5 grid gap-5 lg:grid-cols-2">
                     <div>
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">搜索和 AI 回答页要覆盖的问题</h2>
@@ -456,14 +456,14 @@ export default async function ToolDetailPage({
               <ToolConversionPanel tool={tool} />
               <ToolLinkedContentPanel tool={tool} page={`/tools/${tool.slug}`} />
 
-              <div id="faq" className="workspace-panel p-6">
-                <div className="section-label">
+              <div id="faq" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   常见问题
                 </div>
                 <div className="mt-4 grid gap-4 md:grid-cols-2">
                   {tool.faqItems.slice(0, 4).map((item) => (
-                    <div key={item.question} className="soft-card rounded-[1.5rem] p-5">
+                    <div key={item.question} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                       <div className="text-base font-bold text-[color:var(--ink)]">{item.question}</div>
                       <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item.answer}</div>
                     </div>
@@ -479,8 +479,8 @@ export default async function ToolDetailPage({
                 badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
               />
               {growthProfile ? (
-                <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-                  <div className="section-label">升级路径</div>
+                <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">升级路径</div>
                   <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
                     免费结果之后，优先转深测报告和留资复访
                   </h2>

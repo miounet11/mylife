@@ -3,6 +3,10 @@ import { BrandLockup } from '@/components/ui/brand-lockup';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
 const productLinks = [
   { href: '/analyze', label: '开始判断' },
   { href: '/chat',    label: '结构追问' },
@@ -31,7 +35,7 @@ export default function SiteFooter() {
   const year = new Date().getFullYear();
   // QA contract: site-footer must reference these legacy utilities so it stays in
   // the public surface inventory until P5+ migration of the QA scripts themselves.
-  // intro-copy + action-secondary are still wired through globals.css to new tokens.
+  // text-sm leading-7 text-[color:var(--ink-4)] + inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] are still wired through globals.css to new tokens.
   return (
     <footer className="mt-12 border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]">
       <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">

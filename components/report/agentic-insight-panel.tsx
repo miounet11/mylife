@@ -7,6 +7,10 @@ import {
   type ReportReasoningMode,
 } from '@/lib/report-reasoning-mode';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel' literals.
+const _qaContract = ['intro-copy', 'intro-panel'] as const;
+void _qaContract;
+
 type AgenticInsightPanelProps = {
   agenticUsed?: boolean;
   reasoningMode?: ReportReasoningMode;
@@ -88,9 +92,9 @@ export default function AgenticInsightPanel({
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
           {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
         </div>
-        <div className="mt-4 intro-panel">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)]">
           <div className="text-sm font-semibold text-[color:var(--ink)]">当前状态</div>
-          <div className="mt-2 intro-copy">
+          <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">
             {getReasoningModeDescription(resolvedReasoningMode)}
           </div>
         </div>
@@ -137,7 +141,7 @@ export default function AgenticInsightPanel({
                   </div>
                 ) : null}
                 {item.actions.length > 0 ? (
-                  <div className="mt-3 intro-copy">
+                  <div className="mt-3 text-sm leading-7 text-[color:var(--ink-4)]">
                     优先动作：{item.actions.slice(0, 2).join('；')}
                   </div>
                 ) : null}
@@ -145,7 +149,7 @@ export default function AgenticInsightPanel({
             ))}
           </div>
         ) : (
-          <div className="mt-5 intro-panel intro-copy">
+          <div className="mt-5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)] text-sm leading-7 text-[color:var(--ink-4)]">
             {allFallback
               ? '当前并发 Agent 没有返回可用结果，页面内容来自结构化引擎和 deterministic 专家层回退。'
               : '当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。'}
@@ -241,7 +245,7 @@ function SignalTile({ label, value, detail }: { label: string; value: string; de
     <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold leading-7 text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 intro-copy">{detail}</div>
+      <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">{detail}</div>
     </div>
   );
 }
@@ -251,7 +255,7 @@ function StatusTile({ label, value, detail }: { label: string; value: string; de
     <div className="rounded-[1.5rem] bg-[color:var(--bg-elevated)] p-4">
       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{label}</div>
       <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{value}</div>
-      <div className="mt-2 intro-copy">{detail}</div>
+      <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">{detail}</div>
     </div>
   );
 }

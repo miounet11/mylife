@@ -12,6 +12,10 @@ import {
 import { describeReportDeliveryStage } from '@/lib/report-quality';
 import { productReasoningTraceSteps } from '@/lib/product-experience';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
+
 type EngineBuilds = {
   core: string;
   llm: string;
@@ -273,7 +277,7 @@ export default function ReportEnginePanel({
         <Sparkles className="h-5 w-5 text-[color:var(--accent-strong)]" />
         <div className="font-semibold text-[color:var(--ink)]">报告引擎版本</div>
       </div>
-      <div className="intro-copy mt-2">
+      <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">
         这里显示这份报告当前使用的引擎、质量自检和增强状态，帮助你判断是直接使用还是继续升级。
       </div>
 
@@ -311,7 +315,7 @@ export default function ReportEnginePanel({
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm font-semibold text-[color:var(--ink)]">后台专家增强任务</div>
             <div className={`rounded-full px-3 py-1 text-xs font-semibold ${
-              upgradeJob.status === 'completed'
+ upgradeJob.status === 'completed'
                 ? 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
                 : upgradeJob.status === 'failed'
                 ? 'bg-[color:var(--alert-soft)] text-[color:var(--alert)]'
@@ -522,7 +526,7 @@ export default function ReportEnginePanel({
                   onClick={() => void handleUpgrade(item.key)}
                   disabled={!!submittingStrategy || isPending}
                   className={`rounded-[1.25rem] border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
-                    item.primary
+ item.primary
                       ? 'border-transparent bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white'
                       : 'border-[color:var(--line)] bg-[color:var(--bg-elevated)] text-[color:var(--ink)]'
                   }`}

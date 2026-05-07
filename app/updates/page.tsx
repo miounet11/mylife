@@ -152,7 +152,7 @@ export default async function UpdatesPage({
                 </div>
 
                 <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-                  <div className="soft-card rounded-xl p-4 md:p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-xl p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <RefreshCcw className="h-5 w-5 text-[color:var(--accent-strong)]" />
                       <div className="font-semibold text-[color:var(--ink)]">我的报告更新</div>
@@ -169,7 +169,7 @@ export default async function UpdatesPage({
                             </div>
                             <Link
                               href={`/result/${report.id}`}
-                              className="action-secondary"
+                              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                             >
                               查看报告
                             </Link>
@@ -187,7 +187,7 @@ export default async function UpdatesPage({
                     </div>
                   </div>
 
-                  <div className="soft-card rounded-xl p-4 md:p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-xl p-4 md:p-5">
                     <div className="flex items-center gap-3">
                       <ScrollText className="h-5 w-5 text-[color:var(--warm)]" />
                       <div className="font-semibold text-[color:var(--ink)]">最近提醒记录</div>
@@ -254,7 +254,7 @@ export default async function UpdatesPage({
                 <div className="mt-4">
                   <Link
                     href="/login?next=%2Fupdates"
-                    className="action-primary"
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
                   >
                     前往登录
                   </Link>

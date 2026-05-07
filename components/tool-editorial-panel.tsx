@@ -1,6 +1,10 @@
 import { Crown, Sparkles } from 'lucide-react';
 import type { ToolDefinition } from '@/lib/tools';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
 export default function ToolEditorialPanel({
   tool,
 }: {

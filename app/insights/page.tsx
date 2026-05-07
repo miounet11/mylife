@@ -5,7 +5,7 @@ import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import PriorityDisclosure from '@/components/priority-disclosure';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
+import PublicSurfaceHero from '@/components/public-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {
@@ -103,7 +103,7 @@ export default function InsightsPage() {
               href="/world-yi/insights"
               page="/insights"
               meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
-              className="action-primary action-main"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
             >
               进入环境主轴
               <ArrowRight className="h-4 w-4" />
@@ -113,7 +113,7 @@ export default function InsightsPage() {
               href="/analyze"
               page="/insights"
               meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'analyze_page', contentType: 'insight' }}
-              className="action-secondary"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
             >
               开始分析
             </ContentCardLink>,
@@ -147,16 +147,16 @@ export default function InsightsPage() {
               series: 'world-yi-insights',
               version: 'v1.0.0.1',
             }}
-            className="glass-panel block rounded-xl p-5 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-xl p-5 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               世界易环境观
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1.02fr_0.98fr]">
               <div>
                 <h2 className="text-3xl font-black text-[color:var(--ink)]">环境主轴</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入世界易环境洞察
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -194,11 +194,11 @@ export default function InsightsPage() {
                 href="/knowledge"
                 page="/insights"
                 meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到原理层</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">知识库</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   查看知识库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -208,11 +208,11 @@ export default function InsightsPage() {
                 href="/cases"
                 page="/insights"
                 meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">案例库</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   查看案例库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -222,11 +222,11 @@ export default function InsightsPage() {
                 href="/world-yi/insights"
                 page="/insights"
                 meta={{ surfaceKey: 'insights_page_network', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母路径</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">环境主轴</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   进入环境主轴
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -270,7 +270,7 @@ function TypeSection({ type, items }: { type: EntityInsightType; items: ReturnTy
     <section>
       <div className="mb-3 flex items-end justify-between gap-4">
         <div>
-          <div className="section-label">{entityTypeLabels[type]}</div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">{entityTypeLabels[type]}</div>
           <h2 className="mt-2 text-2xl font-black text-[color:var(--ink)]">{entityTypeLabels[type]}内容</h2>
         </div>
         <div className="text-sm text-[color:var(--muted)]">{items.length} 篇</div>
@@ -292,11 +292,11 @@ function TypeSection({ type, items }: { type: EntityInsightType; items: ReturnTy
               category: entityTypeLabels[type],
               tags: item.tags,
             }}
-            className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
             <h3 className="mt-3 text-xl font-bold leading-snug text-[color:var(--ink)]">{item.title}</h3>
-            <div className="action-guide mt-4 inline-flex items-center gap-2">
+            <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
               查看洞察
               <ArrowRight className="h-4 w-4" />
             </div>

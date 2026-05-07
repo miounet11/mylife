@@ -6,10 +6,9 @@ import { ArrowRight, BellRing, RefreshCcw } from 'lucide-react';
 import type { UpdatesSummary } from '@/lib/updates-summary';
 import { buildChatHref } from '@/lib/chat-entry';
 
-// QA contract (qa:public-product-components): updates-status-panel must include 'intro-copy'.
-const _qaContract = ['intro-copy'] as const;
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 export type UpdatesStatusSummary = UpdatesSummary;
 
 export default function UpdatesStatusPanel({

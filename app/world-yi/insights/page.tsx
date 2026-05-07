@@ -4,7 +4,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { getCaseStudies, getEntityInsightsByType, getKnowledgeArticles } from '@/lib/content-store';
 import { entityTypeLabels, type EntityInsightType } from '@/lib/content';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
@@ -104,10 +104,10 @@ export default function WorldYiInsightsPage() {
           ]}
         />
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-3">
             <div>
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Compass className="h-3.5 w-3.5" />
                 环境入口
               </div>
@@ -150,7 +150,7 @@ export default function WorldYiInsightsPage() {
               <section key={type}>
                 <div className="mb-5 flex items-end justify-between gap-4">
                   <div>
-                    <div className="section-label">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                       <Icon className="h-3.5 w-3.5" />
                       {entityTypeLabels[type]}
                     </div>
@@ -177,11 +177,11 @@ export default function WorldYiInsightsPage() {
                         tags: item.tags,
                         series: 'world-yi-insights',
                       }}
-                      className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
                     >
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                       <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h3>
-                      <div className="action-guide mt-5 inline-flex items-center gap-2">
+                      <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                         查看环境洞察
                         <ArrowRight className="h-4 w-4" />
                       </div>
@@ -194,8 +194,8 @@ export default function WorldYiInsightsPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <BookOpenText className="h-3.5 w-3.5" />
               洞察相关知识
             </div>
@@ -223,8 +223,8 @@ export default function WorldYiInsightsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <LibraryBig className="h-3.5 w-3.5" />
               洞察相关案例
             </div>

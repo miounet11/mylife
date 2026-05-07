@@ -197,7 +197,7 @@ export default function KnowledgePage() {
           <div className="space-y-8">
             {groupedKnowledgeEntries.map((group) => (
               <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-24">
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <BookOpen className="h-3.5 w-3.5" />
                   {group.groupLabel}
                 </div>
@@ -222,7 +222,7 @@ export default function KnowledgePage() {
                           locale,
                           market,
                         }}
-                        className="soft-card rounded-xl p-4 transition hover:-translate-y-0.5"
+                        className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-xl p-4 transition hover:-translate-y-0.5"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                           <BookOpen className="h-3.5 w-3.5" />
@@ -231,7 +231,7 @@ export default function KnowledgePage() {
                         </div>
                         <h2 className="mt-3 text-xl font-bold leading-snug text-[color:var(--ink)]">{article.title}</h2>
                         <div className="mt-2 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
-                        <div className="action-guide mt-4 inline-flex items-center gap-2">
+                        <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                           阅读全文
                           <ArrowRight className="h-4 w-4" />
                         </div>
@@ -263,7 +263,7 @@ export default function KnowledgePage() {
                       contentType: 'knowledge',
                       topicName: hub.topicName,
                     }}
-                    className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                    className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
                   >
                     <div className="flex items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                       <Network className="h-3.5 w-3.5" />
@@ -317,16 +317,16 @@ export default function KnowledgePage() {
                 href="/world-yi"
                 page="/knowledge"
                 meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'world_yi_page', contentType: 'knowledge', series: 'world-yi', version: 'v1.0.0.1' }}
-                className="workspace-panel block p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] block p-6 transition hover:-translate-y-0.5"
               >
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   世界易 v1.0.0.1
                 </div>
                 <div className="mt-4 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
                   <div>
                     <h2 className="text-2xl font-black text-[color:var(--ink)]">主入口</h2>
-                    <div className="action-guide mt-5 inline-flex items-center gap-2">
+                    <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                       进入世界易总入口
                       <ArrowRight className="h-4 w-4" />
                     </div>
@@ -341,10 +341,10 @@ export default function KnowledgePage() {
                 </div>
               </ContentCardLink>
 
-              <div className="workspace-panel p-6 md:p-8">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 md:p-8">
                 <div className="grid gap-8 lg:grid-cols-[0.94fr_1.06fr]">
                   <div className="space-y-5">
-                    <div className="section-label">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                       <Layers3 className="h-3.5 w-3.5" />
                       世界易知识系统层
                     </div>
@@ -358,7 +358,7 @@ export default function KnowledgePage() {
                         { label: '案例证据层', value: `${worldYiStats.publicCaseCount} 篇` },
                         { label: '目标内容宇宙', value: `${worldYiRoadmapSummary.targetArticleCount} 篇` },
                       ].map((item) => (
-                        <div key={item.label} className="metric-tile">
+                        <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3">
                           <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.value}</div>
                         </div>
@@ -388,7 +388,7 @@ export default function KnowledgePage() {
                             <Icon className="h-5 w-5" />
                           </div>
                           <div className="mt-4 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
-                          <div className="action-guide mt-5 inline-flex items-center gap-2">
+                          <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                             进入路径
                             <ArrowRight className="h-4 w-4" />
                           </div>
@@ -410,7 +410,7 @@ export default function KnowledgePage() {
               <div className="space-y-5">
                 {(taiSuiImage || benMingNianImage) ? (
                   <div>
-                    <div className="section-label">传播图入口</div>
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">传播图入口</div>
                     <div className="mt-6 grid gap-5 md:grid-cols-2">
                       {[taiSuiImage, benMingNianImage].filter(Boolean).map((asset) => (
                         <VisualAssetCard key={asset!.id} asset={asset!} />
@@ -452,11 +452,11 @@ export default function KnowledgePage() {
                 href="/knowledge/topics"
                 page="/knowledge"
                 meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专题</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">专题地图</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入专题地图
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -466,11 +466,11 @@ export default function KnowledgePage() {
                 href="/cases"
                 page="/knowledge"
                 meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   查看案例库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -480,11 +480,11 @@ export default function KnowledgePage() {
                 href="/insights"
                 page="/knowledge"
                 meta={{ surfaceKey: 'knowledge_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入洞察中心
                   <ArrowRight className="h-4 w-4" />
                 </div>

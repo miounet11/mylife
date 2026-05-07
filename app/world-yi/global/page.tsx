@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
   createCollectionPageSchema,
@@ -112,8 +112,8 @@ export default function WorldYiGlobalPage() {
           highlightsColumns="grid-cols-1"
         />
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
             全球入口
             </div>
@@ -135,7 +135,7 @@ export default function WorldYiGlobalPage() {
             href="/world-yi"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'knowledge', series: 'world-yi' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母入口</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易总入口</h2>
@@ -145,7 +145,7 @@ export default function WorldYiGlobalPage() {
             href="/cases"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到案例库</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">公开案例库</h2>
@@ -155,7 +155,7 @@ export default function WorldYiGlobalPage() {
             href="/world-yi/en"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', series: 'world-yi-en' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">切到英文层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English Gateway</h2>
@@ -165,10 +165,10 @@ export default function WorldYiGlobalPage() {
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="section-label">相关阅读</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">相关阅读</div>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">相关阅读</h2>
             </div>
-            <Link href="/world-yi/global/topics" className="action-secondary">
+            <Link href="/world-yi/global/topics" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
               查看全部全球专题
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -189,11 +189,11 @@ export default function WorldYiGlobalPage() {
                   tags: entry.tags,
                   series: 'world-yi-global',
                 }}
-                className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   继续阅读
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -202,12 +202,12 @@ export default function WorldYiGlobalPage() {
           </div>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div>
-              <div className="section-label">全球案例层</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">全球案例层</div>
               <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">全球案例层</h2>
-              <Link href="/world-yi/global/cases" className="action-secondary mt-5">
+              <Link href="/world-yi/global/cases" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-5">
                 进入全球案例入口
                 <ArrowRight className="h-4 w-4" />
               </Link>

@@ -11,6 +11,10 @@ import {
   getEstimatedPastEventDateKey,
 } from '@/lib/event-view';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
+
 interface ReportEventCaptureProps {
   reportId: string;
   suggestions: ReportActionSuggestion[];

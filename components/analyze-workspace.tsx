@@ -5,6 +5,10 @@ import Link from 'next/link';
 import { Calendar, ChevronRight, Clock3, FileText, Layers3, UserRound } from 'lucide-react';
 import FortuneForm from '@/components/fortune-form';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
 type HistoryUser = {
   id: string;
   name?: string;

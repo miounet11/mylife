@@ -51,14 +51,14 @@ export default function Error({
 
   return (
     <div className="page-shell flex items-center justify-center px-4">
-      <div className="glass-panel w-full max-w-2xl rounded-[2rem] p-8 md:p-10">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-2xl rounded-[2rem] p-8 md:p-10">
         <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[color:var(--alert-soft)] text-[color:var(--alert)]">
           <AlertTriangle className="h-8 w-8" />
         </div>
         <h2 className="mt-6 text-3xl font-black text-[color:var(--ink)]">页面临时出错了</h2>
-        <div className="mt-4 intro-panel">
+        <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)]">
           <div className="text-sm font-semibold text-[color:var(--ink)]">恢复方式</div>
-          <div className="mt-2 intro-copy">
+          <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">
             {isStaleServerActionError
               ? '当前页面可能来自旧部署版本，系统会自动刷新一次以恢复到最新版本。'
               : '这通常是临时请求异常或页面状态中断。优先重新加载，其次返回首页继续操作。'}
@@ -74,7 +74,7 @@ export default function Error({
           </button>
           <Link
             href="/"
-            className="action-secondary"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
           >
             <ArrowLeft className="h-4 w-4" />
             返回首页

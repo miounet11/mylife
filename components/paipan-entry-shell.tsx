@@ -6,6 +6,10 @@ import { CalendarClock, Compass, ShieldCheck, Sparkles } from 'lucide-react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
 });

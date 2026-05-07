@@ -208,14 +208,14 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <Link href="/visual-assets" className="action-secondary mb-6 inline-flex">
+        <Link href="/visual-assets" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mb-6 inline-flex">
           <ArrowLeft className="h-4 w-4" />
           返回图片库
         </Link>
 
         <article className="space-y-8">
           <section className="grid gap-6 lg:grid-cols-[1fr_0.42fr] lg:items-stretch">
-            <div className="glass-panel overflow-hidden rounded-[2.25rem] p-3 md:p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md overflow-hidden rounded-[2.25rem] p-3 md:p-5">
               <div className="relative overflow-hidden rounded-[1.8rem] border border-[rgba(139,115,70,0.14)] bg-[radial-gradient(circle_at_20%_12%,rgba(178,149,93,0.18),transparent_34%),linear-gradient(135deg,#fffaf2,#efe2cf)] p-3 md:p-5">
                 <Image
                   src={asset.publicUrl}
@@ -231,8 +231,8 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <aside className="glass-panel rounded-[2.25rem] p-6 md:p-8">
-              <div className="section-label">
+            <aside className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2.25rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <ImageIcon className="h-3.5 w-3.5" />
                 {asset.id} · {moduleLabels[asset.module] || asset.module}
               </div>
@@ -248,25 +248,25 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
                   { label: '推荐入口', value: asset.targetRoutes.slice(0, 3).join(' / ') || '/analyze' },
                 ].map((item) => (
                   <div key={item.label} className="rounded-[1.2rem] border border-[color:var(--line)] bg-white/76 p-4">
-                    <div className="product-kicker">{item.label}</div>
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{item.label}</div>
                     <div className="mt-2 text-sm font-bold leading-6 text-[color:var(--ink)]">{item.value}</div>
                   </div>
                 ))}
               </div>
 
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link href="/analyze" className="action-primary">
+                <Link href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">
                   用自己的信息验证
                   <ArrowRight className="h-4 w-4" />
                 </Link>
-                <Link href="/world-yi" className="action-secondary">理解世界易</Link>
+                <Link href="/world-yi" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">理解世界易</Link>
               </div>
             </aside>
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Compass className="h-3.5 w-3.5" />
                 世界易解释
               </div>
@@ -285,8 +285,8 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Route className="h-3.5 w-3.5" />
                 世界易五步读图
               </div>
@@ -305,8 +305,8 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           </section>
 
           <section className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
-            <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Wrench className="h-3.5 w-3.5" />
                 对应工具
               </div>
@@ -319,11 +319,11 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
                   <Link
                     key={tool.slug}
                     href={`/tools/${tool.slug}?source=visual_asset:${asset.slug}`}
-                    className="interactive-card rounded-[1.35rem] p-4"
+                    className="block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)] rounded-[1.35rem] p-4"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <div className="product-kicker">{tool.category} · {tool.themeLabel}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{tool.category} · {tool.themeLabel}</div>
                         <h3 className="mt-2 text-lg font-black text-[color:var(--ink)]">{tool.shortTitle}</h3>
                         <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{tool.hook}</p>
                       </div>
@@ -334,8 +334,8 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <BookOpen className="h-3.5 w-3.5" />
                 配套解读文章
               </div>
@@ -356,13 +356,13 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               { icon: <LibraryBig className="h-5 w-5" />, title: '回到知识体系', body: '把图片中的概念接回知识库，继续阅读世界易和命理基础。', href: '/knowledge', cta: '看知识库' },
               { icon: <MousePointer2 className="h-5 w-5" />, title: '进入工具动作', body: '选择一个相关工具，把图里的结构转成一次单项判断。', href: relatedTools[0] ? `/tools/${relatedTools[0].slug}?source=visual_asset:${asset.slug}` : '/tools', cta: '进入工具' },
             ].map((item) => (
-              <Link key={item.title} href={item.href} className="interactive-card rounded-[1.75rem] p-5">
+              <Link key={item.title} href={item.href} className="block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)] rounded-[1.75rem] p-5">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   {item.icon}
                 </div>
                 <h3 className="mt-4 text-xl font-black text-[color:var(--ink)]">{item.title}</h3>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{item.body}</p>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   {item.cta}
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -378,8 +378,8 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           />
 
           {relatedVisualAssets.length > 0 ? (
-            <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LibraryBig className="h-3.5 w-3.5" />
                 同主题继续看
               </div>
@@ -398,7 +398,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
           <section className="rounded-[1.6rem] border border-[color:var(--line)] bg-white/72 p-5">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div>
-                <div className="product-kicker">图片链接</div>
+                <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">图片链接</div>
                 <code className="mt-2 block break-all text-sm font-semibold text-[color:var(--ink)]">{asset.publicUrl}</code>
               </div>
               <div className="flex gap-2 text-[color:var(--accent-strong)]">

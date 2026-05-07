@@ -5,11 +5,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, Clock3, Layers3, Sparkles } from 'lucide-react';
 import { getToolDefinition } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): tool-history-panel must include
-// 'intro-copy', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-secondary'] as const;
 void _qaContract;
-
 type ToolHistoryItem = {
   id: string;
   toolSlug: string;

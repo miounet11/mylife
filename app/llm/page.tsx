@@ -21,17 +21,17 @@ export default async function LlmSettingsPage({
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.72fr_1.28fr]">
           <div>
-            <div className="section-label">LLM Settings · {mode}</div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">LLM Settings · {mode}</div>
             <h1 className="mt-4 text-4xl font-black text-[color:var(--ink)] md:text-5xl">
               统一配置图片和文章生成模型
             </h1>
-            <p className="intro-copy mt-4">
+            <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-4">
               图片生成和文章生成都从这里读取 Provider 优先级。后台配置优先，现有环境变量作为兜底。
             </p>
             <div className="mt-5 flex flex-wrap gap-3">
-              <Link href="/admin/content" className="action-secondary">返回内容后台</Link>
-              <Link href="/llm?llm=image" className="action-secondary">图片配置</Link>
-              <Link href="/llm?llm=article" className="action-secondary">文章配置</Link>
+              <Link href="/admin/content" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回内容后台</Link>
+              <Link href="/llm?llm=image" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">图片配置</Link>
+              <Link href="/llm?llm=article" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">文章配置</Link>
             </div>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
@@ -40,10 +40,10 @@ export default async function LlmSettingsPage({
               { label: '文章默认', value: 'grok-420-fast', helper: '保留现有模型链' },
               { label: '兜底', value: 'Env Provider', helper: '旧配置继续可用' },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
-                <div className="mt-2 intro-copy">{item.helper}</div>
+                <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">{item.helper}</div>
               </div>
             ))}
           </div>

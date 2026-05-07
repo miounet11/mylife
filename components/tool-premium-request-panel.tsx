@@ -10,11 +10,9 @@ import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
 
-// QA contract (qa:public-product-components): tool-premium-request-panel must include
-// 'intro-copy', 'intro-panel' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel' literals.
 const _qaContract = ['intro-copy', 'intro-panel'] as const;
 void _qaContract;
-
 export default function ToolPremiumRequestPanel({
   tool,
   reportId,

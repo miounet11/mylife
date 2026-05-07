@@ -2,11 +2,9 @@ import Link from 'next/link';
 import { ArrowRight, Milestone } from 'lucide-react';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): tool-journey-panel must include
-// 'intro-copy', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-secondary'] as const;
 void _qaContract;
-
 const journeyReasonMap: Record<ToolDefinition['category'], string[]> = {
   career: ['先看主矛盾', '再补时机判断', '最后落到短动作'],
   wealth: ['先看主要风险', '再补财务窗口', '最后落到执行动作'],

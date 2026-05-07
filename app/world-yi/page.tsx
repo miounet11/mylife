@@ -5,7 +5,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import VisualAssetFeature from '@/components/visual-asset-feature';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
   createCollectionPageSchema,
@@ -208,8 +208,8 @@ export default function WorldYiPage() {
         ) : null}
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Compass className="h-3.5 w-3.5" />
               六层引力模型
             </div>
@@ -223,8 +223,8 @@ export default function WorldYiPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
               五大学理基础
             </div>
@@ -250,7 +250,7 @@ export default function WorldYiPage() {
             href="/knowledge"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge', series: 'world-yi' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到知识层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
@@ -260,7 +260,7 @@ export default function WorldYiPage() {
             href="/cases"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
@@ -270,17 +270,17 @@ export default function WorldYiPage() {
             href="/insights"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight', series: 'world-yi' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到环境层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境洞察</h2>
           </ContentCardLink>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.86fr_1.14fr]">
             <div>
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Network className="h-3.5 w-3.5" />
                 当前公开规模
               </div>
@@ -297,10 +297,10 @@ export default function WorldYiPage() {
           </div>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
           <div className="grid gap-6 lg:grid-cols-[0.92fr_1.08fr]">
             <div>
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <BookOpen className="h-3.5 w-3.5" />
                 内容工程
               </div>
@@ -308,7 +308,7 @@ export default function WorldYiPage() {
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {worldYiRoadmapSummary.tracks.map((item) => (
-                <div key={item.key} className="soft-card rounded-[1.5rem] p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">目标内容量</div>
                   <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.targetCount} 篇</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">{item.label}</div>
@@ -325,7 +325,7 @@ export default function WorldYiPage() {
 
             <div className="relative grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div>
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   体系总部
                 </div>
@@ -345,7 +345,7 @@ export default function WorldYiPage() {
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="section-label">核心分科</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">核心分科</div>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">分科入口</h2>
             </div>
           </div>
@@ -361,10 +361,10 @@ export default function WorldYiPage() {
                   contentType: 'knowledge',
                   series: 'world-yi',
                 }}
-                className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入分科
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -383,16 +383,16 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-domains',
             }}
-            className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Compass className="h-3.5 w-3.5" />
               人生六域
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1fr]">
               <div>
                 <h2 className="text-3xl font-black text-[color:var(--ink)]">Batch 02 已经开始进入事业、财富、关系、健康、家庭与迁移六条主线</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入人生六域入口
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -418,16 +418,16 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-book',
             }}
-            className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <BookOpen className="h-3.5 w-3.5" />
               主书工程
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1fr]">
               <div>
                 <h2 className="text-3xl font-black text-[color:var(--ink)]">十卷主书</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入主书工程
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -453,16 +453,16 @@ export default function WorldYiPage() {
               contentType: 'knowledge',
               series: 'world-yi-matrix',
             }}
-            className="glass-panel block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-[2rem] p-6 transition hover:-translate-y-0.5 md:p-8"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
               内容矩阵
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1fr]">
               <div>
                 <h2 className="text-3xl font-black text-[color:var(--ink)]">120 篇矩阵</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入首批 120 篇执行图
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -481,10 +481,10 @@ export default function WorldYiPage() {
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="section-label">文章入口</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">文章入口</div>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">文章</h2>
             </div>
-            <Link href="/knowledge" className="action-secondary">
+            <Link href="/knowledge" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
               查看全部知识内容
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -505,11 +505,11 @@ export default function WorldYiPage() {
                   category: article.category,
                   tags: article.tags,
                 }}
-                className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{article.category}</div>
                 <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{article.title}</h3>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   阅读全文
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -519,8 +519,8 @@ export default function WorldYiPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">案例层</div>
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">案例层</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">案例</h2>
             <div className="mt-5 space-y-3">
               {worldYiCases.map((item) => (
@@ -544,8 +544,8 @@ export default function WorldYiPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">观察层</div>
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">观察层</div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">观察</h2>
             <div className="mt-5 space-y-3">
               {worldYiInsights.map((item) => (

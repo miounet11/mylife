@@ -25,7 +25,7 @@ export default function ContentCardLink({
   sourceFamily?: string;
 }) {
   const resolvedHref = appendSourceToHref(href, source);
-  const resolvedClassName = className ? `${className} interactive-card` : 'interactive-card';
+  const resolvedClassName = className ? `${className} block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]` : 'block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]';
   return (
     <Link
       href={resolvedHref}

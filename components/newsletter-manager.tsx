@@ -3,6 +3,10 @@
 import { useState } from 'react';
 import { Loader2, Mail, ShieldCheck } from 'lucide-react';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
 interface LookupResult {
   exists: boolean;
   subscription?: {

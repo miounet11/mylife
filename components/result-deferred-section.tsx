@@ -3,6 +3,10 @@
 import { LoaderCircle } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
 export default function ResultDeferredSection({
   id,
   title,

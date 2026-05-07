@@ -6,11 +6,9 @@ import NewsletterSignup from '@/components/newsletter-signup';
 import { buildChatHref } from '@/lib/chat-entry';
 import type { ToolDefinition, ToolPremiumOffer } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): tool-premium-depth-panel must include
-// 'intro-copy', 'action-primary', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 export default function ToolPremiumDepthPanel({
   tool,
   offer,

@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
 export const metadata = createPublicContentMetadata({
@@ -106,7 +106,7 @@ export default function WorldYiDomainsPage() {
         />
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             六域入口
           </div>
@@ -122,16 +122,16 @@ export default function WorldYiDomainsPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-domains',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-            <div className="action-guide mt-5">快速操作</div>
-            <div className="action-strip mt-2 flex flex-wrap gap-3 text-sm font-semibold">
+            <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5">快速操作</div>
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 mt-2 flex flex-wrap gap-3 text-sm font-semibold">
                   <span className="inline-flex items-center gap-2">
                     进入知识主线
                     <ArrowRight className="h-4 w-4" />
                   </span>
-                  <Link href={item.hubHref} className="action-secondary">进入分科页</Link>
+                  <Link href={item.hubHref} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">进入分科页</Link>
                 </div>
               </ContentCardLink>
             ))}
@@ -139,8 +139,8 @@ export default function WorldYiDomainsPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <LibraryBig className="h-3.5 w-3.5" />
               结构联动
             </div>
@@ -163,15 +163,15 @@ export default function WorldYiDomainsPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
             <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
               <div>
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   生活应用层
                 </div>
                 <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">应用入口</h2>
-                <Link href="/world-yi/applications" className="action-secondary mt-5">
+                <Link href="/world-yi/applications" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-5">
                   进入生活应用入口
                   <ArrowRight className="h-4 w-4" />
                 </Link>

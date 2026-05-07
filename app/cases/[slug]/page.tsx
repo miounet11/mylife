@@ -201,7 +201,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.98fr_0.72fr]">
-          <article className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs
@@ -212,7 +212,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                 />
               )}
               backLink={(
-                <Link href="/cases" className="action-secondary inline-flex">
+                <Link href="/cases" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] inline-flex">
                   <ArrowLeft className="h-4 w-4" />
                   返回案例库
                 </Link>
@@ -234,9 +234,9 @@ export default async function CaseDetailPage({ params }: PageProps) {
               hint="先看完案例关键信息，再进入分析页验证自己的结构与阶段。"
               actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="action-primary action-main">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
-                <Link key="cases" href={appendSourceToHref('/cases', pageSource)} className="action-secondary">返回案例库</Link>,
-                <Link key="hub" href={appendSourceToHref(caseHubHref, pageSource)} className="action-secondary">{caseHubLabel}</Link>,
+                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <Link key="cases" href={appendSourceToHref('/cases', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回案例库</Link>,
+                <Link key="hub" href={appendSourceToHref(caseHubHref, pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">{caseHubLabel}</Link>,
               ]}
             />
 
@@ -296,7 +296,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
                       className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                     >
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{entry.title}</div>
-                      <div className="intro-copy mt-2">{entry.excerpt}</div>
+                      <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">{entry.excerpt}</div>
                     </ContentCardLink>
                   ))}
                 </div>
@@ -344,7 +344,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
               </>
             ) : null}
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Compass className="h-4 w-4" />
                 案例相关工具
@@ -371,7 +371,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <BookOpenText className="h-4 w-4" />
                 案例相关知识
@@ -397,7 +397,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Sparkles className="h-4 w-4" />
                 案例相关洞察
@@ -423,7 +423,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">世界易案例路径</div>
               <div className="mt-4 space-y-4">
                 <ContentCardLink
@@ -493,7 +493,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">这类案例的价值</div>
               <div className="mt-4 space-y-3 text-xs leading-6 text-[color:var(--ink)]">
                 <p>它能把抽象判断结果翻译成真实场景。</p>

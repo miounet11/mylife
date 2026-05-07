@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
@@ -138,18 +138,18 @@ export default function WorldYiPublishPage() {
           highlightsColumns="grid-cols-1"
         />
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             当前运行态
           </div>
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易发布判定</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{publicationStageLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{publicationStageDescription}</div>
             </div>
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">全站调度器状态</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{schedulerLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{schedulerDescription}</div>
@@ -157,7 +157,7 @@ export default function WorldYiPublishPage() {
                 全站今日已发布 {worldYiStats.schedulerPublishedToday} 条，草稿池 {worldYiStats.schedulerDraftReserveCount}/{worldYiStats.schedulerDraftReserveTarget}。
               </div>
             </div>
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易专题增发</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{growthLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{growthDescription}</div>
@@ -165,8 +165,8 @@ export default function WorldYiPublishPage() {
           </div>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Globe2 className="h-3.5 w-3.5" />
             会公开发布的层
           </div>
@@ -185,7 +185,7 @@ export default function WorldYiPublishPage() {
                 className="rounded-[1.75rem] bg-white/80 p-6 transition hover:-translate-y-0.5"
               >
                 <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入页面
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -195,8 +195,8 @@ export default function WorldYiPublishPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <FileText className="h-3.5 w-3.5" />
               不会直接原样发布的层
             </div>
@@ -207,8 +207,8 @@ export default function WorldYiPublishPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               当前最合理的发布策略
             </div>

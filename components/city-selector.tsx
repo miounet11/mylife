@@ -209,7 +209,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
                       key={location.id}
                       type="button"
                       onClick={() => handleSelect(location)}
-                      className="product-chip transition hover:border-[color:var(--warm)] hover:bg-[rgba(201,125,58,0.08)]"
+                      className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-2)] transition hover:border-[color:var(--warm)] hover:bg-[rgba(201,125,58,0.08)]"
                     >
                       {location.displayName}
                     </button>
@@ -241,7 +241,7 @@ function LocationResultButton({
       onClick={onClick}
       onMouseEnter={onMouseEnter}
       className={`flex w-full items-center justify-between rounded-[1rem] border px-4 py-3 text-left transition ${
-        active
+ active
           ? 'border-[color:var(--warm)] bg-[rgba(201,125,58,0.1)]'
           : 'border-[color:var(--line)] bg-white hover:bg-[color:var(--bg-elevated)]'
       }`}

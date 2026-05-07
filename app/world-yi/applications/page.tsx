@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiApplicationSurface } from '@/lib/world-yi-surfaces';
@@ -87,7 +87,7 @@ export default function WorldYiApplicationsPage() {
           highlights={worldYiApplicationSurface.doctrine.slice(0, 4).map((body) => ({ body }))}
         />
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
           <div className="grid gap-4 md:grid-cols-3">
             <ContentCardLink
               href="/world-yi/domains"
@@ -95,7 +95,7 @@ export default function WorldYiApplicationsPage() {
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_domains_page', contentType: 'knowledge', series: 'world-yi-applications' }}
               className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
             >
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <BookOpenText className="h-3.5 w-3.5" />
                 回到六域
               </div>
@@ -107,7 +107,7 @@ export default function WorldYiApplicationsPage() {
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_book_page', contentType: 'knowledge', series: 'world-yi-book' }}
               className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
             >
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LibraryBig className="h-3.5 w-3.5" />
                 回到主书
               </div>
@@ -119,7 +119,7 @@ export default function WorldYiApplicationsPage() {
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
               className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
             >
-              <div className="section-label">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 补环境层
               </div>
@@ -130,10 +130,10 @@ export default function WorldYiApplicationsPage() {
 
         <section className="mt-10 space-y-8">
           {groups.map((group) => (
-            <section key={group.title} className="glass-panel rounded-[2rem] p-6 md:p-8">
+            <section key={group.title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
               <div className="grid gap-6 lg:grid-cols-[0.84fr_1.16fr]">
                 <div>
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <Sparkles className="h-3.5 w-3.5" />
                   {group.title}
                 </div>

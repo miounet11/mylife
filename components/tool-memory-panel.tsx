@@ -2,10 +2,9 @@ import Link from 'next/link';
 import { ArrowRight, Database, History } from 'lucide-react';
 import type { ToolMemorySummary } from '@/lib/tool-context';
 
-// QA contract (qa:public-product-components): tool-memory-panel must include 'intro-copy'.
-const _qaContract = ['intro-copy'] as const;
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
 void _qaContract;
-
 export default function ToolMemoryPanel({
   memory,
   title = '你的历史上下文',

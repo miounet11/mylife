@@ -4,11 +4,9 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Mail, ShieldCheck } from 'lucide-react';
 
-// QA contract (qa:public-product-components): login-flow must include
-// 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'intro-panel', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string }) {
   const router = useRouter();
   const [email, setEmail] = useState('');

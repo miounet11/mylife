@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiEnglishTrackSurfaces } from '@/lib/world-yi-global-surfaces';
 
@@ -86,9 +86,9 @@ export default function WorldYiEnglishTracksPage() {
             href="/world-yi/en"
             page="/world-yi/en/tracks"
             meta={{ surfaceKey: 'world_yi_en_tracks_page_network', targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', locale: 'en', series: 'world-yi-en' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Globe2 className="h-3.5 w-3.5" />
               English gateway
             </div>
@@ -98,9 +98,9 @@ export default function WorldYiEnglishTracksPage() {
             href="/world-yi/en/cases"
             page="/world-yi/en/tracks"
             meta={{ surfaceKey: 'world_yi_en_tracks_page_network', targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               Case layer
             </div>
@@ -110,9 +110,9 @@ export default function WorldYiEnglishTracksPage() {
             href="/world-yi/global"
             page="/world-yi/en/tracks"
             meta={{ surfaceKey: 'world_yi_en_tracks_page_network', targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Globe2 className="h-3.5 w-3.5" />
               Chinese global layer
             </div>
@@ -121,7 +121,7 @@ export default function WorldYiEnglishTracksPage() {
         </section>
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             Tracks
           </div>
@@ -138,10 +138,10 @@ export default function WorldYiEnglishTracksPage() {
                   locale: 'en',
                   series: 'world-yi-en',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <h2 className="text-2xl font-bold text-[color:var(--ink)]">{track.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   Open track
                   <ArrowRight className="h-4 w-4" />
                 </div>

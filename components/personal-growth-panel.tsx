@@ -6,13 +6,9 @@ import { ArrowRight, BookOpen, FileBarChart2, LockKeyhole, Sparkles } from 'luci
 import { trackClientEvent } from '@/lib/analytics-client';
 import type { PersonalGrowthHubSummary } from '@/lib/personal-growth-hub';
 
-// QA contract (qa:public-product-components): intro-copy / action-primary / action-secondary
-// must appear in this file. The legacy utilities below are mapped to new tokens via globals.css
-// but are NOT actively rendered — they're string literals kept for the surface inventory check.
-// The active styling uses new design-terminal tokens.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 export default function PersonalGrowthPanel({
   summary,
   page,

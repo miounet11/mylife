@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
 export const metadata = createPublicContentMetadata({
@@ -125,7 +125,7 @@ export default function WorldYiBookPage() {
         />
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <LibraryBig className="h-3.5 w-3.5" />
             已完成卷次
           </div>
@@ -141,11 +141,11 @@ export default function WorldYiBookPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-book',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.volume}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入本卷主题
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -155,8 +155,8 @@ export default function WorldYiBookPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
               工程联动
             </div>
@@ -179,8 +179,8 @@ export default function WorldYiBookPage() {
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               当前判断
             </div>

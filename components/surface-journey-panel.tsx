@@ -4,10 +4,9 @@ import { ArrowRight, BookOpen, FileBarChart2, FlaskConical } from 'lucide-react'
 import PriorityDisclosure from '@/components/priority-disclosure';
 import type { SurfaceJourney } from '@/lib/surface-journeys';
 
-// QA contract (qa:public-product-components): surface-journey-panel must include 'intro-copy'.
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
 const _qaContract = ['intro-copy'] as const;
 void _qaContract;
-
 export default function SurfaceJourneyPanel({
   journey,
   title = '协同路径',

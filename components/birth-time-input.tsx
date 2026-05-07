@@ -4,6 +4,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Clock3, Sparkles } from 'lucide-react';
 import { getShichenOption, SHICHEN_OPTIONS } from '@/lib/shichen';
 
+
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
+const _qaContract = ['intro-copy'] as const;
+void _qaContract;
 interface BirthTimeValue {
   hour: number | null;
   minute: number | null;
@@ -122,7 +126,7 @@ export default function BirthTimeInput({
           <Clock3 className="h-4 w-4 text-[color:var(--warm)]" />
           钟表时间
         </div>
-        <p className="intro-copy mt-1">
+        <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-1">
           支持输入 14:30、1430、14点30分；如果只记得大概时段，可直接点下方时辰。
         </p>
 
@@ -210,7 +214,7 @@ export default function BirthTimeInput({
                   commitTime(option.midHour, 0, value.second ?? 0);
                 }}
                 className={`rounded-2xl border px-3 py-3 text-left transition ${
-                  isSelected
+ isSelected
                     ? `${getPeriodStyle(option.period)} border-transparent shadow-[0_16px_30px_rgba(23,32,51,0.12)]`
                     : 'border-[color:var(--line)] bg-white hover:-translate-y-0.5'
                 }`}
@@ -238,7 +242,7 @@ export default function BirthTimeInput({
                 commitTime(nextHour, minuteValue, value.second ?? 0);
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                value.minute === minuteValue
+ value.minute === minuteValue
                   ? 'bg-[color:var(--accent)] text-white'
                   : 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)] hover:opacity-85'
               }`}

@@ -8,11 +8,9 @@ import { appendSourceToHref } from '@/lib/source-url';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): content-conversion-panel must include
-// 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'intro-panel', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 function getToolContinuationLabel(tool: ToolDefinition) {
   return tool.premiumServiceKey ? getPremiumServiceLabel(tool.premiumServiceKey) : 'AI 深问';
 }

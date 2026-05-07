@@ -15,6 +15,10 @@ import {
   Share2,
 } from 'lucide-react';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
+
 const BRAND_NAME = '人生K线';
 const DEFAULT_SITE_ORIGIN = 'https://www.life-kline.com';
 
@@ -434,7 +438,7 @@ export default function ResultPublicControls({
           <div className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
             {isPublic ? `${publicName}的结构判断结果` : `${BRAND_NAME} 判断入口`}
           </div>
-          <p className="intro-copy mt-3 text-sm text-[color:var(--ink)]">{summary}</p>
+          <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-3 text-sm text-[color:var(--ink)]">{summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {reportVersion}

@@ -172,7 +172,7 @@ export default function CasesPage() {
               <a
                 key={group.groupKey}
                 href={`#${getLocaleAnchorId(group.groupKey)}`}
-                className="product-chip"
+                className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-2)]"
               >
                 {group.groupLabel}
                 <span className="text-xs text-[color:var(--muted)]">{group.entries.length} 篇</span>
@@ -183,7 +183,7 @@ export default function CasesPage() {
           <div className="space-y-8">
             {groupedCaseEntries.map((group) => (
               <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-24">
-                <div className="section-label">{group.groupLabel}</div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">{group.groupLabel}</div>
 
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {group.entries.map((item) => {
@@ -205,7 +205,7 @@ export default function CasesPage() {
                           locale,
                           market,
                         }}
-                        className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                        className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
                       >
                         <div className="flex flex-wrap items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                           <span>{item.category}</span>
@@ -213,7 +213,7 @@ export default function CasesPage() {
                         </div>
                         <h2 className="mt-3 text-xl font-bold leading-snug text-[color:var(--ink)]">{item.title}</h2>
                         <div className="mt-2 text-xs text-[color:var(--muted)]">{market || '多语言用户'}</div>
-                        <div className="action-guide mt-4 inline-flex items-center gap-2">
+                        <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                           查看案例
                           <ArrowRight className="h-4 w-4" />
                         </div>
@@ -260,16 +260,16 @@ export default function CasesPage() {
                     series: 'world-yi',
                     version: 'v1.0.0.1',
                   }}
-                  className="workspace-panel block p-6 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] block p-6 transition hover:-translate-y-0.5"
                 >
-                  <div className="section-label">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                     <Sparkles className="h-3.5 w-3.5" />
                     世界易案例观
                   </div>
                   <div className="mt-4 grid gap-5">
                     <div>
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">案例维度</h2>
-                      <div className="action-guide mt-5 inline-flex items-center gap-2">
+                      <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                         进入世界易总入口
                         <ArrowRight className="h-4 w-4" />
                       </div>
@@ -293,9 +293,9 @@ export default function CasesPage() {
                     contentType: 'case',
                     series: 'world-yi-matrix',
                   }}
-                  className="workspace-panel block p-6 transition hover:-translate-y-0.5"
+                  className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] block p-6 transition hover:-translate-y-0.5"
                 >
-                  <div className="section-label">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                     <Sparkles className="h-3.5 w-3.5" />
                     Batch 05
                   </div>
@@ -307,17 +307,17 @@ export default function CasesPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="action-guide mt-5 inline-flex items-center gap-2">
+                  <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                     查看内容矩阵
                     <ArrowRight className="h-4 w-4" />
                   </div>
                 </ContentCardLink>
               </div>
 
-              <div className="workspace-panel p-6 md:p-8">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 md:p-8">
                 <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr]">
                   <div className="space-y-5">
-                    <div className="section-label">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                       <Layers3 className="h-3.5 w-3.5" />
                       世界易证据层
                     </div>
@@ -333,7 +333,7 @@ export default function CasesPage() {
                         { label: '案例库最终目标', value: `${worldYiRoadmapSummary.tracks.find((track) => track.key === 'cases')?.targetCount || 420} 篇` },
                         { label: '世界易内容宇宙', value: `${worldYiRoadmapSummary.targetArticleCount} 篇` },
                       ].map((item) => (
-                        <div key={item.label} className="metric-tile">
+                        <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3">
                           <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-2 text-xl font-bold text-[color:var(--ink)]">{item.value}</div>
                         </div>
@@ -364,7 +364,7 @@ export default function CasesPage() {
                               <Icon className="h-5 w-5" />
                             </div>
                             <div className="mt-4 text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
-                            <div className="action-guide mt-5 inline-flex items-center gap-2">
+                            <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                               进入案例层
                               <ArrowRight className="h-4 w-4" />
                             </div>
@@ -416,11 +416,11 @@ export default function CasesPage() {
                 href="/knowledge"
                 page="/cases"
                 meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入知识库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -430,11 +430,11 @@ export default function CasesPage() {
                 href="/insights"
                 page="/cases"
                 meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">洞察</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">洞察中心</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入洞察中心
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -444,11 +444,11 @@ export default function CasesPage() {
                 href="/world-yi"
                 page="/cases"
                 meta={{ surfaceKey: 'cases_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'case', series: 'world-yi' }}
-                className="workspace-panel p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   回到世界易
                   <ArrowRight className="h-4 w-4" />
                 </div>

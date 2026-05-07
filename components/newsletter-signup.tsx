@@ -4,11 +4,9 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { ArrowRight, Mail, Sparkles } from 'lucide-react';
 
-// QA contract (qa:public-product-components): newsletter-signup must include
-// 'intro-copy', 'action-primary', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 export default function NewsletterSignup({
   source = 'site',
   title = '订阅站点更新',

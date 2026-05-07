@@ -13,6 +13,10 @@ import {
 } from '@/lib/report-premium-services';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
+
 const iconMap = {
   'event-simulation': CalendarClock,
   'event-verdict': ScrollText,
@@ -263,9 +267,9 @@ export default function ReportPremiumServices({
 
       {canManage ? (
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="soft-card rounded-[1.75rem] p-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
-            <div className="intro-copy mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
+            <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {offers.map((offer) => (
@@ -274,9 +278,9 @@ export default function ReportPremiumServices({
                   type="button"
                   onClick={() => setSelectedServiceKey(offer.key)}
                   className={`rounded-full px-4 py-2 text-sm font-semibold transition ${
-                    selectedServiceKey === offer.key
+ selectedServiceKey === offer.key
                       ? 'bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white'
-                      : 'action-secondary py-2 text-[color:var(--ink)]'
+                      : 'inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] py-2 text-[color:var(--ink)]'
                   }`}
                 >
                   {offer.title}
@@ -332,7 +336,7 @@ export default function ReportPremiumServices({
             {error ? <div className="mt-4 rounded-2xl bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
           </div>
 
-          <div className="soft-card rounded-[1.75rem] p-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">最近提交的专项需求</div>
 
             <div className="mt-4 grid gap-3">

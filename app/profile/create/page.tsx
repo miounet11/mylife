@@ -13,7 +13,7 @@ export default function CreateProfilePage() {
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="space-y-5">
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               档案入口优化
             </div>
@@ -22,7 +22,7 @@ export default function CreateProfilePage() {
             </h1>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
             <div className="grid gap-4 md:grid-cols-2">
               <ActionCard
                 icon={FolderHeart}
@@ -62,13 +62,13 @@ function ActionCard({
   label: string;
 }) {
   return (
-    <div className="soft-card rounded-[1.75rem] p-5">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
         <Icon className="h-5 w-5" />
       </div>
       <h2 className="mt-5 text-xl font-bold text-[color:var(--ink)]">{title}</h2>
       {description ? <p className="mt-2 text-sm text-[color:var(--muted)]">{description}</p> : null}
-      <Link href={href} className="action-secondary mt-5">
+      <Link href={href} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-5">
         {label}
         <ArrowRight className="h-4 w-4" />
       </Link>

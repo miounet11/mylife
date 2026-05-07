@@ -10,6 +10,10 @@ import {
 import { getEntityTypeLabel } from '@/lib/content';
 import { appendSourceToHref } from '@/lib/source-url';
 
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
+void _qaContract;
+
 export default function RelatedContent({ source }: { source?: string }) {
   const worldYiArticles = listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-'))

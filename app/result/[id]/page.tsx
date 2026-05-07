@@ -639,9 +639,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             className="mb-6"
           />
         <section className="mb-10 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
-          <div className="glass-panel rounded-[1.75rem] p-5 md:p-6">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5 md:p-6">
             <div>
-              <div className="section-label">个人结构总览</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">个人结构总览</div>
 
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--muted)]">
                 {isEnhancementPending ? (
@@ -721,7 +721,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </summary>
 
                 <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                  <div className="soft-card rounded-[1.35rem] p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
@@ -800,7 +800,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     <div
                       key={section.eyebrow}
                     className={`rounded-[1.25rem] border px-5 py-5 ${
-                      index === 0
+ index === 0
                         ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
                         : index === 1
                         ? 'border-[color:var(--line)] bg-white/82'
@@ -825,7 +825,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
               <div className={`mt-5 rounded-[1.25rem] border px-4 py-4 ${
-                isEnhancementPending
+ isEnhancementPending
                   ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80'
                   : result.llmUsed
                   ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
@@ -833,7 +833,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               }`}>
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                    isEnhancementPending
+ isEnhancementPending
                       ? 'bg-white text-[color:var(--signal-strong)]'
                       : result.llmUsed
                       ? 'bg-white text-[color:var(--data-up)]'
@@ -888,7 +888,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         key={item.key}
                         data-stage-key={item.key}
                         className={`rounded-[1.1rem] border px-4 py-4 ${
-                          item.status === 'current'
+ item.status === 'current'
                             ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
                             : item.status === 'completed'
                             ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/80'
@@ -898,7 +898,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         <div className="flex items-center justify-between gap-2">
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                           <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
-                            item.status === 'current'
+ item.status === 'current'
                               ? 'bg-white text-[color:var(--accent-strong)]'
                               : item.status === 'completed'
                               ? 'bg-white text-[color:var(--data-up)]'
@@ -963,7 +963,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
 
-              <div className="mt-6 soft-card rounded-[1.35rem] p-5">
+              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
                 <div className="flex items-center gap-3">
                   <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
                   <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
@@ -1030,7 +1030,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             ) : null}
 
             {stateVectorCards.length > 0 && (
-              <div className="soft-card rounded-[1.35rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
                 <div className="flex items-center gap-3">
                   <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
                   <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>

@@ -6,11 +6,9 @@ import { ArrowRight, BellRing, Mail, RefreshCcw, Sparkles, Stars } from 'lucide-
 import { trackClientEvent } from '@/lib/analytics-client';
 import { buildChatHref } from '@/lib/chat-entry';
 
-// QA contract (qa:public-product-components): report-subscription-panel must include
-// 'intro-copy', 'action-primary', 'action-secondary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
-
 type MonthlyHighlight = {
   label: string;
   theme: string;
@@ -120,7 +118,7 @@ export default function ReportSubscriptionPanel({
             </span>
             <span
               className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-[10px] font-bold uppercase tracking-wider ${
-                targetAchieved
+ targetAchieved
                   ? 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
                   : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
               }`}

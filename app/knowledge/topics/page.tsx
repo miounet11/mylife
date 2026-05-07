@@ -2,7 +2,7 @@ import { ArrowRight, Compass, LibraryBig, Network, Sparkles } from 'lucide-react
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import PriorityDisclosure from '@/components/priority-disclosure';
-import PublicSurfaceHero from '@/components/public-surface-hero';
+import PublicSurfaceHero from '@/components/public-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
@@ -88,7 +88,7 @@ export default function KnowledgeTopicsPage() {
               href="/analyze"
               page="/knowledge/topics"
               meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
-              className="action-primary action-main"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
             >
               开始分析
               <ArrowRight className="h-4 w-4" />
@@ -98,7 +98,7 @@ export default function KnowledgeTopicsPage() {
               href="/knowledge"
               page="/knowledge/topics"
               meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-              className="action-secondary"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
             >
               回到知识库
             </ContentCardLink>,
@@ -123,7 +123,7 @@ export default function KnowledgeTopicsPage() {
               href={`/knowledge/topics/${hub.topicSlug}`}
               page="/knowledge/topics"
               meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: `knowledge_topic:${hub.topicSlug}`, contentType: 'knowledge', topicName: hub.topicName }}
-              className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+              className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
             >
               <div className="flex items-center gap-2 text-xs tracking-[0.18em] text-[color:var(--muted)]">
                 <Network className="h-3.5 w-3.5" />
@@ -159,16 +159,16 @@ export default function KnowledgeTopicsPage() {
               series: 'world-yi-network',
               version: 'v1.0.0.1',
             }}
-            className="glass-panel block rounded-xl p-5 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md block rounded-xl p-5 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               世界易主轴
             </div>
             <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_1fr]">
               <div>
                 <h2 className="text-3xl font-black text-[color:var(--ink)]">主轴入口</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   进入世界易专题地图
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -191,13 +191,13 @@ export default function KnowledgeTopicsPage() {
             title="把专题地图接到工具、案例和环境洞察"
             description="补充路径默认收起，不抢专题列表。"
           >
-          <div className="glass-panel rounded-xl p-5">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-5">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               延伸路径与证据
             </div>
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">把专题地图接到工具、案例和环境洞察</h2>
-            <div className="intro-copy mt-3 max-w-3xl">
+            <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-3 max-w-3xl">
               专题地图不该只负责组织知识文章。它还应该把同一主题线继续接到工具入口、真实案例和环境洞察，让整个主题网络更像完整问题图谱。
             </div>
 
@@ -287,11 +287,11 @@ export default function KnowledgeTopicsPage() {
                 href="/knowledge"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">知识</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">知识库</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   返回知识库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -301,11 +301,11 @@ export default function KnowledgeTopicsPage() {
                 href="/cases"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'cases_page', contentType: 'case' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">案例库</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   查看案例库
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -315,11 +315,11 @@ export default function KnowledgeTopicsPage() {
                 href="/world-yi/network"
                 page="/knowledge/topics"
                 meta={{ surfaceKey: 'knowledge_topics_page_network', targetSurfaceKey: 'world_yi_network_page', contentType: 'knowledge', series: 'world-yi-network' }}
-                className="glass-panel rounded-xl p-4 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易</div>
                 <h2 className="mt-3 text-xl font-bold text-[color:var(--ink)]">世界易网络</h2>
-                <div className="action-guide mt-4 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-4 inline-flex items-center gap-2">
                   查看世界易网络
                   <ArrowRight className="h-4 w-4" />
                 </div>

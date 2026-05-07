@@ -128,22 +128,22 @@ export default function VisualAssetsPage() {
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 overflow-hidden rounded-[2.25rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.96),rgba(245,236,222,0.9))] p-6 shadow-[0_24px_70px_rgba(47,32,14,0.08)] md:p-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:p-10">
           <div className="space-y-5">
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Images className="h-3.5 w-3.5" />
               精选图片说明
             </div>
             <h1 className="text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
               世界易图片说明库
             </h1>
-            <p className="hero-description">
+            <p className="text-sm leading-7 md:text-base md:leading-8 text-[color:var(--ink-4)]">
               用图片看懂人生K线 / 世界易的判断路径。每张图都配有深度解读、相关工具和测算入口。
             </p>
             <div className="flex flex-wrap gap-3">
-              <Link href="/analyze" className="action-primary action-main">
+              <Link href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">
                 回到测算入口
                 <ArrowRight className="h-4 w-4" />
               </Link>
-              <Link href="/world-yi" className="action-secondary">理解世界易</Link>
+              <Link href="/world-yi" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">理解世界易</Link>
             </div>
           </div>
 
@@ -153,8 +153,8 @@ export default function VisualAssetsPage() {
               { label: '主题模块', value: `${groupedAssets.length} 组` },
               { label: '深度解读', value: `${visualAssets.length} 篇` },
             ].map((item) => (
-              <div key={item.label} className="soft-card rounded-[1.5rem] p-5">
-                <div className="product-kicker">{item.label}</div>
+              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{item.label}</div>
                 <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
               </div>
             ))}
@@ -177,10 +177,10 @@ export default function VisualAssetsPage() {
               <Link
                 key={group.key}
                 href={group.href}
-                className="soft-card rounded-[1.5rem] p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--accent)]"
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="product-kicker">{group.title}</div>
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{group.title}</div>
                   <span className="rounded-full bg-[color:var(--accent-soft)] px-2.5 py-1 text-xs font-black text-[color:var(--accent-strong)]">{count} 张</span>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">{group.description}</p>
@@ -190,13 +190,13 @@ export default function VisualAssetsPage() {
         </section>
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Route className="h-3.5 w-3.5" />
             推荐阅读路径
           </div>
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
             {pathCards.map((path) => (
-              <div key={path.title} className="glass-panel rounded-[1.8rem] p-5">
+              <div key={path.title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.8rem] p-5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   {path.icon}
                 </div>
@@ -220,7 +220,7 @@ export default function VisualAssetsPage() {
                         />
                       </div>
                       <div>
-                        <div className="product-kicker">{asset.id}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{asset.id}</div>
                         <div className="mt-1 text-sm font-black leading-5 text-[color:var(--ink)]">{asset.title}</div>
                       </div>
                     </Link>
@@ -232,7 +232,7 @@ export default function VisualAssetsPage() {
         </section>
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Boxes className="h-3.5 w-3.5" />
             分模块图片库
           </div>
@@ -241,14 +241,14 @@ export default function VisualAssetsPage() {
               <section key={group.key} id={moduleDomId(group.key)} className="scroll-mt-24">
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div>
-                    <div className="section-label">
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                       <Sparkles className="h-3.5 w-3.5" />
                       {group.title}
                     </div>
                     <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">{group.title} · {group.assets.length} 张</h2>
                     <p className="mt-2 max-w-3xl text-sm leading-7 text-[color:var(--muted)]">{group.description}</p>
                   </div>
-                  <Link href="/analyze" className="action-secondary md:mb-1">用自己的信息验证</Link>
+                  <Link href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] md:mb-1">用自己的信息验证</Link>
                 </div>
                 <div className="mt-5 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                   {group.assets.map((asset) => (

@@ -5,10 +5,9 @@ import { createContentSignalMatcher } from '@/lib/content';
 import { getCaseStudyBySlug, getEntityInsights, getKnowledgeArticleBySlug } from '@/lib/content-store';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): tool-linked-content-panel must include 'intro-copy'.
+// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
 const _qaContract = ['intro-copy'] as const;
 void _qaContract;
-
 export default function ToolLinkedContentPanel({
   tool,
   page,

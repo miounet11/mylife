@@ -99,7 +99,7 @@ export default async function ToolResultPage({
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="space-y-6">
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               {tool.title}
             </div>
@@ -107,18 +107,18 @@ export default async function ToolResultPage({
               {String(result.headline || `${tool.shortTitle}结果已生成`)}
             </h1>
             <div className="space-y-2">
-              <div className="action-guide">快速操作</div>
-              <div className="action-strip flex flex-wrap gap-3">
+              <div className="text-xs font-bold text-[color:var(--brand-strong)]">快速操作</div>
+              <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex flex-wrap gap-3">
                 <Link
                   href={toolChatHref}
-                  className="action-primary action-main"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
                 >
                   <Bot className="mr-1 h-4 w-4" />
                   继续深问
                 </Link>
-                <Link href={reportHref} className="action-secondary">返回综合判断</Link>
-                <Link href="/tools" className="action-secondary">继续做别的工具</Link>
-                <Link href="/docs/use-tools" className="action-secondary">
+                <Link href={reportHref} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回综合判断</Link>
+                <Link href="/tools" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">继续做别的工具</Link>
+                <Link href="/docs/use-tools" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
                   <BookOpenText className="h-4 w-4" />
                   使用方法
                 </Link>
@@ -135,8 +135,8 @@ export default async function ToolResultPage({
         </section>
 
         <section className="mt-8 grid gap-8 xl:grid-cols-[1fr_1fr]">
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <ScrollText className="h-3.5 w-3.5" />
               免费结果摘要
             </div>
@@ -149,8 +149,8 @@ export default async function ToolResultPage({
             </div>
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               下一步承接
             </div>
@@ -165,24 +165,24 @@ export default async function ToolResultPage({
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href={toolChatHref}
-                className="action-primary"
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
               >
                 <Bot className="mr-2 h-4 w-4" />
                 继续深问
               </Link>
-              <Link href={reportHref} className="action-secondary">
+              <Link href={reportHref} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
                 返回综合判断
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
-              <Link href="/tools" className="action-secondary">继续做别的工具</Link>
+              <Link href="/tools" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">继续做别的工具</Link>
             </div>
           </div>
         </section>
 
         {growthProfile ? (
           <section className="mt-8 grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-            <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-              <div className="section-label">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LockKeyhole className="h-3.5 w-3.5" />
                 免费结果之后
               </div>
@@ -200,11 +200,11 @@ export default async function ToolResultPage({
                 ))}
               </div>
               <div className="mt-5 flex flex-wrap gap-3">
-                <Link href={toolChatHref} className="action-primary">
+                <Link href={toolChatHref} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">
                   <Bot className="mr-2 h-4 w-4" />
                   继续深问深测边界
                 </Link>
-                <Link href={`/tools/${tool.slug}#faq`} className="action-secondary">
+                <Link href={`/tools/${tool.slug}#faq`} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
                   查看常见问题
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
@@ -236,8 +236,8 @@ export default async function ToolResultPage({
           >
             <div className="space-y-8">
               {deepDiveSections.length > 0 ? (
-                <div className="workspace-panel p-6 md:p-8">
-                  <div className="section-label">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6 md:p-8">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                     <Sparkles className="h-3.5 w-3.5" />
                     深度解释
                   </div>
@@ -286,9 +286,9 @@ export default async function ToolResultPage({
 
               <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {tool.freeInsights.map((item) => (
-                  <div key={item} className="soft-card rounded-[1.5rem] p-5">
+                  <div key={item} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">这次免费已回答</div>
-                    <div className="intro-copy mt-3">{item}</div>
+                    <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-3">{item}</div>
                   </div>
                 ))}
                 {tool.premiumModules.map((item) => (
@@ -346,7 +346,7 @@ export default async function ToolResultPage({
 
 function ResultCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="soft-card rounded-[1.75rem] p-5">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
       <div className="text-sm tracking-[0.18em] text-[color:var(--muted)]">{title}</div>
       <div className="mt-3 text-sm leading-6 text-[color:var(--ink)]">{value}</div>
     </div>

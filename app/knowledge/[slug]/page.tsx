@@ -238,7 +238,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
-          <article className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs
@@ -249,7 +249,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 />
               )}
               backLink={(
-                <Link href="/knowledge" className="action-secondary inline-flex">
+                <Link href="/knowledge" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] inline-flex">
                   <ArrowLeft className="h-4 w-4" />
                   返回知识库
                 </Link>
@@ -273,9 +273,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               hint="建议先读完本页摘要，再开始个人分析，避免信息跳转过早。"
               actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="action-primary action-main">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
-                <Link key="knowledge" href={appendSourceToHref('/knowledge', pageSource)} className="action-secondary">返回知识库</Link>,
-                ...(topicHub ? [<Link key="topic" href={appendSourceToHref(`/knowledge/topics/${topicHub.topicSlug}`, pageSource)} className="action-secondary">查看专题地图</Link>] : []),
+                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <Link key="knowledge" href={appendSourceToHref('/knowledge', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回知识库</Link>,
+                ...(topicHub ? [<Link key="topic" href={appendSourceToHref(`/knowledge/topics/${topicHub.topicSlug}`, pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">查看专题地图</Link>] : []),
               ]}
             />
 
@@ -331,7 +331,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               <section className="mt-10 rounded-[1.75rem] border border-[color:var(--line)] bg-white/70 p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">所属专题路径</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{topicHub.topicName}专题地图</h2>
-                <p className="intro-copy mt-3">这篇文章已进入稳定专题节点，可直接回专题继续扩展。</p>
+                <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-3">这篇文章已进入稳定专题节点，可直接回专题继续扩展。</p>
                 <ContentCardLink
                   href={`/knowledge/topics/${topicHub.topicSlug}`}
                   source={pageSource}
@@ -342,7 +342,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                     contentType: 'knowledge',
                     topicName: topicHub.topicName,
                   }}
-                  className="action-secondary mt-4"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-4"
                 >
                   返回专题地图
                 </ContentCardLink>
@@ -390,7 +390,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               </>
             ) : null}
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Compass className="h-4 w-4" />
                 相关工具
@@ -417,7 +417,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <LibraryBig className="h-4 w-4" />
                 相关案例
@@ -443,7 +443,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Sparkles className="h-4 w-4" />
                 相关洞察
@@ -469,13 +469,13 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               {isWorldYiArticle ? (
                 <>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">
                     {isWorldYiEnglishArticle ? 'World Yi Reading Path' : '世界易阅读路径'}
                   </div>
-                  <Link href={appendSourceToHref(isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi', pageSource)} className="action-secondary mt-3 inline-flex">
+                  <Link href={appendSourceToHref(isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-3 inline-flex">
                     {isWorldYiEnglishArticle ? 'Back to World Yi English Gateway' : '先回世界易总入口'}
                     <ArrowLeft className="h-4 w-4 rotate-180" />
                   </Link>
@@ -501,7 +501,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                         className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                        <div className="intro-copy mt-2">{item.excerpt}</div>
+                        <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">{item.excerpt}</div>
                       </ContentCardLink>
                     ))}
                   </div>
@@ -509,7 +509,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ) : (
                 <>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">世界易入口</div>
-                  <Link href={appendSourceToHref('/world-yi', pageSource)} className="action-secondary mt-4 inline-flex">
+                  <Link href={appendSourceToHref('/world-yi', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-4 inline-flex">
                     进入世界易总入口
                     <ArrowLeft className="h-4 w-4 rotate-180" />
                   </Link>
@@ -544,7 +544,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               )}
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">
                 {topicHub ? `同专题继续阅读：${topicHub.topicName}` : '相关文章'}
               </div>

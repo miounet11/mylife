@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiExecutionBatches, worldYiRoadmapSummary } from '@/lib/world-yi';
 
@@ -75,9 +75,9 @@ export default function WorldYiMatrixPage() {
             href="/world-yi/book"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'world_yi_book_page', contentType: 'knowledge', series: 'world-yi-book' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <BookOpen className="h-3.5 w-3.5" />
               回到主书
             </div>
@@ -87,9 +87,9 @@ export default function WorldYiMatrixPage() {
             href="/world-yi/network"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'world_yi_network_page', contentType: 'knowledge', series: 'world-yi-network' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
               网络图
             </div>
@@ -99,9 +99,9 @@ export default function WorldYiMatrixPage() {
             href="/knowledge/topics"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge', series: 'world-yi-matrix' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
-            <div className="section-label">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               专题层
             </div>
@@ -109,8 +109,8 @@ export default function WorldYiMatrixPage() {
           </ContentCardLink>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             首批 120 篇
           </div>

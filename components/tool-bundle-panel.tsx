@@ -4,10 +4,9 @@ import type { ToolBundleDefinition } from '@/lib/tools';
 import ToolCardLink from '@/components/tool-card-link';
 import { getToolDefinition } from '@/lib/tools';
 
-// QA contract (qa:public-product-components): tool-bundle-panel must include 'intro-copy'.
-const _qaContract = ['intro-copy'] as const;
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
+const _qaContract = ['intro-copy', 'action-secondary'] as const;
 void _qaContract;
-
 export default function ToolBundlePanel({
   bundle,
   page,

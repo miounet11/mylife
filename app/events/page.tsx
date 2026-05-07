@@ -474,20 +474,20 @@ function EventsPageContent() {
         )}
 
         {focusedReportId && (
-          <section className="glass-panel rounded-[1.75rem] p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
-                <div className="section-label">报告联动模式</div>
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">报告联动模式</div>
                 <div className="mt-3 text-xl font-bold text-[color:var(--ink)]">关联报告事件</div>
               </div>
               <div className="space-y-2">
-                <div className="action-guide">快速操作</div>
-                <div className="action-strip flex flex-wrap gap-3">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)]">快速操作</div>
+                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex flex-wrap gap-3">
                 <ResultCtaLink
                   href={appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource)}
                   page="/events"
                   target="events_focus_report"
-                  className="action-secondary"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   meta={{
                     source: pageSource,
                     ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -502,7 +502,7 @@ function EventsPageContent() {
                   href="/events"
                   page="/events"
                   target="events_focus_all_events"
-                  className="action-secondary"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   meta={{
                     source: pageSource,
                     ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -571,10 +571,10 @@ function EventsPageContent() {
         )}
 
         {!loading && (
-          <section id="validation-workbench" className="glass-panel scroll-mt-28 rounded-[2rem] p-6">
+          <section id="validation-workbench" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md scroll-mt-28 rounded-[2rem] p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <div className="section-label">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                   验证工作台
                 </div>
@@ -718,19 +718,19 @@ function EventsPageContent() {
         )}
 
         {/* 工具栏 */}
-        <div className="glass-panel rounded-[1.75rem] p-5">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center space-x-3">
             <h2 className="text-2xl font-black text-[color:var(--ink)]">
               {view === 'calendar' ? '事件日历' : '事件列表'}
             </h2>
-            <div className="product-chip">
+            <div className="inline-flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-2)]">
               <span className="text-sm text-[color:var(--muted)]">{filteredEvents.length} 个事件</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
-            <div className="action-strip flex p-1">
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex p-1">
               <button
                 onClick={() => setView('calendar')}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition ${view === 'calendar' ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'text-[color:var(--muted)] hover:bg-white'}`}
@@ -753,7 +753,7 @@ function EventsPageContent() {
 
             <button
               onClick={openCreateForm}
-              className="action-primary"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
             >
               <Plus className="w-4 h-4" />
               <span>添加事件</span>
@@ -763,13 +763,13 @@ function EventsPageContent() {
         </div>
 
         {/* 筛选和搜索 */}
-        <div className="soft-card flex flex-col gap-4 rounded-[1.75rem] p-4 md:flex-row md:items-center">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] flex flex-col gap-4 rounded-[1.75rem] p-4 md:flex-row md:items-center">
           <div className="flex items-center space-x-2">
             <Filter className="w-5 h-5 text-[color:var(--muted)]" />
             <select
               value={selectedType}
               onChange={(e) => setSelectedType(e.target.value as 'all' | EventType)}
-              className="smooth-input rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
+              className="transition focus:ring-2 focus:ring-[color:var(--brand-soft-2)] rounded-full border border-[color:var(--line)] bg-white px-4 py-2 text-sm text-[color:var(--ink)]"
             >
               <option value="all">全部类型</option>
               <option value="career">事业</option>
@@ -833,7 +833,7 @@ function EventsPageContent() {
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(10,18,14,0.45)] p-4 backdrop-blur-sm" onClick={closeForm}>
           <div
-            className="glass-panel w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-[2rem]"
             onClick={(e) => e.stopPropagation()}
           >
             <form onSubmit={handleSubmitForm} className="grid grid-cols-1 gap-4 p-5 md:grid-cols-2 md:p-6">
@@ -847,7 +847,7 @@ function EventsPageContent() {
                 <button
                   type="button"
                   onClick={closeForm}
-                  className="action-secondary py-2 text-[color:var(--muted)]"
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] py-2 text-[color:var(--muted)]"
                 >
                   取消
                 </button>
@@ -959,7 +959,7 @@ function EventsPageContent() {
       {toast && (
         <div
           className={`fixed right-4 top-20 z-[60] rounded-full px-4 py-3 text-sm font-medium shadow-[0_16px_34px_rgba(23,32,51,0.12)] ${
-            toast.type === 'success'
+ toast.type === 'success'
               ? 'bg-[rgba(47,125,82,0.08)] border border-[rgba(47,125,82,0.20)] text-[color:var(--data-up)]'
               : 'bg-[color:var(--alert-soft)] border border-[color:var(--alert)] text-[color:var(--alert)]'
           }`}

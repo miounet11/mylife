@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { worldYiRoadmapSummary } from '@/lib/world-yi';
 import { worldYiDomainSurfaces, worldYiApplicationSurface } from '@/lib/world-yi-surfaces';
 import { worldYiEnglishTrackSurfaces, worldYiGlobalTopicSurfaces } from '@/lib/world-yi-global-surfaces';
@@ -101,7 +101,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-network',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   <Icon className="h-5 w-5" />
@@ -112,8 +112,8 @@ export default function WorldYiNetworkPage() {
           })}
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Compass className="h-3.5 w-3.5" />
             六域分科图
           </div>
@@ -139,8 +139,8 @@ export default function WorldYiNetworkPage() {
         </section>
 
         <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
               生活应用图
             </div>
@@ -165,8 +165,8 @@ export default function WorldYiNetworkPage() {
           </div>
           </section>
 
-          <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-            <div className="section-label">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Globe2 className="h-3.5 w-3.5" />
               全球与英文图
             </div>
@@ -201,8 +201,8 @@ export default function WorldYiNetworkPage() {
           </section>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             环境观察图
           </div>

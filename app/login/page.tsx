@@ -26,7 +26,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.76fr_1.24fr]">
           <div className="space-y-5">
-            <div className="section-label">账号体系</div>
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">账号体系</div>
             <h1 className="text-4xl font-black text-[color:var(--ink)] md:text-5xl">
               邮箱登录
             </h1>

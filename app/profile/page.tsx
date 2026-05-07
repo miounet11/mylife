@@ -263,7 +263,7 @@ export default function ProfilePage() {
                   </div>
                   <div
                     className={`text-xl font-black text-[color:var(--ink-1)] ${
-                      item.mono ? 'font-mono tabular-nums' : ''
+ item.mono ? 'font-mono tabular-nums' : ''
                     }`}
                   >
                     {item.value}
@@ -434,7 +434,7 @@ export default function ProfilePage() {
             />
           </PriorityDisclosure>
 
-          <section className="glass-panel rounded-xl p-4 md:p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-xl p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
@@ -446,7 +446,7 @@ export default function ProfilePage() {
                 href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
                 page="/profile"
                 target={user?.email ? 'profile_updates_center' : 'profile_updates_login'}
-                className="action-secondary"
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -503,7 +503,7 @@ export default function ProfilePage() {
                       href={appendSourceToHref(`/result/${updatesSummary.latestReport.id}`, pageSource)}
                       page="/profile"
                       target="profile_updates_latest_report"
-                      className="action-secondary mt-3"
+                      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-3"
                       meta={{
                         source: pageSource,
                         ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -539,13 +539,13 @@ export default function ProfilePage() {
           />
 
           {!loading && !hasProfileData && (
-            <section className="glass-panel rounded-[2rem] p-8 text-center">
+            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
               <ResultCtaLink
                 href="/analyze"
                 page="/profile"
                 target="profile_empty_analyze"
-                className="action-primary mt-6"
+                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)] mt-6"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -655,7 +655,7 @@ function ProfileAction({
       href={href}
       page={page}
       target={target}
-      className="action-secondary"
+      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
       meta={meta}
     >
       <Icon className="h-4 w-4" />

@@ -108,7 +108,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
-          <article className="glass-panel rounded-[2rem] p-6 md:p-8">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs
@@ -119,7 +119,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                 />
               )}
               backLink={(
-                <Link href="/knowledge/topics" className="action-secondary inline-flex">
+                <Link href="/knowledge/topics" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] inline-flex">
                   <ArrowLeft className="h-4 w-4" />
                   返回专题地图
                 </Link>
@@ -134,17 +134,17 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
               excerpt={`这一专题当前已经形成 ${hub.entryCount} 篇可互链内容，覆盖 ${hub.synthesisTypes.join('、')} 等层次。它适合作为一个稳定的搜索入口，也适合作为后续持续扩写的主干主题。`}
               hint="先读本专题第一篇，再回到分析页做个人验证，效率最高。"
               actions={[
-                <Link key="analyze" href="/analyze" className="action-primary action-main">开始分析</Link>,
-                <Link key="topics" href="/knowledge/topics" className="action-secondary">返回专题地图</Link>,
+                <Link key="analyze" href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">开始分析</Link>,
+                <Link key="topics" href="/knowledge/topics" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回专题地图</Link>,
               ]}
             />
 
             <div className="mt-8 grid gap-4 md:grid-cols-2">
-              <div className="soft-card rounded-[1.5rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">内容层次</div>
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{hub.synthesisTypes.join('、')}</div>
               </div>
-              <div className="soft-card rounded-[1.5rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">相邻主题</div>
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {hub.relatedTopicNames.length ? hub.relatedTopicNames.join('、') : '当前仍在继续扩写中'}
@@ -154,7 +154,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
 
             <div className="mt-8 space-y-4">
               {hub.entries.map((item, index) => (
-                <section key={item.entry.slug} className="soft-card rounded-[1.5rem] p-5">
+                <section key={item.entry.slug} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.5rem] p-5">
                   <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">
                     路径 {index + 1} · {item.synthesisType || item.entry.category || '知识内容'}
                   </div>
@@ -170,7 +170,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
                       title: item.entry.title,
                       synthesisType: item.synthesisType,
                     }}
-                    className="action-secondary mt-4"
+                    className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-4"
                   >
                     阅读这篇内容
                     <ArrowRight className="h-4 w-4" />
@@ -194,7 +194,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
               description="当你已经知道自己最关心哪条问题线，就把出生信息带进正式分析，看看个人结构和这个专题怎么对应。"
             />
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="text-sm font-semibold text-[color:var(--muted)]">继续扩展的相邻专题</div>
               <div className="mt-4 flex flex-wrap gap-2">
                 {hub.relatedTopicNames.length ? hub.relatedTopicNames.map((item) => (
@@ -207,7 +207,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Compass className="h-4 w-4" />
                 专题相关工具
@@ -231,7 +231,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <LibraryBig className="h-4 w-4" />
                 专题相关案例
@@ -254,7 +254,7 @@ export default async function KnowledgeTopicPage({ params }: PageProps) {
               </div>
             </div>
 
-            <div className="soft-card rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
               <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                 <Sparkles className="h-4 w-4" />
                 专题相关洞察

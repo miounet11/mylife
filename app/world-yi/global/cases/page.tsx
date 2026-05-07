@@ -3,7 +3,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
@@ -90,7 +90,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/global"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Global gateway</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Back to global path</h2>
@@ -99,7 +99,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/global/topics"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_topics_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Knowledge layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Browse global topics</h2>
@@ -108,7 +108,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/en/cases"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">English layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">See English cases</h2>
@@ -116,7 +116,7 @@ export default function WorldYiGlobalCasesPage() {
         </section>
 
         <section className="mt-10">
-          <div className="section-label">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             全球案例路径
           </div>
@@ -136,11 +136,11 @@ export default function WorldYiGlobalCasesPage() {
                   tags: entry.tags,
                   series: 'world-yi-global',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   查看案例
                   <ArrowRight className="h-4 w-4" />
                 </div>

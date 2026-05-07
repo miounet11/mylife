@@ -8,11 +8,9 @@ import BirthTimeInput from '@/components/birth-time-input';
 import { saveAnalyzeDraft } from '@/lib/analyze-draft';
 import { trackClientEvent } from '@/lib/analytics-client';
 
-// QA contract (qa:public-product-components): content-quick-analyze-panel must include
-// 'intro-copy', 'intro-panel', 'action-primary' literals.
+// QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel', 'action-primary' literals.
 const _qaContract = ['intro-copy', 'intro-panel', 'action-primary'] as const;
 void _qaContract;
-
 type BirthDateValue = {
   year: number | null;
   month: number | null;
@@ -77,7 +75,7 @@ export default function ContentQuickAnalyzePanel({
             type="button"
             onClick={() => setGender(item.value)}
             className={`rounded-[var(--radius-sm)] px-4 py-1.5 text-sm font-semibold transition ${
-              gender === item.value
+ gender === item.value
                 ? 'bg-[color:var(--brand-strong)] text-white'
                 : 'text-[color:var(--ink-4)] hover:text-[color:var(--ink-1)]'
             }`}

@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiDomainSurfaces, type WorldYiDomainKey } from '@/lib/world-yi-surfaces';
@@ -115,7 +115,7 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
             href="/world-yi/domains"
             page={`/world-yi/domains/${surface.key}`}
             meta={{ surfaceKey: `world_yi_domain_${surface.key}_network`, targetSurfaceKey: 'world_yi_domains_page', contentType: 'knowledge', series: 'world-yi-domains' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">总入口</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">回到人生六域</h2>
@@ -124,7 +124,7 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
             href="/world-yi/book"
             page={`/world-yi/domains/${surface.key}`}
             meta={{ surfaceKey: `world_yi_domain_${surface.key}_network`, targetSurfaceKey: 'world_yi_book_page', contentType: 'knowledge', series: 'world-yi-book' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">主书母线</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">主书工程</h2>
@@ -133,15 +133,15 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
             href="/world-yi/applications"
             page={`/world-yi/domains/${surface.key}`}
             meta={{ surfaceKey: `world_yi_domain_${surface.key}_network`, targetSurfaceKey: 'world_yi_applications_page', contentType: 'knowledge', series: 'world-yi-applications' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">动作层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">生活应用入口</h2>
           </ContentCardLink>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             分科阅读路径
           </div>
@@ -162,11 +162,11 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
                   tags: entry.tags,
                   series: 'world-yi-domains',
                 }}
-                className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   阅读知识主线
                   <ArrowRight className="h-4 w-4" />
                 </div>
@@ -178,14 +178,14 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
         <section className="mt-10">
           <div className="flex items-center justify-between gap-4">
             <div>
-              <div className="section-label">对应案例</div>
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">对应案例</div>
               <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">案例</h2>
             </div>
             <ContentCardLink
               href="/cases"
               page={`/world-yi/domains/${surface.key}`}
               meta={{ surfaceKey: `world_yi_domain_${surface.key}_network`, targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi-domains' }}
-              className="action-secondary"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
             >
               查看全部案例
               <ArrowRight className="h-4 w-4" />
@@ -207,11 +207,11 @@ export default async function WorldYiDomainDetailPage({ params }: { params: Prom
                   tags: entry.tags,
                   series: 'world-yi-domains',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <div className="action-guide mt-5 inline-flex items-center gap-2">
+                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
                   查看案例
                   <ArrowRight className="h-4 w-4" />
                 </div>

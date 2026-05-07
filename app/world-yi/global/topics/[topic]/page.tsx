@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiGlobalTopicSurfaces, type WorldYiGlobalTopicKey } from '@/lib/world-yi-global-surfaces';
@@ -116,7 +116,7 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
             href="/world-yi/global/topics"
             page={`/world-yi/global/topics/${surface.key}`}
             meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_topics_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">专题索引</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">回到全球专题</h2>
@@ -125,7 +125,7 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
             href="/world-yi/global/cases"
             page={`/world-yi/global/topics/${surface.key}`}
             meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_cases_page', contentType: 'case', series: 'world-yi-global' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">案例层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">查看全球案例</h2>
@@ -134,15 +134,15 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
             href="/world-yi/en"
             page={`/world-yi/global/topics/${surface.key}`}
             meta={{ surfaceKey: `world_yi_global_topic_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', locale: 'en', series: 'world-yi-en' }}
-            className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">英文层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English gateway</h2>
           </ContentCardLink>
         </section>
 
-        <section className="mt-10 glass-panel rounded-[2rem] p-6 md:p-8">
-          <div className="section-label">
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[2rem] p-6 md:p-8">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Sparkles className="h-3.5 w-3.5" />
             核心文章
           </div>
@@ -158,7 +158,7 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
                   contentType: 'knowledge',
                   series: 'world-yi-global',
                 }}
-                className="soft-card rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
@@ -168,7 +168,7 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
         </section>
 
         <section className="mt-10">
-          <div className="section-label">对应案例</div>
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">对应案例</div>
           <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">对应案例</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {caseEntries.map((entry) => (
@@ -182,7 +182,7 @@ export default async function WorldYiGlobalTopicDetailPage({ params }: { params:
                   contentType: 'case',
                   series: 'world-yi-global',
                 }}
-                className="glass-panel rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
