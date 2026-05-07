@@ -2,7 +2,7 @@ import { ArrowRight, Compass, LibraryBig, Network, Sparkles } from 'lucide-react
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import PriorityDisclosure from '@/components/priority-disclosure';
-import PublicSurfaceHero from '@/components/public-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
+import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';

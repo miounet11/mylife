@@ -4,7 +4,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
-import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
+import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { getCaseStudies, getEntityInsightsByType, getKnowledgeArticles } from '@/lib/content-store';
 import { entityTypeLabels, type EntityInsightType } from '@/lib/content';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';

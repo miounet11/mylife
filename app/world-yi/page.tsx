@@ -5,7 +5,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import VisualAssetFeature from '@/components/visual-asset-feature';
-import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
+import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
   createCollectionPageSchema,

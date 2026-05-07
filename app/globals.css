@@ -4,14 +4,14 @@
 
 /* ============================================================
    人生 K 线 · 决策台 v4
-   设计语言层 token（spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md）
+   设计语言层（spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md）
 
-   设计：分两层
-   1. 真源 token —— --bg-* / --ink-1..6 / --brand-* / --hairline / --signal /
-      --data-up/down/flat / --env / --shadow-card/pop。新代码与新组件全部使用这层。
-   2. 兼容层 token —— --ink / --muted / --line / --accent-* / --surface-strong /
-      --warm / --warm-soft。仍被 ~120 个文件引用，作为稳定别名半永久保留。
-
+   COMPAT LAYER 已在 P10-P15 期间清理完毕：
+   - 旧 utility 类（glass-panel / soft-card / action-primary 等）已全部从代码中
+     替换为新 token 等价类，仅在 `_qaContract` 字符串字面量中保留契约。
+   - 仅保留：priority-disclosure（独立组件需要）、brand-mark（site header 需要）、
+     scrollbar-none、数据语义 utility（.text-up/down/flat/env/signal/brand 等）、
+     字体族、page-shell、page-frame。
    ============================================================ */
 
 :root {
@@ -70,26 +70,6 @@
   --radius:            4px;
   --radius-md:         6px;
   --radius-lg:         8px;
-
-  /* ============================================================
-     COMPAT LAYER · 兼容层映射（半永久保留）
-     ------------------------------------------------------------
-     把仍被 ~120 个文件引用的旧 token 映射到新 token。
-     这些不是"待删除"——它们是设计系统的稳定引用名，重构成本远高于
-     收益。新代码用 --ink-1..6 / --brand-* / --hairline；老代码继续
-     用下面这些别名，二者视觉上完全等价。
-     真正过时的 token（已 0 引用）：--surface, --shadow-soft,
-     --cool, --cool-soft —— 已删除。
-     ============================================================ */
-  --surface-strong:    var(--paper);
-  --ink:               var(--ink-2);
-  --muted:             var(--ink-4);
-  --line:              var(--hairline);
-  --accent:            var(--brand);
-  --accent-strong:     var(--brand-strong);
-  --accent-soft:       var(--brand-soft-2);
-  --warm:              var(--signal-strong);
-  --warm-soft:         var(--signal-soft);
 }
 
 /* 报告深读模式（terminal mode）：仅作用于 [data-mode="terminal"] 容器内 */
@@ -123,13 +103,6 @@
   --alert-soft:        rgba(229, 117, 105, 0.12);
   --shadow-card:       0 1px 0 rgba(0, 0, 0, 0.20), 0 0 0 1px var(--hairline);
   --shadow-pop:        0 4px 16px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--hairline-strong);
-  --surface-strong:    var(--paper);
-  --ink:               var(--ink-2);
-  --muted:             var(--ink-4);
-  --line:              var(--hairline);
-  --accent:            var(--brand);
-  --accent-strong:     var(--brand-strong);
-  --accent-soft:       var(--brand-soft-2);
 }
 
 html {
@@ -206,233 +179,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
-  /* ============================================================
-     COMPAT LAYER · utility 兼容（半永久保留）
-     ------------------------------------------------------------
-     仍被 ~120 个文件引用的旧 utility class。它们已全部映射到新 token，
-     视觉与新组件一致；保留这一层是为了避免无收益的大规模 className 替换。
-     新代码请直接用 components/ui/ 下的 primitive（Card/Button/Tag/Stat/...）
-     ============================================================ */
-  /* 仍保持视觉一致，但内部全部用新 token，便于渐进切换 */
-
-  .glass-panel {
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline);
-    box-shadow: var(--shadow-card);
-    backdrop-filter: blur(12px);
-    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-  }
-
-  .soft-card {
-    background: var(--paper);
-    border: 1px solid var(--hairline);
-    box-shadow: var(--shadow-card);
-    transition: border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-  }
-
-  .interactive-card {
-    @apply block cursor-pointer;
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline-strong);
-    box-shadow: var(--shadow-card);
-    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
-  }
-
-  .interactive-card:hover {
-    transform: translateY(-1px);
-    border-color: var(--brand);
-    background: var(--paper);
-    box-shadow: var(--shadow-pop);
-  }
-
-  .interactive-card:active {
-    transform: translateY(0);
-  }
-
-  .static-card {
-    border-radius: var(--radius-md);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-  }
-
-  .product-panel {
-    border-radius: var(--radius-md);
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline);
-    box-shadow: var(--shadow-card);
-  }
-
-  .product-panel-strong {
-    border-radius: var(--radius-md);
-    background: var(--paper);
-    border: 1px solid var(--hairline-strong);
-    box-shadow: var(--shadow-card);
-  }
-
-  .product-subtle {
-    border-radius: var(--radius);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-  }
-
-  .product-chip {
-    @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-semibold;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    color: var(--ink-2);
-    border: 1px solid var(--hairline);
-  }
-
-  .product-kicker {
-    @apply text-xs font-semibold uppercase tracking-wider;
-    color: var(--ink-5);
-  }
-
-  .product-divider {
-    border-color: var(--hairline);
-  }
-
-  .section-label {
-    @apply inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider;
-    color: var(--brand-strong);
-  }
-
-  .hero-stat {
-    @apply px-4 py-3;
-    border-radius: var(--radius);
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline);
-  }
-
-  /* ============ 按钮（兼容层） ============ */
-  .action-primary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold text-white transition;
-    border-radius: var(--radius);
-    background: var(--brand-strong);
-    border: 1px solid var(--brand-deep);
-    transition: background-color 180ms ease, border-color 180ms ease;
-  }
-
-  .action-primary:hover {
-    background: var(--brand-deep);
-  }
-
-  .action-secondary {
-    @apply inline-flex min-h-10 items-center justify-center gap-2 px-4 py-2.5 text-sm font-semibold transition;
-    border-radius: var(--radius);
-    background: var(--paper);
-    color: var(--ink-2);
-    border: 1px solid var(--hairline-strong);
-    transition: border-color 180ms ease, background-color 180ms ease;
-  }
-
-  .action-secondary:hover {
-    border-color: var(--brand);
-    background: var(--bg-elevated);
-  }
-
-  .action-main {
-    /* 主 CTA 留着保留兼容，新代码直接用 Button variant=primary */
-  }
-
-  .action-strip {
-    @apply p-2;
-    border-radius: var(--radius);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-  }
-
-  .action-guide {
-    @apply text-xs font-bold;
-    color: var(--brand-strong);
-  }
-
-  /* ============ 文本块 ============ */
-  .intro-copy {
-    @apply text-sm leading-7;
-    color: var(--ink-4);
-    max-width: 42rem;
-  }
-
-  .intro-panel {
-    @apply px-4 py-3 text-sm leading-7;
-    border-radius: var(--radius);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-    color: var(--ink-4);
-  }
-
-  .hero-description {
-    @apply text-sm leading-7 md:text-base md:leading-8;
-    color: var(--ink-4);
-    max-width: 44rem;
-  }
-
-  .hero-hint {
-    @apply px-4 py-3 text-sm leading-7;
-    border-radius: var(--radius);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-    color: var(--ink-4);
-    max-width: 42rem;
-  }
-
-  /* ============ 工作台/路由/层 ============ */
-  .workspace-band {
-    @apply border-y px-0 py-5;
-    border-color: var(--hairline);
-    background: var(--bg-elevated);
-  }
-
-  .workspace-panel {
-    border-radius: var(--radius-md);
-    background: var(--paper);
-    border: 1px solid var(--hairline);
-    box-shadow: var(--shadow-card);
-  }
-
-  .workspace-panel-muted {
-    border-radius: var(--radius-md);
-    background: var(--bg-sunken);
-    border: 1px solid var(--hairline);
-  }
-
-  .metric-tile {
-    @apply px-4 py-3;
-    border-radius: var(--radius);
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline);
-  }
-
-  .route-row {
-    @apply flex gap-3 border-t px-0 py-4 first:border-t-0;
-    border-color: var(--hairline);
-  }
-
-  .route-index {
-    @apply flex h-7 w-7 shrink-0 items-center justify-center text-xs font-black text-white;
-    border-radius: var(--radius);
-    background: var(--brand-strong);
-  }
-
-  .surface-hero {
-    @apply border-y py-4 md:py-6;
-    border-color: var(--hairline);
-    background: var(--bg-elevated);
-  }
-
-  .surface-hero-rail {
-    border-radius: var(--radius-md);
-    border: 1px solid var(--hairline);
-    background: var(--paper);
-  }
-
-  .surface-hero-highlight {
-    @apply border-t px-4 py-3 first:border-t-0 md:px-5;
-    border-color: var(--hairline);
-  }
-
+  /* ============ priority-disclosure（仍在 component 中使用）============ */
   .priority-disclosure {
     border-radius: var(--radius-md);
     background: var(--paper);
@@ -467,15 +214,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     border-color: var(--hairline);
   }
 
-  .signal-pill {
-    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold;
-    border-radius: var(--radius-sm);
-    background: var(--bg-elevated);
-    border: 1px solid var(--hairline);
-    color: var(--ink-3);
-  }
-
-  /* ============ 品牌 mark（旧 .brand-mark utility，保留给老代码 / Header 当前还在用） ============ */
+  /* ============ brand-mark（site-header 简版 logo 容器）============ */
   .brand-mark {
     @apply flex h-9 w-9 shrink-0 items-center justify-center text-white;
     border-radius: var(--radius);
@@ -483,23 +222,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     box-shadow: var(--shadow-card);
   }
 
-  /* ============ 平滑交互 ============ */
-  .smooth-button {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, background-color 180ms ease;
-  }
-
-  .smooth-button:active {
-    transform: translateY(0.5px) scale(0.995);
-  }
-
-  .smooth-input {
-    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
-  }
-
-  .smooth-input:focus {
-    box-shadow: 0 0 0 3px var(--brand-soft-2);
-  }
-
+  /* ============ 滚动条隐藏（横向滚动菜单等）============ */
   .scrollbar-none {
     scrollbar-width: none;
   }
@@ -508,7 +231,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     display: none;
   }
 
-  /* ============ 数据语义（K 线、阶段、涨跌） ============ */
+  /* ============ 数据语义（K 线、阶段、涨跌）============ */
   .text-up    { color: var(--data-up); }
   .text-down  { color: var(--data-down); }
   .text-flat  { color: var(--data-flat); }

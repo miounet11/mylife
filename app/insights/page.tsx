@@ -5,7 +5,7 @@ import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import PriorityDisclosure from '@/components/priority-disclosure';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicSurfaceHero from '@/components/public-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
+import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {

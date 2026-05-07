@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import WorldYiSurfaceHero from '@/components/world-yi-border-y border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] py-4 md:py-6';
+import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { getManagedContentEntryBySlug } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 import { worldYiEnglishTrackSurfaces, type WorldYiEnglishTrackKey } from '@/lib/world-yi-global-surfaces';
