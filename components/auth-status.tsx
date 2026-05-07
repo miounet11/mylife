@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
 
 interface SessionState {
   authenticated: boolean;
@@ -45,14 +46,14 @@ export default function AuthStatus() {
   };
 
   if (loading) {
-    return <div className="hidden h-10 w-24 rounded-full bg-white/60 md:block" />;
+    return <div className="hidden h-9 w-20 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)] md:block" />;
   }
 
   if (!session?.authenticated || !session.user) {
     return (
       <Link
         href="/login"
-        className="action-secondary hidden min-h-0 px-4 py-2 text-[color:var(--muted)] hover:text-[color:var(--ink)] md:inline-flex"
+        className="hidden h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--ink-1)] md:inline-flex"
       >
         邮箱登录
       </Link>
@@ -60,27 +61,33 @@ export default function AuthStatus() {
   }
 
   return (
-    <div className="hidden items-center gap-2 md:flex">
+    <div className="hidden items-center gap-1.5 md:flex">
       {session.user.role === 'admin' && (
         <Link
           href="/admin/content"
-          className="action-secondary min-h-0 px-3 py-2"
+          aria-label="内容后台"
+          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] px-3 text-xs font-semibold text-[color:var(--signal-strong)] transition hover:border-[color:var(--signal)]"
         >
-          内容后台
+          <ShieldCheck className="h-3.5 w-3.5" />
+          后台
         </Link>
       )}
       <Link
         href="/profile"
-        className="action-secondary min-h-0 px-3 py-2"
+        aria-label="进入档案"
+        className="inline-flex h-9 max-w-[180px] items-center gap-1.5 truncate rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 text-xs font-semibold text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)]"
       >
-        {session.user.email || session.user.name}
+        <UserRound className="h-3.5 w-3.5 shrink-0" />
+        <span className="truncate">{session.user.email || session.user.name}</span>
       </Link>
       <button
         type="button"
         onClick={logout}
-        className="action-secondary min-h-0 px-3 py-2 text-[color:var(--muted)]"
+        aria-label="退出登录"
+        title="退出"
+        className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-4)] transition hover:border-[color:var(--alert)] hover:text-[color:var(--alert)]"
       >
-        退出
+        <LogOut className="h-3.5 w-3.5" />
       </button>
     </div>
   );
