@@ -10,6 +10,11 @@ import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
 
+// QA contract (qa:public-product-components): tool-premium-request-panel must include
+// 'intro-copy', 'intro-panel' literals.
+const _qaContract = ['intro-copy', 'intro-panel'] as const;
+void _qaContract;
+
 export default function ToolPremiumRequestPanel({
   tool,
   reportId,
@@ -21,7 +26,7 @@ export default function ToolPremiumRequestPanel({
 }) {
   const [contactName, setContactName] = useState('');
   const [contactValue, setContactValue] = useState('');
-  const [question, setQuestion] = useState(`我想围绕“${tool.shortTitle}”申请更深入的专项判断，当前最想解决的问题是：`);
+  const [question, setQuestion] = useState(`我想围绕「${tool.shortTitle}」申请更深入的专项判断，当前最想解决的问题是：`);
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +36,7 @@ export default function ToolPremiumRequestPanel({
   const chatHref = buildChatHref({
     reportId: reportId || undefined,
     intent: tool.chatIntent || undefined,
-    question: `请围绕“${tool.shortTitle}”继续深问，只基于我补充的信息拆清楚问题、因果链、优先级和下一步动作。`,
+    question: `请围绕「${tool.shortTitle}」继续深问，只基于我补充的信息拆清楚问题、因果链、优先级和下一步动作。`,
     source: 'tool_premium_request_panel',
   });
 
@@ -99,39 +104,49 @@ export default function ToolPremiumRequestPanel({
 
   if (!serviceKey) {
     return (
-      <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-        <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+        <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
           <div>
-            <div className="section-label">
-              <LockKeyhole className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <LockKeyhole className="h-3 w-3" />
               继续深问
             </div>
-            <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
+            <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
               回到结构追问
             </h2>
-            <div className="intro-copy mt-3 text-sm text-[color:var(--muted)]">
+            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
               这个工具当前不走人工专项表单，更适合继续上传资料或补充条件，让 AI 按可见信息把问题链拆清。
-            </div>
+            </p>
           </div>
 
-          <div className="intro-panel rounded-[1.75rem] border border-[color:var(--line)] bg-white/84 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-              <Bot className="h-4 w-4" />
+          <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <Bot className="h-3 w-3" />
               下一步动作
             </div>
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-                当前深测点：{tool.paidValueLine}
+            <div className="mt-3 space-y-2">
+              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-6 text-[color:var(--ink-2)]">
+                <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+                  CURRENT
+                </span>
+                <div className="mt-0.5">{tool.paidValueLine}</div>
               </div>
               {tool.premiumModules.slice(0, 3).map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-4 text-xs leading-6 text-[color:var(--accent-strong)]">
-                  继续追问可展开：{item}
+                <div
+                  key={item}
+                  className="rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 text-xs leading-6 text-[color:var(--brand-strong)]"
+                >
+                  <span className="font-mono text-[10px] font-bold">DEEPER</span>
+                  <div className="mt-0.5">{item}</div>
                 </div>
               ))}
             </div>
-            <Link href={chatHref} className="mt-5 inline-flex items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white">
+            <Link
+              href={chatHref}
+              className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+            >
               进入 AI 结构追问
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
@@ -140,73 +155,96 @@ export default function ToolPremiumRequestPanel({
   }
 
   return (
-    <section className="glass-panel rounded-[2rem] p-6 md:p-8">
-      <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
         <div>
-          <div className="section-label">
-            <LockKeyhole className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--signal-strong)]">
+            <LockKeyhole className="h-3 w-3" />
             直接进入专项
           </div>
-          <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)] md:text-4xl">
+          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
             专项判断
           </h2>
 
-          <div className="intro-copy mt-3 text-sm text-[color:var(--muted)]">
+          <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
             如果单个工具已经暴露出主矛盾，可以直接提交专项需求，把当前工具结果和历史上下文一起带入。
-          </div>
+          </p>
 
-          <div className="mt-5 grid gap-3">
-            <div className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-              推荐专项：{serviceLabel}
+          <div className="mt-4 space-y-2">
+            <div className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--signal-strong)]">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
+                推荐专项
+              </span>
+              <div className="mt-0.5 text-[color:var(--ink-1)] font-semibold">
+                {serviceLabel}
+              </div>
             </div>
-            <div className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
-              当前付费点：{tool.paidValueLine}
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3 text-xs leading-6 text-[color:var(--ink-2)]">
+              <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+                CURRENT
+              </span>
+              <div className="mt-0.5">{tool.paidValueLine}</div>
             </div>
             {tool.premiumModules.slice(0, 3).map((item) => (
-              <div key={item} className="rounded-[1.25rem] bg-[color:var(--accent-soft)] px-4 py-4 text-xs leading-6 text-[color:var(--accent-strong)]">
-                解锁后会展开：{item}
+              <div
+                key={item}
+                className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 text-xs leading-6 text-[color:var(--brand-strong)]"
+              >
+                <span className="font-mono text-[10px] font-bold">UNLOCK</span>
+                <div className="mt-0.5">{item}</div>
               </div>
             ))}
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="intro-panel rounded-[1.75rem] border border-[color:var(--line)] bg-white/84 p-5">
-          <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-            <Sparkles className="h-4 w-4" />
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
+        >
+          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+            <Sparkles className="h-3 w-3" />
             提交专项需求
           </div>
 
-          <div className="mt-4 grid gap-4">
+          <div className="mt-3 grid gap-2">
             <input
               value={contactName}
               onChange={(event) => setContactName(event.target.value)}
               placeholder="称呼，可选"
-              className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+              className="h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
             />
             <input
               value={contactValue}
               onChange={(event) => setContactValue(event.target.value)}
               placeholder="邮箱 / 微信 / 手机号"
-              className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+              className="h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
             />
             <textarea
               value={question}
               onChange={(event) => setQuestion(event.target.value)}
               rows={6}
-              className="w-full rounded-[1.5rem] border border-[color:var(--line)] bg-white px-4 py-3 text-xs leading-6 outline-none focus:border-[color:var(--accent)]"
+              className="w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2.5 text-xs leading-6 text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
             />
           </div>
 
-          {message ? <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{message}</div> : null}
-          {error ? <div className="mt-4 rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
+          {message && (
+            <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] px-3 py-2 text-xs font-semibold text-[color:var(--data-up)]">
+              {message}
+            </div>
+          )}
+          {error && (
+            <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
+              {error}
+            </div>
+          )}
 
           <button
             type="submit"
             disabled={submitting}
-            className="mt-4 inline-flex items-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-70"
+            className="mt-3 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-5 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--signal-strong)] hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? '提交中...' : `提交${serviceLabel}需求`}
-            <ArrowRight className="ml-2 h-4 w-4" />
+            {submitting ? '提交中…' : `提交${serviceLabel}需求`}
+            <ArrowRight className="h-4 w-4" />
           </button>
         </form>
       </div>

@@ -102,7 +102,7 @@ export default function PublicReportInteractionPanel({
       href: reportChatHref,
       label: '继续追问',
       icon: Bot,
-      emphasis: 'primary',
+      emphasis: 'primary' as const,
     },
     {
       key: 'own',
@@ -111,7 +111,7 @@ export default function PublicReportInteractionPanel({
       href: '/analyze?source=public_report_interaction',
       label: '开始我的报告',
       icon: Sparkles,
-      emphasis: 'primary',
+      emphasis: 'primary' as const,
     },
     {
       key: 'tool',
@@ -132,26 +132,26 @@ export default function PublicReportInteractionPanel({
   ];
 
   return (
-    <section className="glass-panel rounded-[2rem] p-5 md:p-6">
-      <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+      <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
         <div>
-          <div className="section-label">
-            <Share2 className="h-3.5 w-3.5" />
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+            <Share2 className="h-3 w-3" />
             公开互动动作
           </div>
-          <h2 className="mt-4 text-2xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">
-            这份公开报告，
-            <span className="text-[color:var(--accent-strong)]">不是只能被围观。</span>
+          <h2 className="mt-2 text-xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-2xl">
+            这份公开报告，<br />
+            <span className="text-[color:var(--brand-strong)]">不是只能被围观</span>
           </h2>
-          <p className="mt-4 text-sm leading-7 text-[color:var(--muted)]">
-            {viewerModeText} 下一步要么继续追问这份判断，要么生成自己的报告，要么进入专项工具验证。
+          <p className="mt-3 text-sm leading-6 text-[color:var(--ink-3)]">
+            {viewerModeText} 下一步要么继续追问，要么生成自己的报告，要么进入专项工具验证。
           </p>
 
-          <div className="mt-5 flex flex-wrap gap-2">
+          <div className="mt-4 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={handleShare}
-              className="action-primary min-h-0 px-4 py-2 text-sm"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
             >
               <Share2 className="h-4 w-4" />
               分享公开页
@@ -159,7 +159,7 @@ export default function PublicReportInteractionPanel({
             <button
               type="button"
               onClick={handleCopy}
-              className="action-secondary min-h-0 px-4 py-2 text-sm"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
             >
               <Copy className="h-4 w-4" />
               复制链接
@@ -167,34 +167,47 @@ export default function PublicReportInteractionPanel({
           </div>
 
           {message ? (
-            <div className="mt-3 rounded-full bg-white/84 px-4 py-2 text-xs font-semibold text-[color:var(--accent-strong)]">
+            <div className="mt-3 inline-flex h-7 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
               {message}
             </div>
           ) : null}
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-2.5 sm:grid-cols-2">
           {actions.map((action) => {
             const Icon = action.icon;
+            const isPrimary = action.emphasis === 'primary';
             return (
               <Link
                 key={action.key}
                 href={action.href}
-                className={`rounded-[1.35rem] border p-4 transition hover:-translate-y-0.5 hover:shadow-sm ${
-                  action.emphasis === 'primary'
-                    ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
-                    : 'border-[color:var(--line)] bg-white/82'
+                className={`group block rounded-[var(--radius)] border p-4 transition hover:-translate-y-px ${
+                  isPrimary
+                    ? 'border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] hover:border-[color:var(--brand)]'
+                    : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[color:var(--accent-strong)]">
-                    <Icon className="h-5 w-5" />
+                  <div
+                    className={`flex h-9 w-9 items-center justify-center rounded-[var(--radius-sm)] ${
+                      isPrimary
+                        ? 'border border-[color:var(--brand)] bg-[color:var(--paper)] text-[color:var(--brand-strong)]'
+                        : 'border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
                   </div>
-                  <ArrowRight className="mt-2 h-4 w-4 text-[color:var(--muted)]" />
+                  <ArrowRight className="mt-1 h-3.5 w-3.5 text-[color:var(--ink-5)] transition-all group-hover:translate-x-0.5 group-hover:text-[color:var(--brand-strong)]" />
                 </div>
-                <h3 className="mt-4 text-base font-black text-[color:var(--ink)]">{action.title}</h3>
-                <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{action.description}</p>
-                <div className="mt-4 text-sm font-bold text-[color:var(--accent-strong)]">{action.label}</div>
+                <h3 className="mt-3 text-sm font-bold leading-snug text-[color:var(--ink-1)]">
+                  {action.title}
+                </h3>
+                <p className="mt-1.5 text-xs leading-5 text-[color:var(--ink-4)]">
+                  {action.description}
+                </p>
+                <div className="mt-3 text-xs font-bold text-[color:var(--brand-strong)]">
+                  {action.label}
+                </div>
               </Link>
             );
           })}

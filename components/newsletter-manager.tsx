@@ -28,9 +28,7 @@ export default function NewsletterManager() {
   };
 
   const loadSubscription = async (preserveNotice = false) => {
-    if (!preserveNotice) {
-      resetNotice();
-    }
+    if (!preserveNotice) resetNotice();
     setLoading(true);
 
     try {
@@ -43,10 +41,7 @@ export default function NewsletterManager() {
         return;
       }
 
-      setLookup({
-        exists: data.exists,
-        subscription: data.subscription,
-      });
+      setLookup({ exists: data.exists, subscription: data.subscription });
       if (!data.exists) {
         setMessage('这个邮箱当前没有订阅记录，可以直接重新订阅。');
       }
@@ -93,77 +88,111 @@ export default function NewsletterManager() {
   const isActive = subscription?.status === 'active';
 
   return (
-    <div className="space-y-6">
-      <div className="glass-panel rounded-[2rem] p-6 md:p-8">
-        <div className="section-label">
-          <ShieldCheck className="h-3.5 w-3.5" />
+    <div className="space-y-4">
+      <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+        <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+          <ShieldCheck className="h-3 w-3" />
           订阅管理
         </div>
-        <h2 className="mt-4 text-2xl font-black text-[color:var(--ink)] md:text-3xl">查询、恢复或退订邮箱更新</h2>
-        <div className="intro-copy mt-3 max-w-3xl">
-          用同一个邮箱查询当前状态，必要时恢复订阅或关闭后续邮件，不需要再走人工处理。
-        </div>
+        <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+          查询、恢复或退订邮箱更新
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+          用同一个邮箱查询当前状态，必要时恢复订阅或关闭后续邮件，无需人工处理。
+        </p>
 
-        <div className="mt-6 flex flex-col gap-3 md:flex-row">
+        <div className="mt-5 flex flex-col gap-2 md:flex-row md:items-stretch">
           <div className="relative flex-1">
-            <Mail className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[color:var(--ink-5)]" />
             <input
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder="输入订阅邮箱"
-              className="w-full rounded-full border border-[color:var(--line)] bg-white py-3 pl-11 pr-4 text-sm text-[color:var(--ink)] outline-none focus:border-[color:var(--accent)]"
+              className="h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] pl-9 pr-3 text-sm text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
             />
           </div>
           <button
             type="button"
-            onClick={() => {
-              void loadSubscription();
-            }}
+            onClick={() => void loadSubscription()}
             disabled={loading || !normalizedEmail}
-            className="action-secondary inline-flex items-center justify-center rounded-full bg-[color:var(--ink)] px-6 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '查询状态'}
           </button>
         </div>
 
-        {message && <p className="mt-4 text-sm text-emerald-700">{message}</p>}
-        {error && <p className="mt-4 text-sm text-rose-700">{error}</p>}
+        {message && (
+          <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] px-3 py-2 text-xs font-semibold text-[color:var(--data-up)]">
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
+            {error}
+          </div>
+        )}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
-        <div className="soft-card rounded-[1.75rem] p-6">
-          <div className="text-sm font-semibold text-[color:var(--muted)]">当前状态</div>
+      <div className="grid gap-3 lg:grid-cols-[1.05fr_0.95fr]">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            当前状态
+          </div>
           {subscription ? (
-            <div className="mt-4 space-y-3 text-xs leading-6 text-[color:var(--ink)]">
-              <p>邮箱：{subscription.email}</p>
-              <p>状态：{isActive ? '已订阅' : '已退订'}</p>
-              <p>来源：{subscription.source || 'site'}</p>
-              <p>标签：{subscription.tags.length > 0 ? subscription.tags.join(' / ') : '默认更新'}</p>
+            <div className="mt-3 grid gap-2">
+              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2">
+                <span className="font-mono text-[10px] text-[color:var(--ink-5)]">EMAIL</span>
+                <div className="mt-0.5 font-mono text-sm text-[color:var(--ink-1)]">
+                  {subscription.email}
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <span
+                  className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-[10px] font-bold uppercase tracking-wider ${
+                    isActive
+                      ? 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
+                      : 'border-[color:var(--ink-5)] bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]'
+                  }`}
+                >
+                  {isActive ? 'ACTIVE' : 'INACTIVE'}
+                </span>
+                <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-[10px] font-mono text-[color:var(--ink-4)]">
+                  {subscription.source || 'site'}
+                </span>
+              </div>
+              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2">
+                <span className="font-mono text-[10px] text-[color:var(--ink-5)]">TAGS</span>
+                <div className="mt-0.5 text-xs text-[color:var(--ink-3)]">
+                  {subscription.tags.length > 0 ? subscription.tags.join(' · ') : '默认更新'}
+                </div>
+              </div>
             </div>
           ) : (
-            <p className="mt-4 text-sm text-[color:var(--muted)]">输入邮箱后查询</p>
+            <p className="mt-3 text-sm text-[color:var(--ink-4)]">输入邮箱后查询</p>
           )}
         </div>
 
-        <div className="soft-card rounded-[1.75rem] p-6">
-          <div className="text-sm font-semibold text-[color:var(--muted)]">可执行操作</div>
-          <div className="mt-4 flex flex-col gap-3">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
+          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            可执行操作
+          </div>
+          <div className="mt-3 flex flex-col gap-2">
             <button
               type="button"
               onClick={() => updateSubscription('subscribe')}
               disabled={!normalizedEmail || actionLoading !== null}
-              className="rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {actionLoading === 'subscribe' ? '处理中...' : '恢复 / 开启订阅'}
+              {actionLoading === 'subscribe' ? '处理中…' : '恢复 / 开启订阅'}
             </button>
             <button
               type="button"
               onClick={() => updateSubscription('unsubscribe')}
               disabled={!normalizedEmail || actionLoading !== null}
-              className="action-secondary disabled:opacity-60"
+              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--alert)] hover:text-[color:var(--alert)] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {actionLoading === 'unsubscribe' ? '处理中...' : '退订所有更新'}
+              {actionLoading === 'unsubscribe' ? '处理中…' : '退订所有更新'}
             </button>
           </div>
         </div>
