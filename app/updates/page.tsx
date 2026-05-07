@@ -75,34 +75,52 @@ export default async function UpdatesPage({
       />
       <SiteHeader ctaHref={analyzeHref} ctaLabel="开始分析" />
 
-      <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-3xl">
-            <div className="section-label">
-              <Sparkles className="h-3.5 w-3.5" />
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <BellRing className="h-3 w-3" />
               邮件与留存
             </div>
-            <h1 className="mt-2 text-3xl font-black leading-tight text-[color:var(--ink)] md:text-4xl">更新中心</h1>
+            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+              更新中心
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+              管理订阅状态、升级提醒、月度复盘投递与生命周期邮件。
+            </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Link href={hasSessionContext ? '#my-updates-center' : '/login?next=%2Fupdates'} className="action-primary action-main">
+          <div className="flex flex-wrap gap-2">
+            <Link
+              href={hasSessionContext ? '#my-updates-center' : '/login?next=%2Fupdates'}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+            >
               {hasSessionContext ? '查看我的更新' : '先登录查看'}
             </Link>
-            <Link href={analyzeHref} className="action-secondary">开始分析</Link>
-            <Link href="/docs/updates-subscription" className="action-secondary">
+            <Link
+              href={analyzeHref}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
+              开始分析
+            </Link>
+            <Link
+              href="/docs/updates-subscription"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            >
               <BookOpenText className="h-4 w-4" />
               使用方法
             </Link>
           </div>
         </section>
 
-        <section className="mt-5">
-          <div id="my-updates-center" className="glass-panel rounded-xl p-4 md:p-6">
-            <div className="section-label">
-              <BellRing className="h-3.5 w-3.5" />
+        <section className="mt-6">
+          <div id="my-updates-center" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+              <BellRing className="h-3 w-3" />
               我的更新中心
             </div>
-            <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">我的更新</h2>
+            <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)] md:text-2xl">
+              我的更新
+            </h2>
 
             {hasSessionContext ? (
               <div className="mt-5 space-y-5">
