@@ -5,7 +5,13 @@
 /* ============================================================
    人生 K 线 · 决策台 v4
    设计语言层 token（spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md）
-   策略：新 token 是真源；旧的 utility 仍保留，内部映射新 token，P5 阶段统一删除。
+
+   设计：分两层
+   1. 真源 token —— --bg-* / --ink-1..6 / --brand-* / --hairline / --signal /
+      --data-up/down/flat / --env / --shadow-card/pop。新代码与新组件全部使用这层。
+   2. 兼容层 token —— --ink / --muted / --line / --accent-* / --surface-strong /
+      --warm / --warm-soft。仍被 ~120 个文件引用，作为稳定别名半永久保留。
+
    ============================================================ */
 
 :root {
@@ -65,8 +71,16 @@
   --radius-md:         6px;
   --radius-lg:         8px;
 
-  /* ============ 旧 token 兼容映射（P5 删除前不破老页面） ============ */
-  --surface:           var(--bg-elevated);
+  /* ============================================================
+     COMPAT LAYER · 兼容层映射（半永久保留）
+     ------------------------------------------------------------
+     把仍被 ~120 个文件引用的旧 token 映射到新 token。
+     这些不是"待删除"——它们是设计系统的稳定引用名，重构成本远高于
+     收益。新代码用 --ink-1..6 / --brand-* / --hairline；老代码继续
+     用下面这些别名，二者视觉上完全等价。
+     真正过时的 token（已 0 引用）：--surface, --shadow-soft,
+     --cool, --cool-soft —— 已删除。
+     ============================================================ */
   --surface-strong:    var(--paper);
   --ink:               var(--ink-2);
   --muted:             var(--ink-4);
@@ -76,9 +90,6 @@
   --accent-soft:       var(--brand-soft-2);
   --warm:              var(--signal-strong);
   --warm-soft:         var(--signal-soft);
-  --cool:              var(--env);
-  --cool-soft:         var(--env-soft);
-  --shadow-soft:       var(--shadow-card);
 }
 
 /* 报告深读模式（terminal mode）：仅作用于 [data-mode="terminal"] 容器内 */
@@ -112,7 +123,6 @@
   --alert-soft:        rgba(229, 117, 105, 0.12);
   --shadow-card:       0 1px 0 rgba(0, 0, 0, 0.20), 0 0 0 1px var(--hairline);
   --shadow-pop:        0 4px 16px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--hairline-strong);
-  --surface:           var(--bg-elevated);
   --surface-strong:    var(--paper);
   --ink:               var(--ink-2);
   --muted:             var(--ink-4);
@@ -120,7 +130,6 @@
   --accent:            var(--brand);
   --accent-strong:     var(--brand-strong);
   --accent-soft:       var(--brand-soft-2);
-  --shadow-soft:       var(--shadow-card);
 }
 
 html {
@@ -197,7 +206,13 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
-  /* ============ 旧 utility 兼容层（P5 删除）============ */
+  /* ============================================================
+     COMPAT LAYER · utility 兼容（半永久保留）
+     ------------------------------------------------------------
+     仍被 ~120 个文件引用的旧 utility class。它们已全部映射到新 token，
+     视觉与新组件一致；保留这一层是为了避免无收益的大规模 className 替换。
+     新代码请直接用 components/ui/ 下的 primitive（Card/Button/Tag/Stat/...）
+     ============================================================ */
   /* 仍保持视觉一致，但内部全部用新 token，便于渐进切换 */
 
   .glass-panel {
