@@ -257,7 +257,7 @@ export default function ContentRadarPanel({
                 {signals.length > 0 ? signals.slice(0, 10).map((signal) => (
                   <div
                     key={signal.id}
-                    className="rounded-[1.4rem] bg-white/80 px-4 py-4 transition hover:bg-white"
+                    className="rounded-[var(--radius)] bg-white/80 px-4 py-4 transition hover:bg-white"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div>
@@ -303,7 +303,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无热点信号</div>
                   </div>
                 )}
@@ -314,7 +314,7 @@ export default function ContentRadarPanel({
               <div className="text-sm font-semibold text-[color:var(--muted)]">建议选题</div>
               <div className="grid gap-3">
                 {suggestions.length > 0 ? suggestions.slice(0, 8).map((item) => (
-                  <div key={`${item.sourceId}-${item.url}`} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div key={`${item.sourceId}-${item.url}`} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                     <div className="flex items-center justify-between gap-3">
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.suggestedTopic}</div>
                       <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{item.score}</div>
@@ -341,7 +341,7 @@ export default function ContentRadarPanel({
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">暂无建议选题</div>
                   </div>
                 )}
@@ -353,7 +353,7 @@ export default function ContentRadarPanel({
             <div className="text-sm font-semibold text-[color:var(--muted)]">最近执行记录</div>
             <div className="grid gap-3">
               {runs.length > 0 ? runs.slice(0, 8).map((run) => (
-                <div key={run.id} className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div key={run.id} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{run.sourceLabel}</div>
                     <div className={`rounded-full px-3 py-1 text-xs font-semibold ${run.status === 'success' ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-700'}`}>
@@ -366,7 +366,7 @@ export default function ContentRadarPanel({
                   {run.error && <div className="mt-2 text-xs leading-6 text-rose-700">{run.error}</div>}
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-white/80 px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">暂无执行记录</div>
                 </div>
               )}

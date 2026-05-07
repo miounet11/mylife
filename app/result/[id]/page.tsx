@@ -639,7 +639,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             className="mb-6"
           />
         <section className="mb-10 grid gap-6 lg:grid-cols-[1.18fr_0.82fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5 md:p-6">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-5 md:p-6">
             <div>
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">个人结构总览</div>
 
@@ -706,7 +706,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
 
-              <details id="deep-report" className="mt-6 rounded-[1.35rem] border border-[color:var(--line)] bg-white/64 p-4 open:bg-white/84">
+              <details id="deep-report" className="mt-6 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/64 p-4 open:bg-white/84">
                 <summary className="cursor-pointer list-none">
                   <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                     <div>
@@ -721,7 +721,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </summary>
 
                 <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
+                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
@@ -748,7 +748,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                           const toneClasses = getLifeKLineMetricToneClasses(item.tone);
 
                           return (
-                            <div key={item.label} className={`rounded-[1.2rem] border px-4 py-3 ${toneClasses.card}`}>
+                            <div key={item.label} className={`rounded-[var(--radius)] border px-4 py-3 ${toneClasses.card}`}>
                               <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
                                 {item.label}
                               </div>
@@ -760,7 +760,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     ) : null}
 
                     {result.klineData && result.klineData.length > 0 ? (
-                      <div className="mt-4 rounded-[1.15rem] border border-[color:var(--line)] bg-white/84 p-3">
+                      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/84 p-3">
                         <Suspense fallback={<ChartSkeleton />}>
                           <FortuneChart data={result.klineData} height={320} />
                         </Suspense>
@@ -799,7 +799,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   ].map((section, index) => (
                     <div
                       key={section.eyebrow}
-                    className={`rounded-[1.25rem] border px-5 py-5 ${
+                    className={`rounded-[var(--radius)] border px-5 py-5 ${
  index === 0
                         ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
                         : index === 1
@@ -824,7 +824,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ))}
               </div>
 
-              <div className={`mt-5 rounded-[1.25rem] border px-4 py-4 ${
+              <div className={`mt-5 rounded-[var(--radius)] border px-4 py-4 ${
  isEnhancementPending
                   ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80'
                   : result.llmUsed
@@ -864,7 +864,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
                   {qualityAudit?.summary || enhancementStatusMessage}
                 </div>
-                <div className="mt-4 rounded-[1.1rem] border border-white/70 bg-white/78 p-4">
+                <div className="mt-4 rounded-[var(--radius)] border border-white/70 bg-white/78 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告升级路径</div>
@@ -887,7 +887,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       <div
                         key={item.key}
                         data-stage-key={item.key}
-                        className={`rounded-[1.1rem] border px-4 py-4 ${
+                        className={`rounded-[var(--radius)] border px-4 py-4 ${
  item.status === 'current'
                             ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
                             : item.status === 'completed'
@@ -929,7 +929,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
               {canManage ? (
-                <div className="mt-5 rounded-[1.25rem] border border-[color:var(--line)] bg-white/78 px-4 py-4">
+                <div className="mt-5 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/78 px-4 py-4">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${feedbackHeroTone}`}>
                       {feedbackHeroLabel}
@@ -955,7 +955,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {reportHighlights.map((item) => (
-                  <div key={item.label} className="rounded-[1.1rem] bg-white/80 px-4 py-4">
+                  <div key={item.label} className="rounded-[var(--radius)] bg-white/80 px-4 py-4">
                     <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                     <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
                   </div>
@@ -963,13 +963,13 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
 
-              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
+              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5">
                 <div className="flex items-center gap-3">
                   <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
                   <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
                 </div>
                 <div className="mt-4 grid gap-3 lg:grid-cols-[0.96fr_1.04fr]">
-                  <div className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {coreSectionNames.map((item) => (
@@ -979,7 +979,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       ))}
                     </div>
                   </div>
-                  <div className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
+                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">后面再展开</div>
                     <div className="mt-3 flex flex-wrap gap-2">
                       {deferredSectionNames.map((item) => (
@@ -1030,21 +1030,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             ) : null}
 
             {stateVectorCards.length > 0 && (
-              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.35rem] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5">
                 <div className="flex items-center gap-3">
                   <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
                   <div className="font-semibold text-[color:var(--ink)]">天时地利人和</div>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   {stateVectorCards.map((item) => (
-                    <div key={item.label} className="rounded-[1.1rem] bg-[color:var(--bg-elevated)] px-4 py-4">
+                    <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                       <div className="mt-2 text-2xl font-black text-[color:var(--ink)]">{item.value.toFixed(1)}</div>
                     </div>
                   ))}
                 </div>
                 {referenceAuthority ? (
-                  <div className="mt-4 rounded-[1.1rem] bg-[rgba(178,149,93,0.1)] px-4 py-4">
+                  <div className="mt-4 rounded-[var(--radius)] bg-[rgba(178,149,93,0.1)] px-4 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                         {`参考权威度 ${referenceAuthority.authorityScore}`}

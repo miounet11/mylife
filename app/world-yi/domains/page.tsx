@@ -122,7 +122,7 @@ export default function WorldYiDomainsPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-domains',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
             <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5">快速操作</div>
@@ -155,7 +155,7 @@ export default function WorldYiDomainsPage() {
                   href={item.href}
                   page="/world-yi/domains"
                   meta={{ surfaceKey: 'world_yi_domains_page_network', targetSurfaceKey: item.target, contentType: 'knowledge', series: item.series }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -178,7 +178,7 @@ export default function WorldYiDomainsPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['起名系统', '寻物复原', '择时窗口', '家宅恢复'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}

@@ -159,7 +159,7 @@ export default async function UpdatesPage({
                     </div>
                     <div className="mt-4 grid gap-3">
                       {reportCards.length > 0 ? reportCards.map(({ report, upgradeJob, latestDigest: reportDigest }) => (
-                        <div key={report.id} className="rounded-[1.4rem] bg-white px-4 py-4">
+                        <div key={report.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
                           <div className="flex items-start justify-between gap-3">
                             <div>
                               <div className="text-xs font-semibold text-[color:var(--ink)]">{report.name || '我的报告'}</div>
@@ -180,7 +180,7 @@ export default async function UpdatesPage({
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                        <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
                           暂无报告
                         </div>
                       )}
@@ -194,7 +194,7 @@ export default async function UpdatesPage({
                     </div>
                     <div className="mt-4 grid gap-3">
                       {digestRuns.length > 0 ? digestRuns.map((item) => (
-                        <div key={item.id} className="rounded-[1.4rem] bg-white px-4 py-4">
+                        <div key={item.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
                           <div className="flex items-center justify-between gap-3">
                             <div className="text-xs font-semibold text-[color:var(--ink)]">{item.cycleKey}</div>
                           <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
@@ -209,13 +209,13 @@ export default async function UpdatesPage({
                           </div>
                         </div>
                       )) : (
-                        <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                        <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
                           暂无记录
                         </div>
                       )}
                     </div>
 
-                    <div className="mt-4 rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">邮箱与订阅</div>
+                    <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">邮箱与订阅</div>
                   </div>
                 </div>
 
@@ -226,7 +226,7 @@ export default async function UpdatesPage({
                 >
                   <div className="grid gap-3 md:grid-cols-2">
                     {lifecycleRuns.length > 0 ? lifecycleRuns.map((item) => (
-                      <div key={item.id} className="rounded-[1.4rem] bg-white px-4 py-4">
+                      <div key={item.id} className="rounded-[var(--radius)] bg-white px-4 py-4">
                         <div className="flex items-center justify-between gap-3">
                           <div className="text-sm font-semibold text-[color:var(--ink)]">{mapLifecycleStageLabel(item.stageKey)}</div>
                           <div className={`rounded-full px-3 py-1 text-xs font-semibold ${mapDigestTone(item.status)}`}>
@@ -241,7 +241,7 @@ export default async function UpdatesPage({
                         </div>
                       </div>
                     )) : (
-                      <div className="rounded-[1.4rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+                      <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
                         暂无生命周期提醒记录
                       </div>
                     )}
@@ -299,7 +299,7 @@ function StatusMetric({
   tone: 'neutral' | 'accent' | 'success' | 'warning';
 }) {
   return (
-    <div className={`rounded-[1.4rem] px-4 py-5 ${mapMetricTone(tone)}`}>
+    <div className={`rounded-[var(--radius)] px-4 py-5 ${mapMetricTone(tone)}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 break-all text-2xl font-black">{value}</div>
       <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>

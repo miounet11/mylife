@@ -1472,7 +1472,7 @@ function MessageBubble({
   if (message.role === 'user') {
     return (
       <div className="flex justify-end">
-        <div className="max-w-2xl rounded-[1.75rem] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-4 text-white shadow-[0_14px_32px_rgba(178,149,93,0.2)]">
+        <div className="max-w-2xl rounded-[var(--radius-md)] bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] px-5 py-4 text-white shadow-[0_14px_32px_rgba(178,149,93,0.2)]">
           {isEditing ? (
             <div className="space-y-3">
               <textarea
@@ -1509,13 +1509,13 @@ function MessageBubble({
             <>
               <p className="text-xs leading-6">{message.content}</p>
               {message.tacitSummary ? (
-                <div className="mt-3 rounded-[1rem] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
                   <div className="font-semibold text-white">本轮默会信息</div>
                   <div className="mt-1 text-white/82">{message.tacitSummary}</div>
                 </div>
               ) : null}
               {message.materials?.length ? (
-                <div className="mt-3 rounded-[1rem] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
+                <div className="mt-3 rounded-[var(--radius)] border border-white/18 bg-white/10 px-3 py-2.5 text-[11px] leading-6 text-white/90">
                   <div className="font-semibold text-white">本轮资料</div>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {message.materials.map((material) => (
@@ -1569,7 +1569,7 @@ function MessageBubble({
 
   return (
     <div className="flex justify-start">
-      <div className="max-w-3xl rounded-[1.75rem] border border-[color:var(--line)] bg-white px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
+      <div className="max-w-3xl rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white px-5 py-4 shadow-[0_16px_32px_rgba(23,32,51,0.06)]">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (

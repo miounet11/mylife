@@ -90,7 +90,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/global"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Global gateway</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Back to global path</h2>
@@ -99,7 +99,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/global/topics"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_global_topics_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Knowledge layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Browse global topics</h2>
@@ -108,7 +108,7 @@ export default function WorldYiGlobalCasesPage() {
             href="/world-yi/en/cases"
             page="/world-yi/global/cases"
             meta={{ surfaceKey: 'world_yi_global_cases_page_network', targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">English layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">See English cases</h2>
@@ -136,7 +136,7 @@ export default function WorldYiGlobalCasesPage() {
                   tags: entry.tags,
                   series: 'world-yi-global',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>

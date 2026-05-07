@@ -119,7 +119,7 @@ export default async function WorldYiEnglishTrackDetailPage({ params }: { params
             href="/world-yi/en/tracks"
             page={`/world-yi/en/tracks/${surface.key}`}
             meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_tracks_page', contentType: 'knowledge', locale: 'en', series: 'world-yi-en' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Track index</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">All English tracks</h2>
@@ -128,7 +128,7 @@ export default async function WorldYiEnglishTrackDetailPage({ params }: { params
             href="/world-yi/en/cases"
             page={`/world-yi/en/tracks/${surface.key}`}
             meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_en_cases_page', contentType: 'case', locale: 'en', series: 'world-yi-en' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Case layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English cases</h2>
@@ -137,7 +137,7 @@ export default async function WorldYiEnglishTrackDetailPage({ params }: { params
             href="/world-yi/global"
             page={`/world-yi/en/tracks/${surface.key}`}
             meta={{ surfaceKey: `world_yi_en_track_${surface.key}_network`, targetSurfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">Chinese global layer</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">Global Chinese path</h2>
@@ -162,7 +162,7 @@ export default async function WorldYiEnglishTrackDetailPage({ params }: { params
                   locale: 'en',
                   series: 'world-yi-en',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
@@ -187,7 +187,7 @@ export default async function WorldYiEnglishTrackDetailPage({ params }: { params
                   locale: 'en',
                   series: 'world-yi-en',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>

@@ -822,7 +822,7 @@ export default function FortuneForm({
               </label>
 
               {error ? (
-                <div className="rounded-[12px] border border-[#f1c5c5] bg-[#fff6f6] px-4 py-3 text-[14px] text-[#c24545]">
+                <div className="rounded-[var(--radius-md)] border border-[#f1c5c5] bg-[#fff6f6] px-4 py-3 text-[14px] text-[#c24545]">
                   {error}
                 </div>
               ) : null}
@@ -1008,7 +1008,7 @@ export default function FortuneForm({
                 }}
               />
 
-              <div className="flex min-h-[42px] items-center justify-center rounded-[1.2rem] border border-[color:var(--line)] bg-white/58 px-4 py-4 text-xs text-[#9a927f]">
+              <div className="flex min-h-[42px] items-center justify-center rounded-[var(--radius)] border border-[color:var(--line)] bg-white/58 px-4 py-4 text-xs text-[#9a927f]">
                 <AlertCircle className="mr-[5px] h-[16px] w-[16px]" />
                 <span>平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考</span>
               </div>

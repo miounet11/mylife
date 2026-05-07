@@ -106,7 +106,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
               key={day.toISOString()}
               type="button"
               onClick={() => setSelectedDate(isSelected ? null : day)}
-              className={`aspect-square rounded-[1.1rem] border p-1.5 text-left transition ${
+              className={`aspect-square rounded-[var(--radius)] border p-1.5 text-left transition ${
                 isSelected
                   ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)]'
                   : isCurrent
@@ -140,7 +140,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
           selectedEvents.length > 0 ? (
             <div className="mt-4 space-y-3">
               {selectedEvents.map((event) => (
-                <div key={event.id} className="rounded-[1.25rem] bg-white px-4 py-3">
+                <div key={event.id} className="rounded-[var(--radius)] bg-white px-4 py-3">
                   <div className="flex items-start gap-3">
                     <span className="text-xl">{typeMeta[event.type]}</span>
                     <div className="min-w-0 flex-1">

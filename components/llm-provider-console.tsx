@@ -158,7 +158,7 @@ export default function LlmProviderConsole() {
 
   return (
     <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-      <div className="glass-panel rounded-[1.75rem] p-5">
+      <div className="glass-panel rounded-[var(--radius-md)] p-5">
         <div className="section-label">LLM Provider</div>
         <h2 className="mt-3 text-2xl font-black text-[color:var(--ink)]">生成模型配置</h2>
         <p className="intro-copy mt-3">
@@ -222,7 +222,7 @@ export default function LlmProviderConsole() {
       <div className="space-y-5">
         {loading ? <div className="soft-card rounded-[var(--radius-md)] p-5">加载中...</div> : null}
         {(['image', 'article'] as ProviderPurpose[]).map((purpose) => (
-          <div key={purpose} className="soft-card rounded-[1.75rem] p-5">
+          <div key={purpose} className="soft-card rounded-[var(--radius-md)] p-5">
             <div className="text-sm font-semibold text-[color:var(--muted)]">{purpose === 'image' ? '图片生成 Provider' : '文章生成 Provider'}</div>
             <div className="mt-4 grid gap-3">
               {grouped[purpose].map((provider) => (

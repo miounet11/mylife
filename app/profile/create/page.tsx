@@ -62,7 +62,7 @@ function ActionCard({
   label: string;
 }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
       <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
         <Icon className="h-5 w-5" />
       </div>

@@ -593,7 +593,7 @@ export default function BirthTimeModal({
     <div className="fixed inset-0 z-50 bg-black/45" onClick={onClose}>
       <div className="relative flex min-h-full items-end justify-center sm:items-center sm:p-4">
         <div
-          className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.16)] sm:max-w-[480px] sm:rounded-[24px]"
+          className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.16)] sm:max-w-[480px] sm:rounded-[var(--radius-md)]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="shrink-0 border-b border-[color:var(--line)] px-4 py-3">
@@ -818,7 +818,7 @@ export default function BirthTimeModal({
           </div>
 
           {popoverMode ? (
-            <div className="absolute inset-x-4 bottom-[104px] z-20 rounded-[16px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 shadow-[0_18px_40px_rgba(34,26,18,0.14)]">
+            <div className="absolute inset-x-4 bottom-[104px] z-20 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 shadow-[0_18px_40px_rgba(34,26,18,0.14)]">
               {popoverMode === 'date' ? (
                 <div className="max-h-[220px] space-y-2 overflow-y-auto">
                   {dateList.map((item) => (
@@ -829,7 +829,7 @@ export default function BirthTimeModal({
                         onConfirm(2, item);
                         onClose();
                       }}
-                      className="flex w-full items-center justify-between rounded-[10px] bg-[#faf7f0] px-4 py-3 text-left text-[14px] text-[#444444]"
+                      className="flex w-full items-center justify-between rounded-[var(--radius)] bg-[#faf7f0] px-4 py-3 text-left text-[14px] text-[#444444]"
                     >
                       <span>公历：{item}</span>
                       <span>{'>'}</span>
@@ -843,7 +843,7 @@ export default function BirthTimeModal({
                       key={item}
                       type="button"
                       onClick={() => handlePillarValue(popoverMode, item)}
-                      className="flex h-[40px] items-center justify-center rounded-[10px] bg-[#faf7f0] text-[16px] text-[#444444]"
+                      className="flex h-[40px] items-center justify-center rounded-[var(--radius)] bg-[#faf7f0] text-[16px] text-[#444444]"
                     >
                       {item}
                     </button>

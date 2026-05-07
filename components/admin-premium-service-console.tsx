@@ -293,7 +293,7 @@ export default function AdminPremiumServiceConsole() {
             };
 
             return (
-              <div key={item.id} className="soft-card rounded-[1.75rem] p-5">
+              <div key={item.id} className="soft-card rounded-[var(--radius-md)] p-5">
                 <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">

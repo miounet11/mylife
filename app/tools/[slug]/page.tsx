@@ -248,7 +248,7 @@ export default async function ToolDetailPage({
 
         <section id="tool-runner" className="mt-6 grid gap-8 xl:grid-cols-[1fr_1fr]">
           {imageUploadChatHref ? (
-            <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white/82 p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/82 p-5">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Bot className="h-3.5 w-3.5" />
                 图片上传入口
@@ -268,7 +268,7 @@ export default async function ToolDetailPage({
                   {imageUploadPrimaryLabel || '上传图片测算'}
                   <ArrowRight className="h-4 w-4" />
                 </ResultCtaLink>
-                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] rounded-[1.2rem] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] rounded-[var(--radius)] px-4 py-3 text-xs leading-6 text-[color:var(--muted)]">
                   手相只做可见掌纹、掌丘、手型和照片质量的相学文化观察；户型只做可见结构、动线、采光、收纳和形势问题诊断。
                 </div>
               </div>
@@ -304,32 +304,32 @@ export default async function ToolDetailPage({
             </div>
             <div className="mt-4 grid gap-3">
               {returningFromAnalyze ? (
-                <div className="rounded-[1.25rem] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/85 p-4 text-xs leading-6 text-[color:var(--data-up)]">
+                <div className="rounded-[var(--radius)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/85 p-4 text-xs leading-6 text-[color:var(--data-up)]">
                   综合报告已经接回当前工具，可以直接运行。
                 </div>
               ) : null}
               {entrySource ? (
-                <div className="rounded-[1.25rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+                <div className="rounded-[var(--radius)] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                   {`${sourceContext.guidanceLabel}：${sourceContext.toolHeadline}`}
                 </div>
               ) : null}
               {!report && !imageUploadChatHref ? (
-                <div className="rounded-[1.25rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
+                <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80 p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
                   这个工具会读取你的综合报告来判断结构与阶段。先完成一次综合判断，再回来运行。
                 </div>
               ) : null}
               {imageUploadChatHref ? (
-                <div className="rounded-[1.25rem] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
+                <div className="rounded-[var(--radius)] border border-[color:var(--accent)] bg-[color:var(--accent-soft)]/70 p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
                   这个工具支持直接上传图片测算。点击“上传图片测算”会进入聊天页，并自动切到对应图片类型。
                 </div>
               ) : null}
-              <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 当前触发：{tool.triggerMoment}
               </div>
-              <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 免费版输出：{tool.freeOutputFields.join('、')}
               </div>
-              <div className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                 深测会补：{tool.premiumOutputFields.join('、')}
               </div>
               <div className="text-xs font-bold text-[color:var(--brand-strong)] pt-2">更多入口</div>
@@ -432,7 +432,7 @@ export default async function ToolDetailPage({
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">搜索和 AI 回答页要覆盖的问题</h2>
                       <div className="mt-4 grid gap-3">
                         {growthProfile.geoQuestions.map((item) => (
-                          <div key={item} className="rounded-[1.25rem] bg-white/82 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[var(--radius)] bg-white/82 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -442,7 +442,7 @@ export default async function ToolDetailPage({
                       <h2 className="text-2xl font-black text-[color:var(--ink)]">社交内容只导向一次免费测算</h2>
                       <div className="mt-4 grid gap-3">
                         {growthProfile.socialHooks.map((item) => (
-                          <div key={item} className="rounded-[1.25rem] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                          <div key={item} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
                             {item}
                           </div>
                         ))}
@@ -486,7 +486,7 @@ export default async function ToolDetailPage({
                   </h2>
                   <div className="mt-5 grid gap-3 md:grid-cols-3">
                     {growthProfile.upgradeBullets.map((item) => (
-                      <div key={item} className="rounded-[1.25rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}

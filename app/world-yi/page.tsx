@@ -216,7 +216,7 @@ export default function WorldYiPage() {
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">六层引力模型</h2>
             <div className="mt-5 grid gap-3">
               {attractionLayers.map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}
@@ -231,7 +231,7 @@ export default function WorldYiPage() {
             <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">五大学理基础</h2>
             <div className="mt-5 grid gap-3">
               {foundations.map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}
@@ -250,7 +250,7 @@ export default function WorldYiPage() {
             href="/knowledge"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge', series: 'world-yi' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到知识层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">知识库</h2>
@@ -260,7 +260,7 @@ export default function WorldYiPage() {
             href="/cases"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到证据层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">案例库</h2>
@@ -270,7 +270,7 @@ export default function WorldYiPage() {
             href="/insights"
             page="/world-yi"
             meta={{ surfaceKey: 'world_yi_page_network', targetSurfaceKey: 'insights_page', contentType: 'insight', series: 'world-yi' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到环境层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">环境洞察</h2>
@@ -319,7 +319,7 @@ export default function WorldYiPage() {
         </section>
 
         <section className="mt-10">
-          <div className="relative overflow-hidden rounded-[2.2rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(244,237,226,0.92))] p-6 shadow-[0_24px_64px_rgba(34,33,30,0.07)] md:p-8">
+          <div className="relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,255,255,0.95),rgba(244,237,226,0.92))] p-6 shadow-[0_24px_64px_rgba(34,33,30,0.07)] md:p-8">
             <div className="absolute -right-10 top-6 h-44 w-44 rounded-full bg-[rgba(178,149,93,0.12)] blur-3xl" />
             <div className="absolute left-6 bottom-0 h-32 w-32 rounded-full bg-[rgba(201,125,58,0.12)] blur-3xl" />
 
@@ -333,7 +333,7 @@ export default function WorldYiPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {doctrineWall.map((item) => (
-                  <div key={item} className="rounded-[1.3rem] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_24px_rgba(23,32,51,0.04)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)] shadow-[0_10px_24px_rgba(23,32,51,0.04)]">
                     {item}
                   </div>
                 ))}
@@ -361,7 +361,7 @@ export default function WorldYiPage() {
                   contentType: 'knowledge',
                   series: 'world-yi',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-lg font-bold text-[color:var(--ink)]">{item.title}</div>
                 <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
@@ -399,7 +399,7 @@ export default function WorldYiPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['事业', '财富', '关系', '健康', '家庭', '迁移'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}
@@ -434,7 +434,7 @@ export default function WorldYiPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['卷一：起论与立法', '卷二：世界观与引力', '卷三：概念与判断法', '卷四：财富事业扩张', '卷五：关系家庭代际', '卷六到卷十：环境应用传播治理'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}
@@ -469,7 +469,7 @@ export default function WorldYiPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['Batch 01：母语定盘', 'Batch 02：六域起量', 'Batch 03：应用落地', 'Batch 04：全球华人', 'Batch 05：案例密集化', 'Batch 06：治理与传播'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}
@@ -505,7 +505,7 @@ export default function WorldYiPage() {
                   category: article.category,
                   tags: article.tags,
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{article.category}</div>
                 <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{article.title}</h3>
@@ -536,7 +536,7 @@ export default function WorldYiPage() {
                     title: item.title,
                     tags: item.tags,
                   }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -561,7 +561,7 @@ export default function WorldYiPage() {
                     title: item.title,
                     tags: item.tags,
                   }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>

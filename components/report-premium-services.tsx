@@ -267,7 +267,7 @@ export default function ReportPremiumServices({
 
       {canManage ? (
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
             <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
 
@@ -289,7 +289,7 @@ export default function ReportPremiumServices({
             </div>
 
             <form onSubmit={handleSubmit} className="mt-5 grid gap-4">
-              <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+              <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                 <div className="font-semibold">{selectedOffer?.title}</div>
                 <div className="mt-1 text-[color:var(--muted)]">{selectedOffer?.tagline}</div>
               </div>
@@ -299,13 +299,13 @@ export default function ReportPremiumServices({
                   value={contactName}
                   onChange={(event) => setContactName(event.target.value)}
                   placeholder="称呼，可选"
-                  className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
                 />
                 <input
                   value={contactValue}
                   onChange={(event) => setContactValue(event.target.value)}
                   placeholder="邮箱 / 微信 / 手机号"
-                  className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                  className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
                 />
               </div>
 
@@ -313,7 +313,7 @@ export default function ReportPremiumServices({
                 value={preferredContact}
                 onChange={(event) => setPreferredContact(event.target.value)}
                 placeholder="偏好的联系渠道，例如邮箱、微信"
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 text-sm outline-none focus:border-[color:var(--accent)]"
               />
 
               <textarea
@@ -336,12 +336,12 @@ export default function ReportPremiumServices({
             {error ? <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">最近提交的专项需求</div>
 
             <div className="mt-4 grid gap-3">
               {requests.length > 0 ? requests.map((item) => (
-                <div key={item.id} className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4">
+                <div key={item.id} className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{getPremiumServiceLabel(item.serviceKey)}</div>
                     <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mapRequestStatusClass(item.status)}`}>
@@ -356,7 +356,7 @@ export default function ReportPremiumServices({
                   </div>
                 </div>
               )) : (
-                <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">暂无专项需求</div>
+                <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-sm text-[color:var(--muted)]">暂无专项需求</div>
               )}
             </div>
           </div>

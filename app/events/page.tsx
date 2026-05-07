@@ -474,7 +474,7 @@ function EventsPageContent() {
         )}
 
         {focusedReportId && (
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
               <div>
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">报告联动模式</div>
@@ -718,7 +718,7 @@ function EventsPageContent() {
         )}
 
         {/* 工具栏 */}
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-5">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center space-x-3">
             <h2 className="text-2xl font-black text-[color:var(--ink)]">
@@ -763,7 +763,7 @@ function EventsPageContent() {
         </div>
 
         {/* 筛选和搜索 */}
-        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] flex flex-col gap-4 rounded-[1.75rem] p-4 md:flex-row md:items-center">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] flex flex-col gap-4 rounded-[var(--radius-md)] p-4 md:flex-row md:items-center">
           <div className="flex items-center space-x-2">
             <Filter className="w-5 h-5 text-[color:var(--muted)]" />
             <select
@@ -860,7 +860,7 @@ function EventsPageContent() {
                 }
 
                 return (
-                  <div className="md:col-span-2 rounded-[1.25rem] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-4 text-sm text-[color:var(--signal-strong)]">
+                  <div className="md:col-span-2 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-4 text-sm text-[color:var(--signal-strong)]">
                     <div className="font-semibold">这条历史印证还在使用暂估日期</div>
                     <div className="mt-1 leading-6">{getEstimatedPastEventPrompt(editingEvent)}</div>
                   </div>
@@ -871,12 +871,12 @@ function EventsPageContent() {
                 value={form.title}
                 onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
                 placeholder="事件标题"
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.type}
                 onChange={(e) => setForm((prev) => ({ ...prev, type: e.target.value as EventType }))}
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="career">事业</option>
                 <option value="wealth">财富</option>
@@ -889,18 +889,18 @@ function EventsPageContent() {
                 type="date"
                 value={form.date}
                 onChange={(e) => setForm((prev) => ({ ...prev, date: e.target.value }))}
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <input
                 type="time"
                 value={form.time}
                 onChange={(e) => setForm((prev) => ({ ...prev, time: e.target.value }))}
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <select
                 value={form.impact}
                 onChange={(e) => setForm((prev) => ({ ...prev, impact: e.target.value as ImpactType }))}
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               >
                 <option value="positive">积极</option>
                 <option value="neutral">中性</option>
@@ -912,13 +912,13 @@ function EventsPageContent() {
                 value={form.reminderAdvanceDays}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderAdvanceDays: Number(e.target.value) || 0 }))}
                 placeholder="提前天数"
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               />
               <select
                 value={form.reminderMethod}
                 onChange={(e) => setForm((prev) => ({ ...prev, reminderMethod: e.target.value as 'app' | 'email' | 'sms' }))}
-                className="w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
                 disabled={!form.reminderEnabled}
               >
                 <option value="app">应用通知</option>
@@ -926,7 +926,7 @@ function EventsPageContent() {
                 <option value="sms">短信通知</option>
               </select>
 
-              <label className="md:col-span-2 flex items-center gap-3 rounded-[1.25rem] bg-white/70 px-4 py-3 text-sm text-[color:var(--ink)]">
+              <label className="md:col-span-2 flex items-center gap-3 rounded-[var(--radius)] bg-white/70 px-4 py-3 text-sm text-[color:var(--ink)]">
                 <input
                   type="checkbox"
                   checked={form.reminderEnabled}
@@ -940,7 +940,7 @@ function EventsPageContent() {
                 value={form.description}
                 onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="事件说明"
-                className="md:col-span-2 min-h-[130px] w-full rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
+                className="md:col-span-2 min-h-[130px] w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-3 outline-none focus:border-[color:var(--accent)]"
               />
               <div className="md:col-span-2 flex justify-end border-t border-white/60 pt-2">
                 <button
@@ -1022,7 +1022,7 @@ function EventsSkeleton() {
 
 function WorkbenchStat({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
-    <div className={`rounded-[1.4rem] px-4 py-4 ${tone}`}>
+    <div className={`rounded-[var(--radius)] px-4 py-4 ${tone}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 text-2xl font-black">{value}</div>
     </div>
@@ -1041,14 +1041,14 @@ function WorkbenchPanel({
   empty: string;
 }) {
   return (
-    <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-4">
+    <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
       <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
         {icon}
         {title}
       </div>
       <div className="mt-4 grid gap-3">
         {items.length > 0 ? items : (
-          <div className="rounded-[1.25rem] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
+          <div className="rounded-[var(--radius)] bg-white px-4 py-4 text-sm text-[color:var(--muted)]">
             {empty}
           </div>
         )}
@@ -1067,7 +1067,7 @@ function WorkbenchQueueItem({
   actionSlot: ReactNode;
 }) {
   return (
-    <div className="rounded-[1.25rem] bg-white px-4 py-4">
+    <div className="rounded-[var(--radius)] bg-white px-4 py-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="text-sm font-semibold text-[color:var(--ink)]">{event.title}</div>

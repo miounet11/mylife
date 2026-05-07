@@ -87,7 +87,7 @@ export default function AgenticInsightPanel({
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
-      <section className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-6">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-6">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">专家解释层</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
           {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
@@ -157,7 +157,7 @@ export default function AgenticInsightPanel({
         )}
       </section>
 
-      <section className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-6">
+      <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-6">
         <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">天时地利人和</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">把个人命局放回真实时空环境里判断。</div>
 

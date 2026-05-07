@@ -516,7 +516,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             </div>
 
             <div className="grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
-              <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5">
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{activeScenario.title}</div>
@@ -547,7 +547,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </div>
 
               <div className="grid gap-4">
-                <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">优先看点</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.focus.map((item) => (
@@ -558,7 +558,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                   </div>
                 </div>
 
-                <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
+                <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">风险提醒</div>
                   <div className="mt-3 grid gap-3">
                     {activeScenario.risks.map((item) => (
@@ -585,7 +585,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {expertInterpretation.map((item) => (
-                <div key={item.key} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
                   <div className="mt-3 text-lg font-bold leading-8 text-[color:var(--ink)]">{item.headline}</div>
                   <div className="mt-4 flex flex-wrap gap-2">
@@ -999,7 +999,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {decisionPlaybook.map((item) => (
-                <div key={item.key} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.title}</div>
@@ -1042,7 +1042,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-2">
               {yearlyRoadmap.map((phase) => (
-                <div key={phase.key} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
+                <div key={phase.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">{phase.title}</div>
@@ -1099,7 +1099,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
           <CardContent className="space-y-5 pt-6">
             <div className="grid gap-4 xl:grid-cols-3">
               {yearlyTrendSnapshots.map((item) => (
-                <div key={item.year} className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5">
+                <div key={item.year} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-2xl font-black text-[color:var(--ink)]">{item.year}</div>
                     <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
@@ -1128,7 +1128,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-              <div className="rounded-[1.75rem] bg-[color:var(--accent-soft)] p-5">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--accent-soft)] p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">结构可信度</div>
                 <div className="mt-2 text-4xl font-black text-[color:var(--ink)]">{confidence.overallScore}</div>
                 <div className="mt-1 text-sm text-[color:var(--muted)]">{mapConfidenceLevel(confidence.level)}</div>
@@ -1169,7 +1169,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 pt-6">
-              <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">时柱影响等级</div>
                   <span className={`rounded-full px-3 py-1 text-xs font-semibold ${mapSensitivityBadge(confidence.birthTimeSensitivity.level)}`}>
@@ -1179,7 +1179,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{confidence.birthTimeSensitivity.explanation}</div>
               </div>
 
-              <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
+              <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">最受影响的板块</div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {confidence.birthTimeSensitivity.affectedAreas.map((item) => (
@@ -1203,7 +1203,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
-            <div className="rounded-[1.75rem] bg-[color:var(--accent-soft)] p-5">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--accent-soft)] p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">闭环状态</div>
               <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{validationInsights.summary}</div>
             </div>
@@ -1235,7 +1235,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
-            <div className="rounded-[1.75rem] bg-[color:var(--bg-elevated)] p-5">
+            <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">当前级别</div>
                 <span className={`rounded-full px-3 py-1 text-xs font-semibold ${
@@ -1394,7 +1394,7 @@ function AdviceSection({
   icon?: ReactNode;
 }) {
   return (
-    <section className="rounded-[1.75rem] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 md:p-6">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 md:p-6">
       <div className="flex items-center gap-3">
         <span className={`h-3 w-3 rounded-full ${accent}`} />
         {icon}

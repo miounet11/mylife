@@ -491,7 +491,7 @@ export default function ProfilePage() {
 
             {(updatesSummary?.latestReport || updatesSummary?.latestDigest) ? (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[1.4rem] bg-white px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestReport
@@ -518,7 +518,7 @@ export default function ProfilePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-[1.4rem] bg-white px-4 py-4">
+                <div className="rounded-[var(--radius)] bg-white px-4 py-4">
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestDigest
@@ -676,7 +676,7 @@ function ProfileStatusTile({
   tone: 'neutral' | 'accent' | 'success' | 'warning';
 }) {
   return (
-    <div className={`rounded-[1.4rem] px-4 py-5 ${mapProfileStatusTone(tone)}`}>
+    <div className={`rounded-[var(--radius)] px-4 py-5 ${mapProfileStatusTone(tone)}`}>
       <div className="text-xs tracking-[0.18em]">{label}</div>
       <div className="mt-2 break-all text-2xl font-black">{value}</div>
       <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>

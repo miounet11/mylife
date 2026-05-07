@@ -175,7 +175,7 @@ export default function KnowledgeTopicsPage() {
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 {['四句母命题', '六层引力模型', '五大学理基础', '主书与2000篇内容工程'].map((item) => (
-                  <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}
@@ -203,7 +203,7 @@ export default function KnowledgeTopicsPage() {
 
             <div className="mt-6 grid gap-6 xl:grid-cols-3">
               {toolItems.length > 0 ? (
-                <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/82 p-5">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                     <Compass className="h-4 w-4" />
                     相关工具
@@ -216,7 +216,7 @@ export default function KnowledgeTopicsPage() {
                         toolSlug={tool.slug}
                         category={tool.category}
                         page="/knowledge/topics"
-                        className="block rounded-[1.25rem] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
+                        className="block rounded-[var(--radius)] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
                       >
                         <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
                         <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
@@ -227,7 +227,7 @@ export default function KnowledgeTopicsPage() {
               ) : null}
 
               {caseItems.length > 0 ? (
-                <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/82 p-5">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                     <LibraryBig className="h-4 w-4" />
                     相关案例
@@ -239,7 +239,7 @@ export default function KnowledgeTopicsPage() {
                         href={`/cases/${item.slug}`}
                         page="/knowledge/topics"
                         meta={{ surfaceKey: 'knowledge_topics_page_evidence', targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                        className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
                         <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
@@ -250,7 +250,7 @@ export default function KnowledgeTopicsPage() {
               ) : null}
 
               {insightItems.length > 0 ? (
-                <div className="rounded-[1.7rem] border border-[color:var(--line)] bg-white/82 p-5">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white/82 p-5">
                   <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
                     <Sparkles className="h-4 w-4" />
                     相关洞察
@@ -262,7 +262,7 @@ export default function KnowledgeTopicsPage() {
                         href={`/insights/${item.type}/${item.slug}`}
                         page="/knowledge/topics"
                         meta={{ surfaceKey: 'knowledge_topics_page_evidence', targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                        className="block rounded-[1.25rem] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
+                        className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-white"
                       >
                         <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                         <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>

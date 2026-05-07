@@ -778,7 +778,7 @@ export default async function AdminAnalyticsPage() {
 
           <div className="mt-6 grid gap-4 xl:grid-cols-2">
             {productExperience.rows.map((item) => (
-              <div key={item.surface} className="rounded-[1.6rem] bg-white/76 p-5">
+              <div key={item.surface} className="rounded-[var(--radius-md)] bg-white/76 p-5">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                   <div>
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.surface}</div>
@@ -942,7 +942,7 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-2">
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">身份连续性</div>
@@ -1103,7 +1103,7 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-2">
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">设备测量质量</div>
@@ -1153,7 +1153,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">设备漏斗诊断</div>
@@ -1224,7 +1224,7 @@ export default async function AdminAnalyticsPage() {
             </div>
           </div>
 
-          <div className="mt-8 rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+          <div className="mt-8 rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <div className="text-sm font-semibold text-[color:var(--muted)]">最近几天行为变化</div>
@@ -1392,7 +1392,7 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-2">
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">来源主漏斗</div>
@@ -1422,7 +1422,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">最近 7 周来源趋势</div>
@@ -1462,7 +1462,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">来源 CTA 策略表现</div>
@@ -1493,7 +1493,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">来源 × 设备漏斗</div>
@@ -1520,7 +1520,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜报告后追问</div>
@@ -1552,7 +1552,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜工具兴趣回流</div>
@@ -1586,7 +1586,7 @@ export default async function AdminAnalyticsPage() {
           </div>
 
           <div className="mt-8 grid gap-6 xl:grid-cols-2">
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜报告按来源/设备</div>
@@ -1626,7 +1626,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="rounded-[1.8rem] bg-white/72 p-5 md:p-6">
+            <div className="rounded-[var(--radius-md)] bg-white/72 p-5 md:p-6">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-[color:var(--muted)]">生命周期召回｜工具按来源/设备</div>
@@ -1853,7 +1853,7 @@ export default async function AdminAnalyticsPage() {
             </div>
 
             <div className="mt-6 grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-              <div className="rounded-[1.6rem] bg-white/72 p-5">
+              <div className="rounded-[var(--radius-md)] bg-white/72 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <div className="text-sm font-semibold text-[color:var(--muted)]">分层漏斗</div>
                   <MetricBadge value={reportJourney.funnel.length} label="层" />
@@ -1879,7 +1879,7 @@ export default async function AdminAnalyticsPage() {
               </div>
 
               <div className="grid gap-5">
-                <div className="rounded-[1.6rem] bg-white/72 p-5">
+                <div className="rounded-[var(--radius-md)] bg-white/72 p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--muted)]">热门专项方向</div>
                     <MetricBadge value={reportJourney.categories.length} label="类" />
@@ -1898,7 +1898,7 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
 
-                <div className="rounded-[1.6rem] bg-white/72 p-5">
+                <div className="rounded-[var(--radius-md)] bg-white/72 p-5">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--muted)]">热门承接工具</div>
                     <MetricBadge value={reportJourney.tools.length} label="工具" />
@@ -1922,7 +1922,7 @@ export default async function AdminAnalyticsPage() {
               </div>
             </div>
 
-            <div className="mt-5 rounded-[1.6rem] bg-white/72 p-5">
+            <div className="mt-5 rounded-[var(--radius-md)] bg-white/72 p-5">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-[color:var(--muted)]">最近分层点击</div>
                 <MetricBadge value={reportJourney.latestEvents.length} label="条" />

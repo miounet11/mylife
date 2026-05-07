@@ -1071,10 +1071,10 @@ export default function ContentAdminConsole() {
 
           <div className="space-y-3">
             {loading ? (
-              <div className="soft-card rounded-[1.75rem] p-6 text-sm text-[color:var(--muted)]">内容加载中...</div>
+              <div className="soft-card rounded-[var(--radius-md)] p-6 text-sm text-[color:var(--muted)]">内容加载中...</div>
             ) : (
               filteredEntries.map((entry) => (
-                <div key={entry.id} className="soft-card rounded-[1.75rem] p-5">
+                <div key={entry.id} className="soft-card rounded-[var(--radius-md)] p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3">
                       <input

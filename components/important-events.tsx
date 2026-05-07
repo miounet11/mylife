@@ -94,7 +94,7 @@ export default function ImportantEvents({
             ))}
           </div>
         ) : (
-          <div className="rounded-[1.75rem] border border-dashed border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-6 py-12 text-center">
+          <div className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--line)] bg-[color:var(--bg-elevated)] px-6 py-12 text-center">
             <div className="text-base font-semibold text-[color:var(--ink)]">还没有重要事件</div>
           </div>
         )}
@@ -126,7 +126,7 @@ function EventRow({
   const impact = impactMeta[event.impact];
 
   return (
-    <div className="rounded-[1.75rem] border border-[color:var(--line)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(23,32,51,0.08)]">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-[0_18px_36px_rgba(23,32,51,0.08)]">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">

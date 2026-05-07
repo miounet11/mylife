@@ -135,7 +135,7 @@ export default function WorldYiGlobalPage() {
             href="/world-yi"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'knowledge', series: 'world-yi' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母入口</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易总入口</h2>
@@ -145,7 +145,7 @@ export default function WorldYiGlobalPage() {
             href="/cases"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi-global' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到案例库</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">公开案例库</h2>
@@ -155,7 +155,7 @@ export default function WorldYiGlobalPage() {
             href="/world-yi/en"
             page="/world-yi/global"
             meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', series: 'world-yi-en' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">切到英文层</div>
             <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English Gateway</h2>
@@ -189,7 +189,7 @@ export default function WorldYiGlobalPage() {
                   tags: entry.tags,
                   series: 'world-yi-global',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>

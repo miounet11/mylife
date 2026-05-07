@@ -333,7 +333,7 @@ export default function KnowledgePage() {
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
                     {['时代认知与版本观', '方法论与现代翻译', '人生六域', '生活应用与海外传播'].map((item) => (
-                      <div key={item} className="rounded-[1.25rem] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                      <div key={item} className="rounded-[var(--radius)] bg-white/75 p-4 text-sm font-semibold text-[color:var(--ink)]">
                         {item}
                       </div>
                     ))}
@@ -382,7 +382,7 @@ export default function KnowledgePage() {
                             series: 'world-yi',
                             version: worldYiRoadmapSummary.version,
                           }}
-                          className="rounded-[1.6rem] bg-white/84 p-5 transition hover:-translate-y-0.5"
+                          className="rounded-[var(--radius-md)] bg-white/84 p-5 transition hover:-translate-y-0.5"
                         >
                           <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                             <Icon className="h-5 w-5" />

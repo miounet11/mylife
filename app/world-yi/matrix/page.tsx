@@ -75,7 +75,7 @@ export default function WorldYiMatrixPage() {
             href="/world-yi/book"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'world_yi_book_page', contentType: 'knowledge', series: 'world-yi-book' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <BookOpen className="h-3.5 w-3.5" />
@@ -87,7 +87,7 @@ export default function WorldYiMatrixPage() {
             href="/world-yi/network"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'world_yi_network_page', contentType: 'knowledge', series: 'world-yi-network' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Network className="h-3.5 w-3.5" />
@@ -99,7 +99,7 @@ export default function WorldYiMatrixPage() {
             href="/knowledge/topics"
             page="/world-yi/matrix"
             meta={{ surfaceKey: 'world_yi_matrix_page_network', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge', series: 'world-yi-matrix' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
           >
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Sparkles className="h-3.5 w-3.5" />
@@ -117,7 +117,7 @@ export default function WorldYiMatrixPage() {
           <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">批次列表</h2>
           <div className="mt-6 grid gap-4 xl:grid-cols-2">
             {worldYiExecutionBatches.map((batch) => (
-              <div key={batch.phase} className="rounded-[1.75rem] bg-white/80 p-6">
+              <div key={batch.phase} className="rounded-[var(--radius-md)] bg-white/80 p-6">
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                     {batch.phase}

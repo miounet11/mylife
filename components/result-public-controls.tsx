@@ -429,7 +429,7 @@ export default function ResultPublicControls({
     <div className="space-y-4">
       <div
         ref={posterRef}
-        className="overflow-hidden rounded-[1.75rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.98),rgba(246,241,232,0.92))]"
+        className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.98),rgba(246,241,232,0.92))]"
       >
         <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(178,149,93,0.18),rgba(201,125,58,0.08))] px-5 py-5">
           <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
@@ -455,12 +455,12 @@ export default function ResultPublicControls({
         <div className="grid gap-4 px-5 py-5 md:grid-cols-[1.08fr_0.92fr]">
           <div>
             <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">传播重点</div>
-            <div className="mt-3 rounded-[1.35rem] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+            <div className="mt-3 rounded-[var(--radius)] bg-white/80 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
               {nextFocusSummary}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {highlights.map((item) => (
-                <div key={item.label} className="rounded-[1.25rem] border border-[color:var(--line)] bg-white px-4 py-4">
+                <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 py-4">
                   <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                   <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{item.value}</div>
                 </div>
@@ -565,7 +565,7 @@ export default function ResultPublicControls({
         )}
       </div>
 
-      <div className="rounded-[1.4rem] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
+      <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-sm text-[color:var(--ink)]">
         {message || (isPublic ? '当前公开' : '当前私密')}
       </div>
     </div>

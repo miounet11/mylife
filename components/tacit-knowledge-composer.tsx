@@ -87,7 +87,7 @@ export default function TacitKnowledgeComposer({
   };
 
   return (
-    <div className={isAnalyze ? 'rounded-[20px] border border-[#ece7da] bg-[#faf7f1] px-4 py-4' : 'rounded-[1.4rem] border border-[color:var(--line)] bg-[color:var(--accent-soft)]/40 p-4'}>
+    <div className={isAnalyze ? 'rounded-[var(--radius-md)] border border-[#ece7da] bg-[#faf7f1] px-4 py-4' : 'rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--accent-soft)]/40 p-4'}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className={isAnalyze ? 'text-[15px] font-semibold text-[#3f392f]' : 'text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]'}>
@@ -129,7 +129,7 @@ export default function TacitKnowledgeComposer({
       </div>
 
       {!expanded ? (
-        <div className={isAnalyze ? 'mt-4 rounded-[14px] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'mt-3 rounded-[1rem] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
+        <div className={isAnalyze ? 'mt-4 rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'mt-3 rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
           {hasValue ? (
             <>
               <span className={isAnalyze ? 'font-semibold text-[#8b6a2f]' : 'font-semibold text-[color:var(--accent-strong)]'}>{summaryLabel}</span>
@@ -170,7 +170,7 @@ export default function TacitKnowledgeComposer({
             {LEVELS.map(({ label, key }) => (
               <label
                 key={label}
-                className={isAnalyze ? 'rounded-[14px] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[1rem] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}
+                className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}
               >
                 <div className="flex items-center justify-between gap-3">
                   <span>{label}</span>
@@ -190,28 +190,28 @@ export default function TacitKnowledgeComposer({
           </div>
 
           <div className="grid gap-3 md:grid-cols-2">
-            <label className={isAnalyze ? 'rounded-[14px] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[1rem] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
+            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
               <div className={isAnalyze ? 'text-[12px] tracking-[0.18em] text-[#9a927f]' : 'text-xs text-[color:var(--muted)]'}>最怕发生什么</div>
               <input
                 value={value.unsaidFear || ''}
                 onChange={(event) => updateText('unsaidFear', event.target.value, 80)}
                 placeholder={isAnalyze ? '例如：我一旦表态，就没有回旋了' : '最怕发生什么'}
-                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[10px] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[1rem] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
+                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
               />
             </label>
-            <label className={isAnalyze ? 'rounded-[14px] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[1rem] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
+            <label className={isAnalyze ? 'rounded-[var(--radius-md)] bg-white/90 px-4 py-3 text-[13px] text-[#4b4439]' : 'rounded-[var(--radius)] bg-white/80 px-3 py-3 text-xs text-[color:var(--ink)]'}>
               <div className={isAnalyze ? 'text-[12px] tracking-[0.18em] text-[#9a927f]' : 'text-xs text-[color:var(--muted)]'}>一句说不清的补充</div>
               <input
                 value={value.freeNote || ''}
                 onChange={(event) => updateText('freeNote', event.target.value, 160)}
                 placeholder={isAnalyze ? '例如：不是没有答案，是身体已经先抗拒了' : '一句还说不清的补充'}
-                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[10px] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[1rem] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
+                className={isAnalyze ? 'mt-2 h-[40px] w-full rounded-[var(--radius)] border border-[#ececec] px-3 text-[14px] outline-none placeholder:text-[#c8c1b5]' : 'mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--line)] bg-white px-4 text-sm text-[color:var(--ink)] outline-none'}
               />
             </label>
           </div>
 
           {hasValue ? (
-            <div className={isAnalyze ? 'rounded-[14px] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'rounded-[1rem] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
+            <div className={isAnalyze ? 'rounded-[var(--radius-md)] border border-[#efe1bf] bg-[#fffaf0] px-4 py-3 text-[13px] leading-6 text-[#6a5840]' : 'rounded-[var(--radius)] bg-white/85 px-4 py-3 text-xs leading-6 text-[color:var(--ink)]'}>
               <span className={isAnalyze ? 'font-semibold text-[#8b6a2f]' : 'font-semibold text-[color:var(--accent-strong)]'}>{summaryLabel}</span>
               {summary}
             </div>

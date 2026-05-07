@@ -126,7 +126,7 @@ export default function VisualAssetsPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <section className="grid gap-8 overflow-hidden rounded-[2.25rem] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.96),rgba(245,236,222,0.9))] p-6 shadow-[0_24px_70px_rgba(47,32,14,0.08)] md:p-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:p-10">
+        <section className="grid gap-8 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.96),rgba(245,236,222,0.9))] p-6 shadow-[0_24px_70px_rgba(47,32,14,0.08)] md:p-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:p-10">
           <div className="space-y-5">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
               <Images className="h-3.5 w-3.5" />
@@ -196,7 +196,7 @@ export default function VisualAssetsPage() {
           </div>
           <div className="mt-6 grid gap-5 lg:grid-cols-3">
             {pathCards.map((path) => (
-              <div key={path.title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.8rem] p-5">
+              <div key={path.title} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-5">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   {path.icon}
                 </div>
@@ -207,9 +207,9 @@ export default function VisualAssetsPage() {
                     <Link
                       key={asset.id}
                       href={`/visual-assets/${asset.slug}`}
-                      className="grid grid-cols-[5.75rem_1fr] gap-3 rounded-[1.2rem] border border-[color:var(--line)] bg-white/76 p-3 transition hover:border-[color:var(--accent)]"
+                      className="grid grid-cols-[5.75rem_1fr] gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-white/76 p-3 transition hover:border-[color:var(--accent)]"
                     >
-                      <div className="aspect-video overflow-hidden rounded-[0.9rem] bg-[#f7efe2]">
+                      <div className="aspect-video overflow-hidden rounded-[var(--radius)] bg-[#f7efe2]">
                         <Image
                           src={asset.publicUrl}
                           alt={asset.altText}

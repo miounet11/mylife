@@ -93,7 +93,7 @@ export default function WorldYiApplicationsPage() {
               href="/world-yi/domains"
               page="/world-yi/applications"
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_domains_page', contentType: 'knowledge', series: 'world-yi-applications' }}
-              className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
+              className="rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:bg-white"
             >
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <BookOpenText className="h-3.5 w-3.5" />
@@ -105,7 +105,7 @@ export default function WorldYiApplicationsPage() {
               href="/world-yi/book"
               page="/world-yi/applications"
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_book_page', contentType: 'knowledge', series: 'world-yi-book' }}
-              className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
+              className="rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:bg-white"
             >
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <LibraryBig className="h-3.5 w-3.5" />
@@ -117,7 +117,7 @@ export default function WorldYiApplicationsPage() {
               href="/world-yi/insights"
               page="/world-yi/applications"
               meta={{ surfaceKey: 'world_yi_applications_page_network', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
-              className="rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
+              className="rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:bg-white"
             >
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Sparkles className="h-3.5 w-3.5" />
@@ -155,7 +155,7 @@ export default function WorldYiApplicationsPage() {
                         tags: entry.tags,
                         series: 'world-yi-applications',
                       }}
-                      className="rounded-[1.6rem] bg-white/82 p-5 transition hover:-translate-y-0.5"
+                      className="rounded-[var(--radius-md)] bg-white/82 p-5 transition hover:-translate-y-0.5"
                     >
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                       <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{entry.title}</h3>
@@ -176,7 +176,7 @@ export default function WorldYiApplicationsPage() {
                         tags: entry.tags,
                         series: 'world-yi-applications',
                       }}
-                      className="rounded-[1.6rem] bg-[rgba(255,255,255,0.72)] p-5 transition hover:-translate-y-0.5"
+                      className="rounded-[var(--radius-md)] bg-[rgba(255,255,255,0.72)] p-5 transition hover:-translate-y-0.5"
                     >
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
                       <h3 className="mt-3 text-xl font-bold text-[color:var(--ink)]">{entry.title}</h3>

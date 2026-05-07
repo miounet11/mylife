@@ -144,12 +144,12 @@ export default function WorldYiPublishPage() {
             当前运行态
           </div>
           <div className="mt-6 grid gap-4 lg:grid-cols-3">
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易发布判定</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{publicationStageLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{publicationStageDescription}</div>
             </div>
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">全站调度器状态</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{schedulerLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{schedulerDescription}</div>
@@ -157,7 +157,7 @@ export default function WorldYiPublishPage() {
                 全站今日已发布 {worldYiStats.schedulerPublishedToday} 条，草稿池 {worldYiStats.schedulerDraftReserveCount}/{worldYiStats.schedulerDraftReserveTarget}。
               </div>
             </div>
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">世界易专题增发</div>
               <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{growthLabel}</div>
               <div className="mt-3 text-sm text-[color:var(--ink)]">{growthDescription}</div>
@@ -182,7 +182,7 @@ export default function WorldYiPublishPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-publish',
                 }}
-                className="rounded-[1.75rem] bg-white/80 p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-white/80 p-6 transition hover:-translate-y-0.5"
               >
                 <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
                 <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
@@ -202,7 +202,7 @@ export default function WorldYiPublishPage() {
             </div>
             <div className="mt-4 grid gap-3 text-sm text-[color:var(--ink)]">
               {['十卷主书 docs', '执行批次 / FAQ / 版本文档', '知识页 / 案例页 / 主题页 / 结果页'].map((item) => (
-                <div key={item} className="rounded-[1.2rem] bg-white/80 px-4 py-4 font-semibold">{item}</div>
+                <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-4 font-semibold">{item}</div>
               ))}
             </div>
           </div>
@@ -214,7 +214,7 @@ export default function WorldYiPublishPage() {
             </div>
             <div className="mt-4 grid gap-3 text-sm text-[color:var(--ink)]">
               {['主书', '知识页', '案例页', '入口页', '持续发布队列'].map((item) => (
-                <div key={item} className="rounded-[1.2rem] bg-white/80 px-4 py-4 font-semibold">{item}</div>
+                <div key={item} className="rounded-[var(--radius)] bg-white/80 px-4 py-4 font-semibold">{item}</div>
               ))}
             </div>
           </div>

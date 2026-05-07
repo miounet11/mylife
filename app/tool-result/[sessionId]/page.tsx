@@ -142,7 +142,7 @@ export default async function ToolResultPage({
             </div>
             <div className="mt-5 grid gap-3">
               {Array.isArray(result.evidence) ? (result.evidence as string[]).map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               )) : null}
@@ -156,7 +156,7 @@ export default async function ToolResultPage({
             </div>
             <div className="mt-5 grid gap-3">
               {Array.isArray(result.premiumPreview) ? (result.premiumPreview as string[]).map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-white/82 p-4 text-xs leading-6 text-[color:var(--ink)]">
                   {item}
                 </div>
               )) : null}
@@ -194,7 +194,7 @@ export default async function ToolResultPage({
               </p>
               <div className="mt-5 grid gap-3 md:grid-cols-3">
                 {growthProfile.upgradeBullets.map((item) => (
-                  <div key={item} className="rounded-[1.25rem] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
+                  <div key={item} className="rounded-[var(--radius)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
                     {item}
                   </div>
                 ))}
@@ -346,7 +346,7 @@ export default async function ToolResultPage({
 
 function ResultCard({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[1.75rem] p-5">
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
       <div className="text-sm tracking-[0.18em] text-[color:var(--muted)]">{title}</div>
       <div className="mt-3 text-sm leading-6 text-[color:var(--ink)]">{value}</div>
     </div>

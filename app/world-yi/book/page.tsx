@@ -141,7 +141,7 @@ export default function WorldYiBookPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-book',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.volume}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
@@ -171,7 +171,7 @@ export default function WorldYiBookPage() {
                   href={item.href}
                   page="/world-yi/book"
                   meta={{ surfaceKey: 'world_yi_book_page_network', targetSurfaceKey: item.target, contentType: 'knowledge', series: item.series }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -192,7 +192,7 @@ export default function WorldYiBookPage() {
                 '继续把书稿语言写进结果页和详情页',
                 '继续把 2000 篇内容矩阵挂回主书十卷',
               ].map((item) => (
-                <div key={item} className="rounded-[1.25rem] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
+                <div key={item} className="rounded-[var(--radius)] bg-white/80 p-4 text-sm font-semibold text-[color:var(--ink)]">
                   {item}
                 </div>
               ))}

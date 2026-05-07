@@ -119,7 +119,7 @@ export default function WorldYiInsightsPage() {
               toolSlug={toolItems[0]?.slug || 'bazi'}
               category={toolItems[0]?.category || 'analysis'}
               page="/world-yi/insights"
-              className="block rounded-[1.75rem] bg-[color:var(--accent-soft)]/75 p-6 transition hover:bg-[color:var(--accent-soft)]"
+              className="block rounded-[var(--radius-md)] bg-[color:var(--accent-soft)]/75 p-6 transition hover:bg-[color:var(--accent-soft)]"
             >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">优先工具</div>
               <div className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{toolItems[0]?.shortTitle || '进入分析工具'}</div>
@@ -133,7 +133,7 @@ export default function WorldYiInsightsPage() {
                 contentType: 'knowledge',
                 series: 'world-yi-insights',
               }}
-              className="block rounded-[1.75rem] bg-white/82 p-6 transition hover:bg-white"
+              className="block rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:bg-white"
             >
               <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">优先知识</div>
               <div className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{knowledgeItems[0]?.title || '进入知识中心'}</div>
@@ -177,7 +177,7 @@ export default function WorldYiInsightsPage() {
                         tags: item.tags,
                         series: 'world-yi-insights',
                       }}
-                      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                      className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
                     >
                       <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
                       <h3 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{item.title}</h3>
@@ -215,7 +215,7 @@ export default function WorldYiInsightsPage() {
                     tags: item.tags,
                     series: 'world-yi-insights',
                   }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>
@@ -243,7 +243,7 @@ export default function WorldYiInsightsPage() {
                     tags: item.tags,
                     series: 'world-yi-insights',
                   }}
-                  className="block rounded-[1.25rem] bg-white/80 p-4 transition hover:bg-white"
+                  className="block rounded-[var(--radius)] bg-white/80 p-4 transition hover:bg-white"
                 >
                   <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                 </ContentCardLink>

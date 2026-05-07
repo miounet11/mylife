@@ -96,7 +96,7 @@ export default function PickerWheelColumn({
       <div className="relative overflow-hidden" style={{ height: metrics.height }}>
         {showHighlight ? (
           <div
-            className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 rounded-[10px] bg-[color:var(--accent-soft)]"
+            className="pointer-events-none absolute inset-x-0 top-1/2 z-10 -translate-y-1/2 rounded-[var(--radius)] bg-[color:var(--accent-soft)]"
             style={{ height: compact ? 46 : 58 }}
           />
         ) : null}

@@ -101,7 +101,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-network',
                 }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[1.75rem] p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
               >
                 <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   <Icon className="h-5 w-5" />
@@ -129,7 +129,7 @@ export default function WorldYiNetworkPage() {
                   contentType: 'knowledge',
                   series: 'world-yi-domains',
                 }}
-                className="rounded-[1.75rem] bg-white/82 p-6 transition hover:-translate-y-0.5"
+                className="rounded-[var(--radius-md)] bg-white/82 p-6 transition hover:-translate-y-0.5"
               >
                 <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{domain.shortTitle}</div>
                 <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{domain.title}</h2>
