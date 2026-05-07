@@ -1,10 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <defs>
-    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
-    </linearGradient>
-  </defs>
-  <rect width="100" height="100" rx="20" fill="url(#grad)"/>
-  <text x="50" y="70" font-family="Arial, sans-serif" font-size="60" font-weight="bold" fill="white" text-anchor="middle">命</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="人生K线">
+  <!-- 底：墨绿 -->
+  <rect width="100" height="100" rx="18" fill="#0b5f55"/>
+
+  <!-- 四柱：年 / 月 / 日（实色纸白）/ 时 -->
+  <rect x="16" y="32" width="9" height="40"  rx="1.2" fill="none" stroke="#f5f7f2" stroke-width="2.4"/>
+  <rect x="34" y="22" width="9" height="56"  rx="1.2" fill="none" stroke="#f5f7f2" stroke-width="2.4"/>
+  <rect x="52" y="14" width="9" height="70"  rx="1.2" fill="#f5f7f2"/>
+  <rect x="70" y="36" width="9" height="36"  rx="1.2" fill="none" stroke="#f5f7f2" stroke-width="2.4"/>
+
+  <!-- 判断基线（虚线穿过中部） -->
+  <line x1="4" y1="50" x2="96" y2="50" stroke="#f5f7f2" stroke-width="1.4" stroke-dasharray="4 3" opacity="0.36"/>
+
+  <!-- 当前时点金菱 -->
+  <path d="M 85 60 L 90 65 L 85 70 L 80 65 Z" fill="#c9a14a"/>
 </svg>

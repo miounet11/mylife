@@ -3,6 +3,7 @@
 
 export { BrandMark, BrandMarkSimple } from './brand-mark';
 export { BrandLockup } from './brand-lockup';
+export { BrandLoader } from './brand-loader';
 export { Card, CardHeader, CardTitle, CardContent, CardFooter } from './card';
 export { Button } from './button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './button';

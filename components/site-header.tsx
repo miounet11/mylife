@@ -5,17 +5,18 @@ import { usePathname } from 'next/navigation';
 import {
   ArrowRight,
   CalendarDays,
-  Images,
   LayoutDashboard,
   MessageSquareText,
-  Sparkles,
   UserRound,
   Wrench,
   BookOpenText,
+  Sparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AuthStatus from '@/components/auth-status';
 import ResultCtaLink from '@/components/result-cta-link';
+import { BrandLockup } from '@/components/ui/brand-lockup';
+import { Button } from '@/components/ui/button';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 
@@ -25,13 +26,14 @@ type NavItem = {
   icon: LucideIcon;
 };
 
+// 决策台导航 = 工作台 / 追问 / 工具 / 事件 / 档案 / 文档（6 项，与原一致）
 const primaryNavItems: NavItem[] = [
-  { href: '/analyze', label: '判断工作台', icon: LayoutDashboard },
-  { href: '/chat', label: '结构追问', icon: MessageSquareText },
-  { href: '/tools', label: '工具中心', icon: Wrench },
-  { href: '/events', label: '事件日历', icon: CalendarDays },
+  { href: '/analyze', label: '工作台', icon: LayoutDashboard },
+  { href: '/chat',    label: '结构追问', icon: MessageSquareText },
+  { href: '/tools',   label: '工具中心', icon: Wrench },
+  { href: '/events',  label: '事件日历', icon: CalendarDays },
   { href: '/profile', label: '我的档案', icon: UserRound },
-  { href: '/docs', label: 'Docs', icon: BookOpenText },
+  { href: '/docs',    label: '文档', icon: BookOpenText },
 ];
 
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
@@ -53,34 +55,28 @@ export default function SiteHeader({
 }: SiteHeaderProps) {
   const pathname = usePathname();
 
-  const isActive = (href: string) => href === '/' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const isActive = (href: string) =>
+    href === '/' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[color:var(--line)] bg-white/92 backdrop-blur-xl">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 lg:px-8">
-        <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="回到人生K线首页">
-          <div className="brand-mark">
-            <Sparkles className="h-5 w-5" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-base font-black text-[color:var(--ink)]">人生K线</div>
-            <div className="hidden text-xs text-[color:var(--muted)] sm:block">结构判断工作台</div>
-          </div>
-        </Link>
+    <header className="sticky top-0 z-50 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/92 backdrop-blur-xl">
+      {/* 主行：brand · 主导航 · 用户态 + CTA */}
+      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <BrandLockup size="md" withSubtitle ariaLabel="回到人生K线首页" />
 
-        <nav className="hidden items-center gap-1 xl:flex" aria-label="核心产品导航">
+        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="核心产品导航">
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
-
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'smooth-button inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition',
-                  isActive(item.href)
-                    ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                    : 'text-[color:var(--muted)] hover:bg-[color:var(--accent-soft)] hover:text-[color:var(--ink)]'
+                  'inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] px-3 text-sm font-semibold transition',
+                  active
+                    ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
+                    : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -91,23 +87,25 @@ export default function SiteHeader({
         </nav>
 
         <div className="flex shrink-0 items-center gap-2">
-          <AuthStatus />
+          <div className="hidden md:block">
+            <AuthStatus />
+          </div>
           {ctaAnalytics ? (
             <ResultCtaLink
               href={ctaHref}
               page={ctaAnalytics.page}
               target={ctaAnalytics.target}
-              className="action-primary action-main smooth-button px-4 py-2.5 text-sm"
-              meta={{
-                surface: 'site_header',
-                ...ctaAnalytics.meta,
-              }}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+              meta={{ surface: 'site_header', ...ctaAnalytics.meta }}
             >
               {ctaLabel}
               <ArrowRight className="h-4 w-4" />
             </ResultCtaLink>
           ) : (
-            <Link href={ctaHref} className="action-primary action-main smooth-button px-4 py-2.5 text-sm">
+            <Link
+              href={ctaHref}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+            >
               {ctaLabel}
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -115,23 +113,24 @@ export default function SiteHeader({
         </div>
       </div>
 
-      <div className="scrollbar-none hidden border-t border-[color:var(--line)] bg-white/72 px-4 py-2 md:block xl:hidden">
-        <div className="mx-auto flex max-w-7xl gap-2 overflow-x-auto">
+      {/* 中屏副栏：横向滚动主导航（< lg, ≥ md）*/}
+      <div className="scrollbar-none hidden border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] md:block lg:hidden">
+        <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 py-2 sm:px-6">
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
-
+            const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'smooth-button inline-flex whitespace-nowrap rounded-lg border px-3 py-1.5 text-xs font-semibold transition',
-                  isActive(item.href)
-                    ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                    : 'border-[color:var(--line)] bg-white text-[color:var(--muted)]'
+                  'inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 py-1.5 text-xs font-semibold transition',
+                  active
+                    ? 'bg-[color:var(--brand-soft-2)] text-[color:var(--brand-strong)]'
+                    : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)]',
                 )}
               >
-                <Icon className="mr-1.5 h-3.5 w-3.5" />
+                <Icon className="h-3.5 w-3.5" />
                 {item.label}
               </Link>
             );
@@ -139,29 +138,36 @@ export default function SiteHeader({
         </div>
       </div>
 
-      <div className="border-t border-[color:var(--line)] bg-[rgba(245,239,229,0.78)] px-4 py-2">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 text-xs sm:text-sm">
+      {/* 副带：世界易入口 · 优先增长工具（仅大屏，独立 band） */}
+      <div className="hidden border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/72 lg:block">
+        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link
             href="/world-yi"
-            className="inline-flex min-w-0 items-center gap-2 font-black text-[color:var(--accent-strong)]"
+            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]"
           >
-            <Sparkles className="h-4 w-4 shrink-0" />
-            <span className="truncate">世界易</span>
+            <Sparkles className="h-3.5 w-3.5" />
+            世界易系统
           </Link>
-          <div className="flex min-w-0 flex-1 items-center justify-end gap-2 overflow-x-auto whitespace-nowrap">
+          <div className="scrollbar-none flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap">
             {priorityGrowthHeaderLinks.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-full bg-white/80 px-3 py-1.5 font-semibold text-[color:var(--ink)]">
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
+              >
                 {item.shortLabel}
               </Link>
             ))}
-            <Link href="/chat" className="rounded-full bg-white/80 px-3 py-1.5 font-semibold text-[color:var(--ink)]">
-              结构追问
+            <Link
+              href="/visual-assets"
+              className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
+            >
+              图片库
             </Link>
-            <Link href="/visual-assets" className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3 py-1.5 font-semibold text-[color:var(--ink)]">
-              <Images className="h-3.5 w-3.5" />
-              图片说明库
-            </Link>
-            <Link href="/docs/structured-chat" className="rounded-full bg-white/80 px-3 py-1.5 font-semibold text-[color:var(--ink)]">
+            <Link
+              href="/docs/structured-chat"
+              className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
+            >
               使用方法
             </Link>
           </div>
