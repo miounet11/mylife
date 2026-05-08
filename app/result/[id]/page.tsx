@@ -54,6 +54,7 @@ import RelatedContent from '@/components/related-content';
 import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
+import DegradeNotice from '@/components/degrade-notice';
 import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
 import ReportCurrentState from '@/components/report/report-current-state';
@@ -673,6 +674,20 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
               </div>
+
+              {/* v5-A3 (2026-05-08) basic 报告且仍在重试 LLM 增强时，明确告诉用户 */}
+              {isEnhancementPending ? (
+                <div className="mt-5">
+                  <DegradeNotice
+                    pending={isEnhancementPending}
+                    lastError={upgradeJob?.lastError}
+                    attempts={upgradeJob?.attempts}
+                    maxAttempts={upgradeJob?.maxAttempts}
+                    nextRunAt={upgradeJob?.nextRunAt}
+                    reportId={id}
+                  />
+                </div>
+              ) : null}
 
               <div className="mt-5">
                 <ReportReadingPath
