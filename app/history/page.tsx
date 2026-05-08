@@ -31,6 +31,8 @@ import { Tag } from '@/components/ui/tag';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { appendSourceToHref } from '@/lib/source-url';
+import { resolveResumeTarget } from '@/lib/resume-target';
+import ResumeBar from '@/components/resume-bar';
 import {
   formatEventDateKey,
   getEventViewSortTime,
@@ -200,6 +202,16 @@ export default function HistoryPage() {
       );
   }, [reports]);
 
+  // v5-C4 决策台风「继续上次」恢复条
+  const resumeTarget = useMemo(() => {
+    if (!reports.length && !events.length) return null;
+    return resolveResumeTarget({
+      recentChat: [],
+      events: (events as any[]) || [],
+      reports: (reports as any[]) || [],
+    });
+  }, [reports, events]);
+
   const reviewWorkbench = useMemo(() => {
     const unresolved = events
       .filter((event) => event.userFeedback?.wasAccurate === undefined)
@@ -323,6 +335,13 @@ export default function HistoryPage() {
             </Inline>
           </Inline>
         </section>
+
+        {/* v5-C4 决策台风「继续上次」恢复条 */}
+        {resumeTarget ? (
+          <div className="mb-6">
+            <ResumeBar target={resumeTarget} surface="history" />
+          </div>
+        ) : null}
 
         {/* 4-stat 决策台 */}
         <Card variant="default" padding="lg" className="mb-6 bg-[color:var(--bg-elevated)]">

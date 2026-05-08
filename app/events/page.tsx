@@ -11,12 +11,14 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
+import ResumeBar from '@/components/resume-bar';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { appendSourceToHref } from '@/lib/source-url';
 import { formatLocalDateKey, getTodayLocalDateKey } from '@/lib/utils';
+import { resolveResumeTarget } from '@/lib/resume-target';
 import {
   formatEventQueueDateKey,
   getEstimatedPastEventPrompt,
@@ -158,6 +160,16 @@ function EventsPageContent() {
 
     init();
   }, [loadEvents]);
+
+  // v5-C3 决策台风「继续上次」恢复条 — 仅基于 events（events 页没有 reports/chat 数据）
+  const resumeTarget = useMemo(() => {
+    if (!events.length) return null;
+    return resolveResumeTarget({
+      recentChat: [],
+      events: (events as any[]) || [],
+      reports: [],
+    });
+  }, [events]);
 
   const filteredEvents = useMemo(() => {
     const keywordLower = keyword.trim().toLowerCase();
@@ -466,6 +478,11 @@ function EventsPageContent() {
             </div>
           </div>
         </section>
+
+        {/* v5-C3 决策台风「继续上次」恢复条 */}
+        {resumeTarget ? (
+          <ResumeBar target={resumeTarget} surface="events" />
+        ) : null}
 
         {error && (
           <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--alert)]">

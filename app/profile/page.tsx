@@ -12,10 +12,12 @@ import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
+import ResumeBar from '@/components/resume-bar';
 import ToolHistoryPanel from '@/components/tool-history-panel';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
+import { resolveResumeTarget } from '@/lib/resume-target';
 import { appendSourceToHref } from '@/lib/source-url';
 import { toEventViewModels, type EventTransportRecord } from '@/lib/event-view';
 
@@ -134,6 +136,17 @@ export default function ProfilePage() {
   const latestFortune = fortunes[0] as any;
   const latestResultId = latestFortune?.id;
   const pageSource = 'profile_page';
+
+  // v5-C2 决策台风「继续上次」恢复条 — client-side simple resolve (no chat data here)
+  const resumeTarget = useMemo(() => {
+    if (!fortunes.length && !events.length) return null;
+    return resolveResumeTarget({
+      recentChat: [],
+      events: (events as any[]) || [],
+      reports: (fortunes as any[]) || [],
+    });
+  }, [fortunes, events]);
+
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const latestReportHref = latestResultId ? appendSourceToHref(`/result/${latestResultId}`, pageSource) : '/analyze';
   const profileChatHref = buildChatHref({
@@ -238,6 +251,13 @@ export default function ProfilePage() {
             </div>
           </div>
         </section>
+
+        {/* v5-C2 决策台风「继续上次」恢复条 — 仅当有可恢复目标时显示 */}
+        {resumeTarget ? (
+          <div className="mb-6">
+            <ResumeBar target={resumeTarget} surface="profile" />
+          </div>
+        ) : null}
 
         <div className="space-y-5">
           {error && (
