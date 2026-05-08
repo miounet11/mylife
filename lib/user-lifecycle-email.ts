@@ -78,6 +78,11 @@ const STAGES: LifecycleStageDefinition[] = [
     label: '7 天未活跃召回',
     inactiveDays: 7,
   },
+  {
+    // v5-C5 (2026-05-08) 事件日期已过未回收验证
+    key: 'event_validation_overdue',
+    label: '事件验证逾期提醒',
+  },
 ];
 
 function getHoursSince(timestamp?: string | null, now = new Date()) {
@@ -530,6 +535,95 @@ function buildInactiveReactivationCandidate(params: {
   } satisfies LifecycleCandidate;
 }
 
+// v5-C5 (2026-05-08) 事件验证逾期提醒
+// 触发条件：
+//   1) 用户至少有 1 个 event，date 在 today - 14d ~ today - 3d 之间
+//   2) 该 event userFeedback.wasAccurate 仍为 undefined
+//   3) 14 天内没发过同类邮件
+// 文案围绕「你 X 天前预设的事件——结果如何？」
+function buildEventValidationOverdueCandidate(params: {
+  userId: string;
+  email: string;
+  name: string;
+  now: Date;
+  behavior: LifecycleBehaviorContext;
+}) {
+  const events = eventOperations.getByUserId(params.userId);
+  if (!events.length) return null;
+
+  const today = new Date(params.now);
+  today.setHours(0, 0, 0, 0);
+  const todayMs = today.getTime();
+  const minOverdueDays = 3;
+  const maxOverdueDays = 14;
+
+  // 找最逾期但还在 14 天内的、且 userFeedback 未填的事件
+  const overdueCandidates = events
+    .filter((event) => {
+      const fb = event.userFeedback as any;
+      if (fb && fb.wasAccurate !== undefined) return false;
+      if (!event.date) return false;
+      const eventDate = new Date(`${event.date}T00:00:00`);
+      if (Number.isNaN(eventDate.getTime())) return false;
+      const overdueDays = Math.floor((todayMs - eventDate.getTime()) / 86_400_000);
+      return overdueDays >= minOverdueDays && overdueDays <= maxOverdueDays;
+    })
+    .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  const oldest = overdueCandidates[0];
+  if (!oldest) return null;
+
+  const eventDate = new Date(`${oldest.date}T00:00:00`);
+  const overdueDays = Math.floor((todayMs - eventDate.getTime()) / 86_400_000);
+  const eventTitle = (oldest.title || '你预设的关键节点').slice(0, 30);
+  const reportId = (oldest as any).fortuneAnalysis?.reportId || (oldest as any).reportId || null;
+  const weekKey = getCurrentLifecycleWeekKey(params.now);
+  const source = `lifecycle_event_validation:${params.behavior.lastSource || 'events'}`;
+  const eventsHref = reportId
+    ? `/events?reportId=${encodeURIComponent(reportId)}&eventId=${encodeURIComponent(oldest.id)}&utm_source=lifecycle&utm_campaign=event_validation_overdue`
+    : `/events?eventId=${encodeURIComponent(oldest.id)}&utm_source=lifecycle&utm_campaign=event_validation_overdue`;
+  const chatHref = buildChatHref({
+    reportId,
+    eventId: oldest.id,
+    intent: 'chapter:event-validation',
+    question: `${oldest.date} 我预设的"${eventTitle}"已经过去 ${overdueDays} 天，结果如何？请帮我对照原报告的判断，看哪一项验证准了、哪一项偏了，下次同类事件该怎么修正。`,
+    source,
+  });
+
+  return {
+    stage: {
+      ...STAGES[4],
+      key: `${STAGES[4].key}:${weekKey}:${oldest.id}`,
+    },
+    userId: params.userId,
+    email: params.email,
+    name: params.name,
+    report: reportId ? fortuneOperations.getById(reportId) : null,
+    reasons: ['event_overdue_pending_validation'],
+    primaryCtaLabel: '回收这个事件',
+    primaryCtaHref: eventsHref,
+    secondaryCtaLabel: '先用 AI 复盘一下',
+    secondaryCtaHref: chatHref,
+    intro: `${overdueDays} 天前你预设的"${eventTitle}"已经过去了。`,
+    detail: `判断系统的复利来自每一次事件回收——准了 / 偏了 都是下一轮判断的关键样本。${overdueDays > 7 ? '已经过去一段时间，趁印象还在记录最有效。' : '这是回收结果的最佳窗口期。'}回收只需要 30 秒：点开事件，选择"准 / 偏 / 待定"。`,
+    previewText: `${overdueDays} 天前预设的"${eventTitle}"，结果如何？`,
+    subject: `回收一下 ${overdueDays} 天前那个判断`,
+    bullets: [
+      `事件标题：${eventTitle}`,
+      `预设日期：${oldest.date}（已过去 ${overdueDays} 天）`,
+      reportId ? '回收后系统会自动用结果反馈对照原报告判断，提升下次同类事件的精度。' : '回收后下次同类事件的判断会更准。',
+      '如果你不确定结果，先点"待定"也比不填好。',
+    ],
+    meta: {
+      eventId: oldest.id,
+      eventDate: oldest.date,
+      overdueDays,
+      reportId,
+      lastSource: params.behavior.lastSource || null,
+    },
+  } satisfies LifecycleCandidate;
+}
+
 function buildLifecycleCandidates(params: {
   userId: string;
   email: string;
@@ -543,6 +637,8 @@ function buildLifecycleCandidates(params: {
     buildReportNoFollowupCandidate({ ...params, behavior }),
     buildToolInterestNoRunCandidate({ ...params, behavior }),
     buildInactiveReactivationCandidate({ ...params, behavior }),
+    // v5-C5 事件验证逾期提醒
+    buildEventValidationOverdueCandidate({ ...params, behavior }),
   ].filter((item): item is LifecycleCandidate => !!item);
 }
 
