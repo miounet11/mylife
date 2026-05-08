@@ -560,6 +560,35 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     defaultQuestion: result.analysis?.summary || result.analysis?.opening || decisionNowAction,
   });
   // v5-B1 (2026-05-08): 把单条 followup 升级成 3 条上下文化追问
+  // v5-B4 (2026-05-08): 接入更多上下文（场景视图、纠偏洞察、最逾期事件）
+  const cautionScenario = (result.scenarioViews || []).find((s) => s.key !== 'overall' && s.status === 'caution') || null;
+  const pushScenario = (result.scenarioViews || []).find((s) => s.key !== 'overall' && s.status === 'push') || null;
+
+  // 找最逾期但仍在 14 天内的待验证事件（v5-B4）
+  const todayMs = (() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return t.getTime();
+  })();
+  const pendingOverdueEvent = (() => {
+    if (!Array.isArray(linkedEvents) || linkedEvents.length === 0) return null;
+    const candidates = linkedEvents
+      .filter((e) => {
+        const fb = (e as any).userFeedback;
+        if (fb && fb.wasAccurate !== undefined) return false;
+        if (!e.date) return false;
+        const eventTime = new Date(`${e.date}T00:00:00`).getTime();
+        if (!Number.isFinite(eventTime)) return false;
+        const overdueDays = Math.floor((todayMs - eventTime) / 86_400_000);
+        return overdueDays >= 3 && overdueDays <= 14;
+      })
+      .sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const oldest = candidates[0];
+    if (!oldest) return null;
+    const overdueDays = Math.floor((todayMs - new Date(`${oldest.date}T00:00:00`).getTime()) / 86_400_000);
+    return { title: oldest.title, date: oldest.date, overdueDays };
+  })();
+
   const reportFollowupSuggestions = buildReportFollowupSuggestions({
     publicName,
     patternType: result.pattern?.type,
@@ -567,6 +596,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     actionSuggestions: result.actionSuggestions,
     topMonthlyWindow: topMonthlyWindows[0],
     hasRiskScenario: Array.isArray(result.confidence?.sensitivePoints) && result.confidence.sensitivePoints.length > 0,
+    cautionScenario,
+    pushScenario,
+    correctionLevel: correctionInsight?.level,
+    correctionSummary: correctionInsight?.summary,
+    pendingOverdueEvent,
   });
   const reportChatSource = entrySource.startsWith('lifecycle_report_followup')
     ? entrySource

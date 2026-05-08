@@ -49,6 +49,7 @@ export function buildReportFollowupQuestion(params: {
 }
 
 // v5-B1 (2026-05-08): 把单条 followup 升级成 3 条上下文化追问
+// v5-B4 (2026-05-08): 接入更多上下文（场景视图、纠偏洞察、最逾期事件）
 // 让用户在结果页第一屏就看到「哦原来可以这样问」——这是承接率从 8% 拉到 25% 的关键
 export interface ReportFollowupSuggestion {
   // 显示在卡片上的短标题（≤ 12 字）
@@ -56,31 +57,80 @@ export interface ReportFollowupSuggestion {
   // 实际预填到聊天的完整问题
   question: string;
   // 用于埋点 / 分析
-  intent: 'next-action' | 'window' | 'risk' | 'pattern' | 'general';
+  intent: 'next-action' | 'window' | 'risk' | 'pattern' | 'general' | 'scenario' | 'correction' | 'event-validation';
 }
 
+// v5-B4 上下文化追问生成的输入
+// 每个字段都是可选 — 缺失项时该路径自动跳过
 export function buildReportFollowupSuggestions(params: {
   publicName?: string;
   patternType?: string | null;
   dayMaster?: string | null;
-  actionSuggestions?: ReportActionSuggestion[] | null;
+  actionSuggestions?: Array<{ title?: string; description?: string }> | null;
   topMonthlyWindow?: { label?: string; theme?: string; status?: string } | null;
   hasRiskScenario?: boolean;
+  // v5-B4 新增字段
+  cautionScenario?: { title?: string; summary?: string; risks?: string[] } | null;
+  pushScenario?: { title?: string; summary?: string; focus?: string[] } | null;
+  correctionLevel?: 'healthy' | 'watch' | 'action' | null;
+  correctionSummary?: string | null;
+  pendingOverdueEvent?: { title?: string; date?: string; overdueDays?: number } | null;
 }): ReportFollowupSuggestion[] {
   const suggestions: ReportFollowupSuggestion[] = [];
   const name = params.publicName || '我';
 
-  // 1) 第一条：围绕最近一个动作建议（最具体）
+  // ────── 优先级 1：复盘逾期事件（最具体、最有反馈闭环价值）──────
+  const pe = params.pendingOverdueEvent;
+  if (pe?.title && pe.overdueDays && pe.overdueDays >= 3) {
+    suggestions.push({
+      label: `回收"${pe.title.slice(0, 8)}"`,
+      question: `${pe.date} 我预设的"${pe.title}"已经过去 ${pe.overdueDays} 天，结果如何？请帮我对照原报告的判断，看哪一项验证准了、哪一项偏了，下次同类事件该怎么修正。`,
+      intent: 'event-validation',
+    });
+  }
+
+  // ────── 优先级 2：风险/警示场景（明确指向需要"先避坑"）──────
+  const cs = params.cautionScenario;
+  if (cs?.title) {
+    const riskBullet = cs.risks?.[0] ? `（具体警示：${cs.risks[0]}）` : '';
+    suggestions.push({
+      label: `${cs.title}的坑怎么避`,
+      question: `${name}的${cs.title}当前是 caution 状态${cs.summary ? `——${cs.summary}` : ''}${riskBullet}。请帮我把这个警示翻译成 3 条"现在不要做"的具体动作，以及一个"什么时候可以重新启动"的判断条件。`,
+      intent: 'scenario',
+    });
+  }
+
+  // ────── 优先级 3：纠偏 action 级别（用户已经偏了需要修正）──────
+  if (params.correctionLevel === 'action') {
+    suggestions.push({
+      label: '当前最该纠的偏差',
+      question: `报告显示${name}有需要纠偏的判断${params.correctionSummary ? `：${params.correctionSummary}` : ''}。请告诉我：偏差更可能来自时机、执行还是信息判断失真？如果重做一次，节奏应该前移、后移还是分段？给我下一次同类事件的 3 条纠偏检查点。`,
+      intent: 'correction',
+    });
+  }
+
+  // ────── 优先级 4：第一个动作建议（最具体的下一步）──────
   const primaryAction = params.actionSuggestions?.[0];
-  if (primaryAction) {
+  if (primaryAction?.title) {
     suggestions.push({
       label: `怎么推进「${primaryAction.title}」`,
-      question: `请围绕"${primaryAction.title}"这个动作，按结构、阶段、环境、动作四层继续拆解：${name}现在该怎么推进，先满足什么条件，最需要防什么偏差？`,
+      question: `请围绕"${primaryAction.title}"这个动作${primaryAction.description ? `（${primaryAction.description.slice(0, 30)}）` : ''}，按结构、阶段、环境、动作四层继续拆解：${name}现在该怎么推进，先满足什么条件，最需要防什么偏差？`,
       intent: 'next-action',
     });
   }
 
-  // 2) 第二条：围绕最近的窗口/月份（时间锚点）
+  // ────── 优先级 5：push 场景（可以加速的领域）──────
+  const ps = params.pushScenario;
+  if (ps?.title && !cs) {
+    const focusBullet = ps.focus?.[0] ? `（重点是 ${ps.focus[0]}）` : '';
+    suggestions.push({
+      label: `${ps.title}怎么加速`,
+      question: `${name}的${ps.title}当前是 push 状态${focusBullet}。请帮我把这个机会翻译成 3 条"现在该做"的动作，以及怎么判断什么时候要从激进切回稳健。`,
+      intent: 'scenario',
+    });
+  }
+
+  // ────── 优先级 6：最近月运窗口 ──────
   if (params.topMonthlyWindow?.label) {
     const win = params.topMonthlyWindow;
     suggestions.push({
@@ -90,7 +140,7 @@ export function buildReportFollowupSuggestions(params: {
     });
   }
 
-  // 3) 第三条：围绕格局或日主（结构层）— 永远会有
+  // ────── 优先级 7：格局结构层（永远兜底）──────
   if (params.patternType && params.patternType !== '未知') {
     suggestions.push({
       label: `${params.patternType}怎么落地`,
@@ -99,7 +149,7 @@ export function buildReportFollowupSuggestions(params: {
     });
   }
 
-  // 4) 兜底：风险/警示问法（如果以上都不到 3 条）
+  // ────── 优先级 8：风险通用问法（仅在以上都不够 3 条时补） ──────
   if (suggestions.length < 3 && params.hasRiskScenario) {
     suggestions.push({
       label: '当前最大风险',
@@ -108,7 +158,7 @@ export function buildReportFollowupSuggestions(params: {
     });
   }
 
-  // 5) 通用兜底
+  // ────── 通用兜底（确保至少 1 条）──────
   if (suggestions.length === 0) {
     suggestions.push({
       label: '主线该怎么走',
