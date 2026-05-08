@@ -43,6 +43,9 @@ const nextApp = {
     LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES: '2',
     LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK: '1',
     LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES: '4',
+    // v5-A4 (2026-05-08) 升级队列重试上限收紧：6 → 4
+    // 配合 A1 删 'auto' + A2 熔断收紧，避免堆积 retry 风暴
+    REPORT_UPGRADE_MAX_ATTEMPTS: '4',
     ...cronEnv,
     CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
     CONTENT_RADAR_INTERVAL_MS: '2700000',
