@@ -2887,13 +2887,46 @@ export const analyticsOperations = {
 
       if (eventName === 'result_cta_clicked' || eventName === 'chat_followup_clicked' || eventName === 'report_upgrade_requested') {
         const rawTarget = typeof meta.target === 'string' ? meta.target : eventName === 'chat_followup_clicked' ? 'chat_followup' : eventName;
-        const label = rawTarget === 'chat'
-          ? '结果页进入聊天'
-          : rawTarget === 'events'
-            ? '结果页进入事件中心'
-            : rawTarget === 'chat_followup'
-              ? '聊天追问按钮'
-              : '报告升级重算';
+        // v5-D2 (2026-05-08): 解码 namespaced targets 形如 'result_premium_teaser:offerKey'
+        let label: string;
+        if (rawTarget.startsWith('result_premium_teaser:')) {
+          const offerKey = rawTarget.slice('result_premium_teaser:'.length);
+          const offerLabelMap: Record<string, string> = {
+            'event-simulation': '专项 · 事件推演',
+            'event-verdict': '专项 · 断事',
+            'event-review': '专项 · 事件剖析',
+            'meihua-enhancement': '专项 · 卦象增强',
+          };
+          label = offerLabelMap[offerKey] || `专项 · ${offerKey}`;
+        } else if (rawTarget.startsWith('result_chapter_ask:')) {
+          const chapter = rawTarget.slice('result_chapter_ask:'.length);
+          const chapterLabelMap: Record<string, string> = {
+            rhythm: '章节追问 · 12 月节奏',
+            blueprint: '章节追问 · 命局结构',
+            'current-state': '章节追问 · 当前阶段',
+            scenario: '章节追问 · 场景剧本',
+            'action-validation': '章节追问 · 动作+验证',
+          };
+          label = chapterLabelMap[chapter] || `章节追问 · ${chapter}`;
+        } else if (rawTarget === 'result_cockpit_followup_suggestion') {
+          label = '驾驶舱追问 chips';
+        } else if (rawTarget.startsWith('resume_bar:')) {
+          const kind = rawTarget.slice('resume_bar:'.length);
+          const kindLabelMap: Record<string, string> = {
+            continue_chat: '继续上次 · 聊天',
+            validate_event: '继续上次 · 验证事件',
+            continue_report: '继续上次 · 报告',
+          };
+          label = kindLabelMap[kind] || `继续上次 · ${kind}`;
+        } else if (rawTarget === 'chat') {
+          label = '结果页进入聊天';
+        } else if (rawTarget === 'events') {
+          label = '结果页进入事件中心';
+        } else if (rawTarget === 'chat_followup') {
+          label = '聊天追问按钮';
+        } else {
+          label = '报告升级重算';
+        }
         if (!ctaBuckets[rawTarget]) {
           ctaBuckets[rawTarget] = {
             key: rawTarget,
