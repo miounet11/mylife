@@ -92,7 +92,7 @@ import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
 import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
-import { buildChatHref, buildReportFollowupQuestion } from '@/lib/chat-entry';
+import { buildChatHref, buildReportFollowupQuestion, buildReportFollowupSuggestions } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 import { buildLayeredReportJourney } from '@/lib/report-journey-router';
 import type { ReferenceIntelligencePack } from '@/lib/reference-intelligence';
@@ -550,6 +550,15 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     actionSuggestions: result.actionSuggestions,
     defaultQuestion: result.analysis?.summary || result.analysis?.opening || decisionNowAction,
   });
+  // v5-B1 (2026-05-08): 把单条 followup 升级成 3 条上下文化追问
+  const reportFollowupSuggestions = buildReportFollowupSuggestions({
+    publicName,
+    patternType: result.pattern?.type,
+    dayMaster: result.basic?.dayMaster,
+    actionSuggestions: result.actionSuggestions,
+    topMonthlyWindow: topMonthlyWindows[0],
+    hasRiskScenario: Array.isArray(result.confidence?.sensitivePoints) && result.confidence.sensitivePoints.length > 0,
+  });
   const reportChatSource = entrySource.startsWith('lifecycle_report_followup')
     ? entrySource
     : entrySource
@@ -667,6 +676,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
                   guidedPaths={worldYiGuidedPaths.slice(0, 3)}
                   followupQuestion={reportFollowupQuestion}
+                  followupSuggestions={reportFollowupSuggestions}
                   sourceGuidance={entrySource ? sourceContext.reportHeadline : undefined}
                   chatLabel={sourceCtaStrategy.reportSecondaryLabel}
                   eventsLabel={sourceCtaStrategy.reportEventLabel}

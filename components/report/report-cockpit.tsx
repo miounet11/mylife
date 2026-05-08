@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { ArrowRight, Compass } from 'lucide-react';
+import { ArrowRight, Compass, MessageCircleQuestion } from 'lucide-react';
 
 import type { ReportCockpitSection } from '@/lib/report-types';
+import { buildChatHref, type ReportFollowupSuggestion } from '@/lib/chat-entry';
 import ResultCtaLink from '@/components/result-cta-link';
 
 type GuidedPath = {
@@ -16,6 +17,8 @@ interface ReportCockpitProps {
   eventsHref: string;
   guidedPaths?: GuidedPath[];
   followupQuestion?: string;
+  // v5-B1 (2026-05-08): 3 条上下文化追问，让用户看到「哦原来可以这样问」
+  followupSuggestions?: ReportFollowupSuggestion[];
   sourceGuidance?: string;
   chatLabel?: string;
   eventsLabel?: string;
@@ -36,6 +39,7 @@ export default function ReportCockpit({
   eventsHref,
   guidedPaths = [],
   followupQuestion,
+  followupSuggestions,
   sourceGuidance,
   chatLabel,
   eventsLabel,
@@ -44,6 +48,8 @@ export default function ReportCockpit({
 }: ReportCockpitProps) {
   const topActions = section.topActions.slice(0, 3);
   const avoidances = section.avoidances.slice(0, 3);
+  const suggestions = (followupSuggestions || []).slice(0, 3);
+  const hasSuggestions = suggestions.length > 0;
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
@@ -139,12 +145,51 @@ export default function ReportCockpit({
                 {sourceGuidance}
               </div>
             ) : null}
-            {followupQuestion ? (
+
+            {/* v5-B1: 3 条上下文化追问 chips（替代原单条 PREFILL）*/}
+            {hasSuggestions ? (
+              <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <MessageCircleQuestion className="h-3 w-3" />
+                  继续追问
+                </div>
+                <div className="mt-2 grid gap-1.5">
+                  {suggestions.map((sg, idx) => (
+                    <ResultCtaLink
+                      key={`${sg.intent}-${idx}`}
+                      href={buildChatHref({
+                        reportId,
+                        intent: sg.intent,
+                        question: sg.question,
+                        source: 'result_cockpit_followup_suggestion',
+                        ctaStrategyKey: ctaStrategyKey || null,
+                        sourceFamily: sourceFamily || null,
+                      })}
+                      page={`/result/${reportId}`}
+                      target="result_cockpit_followup_suggestion"
+                      className="group flex items-center justify-between gap-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--brand-soft)]"
+                      meta={{
+                        reportId,
+                        source: 'result_cockpit_followup_suggestion',
+                        intent: sg.intent,
+                        suggestionIndex: idx,
+                        ctaStrategyKey: ctaStrategyKey || null,
+                        sourceFamily: sourceFamily || null,
+                      }}
+                    >
+                      <span className="font-semibold">{sg.label}</span>
+                      <ArrowRight className="h-3.5 w-3.5 shrink-0 text-[color:var(--ink-5)] transition group-hover:text-[color:var(--brand-strong)]" />
+                    </ResultCtaLink>
+                  ))}
+                </div>
+              </div>
+            ) : followupQuestion ? (
               <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]">
                 <span className="font-mono font-bold text-[color:var(--ink-5)]">PREFILL</span>
                 <div className="mt-0.5">{followupQuestion}</div>
               </div>
             ) : null}
+
             <ResultCtaLink
               href={chatHref}
               page={`/result/${reportId}`}
