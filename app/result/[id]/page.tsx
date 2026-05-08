@@ -57,6 +57,7 @@ import { ReportCover } from '@/components/report/report-cover';
 import DegradeNotice from '@/components/degrade-notice';
 import InlineAskCTA from '@/components/inline-ask-cta';
 import PremiumTeaser from '@/components/premium-teaser';
+import ReportFollowupAugmenterTrigger from '@/components/report-followup-augmenter-trigger';
 import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
 import ReportCurrentState from '@/components/report/report-current-state';
@@ -602,6 +603,17 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     correctionSummary: correctionInsight?.summary,
     pendingOverdueEvent,
   });
+
+  // v5-B5 (2026-05-08): 优先使用缓存的 LLM 优化版本，否则用 B4 deterministic
+  const cachedFollowupSuggestions = (result.analysis as any)?.followupSuggestions;
+  const cachedFollowupAt = (result.analysis as any)?.followupSuggestionsAt;
+  const cachedAge = cachedFollowupAt ? Date.now() - new Date(cachedFollowupAt).getTime() : Infinity;
+  const followupCacheFresh = Array.isArray(cachedFollowupSuggestions)
+    && cachedFollowupSuggestions.length > 0
+    && Number.isFinite(cachedAge)
+    && cachedAge < 24 * 60 * 60 * 1000;
+  const finalFollowupSuggestions = followupCacheFresh ? cachedFollowupSuggestions : reportFollowupSuggestions;
+  const shouldTriggerAugmenter = !followupCacheFresh;
   const reportChatSource = entrySource.startsWith('lifecycle_report_followup')
     ? entrySource
     : entrySource
@@ -668,6 +680,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
 
+      {/* v5-B5: 后台 LLM 优化追问 chips（fire-and-forget，不阻塞渲染） */}
+      <ReportFollowupAugmenterTrigger reportId={id} shouldTrigger={shouldTriggerAugmenter} />
+
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <ReportSurface>
           <ReportCover
@@ -719,7 +734,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
                   guidedPaths={worldYiGuidedPaths.slice(0, 3)}
                   followupQuestion={reportFollowupQuestion}
-                  followupSuggestions={reportFollowupSuggestions}
+                  followupSuggestions={finalFollowupSuggestions}
                   sourceGuidance={entrySource ? sourceContext.reportHeadline : undefined}
                   chatLabel={sourceCtaStrategy.reportSecondaryLabel}
                   eventsLabel={sourceCtaStrategy.reportEventLabel}
