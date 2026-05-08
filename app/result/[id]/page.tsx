@@ -56,6 +56,7 @@ import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
 import DegradeNotice from '@/components/degrade-notice';
 import InlineAskCTA from '@/components/inline-ask-cta';
+import PremiumTeaser from '@/components/premium-teaser';
 import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
 import ReportCurrentState from '@/components/report/report-current-state';
@@ -89,7 +90,7 @@ import { CURRENT_REPORT_VERSION, ENGINE_BUILD_VERSIONS } from '@/lib/report-pipe
 import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
-import { buildPremiumServiceOffers } from '@/lib/report-premium-services';
+import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report-premium-services';
 import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
@@ -387,6 +388,13 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     yearlyTrendSnapshots: result.yearlyTrendSnapshots,
   });
   const premiumServiceOffers = buildPremiumServiceOffers({
+    scenarioViews: result.scenarioViews,
+    monthlyWindows: result.monthlyWindows,
+    correctionInsight,
+  });
+  // v5-D1 (2026-05-08): 智能挑选最该 surfacing 的一个 offer
+  const primaryPremiumOffer = pickPrimaryPremiumOffer({
+    offers: premiumServiceOffers,
     scenarioViews: result.scenarioViews,
     monthlyWindows: result.monthlyWindows,
     correctionInsight,
@@ -872,6 +880,20 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   sourceFamily={sourceCtaStrategy.sourceFamily}
                 />
               </div>
+
+              {/* v5-D1: 主报告读完后的专项服务 teaser
+                  根据 scenario / window / correction 智能选 1 个 offer */}
+              {primaryPremiumOffer ? (
+                <div className="mt-6">
+                  <PremiumTeaser
+                    reportId={id}
+                    offer={primaryPremiumOffer}
+                    anchorHref="#premium"
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
+                  />
+                </div>
+              ) : null}
 
               <div className="mt-5 grid gap-4 xl:grid-cols-3">
                 {[

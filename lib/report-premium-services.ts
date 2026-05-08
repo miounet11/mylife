@@ -165,3 +165,49 @@ function pickFocusScenario(scenarios: ScenarioView[]) {
     || scenarios.find((item) => item.key !== 'overall')
     || scenarios[0];
 }
+
+// v5-D1 (2026-05-08) 决策台风专项服务智能匹配
+// 给定报告上下文，返回当下最该 surfacing 的一个 offer
+// 选中规则（按优先级）：
+//   1) correction.level === 'action'    → event-review (有偏差要复盘)
+//   2) scenario.status === 'caution'    → event-verdict (需要倾向判断)
+//   3) 有 push 类型的 monthlyWindow     → event-simulation (可以推演)
+//   4) 默认                              → event-simulation (推演通用入口)
+//   5) 未来可加：高时效问题 → meihua-enhancement
+export function pickPrimaryPremiumOffer(params: {
+  offers: PremiumServiceOffer[];
+  scenarioViews: ScenarioView[];
+  monthlyWindows: MonthlyWindow[];
+  correctionInsight?: ReportCorrectionInsight;
+}): PremiumServiceOffer | null {
+  const offers = params.offers || [];
+  const findOffer = (key: PremiumServiceKey) =>
+    offers.find((o) => o.key === key) || null;
+
+  // 1) 偏差需要复盘 → event-review
+  if (params.correctionInsight?.level === 'action') {
+    const review = findOffer('event-review');
+    if (review) return review;
+  }
+
+  // 2) 场景有警示 → event-verdict
+  const cautionScenario = (params.scenarioViews || []).find(
+    (s) => s.key !== 'overall' && s.status === 'caution',
+  );
+  if (cautionScenario) {
+    const verdict = findOffer('event-verdict');
+    if (verdict) return verdict;
+  }
+
+  // 3) 有 push 类型的窗口 → event-simulation
+  const pushWindow = (params.monthlyWindows || []).find(
+    (w) => w.status === 'push',
+  );
+  if (pushWindow) {
+    const simulation = findOffer('event-simulation');
+    if (simulation) return simulation;
+  }
+
+  // 4) 默认 → event-simulation
+  return findOffer('event-simulation') || offers[0] || null;
+}
