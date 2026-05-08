@@ -55,6 +55,7 @@ import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
 import DegradeNotice from '@/components/degrade-notice';
+import InlineAskCTA from '@/components/inline-ask-cta';
 import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
 import ReportCurrentState from '@/components/report/report-current-state';
@@ -797,23 +798,79 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     )}
                   </div>
                   <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
+                  <div className="mt-2 flex justify-end">
+                    <InlineAskCTA
+                      reportId={id}
+                      chapter="rhythm"
+                      label="问问 12 个月怎么排"
+                      intent="chapter:rhythm"
+                      question={`未来 12 个月的节奏图我看到了。请把它翻译成实际计划：第 1-3 个月、第 4-6 个月、第 7-12 个月，${publicName}各自最该做什么？哪个月是窗口、哪个月该收？`}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
+                    />
+                  </div>
                 </div>
 
               <div id="overview" className="mt-6">
                 <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
+                {/* v5-B2 章节级追问 */}
+                <div className="mt-2 flex justify-end">
+                  <InlineAskCTA
+                    reportId={id}
+                    chapter="blueprint"
+                    label="问问这张命局结构图"
+                    intent="chapter:blueprint"
+                    question={`请围绕${publicName}的命局结构（日主${result.basic?.dayMaster || ''}、${result.pattern?.type || '当前格局'}），用一段话告诉我：哪三件事是结构本身在催的，我现在最该把哪一件落地？`}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
+                  />
+                </div>
               </div>
 
               <div className="mt-5">
                 <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
+                <div className="mt-2 flex justify-end">
+                  <InlineAskCTA
+                    reportId={id}
+                    chapter="current-state"
+                    label="问问当前阶段怎么走"
+                    intent="chapter:current-state"
+                    question={`${publicName}现在所处的阶段，节奏判断是${reportV4Sections.currentOperatingSystem?.stance || '稳住节奏'}。请帮我把这个判断落到具体一周的动作清单上：今天起到本周末，哪三件事必须做、哪一件必须不做？`}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
+                  />
+                </div>
               </div>
 
               <div id="scenario" className="mt-5">
                 <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
+                <div className="mt-2 flex justify-end">
+                  <InlineAskCTA
+                    reportId={id}
+                    chapter="scenario"
+                    label="问问这些场景怎么挑"
+                    intent="chapter:scenario"
+                    question={`报告里给我列了几个场景剧本（事业、财富、关系、健康）。请你帮我做减法：当前${publicName}的主线判断下，哪一类场景值得这个月集中精力，其他几类先放到次要位置就行？为什么？`}
+                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                    sourceFamily={sourceCtaStrategy.sourceFamily}
+                  />
+                </div>
               </div>
 
               <div className="mt-5 grid gap-4 xl:grid-cols-2">
                 <ReportActionBoard section={reportV4Sections.actionBoard} />
                 <ReportValidationPanel section={reportV4Sections.validationLayer} />
+              </div>
+              <div className="mt-2 flex justify-end">
+                <InlineAskCTA
+                  reportId={id}
+                  chapter="action-validation"
+                  label="问问该怎么验证这些判断"
+                  intent="chapter:action-validation"
+                  question={`报告给我了一组动作建议 + 验证项。请告诉我：未来 30 天，我每周该用什么节奏复盘这份判断？哪一项是关键证据、哪一项可以容忍偏差？`}
+                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                  sourceFamily={sourceCtaStrategy.sourceFamily}
+                />
               </div>
 
               <div className="mt-5 grid gap-4 xl:grid-cols-3">
