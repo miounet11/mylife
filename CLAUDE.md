@@ -102,9 +102,10 @@ app/api/analyze/route.ts
 
 ### 2.2 LLM 模型与熔断
 
-- 模型 fallback 链由环境变量驱动：`DEFAULT_MODEL` → `MODEL_FALLBACK_CHAIN`（生产链：`grok-420-fast → gpt-5.2 → auto`）。
-- `lib/llm-provider-configs.ts` 管理 provider（image/article 两种用途），`lib/llm-provider-health.ts` 维护健康窗口（默认 30min）。
-- 熔断阈值由 `LLM_CIRCUIT_*` 系列环境变量控制：连续失败 4 次或失败率 70% 触发 OPEN，恢复需要连续 2 次成功，冷却 8-9 分钟。
+- 模型 fallback 链由环境变量驱动：`DEFAULT_MODEL` → `MODEL_FALLBACK_CHAIN`（生产链：`grok-420-fast → gpt-5.2`）。
+- v5-A1 (2026-05-08) 移除死链路 `auto`：生产端 8s 超时 0 bytes；探测：grok-420-fast 200 / gpt-5.2 200 / auto TIMEOUT。
+- `lib/llm-provider-configs.ts` 管理 provider（image/article 两种用途），`lib/llm-provider-health.ts` 维护健康窗口（v5-A2 起 15min）。
+- 熔断阈值由 `LLM_CIRCUIT_*` 系列环境变量控制：v5-A2 起连续失败 3 次或失败率 60% 触发 OPEN，恢复需要连续 1 次成功，冷却 4 分钟。
 - 报告链使用独立的 `REPORT_MODEL_FALLBACK_CHAIN` / `REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN`，与内容生成 `CONTENT_GENERATION_MODEL_FALLBACK_CHAIN` 隔离。
 
 ### 2.3 数据访问分层
