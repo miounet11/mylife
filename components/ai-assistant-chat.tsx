@@ -916,6 +916,43 @@ export default function AIAssistantChat() {
 
           {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
 
+          {/* v5-B3 (2026-05-08) 进入聊天页第一条系统提示
+              当用户从结果页带 reportId 进入、还没说话时，明确告诉他：
+              这份报告是谁的、当前阶段是什么、可以问什么 */}
+          {!loadingHistory && messages.length === 0 && context?.report ? (
+            <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4 md:p-5">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] text-[color:var(--brand-strong)]">
+                  <Sparkles className="h-3.5 w-3.5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-strong)]">
+                    系统已带上你的报告
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">
+                    这次对话是围绕 <span className="font-bold">{context.report.name || '你'}</span> 的报告展开的：
+                    日主 <span className="font-mono font-bold">{context.report.dayMaster}</span>，
+                    格局 <span className="font-mono font-bold">{context.report.pattern}</span>，
+                    当前大运 <span className="font-mono font-bold">{context.report.currentDaYun}</span>。
+                    我已经把报告里的结构、阶段、五行、十神、近期窗口都加载到了上下文里——你可以直接问具体问题，不用再交代背景。
+                  </p>
+                  {visibleQuickQuestions.length > 0 ? (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      {visibleQuickQuestions.slice(0, 4).map((question) => (
+                        <QuickQuestionButton
+                          key={`hint-${question}`}
+                          question={question}
+                          onClick={() => handlePromptClick(question)}
+                          disabled={isTyping || loadingHistory}
+                        />
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           {!loadingHistory && messages.length === 0 && !context && (
             <div className="space-y-4 rounded-[var(--radius)] bg-[color:var(--paper)] p-4 md:p-5">
               <div>
