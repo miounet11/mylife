@@ -32,13 +32,15 @@ import { Tag } from '@/components/ui/tag';
 
 import { getAuthSession } from '@/lib/auth';
 import { getCurrentUserId } from '@/lib/user-utils';
-import { fortuneOperations, eventOperations, toolSessionOperations } from '@/lib/database';
+import { fortuneOperations, eventOperations, toolSessionOperations, questionOperations } from '@/lib/database';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 import { productActivationPath, productPurposePaths, productTrustSignals } from '@/lib/product-experience';
+import { resolveResumeTarget } from '@/lib/resume-target';
+import ResumeBar from '@/components/resume-bar';
 
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'grok-420-fast';
-const FALLBACK_CHAIN = process.env.MODEL_FALLBACK_CHAIN || 'auto,gpt-5.2';
+const FALLBACK_CHAIN = process.env.MODEL_FALLBACK_CHAIN || 'gpt-5.2';
 const REPORT_VERSION = 'v3';
 
 const iconMap = {
@@ -86,6 +88,12 @@ export default async function DashboardPage() {
   const validatedEvents = events.filter((e: any) => e.userFeedback?.wasAccurate === true).length;
   const driftEvents = events.filter((e: any) => e.userFeedback?.wasAccurate === false).length;
   const pendingEvents = events.filter((e: any) => e.userFeedback?.wasAccurate === undefined).length;
+
+  // v5-C1 决策台风「继续上次」恢复条
+  const recentChat = userId ? questionOperations.getByUserId(userId, 8) : [];
+  const resumeTarget = userId
+    ? resolveResumeTarget({ recentChat, events, reports })
+    : null;
 
   const toolSessions = userId ? toolSessionOperations.listByUser(userId, 5) : [];
   const totalTools = toolSessions.length;
@@ -150,6 +158,13 @@ export default async function DashboardPage() {
             </Inline>
           </Inline>
         </section>
+
+        {/* v5-C1 决策台风「继续上次」恢复条 — 仅当有可恢复目标时显示 */}
+        {resumeTarget ? (
+          <div className="mb-6">
+            <ResumeBar target={resumeTarget} surface="dashboard" />
+          </div>
+        ) : null}
 
         {/* 个人状态 4-Stat */}
         <Card variant="default" padding="lg" className="mb-6 bg-[color:var(--bg-elevated)]">
