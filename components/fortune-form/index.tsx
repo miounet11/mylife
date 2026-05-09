@@ -147,8 +147,12 @@ export default function FortuneForm({
   const [autoAdvanceCancelled, setAutoAdvanceCancelled] = useState(false);
 
   useEffect(() => {
-    const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
-    setSetTimeInfo(createSetTimeInfo(midnightValue));
+    try {
+      const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
+      setSetTimeInfo(createSetTimeInfo(midnightValue));
+    } catch {
+      // localStorage 不可用，保持默认（早晚子时关闭）
+    }
   }, []);
 
   useEffect(() => {

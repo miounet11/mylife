@@ -47,7 +47,11 @@ export default function AdvancedOptionsDisclosure({
     }
 
     if (index === 2) {
-      window.localStorage.setItem(SETTING_MIDNIGHT_KEY, String(next[2].value));
+      try {
+        window.localStorage.setItem(SETTING_MIDNIGHT_KEY, String(next[2].value));
+      } catch {
+        // localStorage 不可用时静默忽略，仅本次会话生效
+      }
     }
 
     onSetTimeInfoChange(next);

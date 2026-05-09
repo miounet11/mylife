@@ -162,7 +162,8 @@ export function isContentRadarAutoPublishEnabled() {
 }
 
 export function getModelFallbackChainEnv() {
-  return readString('MODEL_FALLBACK_CHAIN', 'auto,gpt-5.2');
+  // v5-A1 (2026-05-08): default 改为 'gpt-5.2' — 'auto' 是死链路
+  return readString('MODEL_FALLBACK_CHAIN', 'gpt-5.2');
 }
 
 export function getReportModelFallbackChainEnv() {

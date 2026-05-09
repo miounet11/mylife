@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   UNKNOWN_LOCATION,
@@ -70,9 +70,16 @@ function wait(ms: number) {
 
 function buildCaseName() {
   const KEY = 'demoCount';
-  const current = Number(window.localStorage.getItem(KEY) || '0') + 1;
-  window.localStorage.setItem(KEY, String(current));
-  return `案例${current}`;
+  try {
+    const current = Number(window.localStorage.getItem(KEY) || '0') + 1;
+    window.localStorage.setItem(KEY, String(current));
+    return `案例${current}`;
+  } catch {
+    // localStorage 不可用（如 iOS Safari 私密模式 / 第三方 cookie 拦截）
+    // 用时间戳后 4 位作为兜底，避免完全没有名字
+    const fallback = String(Date.now()).slice(-4);
+    return `案例${fallback}`;
+  }
 }
 
 export type AnalyzeSubmitContext = {
@@ -113,6 +120,13 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
     requestRef.current?.abort();
     reset();
   }, [reset]);
+
+  // 组件卸载时取消正在进行的 SSE 流，避免 setState 已卸载组件
+  useEffect(() => {
+    return () => {
+      requestRef.current?.abort();
+    };
+  }, []);
 
   const submit = useCallback(
     async (payload: PaipanInfoData, payloadLocation: FormLocationState) => {
