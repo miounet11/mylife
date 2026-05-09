@@ -72,7 +72,7 @@ export default async function HomePage() {
         {/* ─────────────────────────────────────────────
            段 1：HERO + 表单（决策台风入口）
            ───────────────────────────────────────────── */}
-        <section className="page-frame pt-6 md:pt-10" id="analysis-form">
+        <section className="page-frame pt-6 md:pt-10 scroll-mt-32" id="analysis-form">
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
             <Stack gap={4}>
               <Eyebrow icon={<Sparkles className="h-3 w-3" />}>
@@ -114,9 +114,7 @@ export default async function HomePage() {
               </Inline>
             </Stack>
 
-            <Card variant="raised" padding="md" className="border-[color:var(--brand-soft-2)]">
-              <FortuneForm returnSource="home_direct" />
-            </Card>
+            <FortuneForm returnSource="home_direct" />
           </div>
         </section>
 
@@ -137,8 +135,8 @@ export default async function HomePage() {
               />
               <Stat
                 label="模型 fallback"
-                value="3 层"
-                hint="grok-420-fast → gpt-5.2 → auto"
+                value="2 层"
+                hint="grok-420-fast → gpt-5.2"
                 size="lg"
               />
               <Stat
