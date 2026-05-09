@@ -601,7 +601,7 @@ export default function BirthTimeModal({
     >
       <div className="relative flex min-h-full items-end justify-center sm:items-center sm:p-4">
         <div
-          className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.16)] sm:max-w-[480px] sm:rounded-[var(--radius-md)]"
+          className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)] shadow-[var(--shadow-pop)] sm:max-w-[480px] sm:rounded-[var(--radius-md)]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="shrink-0 border-b border-[color:var(--line)] px-4 py-3">
@@ -647,7 +647,7 @@ export default function BirthTimeModal({
                   <summary className="cursor-pointer list-none rounded-full bg-[color:var(--paper)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
                     录入说明
                   </summary>
-                  <div className="absolute right-0 top-9 z-30 w-[260px] rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-3 text-xs leading-5 text-[color:var(--muted)] shadow-[0_14px_34px_rgba(24,41,35,0.12)]">
+                  <div className="absolute right-0 top-9 z-30 w-[260px] rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5 text-[color:var(--ink-4)] shadow-[var(--shadow-pop)]">
                     支持公历、农历和四柱。暂不知道具体时间时，开启“时间不确定”即可。
                   </div>
                 </details>
@@ -826,7 +826,7 @@ export default function BirthTimeModal({
           </div>
 
           {popoverMode ? (
-            <div className="absolute inset-x-4 bottom-[104px] z-20 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 shadow-[0_18px_40px_rgba(34,26,18,0.14)]">
+            <div className="absolute inset-x-4 bottom-[104px] z-20 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 shadow-[var(--shadow-pop)]">
               {popoverMode === 'date' ? (
                 <div className="max-h-[220px] space-y-2 overflow-y-auto">
                   {dateList.map((item) => (

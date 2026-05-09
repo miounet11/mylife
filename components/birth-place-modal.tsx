@@ -391,7 +391,7 @@ export default function BirthPlaceModal({
     >
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[440px] rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
+          className="relative w-full max-w-[440px] rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 text-[color:var(--ink-2)] shadow-[var(--shadow-pop)]"
           onClick={(event) => event.stopPropagation()}
         >
           <div className="mb-4 space-y-3">
@@ -443,7 +443,7 @@ export default function BirthPlaceModal({
             ) : null}
 
             {showSearchPopover ? (
-              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] py-1 shadow-[0_18px_40px_rgba(34,26,18,0.12)]">
+              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] py-1 shadow-[var(--shadow-pop)]">
                 {searchResults.map((item, index) => (
                   <button
                     key={`${item.text}-${index}`}
