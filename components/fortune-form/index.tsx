@@ -2,15 +2,15 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle } from 'lucide-react';
 import { Lunar } from 'lunar-javascript';
 import FortuneProgress from '../fortune-progress';
 import BirthPlaceModal from '../birth-place-modal';
 import BirthTimeModal from '../birth-time-modal';
-import InstantPaipanCard from '../instant-paipan-card';
 import PriorityDisclosure from '../priority-disclosure';
 import TacitKnowledgeComposer from '../tacit-knowledge-composer';
-import EntryReadinessSidebar from './entry-readiness-sidebar';
+import BirthTimeCard from './birth-time-card';
+import BirthPlaceCard from './birth-place-card';
+import EntryProgressBar from './entry-progress-bar';
 import GenderPicker from './gender-picker';
 import SubmitButton from './submit-button';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
@@ -22,6 +22,7 @@ import {
   DEFAULT_CASE_TYPES,
   UNKNOWN_LOCATION,
   buildLunarArrFromBirthday,
+  buildProgressSegments,
   createDefaultInfoData,
   formatAddressLabel,
   formatBirthLabel,
@@ -250,6 +251,7 @@ export default function FortuneForm({
   const [showTacitComposer, setShowTacitComposer] = useState(false);
   const [timeConfirmed, setTimeConfirmed] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
+  const [hasAutoOpenedPlace, setHasAutoOpenedPlace] = useState(false);
 
   useEffect(() => {
     const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
@@ -302,8 +304,24 @@ export default function FortuneForm({
     }));
     setDatetimeIndex(0);
     setDatetimeIndexReal(0);
+    // 草稿恢复用户：跳过领着走，用户可自由编辑任一字段
+    setHasAutoOpenedPlace(true);
     clearAnalyzeDraft();
   }, []);
+
+  // 领着走：时间确认后自动打开地点弹窗（一次性、可中断、草稿用户跳过）
+  useEffect(() => {
+    if (!timeConfirmed || locationConfirmed || hasAutoOpenedPlace || showDatetime) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowAddress(true);
+      setHasAutoOpenedPlace(true);
+    }, 220);
+
+    return () => window.clearTimeout(timer);
+  }, [timeConfirmed, locationConfirmed, hasAutoOpenedPlace, showDatetime]);
 
   const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
 
@@ -326,7 +344,7 @@ export default function FortuneForm({
   const hasKnownLocation = locationState.addressData[0] !== '未知地';
   const hasKnownBirthHour = infoData.unknowhour === 0;
   const usesSolarTime = setTimeInfo[1].value === 1;
-  const { entryReadiness, readinessScore, nextHint, canSubmit } = useMemo(
+  const { canSubmit } = useMemo(
     () =>
       getAnalyzeEntryProgress({
         timeConfirmed,
@@ -336,6 +354,15 @@ export default function FortuneForm({
         usesSolarTime,
       }),
     [timeConfirmed, locationConfirmed, hasKnownBirthHour, hasKnownLocation, usesSolarTime]
+  );
+  const progressSegments = useMemo(
+    () =>
+      buildProgressSegments({
+        timeConfirmed,
+        locationConfirmed,
+        genderConfirmed: true,
+      }),
+    [timeConfirmed, locationConfirmed]
   );
   const caseTypeGuidance = getCaseTypeGuidance(selectedCaseType);
   const submitLabel = canSubmit ? '生成我的世界易判断' : '先确认出生时间与地点';
@@ -690,10 +717,11 @@ export default function FortuneForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[1040px]">
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-3 md:px-5 md:py-5">
-            <div className="space-y-2.5 md:space-y-3.5">
+      <form onSubmit={handleSubmit} className="mx-auto w-full max-w-[720px]">
+        <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-3 md:px-5 md:py-5">
+            <div className="space-y-3 md:space-y-4">
+              <EntryProgressBar segments={progressSegments} />
+
               <div className="hidden space-y-1.5 md:block">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   填写出生信息
@@ -731,71 +759,40 @@ export default function FortuneForm({
               ) : null}
 
               <div className="grid gap-2.5 md:grid-cols-2 md:gap-3">
-                <button
-                  type="button"
-                  onClick={() => {
+                <BirthTimeCard
+                  label={timeConfirmed ? birthLabel : ''}
+                  confirmed={timeConfirmed}
+                  unknownHour={infoData.unknowhour === 1}
+                  onOpen={() => {
                     setDatetimeIndex(datetimeIndexReal);
                     setShowDatetime(true);
                   }}
-                  className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-[var(--radius)] md:py-3"
-                >
-                  <div className="text-xs font-semibold text-[color:var(--muted)]">出生时间</div>
-                  <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{birthLabel}</div>
-                  <div className="mt-1.5 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)] md:mt-2">
-                    <span>点击选择</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${timeConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[color:var(--paper)] text-[color:var(--muted)]'}`}>
-                      {timeConfirmed ? '已确认' : '待确认'}
-                    </span>
-                  </div>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => setShowAddress(true)}
-                  className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-left transition hover:border-[color:var(--accent)] md:rounded-[var(--radius)] md:py-3"
-                >
-                  <div className="text-xs font-semibold text-[color:var(--muted)]">出生地点</div>
-                  <div className="mt-1.5 text-[17px] font-bold text-[color:var(--ink)] md:mt-2 md:text-lg">{addressLabel}</div>
-                  <div className="mt-1.5 flex items-center justify-between gap-3 text-sm text-[color:var(--muted)] md:mt-2">
-                    <span>点击选择</span>
-                    <span className={`rounded-full px-3 py-1 text-[12px] font-semibold ${locationConfirmed ? 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]' : 'bg-[color:var(--paper)] text-[color:var(--muted)]'}`}>
-                      {locationConfirmed ? '已确认' : '待确认'}
-                    </span>
-                  </div>
-                </button>
-              </div>
-
-              <div className="grid gap-2.5 md:grid-cols-[0.88fr_1.12fr] md:gap-3">
-                <GenderPicker
-                  value={infoData.sex as 0 | 1}
-                  onChange={(next) => setInfoData((current) => ({ ...current, sex: next }))}
+                  onToggleUnknown={() => {
+                    setInfoData((current) => {
+                      const next = current.unknowhour === 1 ? 0 : 1;
+                      const [datePart] = current.birthday.split(' ');
+                      return {
+                        ...current,
+                        unknowhour: next as 0 | 1,
+                        birthday: next === 1 ? `${datePart} 00:00` : current.birthday,
+                      };
+                    });
+                    setTimeConfirmed(true);
+                  }}
                 />
 
-                <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 text-[color:var(--ink)] md:rounded-[var(--radius)] md:py-3">
-                  <div className="text-xs font-semibold text-[color:var(--muted)]">出生信息模式</div>
-                  <div className="mt-1.5 flex overflow-hidden rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] p-1 md:mt-2">
-                    {[
-                      { label: '公历', value: 0 as 0 | 1 | 2 },
-                      { label: '农历', value: 1 as 0 | 1 | 2 },
-                      { label: '四柱', value: 2 as 0 | 1 | 2 },
-                    ].map((item) => (
-                      <button
-                        key={item.label}
-                        type="button"
-                        onClick={() => {
-                          setDatetimeIndex(item.value);
-                          setShowDatetime(true);
-                        }}
-                        className={`flex-1 rounded-full px-3 py-1.5 text-sm font-semibold ${
-                          datetimeIndex === item.value ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--muted)]'
-                        }`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <BirthPlaceCard
+                  label={locationConfirmed ? addressLabel : ''}
+                  confirmed={locationConfirmed}
+                  bjTime={infoData.bjtime === 1}
+                  onOpen={() => setShowAddress(true)}
+                />
               </div>
+
+              <GenderPicker
+                value={infoData.sex as 0 | 1}
+                onChange={(next) => setInfoData((current) => ({ ...current, sex: next }))}
+              />
 
               <label className="block rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 md:rounded-[var(--radius)] md:py-3">
                 <div className="text-xs font-semibold text-[color:var(--muted)]">命主姓名</div>
@@ -913,41 +910,6 @@ export default function FortuneForm({
 
             </div>
           </div>
-
-          <EntryReadinessSidebar
-            readinessScore={readinessScore}
-            nextHint={nextHint}
-            entryReadiness={entryReadiness}
-            birthLabel={birthLabel}
-            addressLabel={addressLabel}
-            sunTimeLabel={infoData.unknowhour === 1 ? '未知（需选时辰）' : infoData.sunTime}
-            hasTacitContext={hasTacitContext}
-          />
-        </div>
-
-        <div className="mt-5 hidden xl:block">
-          <PriorityDisclosure
-            label="独立入口"
-            title="当前时刻直接起局"
-            description="这里走的是“当前时刻直接起局”，和上方出生信息录入是两条不同流程。"
-          >
-            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_320px] xl:items-start">
-              <InstantPaipanCard
-                sex={infoData.sex}
-                submitting={loading}
-                disabled={loading}
-                onConfirm={(payload) => {
-                  void submitPayload(payload, UNKNOWN_LOCATION);
-                }}
-              />
-
-              <div className="flex min-h-[42px] items-center justify-center rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4 text-xs text-[#9a927f]">
-                <AlertCircle className="mr-[5px] h-[16px] w-[16px]" />
-                <span>平台所有产品拒绝向未成年人提供服务，仅供娱乐和参考</span>
-              </div>
-            </div>
-          </PriorityDisclosure>
-        </div>
       </form>
 
       <BirthTimeModal

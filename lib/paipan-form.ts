@@ -254,3 +254,21 @@ export function getAnalyzeEntryProgress({
     canSubmit,
   };
 }
+
+export interface ProgressSegment {
+  key: 'time' | 'place' | 'gender';
+  label: string;
+  done: boolean;
+}
+
+export function buildProgressSegments(flags: {
+  timeConfirmed: boolean;
+  locationConfirmed: boolean;
+  genderConfirmed: boolean;
+}): ProgressSegment[] {
+  return [
+    { key: 'time', label: '出生时间', done: flags.timeConfirmed },
+    { key: 'place', label: '出生地点', done: flags.locationConfirmed },
+    { key: 'gender', label: '性别', done: flags.genderConfirmed },
+  ];
+}
