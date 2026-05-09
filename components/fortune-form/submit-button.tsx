@@ -5,6 +5,8 @@ type SubmitButtonProps = {
   loading?: boolean;
   label: string;
   error?: string;
+  /** 弹窗打开时隐藏移动端 sticky CTA，避免叠加在弹窗之上 */
+  modalOpen?: boolean;
 };
 
 const ENABLED_CLASSES =
@@ -37,7 +39,7 @@ function CtaButton({
   );
 }
 
-export default function SubmitButton({ canSubmit, loading, label, error }: SubmitButtonProps) {
+export default function SubmitButton({ canSubmit, loading, label, error, modalOpen }: SubmitButtonProps) {
   return (
     <>
       {error ? (
@@ -57,13 +59,15 @@ export default function SubmitButton({ canSubmit, loading, label, error }: Submi
         className="hidden md:flex md:h-14"
       />
 
-      {/* 移动端：sticky footer + safe-area */}
+      {/* 移动端：sticky footer + safe-area；弹窗打开时隐藏 */}
       <div
-        className="
+        aria-hidden={modalOpen}
+        className={`
           md:hidden fixed inset-x-0 bottom-0 z-40
           border-t border-[color:var(--hairline)] bg-[color:var(--paper)]/95 backdrop-blur
           px-3 pt-2 pb-[max(12px,env(safe-area-inset-bottom))]
-        "
+          ${modalOpen ? 'hidden' : ''}
+        `}
       >
         <CtaButton
           canSubmit={canSubmit}

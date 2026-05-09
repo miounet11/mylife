@@ -205,7 +205,19 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
 
         if (!response.ok || !response.body) {
           const failed = await response.json().catch(() => null);
-          setError(failed?.error || '分析请求失败，请稍后再试');
+          let message = failed?.error;
+          if (!message) {
+            if (response.status === 429) {
+              message = '请求过于频繁，请稍后再试';
+            } else if (response.status === 503) {
+              message = '系统繁忙，请稍后再试';
+            } else if (response.status >= 500) {
+              message = '服务异常，请稍后再试';
+            } else {
+              message = '分析请求失败，请稍后再试';
+            }
+          }
+          setError(message);
           setLoadingSummary(null);
           setLoading(false);
           requestRef.current = null;

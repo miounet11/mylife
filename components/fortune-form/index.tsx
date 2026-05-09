@@ -237,7 +237,8 @@ export default function FortuneForm({
   const handleAutoAdvanceComplete = useCallback(() => {
     setAutoAdvancePending(false);
     setHasAutoOpenedPlace(true);
-    setShowAddress(true);
+    // 若用户在 toast 倒计时期间已手动打开过地点弹窗，不再重复触发
+    setShowAddress((current) => current || true);
   }, []);
 
   const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
@@ -296,6 +297,39 @@ export default function FortuneForm({
     }
   }, [hasTacitContext]);
 
+  const submitContext = useMemo(
+    () => ({
+      setTimeInfoValues: {
+        useSolarTime: setTimeInfo[1].value === 1,
+        useSeparateZiHour: setTimeInfo[2].value === 1,
+      },
+      selectedCaseType,
+      readinessScore,
+      hasKnownLocation,
+      hasKnownBirthHour,
+      activeSource,
+      inferredToolSlug,
+      tacitContext,
+      computedSolarTime: computeSunTime,
+      returnHref,
+      hasEmailDelivery,
+      verifiedEmail,
+    }),
+    [
+      setTimeInfo,
+      selectedCaseType,
+      readinessScore,
+      hasKnownLocation,
+      hasKnownBirthHour,
+      activeSource,
+      inferredToolSlug,
+      tacitContext,
+      returnHref,
+      hasEmailDelivery,
+      verifiedEmail,
+    ],
+  );
+
   const {
     loading,
     loadingComplete,
@@ -306,23 +340,7 @@ export default function FortuneForm({
     setError,
     submit,
     cancel,
-  } = useAnalyzeSubmit({
-    setTimeInfoValues: {
-      useSolarTime: setTimeInfo[1].value === 1,
-      useSeparateZiHour: setTimeInfo[2].value === 1,
-    },
-    selectedCaseType,
-    readinessScore,
-    hasKnownLocation,
-    hasKnownBirthHour,
-    activeSource,
-    inferredToolSlug,
-    tacitContext,
-    computedSolarTime: computeSunTime,
-    returnHref,
-    hasEmailDelivery,
-    verifiedEmail,
-  });
+  } = useAnalyzeSubmit(submitContext);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -439,7 +457,13 @@ export default function FortuneForm({
                 onChange={(next) => setInfoData((current) => ({ ...current, sex: next }))}
               />
 
-              <SubmitButton canSubmit={canSubmit} loading={loading} label={submitLabel} error={error} />
+              <SubmitButton
+                canSubmit={canSubmit}
+                loading={loading}
+                label={submitLabel}
+                error={error}
+                modalOpen={showDatetime || showAddress}
+              />
 
               <AdvancedOptionsDisclosure
                 infoData={infoData}
