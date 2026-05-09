@@ -26,6 +26,7 @@ import {
   formatBirthLabel,
   getAnalyzeEntryProgress,
   getBirthdayParts,
+  normalizeBirthPlaceLabel,
   padPart,
   parseBirthTimeConfirm,
   type CaseTypeOption,
