@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type AutoAdvanceToastProps = {
   durationMs: number;
@@ -14,6 +14,14 @@ export default function AutoAdvanceToast({
   onComplete,
 }: AutoAdvanceToastProps) {
   const [remaining, setRemaining] = useState(durationMs);
+  const onCompleteRef = useRef(onComplete);
+  const onCancelRef = useRef(onCancel);
+
+  // Always keep refs pointing at latest callbacks without re-running the timer
+  useEffect(() => {
+    onCompleteRef.current = onComplete;
+    onCancelRef.current = onCancel;
+  }, [onComplete, onCancel]);
 
   useEffect(() => {
     const start = Date.now();
@@ -23,12 +31,12 @@ export default function AutoAdvanceToast({
       setRemaining(left);
       if (left <= 0) {
         window.clearInterval(interval);
-        onComplete();
+        onCompleteRef.current();
       }
-    }, 50);
+    }, 100);
 
     return () => window.clearInterval(interval);
-  }, [durationMs, onComplete]);
+  }, [durationMs]);
 
   const percent = Math.max(0, Math.min(100, (remaining / durationMs) * 100));
 
@@ -47,7 +55,7 @@ export default function AutoAdvanceToast({
         </div>
         <button
           type="button"
-          onClick={onCancel}
+          onClick={() => onCancelRef.current()}
           className="
             rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)]
             px-3 py-1 text-[12px] font-semibold text-[color:var(--ink-2)]

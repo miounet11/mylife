@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import FortuneProgress from '../fortune-progress';
 import BirthPlaceModal from '../birth-place-modal';
@@ -112,63 +112,6 @@ function maskEmail(email?: string | null) {
   return `${localPart.slice(0, 2)}***@${domain}`;
 }
 
-function getCaseTypeGuidance(caseTypeName: string) {
-  const normalized = caseTypeName.trim();
-
-  if (/事业|工作|职业|升职|岗位/.test(normalized)) {
-    return {
-      headline: '事业类问题要先问角色适配、阶段窗口和组织压力。',
-      focus: '更适合追问“这次换岗该推进、观察还是收手”“现在的岗位和我是否匹配”。',
-      avoid: '不要只问会不会升职，先问为什么卡、卡在结构还是环境。',
-    };
-  }
-
-  if (/财富|财务|收入|投资|赚钱/.test(normalized)) {
-    return {
-      headline: '财富类问题要先拆赚钱方式、保留能力和扩张时机。',
-      focus: '更适合追问“现在该保守守财还是放大投入”“现金流最脆弱的点在哪里”。',
-      avoid: '不要只问有没有财运，先问钱怎么进、怎么漏、什么时候别扩。',
-    };
-  }
-
-  if (/关系|感情|婚姻|伴侣|桃花/.test(normalized)) {
-    return {
-      headline: '关系类问题要先看边界、节奏和环境挤压。',
-      focus: '更适合追问“这段关系更像结构不合还是阶段不对”“现在该推进还是拉开距离”。',
-      avoid: '不要只问合不合，先问关系为什么卡、谁在消耗、环境是否在放大问题。',
-    };
-  }
-
-  if (/健康|身体|恢复|睡眠/.test(normalized)) {
-    return {
-      headline: '健康类问题先看恢复秩序、长期透支和现实负荷。',
-      focus: '更适合追问“当前最该先减什么负”“恢复窗口什么时候更适合调整”。',
-      avoid: '不要只问会不会出问题，先问透支在哪、恢复位够不够。',
-    };
-  }
-
-  if (/家庭|父母|孩子|家宅|照护/.test(normalized)) {
-    return {
-      headline: '家庭类问题先处理责任排序，再谈情绪压力。',
-      focus: '更适合追问“当前最该先排哪条责任线”“谁在代替整个系统承压”。',
-      avoid: '不要上来追求圆满，先把责任顺序和恢复位排清楚。',
-    };
-  }
-
-  if (/迁移|移民|出国|回国|城市|海外/.test(normalized)) {
-    return {
-      headline: '迁移类问题先看阶段、身份成本和环境匹配。',
-      focus: '更适合追问“现在适合动还是先稳住”“这次移动最大的现实成本是什么”。',
-      avoid: '不要把地图当答案，先问你当前阶段撑不撑得住这次移动。',
-    };
-  }
-
-  return {
-    headline: '综合问题也要先压成一个主问题，再进入判断。',
-    focus: '更适合追问“现在最该先看事业、关系、财富、健康、家庭还是迁移哪条主线”。',
-    avoid: '不要一次把所有问题混在一起，先锁定一条最想判断的主线。',
-  };
-}
 
 export default function FortuneForm({
   returnHref,
@@ -282,16 +225,16 @@ export default function FortuneForm({
     autoAdvanceCancelled,
   ]);
 
-  const handleAutoAdvanceCancel = () => {
+  const handleAutoAdvanceCancel = useCallback(() => {
     setAutoAdvancePending(false);
     setAutoAdvanceCancelled(true);
-  };
+  }, []);
 
-  const handleAutoAdvanceComplete = () => {
+  const handleAutoAdvanceComplete = useCallback(() => {
     setAutoAdvancePending(false);
     setHasAutoOpenedPlace(true);
     setShowAddress(true);
-  };
+  }, []);
 
   const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
 
@@ -305,8 +248,6 @@ export default function FortuneForm({
 
   const birthLabel = formatBirthLabel(infoData, datetimeIndexReal);
   const addressLabel = formatAddressLabel(locationState.addressData);
-  const latitudeLabel = locationState.latitude !== undefined ? `北纬${locationState.latitude.toFixed(4)}` : '';
-  const longitudeLabel = `东经${locationState.longitude.toFixed(3)}`;
   const selectedCaseType = useMemo(
     () => caseTypes.find((item) => item.id === infoData.typeId)?.name || '综合判断',
     [caseTypes, infoData.typeId]
@@ -334,7 +275,6 @@ export default function FortuneForm({
       }),
     [timeConfirmed, locationConfirmed]
   );
-  const caseTypeGuidance = getCaseTypeGuidance(selectedCaseType);
   const submitLabel = canSubmit ? '生成我的世界易判断' : '先确认出生时间与地点';
   const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
   const verifiedEmail = sessionState?.authenticated && sessionState?.user?.emailVerified
@@ -382,6 +322,8 @@ export default function FortuneForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+
+    if (loading) return;
 
     if (!canSubmit) {
       setError(
