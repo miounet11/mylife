@@ -45,7 +45,7 @@ export const metadata = {
       'x-default': '/',
     },
   }),
-  keywords: ['真太阳时', '世界易', '判断系统', '人生决策', '结构分析', '阶段判断'],
+  keywords: ['生辰八字', '四柱排盘', '真太阳时', '命理结构', '人生阶段判断', '命盘分析', '人生K线'],
 };
 
 export default async function HomePage() {
@@ -70,18 +70,18 @@ export default async function HomePage() {
 
       <main>
         {/* ─────────────────────────────────────────────
-           段 1：HERO + 表单（决策台风入口）
+           段 1：HERO + 表单（全屏焦点单栏 720）
            ───────────────────────────────────────────── */}
         <section className="page-frame pt-6 md:pt-10 scroll-mt-32" id="analysis-form">
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:items-start">
-            <Stack gap={4}>
+          <div className="mx-auto w-full max-w-[720px]">
+            <Stack gap={4} className="mb-6 md:mb-8">
               <Eyebrow icon={<Sparkles className="h-3 w-3" />}>
-                判断系统 · 决策台版本
+                生辰八字 · 真太阳时校正
               </Eyebrow>
               <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                看清你的<span className="text-[color:var(--brand-strong)]">结构、阶段、环境</span>
+                看清你的<span className="text-[color:var(--brand-strong)]">命理结构、阶段窗口</span>
                 <br className="hidden md:block" />
-                与下一步动作
+                与下一步行动
               </h1>
               <Lede size="lg">
                 输入出生时间和地点，先得到一页可读的结构、阶段与下一步判断；
@@ -189,7 +189,7 @@ export default async function HomePage() {
                     category={tool.category}
                     page="/"
                     source={`home_priority_growth:${tool.slug}`}
-                    className="group block rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-px hover:shadow-[var(--shadow-pop)]"
+                    className="group block rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--paper)] p-5 transition-colors hover:border-[color:var(--signal-strong)]"
                   >
                     <Eyebrow tone="signal" className="mb-3">
                       {growthProfile?.heroEyebrow || tool.themeLabel}
@@ -353,13 +353,25 @@ export default async function HomePage() {
 
 function FormSkeleton() {
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5">
-      <div className="space-y-3">
-        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-        <div className="h-10 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-        <div className="h-16 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-        <div className="h-11 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+    <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-3 md:px-5 md:py-5">
+      <div className="space-y-3 md:space-y-4">
+        {/* 顶部进度线 */}
+        <div className="h-px animate-pulse bg-[color:var(--bg-sunken)]" />
+        {/* 标题块 (md+) */}
+        <div className="hidden md:block space-y-1.5">
+          <div className="h-3 w-24 animate-pulse rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]" />
+          <div className="h-6 w-48 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+          <div className="h-4 w-72 animate-pulse rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]" />
+        </div>
+        {/* 出生时间 / 地点两张大卡 */}
+        <div className="grid gap-2.5 md:grid-cols-2 md:gap-3">
+          <div className="h-[88px] animate-pulse rounded-md bg-[color:var(--bg-sunken)]" />
+          <div className="h-[88px] animate-pulse rounded-md bg-[color:var(--bg-sunken)]" />
+        </div>
+        {/* 性别 pill */}
+        <div className="h-[60px] animate-pulse rounded-md bg-[color:var(--bg-sunken)]" />
+        {/* CTA */}
+        <div className="h-12 md:h-14 animate-pulse rounded-full bg-[color:var(--bg-sunken)]" />
       </div>
     </div>
   );
