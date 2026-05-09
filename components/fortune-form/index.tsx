@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Lunar } from 'lunar-javascript';
 import FortuneProgress from '../fortune-progress';
 import BirthPlaceModal from '../birth-place-modal';
 import AdvancedOptionsDisclosure from './advanced-options-disclosure';
@@ -15,7 +14,6 @@ import GenderPicker from './gender-picker';
 import SubmitButton from './submit-button';
 import { useAnalyzeSubmit } from './use-analyze-submit';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
-import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES } from '@/lib/birth-entry';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
 import {
@@ -29,6 +27,7 @@ import {
   getAnalyzeEntryProgress,
   getBirthdayParts,
   padPart,
+  parseBirthTimeConfirm,
   type CaseTypeOption,
   type FormLocationState,
   type PaipanInfoData,
@@ -44,16 +43,6 @@ const BirthTimeModal = dynamic(() => import('../birth-time-modal'), {
 });
 
 const SETTING_MIDNIGHT_KEY = 'setting_midnight';
-
-function getLunarMonthNumber(label: string) {
-  const normalized = label.replace('闰', '').replace('月', '');
-  const monthIndex = LUNAR_MONTH_NAMES.findIndex((item) => item === normalized);
-  return monthIndex + 1;
-}
-
-function getLunarDayNumber(label: string) {
-  return LUNAR_DAY_NAMES.findIndex((item) => item === label) + 1;
-}
 
 function subtractOneHour(year: number, month: number, day: number, hour: number, minute: number) {
   const date = new Date(year, month - 1, day, hour, minute, 0);
@@ -410,56 +399,10 @@ export default function FortuneForm({
   const handleTimeConfirm = (tab: 0 | 1 | 2, data: string[] | string) => {
     setTimeConfirmed(true);
     setError('');
-    if (tab === 0 && Array.isArray(data)) {
-      const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
-      const birthday = `${data[0]}-${data[1]}-${data[2]} ${unknowhour ? '00:00' : `${data[3]}:${data[4]}`}`;
-
-      setInfoData((current) => ({
-        ...current,
-        type: 0,
-        birthday,
-        lunarArr: [],
-        unknowhour,
-      }));
-      setDatetimeIndexReal(0);
-      return;
-    }
-
-    if (tab === 1 && Array.isArray(data)) {
-      const year = Number(data[0]);
-      const monthLabel = data[1];
-      const dayLabel = data[2];
-      const isLeap = monthLabel.startsWith('闰');
-      const lunarMonth = getLunarMonthNumber(monthLabel);
-      const lunarDay = getLunarDayNumber(dayLabel);
-      const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
-      const solar = Lunar.fromYmdHms(year, isLeap ? -lunarMonth : lunarMonth, lunarDay, unknowhour ? 0 : Number(data[3]), unknowhour ? 0 : Number(data[4]), 0).getSolar();
-      const birthday = `${solar.getYear()}-${padPart(solar.getMonth())}-${padPart(solar.getDay())} ${unknowhour ? '00:00' : `${padPart(Number(data[3]))}:${padPart(Number(data[4]))}`}`;
-
-      setInfoData((current) => ({
-        ...current,
-        type: 1,
-        birthday,
-        unknowhour,
-        lunarArr: [year, padPart(lunarMonth), padPart(lunarDay), isLeap, { cnm: monthLabel, cnd: dayLabel }],
-      }));
-      setDatetimeIndexReal(1);
-      return;
-    }
-
-    if (tab === 2 && typeof data === 'string') {
-      const unknowhour = data.includes('时辰未知') ? 1 : 0;
-      const birthday = unknowhour ? `${data.split(' ')[0]} 00:00` : data;
-
-      setInfoData((current) => ({
-        ...current,
-        type: 2,
-        birthday,
-        unknowhour,
-        lunarArr: [],
-      }));
-      setDatetimeIndexReal(2);
-    }
+    const result = parseBirthTimeConfirm(tab, data);
+    if (!result) return;
+    setInfoData((current) => ({ ...current, ...result.patch }));
+    setDatetimeIndexReal(result.datetimeIndexReal);
   };
 
   if (loading) {

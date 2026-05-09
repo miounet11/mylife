@@ -1,6 +1,6 @@
-import { Solar } from 'lunar-javascript';
+import { Lunar, Solar } from 'lunar-javascript';
 import { type LocationOption } from '@/lib/location-engine';
-import { formatLunarDay, formatLunarMonth } from '@/lib/birth-entry';
+import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES, formatLunarDay, formatLunarMonth } from '@/lib/birth-entry';
 
 export interface PaipanInfoData {
   guid: string;
@@ -271,4 +271,83 @@ export function buildProgressSegments(flags: {
     { key: 'place', label: '出生地点', done: flags.locationConfirmed },
     { key: 'gender', label: '性别', done: flags.genderConfirmed },
   ];
+}
+
+/**
+ * 解析 BirthTimeModal onConfirm 回调返回的数据，转成 InfoData 增量 + 模式索引。
+ * 纯逻辑，无副作用；支持 3 个 tab：0=公历 / 1=农历 / 2=四柱。
+ */
+export type BirthTimePatch = {
+  patch: Partial<PaipanInfoData>;
+  datetimeIndexReal: 0 | 1 | 2;
+};
+
+export function parseBirthTimeConfirm(
+  tab: 0 | 1 | 2,
+  data: string[] | string,
+): BirthTimePatch | null {
+  if (tab === 0 && Array.isArray(data)) {
+    const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
+    const birthday = `${data[0]}-${data[1]}-${data[2]} ${unknowhour ? '00:00' : `${data[3]}:${data[4]}`}`;
+    return {
+      patch: {
+        type: 0,
+        birthday,
+        lunarArr: [],
+        unknowhour,
+      },
+      datetimeIndexReal: 0,
+    };
+  }
+
+  if (tab === 1 && Array.isArray(data)) {
+    const year = Number(data[0]);
+    const monthLabel = data[1];
+    const dayLabel = data[2];
+    const isLeap = monthLabel.startsWith('闰');
+    const normalizedMonth = monthLabel.replace('闰', '').replace('月', '');
+    const lunarMonth = LUNAR_MONTH_NAMES.findIndex((item) => item === normalizedMonth) + 1;
+    const lunarDay = LUNAR_DAY_NAMES.findIndex((item) => item === dayLabel) + 1;
+    const unknowhour = data[3] === '未知' || data[4] === '未知' ? 1 : 0;
+    const solar = Lunar.fromYmdHms(
+      year,
+      isLeap ? -lunarMonth : lunarMonth,
+      lunarDay,
+      unknowhour ? 0 : Number(data[3]),
+      unknowhour ? 0 : Number(data[4]),
+      0,
+    ).getSolar();
+    const birthday = `${solar.getYear()}-${padPart(solar.getMonth())}-${padPart(solar.getDay())} ${
+      unknowhour ? '00:00' : `${padPart(Number(data[3]))}:${padPart(Number(data[4]))}`
+    }`;
+
+    return {
+      patch: {
+        type: 1,
+        birthday,
+        unknowhour,
+        lunarArr: [year, padPart(lunarMonth), padPart(lunarDay), isLeap, {
+          cnm: monthLabel,
+          cnd: dayLabel,
+        }],
+      },
+      datetimeIndexReal: 1,
+    };
+  }
+
+  if (tab === 2 && typeof data === 'string') {
+    const unknowhour = data.includes('时辰未知') ? 1 : 0;
+    const birthday = unknowhour ? `${data.split(' ')[0]} 00:00` : data;
+    return {
+      patch: {
+        type: 2,
+        birthday,
+        unknowhour,
+        lunarArr: [],
+      },
+      datetimeIndexReal: 2,
+    };
+  }
+
+  return null;
 }
