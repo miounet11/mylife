@@ -7,6 +7,7 @@ import PickerWheelColumn, { type PickerWheelOption } from './picker-wheel-column
 import { DI_ZHI, TIAN_GAN } from '@/lib/bazi-constants';
 import { formatLunarDay, formatLunarMonth } from '@/lib/birth-entry';
 import { getBirthdayParts, padPart } from '@/lib/paipan-form';
+import { useModalLockAndEscape } from '@/lib/use-modal-lock';
 
 interface BirthTimeModalProps {
   isOpen: boolean;
@@ -16,7 +17,6 @@ interface BirthTimeModalProps {
   onClose: () => void;
   onTabChange: (nextTab: 0 | 1 | 2) => void;
   onConfirm: (tabIndex: 0 | 1 | 2, data: string[] | string) => void;
-  onSetUnknowhour: (value: 0 | 1) => void;
 }
 
 interface SolarState {
@@ -38,6 +38,11 @@ interface LunarState {
 interface PillarState {
   tgList: string[];
   dzList: string[];
+}
+
+interface TodaySnapshot {
+  solar: SolarState;
+  lunar: LunarState;
 }
 
 type PopoverMode = 'tg' | 'dz' | 'date' | null;
@@ -160,7 +165,7 @@ function formatCandidateDate(solar: any, unknowhour: boolean) {
   return `${dateLabel} ${padPart(solar.getHour())}:${padPart(solar.getMinute())}`;
 }
 
-function getTodayLunarState() {
+function buildTodaySnapshot(): TodaySnapshot {
   const now = new Date();
   const lunar = Solar.fromYmdHms(
     now.getFullYear(),
@@ -170,13 +175,24 @@ function getTodayLunarState() {
     now.getMinutes(),
     0
   ).getLunar();
-
-  return {
-    year: String(lunar.getYear()),
-    month: String(lunar.getMonth()),
-    day: String(lunar.getDay()),
+  const clock = {
     hour: padPart(now.getHours()),
     minute: padPart(now.getMinutes()),
+  };
+
+  return {
+    solar: {
+      year: String(now.getFullYear()),
+      month: padPart(now.getMonth() + 1),
+      day: padPart(now.getDate()),
+      ...clock,
+    },
+    lunar: {
+      year: String(lunar.getYear()),
+      month: String(lunar.getMonth()),
+      day: String(lunar.getDay()),
+      ...clock,
+    },
   };
 }
 
@@ -188,8 +204,8 @@ export default function BirthTimeModal({
   onClose,
   onTabChange,
   onConfirm,
-  onSetUnknowhour,
 }: BirthTimeModalProps) {
+  useModalLockAndEscape(isOpen, onClose);
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(tabIndex);
   const [searchValue, setSearchValue] = useState('');
   const [error, setError] = useState('');
@@ -199,6 +215,8 @@ export default function BirthTimeModal({
   const [popoverMode, setPopoverMode] = useState<PopoverMode>(null);
   const [pillarIndex, setPillarIndex] = useState(0);
   const [dateList, setDateList] = useState<string[]>([]);
+  const [todaySnapshot, setTodaySnapshot] = useState<TodaySnapshot | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
   const wasOpenRef = useRef(false);
   const syncSnapshotRef = useRef({
     birthday,
@@ -234,6 +252,8 @@ export default function BirthTimeModal({
     setPillarState(buildPillarState(birthday, unknowhour));
     setPopoverMode(null);
     setDateList([]);
+    setTodaySnapshot(buildTodaySnapshot());
+    setManualOpen(false);
   }, [birthday, isOpen, tabIndex, unknowhour]);
 
   const solarDayCount = useMemo(() => {
@@ -257,30 +277,17 @@ export default function BirthTimeModal({
     }
   }, [lunarDayCount, lunarState.day]);
 
-  const todaySolar = useMemo(() => {
-    const now = new Date();
-    return {
-      year: String(now.getFullYear()),
-      month: padPart(now.getMonth() + 1),
-      day: padPart(now.getDate()),
-      hour: padPart(now.getHours()),
-      minute: padPart(now.getMinutes()),
-    };
-  }, []);
-
-  const todayLunar = useMemo(() => getTodayLunarState(), []);
-
   const showToday = useMemo(() => {
-    if (activeTab === 2) {
+    if (!todaySnapshot || activeTab === 2) {
       return false;
     }
 
     if (activeTab === 0) {
-      return JSON.stringify(solarState) !== JSON.stringify(todaySolar);
+      return JSON.stringify(solarState) !== JSON.stringify(todaySnapshot.solar);
     }
 
-    return JSON.stringify(lunarState) !== JSON.stringify(todayLunar);
-  }, [activeTab, lunarState, solarState, todayLunar, todaySolar]);
+    return JSON.stringify(lunarState) !== JSON.stringify(todaySnapshot.lunar);
+  }, [activeTab, lunarState, solarState, todaySnapshot]);
 
   const solarYearOptions = useMemo<PickerWheelOption[]>(
     () =>
@@ -310,18 +317,18 @@ export default function BirthTimeModal({
   );
 
   const hourOptions = useMemo<PickerWheelOption[]>(
-    () => [{ value: UNKNOWN, label: UNKNOWN }, ...Array.from({ length: 24 }, (_, index) => {
+    () => Array.from({ length: 24 }, (_, index) => {
       const value = padPart(index);
       return { value, label: value };
-    })],
+    }),
     []
   );
 
   const minuteOptions = useMemo<PickerWheelOption[]>(
-    () => [{ value: UNKNOWN, label: UNKNOWN }, ...Array.from({ length: 60 }, (_, index) => {
+    () => Array.from({ length: 60 }, (_, index) => {
       const value = padPart(index);
       return { value, label: value };
-    })],
+    }),
     []
   );
 
@@ -340,18 +347,13 @@ export default function BirthTimeModal({
   );
 
   const branchOptions = useMemo(
-    () => buildBranchOptions(pillarState.tgList[pillarIndex], pillarIndex === 3),
+    () => buildBranchOptions(pillarState.tgList[pillarIndex], false),
     [pillarIndex, pillarState.tgList]
   );
 
   if (!isOpen) {
     return null;
   }
-
-  const syncUnknownFromClock = (hour: string, minute: string) => {
-    const nextUnknown = hour === UNKNOWN || minute === UNKNOWN ? 1 : 0;
-    onSetUnknowhour(nextUnknown);
-  };
 
   const handleTabChange = (nextTab: 0 | 1 | 2) => {
     setError('');
@@ -398,38 +400,55 @@ export default function BirthTimeModal({
   };
 
   const handleToday = () => {
-    const now = new Date();
+    const snapshot = buildTodaySnapshot();
+    setTodaySnapshot(snapshot);
 
     if (activeTab === 0) {
-      const nextState = {
-        year: String(now.getFullYear()),
-        month: padPart(now.getMonth() + 1),
-        day: padPart(now.getDate()),
-        hour: padPart(now.getHours()),
-        minute: padPart(now.getMinutes()),
-      };
-      setSolarState(nextState);
-      syncUnknownFromClock(nextState.hour, nextState.minute);
+      setSolarState(snapshot.solar);
       return;
     }
 
-    const lunar = Solar.fromYmdHms(
-      now.getFullYear(),
-      now.getMonth() + 1,
-      now.getDate(),
-      now.getHours(),
-      now.getMinutes(),
-      0
-    ).getLunar();
-    const nextState = {
-      year: String(lunar.getYear()),
-      month: String(lunar.getMonth()),
-      day: String(lunar.getDay()),
-      hour: padPart(now.getHours()),
-      minute: padPart(now.getMinutes()),
-    };
-    setLunarState(nextState);
-    syncUnknownFromClock(nextState.hour, nextState.minute);
+    setLunarState(snapshot.lunar);
+  };
+
+  const unknownTimeSelected = (() => {
+    if (activeTab === 0) {
+      return solarState.hour === UNKNOWN || solarState.minute === UNKNOWN;
+    }
+
+    if (activeTab === 1) {
+      return lunarState.hour === UNKNOWN || lunarState.minute === UNKNOWN;
+    }
+
+    return pillarState.tgList[3] === UNKNOWN || pillarState.dzList[3] === UNKNOWN;
+  })();
+
+  const handleUnknownTimeChange = (nextValue: boolean) => {
+    if (activeTab === 0) {
+      setSolarState((current) => ({
+        ...current,
+        hour: nextValue ? UNKNOWN : current.hour === UNKNOWN ? '00' : current.hour,
+        minute: nextValue ? UNKNOWN : current.minute === UNKNOWN ? '00' : current.minute,
+      }));
+      return;
+    }
+
+    if (activeTab === 1) {
+      setLunarState((current) => ({
+        ...current,
+        hour: nextValue ? UNKNOWN : current.hour === UNKNOWN ? '00' : current.hour,
+        minute: nextValue ? UNKNOWN : current.minute === UNKNOWN ? '00' : current.minute,
+      }));
+      return;
+    }
+
+    setPillarState((current) => {
+      const nextTgList = current.tgList.slice();
+      const nextDzList = current.dzList.slice();
+      nextTgList[3] = nextValue ? UNKNOWN : UNKNOWN_HOUR_STEM[nextTgList[2]] || '甲';
+      nextDzList[3] = nextValue ? UNKNOWN : '子';
+      return { tgList: nextTgList, dzList: nextDzList };
+    });
   };
 
   const handleSearch = () => {
@@ -469,7 +488,6 @@ export default function BirthTimeModal({
       hour: padPart(hour),
       minute: padPart(minute),
     });
-    onSetUnknowhour(0);
   };
 
   const handleConfirm = async () => {
@@ -482,7 +500,6 @@ export default function BirthTimeModal({
         return;
       }
 
-      syncUnknownFromClock(solarState.hour, solarState.minute);
       onConfirm(activeTab, [solarState.year, solarState.month, solarState.day, solarState.hour, solarState.minute]);
       onClose();
       return;
@@ -496,7 +513,6 @@ export default function BirthTimeModal({
           return;
         }
 
-        syncUnknownFromClock(lunarState.hour, lunarState.minute);
         const monthLabel = lunarMonthOptions.find((option) => option.value === lunarState.month)?.label ?? formatLunarMonth(Number(lunarState.month));
         const dayLabel = formatLunarDay(Number(lunarState.day));
         onConfirm(activeTab, [lunarState.year, monthLabel, dayLabel, lunarState.hour, lunarState.minute]);
@@ -545,8 +561,6 @@ export default function BirthTimeModal({
           nextDzList[pillarIndex] = options[0];
         }
 
-        const unknownValue = value === UNKNOWN || nextDzList[3] === UNKNOWN ? 1 : 0;
-        onSetUnknowhour(unknownValue);
         return { tgList: nextTgList, dzList: nextDzList };
       });
       setPopoverMode('dz');
@@ -556,8 +570,6 @@ export default function BirthTimeModal({
     setPillarState((current) => {
       const nextDzList = current.dzList.slice();
       nextDzList[pillarIndex] = value;
-      const unknownValue = value === UNKNOWN || current.tgList[3] === UNKNOWN ? 1 : 0;
-      onSetUnknowhour(unknownValue);
       return { ...current, dzList: nextDzList };
     });
     setPopoverMode(null);
@@ -573,77 +585,137 @@ export default function BirthTimeModal({
       return `${lunarState.year}年${monthLabel}${formatLunarDay(Number(lunarState.day))} ${lunarState.hour === UNKNOWN ? '未知时辰' : `${lunarState.hour}:${lunarState.minute}`}`;
     }
 
-    return `${pillarState.tgList[0]}${pillarState.dzList[0]} ${pillarState.tgList[1]}${pillarState.dzList[1]} ${pillarState.tgList[2]}${pillarState.dzList[2]} ${pillarState.tgList[3]}${pillarState.dzList[3]}`;
+    const timePillar = pillarState.tgList[3] === UNKNOWN || pillarState.dzList[3] === UNKNOWN
+      ? '时辰未知'
+      : `${pillarState.tgList[3]}${pillarState.dzList[3]}`;
+    return `${pillarState.tgList[0]}${pillarState.dzList[0]} ${pillarState.tgList[1]}${pillarState.dzList[1]} ${pillarState.tgList[2]}${pillarState.dzList[2]} ${timePillar}`;
   })();
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
-      <div className="relative flex h-full items-center justify-center p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="选择出生时间"
+      className="fixed inset-0 z-50 overscroll-contain bg-black/45"
+      onClick={onClose}
+    >
+      <div className="relative flex min-h-full items-end justify-center sm:items-center sm:p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
+          className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)] shadow-[var(--shadow-pop)] sm:max-w-[480px] sm:rounded-[var(--radius-md)]"
           onClick={(event) => event.stopPropagation()}
         >
-          <div className="relative mb-[15px] flex items-center justify-center">
-            <button type="button" onClick={onClose} className="absolute right-0 top-1/2 -translate-y-1/2 p-1 text-[color:var(--muted)]">
-              <X className="h-4 w-4" />
-            </button>
+          <div className="shrink-0 border-b border-[color:var(--line)] px-4 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-base font-bold text-[color:var(--ink)]">出生时间</div>
+              <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-[color:var(--muted)]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-            <div className="flex overflow-hidden rounded-full border border-[color:var(--line)] bg-white/80 text-[15px]">
+            <div className="mt-2 grid grid-cols-3 overflow-hidden rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] p-1 text-[14px] font-semibold">
               {TABS.map((item) => (
                 <button
                   key={item.id}
                   type="button"
                   onClick={() => handleTabChange(item.id)}
-                  className={`h-[34px] w-[75px] ${
-                    activeTab === item.id ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--ink)]'
+                  className={`h-9 rounded-full transition ${
+                    activeTab === item.id ? 'bg-[color:var(--accent)] text-white' : 'text-[color:var(--muted)]'
                   }`}
                 >
                   {item.label}
                 </button>
               ))}
             </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto px-4 py-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-2.5">
+              <div className="text-xs font-semibold text-[color:var(--accent-strong)]">
+                默认滚轮选择，确认后回填主表单
+              </div>
+              <div className="flex items-center gap-2">
+                {activeTab === 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => setManualOpen((current) => !current)}
+                    className="rounded-full bg-[color:var(--paper)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]"
+                  >
+                    手动输入
+                  </button>
+                ) : null}
+                <details className="group relative">
+                  <summary className="cursor-pointer list-none rounded-full bg-[color:var(--paper)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]">
+                    录入说明
+                  </summary>
+                  <div className="absolute right-0 top-9 z-30 w-[260px] rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5 text-[color:var(--ink-4)] shadow-[var(--shadow-pop)]">
+                    支持公历、农历和四柱。暂不知道具体时间时，开启“时间不确定”即可。
+                  </div>
+                </details>
+              </div>
+            </div>
+
+            {activeTab === 0 && manualOpen ? (
+              <div className="mt-3 flex items-center gap-2 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-2">
+                <input
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  inputMode="numeric"
+                  placeholder="199303270255"
+                  className="h-10 flex-1 rounded-lg bg-transparent px-2 text-[15px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
+                />
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className={`h-10 rounded-lg px-4 text-sm font-semibold ${
+                    searchValue ? 'bg-[color:var(--accent)] text-white' : 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]'
+                  }`}
+                >
+                  应用
+                </button>
+              </div>
+            ) : null}
 
             {showToday ? (
               <button
                 type="button"
                 onClick={handleToday}
-                className="absolute left-0 top-1/2 flex h-[30px] w-[30px] -translate-y-1/2 items-center justify-center rounded-full border border-[color:var(--line)] bg-white/78 text-[14px] text-[color:var(--muted)]"
+                className="mt-3 rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)]"
               >
-                今
+                使用当前时间
               </button>
             ) : null}
-          </div>
 
-          {activeTab === 0 ? (
-            <div className="relative flex items-center gap-2">
-              <input
-                value={searchValue}
-                onChange={(event) => setSearchValue(event.target.value)}
-                placeholder="输入出生年月日时分(格式199303270255)"
-                className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-white/86 px-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
-              />
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-2.5">
+              <div>
+                <div className="text-sm font-semibold text-[color:var(--ink)]">时间不确定</div>
+                <div className="mt-0.5 text-xs text-[color:var(--muted)]">
+                  不知道具体时分时开启
+                </div>
+              </div>
               <button
                 type="button"
-                onClick={handleSearch}
-                className={`h-[36px] rounded-full px-4 text-[14px] ${
-                  searchValue ? 'bg-[color:var(--accent)] text-white' : 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]'
+                onClick={() => handleUnknownTimeChange(!unknownTimeSelected)}
+                className={`relative h-7 w-12 rounded-full transition ${
+                  unknownTimeSelected ? 'bg-[color:var(--accent)]' : 'bg-[#d8ded8]'
                 }`}
+                aria-pressed={unknownTimeSelected}
               >
-                确定
+                <span
+                  className={`absolute top-1 h-5 w-5 rounded-full bg-[color:var(--paper)] transition ${
+                    unknownTimeSelected ? 'left-6' : 'left-1'
+                  }`}
+                />
               </button>
-            </div>
-          ) : null}
-
-          <div className="mt-[13px] w-full">
-            <div className="flex h-[40px] items-center justify-around border-t border-[color:var(--line)] text-[14px] text-[color:var(--muted)]">
-              {(activeTab === 2 ? ['年柱', '月柱', '日柱', '时柱'] : ['年', '月', '日', '时', '分']).map((item) => (
-                <div key={item}>{item}</div>
-              ))}
             </div>
 
             {activeTab === 2 ? (
-              <div className="relative pt-4">
-                <div className="grid grid-cols-4 gap-3">
+              <div className="relative mt-4">
+                <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold text-[color:var(--muted)]">
+                  {['年柱', '月柱', '日柱', '时柱'].map((item) => (
+                    <div key={item}>{item}</div>
+                  ))}
+                </div>
+                <div className="mt-2 grid grid-cols-4 gap-2">
                   {pillarState.tgList.map((item, index) => (
                     <button
                       key={`tg-${index}`}
@@ -652,7 +724,7 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('tg');
                       }}
-                      className={`flex h-[64px] items-center justify-center rounded-full text-[28px] ${
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
                         item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--accent)] text-white'
                       }`}
                     >
@@ -660,7 +732,7 @@ export default function BirthTimeModal({
                     </button>
                   ))}
                 </div>
-                <div className="mt-4 grid grid-cols-4 gap-3">
+                <div className="mt-2 grid grid-cols-4 gap-2">
                   {pillarState.dzList.map((item, index) => (
                     <button
                       key={`dz-${index}`}
@@ -669,7 +741,7 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('dz');
                       }}
-                      className={`flex h-[64px] items-center justify-center rounded-full text-[28px] ${
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
                         item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--warm)] text-white'
                       }`}
                     >
@@ -680,82 +752,81 @@ export default function BirthTimeModal({
                 <div className="mt-4 text-center text-[12px] text-[color:var(--muted)]">查找范围：1801-2099年</div>
               </div>
             ) : (
-              <div className="grid grid-cols-5 gap-1">
-                <PickerWheelColumn label="年" options={activeTab === 0 ? solarYearOptions : lunarYearOptions} value={activeTab === 0 ? solarState.year : lunarState.year} onChange={(value) => {
-                  if (activeTab === 0) {
-                    setSolarState((current) => ({ ...current, year: value }));
-                    return;
-                  }
-                  setLunarState((current) => ({ ...current, year: value }));
-                }} />
-                <PickerWheelColumn label="月" options={activeTab === 0 ? solarMonthOptions : lunarMonthWheelOptions} value={activeTab === 0 ? solarState.month : lunarState.month} onChange={(value) => {
-                  if (activeTab === 0) {
-                    setSolarState((current) => ({ ...current, month: value }));
-                    return;
-                  }
-                  setLunarState((current) => ({ ...current, month: value }));
-                }} />
-                <PickerWheelColumn label="日" options={activeTab === 0 ? solarDayOptions : lunarDayOptions} value={activeTab === 0 ? solarState.day : lunarState.day} onChange={(value) => {
-                  if (activeTab === 0) {
-                    setSolarState((current) => ({ ...current, day: value }));
-                    return;
-                  }
-                  setLunarState((current) => ({ ...current, day: value }));
-                }} />
-                <PickerWheelColumn label="时" options={hourOptions} value={activeTab === 0 ? solarState.hour : lunarState.hour} onChange={(value) => {
-                  if (activeTab === 0) {
-                    setSolarState((current) => {
-                      const nextMinute = value === UNKNOWN ? UNKNOWN : current.minute === UNKNOWN ? '00' : current.minute;
-                      syncUnknownFromClock(value, nextMinute);
-                      return { ...current, hour: value, minute: nextMinute };
-                    });
-                    return;
-                  }
-                  setLunarState((current) => {
-                    const nextMinute = value === UNKNOWN ? UNKNOWN : current.minute === UNKNOWN ? '00' : current.minute;
-                    syncUnknownFromClock(value, nextMinute);
-                    return { ...current, hour: value, minute: nextMinute };
-                  });
-                }} />
-                <PickerWheelColumn label="分" options={minuteOptions} value={activeTab === 0 ? solarState.minute : lunarState.minute} onChange={(value) => {
-                  if (activeTab === 0) {
-                    setSolarState((current) => {
-                      const nextHour = value === UNKNOWN ? UNKNOWN : current.hour === UNKNOWN ? '00' : current.hour;
-                      syncUnknownFromClock(nextHour, value);
-                      return { ...current, hour: nextHour, minute: value };
-                    });
-                    return;
-                  }
-                  setLunarState((current) => {
-                    const nextHour = value === UNKNOWN ? UNKNOWN : current.hour === UNKNOWN ? '00' : current.hour;
-                    syncUnknownFromClock(nextHour, value);
-                    return { ...current, hour: nextHour, minute: value };
-                  });
-                }} />
+              <div className="mt-4">
+                <div className={`grid gap-0 text-center text-xs font-semibold text-[color:var(--muted)] ${unknownTimeSelected ? 'grid-cols-3' : 'grid-cols-5'}`}>
+                  {(unknownTimeSelected ? ['年', '月', '日'] : ['年', '月', '日', '时', '分']).map((item) => (
+                    <div key={item}>{item}</div>
+                  ))}
+                </div>
+                <div className="relative mt-1 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-1">
+                  <div className="pointer-events-none absolute inset-x-1 top-1/2 z-10 h-[46px] -translate-y-1/2 rounded-lg bg-[color:var(--accent-soft)]" />
+                  <div className={`relative z-20 grid gap-0 ${unknownTimeSelected ? 'grid-cols-3' : 'grid-cols-5'}`}>
+                    <PickerWheelColumn compact hideLabel showHighlight={false} label="年" options={activeTab === 0 ? solarYearOptions : lunarYearOptions} value={activeTab === 0 ? solarState.year : lunarState.year} onChange={(value) => {
+                      if (activeTab === 0) {
+                        setSolarState((current) => ({ ...current, year: value }));
+                        return;
+                      }
+                      setLunarState((current) => ({ ...current, year: value }));
+                    }} />
+                    <PickerWheelColumn compact hideLabel showHighlight={false} label="月" options={activeTab === 0 ? solarMonthOptions : lunarMonthWheelOptions} value={activeTab === 0 ? solarState.month : lunarState.month} onChange={(value) => {
+                      if (activeTab === 0) {
+                        setSolarState((current) => ({ ...current, month: value }));
+                        return;
+                      }
+                      setLunarState((current) => ({ ...current, month: value }));
+                    }} />
+                    <PickerWheelColumn compact hideLabel showHighlight={false} label="日" options={activeTab === 0 ? solarDayOptions : lunarDayOptions} value={activeTab === 0 ? solarState.day : lunarState.day} onChange={(value) => {
+                      if (activeTab === 0) {
+                        setSolarState((current) => ({ ...current, day: value }));
+                        return;
+                      }
+                      setLunarState((current) => ({ ...current, day: value }));
+                    }} />
+                    {unknownTimeSelected ? null : (
+                      <>
+                        <PickerWheelColumn compact hideLabel showHighlight={false} label="时" options={hourOptions} value={activeTab === 0 ? solarState.hour : lunarState.hour} onChange={(value) => {
+                          if (activeTab === 0) {
+                            setSolarState((current) => ({ ...current, hour: value, minute: current.minute === UNKNOWN ? '00' : current.minute }));
+                            return;
+                          }
+                          setLunarState((current) => ({ ...current, hour: value, minute: current.minute === UNKNOWN ? '00' : current.minute }));
+                        }} />
+                        <PickerWheelColumn compact hideLabel showHighlight={false} label="分" options={minuteOptions} value={activeTab === 0 ? solarState.minute : lunarState.minute} onChange={(value) => {
+                          if (activeTab === 0) {
+                            setSolarState((current) => ({ ...current, hour: current.hour === UNKNOWN ? '00' : current.hour, minute: value }));
+                            return;
+                          }
+                          setLunarState((current) => ({ ...current, hour: current.hour === UNKNOWN ? '00' : current.hour, minute: value }));
+                        }} />
+                      </>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 rounded-[14px] bg-[color:var(--accent-soft)] px-4 py-3 text-[13px] text-[color:var(--muted)]">
-            当前预览：<span className="font-medium text-[color:var(--ink)]">{currentPreview}</span>
+          <div className="shrink-0 border-t border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3">
+            {error ? (
+              <div className="mb-2 rounded-lg border border-[#f1c5c5] bg-[#fff4f4] px-3 py-2 text-[13px] text-[#c24545]">
+                {error}
+              </div>
+            ) : null}
+            <div className="mb-3 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-2 text-[13px] text-[color:var(--muted)]">
+              当前预览：<span className="font-semibold text-[color:var(--ink)]">{currentPreview}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleConfirm}
+              className="flex h-12 w-full items-center justify-center rounded-full bg-[color:var(--ink)] text-[16px] font-bold text-white shadow-[0_12px_26px_rgba(34,26,18,0.14)]"
+            >
+              确认出生时间
+            </button>
           </div>
 
-          {error ? (
-            <div className="mt-3 rounded-[10px] border border-[#f1c5c5] bg-[#fff4f4] px-4 py-3 text-[13px] text-[#c24545]">
-              {error}
-            </div>
-          ) : null}
-
-          <button
-            type="button"
-            onClick={handleConfirm}
-            className="mt-[18px] flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
-          >
-            确定
-          </button>
-
           {popoverMode ? (
-            <div className="absolute inset-x-4 bottom-[82px] z-20 rounded-[16px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-4 shadow-[0_18px_40px_rgba(34,26,18,0.14)]">
+            <div className="absolute inset-x-4 bottom-[104px] z-20 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 shadow-[var(--shadow-pop)]">
               {popoverMode === 'date' ? (
                 <div className="max-h-[220px] space-y-2 overflow-y-auto">
                   {dateList.map((item) => (
@@ -766,7 +837,7 @@ export default function BirthTimeModal({
                         onConfirm(2, item);
                         onClose();
                       }}
-                      className="flex w-full items-center justify-between rounded-[10px] bg-[#faf7f0] px-4 py-3 text-left text-[14px] text-[#444444]"
+                      className="flex w-full items-center justify-between rounded-[var(--radius)] bg-[#faf7f0] px-4 py-3 text-left text-[14px] text-[#444444]"
                     >
                       <span>公历：{item}</span>
                       <span>{'>'}</span>
@@ -775,12 +846,12 @@ export default function BirthTimeModal({
                 </div>
               ) : (
                 <div className="grid grid-cols-5 gap-2">
-                  {(popoverMode === 'tg' ? [...TIAN_GAN, ...(pillarIndex === 3 ? [UNKNOWN] : [])] : branchOptions).map((item) => (
+                  {(popoverMode === 'tg' ? TIAN_GAN : branchOptions).map((item) => (
                     <button
                       key={item}
                       type="button"
                       onClick={() => handlePillarValue(popoverMode, item)}
-                      className="flex h-[40px] items-center justify-center rounded-[10px] bg-[#faf7f0] text-[16px] text-[#444444]"
+                      className="flex h-[40px] items-center justify-center rounded-[var(--radius)] bg-[#faf7f0] text-[16px] text-[#444444]"
                     >
                       {item}
                     </button>

@@ -7,6 +7,7 @@ import { CHINA_REGIONS } from '@/lib/location-engine/china-regions';
 import { WORLD_REGIONS } from '@/lib/location-engine/world-regions';
 import { buildChinaLocation, timezoneOffsetFromLabel, type LocationOption } from '@/lib/location-engine';
 import { UNKNOWN_LOCATION } from '@/lib/paipan-form';
+import { useModalLockAndEscape } from '@/lib/use-modal-lock';
 
 interface BirthPlaceModalProps {
   isOpen: boolean;
@@ -199,6 +200,7 @@ export default function BirthPlaceModal({
   onTabChange,
   onConfirm,
 }: BirthPlaceModalProps) {
+  useModalLockAndEscape(isOpen, onClose);
   const domesticTree = useMemo(() => buildDomesticTree(), []);
   const overseasTree = useMemo(() => buildOverseasTree(), []);
   const [activeTab, setActiveTab] = useState<0 | 1>(tabIndex);
@@ -380,18 +382,28 @@ export default function BirthPlaceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="选择出生地点"
+      className="fixed inset-0 z-50 overscroll-contain bg-black/50"
+      onClick={onClose}
+    >
       <div className="relative flex h-full items-center justify-center p-4">
         <div
-          className="relative w-full max-w-[390px] rounded-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-[17px] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"
+          className="relative w-full max-w-[440px] rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 text-[color:var(--ink-2)] shadow-[var(--shadow-pop)]"
           onClick={(event) => event.stopPropagation()}
         >
+          <div className="mb-4 space-y-3">
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">出生地点</div>
+            <div className="text-sm leading-6 text-[color:var(--muted)]">地点会影响真太阳时换算和环境解释，国内与海外可分别选择。</div>
+          </div>
           <div className="relative flex h-[53px] items-center justify-center">
             <button type="button" onClick={onClose} className="absolute right-0 p-1 text-[color:var(--muted)]">
               <X className="h-4 w-4" />
             </button>
 
-            <div className="flex rounded-full border border-[color:var(--line)] bg-white/80 text-[13px]">
+            <div className="flex rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] text-[13px]">
               {TABS.map((item) => (
                 <button
                   key={item.id}
@@ -418,7 +430,7 @@ export default function BirthPlaceModal({
               onChange={(event) => setSearchValue(event.target.value)}
               onFocus={() => setShowSearchPopover(true)}
               placeholder="搜索全国城市及地区"
-              className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-white/86 pl-9 pr-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
+              className="h-[36px] flex-1 rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] pl-9 pr-4 text-[14px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
             />
             {showSearchPopover ? (
               <button
@@ -431,7 +443,7 @@ export default function BirthPlaceModal({
             ) : null}
 
             {showSearchPopover ? (
-              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto rounded-[14px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] py-1 shadow-[0_18px_40px_rgba(34,26,18,0.12)]">
+              <div className="absolute left-0 right-0 top-[50px] z-20 max-h-[250px] overflow-y-auto rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] py-1 shadow-[var(--shadow-pop)]">
                 {searchResults.map((item, index) => (
                   <button
                     key={`${item.text}-${index}`}
@@ -507,7 +519,7 @@ export default function BirthPlaceModal({
             )}
           </div>
 
-          <div className="relative z-10 mt-3 min-h-[30px] bg-white">
+          <div className="relative z-10 mt-3 min-h-[30px] bg-[color:var(--paper)]">
             {activeTab === 1 ? (
               <div className="flex items-center justify-end gap-2 text-[14px] text-[color:var(--ink)]">
                 <span>换算北京时间</span>
@@ -520,7 +532,7 @@ export default function BirthPlaceModal({
                   }`}
                 >
                   <span
-                    className={`absolute top-[2px] h-[20px] w-[20px] rounded-full bg-white transition ${
+                    className={`absolute top-[2px] h-[20px] w-[20px] rounded-full bg-[color:var(--paper)] transition ${
                       isBeijingTime ? 'left-[24px]' : 'left-[2px]'
                     }`}
                   />
@@ -532,9 +544,9 @@ export default function BirthPlaceModal({
           <button
             type="button"
             onClick={handleConfirm}
-            className="mt-4 flex h-[54px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1]"
+            className="mt-4 flex h-[56px] w-full items-center justify-center rounded-full bg-[color:var(--ink)] font-serif text-[18px] font-bold text-[#f7d3a1] shadow-[0_16px_34px_rgba(34,26,18,0.16)]"
           >
-            确定
+            确认出生地点
           </button>
 
           {activeTab === 1 ? (
