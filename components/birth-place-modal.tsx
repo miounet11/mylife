@@ -7,6 +7,7 @@ import { CHINA_REGIONS } from '@/lib/location-engine/china-regions';
 import { WORLD_REGIONS } from '@/lib/location-engine/world-regions';
 import { buildChinaLocation, timezoneOffsetFromLabel, type LocationOption } from '@/lib/location-engine';
 import { UNKNOWN_LOCATION } from '@/lib/paipan-form';
+import { useModalLockAndEscape } from '@/lib/use-modal-lock';
 
 interface BirthPlaceModalProps {
   isOpen: boolean;
@@ -199,6 +200,7 @@ export default function BirthPlaceModal({
   onTabChange,
   onConfirm,
 }: BirthPlaceModalProps) {
+  useModalLockAndEscape(isOpen, onClose);
   const domesticTree = useMemo(() => buildDomesticTree(), []);
   const overseasTree = useMemo(() => buildOverseasTree(), []);
   const [activeTab, setActiveTab] = useState<0 | 1>(tabIndex);
@@ -380,7 +382,13 @@ export default function BirthPlaceModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50" onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="选择出生地点"
+      className="fixed inset-0 z-50 overscroll-contain bg-black/50"
+      onClick={onClose}
+    >
       <div className="relative flex h-full items-center justify-center p-4">
         <div
           className="relative w-full max-w-[440px] rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--surface-strong)] p-5 text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.14)]"

@@ -7,6 +7,7 @@ import PickerWheelColumn, { type PickerWheelOption } from './picker-wheel-column
 import { DI_ZHI, TIAN_GAN } from '@/lib/bazi-constants';
 import { formatLunarDay, formatLunarMonth } from '@/lib/birth-entry';
 import { getBirthdayParts, padPart } from '@/lib/paipan-form';
+import { useModalLockAndEscape } from '@/lib/use-modal-lock';
 
 interface BirthTimeModalProps {
   isOpen: boolean;
@@ -204,6 +205,7 @@ export default function BirthTimeModal({
   onTabChange,
   onConfirm,
 }: BirthTimeModalProps) {
+  useModalLockAndEscape(isOpen, onClose);
   const [activeTab, setActiveTab] = useState<0 | 1 | 2>(tabIndex);
   const [searchValue, setSearchValue] = useState('');
   const [error, setError] = useState('');
@@ -590,7 +592,13 @@ export default function BirthTimeModal({
   })();
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/45" onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="选择出生时间"
+      className="fixed inset-0 z-50 overscroll-contain bg-black/45"
+      onClick={onClose}
+    >
       <div className="relative flex min-h-full items-end justify-center sm:items-center sm:p-4">
         <div
           className="relative flex max-h-[78vh] w-full flex-col overflow-hidden rounded-t-[24px] border border-[color:var(--line)] bg-[color:var(--surface-strong)] text-[color:var(--ink)] shadow-[0_24px_60px_rgba(34,26,18,0.16)] sm:max-w-[480px] sm:rounded-[var(--radius-md)]"
