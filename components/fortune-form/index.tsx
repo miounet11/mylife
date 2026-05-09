@@ -1,21 +1,20 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { Lunar } from 'lunar-javascript';
 import FortuneProgress from '../fortune-progress';
 import BirthPlaceModal from '../birth-place-modal';
-import BirthTimeModal from '../birth-time-modal';
-import PriorityDisclosure from '../priority-disclosure';
-import TacitKnowledgeComposer from '../tacit-knowledge-composer';
+import AdvancedOptionsDisclosure from './advanced-options-disclosure';
 import BirthTimeCard from './birth-time-card';
 import BirthPlaceCard from './birth-place-card';
 import EntryProgressBar from './entry-progress-bar';
+import FormBanners from './form-banners';
 import GenderPicker from './gender-picker';
 import SubmitButton from './submit-button';
+import { useAnalyzeSubmit } from './use-analyze-submit';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
 import { LUNAR_DAY_NAMES, LUNAR_MONTH_NAMES } from '@/lib/birth-entry';
-import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
 import {
@@ -28,7 +27,6 @@ import {
   formatBirthLabel,
   getAnalyzeEntryProgress,
   getBirthdayParts,
-  normalizeBirthPlaceLabel,
   padPart,
   type CaseTypeOption,
   type FormLocationState,
@@ -39,10 +37,12 @@ import {
   hasTacitKnowledgeInput,
   type TacitKnowledgeInput,
 } from '@/lib/tacit-knowledge';
-import { appendSearchParamsToHref } from '@/lib/source-url';
+
+const BirthTimeModal = dynamic(() => import('../birth-time-modal'), {
+  ssr: false,
+});
 
 const SETTING_MIDNIGHT_KEY = 'setting_midnight';
-const DEMO_COUNT_KEY = 'demoCount';
 
 function getLunarMonthNumber(label: string) {
   const normalized = label.replace('闰', '').replace('月', '');
@@ -64,12 +64,6 @@ function subtractOneHour(year: number, month: number, day: number, hour: number,
     hour: date.getHours(),
     minute: date.getMinutes(),
   };
-}
-
-function createCaseName() {
-  const current = Number(window.localStorage.getItem(DEMO_COUNT_KEY) || '0') + 1;
-  window.localStorage.setItem(DEMO_COUNT_KEY, String(current));
-  return `案例${current}`;
 }
 
 function computeSunTime(infoData: PaipanInfoData, locationState: FormLocationState) {
@@ -107,12 +101,6 @@ function createSetTimeInfo(midnightValue: 0 | 1) {
     { name: '真太阳时', value: 1 as 0 | 1 },
     { name: '早晚子时', value: midnightValue },
   ];
-}
-
-function wait(ms: number) {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
 }
 
 function maskEmail(email?: string | null) {
@@ -200,8 +188,6 @@ export default function FortuneForm({
   returnLabel?: string;
   returnSource?: string;
 }) {
-  const router = useRouter();
-  const analyzeRequestRef = useRef<AbortController | null>(null);
   const [infoData, setInfoData] = useState<PaipanInfoData>(createDefaultInfoData);
   const [locationState, setLocationState] = useState<FormLocationState>(UNKNOWN_LOCATION);
   const [caseTypes] = useState<CaseTypeOption[]>(DEFAULT_CASE_TYPES);
@@ -211,34 +197,6 @@ export default function FortuneForm({
   const [addressIndex, setAddressIndex] = useState<0 | 1>(0);
   const [showDatetime, setShowDatetime] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [loadingComplete, setLoadingComplete] = useState(false);
-  const [serverStage, setServerStage] = useState<{
-    stage: string;
-    progress: number;
-    label: string;
-    detail: string;
-  } | null>(null);
-  const [loadingSummary, setLoadingSummary] = useState<{
-    name: string;
-    birthText: string;
-    birthPlace: string;
-    solarTimeText: string;
-    useSolarTime: boolean;
-    useDaylightSaving: boolean;
-    useSeparateZiHour: boolean;
-  } | null>(null);
-  const [completionMeta, setCompletionMeta] = useState<{
-    llmUsed: boolean;
-    deliveryTier?: 'basic' | 'enhanced' | 'expert';
-    grade?: 'S' | 'A' | 'B' | 'C';
-    score?: number;
-    targetAchieved?: boolean;
-    upgradeQueued?: boolean;
-    upgradeStatus?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
-    upgradeAttempts?: number;
-    upgradeMaxAttempts?: number;
-  } | null>(null);
   const [sessionState, setSessionState] = useState<{
     authenticated: boolean;
     user: {
@@ -246,7 +204,6 @@ export default function FortuneForm({
       emailVerified?: boolean;
     } | null;
   } | null>(null);
-  const [error, setError] = useState('');
   const [tacitContext, setTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
   const [showTacitComposer, setShowTacitComposer] = useState(false);
   const [timeConfirmed, setTimeConfirmed] = useState(false);
@@ -344,7 +301,7 @@ export default function FortuneForm({
   const hasKnownLocation = locationState.addressData[0] !== '未知地';
   const hasKnownBirthHour = infoData.unknowhour === 0;
   const usesSolarTime = setTimeInfo[1].value === 1;
-  const { canSubmit } = useMemo(
+  const { canSubmit, readinessScore } = useMemo(
     () =>
       getAnalyzeEntryProgress({
         timeConfirmed,
@@ -382,242 +339,33 @@ export default function FortuneForm({
     }
   }, [hasTacitContext]);
 
-  const submitPayload = async (payload: PaipanInfoData, payloadLocation: FormLocationState) => {
-    setLoading(true);
-    setLoadingComplete(false);
-    setServerStage(null);
-    setCompletionMeta(null);
-    setError('');
-
-    const displayName = payload.username.trim() || createCaseName();
-    const [birthDate, birthTime] = payload.birthday.split(' ');
-    const birthPlace = normalizeBirthPlaceLabel(payloadLocation.addressData);
-    const useSolarTime = Boolean(setTimeInfo[1].value);
-    const useDaylightSaving = Boolean(payload.xls);
-    const useSeparateZiHour = Boolean(setTimeInfo[2].value);
-
-    setLoadingSummary({
-      name: displayName,
-      birthText: formatBirthLabel(payload, payload.type),
-      birthPlace,
-      solarTimeText: computeSunTime(payload, payloadLocation),
-      useSolarTime,
-      useDaylightSaving,
-      useSeparateZiHour,
-    });
-
-    try {
-      trackGoogleAnalyticsEvent('analyze_submitted', {
-        case_type: selectedCaseType,
-        readiness_score: readinessScore,
-        has_known_location: hasKnownLocation,
-        has_known_birth_hour: hasKnownBirthHour,
-        use_solar_time: useSolarTime,
-        source: activeSource || 'direct',
-        tool_slug: inferredToolSlug,
-      });
-
-      const controller = new AbortController();
-      analyzeRequestRef.current = controller;
-      const response = await fetch('/api/analyze', {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'x-analyze-stream': '1',
-        },
-        body: JSON.stringify({
-          name: displayName,
-          gender: payload.sex === 1 ? 'male' : 'female',
-          birthDate,
-          birthTime,
-          birthSecond: 0,
-          birthPlace,
-          timezone: payload.hw && payload.bjtime ? 8 : payloadLocation.timezone,
-          longitude: payloadLocation.longitude,
-          latitude: payloadLocation.latitude ?? (UNKNOWN_LOCATION.latitude as number),
-          cityNameEn: payloadLocation.option?.nameEn || payloadLocation.option?.city || payloadLocation.addressData[1] || payloadLocation.addressData[0],
-          useDaylightSaving,
-          useSolarTime,
-          useSeparateZiHour,
-          tacitContext,
-          unknowhour: payload.unknowhour,
-          xls: payload.xls,
-          bjtime: payload.bjtime,
-          hw: payload.hw,
-          typeId: payload.typeId,
-          isSave: payload.isSave,
-          source: activeSource || null,
-          toolSlug: inferredToolSlug,
-        }),
-      });
-
-      if (!response.ok || !response.body) {
-        const failed = await response.json().catch(() => null);
-        setError(failed?.error || '分析请求失败，请稍后再试');
-        setLoadingSummary(null);
-        setLoading(false);
-        analyzeRequestRef.current = null;
-        return;
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let completedReportId = '';
-      let completedMeta: {
-        llmUsed: boolean;
-        deliveryTier?: 'basic' | 'enhanced' | 'expert';
-        grade?: 'S' | 'A' | 'B' | 'C';
-        score?: number;
-        targetAchieved?: boolean;
-        upgradeQueued?: boolean;
-        upgradeStatus?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
-        upgradeAttempts?: number;
-        upgradeMaxAttempts?: number;
-      } | null = null;
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          break;
-        }
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-
-        for (const line of lines) {
-          const trimmed = line.trim();
-          if (!trimmed) {
-            continue;
-          }
-
-          const event = JSON.parse(trimmed) as
-            | { type: 'stage'; stage: string; progress: number; label: string; detail: string }
-            | {
-                type: 'complete';
-                reportId: string;
-                llm?: { used?: boolean; fallbackToEngine?: boolean };
-                quality?: {
-                  score?: number;
-                  grade?: 'S' | 'A' | 'B' | 'C';
-                  deliveryTier?: 'basic' | 'enhanced' | 'expert';
-                  targetAchieved?: boolean;
-                };
-                upgrade?: {
-                  queued?: boolean;
-                  reason?: string;
-                  status?: 'pending' | 'running' | 'retry' | 'completed' | 'failed' | 'cancelled';
-                  attempts?: number;
-                  maxAttempts?: number;
-                };
-              }
-            | { type: 'error'; error: string };
-
-          if (event.type === 'stage') {
-            setServerStage({
-              stage: event.stage,
-              progress: event.progress,
-              label: event.label,
-              detail: event.detail,
-            });
-            continue;
-          }
-
-          if (event.type === 'error') {
-            setError(event.error || '分析失败，请稍后再试');
-            setLoadingSummary(null);
-            setServerStage(null);
-            setCompletionMeta(null);
-            setLoading(false);
-            analyzeRequestRef.current = null;
-            return;
-          }
-
-          if (event.type === 'complete') {
-            completedReportId = event.reportId;
-            completedMeta = {
-              llmUsed: !!event.llm?.used,
-              deliveryTier: event.quality?.deliveryTier,
-              grade: event.quality?.grade,
-              score: event.quality?.score,
-              targetAchieved: !!event.quality?.targetAchieved,
-              upgradeQueued: !!event.upgrade?.queued,
-              upgradeStatus: event.upgrade?.status,
-              upgradeAttempts: event.upgrade?.attempts,
-              upgradeMaxAttempts: event.upgrade?.maxAttempts,
-            };
-            setCompletionMeta(completedMeta);
-            trackGoogleAnalyticsEvent('analyze_completed', {
-              report_id: event.reportId,
-              llm_used: !!event.llm?.used,
-              delivery_tier: event.quality?.deliveryTier || 'basic',
-              quality_grade: event.quality?.grade || 'B',
-              quality_score: event.quality?.score || 0,
-              target_achieved: !!event.quality?.targetAchieved,
-              upgrade_queued: !!event.upgrade?.queued,
-              upgrade_status: event.upgrade?.status || 'none',
-              source: activeSource || 'direct',
-              tool_slug: inferredToolSlug,
-            });
-          }
-        }
-      }
-
-      if (!completedReportId) {
-        setError('分析结果未完整返回，请稍后重试');
-        setLoadingSummary(null);
-        setServerStage(null);
-        setCompletionMeta(null);
-        setLoading(false);
-        analyzeRequestRef.current = null;
-        return;
-      }
-
-      setLoadingComplete(true);
-      const targetAchieved = completedMeta?.targetAchieved;
-      const deliveryTier = completedMeta?.deliveryTier;
-      const upgradeQueued = completedMeta?.upgradeQueued;
-      setServerStage({
-        stage: 'complete',
-        progress: 100,
-        label: targetAchieved || deliveryTier === 'expert' ? '专家版报告已准备就绪' : '主报告已准备就绪',
-        detail: targetAchieved || deliveryTier === 'expert'
-          ? '本次结果已经达到专家版标准，正在为你打开完整报告。'
-          : upgradeQueued
-            ? '当前先打开核心结果页，深度区块会继续分批显示，后台也会继续增强并尝试提升到 S 级专家版。'
-            : '结果页已经生成并保存完成，核心内容会先打开，扩展区块随后继续加载。',
-      });
-      await wait(220);
-      analyzeRequestRef.current = null;
-      router.push(
-        returnHref
-          ? appendSearchParamsToHref(`${returnHref}#tool-runner`, {
-              source: activeSource || undefined,
-              reportId: completedReportId,
-              ready: '1',
-            })
-          : appendSearchParamsToHref(`/result/${completedReportId}`, { source: activeSource || undefined })
-      );
-    } catch (error) {
-      if (error instanceof Error && error.name === 'AbortError') {
-        setError('已取消本次判断，你可以继续修改信息后重新提交');
-      } else {
-        setError(
-          hasEmailDelivery
-            ? `网络连接异常，请稍后重试。若报告已经成功生成并保存完成，系统也会把结果提醒发到 ${verifiedEmail}。`
-            : '网络连接异常，请稍后重试。你也可以稍后回到判断记录里查看是否已生成结果。'
-        );
-      }
-      setLoadingSummary(null);
-      setServerStage(null);
-      setCompletionMeta(null);
-      setLoadingComplete(false);
-      setLoading(false);
-      analyzeRequestRef.current = null;
-    }
-  };
+  const {
+    loading,
+    loadingComplete,
+    loadingSummary,
+    serverStage,
+    completionMeta,
+    error,
+    setError,
+    submit,
+    cancel,
+  } = useAnalyzeSubmit({
+    setTimeInfoValues: {
+      useSolarTime: setTimeInfo[1].value === 1,
+      useSeparateZiHour: setTimeInfo[2].value === 1,
+    },
+    selectedCaseType,
+    readinessScore,
+    hasKnownLocation,
+    hasKnownBirthHour,
+    activeSource,
+    inferredToolSlug,
+    tacitContext,
+    computedSolarTime: computeSunTime,
+    returnHref,
+    hasEmailDelivery,
+    verifiedEmail,
+  });
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -631,18 +379,10 @@ export default function FortuneForm({
       return;
     }
 
-    await submitPayload(infoData, locationState);
+    await submit(infoData, locationState);
   };
 
-  const handleCancelLoading = () => {
-    analyzeRequestRef.current?.abort();
-    analyzeRequestRef.current = null;
-    setLoadingSummary(null);
-    setServerStage(null);
-    setCompletionMeta(null);
-    setLoadingComplete(false);
-    setLoading(false);
-  };
+  const handleCancelLoading = cancel;
 
   const handleTimeConfirm = (tab: 0 | 1 | 2, data: string[] | string) => {
     setTimeConfirmed(true);
@@ -734,29 +474,13 @@ export default function FortuneForm({
                 </p>
               </div>
 
-              {hasEmailDelivery ? (
-                <div className="rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.06)] px-3 py-2 text-xs leading-5">
-                  <div className="font-mono font-bold uppercase tracking-wider text-[color:var(--data-up)]">
-                    结果通知
-                  </div>
-                  <div className="mt-0.5 text-[color:var(--ink-2)]">
-                    报告完成后邮件发送到{' '}
-                    <span className="font-mono text-[color:var(--data-up)]">{verifiedEmail}</span>
-                  </div>
-                </div>
-              ) : null}
-
-              {returnHref && returnLabel ? (
-                <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5">
-                  <div className="font-mono font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
-                    当前目标
-                  </div>
-                  <div className="mt-0.5 text-[color:var(--ink-2)]">
-                    你是从「{returnLabel}」回来补综合判断的，完成后会带你回到原来的工具继续。
-                    {returnSource ? <span className="ml-1 font-mono text-[color:var(--ink-5)]">· {returnSource}</span> : ''}
-                  </div>
-                </div>
-              ) : null}
+              <FormBanners
+                hasEmailDelivery={hasEmailDelivery}
+                verifiedEmail={verifiedEmail}
+                returnHref={returnHref}
+                returnLabel={returnLabel}
+                returnSource={returnSource}
+              />
 
               <div className="grid gap-2.5 md:grid-cols-2 md:gap-3">
                 <BirthTimeCard
@@ -794,119 +518,19 @@ export default function FortuneForm({
                 onChange={(next) => setInfoData((current) => ({ ...current, sex: next }))}
               />
 
-              <label className="block rounded-lg border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-2.5 md:rounded-[var(--radius)] md:py-3">
-                <div className="text-xs font-semibold text-[color:var(--muted)]">命主姓名</div>
-                <input
-                  value={infoData.username}
-                  onChange={(event) => setInfoData((current) => ({ ...current, username: event.target.value }))}
-                  placeholder="可填写本人、家人或案例对象姓名"
-                  maxLength={30}
-                  className="mt-1.5 h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-base text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)] md:mt-2 md:h-11"
-                />
-              </label>
+              <SubmitButton canSubmit={canSubmit} loading={loading} label={submitLabel} error={error} />
 
-              <SubmitButton canSubmit={canSubmit} label={submitLabel} error={error} />
-
-              <PriorityDisclosure
-                label="可选"
-                title="补充问题、时间修正和当前状态"
-                description="不影响提交；需要更细判断时再打开。"
-                className="shadow-none md:block"
-              >
-                <div className="grid gap-3">
-                  <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
-                    <div className="text-xs font-semibold text-[color:var(--muted)]">判断主题</div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {caseTypes.map((item) => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => setInfoData((current) => ({ ...current, typeId: item.id }))}
-                          className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-                            infoData.typeId === item.id
-                              ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                              : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]'
-                          }`}
-                        >
-                          {item.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <div className="text-xs font-semibold text-[color:var(--muted)]">时间修正与保存</div>
-                        <div className="mt-1 text-sm leading-6 text-[color:var(--muted)]">默认使用真太阳时。</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="text-sm text-[color:var(--ink)]">保存</span>
-                        <button
-                          type="button"
-                          onClick={() => setInfoData((current) => ({ ...current, isSave: !current.isSave }))}
-                          className={`relative h-[28px] w-[46px] rounded-full transition ${
-                            infoData.isSave ? 'bg-[color:var(--accent)]' : 'bg-[#d6d6d6]'
-                          }`}
-                        >
-                          <span
-                            className={`absolute top-[2px] h-[24px] w-[24px] rounded-full bg-[color:var(--paper)] transition ${
-                              infoData.isSave ? 'left-[20px]' : 'left-[2px]'
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {setTimeInfo.map((item, index) => (
-                        <button
-                          key={item.name}
-                          type="button"
-                          onClick={() => {
-                            setSetTimeInfo((current) => {
-                              const next = current.map((entry, itemIndex) =>
-                                itemIndex === index ? { ...entry, value: (entry.value === 1 ? 0 : 1) as 0 | 1 } : entry
-                              );
-
-                              if (index === 0) {
-                                setInfoData((prev) => ({ ...prev, xls: next[0].value as 0 | 1 }));
-                              }
-
-                              if (index === 2) {
-                                window.localStorage.setItem(SETTING_MIDNIGHT_KEY, String(next[2].value));
-                              }
-
-                              return next;
-                            });
-                          }}
-                          className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition ${
-                            item.value === 1
-                              ? 'border-[color:var(--accent)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]'
-                              : 'border-[color:var(--line)] bg-[color:var(--paper)] text-[color:var(--muted)]'
-                          }`}
-                        >
-                          {item.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <TacitKnowledgeComposer
-                    value={tacitContext}
-                    onChange={setTacitContext}
-                    title="一些无法直接说出来的东西，也可以先交给系统"
-                    description="先选状态、身体信号、关系气氛，再补一句最怕发生什么。"
-                    collapsedLabel="补充当前状态"
-                    emptyHint="这一步不是必填。"
-                    summaryLabel="本次默会输入："
-                    expanded={showTacitComposer}
-                    onExpandedChange={setShowTacitComposer}
-                    onReset={() => setTacitContext(createEmptyTacitKnowledgeInput())}
-                    variant="analyze"
-                  />
-                </div>
-              </PriorityDisclosure>
+              <AdvancedOptionsDisclosure
+                infoData={infoData}
+                onInfoDataChange={(patch) => setInfoData((current) => ({ ...current, ...patch }))}
+                caseTypes={caseTypes}
+                setTimeInfo={setTimeInfo}
+                onSetTimeInfoChange={setSetTimeInfo}
+                tacitContext={tacitContext}
+                onTacitChange={setTacitContext}
+                tacitExpanded={showTacitComposer}
+                onTacitExpandedChange={setShowTacitComposer}
+              />
 
             </div>
           </div>
