@@ -607,7 +607,7 @@ export default function BirthTimeModal({
           <div className="shrink-0 border-b border-[color:var(--line)] px-4 py-3">
             <div className="flex items-center justify-between gap-3">
               <div className="text-base font-bold text-[color:var(--ink)]">出生时间</div>
-              <button type="button" onClick={onClose} className="flex h-9 w-9 items-center justify-center rounded-full text-[color:var(--muted)]">
+              <button type="button" onClick={onClose} aria-label="关闭" className="flex h-11 w-11 items-center justify-center rounded-full text-[color:var(--muted)] hover:bg-[color:var(--bg-sunken)]">
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -660,13 +660,14 @@ export default function BirthTimeModal({
                   value={searchValue}
                   onChange={(event) => setSearchValue(event.target.value)}
                   inputMode="numeric"
-                  placeholder="199303270255"
+                  placeholder="YYYYMMDDhhmm（例：199303270255）"
                   className="h-10 flex-1 rounded-lg bg-transparent px-2 text-[15px] outline-none placeholder:text-[color:var(--muted)] placeholder:opacity-60"
                 />
                 <button
                   type="button"
                   onClick={handleSearch}
-                  className={`h-10 rounded-lg px-4 text-sm font-semibold ${
+                  disabled={!searchValue}
+                  className={`h-10 rounded-lg px-4 text-sm font-semibold disabled:cursor-not-allowed ${
                     searchValue ? 'bg-[color:var(--accent)] text-white' : 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]'
                   }`}
                 >
@@ -724,7 +725,7 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('tg');
                       }}
-                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[20px] md:text-[24px] font-bold ${
                         item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--accent)] text-white'
                       }`}
                     >
@@ -741,8 +742,8 @@ export default function BirthTimeModal({
                         setPillarIndex(index);
                         setPopoverMode('dz');
                       }}
-                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[24px] font-bold ${
-                        item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--warm)] text-white'
+                      className={`flex h-[54px] items-center justify-center rounded-[var(--radius)] text-[20px] md:text-[24px] font-bold ${
+                        item === UNKNOWN ? 'bg-[color:var(--accent-soft)] text-[color:var(--muted)]' : 'bg-[color:var(--signal)] text-white'
                       }`}
                     >
                       {item}
@@ -808,7 +809,7 @@ export default function BirthTimeModal({
 
           <div className="shrink-0 border-t border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3">
             {error ? (
-              <div className="mb-2 rounded-lg border border-[#f1c5c5] bg-[#fff4f4] px-3 py-2 text-[13px] text-[#c24545]">
+              <div className="mb-2 rounded-lg border border-[color:var(--alert)]/40 bg-[color:var(--alert-soft)] px-3 py-2 text-[13px] text-[color:var(--alert)]">
                 {error}
               </div>
             ) : null}
@@ -819,7 +820,7 @@ export default function BirthTimeModal({
             <button
               type="button"
               onClick={handleConfirm}
-              className="flex h-12 w-full items-center justify-center rounded-full bg-[color:var(--ink)] text-[16px] font-bold text-white shadow-[0_12px_26px_rgba(34,26,18,0.14)]"
+              className="flex h-12 w-full items-center justify-center rounded-full bg-[color:var(--ink-1)] text-[16px] font-bold text-white transition hover:bg-[color:var(--brand-deep)]"
             >
               确认出生时间
             </button>
@@ -837,7 +838,7 @@ export default function BirthTimeModal({
                         onConfirm(2, item);
                         onClose();
                       }}
-                      className="flex w-full items-center justify-between rounded-[var(--radius)] bg-[#faf7f0] px-4 py-3 text-left text-[14px] text-[#444444]"
+                      className="flex w-full items-center justify-between rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-left text-[14px] text-[color:var(--ink-2)]"
                     >
                       <span>公历：{item}</span>
                       <span>{'>'}</span>
@@ -851,7 +852,7 @@ export default function BirthTimeModal({
                       key={item}
                       type="button"
                       onClick={() => handlePillarValue(popoverMode, item)}
-                      className="flex h-[40px] items-center justify-center rounded-[var(--radius)] bg-[#faf7f0] text-[16px] text-[#444444]"
+                      className="flex h-[40px] items-center justify-center rounded-[var(--radius)] bg-[color:var(--bg-elevated)] text-[16px] text-[color:var(--ink-2)]"
                     >
                       {item}
                     </button>
