@@ -74,6 +74,9 @@ export default function AdvancedOptionsDisclosure({
             maxLength={30}
             className="mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-base text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
           />
+          <div className="mt-1 text-[11px] text-[color:var(--ink-5)]">
+            最多 30 个字符（emoji 占 2 字符）
+          </div>
         </label>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">

@@ -631,7 +631,7 @@ export default function BirthTimeModal({
           <div className="flex-1 overflow-y-auto px-4 py-3">
             <div className="flex flex-wrap items-center justify-between gap-2 rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-2.5">
               <div className="text-xs font-semibold text-[color:var(--accent-strong)]">
-                默认滚轮选择，确认后回填主表单
+                滑动选择年月日时分，点下方确认
               </div>
               <div className="flex items-center gap-2">
                 {activeTab === 0 ? (
@@ -711,6 +711,9 @@ export default function BirthTimeModal({
 
             {activeTab === 2 ? (
               <div className="relative mt-4">
+                <div className="mb-2 text-[12px] leading-5 text-[color:var(--muted)]">
+                  点击任一天干 / 地支可手动选择；点击 <span className="font-semibold text-[color:var(--ink)]">日柱</span> 可在已知干支组合下反查公历。
+                </div>
                 <div className="grid grid-cols-4 gap-2 text-center text-xs font-semibold text-[color:var(--muted)]">
                   {['年柱', '月柱', '日柱', '时柱'].map((item) => (
                     <div key={item}>{item}</div>

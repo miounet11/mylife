@@ -121,6 +121,12 @@ export default function SiteFooter() {
             <span>600+ 大师话术库</span>
           </div>
         </div>
+
+        {/* 合规声明：拒绝向未成年人提供服务 */}
+        <div className="mt-4 border-t border-[color:var(--hairline)] pt-4 text-[11px] leading-5 text-[color:var(--ink-5)]">
+          本平台所有产品拒绝向未成年人提供服务，仅供 18 岁以上成年人参考与娱乐使用，
+          不构成任何医疗、法律、投资或人生重大决策的建议。
+        </div>
       </div>
     </footer>
   );
