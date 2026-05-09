@@ -6,6 +6,7 @@ import { Lunar } from 'lunar-javascript';
 import FortuneProgress from '../fortune-progress';
 import BirthPlaceModal from '../birth-place-modal';
 import AdvancedOptionsDisclosure from './advanced-options-disclosure';
+import AutoAdvanceToast from './auto-advance-toast';
 import BirthTimeCard from './birth-time-card';
 import BirthPlaceCard from './birth-place-card';
 import EntryProgressBar from './entry-progress-bar';
@@ -209,6 +210,8 @@ export default function FortuneForm({
   const [timeConfirmed, setTimeConfirmed] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
   const [hasAutoOpenedPlace, setHasAutoOpenedPlace] = useState(false);
+  const [autoAdvancePending, setAutoAdvancePending] = useState(false);
+  const [autoAdvanceCancelled, setAutoAdvanceCancelled] = useState(false);
 
   useEffect(() => {
     const midnightValue = window.localStorage.getItem(SETTING_MIDNIGHT_KEY) === '1' ? 1 : 0;
@@ -266,19 +269,39 @@ export default function FortuneForm({
     clearAnalyzeDraft();
   }, []);
 
-  // 领着走：时间确认后自动打开地点弹窗（一次性、可中断、草稿用户跳过）
+  // 领着走：时间确认后展示 2 秒可撤销 toast，到时打开地点弹窗
+  // 一次性、可中断、草稿用户跳过、本次会话取消后不再触发
   useEffect(() => {
-    if (!timeConfirmed || locationConfirmed || hasAutoOpenedPlace || showDatetime) {
+    if (
+      !timeConfirmed
+      || locationConfirmed
+      || hasAutoOpenedPlace
+      || showDatetime
+      || autoAdvancePending
+      || autoAdvanceCancelled
+    ) {
       return;
     }
+    setAutoAdvancePending(true);
+  }, [
+    timeConfirmed,
+    locationConfirmed,
+    hasAutoOpenedPlace,
+    showDatetime,
+    autoAdvancePending,
+    autoAdvanceCancelled,
+  ]);
 
-    const timer = window.setTimeout(() => {
-      setShowAddress(true);
-      setHasAutoOpenedPlace(true);
-    }, 220);
+  const handleAutoAdvanceCancel = () => {
+    setAutoAdvancePending(false);
+    setAutoAdvanceCancelled(true);
+  };
 
-    return () => window.clearTimeout(timer);
-  }, [timeConfirmed, locationConfirmed, hasAutoOpenedPlace, showDatetime]);
+  const handleAutoAdvanceComplete = () => {
+    setAutoAdvancePending(false);
+    setHasAutoOpenedPlace(true);
+    setShowAddress(true);
+  };
 
   const computedSunTime = useMemo(() => computeSunTime(infoData, locationState), [infoData, locationState]);
 
@@ -512,6 +535,14 @@ export default function FortuneForm({
                   onOpen={() => setShowAddress(true)}
                 />
               </div>
+
+              {autoAdvancePending ? (
+                <AutoAdvanceToast
+                  durationMs={2000}
+                  onCancel={handleAutoAdvanceCancel}
+                  onComplete={handleAutoAdvanceComplete}
+                />
+              ) : null}
 
               <GenderPicker
                 value={infoData.sex as 0 | 1}
