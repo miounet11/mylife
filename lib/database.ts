@@ -2201,6 +2201,25 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_gsc_query_daily_page ON gsc_query_daily(page, date);
     CREATE INDEX IF NOT EXISTS idx_gsc_query_daily_date ON gsc_query_daily(date, impressions DESC);
   `);
+
+  // Sub-Spec B1 (2026-05-10): 命理时点档案缓存
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS user_timing_profiles (
+      user_id TEXT PRIMARY KEY,
+      report_id TEXT,
+      birth_signature TEXT NOT NULL,
+      bazi_pillars TEXT NOT NULL,
+      computed_for_year TEXT NOT NULL,
+      past_validations TEXT NOT NULL,
+      next_30_days TEXT NOT NULL,
+      next_12_months TEXT NOT NULL,
+      next_5_years TEXT NOT NULL,
+      computed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      schema_version INTEGER NOT NULL DEFAULT 1,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_user_timing_profiles_report ON user_timing_profiles(report_id);
+  `);
 }
 
 // 用户操作
