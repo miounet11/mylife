@@ -54,6 +54,7 @@
     "system:report-eval": "tsx scripts/report-demand-eval.ts",
     "seo:gsc:fetch": "node --import tsx scripts/seo/fetch-gsc.ts",
     "seo:topic-gap": "node scripts/seo/topic-gap.js",
+    "seo:article-funnel": "node --import tsx lib/seo/article-funnel.ts",
     "visual:import": "tsx scripts/visual-assets/import-manifest.ts",
     "visual:request-images": "tsx scripts/visual-assets/request-images.ts",
     "visual:narratives": "tsx scripts/visual-assets/generate-narratives.ts",
