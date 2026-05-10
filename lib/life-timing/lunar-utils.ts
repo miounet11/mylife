@@ -16,24 +16,23 @@ export function findLiChun(year: number): Date {
 /** 取某年立春后到次年立春前的命理年干支 */
 export function getLiuNianGanZhi(year: number): string {
   const liChun = findLiChun(year);
-  // 查立春 +1 天以确保跨过交节时刻
   const afterLiChun = addDays(liChun, 1);
   const solar = Solar.fromYmd(
     afterLiChun.getFullYear(),
     afterLiChun.getMonth() + 1,
     afterLiChun.getDate()
   );
-  return solar.getLunar().getYearInGanZhi();
+  return solar.getLunar().getYearInGanZhiByLiChun();
 }
 
-/** 取当前日期所属的命理年干支（注意立春切换） */
+/** 取当前日期所属的命理年干支（按立春切换，不是按农历新年） */
 export function getCurrentLiuNianGanZhi(currentDate: Date): string {
   const solar = Solar.fromYmd(
     currentDate.getFullYear(),
     currentDate.getMonth() + 1,
     currentDate.getDate()
   );
-  return solar.getLunar().getYearInGanZhi();
+  return solar.getLunar().getYearInGanZhiByLiChun();
 }
 
 /** 日期加天数 */
