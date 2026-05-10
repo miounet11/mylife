@@ -45,6 +45,10 @@ data/lifekline.db-*
 # Vercel
 .vercel
 
+# Backup files
+*.bak
+*.bak.*
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

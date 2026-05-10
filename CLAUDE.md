@@ -52,7 +52,8 @@ npm run qa:public-surface-heroes      # 单独校验首屏
 ### 系统健康与运营观测
 
 ```bash
-npm run system:health                                # /api/admin/system/health 快照
+npm run system:health                                # /api/admin/system/health 快照（含 validAnalyses 去 bot 真数据）
+npm run system:traffic-truth                         # 真实流量看板，隔离默认表单 bot（v5-A8）
 npm run system:requests                              # 最近请求窗口
 npm run system:retro -- 1440 --save                  # 24h 报告复盘，落盘到 data/runtime
 npm run system:upgrade-compare -- --days=7 --save    # 升级行为三窗口对比（pre / initialPost / current）
@@ -102,11 +103,28 @@ app/api/analyze/route.ts
 
 ### 2.2 LLM 模型与熔断
 
-- 模型 fallback 链由环境变量驱动：`DEFAULT_MODEL` → `MODEL_FALLBACK_CHAIN`（生产链：`grok-420-fast → gpt-5.2`）。
-- v5-A1 (2026-05-08) 移除死链路 `auto`：生产端 8s 超时 0 bytes；探测：grok-420-fast 200 / gpt-5.2 200 / auto TIMEOUT。
-- `lib/llm-provider-configs.ts` 管理 provider（image/article 两种用途），`lib/llm-provider-health.ts` 维护健康窗口（v5-A2 起 15min）。
-- 熔断阈值由 `LLM_CIRCUIT_*` 系列环境变量控制：v5-A2 起连续失败 3 次或失败率 60% 触发 OPEN，恢复需要连续 1 次成功，冷却 4 分钟。
-- 报告链使用独立的 `REPORT_MODEL_FALLBACK_CHAIN` / `REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN`，与内容生成 `CONTENT_GENERATION_MODEL_FALLBACK_CHAIN` 隔离。
+- 模型 fallback 链由环境变量驱动：`DEFAULT_MODEL` → `MODEL_FALLBACK_CHAIN`。
+- **v5-A5 (2026-05-09) 实测翻盘**：直连探测后发现 v5-A1 记录与现实不符。当前真相：
+  - `gpt-5.2` 直连短 prompt 1.4-3s（5/5），真实报告 prompt 17-18s（3/3 并行成功），**才是真主力**
+  - `grok-420-fast` 真实报告 prompt **30s+ timeout**（短 prompt 也只 40% 成功）
+  - `auto` 直连 67% 成功 + 12.9s 偶发空 choices（上游 bug），仍不稳定
+  - 生产链 prod/直连差 5-6s（OpenAI SDK + agentic 编排开销）
+- 当前生产链：**`gpt-5.2 → grok-420-fast`**（DEFAULT_MODEL=gpt-5.2）；CONTENT_GENERATION 异步路径保留 `grok-420-fast,auto` 当三兜底
+- **v5-A5 timeout 已抬到合理值**（关键改：`ANALYZE_LLM_CORE 50s` / `ANALYZE_LLM_FOLLOWUP 36s` / `AGENT_MAIN_LLM 60s` / weights `[0.55, 0.45]`）
+- **v5-A5d 熔断阈值放宽**避免并发 agent 雪崩：`IMMEDIATE_OPEN_CONSECUTIVE 2→4` / `OPEN_CONSECUTIVE 3→5` / 冷却 `4→2 min`
+- `lib/llm-provider-configs.ts` 管理 provider，`lib/llm-provider-health.ts` 维护健康窗口（v5-A2 起 15min）。
+- 报告链使用独立的 `REPORT_MODEL_FALLBACK_CHAIN` / `REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN`，与内容生成隔离。
+
+### 2.2.1 报告质量校验（v5-A6 + v5-A7 修复）
+
+`lib/agentic-report/review/run-verify.ts` + `lib/report-reliability.ts` 决定 LLM 输出是否被保留。30 天历史 60% 报告被无谓降级成"按保守口径交付"模板，根因：
+
+- **verify 规则用算法字面值检查 LLM 自然语言**：旧规则 `bestWindow="2016-2020阶段"` 严格 includes，LLM 输出"2026-2027"等永远不命中。**v5-A6 已改成宽松匹配**（年份/干支/阶段关键词任一命中）+ 检查池从单 agent 扩到 7 agent 拼接
+- **guard 把 verify FAIL 一刀切降级**：旧逻辑 verify FAIL 直接覆盖 opening/summary 成模板。**v5-A6 改成双条件**：score<25 OR (FAIL && LLM 真未成功) OR (FAIL && agent 半数失败) OR (retry && LLM 真未成功)
+- **structure 失败但 agent 全成功时仍被降级**：因为 `analysis.llmUsed` 只代表 structure phase。**v5-A7 引入 anyLlmUsed**（structure || agent.agentSources ≥2 个 'llm'）
+
+实测（A7 reload 后）：opening 是真 LLM 输出从 ~40% → **80%**，conservative 降级 60% → **20%**。
+
 
 ### 2.3 数据访问分层
 
