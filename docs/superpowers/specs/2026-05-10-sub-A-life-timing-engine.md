@@ -46,10 +46,11 @@ lib/life-timing/
 │   ├── tai-sui.ts                    ~80 行   太岁年检测
 │   ├── dayun-transition.ts           ~70 行   大运转换检测
 │   ├── sui-yun-bing-lin.ts           ~40 行   岁运并临检测
-│   └── liuyue-triggers.ts            ~180 行  流月触发检测
+│   ├── liuyue-triggers.ts            ~180 行  流月触发检测（冲/伏吟/三合）
+│   └── liunian-shensha-month.ts      ~150 行  流月吉利神煞触发（贵人/桃花/驿马等）
 ├── timing-orchestrator.ts            ~150 行  统一编排
 ├── past-validation.ts                ~120 行  过去印证生成（区块 2 用）
-└── constants.ts                      ~80 行   12 地支关系表
+└── constants.ts                      ~120 行  12 地支关系表 + 神煞规则表
 
 tests/lib/life-timing/
 ├── detectors/
@@ -57,12 +58,13 @@ tests/lib/life-timing/
 │   ├── tai-sui.test.ts               ~15 测试
 │   ├── dayun-transition.test.ts      ~10 测试
 │   ├── sui-yun-bing-lin.test.ts      ~8 测试
-│   └── liuyue-triggers.test.ts       ~20 测试
+│   ├── liuyue-triggers.test.ts       ~20 测试
+│   └── liunian-shensha-month.test.ts ~15 测试
 ├── timing-orchestrator.test.ts       ~15 测试
 └── past-validation.test.ts           ~10 测试
 ```
 
-总代码量约 **860 行 + 88 测试**。
+总代码量约 **1130 行 + 103 测试**。
 
 ---
 
@@ -87,7 +89,13 @@ export type TimingType =
   | 'liuyue_clash'         // 流月相冲
   | 'liuyue_fuyin'         // 流月伏吟
   | 'liuyue_combine'       // 流月三合/三会
-  | 'liuyue_shensha'       // 流月触发神煞
+  | 'liuyue_shensha_neg'   // 流月触发凶神（羊刃/劫煞/亡神/灾煞）
+  | 'liuyue_shensha_tianyi'   // 流月触发天乙贵人
+  | 'liuyue_shensha_wenchang' // 流月触发文昌
+  | 'liuyue_shensha_taohua'   // 流月触发桃花
+  | 'liuyue_shensha_yima'     // 流月触发驿马
+  | 'liuyue_shensha_tiande'   // 流月触发天德/月德
+  | 'liuyue_shensha_jiangxing'// 流月触发将星
   ;
 
 // 单个时点
@@ -696,7 +704,179 @@ function matchesShenSha(shenSha: { name: string }, branch: EarthlyBranch): boole
 
 ---
 
-## past-validation.ts
+## Detector 6: liunian-shensha-month.ts
+
+### 职责
+检测未来 12 个月里，每个流月是否触发命局的特殊神煞。**专注于"吉利神煞被激活的月份"**——这是月度邮件的主要内容来源，要高频触达但不堆严重程度。
+
+### 神煞规则（基于命理传统）
+
+```typescript
+// lib/life-timing/constants.ts 的扩展部分
+
+// 天乙贵人：按日干查贵人地支
+export const TIAN_YI_GUI_REN: Record<HeavenlyStem, EarthlyBranch[]> = {
+  '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'],
+  '乙': ['申', '子'], '己': ['申', '子'],
+  '丙': ['酉', '亥'], '丁': ['酉', '亥'],
+  '壬': ['卯', '巳'], '癸': ['卯', '巳'],
+  '辛': ['午', '寅'],
+};
+
+// 文昌：按日干查
+export const WEN_CHANG: Record<HeavenlyStem, EarthlyBranch> = {
+  '甲': '巳', '乙': '午', '丙': '申', '丁': '酉', '戊': '申',
+  '己': '酉', '庚': '亥', '辛': '子', '壬': '寅', '癸': '卯',
+};
+
+// 桃花：按年/日支查三合组对应的桃花支
+export const TAO_HUA: Record<EarthlyBranch, EarthlyBranch> = {
+  '申': '酉', '子': '酉', '辰': '酉',      // 申子辰 桃花在酉
+  '寅': '卯', '午': '卯', '戌': '卯',      // 寅午戌 桃花在卯
+  '巳': '午', '酉': '午', '丑': '午',      // 巳酉丑 桃花在午
+  '亥': '子', '卯': '子', '未': '子',      // 亥卯未 桃花在子
+};
+
+// 驿马：按年/日支查
+export const YI_MA: Record<EarthlyBranch, EarthlyBranch> = {
+  '申': '寅', '子': '寅', '辰': '寅',      // 申子辰 驿马在寅
+  '寅': '申', '午': '申', '戌': '申',      // 寅午戌 驿马在申
+  '巳': '亥', '酉': '亥', '丑': '亥',      // 巳酉丑 驿马在亥
+  '亥': '巳', '卯': '巳', '未': '巳',      // 亥卯未 驿马在巳
+};
+
+// 将星：按年/日支查三合组的中支
+export const JIANG_XING: Record<EarthlyBranch, EarthlyBranch> = {
+  '申': '子', '子': '子', '辰': '子',      // 申子辰 将星在子
+  '寅': '午', '午': '午', '戌': '午',      // 寅午戌 将星在午
+  '巳': '酉', '酉': '酉', '丑': '酉',      // 巳酉丑 将星在酉
+  '亥': '卯', '卯': '卯', '未': '卯',      // 亥卯未 将星在卯
+};
+
+// 天德：按月支查天德方位（用对应天干地支表）
+export const TIAN_DE: Record<EarthlyBranch, string> = {
+  '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛', '午': '亥', '未': '甲',
+  '申': '癸', '酉': '寅', '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚',
+};
+
+// 月德：按月支查
+export const YUE_DE: Record<EarthlyBranch, HeavenlyStem> = {
+  '寅': '丙', '午': '丙', '戌': '丙',
+  '亥': '甲', '卯': '甲', '未': '甲',
+  '申': '壬', '子': '壬', '辰': '壬',
+  '巳': '庚', '酉': '庚', '丑': '庚',
+};
+```
+
+### 实现
+
+```typescript
+import { Solar } from 'lunar-javascript';
+import {
+  TIAN_YI_GUI_REN, WEN_CHANG, TAO_HUA, YI_MA, JIANG_XING,
+  type EarthlyBranch, type HeavenlyStem
+} from '../constants';
+import type { TimingPoint, DetectorInput } from '../types';
+
+export function detectLiunianShenshaMonths(input: DetectorInput): TimingPoint[] {
+  const points: TimingPoint[] = [];
+  const dayGan = input.bazi.dayGan as HeavenlyStem;
+  const yearZhi = input.bazi.yearZhi as EarthlyBranch;
+  const dayZhi = input.bazi.dayZhi as EarthlyBranch;
+  
+  // 预先计算神煞对应的地支
+  const tianyiBranches = TIAN_YI_GUI_REN[dayGan];         // 2 个
+  const wenchangBranch = WEN_CHANG[dayGan];
+  const taohuaBranch = TAO_HUA[yearZhi] || TAO_HUA[dayZhi];
+  const yimaBranch = YI_MA[yearZhi] || YI_MA[dayZhi];
+  const jiangxingBranch = JIANG_XING[yearZhi] || JIANG_XING[dayZhi];
+  
+  // 遍历未来 12 个月
+  for (let monthOffset = 0; monthOffset < 12; monthOffset++) {
+    const checkDate = new Date(input.currentDate);
+    checkDate.setMonth(checkDate.getMonth() + monthOffset);
+    checkDate.setDate(15);
+    
+    const solar = Solar.fromDate(checkDate);
+    const lunar = solar.getLunar();
+    const liuYueZhi = lunar.getMonthInGanZhi().charAt(1) as EarthlyBranch;
+    const liuYueGanZhi = lunar.getMonthInGanZhi();
+    
+    // 1. 天乙贵人月
+    if (tianyiBranches.includes(liuYueZhi)) {
+      points.push(makePoint('liuyue_shensha_tianyi', 'notice', checkDate, {
+        shenSha: '天乙贵人', liuYueGanZhi,
+      }, `${liuYueGanZhi}月触发天乙贵人`));
+    }
+    
+    // 2. 文昌月
+    if (liuYueZhi === wenchangBranch) {
+      points.push(makePoint('liuyue_shensha_wenchang', 'notice', checkDate, {
+        shenSha: '文昌', liuYueGanZhi,
+      }, `${liuYueGanZhi}月触发文昌`));
+    }
+    
+    // 3. 桃花月
+    if (taohuaBranch && liuYueZhi === taohuaBranch) {
+      points.push(makePoint('liuyue_shensha_taohua', 'notice', checkDate, {
+        shenSha: '桃花', liuYueGanZhi,
+      }, `${liuYueGanZhi}月触发桃花`));
+    }
+    
+    // 4. 驿马月
+    if (yimaBranch && liuYueZhi === yimaBranch) {
+      points.push(makePoint('liuyue_shensha_yima', 'notice', checkDate, {
+        shenSha: '驿马', liuYueGanZhi,
+      }, `${liuYueGanZhi}月触发驿马`));
+    }
+    
+    // 5. 将星月
+    if (jiangxingBranch && liuYueZhi === jiangxingBranch) {
+      points.push(makePoint('liuyue_shensha_jiangxing', 'notice', checkDate, {
+        shenSha: '将星', liuYueGanZhi,
+      }, `${liuYueGanZhi}月触发将星`));
+    }
+    
+    // 6. 天德 / 月德月（综合判断，简化）
+    // 此处仅做占位提示，实际以 lib/services 已有神煞规则为准
+  }
+  
+  return points;
+}
+
+function makePoint(
+  type: TimingPoint['type'],
+  severity: TimingPoint['severity'],
+  date: Date,
+  context: Record<string, unknown>,
+  reason: string
+): TimingPoint {
+  return {
+    id: `liuyue_shensha_${type}_${date.getFullYear()}_${date.getMonth() + 1}`,
+    type,
+    severity,
+    startDate: new Date(date.getFullYear(), date.getMonth(), 1).toISOString().slice(0, 10),
+    endDate: new Date(date.getFullYear(), date.getMonth() + 1, 0).toISOString().slice(0, 10),
+    rawReason: reason,
+    context,
+  };
+}
+```
+
+### 单测要点
+
+```
+- 日干甲、流月支丑 → 触发天乙贵人
+- 日干甲、流月支未 → 触发天乙贵人（甲有2个贵人支）
+- 日干丙、流月支申 → 触发文昌
+- 年支子/日支子、流月支酉 → 触发桃花
+- 同月触发多个神煞 → 返回多条 TimingPoint（不合并）
+- 12 月遍历无漏月
+- 严重程度一律 notice（不堆积重要性）
+```
+
+---
+
 
 ### 职责
 基于命理结构生成"过去印证"模板（区块 2 用）。**不是预测过去**，而是说"这种结构的人通常在 X 类时间下会有 Y 反应"。
@@ -804,6 +984,7 @@ import { detectTaiSuiYears } from './detectors/tai-sui';
 import { detectDayunTransition } from './detectors/dayun-transition';
 import { detectSuiYunBingLin } from './detectors/sui-yun-bing-lin';
 import { detectLiuyueTriggers } from './detectors/liuyue-triggers';
+import { detectLiunianShenshaMonths } from './detectors/liunian-shensha-month';
 import { generatePastValidations } from './past-validation';
 
 export function buildTimingProfile(input: DetectorInput): TimingProfile {
@@ -813,6 +994,7 @@ export function buildTimingProfile(input: DetectorInput): TimingProfile {
   const dayunShifts = detectDayunTransition(input);
   const suiYunBingLin = detectSuiYunBingLin(input);
   const liuyueTriggers = detectLiuyueTriggers(input);
+  const shenShaMonths = detectLiunianShenshaMonths(input);
   const pastValidations = generatePastValidations(input);
   
   // 2. 合并并按距离切分
@@ -822,6 +1004,7 @@ export function buildTimingProfile(input: DetectorInput): TimingProfile {
     ...dayunShifts,
     ...suiYunBingLin,
     ...liuyueTriggers,
+    ...shenShaMonths,
   ];
   
   // 排序按 startDate
@@ -917,11 +1100,11 @@ function getCurrentLiuNianGanZhi(currentDate: Date): string {
 
 代码层：
 
-- [ ] 5 个 detector 全部通过单测，覆盖率 ≥ 90%
+- [ ] 6 个 detector 全部通过单测，覆盖率 ≥ 90%
 - [ ] timing-orchestrator 通过 15+ 单测
 - [ ] past-validation 通过 10+ 单测
 - [ ] `npm run lint` 0 错误
-- [ ] `npm run test` 新增 88+ 测试全过
+- [ ] `npm run test` 新增 103+ 测试全过
 - [ ] `npx tsc --noEmit` 无新增错误
 
 人肉验证（10 个真实样本）：
@@ -1000,7 +1183,7 @@ for (const user of subscribedUsers) {
 
 ## 总结
 
-Sub-Spec A 是 **9 个文件 + 88 个测试 + 约 860 行代码**，4-5 天完成。
+Sub-Spec A 是 **10 个文件 + 103 个测试 + 约 1130 行代码**，4-5 天完成。
 
 完成后 Sub-Spec B 和 C 才能开始。
 

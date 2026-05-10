@@ -76,10 +76,26 @@
 - 流月与命局形成三合 / 三会：能量增强月
 - 流月与命局某柱伏吟：原局力量加倍
 - 流月与命局某柱相冲：变动月
-- 流月触发贵人神煞：机会月
 - 流月触发凶神（羊刃、劫煞、亡神）：注意月
 
-### 6. 岁运并临（命理大忌）
+### 6. 流月神煞月（每月触达的主力）
+
+更细的流月触发——专门检测**吉利神煞**激活的月份，是月度邮件的主要内容来源：
+
+| 神煞 | 性质 | 月份含义 |
+|---|---|---|
+| **天乙贵人** | 助力 | 关键时刻有人主动帮忙 |
+| **文昌** | 助力 | 学习/创作灵感月 |
+| **桃花** | 中性 | 关系活跃月（异性缘 / 社交） |
+| **驿马** | 中性 | 变动月（出差 / 搬迁 / 远行） |
+| **天德/月德** | 助力 | 化解月（凶事大事化小） |
+| **将星** | 助力 | 主导月（适合担当） |
+
+这些大幅增加触达机会但保持 notice 级别——**不堆 caution/critical 让"重大事件"保持稀缺感**。
+
+每个用户平均每年触发 3-8 个吉利神煞月。
+
+### 7. 岁运并临（命理大忌）
 
 大运的天干地支与流年完全相同时（例"乙巳大运"遇上"乙巳流年"）。每个人一生平均 1-2 次。
 
@@ -87,7 +103,7 @@
 
 ## 四、邮件触达策略
 
-基于以上 6 类时点：
+基于以上 7 类时点：
 
 ### Tier 1（必做）
 
@@ -168,6 +184,7 @@
 ```sql
 user_timing_profiles      -- 时点档案缓存（按 user_id 主键）
 timing_email_log          -- 邮件去重 + 追踪
+timing_email_recall_log   -- 召回全链路记录（点击/落地/停留/完整看）
 ```
 
 ### 扩展表
@@ -181,6 +198,23 @@ email_subscriptions       -- 加 timing_user_id, preferences (JSON)
 ```json
 { "monthly": true, "solarTerms": true, "majorEvents": true }
 ```
+
+### 召回追踪（Sub-Spec C 的强制要求）
+
+每封邮件链接必须遵循统一格式：
+
+```
+https://www.life-kline.com/r/{reportId}
+  ?utm_source=email
+  &utm_medium=monthly|solar_term|tai_sui|dayun_shift
+  &utm_campaign=YYYY-MM-{type}            -- 用于 A/B 对比
+  &highlight={timingPointId}              -- 落地页直接滚动到该时点
+```
+
+落地页必须：
+- 接到 `highlight` 参数后**自动滚动到对应时点并加高亮视觉**（动画 1-2 秒）
+- 记录 `timing_email_recall_log` 一条 'returned_to_site' 行
+- 用户离开时记录 'completed_view' 或退出动作（含 session_duration_ms / pages_viewed）
 
 ---
 
@@ -227,7 +261,17 @@ email_subscriptions       -- 加 timing_user_id, preferences (JSON)
 
 依赖 A，可与 B 并行（建议 B 上线 7 天后启动）。
 
-`lib/timing-email/` + cron + 4 类邮件模板 + PM2 daemon。
+`lib/timing-email/` + cron + 4 类邮件模板 + PM2 daemon + 召回追踪系统。
+
+**强制要求**（来自用户反馈 2026-05-10）：
+
+1. 每个邮件链接必须含完整 UTM 参数 + `highlight={timingPointId}`
+2. 落地页接 `highlight` 参数自动滚动到对应时点并加视觉高亮
+3. 必须新建 `timing_email_recall_log` 表记录全链路召回（点击/落地/停留/完整看）
+4. 必须实现 `npm run timing:recall-analytics` 分析脚本，每周跑
+5. 用户回站后退出，必须记录 `session_duration_ms` 和 `pages_viewed`
+6. 邮件渲染时每个时点必须带"该做 / 该避"两栏（不只是描述）
+7. 月度邮件主题行必须含具体时点数（"5 月，你会有 3 个值得留意的时点"），不用"运势更新"
 
 待 B 上线后独立 brainstorm 出 sub-spec。
 
@@ -242,7 +286,17 @@ email_subscriptions       -- 加 timing_user_id, preferences (JSON)
 | email 留存率 | ≥ 8% | ≥ 15% |
 | 月度邮件打开率 | — | ≥ 30% |
 | 月度邮件点击率 | — | ≥ 8% |
+| **邮件回站率**（点击 → 真到站） | — | ≥ 90%（点击与回站差距 ≤ 10%）|
+| **回站完整看率**（停留 ≥ 60 秒） | — | ≥ 60% |
 | LLM 真实输出占比 | 不下降 | 不下降 |
+
+### 召回数据观察项（不阻塞验收，用于持续优化）
+
+每周跑一次 `npm run timing:recall-analytics`，看：
+
+- 哪类时点的回站率最高 → 后续邮件加权该类
+- 哪个 campaign 数据最差 → 改标题/改内容
+- 老用户疲劳信号 → 决定是否降频
 
 ### 失败信号（命中任一立即停手反思）
 
