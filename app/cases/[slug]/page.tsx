@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpenText, Compass, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -8,6 +9,10 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ArticleInlineCTA from '@/components/article/article-inline-cta';
+import ArticleStickyCTA from '@/components/article/article-sticky-cta';
+import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
+import { findInjectionPoint, isArticleCtaEnabled } from '@/lib/article-cta';
 import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
@@ -83,6 +88,11 @@ export default async function CaseDetailPage({ params }: PageProps) {
   const market = typeof managedEntry.meta?.market === 'string' ? managedEntry.meta.market : '';
   const isEnglishCase = locale.startsWith('en');
   const isGlobalChineseCase = locale === 'zh-US';
+  const ctaEnabled = isArticleCtaEnabled();
+  const surfaceKey = `case_article:${item.slug}`;
+  const inlineCtaPoint = ctaEnabled
+    ? findInjectionPoint(item.sections.map((s) => ({ content: (s.paragraphs || []).join('\n') })))
+    : { injectAfterIndex: -1 };
   const caseHubHref = isEnglishCase ? '/world-yi/en/cases' : isGlobalChineseCase ? '/world-yi/global/cases' : '/world-yi';
   const caseHubLabel = isEnglishCase ? 'Back to World Yi English Cases' : isGlobalChineseCase ? '进入全球案例入口' : '回到世界易总入口';
   const caseMethodHref = isEnglishCase ? '/knowledge/world-yi-en-judgment-language' : '/knowledge/world-yi-case-method';
@@ -241,17 +251,22 @@ export default async function CaseDetailPage({ params }: PageProps) {
             />
 
             <div className="mt-8 space-y-8">
-              {item.sections.map((section) => (
-                <section key={section.title}>
-                  <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
-                  <div className="mt-4 space-y-4">
-                    {section.paragraphs.map((paragraph, index) => (
-                      <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </section>
+              {item.sections.map((section, idx) => (
+                <Fragment key={section.title}>
+                  <section>
+                    <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
+                    <div className="mt-4 space-y-4">
+                      {section.paragraphs.map((paragraph, index) => (
+                        <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+                  {ctaEnabled && idx === inlineCtaPoint.injectAfterIndex && (
+                    <ArticleInlineCTA surfaceKey={surfaceKey} slug={item.slug} contentType="case" />
+                  )}
+                </Fragment>
               ))}
             </div>
 
@@ -511,6 +526,12 @@ export default async function CaseDetailPage({ params }: PageProps) {
         </section>
       </main>
 
+      {ctaEnabled && (
+        <>
+          <ArticleScrollTracker surfaceKey={surfaceKey} slug={item.slug} contentType="case" />
+          <ArticleStickyCTA surfaceKey={surfaceKey} slug={item.slug} contentType="case" />
+        </>
+      )}
       <SiteFooter />
     </div>
   );
