@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Clock3, Compass, LibraryBig, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -8,6 +9,10 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ArticleInlineCTA from '@/components/article/article-inline-cta';
+import ArticleStickyCTA from '@/components/article/article-sticky-cta';
+import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
+import { findInjectionPoint, isArticleCtaEnabled } from '@/lib/article-cta';
 import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
@@ -98,6 +103,11 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
 
   const topicHub = getKnowledgeTopicHubBySlug(article.slug);
   const related = getRelatedKnowledgeEntries(article.slug, 4);
+  const ctaEnabled = isArticleCtaEnabled();
+  const surfaceKey = `knowledge_article:${article.slug}`;
+  const inlineCtaPoint = ctaEnabled
+    ? findInjectionPoint(article.sections.map((s) => ({ content: (s.paragraphs || []).join('\n') })))
+    : { injectAfterIndex: -1 };
   const isWorldYiArticle = article.slug.startsWith('world-yi-');
   const isWorldYiEnglishArticle = isWorldYiArticle && locale === 'en';
   const worldYiReadingOrder = [
@@ -296,17 +306,22 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             </div>
 
             <div className="mt-8 space-y-8">
-              {article.sections.map((section) => (
-                <section key={section.title}>
-                  <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
-                  <div className="mt-4 space-y-4">
-                    {section.paragraphs.map((paragraph, index) => (
-                      <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </section>
+              {article.sections.map((section, index) => (
+                <Fragment key={section.title}>
+                  <section>
+                    <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
+                    <div className="mt-4 space-y-4">
+                      {section.paragraphs.map((paragraph, idx) => (
+                        <p key={`${section.title}-${idx}`} className="text-sm leading-6 text-[color:var(--ink)]">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+                  {ctaEnabled && index === inlineCtaPoint.injectAfterIndex && (
+                    <ArticleInlineCTA surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
+                  )}
+                </Fragment>
               ))}
             </div>
 
@@ -616,6 +631,12 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
         </section>
       </main>
 
+      {ctaEnabled && (
+        <>
+          <ArticleScrollTracker surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
+          <ArticleStickyCTA surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
+        </>
+      )}
       <SiteFooter />
     </div>
   );
