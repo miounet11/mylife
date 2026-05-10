@@ -7,6 +7,35 @@ export interface VerifyResult {
   failedRules: string[];
 }
 
+// v5-A6 (2026-05-09): bestWindow / liuNian 改成宽松匹配
+// 之前用算法生成的 "2016-2020阶段" 严格 includes 验 LLM 自然语言，30 天 78% 报告必 fail
+// 现在按 (1) 4位年份 (2) 天干地支字面 (3) 阶段关键词 任一命中即算对齐
+function extractWindowKeywords(label: string): string[] {
+  if (!label) return [];
+  const keywords: string[] = [label];
+  // 抽取 4 位年份范围 "2016-2020阶段" → ["2016", "2020"]
+  const years = label.match(/\d{4}/g) || [];
+  keywords.push(...years);
+  // 部分阶段关键词
+  if (years.length >= 2) {
+    keywords.push(`${years[0]}-${years[1]}`);
+    keywords.push(`${years[0]}~${years[1]}`);
+    keywords.push(`${years[0]}年到${years[1]}年`);
+  }
+  return keywords.filter(Boolean);
+}
+
+function extractLiuNianKeywords(liuNian: string): string[] {
+  if (!liuNian) return [];
+  const keywords: string[] = [liuNian];
+  // 天干地支 "丙午" → ["丙", "午", "丙午"]
+  const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
+  const branches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  for (const s of stems) if (liuNian.includes(s)) keywords.push(s);
+  for (const b of branches) if (liuNian.includes(b)) keywords.push(b);
+  return keywords;
+}
+
 export function runVerify(context: StructuredAgenticContext, agentResults: Record<string, unknown>) : VerifyResult {
   const failedRules: string[] = [];
   const temporalSpatial = asAgentResult(agentResults.temporal_spatial_advisor);
@@ -56,12 +85,30 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
     failedRules.push('macro_cycle_alignment');
   }
 
-  if (bestWindow && !containsAny(strategyAdvisor.summary, [bestWindow])) {
+  // v5-A6 (2026-05-09): 拼接所有 agent summary 作为大检查池，避免单 agent 漏关键词就 fail
+  const allAgentText = [
+    klineNarrative.summary,
+    strategyAdvisor.summary,
+    careerWealth.summary,
+    asAgentResult(agentResults.relationship_family).summary,
+    asAgentResult(agentResults.health_lifestyle).summary,
+    asAgentResult(agentResults.core_constitution).summary,
+    temporalSpatial.summary,
+  ].join(' ');
+
+  // v5-A6: 宽松匹配 — 提取年份/范围作为关键词集合
+  if (bestWindow && !containsAny(allAgentText, extractWindowKeywords(bestWindow))) {
     failedRules.push('best_window_alignment');
   }
 
-  if (context.context.temporal.currentLiuNian && !containsAny(strategyAdvisor.summary, [String(context.context.temporal.currentLiuNian)])) {
-    failedRules.push('liunian_alignment');
+  // v5-A6: 流年宽松匹配 — 干支或字面或对应年份任一命中即算
+  if (context.context.temporal.currentLiuNian) {
+    const liuNian = String(context.context.temporal.currentLiuNian);
+    const currentYear = new Date().getFullYear();
+    const keywords = [...extractLiuNianKeywords(liuNian), String(currentYear), String(currentYear + 1)];
+    if (!containsAny(allAgentText, keywords)) {
+      failedRules.push('liunian_alignment');
+    }
   }
 
   if (currentPlace && temporalSpatial.summary && !containsAny(temporalSpatial.summary, [currentPlace])) {

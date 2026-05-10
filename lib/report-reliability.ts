@@ -28,6 +28,12 @@ export function assessReportReliability(result: FortuneAnalysisResult): ReportRe
   const qualityStatus = result.analysis?.qualityAudit?.status;
   const deliveryTier = result.analysis?.qualityAudit?.deliveryTier;
 
+  // v5-A7 (2026-05-09): llmUsed 只代表 structure phase，但 agent LLM 成功时 fortune.interaction / explanation
+  // 都有真实 LLM 内容，也应视为"LLM 真用上了"。避免 structure 失败但 agent 全成功时被降级
+  const agentSources = (result.analysis?.orchestration?.agentSources || {}) as Record<string, string>;
+  const agentLlmHits = Object.values(agentSources).filter((v) => v === 'llm').length;
+  const anyLlmUsed = llmUsed || agentLlmHits >= 2;
+
   let score = 100;
   const reasons: string[] = [];
 
@@ -39,7 +45,7 @@ export function assessReportReliability(result: FortuneAnalysisResult): ReportRe
     reasons.push('一致性校验处于观察级，短期窗口建议需要保守处理。');
   }
 
-  if (!llmUsed && !providerHealthDeferred) {
+  if (!anyLlmUsed && !providerHealthDeferred) {
     score -= MISSING_LLM_SCORE;
     reasons.push('未拿到稳定增强正文，解释层可靠性偏弱。');
   }
@@ -59,10 +65,16 @@ export function assessReportReliability(result: FortuneAnalysisResult): ReportRe
     reasons.push('当前交付层级偏基础版，应避免给出过强时机判断。');
   }
 
-  const conservativeDelivery = verifyVerdict === 'FAIL'
-    || score < HARD_FAIL_THRESHOLD
-    || (qualityStatus === 'retry' && !llmUsed && !providerHealthDeferred);
-  const suppressedTimingAdvice = conservativeDelivery || verifyVerdict === 'WARN' || verifyScore < 85;
+  // v5-A6+A7 (2026-05-09): guard 改成"严格 FAIL 且 LLM 真未成功"双条件
+  // 之前单 verify==FAIL 就降级，30 天 60% 报告被误杀；改成必须 LLM 没用上 / agent 半数失败 / score 极低 三条任一
+  // v5-A7: llmTrulyUnavailable 现在用 anyLlmUsed（structure || agent ≥2 命中）
+  const llmTrulyUnavailable = !anyLlmUsed && !providerHealthDeferred;
+  const conservativeDelivery = score < HARD_FAIL_THRESHOLD
+    || (verifyVerdict === 'FAIL' && llmTrulyUnavailable)
+    || (verifyVerdict === 'FAIL' && agentSuccessRate > 0 && agentSuccessRate < 0.5)
+    || (qualityStatus === 'retry' && llmTrulyUnavailable);
+  // suppressedTimingAdvice 只在真正信号不全时压制 timing；之前 score<85 太松，现在 score<70 才压制
+  const suppressedTimingAdvice = conservativeDelivery || (verifyVerdict === 'WARN' && verifyScore < 70);
 
   return {
     status: conservativeDelivery ? 'conservative' : 'passed',
