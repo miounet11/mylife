@@ -62,7 +62,11 @@ export type AnalyticsEventName =
   | 'event_deleted'
   | 'llm_model_attempt'
   | 'llm_model_circuit_changed'
-  | 'report_followup_augmented';
+  | 'report_followup_augmented'
+  | 'article_scroll_depth'
+  | 'article_cta_impressed'
+  | 'article_cta_clicked'
+  | 'article_session_end';
 
 interface TrackEventInput {
   userId?: string | null;
