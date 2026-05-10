@@ -420,3 +420,155 @@ export async function sendPremiumServiceStatusUpdateEmail(params: {
     `,
   });
 }
+
+// ===========================================
+// Sub-Spec C (2026-05-10): Life Timing 触达邮件
+// ===========================================
+
+interface TimingEmailPoint {
+  date: string;
+  title: string;
+  summary: string;
+  todoSuggestions?: string[];
+  avoidSuggestions?: string[];
+}
+
+/** 月度运势邮件（每月 1 号触发） */
+export async function sendTimingMonthlyDigestEmail(params: {
+  email: string;
+  reportId: string;
+  monthLabel: string;
+  points: TimingEmailPoint[];
+  utmCampaign: string;
+  highlightFirstId?: string;
+}) {
+  const { appName, baseUrl } = getEmailConfig();
+  const utmSuffix = `?utm_source=email&utm_medium=monthly&utm_campaign=${encodeURIComponent(params.utmCampaign)}`;
+  const baseLink = `${baseUrl}/r/${encodeURIComponent(params.reportId)}${utmSuffix}`;
+  const highlightLink = params.highlightFirstId
+    ? `${baseLink}&highlight=${encodeURIComponent(params.highlightFirstId)}`
+    : baseLink;
+
+  const pointsHtml = params.points.map((p) => `
+    <li style="margin:0 0 16px;list-style:none;padding-left:12px;border-left:3px solid #f7d3a1">
+      <div style="font-size:13px;color:#6b7280;margin-bottom:4px">${escapeHtml(p.date)}</div>
+      <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:6px">${escapeHtml(p.title)}</div>
+      <div style="font-size:14px;color:#374151;margin-bottom:8px;line-height:1.7">${escapeHtml(p.summary)}</div>
+      ${p.todoSuggestions && p.todoSuggestions.length > 0 ? `
+        <div style="margin-top:6px;font-size:13px"><strong style="color:#047857">该做：</strong>${escapeHtml(p.todoSuggestions.join('；'))}</div>
+      ` : ''}
+      ${p.avoidSuggestions && p.avoidSuggestions.length > 0 ? `
+        <div style="margin-top:4px;font-size:13px"><strong style="color:#b91c1c">该避：</strong>${escapeHtml(p.avoidSuggestions.join('；'))}</div>
+      ` : ''}
+    </li>
+  `).join('');
+
+  const subject = params.points.length > 0
+    ? `${params.monthLabel}，你会有 ${params.points.length} 个值得留意的时点`
+    : `${params.monthLabel} · 来自 ${appName} 的命理时间提醒`;
+
+  return sendMailV2({
+    to: params.email,
+    subject,
+    subtype: 'html',
+    text: `${params.monthLabel} 时点提醒。查看完整：${highlightLink}`,
+    content: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#1f2937;line-height:1.8;max-width:600px">
+        <h2 style="margin:0 0 8px;font-size:22px;color:#111827">${escapeHtml(params.monthLabel)}</h2>
+        <p style="margin:0 0 20px;color:#6b7280;font-size:14px">
+          ${params.points.length > 0
+            ? `下面是这个月需要你留意的 ${params.points.length} 个时点。`
+            : '这个月相对平稳，没有特别需要留意的时点。'}
+        </p>
+        ${params.points.length > 0 ? `<ul style="margin:0 0 24px;padding:0">${pointsHtml}</ul>` : ''}
+        <a href="${escapeHtml(highlightLink)}" style="display:inline-block;padding:10px 16px;border-radius:999px;background:#111827;color:#f7d3a1;text-decoration:none;font-weight:700">
+          看完整的本月时间地图
+        </a>
+        <p style="margin:24px 0 0;color:#9ca3af;font-size:12px">
+          你订阅了 ${appName} 的命理时间提醒。
+          <a href="${escapeHtml(baseUrl)}/unsubscribe?email=${encodeURIComponent(params.email)}" style="color:#9ca3af">退订</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+/** 节气邮件 */
+export async function sendTimingSolarTermEmail(params: {
+  email: string;
+  reportId: string;
+  termName: string;
+  termDate: string;
+  summary: string;
+  todoSuggestions: string[];
+  avoidSuggestions: string[];
+  utmCampaign: string;
+}) {
+  const { appName, baseUrl } = getEmailConfig();
+  const link = `${baseUrl}/r/${encodeURIComponent(params.reportId)}?utm_source=email&utm_medium=solar_term&utm_campaign=${encodeURIComponent(params.utmCampaign)}`;
+
+  return sendMailV2({
+    to: params.email,
+    subject: `${params.termName}前 7 天 · 你的过渡期来了`,
+    subtype: 'html',
+    text: `${params.termName}（${params.termDate}）前 7 天：${params.summary}`,
+    content: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#1f2937;line-height:1.8;max-width:600px">
+        <h2 style="margin:0 0 8px;font-size:22px;color:#111827">${escapeHtml(params.termName)} · ${escapeHtml(params.termDate)}</h2>
+        <p style="margin:0 0 16px;color:#6b7280;font-size:14px">命理上能量切换的关键 7 天</p>
+        <p style="margin:0 0 16px;font-size:15px">${escapeHtml(params.summary)}</p>
+        <div style="background:#fefce8;border:1px solid #fde047;padding:12px 16px;border-radius:8px;margin:16px 0">
+          <div style="font-size:13px"><strong style="color:#047857">该做：</strong>${escapeHtml(params.todoSuggestions.join('；'))}</div>
+          <div style="margin-top:6px;font-size:13px"><strong style="color:#b91c1c">该避：</strong>${escapeHtml(params.avoidSuggestions.join('；'))}</div>
+        </div>
+        <a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 16px;border-radius:999px;background:#111827;color:#f7d3a1;text-decoration:none;font-weight:700">
+          看你完整的时间地图
+        </a>
+        <p style="margin:24px 0 0;color:#9ca3af;font-size:12px">
+          你订阅了 ${appName} 的节气提醒。
+          <a href="${escapeHtml(baseUrl)}/unsubscribe?email=${encodeURIComponent(params.email)}" style="color:#9ca3af">退订</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+/** 重大事件邮件（太岁年 / 换大运 / 岁运并临） */
+export async function sendTimingMajorEventEmail(params: {
+  email: string;
+  reportId: string;
+  eventType: 'tai_sui' | 'dayun_shift' | 'sui_yun_bing_lin';
+  eventLabel: string;
+  summary: string;
+  todoSuggestions: string[];
+  avoidSuggestions: string[];
+  utmCampaign: string;
+}) {
+  const { appName, baseUrl } = getEmailConfig();
+  const link = `${baseUrl}/r/${encodeURIComponent(params.reportId)}?utm_source=email&utm_medium=major_event&utm_campaign=${encodeURIComponent(params.utmCampaign)}`;
+
+  return sendMailV2({
+    to: params.email,
+    subject: `${params.eventLabel} · 你需要先知道这件事`,
+    subtype: 'html',
+    text: `${params.eventLabel}：${params.summary}`,
+    content: `
+      <div style="font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;color:#1f2937;line-height:1.8;max-width:600px">
+        <h2 style="margin:0 0 8px;font-size:22px;color:#dc2626">${escapeHtml(params.eventLabel)}</h2>
+        <p style="margin:0 0 16px;color:#6b7280;font-size:14px">这是命理意义上的关键节点，提前告诉你</p>
+        <p style="margin:0 0 16px;font-size:15px">${escapeHtml(params.summary)}</p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;padding:12px 16px;border-radius:8px;margin:16px 0">
+          <div style="font-size:13px"><strong style="color:#047857">该做：</strong>${escapeHtml(params.todoSuggestions.join('；'))}</div>
+          <div style="margin-top:6px;font-size:13px"><strong style="color:#b91c1c">该避：</strong>${escapeHtml(params.avoidSuggestions.join('；'))}</div>
+        </div>
+        <a href="${escapeHtml(link)}" style="display:inline-block;padding:10px 16px;border-radius:999px;background:#111827;color:#f7d3a1;text-decoration:none;font-weight:700">
+          看你完整的时间地图
+        </a>
+        <p style="margin:24px 0 0;color:#9ca3af;font-size:12px">
+          你订阅了 ${appName} 的命理提醒。
+          <a href="${escapeHtml(baseUrl)}/unsubscribe?email=${encodeURIComponent(params.email)}" style="color:#9ca3af">退订</a>
+        </p>
+      </div>
+    `,
+  });
+}

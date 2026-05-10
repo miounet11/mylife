@@ -8,6 +8,7 @@ import Next30DaysBlock from '@/components/result-v2/next-30-days-block';
 import Next12MonthsBlock from '@/components/result-v2/next-12-months-block';
 import Next5YearsBlock from '@/components/result-v2/next-5-years-block';
 import DetailedFoldBlock from '@/components/result-v2/detailed-fold-block';
+import TimingSubscribeBar from '@/components/result-v2/timing-subscribe-bar';
 import { fortuneOperations } from '@/lib/database';
 import { buildTimingProfile } from '@/lib/life-timing/timing-orchestrator';
 import { getCurrentLiuNianGanZhi } from '@/lib/life-timing/lunar-utils';
@@ -144,14 +145,18 @@ export default async function ResultV2Page({ params }: PageProps) {
         <DetailedFoldBlock baziPillars={record.baziPillars} />
 
         <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-tint)] p-5 text-center">
-          <p className="text-sm text-[color:var(--ink-2)] mb-3">
-            上面这些时点，邮件会提前告诉你
+          <p className="text-sm text-[color:var(--ink-2)] mb-2">
+            上面这些时点，我们会在邮件里提前告诉你
           </p>
           <p className="text-xs text-[color:var(--ink-3)]">
-            （邮箱订阅功能即将上线）
+            完全免费 · 随时可退订 · 留邮箱即可（在屏幕底部）
           </p>
         </div>
       </main>
+      <TimingSubscribeBar
+        surfaceKey={`r:${id}`}
+        reportId={id}
+      />
       <SiteFooter />
     </div>
   );

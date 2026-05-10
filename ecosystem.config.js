@@ -51,6 +51,8 @@ const nextApp = {
     // 文章漏斗 v1（A 阶段）灰度开关 — A 阶段已 reload 上线 2026-05-10
     // 0 关闭 / 1 启用 inline+sticky+scrollDepth；NEXT_PUBLIC_* 是 build-time 内联，回滚需重 build
     NEXT_PUBLIC_ARTICLE_CTA_V1: process.env.NEXT_PUBLIC_ARTICLE_CTA_V1 || '1',
+    // Sub-Spec C (2026-05-10) 命理时间提醒 cron token
+    TIMING_EMAIL_CRON_TOKEN: 'life-kline-timing-email-local-2026',
     ...cronEnv,
     CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
     CONTENT_RADAR_INTERVAL_MS: '2700000',
