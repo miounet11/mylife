@@ -31,6 +31,9 @@ export interface SystemOpsSnapshot {
       metrics: {
         totalAnalyses: number;
         publicReports: number;
+        validAnalyses: number;
+        validPublicReports: number;
+        validAnalysesLast7d: number;
         totalEvents: number;
         validationPending: number;
       };
@@ -301,6 +304,10 @@ export function getSystemOpsSnapshot(params?: {
         metrics: {
           totalAnalyses: overview.totals.total_analyses,
           publicReports: overview.totals.public_reports,
+          // v5-A8 (2026-05-10): 去 bot 后真实数据，与 totalAnalyses 并行展示
+          validAnalyses: overview.totals.valid_analyses,
+          validPublicReports: overview.totals.valid_public_reports,
+          validAnalysesLast7d: overview.totals.valid_analyses_last_7d,
           totalEvents: overview.totals.total_events,
           validationPending: overview.totals.validation_pending,
         },

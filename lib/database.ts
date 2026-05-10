@@ -2181,6 +2181,26 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_visual_asset_reviews_asset_id ON visual_asset_reviews(asset_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_visual_asset_corrections_asset_id ON visual_asset_corrections(asset_id, created_at);
   `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS gsc_query_daily (
+      site TEXT NOT NULL,
+      date TEXT NOT NULL,
+      query TEXT NOT NULL,
+      page TEXT NOT NULL DEFAULT '',
+      country TEXT NOT NULL DEFAULT '',
+      device TEXT NOT NULL DEFAULT '',
+      clicks REAL NOT NULL DEFAULT 0,
+      impressions REAL NOT NULL DEFAULT 0,
+      ctr REAL NOT NULL DEFAULT 0,
+      position REAL NOT NULL DEFAULT 0,
+      fetched_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (site, date, query, page, country, device)
+    );
+    CREATE INDEX IF NOT EXISTS idx_gsc_query_daily_query ON gsc_query_daily(query, date);
+    CREATE INDEX IF NOT EXISTS idx_gsc_query_daily_page ON gsc_query_daily(page, date);
+    CREATE INDEX IF NOT EXISTS idx_gsc_query_daily_date ON gsc_query_daily(date, impressions DESC);
+  `);
 }
 
 // 用户操作
@@ -2383,6 +2403,26 @@ export const analyticsOperations = {
       SELECT
         (SELECT COUNT(*) FROM fortunes) as total_analyses,
         (SELECT COUNT(*) FROM fortunes WHERE is_public = 1) as public_reports,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE NOT (u.role='guest'
+             AND u.birth_date='1990-01-01'
+             AND u.birth_time IN ('12:00','00:00')
+             AND u.birth_place='北京')
+        ) as valid_analyses,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE f.is_public = 1
+             AND NOT (u.role='guest'
+               AND u.birth_date='1990-01-01'
+               AND u.birth_time IN ('12:00','00:00')
+               AND u.birth_place='北京')
+        ) as valid_public_reports,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE datetime(f.created_at) >= datetime('now','-7 days')
+             AND NOT (u.role='guest'
+               AND u.birth_date='1990-01-01'
+               AND u.birth_time IN ('12:00','00:00')
+               AND u.birth_place='北京')
+        ) as valid_analyses_last_7d,
         (SELECT COUNT(*) FROM questions WHERE category = 'chat_user') as chat_messages,
         (SELECT COUNT(*) FROM email_subscriptions WHERE status = 'active') as active_subscribers,
         (SELECT COUNT(*) FROM events) as total_events,
@@ -2397,6 +2437,9 @@ export const analyticsOperations = {
     `).get() as {
       total_analyses: number;
       public_reports: number;
+      valid_analyses: number;
+      valid_public_reports: number;
+      valid_analyses_last_7d: number;
       chat_messages: number;
       active_subscribers: number;
       total_events: number;
@@ -2650,6 +2693,26 @@ export const analyticsOperations = {
       SELECT
         (SELECT COUNT(*) FROM fortunes) as total_analyses,
         (SELECT COUNT(*) FROM fortunes WHERE is_public = 1) as public_reports,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE NOT (u.role='guest'
+             AND u.birth_date='1990-01-01'
+             AND u.birth_time IN ('12:00','00:00')
+             AND u.birth_place='北京')
+        ) as valid_analyses,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE f.is_public = 1
+             AND NOT (u.role='guest'
+               AND u.birth_date='1990-01-01'
+               AND u.birth_time IN ('12:00','00:00')
+               AND u.birth_place='北京')
+        ) as valid_public_reports,
+        (SELECT COUNT(*) FROM fortunes f LEFT JOIN users u ON u.id=f.user_id
+           WHERE datetime(f.created_at) >= datetime('now','-7 days')
+             AND NOT (u.role='guest'
+               AND u.birth_date='1990-01-01'
+               AND u.birth_time IN ('12:00','00:00')
+               AND u.birth_place='北京')
+        ) as valid_analyses_last_7d,
         (SELECT COUNT(*) FROM questions WHERE category = 'chat_user') as chat_messages,
         (SELECT COUNT(*) FROM email_subscriptions WHERE status = 'active') as active_subscribers,
         (SELECT COUNT(*) FROM events) as total_events,
@@ -2659,6 +2722,9 @@ export const analyticsOperations = {
     `).get() as {
       total_analyses: number;
       public_reports: number;
+      valid_analyses: number;
+      valid_public_reports: number;
+      valid_analyses_last_7d: number;
       chat_messages: number;
       active_subscribers: number;
       total_events: number;
