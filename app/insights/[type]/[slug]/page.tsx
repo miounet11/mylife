@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, BookOpenText, Compass, LibraryBig, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -11,6 +12,10 @@ import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
+import ArticleInlineCTA from '@/components/article/article-inline-cta';
+import ArticleStickyCTA from '@/components/article/article-sticky-cta';
+import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
+import { findInjectionPoint, isArticleCtaEnabled } from '@/lib/article-cta';
 import {
   getCaseStudies,
   getEntityInsightByTypeAndSlug,
@@ -76,6 +81,11 @@ export default async function InsightDetailPage({ params }: PageProps) {
   const locale = typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : '';
   const pageSource = `insight_article:${insight.type}:${insight.slug}`;
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
+  const ctaEnabled = isArticleCtaEnabled();
+  const surfaceKey = `insight_article:${insight.slug}`;
+  const inlineCtaPoint = ctaEnabled
+    ? findInjectionPoint(insight.sections.map((s) => ({ content: (s.paragraphs || []).join('\n') })))
+    : { injectAfterIndex: -1 };
 
   const related = getEntityInsightsByType(insight.type as EntityInsightType)
     .filter((item) => item.slug !== insight.slug)
@@ -188,17 +198,22 @@ export default async function InsightDetailPage({ params }: PageProps) {
             />
 
             <div className="mt-8 space-y-8">
-              {insight.sections.map((section) => (
-                <section key={section.title}>
-                  <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
-                  <div className="mt-4 space-y-4">
-                    {section.paragraphs.map((paragraph, index) => (
-                      <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
-                </section>
+              {insight.sections.map((section, idx) => (
+                <Fragment key={section.title}>
+                  <section>
+                    <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
+                    <div className="mt-4 space-y-4">
+                      {section.paragraphs.map((paragraph, index) => (
+                        <p key={`${section.title}-${index}`} className="text-sm leading-6 text-[color:var(--ink)]">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </section>
+                  {ctaEnabled && idx === inlineCtaPoint.injectAfterIndex && (
+                    <ArticleInlineCTA surfaceKey={surfaceKey} slug={insight.slug} contentType="insight" />
+                  )}
+                </Fragment>
               ))}
             </div>
 
@@ -447,6 +462,12 @@ export default async function InsightDetailPage({ params }: PageProps) {
         </section>
       </main>
 
+      {ctaEnabled && (
+        <>
+          <ArticleScrollTracker surfaceKey={surfaceKey} slug={insight.slug} contentType="insight" />
+          <ArticleStickyCTA surfaceKey={surfaceKey} slug={insight.slug} contentType="insight" />
+        </>
+      )}
       <SiteFooter />
     </div>
   );
