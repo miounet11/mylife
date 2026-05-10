@@ -16,7 +16,13 @@ export function findLiChun(year: number): Date {
 /** 取某年立春后到次年立春前的命理年干支 */
 export function getLiuNianGanZhi(year: number): string {
   const liChun = findLiChun(year);
-  const solar = Solar.fromYmd(liChun.getFullYear(), liChun.getMonth() + 1, liChun.getDate());
+  // 查立春 +1 天以确保跨过交节时刻
+  const afterLiChun = addDays(liChun, 1);
+  const solar = Solar.fromYmd(
+    afterLiChun.getFullYear(),
+    afterLiChun.getMonth() + 1,
+    afterLiChun.getDate()
+  );
   return solar.getLunar().getYearInGanZhi();
 }
 
