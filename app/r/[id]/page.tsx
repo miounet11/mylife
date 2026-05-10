@@ -20,6 +20,7 @@ import {
 import { PillarCalculatorService } from '@/lib/services/pillar-calculator.service';
 import { calculateDayun } from '@/lib/dayun-calculator';
 import type { DetectorInput } from '@/lib/life-timing/types';
+import { fallbackNarrate } from '@/lib/life-timing/timing-narrator';
 
 export const dynamic = 'force-dynamic';
 
@@ -85,12 +86,29 @@ export default async function ResultV2Page({ params }: PageProps) {
     };
 
     const profile = buildTimingProfile(input);
-    saveTimingProfile({ userId, reportId: id, profile });
+
+    // 立即填 fallback narrator copy（同步、快速、模板）
+    const profileWithFallback = {
+      ...profile,
+      next_30_days: profile.next_30_days.map((p) => ({ ...p, userCopy: fallbackNarrate(p) })),
+      next_12_months: profile.next_12_months.map((p) => ({ ...p, userCopy: fallbackNarrate(p) })),
+    };
+
+    saveTimingProfile({
+      userId,
+      reportId: id,
+      profile: profileWithFallback,
+      narratorStatus: 'fallback',
+    });
     record = {
       userId,
       reportId: id,
-      ...profile,
+      narratorStatus: 'fallback',
+      narratorCompletedAt: new Date().toISOString(),
+      ...profileWithFallback,
     };
+
+    // LLM narrator 升级由 scripts/life-timing/upgrade-narrator.ts 批量 cron 处理
   }
 
   return (
@@ -143,7 +161,6 @@ function extractPatternFromAnalysis(analysis: unknown): string | undefined {
   if (typeof analysis !== 'string') return undefined;
   try {
     const parsed = JSON.parse(analysis);
-    // v3 分析结构里 pattern 通常在 analysis.pattern.type 或 pattern.type
     if (parsed?.pattern?.type) return parsed.pattern.type;
   } catch {}
   return undefined;

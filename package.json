@@ -56,6 +56,7 @@
     "seo:topic-gap": "node scripts/seo/topic-gap.js",
     "seo:article-funnel": "node --import tsx lib/seo/article-funnel.ts",
     "life-timing:verify": "node --import tsx scripts/life-timing/verify-samples.ts",
+    "life-timing:upgrade-narrator": "node --import tsx scripts/life-timing/upgrade-narrator.ts",
     "visual:import": "tsx scripts/visual-assets/import-manifest.ts",
     "visual:request-images": "tsx scripts/visual-assets/request-images.ts",
     "visual:narratives": "tsx scripts/visual-assets/generate-narratives.ts",

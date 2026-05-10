@@ -2214,12 +2214,28 @@ export function initializeDatabase() {
       next_30_days TEXT NOT NULL,
       next_12_months TEXT NOT NULL,
       next_5_years TEXT NOT NULL,
+      narrator_status TEXT NOT NULL DEFAULT 'pending',
+      narrator_completed_at TEXT,
       computed_at TEXT NOT NULL DEFAULT (datetime('now')),
       schema_version INTEGER NOT NULL DEFAULT 1,
       FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
     );
     CREATE INDEX IF NOT EXISTS idx_user_timing_profiles_report ON user_timing_profiles(report_id);
+    CREATE INDEX IF NOT EXISTS idx_user_timing_profiles_narrator ON user_timing_profiles(narrator_status);
   `);
+
+  // 兼容已有库 — 如果旧表没有这两列，加上
+  try {
+    const cols = (db.prepare(`PRAGMA table_info(user_timing_profiles)`).all() as Array<{ name: string }>).map((c) => c.name);
+    if (!cols.includes('narrator_status')) {
+      db.exec(`ALTER TABLE user_timing_profiles ADD COLUMN narrator_status TEXT NOT NULL DEFAULT 'pending'`);
+    }
+    if (!cols.includes('narrator_completed_at')) {
+      db.exec(`ALTER TABLE user_timing_profiles ADD COLUMN narrator_completed_at TEXT`);
+    }
+  } catch {
+    // ignore
+  }
 }
 
 // 用户操作

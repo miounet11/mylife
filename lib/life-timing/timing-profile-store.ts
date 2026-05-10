@@ -12,6 +12,8 @@ interface Row {
   next_30_days: string;
   next_12_months: string;
   next_5_years: string;
+  narrator_status: string;
+  narrator_completed_at: string | null;
   computed_at: string;
   schema_version: number;
 }
@@ -27,6 +29,8 @@ function getDb() {
 export interface TimingProfileRecord extends TimingProfile {
   userId: string;
   reportId: string | null;
+  narratorStatus: 'pending' | 'done' | 'fallback';
+  narratorCompletedAt: string | null;
 }
 
 export function getTimingProfile(userId: string): TimingProfileRecord | null {
@@ -40,12 +44,16 @@ export function saveTimingProfile(input: {
   userId: string;
   reportId: string | null;
   profile: TimingProfile;
+  narratorStatus?: 'pending' | 'done' | 'fallback';
 }) {
+  const status = input.narratorStatus || 'pending';
+  const completedAt = status === 'done' || status === 'fallback' ? new Date().toISOString() : null;
   const stmt = getDb().prepare(`
     INSERT INTO user_timing_profiles
       (user_id, report_id, birth_signature, bazi_pillars, computed_for_year,
-       past_validations, next_30_days, next_12_months, next_5_years, computed_at, schema_version)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+       past_validations, next_30_days, next_12_months, next_5_years,
+       narrator_status, narrator_completed_at, computed_at, schema_version)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
     ON CONFLICT(user_id) DO UPDATE SET
       report_id = excluded.report_id,
       birth_signature = excluded.birth_signature,
@@ -55,6 +63,8 @@ export function saveTimingProfile(input: {
       next_30_days = excluded.next_30_days,
       next_12_months = excluded.next_12_months,
       next_5_years = excluded.next_5_years,
+      narrator_status = excluded.narrator_status,
+      narrator_completed_at = excluded.narrator_completed_at,
       computed_at = excluded.computed_at
   `);
   stmt.run(
@@ -67,6 +77,8 @@ export function saveTimingProfile(input: {
     JSON.stringify(input.profile.next_30_days),
     JSON.stringify(input.profile.next_12_months),
     JSON.stringify(input.profile.next_5_years),
+    status,
+    completedAt,
     input.profile.computedAt
   );
 }
@@ -90,6 +102,8 @@ function mapRow(row: Row): TimingProfileRecord {
     baziPillars: row.bazi_pillars,
     computedAt: row.computed_at,
     computedForYear: row.computed_for_year,
+    narratorStatus: (row.narrator_status as 'pending' | 'done' | 'fallback') || 'pending',
+    narratorCompletedAt: row.narrator_completed_at,
     past_validations: safeParse<PastValidation[]>(row.past_validations, []),
     next_30_days: safeParse<TimingPoint[]>(row.next_30_days, []),
     next_12_months: safeParse<TimingPoint[]>(row.next_12_months, []),
