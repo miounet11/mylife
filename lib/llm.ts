@@ -297,13 +297,15 @@ function computeReportAttemptTimeouts(phase: PhaseKey, totalBudgetMs: number, at
   if (attemptCount <= 0) return [];
   if (attemptCount === 1) return [totalBudgetMs];
 
+  // v5-A5 (2026-05-09): 主模型 gpt-5.2 实测 1.4s 就回，不需要把预算压死，给 fallback 留够时间
+  // narrative 总预算 18s：主 9.9s（gpt-5.2 富余）+ fallback 8.1s（够 grok 25s 的一半，触发熔断比 timeout 友好）
   const weights = phase === 'structure'
     ? attemptCount === 2
-      ? [0.82, 0.18]
-      : [0.62, 0.2, 0.18]
+      ? [0.55, 0.45]
+      : [0.45, 0.30, 0.25]
     : attemptCount === 2
-      ? [0.7, 0.3]
-      : [0.5, 0.25, 0.25];
+      ? [0.55, 0.45]
+      : [0.45, 0.30, 0.25];
 
   return computeAttemptTimeoutsWithWeights(totalBudgetMs, attemptCount, weights);
 }

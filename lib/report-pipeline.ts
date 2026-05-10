@@ -15,8 +15,10 @@ import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import { parseLocalDate } from '@/lib/utils';
 
-const ANALYZE_LLM_CORE_TIMEOUT_MS = 18000;
-const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 6000;
+// v5-A5f (2026-05-09)：第 8 轮实测 - 14 次中 10 次成功 71%，唯一失败是 narrative 15.4s 被 abort
+// narrative patch 生成 gpt-5.2 真实需 16-18s+框架开销 = ~22s，抬到 36s × 0.55 = 19.8s 主拍 + 16.2s fallback
+const ANALYZE_LLM_CORE_TIMEOUT_MS = 50000;
+const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 36000;
 const ENABLE_AGENTIC_PIPELINE = isAgenticPipelineEnabled();
 const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
@@ -27,8 +29,8 @@ const ANALYZE_FALLBACK_AGENT_KEYS: CoreAgentKey[] = [
   'kline_narrative',
   'strategy_advisor',
 ];
-const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 18000;
-const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 17000;
+const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 60000;
+const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 59000;
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {
@@ -589,9 +591,24 @@ function mergeLLMResult(
   const strategySummary = strategyAgent.summary;
   const temporalSummary = temporalAgent.summary;
   const coreSummary = coreAgent.summary;
+  // v5-A9 (2026-05-10): structure LLM 失败但 agent 成功时，让 agent LLM 救场
+  // 之前 openingOverride 用 baseResult 的规则引擎模板，导致即使 agent 生成了 LLM 内容，
+  // opening 仍然是 "极弱格局是当前主判断，重心落在XX大运" 这种机械模板。
+  // 现在当 structure 失败但任意 agent LLM 命中时，把 core/kline agent summary 作为 opening 种子
+  const agentSourcesMap = (meta.agentic.orchestration.agentSources || {}) as Record<string, string>;
+  const agentLlmHits = Object.values(agentSourcesMap).filter((v) => v === 'llm').length;
+  const structureLlmMissing = !llmResult?.analysis?.opening && !llmResult?.analysis?.summary;
+  const agentRescueActive = structureLlmMissing && agentLlmHits >= 2;
+  const agentRescueOpening = agentRescueActive
+    ? firstNonEmpty([coreAgent.summary, klineAgent.summary, strategyAgent.summary])
+    : '';
+  const agentRescueSummary = agentRescueActive
+    ? firstNonEmpty([strategyAgent.summary, klineAgent.summary, coreAgent.summary])
+    : '';
+
   const focusedNarrative = buildDeterministicFallbackNarrative(merged as FortuneAnalysisResult, {
-    openingOverride: llmResult?.analysis?.opening || baseResult.analysis?.opening,
-    summaryOverride: llmResult?.analysis?.summary || baseResult.analysis?.summary,
+    openingOverride: llmResult?.analysis?.opening || agentRescueOpening || baseResult.analysis?.opening,
+    summaryOverride: llmResult?.analysis?.summary || agentRescueSummary || baseResult.analysis?.summary,
     explanationOverride: llmResult?.analysis?.explanation || baseResult.analysis?.explanation,
     coreSummary,
     strategySummary,

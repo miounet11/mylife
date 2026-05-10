@@ -34,10 +34,11 @@ const RETRYABLE_ERROR_PATTERNS = [
   'AGENT_TIMEOUT',
   'JSON_PARSE_FAILED',
 ] as const;
-const AGENT_MAIN_TASK_TIMEOUT_MS = 26000;
-const AGENT_MAIN_LLM_TIMEOUT_MS = 25000;
-const AGENT_RETRY_TASK_TIMEOUT_MS = 30000;
-const AGENT_RETRY_LLM_TIMEOUT_MS = 29000;
+// v5-A5e (2026-05-09) 第 7 轮：实测 production 比直连多 5-6s 框架开销，agent 给 60s 总预算
+const AGENT_MAIN_TASK_TIMEOUT_MS = 61000;
+const AGENT_MAIN_LLM_TIMEOUT_MS = 60000;
+const AGENT_RETRY_TASK_TIMEOUT_MS = 65000;
+const AGENT_RETRY_LLM_TIMEOUT_MS = 64000;
 
 export async function runAgenticPipeline(params: {
   groundTruth: BuildGroundTruthInput;
