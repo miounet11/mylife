@@ -22,7 +22,7 @@ export interface ShenShaResult {
 // ==================== 神煞查表 ====================
 
 // 天乙贵人：以日干查地支
-const TIANYI_GUIREN: Record<string, string[]> = {
+export const TIANYI_GUIREN: Record<string, string[]> = {
   '甲': ['丑', '未'], '戊': ['丑', '未'],
   '乙': ['子', '申'], '己': ['子', '申'],
   '丙': ['亥', '酉'], '庚': ['亥', '酉'],
@@ -31,14 +31,14 @@ const TIANYI_GUIREN: Record<string, string[]> = {
 };
 
 // 文昌贵人：以日干查地支
-const WENCHANG: Record<string, string> = {
+export const WENCHANG: Record<string, string> = {
   '甲': '巳', '乙': '午', '丙': '申', '丁': '酉',
   '戊': '申', '己': '酉', '庚': '亥', '辛': '子',
   '壬': '寅', '癸': '卯',
 };
 
 // 驿马：以年支或日支三合局首查
-const YIMA: Record<string, string> = {
+export const YIMA: Record<string, string> = {
   '申': '寅', '子': '寅', '辰': '寅',
   '寅': '申', '午': '申', '戌': '申',
   '亥': '巳', '卯': '巳', '未': '巳',
@@ -46,11 +46,19 @@ const YIMA: Record<string, string> = {
 };
 
 // 桃花：以年支或日支三合局中宫查
-const TAOHUA: Record<string, string> = {
+export const TAOHUA: Record<string, string> = {
   '申': '酉', '子': '酉', '辰': '酉',
   '寅': '卯', '午': '卯', '戌': '卯',
   '亥': '子', '卯': '子', '未': '子',
   '巳': '午', '酉': '午', '丑': '午',
+};
+
+// 将星：以年支或日支查三合局中支
+export const JIANGXING: Record<string, string> = {
+  '申': '子', '子': '子', '辰': '子',
+  '寅': '午', '午': '午', '戌': '午',
+  '巳': '酉', '酉': '酉', '丑': '酉',
+  '亥': '卯', '卯': '卯', '未': '卯',
 };
 
 // 华盖：以年支查
@@ -85,14 +93,14 @@ const GUASU: Record<string, string> = {
 };
 
 // 天德贵人：以月支查天干
-const TIANDE: Record<string, string> = {
+export const TIANDE: Record<string, string> = {
   '寅': '丁', '卯': '申', '辰': '壬', '巳': '辛',
   '午': '亥', '未': '甲', '申': '癸', '酉': '寅',
   '戌': '丙', '亥': '乙', '子': '巳', '丑': '庚',
 };
 
 // 月德贵人：以月支查天干
-const YUEDE: Record<string, string> = {
+export const YUEDE: Record<string, string> = {
   '寅': '丙', '卯': '甲', '辰': '壬', '巳': '庚',
   '午': '丙', '未': '甲', '申': '壬', '酉': '庚',
   '戌': '丙', '亥': '甲', '子': '壬', '丑': '庚',
