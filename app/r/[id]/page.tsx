@@ -9,6 +9,7 @@ import Next12MonthsBlock from '@/components/result-v2/next-12-months-block';
 import Next5YearsBlock from '@/components/result-v2/next-5-years-block';
 import DetailedFoldBlock from '@/components/result-v2/detailed-fold-block';
 import TimingSubscribeBar from '@/components/result-v2/timing-subscribe-bar';
+import TimingRecallTracker from '@/components/result-v2/timing-recall-tracker';
 import { fortuneOperations } from '@/lib/database';
 import { buildTimingProfile } from '@/lib/life-timing/timing-orchestrator';
 import { getCurrentLiuNianGanZhi } from '@/lib/life-timing/lunar-utils';
@@ -157,6 +158,7 @@ export default async function ResultV2Page({ params }: PageProps) {
         surfaceKey={`r:${id}`}
         reportId={id}
       />
+      <TimingRecallTracker reportId={id} />
       <SiteFooter />
     </div>
   );

@@ -40,7 +40,11 @@ export default function Next12MonthsBlock({ points }: Props) {
               </div>
               <ul className="space-y-1.5">
                 {monthPoints.map((p) => (
-                  <li key={p.id} className="flex items-start gap-2 text-xs leading-5">
+                  <li
+                    key={p.id}
+                    data-timing-point-id={p.id}
+                    className="flex items-start gap-2 text-xs leading-5 transition-all"
+                  >
                     <span
                       className={`mt-1.5 h-2 w-2 rounded-full flex-shrink-0 ${SEVERITY_DOT[p.severity]}`}
                     />

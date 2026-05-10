@@ -2224,6 +2224,43 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_user_timing_profiles_narrator ON user_timing_profiles(narrator_status);
   `);
 
+  // Sub-Spec C (2026-05-10): 邮件发送去重 + 召回追踪
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS timing_email_log (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      email TEXT NOT NULL,
+      category TEXT NOT NULL,
+      campaign TEXT NOT NULL,
+      report_id TEXT,
+      sent_at TEXT NOT NULL DEFAULT (datetime('now')),
+      status TEXT NOT NULL DEFAULT 'sent',
+      meta TEXT
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_timing_email_log_dedupe
+      ON timing_email_log(email, category, campaign);
+    CREATE INDEX IF NOT EXISTS idx_timing_email_log_sent ON timing_email_log(sent_at);
+
+    CREATE TABLE IF NOT EXISTS timing_email_recall_log (
+      id TEXT PRIMARY KEY,
+      user_id TEXT,
+      email TEXT,
+      email_log_id TEXT,
+      action TEXT NOT NULL,
+      landed_at TEXT,
+      landed_point_id TEXT,
+      session_duration_ms INTEGER,
+      pages_viewed INTEGER,
+      utm_source TEXT,
+      utm_medium TEXT,
+      utm_campaign TEXT,
+      recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_timing_email_recall_log_email ON timing_email_recall_log(email);
+    CREATE INDEX IF NOT EXISTS idx_timing_email_recall_log_campaign ON timing_email_recall_log(utm_campaign);
+    CREATE INDEX IF NOT EXISTS idx_timing_email_recall_log_action ON timing_email_recall_log(action, recorded_at);
+  `);
+
   // 兼容已有库 — 如果旧表没有这两列，加上
   try {
     const cols = (db.prepare(`PRAGMA table_info(user_timing_profiles)`).all() as Array<{ name: string }>).map((c) => c.name);

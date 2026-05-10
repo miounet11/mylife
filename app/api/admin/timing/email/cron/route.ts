@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
           utmCampaign,
           highlightFirstId: points[0]?.id,
         });
-        markSent(sub.email, 'monthly', utmCampaign);
+        markSent(sub.email, 'monthly', utmCampaign, fortune.id);
         monthlySent++;
       } catch (err) {
         errors.push(`monthly[${sub.email}]: ${err instanceof Error ? err.message : err}`);
@@ -116,7 +116,7 @@ export async function POST(request: NextRequest) {
           avoidSuggestions: stPoint?.userCopy?.avoidSuggestions || ['熬夜决策', '签长期合约'],
           utmCampaign: solarTermInfo.campaign,
         });
-        markSent(sub.email, 'solar_term', solarTermInfo.campaign);
+        markSent(sub.email, 'solar_term', solarTermInfo.campaign, fortune.id);
         solarTermSent++;
       } catch (err) {
         errors.push(`solar_term[${sub.email}]: ${err instanceof Error ? err.message : err}`);
@@ -169,10 +169,41 @@ function pickMonthPoints(
 
 const _sentCache = new Set<string>();
 function alreadySent(email: string, category: string, campaign: string): boolean {
-  return _sentCache.has(`${email}|${category}|${campaign}`);
+  // 内存快路径
+  const key = `${email}|${category}|${campaign}`;
+  if (_sentCache.has(key)) return true;
+  // 数据库持久化检查
+  const db = new Database(path.join(process.cwd(), 'data', 'lifekline.db'), { readonly: true });
+  try {
+    const row = db.prepare(
+      `SELECT id FROM timing_email_log WHERE email = ? AND category = ? AND campaign = ? LIMIT 1`
+    ).get(email, category, campaign);
+    if (row) {
+      _sentCache.add(key);
+      return true;
+    }
+    return false;
+  } finally {
+    db.close();
+  }
 }
-function markSent(email: string, category: string, campaign: string) {
-  _sentCache.add(`${email}|${category}|${campaign}`);
+
+function markSent(email: string, category: string, campaign: string, reportId: string | null) {
+  const key = `${email}|${category}|${campaign}`;
+  _sentCache.add(key);
+  const db = new Database(path.join(process.cwd(), 'data', 'lifekline.db'));
+  try {
+    const id = `tel_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    db.prepare(`
+      INSERT OR IGNORE INTO timing_email_log
+        (id, email, category, campaign, report_id, status)
+      VALUES (?, ?, ?, ?, ?, 'sent')
+    `).run(id, email, category, campaign, reportId);
+  } catch {
+    // ignore
+  } finally {
+    db.close();
+  }
 }
 
 function findLatestFortuneByEmail(email: string): { id: string; userId: string } | null {

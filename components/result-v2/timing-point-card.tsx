@@ -20,7 +20,10 @@ export default function TimingPointCard({ point }: Props) {
   const dateLabel = formatDateRange(point.startDate, point.endDate);
 
   return (
-    <div className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
+    <div
+      data-timing-point-id={point.id}
+      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 transition-all"
+    >
       <div className="flex items-center gap-2 text-xs text-[color:var(--ink-3)]">
         <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${SEVERITY_BADGE_CLASS[point.severity]}`}>
           {SEVERITY_LABEL[point.severity]}
