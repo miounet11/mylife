@@ -57,6 +57,7 @@
     "seo:article-funnel": "node --import tsx lib/seo/article-funnel.ts",
     "life-timing:verify": "node --import tsx scripts/life-timing/verify-samples.ts",
     "life-timing:upgrade-narrator": "node --import tsx scripts/life-timing/upgrade-narrator.ts",
+    "life-timing:bootstrap-profiles": "node --import tsx scripts/life-timing/bootstrap-profiles.ts",
     "timing:recall-analytics": "node scripts/life-timing/recall-analytics.js",
     "visual:import": "tsx scripts/visual-assets/import-manifest.ts",
     "visual:request-images": "tsx scripts/visual-assets/request-images.ts",

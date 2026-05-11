@@ -3,7 +3,7 @@ import {
   sendTimingMonthlyDigestEmail,
   sendTimingSolarTermEmail,
 } from '@/lib/email';
-import { getTimingProfile } from '@/lib/life-timing/timing-profile-store';
+import { resolveTimingProfileForReport } from '@/lib/life-timing/resolve-timing-profile';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import type { TimingPoint } from '@/lib/life-timing/types';
@@ -69,8 +69,10 @@ export async function POST(request: NextRequest) {
     const fortune = findLatestFortuneByEmail(sub.email);
     if (!fortune) continue;
 
-    const profile = getTimingProfile(fortune.userId);
-    if (!profile) continue;
+    // 用共享解析函数：缓存命中读 / 不命中现场 build + 立即填 fallback
+    const resolved = resolveTimingProfileForReport(fortune.id);
+    if (!resolved) continue;
+    const profile = resolved.record;
 
     // 月度
     if (dispatchedMonthly && tags.includes('timing:monthly') && !alreadySent(sub.email, 'monthly', utmCampaign)) {

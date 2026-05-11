@@ -2,6 +2,7 @@
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import {
@@ -685,6 +686,24 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <ReportSurface>
+          {/* Sub-Spec B1 软入口：让用户发现新版"未来时间地图" */}
+          <Link
+            href={`/r/${id}`}
+            className="block mb-4 rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-tint)] p-4 transition hover:border-[color:var(--brand-strong)]"
+          >
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)] mb-1">
+                  新版 · 时间地图
+                </div>
+                <div className="text-sm text-[color:var(--ink-1)]">
+                  看你未来 30 天 / 12 个月 / 5 年的命理时点 →
+                </div>
+              </div>
+              <span className="text-[color:var(--brand-strong)] font-bold text-xl">→</span>
+            </div>
+          </Link>
+
           <ReportCover
             userName={publicName}
             birthIso={

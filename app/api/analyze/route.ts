@@ -132,6 +132,17 @@ export async function POST(request: NextRequest) {
       userAgent,
       stageRef,
     });
+
+    // Sub-Spec B1: 异步预生成 timing profile（不阻塞返回，让 /r/[id] 首次访问命中缓存）
+    void (async () => {
+      try {
+        const { resolveTimingProfileForReport } = await import('@/lib/life-timing/resolve-timing-profile');
+        resolveTimingProfileForReport(execution.reportId);
+      } catch (err) {
+        console.warn('[analyze] timing profile prebuild failed:', err instanceof Error ? err.message : err);
+      }
+    })();
+
     return NextResponse.json({
       success: true,
       reportId: execution.reportId,
@@ -231,6 +242,16 @@ async function streamAnalyze(
           stageRef,
           onStage: (event) => send(event),
         });
+
+        // Sub-Spec B1: 异步预生成 timing profile
+        void (async () => {
+          try {
+            const { resolveTimingProfileForReport } = await import('@/lib/life-timing/resolve-timing-profile');
+            resolveTimingProfileForReport(execution.reportId);
+          } catch (err) {
+            console.warn('[analyze stream] timing profile prebuild failed:', err instanceof Error ? err.message : err);
+          }
+        })();
 
         send({
           type: 'complete',
