@@ -141,13 +141,21 @@ export default function SiteHeader({
       {/* 副带：世界易入口 · 优先增长工具（仅大屏，独立 band） */}
       <div className="hidden border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/72 lg:block">
         <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <Link
-            href="/world-yi"
-            className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]"
-          >
-            <Sparkles className="h-3.5 w-3.5" />
-            世界易系统
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/world-yi"
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              世界易系统
+            </Link>
+            <Link
+              href="/reports"
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]"
+            >
+              公开结果库
+            </Link>
+          </div>
           <div className="scrollbar-none flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap">
             {priorityGrowthHeaderLinks.map((item) => (
               <Link

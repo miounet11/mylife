@@ -83,6 +83,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         'en-US': '/world-yi/en/cases',
       },
     }),
+    createSitemapEntry('/reports', {
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.84,
+    }),
     createSitemapEntry('/insights', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
@@ -157,6 +162,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
     const resultRoutes = db
       .prepare('SELECT id, updated_at, created_at FROM fortunes WHERE is_public = 1 ORDER BY updated_at DESC')
       .all() as Array<{ id: string; updated_at?: string; created_at?: string }>;
+    const questionRoutes = db.prepare(`
+      SELECT q.id, q.created_at
+      FROM questions q
+      LEFT JOIN fortunes f ON f.id = json_extract(q.analysis, '$.reportId')
+      WHERE q.category = 'chat_user'
+        AND length(trim(q.question)) >= 8
+        AND length(trim(q.question)) <= 260
+        AND (f.id IS NULL OR f.is_public = 1)
+      ORDER BY datetime(q.created_at) DESC
+      LIMIT 500
+    `).all() as Array<{ id: string; created_at?: string }>;
 
     return [
       ...staticRoutes,
@@ -164,6 +180,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(item.updated_at || item.created_at || Date.now()),
         changeFrequency: 'monthly',
         priority: 0.65,
+      })),
+      ...questionRoutes.map((item) => createSitemapEntry(`/questions/${item.id}`, {
+        lastModified: new Date(item.created_at || Date.now()),
+        changeFrequency: 'monthly',
+        priority: 0.62,
       })),
     ];
   } catch {

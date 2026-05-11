@@ -27,4 +27,18 @@ describe('sitemap tools coverage', () => {
     expect(urls).toContain('https://www.life-kline.com/docs/quick-start');
     expect(urls).toContain('https://www.life-kline.com/docs/privacy-safety');
   });
+
+  test('includes public reports discovery route', () => {
+    const entries = sitemap();
+    const urls = entries.map((item) => item.url);
+
+    expect(urls).toContain('https://www.life-kline.com/reports');
+  });
+
+  test('includes public question detail routes when chat questions exist', () => {
+    const entries = sitemap();
+    const urls = entries.map((item) => item.url);
+
+    expect(urls.some((url) => url.startsWith('https://www.life-kline.com/questions/'))).toBe(true);
+  });
 });

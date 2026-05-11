@@ -109,6 +109,7 @@ import {
   getPublicDisplayName,
   inferWorldYiGuidedPaths,
 } from '@/lib/report-page-helpers';
+import { buildPublicReportSeo } from '@/lib/public-growth-feed';
 
 
 function buildFortuneRecordForExperience(params: {
@@ -148,11 +149,11 @@ export async function generateMetadata({ params }: PageProps) {
   try {
     const fortuneData = fortuneOperations.getById(id);
     if (fortuneData) {
-      const publicName = getPublicDisplayName(fortuneData.name);
       const isPublic = fortuneData.isPublic !== false;
+      const publicSeo = buildPublicReportSeo(fortuneData);
       return {
-        title: `${publicName}的结构判断报告 | 人生K线`,
-        description: `${publicName}的结构判断报告，基于真太阳时修正与结构化解读，默认私密，可按需创建分享页。`,
+        title: `${publicSeo.title} | 人生K线`,
+        description: publicSeo.description,
         alternates: {
           canonical: `https://www.life-kline.com/result/${id}`,
         },
@@ -162,8 +163,8 @@ export async function generateMetadata({ params }: PageProps) {
         },
         openGraph: {
           url: `https://www.life-kline.com/result/${id}`,
-          title: `${publicName}的结构判断 | 人生K线`,
-          description: '结构化判断结果页，展示结构、趋势与建议，可按需分享。',
+          title: `${publicSeo.title} | 人生K线`,
+          description: publicSeo.description,
         },
       };
     }
@@ -649,11 +650,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       ? '持续观察'
       : '反馈稳定';
   
+  const publicSeo = buildPublicReportSeo(buildFortuneRecordForExperience({ id, result }));
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: `${publicName}的结构判断报告`,
-    description: `AI驱动的结构判断公开结果页。此为${publicName}的公开报告。`,
+    headline: publicSeo.title,
+    description: publicSeo.description,
     mainEntityOfPage: `https://www.life-kline.com/result/${id}`,
     author: {
       '@type': 'Organization',
@@ -706,14 +708,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
           <ReportCover
             userName={publicName}
-            birthIso={
-              result.basic && (result.basic as any).birthDate
-                ? `${(result.basic as any).birthDate}${
-                    (result.basic as any).birthTime ? ' ' + (result.basic as any).birthTime : ''
-                  }`
-                : undefined
-            }
-            birthLocation={(result.basic as any)?.birthPlace || undefined}
+            birthIso={canManage && result.basic && (result.basic as any).birthDate
+              ? `${(result.basic as any).birthDate}${
+                  (result.basic as any).birthTime ? ' ' + (result.basic as any).birthTime : ''
+                }`
+              : undefined}
+            birthLocation={canManage ? (result.basic as any)?.birthPlace || undefined : undefined}
             pillarSummary={
               result.basic && (result.basic as any).year && (result.basic as any).month
                 ? `${(result.basic as any).year} ${(result.basic as any).month} ${(result.basic as any).day} ${(result.basic as any).hour}`

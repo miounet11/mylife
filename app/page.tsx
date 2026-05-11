@@ -261,12 +261,20 @@ export default async function HomePage() {
             <Card variant="default" padding="lg">
               <Inline justify="between" align="center" className="mb-4">
                 <Eyebrow>案例</Eyebrow>
-                <Link
-                  href="/cases"
-                  className="text-xs font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
-                >
-                  全部 →
-                </Link>
+                <div className="flex items-center gap-2">
+                  <Link
+                    href="/reports"
+                    className="text-xs font-semibold text-[color:var(--signal-strong)] hover:text-[color:var(--brand-strong)]"
+                  >
+                    公开结果 →
+                  </Link>
+                  <Link
+                    href="/cases"
+                    className="text-xs font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                  >
+                    全部 →
+                  </Link>
+                </div>
               </Inline>
               <Stack gap={3}>
                 {featuredCases.map((item) => (
