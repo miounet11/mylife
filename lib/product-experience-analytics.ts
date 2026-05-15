@@ -125,7 +125,9 @@ const surfaceMetricConfigs: ProductExperienceSurfaceMetricConfig[] = [
       isEvent('premium_service_requested', pageStartsWith('/result/')),
     ],
     nextStepActions: [
+      isEvent('result_chat_started', pageStartsWith('/result/')),
       isEvent('chat_page_viewed', sourceStartsWith('result_report_followup')),
+      isEvent('report_to_chat_completed', sourceStartsWith('result_')),
       isEvent('tool_detail_viewed', sourceStartsWith('result_report')),
       isEvent('events_page_viewed', sourceStartsWith('result_report')),
     ],

@@ -4,6 +4,7 @@ import type { ContentSection } from '@/lib/content';
 import type { ContentStatus, ManagedContentType } from '@/lib/content-store';
 import {
   getContentGenerationMaxTokens,
+  getContentGenerationModel,
   getContentGenerationTimeoutMs,
   isContentGenerationSegmentedEnabled,
   isContentGenerationSocraticEnabled,
@@ -102,10 +103,11 @@ function uniqueStrings(values: string[]) {
 }
 
 export function resolveContentGenerationLlmConfig() {
-  const modelChain = getModelFallbackChain(undefined, 'content');
+  const model = getContentGenerationModel();
+  const modelChain = getModelFallbackChain(model, 'content');
 
   return {
-    model: modelChain[0] || 'grok-420-fast',
+    model,
     modelChain,
     maxTokens: getContentGenerationMaxTokens(),
     disableHealthReorder: true,

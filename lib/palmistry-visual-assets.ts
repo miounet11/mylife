@@ -258,13 +258,14 @@ function buildSpecs(): PalmistryAssetSpec[] {
   return Array.from({ length: 80 }, (_, index) => {
     const topic = palmistryTopics[index % palmistryTopics.length];
     const audience = palmistryAudiences[Math.floor(index / palmistryTopics.length) % palmistryAudiences.length];
-    const ratio = index % 5 === 4 ? '4:5' : '16:9';
+    const ratio: PalmistryAssetSpec['ratio'] = index % 5 === 4 ? '4:5' : '16:9';
+    const size: PalmistryAssetSpec['size'] = ratio === '4:5' ? '1536x1920' : '2048x1152';
     return {
       index: index + 1,
       id: `PALM-SEOGEO-${padIndex(index + 1)}`,
       slug: '',
       ratio,
-      size: ratio === '4:5' ? '1536x1920' : '2048x1152',
+      size,
       topic,
       audience,
     };

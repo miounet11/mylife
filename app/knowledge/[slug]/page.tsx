@@ -9,6 +9,7 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ArticleAnalyzeLink from '@/components/article/article-analyze-link';
 import ArticleInlineCTA from '@/components/article/article-inline-cta';
 import ArticleStickyCTA from '@/components/article/article-sticky-cta';
 import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
@@ -203,7 +204,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
   }, {
     source: `knowledge_article:${article.slug}`,
   });
-  const pageSource = `knowledge_article:${article.slug}`;
+  const pageSource = surfaceKey;
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const journeyCopy = buildSourceJourneyCopy(pageSource, {
     title: '相关入口',
@@ -280,10 +281,27 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 </>
               )}
               excerpt={article.excerpt}
-              hint="建议先读完本页摘要，再开始个人分析，避免信息跳转过早。"
+              hint="把这篇文章落到自己身上验证：先看结构，再进入个人分析，不做泛泛阅读。"
               actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <ArticleAnalyzeLink
+                  key="analyze"
+                  href={appendSourceToHref('/analyze', pageSource)}
+                  surfaceKey={surfaceKey}
+                  slug={article.slug}
+                  contentType="knowledge"
+                  position="hero"
+                  sourceLabel="文章首屏快速分析"
+                  extraMeta={{
+                    title: article.title,
+                    category: article.category,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+                >
+                  {sourceCtaStrategy.searchAnalyzeLabel}
+                </ArticleAnalyzeLink>,
                 <Link key="knowledge" href={appendSourceToHref('/knowledge', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回知识库</Link>,
                 ...(topicHub ? [<Link key="topic" href={appendSourceToHref(`/knowledge/topics/${topicHub.topicSlug}`, pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">查看专题地图</Link>] : []),
               ]}
@@ -302,6 +320,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 caseLabel={sourceCtaStrategy.searchCaseLabel}
                 ctaStrategyKey={sourceCtaStrategy.strategyKey}
                 sourceFamily={sourceCtaStrategy.sourceFamily}
+                contentType="knowledge"
+                slug={article.slug}
+                surfaceKey={surfaceKey}
               />
             </div>
 

@@ -1,4 +1,5 @@
-import { buildDeterministicFallbackNarrative, finalizeReportForDelivery, resolveAnalyzeAgentKeys, shouldRunAnalyzeAgentic } from '@/lib/report-pipeline';
+import { analyzeFortune } from '@/lib/fortune-engine';
+import { buildDeterministicFallbackNarrative, finalizeReportForDelivery, resolveAnalyzeAgentKeys, shouldDeferReportLlmForSource, shouldRunAnalyzeAgentic } from '@/lib/report-pipeline';
 
 describe('report pipeline analyze agent keys', () => {
   it('uses full deterministic expert coverage when agentic llm path is deferred', () => {
@@ -26,24 +27,79 @@ describe('report pipeline analyze agent keys', () => {
     ]);
   });
 
-  it('skips analyze agentic execution when llm is deferred by provider health', () => {
+  it('skips live analyze agentic execution so first delivery is not blocked by slow expert calls', () => {
     expect(shouldRunAnalyzeAgentic({
       source: 'analyze',
-      llmUsed: false,
-      deferredByProviderHealth: true,
+      llmUsed: true,
+      deferredByProviderHealth: false,
       agentScopeHealthDeferred: false,
       agentScopeSnapshotsConservative: false,
     })).toBe(false);
   });
 
-  it('keeps analyze agentic disabled when agent scope has no runnable models', () => {
+  it('keeps upgrade agentic enabled when provider health allows it', () => {
     expect(shouldRunAnalyzeAgentic({
-      source: 'analyze',
+      source: 'upgrade',
+      llmUsed: false,
+      deferredByProviderHealth: false,
+      agentScopeHealthDeferred: false,
+      agentScopeSnapshotsConservative: false,
+    })).toBe(true);
+  });
+
+  it('keeps upgrade agentic disabled when agent scope has no runnable models', () => {
+    expect(shouldRunAnalyzeAgentic({
+      source: 'upgrade',
       llmUsed: false,
       deferredByProviderHealth: false,
       agentScopeHealthDeferred: true,
       agentScopeSnapshotsConservative: true,
     })).toBe(false);
+  });
+
+  it('hard-defers first analyze LLM when report scope is conservatively unhealthy', () => {
+    expect(shouldDeferReportLlmForSource({
+      source: 'analyze',
+      providerHealthDeferred: false,
+      reportScopeSnapshotsConservative: true,
+      hasRunnableModels: true,
+    })).toBe(true);
+  });
+
+  it('defers upgrade LLM probes when provider health is already weak', () => {
+    expect(shouldDeferReportLlmForSource({
+      source: 'upgrade',
+      providerHealthDeferred: true,
+      reportScopeSnapshotsConservative: false,
+      hasRunnableModels: true,
+    })).toBe(true);
+  });
+
+  it('defers upgrade LLM probes when report scope is conservatively unhealthy', () => {
+    expect(shouldDeferReportLlmForSource({
+      source: 'upgrade',
+      providerHealthDeferred: false,
+      reportScopeSnapshotsConservative: true,
+      hasRunnableModels: true,
+    })).toBe(true);
+  });
+
+  it('allows upgrade LLM only when report providers are healthy and runnable', () => {
+    expect(shouldDeferReportLlmForSource({
+      source: 'upgrade',
+      providerHealthDeferred: false,
+      reportScopeSnapshotsConservative: false,
+      hasRunnableModels: true,
+    })).toBe(false);
+  });
+
+  it('defers upgrade LLM when no report models are runnable', () => {
+    expect(shouldDeferReportLlmForSource({
+      source: 'upgrade',
+      providerHealthDeferred: false,
+      reportScopeSnapshotsConservative: false,
+      hasRunnableModels: false,
+    })).toBe(true);
   });
 
   it('builds a focused fallback narrative when llm enhancement is unavailable', () => {
@@ -375,6 +431,32 @@ describe('report pipeline analyze agent keys', () => {
     expect(finalized.analysis.explanation).not.toContain('macro_cycle');
     expect(finalized.analysis.explanation).not.toContain('2027-2027');
     expect(finalized.analysis.qualityAudit?.overallScore).toBeGreaterThan(0);
+  });
+
+  it('preserves deterministic engine evidence through final delivery cleanup', () => {
+    const base = analyzeFortune('张三', new Date(1990, 5, 15), '14:30', '北京', 8, 'male');
+    const finalized = finalizeReportForDelivery(base);
+    const evidence = finalized.analysis?.contextSignals?.engineEvidence as any;
+
+    expect(evidence).toBeDefined();
+    expect(evidence.version).toBe('engine-evidence-v2');
+    expect(evidence.calculationProfile.birthPlace).toBe('北京');
+    expect(evidence.scoringBreakdown.fiveElements).toHaveLength(5);
+    expect(evidence.fiveElementRanking).toHaveLength(5);
+    expect(evidence.measurementResults.map((item: any) => item.id)).toEqual([
+      'pillars',
+      'five-elements',
+      'day-master-strength',
+      'pattern',
+      'ten-gods',
+      'yong-shen',
+      'shen-sha',
+      'dayun',
+      'kline',
+      'domain-advice',
+    ]);
+    expect(evidence.measurementResults.find((item: any) => item.id === 'domain-advice')?.actions.length).toBeGreaterThan(0);
+    expect(finalized.analysis?.enhancementNotes?.join('')).toContain('LLM 仅做表达修饰');
   });
 
   it('does not double-wrap explanation when sections already exist', () => {

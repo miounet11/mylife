@@ -46,6 +46,7 @@
     "qa:admin-surfaces": "npm run qa:admin-product-components",
     "system:health": "node scripts/system-health.js",
     "system:requests": "node scripts/request-window.js",
+    "system:model-chain-review": "node scripts/model-chain-review.js",
     "system:traffic-truth": "node scripts/traffic-truth.js",
     "system:retro": "node scripts/report-retro.js",
     "system:upgrade-compare": "node scripts/upgrade-behavior-compare.js",

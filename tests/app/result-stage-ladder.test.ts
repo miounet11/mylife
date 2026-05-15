@@ -7,7 +7,7 @@ describe('result page stage ladder surface', () => {
   it('renders the user-facing stage ladder from the shared helper', () => {
     expect(source).toContain('buildReportStageLadder');
     expect(source).toContain('reportStageLadder.map');
-    expect(source).toContain('报告升级路径');
+    expect(source).toContain('报告阅读进度');
     expect(source).toContain('下一阶段');
     expect(source).toContain('当前阶段');
     expect(source).toContain('data-stage-key={item.key}');

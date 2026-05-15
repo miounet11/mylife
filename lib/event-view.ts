@@ -27,6 +27,7 @@ export interface EventViewModel {
     suggestionKey?: string;
     reason?: string;
     title?: string;
+    occurrenceWindow?: string;
   };
   followUpAdvice?: {
     shortTerm?: string;
@@ -137,6 +138,7 @@ export function isEstimatedPastEventRecord(event?: {
 
 export function getEstimatedPastEventPrompt(event?: {
   title?: string;
+  occurrenceWindow?: string;
   fortuneAnalysis?: {
     occurrenceWindow?: string;
   };
@@ -146,7 +148,7 @@ export function getEstimatedPastEventPrompt(event?: {
   }
 
   const title = event.title || '这条事件';
-  const occurrenceWindow = event.fortuneAnalysis?.occurrenceWindow?.trim();
+  const occurrenceWindow = (event.occurrenceWindow || event.fortuneAnalysis?.occurrenceWindow)?.trim();
   if (occurrenceWindow) {
     return `${title} 当前先按暂估日期建档，建议优先按“${occurrenceWindow}”回忆真实发生时间。`;
   }

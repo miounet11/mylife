@@ -60,7 +60,7 @@ import * as worldYiPublicationLanes from '@/lib/world-yi-publication-lanes';
 
 let mockEntries: ManagedContentEntry[] = [];
 let mockRuns: ContentSchedulerRunRecord[] = [];
-let mockAnalyticsRows: Array<Record<string, unknown>> = [];
+let mockAnalyticsRows: Parameters<typeof rankScheduledPublishCandidates>[0]['analyticsRows'] = [];
 let mockSignals: Array<Record<string, unknown>> = [];
 const originalEnv = process.env;
 
@@ -87,7 +87,6 @@ function buildReadyDraftEntry(overrides: Partial<ManagedContentEntry>): ManagedC
     ],
     status: 'draft',
     source: 'agent-llm:auto-ops',
-    meta: {},
     createdBy: 'system',
     updatedBy: 'system',
     createdAt: '2026-03-12T00:00:00.000Z',
@@ -402,6 +401,9 @@ describe('content ops snapshot', () => {
         draftBatchSize: 2,
         generateCooldownMinutes: 240,
         radarRefreshMaxAgeHours: 4,
+        adaptiveTypeWeight: 10,
+        adaptiveRadarSourceWeight: 14,
+        adaptiveFreshnessWeight: 8,
       },
     });
 
@@ -447,6 +449,9 @@ describe('content ops snapshot', () => {
         draftBatchSize: 2,
         generateCooldownMinutes: 240,
         radarRefreshMaxAgeHours: 4,
+        adaptiveTypeWeight: 10,
+        adaptiveRadarSourceWeight: 14,
+        adaptiveFreshnessWeight: 8,
       },
     });
 
@@ -490,6 +495,9 @@ describe('content ops snapshot', () => {
         draftBatchSize: 2,
         generateCooldownMinutes: 240,
         radarRefreshMaxAgeHours: 4,
+        adaptiveTypeWeight: 10,
+        adaptiveRadarSourceWeight: 14,
+        adaptiveFreshnessWeight: 8,
       },
     });
 
@@ -790,8 +798,10 @@ describe('content scheduler cycle', () => {
 
     jest.spyOn(worldYiAutonomousState, 'resolveWorldYiAutonomyRuntimePolicy').mockReturnValue({
       effectivePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -812,10 +822,20 @@ describe('content scheduler cycle', () => {
           clusterQuota: 0,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       basePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -836,19 +856,36 @@ describe('content scheduler cycle', () => {
           clusterQuota: 0,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       appliedSignals: [],
       ignoredSignals: [],
     });
     jest.spyOn(worldYiAutonomousState, 'readWorldYiContentDecisionLedger').mockReturnValue([]);
     jest.spyOn(worldYiAutonomousState, 'readOpenAgentContentAnalysisSnapshot').mockReturnValue(null);
-    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [] } as ReturnType<typeof worldYiAutonomousState.summarizeOpenAgentAutonomyBacklogFocus>);
-    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({ recentCycles: [], decisionCounts: {}, blockedReasonCounts: [] } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
+    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [], qualityGate: false, decisionLedger: false, topTargets: [] });
+    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({
+      recentCycles: [],
+      decisionCounts: {},
+      blockedReasonCounts: [],
+      latestDecisionMix: { publishCount: 0, holdCount: 0, reviseCount: 0, blockedCount: 0, totalCandidates: 0, readyCount: 0 },
+      topBlockedReasons: [],
+      topHeldCandidates: [],
+      topReviseCandidates: [],
+      lastPublishRationale: [],
+    } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
     jest.spyOn(worldYiAutonomousState, 'writeWorldYiContentDecisionLedgerEntry').mockImplementation((entry) => entry as ReturnType<typeof worldYiAutonomousState.writeWorldYiContentDecisionLedgerEntry>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationLaneSummaries').mockReturnValue([] as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationLaneSummaries>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationReserveSignal').mockReturnValue({
       weakLaneKeys: [],
-      queuedTargetsPerLane: {},
+      queuedTargetsPerLane: { main: 0, wave2: 0, global: 0 },
       minQueuedTargetsPerLane: 0,
     } as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationReserveSignal>);
     jest.spyOn(worldYiPublicationLanes, 'findWorldYiLaneCoverageRow').mockReturnValue(null);
@@ -888,6 +925,152 @@ describe('content scheduler cycle', () => {
     expect(result.publishedCount).toBeGreaterThan(1);
     expect(mockSaveManagedContentEntry).toHaveBeenCalledTimes(3);
     expect(mockEntries.filter((entry) => entry.status === 'published' && entry.id.startsWith('draft-'))).toHaveLength(3);
+  });
+
+  it('marks scheduled public growth publications as public coverage ready', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-03-13T02:30:00.000Z'));
+    process.env.CONTENT_SCHEDULER_PUBLISH_HOURS = '10,15,20';
+    process.env.CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT = '1';
+    process.env.CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES = '180';
+    process.env.CONTENT_SCHEDULER_DRAFT_BATCH_SIZE = '1';
+    process.env.CONTENT_SCHEDULER_DRAFT_RESERVE_TARGET = '0';
+    process.env.CONTENT_SCHEDULER_GENERATE_COOLDOWN_MINUTES = '240';
+    process.env.CONTENT_SCHEDULER_RADAR_REFRESH_MAX_AGE_HOURS = '4';
+    process.env.CONTENT_SCHEDULER_ADAPTIVE_TYPE_WEIGHT = '10';
+    process.env.CONTENT_SCHEDULER_ADAPTIVE_RADAR_SOURCE_WEIGHT = '14';
+    process.env.CONTENT_SCHEDULER_ADAPTIVE_FRESHNESS_WEIGHT = '8';
+
+    mockEntries = [
+      buildReadyDraftEntry({
+        id: 'growth-draft-1',
+        slug: 'growth-draft-1',
+        title: '海外华人怎么看职业窗口',
+        source: 'agent-llm:public-growth',
+        sections: [1, 2, 3, 4].map((index) => ({
+          title: `职业窗口判断 section ${index}`,
+          paragraphs: [
+            '这段内容明确讨论海外华人面对职业窗口时如何先判断现实变量，再结合阶段节奏确认行动边界与风险成本。',
+            '第二段继续补足真实场景、用户困惑、可执行动作和下一步测算入口，避免只给空泛结论或占位文字。',
+          ],
+        })),
+        meta: {
+          sourceType: 'public-growth',
+          growthPlanKey: 'career-timing',
+          locale: 'zh-CN',
+          market: '海外华人',
+        },
+      }),
+    ];
+    mockSignals = [{ id: 'signal-1', createdAt: '2026-03-13T02:25:00.000Z' }];
+
+    jest.spyOn(worldYiAutonomousState, 'resolveWorldYiAutonomyRuntimePolicy').mockReturnValue({
+      effectivePolicy: {
+        version: 1,
+        source: 'default',
+        focusKeys: [],
+        topTargets: [],
+        publishGate: {
+          requireLlmSource: false,
+          minScore: 0,
+          laneGapBoost: 0,
+          weakLaneBoost: 0,
+          backlogLaneReserveBoost: 0,
+          requireGrowthPublicationReady: true,
+          blockLowPerformanceTypes: false,
+          lowPerformanceTypeMinPublishedCount: 999,
+          blockLowPerformanceRadarSources: false,
+          lowPerformanceRadarSourceMinPublishedCount: 999,
+        },
+        queueWeights: {
+          laneGapBaseBoost: 0,
+          weakLaneBoost: 0,
+          backlogLaneReserveBoost: 0,
+          radarQuota: 0,
+          clusterQuota: 0,
+          perLaneQuota: 0,
+        },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
+      },
+      basePolicy: {
+        version: 1,
+        source: 'default',
+        focusKeys: [],
+        topTargets: [],
+        publishGate: {
+          requireLlmSource: false,
+          minScore: 0,
+          laneGapBoost: 0,
+          weakLaneBoost: 0,
+          backlogLaneReserveBoost: 0,
+          requireGrowthPublicationReady: true,
+          blockLowPerformanceTypes: false,
+          lowPerformanceTypeMinPublishedCount: 999,
+          blockLowPerformanceRadarSources: false,
+          lowPerformanceRadarSourceMinPublishedCount: 999,
+        },
+        queueWeights: {
+          laneGapBaseBoost: 0,
+          weakLaneBoost: 0,
+          backlogLaneReserveBoost: 0,
+          radarQuota: 0,
+          clusterQuota: 0,
+          perLaneQuota: 0,
+        },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
+      },
+      appliedSignals: [],
+      ignoredSignals: [],
+    });
+    jest.spyOn(worldYiAutonomousState, 'readWorldYiContentDecisionLedger').mockReturnValue([]);
+    jest.spyOn(worldYiAutonomousState, 'readOpenAgentContentAnalysisSnapshot').mockReturnValue(null);
+    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [], qualityGate: false, decisionLedger: false, topTargets: [] });
+    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({
+      recentCycles: [],
+      decisionCounts: {},
+      blockedReasonCounts: [],
+      latestDecisionMix: { publishCount: 0, holdCount: 0, reviseCount: 0, blockedCount: 0, totalCandidates: 0, readyCount: 0 },
+      topBlockedReasons: [],
+      topHeldCandidates: [],
+      topReviseCandidates: [],
+      lastPublishRationale: [],
+    } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
+    jest.spyOn(worldYiAutonomousState, 'writeWorldYiContentDecisionLedgerEntry').mockImplementation((entry) => entry as ReturnType<typeof worldYiAutonomousState.writeWorldYiContentDecisionLedgerEntry>);
+    jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationLaneSummaries').mockReturnValue([] as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationLaneSummaries>);
+    jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationReserveSignal').mockReturnValue({
+      weakLaneKeys: [],
+      queuedTargetsPerLane: { main: 0, wave2: 0, global: 0 },
+      minQueuedTargetsPerLane: 0,
+    } as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationReserveSignal>);
+    jest.spyOn(worldYiPublicationLanes, 'findWorldYiLaneCoverageRow').mockReturnValue(null);
+    jest.spyOn(worldYiPublicationLanes, 'getWorldYiPublicationLaneConfigByKey').mockReturnValue(null);
+
+    const result = await runContentSchedulerCycle({ trigger: 'manual' });
+
+    expect(result.publishedCount).toBe(1);
+    const published = mockEntries.find((entry) => entry.id === 'growth-draft-1');
+    expect(published?.status).toBe('published');
+    expect(published?.meta).toEqual(expect.objectContaining({
+      publicationReady: true,
+      surfaceVisibility: 'public',
+      scheduleTrigger: 'manual',
+    }));
+    expect(published?.meta?.editorialScore).toBe(published?.meta?.scheduleScore);
+    expect(published?.meta?.publishReasons).toEqual(published?.meta?.scheduleReasons);
+    expect(typeof published?.meta?.autoPublishedAt).toBe('string');
   });
 
   it('replenishes draft reserve in the same cycle after multi-publish drains it', async () => {
@@ -937,8 +1120,10 @@ describe('content scheduler cycle', () => {
 
     jest.spyOn(worldYiAutonomousState, 'resolveWorldYiAutonomyRuntimePolicy').mockReturnValue({
       effectivePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -959,10 +1144,20 @@ describe('content scheduler cycle', () => {
           clusterQuota: 3,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       basePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -983,19 +1178,36 @@ describe('content scheduler cycle', () => {
           clusterQuota: 3,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       appliedSignals: [],
       ignoredSignals: [],
     });
     jest.spyOn(worldYiAutonomousState, 'readWorldYiContentDecisionLedger').mockReturnValue([]);
     jest.spyOn(worldYiAutonomousState, 'readOpenAgentContentAnalysisSnapshot').mockReturnValue(null);
-    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [] } as ReturnType<typeof worldYiAutonomousState.summarizeOpenAgentAutonomyBacklogFocus>);
-    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({ recentCycles: [], decisionCounts: {}, blockedReasonCounts: [] } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
+    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [], qualityGate: false, decisionLedger: false, topTargets: [] });
+    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({
+      recentCycles: [],
+      decisionCounts: {},
+      blockedReasonCounts: [],
+      latestDecisionMix: { publishCount: 0, holdCount: 0, reviseCount: 0, blockedCount: 0, totalCandidates: 0, readyCount: 0 },
+      topBlockedReasons: [],
+      topHeldCandidates: [],
+      topReviseCandidates: [],
+      lastPublishRationale: [],
+    } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
     jest.spyOn(worldYiAutonomousState, 'writeWorldYiContentDecisionLedgerEntry').mockImplementation((entry) => entry as ReturnType<typeof worldYiAutonomousState.writeWorldYiContentDecisionLedgerEntry>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationLaneSummaries').mockReturnValue([] as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationLaneSummaries>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationReserveSignal').mockReturnValue({
       weakLaneKeys: [],
-      queuedTargetsPerLane: {},
+      queuedTargetsPerLane: { main: 0, wave2: 0, global: 0 },
       minQueuedTargetsPerLane: 0,
     } as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationReserveSignal>);
     jest.spyOn(worldYiPublicationLanes, 'findWorldYiLaneCoverageRow').mockReturnValue(null);
@@ -1083,8 +1295,10 @@ describe('content scheduler cycle', () => {
 
     jest.spyOn(worldYiAutonomousState, 'resolveWorldYiAutonomyRuntimePolicy').mockReturnValue({
       effectivePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -1105,10 +1319,20 @@ describe('content scheduler cycle', () => {
           clusterQuota: 3,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       basePolicy: {
+        version: 1,
         source: 'default',
         focusKeys: [],
+        topTargets: [],
         publishGate: {
           requireLlmSource: false,
           minScore: 0,
@@ -1129,19 +1353,36 @@ describe('content scheduler cycle', () => {
           clusterQuota: 3,
           perLaneQuota: 0,
         },
+        validationMode: {
+          skipKnowledgeAcquisition: false,
+          skipReportUpgrade: false,
+          skipMonthlyDigest: false,
+          skipEmailRetry: false,
+          skipOpenAgentReview: false,
+        },
+        updatedAt: '2026-03-13T02:30:00.000Z',
       },
       appliedSignals: [],
       ignoredSignals: [],
     });
     jest.spyOn(worldYiAutonomousState, 'readWorldYiContentDecisionLedger').mockReturnValue([]);
     jest.spyOn(worldYiAutonomousState, 'readOpenAgentContentAnalysisSnapshot').mockReturnValue(null);
-    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [] } as ReturnType<typeof worldYiAutonomousState.summarizeOpenAgentAutonomyBacklogFocus>);
-    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({ recentCycles: [], decisionCounts: {}, blockedReasonCounts: [] } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
+    jest.spyOn(worldYiAutonomousState, 'summarizeOpenAgentAutonomyBacklogFocus').mockReturnValue({ laneReserve: false, focusKeys: [], qualityGate: false, decisionLedger: false, topTargets: [] });
+    jest.spyOn(worldYiAutonomousState, 'summarizeWorldYiContentDecisionLedger').mockReturnValue({
+      recentCycles: [],
+      decisionCounts: {},
+      blockedReasonCounts: [],
+      latestDecisionMix: { publishCount: 0, holdCount: 0, reviseCount: 0, blockedCount: 0, totalCandidates: 0, readyCount: 0 },
+      topBlockedReasons: [],
+      topHeldCandidates: [],
+      topReviseCandidates: [],
+      lastPublishRationale: [],
+    } as ReturnType<typeof worldYiAutonomousState.summarizeWorldYiContentDecisionLedger>);
     jest.spyOn(worldYiAutonomousState, 'writeWorldYiContentDecisionLedgerEntry').mockImplementation((entry) => entry as ReturnType<typeof worldYiAutonomousState.writeWorldYiContentDecisionLedgerEntry>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationLaneSummaries').mockReturnValue([] as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationLaneSummaries>);
     jest.spyOn(worldYiPublicationLanes, 'buildWorldYiPublicationReserveSignal').mockReturnValue({
       weakLaneKeys: [],
-      queuedTargetsPerLane: {},
+      queuedTargetsPerLane: { main: 0, wave2: 0, global: 0 },
       minQueuedTargetsPerLane: 0,
     } as ReturnType<typeof worldYiPublicationLanes.buildWorldYiPublicationReserveSignal>);
     jest.spyOn(worldYiPublicationLanes, 'findWorldYiLaneCoverageRow').mockReturnValue(null);

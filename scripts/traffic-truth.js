@@ -18,6 +18,7 @@ const DAYS = Number(process.argv[2] || 14);
 
 const BOT_PRED = `birth_date='1990-01-01' AND birth_time IN ('12:00','00:00') AND birth_place='北京'`;
 const BOT_PRED_U = `u.birth_date='1990-01-01' AND u.birth_time IN ('12:00','00:00') AND u.birth_place='北京'`;
+const SYSTEM_EVENT_FILTER = `event_name NOT IN ('llm_model_attempt','llm_model_circuit_changed')`;
 
 console.log(`=== 流量真相看板（最近 ${DAYS} 天）===\n`);
 
@@ -55,7 +56,7 @@ const events = db.prepare(`
   SELECT date(created_at) AS day, COUNT(*) AS events, COUNT(DISTINCT session_id) AS sessions
   FROM analytics_events
   WHERE created_at >= datetime('now', '-${DAYS} days')
-    AND event_name NOT IN ('llm_model_attempt','llm_model_circuit_changed')
+    AND ${SYSTEM_EVENT_FILTER}
   GROUP BY day ORDER BY day DESC
 `).all();
 console.table(events);

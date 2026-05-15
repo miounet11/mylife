@@ -2,8 +2,6 @@
 
 import {
   deriveReportReasoningMode,
-  getReasoningModeDescription,
-  getReasoningModeLabel,
   type ReportReasoningMode,
 } from '@/lib/report-reasoning-mode';
 
@@ -39,8 +37,8 @@ type AgenticInsightPanelProps = {
   contextSignals?: Record<string, unknown>;
 };
 
-const AGENT_LABELS: Record<string, string> = {
-  core_constitution: '核心命局',
+const INSIGHT_LABELS: Record<string, string> = {
+  core_constitution: '核心结构',
   kline_narrative: '人生K线',
   career_wealth: '事业财富',
   relationship_family: '关系家庭',
@@ -59,7 +57,7 @@ export default function AgenticInsightPanel({
   contextSignals,
 }: AgenticInsightPanelProps) {
   const entries = Object.entries(agentResults || {})
-    .map(([key, value]) => normalizeAgentEntry(key, value, orchestration?.agentSources?.[key]))
+    .map(([key, value]) => normalizeInsightEntry(key, value, orchestration?.agentSources?.[key]))
     .filter((item) => item.summary || item.highlights.length || item.actions.length);
   const temporal = (contextSignals?.temporal || {}) as Record<string, unknown>;
   const macroCycles = (contextSignals?.macroCycles || {}) as Record<string, unknown>;
@@ -67,10 +65,10 @@ export default function AgenticInsightPanel({
   const spatialFactors = (contextSignals?.spatialFactors || {}) as Record<string, unknown>;
   const conflicts = loop?.review?.conflicts || [];
   const repairActions = loop?.review?.repairPlan?.actions || [];
-  const totalAgentCalls = orchestration?.totalLlmCalls || 0;
-  const successfulAgents = orchestration?.succeeded?.length || 0;
-  const failedAgents = orchestration?.failed?.length || 0;
-  const allFallback = totalAgentCalls > 0 && successfulAgents === 0;
+  const consistencyScore = typeof verify?.consistencyScore === 'number'
+    ? Math.round(verify.consistencyScore)
+    : null;
+  const hasSupplement = entries.length > 0;
   const resolvedReasoningMode = deriveReportReasoningMode({
     reasoningMode,
     agenticUsed,
@@ -88,25 +86,27 @@ export default function AgenticInsightPanel({
   return (
     <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
       <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-6">
-        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">专家解释层</div>
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">补充判断</div>
         <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">
-          {allFallback ? '并发 Agent 已尝试，但本次未成功接入主链。' : `${getReasoningModeLabel(resolvedReasoningMode)}已接入报告主链。`}
+          {hasSupplement ? '这些补充视角已纳入本次报告。' : '本次报告以基础结构判断为主。'}
         </div>
         <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)]">
           <div className="text-sm font-semibold text-[color:var(--ink)]">当前状态</div>
           <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">
-            {getReasoningModeDescription(resolvedReasoningMode)}
+            {hasSupplement
+              ? '报告已整理出多个可阅读的补充视角，用来帮助你理解重点、风险和行动顺序。'
+              : '可阅读的核心判断已经生成，更多补充内容会在可用时继续整理。'}
           </div>
         </div>
 
-        {totalAgentCalls > 0 ? (
+        {(hasSupplement || verify?.verdict) ? (
           <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            <StatusTile label="调度尝试" value={`${totalAgentCalls} 个`} detail={allFallback ? '当前全部回退为引擎结果' : '已纳入本次报告'} />
-            <StatusTile label="成功接入" value={`${successfulAgents} 个`} detail={successfulAgents > 0 ? '已形成解释输入' : '本次无成功返回'} />
+            <StatusTile label="补充视角" value={`${entries.length} 个`} detail={hasSupplement ? '已纳入本次报告' : '待继续补全'} />
+            <StatusTile label="重点提炼" value={hasSupplement ? '已完成' : '基础版'} detail={hasSupplement ? '已形成可读内容' : '先展示核心判断'} />
             <StatusTile
               label="一致性"
-              value={verify?.verdict || '待校验'}
-              detail={verify?.verdict ? `评分 ${verify.consistencyScore ?? '待计算'}` : `失败 ${failedAgents} 个`}
+              value={mapVerifyVerdict(verify?.verdict)}
+              detail={consistencyScore !== null ? `可信度 ${consistencyScore}` : '按当前内容展示'}
             />
           </div>
         ) : null}
@@ -123,9 +123,6 @@ export default function AgenticInsightPanel({
                         {item.windows[0].label}
                       </div>
                     ) : null}
-                    <div className={`rounded-full px-3 py-1 text-xs font-semibold ${item.source === 'llm' ? 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]' : 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'}`}>
-                      {item.source === 'llm' ? 'LLM返回' : '引擎回退'}
-                    </div>
                   </div>
                 </div>
                 {item.summary ? (
@@ -149,10 +146,8 @@ export default function AgenticInsightPanel({
             ))}
           </div>
         ) : (
-          <div className="mt-5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)] text-sm leading-7 text-[color:var(--ink-4)]">
-            {allFallback
-              ? '当前并发 Agent 没有返回可用结果，页面内容来自结构化引擎和 deterministic 专家层回退。'
-              : '当前专家层未返回足够可展示的结果块，但时空上下文与一致性校验已保留在报告里。'}
+          <div className="mt-5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-3 text-sm leading-7 text-[color:var(--ink-4)]">
+            当前没有足够可展示的补充视角，先阅读核心判断即可。
           </div>
         )}
       </section>
@@ -188,32 +183,18 @@ export default function AgenticInsightPanel({
           />
         </div>
 
-        {verify?.failedRules && verify.failedRules.length > 0 ? (
+        {(verify?.failedRules && verify.failedRules.length > 0) || (orchestration?.errors && orchestration.errors.length > 0) ? (
           <div className="mt-5 rounded-[var(--radius-md)] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
-            仍待继续修正的规则：{verify.failedRules.join('、')}
-          </div>
-        ) : null}
-
-        {orchestration?.errors && orchestration.errors.length > 0 ? (
-          <div className="mt-5 rounded-[var(--radius-md)] bg-[color:var(--signal-soft)] p-4 text-xs leading-6 text-[color:var(--signal-strong)]">
-            Agent 失败原因：{orchestration.errors.slice(0, 4).map((item) => `${AGENT_LABELS[item.key] || item.key} ${item.error}`).join('；')}
+            部分补充内容暂未整理完成，当前报告仍可先阅读核心判断。
           </div>
         ) : null}
 
         {(conflicts.length > 0 || repairActions.length > 0) ? (
-          <div className="mt-5 grid gap-4">
-            <div className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
-              <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">审查结果</div>
-              <div className="mt-2 text-base font-bold text-[color:var(--ink)]">
-                检测到 {conflicts.length} 个冲突，已规划 {repairActions.length} 个修复动作。
-              </div>
+          <div className="mt-5 rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4">
+            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">内容校对</div>
+            <div className="mt-2 text-base font-bold text-[color:var(--ink)]">
+              部分表达仍在校对中，核心判断可以先阅读。
             </div>
-            {conflicts.slice(0, 2).map((item) => (
-              <div key={item.id || item.type} className="rounded-[var(--radius-md)] bg-[color:var(--bg-elevated)] p-4 text-xs leading-6 text-[color:var(--ink)]">
-                <span className="font-semibold">{item.type || '冲突'}</span>
-                {item.severity ? ` / ${item.severity}` : ''}：{item.explanation || '待补充说明'}
-              </div>
-            ))}
           </div>
         ) : null}
       </section>
@@ -221,7 +202,7 @@ export default function AgenticInsightPanel({
   );
 }
 
-function normalizeAgentEntry(key: string, value: unknown, source?: 'llm' | 'fallback') {
+function normalizeInsightEntry(key: string, value: unknown, _source?: 'llm' | 'fallback') {
   const data = (value || {}) as {
     summary?: string;
     highlights?: string[];
@@ -231,12 +212,11 @@ function normalizeAgentEntry(key: string, value: unknown, source?: 'llm' | 'fall
 
   return {
     key,
-    label: AGENT_LABELS[key] || key,
+    label: INSIGHT_LABELS[key] || key,
     summary: data.summary || '',
     highlights: data.highlights || [],
     actions: data.actions || [],
     windows: (data.windows || []).map((item) => ({ label: item.label || '关键窗口' })),
-    source: source || 'fallback',
   };
 }
 
@@ -258,6 +238,13 @@ function StatusTile({ label, value, detail }: { label: string; value: string; de
       <div className="mt-2 text-sm leading-7 text-[color:var(--ink-4)]">{detail}</div>
     </div>
   );
+}
+
+function mapVerifyVerdict(verdict?: 'PASS' | 'WARN' | 'FAIL') {
+  if (verdict === 'PASS') return '稳定';
+  if (verdict === 'WARN') return '需留意';
+  if (verdict === 'FAIL') return '待补全';
+  return '已检查';
 }
 
 function readList(values: string[] | undefined, fallback: string) {

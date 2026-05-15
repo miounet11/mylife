@@ -7,6 +7,7 @@ import { ArrowRight, Bot, Layers3, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
+import PublicGrowthFeedPanel from '@/components/public-growth-feed-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
@@ -398,6 +399,24 @@ export default async function ToolDetailPage({
           compact
         />
 
+        <PublicGrowthFeedPanel
+          title={`${tool.shortTitle}相关公开查询`}
+          description="单项工具页直接展示相关匿名案例和公开追问，用户看完别人的问题后能马上生成自己的判断或继续追问。"
+          signals={[
+            tool.title,
+            tool.shortTitle,
+            tool.themeLabel,
+            tool.description,
+            tool.targetUser,
+            tool.rightQuestion,
+            ...tool.hookKeywords,
+            ...(growthProfile?.keywords || []),
+            ...(growthProfile?.geoQuestions || []),
+          ]}
+          reportLimit={2}
+          questionLimit={4}
+        />
+
         <section className="mt-10 space-y-4">
           <PriorityDisclosure
             label="更多内容"
@@ -426,10 +445,10 @@ export default async function ToolDetailPage({
 
               {growthProfile ? (
                 <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">GEO 问答与社交分发</div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">常见问题与分享参考</div>
                   <div className="mt-5 grid gap-5 lg:grid-cols-2">
                     <div>
-                      <h2 className="text-2xl font-black text-[color:var(--ink)]">搜索和 AI 回答页要覆盖的问题</h2>
+                      <h2 className="text-2xl font-black text-[color:var(--ink)]">用户最常问的问题</h2>
                       <div className="mt-4 grid gap-3">
                         {growthProfile.geoQuestions.map((item) => (
                           <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-sm leading-7 text-[color:var(--ink)]">

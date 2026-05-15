@@ -22,8 +22,10 @@ describe('GET /api/admin/system/health', () => {
       authenticated: true,
       user: {
         id: 'admin_test_user',
+        name: 'Admin Test',
         email: 'admin@example.com',
         role: 'admin',
+        emailVerified: true,
       },
     });
     mockedGetSystemOpsSnapshot.mockReturnValue({
@@ -44,6 +46,9 @@ describe('GET /api/admin/system/health', () => {
           metrics: {
             totalAnalyses: 1,
             publicReports: 1,
+            validAnalyses: 1,
+            validPublicReports: 1,
+            validAnalysesLast7d: 1,
             totalEvents: 1,
             validationPending: 0,
           },
@@ -114,7 +119,20 @@ describe('GET /api/admin/system/health', () => {
     expect(payload.success).toBe(true);
     expect(payload.snapshot.severity).toBe('healthy');
     expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledTimes(1);
-    expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledWith({ mode: 'summary' });
+    expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledWith({
+      mode: 'summary',
+      modelWindowMinutes: undefined,
+    });
+  });
+
+  it('passes model window minutes to the system snapshot', async () => {
+    const response = await GET(new Request('http://localhost/api/admin/system/health?modelWindowMinutes=10') as any);
+
+    expect(response.status).toBe(200);
+    expect(mockedGetSystemOpsSnapshot).toHaveBeenCalledWith({
+      mode: 'summary',
+      modelWindowMinutes: 10,
+    });
   });
 
   it('allows token-based access when no admin session is present', async () => {

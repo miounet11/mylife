@@ -298,7 +298,7 @@ function mapDeviceLabel(deviceType?: string | null) {
   return '未知设备';
 }
 
-function mapAttributionSourceLabel(source?: string | null) {
+function mapAttributionSourceLabel(source?: string | null): string {
   const normalized = `${source || ''}`.trim();
   if (!normalized) return '直接访问';
   if (normalized.startsWith('knowledge_article:')) return `知识文章 · ${normalized.replace('knowledge_article:', '')}`;

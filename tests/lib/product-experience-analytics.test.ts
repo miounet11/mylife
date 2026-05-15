@@ -93,6 +93,39 @@ describe('product experience analytics', () => {
     expect(result?.action).toContain('样本不足');
   });
 
+  it('counts result-to-chat start and completion as result next-step actions', () => {
+    const snapshot = buildProductExperienceAnalyticsSnapshot([
+      ...Array.from({ length: 5 }, (_, index) => ({
+        event_name: 'report_viewed',
+        page: `/result/report_${index}`,
+        meta: JSON.stringify({ reportId: `report_${index}` }),
+        created_at: `2026-05-01 12:00:0${index}`,
+      })),
+      {
+        event_name: 'result_chat_started',
+        page: '/result/report_1',
+        meta: JSON.stringify({ reportId: 'report_1', source: 'report_next_actions' }),
+        created_at: '2026-05-01 12:05:00',
+      },
+      {
+        event_name: 'report_to_chat_completed',
+        page: '/chat',
+        meta: JSON.stringify({ reportId: 'report_1', source: 'result_report_followup:knowledge_article:a' }),
+        created_at: '2026-05-01 12:06:00',
+      },
+    ]);
+
+    const result = snapshot.rows.find((item) => item.surface === 'result');
+
+    expect(result).toMatchObject({
+      views: 5,
+      primaryActions: 0,
+      nextStepActions: 2,
+      totalActions: 2,
+      health: 'critical',
+    });
+  });
+
   it('attributes tool-result premium requests through remembered attribution', () => {
     const snapshot = buildProductExperienceAnalyticsSnapshot([
       ...Array.from({ length: 5 }, (_, index) => ({

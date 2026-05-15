@@ -5,6 +5,7 @@ import { ArrowRight, Compass, Layers, Sparkles, Wrench } from 'lucide-react';
 
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
+import PublicGrowthFeedPanel from '@/components/public-growth-feed-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolBundlePanel from '@/components/tool-bundle-panel';
@@ -317,7 +318,18 @@ export default function ToolsPage() {
           </div>
         </section>
 
-        {/* 内容证据层（保留 SEO 价值） */}
+        <PublicGrowthFeedPanel
+          title="工具相关公开查询"
+          description="工具中心不只给入口，也展示匿名报告和公开追问；你可以顺着真实问题生成自己的判断。"
+          signals={[
+            ...categories.flatMap((category) => [category.title, category.headline]),
+            ...featured.flatMap((tool) => [tool.shortTitle, tool.themeLabel, ...tool.hookKeywords]),
+          ]}
+          reportLimit={3}
+          questionLimit={5}
+        />
+
+        {/* 内容证据层 */}
         <PublicEvidencePanel
           page="/tools"
           title="工具入口接到内容证据"

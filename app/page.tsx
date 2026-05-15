@@ -128,15 +128,15 @@ export default async function HomePage() {
             </Eyebrow>
             <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
               <Stat
-                label="主报告版本"
-                value="v3"
-                hint="多 Agent 并发链路"
+                label="报告层级"
+                value="3 层"
+                hint="总览 · 深问 · 专项工具"
                 size="lg"
               />
               <Stat
-                label="模型 fallback"
-                value="2 层"
-                hint="grok-420-fast → gpt-5.2"
+                label="交付方式"
+                value="可补全"
+                hint="先给核心判断，后续继续完善"
                 size="lg"
               />
               <Stat

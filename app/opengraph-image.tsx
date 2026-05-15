@@ -193,7 +193,7 @@ export default async function OpengraphImage() {
               display: 'flex',
             }}
           >
-            真太阳时校正 · 世界易判断框架 · v3 多 Agent 报告链路
+            真太阳时校正 · 世界易判断框架 · 报告可持续补全
           </div>
         </div>
 
@@ -213,7 +213,7 @@ export default async function OpengraphImage() {
               alignItems: 'center',
             }}
           >
-            {['真太阳时', '600+ 话术库', '多 Agent 链路'].map((label) => (
+            {['真太阳时', '600+ 话术库', '持续补全'].map((label) => (
               <div
                 key={label}
                 style={{

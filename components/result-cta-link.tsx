@@ -28,14 +28,24 @@ export default function ResultCtaLink({
     const toolSlug = typeof meta?.toolSlug === 'string' ? meta.toolSlug : '';
     const source = typeof meta?.source === 'string' ? meta.source : '';
 
+    const eventMeta = {
+      target,
+      ...meta,
+    };
+
     void trackClientEvent({
       eventName: 'result_cta_clicked',
       page,
-      meta: {
-        target,
-        ...meta,
-      },
+      meta: eventMeta,
     });
+
+    if (target.includes('chat') || href.startsWith('/chat')) {
+      void trackClientEvent({
+        eventName: 'result_chat_started',
+        page,
+        meta: eventMeta,
+      });
+    }
 
     if (reportId && workflowId) {
       void trackReportJourneyEvent({

@@ -42,4 +42,17 @@ describe('chat entry', () => {
       ],
     })).toContain('先补关键条件');
   });
+
+  test('preserves result report attribution for followup chat entry', () => {
+    expect(buildChatHref({
+      reportId: 'report_123',
+      intent: 'next-action',
+      question: '继续追问这份报告',
+      source: 'result_report_followup:knowledge_article:a',
+      ctaStrategyKey: 'read_to_judgment',
+      sourceFamily: 'knowledge_article',
+    })).toBe(
+      '/chat?reportId=report_123&intent=next-action&question=%E7%BB%A7%E7%BB%AD%E8%BF%BD%E9%97%AE%E8%BF%99%E4%BB%BD%E6%8A%A5%E5%91%8A&source=result_report_followup%3Aknowledge_article%3Aa&ctaStrategyKey=read_to_judgment&sourceFamily=knowledge_article'
+    );
+  });
 });

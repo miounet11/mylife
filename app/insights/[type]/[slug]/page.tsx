@@ -12,6 +12,7 @@ import NewsletterSignup from '@/components/newsletter-signup';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
+import ArticleAnalyzeLink from '@/components/article/article-analyze-link';
 import ArticleInlineCTA from '@/components/article/article-inline-cta';
 import ArticleStickyCTA from '@/components/article/article-sticky-cta';
 import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
@@ -79,10 +80,10 @@ export default async function InsightDetailPage({ params }: PageProps) {
   if (!insight) notFound();
   const managedEntry = getManagedContentEntryBySlug('insight', insight.slug);
   const locale = typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : '';
-  const pageSource = `insight_article:${insight.type}:${insight.slug}`;
+  const surfaceKey = `insight_article:${insight.type}:${insight.slug}`;
+  const pageSource = surfaceKey;
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const ctaEnabled = isArticleCtaEnabled();
-  const surfaceKey = `insight_article:${insight.slug}`;
   const inlineCtaPoint = ctaEnabled
     ? findInjectionPoint(insight.sections.map((s) => ({ content: (s.paragraphs || []).join('\n') })))
     : { injectAfterIndex: -1 };
@@ -149,7 +150,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
         eventName="insight_article_viewed"
         page={`/insights/${insight.type}/${insight.slug}`}
         meta={{
-          surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+          surfaceKey,
           contentType: 'insight',
           subtype: insight.type,
           slug: insight.slug,
@@ -192,7 +193,26 @@ export default async function InsightDetailPage({ params }: PageProps) {
               hint="先看当前洞察结论，再回到分析页验证你自己的结构与窗口。"
               actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <ArticleAnalyzeLink
+                  key="analyze"
+                  href={appendSourceToHref('/analyze', pageSource)}
+                  surfaceKey={surfaceKey}
+                  slug={insight.slug}
+                  contentType="insight"
+                  position="hero"
+                  sourceLabel="洞察首屏快速分析"
+                  extraMeta={{
+                    subtype: insight.type,
+                    title: insight.title,
+                    name: insight.name,
+                    category: entityTypeLabels[insight.type],
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+                >
+                  {sourceCtaStrategy.searchAnalyzeLabel}
+                </ArticleAnalyzeLink>,
                 <Link key="insights" href={appendSourceToHref('/insights', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回洞察中心</Link>,
               ]}
             />
@@ -239,7 +259,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                       sourceFamily={sourceCtaStrategy.sourceFamily}
                       page={`/insights/${insight.type}/${insight.slug}`}
                       meta={{
-                        surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                        surfaceKey,
                         targetSurfaceKey: `insight_article:${entry.type}:${entry.slug}`,
                         contentType: 'insight',
                         subtype: entry.type,
@@ -262,11 +282,11 @@ export default async function InsightDetailPage({ params }: PageProps) {
           <div className="space-y-5">
             <ContentQuickAnalyzePanel
               sourceLabel="洞察页快速分析"
-              sourceKey={`insight_article:${insight.type}:${insight.slug}`}
+              sourceKey={surfaceKey}
               contentMeta={{
                 contentType: 'insight',
                 subtype: insight.type,
-                surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                surfaceKey,
                 slug: insight.slug,
                 title: insight.title,
                 name: insight.name,
@@ -318,7 +338,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     ctaStrategyKey={sourceCtaStrategy.strategyKey}
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
-                    meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `knowledge_article:${item.slug}`, contentType: 'knowledge' }}
+                    meta={{ surfaceKey, targetSurfaceKey: `knowledge_article:${item.slug}`, contentType: 'knowledge' }}
                     className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.category}</div>
@@ -344,7 +364,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                     ctaStrategyKey={sourceCtaStrategy.strategyKey}
                     sourceFamily={sourceCtaStrategy.sourceFamily}
                     page={`/insights/${insight.type}/${insight.slug}`}
-                    meta={{ surfaceKey: `insight_article:${insight.type}:${insight.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
+                    meta={{ surfaceKey, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
                     className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
                   >
                     <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
@@ -366,7 +386,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
-                    surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                    surfaceKey,
                     targetSurfaceKey: 'knowledge_article:world-yi-environment-method',
                     contentType: 'knowledge',
                     series: 'world-yi',
@@ -382,7 +402,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
-                    surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                    surfaceKey,
                     targetSurfaceKey: 'knowledge_article:world-yi-judgment-crisis',
                     contentType: 'knowledge',
                     series: 'world-yi',
@@ -398,7 +418,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                   sourceFamily={sourceCtaStrategy.sourceFamily}
                   page={`/insights/${insight.type}/${insight.slug}`}
                   meta={{
-                    surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                    surfaceKey,
                     targetSurfaceKey: 'world_yi_page',
                     contentType: 'insight',
                     series: 'world-yi',
@@ -423,7 +443,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
                       sourceFamily={sourceCtaStrategy.sourceFamily}
                       page={`/insights/${insight.type}/${insight.slug}`}
                       meta={{
-                        surfaceKey: `insight_article:${insight.type}:${insight.slug}`,
+                        surfaceKey,
                         targetSurfaceKey: `insight_article:${item.type}:${item.slug}`,
                         contentType: 'insight',
                         subtype: item.type,
@@ -454,7 +474,7 @@ export default async function InsightDetailPage({ params }: PageProps) {
             </div>
 
             <NewsletterSignup
-              source={`insight_article:${insight.type}:${insight.slug}`}
+              source={surfaceKey}
               title="订阅实体洞察更新"
               description="跟进城市、行业和组织的后续变化，让环境判断不会停留在一次性的快照。"
             />

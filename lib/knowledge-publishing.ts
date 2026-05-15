@@ -1,4 +1,4 @@
-import type { ManagedContentEntry } from '@/lib/content-store';
+import type { ManagedContentEntryInput } from '@/lib/content-store';
 import { getKnowledgeSynthesisPublishThreshold } from '@/lib/env';
 
 export interface KnowledgeDraftAssessment {
@@ -8,10 +8,7 @@ export interface KnowledgeDraftAssessment {
   reasons: string[];
 }
 
-type DraftLike = Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & {
-  source?: string;
-  meta?: Record<string, unknown>;
-};
+type DraftLike = ManagedContentEntryInput;
 
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));

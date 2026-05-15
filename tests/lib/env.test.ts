@@ -72,10 +72,10 @@ describe('env helpers', () => {
     expect(isAutonomousGrowthMonthlyDigestEnabled()).toBe(false);
     expect(isAutonomousGrowthEmailRetryEnabled()).toBe(true);
     expect(isOpenAgentRuntimeEnabled()).toBe(true);
-    expect(getOpenAgentRuntimeModel()).toBe('grok-420-fast');
+    expect(getOpenAgentRuntimeModel()).toBe('gpt-5.4-mini');
   });
 
-  it('uses grok primary and auto fallbacks for model helpers by default', async () => {
+  it('uses unified Claude primary and fallback chain for model helpers by default', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.OPEN_AGENT_RUNTIME_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
@@ -102,17 +102,17 @@ describe('env helpers', () => {
       getVisualAssetNarrativeModel,
     } = await import('@/lib/env');
 
-    expect(getDefaultModel()).toBe('grok-420-fast');
-    expect(getOpenAgentRuntimeModel()).toBe('grok-420-fast');
-    expect(getModelFallbackChainEnv()).toBe('auto,gpt-5.2');
-    expect(getReportModelFallbackChainEnv()).toBe('auto,gpt-5.2');
-    expect(getReportNarrativeModelFallbackChainEnv()).toBe('auto,gpt-5.2');
-    expect(getContentGenerationModel()).toBe('grok-420-fast');
-    expect(getContentGenerationModelFallbackChainRaw()).toBe('auto,gpt-5.2');
+    expect(getDefaultModel()).toBe('gpt-5.5');
+    expect(getOpenAgentRuntimeModel()).toBe('gpt-5.5');
+    expect(getModelFallbackChainEnv()).toBe('gpt-5.4-mini,auto');
+    expect(getReportModelFallbackChainEnv()).toBe('gpt-5.4-mini,auto');
+    expect(getReportNarrativeModelFallbackChainEnv()).toBe('gpt-5.4-mini,auto');
+    expect(getContentGenerationModel()).toBe('gpt-5.5');
+    expect(getContentGenerationModelFallbackChainRaw()).toBe('gpt-5.4-mini,auto');
     expect(getVisualAssetApiBaseUrl()).toBe('https://www.gemiai.top/v1');
     expect(getVisualAssetDefaultModel()).toBe('gpt-image-2');
     expect(getVisualAssetCoreModel()).toBe('gpt-image-2-pro');
-    expect(getVisualAssetNarrativeModel()).toBe('grok-420-fast');
+    expect(getVisualAssetNarrativeModel()).toBe('gpt-5.5');
   });
 
   it('deduplicates system health tokens and evaluates radar flags', async () => {
@@ -137,18 +137,21 @@ describe('env helpers', () => {
   it('applies numeric defaults and minimum guards for runtime job configs', async () => {
     process.env.CONTENT_GENERATION_MAX_TOKENS = '900';
     process.env.CONTENT_GENERATION_TIMEOUT_MS = '1000';
+    process.env.CHAT_LLM_TIMEOUT_MS = '1000';
     process.env.REPORT_UPGRADE_MAX_ATTEMPTS = '1';
     process.env.EMAIL_RETRY_BASE_DELAY_MS = '1000';
 
     const {
       getContentGenerationMaxTokens,
       getContentGenerationTimeoutMs,
+      getChatLlmTimeoutMs,
       getReportUpgradeMaxAttempts,
       getEmailRetryBaseDelayMs,
     } = await import('@/lib/env');
 
     expect(getContentGenerationMaxTokens()).toBe(1200);
     expect(getContentGenerationTimeoutMs()).toBe(18_000);
+    expect(getChatLlmTimeoutMs()).toBe(240_000);
     expect(getReportUpgradeMaxAttempts()).toBe(2);
     expect(getEmailRetryBaseDelayMs()).toBe(60_000);
   });

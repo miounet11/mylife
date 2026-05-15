@@ -270,7 +270,7 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
           <div className="flex items-center space-x-2 text-sm text-[color:var(--ink-4)]">
             <Calendar className="w-4 h-4" />
             <span>
-              {warning.startDate} 至 {warning.endDate}
+              {formatDateTime(warning.startDate)} 至 {formatDateTime(warning.endDate)}
             </span>
           </div>
         </div>

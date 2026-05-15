@@ -1,6 +1,26 @@
 import type { FortuneRecord } from '@/lib/user-types';
 import { buildLayeredReportJourney } from '@/lib/report-journey-router';
 
+const measurementResults = [
+  'pillars',
+  'five-elements',
+  'day-master-strength',
+  'pattern',
+  'ten-gods',
+  'yong-shen',
+  'shen-sha',
+  'dayun',
+  'kline',
+  'domain-advice',
+].map((id, index) => ({
+  id,
+  label: `环节${index + 1}`,
+  order: index + 1,
+  score: 88,
+  level: 'good',
+  conclusion: `${id} 稳定`,
+}));
+
 function makeReport(overrides: Partial<FortuneRecord> = {}) {
   return {
     id: 'report_journey_router_test',
@@ -36,6 +56,13 @@ function makeReport(overrides: Partial<FortuneRecord> = {}) {
     analysis: {
       opening: '当前事业和岗位节奏需要重新判断。',
       explanation: '工作节奏、岗位变化和升职判断需要结合时机。',
+      contextSignals: {
+        engineEvidence: {
+          version: 'engine-evidence-v2',
+          measurementResults,
+          stageResults: measurementResults,
+        },
+      },
     } as any,
     ...overrides,
   } as FortuneRecord;
@@ -59,6 +86,73 @@ describe('report journey router', () => {
     ]);
     expect(route.categoryRoutes[0]?.category).toBe('career');
     expect(route.categoryRoutes[0]?.href).toContain('source=');
+    expect(route.measurementSummary.totalStages).toBe(10);
+    expect(route.measurementSummary.complete).toBe(true);
+    expect(route.measurementSummary.stages).toHaveLength(10);
+    expect(route.measurementSummary.stages[0]).toMatchObject({
+      id: 'pillars',
+      order: 1,
+      score: 88,
+      status: 'strong',
+      optimizationHint: '保持当前证据链，优先看下一层组合。',
+    });
+    expect(route.measurementSummary.strongStages.map((item) => item.id)).toContain('domain-advice');
+    expect(route.combinationRoutes[0]?.key).toBe('bazi-evidence-chain');
+    expect(route.combinationRoutes.some((item) => item.key === 'event-validation')).toBe(true);
+  });
+
+  it('adds palmistry as an application complement after stable measurement chain', () => {
+    const route = buildLayeredReportJourney({
+      report: makeReport({
+        analysis: {
+          opening: '当前主报告稳定，可补充手相和多模态观察。',
+          explanation: '用户希望用手相图片做应用类辅助参考。',
+          contextSignals: {
+            engineEvidence: {
+              version: 'engine-evidence-v2',
+              measurementResults,
+            },
+          },
+        } as any,
+      }),
+      quality: { deliveryTier: 'expert', status: 'ready', targetAchieved: true },
+      source: 'result_report:test',
+    });
+
+    const palmistryRoute = route.combinationRoutes.find((item) => item.key === 'palmistry-application');
+    expect(palmistryRoute?.href).toContain('/tools/application-palmistry-reading');
+    expect(palmistryRoute?.boundary).toContain('不做医学诊断');
+  });
+
+  it('prioritizes weak measurement stage before category routing', () => {
+    const weakStages = measurementResults.map((stage) => stage.id === 'kline'
+      ? { ...stage, label: '大运流年 K 线', score: 50, level: 'risk', conclusion: '流年证据不足' }
+      : stage);
+    const route = buildLayeredReportJourney({
+      report: makeReport({
+        analysis: {
+          opening: '当前事业和岗位节奏需要重新判断。',
+          explanation: '工作节奏、岗位变化和升职判断需要结合时机。',
+          contextSignals: {
+            engineEvidence: {
+              version: 'engine-evidence-v2',
+              measurementResults: weakStages,
+            },
+          },
+        } as any,
+      }),
+      quality: { deliveryTier: 'expert', status: 'ready', targetAchieved: true },
+    });
+
+    expect(route.primaryAction.target).toBe('report_journey_deep_report_basic');
+    expect(route.primaryAction.description).toContain('大运流年 K 线');
+    expect(route.measurementSummary.weakStages[0]?.reason).toBe('流年证据不足');
+    expect(route.measurementSummary.optimizationPriorities[0]).toMatchObject({
+      id: 'kline',
+      label: '大运流年 K 线',
+      score: 50,
+      optimizationHint: '优先补证据和边界样本，先把这个环节做稳。',
+    });
   });
 
   it('prioritizes validation when user feedback has drift', () => {

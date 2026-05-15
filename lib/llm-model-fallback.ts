@@ -1,4 +1,5 @@
 import {
+  getContentGenerationModelFallbackChainRaw,
   getDefaultModel,
   getModelFallbackChainEnv,
   getReportModelFallbackChainEnv,
@@ -7,8 +8,7 @@ import {
 
 export type LlmFallbackScope = 'report' | 'agent' | 'chat' | 'content';
 
-// v5-A1 + v5-audit (2026-05-08): 从 env 读取 fallback chain，不再硬编码 'auto'
-// 生产链路：grok-420-fast → gpt-5.2（'auto' 是死链路，见 v5-A1 commit）
+// 从 env 读取 fallback chain；默认生产链路由 lib/env.ts 统一维护。
 
 function parseChain(raw: string, primaryModel: string): string[] {
   const chain: string[] = [];
@@ -30,7 +30,7 @@ export function getModelFallbackChain(_preferredModel?: string | null, scope?: L
   const rawChain = scope === 'report'
     ? getReportModelFallbackChainEnv()
     : scope === 'content'
-      ? getReportNarrativeModelFallbackChainEnv()  // content 用 narrative chain 作为默认
+      ? getContentGenerationModelFallbackChainRaw()
       : getModelFallbackChainEnv();
   return parseChain(rawChain, primary);
 }

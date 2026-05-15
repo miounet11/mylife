@@ -88,8 +88,8 @@ import {
   buildYearlyRoadmap,
 } from '@/lib/report-v2';
 import { buildStateVectorData } from '@/lib/state-vector';
-import { CURRENT_REPORT_VERSION, ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
-import { deriveReportReasoningMode, getReasoningModeLabel, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
+import { ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
+import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
 import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report-premium-services';
@@ -108,6 +108,7 @@ import {
   getLifeKLineMetricToneClasses,
   getPublicDisplayName,
   inferWorldYiGuidedPaths,
+  sanitizePublicFortuneRecord,
 } from '@/lib/report-page-helpers';
 import { buildPublicReportSeo } from '@/lib/public-growth-feed';
 
@@ -185,13 +186,14 @@ export async function generateMetadata({ params }: PageProps) {
   };
 }
 
-async function getResult(reportId: string) {
+async function getResult(reportId: string, options?: { publicView?: boolean }) {
   try {
-    const fortuneData = fortuneOperations.getById(reportId);
-    if (!fortuneData) return null;
+    const originalFortuneData = fortuneOperations.getById(reportId);
+    if (!originalFortuneData) return null;
+    const fortuneData = options?.publicView ? sanitizePublicFortuneRecord(originalFortuneData) : originalFortuneData;
     const analysis = (fortuneData.analysis ?? {
       opening: '当前结构、阶段与节奏已经开始显形。',
-      explanation: '当前结果已由结构化引擎生成，可先查看场景视图、月度窗口和行动建议，再继续进入 AI 深问。',
+      explanation: '当前结果已完成结构判断，可先查看场景视图、月度窗口和行动建议，再继续深入追问。',
     }) as FortuneAnalysisResult['analysis'];
 
     const pillars = fortuneData.bazi?.pillars || [];
@@ -327,14 +329,23 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
-  const result = await getResult(id);
   const currentUserId = await getCurrentUserId();
+  const rawFortuneData = fortuneOperations.getById(id);
+
+  if (!rawFortuneData) {
+    notFound();
+  }
+
+  const canManage = !!currentUserId && rawFortuneData.userId === currentUserId;
+  if (rawFortuneData.isPublic === false && !canManage) {
+    notFound();
+  }
+
+  const result = await getResult(id, { publicView: !canManage });
 
   if (!result) {
     notFound();
   }
-
-  const canManage = !!currentUserId && result.basic.userId === currentUserId;
   const currentUserRecord = currentUserId ? userOperations.getById(currentUserId) as {
     email?: string | null;
     email_verified?: number;
@@ -347,10 +358,6 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
         requestedReportId: id,
       })
     : null;
-  const reasoningModeLabel = getReasoningModeLabel(result.reasoningMode || 'engine');
-  if (result.isPublic === false && !canManage) {
-    notFound();
-  }
   const linkedEvents = canManage
     ? eventOperations
         .getByUserId(result.basic.userId)
@@ -434,13 +441,13 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const nextStageLadderItem = reportStageLadder.find((item) => item.status === 'locked') || null;
   const deliveryTierLabel = reportDeliveryStage.label;
   const upgradeStatusLabel = upgradeJob?.status === 'running'
-    ? '后台增强进行中'
+    ? '内容补全进行中'
     : upgradeJob?.status === 'retry' || upgradeJob?.status === 'pending'
-    ? '后台排队增强中'
+    ? '等待内容补全'
     : upgradeJob?.status === 'completed'
-    ? '后台增强已完成'
+    ? '内容已补全'
     : upgradeJob?.status === 'failed'
-    ? '后台增强已暂停'
+    ? '内容补全已暂停'
     : '';
   const topMonthlyWindows = (result.monthlyWindows || []).slice(0, 3).map((item) => ({
     label: item.label,
@@ -606,7 +613,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     pendingOverdueEvent,
   });
 
-  // v5-B5 (2026-05-08): 优先使用缓存的 LLM 优化版本，否则用 B4 deterministic
+  // v5-B5 (2026-05-08): 优先使用缓存的追问建议，否则用确定性建议
   const cachedFollowupSuggestions = (result.analysis as any)?.followupSuggestions;
   const cachedFollowupAt = (result.analysis as any)?.followupSuggestionsAt;
   const cachedAge = cachedFollowupAt ? Date.now() - new Date(cachedFollowupAt).getTime() : Infinity;
@@ -628,16 +635,14 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,
   });
-  const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '引擎状态', '天时地利人和'];
+  const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '报告状态', '天时地利人和'];
   const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
   const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
   const enhancementStatusMessage = isEnhancementPending
-    ? upgradeJob?.lastError === 'LLM_UNAVAILABLE'
-      ? '当前先显示稳定可读版。后台已经在持续尝试深度增强，但上游模型今天波动较大，增强版会在成功后自动补齐。'
-      : '当前先显示稳定可读版。后台增强任务仍在继续，不需要反复刷新页面。'
+    ? '当前先显示可读版，内容补全仍在继续，不需要反复刷新页面。'
     : !result.llmUsed
-    ? '当前这份结果以结构化引擎和专家层整合输出为主，适合先看结论、阶段和行动建议。'
-    : '当前已经拿到深度增强版，可直接按完整路径阅读。';
+    ? '当前这份结果适合先看结论、阶段和行动建议；如需更完整内容，可稍后重新生成。'
+    : '当前内容已补全，可直接按完整路径阅读。';
   const feedbackLevel = correctionInsight.level || 'healthy';
   const feedbackHeroTone = feedbackLevel === 'action'
     ? 'bg-[color:var(--alert-soft)] text-[color:var(--alert)] border-[color:var(--alert)]'
@@ -683,7 +688,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
 
-      {/* v5-B5: 后台 LLM 优化追问 chips（fire-and-forget，不阻塞渲染） */}
+      {/* v5-B5: 追问建议补全（fire-and-forget，不阻塞渲染） */}
       <ReportFollowupAugmenterTrigger reportId={id} shouldTrigger={shouldTriggerAugmenter} />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
@@ -719,9 +724,6 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ? `${(result.basic as any).year} ${(result.basic as any).month} ${(result.basic as any).day} ${(result.basic as any).hour}`
                 : undefined
             }
-            reportId={id}
-            reportVersion={result.reportVersion || 'v1'}
-            pipelineVersion={(result.analysis as any)?.pipelineVersion || undefined}
             qualityTier={deliveryTierLabel}
             className="mb-6"
           />
@@ -733,11 +735,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--muted)]">
                 {isEnhancementPending ? (
                   <span className="rounded-full bg-[color:var(--signal-soft)] px-3 py-1 text-[color:var(--signal-strong)]">
-                    深度增强补强中
+                    内容补全中
                   </span>
                 ) : null}
                 <span>
-                  {`${result.llmUsed ? 'LLM 深度增强' : '结构化整合输出'} · ${reasoningModeLabel} · 报告 ${result.reportVersion || 'v1'} · ${deliveryTierLabel}`}
+                  {`${result.llmUsed ? '内容已完善' : '基础可读版'} · ${deliveryTierLabel}`}
                 </span>
               </div>
 
@@ -762,15 +764,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
-              {/* v5-A3 (2026-05-08) basic 报告且仍在重试 LLM 增强时，明确告诉用户 */}
+              {/* v5-A3 (2026-05-08) basic 报告仍在补强时，明确告诉用户 */}
               {isEnhancementPending ? (
                 <div className="mt-5">
                   <DegradeNotice
                     pending={isEnhancementPending}
                     lastError={upgradeJob?.lastError}
-                    attempts={upgradeJob?.attempts}
-                    maxAttempts={upgradeJob?.maxAttempts}
-                    nextRunAt={upgradeJob?.nextRunAt}
                     reportId={id}
                   />
                 </div>
@@ -1012,19 +1011,19 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       : 'bg-[color:var(--bg-sunken)] text-[color:var(--muted)]'
                   }`}>
                     {qualityAudit
-                      ? `质量 ${qualityAudit.overallScore || '--'} / ${qualityAudit.grade || 'B'}`
+                      ? `可信度 ${qualityAudit.overallScore || '--'}`
                       : isEnhancementPending
-                      ? '稳定版已可阅读'
+                      ? '基础内容已可阅读'
                       : result.llmUsed
-                      ? '深度版已送达'
-                      : '当前为稳定可读版'}
+                      ? '完整内容已送达'
+                      : '当前为基础可读版'}
                   </span>
                   <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
                     {`当前阶段 ${currentStageLadderItem.shortLabel}`}
                   </span>
                   {qualityAudit?.targetAchieved ? (
                     <span className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
-                      已达到 S级目标
+                      内容已达到完整标准
                     </span>
                   ) : null}
                   {upgradeStatusLabel ? (
@@ -1039,7 +1038,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 <div className="mt-4 rounded-[var(--radius)] border border-white/70 bg-[color:var(--paper)] p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告升级路径</div>
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告阅读进度</div>
                       <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">
                         {`你现在拿到的是${currentStageLadderItem.label}。`}
                       </div>
@@ -1092,10 +1091,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     </div>
                   ) : null}
                 </div>
-                {upgradeJob?.status ? (
+                {upgradeJob?.status && upgradeStatusLabel ? (
                   <div className="mt-3 text-xs text-[color:var(--muted)]">
-                    {`${upgradeStatusLabel}，已尝试 ${upgradeJob.attempts || 0} / ${upgradeJob.maxAttempts || 0} 次。`}
-                    {upgradeJob.nextRunAt ? ` 下一次计划时间 ${upgradeJob.nextRunAt}。` : ''}
+                    {upgradeStatusLabel}，系统会在内容可用后自动更新到这份报告。
                   </div>
                 ) : null}
               </div>
@@ -1173,27 +1171,22 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               canManage={canManage}
               reportVersion={result.reportVersion || 'v1'}
               llmUsed={result.llmUsed}
-              agenticUsed={result.agenticUsed}
-              reasoningMode={result.reasoningMode}
               consistencyScore={result.verify?.consistencyScore}
               verifyVerdict={result.verify?.verdict}
               qualityAudit={result.qualityAudit}
               upgradeJob={result.upgradeJob}
               generatedFrom={result.generatedFrom}
-              upgradedFromVersion={result.upgradedFromVersion}
               engineBuilds={result.engineBuilds || ENGINE_BUILD_VERSIONS}
-              enhancementNotes={result.enhancementNotes || []}
-              orchestration={result.orchestration}
+              enhancementNotes={canManage ? (result.enhancementNotes || []) : []}
               feedbackLoop={result.analysis?.feedbackLoop}
-              versionLineage={result.versionLineage}
             />
 
             {canManage ? (
               <UpdatesStatusPanel
                 reportId={id}
                 compact
-                title="这份报告的升级与更新"
-                description="查看这份报告后续的升级进度、月度提醒和订阅状态，避免结果停留在一次性生成。"
+                title="这份报告的后续更新"
+                description="查看后续内容更新、月度提醒和订阅状态，方便你持续复访。"
                 initialAuthenticated={updatesPanelInitialAuthenticated}
                 initialSummary={updatesPanelInitialSummary}
                 ctaStrategyKey={sourceCtaStrategy.strategyKey}
@@ -1281,9 +1274,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             initialIsPublic={result.isPublic}
             canManage={canManage}
             publicName={publicName}
-            reportVersion={result.reportVersion || 'v1'}
             deliveryTierLabel={deliveryTierLabel}
-            reasoningModeLabel={reasoningModeLabel}
             summary={currentStageSummary}
             nextFocusSummary={nextFocusSummary}
             highlights={reportHighlights}
@@ -1326,7 +1317,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           <ResultDeferredSection
             id="subscription"
             title="订阅与更新"
-            description="把后续月度提醒、升级增强和邮件留存接回这份主报告，方便你持续复访。"
+            description="把后续月度提醒、内容更新和邮件留存接回这份主报告，方便你持续复访。"
             delayMs={320}
           >
             <div className="scroll-mt-28">

@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { ArrowRight, Compass, Search, Sparkles } from 'lucide-react';
+import ArticleAnalyzeLink from '@/components/article/article-analyze-link';
 import { trackClientEvent } from '@/lib/analytics-client';
+import type { ArticleContentType } from '@/lib/article-cta';
 import { appendSourceToHref } from '@/lib/source-url';
 
 // 决策台风「搜索意图承接」面板
@@ -20,6 +22,9 @@ export default function PublicSearchIntentPanel({
   caseLabel,
   ctaStrategyKey,
   sourceFamily,
+  contentType,
+  slug,
+  surfaceKey,
 }: {
   page: string;
   title: string;
@@ -33,13 +38,19 @@ export default function PublicSearchIntentPanel({
   caseLabel?: string;
   ctaStrategyKey?: string;
   sourceFamily?: string;
+  contentType?: ArticleContentType;
+  slug?: string;
+  surfaceKey?: string;
 }) {
+  const resolvedSurfaceKey = surfaceKey || source || '';
+  const shouldTrackAnalyzeStart = Boolean(resolvedSurfaceKey && contentType && slug);
   const actions = [
     {
       href: appendSourceToHref(analyzeHref, source),
       label: analyzeLabel || '先测我的情况',
       tone: 'primary' as const,
       target: 'search_intent_analyze',
+      isAnalyze: true,
     },
     toolHref
       ? {
@@ -62,6 +73,7 @@ export default function PublicSearchIntentPanel({
     label: string;
     tone: 'primary' | 'secondary';
     target: string;
+    isAnalyze?: boolean;
   }>;
 
   return (
@@ -118,33 +130,63 @@ export default function PublicSearchIntentPanel({
             推荐下一步
           </div>
           <div className="mt-3 space-y-2">
-            {actions.map((action) => (
-              <Link
-                key={action.target}
-                href={action.href}
-                onClick={() => {
-                  void trackClientEvent({
-                    eventName: 'result_cta_clicked',
-                    page,
-                    meta: {
+            {actions.map((action) => {
+              const className = action.tone === 'primary'
+                ? 'flex h-10 items-center justify-between rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]'
+                : 'flex h-10 items-center justify-between rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-4 text-sm font-semibold text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)]';
+              const children = (
+                <>
+                  {action.label}
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              );
+
+              if (action.isAnalyze && shouldTrackAnalyzeStart) {
+                return (
+                  <ArticleAnalyzeLink
+                    key={action.target}
+                    href={action.href}
+                    surfaceKey={resolvedSurfaceKey}
+                    slug={slug!}
+                    contentType={contentType!}
+                    position="search-intent"
+                    sourceLabel="搜索意图承接快速分析"
+                    extraMeta={{
                       target: action.target,
-                      source: 'public_search_intent_panel',
                       attributionSource: source || null,
                       ctaStrategyKey: ctaStrategyKey || null,
                       sourceFamily: sourceFamily || null,
-                    },
-                  });
-                }}
-                className={
-                  action.tone === 'primary'
-                    ? 'flex h-10 items-center justify-between rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]'
-                    : 'flex h-10 items-center justify-between rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-4 text-sm font-semibold text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)]'
-                }
-              >
-                {action.label}
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            ))}
+                    }}
+                    className={className}
+                  >
+                    {children}
+                  </ArticleAnalyzeLink>
+                );
+              }
+
+              return (
+                <Link
+                  key={action.target}
+                  href={action.href}
+                  onClick={() => {
+                    void trackClientEvent({
+                      eventName: 'result_cta_clicked',
+                      page,
+                      meta: {
+                        target: action.target,
+                        source: 'public_search_intent_panel',
+                        attributionSource: source || null,
+                        ctaStrategyKey: ctaStrategyKey || null,
+                        sourceFamily: sourceFamily || null,
+                      },
+                    });
+                  }}
+                  className={className}
+                >
+                  {children}
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>

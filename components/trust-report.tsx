@@ -753,7 +753,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       </div>
 
       {reasoningMode !== 'engine' && (
-        <Card id="context" className="scroll-mt-28">
+        <Card id="context-view" className="scroll-mt-28">
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />

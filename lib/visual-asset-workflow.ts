@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { getDefaultModel } from '@/lib/env';
 
 export type VisualAssetWorkflow = {
   id: string;
@@ -117,7 +118,7 @@ export function parseVisualAssetWorkflow(input: unknown): VisualAssetWorkflow {
       narrative: {
         baseUrlEnv: readString(narrativeProvider.baseUrlEnv, 'API_BASE_URL'),
         apiKeyEnv: readString(narrativeProvider.apiKeyEnv, 'OPENAI_API_KEY'),
-        defaultModel: readString(narrativeProvider.defaultModel, 'grok-420-fast'),
+        defaultModel: readString(narrativeProvider.defaultModel, getDefaultModel()),
       },
     },
     qualityPolicy: {

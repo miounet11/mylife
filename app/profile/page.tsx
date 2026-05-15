@@ -1,4 +1,3 @@
-// 用户档案页面 - 完整版本
 'use client';
 
 import dynamic from 'next/dynamic';
@@ -66,7 +65,6 @@ type UpdatesSummaryResponse = {
     latestReport?: {
       id: string;
       name?: string | null;
-      reportVersion?: string | null;
       qualityScore?: number | null;
       qualityGrade?: string | null;
     } | null;
@@ -488,9 +486,9 @@ export default function ProfilePage() {
                 tone={updatesSummary?.subscription?.status === 'active' ? 'success' : 'neutral'}
               />
               <ProfileStatusTile
-                label="活跃升级任务"
+                label="内容补全中"
                 value={`${updatesSummary?.activeUpgradeCount || 0}`}
-                helper="后台增强中的报告数量"
+                helper="正在继续完善的报告数量"
                 tone={(updatesSummary?.activeUpgradeCount || 0) > 0 ? 'accent' : 'neutral'}
               />
               <ProfileStatusTile
@@ -501,9 +499,9 @@ export default function ProfilePage() {
               />
               <ProfileStatusTile
                 label="最新报告"
-                value={updatesSummary?.latestReport?.reportVersion || '待生成'}
+                value={updatesSummary?.latestReport ? '可回访' : '待生成'}
                 helper={updatesSummary?.latestReport?.qualityScore
-                  ? `质量 ${updatesSummary.latestReport.qualityScore} / ${updatesSummary.latestReport.qualityGrade || 'B'}`
+                  ? `可信度 ${updatesSummary.latestReport.qualityScore}`
                   : '还没有生成可复访的结果'}
                 tone={updatesSummary?.latestReport ? 'accent' : 'neutral'}
               />
@@ -515,7 +513,7 @@ export default function ProfilePage() {
                   <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
                   <div className="mt-2 text-sm text-[color:var(--ink)]">
                     {updatesSummary?.latestReport
-                      ? `${updatesSummary.latestReport.name || '我的报告'}，当前版本 ${updatesSummary.latestReport.reportVersion || 'v1'}。`
+                      ? `${updatesSummary.latestReport.name || '我的报告'}，可以继续回看和追问。`
                       : '当前还没有最近报告。'}
                   </div>
                   {updatesSummary?.latestReport?.id ? (

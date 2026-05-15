@@ -66,33 +66,35 @@ function normalizeLineageEntries(entries: unknown): ReportVersionLineageEntry[] 
     return [];
   }
 
-  return entries
-    .map((item) => {
-      if (!item || typeof item !== 'object') {
-        return null;
-      }
+  const normalized: ReportVersionLineageEntry[] = [];
 
-      const candidate = item as ReportVersionLineageEntry;
-      if (!candidate.version) {
-        return null;
-      }
+  entries.forEach((item) => {
+    if (!item || typeof item !== 'object') {
+      return;
+    }
 
-      return {
-        version: candidate.version,
-        generatedAt: candidate.generatedAt,
-        generatedFrom: candidate.generatedFrom,
-        upgradedFromVersion: candidate.upgradedFromVersion,
-        reasoningMode: candidate.reasoningMode,
-        llmUsed: candidate.llmUsed,
-        agenticUsed: candidate.agenticUsed,
-        qualityScore: candidate.qualityScore,
-        qualityGrade: candidate.qualityGrade,
-        deliveryTier: candidate.deliveryTier,
-        targetAchieved: candidate.targetAchieved,
-        summary: candidate.summary,
-      };
-    })
-    .filter((item): item is ReportVersionLineageEntry => !!item);
+    const candidate = item as ReportVersionLineageEntry;
+    if (!candidate.version) {
+      return;
+    }
+
+    normalized.push({
+      version: candidate.version,
+      generatedAt: candidate.generatedAt,
+      generatedFrom: candidate.generatedFrom,
+      upgradedFromVersion: candidate.upgradedFromVersion,
+      reasoningMode: candidate.reasoningMode,
+      llmUsed: candidate.llmUsed,
+      agenticUsed: candidate.agenticUsed,
+      qualityScore: candidate.qualityScore,
+      qualityGrade: candidate.qualityGrade,
+      deliveryTier: candidate.deliveryTier,
+      targetAchieved: candidate.targetAchieved,
+      summary: candidate.summary,
+    });
+  });
+
+  return normalized;
 }
 
 function dedupeLineageEntries(entries: Array<ReportVersionLineageEntry | null>) {

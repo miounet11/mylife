@@ -9,6 +9,7 @@ import ContentCardLink from '@/components/content-card-link';
 import ContentConversionPanel from '@/components/content-conversion-panel';
 import ContentLocaleBadge from '@/components/content-locale-badge';
 import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
+import ArticleAnalyzeLink from '@/components/article/article-analyze-link';
 import ArticleInlineCTA from '@/components/article/article-inline-cta';
 import ArticleStickyCTA from '@/components/article/article-sticky-cta';
 import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
@@ -167,7 +168,7 @@ export default async function CaseDetailPage({ params }: PageProps) {
   }, {
     source: `case_article:${item.slug}`,
   });
-  const pageSource = `case_article:${item.slug}`;
+  const pageSource = surfaceKey;
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const journeyCopy = buildSourceJourneyCopy(pageSource, {
     title: '相关入口',
@@ -244,7 +245,24 @@ export default async function CaseDetailPage({ params }: PageProps) {
               hint="先看完案例关键信息，再进入分析页验证自己的结构与阶段。"
               actionLabel={sourceCtaStrategy.actionGuide}
               actions={[
-                <Link key="analyze" href={appendSourceToHref('/analyze', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">{sourceCtaStrategy.searchAnalyzeLabel}</Link>,
+                <ArticleAnalyzeLink
+                  key="analyze"
+                  href={appendSourceToHref('/analyze', pageSource)}
+                  surfaceKey={surfaceKey}
+                  slug={item.slug}
+                  contentType="case"
+                  position="hero"
+                  sourceLabel="案例首屏快速分析"
+                  extraMeta={{
+                    title: item.title,
+                    category: item.scenario,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+                >
+                  {sourceCtaStrategy.searchAnalyzeLabel}
+                </ArticleAnalyzeLink>,
                 <Link key="cases" href={appendSourceToHref('/cases', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回案例库</Link>,
                 <Link key="hub" href={appendSourceToHref(caseHubHref, pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">{caseHubLabel}</Link>,
               ]}

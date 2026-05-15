@@ -57,7 +57,7 @@ export default function ReportNextActions({
           </h3>
           <p className="mt-2 text-xs leading-5 text-[color:var(--ink-3)]">
             {description ||
-              '不要一次展开所有内容。先确认首份报告的主判断，再用 LLM 追问最卡的一件事，最后只进入一个最相关的专项工具。'}
+              '不要一次展开所有内容。先确认首份报告的主判断，再追问最卡的一件事，最后只进入一个最相关的专项工具。'}
           </p>
         </div>
         <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 font-mono text-[10px] font-semibold tabular-nums text-[color:var(--ink-4)]">
@@ -66,21 +66,49 @@ export default function ReportNextActions({
       </div>
 
       <div className="mt-4 grid gap-2.5 lg:grid-cols-3">
+        <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-4 py-3 lg:col-span-2">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--brand-strong)]">
+            <Bot className="h-3.5 w-3.5" />
+            <span className="font-mono text-[10px] uppercase tracking-wider">01</span>
+            继续追问这份报告
+          </div>
+          <div className="mt-1.5 text-xs leading-5 text-[color:var(--brand-strong)]">
+            {followupQuestion
+              ? '系统已经替你带上报告上下文和第一句追问，点进去直接拆最卡的一件事。'
+              : '先把最卡的一件事问深，让报告从「看懂了」推进到「知道下一步」。'}
+          </div>
+          <ResultCtaLink
+            href={chatHref}
+            page={`/result/${reportId}`}
+            target="result_top_followup_chat"
+            className="mt-3 inline-flex h-9 w-full items-center justify-between gap-1 rounded-[var(--radius-sm)] bg-[color:var(--brand-strong)] px-3 text-sm font-bold text-white transition hover:bg-[color:var(--brand-deep)]"
+            meta={{
+              reportId,
+              source: 'report_next_actions',
+              ctaStrategyKey: ctaStrategyKey || null,
+              sourceFamily: sourceFamily || null,
+            }}
+          >
+            {chatLabel || '继续追问这份报告'}
+            <ArrowRight className="h-3.5 w-3.5" />
+          </ResultCtaLink>
+        </div>
+
         {deepReportHref ? (
-          <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-4 py-3">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--brand-strong)]">
-              <Layers3 className="h-3.5 w-3.5" />
-              <span className="font-mono text-[10px] uppercase tracking-wider">01</span>
-              进入深入报告
+          <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--ink-1)]">
+              <Layers3 className="h-3.5 w-3.5 text-[color:var(--brand-strong)]" />
+              <span className="font-mono text-[10px] uppercase tracking-wider text-[color:var(--brand-strong)]">02</span>
+              展开深入报告
             </div>
-            <div className="mt-1.5 text-xs leading-5 text-[color:var(--brand-strong)]">
-              先把首份报告的主线读清楚，再展开深入层。
+            <div className="mt-1.5 text-xs leading-5 text-[color:var(--ink-3)]">
+              主线不清楚时先追问；需要证据细节时再展开深入层。
             </div>
             <ResultCtaLink
               href={deepReportHref}
               page={`/result/${reportId}`}
               target="result_top_deep_report"
-              className="mt-3 inline-flex h-8 w-full items-center justify-between gap-1 rounded-[var(--radius-sm)] bg-[color:var(--brand-strong)] px-3 text-xs font-bold text-white transition hover:bg-[color:var(--brand-deep)]"
+              className="mt-3 inline-flex h-8 w-full items-center justify-between gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-bold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
               meta={{
                 reportId,
                 source: 'report_next_actions',
@@ -93,34 +121,6 @@ export default function ReportNextActions({
             </ResultCtaLink>
           </div>
         ) : null}
-
-        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--ink-1)]">
-            <Bot className="h-3.5 w-3.5 text-[color:var(--brand-strong)]" />
-            <span className="font-mono text-[10px] uppercase tracking-wider text-[color:var(--brand-strong)]">02</span>
-            追问一件事
-          </div>
-          <div className="mt-1.5 text-xs leading-5 text-[color:var(--ink-3)]">
-            {followupQuestion
-              ? '系统已经替你准备好第一句追问，点进去就能直接接着这份报告往下拆。'
-              : '把最卡的一件事继续问深，让报告从「看懂了」推进到「知道下一步」。'}
-          </div>
-          <ResultCtaLink
-            href={chatHref}
-            page={`/result/${reportId}`}
-            target="result_top_followup_chat"
-            className="mt-3 inline-flex h-8 w-full items-center justify-between gap-1 rounded-[var(--radius-sm)] bg-[color:var(--brand-strong)] px-3 text-xs font-bold text-white transition hover:bg-[color:var(--brand-deep)]"
-            meta={{
-              reportId,
-              source: 'report_next_actions',
-              ctaStrategyKey: ctaStrategyKey || null,
-              sourceFamily: sourceFamily || null,
-            }}
-          >
-            {chatLabel || '去 AI 深问'}
-            <ArrowRight className="h-3.5 w-3.5" />
-          </ResultCtaLink>
-        </div>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-4 py-3">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[color:var(--ink-1)]">

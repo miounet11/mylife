@@ -983,8 +983,17 @@ export function listManagedContentEntries() {
   return rows.map(mapRow);
 }
 
+export type ManagedContentEntryInput = Omit<
+  ManagedContentEntry,
+  'createdAt' | 'updatedAt' | 'source' | 'createdBy' | 'updatedBy'
+> & {
+  source?: string;
+  createdBy?: string | null;
+  updatedBy?: string | null;
+};
+
 export function saveManagedContentEntry(
-  input: Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string },
+  input: ManagedContentEntryInput,
   userId: string
 ) {
   ensureSeedContent();

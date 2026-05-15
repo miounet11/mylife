@@ -22,7 +22,12 @@ const token = readEnv('SYSTEM_HEALTH_TOKEN')
   || readEnv('CONTENT_RADAR_CRON_TOKEN')
   || readEnv('CONTENT_SCHEDULER_CRON_TOKEN')
   || '';
-const requestTimeoutMs = Math.max(5_000, Number(readEnv('SYSTEM_HEALTH_REQUEST_TIMEOUT_MS', 15_000)));
+const requestTimeoutMs = Math.max(5_000, Number(readEnv('SYSTEM_HEALTH_REQUEST_TIMEOUT_MS', 60_000)));
+const modelWindowArg = process.argv.find((arg) => arg.startsWith('--model-window-minutes='));
+const modelWindowMinutes = modelWindowArg ? Number(modelWindowArg.split('=')[1]) : 0;
+const effectiveRunUrl = Number.isFinite(modelWindowMinutes) && modelWindowMinutes > 0
+  ? `${runUrl}${runUrl.includes('?') ? '&' : '?'}modelWindowMinutes=${Math.round(modelWindowMinutes)}`
+  : runUrl;
 
 async function fetchWithTimeout(url, options) {
   const controller = new AbortController();
@@ -45,7 +50,7 @@ async function main() {
   }
 
   try {
-    const response = await fetchWithTimeout(runUrl, {
+    const response = await fetchWithTimeout(effectiveRunUrl, {
       method: 'GET',
       headers: {
         'x-system-health-token': token,

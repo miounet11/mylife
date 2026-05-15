@@ -58,9 +58,7 @@ export default function ResultPublicControls({
   initialIsPublic,
   canManage,
   publicName,
-  reportVersion,
   deliveryTierLabel,
-  reasoningModeLabel,
   summary,
   nextFocusSummary,
   highlights,
@@ -69,9 +67,7 @@ export default function ResultPublicControls({
   initialIsPublic: boolean;
   canManage: boolean;
   publicName: string;
-  reportVersion: string;
   deliveryTierLabel: string;
-  reasoningModeLabel: string;
   summary: string;
   nextFocusSummary: string;
   highlights: ShareHighlight[];
@@ -371,9 +367,8 @@ export default function ResultPublicControls({
               <h1>${escapeHtml(activeShareTitle)}</h1>
               <p class="summary">${safeSummary}</p>
               <div class="chips">
-                <span class="chip">${escapeHtml(reportVersion)}</span>
                 <span class="chip">${escapeHtml(deliveryTierLabel)}</span>
-                <span class="chip">${escapeHtml(reasoningModeLabel)}</span>
+                <span class="chip">可分享报告</span>
               </div>
             </div>
             <div class="content">
@@ -441,13 +436,10 @@ export default function ResultPublicControls({
           <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-3 text-sm text-[color:var(--ink)]">{summary}</p>
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-              {reportVersion}
-            </span>
-            <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
               {deliveryTierLabel}
             </span>
             <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-              {reasoningModeLabel}
+              可分享报告
             </span>
           </div>
         </div>

@@ -386,8 +386,8 @@ async function executeAnalyze(
   const toolMemory = summarizeToolSessions(recentToolSessions, null, 5);
   finalResult.analysis = {
     ...(finalResult.analysis || {}),
-    workflow: analysisWorkflowSnapshot,
   };
+  (finalResult.analysis as typeof finalResult.analysis & { workflow?: typeof analysisWorkflowSnapshot }).workflow = analysisWorkflowSnapshot;
   if (toolMemory) {
     finalResult.analysis = {
       ...(finalResult.analysis || {}),
@@ -463,7 +463,7 @@ async function executeAnalyze(
       dayun: finalResult.dayun,
       shenSha: finalResult.shenSha,
       reportVersion: CURRENT_REPORT_VERSION,
-      isPublic: false,
+      isPublic: true,
     }
   );
   const savedReport = createSavedReportSnapshot({
@@ -572,12 +572,12 @@ async function executeAnalyze(
     stage: 'complete',
     progress: 100,
     label: finalResult.analysis?.qualityAudit?.targetAchieved || finalResult.analysis?.qualityAudit?.deliveryTier === 'expert'
-      ? '专家版报告已准备就绪'
+      ? '完整报告已准备就绪'
       : '当前可读版报告已准备就绪',
     detail: finalResult.analysis?.qualityAudit?.targetAchieved || finalResult.analysis?.qualityAudit?.deliveryTier === 'expert'
-      ? '本次结果已经达到专家版标准，正在为你打开完整报告。'
+      ? '本次结果已经达到更完整标准，正在为你打开完整报告。'
       : queuedUpgrade.queued
-        ? '当前先打开可读版结果，后台会继续增强并尝试提升到 S 级专家版。'
+        ? '当前先打开可读版结果，更完整的内容会继续补全到这份报告里。'
         : '结果页已经生成并保存完成，正在为你打开当前报告。',
   });
 
@@ -617,7 +617,7 @@ function createSavedReportSnapshot(params: {
     dayun: params.finalResult.dayun,
     shenSha: params.finalResult.shenSha,
     reportVersion: CURRENT_REPORT_VERSION,
-    isPublic: false,
+    isPublic: true,
   };
 }
 
@@ -749,20 +749,20 @@ function mapPipelineStage(progressEvent: {
 }): StreamStageEvent | null {
   const stageMeta = {
     engine: {
-      started: { progress: 22, label: '命理引擎正在计算结构底座' },
-      completed: { progress: 38, label: '基础命盘结构计算完成' },
+      started: { progress: 22, label: '正在计算基础结构' },
+      completed: { progress: 38, label: '基础结构已完成' },
     },
     llm: {
-      started: { progress: 48, label: '语言模型正在增强解释层' },
-      completed: { progress: 62, label: '语言增强阶段已完成' },
+      started: { progress: 48, label: '正在整理报告内容' },
+      completed: { progress: 62, label: '报告内容已整理' },
     },
     agentic: {
-      started: { progress: 58, label: '并发专家 Agent 正在分析' },
-      completed: { progress: 78, label: '并发专家 Agent 已返回结果' },
+      started: { progress: 58, label: '正在补充多角度判断' },
+      completed: { progress: 78, label: '补充判断已完成' },
     },
     merge: {
-      started: { progress: 86, label: '正在整合最终报告' },
-      completed: { progress: 92, label: '最终报告整合完成' },
+      started: { progress: 86, label: '正在整理最终报告' },
+      completed: { progress: 92, label: '最终报告整理完成' },
     },
   } as const;
 
@@ -776,8 +776,35 @@ function mapPipelineStage(progressEvent: {
     stage: progressEvent.stage,
     progress: meta.progress,
     label: meta.label,
-    detail: progressEvent.detail,
+    detail: mapPipelineStageDetail(progressEvent.stage, progressEvent.status),
   };
+}
+
+function mapPipelineStageDetail(
+  stage: 'engine' | 'llm' | 'agentic' | 'merge',
+  status: 'started' | 'completed'
+) {
+  if (stage === 'engine') {
+    return status === 'started'
+      ? '正在计算基础结构、阶段信号和重点主题。'
+      : '基础结构已完成，正在继续整理报告正文。';
+  }
+
+  if (stage === 'llm') {
+    return status === 'started'
+      ? '正在整理解释、风险提醒和行动建议。'
+      : '报告正文已整理，正在补充多角度判断。';
+  }
+
+  if (stage === 'agentic') {
+    return status === 'started'
+      ? '正在补充天时、地利、人和等多角度判断。'
+      : '补充判断已完成，正在做最终校对。';
+  }
+
+  return status === 'started'
+    ? '正在汇总结构、趋势和行动建议。'
+    : '最终报告已整理完成。';
 }
 
 function resolveEffectiveTiming(data: AnalyzeInput) {

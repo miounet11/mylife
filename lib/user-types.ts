@@ -573,6 +573,15 @@ export interface FortuneAnalysisResult {
     wealth: number;
     marriage: number;
     health: number;
+    evidence?: {
+      natal: Array<{ driver: string; impact: number }>;
+      dayun: Array<{ driver: string; impact: number }>;
+      liunian: Array<{ driver: string; impact: number }>;
+      drivers: string[];
+      risks: string[];
+      ganZhi?: string;
+      dayunGanZhi?: string | null;
+    };
   }>;
 
   // 大运详细数据
@@ -589,6 +598,9 @@ export interface CareerAdvice {
   avoid?: string[];
   direction: string;
   colors: string[];
+  drivers?: string[];
+  risks?: string[];
+  actions?: string[];
 }
 
 export interface WealthAdvice {
@@ -598,6 +610,9 @@ export interface WealthAdvice {
   direction: string;
   colors: string[];
   avoid: string[];
+  drivers?: string[];
+  risks?: string[];
+  actions?: string[];
 }
 
 export interface MarriageAdvice {
@@ -607,6 +622,9 @@ export interface MarriageAdvice {
   direction: string;
   colors: string[];
   avoid?: string[];
+  drivers?: string[];
+  risks?: string[];
+  actions?: string[];
 }
 
 export interface HealthAdvice {
@@ -616,6 +634,9 @@ export interface HealthAdvice {
   directions: string[];
   colors: string[];
   avoid: string[];
+  drivers?: string[];
+  risks?: string[];
+  actions?: string[];
 }
 
 export interface DataStatistics {

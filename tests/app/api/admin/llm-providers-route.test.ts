@@ -16,8 +16,10 @@ describe('admin llm providers route', () => {
       authenticated: true,
       user: {
         id: 'admin_test_user',
+        name: 'Admin Test',
         email: 'admin@example.com',
         role: 'admin',
+        emailVerified: true,
       },
     });
   });

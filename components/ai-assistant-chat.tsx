@@ -632,13 +632,32 @@ export default function AIAssistantChat() {
 
       await fetchHistory(false);
 
+      const activeReportId = reportId || context?.report?.id || '';
+
       trackGoogleAnalyticsEvent('chat_completed', {
-        report_id: reportId || context?.report?.id || '',
+        report_id: activeReportId,
         event_id: eventId || context?.focusedEvent?.id || '',
         intent: intent || 'default',
         llm_used: !!data.llmUsed,
         material_count: materialSnapshot.length,
       });
+
+      if (activeReportId && source.startsWith('result_')) {
+        void trackClientEvent({
+          eventName: 'report_to_chat_completed',
+          page: '/chat',
+          meta: {
+            reportId: activeReportId,
+            eventId: eventId || context?.focusedEvent?.id || null,
+            intent: intent || null,
+            source,
+            ctaStrategyKey: ctaStrategyKey || null,
+            sourceFamily: sourceFamily || null,
+            llmUsed: !!data.llmUsed,
+            materialCount: materialSnapshot.length,
+          },
+        });
+      }
 
       if (!data.llmUsed) {
         setError('当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。');
@@ -1610,7 +1629,7 @@ function MessageBubble({
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-semibold text-[color:var(--ink)]">结构回复</span>
           {message.llmUsed === false && (
-            <span className="rounded-full bg-[rgba(201,161,74,0.16)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--signal-strong)]">稳定版</span>
+            <span className="rounded-full bg-[rgba(201,161,74,0.16)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--signal-strong)]">待重试</span>
           )}
           {message.regenerated ? (
             <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--muted)]">已重生成</span>
@@ -1626,7 +1645,7 @@ function MessageBubble({
           <span>
             {message.llmUsed
               ? '结合当前报告与对话内容生成'
-              : '上游模型不稳定，当前先展示稳定版结构回复；稍后可点重生成补全深度。'}
+              : '这次没有拿到可用解析，未硬编答案；可点重生成重新尝试。'}
           </span>
           <div className="flex flex-wrap items-center gap-2">
             <span>{time}</span>

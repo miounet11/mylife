@@ -1,0 +1,1681 @@
+[monitor] start 2026-05-15T00:57:47.170Z
+
+## baseline-request-window 2026-05-15T00:57:47.172Z
+$ node scripts/request-window.js 60
+{
+  "windowMinutes": 60,
+  "totalAnalyticsEvents": 1172,
+  "productAnalyticsEvents": 907,
+  "systemAnalyticsEvents": 265,
+  "systemEventShare": 23,
+  "topProductEvents": [
+    {
+      "eventName": "chat_completed",
+      "count": 290
+    },
+    {
+      "eventName": "chat_context_loaded",
+      "count": 290
+    },
+    {
+      "eventName": "chat_page_viewed",
+      "count": 290
+    },
+    {
+      "eventName": "knowledge_article_viewed",
+      "count": 19
+    },
+    {
+      "eventName": "case_article_viewed",
+      "count": 10
+    },
+    {
+      "eventName": "analyze_page_viewed",
+      "count": 3
+    },
+    {
+      "eventName": "report_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "report_followup_augmented",
+      "count": 1
+    },
+    {
+      "eventName": "knowledge_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "home_page_viewed",
+      "count": 1
+    }
+  ],
+  "topSystemEvents": [
+    {
+      "eventName": "llm_model_attempt",
+      "count": 231
+    },
+    {
+      "eventName": "llm_model_circuit_changed",
+      "count": 34
+    }
+  ],
+  "topEvents": [
+    {
+      "eventName": "chat_completed",
+      "count": 290
+    },
+    {
+      "eventName": "chat_context_loaded",
+      "count": 290
+    },
+    {
+      "eventName": "chat_page_viewed",
+      "count": 290
+    },
+    {
+      "eventName": "llm_model_attempt",
+      "count": 231
+    },
+    {
+      "eventName": "llm_model_circuit_changed",
+      "count": 34
+    },
+    {
+      "eventName": "knowledge_article_viewed",
+      "count": 19
+    },
+    {
+      "eventName": "case_article_viewed",
+      "count": 10
+    },
+    {
+      "eventName": "analyze_page_viewed",
+      "count": 3
+    },
+    {
+      "eventName": "report_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "report_followup_augmented",
+      "count": 1
+    },
+    {
+      "eventName": "knowledge_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "home_page_viewed",
+      "count": 1
+    }
+  ],
+  "topPages": [
+    {
+      "page": "/chat",
+      "count": 290
+    },
+    {
+      "page": "/analyze",
+      "count": 3
+    },
+    {
+      "page": "/result/report_1778553814406_4y3pxsn8z",
+      "count": 1
+    },
+    {
+      "page": "/result/report_1778289141754_dhh7cmscz",
+      "count": 1
+    },
+    {
+      "page": "/world-yi",
+      "count": 1
+    },
+    {
+      "page": "/",
+      "count": 1
+    }
+  ],
+  "routeHealth": [
+    {
+      "key": "chat:load",
+      "success": 290,
+      "failed": 0,
+      "fallbacks": 0,
+      "totalDurationMs": 1768,
+      "maxDurationMs": 42,
+      "avgDurationMs": 6
+    }
+  ],
+  "failureHotspots": [],
+  "llmByModel": [
+    {
+      "model": "gpt-5.5",
+      "attempts": 149,
+      "successes": 112,
+      "failures": 37,
+      "successRate": 75,
+      "avgLatencyMs": 26960,
+      "scopes": [
+        {
+          "scope": "agent",
+          "count": 131
+        },
+        {
+          "scope": "report",
+          "count": 18
+        }
+      ]
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "attempts": 42,
+      "successes": 8,
+      "failures": 34,
+      "successRate": 19,
+      "avgLatencyMs": 13215,
+      "scopes": [
+        {
+          "scope": "agent",
+          "count": 24
+        },
+        {
+          "scope": "report",
+          "count": 18
+        }
+      ]
+    },
+    {
+      "model": "auto",
+      "attempts": 40,
+      "successes": 8,
+      "failures": 32,
+      "successRate": 20,
+      "avgLatencyMs": 11860,
+      "scopes": [
+        {
+          "scope": "report",
+          "count": 23
+        },
+        {
+          "scope": "agent",
+          "count": 17
+        }
+      ]
+    }
+  ],
+  "recentUpgradeRows": [
+    {
+      "id": "upgrade_mp4s3q318cgdrz",
+      "report_id": "report_1778720235194_t55rhmf08",
+      "status": "running",
+      "attempts": 4,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T00:49:59.507Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:57:47.020Z"
+    },
+    {
+      "id": "upgrade_mp2dnf0inqqdcm",
+      "report_id": "report_1778575027220_ajii8nwl5",
+      "status": "running",
+      "attempts": 4,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T00:46:56.335Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:55:47.613Z"
+    },
+    {
+      "id": "upgrade_mp37icc2pq7kzy",
+      "report_id": "report_1778625178567_j3fcqsihl",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:32:44.780Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:52:44.780Z"
+    },
+    {
+      "id": "upgrade_mp3yaik6f2gn14",
+      "report_id": "report_1778670163261_cvotklu3q",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:29:41.321Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:49:41.321Z"
+    },
+    {
+      "id": "upgrade_mp1v57qgbmd3wk",
+      "report_id": "report_1778543944737_hyps7prjh",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:47:56.538Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:47:56.538Z"
+    },
+    {
+      "id": "upgrade_mp2borsdoq3lhk",
+      "report_id": "report_1778571731139_awfkmhybu",
+      "status": "failed",
+      "attempts": 4,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T00:43:53.210Z",
+      "last_error": "TARGET_NOT_REACHED",
+      "updated_at": "2026-05-15T00:47:55.553Z"
+    },
+    {
+      "id": "upgrade_mp25c5aqsdkzth",
+      "report_id": "report_1778561064453_1cbuyxnpw",
+      "status": "retry",
+      "attempts": 1,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:46:37.906Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:46:37.906Z"
+    },
+    {
+      "id": "upgrade_mp1u1ogp4ookp0",
+      "report_id": "report_1778542100359_32jb8184h",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:03:01.440Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:43:01.441Z"
+    },
+    {
+      "id": "upgrade_mp20c1938mqgle",
+      "report_id": "report_1778552661076_tbb50nwq5",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T01:11:00.281Z",
+      "last_error": "一致性校验仍需观察 | 一致性校验仍需补强",
+      "updated_at": "2026-05-15T00:43:00.282Z"
+    },
+    {
+      "id": "upgrade_mp0zicm6mkec9i",
+      "report_id": "report_1778490810047_fq6qxtsod",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:41:34.580Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:41:34.580Z"
+    },
+    {
+      "id": "upgrade_moa5pwtysg5w4d",
+      "report_id": "report_1776868653989_bk69jm1jj",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 6,
+      "next_run_at": "2026-05-15T02:41:02.021Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T00:41:02.021Z"
+    },
+    {
+      "id": "upgrade_mp2mcckvtlk4nu",
+      "report_id": "report_1778589627257_ycina7z16",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:41:00.772Z",
+      "last_error": "LLM_UNAVAILABLE",
+      "updated_at": "2026-05-15T00:41:00.772Z"
+    }
+  ]
+}
+
+## baseline-report-retro 2026-05-15T00:57:47.478Z
+$ node scripts/report-retro.js 60 --json
+{
+  "generatedAt": "2026-05-15T00:57:47.728Z",
+  "windowMinutes": 60,
+  "analytics": {
+    "totalEvents": 1172,
+    "activeSessions": 6,
+    "uniqueSubmitters": 0,
+    "uniqueCompleters": 0,
+    "uniqueReportViewers": 2,
+    "topEvents": [
+      {
+        "eventName": "chat_completed",
+        "count": 290
+      },
+      {
+        "eventName": "chat_context_loaded",
+        "count": 290
+      },
+      {
+        "eventName": "chat_page_viewed",
+        "count": 290
+      },
+      {
+        "eventName": "llm_model_attempt",
+        "count": 231
+      },
+      {
+        "eventName": "llm_model_circuit_changed",
+        "count": 34
+      },
+      {
+        "eventName": "knowledge_article_viewed",
+        "count": 19
+      },
+      {
+        "eventName": "case_article_viewed",
+        "count": 10
+      },
+      {
+        "eventName": "analyze_page_viewed",
+        "count": 3
+      },
+      {
+        "eventName": "report_viewed",
+        "count": 2
+      },
+      {
+        "eventName": "report_followup_augmented",
+        "count": 1
+      },
+      {
+        "eventName": "knowledge_page_viewed",
+        "count": 1
+      },
+      {
+        "eventName": "home_page_viewed",
+        "count": 1
+      }
+    ],
+    "missingSessionPageViews": 0
+  },
+  "reports": {
+    "total": 0,
+    "realLikely": 0,
+    "likelyTest": 0,
+    "viewedDistinct": 2,
+    "basicCount": 0,
+    "llmCount": 0,
+    "realViewedCount": 0,
+    "realBasicCount": 0,
+    "realViewedBasicCount": 0,
+    "realLlmCount": 0,
+    "fallbackCompleted": 0,
+    "fallbackRate": 0,
+    "basicRate": 0,
+    "llmRate": 0,
+    "realViewedRate": 0,
+    "realBasicRate": 0,
+    "realViewedBasicRate": 0,
+    "realLlmRate": 0
+  },
+  "realReportCards": [],
+  "realViewedBasicReportCards": [],
+  "testReportCards": [],
+  "activeSessions": [
+    {
+      "sessionId": "60.248.49.19",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 1,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:50:37"
+    },
+    {
+      "sessionId": "2604:a840:3::300d",
+      "homeViewed": 0,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 1,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:40:02"
+    },
+    {
+      "sessionId": "43.173.181.180",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:29:15"
+    },
+    {
+      "sessionId": "27.44.125.108",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:26:23"
+    },
+    {
+      "sessionId": "43.173.182.183",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:24:12"
+    },
+    {
+      "sessionId": "2409:8a74:8a81:9941:684a:4458:fc62:b552",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 00:03:29"
+    }
+  ],
+  "upgradeQueue": {
+    "recentCount": 20,
+    "statusCounts": {
+      "running": 2,
+      "retry": 17,
+      "failed": 1
+    },
+    "providerDeferredCount": 20,
+    "recentProviderDeferred": [
+      {
+        "id": "upgrade_mp4s3q318cgdrz",
+        "reportId": "report_1778720235194_t55rhmf08",
+        "status": "running",
+        "attempts": 4,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T00:49:59.507Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 8,
+        "updatedAt": "2026-05-15T00:57:47.020Z"
+      },
+      {
+        "id": "upgrade_mp2dnf0inqqdcm",
+        "reportId": "report_1778575027220_ajii8nwl5",
+        "status": "running",
+        "attempts": 4,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T00:46:56.335Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 27,
+        "updatedAt": "2026-05-15T00:55:47.613Z"
+      },
+      {
+        "id": "upgrade_mp37icc2pq7kzy",
+        "reportId": "report_1778625178567_j3fcqsihl",
+        "status": "retry",
+        "attempts": 3,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:32:44.780Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 5,
+        "updatedAt": "2026-05-15T00:52:44.780Z"
+      },
+      {
+        "id": "upgrade_mp3yaik6f2gn14",
+        "reportId": "report_1778670163261_cvotklu3q",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:29:41.321Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 5,
+        "updatedAt": "2026-05-15T00:49:41.321Z"
+      },
+      {
+        "id": "upgrade_mp1v57qgbmd3wk",
+        "reportId": "report_1778543944737_hyps7prjh",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:47:56.538Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 6,
+        "updatedAt": "2026-05-15T00:47:56.538Z"
+      },
+      {
+        "id": "upgrade_mp2borsdoq3lhk",
+        "reportId": "report_1778571731139_awfkmhybu",
+        "status": "failed",
+        "attempts": 4,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T00:43:53.210Z",
+        "lastError": "TARGET_NOT_REACHED",
+        "providerDeferralCount": 25,
+        "updatedAt": "2026-05-15T00:47:55.553Z"
+      },
+      {
+        "id": "upgrade_mp25c5aqsdkzth",
+        "reportId": "report_1778561064453_1cbuyxnpw",
+        "status": "retry",
+        "attempts": 1,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:46:37.906Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 14,
+        "updatedAt": "2026-05-15T00:46:37.906Z"
+      },
+      {
+        "id": "upgrade_mp1u1ogp4ookp0",
+        "reportId": "report_1778542100359_32jb8184h",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:03:01.440Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 4,
+        "updatedAt": "2026-05-15T00:43:01.441Z"
+      }
+    ]
+  },
+  "failureHotspots": [],
+  "recommendations": [
+    "页面浏览埋点 session 已基本串通，可以开始把漏斗数据作为正式运营依据。",
+    "最近窗口内没有测算回退，优先扩大真实样本和复盘深度。",
+    "当前窗口内没有足够真实样本，先扩大真实用户测算量。"
+  ]
+}
+
+## baseline-demand-eval 2026-05-15T00:57:47.766Z
+$ node --import tsx scripts/report-demand-eval.ts --recent-real=8 --window-days=1 --json
+{
+  "generatedAt": "2026-05-15T00:57:48.881Z",
+  "personaCount": 20,
+  "expertJudgeCount": 5,
+  "selection": {
+    "mode": "recent-real",
+    "requestedCount": 8,
+    "selectedCount": 5,
+    "windowDays": 1,
+    "viewedFirst": true
+  },
+  "reports": [
+    {
+      "id": "report_1778774971045_6sq342ffp",
+      "name": "王风杰",
+      "birthPlace": "山东省 德州市",
+      "createdAt": "2026-05-14 16:09:31",
+      "deliveryTier": "enhanced",
+      "llmUsed": true,
+      "score": 94,
+      "summary": "结构需火金土，阶段处扩张后段，动作先试探后放大，围绕事业稳扎",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778769692722_xdegn8s5b",
+      "name": "阿木",
+      "birthPlace": "北京",
+      "createdAt": "2026-05-14 14:41:32",
+      "deliveryTier": "enhanced",
+      "llmUsed": true,
+      "score": 95,
+      "summary": "当前忌运中遇用神年，能做事，但必须借势推进、控风险、守现金流",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778760867490_8n3zvinfq",
+      "name": "卢平伟",
+      "birthPlace": "广东省 茂名市",
+      "createdAt": "2026-05-14 12:14:27",
+      "deliveryTier": "enhanced",
+      "llmUsed": false,
+      "score": 78,
+      "summary": "从儿格是当前主判断，重心落在辛未大运。优先顺着土、金对应方向做取舍",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778750766864_8xtyoay53",
+      "name": "扈锦程",
+      "birthPlace": "江苏省 常州市",
+      "createdAt": "2026-05-14 09:26:06",
+      "deliveryTier": "basic",
+      "llmUsed": true,
+      "score": 92,
+      "summary": "2026收尾不宜硬攻，稳住结构，2027后转入沉淀建设",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778723665144_sdehiz8d1",
+      "name": "黄昕琳",
+      "birthPlace": "江苏省 泰州市",
+      "createdAt": "2026-05-14 01:54:25",
+      "deliveryTier": "enhanced",
+      "llmUsed": true,
+      "score": 95,
+      "summary": "结构偏弱需水木通关，2026立夏处于守成向试探过渡阶段，动作先固北东资源，再小步放大优势",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    }
+  ]
+}
+
+## final-request-window 2026-05-15T01:57:49.008Z
+$ node scripts/request-window.js 60
+{
+  "windowMinutes": 60,
+  "totalAnalyticsEvents": 1510,
+  "productAnalyticsEvents": 1227,
+  "systemAnalyticsEvents": 283,
+  "systemEventShare": 19,
+  "topProductEvents": [
+    {
+      "eventName": "chat_page_viewed",
+      "count": 413
+    },
+    {
+      "eventName": "chat_completed",
+      "count": 392
+    },
+    {
+      "eventName": "chat_context_loaded",
+      "count": 392
+    },
+    {
+      "eventName": "knowledge_article_viewed",
+      "count": 13
+    },
+    {
+      "eventName": "tool_detail_viewed",
+      "count": 4
+    },
+    {
+      "eventName": "analyze_page_viewed",
+      "count": 3
+    },
+    {
+      "eventName": "knowledge_page_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "insight_article_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "case_article_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "tools_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "home_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "docs_article_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "insights_page_viewed",
+      "count": 1
+    }
+  ],
+  "topSystemEvents": [
+    {
+      "eventName": "llm_model_attempt",
+      "count": 245
+    },
+    {
+      "eventName": "llm_model_circuit_changed",
+      "count": 38
+    }
+  ],
+  "topEvents": [
+    {
+      "eventName": "chat_page_viewed",
+      "count": 413
+    },
+    {
+      "eventName": "chat_completed",
+      "count": 392
+    },
+    {
+      "eventName": "chat_context_loaded",
+      "count": 392
+    },
+    {
+      "eventName": "llm_model_attempt",
+      "count": 245
+    },
+    {
+      "eventName": "llm_model_circuit_changed",
+      "count": 38
+    },
+    {
+      "eventName": "knowledge_article_viewed",
+      "count": 13
+    },
+    {
+      "eventName": "tool_detail_viewed",
+      "count": 4
+    },
+    {
+      "eventName": "analyze_page_viewed",
+      "count": 3
+    },
+    {
+      "eventName": "knowledge_page_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "insight_article_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "case_article_viewed",
+      "count": 2
+    },
+    {
+      "eventName": "tools_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "home_page_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "docs_article_viewed",
+      "count": 1
+    },
+    {
+      "eventName": "insights_page_viewed",
+      "count": 1
+    }
+  ],
+  "topPages": [
+    {
+      "page": "/chat",
+      "count": 413
+    },
+    {
+      "page": "/analyze",
+      "count": 3
+    },
+    {
+      "page": "/tools",
+      "count": 1
+    },
+    {
+      "page": "/world-yi",
+      "count": 1
+    },
+    {
+      "page": "/",
+      "count": 1
+    },
+    {
+      "page": "/knowledge",
+      "count": 1
+    },
+    {
+      "page": "/insights",
+      "count": 1
+    }
+  ],
+  "routeHealth": [
+    {
+      "key": "chat:load",
+      "success": 392,
+      "failed": 0,
+      "fallbacks": 0,
+      "totalDurationMs": 2141,
+      "maxDurationMs": 34,
+      "avgDurationMs": 5
+    }
+  ],
+  "failureHotspots": [],
+  "llmByModel": [
+    {
+      "model": "gpt-5.5",
+      "attempts": 161,
+      "successes": 119,
+      "failures": 42,
+      "successRate": 74,
+      "avgLatencyMs": 28593,
+      "scopes": [
+        {
+          "scope": "agent",
+          "count": 136
+        },
+        {
+          "scope": "report",
+          "count": 25
+        }
+      ]
+    },
+    {
+      "model": "gpt-5.4-mini",
+      "attempts": 50,
+      "successes": 11,
+      "failures": 39,
+      "successRate": 22,
+      "avgLatencyMs": 13320,
+      "scopes": [
+        {
+          "scope": "agent",
+          "count": 25
+        },
+        {
+          "scope": "report",
+          "count": 25
+        }
+      ]
+    },
+    {
+      "model": "auto",
+      "attempts": 34,
+      "successes": 1,
+      "failures": 33,
+      "successRate": 3,
+      "avgLatencyMs": 11659,
+      "scopes": [
+        {
+          "scope": "agent",
+          "count": 18
+        },
+        {
+          "scope": "report",
+          "count": 16
+        }
+      ]
+    }
+  ],
+  "recentUpgradeRows": [
+    {
+      "id": "upgrade_mp2bnz8gtra7mo",
+      "report_id": "report_1778571694151_7ijwq5oh0",
+      "status": "retry",
+      "attempts": 1,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:36:09.187Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:56:09.187Z"
+    },
+    {
+      "id": "upgrade_mp4s0wchnh9pd2",
+      "report_id": "report_1778720103175_k16yhs0bn",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:38:07.999Z",
+      "last_error": "一致性校验仍需观察 | 专家协同仍需补强 | 一致性校验仍需补强",
+      "updated_at": "2026-05-15T01:56:07.999Z"
+    },
+    {
+      "id": "upgrade_mp2wz7rfjcxme3",
+      "report_id": "report_1778607490390_holzsrrc9",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:55:26.789Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:55:26.789Z"
+    },
+    {
+      "id": "upgrade_mp2bxkdvqqpf0o",
+      "report_id": "report_1778572141256_nd6ox47y2",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:50:23.603Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:50:23.603Z"
+    },
+    {
+      "id": "upgrade_mp2b3kp762jizk",
+      "report_id": "report_1778570742157_mfkojeccw",
+      "status": "retry",
+      "attempts": 1,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:47:20.248Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:47:20.248Z"
+    },
+    {
+      "id": "upgrade_movkdrq08hcb2k",
+      "report_id": "report_1778163071170_762gi257o",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 6,
+      "next_run_at": "2026-05-15T03:45:27.840Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:45:27.840Z"
+    },
+    {
+      "id": "upgrade_mp4u58hs6kdbwt",
+      "report_id": "report_1778723665144_sdehiz8d1",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:45:26.706Z",
+      "last_error": "LLM_UNAVAILABLE",
+      "updated_at": "2026-05-15T01:45:26.706Z"
+    },
+    {
+      "id": "upgrade_mp25pq24qxwyxf",
+      "report_id": "report_1778561697852_n9hvsp4to",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:24:16.657Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:44:16.657Z"
+    },
+    {
+      "id": "upgrade_mp1ejsc1cjg5h8",
+      "report_id": "report_1778516071186_0xpdpmz32",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:44:05.685Z",
+      "last_error": "PROVIDER_UNHEALTHY",
+      "updated_at": "2026-05-15T01:44:05.685Z"
+    },
+    {
+      "id": "upgrade_mp1dfi33rmrdbu",
+      "report_id": "report_1778514191466_jga5llt0c",
+      "status": "retry",
+      "attempts": 2,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T03:44:04.434Z",
+      "last_error": "LLM_UNAVAILABLE",
+      "updated_at": "2026-05-15T01:44:04.435Z"
+    },
+    {
+      "id": "upgrade_mp1wtdb2j8fj59",
+      "report_id": "report_1778546751477_e2ktv9e8l",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:25:57.238Z",
+      "last_error": "一致性校验未通过 | 一致性校验仍需补强",
+      "updated_at": "2026-05-15T01:43:57.238Z"
+    },
+    {
+      "id": "upgrade_mp1xn6shzqhxth",
+      "report_id": "report_1778548142464_yl00xixtz",
+      "status": "retry",
+      "attempts": 3,
+      "max_attempts": 4,
+      "next_run_at": "2026-05-15T02:11:47.620Z",
+      "last_error": "一致性校验未通过 | 一致性校验仍需补强",
+      "updated_at": "2026-05-15T01:41:47.620Z"
+    }
+  ]
+}
+
+## final-report-retro 2026-05-15T01:57:49.413Z
+$ node scripts/report-retro.js 60 --json
+{
+  "generatedAt": "2026-05-15T01:57:49.628Z",
+  "windowMinutes": 60,
+  "analytics": {
+    "totalEvents": 1510,
+    "activeSessions": 4,
+    "uniqueSubmitters": 0,
+    "uniqueCompleters": 0,
+    "uniqueReportViewers": 0,
+    "topEvents": [
+      {
+        "eventName": "chat_page_viewed",
+        "count": 413
+      },
+      {
+        "eventName": "chat_completed",
+        "count": 392
+      },
+      {
+        "eventName": "chat_context_loaded",
+        "count": 392
+      },
+      {
+        "eventName": "llm_model_attempt",
+        "count": 245
+      },
+      {
+        "eventName": "llm_model_circuit_changed",
+        "count": 38
+      },
+      {
+        "eventName": "knowledge_article_viewed",
+        "count": 13
+      },
+      {
+        "eventName": "tool_detail_viewed",
+        "count": 4
+      },
+      {
+        "eventName": "analyze_page_viewed",
+        "count": 3
+      },
+      {
+        "eventName": "knowledge_page_viewed",
+        "count": 2
+      },
+      {
+        "eventName": "insight_article_viewed",
+        "count": 2
+      },
+      {
+        "eventName": "case_article_viewed",
+        "count": 2
+      },
+      {
+        "eventName": "tools_page_viewed",
+        "count": 1
+      },
+      {
+        "eventName": "home_page_viewed",
+        "count": 1
+      },
+      {
+        "eventName": "docs_article_viewed",
+        "count": 1
+      },
+      {
+        "eventName": "insights_page_viewed",
+        "count": 1
+      }
+    ],
+    "missingSessionPageViews": 0
+  },
+  "reports": {
+    "total": 0,
+    "realLikely": 0,
+    "likelyTest": 0,
+    "viewedDistinct": 0,
+    "basicCount": 0,
+    "llmCount": 0,
+    "realViewedCount": 0,
+    "realBasicCount": 0,
+    "realViewedBasicCount": 0,
+    "realLlmCount": 0,
+    "fallbackCompleted": 0,
+    "fallbackRate": 0,
+    "basicRate": 0,
+    "llmRate": 0,
+    "realViewedRate": 0,
+    "realBasicRate": 0,
+    "realViewedBasicRate": 0,
+    "realLlmRate": 0
+  },
+  "realReportCards": [],
+  "realViewedBasicReportCards": [],
+  "testReportCards": [],
+  "activeSessions": [
+    {
+      "sessionId": "117.188.14.59",
+      "homeViewed": 1,
+      "analyzeViewed": 0,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 01:36:51"
+    },
+    {
+      "sessionId": "43.173.173.81",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 01:31:27"
+    },
+    {
+      "sessionId": "43.173.175.205",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 01:29:20"
+    },
+    {
+      "sessionId": "43.173.175.117",
+      "homeViewed": 0,
+      "analyzeViewed": 1,
+      "submitted": 0,
+      "completed": 0,
+      "reportViewed": 0,
+      "chatCompleted": 0,
+      "lastAt": "2026-05-15 01:28:19"
+    }
+  ],
+  "upgradeQueue": {
+    "recentCount": 20,
+    "statusCounts": {
+      "retry": 19,
+      "failed": 1
+    },
+    "providerDeferredCount": 20,
+    "recentProviderDeferred": [
+      {
+        "id": "upgrade_mp2bnz8gtra7mo",
+        "reportId": "report_1778571694151_7ijwq5oh0",
+        "status": "retry",
+        "attempts": 1,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:36:09.187Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 5,
+        "updatedAt": "2026-05-15T01:56:09.187Z"
+      },
+      {
+        "id": "upgrade_mp4s0wchnh9pd2",
+        "reportId": "report_1778720103175_k16yhs0bn",
+        "status": "retry",
+        "attempts": 3,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T02:38:07.999Z",
+        "lastError": "一致性校验仍需观察 | 专家协同仍需补强 | 一致性校验仍需补强",
+        "providerDeferralCount": 14,
+        "updatedAt": "2026-05-15T01:56:07.999Z"
+      },
+      {
+        "id": "upgrade_mp2wz7rfjcxme3",
+        "reportId": "report_1778607490390_holzsrrc9",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:55:26.789Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 30,
+        "updatedAt": "2026-05-15T01:55:26.789Z"
+      },
+      {
+        "id": "upgrade_mp2bxkdvqqpf0o",
+        "reportId": "report_1778572141256_nd6ox47y2",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:50:23.603Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 10,
+        "updatedAt": "2026-05-15T01:50:23.603Z"
+      },
+      {
+        "id": "upgrade_mp2b3kp762jizk",
+        "reportId": "report_1778570742157_mfkojeccw",
+        "status": "retry",
+        "attempts": 1,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:47:20.248Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 6,
+        "updatedAt": "2026-05-15T01:47:20.248Z"
+      },
+      {
+        "id": "upgrade_movkdrq08hcb2k",
+        "reportId": "report_1778163071170_762gi257o",
+        "status": "retry",
+        "attempts": 3,
+        "maxAttempts": 6,
+        "nextRunAt": "2026-05-15T03:45:27.840Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 45,
+        "updatedAt": "2026-05-15T01:45:27.840Z"
+      },
+      {
+        "id": "upgrade_mp4u58hs6kdbwt",
+        "reportId": "report_1778723665144_sdehiz8d1",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:45:26.706Z",
+        "lastError": "LLM_UNAVAILABLE",
+        "providerDeferralCount": 12,
+        "updatedAt": "2026-05-15T01:45:26.706Z"
+      },
+      {
+        "id": "upgrade_mp25pq24qxwyxf",
+        "reportId": "report_1778561697852_n9hvsp4to",
+        "status": "retry",
+        "attempts": 2,
+        "maxAttempts": 4,
+        "nextRunAt": "2026-05-15T03:24:16.657Z",
+        "lastError": "PROVIDER_UNHEALTHY",
+        "providerDeferralCount": 5,
+        "updatedAt": "2026-05-15T01:44:16.657Z"
+      }
+    ]
+  },
+  "failureHotspots": [],
+  "recommendations": [
+    "页面浏览埋点 session 已基本串通，可以开始把漏斗数据作为正式运营依据。",
+    "最近窗口内没有测算回退，优先扩大真实样本和复盘深度。",
+    "当前窗口内没有足够真实样本，先扩大真实用户测算量。"
+  ]
+}
+
+## final-demand-eval 2026-05-15T01:57:49.671Z
+$ node --import tsx scripts/report-demand-eval.ts --recent-real=8 --window-days=1 --json
+{
+  "generatedAt": "2026-05-15T01:57:50.526Z",
+  "personaCount": 20,
+  "expertJudgeCount": 5,
+  "selection": {
+    "mode": "recent-real",
+    "requestedCount": 8,
+    "selectedCount": 4,
+    "windowDays": 1,
+    "viewedFirst": true
+  },
+  "reports": [
+    {
+      "id": "report_1778774971045_6sq342ffp",
+      "name": "王风杰",
+      "birthPlace": "山东省 德州市",
+      "createdAt": "2026-05-14 16:09:31",
+      "deliveryTier": "enhanced",
+      "llmUsed": true,
+      "score": 94,
+      "summary": "结构需火金土，阶段处扩张后段，动作先试探后放大，围绕事业稳扎",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778769692722_xdegn8s5b",
+      "name": "阿木",
+      "birthPlace": "北京",
+      "createdAt": "2026-05-14 14:41:32",
+      "deliveryTier": "enhanced",
+      "llmUsed": true,
+      "score": 95,
+      "summary": "当前忌运中遇用神年，能做事，但必须借势推进、控风险、守现金流",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778760867490_8n3zvinfq",
+      "name": "卢平伟",
+      "birthPlace": "广东省 茂名市",
+      "createdAt": "2026-05-14 12:14:27",
+      "deliveryTier": "enhanced",
+      "llmUsed": false,
+      "score": 78,
+      "summary": "从儿格是当前主判断，重心落在辛未大运。优先顺着土、金对应方向做取舍",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    },
+    {
+      "id": "report_1778750766864_8xtyoay53",
+      "name": "扈锦程",
+      "birthPlace": "江苏省 常州市",
+      "createdAt": "2026-05-14 09:26:06",
+      "deliveryTier": "basic",
+      "llmUsed": true,
+      "score": 92,
+      "summary": "2026收尾不宜硬攻，稳住结构，2027后转入沉淀建设",
+      "personaAverage": 5,
+      "expertAverage": 5,
+      "blocked": {
+        "hasBannedTerms": false,
+        "hasDuplicateYearRange": false,
+        "hasStructuredSections": true,
+        "missingSummary": false
+      },
+      "weakPersonas": [],
+      "expertScores": [
+        {
+          "id": "ziping-structure",
+          "label": "子平格局派",
+          "score": 5,
+          "note": "格局与用忌主线明确。"
+        },
+        {
+          "id": "timing-flow",
+          "label": "大运流年派",
+          "score": 5,
+          "note": "时间窗口可用于决策排序。"
+        },
+        {
+          "id": "practical-advisor",
+          "label": "实务决策派",
+          "score": 5,
+          "note": "动作与避坑都比较明确。"
+        },
+        {
+          "id": "language-discipline",
+          "label": "文本洁净派",
+          "score": 5,
+          "note": "没有明显工程痕迹和坏窗口。"
+        },
+        {
+          "id": "overseas-editor",
+          "label": "海外华人编辑",
+          "score": 5,
+          "note": "第一屏就能抓到结论。"
+        }
+      ]
+    }
+  ]
+}
+
+[monitor] end 2026-05-15T01:57:50.552Z

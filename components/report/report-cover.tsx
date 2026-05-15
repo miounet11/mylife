@@ -1,5 +1,5 @@
 // 决策台 · 报告封面
-// 大尺寸 wordmark 占位 + 用户身份块 + 报告版本与生成时间（全等宽）+ 抽象 K 线背景
+// 大尺寸 wordmark 占位 + 用户身份块 + 生成时间 + 抽象 K 线背景
 // 替换报告页顶部的"普通标题 + 卡片"组合
 // spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md §3.4
 
@@ -13,7 +13,7 @@ interface ReportCoverProps {
   birthIso?: string;
   birthLocation?: string;
   pillarSummary?: string;
-  reportId: string;
+  reportId?: string;
   reportVersion?: string;
   pipelineVersion?: string;
   generatedAt?: string;
@@ -27,16 +27,11 @@ export function ReportCover({
   birthIso,
   birthLocation,
   pillarSummary,
-  reportId,
-  reportVersion = 'v3',
-  pipelineVersion,
   generatedAt,
   qualityTier,
   qualityScore,
   className,
 }: ReportCoverProps) {
-  const shortId = reportId.length > 8 ? reportId.slice(0, 8) : reportId;
-
   return (
     <section
       className={`relative overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-5 md:p-7 ${className || ''}`}
@@ -92,24 +87,16 @@ export function ReportCover({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-1.5">
-            <Tag tone="brand" variant="soft" size="sm">
-              <span className="font-mono">{reportVersion}</span>
-            </Tag>
-            {qualityTier && (
+          {qualityTier && (
+            <div className="flex flex-wrap items-center gap-1.5">
               <Tag tone="signal" variant="soft" size="sm">
                 {qualityTier}
                 {typeof qualityScore === 'number' && (
                   <span className="ml-1 font-mono">{qualityScore}</span>
                 )}
               </Tag>
-            )}
-            {pipelineVersion && (
-              <Tag tone="default" variant="outline" size="sm">
-                <span className="font-mono uppercase">{pipelineVersion}</span>
-              </Tag>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-6 grid gap-4 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] md:items-end">
@@ -146,12 +133,6 @@ export function ReportCover({
                 <div className="mt-1 text-[color:var(--ink-2)]">{birthLocation}</div>
               </div>
             )}
-            <div>
-              <div className="font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                报告 ID
-              </div>
-              <div className="mt-1 font-mono text-[color:var(--ink-3)]">{shortId}</div>
-            </div>
             {generatedAt && (
               <div>
                 <div className="font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">

@@ -1,7 +1,6 @@
 'use client';
 
 import {
-  Bot,
   CheckCircle2,
   Clock3,
   GitMerge,
@@ -55,56 +54,56 @@ const stageOrder = ['received', 'solar-time', 'engine', 'llm', 'agentic', 'merge
 
 type AnalyzeStage = (typeof stageOrder)[number];
 
-type AgentTaskStatus = 'waiting' | 'running' | 'done';
+type ProgressTaskStatus = 'waiting' | 'running' | 'done';
 
-type AgentTaskKey = 'input' | 'solar' | 'engine' | 'enhance' | 'fusion';
+type ProgressTaskKey = 'input' | 'solar' | 'engine' | 'enhance' | 'fusion';
 
-interface AgentTaskDefinition {
-  key: AgentTaskKey;
+interface ProgressTaskDefinition {
+  key: ProgressTaskKey;
   title: string;
   detail: string;
   startStage: AnalyzeStage;
   doneStage: AnalyzeStage;
-  icon: typeof Bot;
+  icon: typeof RadioTower;
 }
 
-const agentTaskDefinitions: AgentTaskDefinition[] = [
+const progressTaskDefinitions: ProgressTaskDefinition[] = [
   {
     key: 'input',
-    title: '信息锁定 Agent',
-    detail: '出生信息、地点和参数已进入任务上下文',
+    title: '信息确认',
+    detail: '确认出生信息、地点和基础参数',
     startStage: 'received',
     doneStage: 'solar-time',
     icon: RadioTower,
   },
   {
     key: 'solar',
-    title: '真太阳时修正 Agent',
-    detail: '按时区、经纬度和校正规则生成时间底座',
+    title: '时间校准',
+    detail: '校准时区、经纬度和时间口径',
     startStage: 'solar-time',
     doneStage: 'engine',
     icon: Clock3,
   },
   {
     key: 'engine',
-    title: '命局结构引擎',
-    detail: '计算四柱、五行、十神、格局和阶段信号',
+    title: '结构计算',
+    detail: '计算基础结构、阶段信号和重点主题',
     startStage: 'engine',
     doneStage: 'llm',
     icon: Stars,
   },
   {
     key: 'enhance',
-    title: '解释增强 Agent',
-    detail: '把结构判断整理成主题、风险和行动建议',
+    title: '内容整理',
+    detail: '整理主题、风险和行动建议',
     startStage: 'llm',
     doneStage: 'agentic',
-    icon: Bot,
+    icon: Sparkles,
   },
   {
     key: 'fusion',
-    title: '结果融合/保存',
-    detail: '合并专家结论，保存报告并准备跳转',
+    title: '结果生成',
+    detail: '汇总内容，保存报告并准备打开结果页',
     startStage: 'agentic',
     doneStage: 'complete',
     icon: GitMerge,
@@ -116,7 +115,7 @@ function getStageRank(stage?: string | null) {
   return index === -1 ? 0 : index;
 }
 
-function getAgentTaskStatus({
+function getProgressTaskStatus({
   startStage,
   doneStage,
   currentStage,
@@ -128,7 +127,7 @@ function getAgentTaskStatus({
   currentStage?: string | null;
   displayProgress: number;
   isComplete: boolean;
-}): AgentTaskStatus {
+}): ProgressTaskStatus {
   if (isComplete) {
     return 'done';
   }
@@ -155,7 +154,7 @@ function getAgentTaskStatus({
   return 'waiting';
 }
 
-function getAgentStatusLabel(status: AgentTaskStatus) {
+function getProgressStatusLabel(status: ProgressTaskStatus) {
   if (status === 'done') {
     return '已完成';
   }
@@ -167,7 +166,7 @@ function getAgentStatusLabel(status: AgentTaskStatus) {
   return '等待中';
 }
 
-function getAgentStatusClass(status: AgentTaskStatus) {
+function getProgressStatusClass(status: ProgressTaskStatus) {
   if (status === 'done') {
     return 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
   }
@@ -312,14 +311,14 @@ export default function FortuneProgress({
     : '处理中，无需重复提交。';
   const deliveryStage = describeReportDeliveryStage(completionMeta?.deliveryTier);
   const deliveryTierLabel = deliveryStage.shortLabel;
-  const backgroundUpgradeLabel = completionMeta?.upgradeStatus === 'running'
-    ? '后台正在增强到更细致的报告'
+  const contentUpdateLabel = completionMeta?.upgradeStatus === 'running'
+    ? '更完整的内容正在补全中'
     : completionMeta?.upgradeStatus === 'pending' || completionMeta?.upgradeStatus === 'retry'
-      ? '后台已排队继续增强'
+      ? '更完整的内容已进入补全队列'
       : completionMeta?.upgradeStatus === 'completed'
-        ? '后台增强已完成'
+        ? '更完整的内容已补全'
         : completionMeta?.upgradeStatus === 'failed'
-          ? '后台增强暂时受阻'
+          ? '内容补全暂时受阻，当前报告仍可阅读'
           : '';
   const completionHeading = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
     ? '更细致的报告已完成'
@@ -327,26 +326,26 @@ export default function FortuneProgress({
   const completionDescription = completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
     ? '更细致的报告结果已生成。'
     : completionMeta?.upgradeQueued
-      ? `先打开${deliveryTierLabel}结果，后台继续增强到更细致的报告。`
+      ? `先打开${deliveryTierLabel}结果，更完整的内容会继续补全到这份报告里。`
       : `${deliveryTierLabel}结果已生成。`;
   const finalStatusLabel = isComplete
     ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
       ? '已达到细致版'
       : completionMeta?.upgradeQueued
-        ? '后台继续增强'
+        ? '内容继续补全'
         : `${deliveryTierLabel}已生成`
     : '计算中';
   const finalStageMessage = isComplete
     ? completionMeta?.targetAchieved || completionMeta?.deliveryTier === 'expert'
       ? '已达到更细致的报告。'
       : completionMeta?.upgradeQueued
-        ? `当前质量 ${completionMeta?.score || '--'} / ${completionMeta?.grade || 'B'}。`
+        ? '当前报告已可阅读，更完整的内容会继续补全。'
         : `${deliveryStage.label}整理完成。`
     : reassuranceMessages[messageIndex];
   const deliveryHint = buildDeliveryHint(deliverySupport);
-  const agentTasks = agentTaskDefinitions.map((task) => ({
+  const progressTasks = progressTaskDefinitions.map((task) => ({
     ...task,
-    status: getAgentTaskStatus({
+    status: getProgressTaskStatus({
       startStage: task.startStage,
       doneStage: task.doneStage,
       currentStage: serverStage?.stage,
@@ -354,19 +353,19 @@ export default function FortuneProgress({
       isComplete,
     }),
   }));
-  const runningAgentTask = agentTasks.find((task) => task.status === 'running');
-  const doneAgentTaskCount = agentTasks.filter((task) => task.status === 'done').length;
-  const agentWorkbenchHeadline = isComplete
+  const runningProgressTask = progressTasks.find((task) => task.status === 'running');
+  const doneProgressTaskCount = progressTasks.filter((task) => task.status === 'done').length;
+  const progressHeadline = isComplete
     ? completionMeta?.upgradeQueued
-      ? '报告已保存，后台继续增强'
-      : '报告任务已完成'
+      ? '报告已保存，内容会继续补全'
+      : '报告已完成'
     : serverStage?.stage === 'agentic' || serverStage?.stage === 'merge'
-      ? '并发专家 Agent 正在融合结果'
+      ? '正在汇总报告重点'
       : serverStage?.stage === 'persist' || serverStage?.stage === 'complete'
-        ? '结果融合/保存中'
-        : runningAgentTask
-        ? `${runningAgentTask.title}正在工作`
-        : '后台 Agent 任务队列已启动';
+        ? '正在保存结果'
+        : runningProgressTask
+        ? `${runningProgressTask.title}中`
+        : '生成进度已开始';
 
   return (
     <div className="mx-auto w-full max-w-2xl">
@@ -425,7 +424,7 @@ export default function FortuneProgress({
               <div className="inline-flex h-8 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-3 text-xs font-semibold text-[color:var(--brand-strong)]">
                 {isComplete
                   ? completionMeta?.upgradeQueued
-                    ? '先看结果，后台增强'
+                    ? '先看结果，继续补全'
                     : '结果页即将打开'
                   : '自动处理中'}
               </div>
@@ -514,27 +513,27 @@ export default function FortuneProgress({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2 text-xs font-bold tracking-[0.16em] text-[color:var(--muted)]">
-                    <Bot className="h-3.5 w-3.5" />
-                    后台工作台
+                    <Sparkles className="h-3.5 w-3.5" />
+                    生成进度
                   </div>
                   <div className="mt-2 text-sm font-black text-[color:var(--ink)]">
-                    {agentWorkbenchHeadline}
+                    {progressHeadline}
                   </div>
                 </div>
                 <div className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-bold text-[color:var(--accent-strong)]">
-                  {doneAgentTaskCount}/{agentTasks.length}
+                  {doneProgressTaskCount}/{progressTasks.length}
                 </div>
               </div>
               <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                按当前阶段推断，不展示内部私有数据。
+                这里显示报告生成的大致进度。
               </div>
               <div className="mt-4 space-y-2">
-                {agentTasks.map((task) => {
+                {progressTasks.map((task) => {
                   const Icon = task.icon;
                   return (
                     <div
                       key={task.key}
-                      className={`rounded-[var(--radius)] border px-3 py-3 transition ${getAgentStatusClass(task.status)}`}
+                      className={`rounded-[var(--radius)] border px-3 py-3 transition ${getProgressStatusClass(task.status)}`}
                     >
                       <div className="flex items-start gap-3">
                         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius)] bg-[color:var(--paper)]">
@@ -549,7 +548,7 @@ export default function FortuneProgress({
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
                             <div className="text-sm font-bold text-[color:var(--ink)]">{task.title}</div>
-                            <div className="shrink-0 text-xs font-bold">{getAgentStatusLabel(task.status)}</div>
+                            <div className="shrink-0 text-xs font-bold">{getProgressStatusLabel(task.status)}</div>
                           </div>
                           <div className="mt-1 text-xs leading-5 opacity-80">{task.detail}</div>
                         </div>
@@ -568,10 +567,7 @@ export default function FortuneProgress({
 
             {isComplete && completionMeta?.upgradeQueued ? (
               <div className="rounded-[var(--radius-md)] border border-[color:var(--accent)]/25 bg-[color:var(--accent-soft)] p-4 text-xs leading-6 text-[color:var(--accent-strong)]">
-                {backgroundUpgradeLabel || '后台增强任务已建立'}
-                {typeof completionMeta.upgradeAttempts === 'number' && typeof completionMeta.upgradeMaxAttempts === 'number'
-                  ? `，当前重试进度 ${completionMeta.upgradeAttempts} / ${completionMeta.upgradeMaxAttempts}。`
-                  : '。'}
+                {contentUpdateLabel || '更完整的内容会继续补全到这份报告里。'}
               </div>
             ) : null}
 

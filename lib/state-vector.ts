@@ -114,12 +114,13 @@ export function buildStateVectorData(input: BuildStateVectorInput): StateVectorD
       ...computeBaseVector(point, input.advice, input.dayun),
     }));
 
-  const forecast = input.referencePack
+  const referencePack = input.referencePack;
+  const forecast = referencePack
     ? forecastBase.map((point) => ({
         year: point.year,
-        tianShi: round(clamp(point.tianShi + input.referencePack.stateVectorAdjustment.tianShiDelta * 0.6, 0, 10)),
-        diLi: round(clamp(point.diLi + input.referencePack.stateVectorAdjustment.diLiDelta * 0.6, 0, 10)),
-        renHe: round(clamp(point.renHe + input.referencePack.stateVectorAdjustment.renHeDelta * 0.6, 0, 10)),
+        tianShi: round(clamp(point.tianShi + referencePack.stateVectorAdjustment.tianShiDelta * 0.6, 0, 10)),
+        diLi: round(clamp(point.diLi + referencePack.stateVectorAdjustment.diLiDelta * 0.6, 0, 10)),
+        renHe: round(clamp(point.renHe + referencePack.stateVectorAdjustment.renHeDelta * 0.6, 0, 10)),
       }))
     : forecastBase;
 

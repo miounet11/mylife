@@ -209,12 +209,12 @@ export function getContentRadarSources() {
   try {
     const parsed = JSON.parse(raw) as Array<Record<string, unknown>>;
     return parsed
-      .map((item) => ({
+      .map((item): ContentRadarSource => ({
         id: `${item.id || ''}`.trim(),
         label: `${item.label || ''}`.trim(),
         platform: `${item.platform || ''}`.trim(),
         url: `${item.url || ''}`.trim(),
-        type: item.type === 'rss' ? 'rss' : 'rss',
+        type: 'rss',
         enabled: item.enabled !== false,
         keywords: Array.isArray(item.keywords) ? item.keywords.map((value) => `${value || ''}`.trim()).filter(Boolean) : [],
       }))

@@ -20,7 +20,6 @@ export default function ReportSubscriptionPanel({
   canManage,
   deliveryTierLabel,
   qualityScore,
-  qualityGrade,
   targetAchieved,
   upgradeStatusLabel,
   monthlyHighlights,
@@ -45,7 +44,7 @@ export default function ReportSubscriptionPanel({
 
   const benefits = [
     { title: '月度窗口更新', icon: Sparkles },
-    { title: '报告升级提醒', icon: RefreshCcw },
+    { title: '报告补全提醒', icon: RefreshCcw },
     { title: '关键节点通知', icon: BellRing },
     { title: '长期复盘闭环', icon: Stars },
     { title: '专项断事推演', icon: Sparkles },
@@ -85,7 +84,7 @@ export default function ReportSubscriptionPanel({
         return;
       }
 
-      setMessage('订阅已生效，后续月度更新和报告升级提醒会发送到你的邮箱。');
+      setMessage('订阅已生效，后续月度更新和报告补全提醒会发送到你的邮箱。');
       setEmail('');
     } catch {
       setError('网络异常，请稍后重试');
@@ -99,14 +98,14 @@ export default function ReportSubscriptionPanel({
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            月度订阅与升级承接
+            月度订阅与补全承接
           </div>
           <h2 className="mt-2 text-xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-2xl">
             让这份报告持续生长，<br />
             <span className="text-[color:var(--brand-strong)]">而不是一次看完就结束</span>
           </h2>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
-            报告不是一次性结论，订阅的价值在于把月度窗口、升级结果和后续追问串成长期判断关系。
+            报告不是一次性结论，订阅的价值在于把月度窗口、补全结果和后续追问串成长期判断关系。
           </p>
 
           <div className="mt-4 flex flex-wrap gap-1.5">
@@ -114,7 +113,7 @@ export default function ReportSubscriptionPanel({
               交付 {deliveryTierLabel}
             </span>
             <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 font-mono text-[10px] font-bold tabular-nums text-[color:var(--brand-strong)]">
-              质量 {qualityScore || '--'} / {qualityGrade || 'B'}
+              可信度 {qualityScore || '--'}
             </span>
             <span
               className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-[10px] font-bold uppercase tracking-wider ${
@@ -123,7 +122,7 @@ export default function ReportSubscriptionPanel({
                   : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
               }`}
             >
-              {targetAchieved ? '已达专家版门槛' : (upgradeStatusLabel || '继续增强中')}
+              {targetAchieved ? '内容已达到完整标准' : (upgradeStatusLabel || '继续补全中')}
             </span>
           </div>
 
@@ -173,7 +172,7 @@ export default function ReportSubscriptionPanel({
             立即建立长期关系
           </div>
           <div className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
-            {canManage ? '订阅月度更新与升级提醒' : '订阅站点更新与节律内容'}
+            {canManage ? '订阅月度更新与补全提醒' : '订阅站点更新与节律内容'}
           </div>
 
           <form onSubmit={handleSubscribe} className="mt-4">

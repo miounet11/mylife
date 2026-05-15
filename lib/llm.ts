@@ -11,17 +11,26 @@ import {
 import { WORLD_YI_DELIVERY_DIRECTIVE, WORLD_YI_DOCTRINE_BRIEF } from '@/lib/world-yi-doctrine';
 
 const toModelDisplayName = (model: string) => {
+  if (model === 'claude-opus-4-7-high') {
+    return '主分析模型 Claude Opus 4.7 High';
+  }
+  if (model === 'gpt-5.5') {
+    return '备用推理模型 GPT-5.5';
+  }
+  if (model === 'gpt-5.4-mini') {
+    return '快速备用模型 GPT-5.4 Mini';
+  }
   if (model === 'gpt-5.4') {
-    return '主分析模型 GPT-5.4';
+    return '备用推理模型 GPT-5.4';
   }
   if (model === 'gpt-5.2') {
-    return '主分析模型 GPT-5.2';
+    return '旧版备用模型 GPT-5.2';
   }
   if (model === 'gpt-5.2-codex') {
-    return '备用推理模型 GPT-5.2 Codex';
+    return '旧版备用推理模型 GPT-5.2 Codex';
   }
   if (model === 'grok-420-fast') {
-    return '快速生成模型 Grok 420 Fast';
+    return '旧版快速生成模型 Grok 420 Fast';
   }
   if (model === 'auto') {
     return '自动路由模型';
@@ -180,7 +189,7 @@ async function executeReportPhase(params: {
 
   for (const [index, model] of modelCandidates.entries()) {
     const remainingBudget = Math.min(params.timeoutMs, params.deadlineAt - Date.now());
-    if (remainingBudget < 900) {
+    if (remainingBudget < 1200) {
       break;
     }
 
@@ -191,7 +200,7 @@ async function executeReportPhase(params: {
     });
 
     const attemptController = new AbortController();
-    const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
+    const attemptTimeoutMs = Math.max(1200, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
     const attemptTimeoutId = setTimeout(() => attemptController.abort(), attemptTimeoutMs);
     const startedAt = Date.now();
 
@@ -202,9 +211,9 @@ async function executeReportPhase(params: {
           { role: 'system', content: buildPhaseSystemPrompt(params.phase) },
           { role: 'user', content: params.prompt },
         ],
-        temperature: params.phase === 'structure' ? 0.4 : 0.5,
-        maxTokens: params.phase === 'structure' ? 520 : 360,
-        reasoningEffort: params.phase === 'structure' ? 'medium' : 'low',
+        temperature: params.phase === 'structure' ? 0.35 : 0.45,
+        maxTokens: params.phase === 'structure' ? 420 : 220,
+        reasoningEffort: 'low',
       }, {
         signal: attemptController.signal,
         timeout: attemptTimeoutMs,
@@ -297,22 +306,21 @@ function computeReportAttemptTimeouts(phase: PhaseKey, totalBudgetMs: number, at
   if (attemptCount <= 0) return [];
   if (attemptCount === 1) return [totalBudgetMs];
 
-  // v5-A5 (2026-05-09): 主模型 gpt-5.2 实测 1.4s 就回，不需要把预算压死，给 fallback 留够时间
-  // narrative 总预算 18s：主 9.9s（gpt-5.2 富余）+ fallback 8.1s（够 grok 25s 的一半，触发熔断比 timeout 友好）
+  // 用户等待路径不能被主模型拖死：首拍短试，保留 fallback 时间。
   const weights = phase === 'structure'
     ? attemptCount === 2
-      ? [0.55, 0.45]
-      : [0.45, 0.30, 0.25]
+      ? [0.45, 0.55]
+      : [0.34, 0.34, 0.32]
     : attemptCount === 2
-      ? [0.55, 0.45]
-      : [0.45, 0.30, 0.25];
+      ? [0.40, 0.60]
+      : [0.30, 0.35, 0.35];
 
   return computeAttemptTimeoutsWithWeights(totalBudgetMs, attemptCount, weights);
 }
 
 function computeAttemptTimeoutsWithWeights(totalBudgetMs: number, attemptCount: number, weights: number[]) {
   const fallbackWeight = 1 / attemptCount;
-  const minBudget = Math.max(2500, Math.floor(totalBudgetMs * 0.12));
+  const minBudget = Math.max(1200, Math.floor(totalBudgetMs * 0.10));
   const budgets: number[] = [];
   let consumed = 0;
 
@@ -357,7 +365,7 @@ function buildPhaseSystemPrompt(phase: PhaseKey) {
 function compactForPrompt(value: unknown, depth: number = 0): unknown {
   if (value == null) return value;
   if (typeof value === 'string') {
-    return value.length > 260 ? `${value.slice(0, 260)}...` : value;
+    return value.length > 160 ? `${value.slice(0, 160)}...` : value;
   }
   if (typeof value !== 'object') {
     return value;
@@ -366,11 +374,11 @@ function compactForPrompt(value: unknown, depth: number = 0): unknown {
     return '[trimmed]';
   }
   if (Array.isArray(value)) {
-    if (value.length <= 12) {
+    if (value.length <= 8) {
       return value.map((item) => compactForPrompt(item, depth + 1));
     }
-    const head = value.slice(0, 6);
-    const tail = value.slice(-6);
+    const head = value.slice(0, 4);
+    const tail = value.slice(-4);
     return [...head, ...tail].map((item) => compactForPrompt(item, depth + 1));
   }
 
@@ -440,8 +448,8 @@ ${JSON.stringify(compactDayun)}` : ''}
 要求：
 1. 输出合法 JSON，不要 markdown。
 2. 先保证字段完整和判断正确，再追求文采。
-3. 文本保持简洁，总体宁短勿长，方便稳定返回。
-4. 必须结合大运、流年、神煞、用神/忌神去写，不得泛泛而谈。
+3. 文本保持简洁，总体宁短勿长；不要为了显得完整而扩写。
+4. 必须结合大运、流年、神煞、用神/忌神去写，但每个判断只保留最关键证据。
 5. analysis.summary 必须像一句世界易式决策结论，优先体现“结构 + 阶段 + 动作”，先给判断，不要空泛抒情。
 5.1 允许综合默会知识、经验判断和跨学科直觉，但必须回到现实取舍与行动，不要写成神秘表演。
 5.2 如果输入里有 worldStateSnapshot / tacitSummary / contextSnapshot，必须把它们当成正式判断输入，而不是边角补充。
@@ -457,7 +465,7 @@ JSON 结构必须完整包含以下最小字段：
   },
   "pattern": {
     "type": "格局名称",
-    "description": "80字以内的格局解释",
+    "description": "60字以内的格局解释",
     "strength": "strong/medium/weak",
     "quality": "good/medium/bad"
   },
@@ -471,7 +479,7 @@ JSON 结构必须完整包含以下最小字段：
   "analysis": {
     "opening": "开场句",
     "summary": "60字以内的阶段摘要",
-    "explanation": "120-220字的综合解释"
+    "explanation": "90-140字的综合解释"
   }
 }
 `;
@@ -496,8 +504,8 @@ ${JSON.stringify(compactDraft)}
 要求：
 1. 只补强叙事深度、行动建议和趋势说明，不要推翻已有结构。
 2. 必须结合大运、流年、神煞、关键结构来写，不要空话。
-3. explanation 控制在 140-220 字，opening 更有定性力量但不要浮夸。
-4. career/wealth/marriage/health 的 general 和 specific 要更落地，避免重复。
+3. explanation 控制在 80-140 字，opening 更有定性力量但不要浮夸。
+4. career/wealth/marriage/health 的 general 一句话，specific 每项最多 2 条，避免重复。
 5. 输出合法 JSON，不要 markdown。
 6. analysis.summary 必须前置主结论，像给用户的世界易式决策摘要。
 7. 禁止输出内部占位词、工程词、提示词痕迹或“解释增强即可”这类句子。

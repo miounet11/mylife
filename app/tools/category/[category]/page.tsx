@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { ArrowRight, BookOpenText, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
+import PublicGrowthFeedPanel from '@/components/public-growth-feed-panel';
 import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -219,6 +220,19 @@ export default async function ToolCategoryPage({
             </ToolCardLink>
           ))}
         </section>
+
+        <PublicGrowthFeedPanel
+          title={`${categoryInfo.title}相关公开查询`}
+          description="分类页直接露出同类匿名报告和用户追问，避免工具页只有静态入口，搜索引擎和用户都能继续顺着问题走。"
+          signals={[
+            categoryInfo.title,
+            categoryInfo.headline,
+            categoryInfo.description,
+            ...tools.flatMap((tool) => [tool.shortTitle, tool.themeLabel, ...tool.hookKeywords]),
+          ]}
+          reportLimit={2}
+          questionLimit={4}
+        />
 
         <PublicEvidencePanel
           page={`/tools/category/${categoryInfo.key}`}

@@ -4,7 +4,12 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Sparkles, ArrowRight } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { ARTICLE_CTA_COPY, type ArticleContentType } from '@/lib/article-cta';
+import {
+  ARTICLE_CTA_COPY,
+  buildArticleAnalyzeHref,
+  buildArticleAnalyzeStartMeta,
+  type ArticleContentType,
+} from '@/lib/article-cta';
 
 interface ArticleInlineCTAProps {
   surfaceKey: string;
@@ -52,14 +57,13 @@ export default function ArticleInlineCTA({ surfaceKey, slug, contentType }: Arti
     void trackClientEvent({
       eventName: 'content_quick_analyze_started',
       page: window.location.pathname,
-      meta: {
+      meta: buildArticleAnalyzeStartMeta({
         surfaceKey,
-        sourceKey: surfaceKey,
-        sourceLabel: '文章页内联快速分析',
-        contentType,
         slug,
+        contentType,
         position: 'inline',
-      },
+        sourceLabel: '文章页内联快速分析',
+      }),
     });
     window.dispatchEvent(
       new CustomEvent('article-cta-clicked', {
@@ -68,7 +72,7 @@ export default function ArticleInlineCTA({ surfaceKey, slug, contentType }: Arti
     );
   };
 
-  const href = `/analyze?from=${encodeURIComponent(surfaceKey)}&surface=inline-card`;
+  const href = buildArticleAnalyzeHref(surfaceKey, 'inline-card');
 
   return (
     <div

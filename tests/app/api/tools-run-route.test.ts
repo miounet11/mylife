@@ -119,12 +119,13 @@ describe('POST /api/tools/run', () => {
     expect(payload.data.tool.slug).toBe('career-role-fit');
     expect(payload.data.workflow.workflowId).toBe('tool-run-v1');
     expect(mockedToolSessionOperations.create).toHaveBeenCalledTimes(1);
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.workflow.workflowId).toBe('tool-run-v1');
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.llmEnhancement.used).toBe(false);
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.quality.score).toBeGreaterThan(0);
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.conversion.score).toBeGreaterThan(0);
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.orchestrationEvents.length).toBeGreaterThan(0);
-    expect(mockedToolSessionOperations.create.mock.calls[0][0].meta.attribution).toEqual({
+    const sessionInput = mockedToolSessionOperations.create.mock.calls[0]?.[0] as any;
+    expect(sessionInput.meta.workflow.workflowId).toBe('tool-run-v1');
+    expect(sessionInput.meta.llmEnhancement.used).toBe(false);
+    expect(sessionInput.meta.quality.score).toBeGreaterThan(0);
+    expect(sessionInput.meta.conversion.score).toBeGreaterThan(0);
+    expect(sessionInput.meta.orchestrationEvents.length).toBeGreaterThan(0);
+    expect(sessionInput.meta.attribution).toEqual({
       eventName: 'result_cta_clicked',
       page: '/knowledge/test',
       source: 'content_conversion_panel',
@@ -181,7 +182,7 @@ describe('POST /api/tools/run', () => {
     }) as any);
 
     expect(response.status).toBe(200);
-    const session = mockedToolSessionOperations.create.mock.calls[0][0];
+    const session = mockedToolSessionOperations.create.mock.calls[0]?.[0] as any;
     expect(session.result.headline).toContain('岗位匹配增强判断');
     expect(session.meta.llmEnhancement.used).toBe(true);
     expect(session.meta.llmEnhancement.deepDiveSections).toHaveLength(3);

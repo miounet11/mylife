@@ -24,7 +24,14 @@ describe('POST /api/admin/content/generate/cron', () => {
       processed: true,
       processedCount: 1,
       reason: 'completed',
-      jobs: [{ processed: true, status: 'completed', jobId: 'content_job_1' }],
+      jobs: [{
+        processed: true,
+        status: 'completed',
+        jobId: 'content_job_1',
+        generatedCount: 1,
+        llmSucceededCount: 1,
+        fallbackCount: 0,
+      }],
     });
 
     const response = await POST(new Request('http://localhost/api/admin/content/generate/cron', {

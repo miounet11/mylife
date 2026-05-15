@@ -1,5 +1,28 @@
 import { buildReportQualityAudit, buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 
+const measurementResults = [
+  'pillars',
+  'five-elements',
+  'day-master-strength',
+  'pattern',
+  'ten-gods',
+  'yong-shen',
+  'shen-sha',
+  'dayun',
+  'kline',
+  'domain-advice',
+].map((id, index) => ({
+  id,
+  label: `测算环节${index + 1}`,
+  order: index + 1,
+  score: 88,
+  level: 'good',
+  conclusion: `${id} 结论稳定`,
+  evidence: [`${id} evidence`],
+  risks: [],
+  actions: [`${id} action`],
+}));
+
 const baseResult = {
   basic: {
     dayMaster: '甲',
@@ -72,6 +95,13 @@ const baseResult = {
       succeeded: ['a', 'b', 'c', 'd', 'e', 'f'],
       failed: ['g'],
     },
+    contextSignals: {
+      engineEvidence: {
+        version: 'engine-evidence-v2',
+        measurementResults,
+        stageResults: measurementResults,
+      },
+    },
   },
   klineData: [
     { year: 2026, career: 78, wealth: 69, marriage: 61, health: 64 },
@@ -124,11 +154,43 @@ describe('report quality audit', () => {
     } as any);
 
     expect(audit.status).toBe('retry');
-    expect(audit.concerns.some((item) => item.includes('LLM'))).toBe(true);
+    expect(audit.concerns.some((item) => item.includes('正文补全'))).toBe(true);
     expect(audit.recommendedActions.some((item) => item.includes('重算'))).toBe(true);
     expect(audit.deliveryTier).toBe('basic');
     expect(audit.targetAchieved).toBe(false);
     expect(audit.blockingIssues.length).toBeGreaterThan(0);
+  });
+
+  it('rewards complete measurement stages as report quality evidence', () => {
+    const audit = buildReportQualityAudit(baseResult as any);
+
+    expect(audit.strengths.some((item) => item.includes('十个测算环节'))).toBe(true);
+    expect(audit.dimensions.find((item) => item.key === 'engine')?.score).toBe(100);
+    expect(audit.dimensions.find((item) => item.key === 'completeness')?.score).toBe(100);
+  });
+
+  it('flags weak or incomplete measurement stages before report composition', () => {
+    const weakStages = measurementResults.map((stage) => stage.id === 'kline'
+      ? { ...stage, score: 52, level: 'risk', evidence: [], actions: [], conclusion: '大运流年证据不足' }
+      : stage);
+    const audit = buildReportQualityAudit({
+      ...baseResult,
+      analysis: {
+        ...baseResult.analysis,
+        contextSignals: {
+          engineEvidence: {
+            version: 'engine-evidence-v2',
+            measurementResults: weakStages,
+          },
+        },
+      },
+    } as any);
+
+    expect(audit.concerns.some((item) => item.includes('测算环节证据链不完整'))).toBe(true);
+    expect(audit.concerns.some((item) => item.includes('大运流年证据不足'))).toBe(true);
+    expect(audit.recommendedActions.some((item) => item.includes('薄弱测算环节'))).toBe(true);
+    expect(audit.dimensions.find((item) => item.key === 'engine')?.score).toBeLessThan(100);
+    expect(audit.dimensions.find((item) => item.key === 'completeness')?.score).toBeLessThan(100);
   });
 
   it('keeps a provider-health deferred stable report in enhanced tier', () => {
@@ -154,8 +216,8 @@ describe('report quality audit', () => {
 
     expect(audit.status).toBe('watch');
     expect(audit.deliveryTier).toBe('enhanced');
-    expect(audit.summary).toContain('稳定深度报告交付');
-    expect(audit.blockingIssues).not.toContain('缺少稳定的 LLM 深度增强正文');
+    expect(audit.summary).toContain('稳定深度版交付');
+    expect(audit.blockingIssues).not.toContain('缺少稳定的深度正文');
   });
 
   it('downgrades reports with missing summary, template residue, duplicated narrative and bad ranges', () => {

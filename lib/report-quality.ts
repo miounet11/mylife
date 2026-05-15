@@ -59,6 +59,40 @@ interface NarrativeQualitySignals {
   severeUserVisibleDefect: boolean;
 }
 
+interface MeasurementStageSignal {
+  id?: string;
+  label?: string;
+  order?: number;
+  score?: number;
+  level?: string;
+  conclusion?: string;
+  evidence?: unknown[];
+  actions?: unknown[];
+}
+
+interface MeasurementStageQualitySummary {
+  total: number;
+  complete: boolean;
+  ordered: boolean;
+  evidenceComplete: boolean;
+  actionComplete: boolean;
+  averageScore: number;
+  riskStages: Array<Required<Pick<MeasurementStageSignal, 'id' | 'label' | 'conclusion'>> & { score: number }>;
+}
+
+const EXPECTED_MEASUREMENT_STAGE_IDS = [
+  'pillars',
+  'five-elements',
+  'day-master-strength',
+  'pattern',
+  'ten-gods',
+  'yong-shen',
+  'shen-sha',
+  'dayun',
+  'kline',
+  'domain-advice',
+];
+
 export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQualityAudit {
   const llmUsed = !!result.analysis?.llmUsed;
   const providerHealthDeferred = result.analysis?.providerHealthDeferred === true;
@@ -69,14 +103,15 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     : 0;
   const totalAgentCalls = orchestration?.totalLlmCalls || 0;
   const narrativeSignals = inspectNarrativeQuality(result);
+  const measurementSummary = inspectMeasurementStageQuality(result);
 
-  const engineScore = clampScore(scoreEngineFoundation(result));
+  const engineScore = clampScore(scoreEngineFoundation(result, measurementSummary));
   const llmScore = clampScore(scoreLLMEnhancement(result, narrativeSignals));
   const agenticScore = clampScore(scoreAgenticExecution(result));
   const consistencyScore = clampScore(
     (verify?.consistencyScore ?? 62) - getConsistencyPenalty(narrativeSignals)
   );
-  const completenessScore = clampScore(scoreCompleteness(result, narrativeSignals));
+  const completenessScore = clampScore(scoreCompleteness(result, narrativeSignals, measurementSummary));
 
   const dimensions: ReportQualityAuditDimension[] = [
     {
@@ -90,14 +125,14 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     },
     {
       key: 'llm',
-      label: '语言增强',
+      label: '正文质量',
       score: llmScore,
       status: toDimensionStatus(llmScore),
       detail: llmUsed
         ? narrativeSignals.severeUserVisibleDefect
-          ? '本次虽然拿到了增强正文，但仍有明显模板化或脏文本残留。'
-          : '本次拿到了 LLM 深度增强正文。'
-        : '本次未获得稳定的 LLM 深度增强，正文以结构化整合输出为主。',
+          ? '本次虽然拿到了补全文本，但仍有明显模板化或脏文本残留。'
+          : '本次拿到了更完整的正文补全。'
+        : '本次未获得稳定的正文补全，正文以结构化整合输出为主。',
     },
     {
       key: 'agentic',
@@ -105,8 +140,8 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
       score: agenticScore,
       status: toDimensionStatus(agenticScore),
       detail: totalAgentCalls > 0
-        ? `并发专家层已执行，成功率约 ${Math.round(agentSuccessRate * 100)}%。`
-        : '当前主要采用 deterministic 专家层和规则化补强。',
+        ? `多维补充判断已执行，完成度约 ${Math.round(agentSuccessRate * 100)}%。`
+        : '当前主要采用基础结构判断和规则化补强。',
     },
     {
       key: 'consistency',
@@ -160,39 +195,53 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     concerns.push('底座信息完整度一般，部分结构信号还不够扎实。');
   }
 
+  if (measurementSummary.complete && measurementSummary.ordered && measurementSummary.evidenceComplete && measurementSummary.actionComplete) {
+    strengths.push('十个测算环节已形成完整证据链，报告不是拼接文案。');
+  } else if (measurementSummary.total > 0) {
+    concerns.push('测算环节证据链不完整，部分结果组合还需要补齐依据或行动项。');
+    recommendedActions.push('优先补齐低分测算环节的 evidence/actions，再进入正式报告编排。');
+  }
+
+  measurementSummary.riskStages.slice(0, 2).forEach((stage) => {
+    concerns.push(`${stage.label}环节评分偏低，建议复核：${stage.conclusion}`);
+  });
+  if (measurementSummary.riskStages.length > 0) {
+    recommendedActions.push(`先复核${measurementSummary.riskStages[0].label}等薄弱测算环节，再做结果组合推荐。`);
+  }
+
   if (llmUsed) {
     if (!narrativeSignals.severeUserVisibleDefect) {
-      strengths.push('本次拿到了 LLM 深度增强，正文解释会更细更完整。');
+      strengths.push('本次拿到了更完整的正文补全，解释会更细更完整。');
     }
   } else if (providerHealthDeferred) {
-    strengths.push('上游模型波动时已主动切换为稳定专家版交付，避免长时间等待后仍返回脏结果。');
-    recommendedActions.push('当前版本可先使用；待上游模型恢复后，再触发增强重算以争取更高分专家版。');
+    strengths.push('系统已切换为稳定专家版交付，避免长时间等待后仍返回不可读结果。');
+    recommendedActions.push('当前版本可先使用；稍后再触发增强重算以争取更高分专家版。');
   } else {
-    concerns.push('本次未获得稳定的 LLM 深度增强，文本深度会低于理想版本。');
-    recommendedActions.push('建议稍后使用当前版本重新升级重算，争取拿到完整的 LLM 增强正文。');
+    concerns.push('本次未获得稳定的正文补全，文本深度会低于理想版本。');
+    recommendedActions.push('建议稍后使用当前版本重新升级重算，争取拿到完整正文。');
   }
 
   if (totalAgentCalls > 0 && agentSuccessRate >= 0.5) {
-    strengths.push('并发专家层有实际参与，事业、关系、健康与策略视角更完整。');
+    strengths.push('多维补充判断有实际参与，事业、关系、健康与策略视角更完整。');
   } else if (totalAgentCalls > 0) {
-    concerns.push('并发专家层本次回退较多，部分维度仍主要依赖 deterministic 结果。');
+    concerns.push('多维补充判断本次完成度偏低，部分维度仍主要依赖基础结果。');
   } else {
-    concerns.push('本次未形成有效的并发专家增强闭环。');
+    concerns.push('本次未形成有效的多维补充判断。');
   }
 
   if (verify?.verdict === 'PASS') {
     strengths.push('一致性校验通过，时序、行业、地理与 K 线信号对齐较好。');
   } else if (verify?.verdict === 'WARN') {
-    concerns.push('一致性校验为 WARN，适合重点复核短期窗口和策略建议。');
+    concerns.push('一致性校验需要留意，适合重点复核短期窗口和策略建议。');
     recommendedActions.push('阅读时优先区分稳定结论与短期时机判断，避免把时机建议当成绝对结论。');
   } else if (verify?.verdict === 'FAIL') {
     concerns.push('一致性校验未通过，这份报告更适合作为参考草稿而不是最终版本。');
-    recommendedActions.push('建议核对出生时间与出生地后重新测算，并等待上游模型稳定后升级重算。');
+    recommendedActions.push('建议核对出生时间与出生地后重新测算，并稍后升级重算。');
   }
 
   if (completenessScore < 80) {
     concerns.push('当前内容完整度仍有提升空间，尤其是解释深度或行动建议颗粒度。');
-    recommendedActions.push('如果你需要更强的决策参考，优先等待增强链路稳定后重新生成。');
+    recommendedActions.push('如果你需要更强的决策参考，建议稍后重新生成。');
   } else {
     strengths.push('当前正文覆盖了结构、趋势、建议与阶段窗口，已具备较完整的阅读价值。');
   }
@@ -244,12 +293,12 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     narrativeSignals,
   });
   const nextActionLabel = targetAchieved
-    ? '已达到 S级专家版'
+    ? '已达到细致版'
     : narrativeSignals.severeUserVisibleDefect
-    ? '修正文案链路后重算'
+    ? '修正文案后重算'
     : verify?.verdict === 'FAIL'
     ? '核对信息后重新测算'
-    : '继续增强到 S级';
+    : '继续补全到细致版';
 
   return {
     overallScore,
@@ -320,19 +369,29 @@ export function buildReportStageLadder(deliveryTier?: ReportDeliveryTier | null)
   }));
 }
 
-function scoreEngineFoundation(result: FortuneAnalysisResult) {
-  let score = 58;
+function scoreEngineFoundation(result: FortuneAnalysisResult, measurementSummary = inspectMeasurementStageQuality(result)) {
+  let score = 54;
   const pillars = result.basic?.pillars || [];
   const fiveElementCount = Object.values(result.fiveElements || {}).filter(Boolean).length;
   const advice = result.advice || {};
 
-  if (pillars.length >= 4) score += 10;
-  if (fiveElementCount >= 5) score += 8;
-  if (result.dayun?.dayuns?.length || result.dayun?.currentDayun) score += 8;
-  if ((result.klineData || []).length >= 3) score += 8;
-  if ((result.shenSha?.list || []).length > 0 || (result.shenSha?.summary || '').length > 0) score += 6;
+  if (pillars.length >= 4) score += 9;
+  if (fiveElementCount >= 5) score += 7;
+  if (result.dayun?.dayuns?.length || result.dayun?.currentDayun) score += 7;
+  if ((result.klineData || []).length >= 3) score += 7;
+  if ((result.shenSha?.list || []).length > 0 || (result.shenSha?.summary || '').length > 0) score += 5;
   if (result.pattern?.type) score += 4;
-  if (advice.career?.general && advice.wealth?.general && advice.marriage?.general && advice.health?.general) score += 6;
+  if (advice.career?.general && advice.wealth?.general && advice.marriage?.general && advice.health?.general) score += 5;
+
+  if (measurementSummary.complete) score += 5;
+  if (measurementSummary.ordered) score += 3;
+  if (measurementSummary.evidenceComplete) score += 4;
+  if (measurementSummary.actionComplete) score += 3;
+  if (measurementSummary.averageScore >= 82) score += 4;
+  else if (measurementSummary.averageScore > 0 && measurementSummary.averageScore < 65) score -= 6;
+  if (!measurementSummary.evidenceComplete) score -= 4;
+  if (!measurementSummary.actionComplete) score -= 4;
+  score -= Math.min(10, measurementSummary.riskStages.length * 3);
 
   return score;
 }
@@ -376,8 +435,12 @@ function scoreAgenticExecution(result: FortuneAnalysisResult) {
   return 42;
 }
 
-function scoreCompleteness(result: FortuneAnalysisResult, narrativeSignals: NarrativeQualitySignals) {
-  let score = 48;
+function scoreCompleteness(
+  result: FortuneAnalysisResult,
+  narrativeSignals: NarrativeQualitySignals,
+  measurementSummary = inspectMeasurementStageQuality(result)
+) {
+  let score = 46;
   const explanationLength = `${result.analysis?.explanation || ''}`.replace(/\s+/g, '').length;
   const adviceCount = [
     ...(result.advice?.career?.specific || []),
@@ -399,6 +462,12 @@ function scoreCompleteness(result: FortuneAnalysisResult, narrativeSignals: Narr
   if (celebrityCount > 0) score += 6;
   if (klineCount >= 3) score += 8;
   if ((result.fortune?.interaction || '').length >= 20) score += 6;
+
+  if (measurementSummary.complete) score += 4;
+  if (measurementSummary.evidenceComplete) score += 4;
+  if (measurementSummary.actionComplete) score += 3;
+  if (measurementSummary.averageScore >= 82) score += 2;
+  if (measurementSummary.riskStages.length > 0) score -= Math.min(6, measurementSummary.riskStages.length * 2);
 
   if (narrativeSignals.missingSummary) score -= 22;
   if (narrativeSignals.duplicateNarrative) score -= 12;
@@ -446,22 +515,22 @@ function buildSummary(
   narrativeSignals?: NarrativeQualitySignals
 ) {
   if (targetAchieved) {
-    return '本次报告已经达到 95 分以上的 S级专家交付标准，可作为当前阶段的专家版主报告使用。';
+    return '本次报告已经达到高分细致版标准，可作为当前阶段的主报告使用。';
   }
   if (narrativeSignals?.severeUserVisibleDefect) {
-    return '本次报告存在明显文本缺陷或模板残留，当前不应按正式专家版交付，建议先修正文案链路后重算。';
+    return '本次报告存在明显文本缺陷或模板残留，当前不应按正式结果交付，建议先修正文案后重算。';
   }
   if (status === 'ready') {
-    return '本次报告整体稳定，已经达到可直接使用的增强版标准，但距离 95 分 S级专家版仍有提升空间。';
+    return '本次报告整体稳定，已经达到可直接使用的深度版标准，后续仍可继续补全细节。';
   }
   if (providerHealthDeferred) {
-    return '本次报告为上游模型波动下的稳定深度报告交付，当前可先使用，待增强链路恢复后再升级到更完整版本。';
+    return '本次报告已按稳定深度版交付，当前可先使用，稍后可再升级到更完整版本。';
   }
   if (status === 'watch') {
-    return '本次报告整体可读，但部分增强链路或校验项处于观察状态，短期时机与策略建议建议结合现实再复核。';
+    return '本次报告整体可读，但部分内容或校验项处于观察状态，短期时机与策略建议建议结合现实再复核。';
   }
   if (!llmUsed) {
-    return '本次报告已生成可读结果，但没有拿到稳定的 LLM 深度增强，建议稍后升级重算以获取更完整版本。';
+    return '本次报告已生成可读结果，但正文还不够完整，建议稍后升级重算以获取更完整版本。';
   }
   if (verifyVerdict === 'FAIL') {
     return '本次报告的一致性校验未通过，更适合作为参考草稿，建议核对出生信息后重新测算。';
@@ -480,13 +549,13 @@ function deriveBlockingIssues(params: {
   const issues: string[] = [];
 
   if (!params.llmUsed && !params.providerHealthDeferred) {
-    issues.push('缺少稳定的 LLM 深度增强正文');
+    issues.push('缺少稳定的深度正文');
   }
   if (params.agentSuccessRate < 0.5) {
-    issues.push('并发专家链路成功率不足');
+    issues.push('多维补充判断完成度不足');
   }
   if (params.verifyVerdict === 'WARN') {
-    issues.push('一致性校验仍处于观察级');
+    issues.push('一致性校验仍需观察');
   }
   if (params.verifyVerdict === 'FAIL') {
     issues.push('一致性校验未通过');
@@ -510,7 +579,7 @@ function deriveBlockingIssues(params: {
   params.dimensions.forEach((dimension) => {
     const floor = REPORT_EXPERT_DIMENSION_FLOORS[dimension.key];
     if (dimension.score < floor) {
-      issues.push(`${dimension.label}未达到 S级门槛`);
+      issues.push(`${dimension.label}仍需补强`);
     }
   });
 
@@ -579,6 +648,44 @@ function getConsistencyPenalty(signals: NarrativeQualitySignals) {
   if (signals.crossTopicLeak) penalty += 6;
 
   return penalty;
+}
+
+function inspectMeasurementStageQuality(result: FortuneAnalysisResult): MeasurementStageQualitySummary {
+  const engineEvidence = result.analysis?.contextSignals?.engineEvidence as { measurementResults?: MeasurementStageSignal[]; stageResults?: MeasurementStageSignal[] } | undefined;
+  const stages = Array.isArray(engineEvidence?.measurementResults)
+    ? engineEvidence.measurementResults
+    : Array.isArray(engineEvidence?.stageResults)
+      ? engineEvidence.stageResults
+      : [];
+  const scores = stages
+    .map((stage) => typeof stage.score === 'number' ? stage.score : null)
+    .filter((score): score is number => score !== null);
+  const stageIds = stages.map((stage) => stage.id || '');
+  const complete = EXPECTED_MEASUREMENT_STAGE_IDS.every((id) => stageIds.includes(id));
+  const ordered = EXPECTED_MEASUREMENT_STAGE_IDS.every((id, index) => stages[index]?.id === id && stages[index]?.order === index + 1);
+  const evidenceComplete = stages.length > 0 && stages.every((stage) => Array.isArray(stage.evidence) && stage.evidence.length > 0);
+  const actionComplete = stages.length > 0 && stages.every((stage) => Array.isArray(stage.actions) && stage.actions.length > 0);
+  const averageScore = scores.length > 0
+    ? scores.reduce((sum, score) => sum + score, 0) / scores.length
+    : 0;
+  const riskStages = stages
+    .filter((stage) => (typeof stage.score === 'number' && stage.score < 65) || ['risk', 'watch'].includes(`${stage.level || ''}`))
+    .map((stage) => ({
+      id: stage.id || 'unknown',
+      label: stage.label || stage.id || '未知测算',
+      score: typeof stage.score === 'number' ? stage.score : 0,
+      conclusion: stage.conclusion || '暂无结论',
+    }));
+
+  return {
+    total: stages.length,
+    complete,
+    ordered,
+    evidenceComplete,
+    actionComplete,
+    averageScore,
+    riskStages,
+  };
 }
 
 function inspectNarrativeQuality(result: FortuneAnalysisResult): NarrativeQualitySignals {

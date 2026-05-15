@@ -21,8 +21,8 @@ export async function POST(request: NextRequest) {
   try {
     const result = await runReportMonthlyDigestCycle({ trigger: 'cron' });
     return NextResponse.json({
-      success: true,
       ...result,
+      success: true,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

@@ -103,6 +103,90 @@ export default function ReportReadingPath({
         })}
       </div>
 
+      <div className="mt-4 grid gap-2.5 lg:grid-cols-2">
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            测算方式 / 结果组合
+          </div>
+          <div className="mt-2 text-sm font-bold text-[color:var(--ink-1)]">
+            {route.measurementSummary.totalStages > 0
+              ? `${route.measurementSummary.totalStages} 个环节 · 均分 ${Math.round(route.measurementSummary.averageScore)}`
+              : '测算环节待补齐'}
+          </div>
+          <p className="mt-1 text-xs leading-5 text-[color:var(--ink-4)]">
+            {route.measurementSummary.resultCombinationSummary}
+          </p>
+          {route.measurementSummary.strongStages.length > 0 ? (
+            <div className="mt-2 grid gap-1.5 md:grid-cols-2">
+              {route.measurementSummary.strongStages.slice(0, 4).map((stage) => (
+                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.25)] bg-[rgba(47,125,82,0.08)] px-2 py-1.5 text-[10px] leading-4 text-[color:var(--data-up)]">
+                  {stage.label}：{Math.round(stage.score)} 分 · {stage.conclusion}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {route.measurementSummary.optimizationPriorities.length > 0 ? (
+            <div className="mt-2 space-y-1">
+              {route.measurementSummary.optimizationPriorities.map((stage) => (
+                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 py-1.5 text-[10px] leading-4 text-[color:var(--signal-strong)]">
+                  {stage.label}：{stage.reason} · 优先级建议：{stage.optimizationHint}
+                </div>
+              ))}
+            </div>
+          ) : null}
+          {route.measurementSummary.stages.length > 0 ? (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {route.measurementSummary.stages.map((stage) => {
+                const toneClass = stage.status === 'strong'
+                  ? 'border-[rgba(47,125,82,0.25)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
+                  : stage.status === 'stable'
+                    ? 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)]'
+                    : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
+                return (
+                  <div key={stage.id} className={`rounded-[var(--radius-sm)] border px-2.5 py-2 text-[10px] leading-4 ${toneClass}`}>
+                    <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-[color:var(--ink-1)]">
+                      <span className="truncate">{stage.order}. {stage.label}</span>
+                      <span className="shrink-0 font-mono">{Math.round(stage.score)} 分</span>
+                    </div>
+                    <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{stage.conclusion}</div>
+                    <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-5)]">优化建议：{stage.optimizationHint}</div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
+          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            组合路线
+          </div>
+          <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            {route.combinationRoutes.map((item) => (
+              <ResultCtaLink
+                key={item.key}
+                href={item.href}
+                page={`/result/${reportId}`}
+                target={`report_journey_combination_${item.key}`}
+                className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-2 transition hover:border-[color:var(--brand)]"
+                meta={{
+                  reportId,
+                  workflowId: route.workflowId,
+                  combinationKey: item.key,
+                  source: route.source,
+                  ctaStrategyKey: ctaStrategyKey || null,
+                  sourceFamily: sourceFamily || null,
+                }}
+              >
+                <div className="text-xs font-bold text-[color:var(--ink-1)]">{item.label}</div>
+                <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
+                {item.boundary ? <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-5)]">{item.boundary}</div> : null}
+              </ResultCtaLink>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {route.categoryRoutes.length > 0 ? (
         <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
           <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">

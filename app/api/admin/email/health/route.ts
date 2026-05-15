@@ -21,9 +21,9 @@ export async function POST(request: NextRequest) {
   try {
     const result = await verifyMailConnection();
     return NextResponse.json({
+      ...result,
       success: true,
       status: 'ok',
-      ...result,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

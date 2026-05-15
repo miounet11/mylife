@@ -406,6 +406,12 @@ function readMetaString(meta: Record<string, unknown> | undefined, key: string) 
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function isPublicGrowthSourceType(sourceType?: string) {
+  return sourceType === 'public-growth'
+    || sourceType === 'public-growth-wave2'
+    || sourceType === 'public-growth-global';
+}
+
 function buildSurfaceLabel(key: string) {
   if (key === 'knowledge_page') return '知识库列表页';
   if (key === 'cases_page') return '案例列表页';
@@ -2252,6 +2258,17 @@ async function runContentSchedulerCycleUnlocked(params: {
     }
 
     for (const candidate of readyCandidates.slice(0, publishQuota)) {
+      const publishedAt = new Date().toISOString();
+      const sourceType = candidate.sourceType || readMetaString(candidate.entry.meta, 'sourceType');
+      const growthPublicationMeta = isPublicGrowthSourceType(sourceType)
+        ? {
+          publicationReady: true,
+          editorialScore: candidate.score,
+          surfaceVisibility: 'public',
+          autoPublishedAt: publishedAt,
+          publishReasons: candidate.reasons,
+        }
+        : {};
       const nextPublishedEntry = saveManagedContentEntry({
         id: candidate.entry.id,
         contentType: candidate.entry.contentType,
@@ -2273,7 +2290,8 @@ async function runContentSchedulerCycleUnlocked(params: {
         source: candidate.entry.source,
         meta: {
           ...(candidate.entry.meta || {}),
-          schedulePublishedAt: new Date().toISOString(),
+          ...growthPublicationMeta,
+          schedulePublishedAt: publishedAt,
           scheduleTrigger: trigger,
           scheduleScore: candidate.score,
           scheduleReasons: candidate.reasons,

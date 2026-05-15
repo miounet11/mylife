@@ -44,6 +44,41 @@ export interface ReportJourneyCategoryRoute {
   primary: boolean;
 }
 
+export type ReportJourneyMeasurementStageStatus = 'strong' | 'stable' | 'watch' | 'risk';
+
+export interface ReportJourneyMeasurementStage {
+  id: string;
+  label: string;
+  order: number;
+  score: number;
+  level: string;
+  status: ReportJourneyMeasurementStageStatus;
+  conclusion: string;
+  reason: string;
+  optimizationHint: string;
+}
+
+export interface ReportJourneyMeasurementSummary {
+  totalStages: number;
+  complete: boolean;
+  averageScore: number;
+  stages: ReportJourneyMeasurementStage[];
+  weakStages: ReportJourneyMeasurementStage[];
+  strongStages: ReportJourneyMeasurementStage[];
+  optimizationPriorities: ReportJourneyMeasurementStage[];
+  methodSummary: string;
+  resultCombinationSummary: string;
+}
+
+export interface ReportJourneyCombinationRoute {
+  key: 'bazi-evidence-chain' | 'palmistry-application' | 'event-validation';
+  label: string;
+  href: string;
+  reason: string;
+  boundary?: string;
+  primary: boolean;
+}
+
 export interface LayeredReportJourney {
   workflowId: string;
   headline: string;
@@ -52,6 +87,8 @@ export interface LayeredReportJourney {
   primaryAction: ReportJourneyAction;
   layers: ReportJourneyLayer[];
   categoryRoutes: ReportJourneyCategoryRoute[];
+  measurementSummary: ReportJourneyMeasurementSummary;
+  combinationRoutes: ReportJourneyCombinationRoute[];
   correctionHint?: string;
   source: string;
 }
@@ -102,6 +139,113 @@ function buildSignalText(report: FortuneRecord) {
     report.advice?.marriage,
     report.advice?.health,
   ].filter(Boolean).join(' ');
+}
+
+function getMeasurementResults(report: FortuneRecord) {
+  const engineEvidence = report.analysis?.contextSignals?.engineEvidence as { measurementResults?: Array<{ id?: string; label?: string; order?: number; score?: number; level?: string; conclusion?: string }> } | undefined;
+  return Array.isArray(engineEvidence?.measurementResults) ? engineEvidence.measurementResults : [];
+}
+
+function buildMeasurementSummary(report: FortuneRecord): ReportJourneyMeasurementSummary {
+  const rawStages = getMeasurementResults(report);
+  const stages = rawStages
+    .map((stage, index): ReportJourneyMeasurementStage => {
+      const score = typeof stage.score === 'number' ? stage.score : 0;
+      const level = `${stage.level || ''}`.trim() || (score >= 85 ? 'good' : score >= 65 ? 'watch' : 'risk');
+      const status: ReportJourneyMeasurementStageStatus = score >= 85 || level === 'good'
+        ? 'strong'
+        : score >= 65 && level !== 'risk'
+          ? 'stable'
+          : level === 'watch'
+            ? 'watch'
+            : 'risk';
+      const conclusion = compactText(stage.conclusion, '该环节需要继续补证据。');
+      const reason = conclusion;
+      const optimizationHint = status === 'strong'
+        ? '保持当前证据链，优先看下一层组合。'
+        : status === 'stable'
+          ? '继续补齐场景证据，确认是否还能提分。'
+          : '优先补证据和边界样本，先把这个环节做稳。';
+
+      return {
+        id: stage.id || `stage-${index + 1}`,
+        label: stage.label || stage.id || '未知测算',
+        order: typeof stage.order === 'number' ? stage.order : index + 1,
+        score,
+        level,
+        status,
+        conclusion,
+        reason,
+        optimizationHint,
+      };
+    })
+    .sort((left, right) => left.order - right.order);
+
+  const scores = stages.map((stage) => stage.score);
+  const averageScore = scores.length > 0 ? scores.reduce((sum, value) => sum + value, 0) / scores.length : 0;
+  const weakStages = stages.filter((stage) => stage.status === 'watch' || stage.status === 'risk' || stage.score < 85).slice(0, 3);
+  const strongStages = stages.filter((stage) => stage.status === 'strong');
+  const optimizationPriorities = [...stages]
+    .filter((stage) => stage.status === 'risk' || stage.status === 'watch' || stage.score < 85)
+    .sort((left, right) => left.score - right.score || left.order - right.order)
+    .slice(0, 4);
+
+  return {
+    totalStages: stages.length,
+    complete: stages.length >= 10 && stages.every((stage, index) => stage.order === index + 1),
+    averageScore,
+    stages,
+    weakStages,
+    strongStages,
+    optimizationPriorities,
+    methodSummary: stages.length > 0
+      ? `当前测算按 ${stages.length} 个环节串联证据，先看底座再看组合。`
+      : '当前尚未拿到完整测算环节证据。',
+    resultCombinationSummary: stages.length > 0
+      ? `结果组合已覆盖${stages.length}个环节，可按“底座→判断→建议→验证”继续读。`
+      : '结果组合还需要补齐测算环节后再读。',
+  };
+}
+
+function buildCombinationRoutes(params: {
+  report: FortuneRecord;
+  source: string;
+  measurementSummary: ReportJourneyMeasurementSummary;
+}) {
+  const routes: ReportJourneyCombinationRoute[] = [
+    {
+      key: 'bazi-evidence-chain',
+      label: '八字证据链',
+      href: withSource('#deep-report', params.source),
+      reason: params.measurementSummary.complete
+        ? '十个测算环节已成链，先看底座、强弱、格局和用神。'
+        : '先补齐测算证据链，再看完整结论组合。',
+      primary: true,
+    },
+  ];
+
+  const text = buildSignalText(params.report);
+  const applicationSignals = /手相|照片|图片|多模态|应用/.test(text) || params.measurementSummary.averageScore >= 85;
+  if (applicationSignals) {
+    routes.push({
+      key: 'palmistry-application',
+      label: '手相/应用补充',
+      href: withSource('/tools/application-palmistry-reading', params.source),
+      reason: '当八字证据链已经稳定时，再用手相或应用类入口补充观察层。',
+      boundary: '只做文化观察和辅助建议，不做医学诊断或绝对命运断言。',
+      primary: false,
+    });
+  }
+
+  routes.push({
+    key: 'event-validation',
+    label: '事件验证回路',
+    href: '#validation',
+    reason: '把当前结果和真实事件对照，持续修正测算组合。',
+    primary: false,
+  });
+
+  return routes;
 }
 
 function getJourneySource(reportId: string, source?: string | null) {
@@ -168,6 +312,7 @@ function buildPrimaryAction(params: {
   quality: QualityInput;
   validation: ValidationInput;
   categoryRoutes: ReportJourneyCategoryRoute[];
+  measurementSummary: ReportJourneyMeasurementSummary;
 }) {
   const driftCount = params.validation?.driftCount || 0;
   if (driftCount > 0) {
@@ -179,11 +324,13 @@ function buildPrimaryAction(params: {
     };
   }
 
-  if (params.quality?.status === 'retry' || params.quality?.deliveryTier === 'basic') {
+  if (params.quality?.status === 'retry' || params.quality?.deliveryTier === 'basic' || params.measurementSummary.weakStages.length > 0) {
     return {
       href: '#deep-report',
       label: '先看核心深度解释',
-      description: '当前先交付稳定版，先把结构证据和阶段判断读清楚，后台增强可继续补齐。',
+      description: params.measurementSummary.weakStages[0]
+        ? `先看${params.measurementSummary.weakStages[0].label}等薄弱测算环节，再进入专项。`
+        : '当前先交付稳定版，先把结构证据和阶段判断读清楚，后台增强可继续补齐。',
       target: 'report_journey_deep_report_basic',
     };
   }
@@ -207,16 +354,23 @@ export function buildLayeredReportJourney(params: {
   const workflow = buildReportJourneyWorkflowSnapshot();
   const source = getJourneySource(params.report.id, params.source);
   const signalText = buildSignalText(params.report);
+  const measurementSummary = buildMeasurementSummary(params.report);
   const categoryRoutes = buildCategoryRoutes({
     report: params.report,
     source,
     signalText,
+  });
+  const combinationRoutes = buildCombinationRoutes({
+    report: params.report,
+    source,
+    measurementSummary,
   });
   const primaryAction = buildPrimaryAction({
     reportId: params.report.id,
     quality: params.quality || null,
     validation: params.validation || null,
     categoryRoutes,
+    measurementSummary,
   });
   const driftCount = params.validation?.driftCount || 0;
   const hasValidatedEvents = (params.validation?.accurateCount || 0) > 0;
@@ -224,7 +378,9 @@ export function buildLayeredReportJourney(params: {
   return {
     workflowId: workflow.workflowId,
     headline: '这份报告按四层继续读',
-    summary: '先用首报抓主线，再看深报证据，然后进入最相关专项，最后用真实事件回头验证。',
+    summary: measurementSummary.complete
+      ? `${measurementSummary.methodSummary} 再进入专项或手相等应用补充。`
+      : '先用首报抓主线，再看深报证据，然后进入最相关专项，最后用真实事件回头验证。',
     currentLayer: 'first-report',
     primaryAction,
     source,
@@ -237,7 +393,9 @@ export function buildLayeredReportJourney(params: {
       {
         key: 'first-report',
         title: '第一层：首报总览',
-        description: '先看一句话判断、当前阶段、现在先做什么和先别做什么。',
+        description: measurementSummary.complete
+          ? `先看${measurementSummary.totalStages}个测算环节是否成链，再看主结论。`
+          : '先看一句话判断、当前阶段、现在先做什么和先别做什么。',
         href: `/result/${params.report.id}`,
         status: 'current',
         badge: '当前',
@@ -245,7 +403,9 @@ export function buildLayeredReportJourney(params: {
       {
         key: 'deep-report',
         title: '第二层：深入报告',
-        description: '继续看命理证据、五行结构、阶段窗口和行动解释。',
+        description: measurementSummary.weakStages[0]
+          ? `继续看命理证据，重点复核${measurementSummary.weakStages[0].label}。`
+          : '继续看命理证据、五行结构、阶段窗口和行动解释。',
         href: '#deep-report',
         status: 'next',
         badge: '下一步',
@@ -270,5 +430,7 @@ export function buildLayeredReportJourney(params: {
       },
     ],
     categoryRoutes,
+    measurementSummary,
+    combinationRoutes,
   };
 }

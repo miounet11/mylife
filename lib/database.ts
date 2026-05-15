@@ -2470,7 +2470,11 @@ export const analyticsOperations = {
     return stmt.all(...params);
   },
 
-  getSystemHealthSummary: () => {
+  getSystemHealthSummary: (options?: { modelWindowMinutes?: number }) => {
+    const modelWindowMinutes = Math.max(1, Math.min(24 * 60, Math.round(options?.modelWindowMinutes || 24 * 60)));
+    const modelWindowLabel = modelWindowMinutes === 24 * 60
+      ? '近 24 小时'
+      : `近 ${modelWindowMinutes} 分钟`;
     const totals = db.prepare(`
       SELECT
         (SELECT COUNT(*) FROM fortunes) as total_analyses,
@@ -2533,18 +2537,18 @@ export const analyticsOperations = {
       SELECT event_name, meta, created_at
       FROM analytics_events
       WHERE event_name IN ('llm_model_attempt', 'llm_model_circuit_changed')
-        AND datetime(created_at) >= datetime('now', '-1 day')
+        AND datetime(created_at) >= datetime('now', ?)
       ORDER BY created_at DESC
       LIMIT 200
-    `).all() as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
+    `).all(`-${modelWindowMinutes} minutes`) as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
     const recentRouteRows = db.prepare(`
       SELECT event_name, meta, created_at
       FROM analytics_events
       WHERE event_name IN ('analyze_completed', 'analyze_failed', 'chat_completed', 'chat_failed')
-        AND datetime(created_at) >= datetime('now', '-1 day')
+        AND datetime(created_at) >= datetime('now', ?)
       ORDER BY created_at DESC
       LIMIT 200
-    `).all() as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
+    `).all(`-${modelWindowMinutes} minutes`) as Array<Pick<RawAnalyticsEventRow, 'event_name' | 'meta' | 'created_at'>>;
     const funnelRows = db.prepare(`
       SELECT event_name, COUNT(*) as count
       FROM analytics_events
@@ -2692,7 +2696,7 @@ export const analyticsOperations = {
     const healthySignals: string[] = [];
 
     if (recentLlmAttempts > 0 && recentLlmSuccessRate < 20) {
-      primaryBlockers.push(`近 24 小时模型成功率仅 ${recentLlmSuccessRate}%，当前主要故障集中在模型供应链。`);
+      primaryBlockers.push(`${modelWindowLabel}模型成功率仅 ${recentLlmSuccessRate}%，当前主要故障集中在模型供应链。`);
     } else if (openModelCount > 0 || halfOpenModelCount > 0) {
       primaryBlockers.push(`当前仍有 ${openModelCount} 个模型熔断、${halfOpenModelCount} 个模型处于半开探测。`);
     } else {
@@ -2750,6 +2754,9 @@ export const analyticsOperations = {
         healthySignals: healthySignals.slice(0, 4),
         cards: [],
         llmSnapshot: {
+          windowMinutes: modelWindowMinutes,
+          attempts: recentLlmAttempts,
+          successRate: recentLlmSuccessRate,
           attempts24h: recentLlmAttempts,
           successRate24h: recentLlmSuccessRate,
           openModelCount,

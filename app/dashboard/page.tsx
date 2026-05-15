@@ -13,7 +13,6 @@ import {
   History,
   LayoutDashboard,
   MessageSquareText,
-  ServerCog,
   Sparkles,
   Wrench,
 } from 'lucide-react';
@@ -39,10 +38,6 @@ import { productActivationPath, productPurposePaths, productTrustSignals } from 
 import { resolveResumeTarget } from '@/lib/resume-target';
 import ResumeBar from '@/components/resume-bar';
 
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'grok-420-fast';
-const FALLBACK_CHAIN = process.env.MODEL_FALLBACK_CHAIN || 'gpt-5.2';
-const REPORT_VERSION = 'v3';
-
 const iconMap = {
   birth: Calendar,
   overview: Compass,
@@ -50,7 +45,7 @@ const iconMap = {
   tool: Wrench,
   validate: BellRing,
   learn: BookOpen,
-  system: ServerCog,
+  system: Compass,
   visual: FileBarChart2,
 } as const;
 
@@ -67,7 +62,7 @@ function formatRelative(iso?: string | Date | null): string {
 
 export const metadata = {
   title: '我的工作台 | 人生K线',
-  description: '统一查看你的报告、事件、订阅、模型与系统状态。',
+  description: '统一查看你的报告、事件、订阅与个人进度。',
   robots: {
     index: false,
     follow: false,
@@ -129,7 +124,7 @@ export default async function DashboardPage() {
                 </span>
               </h1>
               <Lede>
-                这里把你的报告、事件、工具历史、订阅状态、模型链路和系统信号收在一个面板，无需跨页跳转。
+                这里把你的报告、事件、工具历史、订阅状态和下一步入口收在一个面板，无需跨页跳转。
               </Lede>
             </Stack>
             <Inline gap={2} wrap justify="end">
@@ -188,7 +183,7 @@ export default async function DashboardPage() {
           </div>
         </Card>
 
-        {/* 双栏：左 = 报告/事件/工具最近活动 / 右 = 模型 + 订阅 + 系统能力 */}
+        {/* 双栏：左 = 报告/事件/工具最近活动 / 右 = 订阅 + 系统能力 */}
         <div className="grid gap-5 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
           <Stack gap={4}>
             {/* 最近报告 */}
@@ -214,7 +209,6 @@ export default async function DashboardPage() {
                 <Stack gap={2}>
                   {recentReports.map((r: any) => {
                     const qualityScore = r.analysis?.qualityAudit?.overallScore;
-                    const qualityGrade = r.analysis?.qualityAudit?.grade;
                     const driftLevel = r.analysis?.feedbackLoop?.correctionInsight?.level;
                     return (
                       <Link
@@ -227,13 +221,10 @@ export default async function DashboardPage() {
                             <span className="text-sm font-bold leading-snug text-[color:var(--ink-1)]">
                               {r.name || '未命名'}
                             </span>
-                            <Tag tone="default" variant="outline" size="xs">
-                              <span className="font-mono">{r.reportVersion || 'v1'}</span>
-                            </Tag>
                             {qualityScore ? (
                               <Tag tone="brand" variant="soft" size="xs">
                                 <span className="font-mono tabular-nums">
-                                  {qualityScore}/{qualityGrade || 'B'}
+                                  可信度 {qualityScore}
                                 </span>
                               </Tag>
                             ) : null}
@@ -325,38 +316,6 @@ export default async function DashboardPage() {
 
           {/* 右栏 sticky */}
           <Stack gap={4} className="lg:sticky lg:top-32">
-            {/* 模型与引擎状态 */}
-            <Card variant="default" padding="md">
-              <Inline justify="between" align="start" className="mb-3">
-                <Eyebrow icon={<ServerCog className="h-3 w-3" />}>判断引擎</Eyebrow>
-                <Tag tone="up" size="xs" variant="soft">
-                  RUNNING
-                </Tag>
-              </Inline>
-              <Stack gap={3}>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    主模型
-                  </div>
-                  <div className="mt-1 font-mono text-sm font-bold text-[color:var(--ink-1)]">
-                    {DEFAULT_MODEL}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    Fallback 链
-                  </div>
-                  <div className="mt-1 font-mono text-xs text-[color:var(--ink-3)] break-all">
-                    {FALLBACK_CHAIN}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Stat label="报告版本" value={REPORT_VERSION} size="sm" />
-                  <div className="h-8 w-px bg-[color:var(--hairline)]" />
-                  <Stat label="时间精度" value="真太阳" size="sm" />
-                </div>
-              </Stack>
-            </Card>
 
             {/* 订阅状态 */}
             <Card variant={subscriptionActive ? 'default' : 'sunken'} padding="md">
@@ -365,21 +324,21 @@ export default async function DashboardPage() {
                   订阅状态
                 </Eyebrow>
                 <Tag tone={subscriptionActive ? 'up' : 'default'} variant="soft" size="xs">
-                  {subscriptionActive ? 'ACTIVE' : 'INACTIVE'}
+                  {subscriptionActive ? '已激活' : '未激活'}
                 </Tag>
               </Inline>
               <Stack gap={2}>
                 <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2">
-                  <span className="font-mono text-[10px] text-[color:var(--ink-5)]">EMAIL</span>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">邮箱</span>
                   <div className="mt-0.5 font-mono text-xs text-[color:var(--ink-2)]">
                     {updatesSummary?.email || '未绑定'}
                   </div>
                 </div>
                 {latestDigest ? (
                   <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2">
-                    <span className="font-mono text-[10px] text-[color:var(--ink-5)]">LATEST DIGEST</span>
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">最近月度更新</span>
                     <div className="mt-0.5 font-mono text-xs tabular-nums text-[color:var(--ink-2)]">
-                      {latestDigest.cycleKey} · {latestDigest.status}
+                      {latestDigest.cycleKey} · {mapDigestStatus(latestDigest.status)}
                     </div>
                   </div>
                 ) : null}
@@ -413,12 +372,6 @@ export default async function DashboardPage() {
                   <span className="text-xs text-[color:var(--ink-4)]">大师话术库</span>
                   <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--ink-2)]">
                     600+
-                  </span>
-                </Inline>
-                <Inline justify="between" align="baseline">
-                  <span className="text-xs text-[color:var(--ink-4)]">主报告版本</span>
-                  <span className="font-mono text-sm font-bold tabular-nums text-[color:var(--brand-strong)]">
-                    {REPORT_VERSION}
                   </span>
                 </Inline>
               </Stack>
@@ -472,4 +425,11 @@ export default async function DashboardPage() {
       <SiteFooter />
     </div>
   );
+}
+
+function mapDigestStatus(status?: string | null) {
+  if (status === 'sent') return '已发送';
+  if (status === 'error') return '发送失败';
+  if (status === 'skipped') return '本轮跳过';
+  return '暂无记录';
 }

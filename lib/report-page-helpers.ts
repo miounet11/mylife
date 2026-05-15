@@ -2,11 +2,32 @@
 // 从 app/result/[id]/page.tsx 抽出，全部纯函数，无 React/无 DB
 // spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md §5.2
 
+import type { FortuneRecord } from '@/lib/user-types';
+
 export function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
   if (!cleaned) return '某位用户';
   if (cleaned.length === 1) return `${cleaned}**`;
   return `${cleaned.slice(0, 1)}**`;
+}
+
+export function sanitizePublicFortuneRecord<T extends FortuneRecord>(record: T): T {
+  return {
+    ...record,
+    userId: 'public-anonymous',
+    name: getPublicDisplayName(record.name),
+    birthDate: '',
+    birthTime: '',
+    birthPlace: undefined,
+    bazi: {
+      ...record.bazi,
+      userId: undefined,
+      name: getPublicDisplayName(record.name),
+      birthDate: undefined,
+      birthTime: undefined,
+      birthPlace: undefined,
+    },
+  };
 }
 
 export function compactCopy(value?: string | null, maxLength = 92) {

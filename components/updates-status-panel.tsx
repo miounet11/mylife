@@ -14,7 +14,7 @@ export type UpdatesStatusSummary = UpdatesSummary;
 export default function UpdatesStatusPanel({
   reportId,
   title = '这份报告的后续更新',
-  description = '这里直接显示当前订阅、升级任务和最近一次月度更新，不必只靠邮箱回收。',
+  description = '这里显示当前订阅、后续内容补全和最近一次月度更新。',
   compact = false,
   initialSummary,
   initialAuthenticated,
@@ -97,12 +97,12 @@ export default function UpdatesStatusPanel({
   const ctaHref = hasSessionSummary ? '/updates' : '/login?next=%2Fupdates';
   const ctaLabel = hasSessionSummary ? '进入更新中心' : '登录查看更新';
   const focusStatus = useMemo(() => {
-    if (focusUpgradeStatus === 'running') return '后台增强进行中';
-    if (focusUpgradeStatus === 'pending' || focusUpgradeStatus === 'retry') return '后台排队增强中';
-    if (focusUpgradeStatus === 'completed') return '报告增强已完成';
+    if (focusUpgradeStatus === 'running') return '内容补全进行中';
+    if (focusUpgradeStatus === 'pending' || focusUpgradeStatus === 'retry') return '内容补全已排队';
+    if (focusUpgradeStatus === 'completed') return '报告内容已补全';
     if (focusDigestStatus === 'sent') return '最近月度更新已发送';
-    if (focusDigestStatus === 'error') return '最近月度更新发送失败';
-    return '当前没有排队中的升级任务';
+    if (focusDigestStatus === 'error') return '最近月度更新暂未发送成功';
+    return '当前没有待处理的后续更新';
   }, [focusDigestStatus, focusUpgradeStatus]);
 
   return (
@@ -135,7 +135,7 @@ export default function UpdatesStatusPanel({
         </div>
       ) : !summary ? (
         <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3 text-xs text-[color:var(--ink-4)]">
-          暂无本机报告记录。生成报告后，这里会显示升级、更新和继续入口。
+          暂无本机报告记录。生成报告后，这里会显示后续更新和继续入口。
         </div>
       ) : (
         <>
@@ -148,8 +148,8 @@ export default function UpdatesStatusPanel({
             />
             <StatusTile
               label="当前报告"
-              value={focusReport?.reportVersion || '待生成'}
-              helper={focusReport?.qualityScore ? `质量 ${focusReport.qualityScore} / ${focusReport.qualityGrade || 'B'}` : '还没匹配到摘要'}
+              value={focusReport ? '可阅读' : '待生成'}
+              helper={focusReport?.qualityScore ? `可信度 ${focusReport.qualityScore}` : '还没匹配到摘要'}
               tone={focusReport ? 'accent' : 'neutral'}
             />
             <StatusTile
@@ -172,9 +172,9 @@ export default function UpdatesStatusPanel({
               当前进度
             </div>
             <div className="mt-1 text-xs leading-5 text-[color:var(--ink-2)]">{focusStatus}</div>
-            {(focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt) ? (
+            {(focusReport?.digest?.reason || focusUpgradeStatus) ? (
               <div className="mt-1 text-xs text-[color:var(--ink-5)]">
-                {focusReport?.digest?.reason || focusReport?.upgradeJob?.nextRunAt}
+                {focusReport?.digest?.reason || '系统会在内容可用后自动更新到这份报告。'}
               </div>
             ) : null}
           </div>
@@ -191,7 +191,7 @@ export default function UpdatesStatusPanel({
               <Link
                 href={buildChatHref({
                   reportId: focusReport.id,
-                  question: '请围绕这份报告的当前升级进度和最近状态继续追问，告诉我现在最该回看哪一层，以及下一步最值得做什么。',
+                  question: '请围绕这份报告的当前进度和最近状态继续追问，告诉我现在最该回看哪一层，以及下一步最值得做什么。',
                   source: 'updates_status_panel',
                   ctaStrategyKey,
                   sourceFamily,

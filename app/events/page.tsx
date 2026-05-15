@@ -195,16 +195,16 @@ function EventsPageContent() {
   const validationWorkbench = useMemo(() => {
     const unresolved = workbenchEvents
       .filter((event) => event.userFeedback?.wasAccurate === undefined)
-      .sort((left, right) => getEventSortTime(left) - getEventSortTime(right));
+      .sort((left, right) => getEventViewSortTime(left) - getEventViewSortTime(right));
     const overduePending = validationAnchorMs === null
       ? []
-      : unresolved.filter((event) => getEventSortTime(event) < validationAnchorMs);
+      : unresolved.filter((event) => getEventViewSortTime(event) < validationAnchorMs);
     const driftEvents = workbenchEvents
       .filter((event) => event.userFeedback?.wasAccurate === false)
-      .sort((left, right) => getEventSortTime(right) - getEventSortTime(left));
+      .sort((left, right) => getEventViewSortTime(right) - getEventViewSortTime(left));
     const upcomingValidation = validationAnchorMs === null
       ? unresolved.slice(0, 4)
-      : unresolved.filter((event) => getEventSortTime(event) >= validationAnchorMs).slice(0, 4);
+      : unresolved.filter((event) => getEventViewSortTime(event) >= validationAnchorMs).slice(0, 4);
 
     return {
       overduePending,

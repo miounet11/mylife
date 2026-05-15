@@ -24,6 +24,15 @@ async function isAuthorized(request: NextRequest) {
   return !!provided && tokens.includes(provided);
 }
 
+function readModelWindowMinutes(request: NextRequest) {
+  const searchParams = request.nextUrl?.searchParams || new URL(request.url).searchParams;
+  const value = Number(searchParams.get('modelWindowMinutes') || searchParams.get('model_window_minutes'));
+  if (!Number.isFinite(value) || value <= 0) {
+    return undefined;
+  }
+  return Math.max(1, Math.min(24 * 60, Math.round(value)));
+}
+
 export async function GET(request: NextRequest) {
   if (!(await isAuthorized(request))) {
     return NextResponse.json({ success: false, error: '无权限访问' }, { status: 403 });
@@ -31,7 +40,10 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     success: true,
-    snapshot: getSystemOpsSnapshot({ mode: 'summary' }),
+    snapshot: getSystemOpsSnapshot({
+      mode: 'summary',
+      modelWindowMinutes: readModelWindowMinutes(request),
+    }),
     timestamp: new Date().toISOString(),
   });
 }

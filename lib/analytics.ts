@@ -39,6 +39,8 @@ export type AnalyticsEventName =
   | 'report_viewed'
   | 'report_upgrade_requested'
   | 'result_cta_clicked'
+  | 'result_chat_started'
+  | 'report_to_chat_completed'
   | 'auth_code_requested'
   | 'auth_verified'
   | 'newsletter_subscribed'

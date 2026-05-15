@@ -18,6 +18,7 @@ const productLinks = [
 const knowledgeLinks = [
   { href: '/knowledge', label: '知识库' },
   { href: '/cases',     label: '案例库' },
+  { href: '/reports',   label: '公开结果库' },
   { href: '/insights',  label: '洞察' },
   { href: '/world-yi',  label: '世界易' },
   { href: '/visual-assets', label: '图片库' },

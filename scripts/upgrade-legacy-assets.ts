@@ -2,6 +2,7 @@ import { saveManagedContentEntry, listManagedContentEntries, normalizeManagedCon
 import { fortuneOperations } from '@/lib/database';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
+import type { FortuneAdvice } from '@/lib/user-types';
 
 async function upgradeLegacyReports() {
   const reports = fortuneOperations
@@ -27,7 +28,7 @@ async function upgradeLegacyReports() {
         tenGods: regenerated.result.tenGods || {},
         pattern: regenerated.result.pattern,
         fortune: regenerated.result.fortune,
-        advice: regenerated.result.advice,
+        advice: regenerated.result.advice as FortuneAdvice,
         evidence: regenerated.result.evidence,
         analysis: regenerated.result.analysis,
         klineData: regenerated.result.klineData,

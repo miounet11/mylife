@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { eventOperations, fortuneOperations, questionOperations, runInTransaction, toolSessionOperations } from '@/lib/database';
-import { getApiBaseUrl, getApiKey } from '@/lib/env';
+import { getApiBaseUrl, getApiKey, getChatLlmTimeoutMs, getDefaultModel } from '@/lib/env';
 import { generateId } from '@/lib/utils';
 import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
@@ -11,21 +11,13 @@ import { trackServerEvent } from '@/lib/analytics';
 import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/chat-context';
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
-import { formatModelAttemptLabel, getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
-import {
-  assessScopeProviderHealth,
-  getDynamicModelExecutionPlan,
-  isImmediateOpenFailure,
-  recordModelAttempt,
-  shouldConservativelyDeferForSnapshots,
-  summarizeModelExecutionPlan,
-} from '@/lib/llm-provider-health';
+import { recordModelAttempt } from '@/lib/llm-provider-health';
 
-// 设置 API 路由超时为 30 秒
-export const maxDuration = 30;
+// 设置 API 路由超时为 240 秒
+export const maxDuration = 240;
 
-const CHAT_LLM_TIMEOUT_MS = 14000;
+const DEFAULT_CHAT_LLM_TIMEOUT_MS = 240_000;
 const MAX_CHAT_MATERIALS = 4;
 const MAX_CHAT_IMAGE_BYTES = 1.8 * 1024 * 1024;
 
@@ -213,102 +205,26 @@ function buildUserContentWithMaterials(question: string, materialSummary: string
   ];
 }
 
-function hasImageContent(content: ChatCompletionContent) {
-  return Array.isArray(content) && content.some((item) => item.type === 'image_url');
-}
+function classifyChatFallbackReason(error?: unknown) {
+  if (!error) return 'empty_response';
 
-function isLikelyImageContentUnsupported(error: unknown) {
-  const message = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-  return (
-    message.includes('image_url')
-    || message.includes('image input')
-    || message.includes('vision')
-    || message.includes('multimodal')
-    || message.includes('content type')
-    || message.includes('invalid content')
-  );
-}
+  const name = error instanceof Error ? error.name : '';
+  const message = error instanceof Error ? error.message : String(error);
+  const combined = `${name} ${message}`.toLowerCase();
 
-function buildTextOnlyMessages(
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }>,
-  question: string,
-  materialSummary: string
-) {
-  return messages.map((message) => {
-    if (message.role !== 'user' || !hasImageContent(message.content)) {
-      return message;
-    }
-
-    return {
-      ...message,
-      content: materialSummary
-        ? `${question}\n\n${materialSummary}\n图片未进入当前模型，仅基于资料标签、文件名和用户摘要回答。`
-        : question,
-    };
-  });
-}
-
-function computeChatAttemptTimeouts(totalBudgetMs: number, attemptCount: number) {
-  if (attemptCount <= 0) return [];
-  if (attemptCount === 1) return [totalBudgetMs];
-
-  const weights = attemptCount === 2
-    ? [0.84, 0.16]
-    : [0.78, 0.16, 0.06];
-  const fallbackWeight = 1 / attemptCount;
-  const minBudget = Math.max(1000, Math.floor(totalBudgetMs * 0.08));
-  const budgets: number[] = [];
-  let consumed = 0;
-
-  for (let index = 0; index < attemptCount; index += 1) {
-    const remainingSlots = attemptCount - index;
-    const remainingBudget = totalBudgetMs - consumed;
-    if (index === attemptCount - 1) {
-      budgets.push(Math.max(minBudget, remainingBudget));
-      break;
-    }
-
-    const rawBudget = Math.floor(totalBudgetMs * (weights[index] || fallbackWeight));
-    const reservedForTail = minBudget * (remainingSlots - 1);
-    const budget = Math.max(minBudget, Math.min(rawBudget, remainingBudget - reservedForTail));
-    budgets.push(budget);
-    consumed += budget;
+  if (combined.includes('abort') || combined.includes('timeout') || combined.includes('timed out')) {
+    return 'timeout_abort';
   }
 
-  return budgets;
-}
-
-function classifyChatFallbackReason(params: {
-  providerHealthGate?: boolean;
-  modelCandidates: string[];
-  failures: Array<{ errorType?: string; errorMessage?: string }>;
-}) {
-  if (params.providerHealthGate && params.modelCandidates.length === 0) {
-    return 'provider_health_gate';
+  if (
+    combined.includes('model is not supported')
+    || combined.includes('unsupported model')
+    || combined.includes('not supported when using codex with a chatgpt account')
+  ) {
+    return 'unsupported_model';
   }
 
-  if (!params.failures.length) {
-    return 'all_models_failed';
-  }
-
-  if (params.failures.some((item) => isImmediateOpenFailure(item.errorType, item.errorMessage))) {
-    const combined = params.failures
-      .map((item) => `${item.errorType || ''} ${item.errorMessage || ''}`.toLowerCase())
-      .join(' ');
-    if (
-      combined.includes('model is not supported')
-      || combined.includes('unsupported model')
-      || combined.includes('not supported when using codex with a chatgpt account')
-    ) {
-      return 'unsupported_model';
-    }
-    if (combined.includes('request was aborted') || combined.includes('timeout') || combined.includes('timed out')) {
-      return 'timeout_abort';
-    }
-    return 'provider_unstable';
-  }
-
-  return 'all_models_failed';
+  return 'single_model_failed';
 }
 
 async function generateAIResponse(
@@ -364,147 +280,76 @@ async function generateAIResponse(
     ...userHistory.map((item) => ({ role: item.role, content: item.content })),
     { role: 'user', content: userContent },
   ];
-  let messages = baseMessages;
-  let textOnlyRetried = false;
+
+  const model = getDefaultModel();
+  const chatTimeoutMs = getChatLlmTimeoutMs() || DEFAULT_CHAT_LLM_TIMEOUT_MS;
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), chatTimeoutMs);
+  const startedAt = Date.now();
 
   try {
-    const baseChain = getModelFallbackChain(undefined, 'chat');
-    const plan = getDynamicModelExecutionPlan(baseChain, 'chat');
-    const providerHealth = assessScopeProviderHealth(baseChain, 'chat', plan);
-    const modelCandidates = plan.orderedModels;
-    const failures: Array<{ errorType?: string; errorMessage?: string }> = [];
-    if (
-      (providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || []))
-      && modelCandidates.length === 0
-    ) {
+    console.log(`[LLM Chat] single model ${model}; timeout=${chatTimeoutMs}ms; retries=0`);
+    const completion = await createOpenAiCompatibleChatCompletion(openai, {
+      model,
+      messages: baseMessages,
+      temperature: 0.7,
+      maxTokens: 900,
+      reasoningEffort: 'low',
+    }, {
+      signal: controller.signal,
+      timeout: chatTimeoutMs,
+      maxRetries: 0,
+    });
+
+    const content = completion.choices[0].message.content?.trim();
+    if (!content) {
+      console.error(`[LLM Chat] Model ${model} returned empty content`);
+      recordModelAttempt({
+        model,
+        scope: 'chat',
+        success: false,
+        latencyMs: Date.now() - startedAt,
+        errorType: 'empty',
+        traceLabel: 'chat:main',
+      });
       return {
         answer: fallbackAnswer,
         llmUsed: false,
-        fallbackReason: classifyChatFallbackReason({
-          providerHealthGate: true,
-          modelCandidates,
-          failures,
-        }),
+        fallbackReason: classifyChatFallbackReason(),
       };
     }
-    const planSummary = summarizeModelExecutionPlan(plan);
-    const attemptTimeouts = computeChatAttemptTimeouts(CHAT_LLM_TIMEOUT_MS, modelCandidates.length);
-    const deadlineAt = Date.now() + CHAT_LLM_TIMEOUT_MS;
-    console.log(
-      `[LLM Chat] planner ${planSummary.label} ` +
-      `(base=${formatModelAttemptLabel(baseChain)})`
-    );
 
-    for (let index = 0; index < modelCandidates.length; index += 1) {
-      const model = modelCandidates[index];
-      const remainingBudget = deadlineAt - Date.now();
-      if (remainingBudget < 900) {
-        break;
-      }
-
-      const controller = new AbortController();
-      const attemptTimeoutMs = Math.max(900, Math.min(remainingBudget, attemptTimeouts[index] || remainingBudget));
-      const timeoutId = setTimeout(() => controller.abort(), attemptTimeoutMs);
-      const startedAt = Date.now();
-      try {
-        const completion = await createOpenAiCompatibleChatCompletion(openai, {
-          model,
-          messages,
-          temperature: 0.7,
-          maxTokens: 900,
-          reasoningEffort: 'low',
-        }, {
-          signal: controller.signal,
-          timeout: attemptTimeoutMs,
-          maxRetries: 0,
-        });
-
-        const content = completion.choices[0].message.content?.trim();
-        if (!content) {
-          console.error(`[LLM Chat] Model ${model} returned empty content`);
-          recordModelAttempt({
-            model,
-            scope: 'chat',
-            success: false,
-            latencyMs: Date.now() - startedAt,
-            errorType: 'empty',
-            traceLabel: 'chat:main',
-          });
-          continue;
-        }
-
-        recordModelAttempt({
-          model,
-          scope: 'chat',
-          success: true,
-          latencyMs: Date.now() - startedAt,
-          traceLabel: 'chat:main',
-        });
-        if (model !== modelCandidates[0]) {
-          console.warn(`[LLM Chat] Model fallback succeeded with ${model}`);
-        }
-
-        return {
-          answer: content,
-          llmUsed: true,
-          fallbackReason: undefined,
-        };
-      } catch (error) {
-        if (!textOnlyRetried && hasImageContent(userContent) && isLikelyImageContentUnsupported(error)) {
-          textOnlyRetried = true;
-          messages = buildTextOnlyMessages(baseMessages, question, materialSummary);
-          failures.push({
-            errorType: 'image_content_unsupported',
-            errorMessage: error instanceof Error ? error.message : String(error),
-          });
-          recordModelAttempt({
-            model,
-            scope: 'chat',
-            success: false,
-            latencyMs: Date.now() - startedAt,
-            errorType: 'image_content_unsupported',
-            errorMessage: error instanceof Error ? error.message : String(error),
-            traceLabel: 'chat:main',
-          });
-          clearTimeout(timeoutId);
-          index -= 1;
-          continue;
-        }
-        failures.push({
-          errorType: error instanceof Error ? error.name || 'error' : 'error',
-          errorMessage: error instanceof Error ? error.message : String(error),
-        });
-        recordModelAttempt({
-          model,
-          scope: 'chat',
-          success: false,
-          latencyMs: Date.now() - startedAt,
-          errorType: error instanceof Error ? error.name || 'error' : 'error',
-          errorMessage: error instanceof Error ? error.message : String(error),
-          traceLabel: 'chat:main',
-        });
-        console.error(`[LLM Chat] Model ${model} failed:`, error);
-      } finally {
-        clearTimeout(timeoutId);
-      }
-    }
+    recordModelAttempt({
+      model,
+      scope: 'chat',
+      success: true,
+      latencyMs: Date.now() - startedAt,
+      traceLabel: 'chat:main',
+    });
 
     return {
-      answer: fallbackAnswer,
-      llmUsed: false,
-      fallbackReason: classifyChatFallbackReason({
-        providerHealthGate: providerHealth.shouldDefer || shouldConservativelyDeferForSnapshots(providerHealth.snapshots || []),
-        modelCandidates,
-        failures,
-      }),
+      answer: content,
+      llmUsed: true,
+      fallbackReason: undefined,
     };
   } catch (error) {
-    console.error('[LLM Chat] Generation Error:', error);
+    recordModelAttempt({
+      model,
+      scope: 'chat',
+      success: false,
+      latencyMs: Date.now() - startedAt,
+      errorType: error instanceof Error ? error.name || 'error' : 'error',
+      errorMessage: error instanceof Error ? error.message : String(error),
+      traceLabel: 'chat:main',
+    });
+    console.error(`[LLM Chat] Single model ${model} failed:`, error);
     return {
       answer: fallbackAnswer,
       llmUsed: false,
-      fallbackReason: 'generation_exception',
+      fallbackReason: classifyChatFallbackReason(error),
     };
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
 
@@ -634,29 +479,21 @@ function buildFallbackChatAnswer(
       ].join('\n');
     case 'palmistry-reading':
       return [
-        '当前上游模型不稳定，先给你稳定版手相结构观察框架。',
-        'A 图片可用性：请确认手掌完整、掌心正对镜头、自然光、掌纹清晰，并补充左手/右手、惯用手和当前问题。照片不清时不要硬判。',
-        'B 可见结构：按三大主线（生命线、智慧线、感情线）、事业线/命运线、太阳线、水星线、婚姻线、掌丘饱满度、纹理连续性、分叉、岛纹、交叉纹、断续逐项观察。',
-        'C 文化解释：所有线名只作为传统相学术语使用，必须翻译成现实语言，例如节奏、表达、边界、压力承载和复盘习惯。',
-        'D 可执行建议：把观察转成沟通边界、工作节奏、休息恢复、记录复盘、21 天自我观察或重新拍照复测。',
-        'E 边界：不从手相判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数；健康线也不能解释为医学诊断。',
+        '这次没有拿到可用的深度解析结果，所以不硬编手相判断。',
+        '你可以直接点“重生成”。如果照片不清，请补一张掌心正对镜头、自然光、掌纹清晰的图片，并说明左手/右手、惯用手和当前最想问的问题。',
+        '边界先说清：手相只能做传统相学文化观察，不能判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数。',
       ].join('\n');
     case 'home-layout-diagnosis':
       return [
-        '当前上游模型不稳定，先给你稳定版户型结构诊断框架。',
-        'A 核心问题清单：请先确认入户门、阳台、厨房、卫生间、卧室、客厅、主要窗位和方向信息；如果方向不明，先按“上北下南，左西右东”做结构假设。',
-        'B 因果链：优先检查入户是否直冲公共区或卧室、客厅是否被通道化、卧室门线和床位是否受冲、卫生间是否贴近休息区、暗厅暗卫和收纳是否挤压动线。',
-        'C 优先级：先处理玄关缓冲和主通道，再处理卧室安稳，然后处理厨卫潮湿/噪音，最后处理收纳与软装。',
-        'D 低成本调整：用半高柜、地毯、窄屏风、门帘、床位避门线、强排风、门常闭、餐边柜和通道减物来降低冲、堵、湿、乱。',
-        'E 验证边界：连续观察 7-21 天的睡眠、潮湿、异味、杂乱感和动线顺畅度；本判断不替代建筑、消防、装修和物业专业意见。',
+        '这次没有拿到可用的深度解析结果，所以不硬编户型判断。',
+        '你可以直接点“重生成”。如果户型信息不足，请补充入户门、阳台、厨房、卫生间、卧室、客厅、主要窗位和方向；方向不明就说明“方向不确定”。',
+        '边界先说清：这里只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳和收纳，不替代建筑、消防、装修或物业专业意见。',
       ].join('\n');
     default:
       return [
-        '当前上游模型不稳定，先给你稳定版结构回复，避免让追问中断。',
-        `1）判断依据：这次先沿用你报告里的主线“${topScenario}”，不要脱离原报告另起一套解释。`,
-        `2）当前阶段：更适合围绕 ${bestWindow} 做小步验证，不建议在信息不足时一次性押重。`,
-        `3）风险提醒：${riskWindow} 更容易出现节奏过急、反馈反复或执行成本升高，先保守处理。`,
-        `4）下一步：请把问题再压成一句“对象 + 时间点 + 最担心的风险”，例如“我在 6 月前要不要换岗，最怕收入断档”。模型恢复后可以点重生成拿更完整版本。`,
+        '这次没有拿到可用的深度解析结果，所以不硬编答案。',
+        `已保留你的问题和当前报告上下文：主线“${topScenario}”，参考窗口 ${bestWindow}，风险窗口 ${riskWindow}。`,
+        '你可以直接点“重生成”。如果问题很急，请补一句“对象 + 时间点 + 最担心的风险”，系统会用同一上下文重新尝试。',
       ].join('\n');
   }
 }

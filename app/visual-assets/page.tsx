@@ -231,6 +231,43 @@ export default function VisualAssetsPage() {
           </div>
         </section>
 
+        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5 md:p-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                看图之后
+              </div>
+              <h2 className="mt-2 text-2xl font-black text-[color:var(--ink)]">继续把结构落到问题里</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
+                图片负责建立直觉，真正判断还要回到知识解释、公开案例、单项工具和你自己的信息。
+              </p>
+            </div>
+            <Link href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">
+              生成我的判断
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              { href: '/knowledge', title: '读知识解释', body: '把图里的概念拆成可理解的方法。' },
+              { href: '/cases', title: '看公开案例', body: '用真实场景对照结构怎么落地。' },
+              { href: '/tools', title: '进入工具中心', body: '把职业、关系、财富等问题单独验证。' },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
+              >
+                <div className="flex items-center justify-between gap-3 text-sm font-black text-[color:var(--ink)] group-hover:text-[color:var(--brand-strong)]">
+                  {item.title}
+                  <ArrowRight className="h-4 w-4 shrink-0" />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-[color:var(--muted)]">{item.body}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <section className="mt-10">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             <Boxes className="h-3.5 w-3.5" />

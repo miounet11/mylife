@@ -14,6 +14,9 @@ const cronEnv = {
   USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
 };
 
+const PRIMARY_LLM_MODEL = 'gpt-5.5';
+const LLM_FALLBACK_CHAIN = 'gpt-5.4-mini,auto';
+
 const nextApp = {
   name: 'life-kline-next',
   script: 'node_modules/next/dist/bin/next',
@@ -25,15 +28,15 @@ const nextApp = {
     NODE_ENV: 'production',
     PORT: 3000,
     ENABLE_AGENTIC_PIPELINE: enableAgenticPipeline,
-    DEFAULT_MODEL: 'gpt-5.2',
-    OPEN_AGENT_RUNTIME_MODEL: 'gpt-5.2',
-    CONTENT_GENERATION_MODEL: 'gpt-5.2',
-    // v5-A5b (2026-05-09): ANALYZE 同步路径用 2 模型链，确保 weight 0.55+0.45 分到足够预算
-    // auto 留给 content/agent 异步路径当第三兜底（它 67% 成功 + 21s，适合异步）
-    MODEL_FALLBACK_CHAIN: 'grok-420-fast',
-    REPORT_MODEL_FALLBACK_CHAIN: 'grok-420-fast',
-    REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN: 'grok-420-fast',
-    CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'grok-420-fast,auto',
+    DEFAULT_MODEL: PRIMARY_LLM_MODEL,
+    OPEN_AGENT_RUNTIME_MODEL: PRIMARY_LLM_MODEL,
+    CONTENT_GENERATION_MODEL: PRIMARY_LLM_MODEL,
+    // v5-C1 (2026-05-11): 统一主链路，auto 只做最后兜底。
+    MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
+    REPORT_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
+    REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
+    CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
+    CHAT_LLM_TIMEOUT_MS: process.env.CHAT_LLM_TIMEOUT_MS || '240000',
     OPEN_AGENT_RUNTIME_ENABLED: openAgentRuntimeEnabled,
     // v5-A5d (2026-05-09): 熔断阈值放宽 — 之前 IMMEDIATE_OPEN=2 + CONSECUTIVE=3，并发 7 个 agent 同时失败时雪崩
     // 现在 main IMMEDIATE_OPEN=4 + CONSECUTIVE=5 + 冷却缩到 2 分钟，给系统更多自愈空间

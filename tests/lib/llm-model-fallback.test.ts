@@ -32,16 +32,14 @@ describe('llm model fallback', () => {
     jest.resetModules();
   });
 
-  // v5-A1 + v5-audit (2026-05-08): 'auto' 是死链路（生产 8s 超时 0 bytes）
-  // 已从所有 fallback chain 摘掉，env 现在是单一事实源。
+  // 默认生产链路：gpt-5.5 -> gpt-5.4-mini -> auto。
 
   it('default chain (no env) starts from default model + safe fallback', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    // env 默认 'gpt-5.2'，加上 default model = grok-420-fast
-    expect(getModelFallbackChain()).toEqual(['grok-420-fast', 'gpt-5.2']);
+    expect(getModelFallbackChain()).toEqual(['gpt-5.5', 'gpt-5.4-mini', 'auto']);
   });
 
   it('honors a preferred model as the chain head', async () => {
@@ -49,8 +47,8 @@ describe('llm model fallback', () => {
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    // preferredModel 优先于 DEFAULT_MODEL
-    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4', 'gpt-5.2']);
+    // preferredModel 优先于 DEFAULT_MODEL，fallback chain 不重复携带默认主模型
+    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4', 'gpt-5.4-mini', 'auto']);
   });
 
   it('respects MODEL_FALLBACK_CHAIN env var', async () => {
@@ -98,12 +96,12 @@ describe('llm model fallback', () => {
     expect(getReportNarrativeFallbackChain()).toEqual(['grok-420-fast', 'gpt-5.2']);
   });
 
-  it('does not include the dead "auto" model in the default chain', async () => {
+  it('keeps auto as the last default escape hatch', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).not.toContain('auto');
+    expect(getModelFallbackChain()).toEqual(['gpt-5.5', 'gpt-5.4-mini', 'auto']);
   });
 
   it('still loads "auto" if explicitly configured (escape hatch)', async () => {

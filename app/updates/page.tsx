@@ -7,6 +7,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, reportUpgradeJobOperations, userLifecycleEmailRunOperations } from '@/lib/database';
+import { describeReportDeliveryStage } from '@/lib/report-quality';
 import { getAuthSession } from '@/lib/auth';
 import { getCurrentUserId } from '@/lib/user-utils';
 
@@ -86,7 +87,7 @@ export default async function UpdatesPage({
               更新中心
             </h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
-              管理订阅状态、升级提醒、月度复盘投递与生命周期邮件。
+              管理订阅状态、报告补全提醒、月度复盘投递与生命周期邮件。
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -132,13 +133,13 @@ export default async function UpdatesPage({
                     tone="neutral"
                   />
                   <StatusMetric
-                    label="活跃升级任务"
+                    label="活跃内容补全"
                     value={`${activeUpgradeCount}`}
                     helper="进行中"
                     tone={activeUpgradeCount > 0 ? 'accent' : 'neutral'}
                   />
                   <StatusMetric
-                    label="升级已完成"
+                    label="补全已完成"
                     value={`${completedUpgradeCount}`}
                     helper="已完成"
                     tone={completedUpgradeCount > 0 ? 'success' : 'neutral'}
@@ -164,7 +165,7 @@ export default async function UpdatesPage({
                             <div>
                               <div className="text-xs font-semibold text-[color:var(--ink)]">{report.name || '我的报告'}</div>
                               <div className="mt-1 text-xs text-[color:var(--muted)]">
-                                {`报告 ${report.reportVersion || 'v1'} · 质量 ${report.analysis?.qualityAudit?.overallScore || '--'} / ${report.analysis?.qualityAudit?.grade || 'B'}`}
+                                {`可信度 ${report.analysis?.qualityAudit?.overallScore || '--'} · ${describeReportDeliveryStage(report.analysis?.qualityAudit?.deliveryTier).label}`}
                               </div>
                             </div>
                             <Link
@@ -175,7 +176,7 @@ export default async function UpdatesPage({
                             </Link>
                           </div>
                           <div className="mt-3 grid gap-2 text-sm text-[color:var(--muted)]">
-                            <div>{upgradeJob ? `升级任务：${mapUpgradeStatus(upgradeJob.status)}` : '升级任务：当前没有排队中的增强任务'}</div>
+                            <div>{upgradeJob ? `内容补全：${mapUpgradeStatus(upgradeJob.status)}` : '内容补全：当前没有排队中的补全任务'}</div>
                             <div>{reportDigest ? `月度更新：${reportDigest.cycleKey} · ${mapDigestStatus(reportDigest.status)}` : '月度更新：当前还没有生成记录'}</div>
                           </div>
                         </div>
@@ -315,10 +316,10 @@ function mapMetricTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
 }
 
 function mapUpgradeStatus(status?: string) {
-  if (status === 'running') return '增强进行中';
-  if (status === 'pending' || status === 'retry') return '排队等待增强';
-  if (status === 'completed') return '增强已完成';
-  if (status === 'failed') return '增强已暂停';
+  if (status === 'running') return '补全进行中';
+  if (status === 'pending' || status === 'retry') return '排队等待补全';
+  if (status === 'completed') return '补全已完成';
+  if (status === 'failed') return '补全已暂停';
   if (status === 'cancelled') return '任务已取消';
   return '暂无任务';
 }

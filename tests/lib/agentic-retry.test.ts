@@ -123,6 +123,8 @@ const report = {
     { year: 2028, career: 73, wealth: 70, marriage: 68, health: 64 },
   ],
   dayun: {
+    startAge: 29,
+    currentDayunYear: 7,
     currentDayun: {
       index: 2,
       startAge: 29,

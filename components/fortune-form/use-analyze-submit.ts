@@ -319,7 +319,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
             targetAchieved || deliveryTier === 'expert'
               ? '本次结果已经达到专家版标准，正在为你打开完整报告。'
               : upgradeQueued
-                ? '当前先打开核心结果页，深度区块会继续分批显示，后台也会继续增强并尝试提升到 S 级专家版。'
+                ? '当前先打开核心结果页，更完整的内容会继续补全到这份报告里。'
                 : '结果页已经生成并保存完成，核心内容会先打开，扩展区块随后继续加载。',
         });
         await wait(220);

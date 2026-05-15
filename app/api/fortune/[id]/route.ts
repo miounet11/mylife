@@ -6,6 +6,8 @@ import { getCurrentUserId } from '@/lib/user-utils';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord } from '@/lib/report-pipeline';
 import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
+import { sanitizePublicFortuneRecord } from '@/lib/report-page-helpers';
+import type { FortuneAdvice } from '@/lib/user-types';
 
 export async function GET(
   request: NextRequest,
@@ -24,7 +26,9 @@ export async function GET(
       );
     }
 
-    if (fortuneData.isPublic === false && fortuneData.userId !== currentUserId) {
+    const canManage = !!currentUserId && fortuneData.userId === currentUserId;
+
+    if (fortuneData.isPublic === false && !canManage) {
       return NextResponse.json(
         { success: false, error: '该结果已隐藏' },
         { status: 404 }
@@ -33,7 +37,7 @@ export async function GET(
 
     return NextResponse.json({
       success: true,
-      data: fortuneData,
+      data: canManage ? fortuneData : sanitizePublicFortuneRecord(fortuneData),
     });
   } catch (error) {
     console.error('[API] 获取命理数据失败:', error);
@@ -146,7 +150,7 @@ export async function PATCH(
         tenGods: result.tenGods || {},
         pattern: result.pattern,
         fortune: result.fortune,
-        advice: result.advice,
+        advice: result.advice as FortuneAdvice,
         evidence: result.evidence,
         analysis: result.analysis,
         klineData: result.klineData,

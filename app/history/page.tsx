@@ -71,7 +71,6 @@ type HistoryFortune = {
       };
     };
   };
-  reportVersion?: string;
 };
 
 type HistoryEvent = EventViewModel;
@@ -85,7 +84,6 @@ type HistoryReportCard = {
   stage: string;
   scoreLabel: string;
   deliveryTierLabel: string;
-  reportVersion: string;
   feedbackLabel: string;
   feedbackTone: 'up' | 'signal' | 'down';
 };
@@ -174,15 +172,14 @@ export default function HistoryPage() {
           ),
           stage: item.fortune?.currentDaYun || '当前阶段信息已写入报告正文',
           scoreLabel: qualityAudit?.overallScore
-            ? `${qualityAudit.overallScore} / ${qualityAudit.grade || 'B'}`
+            ? `${qualityAudit.overallScore}`
             : '待补充',
           deliveryTierLabel:
             qualityAudit?.deliveryTier === 'expert'
-              ? 'S 级专家版'
+              ? '完整报告'
               : qualityAudit?.deliveryTier === 'enhanced'
-                ? '增强版'
+                ? '细致报告'
                 : '基础版',
-          reportVersion: item.reportVersion || 'v1',
           feedbackLabel:
             correctionLevel === 'action'
               ? `待纠偏 ${validationInsights?.driftCount || 0}`
@@ -689,9 +686,6 @@ export default function HistoryPage() {
                             <Calendar className="h-3 w-3" />
                             {formatDateLabel(item.createdAt)}
                           </span>
-                          <Tag tone="default" variant="outline" size="xs">
-                            <span className="font-mono">{item.reportVersion}</span>
-                          </Tag>
                           <Tag tone="default" variant="soft" size="xs">
                             {item.deliveryTierLabel}
                           </Tag>
@@ -706,7 +700,7 @@ export default function HistoryPage() {
                           </span>
                           <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[color:var(--ink-4)]">
                             <CheckCircle2 className="h-3 w-3" />
-                            质量 {item.scoreLabel}
+                            可信度 {item.scoreLabel}
                           </span>
                           <Tag tone={item.feedbackTone} variant="soft" size="xs">
                             {item.feedbackLabel}

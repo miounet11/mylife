@@ -37,7 +37,8 @@ function formatDateValue(value: BirthDateValue) {
   return `${value.year}-${formatPart(value.month)}-${formatPart(value.day)}`;
 }
 
-function isValidDate(year: number, month: number, day: number) {
+function isValidDate(year: number | null, month: number | null, day: number | null) {
+  if (year === null || month === null || day === null) return false;
   if (year < 1900 || year > new Date().getFullYear()) return false;
   if (month < 1 || month > 12) return false;
   if (day < 1 || day > 31) return false;
@@ -164,7 +165,7 @@ export default function BirthDateInput({
             setSmartInput(nextValue);
 
             const parsed = parseSmartDate(nextValue);
-            if (parsed) {
+            if (parsed && parsed.year !== null && parsed.month !== null && parsed.day !== null) {
               setYearText(String(parsed.year));
               setMonthText(formatPart(parsed.month));
               setDayText(formatPart(parsed.day));

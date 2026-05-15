@@ -622,16 +622,24 @@ function assessReportProviderHealth() {
   const reportSnapshots = reportAssessment.snapshots || [];
   const agentSnapshots = agentAssessment.snapshots || [];
   const conservativeReportDefer = shouldConservativelyDeferForSnapshots(reportSnapshots);
+  const conservativeAgentDefer = shouldConservativelyDeferForSnapshots(agentSnapshots);
+  const reportRunnable = hasRunnableModelsForSnapshots(reportSnapshots);
+  const agentRunnable = hasRunnableModelsForSnapshots(agentSnapshots);
   const shouldDefer = reportAssessment.shouldDefer
+    || agentAssessment.shouldDefer
     || conservativeReportDefer
-    || !hasRunnableModelsForSnapshots(reportSnapshots);
+    || conservativeAgentDefer
+    || !reportRunnable
+    || !agentRunnable;
 
   return {
     shouldDefer,
     summary: {
       report: summarizeHealthSnapshots(reportSnapshots),
       agent: summarizeHealthSnapshots(agentSnapshots),
-      backgroundStrictDefer: conservativeReportDefer,
+      backgroundStrictDefer: conservativeReportDefer || conservativeAgentDefer,
+      reportRunnable,
+      agentRunnable,
     },
   };
 }

@@ -31,14 +31,14 @@ describe('content generation helpers', () => {
   it('prefers explicit content generation models for long-form drafts', () => {
     process.env = {
       ...originalEnv,
-      CONTENT_GENERATION_MODEL: 'grok-420-fast',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto,gpt-5.2',
+      CONTENT_GENERATION_MODEL: 'gpt-5.5',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4-mini,auto',
       CONTENT_GENERATION_MAX_TOKENS: '2600',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual({
-      model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
+      model: 'gpt-5.5',
+      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
       maxTokens: 2600,
       disableHealthReorder: true,
     });
@@ -48,14 +48,14 @@ describe('content generation helpers', () => {
     process.env = {
       ...originalEnv,
       DEFAULT_MODEL: 'gpt-5.4',
-      MODEL_FALLBACK_CHAIN: 'gpt-5.4,gpt-5.2-codex,grok-420-fast,auto',
-      CONTENT_GENERATION_MODEL: 'gpt-5.4',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4,grok-420-fast,auto',
+      MODEL_FALLBACK_CHAIN: 'legacy-a,legacy-b',
+      CONTENT_GENERATION_MODEL: 'gpt-5.5',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4-mini,auto',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
-      model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
+      model: 'gpt-5.5',
+      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
     }));
   });
 
@@ -65,8 +65,8 @@ describe('content generation helpers', () => {
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
-      model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto', 'gpt-5.2'],
+      model: 'gpt-5.5',
+      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
     }));
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',

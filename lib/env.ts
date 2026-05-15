@@ -47,8 +47,11 @@ export function getVisualAssetApiKey() {
   );
 }
 
+const DEFAULT_LLM_MODEL = 'gpt-5.5';
+const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-5.4-mini,auto';
+
 export function getDefaultModel() {
-  return readString('DEFAULT_MODEL', 'grok-420-fast');
+  return readString('DEFAULT_MODEL', DEFAULT_LLM_MODEL);
 }
 
 export function getGoogleAnalyticsId() {
@@ -138,7 +141,7 @@ export function isOpenAgentRuntimeEnabled() {
 }
 
 export function getOpenAgentRuntimeModel() {
-  return 'grok-420-fast';
+  return readString('OPEN_AGENT_RUNTIME_MODEL', getDefaultModel());
 }
 
 export function getOpenAgentRuntimeMaxRetries() {
@@ -162,8 +165,7 @@ export function isContentRadarAutoPublishEnabled() {
 }
 
 export function getModelFallbackChainEnv() {
-  // v5-A1 (2026-05-08): default 改为 'gpt-5.2' — 'auto' 是死链路
-  return readString('MODEL_FALLBACK_CHAIN', 'gpt-5.2');
+  return readString('MODEL_FALLBACK_CHAIN', DEFAULT_LLM_FALLBACK_CHAIN);
 }
 
 export function getReportModelFallbackChainEnv() {
@@ -215,7 +217,7 @@ export function getKnowledgeAcquisitionSignalPromotionLimit() {
 }
 
 export function getContentGenerationModel() {
-  return readString('CONTENT_GENERATION_MODEL', 'grok-420-fast');
+  return readString('CONTENT_GENERATION_MODEL', getDefaultModel());
 }
 
 export function getVisualAssetDefaultModel() {
@@ -272,6 +274,10 @@ export function isContentGenerationSegmentedEnabled() {
 
 export function getContentGenerationTimeoutMs() {
   return readNumber('CONTENT_GENERATION_TIMEOUT_MS', 32_000, 18_000);
+}
+
+export function getChatLlmTimeoutMs() {
+  return readNumber('CHAT_LLM_TIMEOUT_MS', 240_000, 240_000);
 }
 
 export function getContentGenerationJobMaxAttempts() {

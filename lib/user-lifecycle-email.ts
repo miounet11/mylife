@@ -335,7 +335,7 @@ function buildReportNoFollowupCandidate(params: {
     : 'lifecycle_report_followup';
   const sourceCtaStrategy = buildSourceCtaStrategy(source);
   const deviceLabel = mapLifecycleDeviceLabel(params.behavior.lastDeviceType);
-  const reportToChatRate = params.behavior.recentReportToChatRate;
+  const reportToChatRate = params.behavior.recentReportToChatRate ?? null;
   return {
     stage: STAGES[1],
     userId: params.userId,
@@ -402,7 +402,7 @@ function buildToolInterestNoRunCandidate(params: {
   const source = `lifecycle_tool_interest:${params.behavior.lastSource || tool.slug}`;
   const sourceCtaStrategy = buildSourceCtaStrategy(source);
   const deviceLabel = mapLifecycleDeviceLabel(params.behavior.lastDeviceType);
-  const toolRunRate = params.behavior.recentToolToRunRate;
+  const toolRunRate = params.behavior.recentToolToRunRate ?? null;
   const sourceParams = new URLSearchParams({
     source,
   });
@@ -632,14 +632,21 @@ function buildLifecycleCandidates(params: {
   now: Date;
 }) {
   const behavior = getRecentLifecycleBehaviorContext(params.userId);
-  return [
+  const candidates: LifecycleCandidate[] = [];
+
+  [
     buildSignupNoReportCandidate(params),
     buildReportNoFollowupCandidate({ ...params, behavior }),
     buildToolInterestNoRunCandidate({ ...params, behavior }),
     buildInactiveReactivationCandidate({ ...params, behavior }),
-    // v5-C5 事件验证逾期提醒
     buildEventValidationOverdueCandidate({ ...params, behavior }),
-  ].filter((item): item is LifecycleCandidate => !!item);
+  ].forEach((item) => {
+    if (item) {
+      candidates.push(item);
+    }
+  });
+
+  return candidates;
 }
 
 async function deliverLifecycleCandidate(candidate: LifecycleCandidate) {

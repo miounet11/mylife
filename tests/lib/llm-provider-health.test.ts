@@ -1,7 +1,24 @@
-import { describe, expect, test } from '@jest/globals';
-import { deriveModelHealthSnapshots, isImmediateOpenFailure } from '@/lib/llm-provider-health';
+const mockAnalyticsCreate = jest.fn();
+let attemptRows: Array<{ created_at: string; meta: string }> = [];
+let circuitRows: Array<{ created_at: string; meta: string }> = [];
+
+jest.mock('@/lib/database', () => ({
+  analyticsOperations: {
+    create: (...args: unknown[]) => mockAnalyticsCreate(...args),
+    rawQuery: (sql: string) => sql.includes("event_name = 'llm_model_attempt'") ? attemptRows : circuitRows,
+  },
+}));
+
+import { describe, expect, test, beforeEach } from '@jest/globals';
+import { deriveModelHealthSnapshots, isImmediateOpenFailure, recordModelAttempt } from '@/lib/llm-provider-health';
 
 describe('llm provider health immediate open failures', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    attemptRows = [];
+    circuitRows = [];
+  });
+
   test('treats provider cooling and upstream forbidden as immediate-open failures', () => {
     expect(isImmediateOpenFailure('Error', '403 {"error":"token_cooling","message":"Grok token cooling"}')).toBe(true);
     expect(isImmediateOpenFailure('Error', '403 {"error":"upstream_forbidden","upstream_reason":"blocked_user"}')).toBe(true);
@@ -16,6 +33,24 @@ describe('llm provider health immediate open failures', () => {
   test('does not mark parse failures as immediate-open failures', () => {
     expect(isImmediateOpenFailure('SyntaxError', 'Unexpected token')).toBe(false);
     expect(isImmediateOpenFailure('Error', 'JSON_PARSE_FAILED:auto')).toBe(false);
+  });
+
+  test('does not reopen from stale failures after recent recovery successes', () => {
+    const now = new Date().toISOString();
+    attemptRows = [
+      buildAttemptRow(true, now),
+      buildAttemptRow(true, now),
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+    ];
+    circuitRows = [buildCircuitRow('closed', now)];
+
+    recordModelAttempt({ model: 'auto', scope: 'agent', success: true, latencyMs: 100 });
+
+    expect(mockAnalyticsCreate).toHaveBeenCalledTimes(1);
+    expect(mockAnalyticsCreate).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'llm_model_circuit_changed',
+    }));
   });
 
   test('drops stale half-open circuits back to closed', () => {
@@ -54,4 +89,78 @@ describe('llm provider health immediate open failures', () => {
 
     expect(snapshots[0]?.state).toBe('half-open');
   });
+
+  test('does not emit duplicate open circuit events while already open', () => {
+    const now = new Date().toISOString();
+    attemptRows = [
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+    ];
+    circuitRows = [buildCircuitRow('open', now, new Date(Date.now() + 8 * 60 * 1000).toISOString())];
+
+    recordModelAttempt({ model: 'auto', scope: 'agent', success: false, latencyMs: 100, errorType: 'AbortError', errorMessage: 'Request was aborted' });
+
+    expect(mockAnalyticsCreate).toHaveBeenCalledTimes(1);
+    expect(mockAnalyticsCreate).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'llm_model_circuit_changed',
+    }));
+  });
+
+  test('emits half-open only after cooldown elapsed', () => {
+    const expiredReopenAt = new Date(Date.now() - 60_000).toISOString();
+    circuitRows = [buildCircuitRow('open', new Date(Date.now() - 10 * 60_000).toISOString(), expiredReopenAt)];
+
+    recordModelAttempt({ model: 'auto', scope: 'agent', success: true, latencyMs: 100 });
+
+    expect(mockAnalyticsCreate).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'llm_model_circuit_changed',
+      meta: expect.objectContaining({ state: 'half-open', reason: 'cooldown_elapsed' }),
+    }));
+  });
+
+  test('allows half-open failures to reopen the circuit', () => {
+    const now = new Date().toISOString();
+    attemptRows = [
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+      buildAttemptRow(false, now, 'AbortError', 'Request was aborted'),
+    ];
+    circuitRows = [buildCircuitRow('half-open', now)];
+
+    recordModelAttempt({ model: 'auto', scope: 'agent', success: false, latencyMs: 100, errorType: 'AbortError', errorMessage: 'Request was aborted' });
+
+    expect(mockAnalyticsCreate).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'llm_model_circuit_changed',
+      meta: expect.objectContaining({ state: 'open', previousState: 'half-open' }),
+    }));
+  });
+
+  test('emits recovered closed circuit after success streak', () => {
+    const now = new Date().toISOString();
+    attemptRows = [
+      buildAttemptRow(true, now),
+      buildAttemptRow(true, now),
+    ];
+    circuitRows = [buildCircuitRow('half-open', now)];
+
+    recordModelAttempt({ model: 'auto', scope: 'agent', success: true, latencyMs: 100 });
+
+    expect(mockAnalyticsCreate).toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'llm_model_circuit_changed',
+      meta: expect.objectContaining({ state: 'closed', reason: 'recovered' }),
+    }));
+  });
 });
+
+function buildAttemptRow(success: boolean, createdAt: string, errorType?: string, errorMessage?: string) {
+  return {
+    created_at: createdAt,
+    meta: JSON.stringify({ model: 'auto', scope: 'agent', success, latencyMs: 100, errorType, errorMessage }),
+  };
+}
+
+function buildCircuitRow(state: 'closed' | 'degraded' | 'half-open' | 'open', createdAt: string, reopenAt?: string) {
+  return {
+    created_at: createdAt,
+    meta: JSON.stringify({ model: 'auto', scope: 'agent', state, reopenAt }),
+  };
+}

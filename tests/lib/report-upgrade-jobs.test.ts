@@ -367,7 +367,7 @@ describe('report upgrade jobs', () => {
     expect(mockedReportUpgradeJobOperations.markFailed).not.toHaveBeenCalled();
   });
 
-  it('continues regeneration when only agent providers are half-open probes', async () => {
+  it('defers regeneration when agent providers are only half-open probes', async () => {
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue({
       id: 'job_2',
       reportId: 'report_2',
@@ -415,6 +415,9 @@ describe('report upgrade jobs', () => {
       llmUnavailable: false,
       deferredByProviderHealth: false,
     } as any);
+    mockedShouldConservativelyDeferForSnapshots
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
     mockedAssessScopeProviderHealth
       .mockReturnValueOnce({
         shouldDefer: false,
@@ -472,18 +475,22 @@ describe('report upgrade jobs', () => {
       processed: true,
       status: 'retry',
       reportId: 'report_2',
-      score: 86,
+      reason: 'provider_unhealthy',
     });
-    expect(mockedRegenerateReportFromRecord).toHaveBeenCalledTimes(1);
-    expect(mockedReportUpgradeJobOperations.markRetry).toHaveBeenCalledWith(
+    expect(mockedRegenerateReportFromRecord).not.toHaveBeenCalled();
+    expect(mockedReportUpgradeJobOperations.markDeferred).toHaveBeenCalledWith(
       'job_2',
       expect.objectContaining({
-        lastScore: 86,
-        bestScore: 86,
-        bestGrade: 'B',
+        lastError: 'PROVIDER_UNHEALTHY',
+        meta: expect.objectContaining({
+          deferredForProvider: true,
+          providerHealth: expect.objectContaining({
+            backgroundStrictDefer: true,
+          }),
+        }),
       })
     );
-    expect(mockedReportUpgradeJobOperations.markDeferred).not.toHaveBeenCalled();
+    expect(mockedReportUpgradeJobOperations.markRetry).not.toHaveBeenCalled();
   });
 
   it('cancels queued likely test samples instead of upgrading them', async () => {
@@ -833,79 +840,24 @@ describe('report upgrade jobs', () => {
       llmUnavailable: false,
       deferredByProviderHealth: false,
     } as any);
-    mockedAssessScopeProviderHealth
-      .mockReturnValueOnce({
-        shouldDefer: false,
-        snapshots: [
-          {
-            model: 'grok-420-fast',
-            defaultOrder: 0,
-            state: 'closed',
-            attempts: 0,
-            successes: 0,
-            failures: 0,
-            successRate: 1,
-            failureRate: 0,
-            avgLatencyMs: 0,
-            consecutiveFailures: 0,
-            rankPenalty: 0,
-          },
-        ],
-      } as any)
-      .mockReturnValueOnce({
-        shouldDefer: false,
-        snapshots: [
-          {
-            model: 'grok-420-fast',
-            defaultOrder: 0,
-            state: 'closed',
-            attempts: 0,
-            successes: 0,
-            failures: 0,
-            successRate: 1,
-            failureRate: 0,
-            avgLatencyMs: 0,
-            consecutiveFailures: 0,
-            rankPenalty: 0,
-          },
-        ],
-      } as any)
-      .mockReturnValueOnce({
-        shouldDefer: false,
-        snapshots: [
-          {
-            model: 'grok-420-fast',
-            defaultOrder: 0,
-            state: 'closed',
-            attempts: 0,
-            successes: 0,
-            failures: 0,
-            successRate: 1,
-            failureRate: 0,
-            avgLatencyMs: 0,
-            consecutiveFailures: 0,
-            rankPenalty: 0,
-          },
-        ],
-      } as any)
-      .mockReturnValueOnce({
-        shouldDefer: true,
-        snapshots: [
-          {
-            model: 'grok-420-fast',
-            defaultOrder: 0,
-            state: 'half-open',
-            attempts: 1,
-            successes: 0,
-            failures: 1,
-            successRate: 0,
-            failureRate: 1,
-            avgLatencyMs: 4200,
-            consecutiveFailures: 1,
-            rankPenalty: 350,
-          },
-        ],
-      } as any);
+    mockedAssessScopeProviderHealth.mockReturnValue({
+      shouldDefer: false,
+      snapshots: [
+        {
+          model: 'grok-420-fast',
+          defaultOrder: 0,
+          state: 'closed',
+          attempts: 0,
+          successes: 0,
+          failures: 0,
+          successRate: 1,
+          failureRate: 0,
+          avgLatencyMs: 0,
+          consecutiveFailures: 0,
+          rankPenalty: 0,
+        },
+      ],
+    } as any);
 
     const result = await processReportUpgradeBatch(2);
 

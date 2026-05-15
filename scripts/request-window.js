@@ -12,6 +12,22 @@ function parseMeta(value) {
   }
 }
 
+const SYSTEM_EVENT_NAMES = new Set([
+  'llm_model_attempt',
+  'llm_model_circuit_changed',
+]);
+
+function getEventScope(eventName) {
+  return SYSTEM_EVENT_NAMES.has(eventName) ? 'system' : 'product';
+}
+
+function topEntries(map, limit) {
+  return [...map.entries()]
+    .sort((left, right) => right[1] - left[1])
+    .slice(0, limit)
+    .map(([eventName, count]) => ({ eventName, count }));
+}
+
 const analyticsRows = db.prepare(`
   SELECT event_name, page, meta, created_at
   FROM analytics_events
@@ -20,13 +36,25 @@ const analyticsRows = db.prepare(`
 `).all(`-${minutes} minutes`);
 
 const byEvent = new Map();
+const productEvents = new Map();
+const systemEvents = new Map();
 const pageViews = new Map();
 const routeHealth = new Map();
 const failureHotspots = new Map();
 const llmByModel = new Map();
+let productEventCount = 0;
+let systemEventCount = 0;
 
 for (const row of analyticsRows) {
   byEvent.set(row.event_name, (byEvent.get(row.event_name) || 0) + 1);
+  const scope = getEventScope(row.event_name);
+  if (scope === 'system') {
+    systemEventCount += 1;
+    systemEvents.set(row.event_name, (systemEvents.get(row.event_name) || 0) + 1);
+  } else {
+    productEventCount += 1;
+    productEvents.set(row.event_name, (productEvents.get(row.event_name) || 0) + 1);
+  }
   const meta = parseMeta(row.meta);
 
   if (row.event_name.endsWith('_page_viewed') || row.event_name === 'report_viewed') {
@@ -121,10 +149,12 @@ const recentUpgradeRows = db.prepare(`
 const output = {
   windowMinutes: minutes,
   totalAnalyticsEvents: analyticsRows.length,
-  topEvents: [...byEvent.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .slice(0, 15)
-    .map(([eventName, count]) => ({ eventName, count })),
+  productAnalyticsEvents: productEventCount,
+  systemAnalyticsEvents: systemEventCount,
+  systemEventShare: analyticsRows.length > 0 ? Math.round((systemEventCount / analyticsRows.length) * 100) : 0,
+  topProductEvents: topEntries(productEvents, 15),
+  topSystemEvents: topEntries(systemEvents, 10),
+  topEvents: topEntries(byEvent, 15),
   topPages: [...pageViews.entries()]
     .sort((left, right) => right[1] - left[1])
     .slice(0, 12)

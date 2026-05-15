@@ -117,11 +117,12 @@ export function getSystemOpsSnapshot(params?: {
   knowledgeRunStaleMs?: number;
   contentGenerateStaleMinutes?: number;
   contentPublishStaleMinutes?: number;
+  modelWindowMinutes?: number;
 }) : SystemOpsSnapshot {
   const mode = params?.mode || 'full';
   const summaryMode = mode === 'summary';
   const overview = summaryMode
-    ? analyticsOperations.getSystemHealthSummary()
+    ? analyticsOperations.getSystemHealthSummary({ modelWindowMinutes: params?.modelWindowMinutes })
     : analyticsOperations.getOverview();
   const scheduler = getContentSchedulerOverview();
   const knowledgeSnapshot = summaryMode ? readKnowledgeAcquisitionSnapshot() : null;

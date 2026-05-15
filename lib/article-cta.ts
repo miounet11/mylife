@@ -1,4 +1,38 @@
 export type ArticleContentType = 'knowledge' | 'case' | 'insight';
+export type ArticleAnalyzePosition = 'hero' | 'search-intent' | 'inline' | 'sticky';
+
+export interface ArticleAnalyzeStartMetaInput {
+  surfaceKey: string;
+  slug: string;
+  contentType: ArticleContentType;
+  position: ArticleAnalyzePosition;
+  sourceLabel: string;
+  extraMeta?: Record<string, unknown>;
+}
+
+export function buildArticleAnalyzeStartMeta({
+  surfaceKey,
+  slug,
+  contentType,
+  position,
+  sourceLabel,
+  extraMeta = {},
+}: ArticleAnalyzeStartMetaInput): Record<string, unknown> {
+  return {
+    ...extraMeta,
+    surface: surfaceKey,
+    surfaceKey,
+    sourceKey: surfaceKey,
+    sourceLabel,
+    contentType,
+    slug,
+    position,
+  };
+}
+
+export function buildArticleAnalyzeHref(surfaceKey: string, surface: string): string {
+  return `/analyze?from=${encodeURIComponent(surfaceKey)}&surface=${encodeURIComponent(surface)}`;
+}
 
 export interface ArticleCtaCopy {
   inline: {

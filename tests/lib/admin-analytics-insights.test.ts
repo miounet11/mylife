@@ -232,7 +232,7 @@ const snapshot = {
 
 describe('admin analytics insights', () => {
   it('builds a readable operating insight summary', () => {
-    const insight = buildAdminOperatingInsight(snapshot);
+    const insight = buildAdminOperatingInsight(snapshot as Parameters<typeof buildAdminOperatingInsight>[0]);
 
     expect(insight.headline).toContain('验证结果回收');
     expect(insight.summary).toContain('命中率');
@@ -249,7 +249,7 @@ describe('admin analytics insights', () => {
   });
 
   it('builds actionable admin tasks', () => {
-    const actions = buildAdminActionItems(snapshot);
+    const actions = buildAdminActionItems(snapshot as Parameters<typeof buildAdminActionItems>[0]);
 
     expect(actions).toHaveLength(4);
     expect(actions[0]?.title).toBe('先追结果回收');

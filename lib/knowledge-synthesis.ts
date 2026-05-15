@@ -1,7 +1,7 @@
 import type Database from 'better-sqlite3';
 import { db } from '@/lib/database';
 import { sanitizeContentSlug } from '@/lib/content-generation';
-import { saveManagedContentEntry, type ManagedContentEntry } from '@/lib/content-store';
+import { saveManagedContentEntry, type ManagedContentEntryInput } from '@/lib/content-store';
 import { isKnowledgeSynthesisAutoPublishEnabled } from '@/lib/env';
 import {
   dedupeBibliographyEntries,
@@ -135,7 +135,7 @@ function hasBookLadderSignals(pack: TopicSynthesisPack) {
 }
 
 function buildDraftInputsForPack(pack: TopicSynthesisPack) {
-  const drafts: Array<Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string }> = [];
+  const drafts: Array<ManagedContentEntryInput> = [];
 
   if (hasTopicOverviewSignals(pack)) {
     drafts.push(buildTopicOverviewDraft(pack));
@@ -201,7 +201,7 @@ export function buildKnowledgeSynthesisSnapshot(
   };
 }
 
-function buildQuestionMapDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildQuestionMapDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'question-map');
   const questionTitles = pack.questions.slice(0, 6).map((item) => item.name);
   const conceptNames = pack.concepts.slice(0, 6).map((item) => item.name);
@@ -263,7 +263,7 @@ function buildQuestionMapDraft(pack: TopicSynthesisPack): Omit<ManagedContentEnt
   };
 }
 
-function buildConceptGlossaryDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildConceptGlossaryDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'concept-glossary');
   const concepts = pack.concepts.slice(0, 10);
 
@@ -320,7 +320,7 @@ function buildConceptGlossaryDraft(pack: TopicSynthesisPack): Omit<ManagedConten
   };
 }
 
-function buildQuestionClusterSummaryDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildQuestionClusterSummaryDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'question-clusters');
   const concepts = pack.concepts.slice(0, 5);
   const questionClusters = concepts.map((concept) => ({
@@ -387,7 +387,7 @@ function buildQuestionClusterSummaryDraft(pack: TopicSynthesisPack): Omit<Manage
   };
 }
 
-function buildBookPathDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildBookPathDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'book-path');
   const bookTitles = pack.books.slice(0, 6).map((item) => item.title);
   const conceptNames = pack.concepts.slice(0, 5).map((item) => item.name);
@@ -449,7 +449,7 @@ function buildBookPathDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry,
   };
 }
 
-function buildBookLadderDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildBookLadderDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'book-ladder');
   const books = pack.books.slice(0, 9);
   const foundation = books.slice(0, 3);
@@ -507,7 +507,7 @@ function buildBookLadderDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntr
   };
 }
 
-function buildTopicOverviewDraft(pack: TopicSynthesisPack): Omit<ManagedContentEntry, 'createdAt' | 'updatedAt' | 'source'> & { source?: string } {
+function buildTopicOverviewDraft(pack: TopicSynthesisPack): ManagedContentEntryInput {
   const slug = buildSynthesisSlug(pack, 'topic-overview');
   const conceptNames = pack.concepts.slice(0, 6).map((item) => item.name);
   const questionNames = pack.questions.slice(0, 4).map((item) => item.name);
@@ -583,7 +583,7 @@ export function generateKnowledgeSynthesisDrafts(
   const userId = params?.userId || 'system_knowledge';
   const autoPublish = params?.autoPublish ?? isKnowledgeSynthesisAutoPublishEnabled();
   const snapshot = buildKnowledgeSynthesisSnapshot({ topicLimit: params?.topicLimit ?? 4 });
-  const drafts: ManagedContentEntry[] = [];
+  const drafts: ReturnType<typeof saveManagedContentEntry>[] = [];
 
   snapshot.topics.forEach((pack) => {
     const draftInputs = buildDraftInputsForPack(pack)
@@ -591,7 +591,7 @@ export function generateKnowledgeSynthesisDrafts(
 
     const persisted = draftInputs
       .map((input) => saveManagedContentEntry(input, userId))
-      .filter((item): item is ManagedContentEntry => !!item);
+      .filter((item): item is NonNullable<ReturnType<typeof saveManagedContentEntry>> => !!item);
 
     drafts.push(...persisted);
   });

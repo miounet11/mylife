@@ -4,7 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { X, ArrowRight } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { ARTICLE_CTA_COPY, type ArticleContentType } from '@/lib/article-cta';
+import {
+  ARTICLE_CTA_COPY,
+  buildArticleAnalyzeHref,
+  buildArticleAnalyzeStartMeta,
+  type ArticleContentType,
+} from '@/lib/article-cta';
 
 interface ArticleStickyCTAProps {
   surfaceKey: string;
@@ -70,14 +75,13 @@ export default function ArticleStickyCTA({ surfaceKey, slug, contentType }: Arti
     void trackClientEvent({
       eventName: 'content_quick_analyze_started',
       page: window.location.pathname,
-      meta: {
+      meta: buildArticleAnalyzeStartMeta({
         surfaceKey,
-        sourceKey: surfaceKey,
-        sourceLabel: '文章页 Sticky 快速分析',
-        contentType,
         slug,
+        contentType,
         position: 'sticky',
-      },
+        sourceLabel: '文章页 Sticky 快速分析',
+      }),
     });
     window.dispatchEvent(
       new CustomEvent('article-cta-clicked', {
@@ -95,7 +99,7 @@ export default function ArticleStickyCTA({ surfaceKey, slug, contentType }: Arti
     }
   };
 
-  const href = `/analyze?from=${encodeURIComponent(surfaceKey)}&surface=sticky`;
+  const href = buildArticleAnalyzeHref(surfaceKey, 'sticky');
 
   return (
     <div

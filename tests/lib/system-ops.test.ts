@@ -146,14 +146,14 @@ describe('system ops snapshot', () => {
   };
 
   beforeEach(() => {
-    mockedGetOverview.mockReturnValue(baseOverview);
+    mockedGetOverview.mockReturnValue(baseOverview as never);
     mockedGetSystemHealthSummary.mockReturnValue({
       totals: baseOverview.totals,
       systemHealth: baseOverview.systemHealth,
-    });
-    mockedGetContentOpsSnapshot.mockReturnValue(baseContentSnapshot);
+    } as never);
+    mockedGetContentOpsSnapshot.mockReturnValue(baseContentSnapshot as never);
     mockedGetContentSchedulerOverview.mockReturnValue(baseScheduler);
-    mockedGetKnowledgeOpsSnapshot.mockReturnValue(baseKnowledgeSnapshot);
+    mockedGetKnowledgeOpsSnapshot.mockReturnValue(baseKnowledgeSnapshot as never);
   });
 
   afterEach(() => {
@@ -182,12 +182,12 @@ describe('system ops snapshot', () => {
         healthySignals: [],
         cards: [],
       },
-    });
+    } as never);
     mockedGetContentOpsSnapshot.mockReturnValueOnce({
       ...baseContentSnapshot,
       generationQueue: [],
       autoPublishCandidates: [],
-    });
+    } as never);
     mockedGetContentSchedulerOverview.mockReturnValueOnce({
       ...baseScheduler,
       draftReserveCount: 0,
@@ -212,7 +212,7 @@ describe('system ops snapshot', () => {
           ttlMs: 2_700_000,
         },
       },
-    });
+    } as never);
 
     const snapshot = getSystemOpsSnapshot({
       knowledgeRunStaleMs: 30 * 60 * 1000,

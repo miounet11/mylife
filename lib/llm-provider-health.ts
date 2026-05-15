@@ -158,12 +158,13 @@ export function isImmediateOpenFailure(errorType?: string, errorMessage?: string
 }
 
 function hasImmediateOpenFailureStreak(attempts: ModelAttemptEvent[]) {
-  const recentFailures = attempts
-    .filter((item) => !item.success)
-    .slice(0, IMMEDIATE_OPEN_CONSECUTIVE_FAILURES);
+  const recentAttempts = attempts.slice(0, IMMEDIATE_OPEN_CONSECUTIVE_FAILURES);
 
-  return recentFailures.length >= IMMEDIATE_OPEN_CONSECUTIVE_FAILURES
-    && recentFailures.every((item) => isImmediateOpenFailure(item.errorType, item.errorMessage));
+  return recentAttempts.length >= IMMEDIATE_OPEN_CONSECUTIVE_FAILURES
+    && recentAttempts.every((item) => (
+      !item.success
+      && isImmediateOpenFailure(item.errorType, item.errorMessage)
+    ));
 }
 
 export function deriveModelHealthSnapshots(params: {
@@ -536,6 +537,28 @@ export function recordModelAttempt(input: {
   reconcileModelCircuitState(input.model, input.scope);
 }
 
+function shouldEmitCircuitChange(latestCircuit: ModelCircuitEvent | undefined, nextState: LlmCircuitState, now: Date) {
+  if (!latestCircuit) {
+    return true;
+  }
+
+  if (latestCircuit.state === nextState) {
+    return false;
+  }
+
+  if (latestCircuit.state === 'open' && nextState === 'half-open') {
+    return latestCircuit.reopenAt
+      ? new Date(latestCircuit.reopenAt).getTime() <= now.getTime()
+      : !isFreshCircuitTimestamp(latestCircuit.createdAt, now);
+  }
+
+  if (latestCircuit.state === 'half-open' && nextState === 'open') {
+    return true;
+  }
+
+  return true;
+}
+
 function reconcileModelCircuitState(model: string, scope: LlmScope) {
   const attempts = getAttemptEvents([model], scope).map((row) => {
     const meta = parseMeta<Record<string, unknown>>(row.meta);
@@ -573,7 +596,7 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
 
   if (
     hasImmediateOpenFailureStreak(attempts)
-    && latestCircuit?.state !== 'open'
+    && shouldEmitCircuitChange(latestCircuit, 'open', now)
   ) {
     const reopenAt = new Date(now.getTime() + OPEN_COOLDOWN_MINUTES * 60 * 1000);
     analyticsOperations.create({
@@ -597,7 +620,7 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
     snapshot.attempts >= OPEN_MIN_ATTEMPTS &&
     snapshot.failureRate >= OPEN_FAILURE_RATE &&
     snapshot.consecutiveFailures >= OPEN_CONSECUTIVE_FAILURES &&
-    latestCircuit?.state !== 'open'
+    shouldEmitCircuitChange(latestCircuit, 'open', now)
   ) {
     const reopenAt = new Date(now.getTime() + OPEN_COOLDOWN_MINUTES * 60 * 1000);
     analyticsOperations.create({
@@ -620,7 +643,8 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
   if (
     latestCircuit?.state === 'open' &&
     latestCircuit.reopenAt &&
-    new Date(latestCircuit.reopenAt).getTime() <= now.getTime()
+    new Date(latestCircuit.reopenAt).getTime() <= now.getTime() &&
+    shouldEmitCircuitChange(latestCircuit, 'half-open', now)
   ) {
     analyticsOperations.create({
       id: `evt_${generateId()}`,
@@ -638,7 +662,8 @@ function reconcileModelCircuitState(model: string, scope: LlmScope) {
 
   if (
     (latestCircuit?.state === 'open' || latestCircuit?.state === 'half-open') &&
-    recentSuccessStreak
+    recentSuccessStreak &&
+    shouldEmitCircuitChange(latestCircuit, 'closed', now)
   ) {
     analyticsOperations.create({
       id: `evt_${generateId()}`,

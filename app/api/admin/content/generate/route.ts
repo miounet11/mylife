@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
 import { enqueueContentGenerationJob, getContentGenerationJob } from '@/lib/content-generation-jobs';
-import type { ContentGenerationInput } from '@/lib/content-generation';
+import type { ContentGenerationInput, ContentGenerationLocale } from '@/lib/content-generation';
 
 export const maxDuration = 30;
 
@@ -11,6 +11,13 @@ async function ensureAdmin() {
     return null;
   }
   return session.user;
+}
+
+function parseContentGenerationLocale(value: unknown): ContentGenerationLocale | undefined {
+  const locale = `${value || ''}`.trim();
+  return ['zh-CN', 'zh-TW', 'zh-HK', 'zh-SG', 'zh-MY', 'zh-US', 'en-US', 'en-GB', 'en-SG'].includes(locale)
+    ? (locale as ContentGenerationLocale)
+    : undefined;
 }
 
 function buildInput(body: any): ContentGenerationInput {
@@ -25,7 +32,7 @@ function buildInput(body: any): ContentGenerationInput {
       ? body.keywords.map((item: unknown) => `${item || ''}`.trim()).filter(Boolean)
       : [],
     audience: `${body.audience || ''}`.trim(),
-    locale: `${body.locale || ''}`.trim() || undefined,
+    locale: parseContentGenerationLocale(body.locale),
     market: `${body.market || ''}`.trim(),
     entityName: `${body.entityName || ''}`.trim(),
     sourceSignals: `${body.sourceSignals || ''}`.trim(),

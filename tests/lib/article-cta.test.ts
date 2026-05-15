@@ -1,4 +1,10 @@
-import { findInjectionPoint, ARTICLE_CTA_COPY, isArticleCtaEnabled } from '@/lib/article-cta';
+import {
+  ARTICLE_CTA_COPY,
+  buildArticleAnalyzeHref,
+  buildArticleAnalyzeStartMeta,
+  findInjectionPoint,
+  isArticleCtaEnabled,
+} from '@/lib/article-cta';
 
 describe('findInjectionPoint', () => {
   it('returns 2 (after 3rd section) when sections >= 4 and total chars >= 800', () => {
@@ -42,6 +48,32 @@ describe('findInjectionPoint', () => {
 
   it('handles empty sections', () => {
     expect(findInjectionPoint([])).toEqual({ injectAfterIndex: -1 });
+  });
+});
+
+describe('article analyze CTA helpers', () => {
+  it('keeps analyze attribution consistent across article CTA positions', () => {
+    expect(buildArticleAnalyzeStartMeta({
+      surfaceKey: 'knowledge_article:a',
+      slug: 'a',
+      contentType: 'knowledge',
+      position: 'hero',
+      sourceLabel: '文章首屏快速分析',
+      extraMeta: { ctaStrategyKey: 'read_to_judgment' },
+    })).toEqual({
+      ctaStrategyKey: 'read_to_judgment',
+      surface: 'knowledge_article:a',
+      surfaceKey: 'knowledge_article:a',
+      sourceKey: 'knowledge_article:a',
+      sourceLabel: '文章首屏快速分析',
+      contentType: 'knowledge',
+      slug: 'a',
+      position: 'hero',
+    });
+  });
+
+  it('preserves from attribution in analyze href', () => {
+    expect(buildArticleAnalyzeHref('case_article:demo', 'hero')).toBe('/analyze?from=case_article%3Ademo&surface=hero');
   });
 });
 

@@ -63,7 +63,7 @@ export async function generateAugmentedFollowups(
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
   try {
-    const userPrompt = JSON.stringify(
+    const userPrompt = `Return valid json only.\n${JSON.stringify(
       {
         reportFacts: params.reportFacts,
         suggestions: baseSuggestions.map((s) => ({
@@ -74,7 +74,7 @@ export async function generateAugmentedFollowups(
       },
       null,
       2,
-    );
+    )}`;
 
     const response = await createOpenAiCompatibleChatCompletion(
       openai,

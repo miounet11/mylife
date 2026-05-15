@@ -2,7 +2,7 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock4, FileText, ServerCog, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Clock4, FileText, Sparkles } from 'lucide-react';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -15,7 +15,6 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { Inline } from '@/components/ui/inline';
 import { Lede } from '@/components/ui/lede';
 import { Stack } from '@/components/ui/stack';
-import { Stat } from '@/components/ui/stat';
 import { Tag } from '@/components/ui/tag';
 
 import { getAuthSession } from '@/lib/auth';
@@ -37,9 +36,6 @@ export const metadata = {
     follow: false,
   },
 };
-
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'grok-420-fast';
-const FALLBACK_CHAIN = process.env.MODEL_FALLBACK_CHAIN || 'auto,gpt-5.2';
 
 function formatRelative(iso?: string | Date): string {
   if (!iso) return '';
@@ -156,41 +152,8 @@ export default async function AnalyzeEntryPage({
             />
           </Card>
 
-          {/* 右副区：模型状态 + 最近报告 + 系统能力 */}
+          {/* 右副区：最近报告 + 系统能力 */}
           <Stack gap={4} className="lg:sticky lg:top-32">
-            {/* 模型状态 */}
-            <Card variant="default" padding="md">
-              <Inline justify="between" align="start" className="mb-3">
-                <Eyebrow icon={<ServerCog className="h-3 w-3" />}>判断引擎</Eyebrow>
-                <Tag tone="up" size="xs" variant="soft">
-                  RUNNING
-                </Tag>
-              </Inline>
-              <Stack gap={3}>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    主模型
-                  </div>
-                  <div className="mt-1 font-mono text-sm font-bold text-[color:var(--ink-1)]">
-                    {DEFAULT_MODEL}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    Fallback 链
-                  </div>
-                  <div className="mt-1 font-mono text-xs text-[color:var(--ink-3)] break-all">
-                    {FALLBACK_CHAIN}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Stat label="报告版本" value="v3" size="sm" />
-                  <div className="h-8 w-px bg-[color:var(--hairline)]" />
-                  <Stat label="时间精度" value="真太阳" size="sm" />
-                </div>
-              </Stack>
-            </Card>
-
             {/* 最近报告 */}
             {totalUserReports > 0 && (
               <Card variant="default" padding="md">
@@ -214,8 +177,8 @@ export default async function AnalyzeEntryPage({
                         <span className="text-sm font-bold leading-snug text-[color:var(--ink-2)] truncate">
                           {report.name || '未命名'}
                         </span>
-                        <Tag tone="default" variant="soft" size="xs">
-                          <span className="font-mono">{report.reportVersion || 'v1'}</span>
+                        <Tag tone="brand" variant="soft" size="xs">
+                          可继续阅读
                         </Tag>
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[color:var(--ink-5)]">
@@ -271,14 +234,14 @@ export default async function AnalyzeEntryPage({
           </section>
         )}
 
-        {/* 推理链路（折叠到下方，不抢主流程） */}
+        {/* 判断依据（折叠到下方，不抢主流程） */}
         <section className="mt-10 md:mt-12">
           <div className="grid gap-5 lg:grid-cols-2">
             <Card variant="default" padding="lg">
-              <Eyebrow className="mb-3">可追溯推理链路</Eyebrow>
+              <Eyebrow className="mb-3">判断依据</Eyebrow>
               <h2 className="text-lg font-black leading-tight text-[color:var(--ink-1)]">
                 不是直接给结论，<br />
-                而是保留每一步判断来源
+                而是说明判断从哪里来
               </h2>
               <Stack gap={3} className="mt-5">
                 {productReasoningTraceSteps.map((step, index) => (

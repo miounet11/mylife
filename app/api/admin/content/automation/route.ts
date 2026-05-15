@@ -36,8 +36,8 @@ export async function POST(request: NextRequest) {
     if (body.useScheduler === true) {
       const result = await runContentSchedulerCycle({ trigger: 'manual' });
       return NextResponse.json({
-        success: true,
         ...result,
+        success: true,
         snapshot: getContentOpsSnapshot(),
       });
     }

@@ -142,6 +142,46 @@ export default function PublicReportsPage() {
             </div>
           </div>
         </section>
+
+        <section className="mt-10 rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5 md:p-6">
+          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                看完公开内容后
+              </div>
+              <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)]">把别人的问题，转成你的下一步</h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-4)]">
+                先用公开报告找相似处，再去知识库补方法、看案例对照、用工具拆单项问题，最后生成自己的完整判断。
+              </p>
+            </div>
+            <Link
+              href="/analyze"
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+            >
+              生成我的判断
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-5 grid gap-3 md:grid-cols-3">
+            {[
+              { href: '/knowledge', title: '先补判断方法', body: '看格局、日主、阶段节奏背后的解释框架。' },
+              { href: '/cases', title: '再看案例对照', body: '用公开案例判断自己的问题更像哪一种场景。' },
+              { href: '/tools', title: '拆成单项工具', body: '把职业、关系、财富、阶段窗口分开验证。' },
+            ].map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
+              >
+                <div className="flex items-center justify-between gap-3 text-sm font-black text-[color:var(--ink-1)] group-hover:text-[color:var(--brand-strong)]">
+                  {item.title}
+                  <ArrowRight className="h-4 w-4 shrink-0" />
+                </div>
+                <p className="mt-2 text-xs leading-5 text-[color:var(--ink-4)]">{item.body}</p>
+              </Link>
+            ))}
+          </div>
+        </section>
       </main>
       <SiteFooter />
     </div>

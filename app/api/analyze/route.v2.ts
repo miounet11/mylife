@@ -270,7 +270,7 @@ async function saveAnalysisResult(params: {
     dayun: result.dayun,
     shenSha: result.shenSha,
     reportVersion: REPORT_VERSION,
-    isPublic: false,
+    isPublic: true,
   });
 }
 
