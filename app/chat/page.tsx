@@ -15,7 +15,7 @@ import { Stack } from '@/components/ui/stack';
 import { Tag } from '@/components/ui/tag';
 
 import { listChatIntentPresets, getChatIntentPreset } from '@/lib/chat-intent';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildChatHref, normalizeAttributionSource } from '@/lib/chat-entry';
 import { appendSourceToHref } from '@/lib/source-url';
 
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
@@ -46,7 +46,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   const eventId = resolvedSearchParams.eventId?.trim() || '';
   const intent = resolvedSearchParams.intent?.trim() || '';
   const question = resolvedSearchParams.question?.trim() || '';
-  const source = resolvedSearchParams.source?.trim() || '';
+  const source = normalizeAttributionSource(resolvedSearchParams.source);
   const ctaStrategyKey = resolvedSearchParams.ctaStrategyKey?.trim() || '';
   const sourceFamily = resolvedSearchParams.sourceFamily?.trim() || '';
   const reportHref = reportId

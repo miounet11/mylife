@@ -32,13 +32,13 @@ describe('content generation helpers', () => {
     process.env = {
       ...originalEnv,
       CONTENT_GENERATION_MODEL: 'gpt-5.5',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4-mini,auto',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto',
       CONTENT_GENERATION_MAX_TOKENS: '2600',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual({
       model: 'gpt-5.5',
-      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
+      modelChain: ['gpt-5.5', 'auto'],
       maxTokens: 2600,
       disableHealthReorder: true,
     });
@@ -50,23 +50,27 @@ describe('content generation helpers', () => {
       DEFAULT_MODEL: 'gpt-5.4',
       MODEL_FALLBACK_CHAIN: 'legacy-a,legacy-b',
       CONTENT_GENERATION_MODEL: 'gpt-5.5',
-      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'gpt-5.4-mini,auto',
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: 'auto',
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
       model: 'gpt-5.5',
-      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
+      modelChain: ['gpt-5.5', 'auto'],
     }));
   });
 
   it('defaults socratic and segmented generation to enabled', () => {
     process.env = {
       ...originalEnv,
+      DEFAULT_MODEL: undefined,
+      MODEL_FALLBACK_CHAIN: undefined,
+      CONTENT_GENERATION_MODEL: undefined,
+      CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: undefined,
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
-      model: 'gpt-5.5',
-      modelChain: ['gpt-5.5', 'gpt-5.4-mini', 'auto'],
+      model: 'gpt-5.4-mini-my',
+      modelChain: ['gpt-5.4-mini-my', 'gpt-4.1-mini-2025-04-14', 'lingsi1.0'],
     }));
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',

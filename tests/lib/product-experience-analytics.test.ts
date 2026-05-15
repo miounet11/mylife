@@ -103,8 +103,8 @@ describe('product experience analytics', () => {
       })),
       {
         event_name: 'result_chat_started',
-        page: '/result/report_1',
-        meta: JSON.stringify({ reportId: 'report_1', source: 'report_next_actions' }),
+        page: '/r/report_1',
+        meta: JSON.stringify({ reportId: 'report_1', source: 'result_report_followup' }),
         created_at: '2026-05-01 12:05:00',
       },
       {

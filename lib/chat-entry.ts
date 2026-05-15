@@ -5,6 +5,29 @@ function cleanQueryValue(value?: string | null) {
   return normalized ? normalized : '';
 }
 
+export function normalizeAttributionSource(value?: string | null) {
+  const source = cleanQueryValue(value);
+  if (!source) return '';
+
+  const collapsedSegments: string[] = [];
+  for (const segment of source.split(':')) {
+    const cleanSegment = segment.trim();
+    if (!cleanSegment || cleanSegment === collapsedSegments[collapsedSegments.length - 1]) continue;
+    collapsedSegments.push(cleanSegment);
+  }
+
+  return collapsedSegments.join(':');
+}
+
+export function buildReportChatSource(entrySource?: string | null) {
+  const source = normalizeAttributionSource(entrySource);
+  if (!source) return 'result_report_followup';
+  if (source === 'result_report_followup' || source.startsWith('result_report_followup:')) return source;
+  if (source.startsWith('lifecycle_report_followup')) return source;
+
+  return `result_report_followup:${source}`;
+}
+
 export function buildChatHref(params: {
   reportId?: string | null;
   eventId?: string | null;
@@ -19,7 +42,7 @@ export function buildChatHref(params: {
   const eventId = cleanQueryValue(params.eventId);
   const intent = cleanQueryValue(params.intent);
   const question = cleanQueryValue(params.question);
-  const source = cleanQueryValue(params.source);
+  const source = normalizeAttributionSource(params.source);
   const ctaStrategyKey = cleanQueryValue(params.ctaStrategyKey);
   const sourceFamily = cleanQueryValue(params.sourceFamily);
 

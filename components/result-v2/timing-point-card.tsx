@@ -22,13 +22,13 @@ export default function TimingPointCard({ point }: Props) {
   return (
     <div
       data-timing-point-id={point.id}
-      className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 transition-all"
+      className="group rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--brand-soft-2)] hover:shadow-md"
     >
       <div className="flex items-center gap-2 text-xs text-[color:var(--ink-3)]">
         <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${SEVERITY_BADGE_CLASS[point.severity]}`}>
           {SEVERITY_LABEL[point.severity]}
         </span>
-        <span className="font-mono">{dateLabel}</span>
+        <span className="font-mono transition group-hover:text-[color:var(--brand-strong)]">{dateLabel}</span>
       </div>
       <p className="mt-2 text-sm leading-6 text-[color:var(--ink-1)]">
         {point.userCopy?.summary || point.rawReason}

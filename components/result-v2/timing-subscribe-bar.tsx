@@ -39,8 +39,8 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
 
   if (status === 'done') {
     return (
-      <div className="fixed bottom-0 left-0 right-0 z-40 md:bottom-6 md:right-6 md:left-auto md:w-[320px] bg-emerald-50 border-t md:border md:rounded-[var(--radius-md)] border-emerald-200 p-4">
-        <p className="text-sm text-emerald-900">
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-emerald-200 bg-emerald-50 p-4 shadow-[0_-10px_30px_rgba(0,0,0,0.08)] md:bottom-6 md:right-6 md:left-auto md:w-[320px] md:rounded-[var(--radius-md)] md:border">
+        <p className="text-sm font-semibold text-emerald-900">
           ✓ 已记下你的邮箱。我们会在每个关键时点之前提醒你。
         </p>
       </div>
@@ -80,7 +80,7 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
   };
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-40 md:bottom-6 md:right-6 md:left-auto md:w-[360px] bg-[color:var(--paper)] border-t border-[color:var(--brand-soft-2)] md:border md:rounded-[var(--radius-md)] md:shadow-lg p-4">
+    <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-4 shadow-[0_-14px_34px_rgba(0,0,0,0.10)] md:bottom-6 md:right-6 md:left-auto md:w-[360px] md:rounded-[var(--radius-md)] md:border md:shadow-xl">
       <p className="text-sm font-bold text-[color:var(--ink-1)] mb-1">
         留邮箱，我们怕你错过这些时点
       </p>
@@ -95,12 +95,12 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           disabled={status === 'submitting'}
-          className="flex-1 rounded border border-[color:var(--line)] px-3 py-2 text-sm focus:outline-none focus:border-[color:var(--brand-strong)]"
+          className="flex-1 rounded-full border border-[color:var(--line)] bg-[color:var(--bg)] px-3 py-2 text-sm transition focus:outline-none focus:border-[color:var(--brand-strong)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)]"
         />
         <button
           type="submit"
           disabled={status === 'submitting' || !email.trim()}
-          className="rounded-full bg-[color:var(--brand-strong)] px-4 py-2 text-sm font-bold text-white whitespace-nowrap disabled:opacity-50"
+          className="rounded-full bg-[color:var(--brand)] px-4 py-2 text-sm font-bold text-white whitespace-nowrap transition hover:bg-[color:var(--brand-strong)] disabled:opacity-50"
         >
           {status === 'submitting' ? '...' : '开始'}
         </button>

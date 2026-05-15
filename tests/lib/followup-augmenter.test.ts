@@ -6,7 +6,7 @@ jest.mock('openai', () => jest.fn().mockImplementation(() => ({})));
 jest.mock('@/lib/env', () => ({
   getApiBaseUrl: jest.fn(() => 'https://example.test/v1'),
   getApiKey: jest.fn(() => 'test-key'),
-  getDefaultModel: jest.fn(() => 'gpt-5.5'),
+  getDefaultModel: jest.fn(() => 'gpt-5.4-mini-my'),
 }));
 
 jest.mock('@/lib/openai-compatible-chat', () => ({

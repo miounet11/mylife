@@ -14,8 +14,10 @@ const cronEnv = {
   USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
 };
 
-const PRIMARY_LLM_MODEL = 'gpt-5.5';
-const LLM_FALLBACK_CHAIN = 'gpt-5.4-mini,auto';
+const PRIMARY_LLM_MODEL = 'gpt-5.4-mini-my';
+// v5-C3 (2026-05-15): 用同上游异源模型 gpt-4.1-mini-2025-04-14 替换 grok-420-fast。
+// 直连探测：gpt-4.1-mini ≈1s 100% 成功；lingsi1.0 ≈800ms 100% 成功；grok-420-fast 5 次有 1 次 60s 卡死，移出链路。
+const LLM_FALLBACK_CHAIN = 'gpt-4.1-mini-2025-04-14,lingsi1.0';
 
 const nextApp = {
   name: 'life-kline-next',
@@ -31,7 +33,7 @@ const nextApp = {
     DEFAULT_MODEL: PRIMARY_LLM_MODEL,
     OPEN_AGENT_RUNTIME_MODEL: PRIMARY_LLM_MODEL,
     CONTENT_GENERATION_MODEL: PRIMARY_LLM_MODEL,
-    // v5-C1 (2026-05-11): 统一主链路，auto 只做最后兜底。
+    // v5-C1 (2026-05-11): 统一文本生成主链路、备用链路与兜底链路。
     MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
     REPORT_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
     REPORT_NARRATIVE_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
@@ -48,7 +50,8 @@ const nextApp = {
     LLM_CIRCUIT_OPEN_CONSECUTIVE_FAILURES: '5',
     LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES: '4',
     LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK: '1',
-    LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES: '2',
+    // v5-C2 (2026-05-15): cooldown 2→4 分钟，避免三档同分钟一起 half-open 撞同一上游波动
+    LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES: '4',
     // v5-A4 (2026-05-08) 升级队列重试上限收紧：6 → 4
     // 配合 A1 删 'auto' + A2 熔断收紧，避免堆积 retry 风暴
     REPORT_UPGRADE_MAX_ATTEMPTS: '4',
@@ -253,7 +256,8 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       REPORT_UPGRADE_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-upgrade/cron',
       REPORT_UPGRADE_INTERVAL_MS: '180000',
       REPORT_UPGRADE_BATCH_SIZE: '2',
-      REPORT_UPGRADE_REQUEST_TIMEOUT_MS: '60000',
+      // v5-C2 (2026-05-15): structure(180s)+narrative(90s)+overhead 必须 < daemon fetch 超时
+      REPORT_UPGRADE_REQUEST_TIMEOUT_MS: '300000',
       REPORT_UPGRADE_STARTUP_DELAY_MS: '20000',
       REPORT_UPGRADE_RETRY_DELAY_MS: '60000',
       REPORT_MONTHLY_DIGEST_CRON_TOKEN: cronEnv.REPORT_MONTHLY_DIGEST_CRON_TOKEN,

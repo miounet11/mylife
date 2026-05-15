@@ -113,19 +113,19 @@ const surfaceMetricConfigs: ProductExperienceSurfaceMetricConfig[] = [
   },
   {
     surface: 'result',
-    views: [isEvent('report_viewed', pageStartsWith('/result/'))],
+    views: [isEvent('report_viewed', resultPage())],
     primaryActions: [
-      isEvent('result_cta_clicked', pageStartsWith('/result/')),
-      isEvent('report_upgrade_requested', pageStartsWith('/result/')),
+      isEvent('result_cta_clicked', resultPage()),
+      isEvent('report_upgrade_requested', resultPage()),
       isEvent('report_event_saved_from_result'),
       isEvent('report_past_event_saved_from_result'),
     ],
     secondaryActions: [
-      isEvent('tool_card_clicked', pageStartsWith('/result/')),
-      isEvent('premium_service_requested', pageStartsWith('/result/')),
+      isEvent('tool_card_clicked', resultPage()),
+      isEvent('premium_service_requested', resultPage()),
     ],
     nextStepActions: [
-      isEvent('result_chat_started', pageStartsWith('/result/')),
+      isEvent('result_chat_started', resultPage()),
       isEvent('chat_page_viewed', sourceStartsWith('result_report_followup')),
       isEvent('report_to_chat_completed', sourceStartsWith('result_')),
       isEvent('tool_detail_viewed', sourceStartsWith('result_report')),
@@ -582,6 +582,10 @@ function pageEquals(page: string): ProductExperiencePredicate {
 
 function pageStartsWith(prefix: string): ProductExperiencePredicate {
   return (event) => event.page.startsWith(prefix);
+}
+
+function resultPage(): ProductExperiencePredicate {
+  return (event) => event.page.startsWith('/result/') || event.page.startsWith('/r/');
 }
 
 function targetEquals(target: string): ProductExperiencePredicate {

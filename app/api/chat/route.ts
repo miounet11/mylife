@@ -13,6 +13,7 @@ import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatInten
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import { recordModelAttempt } from '@/lib/llm-provider-health';
+import { normalizeAttributionSource } from '@/lib/chat-entry';
 
 // 设置 API 路由超时为 240 秒
 export const maxDuration = 240;
@@ -618,7 +619,7 @@ function resolveRequestedIntent(request: NextRequest, bodyIntent?: string) {
 
 function resolveRequestedSource(request: NextRequest, bodySource?: string) {
   const url = new URL(request.url);
-  const source = `${bodySource || url.searchParams.get('source') || ''}`.trim();
+  const source = normalizeAttributionSource(bodySource || url.searchParams.get('source') || '');
   return source || undefined;
 }
 

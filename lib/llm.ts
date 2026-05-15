@@ -14,8 +14,11 @@ const toModelDisplayName = (model: string) => {
   if (model === 'claude-opus-4-7-high') {
     return '主分析模型 Claude Opus 4.7 High';
   }
+  if (model === 'gpt-5.4-mini-my') {
+    return '默认请求模型 GPT-5.4 Mini My';
+  }
   if (model === 'gpt-5.5') {
-    return '备用推理模型 GPT-5.5';
+    return '旧版备用推理模型 GPT-5.5';
   }
   if (model === 'gpt-5.4-mini') {
     return '快速备用模型 GPT-5.4 Mini';
@@ -29,8 +32,14 @@ const toModelDisplayName = (model: string) => {
   if (model === 'gpt-5.2-codex') {
     return '旧版备用推理模型 GPT-5.2 Codex';
   }
+  if (model === 'gpt-4.1-mini-2025-04-14' || model === 'gpt-4.1-mini') {
+    return '备用快速生成模型 GPT-4.1 Mini';
+  }
   if (model === 'grok-420-fast') {
-    return '旧版快速生成模型 Grok 420 Fast';
+    return '备用快速生成模型 Grok 420 Fast';
+  }
+  if (model === 'lingsi1.0') {
+    return '兜底生成模型 Lingsi 1.0';
   }
   if (model === 'auto') {
     return '自动路由模型';

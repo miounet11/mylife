@@ -4,6 +4,7 @@ import {
   isNativeOpenAiModel,
   resolveChatCompletionMaxTokensField,
   resolveReasoningEffortFromBudgetTokens,
+  supportsReasoningEffortParameter,
   supportsTemperatureParameter,
 } from '@/lib/openai-compatible-chat';
 
@@ -53,5 +54,20 @@ describe('openai-compatible chat helper', () => {
     expect(resolveReasoningEffortFromBudgetTokens(2000)).toBe('low');
     expect(resolveReasoningEffortFromBudgetTokens(5000)).toBe('medium');
     expect(resolveReasoningEffortFromBudgetTokens(20000)).toBe('high');
+  });
+
+  it('drops reasoning_effort for legacy OpenAI models that do not support it', () => {
+    const body = buildOpenAiCompatibleChatCompletionBody({
+      model: 'gpt-4.1-mini-2025-04-14',
+      messages: [{ role: 'user', content: 'test' }],
+      maxTokens: 200,
+      reasoningEffort: 'medium',
+    });
+
+    expect(body).not.toHaveProperty('reasoning_effort');
+    expect(supportsReasoningEffortParameter('gpt-4.1-mini-2025-04-14')).toBe(false);
+    expect(supportsReasoningEffortParameter('gpt-5.4-mini-my')).toBe(true);
+    expect(supportsReasoningEffortParameter('o4-mini')).toBe(true);
+    expect(supportsReasoningEffortParameter('grok-420-fast')).toBe(false);
   });
 });

@@ -7,7 +7,7 @@ interface Props {
 
 export default function Next30DaysBlock({ points }: Props) {
   return (
-    <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5 md:p-6">
+    <section className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5 shadow-sm md:p-6">
       <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
         未来 30 天
       </div>

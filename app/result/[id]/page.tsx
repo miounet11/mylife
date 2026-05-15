@@ -1,7 +1,7 @@
 // 结构判断结果页面
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
@@ -29,6 +29,7 @@ interface PageProps {
   }>;
   searchParams?: Promise<{
     source?: string;
+    view?: string;
   }>;
 }
 
@@ -96,7 +97,7 @@ import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report
 import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
-import { buildChatHref, buildReportFollowupQuestion, buildReportFollowupSuggestions } from '@/lib/chat-entry';
+import { buildChatHref, buildReportChatSource, buildReportFollowupQuestion, buildReportFollowupSuggestions } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 import { buildLayeredReportJourney } from '@/lib/report-journey-router';
 import type { ReferenceIntelligencePack } from '@/lib/reference-intelligence';
@@ -329,6 +330,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
+  const shouldShowFullReport = resolvedSearchParams.view === 'full';
+  if (!shouldShowFullReport) {
+    const query = entrySource ? `?source=${encodeURIComponent(entrySource)}` : '';
+    redirect(`/r/${encodeURIComponent(id)}${query}`);
+  }
   const currentUserId = await getCurrentUserId();
   const rawFortuneData = fortuneOperations.getById(id);
 
@@ -623,11 +629,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     && cachedAge < 24 * 60 * 60 * 1000;
   const finalFollowupSuggestions = followupCacheFresh ? cachedFollowupSuggestions : reportFollowupSuggestions;
   const shouldTriggerAugmenter = !followupCacheFresh;
-  const reportChatSource = entrySource.startsWith('lifecycle_report_followup')
-    ? entrySource
-    : entrySource
-      ? `result_report_followup:${entrySource}`
-      : 'result_report_followup';
+  const reportChatSource = buildReportChatSource(entrySource);
   const reportChatHref = buildChatHref({
     reportId: id,
     question: reportFollowupQuestion,

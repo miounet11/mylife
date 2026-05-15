@@ -42,6 +42,14 @@ export function resolveReasoningEffortFromBudgetTokens(budgetTokens?: number | n
   return 'low';
 }
 
+export function supportsReasoningEffortParameter(model?: string | null) {
+  // 仅 GPT-5 / o-series 推理类模型支持 reasoning_effort。
+  // gpt-4.x / gpt-3.x 等传统模型若收到该参数，上游网关会以 429/400 拒绝。
+  const normalized = normalizeModelId(model);
+  if (isGpt5FamilyModel(model)) return true;
+  return /^o[1345](?:$|[-.])/.test(normalized);
+}
+
 export function buildOpenAiCompatibleChatCompletionBody(params: {
   model: string;
   messages: ChatCompletionMessage[];
@@ -77,7 +85,7 @@ export function buildOpenAiCompatibleChatCompletionBody(params: {
     body.response_format = params.responseFormat;
   }
 
-  if (params.reasoningEffort && isNativeOpenAiModel(params.model)) {
+  if (params.reasoningEffort && supportsReasoningEffortParameter(params.model)) {
     body.reasoning_effort = params.reasoningEffort;
   }
 

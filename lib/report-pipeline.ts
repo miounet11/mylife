@@ -16,10 +16,15 @@ import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import { parseLocalDate } from '@/lib/utils';
 
 // 首次 analyze 是用户等待路径：核心草案快速交付，长尾补强交给后续升级/重试。
-const ANALYZE_LLM_CORE_TIMEOUT_MS = 22000;
-const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 8000;
-const UPGRADE_LLM_CORE_TIMEOUT_MS = 50000;
-const UPGRADE_LLM_FOLLOWUP_TIMEOUT_MS = 36000;
+// v5-C2 (2026-05-15): 上游偶发 abort 集中在分钟级，把 upgrader 主 LLM 预算抬到 180s 量级，
+// 让单次请求能撑过 ~14s 上游平均延迟 + 重试 + fallback。analyze 路径仍受用户等待约束，仅微调。
+// v5-C3 (2026-05-15): 直连探测显示主模型 gpt-5.4-mini-my 平均 ~9s（最高 11s），
+// 之前 22s/8s/8s/9s 苛刻预算把主模型 1 次 + fallback 1 次都不够跑完即 abort。
+// 抬到 32s/12s/14s/15s，覆盖 ~11s 主 + ~1s fallback(gpt-4.1-mini) 真实延迟，仍在用户可接受范围。
+const ANALYZE_LLM_CORE_TIMEOUT_MS = 32000;
+const ANALYZE_LLM_FOLLOWUP_TIMEOUT_MS = 12000;
+const UPGRADE_LLM_CORE_TIMEOUT_MS = 180000;
+const UPGRADE_LLM_FOLLOWUP_TIMEOUT_MS = 90000;
 const ENABLE_AGENTIC_PIPELINE = isAgenticPipelineEnabled();
 const ANALYZE_FRONT_AGENT_KEYS: CoreAgentKey[] = [
   'core_constitution',
@@ -30,8 +35,8 @@ const ANALYZE_FALLBACK_AGENT_KEYS: CoreAgentKey[] = [
   'kline_narrative',
   'strategy_advisor',
 ];
-const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 9000;
-const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 8000;
+const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 14000;
+const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 13000;
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {

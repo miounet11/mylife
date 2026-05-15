@@ -47,8 +47,9 @@ export function getVisualAssetApiKey() {
   );
 }
 
-const DEFAULT_LLM_MODEL = 'gpt-5.5';
-const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-5.4-mini,auto';
+const DEFAULT_LLM_MODEL = 'gpt-5.4-mini-my';
+// v5-C3 (2026-05-15): grok-420-fast 偶发 60s 卡死，换成同上游异源 gpt-4.1-mini-2025-04-14（探测 100% 成功 ~1s）。
+const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-4.1-mini-2025-04-14,lingsi1.0';
 
 export function getDefaultModel() {
   return readString('DEFAULT_MODEL', DEFAULT_LLM_MODEL);
