@@ -73,6 +73,56 @@ export function ReportHighlightsGrid({
   );
 }
 
+interface EvidenceBlock {
+  eyebrow: string;
+  headline: string;
+  evidence: string[];
+}
+
+export function PastPresentFutureRow({
+  past,
+  present,
+  future,
+}: {
+  past: EvidenceBlock;
+  present: EvidenceBlock;
+  future: EvidenceBlock;
+}) {
+  const tones = [
+    'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70',
+    'border-[color:var(--line)] bg-[color:var(--paper)]',
+    'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/75',
+  ];
+  const blocks = [past, present, future];
+  return (
+    <div className="mt-5 grid gap-4 xl:grid-cols-3">
+      {blocks.map((section, index) => (
+        <div
+          key={section.eyebrow}
+          className={`rounded-[var(--radius)] border px-5 py-5 ${tones[index]}`}
+        >
+          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+            {section.eyebrow}
+          </div>
+          <div className="mt-3 text-base font-bold leading-7 text-[color:var(--ink)]">
+            {section.headline}
+          </div>
+          <div className="mt-4 grid gap-3">
+            {section.evidence.map((item) => (
+              <div
+                key={item}
+                className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]"
+              >
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function ReadingPathPlanner({
   coreSectionNames,
   deferredSectionNames,
