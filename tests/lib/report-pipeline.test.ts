@@ -27,12 +27,22 @@ describe('report pipeline analyze agent keys', () => {
     ]);
   });
 
-  it('skips live analyze agentic execution so first delivery is not blocked by slow expert calls', () => {
+  it('runs live analyze agentic execution when agent-scope provider health is healthy (v5-D2)', () => {
     expect(shouldRunAnalyzeAgentic({
       source: 'analyze',
       llmUsed: true,
       deferredByProviderHealth: false,
       agentScopeHealthDeferred: false,
+      agentScopeSnapshotsConservative: false,
+    })).toBe(true);
+  });
+
+  it('still defers analyze agentic when agent scope is unhealthy', () => {
+    expect(shouldRunAnalyzeAgentic({
+      source: 'analyze',
+      llmUsed: true,
+      deferredByProviderHealth: false,
+      agentScopeHealthDeferred: true,
       agentScopeSnapshotsConservative: false,
     })).toBe(false);
   });

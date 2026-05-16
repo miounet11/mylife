@@ -72,10 +72,11 @@ export function shouldRunAnalyzeAgentic(params: {
     return false;
   }
 
-  if (params.source === 'analyze') {
-    return false;
-  }
-
+  // v5-D2 (2026-05-16): 移除 4ae75e7 引入的 analyze 路径硬禁用。
+  // 之前 `if (source === 'analyze') return false` 让 100% analyze 报告走 deterministic-expert fallback，
+  // 表面 quality=91/S，但 agentSources 7/7 全为 fallback、totalLlmCalls=0，专家协同维度只有 72/watch。
+  // analyze 路径已有 ANALYZE_FRONT/FALLBACK_AGENT_KEYS（3 个 agent）+ 14s/13s 短 timeout，
+  // 用户等待成本可控；只在 health gate 下沉时再 defer，与 upgrade 路径口径一致。
   if (params.agentScopeHealthDeferred || params.agentScopeSnapshotsConservative) {
     return false;
   }
