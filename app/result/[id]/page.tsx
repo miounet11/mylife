@@ -15,10 +15,6 @@ const TrustReport = NextDynamic(() => import('@/components/trust-report'), {
   loading: () => <ReportSkeleton />,
 });
 
-const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
-  loading: () => <ChartSkeleton />,
-});
-
 const NextStepGuide = NextDynamic(() => import('@/components/next-step-guide'), {
   loading: () => <GuideSkeleton />,
 });
@@ -58,6 +54,7 @@ import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
 import DegradeNotice from '@/components/degrade-notice';
 import ChapterAskDock, { type DockChapter } from '@/components/report/chapter-ask-dock';
+import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import PremiumTeaser from '@/components/premium-teaser';
 import ReportFollowupAugmenterTrigger from '@/components/report-followup-augmenter-trigger';
 import { ReportSurface } from '@/components/report-surface';
@@ -106,7 +103,6 @@ import {
   buildPastValidationBlock,
   buildPresentDiagnosisBlock,
   compactCopy,
-  getLifeKLineMetricToneClasses,
   getPublicDisplayName,
   inferWorldYiGuidedPaths,
   sanitizePublicFortuneRecord,
@@ -824,56 +820,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </summary>
 
                 <div id="trend" className="mt-6 grid gap-4 xl:grid-cols-[1.08fr_0.92fr]">
-                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">人生长弧线</div>
-                        <h3 className="mt-2 text-lg font-bold text-[color:var(--ink)]">
-                          {reportV4Sections.lifeKLine.headline || '人生长弧线'}
-                        </h3>
-                      </div>
-                      {reportV4Sections.lifeKLine.arcLabel ? (
-                        <div className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                          {compactCopy(reportV4Sections.lifeKLine.arcLabel, 30)}
-                        </div>
-                      ) : null}
-                    </div>
-
-                    {reportV4Sections.lifeKLine.summary ? (
-                      <p className="mt-2 text-xs leading-6 text-[color:var(--muted)]">
-                        {compactCopy(reportV4Sections.lifeKLine.summary, 108)}
-                      </p>
-                    ) : null}
-
-                    {reportV4Sections.lifeKLine.latestMetrics.length > 0 ? (
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                        {reportV4Sections.lifeKLine.latestMetrics.map((item) => {
-                          const toneClasses = getLifeKLineMetricToneClasses(item.tone);
-
-                          return (
-                            <div key={item.label} className={`rounded-[var(--radius)] border px-4 py-3 ${toneClasses.card}`}>
-                              <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
-                                {item.label}
-                              </div>
-                              <div className={`mt-2 text-base font-bold ${toneClasses.value}`}>{item.value}</div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : null}
-
-                    {result.klineData && result.klineData.length > 0 ? (
-                      <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-3">
-                        <Suspense fallback={<ChartSkeleton />}>
-                          <FortuneChart data={result.klineData} height={320} />
-                        </Suspense>
-                      </div>
-                    ) : (
-                      <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4 text-xs leading-6 text-[color:var(--muted)]">
-                        暂无趋势图数据，先结合节奏板与驾驶舱判断推进。
-                      </div>
-                    )}
-                  </div>
+                  <LifeKLineSummaryCard
+                    section={reportV4Sections.lifeKLine}
+                    klineData={result.klineData}
+                  />
                   <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
                 </div>
 
@@ -1398,12 +1348,6 @@ function ReportSkeleton() {
       <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
       <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
     </div>
-  );
-}
-
-function ChartSkeleton() {
-  return (
-    <div className="h-64 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
   );
 }
 
