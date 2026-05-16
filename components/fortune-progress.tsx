@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { describeReportDeliveryStage } from '@/lib/report-quality';
+import PreheatPanel from '@/components/fortune-form/preheat-panel';
 
 const steps = [
   {
@@ -186,6 +187,10 @@ interface FortuneProgressSummary {
   useSolarTime: boolean;
   useDaylightSaving: boolean;
   useSeparateZiHour: boolean;
+  // v5-D3: 客户端快算预热数据
+  birthday?: string;
+  unknownHour?: boolean;
+  gender?: 0 | 1;
 }
 
 interface FortuneProgressServerStage {
@@ -478,6 +483,15 @@ export default function FortuneProgress({
           </div>
 
           <div className="space-y-5">
+            {/* v5-D3 (2026-05-16) 等待期预热阅读：把客户端可即时计算的四柱/日主/五行展示给用户 */}
+            {summary?.birthday ? (
+              <PreheatPanel
+                birthday={summary.birthday}
+                unknownHour={summary.unknownHour}
+                gender={summary.gender}
+              />
+            ) : null}
+
             <div className="overflow-hidden rounded-full bg-[color:var(--paper)]">
                 <div
                   className="h-4 rounded-full bg-[linear-gradient(90deg,var(--accent),var(--warm))] transition-all duration-200"

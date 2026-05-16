@@ -40,6 +40,10 @@ type LoadingSummary = {
   useSolarTime: boolean;
   useDaylightSaving: boolean;
   useSeparateZiHour: boolean;
+  // v5-D3: 客户端快算预热
+  birthday: string;
+  unknownHour: boolean;
+  gender: 0 | 1;
 };
 
 type AnalyzeEvent =
@@ -151,6 +155,10 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
         useSolarTime,
         useDaylightSaving,
         useSeparateZiHour,
+        // v5-D3: 提供给 PreheatPanel 客户端快算
+        birthday: payload.birthday,
+        unknownHour: payload.unknowhour === 1,
+        gender: payload.sex as 0 | 1,
       });
 
       try {
