@@ -221,11 +221,9 @@ async function executeReportPhase(params: {
           { role: 'user', content: params.prompt },
         ],
         temperature: params.phase === 'structure' ? 0.35 : 0.45,
-        // v5-C4 (2026-05-16): gpt-4.1-mini 不带 reasoning_effort，maxTokens 直接对应输出长度；
-        // 之前 420/220 在真实 prompt（含 pattern/tenGods/dayun/shenSha 等）下输出会被截断，
-        // 导致 JSON 不闭合 → JSON_PARSE_FAILED（report scope 60min 0/8）。
-        // 抬到 1400/700，覆盖 gpt-4.1-mini 实际输出需求；对 GPT-5 系列没有副作用。
-        maxTokens: params.phase === 'structure' ? 1400 : 700,
+        // v5-C5 (2026-05-16): C4 抬到 1400/700 仍观察到 finish=length 截断（实际输出 1197+ 字符仍未闭合），
+        // 继续抬到 2400/1200。gpt-4.1-mini 输出无 reasoning 缓冲，直接对应字段；GPT-5 系列只影响上限。
+        maxTokens: params.phase === 'structure' ? 2400 : 1200,
         reasoningEffort: 'low',
       }, {
         signal: attemptController.signal,
@@ -596,11 +594,57 @@ function stripMarkdownFence(value: string) {
 }
 
 function repairJsonCandidate(value: string) {
-  return value
+  const normalized = value
     .replace(/[“”]/g, '"')
     .replace(/[‘’]/g, '\'')
     .replace(/,\s*([}\]])/g, '$1')
     .trim();
+
+  // v5-C5: 尝试修复因 finish=length 被截断的 JSON：补齐字符串引号 + 未闭合的 {[]}
+  return closeTruncatedJson(normalized);
+}
+
+function closeTruncatedJson(value: string): string {
+  let inString = false;
+  let escape = false;
+  const stack: string[] = [];
+
+  for (let i = 0; i < value.length; i += 1) {
+    const ch = value[i];
+    if (escape) {
+      escape = false;
+      continue;
+    }
+    if (ch === '\\') {
+      escape = true;
+      continue;
+    }
+    if (inString) {
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === '{' || ch === '[') stack.push(ch);
+    else if (ch === '}' || ch === ']') stack.pop();
+  }
+
+  let repaired = value;
+  if (inString) repaired += '"';
+
+  // 移除结尾不完整的 key/value 片段，比如 `"foo":` 或 `"foo":"bar`
+  repaired = repaired.replace(/,\s*"[^"]*"\s*:\s*$/, '');
+  repaired = repaired.replace(/,\s*"[^"]*"\s*:\s*"[^"]*$/, '');
+  repaired = repaired.replace(/,\s*$/, '');
+
+  while (stack.length > 0) {
+    const open = stack.pop();
+    repaired += open === '{' ? '}' : ']';
+  }
+
+  return repaired;
 }
 
 function mergeInterpretation(
