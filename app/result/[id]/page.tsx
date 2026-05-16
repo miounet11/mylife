@@ -6,7 +6,6 @@ import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
 import {
-  CalendarClock,
   Compass,
 } from 'lucide-react';
 
@@ -56,6 +55,11 @@ import DegradeNotice from '@/components/degrade-notice';
 import ChapterAskDock, { type DockChapter } from '@/components/report/chapter-ask-dock';
 import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import ReportStageProgress from '@/components/report/report-stage-progress';
+import {
+  ReadingPathPlanner,
+  ReportHighlightsGrid,
+  ValidationFeedbackHero,
+} from '@/components/report/report-deep-summary-blocks';
 import PremiumTeaser from '@/components/premium-teaser';
 import ReportFollowupAugmenterTrigger from '@/components/report-followup-augmenter-trigger';
 import { ReportSurface } from '@/components/report-surface';
@@ -905,68 +909,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               />
 
               {canManage ? (
-                <div className="mt-5 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${feedbackHeroTone}`}>
-                      {feedbackHeroLabel}
-                    </span>
-                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                      {`关联事件 ${validationInsights.totalLinkedEvents || 0}`}
-                    </span>
-                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                      {`待验证 ${validationInsights.pendingCount || 0}`}
-                    </span>
-                    <span className="rounded-full bg-[color:var(--bg-sunken)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                      {`偏差 ${validationInsights.driftCount || 0}`}
-                    </span>
-                  </div>
-                  <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">
-                    {validationInsights.summary}
-                  </div>
-                  <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-3 text-xs leading-6 text-[color:var(--ink)]">
-                    {correctionInsight.summary}
-                  </div>
-                </div>
+                <ValidationFeedbackHero
+                  toneClass={feedbackHeroTone}
+                  label={feedbackHeroLabel}
+                  validationInsights={validationInsights}
+                  correctionInsight={correctionInsight}
+                />
               ) : null}
 
-              <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {reportHighlights.map((item) => (
-                  <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
-                    <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
-                    <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
-                  </div>
-                ))}
-              </div>
+              <ReportHighlightsGrid items={reportHighlights} />
 
 
-              <div className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5">
-                <div className="flex items-center gap-3">
-                  <CalendarClock className="h-5 w-5 text-[color:var(--warm)]" />
-                  <div className="font-semibold text-[color:var(--ink)]">继续展开的顺序</div>
-                </div>
-                <div className="mt-4 grid gap-3 lg:grid-cols-[0.96fr_1.04fr]">
-                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">现在先看</div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {coreSectionNames.map((item) => (
-                        <span key={item} className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--ink)]">
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-4 py-4">
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">后面再展开</div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {deferredSectionNames.map((item) => (
-                        <span key={item} className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                          {item}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ReadingPathPlanner
+                coreSectionNames={coreSectionNames}
+                deferredSectionNames={deferredSectionNames}
+              />
               </details>
             </div>
           </div>
