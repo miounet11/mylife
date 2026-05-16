@@ -14,10 +14,11 @@ const cronEnv = {
   USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
 };
 
-const PRIMARY_LLM_MODEL = 'gpt-5.4-mini-my';
-// v5-C3 (2026-05-15): 用同上游异源模型 gpt-4.1-mini-2025-04-14 替换 grok-420-fast。
-// 直连探测：gpt-4.1-mini ≈1s 100% 成功；lingsi1.0 ≈800ms 100% 成功；grok-420-fast 5 次有 1 次 60s 卡死，移出链路。
-const LLM_FALLBACK_CHAIN = 'gpt-4.1-mini-2025-04-14,lingsi1.0';
+// v5-D1 (2026-05-16): 主模型从 gpt-5.4-mini-my 切到 gpt-4.1-mini-2025-04-14。
+// 6h 流量：gpt-4.1-mini @ report 69/74=93%；gpt-5.4-mini-my @ report 3/32=9%（500 没有可用token / 429）。
+// 引擎证据已 v2 完整，LLM 仅表达层；稳定性优先。gpt-5.4-mini-my 降为最后兜底。
+const PRIMARY_LLM_MODEL = 'gpt-4.1-mini-2025-04-14';
+const LLM_FALLBACK_CHAIN = 'lingsi1.0,gpt-5.4-mini-my';
 
 const nextApp = {
   name: 'life-kline-next',

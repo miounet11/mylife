@@ -47,9 +47,13 @@ export function getVisualAssetApiKey() {
   );
 }
 
-const DEFAULT_LLM_MODEL = 'gpt-5.4-mini-my';
-// v5-C3 (2026-05-15): grok-420-fast 偶发 60s 卡死，换成同上游异源 gpt-4.1-mini-2025-04-14（探测 100% 成功 ~1s）。
-const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-4.1-mini-2025-04-14,lingsi1.0';
+// v5-D1 (2026-05-16): 主模型切换到 gpt-4.1-mini-2025-04-14。
+// 6h 真实流量：report scope gpt-4.1-mini 69/74=93% 成功 avg 5.8s；
+// gpt-5.4-mini-my 仅 3/32=9%（大量 "500 没有可用token" / "429 backends busy" / EMPTY_CONTENT）。
+// 确定性引擎已提供全部判断证据，LLM 只负责表达，gpt-4.1-mini 稳定性收益 >> 文案差异。
+// gpt-5.4-mini-my 保留为最后兜底（上游恢复后仍可被自动选中）。
+const DEFAULT_LLM_MODEL = 'gpt-4.1-mini-2025-04-14';
+const DEFAULT_LLM_FALLBACK_CHAIN = 'lingsi1.0,gpt-5.4-mini-my';
 
 export function getDefaultModel() {
   return readString('DEFAULT_MODEL', DEFAULT_LLM_MODEL);
