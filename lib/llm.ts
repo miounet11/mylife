@@ -221,7 +221,11 @@ async function executeReportPhase(params: {
           { role: 'user', content: params.prompt },
         ],
         temperature: params.phase === 'structure' ? 0.35 : 0.45,
-        maxTokens: params.phase === 'structure' ? 420 : 220,
+        // v5-C4 (2026-05-16): gpt-4.1-mini 不带 reasoning_effort，maxTokens 直接对应输出长度；
+        // 之前 420/220 在真实 prompt（含 pattern/tenGods/dayun/shenSha 等）下输出会被截断，
+        // 导致 JSON 不闭合 → JSON_PARSE_FAILED（report scope 60min 0/8）。
+        // 抬到 1400/700，覆盖 gpt-4.1-mini 实际输出需求；对 GPT-5 系列没有副作用。
+        maxTokens: params.phase === 'structure' ? 1400 : 700,
         reasoningEffort: 'low',
       }, {
         signal: attemptController.signal,
@@ -230,6 +234,7 @@ async function executeReportPhase(params: {
       });
 
       const responseText = completion.choices?.[0]?.message?.content?.trim();
+      const finishReason = completion.choices?.[0]?.finish_reason;
       if (!responseText) {
         lastError = new Error(`EMPTY_CONTENT:${model}`);
         recordModelAttempt({
@@ -238,7 +243,7 @@ async function executeReportPhase(params: {
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: 'empty',
-          errorMessage: 'EMPTY_CONTENT',
+          errorMessage: `EMPTY_CONTENT${finishReason ? `:finish=${finishReason}` : ''}`,
           traceLabel,
         });
         continue;
@@ -253,7 +258,7 @@ async function executeReportPhase(params: {
           success: false,
           latencyMs: Date.now() - startedAt,
           errorType: 'parse',
-          errorMessage: 'JSON_PARSE_FAILED',
+          errorMessage: `JSON_PARSE_FAILED${finishReason ? `:finish=${finishReason}` : ''}:len=${responseText.length}`,
           traceLabel,
         });
         continue;
