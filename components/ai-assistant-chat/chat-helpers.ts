@@ -12,7 +12,9 @@ import {
   ScrollText,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import type { ChatContextEvent } from '@/lib/chat-context';
+import type { ChatContextEvent, ChatExperienceContext } from '@/lib/chat-context';
+import { getChatIntentPreset } from '@/lib/chat-intent';
+import type { ReportActionSuggestion } from '@/lib/report-v2';
 import {
   cloneTacitKnowledgeInput,
   createEmptyTacitKnowledgeInput,
@@ -20,6 +22,32 @@ import {
   type TacitKnowledgeInput,
 } from '@/lib/tacit-knowledge';
 import { buildChatHref } from '@/lib/chat-entry';
+
+export type ChatContextState = ChatExperienceContext;
+export type SuggestedEventDraft = ReportActionSuggestion;
+
+export type IntentPreset = {
+  entryLabel: string;
+  helper: string;
+  placeholder: string;
+  prefillQuestion: string;
+  questions: string[];
+};
+
+export function getIntentPreset(intent: string): IntentPreset | null {
+  const preset = getChatIntentPreset(intent);
+  if (!preset) {
+    return null;
+  }
+
+  return {
+    entryLabel: preset.entryLabel,
+    helper: preset.helper,
+    placeholder: preset.placeholder,
+    prefillQuestion: preset.prefillQuestion,
+    questions: preset.questions,
+  };
+}
 
 export type ChatMaterialKind =
   | 'floor_plan'
