@@ -222,12 +222,13 @@ export default function ReportPremiumServices({
                         target: offer.key,
                         source: 'report_premium_services',
                         intent: offer.key,
+                        canManage,
                       },
                     });
                   }}
                   className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] hover:bg-[color:var(--signal-strong)] hover:text-white"
                 >
-                  {canManage ? offer.primaryCtaLabel : '生成我的专属报告'}
+                  {canManage ? offer.primaryCtaLabel : '申请专项咨询'}
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
@@ -241,6 +242,7 @@ export default function ReportPremiumServices({
                         reportId,
                         target: `${offer.key}_secondary`,
                         source: 'report_premium_services',
+                        canManage,
                       },
                     });
                   }}
@@ -250,26 +252,23 @@ export default function ReportPremiumServices({
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                {canManage ? (
-                  <button
-                    type="button"
-                    onClick={() => handlePrefill(offer.key)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 text-sm font-semibold text-[color:var(--signal-strong)] hover:bg-[color:var(--signal)] hover:text-[color:var(--ink-1)]"
-                  >
-                    提交需求单
-                  </button>
-                ) : null}
+                <button
+                  type="button"
+                  onClick={() => handlePrefill(offer.key)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 text-sm font-semibold text-[color:var(--signal-strong)] hover:bg-[color:var(--signal)] hover:text-[color:var(--ink-1)]"
+                >
+                  提交需求单
+                </button>
               </div>
             </div>
           );
         })}
       </div>
 
-      {canManage ? (
-        <div className="mt-8 grid gap-5 lg:grid-cols-[1.05fr_0.95fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-            <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
-            <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
+      <div className={`mt-8 grid gap-5 ${canManage ? 'lg:grid-cols-[1.05fr_0.95fr]' : ''}`}>
+        <div id="premium-form" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
+          <div className="text-sm font-semibold text-[color:var(--ink)]">提交专项服务需求</div>
+          <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">把你最想解决的一个现实问题写清楚，系统会把当前报告与需求一起交给后续服务链路。</div>
 
             <div className="mt-4 flex flex-wrap gap-2">
               {offers.map((offer) => (
@@ -336,6 +335,7 @@ export default function ReportPremiumServices({
             {error ? <div className="mt-4 rounded-[var(--radius)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm text-[color:var(--alert)]">{error}</div> : null}
           </div>
 
+        {canManage ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
             <div className="text-sm font-semibold text-[color:var(--ink)]">最近提交的专项需求</div>
 
@@ -360,8 +360,8 @@ export default function ReportPremiumServices({
               )}
             </div>
           </div>
-        </div>
-      ) : null}
+        ) : null}
+      </div>
     </div>
   );
 }
@@ -374,7 +374,7 @@ function mapSecondaryHref(
   sourceFamily?: string
 ) {
   if (!canManage) {
-    return '/analyze';
+    return '#premium';
   }
 
   switch (key) {
@@ -403,7 +403,7 @@ function mapPrimaryHref(
   sourceFamily?: string
 ) {
   if (!canManage) {
-    return '/analyze';
+    return '#premium';
   }
 
   return buildChatHref({
