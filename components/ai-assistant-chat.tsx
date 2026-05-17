@@ -81,6 +81,7 @@ import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materi
 import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
+import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
 
 type ChatContextReport = ChatReportContext;
 
@@ -111,7 +112,12 @@ export default function AIAssistantChat() {
     setCopiedMessageId,
     setPreviousUserQuestions,
   } = useChatMessageActions();
-  const [isNearBottom, setIsNearBottom] = useState(true);
+  const {
+    messagesScrollerRef,
+    isNearBottom,
+    scrollToBottom,
+    resetInitialScroll,
+  } = useChatScroll({ messages, isTyping, loadingHistory });
   const {
     tacitContext,
     restoredTacitContext,
@@ -142,9 +148,7 @@ export default function AIAssistantChat() {
     handleSaveSuggestedEvent,
     handleSaveMessageEvent,
   } = useChatEvents({ context, reportId, source, setError });
-  const messagesScrollerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const initialScrollDoneRef = useRef(false);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
   const intentPreset = getIntentPreset(intent);
   const scopedIntentLinks = listChatIntentPresets().map((item) => ({
@@ -170,12 +174,6 @@ export default function AIAssistantChat() {
   const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
   const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
   const canRestoreTacit = hasTacitKnowledgeInput(restoredTacitContext) && !areTacitKnowledgeInputsEqual(restoredTacitContext, tacitContext);
-
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
-    const node = messagesScrollerRef.current;
-    if (!node) return;
-    node.scrollTo({ top: node.scrollHeight, behavior });
-  };
 
   const fetchHistory = async (showLoader = false) => {
     try {
@@ -236,38 +234,9 @@ export default function AIAssistantChat() {
   fetchHistoryRef.current = fetchHistory;
 
   useEffect(() => {
-    initialScrollDoneRef.current = false;
+    resetInitialScroll();
     void fetchHistoryRef.current(true);
-  }, [reportId, eventId, intent, source, ctaStrategyKey, sourceFamily]);
-
-  useEffect(() => {
-    const node = messagesScrollerRef.current;
-    if (!node) return undefined;
-
-    const handleScroll = () => {
-      const distanceToBottom = node.scrollHeight - node.scrollTop - node.clientHeight;
-      setIsNearBottom(distanceToBottom <= 120);
-    };
-
-    handleScroll();
-    node.addEventListener('scroll', handleScroll);
-
-    return () => {
-      node.removeEventListener('scroll', handleScroll);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (loadingHistory) return;
-    if (initialScrollDoneRef.current && !isNearBottom && !isTyping) return;
-    const behavior: ScrollBehavior = initialScrollDoneRef.current ? 'smooth' : 'auto';
-    const timer = window.requestAnimationFrame(() => {
-      scrollToBottom(behavior);
-      initialScrollDoneRef.current = true;
-    });
-
-    return () => window.cancelAnimationFrame(timer);
-  }, [messages, isTyping, loadingHistory, isNearBottom]);
+  }, [reportId, eventId, intent, source, ctaStrategyKey, sourceFamily, resetInitialScroll]);
 
   useEffect(() => {
     const node = inputRef.current;
