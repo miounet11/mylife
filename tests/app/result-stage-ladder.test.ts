@@ -3,21 +3,26 @@ import { join } from 'node:path';
 
 describe('result page stage ladder surface', () => {
   const source = readFileSync(join(process.cwd(), 'app/result/[id]/page.tsx'), 'utf8');
+  const stageProgressSource = readFileSync(
+    join(process.cwd(), 'components/report/report-stage-progress.tsx'),
+    'utf8',
+  );
   const timingSource = readFileSync(join(process.cwd(), 'app/r/[id]/page.tsx'), 'utf8');
 
   it('renders the user-facing stage ladder from the shared helper', () => {
     expect(source).toContain('buildReportStageLadder');
-    expect(source).toContain('reportStageLadder.map');
-    expect(source).toContain('报告阅读进度');
-    expect(source).toContain('下一阶段');
-    expect(source).toContain('当前阶段');
-    expect(source).toContain('data-stage-key={item.key}');
+    expect(source).toContain('reportStageLadder');
+    expect(source).toContain('ReportStageProgress');
+    expect(stageProgressSource).toContain('报告阅读进度');
+    expect(stageProgressSource).toContain('下一阶段');
+    expect(stageProgressSource).toContain('当前阶段');
+    expect(stageProgressSource).toContain('data-stage-key={item.key}');
   });
 
   it('marks each rendered ladder card with its stage key for regression safety', () => {
-    expect(source).toContain('data-stage-key={item.key}');
-    expect(source).toContain("item.status === 'current'");
-    expect(source).toContain("item.status === 'completed'");
+    expect(stageProgressSource).toContain('data-stage-key={item.key}');
+    expect(stageProgressSource).toContain("item.status === 'current'");
+    expect(stageProgressSource).toContain("item.status === 'completed'");
   });
 
   it('uses the compact timing report as the default historical report view', () => {
