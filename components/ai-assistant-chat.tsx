@@ -80,6 +80,7 @@ import { MessageBubble } from '@/components/ai-assistant-chat/message-bubble';
 import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
 import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
+import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
 
 type ChatContextReport = ChatReportContext;
 
@@ -98,12 +99,19 @@ export default function AIAssistantChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [error, setError] = useState('');
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [editingContent, setEditingContent] = useState('');
-  const [messageActionKey, setMessageActionKey] = useState<string | null>(null);
-  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
+  const {
+    editingMessageId,
+    editingContent,
+    messageActionKey,
+    copiedMessageId,
+    previousUserQuestions,
+    setEditingMessageId,
+    setEditingContent,
+    setMessageActionKey,
+    setCopiedMessageId,
+    setPreviousUserQuestions,
+  } = useChatMessageActions();
   const [isNearBottom, setIsNearBottom] = useState(true);
-  const [previousUserQuestions, setPreviousUserQuestions] = useState<Record<string, string>>({});
   const {
     tacitContext,
     restoredTacitContext,
@@ -285,7 +293,7 @@ export default function AIAssistantChat() {
     if (!copiedMessageId) return undefined;
     const timer = window.setTimeout(() => setCopiedMessageId(null), 1800);
     return () => window.clearTimeout(timer);
-  }, [copiedMessageId]);
+  }, [copiedMessageId, setCopiedMessageId]);
 
   const trackFollowupClick = (question: string) => {
     void fetch('/api/analytics/track', {
