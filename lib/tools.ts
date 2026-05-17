@@ -1399,13 +1399,20 @@ export function buildToolRunSummary(params: {
   const toolMemory = summarizeToolSessions(params.recentSessions || [], report, 4);
   const opening = `${report.analysis?.opening || ''}`.trim() || `${report.name}当前已经进入一个需要重新排顺序的阶段。`;
   const explanation = `${report.analysis?.explanation || ''}`.trim() || '这份结果会优先围绕结构、阶段、环境和动作四层展开。';
+  // v5-D25 (2026-05-17): career/wealth/marriage/health 是 *Advice 对象，不是 string。
+  // 之前的代码 .filter(Boolean) 后强转 as string[]，对象进入 adviceSignals[0/1]
+  // → 写到 recommendedAction → 下游 scoreToolResultQuality 的 .trim() 抛 TypeError。
+  // 日志实锤：tool-run all model attempts failed 后必现 "a.recommendedAction.trim is not a function"。
   const adviceSignals = [
-    report.advice?.career,
-    report.advice?.wealth,
-    report.advice?.marriage,
-    report.advice?.health,
+    report.advice?.career?.general,
+    report.advice?.wealth?.general,
+    report.advice?.marriage?.general,
+    report.advice?.health?.general,
     report.advice?.overall,
-  ].filter(Boolean).slice(0, 2) as string[];
+  ]
+    .map((value) => (typeof value === 'string' ? value.trim() : ''))
+    .filter((value) => value.length > 0)
+    .slice(0, 2);
   const patternLabel = report.pattern?.type || '当前格局';
   const confidenceLabel = report.reportVersion?.includes('agent') ? '多层增强' : '基础结构判断';
 

@@ -123,7 +123,9 @@ type RawToolLlmEnhancement = {
 
 function mergeString(base: string, candidate: unknown, minLength = 8) {
   const value = `${candidate || ''}`.trim();
-  return value.length >= minLength ? value : base;
+  if (value.length >= minLength) return value;
+  // v5-D25: base 在 TS 上是 string，但跨边界进来的对象/数字会让下游 .trim() 爆。强制 stringify。
+  return typeof base === 'string' ? base : `${base ?? ''}`;
 }
 
 function mergeStringArray(base: string[], candidate: unknown, minItems = 1) {
