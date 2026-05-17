@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseChatScrollOptions {
   messages: unknown;
@@ -13,15 +13,15 @@ export function useChatScroll({ messages, isTyping, loadingHistory }: UseChatScr
   const messagesScrollerRef = useRef<HTMLDivElement>(null);
   const initialScrollDoneRef = useRef(false);
 
-  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
     const node = messagesScrollerRef.current;
     if (!node) return;
     node.scrollTo({ top: node.scrollHeight, behavior });
-  };
+  }, []);
 
-  const resetInitialScroll = () => {
+  const resetInitialScroll = useCallback(() => {
     initialScrollDoneRef.current = false;
-  };
+  }, []);
 
   useEffect(() => {
     const node = messagesScrollerRef.current;
@@ -50,7 +50,7 @@ export function useChatScroll({ messages, isTyping, loadingHistory }: UseChatScr
     });
 
     return () => window.cancelAnimationFrame(timer);
-  }, [messages, isTyping, loadingHistory, isNearBottom]);
+  }, [messages, isTyping, loadingHistory, isNearBottom, scrollToBottom]);
 
   return {
     messagesScrollerRef,
