@@ -43,7 +43,6 @@ import {
   cloneTacitKnowledgeInput,
   createEmptyTacitKnowledgeInput,
   hasTacitKnowledgeInput,
-  type TacitKnowledgeInput,
 } from '@/lib/tacit-knowledge';
 import {
   type ChatContextState,
@@ -80,6 +79,7 @@ import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/materia
 import { MessageBubble } from '@/components/ai-assistant-chat/message-bubble';
 import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
 import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
+import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 
 type ChatContextReport = ChatReportContext;
 
@@ -104,9 +104,14 @@ export default function AIAssistantChat() {
   const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   const [isNearBottom, setIsNearBottom] = useState(true);
   const [previousUserQuestions, setPreviousUserQuestions] = useState<Record<string, string>>({});
-  const [tacitContext, setTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
-  const [restoredTacitContext, setRestoredTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
-  const [showTacitComposer, setShowTacitComposer] = useState(false);
+  const {
+    tacitContext,
+    restoredTacitContext,
+    showTacitComposer,
+    setTacitContext,
+    setRestoredTacitContext,
+    setShowTacitComposer,
+  } = useChatTacit();
   const {
     materials,
     selectedMaterialKind,
