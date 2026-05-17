@@ -7,6 +7,7 @@ import { ArrowRight, BookOpen, BookOpenText, Clock4, Compass, Sparkles } from 'l
 
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
+import HomeSampleAndFaq from '@/components/home/sample-and-faq';
 import PersonalGrowthPanel from '@/components/personal-growth-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -16,7 +17,6 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { Inline } from '@/components/ui/inline';
 import { Lede } from '@/components/ui/lede';
 import { Stack } from '@/components/ui/stack';
-import { Stat } from '@/components/ui/stat';
 import { Tag } from '@/components/ui/tag';
 import { getFeaturedCaseStudies } from '@/lib/content-store';
 import { getAuthSession } from '@/lib/auth';
@@ -119,41 +119,10 @@ export default async function HomePage() {
         </section>
 
         {/* ─────────────────────────────────────────────
-           段 2：价值证明（4 个 stat 横排，决策台核心）
+           段 2：示例预览 + FAQ（v5-D9 替换旧 4-Stat 段）
+           Why: 抽象数字说服力低，访客更想看"会拿到什么 + 我担心的问题有没有解释"
            ───────────────────────────────────────────── */}
-        <section className="page-frame mt-10 md:mt-14">
-          <Card variant="default" padding="lg" className="bg-[color:var(--bg-elevated)]">
-            <Eyebrow tone="muted" className="mb-4">
-              判断系统的当前状态
-            </Eyebrow>
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-              <Stat
-                label="报告层级"
-                value="3 层"
-                hint="总览 · 深问 · 专项工具"
-                size="lg"
-              />
-              <Stat
-                label="交付方式"
-                value="可补全"
-                hint="先给核心判断，后续继续完善"
-                size="lg"
-              />
-              <Stat
-                label="时间精度"
-                value="真太阳"
-                hint="经纬度 + 节气分钟级"
-                size="lg"
-              />
-              <Stat
-                label="话术库"
-                value="600+"
-                hint="基于滴天髓·三命通会"
-                size="lg"
-              />
-            </div>
-          </Card>
-        </section>
+        <HomeSampleAndFaq />
 
         {/* ─────────────────────────────────────────────
            段 3：高意图工具（仅在有时显示，金色铁律）
