@@ -26,6 +26,23 @@ import { buildChatHref } from '@/lib/chat-entry';
 export type ChatContextState = ChatExperienceContext;
 export type SuggestedEventDraft = ReportActionSuggestion;
 
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: Date | null;
+  llmUsed?: boolean;
+  edited?: boolean;
+  regenerated?: boolean;
+  reportId?: string | null;
+  eventId?: string | null;
+  responseToQuestionId?: string | null;
+  tacitContext?: TacitKnowledgeInput | null;
+  tacitSummary?: string | null;
+  materials?: ChatMaterialDisplay[];
+  materialSummary?: string | null;
+}
+
 export type IntentPreset = {
   entryLabel: string;
   helper: string;
@@ -207,9 +224,7 @@ export function buildScopedChatHref(params: {
   return buildChatHref(params);
 }
 
-export function findLatestScopedTacitContext(
-  messages: Array<{ role: 'user' | 'assistant'; tacitContext?: TacitKnowledgeInput | null }>,
-) {
+export function findLatestScopedTacitContext(messages: ChatMessage[]) {
   for (let index = messages.length - 1; index >= 0; index -= 1) {
     const tacitContext = messages[index]?.tacitContext;
     if (messages[index]?.role === 'user' && hasTacitKnowledgeInput(tacitContext)) {
@@ -220,9 +235,7 @@ export function findLatestScopedTacitContext(
   return createEmptyTacitKnowledgeInput();
 }
 
-export function buildPreviousUserQuestionMap(
-  messages: Array<{ id: string; role: 'user' | 'assistant'; content: string }>,
-) {
+export function buildPreviousUserQuestionMap(messages: ChatMessage[]) {
   const previousUserQuestions: Record<string, string> = {};
   let latestUserQuestion = '';
 
