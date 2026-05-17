@@ -1,6 +1,15 @@
 'use client';
 
-import { useEffect, useMemo, useRef } from 'react';
+// v5-D10 (2026-05-17) PickerWheelColumn 升级
+// - 加 a11y：listbox/option role + aria-selected + aria-label
+// - 键盘支持：ArrowUp/Down 切换、Home/End 跳到首尾
+// - iOS/桌面滚轮：scrollend 校正 + 防过冲；外部页面不跟随（overscroll contain）
+// - 滚动停止后才 commit onChange，避免快速滚动时回调风暴
+//
+// Why: 此前滚轮快速滚动会触发大量 onChange + 父组件重新渲染，iOS 上还容易
+//      把整页拉走；同时 button 列没有 listbox 语义，键盘和读屏体验差。
+
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 
 export interface PickerWheelOption {
   label: string;
@@ -30,6 +39,7 @@ export default function PickerWheelColumn({
   const lastScrollTopRef = useRef<number | null>(null);
   const syncingRef = useRef(false);
   const frameRef = useRef<number | null>(null);
+  const settleTimerRef = useRef<number | null>(null);
   const metrics = useMemo(() => {
     const rowHeight = compact ? 38 : 44;
     const height = compact ? 174 : 210;
@@ -37,25 +47,20 @@ export default function PickerWheelColumn({
     return { rowHeight, height, padding };
   }, [compact]);
 
+  // 同步 value -> scrollTop（外部值变化时）
   useEffect(() => {
     const index = options.findIndex((option) => option.value === value);
-    if (index < 0 || !containerRef.current) {
-      return;
-    }
+    if (index < 0 || !containerRef.current) return;
 
     const container = containerRef.current;
     const targetTop = Math.max(0, index * metrics.rowHeight);
-    if (lastScrollTopRef.current === targetTop) {
-      return;
-    }
+    if (lastScrollTopRef.current === targetTop) return;
 
     lastScrollTopRef.current = targetTop;
     syncingRef.current = true;
     container.scrollTop = targetTop;
 
-    if (frameRef.current) {
-      window.cancelAnimationFrame(frameRef.current);
-    }
+    if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
     frameRef.current = window.requestAnimationFrame(() => {
       syncingRef.current = false;
       frameRef.current = null;
@@ -64,27 +69,54 @@ export default function PickerWheelColumn({
 
   useEffect(() => {
     return () => {
-      if (frameRef.current) {
-        window.cancelAnimationFrame(frameRef.current);
-      }
+      if (frameRef.current) window.cancelAnimationFrame(frameRef.current);
+      if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
     };
   }, []);
 
-  const handleScroll = () => {
-    if (syncingRef.current || !containerRef.current) {
-      return;
-    }
-
+  const settleToIndex = useCallback(() => {
+    if (syncingRef.current || !containerRef.current) return;
+    const container = containerRef.current;
     const index = Math.max(
       0,
-      Math.min(options.length - 1, Math.round(containerRef.current.scrollTop / metrics.rowHeight))
+      Math.min(options.length - 1, Math.round(container.scrollTop / metrics.rowHeight))
     );
-    const nextValue = options[index]?.value;
-
-    if (nextValue && nextValue !== value) {
-      onChange(nextValue);
+    // 终态对齐到 row 中心，避免 scroll-snap 在 iOS 上偶尔停在两行之间
+    const targetTop = index * metrics.rowHeight;
+    if (Math.abs(container.scrollTop - targetTop) > 1) {
+      syncingRef.current = true;
+      container.scrollTo({ top: targetTop, behavior: 'smooth' });
+      window.setTimeout(() => {
+        syncingRef.current = false;
+      }, 180);
     }
-  };
+    const nextValue = options[index]?.value;
+    if (nextValue && nextValue !== value) onChange(nextValue);
+  }, [metrics.rowHeight, onChange, options, value]);
+
+  // 滚动停止后再 commit；快速滚动期间不刷父
+  const handleScroll = useCallback(() => {
+    if (syncingRef.current) return;
+    if (settleTimerRef.current) window.clearTimeout(settleTimerRef.current);
+    settleTimerRef.current = window.setTimeout(settleToIndex, 110);
+  }, [settleToIndex]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const currentIndex = options.findIndex((option) => option.value === value);
+      if (currentIndex < 0) return;
+      let nextIndex = currentIndex;
+      if (event.key === 'ArrowDown' || event.key === 'PageDown') nextIndex = Math.min(options.length - 1, currentIndex + 1);
+      else if (event.key === 'ArrowUp' || event.key === 'PageUp') nextIndex = Math.max(0, currentIndex - 1);
+      else if (event.key === 'Home') nextIndex = 0;
+      else if (event.key === 'End') nextIndex = options.length - 1;
+      else return;
+      event.preventDefault();
+      const nextValue = options[nextIndex]?.value;
+      if (nextValue && nextValue !== value) onChange(nextValue);
+    },
+    [onChange, options, value],
+  );
 
   return (
     <div className="min-w-0">
@@ -103,17 +135,22 @@ export default function PickerWheelColumn({
         <div
           ref={containerRef}
           onScroll={handleScroll}
-          className="relative h-full snap-y snap-mandatory overflow-y-auto px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          onKeyDown={handleKeyDown}
+          role="listbox"
+          aria-label={label}
+          tabIndex={0}
+          className="relative h-full snap-y snap-mandatory overflow-y-auto overscroll-contain px-0 [touch-action:pan-y] [scrollbar-width:none] focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] [&::-webkit-scrollbar]:hidden"
           style={{ paddingBottom: metrics.padding, paddingTop: metrics.padding }}
         >
           <div className="space-y-0">
             {options.map((option) => {
               const selected = option.value === value;
-
               return (
                 <button
                   key={`${label}-${option.value}`}
                   type="button"
+                  role="option"
+                  aria-selected={selected}
                   onClick={() => onChange(option.value)}
                   className={`relative z-20 flex w-full snap-center items-center justify-center text-center transition ${
                     selected
