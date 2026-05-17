@@ -32,16 +32,15 @@ describe('llm model fallback', () => {
     jest.resetModules();
   });
 
-  // v5-D1 (2026-05-16): 主模型从 gpt-5.4-mini-my 切到 gpt-4.1-mini-2025-04-14。
-  // 真实流量证据：gpt-4.1-mini @ report 93%，gpt-5.4-mini-my @ report 9%（500/429/EMPTY_CONTENT）。
-  // gpt-5.4-mini-my 降为最后兜底。
+  // v5-D21 (2026-05-17): baseline 数据治理 — fallback 从 lingsi1.0,gpt-5.4-mini-my → gpt-5.2,gpt-5.5。
+  // 4.1-mini 92.84% primary；gpt-5.2/gpt-5.5 慢但兜底质量高；lingsi1.0 (0%) / gpt-5.4-mini-my (44%) 移除。
 
   it('default chain (no env) starts from default model + safe fallback', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'lingsi1.0', 'gpt-5.4-mini-my']);
+    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'gpt-5.2', 'gpt-5.5']);
   });
 
   it('honors a preferred model as the chain head', async () => {
@@ -50,7 +49,7 @@ describe('llm model fallback', () => {
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
     // preferredModel 优先于 DEFAULT_MODEL，fallback chain 不重复携带默认主模型
-    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4', 'lingsi1.0', 'gpt-5.4-mini-my']);
+    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4', 'gpt-5.2', 'gpt-5.5']);
   });
 
   it('respects MODEL_FALLBACK_CHAIN env var', async () => {
@@ -103,7 +102,7 @@ describe('llm model fallback', () => {
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'lingsi1.0', 'gpt-5.4-mini-my']);
+    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'gpt-5.2', 'gpt-5.5']);
   });
 
   it('still loads "auto" if explicitly configured (escape hatch)', async () => {

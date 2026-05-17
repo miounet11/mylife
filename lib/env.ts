@@ -47,13 +47,11 @@ export function getVisualAssetApiKey() {
   );
 }
 
-// v5-D1 (2026-05-16): 主模型切换到 gpt-4.1-mini-2025-04-14。
-// 6h 真实流量：report scope gpt-4.1-mini 69/74=93% 成功 avg 5.8s；
-// gpt-5.4-mini-my 仅 3/32=9%（大量 "500 没有可用token" / "429 backends busy" / EMPTY_CONTENT）。
-// 确定性引擎已提供全部判断证据，LLM 只负责表达，gpt-4.1-mini 稳定性收益 >> 文案差异。
-// gpt-5.4-mini-my 保留为最后兜底（上游恢复后仍可被自动选中）。
+// v5-D21 (2026-05-17): 按 baseline 30 天数据治理。
+// 4.1-mini 92.84% / p50 5.6s 为最优 primary；gpt-5.2 77%、gpt-5.5 58% 慢但兜底质量高。
+// 移除 lingsi1.0 (0%) / gpt-5.4-mini-my (44%) / grok-420-fast (30%) / auto (9%) 等。
 const DEFAULT_LLM_MODEL = 'gpt-4.1-mini-2025-04-14';
-const DEFAULT_LLM_FALLBACK_CHAIN = 'lingsi1.0,gpt-5.4-mini-my';
+const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-5.2,gpt-5.5';
 
 export function getDefaultModel() {
   return readString('DEFAULT_MODEL', DEFAULT_LLM_MODEL);

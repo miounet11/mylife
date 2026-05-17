@@ -104,11 +104,11 @@ describe('env helpers', () => {
 
     expect(getDefaultModel()).toBe('gpt-4.1-mini-2025-04-14');
     expect(getOpenAgentRuntimeModel()).toBe('gpt-4.1-mini-2025-04-14');
-    expect(getModelFallbackChainEnv()).toBe('lingsi1.0,gpt-5.4-mini-my');
-    expect(getReportModelFallbackChainEnv()).toBe('lingsi1.0,gpt-5.4-mini-my');
-    expect(getReportNarrativeModelFallbackChainEnv()).toBe('lingsi1.0,gpt-5.4-mini-my');
+    expect(getModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
+    expect(getReportModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
+    expect(getReportNarrativeModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
     expect(getContentGenerationModel()).toBe('gpt-4.1-mini-2025-04-14');
-    expect(getContentGenerationModelFallbackChainRaw()).toBe('lingsi1.0,gpt-5.4-mini-my');
+    expect(getContentGenerationModelFallbackChainRaw()).toBe('gpt-5.2,gpt-5.5');
     expect(getVisualAssetApiBaseUrl()).toBe('https://www.gemiai.top/v1');
     expect(getVisualAssetDefaultModel()).toBe('gpt-image-2');
     expect(getVisualAssetCoreModel()).toBe('gpt-image-2-pro');

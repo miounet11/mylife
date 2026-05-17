@@ -14,11 +14,13 @@ const cronEnv = {
   USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
 };
 
-// v5-D1 (2026-05-16): 主模型从 gpt-5.4-mini-my 切到 gpt-4.1-mini-2025-04-14。
-// 6h 流量：gpt-4.1-mini @ report 69/74=93%；gpt-5.4-mini-my @ report 3/32=9%（500 没有可用token / 429）。
-// 引擎证据已 v2 完整，LLM 仅表达层；稳定性优先。gpt-5.4-mini-my 降为最后兜底。
+// v5-D21 (2026-05-17): 按 baseline 30 天数据治理模型链路。
+// 4.1-mini 92.84% / p50 5.6s（最优）；gpt-5.2 77% / p50 25s、gpt-5.5 58% — 慢但兜底质量高。
+// 移除：grok-420-fast 30% / auto 9% / gpt-5.4-mini 23% / gpt-5.4-mini-my 44% /
+//       claude-opus-4-7-high 27% / gpt-5.4 42% / lingsi1.0 0% / gpt-5.2-codex 0%。
+// 留档：docs/v5-D21-model-chain-treatment.md，本文件之前硬编码 lingsi1.0,gpt-5.4-mini-my 会覆盖 .env.local。
 const PRIMARY_LLM_MODEL = 'gpt-4.1-mini-2025-04-14';
-const LLM_FALLBACK_CHAIN = 'lingsi1.0,gpt-5.4-mini-my';
+const LLM_FALLBACK_CHAIN = 'gpt-5.2,gpt-5.5';
 
 const nextApp = {
   name: 'life-kline-next',
