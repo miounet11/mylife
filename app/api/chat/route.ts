@@ -1357,20 +1357,10 @@ export async function GET(request: NextRequest) {
         sourceFamily: requestedSourceFamily || null,
       },
     });
-    trackChatCompleted({
-      userId,
-      sessionId,
-      userAgent,
-      action: 'load',
-      reportId: context.report?.id || null,
-      eventId: context.focusedEvent?.id || null,
-      intent: requestedIntent || null,
-      source: requestedSource || null,
-      ctaStrategyKey: requestedCtaStrategyKey || null,
-      sourceFamily: requestedSourceFamily || null,
-      durationMs: Date.now() - requestStartedAt,
-      historyCount: history.length,
-    });
+    // v5-D28 (2026-05-18): 移除 chat_completed{action:load} 双写。
+    // chat_context_loaded 已是 GET /api/chat 的事实事件，再写 chat_completed 会让
+    // 聚合 chatCompletedCount 99% 是 load（D23 噪音 31972/32183）。失真严重。
+    // GET 不再写 chat_completed；后续聚合应只看 ask/regenerate/edit/delete。
 
     return NextResponse.json({
       success: true,
