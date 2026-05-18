@@ -204,7 +204,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
   return (
     <div className="page-shell">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
-      <AnalyticsPageView eventName="knowledge_article_viewed" page={`/visual-assets/${asset.slug}`} meta={{ surfaceKey: 'visual_asset_detail', assetId: asset.id }} />
+      <AnalyticsPageView eventName="visual_asset_viewed" page={`/visual-assets/${asset.slug}`} meta={{ surfaceKey: 'visual_asset_detail', assetId: asset.id, slug: asset.slug }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">

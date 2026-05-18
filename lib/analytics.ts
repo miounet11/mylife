@@ -25,6 +25,7 @@ export type AnalyticsEventName =
   | 'tool_result_viewed'
   | 'content_card_clicked'
   | 'tool_card_clicked'
+  | 'visual_asset_viewed'
   | 'content_quick_analyze_started'
   | 'tool_run_started'
   | 'tool_image_upload_started'
