@@ -786,15 +786,32 @@ function ensureSeedContent() {
   }
 }
 
+// v5-D34 30s TTL memoize：listPublishedEntriesByType 是 SSR 热路径，bot/RSC prefetch 风暴下
+// /analyze /tools/[slug] /cases/* /knowledge /world-yi/* 都会触发 3 个全表 SELECT + 大量 mapRow
+// JSON 反序列化。content-scheduler 每 20 min 才发新内容，30s 缓存足够新鲜；save/delete 主动失效。
+const publishedListCache = new Map<string, { value: ManagedContentEntry[]; expiresAt: number }>();
+const PUBLISHED_LIST_TTL_MS = 30_000;
+
+function invalidatePublishedListCache() {
+  publishedListCache.clear();
+}
+
 function listPublishedEntriesByType(contentType: ManagedContentType) {
   ensureSeedContent();
+  const now = Date.now();
+  const cached = publishedListCache.get(contentType);
+  if (cached && cached.expiresAt > now) {
+    return cached.value;
+  }
   const rows = db.prepare(`
     SELECT * FROM content_entries
     WHERE content_type = ? AND status = 'published'
     ORDER BY featured DESC, updated_at DESC, created_at DESC
   `).all(contentType);
 
-  return rows.map(mapRow);
+  const value = rows.map(mapRow);
+  publishedListCache.set(contentType, { value, expiresAt: now + PUBLISHED_LIST_TTL_MS });
+  return value;
 }
 
 function getPublishedEntryBySlug(contentType: ManagedContentType, slug: string) {
@@ -929,10 +946,18 @@ export function refreshManagedContentJourneyMetadata(params?: {
     refreshedCount += 1;
   });
 
+  if (refreshedCount > 0) {
+    invalidatePublishedListCache();
+  }
+
   return {
     scannedCount: entries.length,
     refreshedCount,
   };
+}
+
+export function invalidateManagedContentPublishedListCache() {
+  invalidatePublishedListCache();
 }
 
 export function getKnowledgeArticleBySlug(slug: string) {
@@ -1074,9 +1099,11 @@ export function saveManagedContentEntry(
   }
 
   const row = db.prepare(`SELECT * FROM content_entries WHERE id = ?`).get(payload.id);
+  invalidatePublishedListCache();
   return row ? mapRow(row) : null;
 }
 
 export function deleteManagedContentEntry(id: string) {
+  invalidatePublishedListCache();
   return db.prepare(`DELETE FROM content_entries WHERE id = ?`).run(id);
 }
