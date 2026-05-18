@@ -159,6 +159,29 @@ export function listPublicReportFeedItems(limit = 48): PublicReportFeedItem[] {
     .slice(0, limit);
 }
 
+export interface PublicReportFeedPage {
+  items: PublicReportFeedItem[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+
+export function listPublicReportFeedItemsPaged(
+  page = 1,
+  perPage = 48,
+): PublicReportFeedPage {
+  const safePerPage = Math.max(1, Math.min(120, Math.floor(perPage)));
+  const total = fortuneOperations.countPublic();
+  const totalPages = Math.max(1, Math.ceil(total / safePerPage));
+  const safePage = Math.max(1, Math.min(totalPages, Math.floor(page)));
+  const offset = (safePage - 1) * safePerPage;
+  const items = fortuneOperations
+    .listPublicPaged(safePerPage, offset)
+    .map(toPublicReportFeedItem);
+  return { items, total, page: safePage, perPage: safePerPage, totalPages };
+}
+
 function parseJson<T>(value: unknown, fallback: T): T {
   if (!value) return fallback;
   if (typeof value !== 'string') return value as T;

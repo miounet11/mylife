@@ -4,9 +4,11 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
-import { listPublicQuestionFeedItems, listPublicReportFeedItems } from '@/lib/public-growth-feed';
+import { listPublicQuestionFeedItems, listPublicReportFeedItemsPaged } from '@/lib/public-growth-feed';
 
 export const dynamic = 'force-dynamic';
+
+const PER_PAGE = 48;
 
 export function generateMetadata() {
   return createPublicContentMetadata({
@@ -17,8 +19,15 @@ export function generateMetadata() {
   });
 }
 
-export default function PublicReportsPage() {
-  const reports = listPublicReportFeedItems(48);
+interface PageProps {
+  searchParams?: Promise<{ page?: string }>;
+}
+
+export default async function PublicReportsPage({ searchParams }: PageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const requestedPage = Math.max(1, Number.parseInt(sp.page || '1', 10) || 1);
+  const reportPage = listPublicReportFeedItemsPaged(requestedPage, PER_PAGE);
+  const reports = reportPage.items;
   const questions = listPublicQuestionFeedItems(60);
   const schemas = [
     createCollectionPageSchema({
@@ -76,7 +85,7 @@ export default function PublicReportsPage() {
 
         <section className="mt-6 grid gap-4 md:grid-cols-3">
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
-            <div className="text-2xl font-black text-[color:var(--ink-1)]">{reports.length}</div>
+            <div className="text-2xl font-black text-[color:var(--ink-1)]">{reportPage.total}</div>
             <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">公开匿名报告</div>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
@@ -113,6 +122,43 @@ export default function PublicReportsPage() {
                 </Link>
               ))}
             </div>
+            {reportPage.totalPages > 1 ? (
+              <nav
+                className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3 text-xs"
+                aria-label="公开测算结果分页"
+              >
+                <div className="text-[color:var(--ink-4)]">
+                  第 <span className="font-bold text-[color:var(--ink-1)]">{reportPage.page}</span> / {reportPage.totalPages} 页 ·
+                  共 <span className="font-bold text-[color:var(--ink-1)]">{reportPage.total}</span> 条
+                </div>
+                <div className="flex items-center gap-2">
+                  {reportPage.page > 1 ? (
+                    <Link
+                      href={`/reports?page=${reportPage.page - 1}`}
+                      className="inline-flex h-8 items-center rounded-full border border-[color:var(--hairline)] px-3 font-semibold text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
+                    >
+                      上一页
+                    </Link>
+                  ) : (
+                    <span className="inline-flex h-8 items-center rounded-full border border-[color:var(--hairline)] px-3 font-semibold text-[color:var(--ink-5)] opacity-60">
+                      上一页
+                    </span>
+                  )}
+                  {reportPage.page < reportPage.totalPages ? (
+                    <Link
+                      href={`/reports?page=${reportPage.page + 1}`}
+                      className="inline-flex h-8 items-center rounded-full bg-[color:var(--brand)] px-3 font-semibold text-white transition hover:bg-[color:var(--brand-strong)]"
+                    >
+                      下一页
+                    </Link>
+                  ) : (
+                    <span className="inline-flex h-8 items-center rounded-full bg-[color:var(--bg-sunken)] px-3 font-semibold text-[color:var(--ink-5)] opacity-60">
+                      下一页
+                    </span>
+                  )}
+                </div>
+              </nav>
+            ) : null}
           </div>
 
           <div>

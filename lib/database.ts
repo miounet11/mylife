@@ -2395,6 +2395,21 @@ export const fortuneOperations = {
     return rows.map(mapFortuneRow);
   },
 
+  listPublicPaged: (limit: number, offset: number) => {
+    const safeLimit = Math.max(1, Math.min(200, Math.floor(limit)));
+    const safeOffset = Math.max(0, Math.floor(offset));
+    const stmt = db.prepare(
+      'SELECT * FROM fortunes WHERE is_public = 1 ORDER BY datetime(updated_at) DESC, datetime(created_at) DESC LIMIT ? OFFSET ?'
+    );
+    const rows = stmt.all(safeLimit, safeOffset) as RawFortuneRow[];
+    return rows.map(mapFortuneRow);
+  },
+
+  countPublic: () => {
+    const row = db.prepare('SELECT COUNT(*) as c FROM fortunes WHERE is_public = 1').get() as { c: number };
+    return row.c;
+  },
+
   update: (id: string, updates: Partial<Omit<FortuneRecord, 'id' | 'userId'>>) => {
     const JSON_FIELDS = ['bazi', 'fiveElements', 'tenGods', 'pattern', 'fortune', 'advice', 'evidence', 'analysis', 'klineData', 'dayun', 'shenSha'] as const;
     const COLUMN_MAP: Record<string, string> = {
