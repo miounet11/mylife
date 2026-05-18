@@ -559,14 +559,21 @@ function buildCandidateSuppressionReason(
     /仅允许 LLM 草稿进入自动发布候选|历史转化过弱|热点来源历史反馈过弱|结构质量未达自动发布阈值/.test(reason)
   ));
 
-  if (suppression.exactTitleBlockedCount >= 2) {
+  // D31-B: LLM 草稿的精确标题历史窗口不再硬 block
+  // 生成端 D31-A 已按 titleFamilyKey 限流，发布端继续依赖
+  // hasStructuredAutoPublishQuality + publishGate.minScore 把关；
+  // suppression 改用更宽的阈值，避免 6 期 ledger 残留把当前合格草稿误杀。
+  const isLlmSource = entry.source.startsWith('agent-llm:');
+  const exactBlockThreshold = isLlmSource ? 8 : 2;
+
+  if (suppression.exactTitleBlockedCount >= exactBlockThreshold) {
     return `重复标题预过滤：最近 ${suppression.exactTitleBlockedCount} 次同标题候选均已被阻断`;
   }
 
   if (
     suppression.familyBlockedCount >= 3
     && dominatedBySameReasons
-    && !entry.source.startsWith('agent-llm:')
+    && !isLlmSource
   ) {
     return `重复题材/来源疲劳预过滤：最近 ${suppression.familyBlockedCount} 次同题材候选已因相近原因被阻断`;
   }
