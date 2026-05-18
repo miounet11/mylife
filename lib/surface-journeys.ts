@@ -234,7 +234,14 @@ function withJourneySource(journey: SurfaceJourney, rawSource?: string | null): 
   };
 }
 
-export function buildJourneyForTool(tool: ToolDefinition, options?: { source?: string | null }): SurfaceJourney {
+// v5-D34c：buildJourneyForTool 是 /tools/[slug] SSR 主热点，每次跑 4 次 pickContentEntries
+// （每次内部全表 filter + scoring + journeyMeta JSON 解析），即使 listPublishedEntriesByType
+// 有 30s 缓存，上层过滤逻辑仍 CPU 密集。tool.slug 是静态映射，输出与 source 无关，
+// 把无 source 版本按 slug cache 30s，再 withJourneySource 套 source 后缀（href 拼接而已）。
+const toolJourneyCache = new Map<string, { value: SurfaceJourney; expiresAt: number }>();
+const TOOL_JOURNEY_TTL_MS = 30_000;
+
+function buildJourneyForToolUncached(tool: ToolDefinition): SurfaceJourney {
   const category = tool.category;
   const signalText = `${tool.title} ${tool.description} ${tool.hook} ${tool.relatedReportThemes.join(' ')}`;
   const tools = tool.nextToolSlugs
@@ -260,13 +267,29 @@ export function buildJourneyForTool(tool: ToolDefinition, options?: { source?: s
     preferredReportThemes: tool.relatedReportThemes,
   });
 
-  const journey = ensureJourneyDepth({
+  return ensureJourneyDepth({
     reportCard: buildReportCard(category),
     toolCards: tools.map(mapToolCard),
     knowledgeCards: knowledge.map((entry) => mapEntryCard(entry, 'knowledge')),
     caseCards: cases.map((entry) => mapEntryCard(entry, 'case')),
   }, { category, signalText });
+}
+
+export function buildJourneyForTool(tool: ToolDefinition, options?: { source?: string | null }): SurfaceJourney {
+  const now = Date.now();
+  const cached = toolJourneyCache.get(tool.slug);
+  let journey: SurfaceJourney;
+  if (cached && cached.expiresAt > now) {
+    journey = cached.value;
+  } else {
+    journey = buildJourneyForToolUncached(tool);
+    toolJourneyCache.set(tool.slug, { value: journey, expiresAt: now + TOOL_JOURNEY_TTL_MS });
+  }
   return withJourneySource(journey, options?.source);
+}
+
+export function invalidateSurfaceJourneyCaches() {
+  toolJourneyCache.clear();
 }
 
 export function buildJourneyForReport(report: FortuneRecord, options?: { source?: string | null }): SurfaceJourney {
