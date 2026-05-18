@@ -151,12 +151,29 @@ export function toPublicReportFeedItem(report: FortuneRecord): PublicReportFeedI
   };
 }
 
+// v5-D34d：listPublicReportFeedItems 在 PublicGrowthFeedPanel 里，
+// /tools/* /tools/category/* /tools 三处 SSR 都装了它；GPTBot/SemrushBot 风暴下每次都
+// fortuneOperations.listRecent(N) 全列 + JSON 解析。signal 在面板里客户端过滤，
+// 输入参数仅 limit，可按 limit 做 30s TTL 全局缓存。
+const PUBLIC_REPORT_FEED_TTL_MS = 30_000;
+const publicReportFeedCache = new Map<number, { value: PublicReportFeedItem[]; expiresAt: number }>();
+
+export function invalidatePublicGrowthFeedCache() {
+  publicReportFeedCache.clear();
+  publicQuestionFeedCache.clear();
+}
+
 export function listPublicReportFeedItems(limit = 48): PublicReportFeedItem[] {
-  return fortuneOperations
+  const now = Date.now();
+  const cached = publicReportFeedCache.get(limit);
+  if (cached && cached.expiresAt > now) return cached.value;
+  const value = fortuneOperations
     .listRecent(Math.max(limit * 3, limit))
     .filter((report) => report.isPublic !== false)
     .map(toPublicReportFeedItem)
     .slice(0, limit);
+  publicReportFeedCache.set(limit, { value, expiresAt: now + PUBLIC_REPORT_FEED_TTL_MS });
+  return value;
 }
 
 export interface PublicReportFeedPage {
@@ -405,7 +422,19 @@ function toPublicQuestionFeedItems(rows: PublicQuestionRow[], limit: number): Pu
   return items;
 }
 
+const PUBLIC_QUESTION_FEED_TTL_MS = 30_000;
+const publicQuestionFeedCache = new Map<number, { value: PublicQuestionFeedItem[]; expiresAt: number }>();
+
 export function listPublicQuestionFeedItems(limit = 80): PublicQuestionFeedItem[] {
+  const now = Date.now();
+  const cached = publicQuestionFeedCache.get(limit);
+  if (cached && cached.expiresAt > now) return cached.value;
+  const value = listPublicQuestionFeedItemsUncached(limit);
+  publicQuestionFeedCache.set(limit, { value, expiresAt: now + PUBLIC_QUESTION_FEED_TTL_MS });
+  return value;
+}
+
+function listPublicQuestionFeedItemsUncached(limit: number): PublicQuestionFeedItem[] {
   const rows = db.prepare(`
     SELECT
       q.id,
