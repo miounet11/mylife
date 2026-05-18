@@ -44,6 +44,9 @@ export default function NewsletterSignup({
       }
       setMessage('订阅成功，后续更新会发送到你的邮箱。');
       setEmail('');
+      try {
+        localStorage.setItem('newsletter-subscribed', 'done');
+      } catch {}
     } catch {
       setError('网络异常，请稍后重试');
     } finally {

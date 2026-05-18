@@ -8,22 +8,26 @@ interface Props {
   reportId: string;
 }
 
-const STORAGE_KEY = 'timing-subscribe-state:';
+// 全局订阅状态键：任意入口订阅成功后所有报告都视为已订阅
+// 旧的 per-report sessionStorage 键保留读取兼容，不再写入
+const GLOBAL_SUBSCRIBED_KEY = 'newsletter-subscribed';
+const LEGACY_STORAGE_KEY = 'timing-subscribe-state:';
 
 export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [hidden, setHidden] = useState(true);
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // 已订阅过 → 不再显示
+    // 已订阅过（任何入口）→ 整个 bar 不再显示
     if (typeof window === 'undefined') return;
-    const key = STORAGE_KEY + reportId;
-    const flag = sessionStorage.getItem(key);
-    if (flag === 'done') {
-      setStatus('done');
-      setHidden(false);
+    const globalDone =
+      localStorage.getItem(GLOBAL_SUBSCRIBED_KEY) === 'done' ||
+      sessionStorage.getItem(LEGACY_STORAGE_KEY + reportId) === 'done';
+    if (globalDone) {
+      setDismissed(true);
       return;
     }
     // 滚动 200px 后显示
@@ -34,6 +38,8 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
   }, [reportId]);
+
+  if (dismissed) return null;
 
   if (hidden) return null;
 
@@ -67,7 +73,7 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
         throw new Error(data.error || '提交失败');
       }
       setStatus('done');
-      sessionStorage.setItem(STORAGE_KEY + reportId, 'done');
+      localStorage.setItem(GLOBAL_SUBSCRIBED_KEY, 'done');
       void trackClientEvent({
         eventName: 'newsletter_subscribed',
         page: window.location.pathname,

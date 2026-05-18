@@ -86,6 +86,9 @@ export default function ReportSubscriptionPanel({
 
       setMessage('订阅已生效，后续月度更新和报告补全提醒会发送到你的邮箱。');
       setEmail('');
+      try {
+        localStorage.setItem('newsletter-subscribed', 'done');
+      } catch {}
     } catch {
       setError('网络异常，请稍后重试');
     } finally {
