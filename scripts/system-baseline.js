@@ -13,22 +13,51 @@
  * 只读 SQLite，不写任何业务表。输出 docs/baseline-YYYY-MM-DD.md。
  *
  * 用法：
- *   node scripts/system-baseline.js [--days=30] [--out=docs/baseline-2026-05-17.md]
+ *   node scripts/system-baseline.js [--days 30 | --days=30] [--out docs/baseline-x.md]
+ *
+ * 注：--days 同时支持 `--days=N` 与 `--days N` 两种写法。默认输出
+ *   docs/baseline-YYYY-MM-DD.md（30 天窗口），其它窗口附加 -<days>d 后缀，
+ *   避免短窗口跑覆盖默认 30 天报告。
  */
 
 const path = require('path');
 const fs = require('fs');
 const Database = require('better-sqlite3');
 
-const args = Object.fromEntries(
-  process.argv.slice(2).map((a) => {
-    const m = a.match(/^--([^=]+)=(.*)$/);
-    return m ? [m[1], m[2]] : [a.replace(/^--/, ''), true];
-  })
-);
+function parseArgs(argv) {
+  const out = {};
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    const eq = a.match(/^--([^=]+)=(.*)$/);
+    if (eq) {
+      out[eq[1]] = eq[2];
+      continue;
+    }
+    if (a.startsWith('--')) {
+      const key = a.slice(2);
+      const next = argv[i + 1];
+      if (next !== undefined && !next.startsWith('--')) {
+        out[key] = next;
+        i++;
+      } else {
+        out[key] = true;
+      }
+    }
+  }
+  return out;
+}
+
+const args = parseArgs(process.argv.slice(2));
 const DAYS = Number(args.days || 30);
+if (!Number.isFinite(DAYS) || DAYS <= 0) {
+  console.error(`invalid --days: ${args.days}`);
+  process.exit(1);
+}
 const today = new Date().toISOString().slice(0, 10);
-const OUT = args.out || `docs/baseline-${today}.md`;
+const defaultOut = DAYS === 30
+  ? `docs/baseline-${today}.md`
+  : `docs/baseline-${today}-${DAYS}d.md`;
+const OUT = args.out || defaultOut;
 
 const dbPath = path.join(process.cwd(), 'data', 'lifekline.db');
 const db = new Database(dbPath, { readonly: true, fileMustExist: true });
