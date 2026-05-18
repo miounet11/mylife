@@ -14,7 +14,6 @@ import DetailedFoldBlock from '@/components/result-v2/detailed-fold-block';
 import TimingSubscribeBar from '@/components/result-v2/timing-subscribe-bar';
 import TimingRecallTracker from '@/components/result-v2/timing-recall-tracker';
 import { fortuneOperations } from '@/lib/database';
-import { sanitizePublicFortuneRecord } from '@/lib/report-page-helpers';
 import { resolveTimingProfileForFortune } from '@/lib/life-timing/resolve-timing-profile';
 import { buildChatHref, buildReportChatSource } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
@@ -37,7 +36,10 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
   const canManage = !!currentUserId && fortune.userId === currentUserId;
   if (fortune.isPublic === false && !canManage) notFound();
 
-  const displayFortune = canManage ? fortune : sanitizePublicFortuneRecord(fortune);
+  // timing profile 必须用原始 fortune（含真 birthDate/userId）才能算并命中缓存
+  // sanitize 只用于面向访客展示的字段（name/birthDate/birthPlace），但本页面只渲染
+  // baziPillars + pattern，不展示 PII；为简单起见直接用原始 fortune
+  const displayFortune = fortune;
   const resolved = resolveTimingProfileForFortune({
     id: displayFortune.id,
     userId: displayFortune.userId,
