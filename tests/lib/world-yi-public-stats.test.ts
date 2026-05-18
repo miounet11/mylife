@@ -1,12 +1,17 @@
-import { describe, expect, test } from '@jest/globals';
+import { beforeEach, describe, expect, test } from '@jest/globals';
 import { deleteManagedContentEntry, saveManagedContentEntry } from '@/lib/content-store';
-import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
+import { getWorldYiPublicStats, invalidateWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
 describe('world yi public stats', () => {
+  beforeEach(() => {
+    invalidateWorldYiPublicStats();
+  });
+
   test('tracks recent world yi publication from actual non-seed entries', () => {
     const id = 'content_test_world_yi_recent_publication';
     const slug = 'world-yi-test-recent-publication';
     const before = getWorldYiPublicStats();
+    invalidateWorldYiPublicStats();
 
     try {
       saveManagedContentEntry({
@@ -43,6 +48,7 @@ describe('world yi public stats', () => {
         },
       }, 'test_user');
 
+      invalidateWorldYiPublicStats();
       const after = getWorldYiPublicStats();
 
       expect(after.nonSeedContentCount).toBe(before.nonSeedContentCount + 1);
@@ -58,6 +64,7 @@ describe('world yi public stats', () => {
   test('treats published public growth entries as ongoing world yi publication', () => {
     const id = 'content_test_world_yi_growth_publication';
     const before = getWorldYiPublicStats();
+    invalidateWorldYiPublicStats();
 
     try {
       saveManagedContentEntry({
@@ -92,6 +99,7 @@ describe('world yi public stats', () => {
         },
       }, 'test_user');
 
+      invalidateWorldYiPublicStats();
       const after = getWorldYiPublicStats();
 
       expect(after.publicKnowledgeCount).toBe(before.publicKnowledgeCount + 1);

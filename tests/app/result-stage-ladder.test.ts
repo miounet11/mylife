@@ -29,7 +29,10 @@ describe('result page stage ladder surface', () => {
     expect(source).toContain('redirect(`/r/${encodeURIComponent(id)}${query}`)');
     expect(source).toContain("resolvedSearchParams.view === 'full'");
     expect(timingSource).toContain('展开完整细节');
-    expect(timingSource).toContain('sanitizePublicFortuneRecord');
+    // v5-D33-B1: /r/[id] 不再走 sanitizePublicFortuneRecord（sanitize 把 birthDate 清空导致 timing 算 NaN → notFound）
+    // 改为直接用原始 fortune 算 timing profile；canManage 仍守 isPublic=false 闸门。
+    expect(timingSource).toContain('resolveTimingProfileForFortune');
+    expect(timingSource).toContain('canManage');
   });
 
   it('keeps compact report chat entry instrumented', () => {

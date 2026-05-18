@@ -149,7 +149,27 @@ function isWithinDays(value?: string | null, days = 7) {
   return Date.now() - timestamp <= days * 24 * 60 * 60 * 1000;
 }
 
+// v5-D34 60s TTL memoize：getWorldYiPublicStats 在 /analyze /dashboard /knowledge /world-yi/* 5+ SSR 页面被调用，
+// 每次跑 3 个全表 content_entries SELECT + 大量 JSON 反序列化。bot/RSC prefetch 风暴下会让主进程 SQLite
+// 同步查询打满 CPU（10k+ pread64/s）。底层数据由 scheduler 周期 ≥20min 才更新，60s 缓存足够新鲜。
+let cachedStats: { value: WorldYiPublicStats; expiresAt: number } | null = null;
+const STATS_TTL_MS = 60_000;
+
 export function getWorldYiPublicStats(): WorldYiPublicStats {
+  const now = Date.now();
+  if (cachedStats && cachedStats.expiresAt > now) {
+    return cachedStats.value;
+  }
+  const value = computeWorldYiPublicStats();
+  cachedStats = { value, expiresAt: now + STATS_TTL_MS };
+  return value;
+}
+
+export function invalidateWorldYiPublicStats() {
+  cachedStats = null;
+}
+
+function computeWorldYiPublicStats(): WorldYiPublicStats {
   const publishedKnowledgeEntries = listPublishedManagedContentEntriesByType('knowledge');
   const publishedCaseEntries = listPublishedManagedContentEntriesByType('case');
   const publishedInsightEntries = listPublishedManagedContentEntriesByType('insight');
