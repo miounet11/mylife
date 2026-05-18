@@ -1908,8 +1908,25 @@ export async function runContentAutomationCycle(params: {
   const plan = buildAutomationRunPlan(params.limit || 3);
   const usedSlugs = new Set(listManagedContentEntries().map((entry) => entry.slug));
   const savedEntries: ManagedContentEntry[] = [];
+  const skippedDuplicateTitles: { title: string; familyKey: string; draftCount: number; publishedCount: number }[] = [];
   const analyticsRows = listRecentContentAnalyticsRows();
   const baseEntries = listManagedContentEntries();
+
+  // D31-A: 题材族 (titleFamilyKey) 重复抑制 — 阻止生成端持续产同题草稿
+  // 阈值：每 family + contentType 最多 3 篇草稿 / 1 篇已发布
+  const TITLE_FAMILY_DRAFT_MAX = 3;
+  const TITLE_FAMILY_PUBLISHED_MAX = 1;
+  const familyCounts = new Map<string, { draft: number; published: number }>();
+  for (const entry of baseEntries) {
+    const familyKey = normalizeTitleFamilyKey(entry.title);
+    if (!familyKey || familyKey.length < 12) continue;
+    const mapKey = `${entry.contentType}:${familyKey}`;
+    const bucket = familyCounts.get(mapKey) || { draft: 0, published: 0 };
+    if (entry.status === 'published') bucket.published += 1;
+    else if (entry.status === 'draft') bucket.draft += 1;
+    familyCounts.set(mapKey, bucket);
+  }
+
   const performance = buildContentPerformanceContext({
     entries: baseEntries,
     analyticsRows,
@@ -1940,6 +1957,25 @@ export async function runContentAutomationCycle(params: {
     });
 
     for (const draft of generated.entries) {
+      // D31-A: 跳过题材族已饱和的草稿（含本批新增）
+      const familyKey = normalizeTitleFamilyKey(draft.title);
+      if (familyKey && familyKey.length >= 12) {
+        const mapKey = `${draft.contentType}:${familyKey}`;
+        const bucket = familyCounts.get(mapKey) || { draft: 0, published: 0 };
+        if (
+          bucket.draft >= TITLE_FAMILY_DRAFT_MAX
+          || bucket.published >= TITLE_FAMILY_PUBLISHED_MAX
+        ) {
+          skippedDuplicateTitles.push({
+            title: draft.title,
+            familyKey,
+            draftCount: bucket.draft,
+            publishedCount: bucket.published,
+          });
+          continue;
+        }
+      }
+
       const growthPlanKey = item.sourceType?.startsWith('public-growth') ? item.key : undefined;
       const draftEntry: ManagedContentEntry = {
         id: '',
@@ -2012,6 +2048,15 @@ export async function runContentAutomationCycle(params: {
 
       if (entry) {
         savedEntries.push(entry);
+        // D31-A: 本批次新增也计入 family，防止同 cycle 内继续产同题
+        const savedFamilyKey = normalizeTitleFamilyKey(entry.title);
+        if (savedFamilyKey && savedFamilyKey.length >= 12) {
+          const mapKey = `${entry.contentType}:${savedFamilyKey}`;
+          const bucket = familyCounts.get(mapKey) || { draft: 0, published: 0 };
+          if (entry.status === 'published') bucket.published += 1;
+          else bucket.draft += 1;
+          familyCounts.set(mapKey, bucket);
+        }
       }
     }
   }
@@ -2022,6 +2067,7 @@ export async function runContentAutomationCycle(params: {
     generatedCount: savedEntries.length,
     publishedCount: savedEntries.filter((entry) => entry.status === 'published').length,
     draftCount: savedEntries.filter((entry) => entry.status === 'draft').length,
+    skippedDuplicateTitles,
   };
 }
 
