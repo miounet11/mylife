@@ -455,6 +455,16 @@ export function getAgentParallelConcurrency() {
   return readNumber('AGENT_PARALLEL_CONCURRENCY', 2, 1);
 }
 
+/**
+ * P1 第二阶段：DAG runtime 灰度开关。
+ *
+ * 默认 false（保持纯并行不变）。设为 '1' 时启用按 wave 分波调度。
+ * staged rollout 路径：dev → staging → 5% prod → 25% → 100%。
+ */
+export function isAgentDagSchedulerEnabled() {
+  return readString('AGENT_DAG_SCHEDULER', '0') === '1';
+}
+
 export function getReportUpgradeLockMinutes() {
   return readNumber('REPORT_UPGRADE_LOCK_MINUTES', 20, 5);
 }
