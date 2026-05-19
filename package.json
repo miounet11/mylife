@@ -54,6 +54,7 @@
     "system:site-quality:checks": "node scripts/site-quality-validation-checks.js",
     "system:site-quality": "node --import tsx scripts/site-quality-governor.ts",
     "system:report-eval": "tsx scripts/report-demand-eval.ts",
+    "prompts:eval": "tsx scripts/prompt-eval.ts",
     "seo:gsc:fetch": "node --import tsx scripts/seo/fetch-gsc.ts",
     "seo:topic-gap": "node scripts/seo/topic-gap.js",
     "seo:article-funnel": "node --import tsx lib/seo/article-funnel.ts",

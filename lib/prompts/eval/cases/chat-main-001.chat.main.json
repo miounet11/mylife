@@ -1,0 +1,6 @@
+{
+  "id": "chat-main-001",
+  "promptId": "chat.main",
+  "mustInclude": ["大运", "用神"],
+  "mustExclude": ["格局清正", "保持平常心", "也许", "macro_cycle", "ENGINE_", "天机不可泄露"]
+}

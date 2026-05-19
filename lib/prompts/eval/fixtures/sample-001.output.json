@@ -1,0 +1,16 @@
+{
+  "basic": { "dayMaster": "甲木", "summary": "甲木坐午，年柱甲子" },
+  "pattern": { "type": "正官格", "description": "甲木见辛金为官", "strength": "medium", "quality": "good" },
+  "fortune": {
+    "currentDaYun": "庚午大运压官星，2026 流年丙午冲提",
+    "currentLiuNian": "丙午",
+    "interaction": "运岁双午引动",
+    "nextYear": "丁未平稳",
+    "trend": "未来3年先紧后松"
+  },
+  "analysis": {
+    "opening": "你不是乱，是结构在过渡",
+    "summary": "结构上正官被合，2026 年立春后推进感转弱，先稳后试。",
+    "explanation": "甲木坐午身偏弱，庚午大运里官星显，丙午流年冲动节奏，建议先把现金流和睡眠顶住。"
+  }
+}

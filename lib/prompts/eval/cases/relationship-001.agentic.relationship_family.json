@@ -1,0 +1,6 @@
+{
+  "id": "relationship-001",
+  "promptId": "agentic.relationship_family",
+  "mustInclude": ["边界", "代价"],
+  "mustExclude": ["和谐美满", "姻缘天定", "也许", "ENGINE_"]
+}

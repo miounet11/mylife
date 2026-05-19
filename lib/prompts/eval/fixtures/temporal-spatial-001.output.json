@@ -1,0 +1,17 @@
+{
+  "summary": "现在等立春过后，在杭州顺 AI 行业上行做产品收口。",
+  "temporalSignal": "当前流年丙午接近立春切换；2028 立春后切入新流年甲辰，节奏由紧转松",
+  "spatialSignal": "当前地杭州，方位喜东南；办公位优先靠东窗，避免西晒",
+  "macroSignal": "AI 行业仍在上行段；地产链下行不必硬接",
+  "highlights": [
+    "立春前 30 天不做长约——节气切换期决策容易被反复",
+    "杭州东南向 → 推进感与本地行业结构相合"
+  ],
+  "risks": ["跨城市频繁出差会打散流年节奏"],
+  "windows": [{"label": "2028 春", "score": 82, "advice": "立春后启动核心动作"}],
+  "actions": [
+    "立春后 30 天内完成核心确认",
+    "在杭州东南向工位完成关键创作"
+  ],
+  "citations": ["temporal", "macroCycles", "geoClimate", "spatialFactors"]
+}

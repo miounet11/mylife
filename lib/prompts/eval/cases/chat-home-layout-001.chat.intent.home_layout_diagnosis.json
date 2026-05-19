@@ -1,0 +1,6 @@
+{
+  "id": "chat-home-layout-001",
+  "promptId": "chat.intent.home_layout_diagnosis",
+  "mustInclude": ["核心问题清单", "因果链", "优先级", "低成本调整", "验证与边界", "动线"],
+  "mustExclude": ["大吉", "大凶", "必灾", "摆件转运"]
+}

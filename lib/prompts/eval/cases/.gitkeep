@@ -1,0 +1,2 @@
+# golden eval cases 落位目录
+# 每个文件：{id}.{promptId}.json，符合 EvalCase 结构

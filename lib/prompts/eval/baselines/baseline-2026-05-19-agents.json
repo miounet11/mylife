@@ -1,0 +1,240 @@
+{
+  "generatedAt": "2026-05-19T02:41:06.714Z",
+  "scores": [
+    {
+      "caseId": "career-001",
+      "promptId": "agentic.career_wealth",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "chat-event-review-001",
+      "promptId": "chat.intent.event_review",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 40,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 85,
+      "notes": []
+    },
+    {
+      "caseId": "chat-event-sim-001",
+      "promptId": "chat.intent.event_simulation",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 83.33333333333334,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 93.7,
+      "notes": []
+    },
+    {
+      "caseId": "chat-event-verdict-001",
+      "promptId": "chat.intent.event_verdict",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 75,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 92,
+      "notes": []
+    },
+    {
+      "caseId": "chat-home-layout-001",
+      "promptId": "chat.intent.home_layout_diagnosis",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 42.857142857142854,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 85.6,
+      "notes": []
+    },
+    {
+      "caseId": "chat-main-001",
+      "promptId": "chat.main",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "chat-meihua-001",
+      "promptId": "chat.intent.meihua_enhancement",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "chat-palmistry-001",
+      "promptId": "chat.intent.palmistry_reading",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 50,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 87,
+      "notes": []
+    },
+    {
+      "caseId": "core-001",
+      "promptId": "agentic.core_constitution",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "health-001",
+      "promptId": "agentic.health_lifestyle",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "kline-001",
+      "promptId": "agentic.kline_narrative",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "narrative-001",
+      "promptId": "analyze.narrative",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "relationship-001",
+      "promptId": "agentic.relationship_family",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "sample-001",
+      "promptId": "analyze.structure",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "strategy-001",
+      "promptId": "agentic.strategy_advisor",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "temporal-spatial-001",
+      "promptId": "agentic.temporal_spatial_advisor",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    }
+  ],
+  "aggregate": {
+    "count": 16,
+    "avg": {
+      "structure_completeness": 100,
+      "evidence_density": 86.9,
+      "anti_pattern_hit": 100,
+      "engine_consistency": 100,
+      "human_taste": 80
+    },
+    "total": 94.4
+  }
+}

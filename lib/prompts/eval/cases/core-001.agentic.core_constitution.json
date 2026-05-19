@@ -1,0 +1,10 @@
+{
+  "id": "core-001",
+  "promptId": "agentic.core_constitution",
+  "mustInclude": ["用神", "日主"],
+  "mustExclude": ["格局清正", "乃富贵之命也", "宿命已定", "anchorPoints", "ENGINE_"],
+  "engineTruth": {
+    "favorableElements": ["水", "金"],
+    "unfavorableElements": ["火", "土"]
+  }
+}

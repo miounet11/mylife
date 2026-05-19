@@ -1,0 +1,6 @@
+{
+  "id": "career-001",
+  "promptId": "agentic.career_wealth",
+  "mustInclude": ["主战场", "现金"],
+  "mustExclude": ["理性投资", "格局清正", "也许", "ENGINE_"]
+}

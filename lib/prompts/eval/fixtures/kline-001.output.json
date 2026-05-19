@@ -1,0 +1,19 @@
+{
+  "summary": "你目前处在 2028 年转折前夜，K 线在 2028 锚点处由盘整切换为上行，建议把节奏从守势转向试探推进。",
+  "currentPhase": "转折前夜",
+  "peakYears": [{ "year": 2032, "label": "峰值起势" }],
+  "troughYears": [{ "year": 2028, "label": "转折前夜" }],
+  "highlights": [
+    "2028 立春后官星松动，推进感由紧转松",
+    "2032 年峰值前一年是关键铺路期"
+  ],
+  "risks": ["2028 上半年仍可能反复，注意短周期回踩"],
+  "windows": [
+    { "label": "2028 春", "score": 80, "advice": "完成关键确认，不签长约" }
+  ],
+  "actions": [
+    "未来 6 个月把现金流和睡眠两件事顶住",
+    "2028 立春后再推进核心谈判"
+  ],
+  "citations": ["kline.anchorPoints", "kline.windows"]
+}

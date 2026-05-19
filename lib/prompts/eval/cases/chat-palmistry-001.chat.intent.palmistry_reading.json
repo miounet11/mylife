@@ -1,0 +1,6 @@
+{
+  "id": "chat-palmistry-001",
+  "promptId": "chat.intent.palmistry_reading",
+  "mustInclude": ["可见依据", "感情线", "智慧线", "图片可用性", "边界与复看"],
+  "mustExclude": ["你寿命", "摆件转运", "许愿", "你身体可能有"]
+}

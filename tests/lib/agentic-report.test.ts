@@ -247,6 +247,37 @@ describe('agentic-report pipeline helpers', () => {
     expect(verify.verdict).toMatch(/PASS|WARN/);
   });
 
+  it('flags HIGH severity when kline peak/trough year is off-anchor (review v2 hard check)', () => {
+    const engine = buildEngineGroundTruth({ birthDate, report });
+    const context = buildContextSignals({
+      birthDate,
+      birthPlace: '北京',
+      currentPlace: '上海',
+      engine,
+      report: {
+        advice: report.advice,
+        fortune: { currentDaYun: '乙亥大运', currentLiuNian: '丙午', interaction: '', nextYear: '' },
+      },
+      now: new Date(Date.UTC(2026, 2, 12)),
+    });
+    const structured = { engine, context, report: { advice: report.advice, fortune: report.fortune } };
+
+    const validYear = engine.kline.anchorPoints[0]?.year ?? 2030;
+    const offAnchorYear = validYear + 999;
+    const offendingResults = {
+      kline_narrative: {
+        summary: '伪输出',
+        peakYears: [{ year: offAnchorYear, label: '伪峰' }],
+        troughYears: [],
+        windows: [],
+      },
+    };
+    const review = runReview(structured, offendingResults);
+    const hit = review.conflicts.find((c) => c.id === 'conflict_kline_year_off_anchor');
+    expect(hit).toBeDefined();
+    expect(hit?.severity).toBe('HIGH');
+  });
+
   it('builds fallback summaries from personalized engine signals instead of a fixed template', () => {
     const engine = buildEngineGroundTruth({ birthDate, report });
     const context = buildContextSignals({

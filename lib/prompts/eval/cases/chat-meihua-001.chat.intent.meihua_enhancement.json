@@ -1,0 +1,6 @@
+{
+  "id": "chat-meihua-001",
+  "promptId": "chat.intent.meihua_enhancement",
+  "mustInclude": ["即时风险", "30 天"],
+  "mustExclude": ["未来三五年", "长周期"]
+}

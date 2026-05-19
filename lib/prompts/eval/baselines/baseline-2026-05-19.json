@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-05-19T01:13:41.342Z",
+  "scores": [
+    {
+      "caseId": "kline-001",
+      "promptId": "agentic.kline_narrative",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "narrative-001",
+      "promptId": "analyze.narrative",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "sample-001",
+      "promptId": "analyze.structure",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    },
+    {
+      "caseId": "strategy-001",
+      "promptId": "agentic.strategy_advisor",
+      "promptVersion": "v2-2026-05-19",
+      "scores": {
+        "structure_completeness": 100,
+        "evidence_density": 100,
+        "anti_pattern_hit": 100,
+        "engine_consistency": 100,
+        "human_taste": 80
+      },
+      "total": 97,
+      "notes": []
+    }
+  ],
+  "aggregate": {
+    "count": 4,
+    "avg": {
+      "structure_completeness": 100,
+      "evidence_density": 100,
+      "anti_pattern_hit": 100,
+      "engine_consistency": 100,
+      "human_taste": 80
+    },
+    "total": 97
+  }
+}

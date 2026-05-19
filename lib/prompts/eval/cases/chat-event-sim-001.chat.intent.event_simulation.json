@@ -1,0 +1,6 @@
+{
+  "id": "chat-event-sim-001",
+  "promptId": "chat.intent.event_simulation",
+  "mustInclude": ["试探", "加速", "收手", "失败征兆"],
+  "mustExclude": ["看缘分", "看天意", "也许", "可能", "仅供参考"]
+}

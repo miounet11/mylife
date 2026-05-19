@@ -146,6 +146,33 @@ export function getChatIntentPreset(intent?: string | null) {
 }
 
 export function getChatIntentSystemPrompt(intent?: string | null) {
+  // 优先读 lib/prompts/ 注册表（v2 spec）。未命中时回退到 preset 内的 legacy 字符串。
+  const normalized = normalizeChatIntent(intent);
+  if (normalized) {
+    try {
+      // 动态引入避免循环依赖（chat-intent.ts 被 chat-context.ts 早期引用）
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { getPrompt, buildPrompt } = require('@/lib/prompts');
+      const idMap: Record<ChatIntent, string> = {
+        'event-simulation': 'chat.intent.event_simulation',
+        'event-verdict': 'chat.intent.event_verdict',
+        'event-review': 'chat.intent.event_review',
+        'meihua-enhancement': 'chat.intent.meihua_enhancement',
+        'palmistry-reading': 'chat.intent.palmistry_reading',
+        'home-layout-diagnosis': 'chat.intent.home_layout_diagnosis',
+      };
+      const id = idMap[normalized];
+      if (id && getPrompt(id)) {
+        // 触发注册（首次调用前） + 取 system 段
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        require('@/lib/prompts/chat/intents');
+        const built = buildPrompt(id, {});
+        return built.system;
+      }
+    } catch {
+      // 回退
+    }
+  }
   return getChatIntentPreset(intent)?.systemPrompt || '';
 }
 

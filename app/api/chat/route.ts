@@ -13,6 +13,9 @@ import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatInten
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import { recordModelAttempt } from '@/lib/llm-provider-health';
+import { buildPrompt, getPrompt } from '@/lib/prompts';
+import '@/lib/prompts/chat/main';
+import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
 
 // 设置 API 路由超时为 240 秒
@@ -259,24 +262,52 @@ async function generateAIResponse(
   const intentSummaryHint = getChatIntentSummaryHint(options?.intent);
   const materialSummary = options?.materialSummary || buildMaterialSummary(options?.materials || []);
   const userContent = buildUserContentWithMaterials(question, materialSummary, options?.materials || []);
+
+  // v2 chat.main spec：把 contextSummary / intentPrompt / materialSummary / 多模态边界拼成结构化 system。
+  // 多模态分支按需触发 —— 没有对应附件就不污染 prompt。
+  const intentNormalized = normalizeChatIntent(options?.intent);
+  const materials = options?.materials || [];
+  const hasImage = materials.some((m) => /^image\//i.test(m?.mimeType || '') || /\.(jpe?g|png|webp|gif)$/i.test(m?.fileName || ''));
+  const hasDoc = materials.some((m) => /pdf|word|excel|text|json|application/i.test(m?.mimeType || ''));
+  const hasPalmistry = intentNormalized === 'palmistry-reading' || (hasImage && /palmistry|手相/i.test(materialSummary));
+  const hasHomeLayout = intentNormalized === 'home-layout-diagnosis' || (hasImage && /户型|home.?layout|floor.?plan/i.test(materialSummary));
+  const hasFaceOrHandwriting = hasImage && !hasPalmistry && !hasHomeLayout;
+
+  let systemContent: string;
+  if (getPrompt('chat.main')) {
+    const built = buildPrompt('chat.main', {
+      contextSummary,
+      intentPrompt,
+      intentSummaryHint,
+      materialSummary,
+      hasPalmistry,
+      hasHomeLayout,
+      hasDocument: hasDoc,
+      hasFaceOrHandwriting,
+    });
+    systemContent = `${built.system}\n\n${built.user}`;
+  } else {
+    systemContent = [
+      '你是一位精通传统子平八字、滴天髓等命理学，同时又懂得现代心理学和职场发展的顶级AI命理大师。',
+      '你必须优先引用用户当前报告里的结构、用神、行运阶段、未来窗口和已记录现实事件，不要给空泛套话。',
+      '每次回答都尽量包含：1）判断依据 2）当前阶段建议 3）风险提醒 4）若适合，建议把节点落成事件。',
+      '若某结论受时辰或短期节奏影响较大，要明确提示不确定性。',
+      '若用户补充图片、字迹、学习材料、户型图或文书，只把它们作为辅助上下文：不要识别人脸身份，不要作医疗、法律、金融等确定性判断，不要复述敏感个人信息。',
+      '涉及法院文书、合同、诉讼材料时，只做结构化阅读、关键风险、下一步待核实问题，并明确重大事项应交由律师或专业人士处理。',
+      '面相、手相、字迹、场景图像不能作为唯一依据；回答必须回到结构、时间、事件和用户可执行动作。',
+      '涉及手相照片时，只做可见掌纹、掌丘、手型和照片质量的相学文化观察；不得判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数。',
+      '涉及户型图时，只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳、收纳与形势问题；方向和外局缺失时必须说明边界，不编造外部环境。',
+      intentPrompt,
+      contextSummary,
+      materialSummary,
+      intentSummaryHint,
+    ].join('\n');
+  }
+
   const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
     {
       role: 'system',
-      content: [
-        '你是一位精通传统子平八字、滴天髓等命理学，同时又懂得现代心理学和职场发展的顶级AI命理大师。',
-        '你必须优先引用用户当前报告里的结构、用神、行运阶段、未来窗口和已记录现实事件，不要给空泛套话。',
-        '每次回答都尽量包含：1）判断依据 2）当前阶段建议 3）风险提醒 4）若适合，建议把节点落成事件。',
-        '若某结论受时辰或短期节奏影响较大，要明确提示不确定性。',
-        '若用户补充图片、字迹、学习材料、户型图或文书，只把它们作为辅助上下文：不要识别人脸身份，不要作医疗、法律、金融等确定性判断，不要复述敏感个人信息。',
-        '涉及法院文书、合同、诉讼材料时，只做结构化阅读、关键风险、下一步待核实问题，并明确重大事项应交由律师或专业人士处理。',
-        '面相、手相、字迹、场景图像不能作为唯一依据；回答必须回到结构、时间、事件和用户可执行动作。',
-        '涉及手相照片时，只做可见掌纹、掌丘、手型和照片质量的相学文化观察；不得判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数。',
-        '涉及户型图时，只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳、收纳与形势问题；方向和外局缺失时必须说明边界，不编造外部环境。',
-        intentPrompt,
-        contextSummary,
-        materialSummary,
-        intentSummaryHint,
-      ].join('\n'),
+      content: systemContent,
     },
     ...userHistory.map((item) => ({ role: item.role, content: item.content })),
     { role: 'user', content: userContent },

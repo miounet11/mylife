@@ -1,0 +1,6 @@
+{
+  "id": "narrative-001",
+  "promptId": "analyze.narrative",
+  "mustInclude": ["守势"],
+  "mustExclude": ["格局清正", "保持平常心", "解释增强即可", "macro_cycle", "也许"]
+}

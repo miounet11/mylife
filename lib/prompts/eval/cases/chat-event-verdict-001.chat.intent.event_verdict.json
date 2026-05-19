@@ -1,0 +1,6 @@
+{
+  "id": "chat-event-verdict-001",
+  "promptId": "chat.intent.event_verdict",
+  "mustInclude": ["倾向", "前置条件", "暂缓"],
+  "mustExclude": ["看个人选择", "因人而异", "也许", "可能"]
+}

@@ -9,6 +9,10 @@ import {
   summarizeModelExecutionPlan,
 } from '@/lib/llm-provider-health';
 import { WORLD_YI_DELIVERY_DIRECTIVE, WORLD_YI_DOCTRINE_BRIEF } from '@/lib/world-yi-doctrine';
+import { buildPrompt, getPrompt } from '@/lib/prompts';
+// 触发自注册
+import '@/lib/prompts/analyze/structure';
+import '@/lib/prompts/analyze/narrative';
 
 const toModelDisplayName = (model: string) => {
   if (model === 'claude-opus-4-7-high') {
@@ -139,7 +143,7 @@ export async function generateFortuneInterpretationCore(
     baseChain,
     timeoutMs,
     deadlineAt,
-    prompt: buildStructuredPrompt(baziData),
+    ...buildStructuredPromptV2(baziData),
     onProgress,
   });
 }
@@ -164,7 +168,7 @@ export async function generateFortuneInterpretationFollowup(
     baseChain,
     timeoutMs,
     deadlineAt,
-    prompt: buildNarrativePatchPrompt(baziData, structureDraft),
+    ...buildNarrativePatchPromptV2(baziData, structureDraft),
     onProgress,
   });
 
@@ -180,6 +184,7 @@ async function executeReportPhase(params: {
   timeoutMs: number;
   deadlineAt: number;
   prompt: string;
+  systemOverride?: string;
   onProgress?: (event: LlmProgressEvent) => void | Promise<void>;
 }) {
   const plan = getDynamicModelExecutionPlan(params.baseChain, 'report');
@@ -217,7 +222,7 @@ async function executeReportPhase(params: {
       const completion = await createOpenAiCompatibleChatCompletion(params.openai, {
         model,
         messages: [
-          { role: 'system', content: buildPhaseSystemPrompt(params.phase) },
+          { role: 'system', content: params.systemOverride ?? buildPhaseSystemPrompt(params.phase) },
           { role: 'user', content: params.prompt },
         ],
         temperature: params.phase === 'structure' ? 0.35 : 0.45,
@@ -556,6 +561,39 @@ ${JSON.stringify(compactDraft)}
   }
 }
 `;
+}
+
+/**
+ * V2 包装：让 analyze.structure / analyze.narrative 走 lib/prompts/ 注册表。
+ * 返回 { prompt: user, systemOverride: system }，供 executeReportPhase 直接展开。
+ * 若 spec 未注册，回退到 legacy 实现（buildStructuredPrompt + buildPhaseSystemPrompt）。
+ */
+function buildStructuredPromptV2(baziData: Record<string, unknown>): { prompt: string; systemOverride?: string } {
+  if (!getPrompt('analyze.structure')) {
+    return { prompt: buildStructuredPrompt(baziData) };
+  }
+  const compactBaziData = buildReportPromptPayload(baziData);
+  const compactShenSha = (baziData as Record<string, unknown>).shenSha
+    ? compactForPrompt((baziData as Record<string, unknown>).shenSha)
+    : undefined;
+  const compactDayun = (baziData as Record<string, unknown>).dayun
+    ? compactForPrompt((baziData as Record<string, unknown>).dayun)
+    : undefined;
+  const built = buildPrompt('analyze.structure', { compactBaziData, compactShenSha, compactDayun });
+  return { prompt: built.user, systemOverride: built.system };
+}
+
+function buildNarrativePatchPromptV2(
+  baziData: Record<string, unknown>,
+  draft: Record<string, unknown>
+): { prompt: string; systemOverride?: string } {
+  if (!getPrompt('analyze.narrative')) {
+    return { prompt: buildNarrativePatchPrompt(baziData, draft) };
+  }
+  const compactBaziData = buildReportPromptPayload(baziData);
+  const compactDraft = compactForPrompt(draft);
+  const built = buildPrompt('analyze.narrative', { compactBaziData, compactDraft });
+  return { prompt: built.user, systemOverride: built.system };
 }
 
 function parseJsonContent<T>(content: string): T | null {

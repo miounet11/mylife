@@ -1,0 +1,6 @@
+{
+  "id": "health-001",
+  "promptId": "agentic.health_lifestyle",
+  "mustInclude": ["睡眠"],
+  "mustExclude": ["注意身体", "保持心情愉快", "也许", "ENGINE_", "综合征", "高血压"]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "chat-event-review-001",
+  "promptId": "chat.intent.event_review",
+  "mustInclude": ["时机", "执行", "环境", "信息判断"],
+  "mustExclude": ["事在人为", "重在过程", "也许是命"]
+}

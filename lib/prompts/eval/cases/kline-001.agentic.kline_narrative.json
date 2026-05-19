@@ -1,0 +1,12 @@
+{
+  "id": "kline-001",
+  "promptId": "agentic.kline_narrative",
+  "input": {
+    "_note": "scorer 仅看 fixture 输出；input 仅作快照"
+  },
+  "mustInclude": ["2028", "转折"],
+  "mustExclude": ["格局清正", "仅供参考", "anchorPoints", "macro_cycle", "天机"],
+  "engineTruth": {
+    "currentPhase": "转折前夜"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "summary": "丙火日主偏弱，用神为水金，整体结构偏守势。",
+  "constitutionSummary": "丙火生于午月，火势透干而无水制，日主看似旺实则虚浮；金水为用，火土为忌。",
+  "favorableElements": ["水", "金"],
+  "unfavorableElements": ["火", "土"],
+  "highlights": [
+    "决策偏快但容易在关键节点上头",
+    "对节奏感敏感，适合做需要把控时机的工作",
+    "压力大时先垮的是睡眠"
+  ],
+  "risks": ["承担过度时容易关系内耗", "夏季流月推进感容易被火势放大成幻觉"],
+  "windows": [{"label": "2028 春", "score": 78, "advice": "完成关键确认"}],
+  "actions": ["长期保留 6 个月现金缓冲", "夏季把作息提前 1 小时"],
+  "citations": ["constitution", "dayun.windows"]
+}

@@ -1,0 +1,6 @@
+{
+  "id": "temporal-spatial-001",
+  "promptId": "agentic.temporal_spatial_advisor",
+  "mustInclude": ["立春", "AI"],
+  "mustExclude": ["天时地利人和俱备", "风水大吉", "也许", "ENGINE_", "solar_terms"]
+}

@@ -1,0 +1,9 @@
+{
+  "id": "strategy-001",
+  "promptId": "agentic.strategy_advisor",
+  "mustInclude": ["2028 春"],
+  "mustExclude": ["格局清正", "既要", "保持平常心", "anchorPoints", "天机"],
+  "engineTruth": {
+    "topPriority": "先稳住现金流，等 2028 春窗口启动核心谈判"
+  }
+}

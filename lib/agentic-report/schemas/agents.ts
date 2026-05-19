@@ -13,6 +13,17 @@ export type BaseAgentOutput = {
   windows: AgentWindow[];
   actions: string[];
   citations: string[];
+  /**
+   * 可选 uncertainty 通道（v2 引入）。
+   * 当输入信息不足、引擎字段缺失、或判断需谨慎时，agent 应主动声明：
+   *   - level: 'high' | 'medium' | 'low'，high = 强信心，low = 应谨慎
+   *   - reason: 一句话说明为什么不确定（缺哪个输入 / 哪个字段冲突）
+   * 老消费方未读取该字段不会破坏。
+   */
+  confidence?: {
+    level: 'high' | 'medium' | 'low';
+    reason: string;
+  };
 };
 
 export type CoreConstitutionOutput = BaseAgentOutput & {

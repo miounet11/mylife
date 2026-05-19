@@ -1,0 +1,14 @@
+{
+  "id": "sample-001",
+  "promptId": "analyze.structure",
+  "input": {
+    "basic": { "dayMaster": "甲木", "pillars": ["甲子", "丙寅", "甲午", "己巳"] },
+    "fortune": { "currentDaYun": "庚午", "currentLiuNian": "丙午" }
+  },
+  "mustInclude": ["甲", "大运"],
+  "mustExclude": ["格局清正", "仅供参考", "macro_cycle"],
+  "engineTruth": {
+    "basic.dayMaster": "甲木",
+    "pattern.strength": "medium"
+  }
+}
