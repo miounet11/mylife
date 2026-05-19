@@ -69,7 +69,9 @@ export type AnalyticsEventName =
   | 'article_scroll_depth'
   | 'article_cta_impressed'
   | 'article_cta_clicked'
-  | 'article_session_end';
+  | 'article_session_end'
+  | 'today_card_viewed'
+  | 'today_card_cta_clicked';
 
 interface TrackEventInput {
   userId?: string | null;

@@ -11,6 +11,7 @@ import HomeSampleAndFaq from '@/components/home/sample-and-faq';
 import PersonalGrowthPanel from '@/components/personal-growth-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
+import TodayCard from '@/components/today-card';
 import ToolCardLink from '@/components/tool-card-link';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
@@ -27,6 +28,7 @@ import { buildPersonalGrowthHub } from '@/lib/personal-growth-hub';
 import { createPublicContentMetadata } from '@/lib/public-content-seo';
 import { getPriorityGrowthTools, getToolGrowthProfile } from '@/lib/tools';
 import { productTrustSignals } from '@/lib/product-experience';
+import { buildTodayCardMemoized } from '@/lib/today-card';
 
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
@@ -63,12 +65,33 @@ export default async function HomePage() {
     toolSessions: initialToolSessions as any,
   });
 
+  // v5-D37 今日一签：取用户最新档案，SSR 预算 24h memoize
+  const primaryFortune = initialReports[0] || null;
+  const todayCard = primaryFortune ? buildTodayCardMemoized(primaryFortune as any) : null;
+
   return (
     <div className="page-shell">
       <AnalyticsPageView eventName="home_page_viewed" page="/" meta={{ surfaceKey: 'landing' }} />
       <SiteHeader ctaHref="#analysis-form" ctaLabel="立即开始" />
 
       <main>
+        {/* ─────────────────────────────────────────────
+           段 0：今日一签（v5-D37）
+           Why: 把"报告产品"改成"时间产品"。有档案的用户每天打开第一眼看到今天。
+           ───────────────────────────────────────────── */}
+        {todayCard && primaryFortune && (
+          <section className="page-frame pt-4 md:pt-6">
+            <div className="mx-auto w-full max-w-[720px]">
+              <TodayCard
+                fortuneId={primaryFortune.id}
+                displayName={primaryFortune.name || undefined}
+                card={todayCard}
+                page="/"
+              />
+            </div>
+          </section>
+        )}
+
         {/* ─────────────────────────────────────────────
            段 1：HERO + 表单（全屏焦点单栏 720）
            ───────────────────────────────────────────── */}
