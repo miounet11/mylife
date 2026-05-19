@@ -99,6 +99,9 @@ export type AnalyzeSubmitContext = {
   returnHref?: string;
   hasEmailDelivery: boolean;
   verifiedEmail: string;
+  /** v5-D39 多档案：可选 relation 与自定义昵称 */
+  relation?: string | null;
+  relationLabel?: string | null;
 };
 
 export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
@@ -208,6 +211,8 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
             isSave: payload.isSave,
             source: ctx.activeSource || null,
             toolSlug: ctx.inferredToolSlug,
+            relation: ctx.relation ?? null,
+            relationLabel: ctx.relationLabel ?? null,
           }),
         });
 

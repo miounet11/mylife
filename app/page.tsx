@@ -11,7 +11,7 @@ import HomeSampleAndFaq from '@/components/home/sample-and-faq';
 import PersonalGrowthPanel from '@/components/personal-growth-panel';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
-import TodayCard from '@/components/today-card';
+import TodayCardStrip from '@/components/today-card-strip';
 import ToolCardLink from '@/components/tool-card-link';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
@@ -65,9 +65,14 @@ export default async function HomePage() {
     toolSessions: initialToolSessions as any,
   });
 
-  // v5-D37 今日一签：取用户最新档案，SSR 预算 24h memoize
-  const primaryFortune = initialReports[0] || null;
-  const todayCard = primaryFortune ? buildTodayCardMemoized(primaryFortune as any) : null;
+  // v5-D37/D39 今日一签条带：SSR 预算所有档案的今日卡，前端只切 active
+  // initialReports 已按 (self 第一, created_at desc) 排序（v5-D39 DB 层）
+  const todayStripItems = initialReports
+    .map((f) => {
+      const card = buildTodayCardMemoized(f as any);
+      return card ? { fortune: f, card } : null;
+    })
+    .filter((x): x is { fortune: typeof initialReports[number]; card: NonNullable<ReturnType<typeof buildTodayCardMemoized>> } => !!x);
 
   return (
     <div className="page-shell">
@@ -76,18 +81,13 @@ export default async function HomePage() {
 
       <main>
         {/* ─────────────────────────────────────────────
-           段 0：今日一签（v5-D37）
-           Why: 把"报告产品"改成"时间产品"。有档案的用户每天打开第一眼看到今天。
+           段 0：今日一签条带（v5-D37 + D39 多档案）
+           Why: 把"报告产品"改成"时间产品"；多档案是使用频次杠杆，不是切换 dashboard。
            ───────────────────────────────────────────── */}
-        {todayCard && primaryFortune && (
+        {todayStripItems.length > 0 && (
           <section className="page-frame pt-4 md:pt-6">
             <div className="mx-auto w-full max-w-[720px]">
-              <TodayCard
-                fortuneId={primaryFortune.id}
-                displayName={primaryFortune.name || undefined}
-                card={todayCard}
-                page="/"
-              />
+              <TodayCardStrip items={todayStripItems as any} page="/" />
             </div>
           </section>
         )}

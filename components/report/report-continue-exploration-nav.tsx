@@ -14,6 +14,7 @@ import {
   ListChecks,
   Wrench,
   BookOpen,
+  Users,
   ArrowRight,
 } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
@@ -68,6 +69,13 @@ const ITEMS: Item[] = [
     label: '延伸阅读',
     desc: '相关知识、案例和后续阅读',
     Icon: BookOpen,
+  },
+  {
+    id: 'add-fortune',
+    hash: '/?source=continue_exploration_add#analysis-form',
+    label: '算关心的人',
+    desc: '家人 / 伴侣 / 孩子的命格',
+    Icon: Users,
   },
 ];
 

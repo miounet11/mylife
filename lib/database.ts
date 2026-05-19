@@ -49,6 +49,9 @@ interface RawFortuneRow {
   is_public: number;
   created_at?: string;
   updated_at?: string;
+  /** v5-D39 多档案：可选关系字段；老档案为 NULL，等价 self */
+  relation?: string | null;
+  relation_label?: string | null;
 }
 
 interface RawAnalyticsEventRow {
@@ -1306,6 +1309,8 @@ function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
     isPublic: row.is_public !== 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    relation: row.relation || undefined,
+    relationLabel: row.relation_label || undefined,
   } as FortuneRecord;
 }
 
@@ -1647,6 +1652,24 @@ export function initializeDatabase() {
 
   try {
     db.exec(`ALTER TABLE fortunes ADD COLUMN report_version TEXT DEFAULT 'v1'`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  // v5-D39 多档案：relation 自由枚举（self / spouse / child / parent / friend / colleague / other）
+  // relation_label 用户自定义昵称（"老婆""大宝"），可空。老档案 NULL = 视作 self。
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN relation TEXT`);
+  } catch (e) {
+    if (e instanceof Error && !e.message.includes('duplicate column')) {
+      throw e;
+    }
+  }
+
+  try {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN relation_label TEXT`);
   } catch (e) {
     if (e instanceof Error && !e.message.includes('duplicate column')) {
       throw e;
@@ -2346,8 +2369,8 @@ export const userOperations = {
 export const fortuneOperations = {
   create: (fortune: FortuneRecord) => {
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, dayun, shen_sha, report_version, is_public)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, dayun, shen_sha, report_version, is_public, relation, relation_label)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       fortune.id,
@@ -2370,7 +2393,9 @@ export const fortuneOperations = {
       JSON.stringify(fortune.dayun || null),
       JSON.stringify(fortune.shenSha || null),
       fortune.reportVersion || 'v1',
-      fortune.isPublic === false ? 0 : 1
+      fortune.isPublic === false ? 0 : 1,
+      fortune.relation || null,
+      fortune.relationLabel || null
     );
   },
 
@@ -2384,7 +2409,12 @@ export const fortuneOperations = {
   },
 
   getByUserId: (userId: string) => {
-    const stmt = db.prepare('SELECT * FROM fortunes WHERE user_id = ? ORDER BY created_at DESC');
+    // v5-D39 多档案排序：self 永远第一（NULL 也视作 self），其它按 created_at desc
+    const stmt = db.prepare(
+      `SELECT * FROM fortunes WHERE user_id = ?
+       ORDER BY (CASE WHEN relation IS NULL OR relation = '' OR relation = 'self' THEN 0 ELSE 1 END),
+                datetime(created_at) DESC`
+    );
     const rows = stmt.all(userId) as RawFortuneRow[];
     return rows.map(mapFortuneRow);
   },

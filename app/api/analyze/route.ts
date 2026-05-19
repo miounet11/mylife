@@ -18,6 +18,7 @@ import {
 } from '@/lib/tacit-knowledge';
 import type { FortuneAdvice } from '@/lib/user-types';
 import { validateAnalyzeRequest } from '@/lib/validators';
+import { sanitizeRelationInput } from '@/lib/relation';
 
 export const maxDuration = 60;
 
@@ -37,6 +38,10 @@ type AnalyzeInput = {
   tacitContext?: Record<string, unknown>;
   source?: string | null;
   toolSlug?: string | null;
+  /** v5-D39 多档案：可选 relation key */
+  relation?: string | null;
+  /** v5-D39 多档案：可选自定义昵称 */
+  relationLabel?: string | null;
 };
 
 type StreamStageEvent = {
@@ -432,6 +437,12 @@ async function executeAnalyze(
     nextReportVersion: CURRENT_REPORT_VERSION,
   });
 
+  // v5-D39 多档案：清洗 relation / relationLabel
+  const sanitizedRelation = sanitizeRelationInput({
+    relation: data.relation ?? null,
+    relationLabel: data.relationLabel ?? null,
+  });
+
   createFortuneWithUser(
     userId,
     {
@@ -464,6 +475,8 @@ async function executeAnalyze(
       shenSha: finalResult.shenSha,
       reportVersion: CURRENT_REPORT_VERSION,
       isPublic: true,
+      relation: sanitizedRelation.relation ?? undefined,
+      relationLabel: sanitizedRelation.relationLabel ?? undefined,
     }
   );
   const savedReport = createSavedReportSnapshot({
@@ -596,6 +609,10 @@ function createSavedReportSnapshot(params: {
   timezone: number;
   finalResult: Awaited<ReturnType<typeof generateVersionedReport>>['result'];
 }) {
+  const sanitized = sanitizeRelationInput({
+    relation: params.data.relation ?? null,
+    relationLabel: params.data.relationLabel ?? null,
+  });
   return {
     id: params.id,
     userId: params.userId,
@@ -618,6 +635,8 @@ function createSavedReportSnapshot(params: {
     shenSha: params.finalResult.shenSha,
     reportVersion: CURRENT_REPORT_VERSION,
     isPublic: true,
+    relation: sanitized.relation ?? undefined,
+    relationLabel: sanitized.relationLabel ?? undefined,
   };
 }
 

@@ -11,6 +11,7 @@ import BirthPlaceCard from './birth-place-card';
 import EntryProgressBar from './entry-progress-bar';
 import FormBanners from './form-banners';
 import GenderPicker from './gender-picker';
+import RelationPicker from './relation-picker';
 import SubmitButton from './submit-button';
 import { useAnalyzeSubmit } from './use-analyze-submit';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
@@ -140,6 +141,9 @@ export default function FortuneForm({
   } | null>(null);
   const [tacitContext, setTacitContext] = useState<TacitKnowledgeInput>(createEmptyTacitKnowledgeInput);
   const [showTacitComposer, setShowTacitComposer] = useState(false);
+  // v5-D39 多档案：可选 relation
+  const [relationKey, setRelationKey] = useState<import('@/lib/relation').RelationKey | null>(null);
+  const [relationLabel, setRelationLabel] = useState<string>('');
   const [timeConfirmed, setTimeConfirmed] = useState(false);
   const [locationConfirmed, setLocationConfirmed] = useState(false);
   const [hasAutoOpenedPlace, setHasAutoOpenedPlace] = useState(false);
@@ -314,6 +318,8 @@ export default function FortuneForm({
       returnHref,
       hasEmailDelivery,
       verifiedEmail,
+      relation: relationKey,
+      relationLabel: relationLabel.trim() || null,
     }),
     [
       setTimeInfo,
@@ -327,6 +333,8 @@ export default function FortuneForm({
       returnHref,
       hasEmailDelivery,
       verifiedEmail,
+      relationKey,
+      relationLabel,
     ],
   );
 
@@ -455,6 +463,13 @@ export default function FortuneForm({
               <GenderPicker
                 value={infoData.sex as 0 | 1}
                 onChange={(next) => setInfoData((current) => ({ ...current, sex: next }))}
+              />
+
+              <RelationPicker
+                value={relationKey}
+                label={relationLabel}
+                onChange={setRelationKey}
+                onLabelChange={setRelationLabel}
               />
 
               <SubmitButton

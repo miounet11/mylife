@@ -731,6 +731,14 @@ export interface FortuneRecord {
   isPublic?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  /**
+   * v5-D39 多档案：关系类型。可空 = 视作 self。
+   * 已知值：self / spouse / child / parent / sibling / friend / colleague / other
+   * 不做枚举强约束，给前端 chip 维护。
+   */
+  relation?: string;
+  /** v5-D39 用户自定义关系昵称，如"老婆""大宝"。可空。 */
+  relationLabel?: string;
 }
 
 export interface AnalyticsEventRecord {
