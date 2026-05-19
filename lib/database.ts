@@ -2428,9 +2428,14 @@ export const fortuneOperations = {
     const setClause = Object.keys(updates)
       .map((key) => `${COLUMN_MAP[key] || key} = ?`)
       .join(', ');
-    const values = Object.entries(updates).map(([key, value]) =>
-      JSON_FIELDS.includes(key as typeof JSON_FIELDS[number]) ? JSON.stringify(value) : value
-    );
+    const values = Object.entries(updates).map(([key, value]) => {
+      if (JSON_FIELDS.includes(key as typeof JSON_FIELDS[number])) return JSON.stringify(value);
+      // better-sqlite3 不接受 boolean 绑定；isPublic 等布尔列要转成 0/1。
+      // v5-D34e：修 22:02 起 /api/fortune/[id] 切公开状态报 "SQLite3 can only bind ..." 的 bug。
+      if (typeof value === 'boolean') return value ? 1 : 0;
+      if (value === undefined) return null;
+      return value;
+    });
     values.push(new Date().toISOString());
     values.push(id);
     const stmt = db.prepare(`UPDATE fortunes SET ${setClause}, updated_at = ? WHERE id = ?`);
