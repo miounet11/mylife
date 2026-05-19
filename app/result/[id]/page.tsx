@@ -71,7 +71,10 @@ import ReportActionBoard from '@/components/report/report-action-board';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import ReportNextActions from '@/components/report/report-next-actions';
 import ReportReadingPath from '@/components/report/report-reading-path';
+import ReportTimingTabs from '@/components/report/report-timing-tabs';
+import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
 import { getCurrentUserId } from '@/lib/user-utils';
+import { resolveTimingProfileForFortune } from '@/lib/life-timing/resolve-timing-profile';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
 import { calculateDayun } from '@/lib/dayun-calculator';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
@@ -353,6 +356,24 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   if (!result) {
     notFound();
   }
+
+  // v5-D38 时间地图 Tab：在 cockpit 后展示 30d/12m/5y 三档
+  // resolve 内部已 memoize；失败时静默不展示，不阻断主报告
+  let timingRecord: any = null;
+  try {
+    const resolved = resolveTimingProfileForFortune({
+      id: rawFortuneData.id,
+      userId: rawFortuneData.userId,
+      birthDate: rawFortuneData.birthDate,
+      birthTime: rawFortuneData.birthTime,
+      gender: rawFortuneData.gender,
+      analysis: rawFortuneData.analysis,
+    });
+    timingRecord = resolved?.record || null;
+  } catch (err) {
+    console.warn('[result-page] resolveTimingProfileForFortune failed', err);
+  }
+
   const currentUserRecord = currentUserId ? userOperations.getById(currentUserId) as {
     email?: string | null;
     email_verified?: number;
@@ -809,6 +830,14 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
+              {/* v5-D38 时间地图 Tab：30d / 12m / 5y 一键切换；
+                  把原本只在 /r 出现的时间维度提到 full 视图主流，避免用户为了看时点跳两次 */}
+              {timingRecord ? (
+                <div className="mt-5">
+                  <ReportTimingTabs record={timingRecord} />
+                </div>
+              ) : null}
+
 
               <details id="deep-report" className="mt-6 rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 open:bg-[color:var(--paper)]">
                 <summary className="cursor-pointer list-none">
@@ -985,6 +1014,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           </div>
         </section>
 
+        {/* v5-D38 继续探索导航：把底部 6 屏铺开的板块入口浓缩成一张卡，
+            用户按需跳转，不必逐屏滚动；底部 section 仍保留以兼容直链/SEO/埋点 */}
+        <div className="mb-10">
+          <ReportContinueExplorationNav reportId={id} />
+        </div>
+
         <ProductSurfaceRolePanel
           surface="result"
           className="mb-10"
@@ -1105,7 +1140,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           />
         </div>
 
-        <div className="mt-16">
+        <div id="tool-recommendations" className="mt-16 scroll-mt-28">
           <ToolRecommendations
             report={experienceReport}
             page={`/result/${id}`}
@@ -1118,7 +1153,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           />
         </div>
 
-        <div className="mt-16">
+        <div id="related-content" className="mt-16 scroll-mt-28">
           <ResultDeferredSection
             title="延伸内容"
             description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
