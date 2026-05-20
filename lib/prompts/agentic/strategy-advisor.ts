@@ -14,6 +14,11 @@
  */
 import { registerPrompt } from '@/lib/prompts/registry';
 import { ACTIONS_CONTRACT, ANTI_PATTERNS, JUDGMENT_METHOD, STYLE_CALIBRATION } from '@/lib/prompts/shared/world-yi';
+import {
+  buildTimingAnchorHardConstraints,
+  buildTimingAntiPatterns,
+  buildTimingVerbSoftPreferences,
+} from '@/lib/timing-anchor-vocab';
 import type { PromptSpec } from '@/lib/prompts/types';
 import { buildPromptModules, injectPromptModules } from '@/lib/agentic-report/prompt-injector';
 import { getAgentSchemaDoc } from '@/lib/agentic-report/schemas/agents';
@@ -53,14 +58,8 @@ const HARD_CONSTRAINTS = [
   'topPriority 不能与 avoidNow 指向同一类动作（不允许"既要又要"式空话）。',
   '不得改写 ENGINE_CONSTITUTION 的日主强弱、用神、忌神。',
   '不得使用工程占位词：ENGINE_*、CONTEXT_*、anchorPoints、windows 等英文键名直接出现在用户可见文本里。',
-  // v5-D48 李继刚式时间锚约束（与 analyze.narrative v3-2026-05-20 同口径）
-  'actions 每条必须满足三段式：[时间锚] + [动词] + [对象]。',
-  '[时间锚] 只允许以下三类之一：',
-  '  (a) 公历年月：2026年5月 / 2026年5月初 / 2026年5月底（必须含"年"）；',
-  '  (b) 节气：立春 / 惊蛰 / 清明 / ... / 大寒（可加"前 N 天"或"后 N 天"）；',
-  '  (c) 流年/大运标签：丙午流年 / 丁未流年 / 庚午大运（必须与 [CONTEXT_TEMPORAL] 或 [ENGINE_DAYUN_WINDOWS] 字段一致）。',
-  '不允许在 actions 中出现以下模糊词作为时间锚：近期 / 将来 / 不久 / 适当时机 / 合适时机 / 合适窗口 / 一段时间内 / 短期 / 中期 / 长期 / 未来一段。',
-  'actions 数组 2~5 条（与 ACTIONS_CONTRACT 同口径）；每条不超过 40 字；一条只承载一个动作。',
+  // v5-D48/D49 李继刚式时间锚约束（vocab 共享源）
+  ...buildTimingAnchorHardConstraints('actions', '2~5 条（与 ACTIONS_CONTRACT 同口径）'),
 ];
 
 const SOFT_PREFERENCES = [
@@ -69,9 +68,8 @@ const SOFT_PREFERENCES = [
   'avoidNow 必须给出"为什么避"的一句依据，不是单纯禁令。',
   'actions 遵守统一契约：动词起手、至少 2 条、含先后关系、含时间锚。',
   'highlights 每条带一个窗口标签或年份作为锚点。',
-  // v5-D48 timing 风格（李继刚式）
-  'actions 优先用"公历年月 + 动词 + 对象"句式，能精确到月就不要用季度。',
-  'actions 动词必须可执行：推进 / 收缩 / 复盘 / 谈判 / 签约 / 暂停 / 切换 / 观望，禁用"做"/"搞"/"弄"/"安排"等含糊词。',
+  // v5-D48/D49 timing 风格（vocab 共享源）
+  ...buildTimingVerbSoftPreferences('actions'),
   '宁可省一条 action（保留 ACTIONS_CONTRACT 下限 2 条），也不要用"近期"等模糊词凑数。',
 ];
 
@@ -82,9 +80,8 @@ const ANTI_PATTERN_LIST = [
   '"既要稳健又要进取" 这类两头讨好的空话',
   '"建议保持平常心" 这类无信息量句子',
   'macro_cycle / solar_terms / anchorPoints / windows 等英文工程词直接出现在 summary 或 highlights 中',
-  // v5-D48 时间口水反模式
-  '"近期推进"/"将来再看"/"合适时机"/"一段时间内"/"短期内"/"中长期" 等无锚点时间词',
-  '"X 月做 A 也做 B" 复合时间条目（一条只能承载一个动作）',
+  // v5-D48/D49 时间口水反模式（vocab 共享源）
+  ...buildTimingAntiPatterns(),
 ];
 
 function buildInput(ctx: StrategyAdvisorInput): string {

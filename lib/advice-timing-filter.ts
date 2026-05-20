@@ -5,29 +5,21 @@
 //
 // 规则（与 lib/prompts/analyze/narrative.ts HARD_CONSTRAINTS 对齐）：
 //  - 必须是非空 string（trim 后）
-//  - 长度 ≤ 40 字（按 UTF-16 代码单元计，prompt 同口径）
+//  - 长度 ≤ TIMING_MAX_LEN
 //  - 不得包含任意黑名单模糊词（区分大小写无意义，全部中文）
-//  - 最终上限 5 条；非数组输入返回 []
+//  - 最终上限 TIMING_MAX_ITEMS 条；非数组输入返回 []
 //
 // 不强求"必须出现具体时间锚"——这条由 prompt 负责，runtime 只兜底拦截最大噪音源。
 // 这样空数组也合法：宁可前端"未识别"，也不让"近期"桶污染时间窗口图。
+//
+// v5-D49：黑名单 / 上限 / 长度统一从 lib/timing-anchor-vocab.ts 读，
+// 不再在本文件内嵌写常量副本（避免与 prompt 端漂移）。
 
-const FUZZY_TIME_TOKENS = [
-  '近期',
-  '将来',
-  '不久',
-  '适当时机',
-  '合适时机',
-  '合适窗口',
-  '一段时间内',
-  '短期',
-  '中期',
-  '长期',
-  '未来一段',
-];
-
-const MAX_ITEMS = 5;
-const MAX_LEN = 40;
+import {
+  FUZZY_TIME_TOKENS,
+  TIMING_MAX_ITEMS,
+  TIMING_MAX_LEN,
+} from '@/lib/timing-anchor-vocab';
 
 export function sanitizeAdviceTiming(input: unknown): string[] {
   if (!Array.isArray(input)) return [];
@@ -37,17 +29,17 @@ export function sanitizeAdviceTiming(input: unknown): string[] {
     if (typeof raw !== 'string') continue;
     const item = raw.trim();
     if (!item) continue;
-    if (item.length > MAX_LEN) continue;
+    if (item.length > TIMING_MAX_LEN) continue;
     if (FUZZY_TIME_TOKENS.some((token) => item.includes(token))) continue;
     if (out.includes(item)) continue;
     out.push(item);
-    if (out.length >= MAX_ITEMS) break;
+    if (out.length >= TIMING_MAX_ITEMS) break;
   }
   return out;
 }
 
 export const __TEST_ONLY = {
   FUZZY_TIME_TOKENS,
-  MAX_ITEMS,
-  MAX_LEN,
+  MAX_ITEMS: TIMING_MAX_ITEMS,
+  MAX_LEN: TIMING_MAX_LEN,
 };
