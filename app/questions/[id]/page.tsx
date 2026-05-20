@@ -129,10 +129,10 @@ export default async function PublicQuestionPage({ params }: PageProps) {
             )}
 
             {item.analysisPoints.length > 0 && (
-              <section className="mt-4 grid gap-3">
+              <section className="mt-4 grid gap-2">
                 <div className="text-sm font-black text-[color:var(--ink-1)]">结构与阶段判断</div>
                 {item.analysisPoints.map((point) => (
-                  <div key={point} className="flex gap-2 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-sm leading-6 text-[color:var(--ink-3)]">
+                  <div key={point} className="flex gap-2 border-l-2 border-[color:var(--brand-soft)] pl-3 py-1 text-sm leading-6 text-[color:var(--ink-3)] lk-readonly">
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[color:var(--brand-strong)]" />
                     <span>{point}</span>
                   </div>
@@ -141,13 +141,15 @@ export default async function PublicQuestionPage({ params }: PageProps) {
             )}
 
             {item.actionPoints.length > 0 && (
-              <section className="mt-4 grid gap-3">
+              <section className="mt-4">
                 <div className="text-sm font-black text-[color:var(--ink-1)]">可执行建议</div>
-                {item.actionPoints.slice(0, 4).map((point) => (
-                  <div key={point} className="rounded-[var(--radius-md)] bg-[color:var(--bg-sunken)] p-3 text-sm leading-6 text-[color:var(--ink-3)]">
-                    {point}
-                  </div>
-                ))}
+                <ul className="mt-3 grid gap-2 text-sm leading-6 text-[color:var(--ink-3)]">
+                  {item.actionPoints.slice(0, 4).map((point) => (
+                    <li key={point} className="lk-bullet lk-readonly">
+                      {point}
+                    </li>
+                  ))}
+                </ul>
               </section>
             )}
           </article>
@@ -155,13 +157,13 @@ export default async function PublicQuestionPage({ params }: PageProps) {
           <aside className="grid gap-4 xl:sticky xl:top-20">
             <PublicQuestionComments questionId={item.id} initialComments={comments} />
 
-            <section className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
+            <section className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 lk-readonly">
               <div className="text-sm font-black text-[color:var(--ink-1)]">参与会沉淀成你的判断资产</div>
-              <div className="mt-3 grid gap-2 text-xs leading-5 text-[color:var(--ink-4)]">
-                <div className="rounded-[var(--radius)] bg-[color:var(--bg-sunken)] p-3">1. 评价这个公开命例：同意、反例、补充时间点都可以。</div>
-                <div className="rounded-[var(--radius)] bg-[color:var(--bg-sunken)] p-3">2. WorldYi 会结合上下文克制回应，不做绝对断语。</div>
-                <div className="rounded-[var(--radius)] bg-[color:var(--bg-sunken)] p-3">3. 留言会带上主题标签，后续用于理解你的关注点和复盘路径。</div>
-              </div>
+              <ol className="mt-3 grid gap-1.5 text-xs leading-5 text-[color:var(--ink-4)] list-decimal pl-5">
+                <li>评价这个公开命例：同意、反例、补充时间点都可以。</li>
+                <li>WorldYi 会结合上下文克制回应，不做绝对断语。</li>
+                <li>留言会带上主题标签，后续用于理解你的关注点和复盘路径。</li>
+              </ol>
             </section>
 
             <section className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">

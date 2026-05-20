@@ -108,4 +108,48 @@ describe('public growth feed', () => {
     expect(item?.answerSummary).not.toContain('财位');
     expect(item?.analysisPoints).toContain(item?.answerText);
   });
+
+  test('v5-D43: filters engineering-noise lines and stale past-year items from actionPoints', () => {
+    mockedDb.__mock.get.mockReturnValue({
+      id: 'q3',
+      question: '我应该怎么判断事业窗口？',
+      analysis: JSON.stringify({ intent: 'career-timing' }),
+      created_at: '2026-05-20 08:02:25',
+      report_id: 'r3',
+      pattern: JSON.stringify({ type: '比肩格', description: '结构偏强。' }),
+      bazi: JSON.stringify({ dayMaster: '庚' }),
+      fortune: JSON.stringify({ currentDaYun: '丁酉大运', currentLiuNian: '丙午流年' }),
+      advice: JSON.stringify({
+        overall: '在2016-2020阶段内，尝试小规模合作，验证市场反应',
+        career: {
+          overall: '优先参与与火木相关的项目或岗位，增强核心竞争力',
+          specific: ['2026年6月推进核心谈判'],
+        },
+      }),
+      report_analysis: JSON.stringify({
+        qualityAudit: {
+          summary: '本次质量审计摘要。',
+          recommendedActions: [
+            '优先补齐低分测算环节的 evidence/actions，再进入正式报告编排。',
+            '建议核对出生时间与地点信息已脱敏，并稍后升级重算。',
+          ],
+        },
+        feedbackLoop: {
+          correctionInsight: { fixes: ['重新校准 actions_set 项'], checkpoints: ['checkpoint:01'] },
+        },
+      }),
+      assistant_answer: '先确认窗口。',
+    });
+
+    const item = getPublicQuestionFeedItem('q3');
+
+    // 工程口水不应进 actionPoints
+    expect(item?.actionPoints.join('|')).not.toMatch(/evidence|actions|低分测算|升级重算|核对出生时间/);
+    // 过去年份窗口（2016-2020）不应进
+    expect(item?.actionPoints.join('|')).not.toContain('2016-2020');
+    // 正常含锚条目应保留
+    expect(item?.actionPoints).toContain('2026年6月推进核心谈判');
+    // qualityAudit.summary 不再做 reportSummary fallback
+    expect(item?.reportSummary || '').not.toContain('质量审计摘要');
+  });
 });
