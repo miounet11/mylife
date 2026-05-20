@@ -10,6 +10,7 @@ import {
 } from '@/lib/llm-provider-health';
 import { WORLD_YI_DELIVERY_DIRECTIVE, WORLD_YI_DOCTRINE_BRIEF } from '@/lib/world-yi-doctrine';
 import { buildPrompt, getPrompt } from '@/lib/prompts';
+import { sanitizeAdviceTiming } from '@/lib/advice-timing-filter';
 // 触发自注册
 import '@/lib/prompts/analyze/structure';
 import '@/lib/prompts/analyze/narrative';
@@ -172,9 +173,20 @@ export async function generateFortuneInterpretationFollowup(
     onProgress,
   });
 
-  return narrativePatch
+  const merged = narrativePatch
     ? mergeInterpretation(structureDraft, narrativePatch)
     : structureDraft;
+
+  // v5-D42: 对 advice.timing 做运行时兜底过滤，剔除"近期/将来"等无锚条目
+  const adviceCandidate = (merged as Record<string, unknown>).advice;
+  if (adviceCandidate && typeof adviceCandidate === 'object' && !Array.isArray(adviceCandidate)) {
+    const adviceObj = adviceCandidate as Record<string, unknown>;
+    if ('timing' in adviceObj) {
+      adviceObj.timing = sanitizeAdviceTiming(adviceObj.timing);
+    }
+  }
+
+  return merged;
 }
 
 async function executeReportPhase(params: {
