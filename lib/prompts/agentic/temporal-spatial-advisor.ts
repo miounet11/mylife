@@ -31,7 +31,7 @@ const PERSONA = [
 
 export const TEMPORAL_SPATIAL_ADVISOR_SPEC: PromptSpec<StructuredAgenticContext> = {
   id: 'agentic.temporal_spatial_advisor',
-  version: 'v2-2026-05-19',
+  version: 'v3-2026-05-20',
   persona: PERSONA,
   task: '把节气、流年、方位、地理气候、行业周期合并成一段"什么时候、在哪里、顺什么大势"的判断。',
   buildInput: (ctx) =>
@@ -57,17 +57,32 @@ export const TEMPORAL_SPATIAL_ADVISOR_SPEC: PromptSpec<StructuredAgenticContext>
     'macroSignal 必须显式包含 [CONTEXT_MACRO].industryCycle 中至少一个 industry 名称。',
     'windows[].label 必须来自 [ENGINE_KLINE_WINDOWS] 或 [ENGINE_DAYUN_WINDOWS]。',
     '不得使用工程占位词：ENGINE_*、CONTEXT_* 直接出现在文本里。',
+    // v5-D48 李继刚式时间锚约束（与 analyze.narrative v3-2026-05-20 同口径）
+    'actions 每条必须满足三段式：[时间锚] + [动词] + [对象]。',
+    '[时间锚] 只允许以下三类之一：',
+    '  (a) 公历年月：2026年5月 / 2026年5月初 / 2026年5月底（必须含"年"）；',
+    '  (b) 节气：立春 / 惊蛰 / 清明 / ... / 大寒（可加"前 N 天"或"后 N 天"）；',
+    '  (c) 流年/大运标签：丙午流年 / 丁未流年 / 庚午大运（必须与 [CONTEXT_TEMPORAL] 或 [ENGINE_DAYUN_WINDOWS] 字段一致）。',
+    '不允许在 actions 中出现模糊词作为时间锚：近期 / 将来 / 不久 / 适当时机 / 合适时机 / 合适窗口 / 一段时间内 / 短期 / 中期 / 长期 / 未来一段。',
+    'actions 数组 2~5 条（与 ACTIONS_CONTRACT 同口径）；每条不超过 40 字；一条只承载一个动作。',
   ],
   softPreferences: [
     'summary 60~90 字，把三段信号压成一句复合判断。',
     'highlights 每条带一个"信号 → 现实含义"的映射。',
     'actions 遵守统一契约；并区分"何时做"和"在哪里做"两个维度。',
+    // v5-D48 timing 风格（李继刚式）
+    'actions 优先用"公历年月/节气 + 动词 + 对象"句式，能精确到月就不要用季度。',
+    'actions 动词必须可执行：推进 / 收缩 / 复盘 / 谈判 / 签约 / 暂停 / 切换 / 观望，禁用"做"/"搞"/"弄"/"安排"等含糊词。',
+    '宁可省一条 action（保留 ACTIONS_CONTRACT 下限 2 条），也不要用"近期"等模糊词凑数。',
   ],
   antiPatterns: [
     '"天时地利人和俱备" 这类无信息量套话',
     '"风水大吉/大凶"',
     '"也许/可能/仅供参考"',
     'ENGINE_*、CONTEXT_*、anchorPoints、windows、solar_terms、macro_cycle 等英文工程词',
+    // v5-D48 时间口水反模式
+    '"近期推进"/"将来再看"/"合适时机"/"一段时间内"/"短期内"/"中长期" 等无锚点时间词',
+    '"X 月做 A 也做 B" 复合时间条目（一条只能承载一个动作）',
   ],
   outputSchemaDoc: getAgentSchemaDoc('temporal_spatial_advisor'),
   temperature: 0.4,
