@@ -6,10 +6,9 @@ import { buildAdminActionItems, buildAdminOperatingInsight, type AdminAnalyticsS
 import { getAdminQualityWorkboard } from '@/lib/admin-quality-workboard';
 import { requireAdminUser } from '@/lib/auth';
 import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
-import { analyticsOperations, reportJourneyEventOperations } from '@/lib/database';
+import { analyticsOperations } from '@/lib/database';
+import { getAdminAnalyticsAggregateSnapshot } from '@/lib/admin-analytics-snapshot';
 import { toKnowledgeEditorialCandidate } from '@/lib/knowledge-editorial';
-import { getProductExperienceAnalyticsSnapshot } from '@/lib/product-experience-analytics';
-import { listRealUserReportUpgradeCandidates } from '@/lib/real-user-report-upgrades';
 import { formatAttributionSourceLabel } from '@/lib/source-attribution';
 import { listToolDefinitions } from '@/lib/tools';
 import { formatDateTime } from '@/lib/utils';
@@ -35,10 +34,16 @@ const statLabels: Array<{ key: keyof ReturnType<typeof analyticsOperations.getOv
 
 export default async function AdminAnalyticsPage() {
   await requireAdminUser('/admin/analytics');
-  const overview = analyticsOperations.getOverview();
-  const reportJourney = reportJourneyEventOperations.getAnalyticsSnapshot(30);
-  const productExperience = getProductExperienceAnalyticsSnapshot(30);
-  const realUserUpgradeCandidates = listRealUserReportUpgradeCandidates(7, 8);
+  const {
+    overview,
+    reportJourney,
+    productExperience,
+    realUserUpgradeCandidates,
+    emailDeliveryRows,
+    attributedConversionRows,
+    interactionRows,
+    toolFunnelRows,
+  } = getAdminAnalyticsAggregateSnapshot();
   const {
     totals,
     eventsLast7d,
@@ -81,72 +86,6 @@ export default async function AdminAnalyticsPage() {
     systemHealth,
     ctaStrategyBreakdown = [],
   } = overview;
-  const emailDeliveryRows = analyticsOperations.rawQuery(`
-    SELECT event_name, page, meta, created_at
-    FROM analytics_events
-    WHERE event_name IN ('email_delivery_succeeded', 'email_delivery_failed')
-      AND datetime(created_at) >= datetime('now', '-7 days')
-    ORDER BY datetime(created_at) DESC
-    LIMIT 100
-  `) as Array<{
-    event_name: string;
-    page?: string | null;
-    meta?: string | null;
-    created_at?: string | null;
-  }>;
-  const attributedConversionRows = analyticsOperations.rawQuery(`
-    SELECT event_name, page, meta, created_at
-    FROM analytics_events
-    WHERE event_name IN ('tool_run_started', 'premium_service_requested')
-      AND datetime(created_at) >= datetime('now', '-30 days')
-      AND json_extract(meta, '$.attribution.source') IS NOT NULL
-    ORDER BY datetime(created_at) DESC
-    LIMIT 200
-  `) as Array<{
-    event_name: string;
-    page?: string | null;
-    meta?: string | null;
-    created_at?: string | null;
-  }>;
-  const interactionRows = analyticsOperations.rawQuery(`
-    SELECT event_name, page, meta, session_id, created_at
-    FROM analytics_events
-    WHERE datetime(created_at) >= datetime('now', '-30 days')
-      AND event_name IN (
-        'knowledge_article_viewed',
-        'case_article_viewed',
-        'tool_detail_viewed',
-        'content_card_clicked',
-        'content_quick_analyze_started',
-        'tool_run_started',
-        'tool_run_completed',
-        'tool_result_viewed',
-        'result_cta_clicked',
-        'premium_service_requested'
-      )
-    ORDER BY datetime(created_at) DESC
-    LIMIT 4000
-  `) as Array<{
-    event_name: string;
-    page?: string | null;
-    meta?: string | null;
-    session_id?: string | null;
-    created_at?: string | null;
-  }>;
-  const toolFunnelRows = analyticsOperations.rawQuery(`
-    SELECT event_name, page, meta, created_at
-    FROM analytics_events
-    WHERE event_name IN ('tool_detail_viewed', 'tool_run_started', 'tool_result_viewed', 'premium_service_requested')
-      AND datetime(created_at) >= datetime('now', '-30 days')
-      AND json_extract(meta, '$.toolSlug') IS NOT NULL
-    ORDER BY datetime(created_at) DESC
-    LIMIT 1200
-  `) as Array<{
-    event_name: string;
-    page?: string | null;
-    meta?: string | null;
-    created_at?: string | null;
-  }>;
   const emailHealth = await Promise.race([
     verifyMailConnection()
       .then((result) => ({

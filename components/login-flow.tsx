@@ -72,8 +72,14 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
       }
 
       setMessage('登录成功，正在跳转。');
-      router.replace(nextHref);
-      router.refresh();
+      // v5-D51 用浏览器原生跳转替代 router.replace，避免目标页 SSR 慢（如 /admin/analytics）
+      // 时整个登录流程被 RSC 阻塞，用户长时间看到"登录中…"
+      if (typeof window !== 'undefined') {
+        window.location.assign(nextHref);
+      } else {
+        router.replace(nextHref);
+        router.refresh();
+      }
     } catch {
       setError('网络异常，请稍后重试');
     } finally {
