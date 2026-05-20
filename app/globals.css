@@ -191,7 +191,8 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     cursor: default;
     user-select: text;
   }
-  .lk-readonly:hover { background-color: var(--bg-sunken); }
+  /* 纯展示元素 hover 时不改变任何视觉信号，避免被误判为可点击 */
+  .lk-readonly:hover { background-color: inherit; border-color: inherit; box-shadow: inherit; transform: none; }
   .lk-action { cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease; }
   .lk-action:hover { border-color: var(--brand); }
   .lk-action:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }

@@ -33,8 +33,8 @@ function TrustSignal({ icon, label, value, delay }: any) {
   const [isVisible, setIsVisible] = useState(false);
   
   return (
-    <div 
-      className="bg-[color:var(--paper)] rounded-lg p-6 shadow-[var(--shadow-card)] border-2 border-[color:var(--brand-soft-2)] hover:shadow-[var(--shadow-pop)] transition transform hover:scale-105 cursor-pointer"
+    <div
+      className="lk-readonly bg-[color:var(--paper)] rounded-lg p-6 shadow-[var(--shadow-card)] border-2 border-[color:var(--brand-soft-2)]"
       style={{ 
         animation: `fadeInUp 0.5s ease-out ${delay}ms both`,
         opacity: isVisible ? 1 : 0,
