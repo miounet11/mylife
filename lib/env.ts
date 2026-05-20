@@ -399,6 +399,15 @@ export function getAdminEmails() {
   return uniqueStrings(readString('ADMIN_EMAILS').split(',').map((item) => item.toLowerCase()));
 }
 
+/**
+ * v5-D50 admin 二次密码（在邮箱魔法码之上的二次校验）。
+ * 仅当邮箱 ∈ ADMIN_EMAILS 时强制校验；非 admin 邮箱完全不受影响。
+ * 返回空串视为"未配置"（开发环境默认行为：不强制二次密码）。
+ */
+export function getAdminLoginPassword() {
+  return readString('ADMIN_LOGIN_PASSWORD').trim();
+}
+
 export function getPremiumServiceAlertEmails() {
   return uniqueStrings([
     ...readString('PREMIUM_SERVICE_ALERT_EMAILS').split(',').map((item) => item.toLowerCase()),

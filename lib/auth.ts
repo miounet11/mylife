@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { db, userOperations } from '@/lib/database';
-import { getAdminEmails as getConfiguredAdminEmails, isProductionEnvironment } from '@/lib/env';
+import { getAdminEmails as getConfiguredAdminEmails, getAdminLoginPassword, isProductionEnvironment } from '@/lib/env';
 import { generateId } from '@/lib/utils';
 
 const SESSION_COOKIE_NAME = 'life_kline_session_id';
@@ -17,6 +17,14 @@ function getAdminEmails() {
 
 function isAdminEmail(email: string) {
   return getAdminEmails().has(normalizeEmail(email));
+}
+
+/**
+ * v5-D50 暴露给 API：该邮箱是否需要在登录时输入 admin 二次密码。
+ * 用于 /api/auth/request-code 响应里告知前端展示密码输入框。
+ */
+export function adminPasswordRequiredFor(email: string) {
+  return isAdminEmail(email) && Boolean(getAdminLoginPassword());
 }
 
 export function createLoginCode(email: string) {
@@ -157,13 +165,27 @@ export async function getAuthSession() {
 export async function verifyLoginCodeAndCreateSession({
   email,
   code,
+  adminPassword,
   currentUserId,
 }: {
   email: string;
   code: string;
+  adminPassword?: string;
   currentUserId?: string | null;
 }) {
   const normalizedEmail = normalizeEmail(email);
+
+  // v5-D50 admin 二次密码校验：仅对白名单邮箱生效，非 admin 邮箱完全跳过
+  if (isAdminEmail(normalizedEmail)) {
+    const expected = getAdminLoginPassword();
+    if (expected) {
+      const provided = (adminPassword || '').trim();
+      if (provided !== expected) {
+        return { success: false, error: '管理员二次密码不正确' };
+      }
+    }
+  }
+
   const row = db.prepare(`
     SELECT * FROM auth_codes
     WHERE email = ? AND code = ? AND purpose = ? AND used_at IS NULL

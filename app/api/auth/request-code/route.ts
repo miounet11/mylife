@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createLoginCode } from '@/lib/auth';
+import { adminPasswordRequiredFor, createLoginCode } from '@/lib/auth';
 import { shouldShowAuthPreviewCode } from '@/lib/env';
 import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
 import { validateEmail } from '@/lib/validators';
@@ -70,6 +70,8 @@ export async function POST(request: NextRequest) {
       expiresAt: result.expiresAt,
       deliveryConfigured: emailConfigured,
       previewCode: shouldShowAuthPreviewCode() ? result.code : undefined,
+      // v5-D50 通知前端展示 admin 二次密码输入框（仅 admin 邮箱命中）
+      adminPasswordRequired: adminPasswordRequiredFor(result.email),
     });
   } catch (error) {
     console.error('[API] 请求登录验证码失败:', error);

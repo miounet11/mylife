@@ -11,6 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const email = `${body.email || ''}`;
     const code = `${body.code || ''}`.trim();
+    const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : undefined;
 
     const error = validateEmail(email);
     if (error) {
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
     const result = await verifyLoginCodeAndCreateSession({
       email,
       code,
+      adminPassword,
       currentUserId,
     });
 

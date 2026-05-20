@@ -4,6 +4,7 @@ jest.mock('next/headers', () => ({
 
 jest.mock('@/lib/env', () => ({
   getAdminEmails: jest.fn(() => []),
+  getAdminLoginPassword: jest.fn(() => ''),
   isProductionEnvironment: jest.fn(() => false),
 }));
 
@@ -22,9 +23,12 @@ jest.mock('@/lib/database', () => ({
 
 import { cookies } from 'next/headers';
 import { db, userOperations } from '@/lib/database';
+import { getAdminEmails, getAdminLoginPassword } from '@/lib/env';
 import { verifyLoginCodeAndCreateSession } from '@/lib/auth';
 
 const mockedCookies = cookies as jest.MockedFunction<typeof cookies>;
+const mockedGetAdminEmails = getAdminEmails as jest.MockedFunction<typeof getAdminEmails>;
+const mockedGetAdminLoginPassword = getAdminLoginPassword as jest.MockedFunction<typeof getAdminLoginPassword>;
 const mockedDb = db as unknown as {
   prepare: jest.Mock;
   transaction: jest.Mock;
@@ -96,5 +100,94 @@ describe('auth guest merge', () => {
         path: '/',
       })
     );
+  });
+});
+
+// v5-D50 admin 二次密码二次校验
+describe('auth admin password gate', () => {
+  const cookieStore = {
+    get: jest.fn(),
+    set: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockedCookies.mockResolvedValue(cookieStore as any);
+    mockedDb.transaction.mockImplementation((fn: () => void) => fn);
+    mockedDb.prepare.mockImplementation((sql: string) => ({
+      get: () => {
+        if (sql.includes('SELECT * FROM auth_codes')) {
+          return {
+            id: 'auth_1',
+            expires_at: '2999-01-01T00:00:00.000Z',
+          };
+        }
+        return undefined;
+      },
+      run: jest.fn(),
+    }));
+    mockedUserOperations.getByEmail.mockReturnValue({
+      id: 'user_admin',
+      email: 'code@life-kline.com',
+    } as any);
+    mockedUserOperations.getById.mockReturnValue({
+      id: 'user_admin',
+      name: 'code',
+      email: 'code@life-kline.com',
+      role: 'admin',
+      email_verified: 1,
+    } as any);
+    mockedGetAdminEmails.mockReturnValue(['code@life-kline.com']);
+    mockedGetAdminLoginPassword.mockReturnValue('hao123321');
+  });
+
+  it('rejects admin login when password is missing', async () => {
+    const result = await verifyLoginCodeAndCreateSession({
+      email: 'code@life-kline.com',
+      code: '123456',
+    });
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('管理员二次密码');
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it('rejects admin login when password is wrong', async () => {
+    const result = await verifyLoginCodeAndCreateSession({
+      email: 'code@life-kline.com',
+      code: '123456',
+      adminPassword: 'wrong',
+    });
+    expect(result.success).toBe(false);
+    expect(cookieStore.set).not.toHaveBeenCalled();
+  });
+
+  it('accepts admin login when password matches', async () => {
+    const result = await verifyLoginCodeAndCreateSession({
+      email: 'code@life-kline.com',
+      code: '123456',
+      adminPassword: 'hao123321',
+    });
+    expect(result.success).toBe(true);
+    expect(cookieStore.set).toHaveBeenCalled();
+  });
+
+  it('does not require password for non-admin emails', async () => {
+    mockedUserOperations.getByEmail.mockReturnValue({
+      id: 'user_normal',
+      email: 'someone@example.com',
+    } as any);
+    mockedUserOperations.getById.mockReturnValue({
+      id: 'user_normal',
+      name: 'someone',
+      email: 'someone@example.com',
+      role: 'user',
+      email_verified: 1,
+    } as any);
+    const result = await verifyLoginCodeAndCreateSession({
+      email: 'someone@example.com',
+      code: '123456',
+    });
+    expect(result.success).toBe(true);
   });
 });
