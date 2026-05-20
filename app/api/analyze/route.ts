@@ -317,6 +317,8 @@ async function streamAnalyze(
       'Content-Type': 'application/x-ndjson; charset=utf-8',
       'Cache-Control': 'no-cache, no-transform',
       Connection: 'keep-alive',
+      // v5-D52: 显式禁用 nginx/CDN 中间代理 buffering，确保流式首字节即时下发
+      'X-Accel-Buffering': 'no',
     },
   });
 }

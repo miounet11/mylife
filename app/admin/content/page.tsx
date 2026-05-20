@@ -1,7 +1,6 @@
 import Link from 'next/link';
+import { AdminFooter, AdminHeader } from '@/components/admin-shell';
 import ContentAdminConsole from '@/components/content-admin-console';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
 import { requireAdminUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +10,7 @@ export default async function AdminContentPage() {
 
   return (
     <div className="page-shell">
-      <SiteHeader ctaHref="/admin/analytics" ctaLabel="经营后台" />
+      <AdminHeader />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.76fr_1.24fr]">
@@ -57,7 +56,7 @@ export default async function AdminContentPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <AdminFooter />
     </div>
   );
 }

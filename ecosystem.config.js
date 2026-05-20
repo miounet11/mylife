@@ -82,6 +82,13 @@ const nextApp = {
   max_memory_restart: '1500M',
   watch: false,
   restart_delay: 4000,
+  // v5-D52 (2026-05-20): 重启期 502 防护
+  // - kill_timeout 15s 给 Next.js 把 inflight 请求处理完（默认 1600ms 太短，长 LLM 请求会被腰斩）
+  // - listen_timeout 给冷启动充足时间，避免 PM2 误判后强杀
+  // - wait_ready: 依赖 Next.js 显式发 ready 才切流（next start 默认监听后即可，保守开启 = 否）
+  kill_timeout: 15000,
+  listen_timeout: 30000,
+  shutdown_with_message: true,
 };
 
 const backgroundWorkers = enableBackgroundWorkers ? [

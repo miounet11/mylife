@@ -1,6 +1,5 @@
 import Link from 'next/link';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
+import { AdminFooter, AdminHeader } from '@/components/admin-shell';
 import { mapCtaSourceFamilyLabel, mapCtaStrategyLabel } from '@/lib/cta-strategy';
 import { buildAdminActionItems, buildAdminOperatingInsight, type AdminAnalyticsSnapshot } from '@/lib/admin-analytics-insights';
 import { getAdminQualityWorkboard } from '@/lib/admin-quality-workboard';
@@ -653,7 +652,7 @@ export default async function AdminAnalyticsPage() {
 
   return (
     <div className="page-shell">
-      <SiteHeader ctaHref="/admin/content" ctaLabel="内容后台" />
+      <AdminHeader />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
         <section className="grid gap-8 lg:grid-cols-[0.78fr_1.22fr]">
@@ -2862,7 +2861,7 @@ export default async function AdminAnalyticsPage() {
         </section>
       </main>
 
-      <SiteFooter />
+      <AdminFooter />
     </div>
   );
 }
