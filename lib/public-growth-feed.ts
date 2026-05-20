@@ -466,8 +466,8 @@ function toPublicQuestionFeedItems(rows: PublicQuestionRow[], limit: number): Pu
       reportAnalysis.feedbackLoop?.validationInsights?.lessons,
       extractExplanationPoints(reportAnalysis.explanation),
       pattern.description,
-      fortune.currentDaYun ? `当前阶段：${fortune.currentDaYun}` : '',
-      fortune.currentLiuNian ? `流年参考：${fortune.currentLiuNian}` : '',
+      // v5-D46: 结构卡顶部已渲染 currentDaYun / currentLiuNian / pattern，
+      // analysisPoints 不再重复出"当前阶段：xxx / 流年参考：xxx"
       fortune.interaction,
     ]);
     const actionPoints = uniquePublicPoints([

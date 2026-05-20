@@ -152,4 +152,34 @@ describe('public growth feed', () => {
     // qualityAudit.summary 不再做 reportSummary fallback
     expect(item?.reportSummary || '').not.toContain('质量审计摘要');
   });
+
+  test('v5-D46: drops duplicate-with-structure-card prefixes from analysisPoints', () => {
+    mockedDb.__mock.get.mockReturnValue({
+      id: 'q4',
+      question: '我应该怎么判断事业窗口？',
+      analysis: JSON.stringify({ intent: 'career-timing' }),
+      created_at: '2026-05-20 08:02:25',
+      report_id: 'r4',
+      pattern: JSON.stringify({ type: '比肩格', description: '结构偏强。' }),
+      bazi: JSON.stringify({ dayMaster: '庚' }),
+      fortune: JSON.stringify({ currentDaYun: '丁酉大运', currentLiuNian: '丙午流年', interaction: '事业推进窗口已经打开。' }),
+      advice: JSON.stringify({ overall: '先推进一个可验证动作。' }),
+      report_analysis: JSON.stringify({
+        explanation: '当前主轴：比肩格。当前阶段：丁酉大运。顺势重点：火、木、水。',
+        judgmentBlocks: {
+          presentDiagnosis: { headline: '当前适合推进事业主线。', evidence: ['结构与阶段同向。'] },
+        },
+      }),
+      assistant_answer: '先确认窗口。',
+    });
+
+    const item = getPublicQuestionFeedItem('q4');
+    for (const point of item?.analysisPoints || []) {
+      expect(point.startsWith('当前主轴：')).toBe(false);
+      expect(point.startsWith('当前阶段：')).toBe(false);
+      expect(point.startsWith('顺势重点：')).toBe(false);
+      expect(point.startsWith('流年参考：')).toBe(false);
+    }
+    expect(item?.analysisPoints).toContain('当前适合推进事业主线。');
+  });
 });
