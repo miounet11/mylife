@@ -282,6 +282,24 @@ function uniquePublicPoints(values: unknown[], maxLength = 130) {
     const key = point.toLowerCase();
     if (!point || seen.has(key)) continue;
     if (isPublicNoiseLine(point)) continue;
+    // v5-D47: 去包含关系重复（当前条是已收点的子串，或反过来）
+    let containedByExisting = false;
+    for (let i = 0; i < points.length; i++) {
+      const existing = points[i];
+      if (existing.includes(point)) {
+        containedByExisting = true;
+        break;
+      }
+      if (point.includes(existing)) {
+        // 当前条更长且包含旧条，替换旧条
+        points[i] = point;
+        seen.delete(existing.toLowerCase());
+        seen.add(key);
+        containedByExisting = true;
+        break;
+      }
+    }
+    if (containedByExisting) continue;
     seen.add(key);
     points.push(point);
     if (points.length >= 5) break;

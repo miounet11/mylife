@@ -182,4 +182,36 @@ describe('public growth feed', () => {
     }
     expect(item?.analysisPoints).toContain('当前适合推进事业主线。');
   });
+
+  test('v5-D47: dedupes substring containment in analysisPoints/actionPoints', () => {
+    mockedDb.__mock.get.mockReturnValue({
+      id: 'q5',
+      question: '我应该怎么判断事业窗口？',
+      analysis: JSON.stringify({ intent: 'career-timing' }),
+      created_at: '2026-05-20 08:02:25',
+      report_id: 'r5',
+      pattern: JSON.stringify({ type: '比肩格', description: '结构偏强。' }),
+      bazi: JSON.stringify({ dayMaster: '庚' }),
+      fortune: JSON.stringify({ currentDaYun: '丁酉大运', interaction: '事业推进窗口已经打开。' }),
+      advice: JSON.stringify({ overall: '先推进核心动作。' }),
+      report_analysis: JSON.stringify({
+        // 第一条 explanation 段后跟一条 evidence 完全是它的子串，应只留长版
+        explanation: '主判断：核心结构稳定，先稳住主线再扩展规模。',
+        judgmentBlocks: {
+          presentDiagnosis: {
+            headline: '核心结构稳定，先稳住主线再扩展规模。',
+            evidence: ['先稳住主线再扩展规模'],
+          },
+        },
+      }),
+      assistant_answer: '先确认窗口。',
+    });
+
+    const item = getPublicQuestionFeedItem('q5');
+    const points = item?.analysisPoints || [];
+    // 短子串句不应单独存在
+    expect(points.includes('先稳住主线再扩展规模')).toBe(false);
+    // 包含它的长句应该至少有一条
+    expect(points.some((p) => p.includes('先稳住主线再扩展规模'))).toBe(true);
+  });
 });
