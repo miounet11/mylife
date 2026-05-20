@@ -176,9 +176,14 @@ export function toPublicReportFeedItem(report: FortuneRecord): PublicReportFeedI
 const PUBLIC_REPORT_FEED_TTL_MS = 30_000;
 const publicReportFeedCache = new Map<number, { value: PublicReportFeedItem[]; expiresAt: number }>();
 
+// v5-D54: questions stats cache（声明在 invalidate 前，避免 TDZ）
+const PUBLIC_QUESTION_STATS_TTL_MS = 30_000;
+let publicQuestionStatsCache: { value: PublicQuestionStats; expiresAt: number } | null = null;
+
 export function invalidatePublicGrowthFeedCache() {
   publicReportFeedCache.clear();
   publicQuestionFeedCache.clear();
+  publicQuestionStatsCache = null;
 }
 
 export function listPublicReportFeedItems(limit = 48): PublicReportFeedItem[] {
@@ -612,4 +617,50 @@ export function getPublicQuestionFeedItem(id: string): PublicQuestionFeedItem | 
 
   if (!row) return null;
   return toPublicQuestionFeedItems([row], 1)[0] || null;
+}
+
+// v5-D54 (2026-05-20): /questions 列表页元数据 — 总数 + 今日新增 + 近 24h 新增
+export interface PublicQuestionStats {
+  total: number;
+  today: number;
+  last24h: number;
+  last2h: number;
+}
+
+export function getPublicQuestionStats(): PublicQuestionStats {
+  const now = Date.now();
+  if (publicQuestionStatsCache && publicQuestionStatsCache.expiresAt > now) {
+    return publicQuestionStatsCache.value;
+  }
+  // questions.created_at 是 TEXT 'YYYY-MM-DD HH:MM:SS' UTC，必须用 datetime() 比较，
+  // 不能用 strftime('%s', ...)*1000，否则文本与大整数比较恒为 true。
+  const baseWhere = `
+    q.category = 'chat_user'
+      AND length(trim(q.question)) >= 8
+      AND length(trim(q.question)) <= 260
+      AND (f.id IS NULL OR f.is_public = 1)
+  `;
+  const row = db.prepare(`
+    SELECT
+      COUNT(*) AS total,
+      SUM(CASE WHEN datetime(q.created_at) >= date('now') THEN 1 ELSE 0 END) AS today,
+      SUM(CASE WHEN datetime(q.created_at) >= datetime('now','-1 day') THEN 1 ELSE 0 END) AS last24h,
+      SUM(CASE WHEN datetime(q.created_at) >= datetime('now','-2 hours') THEN 1 ELSE 0 END) AS last2h
+    FROM questions q
+    LEFT JOIN fortunes f ON f.id = json_extract(q.analysis, '$.reportId')
+    WHERE ${baseWhere}
+  `).get() as { total: number; today: number; last24h: number; last2h: number } | undefined;
+
+  const value: PublicQuestionStats = {
+    total: Number(row?.total || 0),
+    today: Number(row?.today || 0),
+    last24h: Number(row?.last24h || 0),
+    last2h: Number(row?.last2h || 0),
+  };
+  publicQuestionStatsCache = { value, expiresAt: now + PUBLIC_QUESTION_STATS_TTL_MS };
+  return value;
+}
+
+export function invalidatePublicQuestionStatsCache() {
+  publicQuestionStatsCache = null;
 }

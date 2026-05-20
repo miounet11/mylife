@@ -100,9 +100,31 @@ export default async function PublicQuestionPage({ params }: PageProps) {
 
         <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
           <article className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-7">
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-bold text-[color:var(--ink-4)]">
-              <FileQuestion className="h-3.5 w-3.5" />
-              {item.contextLabel}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-bold text-[color:var(--ink-4)]">
+                <FileQuestion className="h-3.5 w-3.5" />
+                {item.contextLabel}
+              </div>
+              {item.createdAt ? (() => {
+                const iso = item.createdAt.includes('T') ? item.createdAt : `${item.createdAt.replace(' ', 'T')}Z`;
+                const date = new Date(iso);
+                if (Number.isNaN(date.getTime())) return null;
+                const y = date.getUTCFullYear();
+                const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+                const d = String(date.getUTCDate()).padStart(2, '0');
+                const hh = String(date.getUTCHours()).padStart(2, '0');
+                const mm = String(date.getUTCMinutes()).padStart(2, '0');
+                const abs = `${y}-${m}-${d} ${hh}:${mm} UTC`;
+                return (
+                  <time
+                    dateTime={date.toISOString()}
+                    title={abs}
+                    className="inline-flex items-center rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--ink-4)]"
+                  >
+                    创建于 {abs}
+                  </time>
+                );
+              })() : null}
             </div>
             <h1 className="mt-4 text-2xl font-black leading-tight tracking-tight text-[color:var(--ink-1)] md:text-3xl">
               {item.title}
