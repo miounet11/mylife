@@ -2,10 +2,16 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2, FileQuestion, Layers3, MessageSquareText, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ChatMarkdown from '@/components/chat-markdown';
 import PublicQuestionComments from '@/components/public-question-comments';
+import PublicQuestionStructureCard from '@/components/public-question/structure-card';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { createBreadcrumbSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
+import {
+  extractPublicQuestionStructure,
+  shapeAnswerMarkdown,
+} from '@/lib/public-question-enrichment';
 import { listVisiblePublicQuestionComments } from '@/lib/public-question-comments';
 import { getPublicQuestionFeedItem, listPublicQuestionFeedItems } from '@/lib/public-growth-feed';
 
@@ -64,6 +70,12 @@ export default async function PublicQuestionPage({ params }: PageProps) {
 
   const relatedQuestions = listPublicQuestionFeedItems(8).filter((question) => question.id !== item.id).slice(0, 4);
   const comments = listVisiblePublicQuestionComments(item.id);
+  const structure = extractPublicQuestionStructure({
+    answerText: item.answerText,
+    analysisPoints: item.analysisPoints,
+    contextLabel: item.contextLabel,
+  });
+  const answerMarkdown = shapeAnswerMarkdown(item.answerText || item.answerSummary);
   const schemas = [
     createBreadcrumbSchema([
       { name: '首页', path: '/' },
@@ -101,8 +113,12 @@ export default async function PublicQuestionPage({ params }: PageProps) {
                 <Sparkles className="h-4 w-4 text-[color:var(--brand-strong)]" />
                 公开解析
               </div>
-              <p className="mt-3 whitespace-pre-line text-sm leading-7 text-[color:var(--ink-2)]">{item.answerText || item.answerSummary}</p>
+              <div className="mt-3 text-sm leading-7 text-[color:var(--ink-2)]">
+                <ChatMarkdown content={answerMarkdown} />
+              </div>
             </section>
+
+            <PublicQuestionStructureCard structure={structure} />
 
             {item.reportSummary && (
               <section className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
