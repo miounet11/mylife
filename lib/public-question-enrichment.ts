@@ -62,10 +62,13 @@ export function shapeAnswerMarkdown(input: string): string {
   const stripped = input.replace(/\r\n/g, '\n').trim();
 
   // 1. 关键引导词后换行（变成新段）
-  const headedSegments = stripped.replace(
-    /([。；])\s*(判断依据是|当前阶段建议|风险提醒|建议你在|顺势重点|当前主轴|当前阶段|接下来最容易起变化的是|这一段，?动作要提前收口)[：:]?/g,
-    '$1\n\n**$2**：'
-  );
+  // 注意：「建议你在」后面紧跟时间词，不强制加冒号，仅换行 + 加粗
+  const headedSegments = stripped
+    .replace(
+      /([。；])\s*(判断依据是|当前阶段建议|风险提醒|顺势重点|当前主轴|当前阶段|接下来最容易起变化的是|这一段，?动作要提前收口)[：:]?/g,
+      '$1\n\n**$2**：'
+    )
+    .replace(/([。；])\s*(建议你在)/g, '$1\n\n**$2**');
 
   // 2. 时间窗口加粗
   const timeMarked = headedSegments.replace(/(20\d{2}年\d{1,2}月|\d{1,2}月(?:初|底)?)/g, '**$1**');
@@ -89,16 +92,22 @@ export interface PublicQuestionStructure {
 
 const PATTERN_RE = /(正印格|偏印格|食神格|伤官格|正官格|七杀格|正财格|偏财格|比肩格|劫财格|羊刃格|建禄格|身弱格|身强格)/;
 const DA_YUN_RE = /([甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥])大运/;
-const FAVOR_RE = /(?:用神|喜神|顺势重点)[^。；\n]*?([金木水火土、和与]{2,12})/;
-const UNFAVOR_RE = /(?:忌神|防|不宜)[^。；\n]{0,12}([金木水火土]{1,3})/g;
+// 用神识别走双向：A. "用神/喜神/顺势重点" 后跟元素；B. 元素后跟 "为用神/为喜神"。
+const FAVOR_AFTER_RE = /(?:用神|喜神|顺势重点)[^。；\n]{0,4}?([金木水火土][金木水火土、和与]{0,8})/;
+const FAVOR_BEFORE_RE = /([金木水火土][金木水火土、和与]{0,8}?)\s*为?(?:用神|喜神)/;
+const UNFAVOR_RE = /(?:忌神|防|不宜)[^。；\n]{0,12}?([金木水火土]{1,3})/g;
 const WINDOW_RE = /(20\d{2}年\d{1,2}月(?:初|底)?|\d{1,2}月(?:初|底)?)[^。；\n]{0,32}/g;
 
 function pickElements(raw: string | undefined): string[] {
   if (!raw) return [];
-  return raw
-    .split(/[、和与]/)
-    .map((s) => s.trim())
-    .filter((s) => /^[金木水火土]$/.test(s));
+  // 既要支持「木、火」分隔写法，也要支持「水土/木火」连写
+  const tokens: string[] = [];
+  for (const seg of raw.split(/[、和与]/)) {
+    for (const ch of seg.trim()) {
+      if (/[金木水火土]/.test(ch) && !tokens.includes(ch)) tokens.push(ch);
+    }
+  }
+  return tokens;
 }
 
 export function extractPublicQuestionStructure(
@@ -112,7 +121,7 @@ export function extractPublicQuestionStructure(
 
   const patternMatch = blob.match(PATTERN_RE) || (parts.contextLabel || '').match(PATTERN_RE);
   const daYunMatch = blob.match(DA_YUN_RE);
-  const favorMatch = blob.match(FAVOR_RE);
+  const favorMatch = blob.match(FAVOR_AFTER_RE) || blob.match(FAVOR_BEFORE_RE);
   const unfavor: string[] = [];
   let m: RegExpExecArray | null;
   UNFAVOR_RE.lastIndex = 0;
