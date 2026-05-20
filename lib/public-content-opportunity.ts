@@ -2,6 +2,7 @@ import type { ContentGenerationInput } from '@/lib/content-generation';
 import { enqueueContentGenerationJob } from '@/lib/content-generation-jobs';
 import type { ManagedContentType } from '@/lib/content-store';
 import type { ContentGenerationJobRecord } from '@/lib/user-types';
+import { isPublicNoiseLine } from '@/lib/public-noise-filter';
 
 export type PublicContentOpportunitySourceType = 'question' | 'comment' | 'report';
 export type PublicContentOpportunityRisk = 'low' | 'medium' | 'high';
@@ -220,8 +221,11 @@ function buildSanitizedSignals(source: PublicContentOpportunitySource) {
     answer: sanitizePublicOpportunityText(source.answer, 220),
     summary: sanitizePublicOpportunityText(source.summary || source.reportSummary, 220),
     contextLabel: sanitizePublicOpportunityText(source.contextLabel, 60),
+    // v5-D45: 与 public-growth-feed 同款 isPublicNoiseLine 过滤，
+    // 避免工程口水/过去年份窗口流入 opportunity 评分与最终生成内容
     actionPoints: uniqueStrings(source.actionPoints || [])
       .map((item) => sanitizePublicOpportunityText(item, 90))
+      .filter((item) => item && !isPublicNoiseLine(item))
       .slice(0, 3),
   };
 }

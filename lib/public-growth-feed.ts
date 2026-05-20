@@ -1,5 +1,6 @@
 import { db, fortuneOperations } from '@/lib/database';
 import type { FortuneRecord } from '@/lib/user-types';
+import { isPublicNoiseLine } from '@/lib/public-noise-filter';
 
 const SITE_URL = 'https://www.life-kline.com';
 
@@ -287,40 +288,6 @@ function uniquePublicPoints(values: unknown[], maxLength = 130) {
   }
 
   return points;
-}
-
-// v5-D43: 公开页噪音行过滤
-// 1) 工程口水：evidence / actions / 脱敏 / 重算 / 补齐低分 / 升级重算 / 报告编排 等
-//    这些来源是 qualityAudit.recommendedActions 等运维字段，不该流到用户视图
-// 2) 过去年份窗口：如 "2016-2020" 在 2026 年仍展示给用户没有意义
-// 3) 含工程占位词：evidence_pack / actions_set / orchestrate 等英文 token
-const PUBLIC_NOISE_TOKENS = [
-  'evidence',
-  'actions',
-  'orchestrat',
-  'recommend',
-  'audit',
-  'fixes',
-  'checkpoint',
-  '低分测算',
-  '正式报告编排',
-  '稍后升级重算',
-  '升级重算',
-  '核对出生时间与地点',
-  '已脱敏，并稍后',
-];
-
-function isPublicNoiseLine(text: string): boolean {
-  const lower = text.toLowerCase();
-  if (PUBLIC_NOISE_TOKENS.some((t) => lower.includes(t.toLowerCase()))) return true;
-  // 完全落在过去的年份区间或单点年份（< 当前年 - 1）
-  const years = Array.from(text.matchAll(/(19|20)\d{2}/g)).map((m) => Number(m[0]));
-  if (years.length > 0) {
-    const currentYear = new Date().getUTCFullYear();
-    const maxYear = Math.max(...years);
-    if (maxYear < currentYear - 1) return true;
-  }
-  return false;
 }
 
 function extractExplanationPoints(explanation?: string) {

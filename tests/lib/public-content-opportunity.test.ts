@@ -175,4 +175,28 @@ describe('public content opportunity extraction', () => {
     }));
     expect(mockEnqueueContentGenerationJob).not.toHaveBeenCalled();
   });
+
+  test('v5-D45: filters engineering-noise and stale past-year actionPoints from opportunities', () => {
+    const opportunities = extractPublicContentOpportunities({
+      id: 'q_d45',
+      type: 'question',
+      isPublic: true,
+      href: '/questions/q_d45',
+      question: '我应该怎么判断 2027 年事业窗口？',
+      answer: '先确认资源、窗口和关键承诺，再推进事业动作。',
+      contextLabel: '比肩格 · 庚',
+      actionPoints: [
+        '优先补齐低分测算环节的 evidence/actions，再进入正式报告编排。',
+        '建议核对出生时间与地点信息已脱敏，并稍后升级重算。',
+        '在2016-2020阶段内，尝试小规模合作，验证市场反应',
+        '2026年6月推进核心谈判',
+      ],
+    });
+
+    expect(opportunities.length).toBeGreaterThan(0);
+    const allActionPoints = opportunities.flatMap((o) => o.sanitizedSignals.actionPoints || []);
+    expect(allActionPoints.join('|')).not.toMatch(/evidence|actions|低分测算|升级重算|核对出生时间/);
+    expect(allActionPoints.join('|')).not.toContain('2016-2020');
+    expect(allActionPoints).toContain('2026年6月推进核心谈判');
+  });
 });
