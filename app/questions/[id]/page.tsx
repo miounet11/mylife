@@ -74,6 +74,7 @@ export default async function PublicQuestionPage({ params }: PageProps) {
     answerText: item.answerText,
     analysisPoints: item.analysisPoints,
     contextLabel: item.contextLabel,
+    authoritative: item.structured,
   });
   const answerMarkdown = shapeAnswerMarkdown(item.answerText || item.answerSummary);
   const schemas = [

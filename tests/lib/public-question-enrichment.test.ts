@@ -95,4 +95,56 @@ describe('extractPublicQuestionStructure', () => {
     expect(s.patternName).toBeUndefined();
     expect(s.windows).toEqual([]);
   });
+
+  describe('v5-D41 authoritative source', () => {
+    it('prefers authoritative.patternType over text regex', () => {
+      const s = extractPublicQuestionStructure({
+        contextLabel: '正印格 · 丁',
+        answerText: '其实是七杀格的格局。',
+        authoritative: { patternType: '正印格' },
+      });
+      expect(s.patternName).toBe('正印格');
+    });
+
+    it('uses authoritative yongShen / xiShen with cleaning', () => {
+      const s = extractPublicQuestionStructure({
+        answerText: '完全没有提用神。',
+        authoritative: { yongShen: ['木'], xiShen: ['火'] },
+      });
+      expect(s.favorable).toEqual(expect.arrayContaining(['木', '火']));
+    });
+
+    it('uses authoritative timing as windows', () => {
+      const s = extractPublicQuestionStructure({
+        authoritative: {
+          timing: ['2026年5月推进重点项目', '2026年7月暂停决策'],
+        },
+      });
+      expect(s.windows.length).toBe(2);
+      expect(s.windows[0].when).toBe('2026年5月');
+      expect(s.windows[1].when).toBe('2026年7月');
+    });
+
+    it('falls back to "近期" when timing has no month', () => {
+      const s = extractPublicQuestionStructure({
+        authoritative: { timing: ['尽快推进重点项目'] },
+      });
+      expect(s.windows[0].when).toBe('近期');
+    });
+
+    it('passes through liuNian / dayMaster / directions / trend', () => {
+      const s = extractPublicQuestionStructure({
+        authoritative: {
+          currentLiuNian: '丙午',
+          dayMaster: '丁',
+          directions: ['南方', '艺术行业'],
+          trend: '稳中求进',
+        },
+      });
+      expect(s.liuNian).toBe('丙午');
+      expect(s.dayMaster).toBe('丁');
+      expect(s.directions).toEqual(['南方', '艺术行业']);
+      expect(s.trend).toBe('稳中求进');
+    });
+  });
 });

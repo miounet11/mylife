@@ -14,6 +14,21 @@ export interface PublicReportFeedItem {
   createdAt?: string;
 }
 
+export interface PublicQuestionStructured {
+  patternType?: string;
+  patternDescription?: string;
+  dayMaster?: string;
+  currentDaYun?: string;
+  currentLiuNian?: string;
+  yongShen?: string[];
+  xiShen?: string[];
+  trend?: string;
+  /** 抽自 advice.career.timing/marriage.timing 等领域 timing */
+  timing?: string[];
+  /** 抽自 advice.career.directions 等 */
+  directions?: string[];
+}
+
 export interface PublicQuestionFeedItem {
   id: string;
   reportId?: string | null;
@@ -29,6 +44,8 @@ export interface PublicQuestionFeedItem {
   analysisPoints: string[];
   actionPoints: string[];
   createdAt?: string;
+  /** v5-D41: 权威结构化字段，渲染层优先使用这些，正则抽取仅作 fallback */
+  structured?: PublicQuestionStructured;
 }
 
 function asText(value: unknown) {
@@ -315,6 +332,86 @@ function buildMismatchFallback(question: string, contextLabel: string) {
   return `围绕“${question}”，公开页检测到原始材料类型或回答内容与问题主题不一致，因此不展示可能错配的解析。这里只保留匿名后的安全边界说明：需要以用户实际提交的材料为准，先确认问题主题、材料类型和可见信息一致，再做${contextLabel}相关判断；不展示姓名、生日、出生时间、出生地等敏感信息。`;
 }
 
+// v5-D41: 把权威 JSON 字段（pattern/bazi/fortune/advice）转成 structured，
+// 供页面渲染层优先使用，避免正则抽取漏检 / 误判。
+function buildStructuredFields(parts: {
+  pattern: { type?: string; description?: string };
+  bazi: { dayMaster?: string };
+  fortune: { currentDaYun?: string; currentLiuNian?: string; interaction?: string; trend?: string };
+  advice: {
+    career?: { timing?: string; specific?: string[]; directions?: string[] };
+    wealth?: { timing?: string; specific?: string[]; directions?: string[] };
+    marriage?: { timing?: string; specific?: string[]; directions?: string[] };
+    health?: { timing?: string; specific?: string[]; directions?: string[] };
+    timing?: string[];
+    yongShen?: string[];
+    xiShen?: string[];
+  };
+}): PublicQuestionStructured | undefined {
+  const { pattern, bazi, fortune, advice } = parts;
+
+  // 元素 chip 白名单过滤（仅五行单字），避免脏数据穿透到 UI
+  const cleanElements = (raw?: string[]): string[] | undefined => {
+    if (!Array.isArray(raw)) return undefined;
+    const out: string[] = [];
+    for (const item of raw) {
+      const text = asText(item);
+      for (const ch of text) {
+        if (/[金木水火土]/.test(ch) && !out.includes(ch)) out.push(ch);
+      }
+    }
+    return out.length > 0 ? out : undefined;
+  };
+
+  // timing 收敛到字符串数组：兼容 advice.timing[] 和各领域 advice.X.timing
+  const timingPool: string[] = [];
+  const pushTiming = (v?: string | string[]) => {
+    if (!v) return;
+    if (Array.isArray(v)) v.forEach((s) => pushTiming(s));
+    else {
+      const text = sanitizePublicContent(v, 80);
+      if (text && !timingPool.includes(text)) timingPool.push(text);
+    }
+  };
+  pushTiming(advice.timing);
+  pushTiming(advice.career?.timing);
+  pushTiming(advice.wealth?.timing);
+  pushTiming(advice.marriage?.timing);
+  pushTiming(advice.health?.timing);
+
+  const directionPool: string[] = [];
+  const pushDirection = (v?: string[] | string) => {
+    if (!v) return;
+    if (Array.isArray(v)) v.forEach((s) => pushDirection(s));
+    else {
+      const text = sanitizePublicContent(v, 60);
+      if (text && !directionPool.includes(text)) directionPool.push(text);
+    }
+  };
+  pushDirection(advice.career?.directions);
+  pushDirection(advice.wealth?.directions);
+  pushDirection(advice.marriage?.directions);
+  pushDirection(advice.health?.directions);
+
+  const out: PublicQuestionStructured = {
+    patternType: pattern.type ? sanitizePublicContent(pattern.type, 30) : undefined,
+    patternDescription: pattern.description ? sanitizePublicContent(pattern.description, 180) : undefined,
+    dayMaster: bazi.dayMaster ? sanitizePublicContent(bazi.dayMaster, 8) : undefined,
+    currentDaYun: fortune.currentDaYun ? sanitizePublicContent(fortune.currentDaYun, 30) : undefined,
+    currentLiuNian: fortune.currentLiuNian ? sanitizePublicContent(fortune.currentLiuNian, 30) : undefined,
+    yongShen: cleanElements(advice.yongShen),
+    xiShen: cleanElements(advice.xiShen),
+    trend: fortune.trend ? sanitizePublicContent(fortune.trend, 120) : undefined,
+    timing: timingPool.length > 0 ? timingPool.slice(0, 4) : undefined,
+    directions: directionPool.length > 0 ? directionPool.slice(0, 4) : undefined,
+  };
+
+  const hasAny = Object.values(out).some((v) =>
+    Array.isArray(v) ? v.length > 0 : Boolean(v)
+  );
+  return hasAny ? out : undefined;
+}
+
 function toPublicQuestionFeedItems(rows: PublicQuestionRow[], limit: number): PublicQuestionFeedItem[] {
   const seen = new Set<string>();
   const items: PublicQuestionFeedItem[] = [];
@@ -414,6 +511,7 @@ function toPublicQuestionFeedItems(rows: PublicQuestionRow[], limit: number): Pu
       analysisPoints: publicAnalysisPoints,
       actionPoints,
       createdAt: row.created_at,
+      structured: buildStructuredFields({ pattern, bazi, fortune, advice }),
     });
 
     if (items.length >= limit) break;

@@ -85,9 +85,27 @@ export function shapeAnswerMarkdown(input: string): string {
 export interface PublicQuestionStructure {
   patternName?: string; // 主轴 / 格局
   daYun?: string; // 大运
+  liuNian?: string; // 流年
+  dayMaster?: string; // 日主
   favorable?: string[]; // 用神 / 喜神
   unfavorable?: string[]; // 忌神
   windows: Array<{ when: string; action: string }>; // 时间窗口
+  directions?: string[]; // 方向 / 方位 / 关键动作
+  trend?: string; // 整体走势一句话
+}
+
+/** v5-D41: 来自数据库 JSON 字段的权威结构化输入（优先于正则抽取） */
+export interface AuthoritativeStructuredInput {
+  patternType?: string;
+  patternDescription?: string;
+  dayMaster?: string;
+  currentDaYun?: string;
+  currentLiuNian?: string;
+  yongShen?: string[];
+  xiShen?: string[];
+  trend?: string;
+  timing?: string[];
+  directions?: string[];
 }
 
 const PATTERN_RE = /(正印格|偏印格|食神格|伤官格|正官格|七杀格|正财格|偏财格|比肩格|劫财格|羊刃格|建禄格|身弱格|身强格)/;
@@ -111,8 +129,15 @@ function pickElements(raw: string | undefined): string[] {
 }
 
 export function extractPublicQuestionStructure(
-  parts: { answerText?: string; analysisPoints?: string[]; contextLabel?: string }
+  parts: {
+    answerText?: string;
+    analysisPoints?: string[];
+    contextLabel?: string;
+    /** v5-D41: 优先使用权威字段，未提供时再走文本正则 */
+    authoritative?: AuthoritativeStructuredInput;
+  }
 ): PublicQuestionStructure {
+  const auth = parts.authoritative;
   const blob = [
     parts.contextLabel || '',
     parts.answerText || '',
@@ -131,25 +156,50 @@ export function extractPublicQuestionStructure(
     });
   }
 
+  // ---- 时间窗口：优先用权威 timing[]，否则正则抽 ----
   const windows: Array<{ when: string; action: string }> = [];
-  WINDOW_RE.lastIndex = 0;
-  let w: RegExpExecArray | null;
-  const seenWhen = new Set<string>();
-  while ((w = WINDOW_RE.exec(blob)) && windows.length < 4) {
-    const when = w[1];
-    if (seenWhen.has(when)) continue;
-    seenWhen.add(when);
-    // 取 when 之后到下一句号的片段作为 action 摘要
-    const after = blob.slice(w.index + w[0].length).split(/[。；\n]/)[0] || '';
-    const action = (w[0].slice(when.length) + after).trim().slice(0, 28).replace(/[，,]\s*$/, '');
-    windows.push({ when, action: action || '关注节奏' });
+  const WHEN_TIMING_RE = /(20\d{2}年\d{1,2}月(?:初|底)?|\d{1,2}月(?:初|底)?)/;
+  if (auth?.timing && auth.timing.length > 0) {
+    for (const t of auth.timing.slice(0, 4)) {
+      const w = t.match(WHEN_TIMING_RE);
+      if (w) {
+        const when = w[1];
+        const action = t.replace(when, '').replace(/^[，。：:、\s]+/, '').slice(0, 28) || '关注节奏';
+        windows.push({ when, action });
+      } else {
+        // 没有具体月份的就当作整段建议放最前
+        windows.push({ when: '近期', action: t.slice(0, 28) });
+      }
+    }
+  } else {
+    WINDOW_RE.lastIndex = 0;
+    let w: RegExpExecArray | null;
+    const seenWhen = new Set<string>();
+    while ((w = WINDOW_RE.exec(blob)) && windows.length < 4) {
+      const when = w[1];
+      if (seenWhen.has(when)) continue;
+      seenWhen.add(when);
+      const after = blob.slice(w.index + w[0].length).split(/[。；\n]/)[0] || '';
+      const action = (w[0].slice(when.length) + after).trim().slice(0, 28).replace(/[，,]\s*$/, '');
+      windows.push({ when, action: action || '关注节奏' });
+    }
   }
 
+  // ---- 用神 / 忌神：权威优先 ----
+  const favorable =
+    auth?.yongShen && auth.yongShen.length > 0
+      ? Array.from(new Set([...auth.yongShen, ...(auth.xiShen || [])]))
+      : pickElements(favorMatch?.[1]);
+
   return {
-    patternName: patternMatch ? patternMatch[1] : undefined,
-    daYun: daYunMatch ? `${daYunMatch[1]}大运` : undefined,
-    favorable: pickElements(favorMatch?.[1]),
+    patternName: auth?.patternType || (patternMatch ? patternMatch[1] : undefined),
+    daYun: auth?.currentDaYun || (daYunMatch ? `${daYunMatch[1]}大运` : undefined),
+    liuNian: auth?.currentLiuNian,
+    dayMaster: auth?.dayMaster,
+    favorable,
     unfavorable: unfavor,
     windows,
+    directions: auth?.directions,
+    trend: auth?.trend,
   };
 }
