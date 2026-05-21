@@ -10,13 +10,12 @@ import {
   UserRound,
   Wrench,
   BookOpenText,
+  Search,
   Sparkles,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AuthStatus from '@/components/auth-status';
 import ResultCtaLink from '@/components/result-cta-link';
-import { BrandLockup } from '@/components/ui/brand-lockup';
-import { Button } from '@/components/ui/button';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 
@@ -26,7 +25,6 @@ type NavItem = {
   icon: LucideIcon;
 };
 
-// 决策台导航 = 工作台 / 追问 / 工具 / 事件 / 档案 / 文档（6 项，与原一致）
 const primaryNavItems: NavItem[] = [
   { href: '/analyze', label: '工作台', icon: LayoutDashboard },
   { href: '/chat',    label: '结构追问', icon: MessageSquareText },
@@ -34,6 +32,15 @@ const primaryNavItems: NavItem[] = [
   { href: '/events',  label: '事件日历', icon: CalendarDays },
   { href: '/profile', label: '我的档案', icon: UserRound },
   { href: '/docs',    label: '文档', icon: BookOpenText },
+];
+
+const portalSubLinks = [
+  { href: '/world-yi',      label: '世界易' },
+  { href: '/knowledge',     label: '知识库' },
+  { href: '/cases',         label: '案例库' },
+  { href: '/reports',       label: '公开结果' },
+  { href: '/insights',      label: '洞察' },
+  { href: '/visual-assets', label: '图片库' },
 ];
 
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
@@ -59,125 +66,137 @@ export default function SiteHeader({
     href === '/' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/92 backdrop-blur-xl">
-      {/* 主行：brand · 主导航 · 用户态 + CTA */}
-      <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <BrandLockup size="md" withSubtitle ariaLabel="回到人生K线首页" />
-
-        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="核心产品导航">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] px-3 text-sm font-semibold transition',
-                  active
-                    ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
-                    : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
-                )}
+    <header className="sticky top-0 z-50">
+      {/* Row 1 : FB 蓝顶栏（chrome） */}
+      <div className="fb-chrome border-b border-[#1e3160]">
+        <div className="mx-auto flex h-[42px] max-w-7xl items-center gap-4 px-3 sm:px-4 lg:px-6">
+          <Link
+            href="/"
+            aria-label="回到人生K线首页"
+            className="flex shrink-0 items-center gap-2 text-white hover:opacity-90"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-white/12 text-[15px] font-black leading-none">
+              <span className="font-serif">K</span>
+            </span>
+            <span className="flex flex-col leading-none">
+              <span className="text-[15px] font-extrabold tracking-tight">
+                人生<span className="font-serif">K</span>线
+              </span>
+              <span
+                className="mt-0.5 text-[9px] font-semibold uppercase opacity-80"
+                style={{ letterSpacing: '0.18em' }}
               >
-                <Icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+                LIFE KLINE
+              </span>
+            </span>
+          </Link>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="hidden md:block">
-            <AuthStatus />
+          <form
+            action="https://www.google.com/search"
+            method="get"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="relative ml-1 hidden min-w-0 max-w-[420px] flex-1 md:block"
+            role="search"
+          >
+            <input type="hidden" name="q" value="site:life-kline.com" />
+            <input
+              type="text"
+              name="q"
+              placeholder="搜索世界易 / 八字 / 紫微 / 文章 / 案例"
+              className="h-7 w-full rounded-[2px] border border-[#29487d] bg-white px-2 pr-7 text-[13px] text-[color:var(--fb-ink-1)] placeholder:text-[color:var(--fb-ink-4)] focus:border-white focus:outline-none"
+              aria-label="搜索人生K线"
+            />
+            <Search className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[color:var(--fb-ink-3)]" />
+          </form>
+
+          <div className="ml-auto flex shrink-0 items-center gap-2 text-white">
+            <div className="hidden md:block">
+              <AuthStatus />
+            </div>
+            {ctaAnalytics ? (
+              <ResultCtaLink
+                href={ctaHref}
+                page={ctaAnalytics.page}
+                target={ctaAnalytics.target}
+                className="inline-flex h-7 items-center gap-1 rounded-[2px] border border-[#29487d] bg-[#4267b2] px-3 text-[13px] font-bold text-white hover:bg-[#365899]"
+                meta={{ surface: 'site_header', ...ctaAnalytics.meta }}
+              >
+                {ctaLabel}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </ResultCtaLink>
+            ) : (
+              <Link
+                href={ctaHref}
+                className="inline-flex h-7 items-center gap-1 rounded-[2px] border border-[#29487d] bg-[#4267b2] px-3 text-[13px] font-bold text-white hover:bg-[#365899]"
+              >
+                {ctaLabel}
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            )}
           </div>
-          {ctaAnalytics ? (
-            <ResultCtaLink
-              href={ctaHref}
-              page={ctaAnalytics.page}
-              target={ctaAnalytics.target}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
-              meta={{ surface: 'site_header', ...ctaAnalytics.meta }}
-            >
-              {ctaLabel}
-              <ArrowRight className="h-4 w-4" />
-            </ResultCtaLink>
-          ) : (
-            <Link
-              href={ctaHref}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
-            >
-              {ctaLabel}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          )}
         </div>
       </div>
 
-      {/* 中屏副栏：横向滚动主导航（< lg, ≥ md）*/}
-      <div className="scrollbar-none hidden border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] md:block lg:hidden">
-        <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 py-2 sm:px-6">
-          {primaryNavItems.map((item) => {
-            const Icon = item.icon;
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  'inline-flex shrink-0 items-center gap-1.5 rounded-[var(--radius-sm)] px-2.5 py-1.5 text-xs font-semibold transition',
-                  active
-                    ? 'bg-[color:var(--brand-soft-2)] text-[color:var(--brand-strong)]'
-                    : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)]',
-                )}
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {item.label}
-              </Link>
-            );
-          })}
+      {/* Row 2 : 白底主导航 */}
+      <div className="border-b border-[color:var(--fb-border)] bg-white">
+        <div className="scrollbar-none mx-auto flex h-10 max-w-7xl items-center gap-1 overflow-x-auto px-3 sm:px-4 lg:px-6">
+          <nav className="flex items-center gap-0.5" aria-label="核心产品导航">
+            {primaryNavItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'inline-flex h-9 shrink-0 items-center gap-1.5 px-3 text-[13px] font-semibold no-underline hover:no-underline',
+                    active
+                      ? 'border-b-2 border-[color:var(--fb-blue)] text-[color:var(--fb-blue-link-hover)]'
+                      : 'border-b-2 border-transparent text-[color:var(--fb-ink-2)] hover:text-[color:var(--fb-blue-link-hover)]',
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
         </div>
       </div>
 
-      {/* 副带：世界易入口 · 优先增长工具（仅大屏，独立 band） */}
-      <div className="hidden border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/72 lg:block">
-        <div className="mx-auto flex h-9 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/world-yi"
-              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]"
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              世界易系统
-            </Link>
-            <Link
-              href="/reports"
-              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]"
-            >
-              公开结果库
-            </Link>
-          </div>
-          <div className="scrollbar-none flex min-w-0 items-center gap-1 overflow-x-auto whitespace-nowrap">
-            {priorityGrowthHeaderLinks.map((item) => (
+      {/* Row 3 : 易学栏目副带 */}
+      <div className="border-b border-[color:var(--fb-border)] bg-[#f6f7f9]">
+        <div className="mx-auto flex h-9 max-w-7xl items-center gap-4 px-3 sm:px-4 lg:px-6">
+          <Sparkles className="h-3.5 w-3.5 shrink-0 text-[color:var(--fb-blue)]" aria-hidden />
+          <div className="scrollbar-none flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[12px]">
+            {portalSubLinks.map((item) => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    'shrink-0 font-semibold no-underline hover:underline',
+                    active
+                      ? 'text-[color:var(--fb-blue-link-hover)]'
+                      : 'text-[color:var(--fb-blue-link)]',
+                  )}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+            <span className="text-[color:var(--fb-ink-4)]">·</span>
+            {priorityGrowthHeaderLinks.slice(0, 3).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
+                className="shrink-0 font-semibold text-[color:var(--fb-ink-3)] no-underline hover:text-[color:var(--fb-blue-link)] hover:underline"
               >
                 {item.shortLabel}
               </Link>
             ))}
-            <Link
-              href="/visual-assets"
-              className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
-            >
-              图片库
-            </Link>
-            <Link
-              href="/docs/structured-chat"
-              className="inline-flex shrink-0 items-center rounded-[var(--radius-sm)] px-2 py-1 text-xs font-semibold text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
-            >
-              使用方法
-            </Link>
           </div>
         </div>
       </div>

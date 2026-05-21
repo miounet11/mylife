@@ -12,10 +12,13 @@ export default async function UnsubscribePage({ searchParams }: PageProps) {
 
   if (!email) {
     return (
-      <main className="min-h-screen flex items-center justify-center px-6">
-        <div className="max-w-md text-center">
-          <h1 className="text-2xl font-bold mb-4">无效的退订链接</h1>
-          <p className="text-sm text-[color:var(--ink-3)]">链接缺少 email 参数。</p>
+      <main className="flex min-h-screen items-center justify-center px-4 py-10">
+        <div className="fb-card w-full max-w-md p-6 text-center">
+          <h1 className="mb-2 text-[20px] font-bold text-[color:var(--fb-ink-1)]">无效的退订链接</h1>
+          <p className="text-[13px] text-[color:var(--fb-ink-3)]">链接缺少 email 参数。</p>
+          <a href="/" className="mt-4 inline-block text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
+            返回首页
+          </a>
         </div>
       </main>
     );
@@ -37,17 +40,23 @@ export default async function UnsubscribePage({ searchParams }: PageProps) {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-6 bg-[color:var(--bg)]">
-      <div className="max-w-md text-center">
-        <h1 className="text-2xl font-bold mb-4 text-[color:var(--ink-1)]">
+    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="fb-card w-full max-w-md p-6 text-center">
+        <h1 className="mb-2 text-[20px] font-bold text-[color:var(--fb-ink-1)]">
           {success ? '已退订' : '退订失败'}
         </h1>
-        <p className="text-sm text-[color:var(--ink-2)] leading-7">{message}</p>
+        <p className="text-[14px] leading-[1.5] text-[color:var(--fb-ink-2)]">{message}</p>
         {success && (
-          <p className="mt-4 text-xs text-[color:var(--ink-3)]">
+          <p className="mt-3 text-[12px] text-[color:var(--fb-ink-3)]">
             未来如果想再次收到提醒，可以在结果页底部重新订阅。
           </p>
         )}
+        <a
+          href="/"
+          className="mt-4 inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+        >
+          返回首页
+        </a>
       </div>
     </main>
   );

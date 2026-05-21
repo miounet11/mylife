@@ -98,7 +98,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="zh-CN">
+    <html lang="zh-CN" data-theme="fb2017">
       <body className="bg-[color:var(--bg)] font-sans text-[color:var(--ink)] antialiased selection:bg-[color:var(--accent-soft)] selection:text-[color:var(--ink)]">
         <BuildVersionGuard initialBuildId={runtimeBuildId} />
         <Script id="site-structured-data" type="application/ld+json" strategy="beforeInteractive">

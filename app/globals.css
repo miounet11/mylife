@@ -316,3 +316,213 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     scroll-behavior: auto !important;
   }
 }
+
+/* ============================================================
+   FB-2017 主题层（v5-D60）
+   作用：把 v4「米白决策台」整体改为 2017 年 Facebook 门户风。
+   作用域：<html data-theme="fb2017">（root layout 注入）。
+   回滚：删 layout 上的 data-theme="fb2017" 即可。
+   ============================================================ */
+html[data-theme="fb2017"] {
+  --font-sans:  Helvetica, Arial, "Lucida Grande", "PingFang SC",
+                "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-serif: Georgia, "Songti SC", "Source Han Serif SC", serif;
+  --font-mono:  Menlo, Consolas, "PingFang SC", monospace;
+
+  --fb-blue:           #3b5998;
+  --fb-blue-strong:    #2f477a;
+  --fb-blue-deep:      #1e3160;
+  --fb-blue-link:      #365899;
+  --fb-blue-link-hover:#1d2129;
+  --fb-bg:             #e9ebee;
+  --fb-card:           #ffffff;
+  --fb-border:         #dddfe2;
+  --fb-border-strong:  #ccd0d5;
+  --fb-ink-1:          #1d2129;
+  --fb-ink-2:          #4b4f56;
+  --fb-ink-3:          #606770;
+  --fb-ink-4:          #8d949e;
+  --fb-action-bg:      #f5f6f7;
+  --fb-action-bg-hover:#ebedf0;
+  --fb-signal:         #f7b928;
+  --fb-success:        #42b72a;
+  --fb-alert:          #fa3e3e;
+
+  --bg:                var(--fb-bg);
+  --bg-elevated:       var(--fb-card);
+  --bg-sunken:         #dfe3ee;
+  --paper:             var(--fb-card);
+  --ink-1:             var(--fb-ink-1);
+  --ink-2:             var(--fb-ink-1);
+  --ink-3:             var(--fb-ink-2);
+  --ink-4:             var(--fb-ink-3);
+  --ink-5:             var(--fb-ink-4);
+  --ink-6:             #bec3c9;
+  --hairline:          var(--fb-border);
+  --hairline-strong:   var(--fb-border-strong);
+  --brand:             var(--fb-blue);
+  --brand-strong:      var(--fb-blue);
+  --brand-deep:        var(--fb-blue-deep);
+  --brand-soft:        rgba(59, 89, 152, 0.08);
+  --brand-soft-2:      rgba(59, 89, 152, 0.16);
+  --signal:            var(--fb-signal);
+  --signal-strong:     #c79014;
+  --signal-soft:       rgba(247, 185, 40, 0.14);
+  --data-up:           var(--fb-success);
+  --data-down:         var(--fb-alert);
+  --data-flat:         var(--fb-ink-3);
+  --env:               var(--fb-blue-link);
+  --env-soft:          rgba(54, 88, 153, 0.10);
+  --alert:             var(--fb-alert);
+  --alert-soft:        rgba(250, 62, 62, 0.10);
+
+  --radius-sm:         2px;
+  --radius:            3px;
+  --radius-md:         3px;
+  --radius-lg:         4px;
+  --shadow-card:       0 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--fb-border);
+  --shadow-pop:        0 2px 4px rgba(0, 0, 0, 0.10), 0 0 0 1px var(--fb-border-strong);
+
+  --ink:           var(--fb-ink-1);
+  --muted:         var(--fb-ink-3);
+  --line:          var(--fb-border);
+  --accent:        var(--fb-blue);
+  --accent-strong: var(--fb-blue);
+  --accent-soft:   rgba(59, 89, 152, 0.08);
+  --surface:       var(--fb-card);
+  --surface-strong:var(--fb-card);
+  --surface-soft:  #f5f6f7;
+}
+
+html[data-theme="fb2017"] body {
+  background: var(--fb-bg) !important;
+  background-attachment: initial;
+  color: var(--fb-ink-1);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.34;
+  -webkit-font-smoothing: antialiased;
+}
+
+html[data-theme="fb2017"] .page-shell::before { display: none !important; }
+
+html[data-theme="fb2017"] h1 { font-size: 24px; font-weight: 700; color: var(--fb-ink-1); letter-spacing: 0; }
+html[data-theme="fb2017"] h2 { font-size: 20px; font-weight: 700; color: var(--fb-ink-1); }
+html[data-theme="fb2017"] h3 { font-size: 16px; font-weight: 700; color: var(--fb-ink-1); }
+html[data-theme="fb2017"] h4 { font-size: 14px; font-weight: 700; color: var(--fb-ink-1); }
+
+html[data-theme="fb2017"] a { color: var(--fb-blue-link); }
+html[data-theme="fb2017"] a:hover { text-decoration: underline; color: var(--fb-blue-link-hover); }
+
+html[data-theme="fb2017"] .num,
+html[data-theme="fb2017"] [data-numeric="true"],
+html[data-theme="fb2017"] .tabular {
+  font-family: var(--font-sans);
+  font-variant-numeric: normal;
+  font-feature-settings: normal;
+}
+
+html[data-theme="fb2017"] ::selection {
+  background: rgba(59, 89, 152, 0.25);
+  color: var(--fb-ink-1);
+}
+
+html[data-theme="fb2017"] .fb-chrome   { background: var(--fb-blue); color: #fff; }
+html[data-theme="fb2017"] .fb-chrome a { color: #fff; }
+html[data-theme="fb2017"] .fb-chrome a:hover { text-decoration: none; opacity: 0.85; }
+html[data-theme="fb2017"] .fb-card {
+  background: var(--fb-card);
+  border: 1px solid var(--fb-border);
+  border-radius: 3px;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+}
+html[data-theme="fb2017"] .fb-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 28px; padding: 0 10px;
+  border: 1px solid var(--fb-border-strong);
+  border-radius: 2px;
+  background: var(--fb-action-bg);
+  color: var(--fb-ink-1);
+  font-size: 13px; font-weight: 700;
+  line-height: 1; cursor: pointer;
+}
+html[data-theme="fb2017"] .fb-btn:hover { background: var(--fb-action-bg-hover); text-decoration: none; }
+html[data-theme="fb2017"] .fb-btn-primary {
+  background: var(--fb-blue);
+  border-color: var(--fb-blue-strong);
+  color: #fff;
+}
+html[data-theme="fb2017"] .fb-btn-primary:hover { background: var(--fb-blue-strong); color: #fff; }
+html[data-theme="fb2017"] .fb-input {
+  height: 28px; padding: 0 8px;
+  border: 1px solid var(--fb-border-strong);
+  border-radius: 2px;
+  background: #fff;
+  font-size: 13px;
+}
+html[data-theme="fb2017"] .fb-input:focus {
+  outline: none; border-color: var(--fb-blue);
+  box-shadow: 0 0 2px rgba(59,89,152,0.4);
+}
+html[data-theme="fb2017"] .fb-divider { height: 1px; background: var(--fb-border); border: 0; }
+html[data-theme="fb2017"] .fb-section-title {
+  font-size: 12px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--fb-ink-3);
+}
+
+/* FB-2017 · 原子件精度修正 */
+html[data-theme="fb2017"] button.inline-flex.items-center.justify-center.gap-2 {
+  border-radius: 2px; font-weight: 700; letter-spacing: 0;
+}
+html[data-theme="fb2017"] .h-8.px-3.text-xs  { height: 26px; padding: 0 8px;  font-size: 12px; }
+html[data-theme="fb2017"] .h-10.px-4.text-sm { height: 28px; padding: 0 12px; font-size: 13px; }
+html[data-theme="fb2017"] .h-11.px-5.text-base { height: 32px; padding: 0 14px; font-size: 14px; }
+html[data-theme="fb2017"] .h-12.px-6.text-md  { height: 36px; padding: 0 16px; font-size: 14px; }
+
+html[data-theme="fb2017"] .text-xs.font-bold.uppercase {
+  text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 700;
+}
+
+html[data-theme="fb2017"] p.max-w-\[44rem\] {
+  font-size: 14px; line-height: 1.5; max-width: 640px; color: var(--fb-ink-2);
+}
+
+html[data-theme="fb2017"] .hover\:-translate-y-px:hover { transform: none; }
+html[data-theme="fb2017"] .shadow-\[var\(--shadow-pop\)\],
+html[data-theme="fb2017"] .hover\:shadow-\[var\(--shadow-pop\)\]:hover {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 0 0 1px var(--fb-border-strong);
+}
+html[data-theme="fb2017"] .shadow-\[0_0_0_3px_var\(--signal-soft\)\] {
+  box-shadow: 0 0 0 2px rgba(247,185,40,0.45);
+}
+
+html[data-theme="fb2017"] h1.text-3xl,
+html[data-theme="fb2017"] h1.text-4xl,
+html[data-theme="fb2017"] h1.md\:text-3xl,
+html[data-theme="fb2017"] h1.md\:text-4xl,
+html[data-theme="fb2017"] h1.md\:text-5xl,
+html[data-theme="fb2017"] h2.text-2xl,
+html[data-theme="fb2017"] h2.md\:text-2xl,
+html[data-theme="fb2017"] h2.md\:text-3xl {
+  font-size: 22px; font-weight: 700; line-height: 1.25; letter-spacing: 0;
+}
+
+html[data-theme="fb2017"] .font-black { font-weight: 700; }
+
+html[data-theme="fb2017"] .bg-gradient-to-r.bg-clip-text.text-transparent,
+html[data-theme="fb2017"] .bg-clip-text.text-transparent {
+  background: none !important;
+  -webkit-text-fill-color: var(--fb-ink-1);
+  color: var(--fb-ink-1);
+}
+
+html[data-theme="fb2017"] .backdrop-blur,
+html[data-theme="fb2017"] .backdrop-blur-sm,
+html[data-theme="fb2017"] .backdrop-blur-md,
+html[data-theme="fb2017"] .backdrop-blur-lg,
+html[data-theme="fb2017"] .backdrop-blur-xl,
+html[data-theme="fb2017"] .backdrop-blur-2xl {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
