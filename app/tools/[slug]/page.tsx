@@ -13,13 +13,12 @@ import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolBundlePanel from '@/components/tool-bundle-panel';
 import ToolCaseStoriesPanel from '@/components/tool-case-stories-panel';
-import ToolConversionPanel from '@/components/tool-conversion-panel';
+// v5-D57: 移除 ToolConversionPanel
 import ToolEditorialPanel from '@/components/tool-editorial-panel';
 import ToolJourneyPanel from '@/components/tool-journey-panel';
 import ToolLinkedContentPanel from '@/components/tool-linked-content-panel';
 import ToolMemoryPanel from '@/components/tool-memory-panel';
-import ToolPremiumDepthPanel from '@/components/tool-premium-depth-panel';
-import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
+// v5-D57 (2026-05-21): C 端移除 ToolPremiumDepthPanel + ToolPremiumRequestPanel
 import ToolRecommendations from '@/components/tool-recommendations';
 import ResultCtaLink from '@/components/result-cta-link';
 import ToolRunner from '@/components/tool-runner';
@@ -36,7 +35,7 @@ import {
   createPublicContentMetadata,
 } from '@/lib/public-content-seo';
 import { summarizeToolSessions } from '@/lib/tool-context';
-import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
+import { getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
 
 export async function generateMetadata({
   params,
@@ -94,7 +93,7 @@ export default async function ToolDetailPage({
     : latestReport;
   const recentSessions = userId ? toolSessionOperations.listByUser(userId, 5) : [];
   const memory = summarizeToolSessions(recentSessions, report, 5);
-  const premiumOffer = buildToolPremiumOffer(tool);
+  // v5-D57: 移除 premiumOffer
   const growthProfile = getToolGrowthProfile(tool.slug);
   const bundle = getToolBundleForSlug(tool.slug);
   const entrySource = resolvedSearchParams.source?.trim() || '';
@@ -330,9 +329,7 @@ export default async function ToolDetailPage({
               <div className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
                 免费版输出：{tool.freeOutputFields.join('、')}
               </div>
-              <div className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-xs leading-6 text-[color:var(--ink)]">
-                深测会补：{tool.premiumOutputFields.join('、')}
-              </div>
+              {/* v5-D57: 移除「深测会补」付费提示 */}
               <div className="text-xs font-bold text-[color:var(--brand-strong)] pt-2">更多入口</div>
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 flex flex-wrap gap-3 text-sm font-semibold">
                 <ResultCtaLink
@@ -435,12 +432,7 @@ export default async function ToolDetailPage({
                     <div className="mt-2 text-sm leading-6 text-[color:var(--ink)]">{item}</div>
                   </div>
                 ))}
-                {tool.premiumModules.slice(0, 2).map((item) => (
-                  <div key={item} className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
-                    <div className="text-sm font-semibold text-[color:var(--accent-strong)]">深测再展开</div>
-                    <div className="mt-2 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
-                  </div>
-                ))}
+                {/* v5-D57: 移除「深测再展开」付费 teaser */}
               </div>
 
               {growthProfile ? (
@@ -472,7 +464,7 @@ export default async function ToolDetailPage({
               ) : null}
 
               <ToolCaseStoriesPanel tool={tool} />
-              <ToolConversionPanel tool={tool} />
+              {/* v5-D57: 移除 ToolConversionPanel（付费结果预期） */}
               <ToolLinkedContentPanel tool={tool} page={`/tools/${tool.slug}`} />
 
               <div id="faq" className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-6">
@@ -512,14 +504,7 @@ export default async function ToolDetailPage({
                   </div>
                 </section>
               ) : null}
-              <ToolPremiumDepthPanel
-                tool={tool}
-                offer={premiumOffer}
-                reportId={report?.id}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-              />
-              <ToolPremiumRequestPanel tool={tool} reportId={report?.id} page={`/tools/${tool.slug}`} />
+              {/* v5-D57: 移除 ToolPremiumDepthPanel + ToolPremiumRequestPanel */}
               {bundle ? <ToolBundlePanel bundle={bundle} page={`/tools/${tool.slug}`} /> : null}
               <ToolRecommendations
                 report={report}

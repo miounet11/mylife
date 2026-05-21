@@ -12,17 +12,15 @@ import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolBundlePanel from '@/components/tool-bundle-panel';
 import ToolCaseStoriesPanel from '@/components/tool-case-stories-panel';
-import ToolConversionPanel from '@/components/tool-conversion-panel';
+// v5-D57 (2026-05-21): C 端移除 ToolConversionPanel / ToolPremiumDepthPanel / ToolPremiumRequestPanel
 import ToolEditorialPanel from '@/components/tool-editorial-panel';
 import ToolJourneyPanel from '@/components/tool-journey-panel';
 import ToolMemoryPanel from '@/components/tool-memory-panel';
-import ToolPremiumDepthPanel from '@/components/tool-premium-depth-panel';
-import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
 import ToolRecommendations from '@/components/tool-recommendations';
 import { summarizeToolSessions } from '@/lib/tool-context';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
 import { buildJourneyForTool } from '@/lib/surface-journeys';
-import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
+import { getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
@@ -60,7 +58,7 @@ export default async function ToolResultPage({
     : [];
   const quality = sessionMeta.quality || null;
   const conversion = sessionMeta.conversion || null;
-  const premiumOffer = buildToolPremiumOffer(tool);
+  // v5-D57: 移除 premiumOffer
   const growthProfile = getToolGrowthProfile(tool.slug);
   const bundle = getToolBundleForSlug(tool.slug);
   const journey = buildJourneyForTool(tool, { source: entrySource || null });
@@ -291,12 +289,7 @@ export default async function ToolResultPage({
                     <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-3">{item}</div>
                   </div>
                 ))}
-                {tool.premiumModules.map((item) => (
-                  <div key={item} className="rounded-[var(--radius-md)] border border-dashed border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 p-5">
-                    <div className="text-sm font-semibold text-[color:var(--accent-strong)]">继续付费可展开</div>
-                    <div className="mt-3 text-xs leading-6 text-[color:var(--ink)]">{item}</div>
-                  </div>
-                ))}
+                {/* v5-D57: 移除「继续付费可展开」teaser */}
               </div>
 
               <ToolJourneyPanel
@@ -309,21 +302,14 @@ export default async function ToolResultPage({
                 title="类似用户是怎么继续往下测的"
                 description="用案例快速看清后续链路怎么承接。"
               />
-              <ToolConversionPanel tool={tool} />
+              {/* v5-D57: 移除 ToolConversionPanel（付费结果预期） */}
               <SurfaceJourneyPanel
                 journey={journey}
                 title={toolResultJourneyCopy.title}
                 description={toolResultJourneyCopy.description}
                 badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
               />
-              <ToolPremiumDepthPanel
-                tool={tool}
-                offer={premiumOffer}
-                reportId={report?.id}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-              />
-              <ToolPremiumRequestPanel tool={tool} reportId={report?.id} page={`/tool-result/${session.id}`} />
+              {/* v5-D57: 移除 ToolPremiumDepthPanel + ToolPremiumRequestPanel */}
               {bundle ? <ToolBundlePanel bundle={bundle} page={`/tool-result/${session.id}`} /> : null}
               <ToolRecommendations
                 report={report}

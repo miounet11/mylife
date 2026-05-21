@@ -31,7 +31,6 @@ interface PageProps {
 import {
   eventOperations,
   fortuneOperations,
-  premiumServiceRequestOperations,
   reportUpgradeJobOperations,
   userOperations,
 } from '@/lib/database';
@@ -40,7 +39,6 @@ import SiteHeader from '@/components/site-header';
 import ResultPublicControls from '@/components/result-public-controls';
 import PublicReportInteractionPanel from '@/components/public-report-interaction-panel';
 import ReportEnginePanel from '@/components/report-engine-panel';
-import ReportPremiumServices from '@/components/report-premium-services';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
@@ -60,7 +58,6 @@ import {
   ReportHighlightsGrid,
   ValidationFeedbackHero,
 } from '@/components/report/report-deep-summary-blocks';
-import PremiumTeaser from '@/components/premium-teaser';
 import ReportFollowupAugmenterTrigger from '@/components/report-followup-augmenter-trigger';
 import { ReportSurface } from '@/components/report-surface';
 import ReportBlueprintCards from '@/components/report/report-blueprint-cards';
@@ -98,7 +95,6 @@ import { ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
-import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report-premium-services';
 import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
@@ -425,22 +421,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     expertInterpretation: result.expertInterpretation,
     yearlyTrendSnapshots: result.yearlyTrendSnapshots,
   });
-  const premiumServiceOffers = buildPremiumServiceOffers({
-    scenarioViews: result.scenarioViews,
-    monthlyWindows: result.monthlyWindows,
-    correctionInsight,
-  });
-  // v5-D1 (2026-05-08): 智能挑选最该 surfacing 的一个 offer
-  const primaryPremiumOffer = pickPrimaryPremiumOffer({
-    offers: premiumServiceOffers,
-    scenarioViews: result.scenarioViews,
-    monthlyWindows: result.monthlyWindows,
-    correctionInsight,
-  });
-  const initialPremiumRequests = canManage
-    ? premiumServiceRequestOperations.listByUserAndReport(currentUserId!, id, 6)
-    : [];
-  const initialPremiumEmail = `${currentUserRecord?.email || ''}`.trim();
+  // v5-D57 (2026-05-21): 移除 premium offers 计算（C 端不再展示付费 teaser/services）
   const publicName = getPublicDisplayName(result.basic.name);
   const fiveElements = result.fiveElements || {};
   const sortedElements = Object.entries(fiveElements).sort(
@@ -878,19 +859,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 <ReportValidationPanel section={reportV4Sections.validationLayer} />
               </div>
 
-              {/* v5-D1: 主报告读完后的专项服务 teaser
-                  根据 scenario / window / correction 智能选 1 个 offer */}
-              {primaryPremiumOffer ? (
-                <div className="mt-6">
-                  <PremiumTeaser
-                    reportId={id}
-                    offer={primaryPremiumOffer}
-                    anchorHref="#premium"
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                  />
-                </div>
-              ) : null}
+              {/* v5-D57 (2026-05-21): 移除 PremiumTeaser
+                  本周期方向：极致爽用 → 频次留存 → 邮箱长尾，C 端不再展示付费 teaser */}
 
               <PastPresentFutureRow
                 past={pastValidationBlock}
@@ -1063,26 +1033,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           </Suspense>
         </ResultDeferredSection>
 
-        <div className="mt-16">
-          <ResultDeferredSection
-            id="premium"
-            title="专项服务"
-            description="当主报告已经指出方向，这里承接更聚焦的专项判断和深度服务需求。"
-            delayMs={180}
-          >
-            <div className="scroll-mt-28">
-              <ReportPremiumServices
-                reportId={id}
-                canManage={canManage}
-                offers={premiumServiceOffers}
-                initialEmail={initialPremiumEmail}
-                initialRequests={initialPremiumRequests}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-              />
-            </div>
-          </ResultDeferredSection>
-        </div>
+        {/* v5-D57 (2026-05-21): 移除 ReportPremiumServices C 端入口（admin 后台仍可跟进） */}
 
         <div className="mt-16">
           <ResultDeferredSection

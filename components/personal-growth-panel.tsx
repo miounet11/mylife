@@ -126,21 +126,21 @@ export default function PersonalGrowthPanel({
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-5">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft)] bg-[color:var(--paper)] p-5">
+            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <BookOpen className="h-3 w-3" />
-              付费升级点
+              下一步可以测什么
             </div>
-            <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-6 text-[color:var(--signal-strong)]">
+            <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--brand-soft)] bg-[color:var(--brand-soft)] px-3 py-2 text-xs leading-6 text-[color:var(--brand-strong)]">
               {summary.primaryTool.premiumServiceLabel}
             </div>
             <TrackedLink
               href={summary.primaryTool.href}
               page={page}
-              target="personal_growth_paid_path"
-              className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-3 text-sm font-semibold text-[color:var(--ink-1)] hover:bg-[color:var(--signal-strong)] hover:text-white"
+              target="personal_growth_continue_tool"
+              className="mt-3 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-3 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
             >
-              从这个工具进入付费承接
+              继续往下测
               <ArrowRight className="h-4 w-4" />
             </TrackedLink>
           </div>

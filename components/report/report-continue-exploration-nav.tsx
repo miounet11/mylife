@@ -9,7 +9,6 @@
 import Link from 'next/link';
 import {
   CheckSquare,
-  Sparkles,
   BellRing,
   ListChecks,
   Wrench,
@@ -35,13 +34,7 @@ const ITEMS: Item[] = [
     desc: '把这份报告放回真实事件中复盘',
     Icon: CheckSquare,
   },
-  {
-    id: 'premium',
-    hash: '#premium',
-    label: '专项服务',
-    desc: '更聚焦的专项判断与深度服务',
-    Icon: Sparkles,
-  },
+  // v5-D57 (2026-05-21): 移除「专项服务」C 端入口
   {
     id: 'subscription',
     hash: '#subscription',

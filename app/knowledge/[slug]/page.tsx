@@ -22,7 +22,7 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import ToolCardLink from '@/components/tool-card-link';
-import ToolPremiumRequestPanel from '@/components/tool-premium-request-panel';
+// v5-D57 (2026-05-21): C 端移除 ToolPremiumRequestPanel
 import { appendSourceToHref, buildSourceCtaStrategy, buildSourceJourneyCopy } from '@/lib/source-context';
 import {
   getCaseStudies,
@@ -412,18 +412,15 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
             />
 
             {primaryTool ? (
-              <>
-                <ContentConversionPanel
-                  tool={primaryTool}
-                  page={`/knowledge/${article.slug}`}
-                  contentLabel="文章"
-                  contentTitle={article.title}
-                  source={pageSource}
-                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                  sourceFamily={sourceCtaStrategy.sourceFamily}
-                />
-                <ToolPremiumRequestPanel tool={primaryTool} page={`/knowledge/${article.slug}`} />
-              </>
+              <ContentConversionPanel
+                tool={primaryTool}
+                page={`/knowledge/${article.slug}`}
+                contentLabel="文章"
+                contentTitle={article.title}
+                source={pageSource}
+                ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                sourceFamily={sourceCtaStrategy.sourceFamily}
+              />
             ) : null}
 
             <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
