@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, BarChart3, FileText, Package, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, BarChart3, FileText, Package, Repeat2, ShieldCheck } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AuthStatus from '@/components/auth-status';
 import { cn } from '@/lib/utils';
@@ -14,6 +14,7 @@ type AdminNavItem = {
 };
 
 const adminNavItems: AdminNavItem[] = [
+  { href: '/admin/usage',            label: '频率留存',   icon: Repeat2 },
   { href: '/admin/analytics',        label: '经营分析',   icon: BarChart3 },
   { href: '/admin/content',          label: '内容后台',   icon: FileText },
   { href: '/admin/premium-services', label: '增值服务',   icon: Package },
@@ -29,7 +30,7 @@ export function AdminHeader() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Link
-            href="/admin/analytics"
+            href="/admin/usage"
             className="inline-flex items-center gap-2 text-sm font-black tracking-tight text-[color:var(--ink-1)]"
             aria-label="人生K线 管理后台"
           >
@@ -109,6 +110,7 @@ export function AdminFooter() {
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-2 px-4 py-6 text-xs text-[color:var(--ink-4)] sm:flex-row sm:items-center sm:px-6 lg:px-8">
         <div>© {year} 人生K线 · 管理后台 · 仅限授权管理员访问</div>
         <div className="flex items-center gap-3">
+          <Link href="/admin/usage" className="hover:text-[color:var(--ink-1)]">频率留存</Link>
           <Link href="/admin/analytics" className="hover:text-[color:var(--ink-1)]">经营分析</Link>
           <Link href="/admin/content" className="hover:text-[color:var(--ink-1)]">内容后台</Link>
           <Link href="/admin/premium-services" className="hover:text-[color:var(--ink-1)]">增值服务</Link>
