@@ -78,6 +78,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
       <main className="page-frame py-3 md:py-4" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
+        {/* HERO 区 */}
         {/* FB Messenger 2017 风工作区：白底 + 1px 灰边外框 */}
         <div
           className="overflow-hidden rounded-[3px] border border-[#dddfe2] bg-white"
