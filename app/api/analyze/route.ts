@@ -110,7 +110,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const data = await request.json() as AnalyzeInput;
+    // v5-D59 (2026-05-21): 空 body / 非法 JSON 走 400 而不是抛出
+    // 部分 bot/扫描器会 POST 空 body，原来会让 request.json() 抛 SyntaxError，
+    // 在流式响应未启动时表现为 nginx → upstream RST → 502。
+    let data: AnalyzeInput;
+    try {
+      data = await request.json() as AnalyzeInput;
+    } catch {
+      return NextResponse.json(
+        { success: false, error: '请求格式错误' },
+        { status: 400 }
+      );
+    }
     source = typeof data.source === 'string' ? data.source.trim() : '';
     toolSlug = typeof data.toolSlug === 'string' ? data.toolSlug.trim() : '';
     const validation = validateAnalyzeRequest(data);

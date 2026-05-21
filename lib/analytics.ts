@@ -74,7 +74,8 @@ export type AnalyticsEventName =
   | 'today_card_cta_clicked'
   | 'chat_fab_clicked'
   | 'chat_fab_dismissed'
-  | 'newsletter_bar_dismissed';
+  | 'newsletter_bar_dismissed'
+  | 'analyze_form_started';
 
 interface TrackEventInput {
   userId?: string | null;

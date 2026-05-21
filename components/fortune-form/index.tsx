@@ -15,6 +15,7 @@ import RelationPicker from './relation-picker';
 import SubmitButton from './submit-button';
 import { useAnalyzeSubmit } from './use-analyze-submit';
 import { clearAnalyzeDraft, readAnalyzeDraft } from '@/lib/analyze-draft';
+import { trackClientEvent } from '@/lib/analytics-client';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { type LocationOption } from '@/lib/location-engine';
 import {
@@ -275,6 +276,25 @@ export default function FortuneForm({
       }),
     [timeConfirmed, locationConfirmed, hasKnownBirthHour, hasKnownLocation, usesSolarTime]
   );
+  // v5-D59 (2026-05-21): 表单首次有效交互埋点
+  // 5h 漏斗 41 PV → 2 submitted（4.9%），需要拆段定位流失点：
+  //   pageview → form_started → submitted
+  // form_started = 用户至少把"时间"或"地点"两步中的一步确认了
+  const [formStartedTracked, setFormStartedTracked] = useState(false);
+  useEffect(() => {
+    if (formStartedTracked) return;
+    if (!timeConfirmed && !locationConfirmed) return;
+    setFormStartedTracked(true);
+    void trackClientEvent({
+      eventName: 'analyze_form_started',
+      page: typeof window !== 'undefined' ? window.location.pathname : '/analyze',
+      meta: {
+        first_step: timeConfirmed ? 'time' : 'location',
+        has_known_birth_hour: hasKnownBirthHour,
+        has_known_location: hasKnownLocation,
+      },
+    });
+  }, [timeConfirmed, locationConfirmed, formStartedTracked, hasKnownBirthHour, hasKnownLocation]);
   const progressSegments = useMemo(
     () =>
       buildProgressSegments({
