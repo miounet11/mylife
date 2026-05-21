@@ -7,8 +7,7 @@ import { MessageSquareText, X } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 
 // v5-D55 (2026-05-21): 右下角通栏 chat 入口
-// 5h 漏斗显示 chat_message_sent=1 / chat_page_viewed=5，入口埋得太深。
-// FAB + 一条文案条，所有页面共享，唯独在 /chat 自己 / /admin / 全屏交互页隐藏。
+// v5-D60 (2026-05-21): FB Messenger 2017 风圆形 FAB + Messenger 弹层
 const HIDE_PATTERNS: Array<RegExp | string> = [
   '/chat',
   /^\/admin(\/|$)/,
@@ -18,6 +17,7 @@ const HIDE_PATTERNS: Array<RegExp | string> = [
 
 const DISMISS_KEY = 'lk-chat-fab-dismissed-at';
 const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 3; // 关闭后 3 天再出
+const FB_BLUE = '#3b5998';
 
 function shouldHide(pathname: string | null) {
   if (!pathname) return true;
@@ -30,6 +30,7 @@ export default function ChatFab() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
+  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -79,36 +80,64 @@ export default function ChatFab() {
 
   return (
     <div
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(env(safe-area-inset-bottom),12px)] sm:justify-end sm:px-5"
+      className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom)', fontFamily: 'Helvetica, Arial, sans-serif' }}
       aria-live="polite"
     >
-      <div className="pointer-events-auto flex w-full max-w-[420px] items-stretch gap-0 overflow-hidden rounded-full border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] shadow-[0_10px_30px_-12px_rgba(0,0,0,0.25)] backdrop-blur sm:max-w-[360px]">
-        <Link
-          href={href}
-          onClick={onClick}
-          className="group flex flex-1 items-center gap-2 px-4 py-2.5 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--bg-sunken)]"
-          aria-label="打开结构追问"
-          data-analytics-target="chat_fab_link"
-        >
-          <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[color:var(--brand-strong)] text-white">
-            <MessageSquareText className="h-4 w-4" />
-          </span>
-          <span className="flex flex-col leading-tight">
-            <span className="text-[13px] font-black text-[color:var(--ink-1)]">向 WorldYi 追问一句</span>
-            <span className="text-[11px] font-medium text-[color:var(--ink-4)]">
+      {popoverOpen ? (
+        <div className="w-[280px] overflow-hidden rounded-[3px] border border-[#dddfe2] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.18)]">
+          <div
+            className="flex items-center justify-between px-3 py-2 text-[13px] font-bold text-white"
+            style={{ background: FB_BLUE }}
+          >
+            <span>WorldYi 追问</span>
+            <button
+              type="button"
+              onClick={() => setPopoverOpen(false)}
+              aria-label="收起"
+              className="inline-flex h-6 w-6 items-center justify-center rounded-[3px] text-white/90 hover:bg-white/15"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          </div>
+          <div className="px-3 py-3 text-[13px] leading-5 text-[#1d2129]">
+            <p className="font-semibold">向 WorldYi 追问一句</p>
+            <p className="mt-1 text-[12px] text-[#606770]">
               不用注册 · 直接问命理结构 / 阶段 / 时机
-            </span>
-          </span>
-        </Link>
-        <button
-          type="button"
-          onClick={dismiss}
-          aria-label="关闭追问入口（3 天内不再显示）"
-          className="inline-flex w-9 shrink-0 items-center justify-center border-l border-[color:var(--hairline)] text-[color:var(--ink-4)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
-        >
-          <X className="h-4 w-4" />
-        </button>
-      </div>
+            </p>
+            <div className="mt-3 flex items-center gap-2">
+              <Link
+                href={href}
+                onClick={onClick}
+                data-analytics-target="chat_fab_link"
+                className="fb-btn fb-btn-primary inline-flex flex-1 items-center justify-center px-3 py-1.5 text-[13px] font-bold"
+              >
+                打开对话
+              </Link>
+              <button
+                type="button"
+                onClick={dismiss}
+                className="fb-btn px-3 py-1.5 text-[12px] text-[#606770]"
+                aria-label="3 天内不再显示"
+              >
+                以后再说
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={() => setPopoverOpen((v) => !v)}
+        aria-label={popoverOpen ? '收起追问入口' : '打开追问入口'}
+        aria-expanded={popoverOpen}
+        data-analytics-target="chat_fab_toggle"
+        className="inline-flex h-14 w-14 items-center justify-center rounded-full text-white shadow-[0_4px_12px_rgba(0,0,0,0.25)] transition hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2"
+        style={{ background: FB_BLUE }}
+      >
+        {popoverOpen ? <X className="h-6 w-6" /> : <MessageSquareText className="h-6 w-6" />}
+      </button>
     </div>
   );
 }

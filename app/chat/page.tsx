@@ -1,32 +1,23 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense } from 'react';
-import { ArrowLeft, Compass, MessageSquareText, Sparkles } from 'lucide-react';
 
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import UpdatesStatusPanelWithQuery from '@/components/updates-status-panel-with-query';
 
-import { Card } from '@/components/ui/card';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { Inline } from '@/components/ui/inline';
-import { Stack } from '@/components/ui/stack';
-import { Tag } from '@/components/ui/tag';
-
 import { listChatIntentPresets, getChatIntentPreset } from '@/lib/chat-intent';
 import { buildChatHref, normalizeAttributionSource } from '@/lib/chat-entry';
 import { appendSourceToHref } from '@/lib/source-url';
 
+// v5-D60: FB Messenger 2017 风 chat 工作区
+// 左侧栏 260px（对话历史 / 上下文档案 / 推荐追问）+ 中央消息流 flex-1
+// 移动端 < md 隐藏左栏，靠 drawer 触发
+
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   loading: () => <ChatSkeleton />,
 });
-
-const doctrineCards: Array<[string, string]> = [
-  ['结构锚点', '先钉住这次问题到底卡在结构、阶段还是环境。'],
-  ['阶段窗口', '尽量把问题放到一个明确时间段里再问。'],
-  ['动作结论', '每轮追问最后都收敛成先做什么。'],
-];
 
 interface ChatPageProps {
   searchParams?: Promise<{
@@ -86,138 +77,91 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
       />
       <SiteHeader ctaHref="/analyze" ctaLabel="重新判断" />
 
-      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        {/* HERO 区 */}
-        <section className="mb-5 md:mb-6">
-          <Inline justify="between" align="end" wrap className="gap-4">
-            <Stack gap={3}>
-              <Eyebrow icon={<MessageSquareText className="h-3 w-3" />}>
-                结构追问 · 收敛成动作
-              </Eyebrow>
-              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                {intentPreset ? `${intentPreset.entryLabel}` : '直接把当前问题问清楚'}
-              </h1>
-              <Inline gap={2} wrap>
-                {reportId && (
-                  <Tag tone="brand" variant="soft" size="sm">
-                    报告 <span className="ml-1 font-mono">{reportId.slice(0, 8)}</span>
-                  </Tag>
-                )}
-                {eventId && (
-                  <Tag tone="env" variant="soft" size="sm">
-                    事件 <span className="ml-1 font-mono">{eventId.slice(0, 8)}</span>
-                  </Tag>
-                )}
-                <Tag tone={intentPreset ? 'signal' : 'default'} variant="soft" size="sm">
-                  {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
-                </Tag>
-              </Inline>
-            </Stack>
-
-            <Link
-              href={reportHref}
-              className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              {reportId ? '返回当前报告' : '查看我的档案'}
-            </Link>
-          </Inline>
-        </section>
-
-        {/* 双栏：聊天主区 + 右侧专项切换 */}
-        <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)] xl:items-start">
-          <Card variant="raised" padding="none" className="overflow-hidden">
-            <div id="chat-workbench">
-              <AIAssistantChat />
-            </div>
-          </Card>
-
-          <Stack gap={4} className="xl:sticky xl:top-32">
-            {/* 切换专项 */}
-            <Card variant="default" padding="md">
-              <Eyebrow icon={<Compass className="h-3 w-3" />} className="mb-3">
-                切换专项
-              </Eyebrow>
-              <Stack gap={1}>
-                {scopedIntentLinks.map((item) => {
-                  const active = item.key === intentPreset?.key;
-                  return (
-                    <Link
-                      key={item.key}
-                      href={item.href}
-                      className={
-                        active
-                          ? 'block rounded-[var(--radius)] border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-3 py-2 text-sm font-bold text-[color:var(--brand-strong)]'
-                          : 'block rounded-[var(--radius)] px-3 py-2 text-sm font-semibold text-[color:var(--ink-3)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]'
-                      }
-                    >
-                      {item.entryLabel}
-                    </Link>
-                  );
-                })}
-              </Stack>
-            </Card>
-
-            {/* 辅助入口 */}
-            <Card variant="sunken" padding="md">
-              <Eyebrow tone="muted" className="mb-3">辅助入口</Eyebrow>
-              <Stack gap={2}>
-                <Link
-                  href={reportHref}
-                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
-                >
-                  {reportId ? '返回当前结果页' : '返回我的档案'}
-                  <span className="text-[color:var(--ink-5)]">→</span>
-                </Link>
-                <Link
-                  href={eventsHref}
-                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
-                >
-                  管理关联事件
-                  <span className="text-[color:var(--ink-5)]">→</span>
-                </Link>
-                <Link
-                  href="/docs/structured-chat"
-                  className="inline-flex items-center justify-between text-sm font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand-strong)]"
-                >
-                  使用方法
-                  <span className="text-[color:var(--ink-5)]">→</span>
-                </Link>
-              </Stack>
-            </Card>
-
-            {/* 后续更新 */}
-            <Suspense fallback={<ChatUpdatePanelSkeleton />}>
-              <UpdatesStatusPanelWithQuery
-                compact
-                title="后续更新"
-                description="查看报告升级、月度提醒和订阅状态。"
+      <main className="page-frame py-3 md:py-4" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
+        {/* FB Messenger 2017 风工作区：白底 + 1px 灰边外框 */}
+        <div
+          className="overflow-hidden rounded-[3px] border border-[#dddfe2] bg-white"
+          style={{ minHeight: 'calc(100vh - 220px)' }}
+        >
+          <div className="grid h-full lg:grid-cols-[260px_1fr]">
+            {/* 桌面 lg+ 左侧栏 */}
+            <aside className="hidden border-r border-[#dddfe2] bg-[#f5f6f7] lg:flex lg:flex-col">
+              <ChatSidebar
+                intentKey={intentPreset?.key || ''}
+                intentLabel={intentPreset?.entryLabel || '自由结构追问'}
+                reportId={reportId}
+                eventId={eventId}
+                reportHref={reportHref}
+                eventsHref={eventsHref}
+                scopedIntentLinks={scopedIntentLinks}
               />
-            </Suspense>
-          </Stack>
-        </div>
+            </aside>
 
-        {/* 追问规则（折叠到下方） */}
-        <section className="mt-10">
-          <Eyebrow tone="muted" icon={<Sparkles className="h-3 w-3" />} className="mb-4">
-            追问的三个原则
-          </Eyebrow>
-          <div className="grid gap-3 md:grid-cols-3">
-            {doctrineCards.map(([title, description], index) => (
-              <Card key={title} variant="default" padding="md">
-                <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">
-                    {String(index + 1).padStart(2, '0')}
+            {/* 中央消息流 */}
+            <section
+              className="flex flex-col bg-white"
+              style={{ minHeight: 'calc(100vh - 220px)' }}
+            >
+              {/* 移动端 drawer 触发头条（lg 以下显示） */}
+              <div className="border-b border-[#dddfe2] bg-[#f5f6f7] px-3 py-2 lg:hidden">
+                <details>
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[13px] font-bold text-[#1d2129]">
+                    <span>
+                      {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
+                      {reportId ? <span className="ml-2 font-mono text-[11px] text-[#606770]">报告 {reportId.slice(0, 8)}</span> : null}
+                    </span>
+                    <span className="text-[12px] font-semibold text-[#3b5998]">展开</span>
+                  </summary>
+                  <div className="mt-2.5">
+                    <ChatSidebar
+                      intentKey={intentPreset?.key || ''}
+                      intentLabel={intentPreset?.entryLabel || '自由结构追问'}
+                      reportId={reportId}
+                      eventId={eventId}
+                      reportHref={reportHref}
+                      eventsHref={eventsHref}
+                      scopedIntentLinks={scopedIntentLinks}
+                    />
+                  </div>
+                </details>
+              </div>
+
+              {/* 桌面 chat 顶部条（标题 + 当前专项） */}
+              <div className="hidden items-center justify-between gap-3 border-b border-[#dddfe2] bg-white px-4 py-2 lg:flex">
+                <div className="flex items-center gap-2">
+                  <span
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-full text-white"
+                    style={{ background: '#3b5998' }}
+                  >
+                    <span className="text-[12px] font-bold">W</span>
                   </span>
-                  <h3 className="text-sm font-bold text-[color:var(--ink-1)]">{title}</h3>
+                  <div>
+                    <div className="text-[14px] font-bold text-[#1d2129]">WorldYi 结构追问</div>
+                    <div className="text-[11px] text-[#606770]">
+                      {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
-                  {description}
-                </p>
-              </Card>
-            ))}
+                <div className="flex items-center gap-1.5">
+                  {reportId ? (
+                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#1d2129]">
+                      报告 <span className="font-mono">{reportId.slice(0, 8)}</span>
+                    </span>
+                  ) : null}
+                  {eventId ? (
+                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#1d2129]">
+                      事件 <span className="font-mono">{eventId.slice(0, 8)}</span>
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col" id="chat-workbench">
+                <AIAssistantChat />
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
       </main>
 
       <SiteFooter />
@@ -225,18 +169,117 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
   );
 }
 
-function ChatSkeleton() {
+interface ChatSidebarProps {
+  intentKey: string;
+  intentLabel: string;
+  reportId: string;
+  eventId: string;
+  reportHref: string;
+  eventsHref: string;
+  scopedIntentLinks: Array<{ key: string; entryLabel: string; href: string }>;
+}
+
+function ChatSidebar({
+  intentKey,
+  intentLabel,
+  reportId,
+  eventId,
+  reportHref,
+  eventsHref,
+  scopedIntentLinks,
+}: ChatSidebarProps) {
   return (
-    <div className="space-y-3 p-5">
-      <div className="h-12 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-      <div className="h-80 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
-      <div className="h-12 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]" />
+    <div className="flex flex-col gap-3 p-3">
+      {/* 上下文档案 */}
+      <SidebarSection title="上下文档案">
+        <div className="space-y-1.5">
+          <Link
+            href={reportHref}
+            className="block rounded-[3px] border border-[#dddfe2] bg-white px-2.5 py-2 text-[12px] text-[#1d2129] hover:border-[#3b5998]"
+          >
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#606770]">报告</div>
+            <div className="mt-0.5 truncate font-semibold">
+              {reportId ? `报告 ${reportId.slice(0, 8)}` : '未绑定，点击查看档案'}
+            </div>
+          </Link>
+          <Link
+            href={eventsHref}
+            className="block rounded-[3px] border border-[#dddfe2] bg-white px-2.5 py-2 text-[12px] text-[#1d2129] hover:border-[#3b5998]"
+          >
+            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#606770]">事件</div>
+            <div className="mt-0.5 truncate font-semibold">
+              {eventId ? `事件 ${eventId.slice(0, 8)}` : '管理关联事件'}
+            </div>
+          </Link>
+          <Link
+            href="/docs/structured-chat"
+            className="block rounded-[3px] border border-[#dddfe2] bg-white px-2.5 py-2 text-[12px] font-semibold text-[#1d2129] hover:border-[#3b5998]"
+          >
+            使用方法
+          </Link>
+        </div>
+      </SidebarSection>
+
+      {/* 推荐追问 / 切换专项 */}
+      <SidebarSection title="推荐追问 · 切换专项">
+        <div className="space-y-1">
+          {scopedIntentLinks.map((item) => {
+            const active = item.key === intentKey;
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={
+                  active
+                    ? 'block rounded-[3px] border border-[#3b5998] bg-[#e7f3ff] px-2.5 py-1.5 text-[12px] font-bold text-[#365899]'
+                    : 'block rounded-[3px] border border-transparent px-2.5 py-1.5 text-[12px] font-semibold text-[#1d2129] hover:border-[#dddfe2] hover:bg-white'
+                }
+              >
+                {item.entryLabel}
+              </Link>
+            );
+          })}
+        </div>
+      </SidebarSection>
+
+      {/* 对话历史 / 后续更新 */}
+      <SidebarSection title="后续更新">
+        <Suspense fallback={<div className="h-24 animate-pulse rounded-[3px] bg-white border border-[#dddfe2]" />}>
+          <UpdatesStatusPanelWithQuery
+            compact
+            title="后续更新"
+            description="查看报告升级、月度提醒和订阅状态。"
+          />
+        </Suspense>
+      </SidebarSection>
+
+      <div className="text-[11px] leading-4 text-[#606770]">
+        <div className="font-bold text-[#1d2129]">追问的三个原则</div>
+        <ol className="mt-1 list-decimal space-y-0.5 pl-4">
+          <li>先钉住卡在结构、阶段还是环境。</li>
+          <li>把问题放到一个明确时间段。</li>
+          <li>每轮收敛成"先做什么"。</li>
+        </ol>
+      </div>
     </div>
   );
 }
 
-function ChatUpdatePanelSkeleton() {
+function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="h-40 animate-pulse rounded-[var(--radius-md)] bg-[color:var(--bg-sunken)]" />
+    <div>
+      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#606770]">{title}</div>
+      {children}
+    </div>
+  );
+}
+
+function ChatSkeleton() {
+  return (
+    <div className="space-y-3 p-4">
+      <div className="h-12 animate-pulse rounded-[3px] bg-[#f5f6f7]" />
+      <div className="h-80 animate-pulse rounded-[3px] bg-[#f5f6f7]" />
+      <div className="h-12 animate-pulse rounded-[3px] bg-[#f5f6f7]" />
+    </div>
   );
 }

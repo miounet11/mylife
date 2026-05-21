@@ -1,42 +1,17 @@
 'use client';
 
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import type { ChangeEvent, RefObject } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ArrowDown, Send, Sparkles } from 'lucide-react';
 import {
-  ArrowDown,
-  ArrowRight,
-  Bot,
-  CalendarClock,
-  Check,
-  CheckCircle2,
-  Compass,
-  Copy,
-  ImagePlus,
-  Paperclip,
-  Pencil,
-  Plus,
-  RotateCcw,
-  Send,
-  ShieldCheck,
-  Sparkles,
-  Trash2,
-  X,
-} from 'lucide-react';
-import {
-  buildChatEventDraft,
   type ChatContextEvent,
   type ChatCorrectionPrompt,
   type ChatExperienceContext,
   type ChatReportContext,
 } from '@/lib/chat-context';
-import { listChatIntentPresets } from '@/lib/chat-intent';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
-import ChatMarkdown from '@/components/chat-markdown';
 import TacitKnowledgeComposer from '@/components/tacit-knowledge-composer';
-import type { ReportActionSuggestion } from '@/lib/report-v2';
 import {
   areTacitKnowledgeInputsEqual,
   buildTacitKnowledgeSummary,
@@ -46,32 +21,14 @@ import {
 } from '@/lib/tacit-knowledge';
 import {
   type ChatContextState,
-  type ChatMaterialDisplay,
-  type ChatMaterialDraft,
-  type ChatMaterialKind,
   type ChatMessage,
-  type IntentPreset,
-  type SuggestedEventDraft,
   buildPreviousUserQuestionMap,
-  buildScopedChatHref,
   defaultWorldYiQuestions,
   findLatestScopedTacitContext,
-  formatChatTime,
-  formatFileSize,
   getIntentPreset,
-  getMaterialOption,
-  mapEventTypeLabel,
-  mapImpactLabel,
-  mapValidationLabel,
-  materialKindOptions,
-  maxInlineImageBytes,
-  maxMaterialCount,
-  readFileAsDataUrl,
   toMaterialPayload,
 } from '@/components/ai-assistant-chat/chat-helpers';
 import {
-  CorrectionPromptButton,
-  MaterialChip,
   QuickQuestionButton,
 } from '@/components/ai-assistant-chat/chat-buttons';
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
@@ -85,6 +42,7 @@ import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
 
 type ChatContextReport = ChatReportContext;
 
+// v5-D60: FB Messenger 2017 风消息流 + 底部 sticky 输入区
 export default function AIAssistantChat() {
   const searchParams = useSearchParams();
   const reportId = searchParams.get('reportId') || '';
@@ -151,17 +109,6 @@ export default function AIAssistantChat() {
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
   const intentPreset = getIntentPreset(intent);
-  const scopedIntentLinks = listChatIntentPresets().map((item) => ({
-    ...item,
-    href: buildScopedChatHref({
-      reportId: reportId || context?.report?.id || undefined,
-      eventId: eventId || context?.focusedEvent?.id || undefined,
-      intent: item.key,
-      source: source || undefined,
-      ctaStrategyKey: ctaStrategyKey || undefined,
-      sourceFamily: sourceFamily || undefined,
-    }),
-  }));
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
     eventId: eventId || context?.focusedEvent?.id || undefined,
@@ -536,58 +483,13 @@ export default function AIAssistantChat() {
     : quickQuestions;
 
   return (
-    <div className="flex h-full flex-col bg-transparent">
-      <div className="border-b border-white/60 bg-[color:var(--paper)] p-4 md:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-              <Bot className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-semibold text-[color:var(--ink)]">世界易结构追问器</h2>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {reportId || context?.report?.id ? (
-              <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                已绑定报告
-              </span>
-            ) : null}
-            {eventId || context?.focusedEvent?.id ? (
-              <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
-                已绑定事件
-              </span>
-            ) : null}
-            <span className="rounded-md bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--muted)]">
-              {intentPreset ? `专项 ${intentPreset.entryLabel}` : '自由结构追问'}
-            </span>
-          </div>
-        </div>
-
-        <details className="mt-3 rounded-lg border border-[color:var(--line)] bg-[color:var(--paper)]">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
-            切换专项
-            <span className="text-[color:var(--accent-strong)]">{intentPreset?.entryLabel || '自由结构追问'}</span>
-          </summary>
-          <div className="grid gap-2 border-t border-[color:var(--line)] p-3 sm:grid-cols-2">
-            {scopedIntentLinks.map((item) => (
-              <Link
-                key={item.key}
-                href={item.href}
-                className={`rounded-lg px-3 py-2 text-sm transition hover:-translate-y-0.5 ${
-                  item.key === intent ? 'bg-[color:var(--accent-soft)] font-semibold text-[color:var(--accent-strong)]' : 'bg-[color:var(--bg-elevated)] text-[color:var(--ink)]'
-                }`}
-              >
-                <div>{item.entryLabel}</div>
-              </Link>
-            ))}
-          </div>
-        </details>
-      </div>
-
-      <div className="relative flex-1">
-        <div ref={messagesScrollerRef} className="flex h-full flex-col space-y-3 overflow-y-auto p-4 md:p-5">
+    <div className="flex h-full flex-col bg-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
+      {/* 消息流区 */}
+      <div className="relative flex-1 min-h-0 bg-white">
+        <div
+          ref={messagesScrollerRef}
+          className="flex h-full flex-col gap-1.5 overflow-y-auto px-3 py-3 md:px-4"
+        >
           {context && (
             <ContextCard
               context={context}
@@ -601,35 +503,34 @@ export default function AIAssistantChat() {
           )}
 
           {error && (
-            <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-4 py-3 text-sm text-[color:var(--signal-strong)]">
+            <div className="rounded-[3px] border border-[#bd4c42] bg-[#fdecea] px-3 py-2 text-[13px] text-[#bd4c42]">
               {error}
             </div>
           )}
 
-          {loadingHistory && <div className="py-10 text-center text-sm text-[color:var(--muted)]">正在载入聊天记录...</div>}
+          {loadingHistory && (
+            <div className="py-10 text-center text-[13px] text-[#606770]">正在载入聊天记录...</div>
+          )}
 
-          {/* v5-B3 (2026-05-08) 进入聊天页第一条系统提示
-              当用户从结果页带 reportId 进入、还没说话时，明确告诉他：
-              这份报告是谁的、当前阶段是什么、可以问什么 */}
           {!loadingHistory && messages.length === 0 && context?.report ? (
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4 md:p-5">
-              <div className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] text-[color:var(--brand-strong)]">
-                  <Sparkles className="h-3.5 w-3.5" />
+            <div className="rounded-[3px] border border-[#3b5998] bg-[#e7f3ff] px-3 py-3">
+              <div className="flex items-start gap-2">
+                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] bg-white text-[#3b5998] border border-[#3b5998]">
+                  <Sparkles className="h-3 w-3" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-strong)]">
+                  <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#365899]">
                     系统已带上你的报告
                   </div>
-                  <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">
-                    这次对话是围绕 <span className="font-bold">{context.report.name || '你'}</span> 的报告展开的：
+                  <p className="mt-1.5 text-[13px] leading-5 text-[#1d2129]">
+                    这次对话围绕 <span className="font-bold">{context.report.name || '你'}</span> 的报告：
                     日主 <span className="font-mono font-bold">{context.report.dayMaster}</span>，
                     格局 <span className="font-mono font-bold">{context.report.pattern}</span>，
                     当前大运 <span className="font-mono font-bold">{context.report.currentDaYun}</span>。
-                    我已经把报告里的结构、阶段、五行、十神、近期窗口都加载到了上下文里——你可以直接问具体问题，不用再交代背景。
+                    报告里的结构、阶段、五行、十神、近期窗口都已加载到上下文里。
                   </p>
                   {visibleQuickQuestions.length > 0 ? (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
                       {visibleQuickQuestions.slice(0, 4).map((question) => (
                         <QuickQuestionButton
                           key={`hint-${question}`}
@@ -646,15 +547,12 @@ export default function AIAssistantChat() {
           ) : null}
 
           {!loadingHistory && messages.length === 0 && !context && (
-            <div className="space-y-4 rounded-[var(--radius)] bg-[color:var(--paper)] p-4 md:p-5">
-              <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-                  <Sparkles className="h-3 w-3" />
-                  推荐追问
-                </div>
+            <div className="space-y-3 rounded-[3px] border border-[#dddfe2] bg-white p-3">
+              <div className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#3b5998]">
+                <Sparkles className="h-3 w-3" />
+                推荐追问
               </div>
-
-              <div className="grid gap-2 md:grid-cols-2">
+              <div className="grid gap-1.5 md:grid-cols-2">
                 {visibleQuickQuestions.slice(0, 2).map((question) => (
                   <QuickQuestionButton
                     key={question}
@@ -691,7 +589,12 @@ export default function AIAssistantChat() {
 
           {isTyping && (
             <div className="flex justify-start">
-              <div className="rounded-[var(--radius-md)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--muted)]">正在整理回答，请稍候...</div>
+              <div
+                className="rounded-[18px] px-4 py-2 text-[13px] text-[#606770]"
+                style={{ background: '#f1f0f0' }}
+              >
+                正在整理回答...
+              </div>
             </div>
           )}
         </div>
@@ -700,21 +603,22 @@ export default function AIAssistantChat() {
           <button
             type="button"
             onClick={() => scrollToBottom('smooth')}
-            className="absolute bottom-4 right-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] shadow-[var(--shadow-card)] transition hover:border-[color:var(--brand)]"
+            className="fb-btn absolute bottom-3 right-3 inline-flex h-8 items-center gap-1 px-2.5 text-[12px] font-semibold text-[#1d2129] shadow-[0_2px_6px_rgba(0,0,0,0.12)]"
           >
-            <ArrowDown className="h-4 w-4" />
+            <ArrowDown className="h-3.5 w-3.5" />
             回到最新消息
           </button>
         ) : null}
       </div>
 
-      <div className="border-t border-white/60 bg-[color:var(--paper)] p-4 md:p-5">
+      {/* 底部输入区：sticky 白条 + 1px 灰边上分隔 */}
+      <div className="border-t border-[#dddfe2] bg-white px-3 py-2.5 md:px-4">
         <form
           onSubmit={(event) => {
             event.preventDefault();
             void sendQuestion(input);
           }}
-          className="space-y-3"
+          className="space-y-2"
         >
           <MaterialEvidenceComposer
             materials={materials}
@@ -755,13 +659,13 @@ export default function AIAssistantChat() {
             canRestore={canRestoreTacit}
           />
 
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-2">
             <div className="flex-1">
               <textarea
                 ref={inputRef}
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              onKeyDown={(event) => {
+                value={input}
+                onChange={(event) => setInput(event.target.value)}
+                onKeyDown={(event) => {
                   if (event.key === 'Enter' && !event.shiftKey) {
                     event.preventDefault();
                     if (input.trim() && !isTyping && !isAddingMaterial) {
@@ -769,25 +673,27 @@ export default function AIAssistantChat() {
                     }
                   }
                 }}
-                placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如“结合 2026.08 这个窗口，我该不该推进跳槽？”'}
+                placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如"结合 2026.08 这个窗口，我该不该推进跳槽？"'}
                 rows={2}
-                className="min-h-[56px] w-full resize-none rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-3 text-[color:var(--ink)] outline-none transition focus:border-[color:var(--accent)] focus:ring-4 focus:ring-[color:var(--accent-soft)]"
+                className="fb-input min-h-[40px] w-full resize-none px-3 py-2 text-[14px]"
                 disabled={isTyping}
               />
-              <div className="mt-2 flex flex-wrap items-center gap-2 px-1 text-xs text-[color:var(--muted)]">
-                {hasTacitContext ? (
-                  <span className="rounded-full bg-[color:var(--accent-soft)] px-2.5 py-1 font-semibold text-[color:var(--accent-strong)]">
+              {hasTacitContext ? (
+                <div className="mt-1 px-1">
+                  <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#3b5998]">
                     已带入默会信息
                   </span>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
             <button
               type="submit"
               disabled={!input.trim() || isTyping || isAddingMaterial}
-              className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[linear-gradient(135deg,var(--accent),var(--accent-strong))] text-white transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="发送"
+              className="fb-btn fb-btn-primary inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-3.5 w-3.5" />
+              发送
             </button>
           </div>
         </form>
@@ -795,4 +701,3 @@ export default function AIAssistantChat() {
     </div>
   );
 }
-

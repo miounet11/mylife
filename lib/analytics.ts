@@ -55,6 +55,8 @@ export type AnalyticsEventName =
   | 'chat_context_loaded'
   | 'chat_followup_clicked'
   | 'chat_event_saved'
+  | 'chat_fab_clicked'
+  | 'chat_fab_dismissed'
   | 'premium_service_requested'
   | 'premium_service_status_updated'
   | 'event_created'
@@ -72,8 +74,6 @@ export type AnalyticsEventName =
   | 'article_session_end'
   | 'today_card_viewed'
   | 'today_card_cta_clicked'
-  | 'chat_fab_clicked'
-  | 'chat_fab_dismissed'
   | 'newsletter_bar_dismissed'
   | 'analyze_form_started';
 

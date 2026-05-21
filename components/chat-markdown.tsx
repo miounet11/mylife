@@ -4,59 +4,61 @@ import ReactMarkdown from 'react-markdown';
 import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 
+// v5-D60: FB Messenger 2017 风 markdown 渲染（嵌在 AI 气泡 #f1f0f0 内）
+
 export default function ChatMarkdown({ content }: { content: string }) {
   const normalizedContent = normalizeChatMarkdown(content);
 
   return (
-    <div className="chat-markdown text-xs leading-6 text-[color:var(--ink)]">
+    <div className="chat-markdown text-[14px] leading-5 text-[#1d2129]">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkBreaks]}
         components={{
-          h1: ({ children }) => <h1 className="mt-5 text-xl font-bold text-[color:var(--ink)] first:mt-0">{children}</h1>,
-          h2: ({ children }) => <h2 className="mt-5 text-lg font-bold text-[color:var(--ink)] first:mt-0">{children}</h2>,
-          h3: ({ children }) => <h3 className="mt-4 text-base font-semibold text-[color:var(--ink)] first:mt-0">{children}</h3>,
-          p: ({ children }) => <p className="mt-3 first:mt-0">{children}</p>,
-          ul: ({ children }) => <ul className="mt-3 list-disc space-y-2 pl-5">{children}</ul>,
-          ol: ({ children }) => <ol className="mt-3 list-decimal space-y-2 pl-5">{children}</ol>,
+          h1: ({ children }) => <h1 className="mt-3 text-[16px] font-bold text-[#1d2129] first:mt-0">{children}</h1>,
+          h2: ({ children }) => <h2 className="mt-3 text-[15px] font-bold text-[#1d2129] first:mt-0">{children}</h2>,
+          h3: ({ children }) => <h3 className="mt-2.5 text-[14px] font-semibold text-[#1d2129] first:mt-0">{children}</h3>,
+          p: ({ children }) => <p className="mt-2 first:mt-0">{children}</p>,
+          ul: ({ children }) => <ul className="mt-2 list-disc space-y-1 pl-5">{children}</ul>,
+          ol: ({ children }) => <ol className="mt-2 list-decimal space-y-1 pl-5">{children}</ol>,
           li: ({ children }) => <li className="pl-1">{children}</li>,
           blockquote: ({ children }) => (
-            <blockquote className="mt-4 rounded-r-2xl border-l-4 border-[color:var(--accent)] bg-[color:var(--accent-soft)]/50 px-4 py-3 text-[color:var(--ink)]">
+            <blockquote className="mt-2.5 rounded-[3px] border-l-[3px] border-[#3b5998] bg-white px-3 py-2 text-[#1d2129]">
               {children}
             </blockquote>
           ),
-          hr: () => <hr className="my-4 border-[color:var(--line)]" />,
+          hr: () => <hr className="my-3 border-[#dddfe2]" />,
           a: ({ href, children }) => (
             <a
               href={href}
               target={href?.startsWith('http') ? '_blank' : undefined}
               rel={href?.startsWith('http') ? 'noreferrer' : undefined}
-              className="font-medium text-[color:var(--accent-strong)] underline underline-offset-4"
+              className="font-medium text-[#3b5998] hover:underline"
             >
               {children}
             </a>
           ),
           table: ({ children }) => (
-            <div className="mt-4 overflow-x-auto rounded-[var(--radius)] border border-[color:var(--line)]">
-              <table className="min-w-full border-collapse bg-[color:var(--paper)] text-left text-sm">{children}</table>
+            <div className="mt-2.5 overflow-x-auto rounded-[3px] border border-[#dddfe2]">
+              <table className="min-w-full border-collapse bg-white text-left text-[13px]">{children}</table>
             </div>
           ),
-          thead: ({ children }) => <thead className="bg-[color:var(--bg-elevated)]">{children}</thead>,
-          th: ({ children }) => <th className="border-b border-[color:var(--line)] px-3 py-2 font-semibold text-[color:var(--ink)]">{children}</th>,
-          td: ({ children }) => <td className="border-b border-[color:var(--line)] px-3 py-2 align-top text-[color:var(--ink)]">{children}</td>,
+          thead: ({ children }) => <thead className="bg-[#f5f6f7]">{children}</thead>,
+          th: ({ children }) => <th className="border-b border-[#dddfe2] px-2.5 py-1.5 font-semibold text-[#1d2129]">{children}</th>,
+          td: ({ children }) => <td className="border-b border-[#dddfe2] px-2.5 py-1.5 align-top text-[#1d2129]">{children}</td>,
           pre: ({ children }) => (
-            <pre className="mt-4 overflow-x-auto rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[#0e1714] px-4 py-4 font-mono text-[13px] leading-6 text-[#d8dfd9]">{children}</pre>
+            <pre className="mt-2.5 overflow-x-auto rounded-[3px] border border-[#dddfe2] bg-white px-3 py-2 font-mono text-[12px] leading-5 text-[#1d2129]">{children}</pre>
           ),
           code: ({ className, children }) => {
             const value = String(children).replace(/\n$/, '');
             const isBlock = Boolean(className?.includes('language-')) || value.includes('\n');
 
             return isBlock ? (
-              <code className="font-mono text-[13px] text-inherit">{children}</code>
+              <code className="font-mono text-[12px] text-inherit">{children}</code>
             ) : (
-              <code className="rounded bg-[color:var(--bg-sunken)] px-1.5 py-0.5 font-mono text-[13px] text-[color:var(--ink)]">{children}</code>
+              <code className="rounded-[3px] bg-white px-1 py-0.5 font-mono text-[12px] text-[#1d2129] border border-[#dddfe2]">{children}</code>
             );
           },
-          strong: ({ children }) => <strong className="font-semibold text-[color:var(--ink)]">{children}</strong>,
+          strong: ({ children }) => <strong className="font-semibold text-[#1d2129]">{children}</strong>,
         }}
       >
         {normalizedContent}
