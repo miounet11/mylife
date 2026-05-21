@@ -1,15 +1,11 @@
 import Link from 'next/link';
 import { ArrowRight, ChevronDown } from 'lucide-react';
-import { Card } from '@/components/ui/card';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { Stack } from '@/components/ui/stack';
 
 // v5-D9 (2026-05-17) 替换首页旧 4-Stat 段：用"示例预览 + FAQ"提高首屏说服力
+// v5-D60 (2026-05-21) 适配 FB 风三栏布局：放在中流卡片中，不再用 page-frame；
+//   取消左右双列，改为单列（中流宽度 540 不够双列），每张内卡用 FB 硬边 + 3px 圆角。
 // Why: 抽象数字（"3 层 / 600+ / 真太阳 / 可补全"）说服力低，访客更想看
 //      "我会拿到什么样的页面 + 我担心的问题有没有解释"。
-// How:
-//  - 左：示例预览，用一份脱敏报告卡片化展示结构 / 阶段 / 动作三层
-//  - 右：FAQ accordion 用原生 <details> 实现，无新依赖
 
 const SAMPLE_PREVIEW = {
   eyebrow: '示例预览',
@@ -56,63 +52,71 @@ const FAQ_ITEMS: Array<{ q: string; a: string }> = [
 
 export default function HomeSampleAndFaq() {
   return (
-    <section className="page-frame mt-10 md:mt-14">
-      <div className="grid gap-5 md:grid-cols-[1.05fr_0.95fr]">
-        {/* 左：示例预览 */}
-        <Card variant="default" padding="lg" className="bg-[color:var(--bg-elevated)]">
-          <Eyebrow tone="brand" className="mb-3">
-            {SAMPLE_PREVIEW.eyebrow}
-          </Eyebrow>
-          <h2 className="mb-4 text-lg font-black leading-snug text-[color:var(--ink-1)] md:text-xl">
+    <div className="flex flex-col gap-2" id="sample-faq">
+      {/* 示例预览卡 */}
+      <section className="fb-card overflow-hidden">
+        <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2">
+          <div className="fb-section-title">{SAMPLE_PREVIEW.eyebrow}</div>
+        </div>
+        <div className="px-4 py-3">
+          <h2 className="mb-3 text-[16px] font-bold leading-snug text-[color:var(--fb-ink-1)]">
             {SAMPLE_PREVIEW.headline}
           </h2>
-          <Stack gap={3}>
+          <div className="flex flex-col gap-2">
             {SAMPLE_PREVIEW.blocks.map((block) => (
               <div
                 key={block.tag}
-                className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4"
+                className="rounded-[3px] border border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2"
               >
-                <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--brand-strong)]">
+                <div className="inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 text-[10px] font-bold text-white">
                   {block.tag}
                 </div>
-                <div className="mt-2 text-sm font-bold text-[color:var(--ink-1)]">{block.title}</div>
-                <p className="mt-1 text-xs leading-6 text-[color:var(--ink-4)]">{block.body}</p>
+                <div className="mt-1.5 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
+                  {block.title}
+                </div>
+                <p className="mt-0.5 text-[12px] leading-[1.5] text-[color:var(--fb-ink-3)]">
+                  {block.body}
+                </p>
               </div>
             ))}
-          </Stack>
+          </div>
           <Link
             href={SAMPLE_PREVIEW.ctaHref}
-            className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--brand-strong)] hover:text-[color:var(--brand-deep)]"
+            className="mt-3 inline-flex items-center gap-1 text-[13px] font-semibold text-[color:var(--fb-blue-link)] hover:underline"
           >
             {SAMPLE_PREVIEW.ctaLabel}
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 w-3.5" />
           </Link>
-        </Card>
+        </div>
+      </section>
 
-        {/* 右：FAQ */}
-        <Card variant="default" padding="lg">
-          <Eyebrow tone="muted" className="mb-3">
-            填写前的 4 个问题
-          </Eyebrow>
-          <h2 className="mb-4 text-lg font-black leading-snug text-[color:var(--ink-1)] md:text-xl">
+      {/* FAQ 卡 */}
+      <section className="fb-card overflow-hidden">
+        <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2">
+          <div className="fb-section-title">填写前的 4 个问题</div>
+        </div>
+        <div className="px-4 py-3">
+          <h2 className="mb-3 text-[16px] font-bold leading-snug text-[color:var(--fb-ink-1)]">
             常见疑虑先看这里
           </h2>
-          <div className="space-y-2">
+          <div className="flex flex-col gap-1.5">
             {FAQ_ITEMS.map((item) => (
               <details
                 key={item.q}
-                className="group rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3 open:border-[color:var(--brand-soft-2)] open:bg-[color:var(--brand-tint)]/50"
+                className="group rounded-[3px] border border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2 open:bg-white"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-bold text-[color:var(--ink-1)]">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
                   <span>{item.q}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-[color:var(--ink-5)] transition-transform group-open:rotate-180" />
+                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[color:var(--fb-ink-4)] transition-transform group-open:rotate-180" />
                 </summary>
-                <p className="mt-2 text-xs leading-6 text-[color:var(--ink-3)]">{item.a}</p>
+                <p className="mt-2 text-[12px] leading-[1.6] text-[color:var(--fb-ink-2)]">
+                  {item.a}
+                </p>
               </details>
             ))}
           </div>
-        </Card>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   );
 }
