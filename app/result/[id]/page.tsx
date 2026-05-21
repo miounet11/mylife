@@ -641,7 +641,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     sourceFamily: sourceCtaStrategy.sourceFamily,
   });
   const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '报告状态', '天时地利人和'];
-  const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
+  const deferredSectionNames = ['可信报告', '订阅更新', '趋势图', '下一步', '延伸内容'];
   const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
   const enhancementStatusMessage = isEnhancementPending
     ? '当前先显示可读版，内容补全仍在继续，不需要反复刷新页面。'

@@ -13,6 +13,32 @@ interface Props {
 const GLOBAL_SUBSCRIBED_KEY = 'newsletter-subscribed';
 const LEGACY_STORAGE_KEY = 'timing-subscribe-state:';
 
+// v5-D58 (2026-05-21): 本周期产品宪法 = 不打断使用 + 邮件用于长期跟踪。
+// 访问计数节流：第 1/2 次访问报告页不弹订阅 bar，第 3 次以后才出。
+// 只数 unique reportId（同一份报告多次回访不重复计数）。
+const VISIT_KEY = 'lk-report-visited-ids';
+const VISIT_THRESHOLD = 3;
+const DISMISS_KEY = 'lk-timing-subscribe-dismissed-at';
+const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 关闭后 7 天再出
+
+function recordVisitAndCount(reportId: string): number {
+  try {
+    const raw = window.localStorage.getItem(VISIT_KEY);
+    const ids: string[] = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(ids)) return VISIT_THRESHOLD; // 数据坏了就放行
+    if (!ids.includes(reportId)) {
+      ids.push(reportId);
+      // 截断，最多记 50 个，避免无限增长
+      const trimmed = ids.slice(-50);
+      window.localStorage.setItem(VISIT_KEY, JSON.stringify(trimmed));
+      return trimmed.length;
+    }
+    return ids.length;
+  } catch {
+    return VISIT_THRESHOLD;
+  }
+}
+
 export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle');
@@ -27,6 +53,22 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
       localStorage.getItem(GLOBAL_SUBSCRIBED_KEY) === 'done' ||
       sessionStorage.getItem(LEGACY_STORAGE_KEY + reportId) === 'done';
     if (globalDone) {
+      setDismissed(true);
+      return;
+    }
+    // 最近 7 天内主动关掉过 → 不再显示
+    const dismissedAtRaw = localStorage.getItem(DISMISS_KEY);
+    if (dismissedAtRaw) {
+      const ts = Number.parseInt(dismissedAtRaw, 10);
+      if (Number.isFinite(ts) && Date.now() - ts < DISMISS_TTL_MS) {
+        setDismissed(true);
+        return;
+      }
+      localStorage.removeItem(DISMISS_KEY);
+    }
+    // v5-D58: N 次访问后才弹
+    const visitCount = recordVisitAndCount(reportId);
+    if (visitCount < VISIT_THRESHOLD) {
       setDismissed(true);
       return;
     }
@@ -52,6 +94,20 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
       </div>
     );
   }
+
+  const handleDismiss = () => {
+    try {
+      localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    } catch {
+      /* ignore */
+    }
+    setDismissed(true);
+    void trackClientEvent({
+      eventName: 'newsletter_bar_dismissed',
+      page: typeof window !== 'undefined' ? window.location.pathname : undefined,
+      meta: { surfaceKey, reportId, source: 'timing_subscribe_bar' },
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,6 +143,14 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-4 shadow-[0_-14px_34px_rgba(0,0,0,0.10)] md:bottom-6 md:right-6 md:left-auto md:w-[360px] md:rounded-[var(--radius-md)] md:border md:shadow-xl">
+      <button
+        type="button"
+        onClick={handleDismiss}
+        aria-label="关闭订阅入口（7 天内不再显示）"
+        className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full text-[color:var(--ink-4)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]"
+      >
+        ×
+      </button>
       <p className="text-sm font-bold text-[color:var(--ink-1)] mb-1">
         留邮箱，我们怕你错过这些时点
       </p>

@@ -118,7 +118,7 @@ export default function ReportStageProgress({
                         : 'bg-[color:var(--paper)] text-[color:var(--muted)]'
                   }`}
                 >
-                  {item.status === 'current' ? '当前' : item.status === 'completed' ? '已完成' : '待解锁'}
+                  {item.status === 'current' ? '当前' : item.status === 'completed' ? '已完成' : '未到'}
                 </span>
               </div>
               <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">{item.description}</div>
