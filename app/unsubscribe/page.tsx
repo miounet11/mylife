@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Link from 'next/link';
 import { emailSubscriptionOperations } from '@/lib/database';
 
 export const dynamic = 'force-dynamic';
@@ -16,9 +17,9 @@ export default async function UnsubscribePage({ searchParams }: PageProps) {
         <div className="fb-card w-full max-w-md p-6 text-center">
           <h1 className="mb-2 text-[20px] font-bold text-[color:var(--fb-ink-1)]">无效的退订链接</h1>
           <p className="text-[13px] text-[color:var(--fb-ink-3)]">链接缺少 email 参数。</p>
-          <a href="/" className="mt-4 inline-block text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
+          <Link href="/" className="mt-4 inline-block text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
             返回首页
-          </a>
+          </Link>
         </div>
       </main>
     );
@@ -51,12 +52,12 @@ export default async function UnsubscribePage({ searchParams }: PageProps) {
             未来如果想再次收到提醒，可以在结果页底部重新订阅。
           </p>
         )}
-        <a
+        <Link
           href="/"
           className="mt-4 inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
         >
           返回首页
-        </a>
+        </Link>
       </div>
     </main>
   );

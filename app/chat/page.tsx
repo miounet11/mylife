@@ -259,7 +259,7 @@ function ChatSidebar({
         <ol className="mt-1 list-decimal space-y-0.5 pl-4">
           <li>先钉住卡在结构、阶段还是环境。</li>
           <li>把问题放到一个明确时间段。</li>
-          <li>每轮收敛成"先做什么"。</li>
+          <li>每轮收敛成&ldquo;先做什么&rdquo;。</li>
         </ol>
       </div>
     </div>
