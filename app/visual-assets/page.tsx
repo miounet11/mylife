@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight, BookOpen, Boxes, Images, Route, Share2, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpen, Boxes, Route, Share2, Sparkles } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -125,39 +125,39 @@ export default function VisualAssetsPage() {
       <AnalyticsPageView eventName="knowledge_page_viewed" page="/visual-assets" meta={{ surfaceKey: 'visual_assets', count: visualAssets.length }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <section className="grid gap-8 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.96),rgba(245,236,222,0.9))] p-6 shadow-[0_24px_70px_rgba(47,32,14,0.08)] md:p-8 lg:grid-cols-[0.88fr_1.12fr] lg:items-center lg:p-10">
-          <div className="space-y-5">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <Images className="h-3.5 w-3.5" />
-              精选图片说明
-            </div>
-            <h1 className="text-4xl font-black leading-tight text-[color:var(--ink)] md:text-6xl">
+      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            图片说明库 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
               世界易图片说明库
             </h1>
-            <p className="text-sm leading-7 md:text-base md:leading-8 text-[color:var(--ink-4)]">
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               用图片看懂人生K线 / 世界易的判断路径。每张图都配有深度解读、相关工具和测算入口。
             </p>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/analyze" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]">
-                回到测算入口
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="/world-yi" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">理解世界易</Link>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">精选 {visualAssets.length} 张</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">主题 {groupedAssets.length} 组</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">深度解读</span>
             </div>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            {[
-              { label: '精选图片', value: `${visualAssets.length} 张` },
-              { label: '主题模块', value: `${groupedAssets.length} 组` },
-              { label: '深度解读', value: `${visualAssets.length} 篇` },
-            ].map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-                <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">{item.label}</div>
-                <div className="mt-3 text-2xl font-black text-[color:var(--ink)]">{item.value}</div>
-              </div>
-            ))}
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Link
+                href="/analyze"
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                回到测算入口
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href="/world-yi"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                理解世界易
+              </Link>
+            </div>
           </div>
         </section>
 

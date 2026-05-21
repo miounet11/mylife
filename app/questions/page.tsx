@@ -87,26 +87,35 @@ export default async function PublicQuestionsPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始免费测算" />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <MessageSquareText className="h-3 w-3" />
-              用户公开追问
-            </div>
-            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            用户公开追问 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
               真实用户在问什么 · 公开匿名追问集合
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               这里是用户实际发出的命理追问，全部匿名公开。每条都标注了创建时间，并尽可能保留关联的结构判断。
             </p>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">奇门</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">择日</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Link
+                href="/analyze"
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                生成我的免费报告
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
           </div>
-          <Link
-            href="/analyze"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
-          >
-            生成我的免费报告
-            <ArrowRight className="h-4 w-4" />
-          </Link>
         </section>
 
         <section className="mt-6 grid gap-4 md:grid-cols-4">

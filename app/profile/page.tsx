@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState } from 'react';
-import { ArrowRight, BellRing, BookOpenText, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
+import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -189,63 +189,67 @@ export default function ProfilePage() {
       />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        <section className="mb-6 md:mb-8">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-            <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-                <Sparkles className="h-3 w-3" />
-                我的档案
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            我的档案
+          </div>
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+                  恢复你的<span className="text-[color:var(--brand-strong)]">下一步</span>
+                </h1>
+                <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+                  续接你的最新报告、工具历史和事件反馈，从这里直接恢复上次没完成的判断任务。
+                </p>
               </div>
-              <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                恢复你的<span className="text-[color:var(--brand-strong)]">下一步</span>
-              </h1>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <ResultCtaLink
-                href={latestReportHref}
-                page="/profile"
-                target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
-                meta={{
-                  source: pageSource,
-                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                  sourceFamily: sourceCtaStrategy.sourceFamily,
-                  surface: 'profile_header',
-                  reportId: latestResultId || null,
-                }}
-              >
-                {latestResultId ? '打开最新报告' : '开始分析'}
-              </ResultCtaLink>
-              <ResultCtaLink
-                href={profileChatHref}
-                page="/profile"
-                target="profile_header_chat"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-                meta={{
-                  source: pageSource,
-                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                  sourceFamily: sourceCtaStrategy.sourceFamily,
-                  surface: 'profile_header',
-                  reportId: latestResultId || null,
-                }}
-              >
-                继续追问
-              </ResultCtaLink>
-              <ResultCtaLink
-                href="/docs/profile-history"
-                page="/profile"
-                target="profile_header_docs"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-                meta={{
-                  source: pageSource,
-                  ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                  sourceFamily: sourceCtaStrategy.sourceFamily,
-                  surface: 'profile_header',
-                }}
-              >
-                <BookOpenText className="h-4 w-4" />
-                使用方法
-              </ResultCtaLink>
+              <div className="flex flex-wrap gap-2 md:justify-end md:shrink-0">
+                <ResultCtaLink
+                  href={latestReportHref}
+                  page="/profile"
+                  target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
+                  className="inline-flex h-7 items-center rounded-[2px] bg-[color:var(--fb-blue)] px-3 text-[13px] font-bold text-white hover:bg-[color:var(--fb-blue-strong)] hover:no-underline"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_header',
+                    reportId: latestResultId || null,
+                  }}
+                >
+                  {latestResultId ? '打开最新报告' : '开始分析'}
+                </ResultCtaLink>
+                <ResultCtaLink
+                  href={profileChatHref}
+                  page="/profile"
+                  target="profile_header_chat"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_header',
+                    reportId: latestResultId || null,
+                  }}
+                >
+                  继续追问
+                </ResultCtaLink>
+                <ResultCtaLink
+                  href="/docs/profile-history"
+                  page="/profile"
+                  target="profile_header_docs"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                    surface: 'profile_header',
+                  }}
+                >
+                  使用方法
+                </ResultCtaLink>
+              </div>
             </div>
           </div>
         </section>

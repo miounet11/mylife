@@ -2,7 +2,6 @@ import { ArrowRight, Compass, LibraryBig, Network, Sparkles } from 'lucide-react
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentCardLink from '@/components/content-card-link';
 import PriorityDisclosure from '@/components/priority-disclosure';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
@@ -72,49 +71,49 @@ export default function KnowledgeTopicsPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
-              <Sparkles className="h-3.5 w-3.5" />
-              自动专题地图
-            </>
-          )}
-          title="专题地图"
-          description="把知识库按主题重新组织，帮助你从零散文章进入一条可连续阅读的判断路径。"
-          hint="如果你的目标不是学习方法，而是得到自己的结果，可以直接回到分析入口。"
-          actions={[
-            <ContentCardLink
-              key="analyze"
-              href="/analyze"
-              page="/knowledge/topics"
-              meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
-            >
-              开始分析
-              <ArrowRight className="h-4 w-4" />
-            </ContentCardLink>,
-            <ContentCardLink
-              key="knowledge"
-              href="/knowledge"
-              page="/knowledge/topics"
-              meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
-            >
-              回到知识库
-            </ContentCardLink>,
-          ]}
-          highlights={topicHubs.slice(0, 4).map((hub) => ({
-            title: (
-              <>
-                <span className="mr-2 inline-flex align-middle">
-                  <Network className="h-3.5 w-3.5" />
-                </span>
-                {hub.entryCount} 篇
-              </>
-            ),
-            body: hub.topicName,
-          }))}
-        />
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            自动专题地图 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              专题地图
+            </h1>
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              把知识库按主题重新组织，帮助你从零散文章进入一条可连续阅读的判断路径。
+            </p>
+            <p className="mt-1 text-[12px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              如果你的目标不是学习方法，而是得到自己的结果，可以直接回到分析入口。
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">奇门</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">择日</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <ContentCardLink
+                href="/analyze"
+                page="/knowledge/topics"
+                meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                开始分析
+                <ArrowRight className="h-3.5 w-3.5" />
+              </ContentCardLink>
+              <ContentCardLink
+                href="/knowledge"
+                page="/knowledge/topics"
+                meta={{ surfaceKey: 'knowledge_topics_page', targetSurfaceKey: 'knowledge_page', contentType: 'knowledge' }}
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                回到知识库
+              </ContentCardLink>
+            </div>
+          </div>
+        </section>
 
         <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {topicHubs.map((hub) => (

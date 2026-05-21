@@ -3,11 +3,10 @@ export const revalidate = 3600;
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpenText, Sparkles } from 'lucide-react';
+import { ArrowRight, BookOpenText } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
 import PublicGrowthFeedPanel from '@/components/public-growth-feed-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import ToolCardLink from '@/components/tool-card-link';
@@ -113,50 +112,52 @@ export default async function ToolCategoryPage({
       <SiteHeader ctaHref="/tools" ctaLabel="回到工具中心" />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
-              <Sparkles className="h-3 w-3" />
-              {categoryInfo.title}
-            </>
-          )}
-          title={categoryInfo.headline}
-          description={categoryInfo.description}
-          hint={problemLineGuide
-            ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
-            : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
-          actions={[
-            <Link
-              key="tools"
-              href="/tools"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
-            >
-              回到工具中心
-              <ArrowRight className="h-4 w-4" />
-            </Link>,
-            <Link
-              key="analyze"
-              href="/analyze"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-            >
-              先做综合判断
-            </Link>,
-            <Link
-              key="docs"
-              href="/docs/use-tools"
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-            >
-              <BookOpenText className="h-4 w-4" />
-              使用方法
-            </Link>,
-          ]}
-          highlights={[
-            { title: '工具数', body: `${tools.length} 个` },
-            { title: '前置', body: '综合判断' },
-            { title: '后续', body: '单项复测' },
-          ]}
-          highlightsColumns="md:grid-cols-3"
-        />
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            {categoryInfo.title} · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              {categoryInfo.headline}
+            </h1>
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              {categoryInfo.description}
+            </p>
+            <p className="mt-1 text-[12px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              {problemLineGuide
+                ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
+                : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">工具数 {tools.length}</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">前置 综合判断</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">后续 单项复测</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Link
+                href="/tools"
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                回到工具中心
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link
+                href="/analyze"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                先做综合判断
+              </Link>
+              <Link
+                href="/docs/use-tools"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                <BookOpenText className="h-3.5 w-3.5" />
+                使用方法
+              </Link>
+            </div>
+          </div>
+        </section>
 
         {problemLineGuide ? (
           <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">

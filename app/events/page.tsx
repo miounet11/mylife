@@ -413,28 +413,22 @@ function EventsPageContent() {
       />
 
       <main className="page-frame py-6 pb-16 space-y-6 md:py-8 md:pb-20">
-        <section className="grid gap-5 lg:grid-cols-[0.85fr_1.15fr] lg:items-end">
-          <div>
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <Sparkles className="h-3 w-3" />
-              事件中心
-            </div>
-            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+        {/* HERO 区 */}
+        <section className="fb-card overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            事件中心 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
               事件 · 提醒 · 验证
             </h1>
-            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               不是日历，是把真实反馈接回报告质量。
             </p>
-          </div>
-
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-              快速操作
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mt-3">
               <button
                 onClick={openCreateForm}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
                 type="button"
               >
                 创建事件
@@ -443,7 +437,7 @@ function EventsPageContent() {
                 href={focusedReportId ? appendSourceToHref(`/result/${encodeURIComponent(focusedReportId)}`, pageSource) : '/analyze'}
                 page="/events"
                 target={focusedReportId ? 'events_hero_report' : 'events_hero_analyze'}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -464,7 +458,7 @@ function EventsPageContent() {
                 })}
                 page="/events"
                 target="events_hero_chat"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,

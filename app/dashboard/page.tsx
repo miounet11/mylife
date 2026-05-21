@@ -11,8 +11,6 @@ import {
   Compass,
   FileBarChart2,
   History,
-  LayoutDashboard,
-  MessageSquareText,
   Sparkles,
   Wrench,
 } from 'lucide-react';
@@ -24,7 +22,6 @@ import SiteHeader from '@/components/site-header';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Inline } from '@/components/ui/inline';
-import { Lede } from '@/components/ui/lede';
 import { Stack } from '@/components/ui/stack';
 import { Stat } from '@/components/ui/stat';
 import { Tag } from '@/components/ui/tag';
@@ -110,48 +107,48 @@ export default async function DashboardPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="新建判断" />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        {/* HERO */}
-        <section className="mb-6 md:mb-8">
-          <Inline justify="between" align="end" wrap className="gap-4">
-            <Stack gap={3}>
-              <Eyebrow icon={<LayoutDashboard className="h-3 w-3" />}>
-                我的工作台 · DASHBOARD
-              </Eyebrow>
-              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                {authenticated ? '继续推进，' : '欢迎，先生成第一份报告'}
-                <span className="text-[color:var(--brand-strong)]">
-                  {authenticated ? `${session.user?.email || ''}` : ''}
-                </span>
-              </h1>
-              <Lede>
-                这里把你的报告、事件、工具历史、订阅状态和下一步入口收在一个面板，无需跨页跳转。
-              </Lede>
-            </Stack>
-            <Inline gap={2} wrap justify="end">
-              <Link
-                href="/analyze"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
-              >
-                新建判断
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-              {latestReport ? (
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            我的工作台
+          </div>
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+                  {authenticated ? '继续推进，' : '欢迎，先生成第一份报告'}
+                  <span className="text-[color:var(--brand-strong)]">
+                    {authenticated ? `${session.user?.email || ''}` : ''}
+                  </span>
+                </h1>
+                <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+                  这里把你的报告、事件、工具历史、订阅状态和下一步入口收在一个面板，无需跨页跳转。
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 md:justify-end md:shrink-0">
                 <Link
-                  href={latestReportHref}
-                  className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                  href="/analyze"
+                  className="inline-flex h-7 items-center rounded-[2px] bg-[color:var(--fb-blue)] px-3 text-[13px] font-bold text-white hover:bg-[color:var(--fb-blue-strong)] hover:no-underline"
                 >
-                  打开最新报告
+                  新建判断
                 </Link>
-              ) : null}
-              <Link
-                href="/chat"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-              >
-                <MessageSquareText className="h-4 w-4" />
-                结构追问
-              </Link>
-            </Inline>
-          </Inline>
+                {latestReport ? (
+                  <Link
+                    href={latestReportHref}
+                    className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                  >
+                    打开最新报告
+                  </Link>
+                ) : null}
+                <Link
+                  href="/chat"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                >
+                  结构追问
+                </Link>
+              </div>
+            </div>
+          </div>
         </section>
 
         {/* v5-C1 决策台风「继续上次」恢复条 — 仅当有可恢复目标时显示 */}

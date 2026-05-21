@@ -5,7 +5,6 @@ import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
 import NewsletterSignup from '@/components/newsletter-signup';
 import PriorityDisclosure from '@/components/priority-disclosure';
 import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicSurfaceHero from '@/components/public-surface-hero';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import {
@@ -82,48 +81,46 @@ export default function InsightsPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-4 pb-16 md:py-6 md:pb-20">
-        <PublicSurfaceHero
-          label={(
-            <>
-              <Sparkles className="h-3.5 w-3.5" />
-              实体内容层
-            </>
-          )}
-          title={(
-            <>
-              真正能长期做大的站点，
-              <span className="font-serif text-[color:var(--accent-strong)]">要把工具、结果和实体内容连起来。</span>
-            </>
-          )}
-          description="这里把行业、城市和组织节奏做成可索引、可内链、可持续扩展的内容页，服务搜索意图，也服务结果页后的继续阅读。"
-          hint="先选一个类型进入，再决定是否回到分析页。"
-          actions={[
-            <ContentCardLink
-              key="world-yi-insights"
-              href="/world-yi/insights"
-              page="/insights"
-              meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
-            >
-              进入环境主轴
-              <ArrowRight className="h-4 w-4" />
-            </ContentCardLink>,
-            <ContentCardLink
-              key="analyze"
-              href="/analyze"
-              page="/insights"
-              meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'analyze_page', contentType: 'insight' }}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
-            >
-              开始分析
-            </ContentCardLink>,
-          ]}
-          highlights={insightTypes.map((type) => ({
-            title: entityTypeLabels[type],
-            body: `${insights.filter((item) => item.type === type).length} 篇内容，围绕具体搜索场景建立公开内容资产。`,
-          }))}
-          highlightsColumns="md:grid-cols-3"
-        />
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            行业与城市洞察 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              真正能长期做大的站点，要把工具、结果和实体内容连起来。
+            </h1>
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              这里把行业、城市和组织节奏做成可索引、可内链、可持续扩展的内容页，服务搜索意图，也服务结果页后的继续阅读。
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">奇门</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">择日</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <ContentCardLink
+                href="/world-yi/insights"
+                page="/insights"
+                meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'world_yi_insights_page', contentType: 'insight', series: 'world-yi-insights' }}
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                进入环境主轴
+                <ArrowRight className="h-3.5 w-3.5" />
+              </ContentCardLink>
+              <ContentCardLink
+                href="/analyze"
+                page="/insights"
+                meta={{ surfaceKey: 'insights_page', targetSurfaceKey: 'analyze_page', contentType: 'insight' }}
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                开始分析
+              </ContentCardLink>
+            </div>
+          </div>
+        </section>
 
         <section className="mt-6 space-y-8">
           {insightTypes.map((type) => (

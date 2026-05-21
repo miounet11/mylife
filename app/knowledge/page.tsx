@@ -135,46 +135,53 @@ export default function KnowledgePage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        <section className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <BookOpen className="h-3 w-3" />
-              知识库
-            </div>
-            <h1 className="mt-2 text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-              系统化阅读 · <span className="text-[color:var(--brand-strong)]">真太阳时与世界易</span>
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            世界易知识库 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              系统化阅读 · 真太阳时与世界易
             </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               围绕真太阳时校正、结构判断、报告阅读和决策应用建立的可积累知识体系。
             </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <ContentCardLink
-              href="/docs"
-              page="/knowledge"
-              meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'docs_index', contentType: 'docs' }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-            >
-              <FileQuestion className="h-4 w-4" />
-              Docs
-            </ContentCardLink>
-            <ContentCardLink
-              href="/knowledge/topics"
-              page="/knowledge"
-              meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge' }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
-            >
-              专题地图
-              <ArrowRight className="h-4 w-4" />
-            </ContentCardLink>
-            <ContentCardLink
-              href="/analyze"
-              page="/knowledge"
-              meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-            >
-              回到分析入口
-            </ContentCardLink>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">奇门</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">择日</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <ContentCardLink
+                href="/knowledge/topics"
+                page="/knowledge"
+                meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'knowledge_topics_page', contentType: 'knowledge' }}
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+              >
+                专题地图
+                <ArrowRight className="h-3.5 w-3.5" />
+              </ContentCardLink>
+              <ContentCardLink
+                href="/docs"
+                page="/knowledge"
+                meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'docs_index', contentType: 'docs' }}
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                <FileQuestion className="h-3.5 w-3.5" />
+                Docs
+              </ContentCardLink>
+              <ContentCardLink
+                href="/analyze"
+                page="/knowledge"
+                meta={{ surfaceKey: 'knowledge_page', targetSurfaceKey: 'analyze_page', contentType: 'knowledge' }}
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+              >
+                回到分析入口
+              </ContentCardLink>
+            </div>
           </div>
         </section>
 
@@ -366,7 +373,7 @@ export default function KnowledgePage() {
                     </div>
                   </div>
 
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-3 md:grid-cols-2">
                     {worldYiKnowledgePowerLinks.map((item) => {
                       const Icon = item.icon;
 
@@ -382,15 +389,11 @@ export default function KnowledgePage() {
                             series: 'world-yi',
                             version: worldYiRoadmapSummary.version,
                           }}
-                          className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
+                          className="block border border-[#dddfe2] bg-white p-3 hover:border-[color:var(--fb-blue)]"
                         >
-                          <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius)] bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
-                            <Icon className="h-5 w-5" />
-                          </div>
-                          <div className="mt-4 text-xl font-bold text-[color:var(--ink)]">{item.title}</div>
-                          <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
-                            进入路径
-                            <ArrowRight className="h-4 w-4" />
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-[color:var(--fb-blue)]" />
+                            <div className="text-[14px] font-bold text-[color:var(--fb-ink-1)]">{item.title}</div>
                           </div>
                         </ContentCardLink>
                       );

@@ -2,7 +2,7 @@ export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
 import Link from 'next/link';
-import { ArrowRight, BookOpen, Clock4, FileText, Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
@@ -13,7 +13,6 @@ import UpdatesStatusPanel from '@/components/updates-status-panel';
 import { Card } from '@/components/ui/card';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Inline } from '@/components/ui/inline';
-import { Lede } from '@/components/ui/lede';
 import { Stack } from '@/components/ui/stack';
 import { Tag } from '@/components/ui/tag';
 
@@ -87,54 +86,54 @@ export default async function AnalyzeEntryPage({
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         {/* HERO 区 */}
-        <section className="mb-6 md:mb-8">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] lg:items-end">
-            <Stack gap={3}>
-              <Eyebrow icon={<Sparkles className="h-3 w-3" />}>判断工作台</Eyebrow>
-              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                填出生信息，
-                <span className="text-[color:var(--brand-strong)]">生成第一份判断报告</span>
-              </h1>
-              <Lede>
-                用真太阳时校正与世界易判断框架，先得到结构、阶段与环境总览，再决定下一步路径。
-              </Lede>
-              {returnTool && (
-                <Card variant="signal" padding="sm">
-                  <Inline gap={2}>
-                    <Tag tone="signal" variant="solid" size="sm">
-                      回流路径
-                    </Tag>
-                    <span className="text-sm font-semibold text-[color:var(--ink-2)]">
-                      完成后回到：{returnTool.shortTitle}
-                    </span>
-                  </Inline>
-                </Card>
-              )}
-            </Stack>
-
-            <Inline gap={2} wrap justify="end" className="lg:justify-end">
-              <Link
-                href="/docs/birth-info"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-              >
-                <Clock4 className="h-3.5 w-3.5" />
-                填写 tips
-              </Link>
-              <Link
-                href="/docs/true-solar-time"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-              >
-                <BookOpen className="h-3.5 w-3.5" />
-                真太阳时
-              </Link>
-              <Link
-                href="/docs/read-first-report"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
-              >
-                <FileText className="h-3.5 w-3.5" />
-                报告读法
-              </Link>
-            </Inline>
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            判断工作台
+          </div>
+          <div className="px-4 py-3">
+            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+                  填出生信息，
+                  <span className="text-[color:var(--brand-strong)]">生成第一份判断报告</span>
+                </h1>
+                <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+                  用真太阳时校正与世界易判断框架，先得到结构、阶段与环境总览，再决定下一步路径。
+                </p>
+                {returnTool && (
+                  <div className="mt-2 inline-flex items-center gap-2 border border-[color:var(--fb-border)] bg-[#f5f6f7] px-2 py-1 text-[12px] text-[color:var(--fb-ink-2)]">
+                    <span className="font-bold text-[color:var(--fb-blue)]">回流路径</span>
+                    <span>完成后回到：{returnTool.shortTitle}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-2 md:justify-end md:shrink-0">
+                <Link
+                  href="#analyze-workspace"
+                  className="inline-flex h-7 items-center rounded-[2px] bg-[color:var(--fb-blue)] px-3 text-[13px] font-bold text-white hover:bg-[color:var(--fb-blue-strong)] hover:no-underline"
+                >
+                  开始填写
+                </Link>
+                <Link
+                  href="/docs/birth-info"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                >
+                  填写 tips
+                </Link>
+                <Link
+                  href="/docs/true-solar-time"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                >
+                  真太阳时
+                </Link>
+                <Link
+                  href="/docs/read-first-report"
+                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                >
+                  报告读法
+                </Link>
+              </div>
+            </div>
           </div>
         </section>
 

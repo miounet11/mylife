@@ -5,7 +5,6 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import VisualAssetFeature from '@/components/visual-asset-feature';
-import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
   createCollectionPageSchema,
@@ -29,21 +28,6 @@ export const metadata = createPublicContentMetadata({
 });
 
 export const dynamic = 'force-dynamic';
-
-const motherPropositions = [
-  {
-    body: '结构',
-  },
-  {
-    body: '阶段',
-  },
-  {
-    body: '环境',
-  },
-  {
-    body: '动作',
-  },
-];
 
 const attractionLayers = [
   '认知层：解释混乱，降低复杂度',
@@ -181,25 +165,37 @@ export default function WorldYiPage() {
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
       <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <WorldYiSurfaceHero
-          label={(
-            <>
-              <Sparkles className="h-3.5 w-3.5" />
-              世界易 {worldYiRoadmapSummary.version}
-            </>
-          )}
-          title="世界易"
-          description="这是世界易体系的总入口，用来连接总论、主书、人生六域、全球传播路径和个人判断入口。"
-          hint="如果你想先建立个人结果，直接进入个人判断；如果你想先理解体系，再从这里往下走。"
-          actions={[
-            { href: '/knowledge/world-yi-v1-manifesto', label: '先读世界易总论', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
-            { href: '/world-yi/domains', label: '看人生六域' },
-            { href: '/world-yi/book', label: '看主书工程' },
-            { href: '/world-yi/global', label: '看全球传播入口' },
-            { href: '/analyze', label: '进入个人判断' },
-          ]}
-          highlights={motherPropositions}
-        />
+        {/* HERO 区 */}
+        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            世界易 {worldYiRoadmapSummary.version} · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              世界易
+            </h1>
+            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
+              这是世界易体系的总入口，用来连接总论、主书、人生六域、全球传播路径和个人判断入口。
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">奇门</span>
+              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">择日</span>
+            </div>
+            <div className="flex flex-wrap gap-2 mt-3">
+              <Link href="/knowledge/world-yi-v1-manifesto" className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]">
+                先读世界易总论
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Link>
+              <Link href="/world-yi/domains" className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]">看人生六域</Link>
+              <Link href="/world-yi/book" className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]">看主书工程</Link>
+              <Link href="/world-yi/global" className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]">看全球传播入口</Link>
+              <Link href="/analyze" className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]">进入个人判断</Link>
+            </div>
+          </div>
+        </section>
 
         {worldYiMethodImage ? (
           <div className="mt-10">

@@ -8,7 +8,6 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  History,
   Target,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
@@ -274,20 +273,20 @@ export default function HistoryPage() {
 
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         {/* HERO 区 */}
-        <section className="mb-6 md:mb-8">
-          <Inline justify="between" align="end" wrap className="gap-4">
-            <Stack gap={3}>
-              <Eyebrow icon={<History className="h-3 w-3" />}>复盘工作台</Eyebrow>
-              <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-                历史记录 · 把过去的判断转成下一轮质量
-              </h1>
-            </Stack>
-            <Inline gap={2} wrap justify="end">
+        <section className="fb-card mb-6 md:mb-8 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
+          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
+            复盘工作台 · 命理/易学门户
+          </div>
+          <div className="px-4 py-3">
+            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+              历史记录 · 把过去的判断转成下一轮质量
+            </h1>
+            <div className="flex flex-wrap gap-2 mt-3">
               <ResultCtaLink
                 href={appendSourceToHref('/events', pageSource)}
                 page="/history"
                 target="history_header_events"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -302,7 +301,7 @@ export default function HistoryPage() {
                 href={historyResumeChatHref}
                 page="/history"
                 target="history_header_chat"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -318,7 +317,7 @@ export default function HistoryPage() {
                 href="/docs/profile-history"
                 page="/history"
                 target="history_header_docs"
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -326,11 +325,11 @@ export default function HistoryPage() {
                   surface: 'history_header',
                 }}
               >
-                <BookOpenText className="h-4 w-4" />
+                <BookOpenText className="h-3.5 w-3.5" />
                 使用方法
               </ResultCtaLink>
-            </Inline>
-          </Inline>
+            </div>
+          </div>
         </section>
 
         {/* v5-C4 决策台风「继续上次」恢复条 */}
