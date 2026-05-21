@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import Script from 'next/script';
 import BuildVersionGuard from '@/components/build-version-guard';
+import ChatFab from '@/components/chat-fab';
 import GoogleAnalyticsRouteTracker from '@/components/google-analytics-route-tracker';
 import { GOOGLE_ANALYTICS_ID } from '@/lib/google-analytics-config';
 import { getRuntimeBuildId } from '@/lib/runtime-build';
@@ -125,6 +126,7 @@ export default function RootLayout({
           </>
         ) : null}
         {children}
+        <ChatFab />
       </body>
     </html>
   );

@@ -71,7 +71,9 @@ export type AnalyticsEventName =
   | 'article_cta_clicked'
   | 'article_session_end'
   | 'today_card_viewed'
-  | 'today_card_cta_clicked';
+  | 'today_card_cta_clicked'
+  | 'chat_fab_clicked'
+  | 'chat_fab_dismissed';
 
 interface TrackEventInput {
   userId?: string | null;
