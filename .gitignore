@@ -52,3 +52,6 @@ data/lifekline.db-*
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# v5-D60j: build 临时目录（不应入仓）
+.next-build-*
