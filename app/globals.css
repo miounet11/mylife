@@ -526,3 +526,191 @@ html[data-theme="fb2017"] .backdrop-blur-2xl {
   backdrop-filter: none !important;
   -webkit-backdrop-filter: none !important;
 }
+
+/* ============================================================
+   FB-2017 · 内容/列表/工具页矩阵层（v5-D60 worker-4）
+   作用：把 /knowledge /cases /tools /reports /insights /visual-assets
+        /world-yi/* /docs /updates /history /questions /events 各列表/详情页
+        全部映射成 FB Page / News-Feed 风。
+   ============================================================ */
+
+/* —— 页面外壳：去 v4 米白渐变，回归 FB 灰底 —— */
+html[data-theme="fb2017"] .page-frame {
+  max-width: 1100px;
+}
+
+/* —— Tag/分类 chip 改 FB 风（灰底 12px / 蓝字 / 不要圆形） —— */
+html[data-theme="fb2017"] .fb-tag {
+  display: inline-flex; align-items: center;
+  height: 22px; padding: 0 8px;
+  border: 1px solid var(--fb-border);
+  border-radius: 2px;
+  background: var(--fb-action-bg);
+  color: var(--fb-blue-link);
+  font-size: 12px; font-weight: 600;
+  line-height: 1; cursor: pointer;
+  text-decoration: none;
+}
+html[data-theme="fb2017"] .fb-tag:hover {
+  text-decoration: underline; background: var(--fb-action-bg-hover);
+}
+html[data-theme="fb2017"] .fb-tag-static {
+  display: inline-flex; align-items: center;
+  height: 20px; padding: 0 6px;
+  border: 1px solid var(--fb-border);
+  border-radius: 2px;
+  background: var(--fb-action-bg);
+  color: var(--fb-ink-3);
+  font-size: 11px; font-weight: 600;
+  line-height: 1;
+}
+
+/* 把 v4 的圆形 pill chip 在 fb 主题下回归方形 FB tag */
+html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--accent-soft\)\],
+html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--brand-soft\)\],
+html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--bg-sunken\)\] {
+  border-radius: 2px !important;
+  background: var(--fb-action-bg) !important;
+  color: var(--fb-blue-link) !important;
+  border: 1px solid var(--fb-border);
+  font-weight: 600;
+}
+
+/* —— 列表卡：在 fb 主题下统一回到 FB 白卡 + 1px 硬边 —— */
+html[data-theme="fb2017"] .rounded-\[var\(--radius-md\)\].border,
+html[data-theme="fb2017"] .rounded-\[var\(--radius-lg\)\].border,
+html[data-theme="fb2017"] .rounded-\[var\(--radius\)\].border {
+  border-radius: 3px !important;
+  border-color: var(--fb-border) !important;
+  background: var(--fb-card) !important;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+}
+html[data-theme="fb2017"] .rounded-\[var\(--radius-md\)\].border:hover,
+html[data-theme="fb2017"] .rounded-\[var\(--radius-lg\)\].border:hover {
+  border-color: var(--fb-border-strong) !important;
+}
+
+/* 列表卡之间统一 8px 间隙（News Feed 风） */
+html[data-theme="fb2017"] .grid.gap-3 { gap: 8px; }
+html[data-theme="fb2017"] .grid.gap-4 { gap: 8px; }
+html[data-theme="fb2017"] .grid.gap-5 { gap: 10px; }
+
+/* —— Hero 区：去掉装饰描边，改 FB Page 风白卡条 —— */
+html[data-theme="fb2017"] section.relative.overflow-hidden.rounded-\[var\(--radius-lg\)\] {
+  border-radius: 3px;
+  background: var(--fb-card);
+  border: 1px solid var(--fb-border);
+}
+/* 装饰 SVG（如 K 线刻度）在 FB 主题下隐藏 */
+html[data-theme="fb2017"] section.relative.overflow-hidden > svg[aria-hidden="true"] {
+  display: none;
+}
+
+/* —— Article 详情：左 brand-soft-2 引文条改 FB blue —— */
+html[data-theme="fb2017"] .border-l-2.border-\[color\:var\(--brand-soft-2\)\] {
+  border-left-color: var(--fb-blue);
+  border-left-width: 4px;
+  background: var(--fb-action-bg);
+  padding: 8px 14px;
+}
+
+/* —— 分页器：FB 经典扁平按钮 —— */
+html[data-theme="fb2017"] nav[aria-label*="分页"] {
+  border-radius: 3px !important;
+  background: var(--fb-card) !important;
+}
+html[data-theme="fb2017"] nav[aria-label*="分页"] a,
+html[data-theme="fb2017"] nav[aria-label*="分页"] span {
+  border-radius: 2px !important;
+  border: 1px solid var(--fb-border-strong) !important;
+  background: var(--fb-action-bg) !important;
+  color: var(--fb-blue-link) !important;
+  font-weight: 700;
+  height: 26px;
+  padding: 0 10px;
+}
+html[data-theme="fb2017"] nav[aria-label*="分页"] a:hover {
+  background: var(--fb-action-bg-hover) !important;
+  text-decoration: none;
+}
+html[data-theme="fb2017"] nav[aria-label*="分页"] a.bg-\[color\:var\(--brand\)\] {
+  background: var(--fb-blue) !important;
+  color: #fff !important;
+  border-color: var(--fb-blue-strong) !important;
+}
+html[data-theme="fb2017"] nav[aria-label*="分页"] span.bg-\[color\:var\(--bg-sunken\)\] {
+  background: #f5f6f7 !important;
+  color: var(--fb-ink-4) !important;
+  opacity: 1;
+}
+
+/* —— 报告/工具/案例阅读流：限宽 680px（FB Note 风） —— */
+html[data-theme="fb2017"] .reading-flow,
+html[data-theme="fb2017"] article.reading-flow {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* —— "操作组" 一行 FB 按钮：把 v4 圆角实心 brand 按钮统一收成 fb-btn 风 —— */
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white,
+html[data-theme="fb2017"] button.bg-\[color\:var\(--brand-strong\)\].text-white,
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white,
+html[data-theme="fb2017"] button.bg-\[color\:var\(--brand\)\].text-white {
+  background: var(--fb-blue) !important;
+  border: 1px solid var(--fb-blue-strong);
+  border-radius: 2px;
+  font-weight: 700;
+  font-size: 13px;
+}
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white:hover,
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white:hover {
+  background: var(--fb-blue-strong) !important;
+  text-decoration: none;
+  color: #fff !important;
+}
+
+/* 次级按钮：白底 FB 边 */
+html[data-theme="fb2017"] a.border-\[color\:var\(--hairline-strong\)\].bg-\[color\:var\(--paper\)\] {
+  background: var(--fb-action-bg) !important;
+  border-color: var(--fb-border-strong) !important;
+  color: var(--fb-ink-1) !important;
+  border-radius: 2px;
+  font-weight: 700;
+}
+html[data-theme="fb2017"] a.border-\[color\:var\(--hairline-strong\)\].bg-\[color\:var\(--paper\)\]:hover {
+  background: var(--fb-action-bg-hover) !important;
+  text-decoration: none;
+}
+
+/* —— FB Page 风顶部 hero（取消大渐变标题） —— */
+html[data-theme="fb2017"] h1.bg-clip-text,
+html[data-theme="fb2017"] h2.bg-clip-text {
+  background: none !important;
+  -webkit-text-fill-color: var(--fb-ink-1) !important;
+  color: var(--fb-ink-1) !important;
+}
+
+/* —— v4 brand kicker（uppercase tracking 0.14em）改 FB 蓝标签条 —— */
+html[data-theme="fb2017"] .text-xs.font-bold.tracking-\[0\.14em\].text-\[color\:var\(--brand-strong\)\] {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--fb-blue-link);
+}
+
+/* —— 两栏 News Feed 容器（可选用 .fb-feed-grid） —— */
+html[data-theme="fb2017"] .fb-feed-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  html[data-theme="fb2017"] .fb-feed-grid {
+    grid-template-columns: minmax(0, 1fr) 300px;
+    align-items: start;
+  }
+}
+html[data-theme="fb2017"] .fb-feed-sidebar { position: sticky; top: 76px; }
+html[data-theme="fb2017"] .fb-feed-sidebar > * + * { margin-top: 12px; }
