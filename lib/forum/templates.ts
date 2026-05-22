@@ -1,0 +1,279 @@
+// v5-D61 论坛 Q&A 模板池
+// 设计目标：极少 LLM 情况下，靠 [行业 × 命理切面 × 时段 × 隐私模板 × 提问句式] 组合
+// 跑出年量级真实感的内容。所有变量替换前都要 sanitize。
+
+// ========== 50 行业 ==========
+export const INDUSTRIES = [
+  { key: 'tech', label: '互联网/技术', occupations: ['前端工程师', '后端工程师', '算法工程师', '产品经理', '运维工程师', 'UI 设计师', '测试工程师'] },
+  { key: 'finance', label: '金融/投资', occupations: ['银行职员', '基金经理', '券商分析师', '风控专员', '财务顾问', '保险代理'] },
+  { key: 'education', label: '教育/培训', occupations: ['公立中学老师', '高校讲师', '幼儿园老师', '考研讲师', '一对一家教'] },
+  { key: 'medical', label: '医疗/健康', occupations: ['三甲医院医生', '社区医生', '护士', '中医师', '康复师', '药剂师'] },
+  { key: 'law', label: '法律/政务', occupations: ['律师', '公务员', '法官助理', '基层街道办', '事业编', '司法行政'] },
+  { key: 'manufacturing', label: '制造业', occupations: ['车间主管', '质检员', '工艺工程师', '采购', '供应链经理'] },
+  { key: 'retail', label: '零售/电商', occupations: ['淘宝店主', '直播带货主播', '社区团购团长', '商超柜台', '便利店店长'] },
+  { key: 'food', label: '餐饮', occupations: ['连锁餐饮店长', '私房菜主理人', '中央厨房主管', '咖啡师', '面点师傅'] },
+  { key: 'logistics', label: '物流/快递', occupations: ['快递员', '货车司机', '快递站点站长', '仓储管理员'] },
+  { key: 'realestate', label: '房产/建筑', occupations: ['房产中介', '物业经理', '装修设计师', '工地项目经理', '土建预算员'] },
+  { key: 'media', label: '媒体/内容', occupations: ['公众号主笔', '视频博主', '新闻记者', '品牌策划', '编辑'] },
+  { key: 'design', label: '设计/创意', occupations: ['平面设计师', '室内设计师', '插画师', '动效师', '摄影师'] },
+  { key: 'art', label: '艺术/演艺', occupations: ['钢琴老师', '舞蹈老师', '配音演员', '画廊助理', '剧团演员'] },
+  { key: 'sales', label: '销售/市场', occupations: ['汽车销售', '医疗器械销售', '地推主管', '商务 BD', '客户经理'] },
+  { key: 'service', label: '生活服务', occupations: ['美容师', '理发师', '美甲师', '健身教练', '瑜伽老师', '宠物美容师'] },
+  { key: 'government', label: '体制内', occupations: ['街道办职员', '统计局科员', '档案室管理员', '事业单位会计'] },
+  { key: 'agriculture', label: '农业/养殖', occupations: ['果园承包户', '茶农', '中药材种植户', '渔业户'] },
+  { key: 'transport', label: '交通/出行', occupations: ['网约车司机', '出租车司机', '航空乘务员', '高铁乘务员', '货代'] },
+  { key: 'tourism', label: '旅游/酒店', occupations: ['酒店前台', '导游', '民宿主理人', '景区运营'] },
+  { key: 'sports', label: '运动/健身', occupations: ['健身房店长', '篮球教练', '羽毛球教练', '跑步教练'] },
+  { key: 'beauty', label: '美业', occupations: ['化妆师', '美睫师', '半永久师', '美容院店长'] },
+  { key: 'auto', label: '汽车', occupations: ['4S 店销售', '维修技师', '二手车评估师', '汽车美容师'] },
+  { key: 'energy', label: '能源/环保', occupations: ['新能源工程师', '环评工程师', '光伏运维', '污水处理工程师'] },
+  { key: 'science', label: '科研', occupations: ['博士在读', '博士后', '高校研究员', '实验室技术员'] },
+  { key: 'consulting', label: '咨询', occupations: ['管理咨询顾问', '财税顾问', 'HR 顾问', '战略分析师'] },
+  { key: 'translation', label: '翻译/语言', occupations: ['英语笔译', '日语口译', '韩语老师', '葡萄牙语翻译'] },
+  { key: 'maternal', label: '母婴/早教', occupations: ['月嫂', '育婴师', '早教老师', '催乳师'] },
+  { key: 'elderly', label: '养老/护理', occupations: ['养老院护工', '居家陪护', '康复护理'] },
+  { key: 'farm', label: '农村/小镇', occupations: ['村委会工作人员', '农产品电商', '小镇便利店主', '乡村教师'] },
+  { key: 'startup', label: '创业', occupations: ['SaaS 创始人', '小程序团队主理人', '独立开发者', '内容创业者'] },
+  { key: 'student', label: '在校学生', occupations: ['大三学生', '研一学生', '高三学生', '复读生', '海外留学生'] },
+  { key: 'jobless', label: '待业/转型', occupations: ['辞职 gap year', '考公备考', '转行学编程', '待产中', '休学一年'] },
+  { key: 'freelance', label: '自由职业', occupations: ['自由插画师', '小红书博主', '独立心理咨询师', '占星师助理'] },
+  { key: 'writing', label: '写作/出版', occupations: ['网文作者', '小说签约作者', '出版社编辑', '剧本写手'] },
+  { key: 'gaming', label: '游戏', occupations: ['游戏策划', '电竞选手', '游戏主播', 'QA 测试'] },
+  { key: 'fashion', label: '服装/时尚', occupations: ['服装买手', '服装设计师', '电商运营', '童装店主'] },
+  { key: 'pet', label: '宠物', occupations: ['宠物医院前台', '猫咖店主', '宠物训练师', '宠物寄养'] },
+  { key: 'home', label: '家居/装修', occupations: ['全屋定制销售', '硬装项目经理', '软装搭配师', '家具厂业务员'] },
+  { key: 'security', label: '安全/安保', occupations: ['物业保安队长', '公司前台保安', '保险公司理赔'] },
+  { key: 'craft', label: '手工/匠人', occupations: ['银器手作师', '陶艺师', '刺绣师', '木工'] },
+  { key: 'culture', label: '文化/传媒', occupations: ['博物馆讲解员', '非遗传承学徒', '茶文化讲师'] },
+  { key: 'religion', label: '宗教/民俗', occupations: ['寺庙义工', '道观研习生', '民俗活动协调员'] },
+  { key: 'social', label: '社工/公益', occupations: ['社区社工', '公益机构干事', 'NGO 志愿者'] },
+  { key: 'mining', label: '矿业/重工', occupations: ['井下作业员', '钢厂操作工', '冶炼厂工程师'] },
+  { key: 'foreign', label: '外贸', occupations: ['跨境电商运营', '外贸业务员', '海运报关员'] },
+  { key: 'broadcast', label: '广电/传播', occupations: ['电视台编导', '广播主持', '剧组场务'] },
+  { key: 'publishing', label: '出版/印刷', occupations: ['印刷厂业务', '出版社发行', '排版师'] },
+  { key: 'hr', label: '人力资源', occupations: ['HRBP', '招聘专员', '薪酬绩效专员'] },
+  { key: 'admin', label: '行政/文秘', occupations: ['公司前台', '行政助理', '总经理秘书'] },
+  { key: 'expat', label: '海外华人', occupations: ['新加坡软件工程师', '加州工程师', '日本料理店主理人', '迪拜外派'] },
+];
+
+// ========== 12 命理切面 ==========
+export const CATEGORIES = [
+  { key: 'bazi', label: '八字命盘', topics: ['日主旺衰', '十神组合', '用神取舍', '大运流年', '配偶宫位', '财官印格局'] },
+  { key: 'ziwei', label: '紫微斗数', topics: ['命宫主星', '迁移宫', '财帛宫', '夫妻宫', '事业宫', '化忌冲'] },
+  { key: 'liuyao', label: '六爻预测', topics: ['世应关系', '动爻变爻', '用神取法', '官鬼妻财', '伏神'] },
+  { key: 'qimen', label: '奇门遁甲', topics: ['八门吉凶', '九星格局', '值符值使', '三奇得使', '体用关系'] },
+  { key: 'zeri', label: '择日选时', topics: ['结婚择日', '搬家择日', '签约择日', '动土上梁', '出行远行'] },
+  { key: 'fengshui', label: '风水堪舆', topics: ['卧室方位', '办公桌朝向', '门口风水', '阳台布局', '炉灶位'] },
+  { key: 'xingming', label: '姓名学', topics: ['取名笔画', '改名时机', '公司起名', '宝宝取名', '艺名笔名'] },
+  { key: 'xiangmian', label: '面相手相', topics: ['事业线', '婚姻线', '生命线', '颧骨', '印堂', '法令纹'] },
+  { key: 'meihua', label: '梅花易数', topics: ['起卦时机', '体用互变', '万物类象', '即时占卜'] },
+  { key: 'xingzuo', label: '西洋占星', topics: ['太阳星座', '上升星座', '月亮星座', '行运盘', '合盘看伴侣'] },
+  { key: 'taluo', label: '塔罗牌', topics: ['事业大牌', '感情发展', '决策抉择', '近期运势', '求职塔罗'] },
+  { key: 'fenghua', label: '综合改运', topics: ['本命年化太岁', '凶神化解', '颜色穿搭', '能量石', '日常作息'] },
+];
+
+// ========== 5 隐私模式 ==========
+export const PRIVACY_MODES = [
+  {
+    key: 'partial-bazi',
+    label: '保留年月柱，隐藏日时',
+    visibilityMask: ['dayGanZhi', 'hourGanZhi', 'birthDate'],
+    intro: '本命农历{lunarYear}年{lunarMonth}月生（具体日期不便透露），{gender}',
+  },
+  {
+    key: 'date-only',
+    label: '只给阳历日期不给时辰',
+    visibilityMask: ['hourGanZhi', 'dayGanZhi'],
+    intro: '本命{birthYear}年{birthMonth}月{birthDay}日，时辰记不清了，老人也说不准',
+  },
+  {
+    key: 'no-time',
+    label: '完全不给出生时间，只给年龄',
+    visibilityMask: ['birthDate', 'birthTime', 'dayGanZhi', 'hourGanZhi'],
+    intro: '我今年{ageRange}岁，{gender}，老家在{province}',
+  },
+  {
+    key: 'lunar-only',
+    label: '只给农历模糊',
+    visibilityMask: ['birthDate', 'hourGanZhi'],
+    intro: '农历{lunarYear}年{lunarSeason}生人，{gender}',
+  },
+  {
+    key: 'pen-name',
+    label: '化名 + 模糊年龄段',
+    visibilityMask: ['birthDate', 'birthTime', 'fullName'],
+    intro: '化名问一下，本命{ageRange}岁段，性别保密',
+  },
+];
+
+// ========== 提问句式（按类别 30+ 模板） ==========
+export const QUESTION_TEMPLATES: Record<string, string[]> = {
+  bazi: [
+    '{intro}，做{occupation}快{years}年了，最近{situation}。请问从八字看{topic}是怎样？',
+    '{intro}，今年想{plan}，但身边人都说{rumor}。从{topic}角度，今年这步走得通吗？',
+    '{intro}，{topic}方面我自己看是{guess}，但老师们一般怎么判？',
+    '想请教{topic}：{intro}，目前在{industry}行业{occupation}，{conflict}。',
+    '{intro}，{age}岁了还在{state}，老一辈说我{topic}有问题，求帮我看看是不是这样。',
+    '本来打算{plan}，看了下我的{topic}有点犹豫。{intro}，{occupation}，求老师给个方向。',
+    '{intro}，最近{event}，朋友建议看一下{topic}，能否帮我大致判断一下走向？',
+    '{intro}，做{occupation}很多年，最近遇到{problem}，从{topic}看应该怎么调整？',
+  ],
+  ziwei: [
+    '{intro}，最近紫微排盘自己看{topic}，发现{observation}，请教各位老师怎么解？',
+    '{intro}，{age}岁的命宫主星和大限，{question}',
+    '一直对紫微感兴趣，给自己排了盘，{topic}这个位置我看不懂：{detail}。{intro}，求点拨。',
+    '{intro}，{occupation}做了{years}年，紫微斗数 {topic} 显示{signal}，是不是该考虑转行？',
+  ],
+  liuyao: [
+    '今天上午{time}，{intro}，{occupation}，针对{topic}起了一卦，{卦象}，请问怎么看？',
+    '{intro}，最近就{life_event}起了一卦，世爻应爻关系是{relation}，{question}',
+    '昨晚{time}临时起意问{topic}，得卦{卦象}。{intro}，求懂六爻的老师指点。',
+  ],
+  qimen: [
+    '{intro}，今天{time}用奇门起局问{topic}，{格局}。从{occupation}的角度该怎么应对？',
+    '本人{intro}，{occupation}，最近{situation}，奇门看下来{格局}是不是凶？',
+  ],
+  zeri: [
+    '{intro}，{life_event}定在{date_range}，求看哪天好？我自己看{guess_date}还行，老师们觉得呢？',
+    '{intro}，准备{plan}，已经选了三个备选日：{date_options}，请帮我从黄历+八字角度筛一下。',
+    '老人催{life_event}，{intro}，已经定了{tentative_date}，怕冲了我的{topic}，请帮看下。',
+  ],
+  fengshui: [
+    '{intro}，刚搬到{location}，{occupation}，工位/床位现在朝{direction}，请问{topic}有没有讲究？',
+    '租的房子户型有点别扭：{layout}。{intro}，从{topic}看会不会影响{aspect}？',
+    '本命年想调一下风水，{intro}，目前家里{current_setup}。从{topic}看可以怎么动？',
+  ],
+  xingming: [
+    '{intro}，准备给孩子取名，姓{surname}，预产期{date}，性别{gender_baby}，{topic}方面要回避什么？',
+    '我自己想改名，{intro}，目前用名是{current_name}，从{topic}看还要不要改？',
+    '公司起名，{intro}，{industry}行业，主营{business}，求{topic}吉利的字。',
+  ],
+  xiangmian: [
+    '{intro}，{age}岁，最近{situation}，朋友说我{face_feature}是不是有问题？',
+    '本人{occupation}，{intro}，手相上{hand_feature}很明显，请教从{topic}看怎么解？',
+  ],
+  meihua: [
+    '刚才在{location}{trigger_event}，按梅花易数起了一卦，{卦象}。{intro}，求解{topic}。',
+    '{intro}，{occupation}，刚刚就{question}动了卦，{卦象}，是吉是凶？',
+  ],
+  xingzuo: [
+    '{intro}，{星座}座，{age}岁，最近{topic}遇到{problem}。从行运盘看怎么解？',
+    '本人{星座}+{rising}上升+{moon}月亮，{intro}，{occupation}，{topic}方面怎么破？',
+    '想问下合盘：我{星座}，对方{partner_sign}，{intro}，{topic}方面怎么样？',
+  ],
+  taluo: [
+    '{intro}，刚抽了三张牌问{topic}：{card1}/{card2}/{card3}。{occupation}，求老师解读。',
+    '本人{intro}，{situation}，塔罗抽到{card}逆位，{topic}该怎么走？',
+  ],
+  fenghua: [
+    '{intro}，今年{age}岁，正好本命年，{topic}方面老人说要化太岁，应该怎么做？',
+    '{intro}，{occupation}，最近{problem}很久了，从{topic}方面有什么日常可以调整？',
+  ],
+};
+
+// ========== 提问 situation/problem 句子池 ==========
+export const SITUATIONS = [
+  '工作上一直没起色',
+  '老板对我态度突然变了',
+  '团队来了新人，我位置很尴尬',
+  '一份 offer 一直没下来，对方说还在评估',
+  '想跳槽但又怕踩坑',
+  '婚姻状态稳定但总觉得隔着什么',
+  '相亲见了好几个，没一个有感觉的',
+  '父母身体有点小问题，焦虑',
+  '孩子升学的关键时间点',
+  '存款卡在一个数字上下不来',
+  '投资亏了一笔，不大不小',
+  '想创业但合伙人选不定',
+  '已经怀孕想问后续走向',
+  '失恋了，不知道是缘分到了还是真的没机会',
+  '换城市发展中，心里没底',
+  '考研二战，结果未出',
+  '考公面试在即',
+  '体检报告里有个小指标偏高',
+  '搬家到新地方第一年',
+  '准备签一份大合同',
+];
+
+export const PROBLEMS = [
+  '总觉得使不上劲',
+  '钱进不来留不住',
+  '机会都擦肩而过',
+  '人际关系突然变差',
+  '健康亮黄灯',
+  '决策选项很多但都不踏实',
+  '家庭和工作两头扯',
+  '感情进入瓶颈期',
+  '朋友建议跟自己直觉相反',
+  '目标完成不了',
+];
+
+// ========== 官方答 / 老师答 / 兴趣爱好者答 模板 ==========
+export const OFFICIAL_ANSWER_INTROS = [
+  '【世界易学官方】感谢提问。',
+  '【WorldYi 编辑组】先简短回应一下。',
+  '【官方答主】这条问题我们整理一下。',
+  '【世界易学说】先给一个保守判断。',
+];
+
+export const MASTER_ANSWER_INTROS = [
+  '我从{category}的角度先聊一下。',
+  '看了你的描述，重点先聚焦在{topic}这一处。',
+  '关键不在{distractor}，而在{key}。',
+  '先说结论，再讲理由。结论是{verdict}。',
+  '这个问题的根，在{root_cause}，其他都是表征。',
+];
+
+export const ENTHUSIAST_ANSWER_INTROS = [
+  '不是大师，但我也{age}岁了，类似情况碰过一次：',
+  '路过补一句，跟我去年的状态很像：',
+  '我自己读了三年{category}，斗胆说一句：',
+  '我老家有个长辈也碰过{topic}的问题，他的处理是',
+];
+
+// ========== 答的结构化片段池 ==========
+export const ANSWER_FRAGMENTS = {
+  // 怎么定位问题
+  identify: [
+    '从你给到的{visible_info}看，{observation}',
+    '能确定的是{certain}，不能确定的是{uncertain}',
+    '这一段时间的特征：{trait_a}+{trait_b}',
+    '关键节点应该在{time_window}',
+  ],
+  // 给行动
+  action: [
+    '近 30 天先做这一件事：{primary_action}',
+    '不需要急着{wrong_action}，先把{right_action}做好',
+    '一个保守的策略是{conservative}，激进的是{aggressive}，看你承担',
+    '今年内的关键窗口在{window}，错过这一步就要等{next_year}',
+  ],
+  // 风险提示
+  risk: [
+    '要避免的：{avoid_a} / {avoid_b}',
+    '风险点是{risk}，提前做{prep}就行',
+    '如果{trigger}发生，立刻{counteract}',
+  ],
+  // 收尾
+  closing: [
+    '你下面回个具体的{ask_back}，我再细看。',
+    '这只是粗判，要不要细看{deeper}还是看你。',
+    '愿意你照这步走 30 天后回来更新一下。',
+    '其实方向你心里有数，只是想要个外人确认而已。',
+  ],
+};
+
+// ========== SEO 关键词池（按类别） ==========
+export const SEO_KEYWORDS: Record<string, string[]> = {
+  bazi: ['八字算命', '生辰八字', '八字格局', '日主旺衰', '十神查询', '八字大运', '八字流年', '八字财运', '八字事业', '八字婚姻'],
+  ziwei: ['紫微斗数', '紫微排盘', '紫微命宫', '紫微化忌', '紫微夫妻宫', '紫微财帛宫', '紫微大限'],
+  liuyao: ['六爻起卦', '六爻预测', '六爻断卦', '六爻官鬼', '六爻妻财', '梅花六爻'],
+  qimen: ['奇门遁甲', '奇门起局', '奇门预测', '奇门八门', '奇门九星'],
+  zeri: ['结婚择日', '搬家择日', '签约择日', '黄道吉日', '动土择日', '上梁择日'],
+  fengshui: ['卧室风水', '办公风水', '门口风水', '阳台风水', '厨房风水', '客厅布局', '床位朝向', '工位朝向'],
+  xingming: ['宝宝取名', '公司起名', '改名字', '姓名笔画', '五格剖象', '字辈起名'],
+  xiangmian: ['面相算命', '手相算命', '事业线', '婚姻线', '生命线', '法令纹', '印堂', '颧骨'],
+  meihua: ['梅花易数', '万物类象', '体用关系', '即时起卦'],
+  xingzuo: ['太阳星座', '上升星座', '月亮星座', '行运盘', '合盘', '12 星座', '星盘解读', '占星'],
+  taluo: ['塔罗占卜', '塔罗事业', '塔罗感情', '塔罗近期运势', '塔罗大牌'],
+  fenghua: ['本命年', '化太岁', '运势调整', '改运方法', '颜色禁忌'],
+};

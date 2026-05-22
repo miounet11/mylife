@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   MessageSquareText,
   UserRound,
+  Users,
   Wrench,
   BookOpenText,
   Search,
@@ -28,6 +29,7 @@ type NavItem = {
 const primaryNavItems: NavItem[] = [
   { href: '/analyze', label: '工作台', icon: LayoutDashboard },
   { href: '/chat',    label: '结构追问', icon: MessageSquareText },
+  { href: '/community', label: '社区', icon: Users },
   { href: '/tools',   label: '工具中心', icon: Wrench },
   { href: '/events',  label: '事件日历', icon: CalendarDays },
   { href: '/profile', label: '我的档案', icon: UserRound },

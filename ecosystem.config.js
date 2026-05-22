@@ -359,6 +359,27 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     watch: false,
     restart_delay: 5000,
   },
+  {
+    name: 'life-kline-forum',
+    script: 'scripts/forum-daemon.js',
+    cwd: '/home/life-kline-next',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      FORUM_DAILY_TARGET: '300',
+      FORUM_TICK_MS: '300000', // 5 min
+    },
+    error_file: '/root/.pm2/logs/life-kline-forum-error.log',
+    out_file: '/root/.pm2/logs/life-kline-forum-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true,
+    autorestart: true,
+    max_restarts: 20,
+    min_uptime: '10s',
+    watch: false,
+    restart_delay: 5000,
+  },
 ] : [];
 
 module.exports = {

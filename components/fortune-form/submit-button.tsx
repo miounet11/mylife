@@ -10,9 +10,9 @@ type SubmitButtonProps = {
 };
 
 const ENABLED_CLASSES =
-  'bg-[color:var(--ink-1)] text-white hover:bg-[color:var(--brand-deep)]';
+  'bg-[color:var(--fb-blue)] text-white hover:bg-[#365899]';
 const DISABLED_CLASSES =
-  'bg-[color:var(--bg-sunken)] text-[color:var(--ink-5)] cursor-not-allowed';
+  'bg-[#f5f6f7] text-[color:var(--fb-ink-4)] border border-[#dddfe2] cursor-not-allowed';
 
 function CtaButton({
   canSubmit,
@@ -30,7 +30,7 @@ function CtaButton({
     <button
       type="submit"
       disabled={!enabled}
-      className={`${className} flex h-12 w-full items-center justify-center rounded-full text-base font-bold transition disabled:cursor-not-allowed ${
+      className={`${className} flex h-12 w-full items-center justify-center rounded-[2px] text-base font-bold transition disabled:cursor-not-allowed ${
         enabled ? ENABLED_CLASSES : DISABLED_CLASSES
       }`}
     >

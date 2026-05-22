@@ -15,6 +15,7 @@ const productLinks = [
 ];
 
 const knowledgeLinks = [
+  { href: '/community', label: '社区 Q&A' },
   { href: '/knowledge', label: '知识库' },
   { href: '/cases',     label: '案例库' },
   { href: '/reports',   label: '公开结果库' },

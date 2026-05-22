@@ -1,5 +1,6 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
+import { forumQuestionOperations } from '@/lib/database';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
 import { listProductDocRoutes } from '@/lib/product-docs';
@@ -87,6 +88,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: new Date(),
       changeFrequency: 'daily',
       priority: 0.84,
+    }),
+    createSitemapEntry('/community', {
+      lastModified: new Date(),
+      changeFrequency: 'hourly',
+      priority: 0.88,
     }),
     createSitemapEntry('/insights', {
       lastModified: new Date(),
@@ -186,6 +192,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: 'monthly',
         priority: 0.62,
       })),
+      ...(() => {
+        try {
+          return forumQuestionOperations.listAllSlugsForSitemap().map((q) => createSitemapEntry(`/community/${q.slug}`, {
+            lastModified: new Date(q.published_at || Date.now()),
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          }));
+        } catch {
+          return [];
+        }
+      })(),
     ];
   } catch {
     return staticRoutes;

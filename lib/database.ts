@@ -2284,6 +2284,65 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_timing_email_recall_log_action ON timing_email_recall_log(action, recorded_at);
   `);
 
+  // v5-D61 论坛 Q&A 平台
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS forum_users (
+      id TEXT PRIMARY KEY,
+      handle TEXT NOT NULL,
+      display_name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      city TEXT,
+      province TEXT,
+      occupation TEXT,
+      industry TEXT,
+      interests JSON,
+      role TEXT NOT NULL,
+      bio TEXT,
+      avatar_seed TEXT,
+      joined_at TEXT NOT NULL,
+      reputation INTEGER DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_forum_users_role ON forum_users(role);
+    CREATE INDEX IF NOT EXISTS idx_forum_users_industry ON forum_users(industry);
+
+    CREATE TABLE IF NOT EXISTS forum_questions (
+      id TEXT PRIMARY KEY,
+      slug TEXT NOT NULL UNIQUE,
+      author_id TEXT NOT NULL,
+      title TEXT NOT NULL,
+      body TEXT NOT NULL,
+      category TEXT NOT NULL,
+      industry TEXT,
+      tags JSON,
+      privacy_mode TEXT NOT NULL,
+      metadata JSON,
+      status TEXT NOT NULL DEFAULT 'pending',
+      published_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      view_count INTEGER DEFAULT 0,
+      answer_count INTEGER DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_status_pub ON forum_questions(status, published_at);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_category ON forum_questions(category);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_industry ON forum_questions(industry);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_slug ON forum_questions(slug);
+
+    CREATE TABLE IF NOT EXISTS forum_answers (
+      id TEXT PRIMARY KEY,
+      question_id TEXT NOT NULL,
+      author_id TEXT NOT NULL,
+      body TEXT NOT NULL,
+      is_official INTEGER NOT NULL DEFAULT 0,
+      upvote_count INTEGER DEFAULT 0,
+      status TEXT NOT NULL DEFAULT 'pending',
+      published_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      response_delay_minutes INTEGER DEFAULT 0
+    );
+    CREATE INDEX IF NOT EXISTS idx_forum_answers_question ON forum_answers(question_id, status);
+    CREATE INDEX IF NOT EXISTS idx_forum_answers_status_pub ON forum_answers(status, published_at);
+  `);
+
   // 兼容已有库 — 如果旧表没有这两列，加上
   try {
     const cols = (db.prepare(`PRAGMA table_info(user_timing_profiles)`).all() as Array<{ name: string }>).map((c) => c.name);
@@ -6681,6 +6740,261 @@ export const toolSessionOperations = {
     `).all(userId, toolSlug, limit) as RawToolSessionRow[];
 
     return rows.map(mapToolSessionRow);
+  },
+};
+
+// ==================== v5-D61 论坛 Q&A operations ====================
+
+interface RawForumUserRow {
+  id: string;
+  handle: string;
+  display_name: string;
+  email: string;
+  city: string | null;
+  province: string | null;
+  occupation: string | null;
+  industry: string | null;
+  interests: string | null;
+  role: string;
+  bio: string | null;
+  avatar_seed: string | null;
+  joined_at: string;
+  reputation: number;
+}
+
+interface RawForumQuestionRow {
+  id: string;
+  slug: string;
+  author_id: string;
+  title: string;
+  body: string;
+  category: string;
+  industry: string | null;
+  tags: string | null;
+  privacy_mode: string;
+  metadata: string | null;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  view_count: number;
+  answer_count: number;
+}
+
+interface RawForumAnswerRow {
+  id: string;
+  question_id: string;
+  author_id: string;
+  body: string;
+  is_official: number;
+  upvote_count: number;
+  status: string;
+  published_at: string | null;
+  created_at: string;
+  response_delay_minutes: number;
+}
+
+function mapForumUser(row: RawForumUserRow) {
+  return {
+    id: row.id,
+    handle: row.handle,
+    displayName: row.display_name,
+    email: row.email,
+    city: row.city || '',
+    province: row.province || '',
+    occupation: row.occupation || '',
+    industry: row.industry || '',
+    interests: row.interests ? JSON.parse(row.interests) : [],
+    role: row.role as 'asker' | 'master' | 'enthusiast' | 'official',
+    bio: row.bio || '',
+    avatarSeed: row.avatar_seed || row.handle,
+    joinedAt: row.joined_at,
+    reputation: row.reputation,
+  };
+}
+
+function mapForumQuestion(row: RawForumQuestionRow) {
+  return {
+    id: row.id,
+    slug: row.slug,
+    authorId: row.author_id,
+    title: row.title,
+    body: row.body,
+    category: row.category,
+    industry: row.industry || '',
+    tags: row.tags ? JSON.parse(row.tags) : [],
+    privacyMode: row.privacy_mode,
+    metadata: row.metadata ? JSON.parse(row.metadata) : { visibilityMask: [] },
+    status: row.status as 'pending' | 'visible' | 'archived',
+    publishedAt: row.published_at,
+    createdAt: row.created_at,
+    viewCount: row.view_count,
+    answerCount: row.answer_count,
+  };
+}
+
+function mapForumAnswer(row: RawForumAnswerRow) {
+  return {
+    id: row.id,
+    questionId: row.question_id,
+    authorId: row.author_id,
+    body: row.body,
+    isOfficial: row.is_official === 1,
+    upvoteCount: row.upvote_count,
+    status: row.status as 'pending' | 'visible',
+    publishedAt: row.published_at,
+    createdAt: row.created_at,
+    responseDelayMinutes: row.response_delay_minutes,
+  };
+}
+
+export const forumUserOperations = {
+  upsertMany: (users: Array<{
+    id: string; handle: string; displayName: string; email: string;
+    city: string; province: string; occupation: string; industry: string;
+    interests: string[]; role: string; bio: string; avatarSeed: string;
+    joinedAt: string; reputation: number;
+  }>) => {
+    const stmt = db.prepare(`
+      INSERT INTO forum_users (id, handle, display_name, email, city, province, occupation, industry, interests, role, bio, avatar_seed, joined_at, reputation)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(id) DO UPDATE SET
+        handle=excluded.handle,
+        display_name=excluded.display_name,
+        email=excluded.email,
+        city=excluded.city,
+        province=excluded.province,
+        occupation=excluded.occupation,
+        industry=excluded.industry,
+        interests=excluded.interests,
+        role=excluded.role,
+        bio=excluded.bio,
+        reputation=excluded.reputation
+    `);
+    const tx = db.transaction((rows: typeof users) => {
+      for (const u of rows) {
+        stmt.run(u.id, u.handle, u.displayName, u.email, u.city, u.province, u.occupation, u.industry, JSON.stringify(u.interests), u.role, u.bio, u.avatarSeed, u.joinedAt, u.reputation);
+      }
+    });
+    tx(users);
+    return users.length;
+  },
+  count: () => (db.prepare('SELECT COUNT(*) as n FROM forum_users').get() as { n: number }).n,
+  getById: (id: string) => {
+    const row = db.prepare('SELECT * FROM forum_users WHERE id = ?').get(id) as RawForumUserRow | undefined;
+    return row ? mapForumUser(row) : null;
+  },
+  listByRole: (role: string, limit = 100) => {
+    const rows = db.prepare('SELECT * FROM forum_users WHERE role = ? LIMIT ?').all(role, limit) as RawForumUserRow[];
+    return rows.map(mapForumUser);
+  },
+  listAll: () => {
+    const rows = db.prepare('SELECT * FROM forum_users').all() as RawForumUserRow[];
+    return rows.map(mapForumUser);
+  },
+};
+
+export const forumQuestionOperations = {
+  create: (q: {
+    id: string; slug: string; authorId: string; title: string; body: string;
+    category: string; industry: string; tags: string[]; privacyMode: string;
+    metadata: Record<string, unknown>; status: string; publishedAt: string | null;
+    viewCount: number; answerCount: number;
+  }) => {
+    db.prepare(`
+      INSERT INTO forum_questions (id, slug, author_id, title, body, category, industry, tags, privacy_mode, metadata, status, published_at, view_count, answer_count)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(q.id, q.slug, q.authorId, q.title, q.body, q.category, q.industry, JSON.stringify(q.tags), q.privacyMode, JSON.stringify(q.metadata), q.status, q.publishedAt, q.viewCount, q.answerCount);
+  },
+  getBySlug: (slug: string) => {
+    const row = db.prepare('SELECT * FROM forum_questions WHERE slug = ?').get(slug) as RawForumQuestionRow | undefined;
+    return row ? mapForumQuestion(row) : null;
+  },
+  getById: (id: string) => {
+    const row = db.prepare('SELECT * FROM forum_questions WHERE id = ?').get(id) as RawForumQuestionRow | undefined;
+    return row ? mapForumQuestion(row) : null;
+  },
+  listVisible: (params: { limit?: number; offset?: number; category?: string; industry?: string; tag?: string } = {}) => {
+    const limit = Math.min(Math.max(params.limit ?? 30, 1), 100);
+    const offset = Math.max(params.offset ?? 0, 0);
+    const where: string[] = [`status = 'visible'`, `datetime(published_at) <= datetime('now')`];
+    const args: unknown[] = [];
+    if (params.category) { where.push('category = ?'); args.push(params.category); }
+    if (params.industry) { where.push('industry = ?'); args.push(params.industry); }
+    if (params.tag) { where.push(`tags LIKE ?`); args.push(`%"${params.tag}"%`); }
+    const sql = `SELECT * FROM forum_questions WHERE ${where.join(' AND ')} ORDER BY datetime(published_at) DESC LIMIT ? OFFSET ?`;
+    const rows = db.prepare(sql).all(...args, limit, offset) as RawForumQuestionRow[];
+    return rows.map(mapForumQuestion);
+  },
+  countVisible: (params: { category?: string; industry?: string; tag?: string } = {}) => {
+    const where: string[] = [`status = 'visible'`, `datetime(published_at) <= datetime('now')`];
+    const args: unknown[] = [];
+    if (params.category) { where.push('category = ?'); args.push(params.category); }
+    if (params.industry) { where.push('industry = ?'); args.push(params.industry); }
+    if (params.tag) { where.push(`tags LIKE ?`); args.push(`%"${params.tag}"%`); }
+    const sql = `SELECT COUNT(*) as n FROM forum_questions WHERE ${where.join(' AND ')}`;
+    return (db.prepare(sql).get(...args) as { n: number }).n;
+  },
+  countTotal: () => (db.prepare('SELECT COUNT(*) as n FROM forum_questions').get() as { n: number }).n,
+  countToday: () => (db.prepare(`SELECT COUNT(*) as n FROM forum_questions WHERE date(published_at) = date('now')`).get() as { n: number }).n,
+  bumpView: (slug: string) => {
+    db.prepare(`UPDATE forum_questions SET view_count = view_count + 1 WHERE slug = ?`).run(slug);
+  },
+  searchTitle: (q: string, limit = 20) => {
+    if (!q.trim()) return [];
+    const like = `%${q.trim()}%`;
+    const rows = db.prepare(`
+      SELECT * FROM forum_questions
+      WHERE status = 'visible' AND datetime(published_at) <= datetime('now') AND (title LIKE ? OR body LIKE ?)
+      ORDER BY datetime(published_at) DESC LIMIT ?
+    `).all(like, like, limit) as RawForumQuestionRow[];
+    return rows.map(mapForumQuestion);
+  },
+  listAllSlugsForSitemap: () => {
+    const rows = db.prepare(`SELECT slug, published_at FROM forum_questions WHERE status = 'visible' AND datetime(published_at) <= datetime('now') ORDER BY datetime(published_at) DESC LIMIT 5000`).all() as Array<{ slug: string; published_at: string }>;
+    return rows;
+  },
+};
+
+export const forumAnswerOperations = {
+  create: (a: {
+    id: string; questionId: string; authorId: string; body: string;
+    isOfficial: boolean; upvoteCount: number; status: string;
+    publishedAt: string | null; responseDelayMinutes: number;
+  }) => {
+    db.prepare(`
+      INSERT INTO forum_answers (id, question_id, author_id, body, is_official, upvote_count, status, published_at, response_delay_minutes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(a.id, a.questionId, a.authorId, a.body, a.isOfficial ? 1 : 0, a.upvoteCount, a.status, a.publishedAt, a.responseDelayMinutes);
+  },
+  listByQuestion: (questionId: string) => {
+    const rows = db.prepare(`
+      SELECT * FROM forum_answers
+      WHERE question_id = ? AND status = 'visible' AND datetime(published_at) <= datetime('now')
+      ORDER BY is_official DESC, datetime(published_at) ASC
+    `).all(questionId) as RawForumAnswerRow[];
+    return rows.map(mapForumAnswer);
+  },
+  listPendingDue: (limit = 200) => {
+    // 找出该到时间发布的 pending 答（publishedAt 是计划发布时间，未来由 daemon 发布时再用）
+    const rows = db.prepare(`
+      SELECT * FROM forum_answers
+      WHERE status = 'pending' AND published_at IS NOT NULL AND datetime(published_at) <= datetime('now')
+      LIMIT ?
+    `).all(limit) as RawForumAnswerRow[];
+    return rows.map(mapForumAnswer);
+  },
+  releasePending: (id: string) => {
+    db.prepare(`UPDATE forum_answers SET status='visible' WHERE id = ?`).run(id);
+  },
+  // 用于 daemon 一次性插入但延后展示
+  createScheduled: (a: {
+    id: string; questionId: string; authorId: string; body: string;
+    isOfficial: boolean; upvoteCount: number; scheduledFor: string; responseDelayMinutes: number;
+  }) => {
+    db.prepare(`
+      INSERT INTO forum_answers (id, question_id, author_id, body, is_official, upvote_count, status, published_at, response_delay_minutes)
+      VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+    `).run(a.id, a.questionId, a.authorId, a.body, a.isOfficial ? 1 : 0, a.upvoteCount, a.scheduledFor, a.responseDelayMinutes);
   },
 };
 
