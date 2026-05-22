@@ -56,6 +56,46 @@ function slugify(title: string, suffix: string): string {
 const STAR_SIGNS = ['白羊', '金牛', '双子', '巨蟹', '狮子', '处女', '天秤', '天蝎', '射手', '摩羯', '水瓶', '双鱼'];
 const TAROT_CARDS = ['愚者', '魔术师', '女祭司', '皇后', '皇帝', '教皇', '恋人', '战车', '力量', '隐者', '命运之轮', '正义', '倒吊人', '死神', '节制', '恶魔', '塔', '星星', '月亮', '太阳', '审判', '世界'];
 
+// v5-D66 标题家族：8 种句式 + SEO 关键词直挂 — 把高搜索量长尾打进 <title>
+// 之前只用 "X·Y：Z 的 N 年困惑" 一种结构，长尾命中率为 0
+const TITLE_PATTERNS = [
+  // 0: 关键词主导（最 SEO）
+  (kw: string, occu: string, years: number) => `${kw}怎么看：${occu}做了${years}年的疑问`,
+  // 1: 关键词 + 场景
+  (kw: string, occu: string, _years: number, situ: string) => `${kw}问题：${occu}${situ}`,
+  // 2: 老格式（SEO 弱，但口语化）
+  (kw: string, occu: string, years: number, _situ: string, catLabel: string, topic: string) =>
+    `${catLabel} · ${topic}：${occu}的${years}年困惑`,
+  // 3: 求助式（论坛感）
+  (kw: string, occu: string, _years: number) => `求助：${kw}怎么解读？我是${occu}`,
+  // 4: 数字标题（CTR 高）
+  (kw: string, _occu: string, years: number) => `${kw}：${years}年里我学到的 3 件事`,
+  // 5: 反问式
+  (kw: string, occu: string, _years: number) => `${occu}，${kw}真的会影响事业吗？`,
+  // 6: 关键词 + 行业
+  (kw: string, occu: string, _years: number) => `${occu}的${kw}：怎么判走向？`,
+  // 7: 当年/今年挂钩（时效性 SEO）
+  (kw: string, occu: string, _years: number) => `今年${kw}：${occu}的真实经历`,
+];
+
+function buildTitle(
+  rng: () => number,
+  catLabel: string,
+  topic: string,
+  occupation: string,
+  years: number,
+  categoryKey: string,
+): string {
+  const seoPool = SEO_KEYWORDS[categoryKey] || [];
+  // 70% 概率从 SEO_KEYWORDS 池抽词当核心；30% 退回 topic 兜底
+  const useSeo = seoPool.length > 0 && rng() < 0.7;
+  const kw = useSeo ? pick(rng, seoPool) : topic;
+  const situ = pick(rng, ['最近遇到瓶颈', '换城市发展', '父母身体不好', '存款卡住', '相亲没结果', '考公面试在即']);
+  const pattern = pick(rng, TITLE_PATTERNS);
+  return pattern(kw, occupation, years, situ, catLabel, topic);
+}
+
+
 export interface BuildQuestionInput {
   context: ForumGenerationContext;
   seed: number;
@@ -164,9 +204,9 @@ export function buildQuestion(input: BuildQuestionInput): ForumQuestionRecord {
     .replace('{card3}', pick(rng, TAROT_CARDS))
     .replace('{card}', pick(rng, TAROT_CARDS));
 
-  const titleStem = `${category.label} · ${topic}：${occupation}的${years}年困惑`;
-  // 截断到 28 字符
-  const title = titleStem.length > 28 ? titleStem.slice(0, 28) : titleStem;
+  const titleStem = buildTitle(rng, category.label, topic, occupation, years, categoryKey);
+  // 截断到 36 字符（之前 28 字会把 SEO 词切掉）
+  const title = titleStem.length > 36 ? titleStem.slice(0, 36) : titleStem;
 
   const tagsBase = SEO_KEYWORDS[categoryKey] || [];
   const tags = pickN(rng, tagsBase, Math.min(4, tagsBase.length));
