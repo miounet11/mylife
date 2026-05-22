@@ -55,3 +55,7 @@ next-env.d.ts
 
 # v5-D60j: build 临时目录（不应入仓）
 .next-build-*
+
+# v5-D71: DB 备份不入仓
+data/*.db.before-*
+data/*.before-d*
