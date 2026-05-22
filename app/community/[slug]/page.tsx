@@ -1,11 +1,12 @@
 // v5-D61 社区详情页 /community/[slug]
+// v5-D69 bumpView 改走客户端 ping（卸载同步写）；getBySlug 走 forumPublicCache 60s TTL。
+// 注：保留 force-dynamic 因为 page 依赖 searchParams.lang（force-static + searchParams 会被 Next 自动 opt-out）。
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import {
-  forumQuestionOperations,
   forumUserOperations,
 } from '@/lib/database';
 import { forumPublicCache } from '@/lib/forum-public-cache';
@@ -22,6 +23,7 @@ import { detectLocaleFromQuery, toLocale } from '@/lib/i18n/zh-locale';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import ForumViewPing from '@/components/forum-view-ping';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -33,7 +35,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const slug = decodeURIComponent(rawSlug);
   const sp = searchParams ? await searchParams : {};
   const locale = detectLocaleFromQuery(sp.lang);
-  const q = forumQuestionOperations.getBySlug(slug);
+  const q = forumPublicCache.getBySlug(slug);
   if (!q) return { title: '提问不存在' };
   const title = toLocale(q.title, locale);
   const bodySnippet = toLocale(q.body.slice(0, 110) + (q.body.length > 110 ? '…' : ''), locale);
@@ -71,9 +73,9 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
   const sp = searchParams ? await searchParams : {};
   const locale = detectLocaleFromQuery(sp.lang);
   const T = (s: string) => toLocale(s, locale);
-  const q = forumQuestionOperations.getBySlug(slug);
+  const q = forumPublicCache.getBySlug(slug);
   if (!q) return notFound();
-  forumQuestionOperations.bumpView(slug);
+  // v5-D69 bumpView 改走客户端 ForumViewPing；这里不再同步写。
 
   const author = forumUserOperations.getById(q.authorId);
   const answers = forumPublicCache.listAnswers(q.id);
@@ -91,6 +93,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
 
   return (
     <div className="page-shell">
+      <ForumViewPing slug={q.slug} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(qaSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(bcSchema) }} />
       <AnalyticsPageView eventName="knowledge_article_viewed" page={`${FORUM_BASE}/${q.slug}`} meta={{ surfaceKey: 'community_detail', category: q.category, industry: q.industry }} />

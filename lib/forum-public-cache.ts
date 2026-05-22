@@ -48,6 +48,8 @@ export const forumPublicCache = {
     memo(`answers:${questionId}`, () => forumAnswerOperations.listByQuestion(questionId)),
   searchTitle: (q: string, limit = 30) =>
     memo(`search:${limit}:${q}`, () => forumQuestionOperations.searchTitle(q, limit)),
+  getBySlug: (slug: string) =>
+    memo(`slug:${slug}`, () => forumQuestionOperations.getBySlug(slug)),
   /** 写路径或后台手动触发后调用，立即让所有列表/计数失效 */
   invalidateAll: () => {
     cache.clear();
