@@ -240,15 +240,15 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
                 </div>
                 <div className="divide-y divide-[color:var(--fb-border)]">
                   {faqs.map((f, i) => (
-                    <details key={i} className="group" open={i === 0}>
-                      <summary className="flex cursor-pointer items-start gap-2 px-4 py-3 text-[14px] font-bold text-[color:var(--fb-ink-1)] hover:bg-[#f5f6f7]">
+                    <div key={i} className="px-4 py-3">
+                      <div className="flex items-start gap-2 text-[14px] font-bold text-[color:var(--fb-ink-1)]">
                         <span className="text-[color:var(--fb-blue)] shrink-0">Q.</span>
                         <span className="flex-1">{T(f.q)}</span>
-                      </summary>
-                      <div className="px-4 pb-3 pl-9 text-[13px] leading-[1.7] text-[color:var(--fb-ink-2)]">
+                      </div>
+                      <div className="mt-1.5 pl-6 text-[13px] leading-[1.7] text-[color:var(--fb-ink-2)]">
                         {T(f.a)}
                       </div>
-                    </details>
+                    </div>
                   ))}
                 </div>
               </section>

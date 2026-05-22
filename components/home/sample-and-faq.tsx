@@ -1,11 +1,11 @@
 import Link from 'next/link';
-import { ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 // v5-D9 (2026-05-17) 替换首页旧 4-Stat 段：用"示例预览 + FAQ"提高首屏说服力
 // v5-D60 (2026-05-21) 适配 FB 风三栏布局：放在中流卡片中，不再用 page-frame；
 //   取消左右双列，改为单列（中流宽度 540 不够双列），每张内卡用 FB 硬边 + 3px 圆角。
-// Why: 抽象数字（"3 层 / 600+ / 真太阳 / 可补全"）说服力低，访客更想看
-//      "我会拿到什么样的页面 + 我担心的问题有没有解释"。
+// v5-D65 (2026-05-22) FAQ 拍平：去掉 details/summary 折叠，全部默认展开 —
+//   SEO 抓取更稳（不再依赖 open 属性可见性），用户少一次点击直达答案。
 
 const SAMPLE_PREVIEW = {
   eyebrow: '示例预览',
@@ -101,18 +101,17 @@ export default function HomeSampleAndFaq() {
           </h2>
           <div className="flex flex-col gap-1.5">
             {FAQ_ITEMS.map((item) => (
-              <details
+              <div
                 key={item.q}
-                className="group rounded-[3px] border border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2 open:bg-white"
+                className="rounded-[3px] border border-[color:var(--fb-border)] bg-white px-3 py-2"
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
-                  <span>{item.q}</span>
-                  <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[color:var(--fb-ink-4)] transition-transform group-open:rotate-180" />
-                </summary>
-                <p className="mt-2 text-[12px] leading-[1.6] text-[color:var(--fb-ink-2)]">
+                <div className="text-[13px] font-bold text-[color:var(--fb-ink-1)]">
+                  {item.q}
+                </div>
+                <p className="mt-1 text-[12px] leading-[1.6] text-[color:var(--fb-ink-2)]">
                   {item.a}
                 </p>
-              </details>
+              </div>
             ))}
           </div>
         </div>

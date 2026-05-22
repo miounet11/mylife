@@ -894,18 +894,17 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ) : null}
               </section>
 
-              <details id="deep-report" className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5 open:bg-[color:var(--paper)]">
-                <summary className="cursor-pointer list-none">
+              <section id="deep-report" className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <header>
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div>
                       <div className="fb-section-title text-[16px] font-bold text-[color:var(--ink-1)]">深入报告</div>
                       <p className="mt-1 text-[13px] leading-[1.5] text-[color:var(--ink-4)]">
-                        首屏先看总览和三步动作；需要细节时再展开这里，减少结果页的信息噪音。
+                        首屏总览和三步动作之后，下面是完整命理细节。
                       </p>
                     </div>
-                    <span className="inline-flex items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-[#e9ebee] px-3 py-1 text-[12px] font-semibold text-[#3b5998]">展开</span>
                   </div>
-                </summary>
+                </header>
 
                 <div id="trend" className="mt-4 grid gap-3 scroll-mt-24 xl:grid-cols-[1.08fr_0.92fr]">
                   <LifeKLineSummaryCard
@@ -980,7 +979,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   coreSectionNames={coreSectionNames}
                   deferredSectionNames={deferredSectionNames}
                 />
-              </details>
+              </section>
 
               {/* v5-D38 继续探索导航 */}
               <div>

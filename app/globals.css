@@ -228,7 +228,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
     @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
   }
 
-  /* ============ priority-disclosure（仍在 component 中使用）============ */
+  /* ============ priority-disclosure（v5-D65 拍平为静态 section）============ */
   .priority-disclosure {
     border-radius: var(--radius-md);
     background: var(--paper);
@@ -237,25 +237,11 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
   }
 
   .priority-disclosure-summary {
-    @apply flex cursor-pointer list-none items-start justify-between gap-4 px-4 py-4 md:px-5;
+    @apply flex items-start justify-between gap-4 px-4 py-4 md:px-5;
   }
 
-  .priority-disclosure-summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .priority-disclosure-icon {
-    @apply mt-1 flex h-8 w-8 shrink-0 items-center justify-center;
-    border-radius: var(--radius);
-    border: 1px solid var(--hairline);
-    background: var(--bg-elevated);
-    color: var(--ink-4);
-    transition: transform 180ms ease, color 180ms ease;
-  }
-
-  .priority-disclosure[open] .priority-disclosure-icon {
-    transform: rotate(180deg);
-    color: var(--brand-strong);
+  .priority-disclosure-summary--static {
+    @apply cursor-default;
   }
 
   .priority-disclosure-body {
@@ -776,17 +762,12 @@ html[data-theme="fb2017"] .fb-section-card {
   padding: 12px 14px;
 }
 
-/* —— priority-disclosure（保留组件）在 fb 主题下收紧 —— */
+/* —— priority-disclosure（v5-D65 拍平后保留）在 fb 主题下收紧 —— */
 html[data-theme="fb2017"] .priority-disclosure {
   border-radius: 3px;
   background: var(--fb-card);
   border: 1px solid var(--fb-border);
   box-shadow: none;
-}
-html[data-theme="fb2017"] .priority-disclosure-icon {
-  border-radius: 2px;
-  background: var(--fb-action-bg);
-  border-color: var(--fb-border);
 }
 
 /* —— ChatFab 圆形 messenger 按钮（保留圆）+ FB 蓝实心 —— */
@@ -840,8 +821,8 @@ html[data-theme="fb2017"] p.text-sm.md\:text-base.leading-7 {
   color: var(--fb-ink-2);
 }
 
-/* —— 顶部 priority disclosure（dashboard 的 5w 总览）→ FB 风 —— */
-html[data-theme="fb2017"] details.priority-disclosure summary {
+/* —— priority disclosure 在 fb 主题下 padding/字号收紧（v5-D65 后是 header 不是 summary） —— */
+html[data-theme="fb2017"] .priority-disclosure .priority-disclosure-summary {
   padding: 10px 14px;
   font-size: 14px;
   font-weight: 700;
