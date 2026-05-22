@@ -2357,6 +2357,19 @@ export function initializeDatabase() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_forum_title_pool_title ON forum_title_pool(title);
   `);
 
+  // v5-D70 兼容：旧表加 body / official_answer 字段
+  try {
+    const cols = (db.prepare(`PRAGMA table_info(forum_title_pool)`).all() as Array<{ name: string }>).map((c) => c.name);
+    if (!cols.includes('body')) {
+      db.exec(`ALTER TABLE forum_title_pool ADD COLUMN body TEXT`);
+    }
+    if (!cols.includes('official_answer')) {
+      db.exec(`ALTER TABLE forum_title_pool ADD COLUMN official_answer TEXT`);
+    }
+  } catch (err) {
+    console.warn('[db] forum_title_pool migrate failed:', err);
+  }
+
   // 兼容已有库 — 如果旧表没有这两列，加上
   try {
     const cols = (db.prepare(`PRAGMA table_info(user_timing_profiles)`).all() as Array<{ name: string }>).map((c) => c.name);
@@ -6969,35 +6982,51 @@ export const forumQuestionOperations = {
   },
 };
 
-// v5-D67 LLM 预生成标题池
+// v5-D67/D70 LLM 预生成标题池（含 body / official_answer 配套）
 export const forumTitlePoolOperations = {
-  addBatch: (items: Array<{ title: string; category: string; keyword?: string | null }>, batchId: string) => {
+  addBatch: (
+    items: Array<{ title: string; category: string; keyword?: string | null; body?: string | null; officialAnswer?: string | null }>,
+    batchId: string,
+  ) => {
     if (!items.length) return { inserted: 0, skipped: 0 };
     const stmt = db.prepare(
-      `INSERT OR IGNORE INTO forum_title_pool (title, category, keyword, status, batch_id) VALUES (?, ?, ?, 'fresh', ?)`
+      `INSERT OR IGNORE INTO forum_title_pool (title, category, keyword, body, official_answer, status, batch_id) VALUES (?, ?, ?, ?, ?, 'fresh', ?)`
     );
     let inserted = 0;
     const tx = db.transaction((rows: typeof items) => {
       for (const r of rows) {
         const t = (r.title || '').trim();
         if (!t) continue;
-        const info = stmt.run(t, r.category, r.keyword ?? null, batchId);
+        const info = stmt.run(t, r.category, r.keyword ?? null, r.body ?? null, r.officialAnswer ?? null, batchId);
         if (info.changes > 0) inserted += 1;
       }
     });
     tx(items);
     return { inserted, skipped: items.length - inserted };
   },
-  consumeOne: (category?: string): { id: number; title: string; category: string; keyword: string | null } | null => {
+  consumeOne: (category?: string): { id: number; title: string; category: string; keyword: string | null; body: string | null; officialAnswer: string | null } | null => {
     const tx = db.transaction(() => {
-      const row = (category
-        ? db.prepare(`SELECT id, title, category, keyword FROM forum_title_pool WHERE status = 'fresh' AND category = ? ORDER BY id ASC LIMIT 1`).get(category)
-        : db.prepare(`SELECT id, title, category, keyword FROM forum_title_pool WHERE status = 'fresh' ORDER BY id ASC LIMIT 1`).get()) as
-        | { id: number; title: string; category: string; keyword: string | null }
+      // v5-D70：优先消费 body 不为 NULL 的（D70+ 配对版），其次任何 fresh
+      const sqlBody = category
+        ? `SELECT id, title, category, keyword, body, official_answer FROM forum_title_pool WHERE status = 'fresh' AND category = ? AND body IS NOT NULL ORDER BY id ASC LIMIT 1`
+        : `SELECT id, title, category, keyword, body, official_answer FROM forum_title_pool WHERE status = 'fresh' AND body IS NOT NULL ORDER BY id ASC LIMIT 1`;
+      const sqlAny = category
+        ? `SELECT id, title, category, keyword, body, official_answer FROM forum_title_pool WHERE status = 'fresh' AND category = ? ORDER BY id ASC LIMIT 1`
+        : `SELECT id, title, category, keyword, body, official_answer FROM forum_title_pool WHERE status = 'fresh' ORDER BY id ASC LIMIT 1`;
+      const args = category ? [category] : [];
+      const row = (db.prepare(sqlBody).get(...args) || db.prepare(sqlAny).get(...args)) as
+        | { id: number; title: string; category: string; keyword: string | null; body: string | null; official_answer: string | null }
         | undefined;
       if (!row) return null;
       db.prepare(`UPDATE forum_title_pool SET status = 'consumed', consumed_at = datetime('now') WHERE id = ?`).run(row.id);
-      return row;
+      return {
+        id: row.id,
+        title: row.title,
+        category: row.category,
+        keyword: row.keyword,
+        body: row.body,
+        officialAnswer: row.official_answer,
+      };
     });
     return tx() as ReturnType<typeof forumTitlePoolOperations.consumeOne>;
   },

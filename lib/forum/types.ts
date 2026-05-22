@@ -37,6 +37,7 @@ export interface ForumQuestionRecord {
     gender?: 'male' | 'female';
     ageRange?: string;         // "30-35"
     visibilityMask: string[];  // 哪些字段被隐藏
+    pooledOfficialAnswer?: string;  // v5-D70：池产出的官方答正文，buildAnswer 时优先使用
   };
   status: 'pending' | 'visible' | 'archived';
   publishedAt: string | null;  // 发布时间（即对外可见时间）

@@ -87,12 +87,12 @@ function buildTitle(
   occupation: string,
   years: number,
   categoryKey: string,
-): string {
-  // v5-D67：先尝试从 LLM 预生成池消费
+): { title: string; body: string | null; officialAnswer: string | null } {
+  // v5-D67/D70：先尝试从 LLM 预生成池消费（含 title + body + officialAnswer）
   try {
     const pooled = forumTitlePoolOperations.consumeOne(categoryKey);
     if (pooled?.title) {
-      return pooled.title;
+      return { title: pooled.title, body: pooled.body, officialAnswer: pooled.officialAnswer };
     }
   } catch (err) {
     console.warn('[forum/buildTitle] pool consume failed, fallback to template:', err);
@@ -105,7 +105,7 @@ function buildTitle(
   const kw = useSeo ? pick(rng, seoPool) : topic;
   const situ = pick(rng, ['最近遇到瓶颈', '换城市发展', '父母身体不好', '存款卡住', '相亲没结果', '考公面试在即']);
   const pattern = pick(rng, TITLE_PATTERNS);
-  return pattern(kw, occupation, years, situ, catLabel, topic);
+  return { title: pattern(kw, occupation, years, situ, catLabel, topic), body: null, officialAnswer: null };
 }
 
 
@@ -167,7 +167,7 @@ export function buildQuestion(input: BuildQuestionInput): ForumQuestionRecord {
   const situation = pick(rng, SITUATIONS);
   const problem = pick(rng, PROBLEMS);
 
-  const body = tpl
+  const templateBody = tpl
     .replace('{intro}', intro)
     .replace('{occupation}', occupation)
     .replace('{years}', String(years))
@@ -217,9 +217,11 @@ export function buildQuestion(input: BuildQuestionInput): ForumQuestionRecord {
     .replace('{card3}', pick(rng, TAROT_CARDS))
     .replace('{card}', pick(rng, TAROT_CARDS));
 
-  const titleStem = buildTitle(rng, category.label, topic, occupation, years, categoryKey);
+  const poolEntry = buildTitle(rng, category.label, topic, occupation, years, categoryKey);
   // 截断到 36 字符（之前 28 字会把 SEO 词切掉）
-  const title = titleStem.length > 36 ? titleStem.slice(0, 36) : titleStem;
+  const title = poolEntry.title.length > 36 ? poolEntry.title.slice(0, 36) : poolEntry.title;
+  // v5-D70：如果池给了 body 就用池的（更拟人化），否则模板拼接
+  const body = (poolEntry.body && poolEntry.body.trim().length >= 30) ? poolEntry.body.trim() : templateBody;
 
   const tagsBase = SEO_KEYWORDS[categoryKey] || [];
   const tags = pickN(rng, tagsBase, Math.min(4, tagsBase.length));
@@ -248,6 +250,8 @@ export function buildQuestion(input: BuildQuestionInput): ForumQuestionRecord {
       gender: gender === '男' ? 'male' : 'female',
       ageRange,
       visibilityMask: privacy.visibilityMask,
+      // v5-D70：池给的官方答（如有），由 tick.ts 在创建官方答时拿来用
+      pooledOfficialAnswer: poolEntry.officialAnswer || undefined,
     },
     status: 'visible',
     publishedAt: context.scheduledFor.toISOString(),
@@ -329,7 +333,15 @@ export function buildAnswer(input: BuildAnswerInput): ForumAnswerRecord {
     sections.push('> 想看自己的完整命盘？[点这里免费生成](/analyze)。');
   }
 
-  const body = sections.join('\n').trim();
+  let body = sections.join('\n').trim();
+
+  // v5-D70：官方答如果有 LLM 池产出，优先用池版本（更深度），并保留底部 CTA 行
+  if (isOfficial) {
+    const pooled = question.metadata.pooledOfficialAnswer;
+    if (pooled && pooled.trim().length >= 80) {
+      body = `${pooled.trim()}\n\n> 想看自己的完整命盘？[点这里免费生成](/analyze)。`;
+    }
+  }
 
   return {
     id: `fa_${seed.toString(36)}_${Math.floor(rng() * 999999).toString(36)}`,
