@@ -2341,6 +2341,20 @@ export function initializeDatabase() {
     );
     CREATE INDEX IF NOT EXISTS idx_forum_answers_question ON forum_answers(question_id, status);
     CREATE INDEX IF NOT EXISTS idx_forum_answers_status_pub ON forum_answers(status, published_at);
+
+    -- v5-D67 LLM 预生成标题池：一次请求出 100-300 条，daemon tick 时消费
+    CREATE TABLE IF NOT EXISTS forum_title_pool (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL,
+      keyword TEXT,
+      status TEXT NOT NULL DEFAULT 'fresh',  -- fresh | consumed
+      consumed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      batch_id TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_forum_title_pool_status ON forum_title_pool(status, category);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_forum_title_pool_title ON forum_title_pool(title);
   `);
 
   // 兼容已有库 — 如果旧表没有这两列，加上
@@ -6952,6 +6966,54 @@ export const forumQuestionOperations = {
   listAllSlugsForSitemap: () => {
     const rows = db.prepare(`SELECT slug, published_at FROM forum_questions WHERE status = 'visible' AND datetime(published_at) <= datetime('now') ORDER BY datetime(published_at) DESC LIMIT 5000`).all() as Array<{ slug: string; published_at: string }>;
     return rows;
+  },
+};
+
+// v5-D67 LLM 预生成标题池
+export const forumTitlePoolOperations = {
+  addBatch: (items: Array<{ title: string; category: string; keyword?: string | null }>, batchId: string) => {
+    if (!items.length) return { inserted: 0, skipped: 0 };
+    const stmt = db.prepare(
+      `INSERT OR IGNORE INTO forum_title_pool (title, category, keyword, status, batch_id) VALUES (?, ?, ?, 'fresh', ?)`
+    );
+    let inserted = 0;
+    const tx = db.transaction((rows: typeof items) => {
+      for (const r of rows) {
+        const t = (r.title || '').trim();
+        if (!t) continue;
+        const info = stmt.run(t, r.category, r.keyword ?? null, batchId);
+        if (info.changes > 0) inserted += 1;
+      }
+    });
+    tx(items);
+    return { inserted, skipped: items.length - inserted };
+  },
+  consumeOne: (category?: string): { id: number; title: string; category: string; keyword: string | null } | null => {
+    const tx = db.transaction(() => {
+      const row = (category
+        ? db.prepare(`SELECT id, title, category, keyword FROM forum_title_pool WHERE status = 'fresh' AND category = ? ORDER BY id ASC LIMIT 1`).get(category)
+        : db.prepare(`SELECT id, title, category, keyword FROM forum_title_pool WHERE status = 'fresh' ORDER BY id ASC LIMIT 1`).get()) as
+        | { id: number; title: string; category: string; keyword: string | null }
+        | undefined;
+      if (!row) return null;
+      db.prepare(`UPDATE forum_title_pool SET status = 'consumed', consumed_at = datetime('now') WHERE id = ?`).run(row.id);
+      return row;
+    });
+    return tx() as ReturnType<typeof forumTitlePoolOperations.consumeOne>;
+  },
+  countFresh: (category?: string): number => {
+    const sql = category
+      ? `SELECT COUNT(*) as n FROM forum_title_pool WHERE status = 'fresh' AND category = ?`
+      : `SELECT COUNT(*) as n FROM forum_title_pool WHERE status = 'fresh'`;
+    const row = (category ? db.prepare(sql).get(category) : db.prepare(sql).get()) as { n: number };
+    return row.n;
+  },
+  countByCategory: (): Array<{ category: string; n: number }> => {
+    return db.prepare(`SELECT category, COUNT(*) as n FROM forum_title_pool WHERE status = 'fresh' GROUP BY category ORDER BY n DESC`).all() as Array<{ category: string; n: number }>;
+  },
+  prune: (keepDays = 30): number => {
+    const info = db.prepare(`DELETE FROM forum_title_pool WHERE status = 'consumed' AND datetime(consumed_at) < datetime('now', ?)`).run(`-${keepDays} days`);
+    return info.changes;
   },
 };
 

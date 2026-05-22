@@ -1,4 +1,5 @@
 // v5-D61 论坛 Q&A 内容生成器（纯模板拼接版，零 LLM）
+// v5-D67：标题先尝试从 forum_title_pool 消费（LLM 预生成），未命中回退 8 套模板
 
 import { ForumUserRecord, ForumQuestionRecord, ForumAnswerRecord, ForumGenerationContext } from './types';
 import {
@@ -14,6 +15,7 @@ import {
   ANSWER_FRAGMENTS,
   SEO_KEYWORDS,
 } from './templates';
+import { forumTitlePoolOperations } from '@/lib/database';
 
 function makeRng(seed: number) {
   let a = seed >>> 0;
@@ -86,6 +88,17 @@ function buildTitle(
   years: number,
   categoryKey: string,
 ): string {
+  // v5-D67：先尝试从 LLM 预生成池消费
+  try {
+    const pooled = forumTitlePoolOperations.consumeOne(categoryKey);
+    if (pooled?.title) {
+      return pooled.title;
+    }
+  } catch (err) {
+    console.warn('[forum/buildTitle] pool consume failed, fallback to template:', err);
+  }
+
+  // 回退：v5-D66 8 套模板拼接
   const seoPool = SEO_KEYWORDS[categoryKey] || [];
   // 70% 概率从 SEO_KEYWORDS 池抽词当核心；30% 退回 topic 兜底
   const useSeo = seoPool.length > 0 && rng() < 0.7;
