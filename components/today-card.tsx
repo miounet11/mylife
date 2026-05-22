@@ -150,14 +150,14 @@ export default function TodayCard({ fortuneId, displayName, card, page = '/' }: 
           page={page}
           target="today_card_open_report"
           meta={{ fortuneId, date: card.date, tone: card.toneLabel }}
-          className="inline-flex min-h-11 items-center justify-center gap-1.5 rounded-full bg-[color:var(--brand)] px-4 py-2 text-sm font-black text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-[color:var(--brand-strong)]"
+          className="inline-flex min-h-10 items-center justify-center gap-1.5 rounded-[2px] bg-[color:var(--fb-blue)] px-4 py-2 text-[14px] font-bold text-white transition hover:bg-[#365899] hover:no-underline"
         >
           看我的时间地图
           <ArrowRight className="h-4 w-4" />
         </ResultCtaLink>
         <Link
           href={`/events?source=today_card&fortuneId=${encodeURIComponent(fortuneId)}`}
-          className="text-sm font-bold text-[color:var(--ink-3)] underline-offset-4 hover:text-[color:var(--brand-strong)] hover:underline"
+          className="inline-flex min-h-10 items-center rounded-[2px] border border-[#dddfe2] bg-white px-3 py-1.5 text-[13px] font-bold text-[color:var(--fb-ink-2)] hover:bg-[#f5f6f7] hover:no-underline"
         >
           记一笔今天 →
         </Link>

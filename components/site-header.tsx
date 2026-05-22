@@ -94,20 +94,17 @@ export default function SiteHeader({
           </Link>
 
           <form
-            action="https://www.google.com/search"
+            action="/community/search"
             method="get"
-            target="_blank"
-            rel="noopener noreferrer"
             className="relative ml-1 hidden min-w-0 max-w-[420px] flex-1 md:block"
             role="search"
           >
-            <input type="hidden" name="q" value="site:life-kline.com" />
             <input
               type="text"
               name="q"
-              placeholder="搜索世界易 / 八字 / 紫微 / 文章 / 案例"
+              placeholder="搜索：八字 / 紫微 / 六爻 / 风水 / 塔罗 …"
               className="h-7 w-full rounded-[2px] border border-[#29487d] bg-white px-2 pr-7 text-[13px] text-[color:var(--fb-ink-1)] placeholder:text-[color:var(--fb-ink-4)] focus:border-white focus:outline-none"
-              aria-label="搜索人生K线"
+              aria-label="站内搜索"
             />
             <Search className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[color:var(--fb-ink-3)]" />
           </form>

@@ -10,6 +10,7 @@ import { trackClientEvent } from '@/lib/analytics-client';
 // v5-D60 (2026-05-21): FB Messenger 2017 风圆形 FAB + Messenger 弹层
 const HIDE_PATTERNS: Array<RegExp | string> = [
   '/chat',
+  '/analyze',          // analyze 页有移动端 sticky 主 CTA，避免撞车
   /^\/admin(\/|$)/,
   /^\/login(\/|$)/,
   /^\/r\/[^/]+\/edit/, // 预留：未来报告编辑页

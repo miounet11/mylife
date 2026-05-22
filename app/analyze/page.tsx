@@ -93,9 +93,9 @@ export default async function AnalyzeEntryPage({
           <div className="px-4 py-3">
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="min-w-0">
-                <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
+                <h1 className="text-[26px] md:text-[28px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
                   填出生信息，
-                  <span className="text-[color:var(--brand-strong)]">生成第一份判断报告</span>
+                  <span className="text-[color:var(--fb-blue)]">生成第一份判断报告</span>
                 </h1>
                 <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
                   用真太阳时校正与世界易判断框架，先得到结构、阶段与环境总览，再决定下一步路径。
