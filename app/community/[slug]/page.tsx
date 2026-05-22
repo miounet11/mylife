@@ -18,38 +18,59 @@ import {
   buildBreadcrumbJsonLd,
   describeQuestion,
 } from '@/lib/forum/seo';
+import { detectLocaleFromQuery, toLocale } from '@/lib/i18n/zh-locale';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
+  const sp = searchParams ? await searchParams : {};
+  const locale = detectLocaleFromQuery(sp.lang);
   const q = forumQuestionOperations.getBySlug(slug);
   if (!q) return { title: '提问不存在' };
-  const desc = `${q.body.slice(0, 110)}${q.body.length > 110 ? '…' : ''} · ${describeQuestion(q)}`;
+  const title = toLocale(q.title, locale);
+  const bodySnippet = toLocale(q.body.slice(0, 110) + (q.body.length > 110 ? '…' : ''), locale);
+  const desc = `${bodySnippet} · ${toLocale(describeQuestion(q), locale)}`;
+  const url = `https://www.life-kline.com${FORUM_BASE}/${q.slug}`;
   return {
-    title: `${q.title} | ${FORUM_LABEL}`,
+    title: `${title} | ${toLocale(FORUM_LABEL, locale)}`,
     description: desc,
-    alternates: { canonical: `https://www.life-kline.com${FORUM_BASE}/${q.slug}` },
+    alternates: {
+      canonical: url,
+      languages: {
+        'zh-CN': url,
+        'zh-Hant': `${url}?lang=zh-Hant`,
+        'zh-TW': `${url}?lang=zh-Hant`,
+        'zh-HK': `${url}?lang=zh-Hant`,
+        'x-default': url,
+      },
+    },
     openGraph: {
-      title: q.title,
+      title,
       description: desc,
-      url: `https://www.life-kline.com${FORUM_BASE}/${q.slug}`,
+      url,
       type: 'article',
       publishedTime: q.publishedAt || undefined,
+      locale: locale === 'zh-Hant' ? 'zh_TW' : 'zh_CN',
+      alternateLocale: locale === 'zh-Hant' ? ['zh_CN'] : ['zh_TW', 'zh_HK'],
     },
     keywords: q.tags.join(','),
   };
 }
 
-export default async function CommunityDetailPage({ params }: PageProps) {
+export default async function CommunityDetailPage({ params, searchParams }: PageProps) {
   const { slug: rawSlug } = await params;
   const slug = decodeURIComponent(rawSlug);
+  const sp = searchParams ? await searchParams : {};
+  const locale = detectLocaleFromQuery(sp.lang);
+  const T = (s: string) => toLocale(s, locale);
   const q = forumQuestionOperations.getBySlug(slug);
   if (!q) return notFound();
   forumQuestionOperations.bumpView(slug);
@@ -105,7 +126,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
               </div>
               <div className="px-4 py-4">
                 <h1 className="text-[20px] font-bold text-[color:var(--fb-ink-1)] leading-[1.3] mb-2">
-                  {q.title}
+                  {T(q.title)}
                 </h1>
                 <div className="flex flex-wrap items-center gap-1.5 mb-3 text-[11px]">
                   <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
@@ -121,7 +142,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                   ))}
                 </div>
                 <div className="prose-fb text-[14px] leading-[1.6] text-[color:var(--fb-ink-1)] whitespace-pre-line">
-                  {q.body}
+                  {T(q.body)}
                 </div>
                 {q.metadata.visibilityMask?.length ? (
                   <div className="mt-3 rounded-[2px] border border-[#dddfe2] bg-[#fdfdfd] px-2.5 py-2 text-[11px] text-[color:var(--fb-ink-3)]">
@@ -179,7 +200,7 @@ export default async function CommunityDetailPage({ params }: PageProps) {
                   </div>
                   <div className="px-4 py-3">
                     <div className="prose-fb text-[14px] leading-[1.6] text-[color:var(--fb-ink-1)] whitespace-pre-line">
-                      {a.body}
+                      {T(a.body)}
                     </div>
                   </div>
                 </article>

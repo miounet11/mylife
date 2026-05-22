@@ -1,6 +1,7 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
 import { forumQuestionOperations } from '@/lib/database';
+import { CATEGORIES } from '@/lib/forum/templates';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
 import { listProductDocRoutes } from '@/lib/product-docs';
@@ -94,6 +95,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'hourly',
       priority: 0.88,
     }),
+    ...CATEGORIES.map((c) => createSitemapEntry(`/community/category/${c.key}`, {
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.82,
+    })),
     createSitemapEntry('/insights', {
       lastModified: new Date(),
       changeFrequency: 'weekly',

@@ -15,6 +15,7 @@ import {
   getCategoryLabel,
   getIndustryLabel,
 } from '@/lib/forum/seo';
+import { detectLocaleFromQuery, toLocale } from '@/lib/i18n/zh-locale';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -22,12 +23,23 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 export const metadata: Metadata = {
   title: `${FORUM_LABEL} · 命理 Q&A 社区`,
   description: '世界易学说命理社区。每天 300+ 真实命理提问与官方解读，覆盖八字、紫微、六爻、奇门、择日、风水、塔罗、占星、面相、姓名学。',
-  alternates: { canonical: 'https://www.life-kline.com/community' },
+  alternates: {
+    canonical: 'https://www.life-kline.com/community',
+    languages: {
+      'zh-CN': 'https://www.life-kline.com/community',
+      'zh-Hant': 'https://www.life-kline.com/community?lang=zh-Hant',
+      'zh-TW': 'https://www.life-kline.com/community?lang=zh-Hant',
+      'zh-HK': 'https://www.life-kline.com/community?lang=zh-Hant',
+      'x-default': 'https://www.life-kline.com/community',
+    },
+  },
   openGraph: {
     title: '世界易学说社区 · 每日命理 Q&A',
     description: '八字 / 紫微 / 六爻 / 奇门 / 择日 / 塔罗 — 真实问题，专业老师解答。',
     url: 'https://www.life-kline.com/community',
     type: 'website',
+    locale: 'zh_CN',
+    alternateLocale: ['zh_TW', 'zh_HK'],
   },
 };
 
@@ -36,6 +48,7 @@ interface PageProps {
     category?: string;
     industry?: string;
     page?: string;
+    lang?: string;
   }>;
 }
 
@@ -47,6 +60,8 @@ export default async function CommunityPage({ searchParams }: PageProps) {
   const industry = sp.industry?.trim() || '';
   const pageNum = Math.max(1, Number(sp.page || 1));
   const offset = (pageNum - 1) * PAGE_SIZE;
+  const locale = detectLocaleFromQuery(sp.lang);
+  const T = (s: string) => toLocale(s, locale);
 
   const list = forumQuestionOperations.listVisible({
     limit: PAGE_SIZE,
@@ -142,12 +157,12 @@ export default async function CommunityPage({ searchParams }: PageProps) {
                         </div>
                       </div>
 
-                      <Link href={`${FORUM_BASE}/${q.slug}`} className="block group">
+                      <Link href={`${FORUM_BASE}/${q.slug}${locale === 'zh-Hant' ? '?lang=zh-Hant' : ''}`} className="block group">
                         <h2 className="text-[15px] font-bold text-[color:var(--fb-ink-1)] leading-[1.35] group-hover:text-[color:var(--fb-blue-link)]">
-                          {q.title}
+                          {T(q.title)}
                         </h2>
                         <p className="mt-1 text-[13px] leading-[1.5] text-[color:var(--fb-ink-2)] line-clamp-2">
-                          {q.body.replace(/\n/g, ' ')}
+                          {T(q.body.replace(/\n/g, ' '))}
                         </p>
                       </Link>
 

@@ -78,6 +78,7 @@
   "dependencies": {
     "@codeany/open-agent-sdk": "github:codeany-ai/open-agent-sdk-typescript#366438d2ef94775a4515301bcf8a58ab866c1731",
     "better-sqlite3": "^11.7.0",
+    "chinese-conv": "^4.0.0",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "html-to-image": "^1.11.13",
