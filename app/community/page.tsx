@@ -5,9 +5,9 @@ export const revalidate = 0;
 import Link from 'next/link';
 import { Metadata } from 'next';
 import {
-  forumQuestionOperations,
   forumUserOperations,
 } from '@/lib/database';
+import { forumPublicCache } from '@/lib/forum-public-cache';
 import { CATEGORIES, INDUSTRIES } from '@/lib/forum/templates';
 import {
   FORUM_BASE,
@@ -63,18 +63,18 @@ export default async function CommunityPage({ searchParams }: PageProps) {
   const locale = detectLocaleFromQuery(sp.lang);
   const T = (s: string) => toLocale(s, locale);
 
-  const list = forumQuestionOperations.listVisible({
+  const list = forumPublicCache.listVisible({
     limit: PAGE_SIZE,
     offset,
     category: category || undefined,
     industry: industry || undefined,
   });
-  const total = forumQuestionOperations.countVisible({
+  const total = forumPublicCache.countVisible({
     category: category || undefined,
     industry: industry || undefined,
   });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const todayCount = forumQuestionOperations.countToday();
+  const todayCount = forumPublicCache.countToday();
 
   // 拉取作者
   const authorIds = Array.from(new Set(list.map((q) => q.authorId)));

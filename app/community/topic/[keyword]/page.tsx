@@ -6,9 +6,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import {
-  forumQuestionOperations,
   forumUserOperations,
 } from '@/lib/database';
+import { forumPublicCache } from '@/lib/forum-public-cache';
 import { CATEGORIES, SEO_KEYWORDS, CATEGORY_FAQ } from '@/lib/forum/templates';
 import {
   FORUM_BASE,
@@ -97,9 +97,9 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
   const catLabel = catObj.label;
 
   // 用 LIKE 匹配标题/正文含此关键词的提问（最多 30 条）
-  const matched = forumQuestionOperations.searchTitle(keyword, 30);
+  const matched = forumPublicCache.searchTitle(keyword, 30);
   // 兜底：如果该关键词暂未匹配到题目，回退到该类目最近 30 条
-  const list = matched.length > 0 ? matched : forumQuestionOperations.listVisible({ category: cat, limit: 30 });
+  const list = matched.length > 0 ? matched : forumPublicCache.listVisible({ category: cat, limit: 30 });
 
   const authorIds = Array.from(new Set(list.map((q) => q.authorId)));
   const authorMap = new Map<string, ReturnType<typeof forumUserOperations.getById>>();

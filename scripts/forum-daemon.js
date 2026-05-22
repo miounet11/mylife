@@ -72,7 +72,7 @@ function refillTitlePoolIfLow() {
   const cmd = path.join(ROOT, 'node_modules', '.bin', 'tsx');
   const args = [path.join(ROOT, 'scripts', 'forum', 'llm-titles.ts'), String(TITLE_POOL_REFILL)];
   const env = { ...process.env };
-  const r = spawnSync(cmd, args, { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 3 * 60 * 1000 });
+  const r = spawnSync(cmd, args, { cwd: ROOT, env, stdio: ['ignore', 'pipe', 'pipe'], timeout: 4 * 60 * 1000 });
   if (r.stdout) process.stdout.write(r.stdout);
   if (r.stderr) process.stderr.write(r.stderr);
   if (r.status === 0) {

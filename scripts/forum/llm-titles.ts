@@ -100,7 +100,7 @@ async function main() {
   const openai = new OpenAI({
     apiKey,
     baseURL: getApiBaseUrl(),
-    timeout: 90000,
+    timeout: 180000,
     maxRetries: 0,
   });
 

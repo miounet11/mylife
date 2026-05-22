@@ -6,9 +6,9 @@ import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import {
   forumQuestionOperations,
-  forumAnswerOperations,
   forumUserOperations,
 } from '@/lib/database';
+import { forumPublicCache } from '@/lib/forum-public-cache';
 import {
   FORUM_BASE,
   FORUM_LABEL,
@@ -76,7 +76,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
   forumQuestionOperations.bumpView(slug);
 
   const author = forumUserOperations.getById(q.authorId);
-  const answers = forumAnswerOperations.listByQuestion(q.id);
+  const answers = forumPublicCache.listAnswers(q.id);
   const responderIds = Array.from(new Set(answers.map((a) => a.authorId)));
   const responderMap = new Map<string, ReturnType<typeof forumUserOperations.getById>>();
   responderIds.forEach((id) => responderMap.set(id, forumUserOperations.getById(id)));
@@ -85,7 +85,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
   const bcSchema = buildBreadcrumbJsonLd(q);
 
   // 同类相关 4 条
-  const related = forumQuestionOperations.listVisible({ category: q.category, limit: 5 })
+  const related = forumPublicCache.listVisible({ category: q.category, limit: 5 })
     .filter((r) => r.id !== q.id)
     .slice(0, 4);
 

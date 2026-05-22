@@ -5,9 +5,9 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import {
-  forumQuestionOperations,
   forumUserOperations,
 } from '@/lib/database';
+import { forumPublicCache } from '@/lib/forum-public-cache';
 import { CATEGORIES, SEO_KEYWORDS, CATEGORY_FAQ } from '@/lib/forum/templates';
 import {
   FORUM_BASE,
@@ -70,12 +70,12 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
   const locale = detectLocaleFromQuery(sp.lang);
   const T = (s: string) => toLocale(s, locale);
 
-  const list = forumQuestionOperations.listVisible({
+  const list = forumPublicCache.listVisible({
     limit: PAGE_SIZE,
     offset,
     category,
   });
-  const total = forumQuestionOperations.countVisible({ category });
+  const total = forumPublicCache.countVisible({ category });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
   const authorIds = Array.from(new Set(list.map((q) => q.authorId)));
