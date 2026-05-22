@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 import { db } from '@/lib/database';
 import { forumQuestionOperations } from '@/lib/database';
-import { CATEGORIES } from '@/lib/forum/templates';
+import { CATEGORIES, SEO_KEYWORDS } from '@/lib/forum/templates';
 import { getCaseStudies, getEntityInsights, getKnowledgeArticles } from '@/lib/content-store';
 import { listKnowledgeTopicHubRoutes } from '@/lib/knowledge-network-feed';
 import { listProductDocRoutes } from '@/lib/product-docs';
@@ -100,6 +100,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'daily',
       priority: 0.82,
     })),
+    // v5-D64 关键词主题落地页：SEO_KEYWORDS 池扁平 70+ URL
+    ...Object.values(SEO_KEYWORDS).flat().map((kw) => {
+      const path = `/community/topic/${encodeURIComponent(kw)}`;
+      return createSitemapEntry(path, {
+        lastModified: new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.78,
+        languages: {
+          'zh-CN': path,
+          'zh-Hant': `${path}?lang=zh-Hant`,
+          'x-default': path,
+        },
+      });
+    }),
     createSitemapEntry('/insights', {
       lastModified: new Date(),
       changeFrequency: 'weekly',
