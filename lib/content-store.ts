@@ -272,6 +272,11 @@ export function isPublicKnowledgeEntry(entry: ManagedContentEntry) {
     return false;
   }
 
+  // v5-D78: 引擎+LLM 修饰链路（D75 关键词长文 / D77 基础百科）已经过 fact-pack 校验，直接放行
+  if (entry.source.startsWith('engine-llm:')) {
+    return true;
+  }
+
   return readBoolean(entry.meta, 'publicationReady');
 }
 
