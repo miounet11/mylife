@@ -15,7 +15,7 @@ import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 
 const MAX_LEN = Number(process.argv[2]) || 260;
 const LIMIT = Number(process.argv[3]) || 1000;
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 const DB_PATH = path.resolve(process.cwd(), 'data', 'lifekline.db');
 

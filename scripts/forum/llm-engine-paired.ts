@@ -21,7 +21,7 @@ import { buildVirtualBaziFact, formatFactPackForPrompt, VirtualBaziFact } from '
 
 const TARGET = Math.max(20, Math.min(500, Number(process.argv[2]) || 100));
 const PER_CALL = Math.max(2, Math.min(6, Number(process.argv[3]) || 3));
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 const SYSTEM_PROMPT = `你是中文命理论坛资深运营 + 官方答主。
 

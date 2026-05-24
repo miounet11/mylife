@@ -18,7 +18,7 @@ import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 const TARGET = Math.max(50, Math.min(900, Number(process.argv[2]) || 300));
 const MODEL_OVERRIDE = process.argv[3];
 
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 const ITEMS_PER_CALL = Math.max(5, Math.min(20, Number(process.env.FORUM_LLM_ITEMS_PER_CALL) || 10));
 
 const SYSTEM_PROMPT = `你是中文命理论坛的资深运营。每次生产 N 条「真实用户提问 + 官方答主回复」配对。

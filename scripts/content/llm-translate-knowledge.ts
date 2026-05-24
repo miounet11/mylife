@@ -19,7 +19,7 @@ import type { ContentSection } from '@/lib/content';
 const SOURCE = process.argv[2] || 'engine-llm:encyclopedia';
 const TARGET_LOCALE = process.argv[3] || 'en';
 const CONTENT_TYPE = (process.argv[4] || 'knowledge') as 'knowledge' | 'case' | 'insight';
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 interface SrcEntry {
   id: string;

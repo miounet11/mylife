@@ -19,7 +19,7 @@ import { getApiBaseUrl, getApiKey } from '@/lib/env';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 
 const ONLY = process.argv[2] || 'all';
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 interface Entry {
   type: 'gan' | 'zhi' | 'shishen' | 'shensha' | 'pattern';

@@ -20,7 +20,7 @@ import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { buildVirtualBaziFact, formatFactPackForPrompt, VirtualBaziFact } from '@/lib/forum/virtual-bazi-fact';
 
 const ONLY_KEYWORD = process.argv[2] || '';
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 interface KeywordSpec {
   keyword: string;

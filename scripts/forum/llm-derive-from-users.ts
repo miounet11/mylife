@@ -23,7 +23,7 @@ import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 
 const TARGET = Math.max(20, Math.min(500, Number(process.argv[2]) || 200));
 const SEEDS_PER_CALL = Math.max(3, Math.min(8, Number(process.argv[3]) || 5));
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 const DB_PATH = path.resolve(process.cwd(), 'data', 'lifekline.db');
 

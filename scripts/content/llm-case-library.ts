@@ -15,7 +15,7 @@ import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import { buildVirtualBaziFact, formatFactPackForPrompt, VirtualBaziFact } from '@/lib/forum/virtual-bazi-fact';
 
 const TARGET = Math.max(20, Math.min(600, Number(process.argv[2]) || 300));
-const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
+const CONCURRENCY = Math.max(1, Math.min(50, Number(process.env.FORUM_LLM_CONCURRENCY) || 50));
 
 // 10 个主题大类 × 8-10 个细化场景 = 80+ 题材
 interface ScenarioTheme {
