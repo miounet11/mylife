@@ -1,9 +1,10 @@
 // v5-D80 多语种翻译试点：D77 53 条命理百科 → 英文
 // slug 加 -en 后缀，meta.locale=en，路由零改动；hreflang 互链通过 meta.alternateLanguages 实现
 //
-// 用法: npx tsx scripts/content/llm-translate-knowledge.ts [source?] [targetLocale?]
+// 用法: npx tsx scripts/content/llm-translate-knowledge.ts [source?] [targetLocale?] [contentType?]
 //   source: 默认 engine-llm:encyclopedia
 //   targetLocale: 默认 en
+//   contentType: 默认 knowledge（可选 case）
 
 import { loadEnvConfig } from '@next/env';
 loadEnvConfig(process.cwd());
@@ -17,6 +18,7 @@ import type { ContentSection } from '@/lib/content';
 
 const SOURCE = process.argv[2] || 'engine-llm:encyclopedia';
 const TARGET_LOCALE = process.argv[3] || 'en';
+const CONTENT_TYPE = (process.argv[4] || 'knowledge') as 'knowledge' | 'case' | 'insight';
 const CONCURRENCY = Math.max(1, Math.min(30, Number(process.env.FORUM_LLM_CONCURRENCY) || 30));
 
 interface SrcEntry {
@@ -201,7 +203,7 @@ async function main() {
     const targetSlug = `${r.src.slug}-${TARGET_LOCALE}`;
     try {
       saveManagedContentEntry({
-        contentType: 'knowledge',
+        contentType: CONTENT_TYPE,
         subtype: r.src.subtype || null,
         slug: targetSlug,
         title: r.payload.title,
@@ -209,7 +211,7 @@ async function main() {
         excerpt: r.payload.excerpt,
         category: r.src.category,
         readTime: r.src.read_time,
-        tags: r.payload.tags.length ? r.payload.tags : ['knowledge', TARGET_LOCALE],
+        tags: r.payload.tags.length ? r.payload.tags : [CONTENT_TYPE, TARGET_LOCALE],
         featured: false,
         seoTitle: r.payload.seoTitle || r.payload.title,
         seoDescription: r.payload.seoDescription || r.payload.excerpt,
