@@ -37,9 +37,10 @@
     ".next-build-216677-1779352336590/types/**/*.ts",
     ".next-build-2691862-1779065768135/types/**/*.ts",
     ".next-build-3051293-1779122087000/types/**/*.ts",
+    ".next-build-544723-1779440108124/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-build-544723-1779440108124/types/**/*.ts"
+    ".next-build-1327783-1779623814350/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

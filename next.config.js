@@ -52,8 +52,9 @@ const nextConfig = {
     formats: ['image/avif', 'image/webp'],
   },
   experimental: {
+    // v5-D84 (2026-05-24): 之前 cpus:1 是单 fork 时代为了不抢 LLM 链路 CPU 的妥协。
+    // 现在 PM2 横向 3 实例（v5-D83）已分担负载，每实例放开多核 worker 让 SSR/RSC 编译并行。
     workerThreads: false,
-    cpus: 1,
     optimizePackageImports: ['lucide-react']
   },
   webpack: (config, { isServer }) => {

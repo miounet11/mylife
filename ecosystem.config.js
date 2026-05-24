@@ -2,6 +2,12 @@
 const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS !== '0';
 const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '1';
 const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '1';
+
+// v5-D83 (2026-05-24): daemon 回调改走本机 nginx :8080（内部 upstream 入口）。
+// 之前所有 daemon 硬编码 127.0.0.1:3000，把单进程打爆。
+// 现在 nginx 在 :8080 监听，按 least_conn 把回调分到 3000/3001/3002，
+// 公网入口与 daemon 共享 3 实例池，瞬间扩容 3 倍处理能力。
+const INTERNAL_API_HOST = process.env.INTERNAL_API_HOST || '127.0.0.1:8080';
 const cronEnv = {
   CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
   CONTENT_SCHEDULER_CRON_TOKEN: 'life-kline-scheduler-local-2026',
@@ -27,6 +33,9 @@ const nextApp = {
   script: 'node_modules/next/dist/bin/next',
   args: 'start',
   cwd: '/home/life-kline-next',
+  // v5-D83 (2026-05-24): cluster 模式与 next start 内部 fork 互不兼容，
+  // 改用「多 fork 实例 + 不同端口 + nginx upstream 负载均衡」方案。
+  // 主端口 3000 留给现有 daemon 回调（避免改 12 处 daemon 配置）。
   instances: 1,
   exec_mode: 'fork',
   env: {
@@ -64,7 +73,7 @@ const nextApp = {
     // Sub-Spec C (2026-05-10) 命理时间提醒 cron token
     TIMING_EMAIL_CRON_TOKEN: 'life-kline-timing-email-local-2026',
     ...cronEnv,
-    CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
+    CONTENT_RADAR_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content/radar/cron`,
     CONTENT_RADAR_INTERVAL_MS: '2700000',
     CONTENT_RADAR_REQUEST_TIMEOUT_MS: '60000',
     CONTENT_RADAR_STARTUP_DELAY_MS: '15000',
@@ -79,7 +88,7 @@ const nextApp = {
   autorestart: true,
   max_restarts: 10,
   min_uptime: '10s',
-  max_memory_restart: '1500M',
+  max_memory_restart: '2500M',
   watch: false,
   restart_delay: 4000,
   // v5-D52 (2026-05-20): 重启期 502 防护
@@ -102,7 +111,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       EMAIL_RETRY_ENABLED: '1',
       EMAIL_RETRY_CRON_TOKEN: cronEnv.EMAIL_RETRY_CRON_TOKEN,
-      EMAIL_RETRY_RUN_URL: 'http://127.0.0.1:3000/api/admin/email/retry/cron',
+      EMAIL_RETRY_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/email/retry/cron`,
       EMAIL_RETRY_INTERVAL_MS: '120000',
       EMAIL_RETRY_BATCH_SIZE: '5',
       EMAIL_RETRY_MAX_ATTEMPTS: '4',
@@ -131,7 +140,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       CONTENT_RADAR_ENABLED: '1',
       CONTENT_RADAR_CRON_TOKEN: cronEnv.CONTENT_RADAR_CRON_TOKEN,
-      CONTENT_RADAR_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/radar/cron',
+      CONTENT_RADAR_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content/radar/cron`,
       CONTENT_RADAR_INTERVAL_MS: '2700000',
       CONTENT_RADAR_REQUEST_TIMEOUT_MS: '60000',
       CONTENT_RADAR_STARTUP_DELAY_MS: '15000',
@@ -159,7 +168,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       CONTENT_GENERATION_ENABLED: '1',
       CONTENT_GENERATION_CRON_TOKEN: cronEnv.CONTENT_GENERATION_CRON_TOKEN,
-      CONTENT_GENERATION_JOB_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/generate/cron',
+      CONTENT_GENERATION_JOB_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content/generate/cron`,
       CONTENT_GENERATION_JOB_INTERVAL_MS: '60000',
       CONTENT_GENERATION_JOB_REQUEST_TIMEOUT_MS: '900000',
       CONTENT_GENERATION_JOB_STARTUP_DELAY_MS: '15000',
@@ -188,7 +197,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       CONTENT_SCHEDULER_ENABLED: '1',
       CONTENT_RADAR_CRON_TOKEN: cronEnv.CONTENT_RADAR_CRON_TOKEN,
       CONTENT_SCHEDULER_CRON_TOKEN: cronEnv.CONTENT_SCHEDULER_CRON_TOKEN,
-      CONTENT_SCHEDULER_RUN_URL: 'http://127.0.0.1:3000/api/admin/content/scheduler/cron',
+      CONTENT_SCHEDULER_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content/scheduler/cron`,
       CONTENT_SCHEDULER_INTERVAL_MS: '1200000',
       CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS: '900000',
       CONTENT_SCHEDULER_STARTUP_DELAY_MS: '20000',
@@ -225,7 +234,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       KNOWLEDGE_ACQUISITION_ENABLED: '1',
       KNOWLEDGE_ACQUISITION_CRON_TOKEN: cronEnv.KNOWLEDGE_ACQUISITION_CRON_TOKEN,
-      KNOWLEDGE_ACQUISITION_RUN_URL: 'http://127.0.0.1:3000/api/admin/knowledge/sources/cron',
+      KNOWLEDGE_ACQUISITION_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/knowledge/sources/cron`,
       KNOWLEDGE_ACQUISITION_INTERVAL_MS: '1800000',
       KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS: '180000',
       KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS: '25000',
@@ -263,7 +272,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       REPORT_UPGRADE_ENABLED: '1',
       REPORT_UPGRADE_CRON_TOKEN: cronEnv.REPORT_UPGRADE_CRON_TOKEN,
-      REPORT_UPGRADE_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-upgrade/cron',
+      REPORT_UPGRADE_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/report-upgrade/cron`,
       REPORT_UPGRADE_INTERVAL_MS: '180000',
       REPORT_UPGRADE_BATCH_SIZE: '2',
       // v5-C2 (2026-05-15): structure(180s)+narrative(90s)+overhead 必须 < daemon fetch 超时
@@ -271,7 +280,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       REPORT_UPGRADE_STARTUP_DELAY_MS: '20000',
       REPORT_UPGRADE_RETRY_DELAY_MS: '60000',
       REPORT_MONTHLY_DIGEST_CRON_TOKEN: cronEnv.REPORT_MONTHLY_DIGEST_CRON_TOKEN,
-      REPORT_MONTHLY_DIGEST_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-monthly-digest/cron',
+      REPORT_MONTHLY_DIGEST_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/report-monthly-digest/cron`,
       REPORT_MONTHLY_DIGEST_INTERVAL_MS: '21600000',
       REPORT_MONTHLY_DIGEST_BATCH_SIZE: '20',
     },
@@ -295,7 +304,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       USER_LIFECYCLE_EMAIL_ENABLED: '1',
       USER_LIFECYCLE_EMAIL_CRON_TOKEN: cronEnv.USER_LIFECYCLE_EMAIL_CRON_TOKEN,
-      USER_LIFECYCLE_EMAIL_RUN_URL: 'http://127.0.0.1:3000/api/admin/email/lifecycle/cron',
+      USER_LIFECYCLE_EMAIL_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/email/lifecycle/cron`,
       USER_LIFECYCLE_EMAIL_INTERVAL_MS: '21600000',
       USER_LIFECYCLE_EMAIL_BATCH_SIZE: '25',
     },
@@ -319,7 +328,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       NODE_ENV: 'production',
       REPORT_MONTHLY_DIGEST_ENABLED: '1',
       REPORT_MONTHLY_DIGEST_CRON_TOKEN: cronEnv.REPORT_MONTHLY_DIGEST_CRON_TOKEN,
-      REPORT_MONTHLY_DIGEST_RUN_URL: 'http://127.0.0.1:3000/api/admin/report-monthly-digest/cron',
+      REPORT_MONTHLY_DIGEST_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/report-monthly-digest/cron`,
       REPORT_MONTHLY_DIGEST_INTERVAL_MS: '21600000',
       REPORT_MONTHLY_DIGEST_BATCH_SIZE: '20',
       REPORT_MONTHLY_DIGEST_TIMEZONE_OFFSET_MINUTES: '480',
@@ -343,7 +352,7 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       TIMING_EMAIL_CRON_TOKEN: cronEnv.TIMING_EMAIL_CRON_TOKEN,
-      TIMING_EMAIL_RUN_URL: 'http://127.0.0.1:3000/api/admin/timing/email/cron?mode=auto',
+      TIMING_EMAIL_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/timing/email/cron?mode=auto`,
       TIMING_EMAIL_INTERVAL_MS: '21600000',  // 6 小时
       TIMING_EMAIL_REQUEST_TIMEOUT_MS: '60000',
       TIMING_EMAIL_STARTUP_DELAY_MS: '30000',
@@ -382,6 +391,25 @@ const backgroundWorkers = enableBackgroundWorkers ? [
   },
 ] : [];
 
+// v5-D83 (2026-05-24): 横向扩展副本 — 在 3001/3002 起两个独立 fork。
+// 主端口 3000 留给 daemon 回调（避免改 12 处硬编码 URL）。
+// nginx upstream 会把公网流量按 least_conn 分到 3000/3001/3002。
+// 副本与 nextApp 共享同一份 .next 构建产物，无需重新 build。
+const makeWebReplica = (suffix, port) => ({
+  ...nextApp,
+  name: `life-kline-next-${suffix}`,
+  args: `start -p ${port}`,
+  env: { ...nextApp.env, PORT: String(port) },
+  error_file: `/root/.pm2/logs/life-kline-next-${suffix}-error.log`,
+  out_file: `/root/.pm2/logs/life-kline-next-${suffix}-out.log`,
+});
+
+const webReplicas = [
+  makeWebReplica('web1', 3001),
+  makeWebReplica('web2', 3002),
+  makeWebReplica('web3', 3003),
+];
+
 module.exports = {
-  apps: [nextApp, ...backgroundWorkers],
+  apps: [nextApp, ...webReplicas, ...backgroundWorkers],
 };

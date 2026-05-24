@@ -1548,8 +1548,21 @@ const dbPath = path.join(process.cwd(), 'data', 'lifekline.db');
 // 创建数据库实例
 export const db = new Database(dbPath);
 
-// 启用WAL模式（提高并发性能）
+// v5-D84 (2026-05-24): SQLite PRAGMA 全栈调优
+// - WAL：并发读写不互锁（已启用）
+// - synchronous=NORMAL：WAL 模式下 fsync 改为按 checkpoint 批量；崩溃最多丢最后未 checkpoint 的 WAL，可接受
+// - cache_size=-65536：64MB 页缓存（之前 16MB），909k 行 analytics 索引扫描受益最大
+// - mmap_size=256MB：让 SQLite 用 mmap 直读 db 文件，绕过 page cache 拷贝
+// - temp_store=MEMORY：临时表/排序走内存（之前走磁盘）
+// - busy_timeout=10000：高并发写阻塞时多等 5s 再报 SQLITE_BUSY
+// - wal_autocheckpoint=2000：WAL 满 8MB 才 checkpoint（之前 4MB），减少 fsync 抖动
 db.pragma('journal_mode = WAL');
+db.pragma('synchronous = NORMAL');
+db.pragma('cache_size = -65536');
+db.pragma('mmap_size = 268435456');
+db.pragma('temp_store = MEMORY');
+db.pragma('busy_timeout = 10000');
+db.pragma('wal_autocheckpoint = 2000');
 
 // 初始化数据库
 export function initializeDatabase() {

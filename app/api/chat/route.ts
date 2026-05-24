@@ -111,6 +111,26 @@ type TimelineMessage = QuestionRow & {
   content: string;
 };
 
+// v5-D84 (2026-05-24): chat_context_loaded 抑制窗口 — 同 sessionId 10 分钟内只记一次。
+// 进程内 Map（PM2 多实例 = 每实例独立窗口，可接受 — 最坏 3 实例 × 1 写 = 3 条/10min）。
+const chatContextLoadedAt = new Map<string, number>();
+const CHAT_CONTEXT_LOADED_TTL_MS = 10 * 60 * 1000;
+function shouldRecordChatContextLoaded(sessionId: string): boolean {
+  if (!sessionId) return true;
+  const now = Date.now();
+  const last = chatContextLoadedAt.get(sessionId);
+  if (last && now - last < CHAT_CONTEXT_LOADED_TTL_MS) return false;
+  chatContextLoadedAt.set(sessionId, now);
+  // 简单 GC：超过 5000 条时清理过期项
+  if (chatContextLoadedAt.size > 5000) {
+    const expireBefore = now - CHAT_CONTEXT_LOADED_TTL_MS;
+    for (const [k, v] of chatContextLoadedAt) {
+      if (v < expireBefore) chatContextLoadedAt.delete(k);
+    }
+  }
+  return true;
+}
+
 function clampChatText(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
 }
@@ -1370,24 +1390,29 @@ export async function GET(request: NextRequest) {
     const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
     const history = toHistoryPayload(rows);
 
-    trackServerEvent({
-      userId,
-      sessionId,
-      userAgent,
-      eventName: 'chat_context_loaded',
-      page: '/chat',
-      meta: {
-        reportId: context.report?.id || null,
-        eventId: context.focusedEvent?.id || null,
-        durationMs: Date.now() - requestStartedAt,
-        historyCount: history.length,
-        recentEvents: context.recentEvents.length,
-        intent: requestedIntent || null,
-        source: requestedSource || null,
-        ctaStrategyKey: requestedCtaStrategyKey || null,
-        sourceFamily: requestedSourceFamily || null,
-      },
-    });
+    // v5-D84 (2026-05-24): chat_context_loaded 抑制噪音 — 同 session 10 分钟内只写一次。
+    // 之前 90 天累计 695k 条 = 76% 全部 analytics 体量，DB 严重膨胀。
+    // 真实业务诉求是「这个 session 进入过 chat 页」，不是「轮询了多少次」。
+    if (shouldRecordChatContextLoaded(sessionId)) {
+      trackServerEvent({
+        userId,
+        sessionId,
+        userAgent,
+        eventName: 'chat_context_loaded',
+        page: '/chat',
+        meta: {
+          reportId: context.report?.id || null,
+          eventId: context.focusedEvent?.id || null,
+          durationMs: Date.now() - requestStartedAt,
+          historyCount: history.length,
+          recentEvents: context.recentEvents.length,
+          intent: requestedIntent || null,
+          source: requestedSource || null,
+          ctaStrategyKey: requestedCtaStrategyKey || null,
+          sourceFamily: requestedSourceFamily || null,
+        },
+      });
+    }
     // v5-D28 (2026-05-18): 移除 chat_completed{action:load} 双写。
     // chat_context_loaded 已是 GET /api/chat 的事实事件，再写 chat_completed 会让
     // 聚合 chatCompletedCount 99% 是 load（D23 噪音 31972/32183）。失真严重。
