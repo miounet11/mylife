@@ -75,7 +75,7 @@ describe('env helpers', () => {
     expect(getOpenAgentRuntimeModel()).toBe('gpt-5.4-mini');
   });
 
-  it('uses unified text-generation primary and fallback chain for model helpers by default', async () => {
+  it('uses unified text-generation primary and fallback chain for model helpers by default (v5-D121: auto + empty)', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.OPEN_AGENT_RUNTIME_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
@@ -102,17 +102,17 @@ describe('env helpers', () => {
       getVisualAssetNarrativeModel,
     } = await import('@/lib/env');
 
-    expect(getDefaultModel()).toBe('gpt-4.1-mini-2025-04-14');
-    expect(getOpenAgentRuntimeModel()).toBe('gpt-4.1-mini-2025-04-14');
-    expect(getModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
-    expect(getReportModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
-    expect(getReportNarrativeModelFallbackChainEnv()).toBe('gpt-5.2,gpt-5.5');
-    expect(getContentGenerationModel()).toBe('gpt-4.1-mini-2025-04-14');
-    expect(getContentGenerationModelFallbackChainRaw()).toBe('gpt-5.2,gpt-5.5');
+    expect(getDefaultModel()).toBe('auto');
+    expect(getOpenAgentRuntimeModel()).toBe('auto');
+    expect(getModelFallbackChainEnv()).toBe('');
+    expect(getReportModelFallbackChainEnv()).toBe('');
+    expect(getReportNarrativeModelFallbackChainEnv()).toBe('');
+    expect(getContentGenerationModel()).toBe('auto');
+    expect(getContentGenerationModelFallbackChainRaw()).toBe('');
     expect(getVisualAssetApiBaseUrl()).toBe('https://www.gemiai.top/v1');
     expect(getVisualAssetDefaultModel()).toBe('gpt-image-2');
     expect(getVisualAssetCoreModel()).toBe('gpt-image-2-pro');
-    expect(getVisualAssetNarrativeModel()).toBe('gpt-4.1-mini-2025-04-14');
+    expect(getVisualAssetNarrativeModel()).toBe('auto');
   });
 
   it('deduplicates system health tokens and evaluates radar flags', async () => {

@@ -47,11 +47,10 @@ export function getVisualAssetApiKey() {
   );
 }
 
-// v5-D21 (2026-05-17): 按 baseline 30 天数据治理。
-// 4.1-mini 92.84% / p50 5.6s 为最优 primary；gpt-5.2 77%、gpt-5.5 58% 慢但兜底质量高。
-// 移除 lingsi1.0 (0%) / gpt-5.4-mini-my (44%) / grok-420-fast (30%) / auto (9%) 等。
-const DEFAULT_LLM_MODEL = 'gpt-4.1-mini-2025-04-14';
-const DEFAULT_LLM_FALLBACK_CHAIN = 'gpt-5.2,gpt-5.5';
+// v5-D121 (2026-05-25): 全链路统一切 ttqq + auto；上游网关自选模型，本地不再维护 fallback。
+// 历史 D21 治理（4.1-mini primary / gpt-5.2,gpt-5.5 fallback）作废。
+const DEFAULT_LLM_MODEL = 'auto';
+const DEFAULT_LLM_FALLBACK_CHAIN = '';
 
 export function getDefaultModel() {
   return readString('DEFAULT_MODEL', DEFAULT_LLM_MODEL);

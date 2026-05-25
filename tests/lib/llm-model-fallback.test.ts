@@ -32,15 +32,15 @@ describe('llm model fallback', () => {
     jest.resetModules();
   });
 
-  // v5-D21 (2026-05-17): baseline 数据治理 — fallback 从 lingsi1.0,gpt-5.4-mini-my → gpt-5.2,gpt-5.5。
-  // 4.1-mini 92.84% primary；gpt-5.2/gpt-5.5 慢但兜底质量高；lingsi1.0 (0%) / gpt-5.4-mini-my (44%) 移除。
+  // v5-D121 (2026-05-25): 全链路切 ttqq + auto。primary=auto，本地不再维护 fallback 链。
+  // 历史 D21（4.1-mini primary / gpt-5.2,gpt-5.5 fallback）作废。
 
-  it('default chain (no env) starts from default model + safe fallback', async () => {
+  it('default chain (no env) is just the auto primary (no local fallback)', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'gpt-5.2', 'gpt-5.5']);
+    expect(getModelFallbackChain()).toEqual(['auto']);
   });
 
   it('honors a preferred model as the chain head', async () => {
@@ -48,8 +48,8 @@ describe('llm model fallback', () => {
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    // preferredModel 优先于 DEFAULT_MODEL，fallback chain 不重复携带默认主模型
-    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4', 'gpt-5.2', 'gpt-5.5']);
+    // preferredModel 优先于 DEFAULT_MODEL；fallback 链空，结果只剩 preferred
+    expect(getModelFallbackChain('gpt-5.4')).toEqual(['gpt-5.4']);
   });
 
   it('respects MODEL_FALLBACK_CHAIN env var', async () => {
@@ -97,12 +97,12 @@ describe('llm model fallback', () => {
     expect(getReportNarrativeFallbackChain()).toEqual(['grok-420-fast', 'gpt-5.2']);
   });
 
-  it('keeps auto as the last default escape hatch', async () => {
+  it('keeps auto as the default escape hatch (now the primary)', async () => {
     delete process.env.DEFAULT_MODEL;
     delete process.env.MODEL_FALLBACK_CHAIN;
 
     const { getModelFallbackChain } = await import('@/lib/llm-model-fallback');
-    expect(getModelFallbackChain()).toEqual(['gpt-4.1-mini-2025-04-14', 'gpt-5.2', 'gpt-5.5']);
+    expect(getModelFallbackChain()).toEqual(['auto']);
   });
 
   it('still loads "auto" if explicitly configured (escape hatch)', async () => {

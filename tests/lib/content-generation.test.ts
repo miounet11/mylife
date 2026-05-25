@@ -69,8 +69,8 @@ describe('content generation helpers', () => {
     };
 
     expect(resolveContentGenerationLlmConfig()).toEqual(expect.objectContaining({
-      model: 'gpt-4.1-mini-2025-04-14',
-      modelChain: ['gpt-4.1-mini-2025-04-14', 'gpt-5.2', 'gpt-5.5'],
+      model: 'auto',
+      modelChain: ['auto'],
     }));
     expect(buildReasoningPlanPrompt({
       topic: '测试主题',
