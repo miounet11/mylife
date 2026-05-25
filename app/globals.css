@@ -847,3 +847,109 @@ html[data-theme="fb2017"] .group:hover .group-hover\:-translate-y-px {
 html[data-theme="fb2017"] .rounded-full.border-\[color\:var\(--hairline-strong\)\] {
   border-radius: 2px;
 }
+
+/* ============================================================
+   FB-2017 · a11y 对比度修复层（v5-D118 2026-05-25）
+   背景：用户反馈"字体颜色与背景重合"，主要发生在：
+   1) fb-section-title (12px ink-3) 配 fb-action-bg 灰底，对比度临界
+   2) 11px text-[--fb-ink-3] / text-[--fb-ink-4] 在卡内灰条上几乎看不见
+   3) 标题栏 hairline 太浅，section header 与 body 分不开
+   策略：不动单个组件，在 css 尾部统一拉对比度。
+   ============================================================ */
+
+/* —— section 标题统一加深，从 ink-3 → ink-2，加粗到 700 —— */
+html[data-theme="fb2017"] .fb-section-title {
+  color: var(--fb-ink-2);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* —— section header 条改白底 + 蓝顶线，告别灰底糊脸 —— */
+html[data-theme="fb2017"] .fb-card > .border-b.border-\[color\:var\(--fb-border\)\].bg-\[color\:var\(--fb-action-bg\)\] {
+  background: #fff !important;
+  border-bottom-color: var(--fb-border-strong) !important;
+  border-top: 2px solid var(--fb-blue);
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
+}
+
+/* —— 卡内 11px / 12px 元信息颜色加深，避免 ink-3 在白底/灰底两可的低对比 —— */
+html[data-theme="fb2017"] .text-\[11px\].text-\[color\:var\(--fb-ink-3\)\],
+html[data-theme="fb2017"] .text-\[11px\].font-semibold.text-\[color\:var\(--fb-ink-3\)\],
+html[data-theme="fb2017"] .text-\[12px\].text-\[color\:var\(--fb-ink-3\)\] {
+  color: var(--fb-ink-2) !important;
+}
+
+/* —— ink-4 在卡内提升到 ink-3（保持灰，但够清晰） —— */
+html[data-theme="fb2017"] .text-\[color\:var\(--fb-ink-4\)\] {
+  color: var(--fb-ink-3) !important;
+}
+
+/* —— 链接文本加深、强化下划线信号 —— */
+html[data-theme="fb2017"] a.text-\[color\:var\(--fb-blue-link\)\] {
+  color: #1c3d8a;
+  font-weight: 600;
+}
+html[data-theme="fb2017"] a.text-\[color\:var\(--fb-blue-link\)\]:hover {
+  color: var(--fb-blue-deep);
+  text-decoration: underline;
+}
+
+/* —— 主标题再补一层保险：v4 渐变标题在 fb 主题完全 ink-1 —— */
+html[data-theme="fb2017"] .text-transparent {
+  color: var(--fb-ink-1) !important;
+  -webkit-text-fill-color: var(--fb-ink-1) !important;
+}
+
+/* —— Hero 表单下两行 tips（"使用方法 / 填写 tips"）在白底卡里改 ink-2 —— */
+html[data-theme="fb2017"] section#analysis-form .text-\[12px\].text-\[color\:var\(--fb-ink-3\)\] {
+  color: var(--fb-ink-2) !important;
+}
+
+/* —— 列表卡 hover 用浅蓝调，告别灰糊蓝 —— */
+html[data-theme="fb2017"] a.hover\:bg-\[color\:var\(--fb-action-bg\)\]:hover,
+html[data-theme="fb2017"] button.hover\:bg-\[color\:var\(--fb-action-bg\)\]:hover {
+  background: rgba(59, 89, 152, 0.06) !important;
+}
+
+/* —— 卡片顶 section title 行下方 1px 用 border-strong，不再吃显示器糊脸 —— */
+html[data-theme="fb2017"] .fb-card .border-b.border-\[color\:var\(--fb-border\)\] {
+  border-bottom-color: var(--fb-border-strong) !important;
+}
+
+/* —— 段落主体行高、字重微调：14/1.55，避免 1.34 紧到看不清 —— */
+html[data-theme="fb2017"] p {
+  line-height: 1.55;
+}
+
+/* —— 表单 placeholder 太浅 → 提高到 ink-3 —— */
+html[data-theme="fb2017"] input::placeholder,
+html[data-theme="fb2017"] textarea::placeholder {
+  color: var(--fb-ink-3);
+  opacity: 1;
+}
+
+/* —— focus 描边蓝色加重，让键盘用户能看见 —— */
+html[data-theme="fb2017"] :focus-visible {
+  outline: 2px solid var(--fb-blue) !important;
+  outline-offset: 2px !important;
+}
+
+/* —— 主按钮（fb-blue 实心）字号提到 14px、字距 0、padding 拉开 —— */
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white,
+html[data-theme="fb2017"] button.bg-\[color\:var\(--brand-strong\)\].text-white,
+html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white,
+html[data-theme="fb2017"] button.bg-\[color\:var\(--brand\)\].text-white {
+  font-size: 14px !important;
+  letter-spacing: 0;
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* —— 全站 secondary 按钮文字加重 —— */
+html[data-theme="fb2017"] .fb-btn { font-size: 13px; font-weight: 700; color: var(--fb-ink-1); }
+
+/* —— Hero h1 内嵌的强调蓝色 span 太亮，统一到 fb-blue-deep（更稳） —— */
+html[data-theme="fb2017"] section#analysis-form h1 .text-\[color\:var\(--fb-blue\)\] {
+  color: var(--fb-blue-deep) !important;
+}

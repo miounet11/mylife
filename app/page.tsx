@@ -111,21 +111,19 @@ export default async function HomePage() {
               id="analysis-form"
               className="fb-card scroll-mt-24 overflow-hidden"
             >
-              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2">
+              <div className="border-b border-[color:var(--fb-border-strong)] bg-white px-4 py-3">
                 <div className="fb-section-title flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5" />
+                  <Sparkles className="h-3.5 w-3.5 text-[color:var(--fb-blue)]" />
                   世界易学说 · 命理门户
                 </div>
-              </div>
-              <div className="px-4 py-4">
-                <h1 className="text-[22px] font-bold leading-[1.25] text-[color:var(--fb-ink-1)]">
-                  一处看清你的<span className="text-[color:var(--fb-blue)]">结构、阶段与下一步</span>
+                <h1 className="mt-1.5 text-[22px] font-bold leading-[1.25] text-[color:var(--fb-ink-1)]">
+                  一处看清你的<span className="text-[color:var(--fb-blue-deep)]">结构、阶段与下一步</span>
                 </h1>
-                <p className="mt-2 text-[13px] leading-[1.55] text-[color:var(--fb-ink-2)]">
+                <p className="mt-2 text-[14px] leading-[1.55] text-[color:var(--fb-ink-2)]">
                   输入出生时间和地点，先得到一页可读的结构、阶段与行动判断；
                   再决定要不要追问、记录事件或调用八字 / 紫微 / 六爻 / 奇门 / 择日工具。
                 </p>
-                <div className="mt-2 flex flex-wrap gap-3 text-[12px] text-[color:var(--fb-ink-3)]">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[color:var(--fb-ink-2)]">
                   <Link
                     href="/docs/quick-start"
                     className="inline-flex items-center gap-1 font-semibold text-[color:var(--fb-blue-link)] hover:underline"
@@ -141,10 +139,9 @@ export default async function HomePage() {
                     填写 tips
                   </Link>
                 </div>
-
-                <div className="mt-3">
-                  <FortuneForm returnSource="home_direct" />
-                </div>
+              </div>
+              <div className="px-4 py-4">
+                <FortuneForm returnSource="home_direct" />
               </div>
             </section>
 
