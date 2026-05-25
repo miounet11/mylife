@@ -3,6 +3,9 @@ const nextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: '/home/life-kline-next',
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // v5-D119 (2026-05-25): 内容矩阵爆炸（4247 篇 knowledge + 200+ docs/topic）
+  // 后部分页 SSG 单页 >60s，3 次重试全挂；放宽到 180s 让重型聚合页过线。
+  staticPageGenerationTimeout: 180,
   typescript: {
     ignoreBuildErrors: true,
   },

@@ -87,8 +87,16 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export async function generateStaticParams() {
+  // v5-D119 (2026-05-25): 限制 build-time SSG 仅生成 zh-Hans/zh-CN（约 1000 页），
+  // 其它语种 (en/ja/zh-Hant 共 3000+ 页) 走 ISR (revalidate=3600) 首访生成。
+  // 修因：D90..D116 决策矩阵堆叠后 SSG 4247 页，单页 LLM/SQLite 同步触发 >60s 超时，build 失败。
+  // 风险控制：D85 nginx micro-cache 已在，bot 首访的延迟由 60s 缓存吸收。
   return listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => isPublicKnowledgeEntry(entry))
+    .filter((entry) => {
+      const loc = typeof entry.meta?.locale === 'string' ? entry.meta.locale : '';
+      return !loc || loc === 'zh-Hans' || loc === 'zh-CN';
+    })
     .map((entry) => ({
       slug: entry.slug,
     }));
