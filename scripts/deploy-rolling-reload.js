@@ -21,7 +21,11 @@ const http = require('node:http');
 
 const GAP_MS = Number(process.env.ROLLING_GAP_MS) || 12000;
 const HEALTH_TIMEOUT_MS = Number(process.env.ROLLING_HEALTH_TIMEOUT_MS) || 8000;
-const HEALTH_RETRY = Number(process.env.ROLLING_HEALTH_RETRY) || 6;
+// 冷启动 Next 实例首屏 SSR 可达 60-180s（D120 实测 :3002 193s）。
+// css static 在进程 ready 后立即可服务，比 SSR 快，但 listen 之前仍需 ~20-40s。
+// 默认放到 60 次 × 2s = 120s 以覆盖冷启动；热 reload 通常 1-2 次就 200。
+const HEALTH_RETRY = Number(process.env.ROLLING_HEALTH_RETRY) || 60;
+const HEALTH_INTERVAL_MS = Number(process.env.ROLLING_HEALTH_INTERVAL_MS) || 2000;
 
 // pm2 名 → 端口；主实例（3000）放最后，让 daemon 流量最后切
 const TARGETS = [
@@ -55,7 +59,7 @@ async function waitHealthy(port, urlPath) {
   for (let i = 0; i < HEALTH_RETRY; i += 1) {
     const code = await probe(port, urlPath);
     if (code === 200) return true;
-    await new Promise((r) => setTimeout(r, 2000));
+    await new Promise((r) => setTimeout(r, HEALTH_INTERVAL_MS));
   }
   return false;
 }
