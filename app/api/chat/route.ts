@@ -353,7 +353,7 @@ async function generateAIResponse(
       maxRetries: 0,
     });
 
-    const content = completion.choices[0].message.content?.trim();
+    const content = completion.choices?.[0]?.message?.content?.trim();
     if (!content) {
       console.error(`[LLM Chat] Model ${model} returned empty content`);
       recordModelAttempt({
