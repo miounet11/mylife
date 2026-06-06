@@ -1,5 +1,5 @@
 const intervalMs = Math.max(60_000, Number(process.env.TIMING_EMAIL_INTERVAL_MS || 1000 * 60 * 60 * 6)); // 默认 6 小时
-const runUrl = process.env.TIMING_EMAIL_RUN_URL || 'http://127.0.0.1:3000/api/admin/timing/email/cron?mode=auto';
+const runUrl = process.env.TIMING_EMAIL_RUN_URL || 'http://127.0.0.1:8080/api/admin/timing/email/cron?mode=auto';
 const token = process.env.TIMING_EMAIL_CRON_TOKEN || '';
 const requestTimeoutMs = Math.max(30_000, Number(process.env.TIMING_EMAIL_REQUEST_TIMEOUT_MS || 60_000));
 const startupDelayMs = Math.max(5_000, Number(process.env.TIMING_EMAIL_STARTUP_DELAY_MS || 30_000));

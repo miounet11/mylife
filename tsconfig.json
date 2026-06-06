@@ -36,13 +36,17 @@
     "**/*.tsx",
     ".next-build-1327783-1779623814350/types/**/*.ts",
     ".next-build-1755351-1779683696815/types/**/*.ts",
+    ".next-build-1776140-1779686710095/types/**/*.ts",
+    ".next-build-1845973-1780622474828/types/**/*.ts",
+    ".next-build-1948830-1780656883401/types/**/*.ts",
     ".next-build-216677-1779352336590/types/**/*.ts",
     ".next-build-2691862-1779065768135/types/**/*.ts",
     ".next-build-3051293-1779122087000/types/**/*.ts",
+    ".next-build-3965415-1780207909748/types/**/*.ts",
     ".next-build-544723-1779440108124/types/**/*.ts",
     ".next/types/**/*.ts",
     "next-env.d.ts",
-    ".next-build-1776140-1779686710095/types/**/*.ts"
+    ".next-build-1956286-1780657497910/types/**/*.ts"
   ],
   "exclude": [
     "node_modules"

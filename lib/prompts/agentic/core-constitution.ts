@@ -36,10 +36,11 @@ export const CORE_CONSTITUTION_SPEC: PromptSpec<StructuredAgenticContext> = {
   task: '把引擎给出的命局结构翻译成人能听懂的优势/风险/性格主轴，不得改写真值。',
   buildInput: (ctx) =>
     buildAgentUserPrompt(ctx, {
-      readingOrder: ['ENGINE_CONSTITUTION', 'ENGINE_TEN_GODS_TABLE', 'CONTEXT_TEMPORAL', 'CONTEXT_WORLD_STATE'],
+      readingOrder: ['ENGINE_CONSTITUTION', 'ENGINE_TEN_GODS_TABLE', 'CONTEXT_TEMPORAL', 'CONTEXT_WORLD_STATE', 'WORLD_YI_V2_DOCTRINE_PRIMITIVES'],
       notes: [
         'favorableElements / unfavorableElements 必须直接复用 ENGINE_CONSTITUTION 里的字段',
         'highlights 至少 3 条，risks 至少 1 条具体现实信号',
+        '引用 WORLD_YI_V2_DOCTRINE_PRIMITIVES 中的 bazi-as-yixue-instantiation / judgment primitives 做易学映射（v2 doctrine spine 必引）',
       ],
     }),
   hardConstraints: [

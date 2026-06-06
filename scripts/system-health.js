@@ -16,7 +16,7 @@ function loadPm2FallbackEnv() {
 const pm2Env = loadPm2FallbackEnv();
 const readEnv = (name, fallback = '') => process.env[name] || pm2Env[name] || fallback;
 
-const runUrl = readEnv('SYSTEM_HEALTH_RUN_URL', 'http://127.0.0.1:3000/api/admin/system/health');
+const runUrl = readEnv('SYSTEM_HEALTH_RUN_URL', 'http://127.0.0.1:8080/api/admin/system/health');
 const token = readEnv('SYSTEM_HEALTH_TOKEN')
   || readEnv('KNOWLEDGE_ACQUISITION_CRON_TOKEN')
   || readEnv('CONTENT_RADAR_CRON_TOKEN')

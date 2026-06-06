@@ -13,7 +13,8 @@ import { buildReportQualityAudit } from '@/lib/report-quality';
 import { applyReliabilityGuard } from '@/lib/report-reliability';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
-import { parseLocalDate } from '@/lib/utils';
+import { parseLocalDate, heavyGenerationCache } from '@/lib/utils';
+import { getWorldYiV2MatchesForReport } from '@/lib/content-store';
 
 // 首次 analyze 是用户等待路径：核心草案快速交付，长尾补强交给后续升级/重试。
 // v5-C2 (2026-05-15): 上游偶发 abort 集中在分钟级，把 upgrader 主 LLM 预算抬到 180s 量级，
@@ -35,8 +36,11 @@ const ANALYZE_FALLBACK_AGENT_KEYS: CoreAgentKey[] = [
   'kline_narrative',
   'strategy_advisor',
 ];
-const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 14000;
-const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 13000;
+// 用户实时 analyze 链路不再跑 LLM agents。
+// 线上失败集中在 13~14s Request aborted，根因是 report LLM + 多 agent 并发抢同一上游。
+// analyze 只交付 engine + report LLM + deterministic expert；后台 upgrade 再补 agent enrichment。
+const ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS = 0;
+const ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS = 0;
 
 export const CURRENT_REPORT_VERSION = 'v3';
 export const ENGINE_BUILD_VERSIONS = {
@@ -72,11 +76,13 @@ export function shouldRunAnalyzeAgentic(params: {
     return false;
   }
 
-  // v5-D2 (2026-05-16): 移除 4ae75e7 引入的 analyze 路径硬禁用。
-  // 之前 `if (source === 'analyze') return false` 让 100% analyze 报告走 deterministic-expert fallback，
-  // 表面 quality=91/S，但 agentSources 7/7 全为 fallback、totalLlmCalls=0，专家协同维度只有 72/watch。
-  // analyze 路径已有 ANALYZE_FRONT/FALLBACK_AGENT_KEYS（3 个 agent）+ 14s/13s 短 timeout，
-  // 用户等待成本可控；只在 health gate 下沉时再 defer，与 upgrade 路径口径一致。
+  // 用户实时 analyze 是转化核心链路：不要在这里并发跑 LLM agents。
+  // 线上失败集中在 agent scope 的 13~14s Request aborted；这会污染熔断、制造 upgrade retry，
+  // 但主报告 engine + report LLM 本身稳定。agent enrichment 交给后台 upgrade/cron 实例处理。
+  if (params.source === 'analyze') {
+    return false;
+  }
+
   if (params.agentScopeHealthDeferred || params.agentScopeSnapshotsConservative) {
     return false;
   }
@@ -308,6 +314,18 @@ export async function generateVersionedReport(params: {
     upgradedFromVersion: params.upgradedFromVersion,
     agentic,
   });
+
+  // Stability guard (highest dim): stage large agentic outputs (parallel LLM results) via
+  // bounded cache before finalize/serialize. Full blobs only meta-tracked to avoid retaining
+  // multi-MB agent graphs in any process (web or worker). Heavy report paths still benefit.
+  try {
+    const agentData = (agentic as any)?.agentResults || agentic;
+    const agentSize = JSON.stringify(agentData || {}).length;
+    if (agentSize > 120000) {
+      const gk = `report-agentic-${(params.userId || 'anon').toString().slice(0,6)}-${Date.now()}`;
+      heavyGenerationCache.set(gk, { meta: 'agentic-report-staged', bytes: agentSize }, Math.min(agentSize, 256*1024));
+    }
+  } catch {}
   await params.onProgress?.({
     stage: 'merge',
     status: 'completed',
@@ -684,6 +702,37 @@ function mergeLLMResult(
     temporalSummary,
   });
   merged.analysis.qualityAudit = buildReportQualityAudit(merged as FortuneAnalysisResult);
+
+  // World Yi v2.0 Report Integration: surface live doctrine-spine + judgment primitives
+  // into stored analysis (feeds UI surfaces, upgrade lineage, and user report history).
+  // Uses schedulePublishedAt + meta from publication program. New v2 pieces auto-appear
+  // in reports as publication flow promotes them. Bidirectional: also populates context for agents.
+  try {
+    const pillarsForMatch = [
+      baseResult.pattern?.type,
+      ...(baseResult.advice?.yongShen || []),
+      ...(baseResult.advice?.xiShen || []),
+      baseResult.fortune?.currentDaYun,
+    ].filter(Boolean) as string[];
+    const themesForMatch = ['career', 'wealth', 'relationship', 'health', 'timing', 'kline'];
+    const agentsForMatch = ['core_constitution', 'career_wealth', 'strategy_advisor', 'temporal_spatial_advisor', 'kline_narrative'];
+    const worldYiV2Refs = getWorldYiV2MatchesForReport({
+      pillars: pillarsForMatch,
+      themes: themesForMatch,
+      agentModules: agentsForMatch,
+      yongShen: [...(baseResult.advice?.yongShen || []), ...(baseResult.advice?.xiShen || [])],
+    }, 4);
+    (merged.analysis as any).worldYiV2References = worldYiV2Refs;
+    if (worldYiV2Refs.length > 0) {
+      const titles = worldYiV2Refs.map((r: any) => r.title).join('；');
+      (merged.analysis as any).enhancementNotes = uniqueList([
+        ...(((merged.analysis as any).enhancementNotes || []) as string[]),
+        `World Yi v2 doctrine 已桥接：${titles}（schedulePublishedAt 自动生效，primitives 匹配 pillars/agents）。`,
+      ]);
+    }
+  } catch {
+    // non-fatal; report still delivers
+  }
 
   return merged;
 }

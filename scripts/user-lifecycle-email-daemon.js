@@ -1,5 +1,5 @@
 const intervalMs = Math.max(60_000, Number(process.env.USER_LIFECYCLE_EMAIL_INTERVAL_MS || 1000 * 60 * 60 * 6));
-const runUrl = process.env.USER_LIFECYCLE_EMAIL_RUN_URL || 'http://127.0.0.1:3000/api/admin/email/lifecycle/cron';
+const runUrl = process.env.USER_LIFECYCLE_EMAIL_RUN_URL || 'http://127.0.0.1:8080/api/admin/email/lifecycle/cron';
 const token = process.env.USER_LIFECYCLE_EMAIL_CRON_TOKEN || '';
 
 function sleep(ms) {

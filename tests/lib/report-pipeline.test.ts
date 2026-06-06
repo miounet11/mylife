@@ -27,14 +27,14 @@ describe('report pipeline analyze agent keys', () => {
     ]);
   });
 
-  it('runs live analyze agentic execution when agent-scope provider health is healthy (v5-D2)', () => {
+  it('keeps live analyze agentic execution disabled to protect the user path', () => {
     expect(shouldRunAnalyzeAgentic({
       source: 'analyze',
       llmUsed: true,
       deferredByProviderHealth: false,
       agentScopeHealthDeferred: false,
       agentScopeSnapshotsConservative: false,
-    })).toBe(true);
+    })).toBe(false);
   });
 
   it('still defers analyze agentic when agent scope is unhealthy', () => {
@@ -218,8 +218,18 @@ describe('report pipeline analyze agent keys', () => {
     expect(narrative.explanation).toContain('风险提醒：');
     expect(narrative.explanation).toContain('先收敛战线，只推进一个最关键项目');
   });
+});
 
-  it('strips placeholder leaks and template tail from focused narrative output', () => {
+// World Yi v2.0 Report Engine Integration smoke (mandated bidirectional bridge)
+describe('World Yi v2 report engine integration', () => {
+  it('content store v2 matchers importable and non-throwing for report context', async () => {
+    const { getWorldYiV2MatchesForReport } = await import('@/lib/content-store');
+    const refs = getWorldYiV2MatchesForReport({ pillars: ['身弱格'], themes: ['career'], yongShen: ['火'] }, 2);
+    expect(Array.isArray(refs)).toBe(true);
+  });
+});
+
+it('strips placeholder leaks and template tail from focused narrative output', () => {
     const narrative = buildDeterministicFallbackNarrative({
       basic: {
         dayMaster: '辛',
@@ -687,4 +697,3 @@ describe('report pipeline analyze agent keys', () => {
     expect(finalized.analysis.summary).not.toContain('保守交付');
     expect(finalized.analysis.explanation).toContain('世界易判断：');
   });
-});

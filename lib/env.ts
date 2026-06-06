@@ -314,6 +314,11 @@ export function getContentSchedulerMinPublishGapMinutes() {
   return readNumber('CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES', 180, 30);
 }
 
+/** After this many minutes without a publish, scheduler relaxes gates to avoid feed starvation. */
+export function getContentSchedulerPublishStaleRelaxMinutes() {
+  return readNumber('CONTENT_SCHEDULER_PUBLISH_STALE_RELAX_MINUTES', 360, 60);
+}
+
 export function getContentSchedulerDraftReserveTarget() {
   return readNumber('CONTENT_SCHEDULER_DRAFT_RESERVE_TARGET', 240, 3);
 }

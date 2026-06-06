@@ -2,16 +2,19 @@ import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/li
 import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations, systemLockOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
+  listManagedContentEntriesLight,
+  countManagedContentEntries,
   refreshManagedContentJourneyMetadata,
   saveManagedContentEntry,
   type ManagedContentEntry,
+  type ManagedContentEntryLight,
   type ManagedContentType,
 } from '@/lib/content-store';
 import type { EntityInsightType } from '@/lib/content';
 import { runContentRadarCycle } from '@/lib/content-radar';
 import { assessGrowthPublication } from '@/lib/public-growth-plan';
 import type { ContentSchedulerRunRecord } from '@/lib/user-types';
-import { generateId } from '@/lib/utils';
+import { generateId, contentSnapshotCache, worldYiPublicationCache } from '@/lib/utils';
 import {
   readOpenAgentContentAnalysisSnapshot,
   readWorldYiContentDecisionLedger,
@@ -43,6 +46,7 @@ import {
   getContentSchedulerGenerateCooldownMinutes,
   getContentSchedulerMinPublishGapMinutes,
   getContentSchedulerPublishHoursRaw,
+  getContentSchedulerPublishStaleRelaxMinutes,
   getContentSchedulerRadarRefreshMaxAgeHours,
   getContentSchedulerTimezoneOffsetMinutes,
 } from '@/lib/env';
@@ -462,21 +466,85 @@ function getPublishedTypesForCluster(entries: ManagedContentEntry[], cluster: St
   };
 }
 
-function hasStructuredAutoPublishQuality(entry: ManagedContentEntry) {
+function hasStructuredAutoPublishQuality(entry: ManagedContentEntry, relaxed = false) {
+  const minSections = relaxed ? 3 : 4;
+  const minParagraphLen = relaxed ? 12 : 18;
+  const minExcerpt = relaxed ? 48 : 72;
+  const minSeoDescription = relaxed ? 48 : 72;
+  const minTags = relaxed ? 3 : 4;
   const paragraphQualityOk = entry.sections.every((section) => (
     section.title.trim().length >= 4 &&
     section.paragraphs.length >= 2 &&
-    section.paragraphs.every((paragraph) => paragraph.trim().length >= 18)
+    section.paragraphs.every((paragraph) => paragraph.trim().length >= minParagraphLen)
   ));
 
   return (
-    entry.excerpt.trim().length >= 72 &&
+    entry.excerpt.trim().length >= minExcerpt &&
     entry.seoTitle.trim().length >= 12 &&
-    entry.seoDescription.trim().length >= 72 &&
-    entry.tags.length >= 4 &&
-    entry.sections.length >= 4 &&
+    entry.seoDescription.trim().length >= minSeoDescription &&
+    entry.tags.length >= minTags &&
+    entry.sections.length >= minSections &&
     paragraphQualityOk
   );
+}
+
+function isSchedulerTrustedAutoPublishSource(entry: ManagedContentEntry, sourceType: string) {
+  if (entry.source.startsWith('agent-llm:')) {
+    return true;
+  }
+  if (/^world-yi/i.test(entry.source)) {
+    return true;
+  }
+  return sourceType === 'public-growth'
+    || sourceType === 'public-growth-wave2'
+    || sourceType === 'public-growth-global';
+}
+
+function applyPublishStarvationRelaxation(
+  policy: WorldYiAutonomyPolicy,
+  minutesSinceLastPublish: number | null | undefined,
+): { policy: WorldYiAutonomyPolicy; relaxedStructure: boolean } {
+  const relaxAfter = getContentSchedulerPublishStaleRelaxMinutes();
+  if (minutesSinceLastPublish === null || minutesSinceLastPublish === undefined || minutesSinceLastPublish < relaxAfter) {
+    return { policy, relaxedStructure: false };
+  }
+
+  const severe = minutesSinceLastPublish >= relaxAfter * 2;
+  return {
+    policy: {
+      ...policy,
+      publishGate: {
+        ...policy.publishGate,
+        minScore: Math.max(severe ? 130 : 155, policy.publishGate.minScore - (severe ? 85 : 60)),
+        requireLlmSource: severe ? false : policy.publishGate.requireLlmSource,
+        requireGrowthPublicationReady: severe ? false : policy.publishGate.requireGrowthPublicationReady,
+      },
+    },
+    relaxedStructure: true,
+  };
+}
+
+function resolveSchedulerCanPublishNow(params: {
+  publishWindowOpen: boolean;
+  publishedToday: number;
+  dailyPublishLimit: number;
+  minutesSinceLastPublish: number | null | undefined;
+  minPublishGapMinutes: number;
+}) {
+  const relaxAfter = getContentSchedulerPublishStaleRelaxMinutes();
+  let minGap = params.minPublishGapMinutes;
+  const stale = params.minutesSinceLastPublish;
+
+  if (stale !== null && stale !== undefined && stale >= relaxAfter) {
+    minGap = Math.min(minGap, 45);
+  }
+  if (stale !== null && stale !== undefined && stale >= relaxAfter * 2) {
+    minGap = 0;
+  }
+
+  return params.publishWindowOpen &&
+    params.publishedToday < params.dailyPublishLimit &&
+    (stale === null || stale === undefined || stale >= minGap);
 }
 
 function normalizeTitleKey(value: string) {
@@ -586,6 +654,7 @@ function buildAutoPublishGateDecision(params: {
   performance: ContentPerformanceContext;
   lanes: PublicationLaneSummary[];
   autonomyPolicy: WorldYiAutonomyPolicy;
+  relaxedStructure?: boolean;
   now?: Date;
   config?: ContentSchedulerConfig;
 }): AutoPublishGateDecision {
@@ -603,11 +672,14 @@ function buildAutoPublishGateDecision(params: {
   });
   const reserveSignal = buildWorldYiPublicationReserveSignal(params.lanes);
 
-  if (params.autonomyPolicy.publishGate.requireLlmSource && !entry.source.startsWith('agent-llm:')) {
-    hardBlockReasons.push('仅允许 LLM 草稿进入自动发布候选');
+  if (
+    params.autonomyPolicy.publishGate.requireLlmSource
+    && !isSchedulerTrustedAutoPublishSource(entry, sourceType)
+  ) {
+    hardBlockReasons.push('仅允许 LLM / 世界易 / 增长计划草稿进入自动发布候选');
   }
 
-  if (!hasStructuredAutoPublishQuality(entry)) {
+  if (!hasStructuredAutoPublishQuality(entry, params.relaxedStructure)) {
     hardBlockReasons.push('结构质量未达自动发布阈值');
   } else {
     reasons.push('结构质量通过');
@@ -734,6 +806,7 @@ function evaluateDraftEntries(params: {
   performance: ContentPerformanceContext;
   lanes: PublicationLaneSummary[];
   autonomyPolicy: WorldYiAutonomyPolicy;
+  relaxedStructure?: boolean;
   analysisPlan?: OpenAgentContentAnalysisPlan | null;
   now?: Date;
   config?: ContentSchedulerConfig;
@@ -789,6 +862,7 @@ function evaluateDraftEntries(params: {
         performance: params.performance,
         lanes: params.lanes,
         autonomyPolicy: params.autonomyPolicy,
+        relaxedStructure: params.relaxedStructure,
         now: params.now,
         config: params.config,
       });
@@ -834,14 +908,25 @@ function evaluateScheduledPublishCandidates(params: {
     fallbackFocus: backlogFocus,
     analysisPlan: openAgentContentAnalysis,
   });
+  const lastPublishedDate = params.entries
+    .filter((entry) => entry.status === 'published')
+    .map((entry) => getEntryScheduledPublishedDate(entry))
+    .filter((date): date is Date => !!date)
+    .sort((left, right) => right.getTime() - left.getTime())[0] || null;
+  const minutesSinceLastPublish = minutesBetweenDates(now, lastPublishedDate);
+  const starvation = applyPublishStarvationRelaxation(
+    policyResolution.effectivePolicy,
+    minutesSinceLastPublish ?? undefined,
+  );
 
   return {
-    autonomyPolicy: policyResolution.effectivePolicy,
+    autonomyPolicy: starvation.policy,
     candidates: evaluateDraftEntries({
       entries: params.entries,
       performance,
       lanes,
-      autonomyPolicy: policyResolution.effectivePolicy,
+      autonomyPolicy: starvation.policy,
+      relaxedStructure: starvation.relaxedStructure,
       analysisPlan: openAgentContentAnalysis,
       now,
       config,
@@ -1560,9 +1645,13 @@ export function buildContentSchedulerState(params: {
   const minutesSinceLastPublish = minutesBetweenDates(now, lastPublishedDate);
   const minutesSinceLastGenerate = minutesBetween(now, lastGeneratedAt);
   const publishWindowOpen = config.publishHours.includes(localHour(now, config.timezoneOffsetMinutes));
-  const canPublishNow = publishWindowOpen &&
-    publishedToday < config.dailyPublishLimit &&
-    (minutesSinceLastPublish === null || minutesSinceLastPublish >= config.minPublishGapMinutes);
+  const canPublishNow = resolveSchedulerCanPublishNow({
+    publishWindowOpen,
+    publishedToday,
+    dailyPublishLimit: config.dailyPublishLimit,
+    minutesSinceLastPublish,
+    minPublishGapMinutes: config.minPublishGapMinutes,
+  });
 
   return {
     localNow: formatLocalClock(now, config.timezoneOffsetMinutes),
@@ -1886,21 +1975,41 @@ export function buildContentOpsSnapshot(params: {
 }
 
 export function getContentOpsSnapshot() {
+  const cacheKey = 'ops-snapshot:v1';
+  const cached = contentSnapshotCache.get(cacheKey);
+  if (cached) return cached;
+
   const entries = listManagedContentEntries();
   const analyticsRows = listRecentContentAnalyticsRows();
 
-  return buildContentOpsSnapshot({
+  const result = buildContentOpsSnapshot({
     entries,
     analyticsRows,
     radarSignals: contentSignalOperations.listRecent(20),
   });
+
+  // Guard: estimate size from entry count + rough analytics (protects Next cache layers + heap)
+  const roughSize = (entries.length * 1800) + (analyticsRows.length * 120);
+  contentSnapshotCache.set(cacheKey, result, roughSize);
+  return result;
 }
 
 export function getContentSchedulerOverview() {
-  return buildContentSchedulerState({
-    entries: listManagedContentEntries(),
+  const cacheKey = 'scheduler-overview:v1';
+  const cached = contentSnapshotCache.get(cacheKey);
+  if (cached) return cached;
+
+  // DB projection: use light entries (no sections) + fast counts. Massive memory win for web tier.
+  const lightEntries = listManagedContentEntriesLight();
+  const result = buildContentSchedulerState({
+    entries: lightEntries as any, // compatible shape for most scheduler logic (title/status/meta etc)
     runs: contentSchedulerRunOperations.listRecent(20),
   });
+
+  // Bounded guard - scheduler state includes full lane summaries + performance graphs
+  const roughSize = 420 * 1024; // conservative ~420KB even for 4000 entries (internal reductions)
+  contentSnapshotCache.set(cacheKey, result, roughSize);
+  return result;
 }
 
 export function buildAutomationRunPlan(limit = 3) {
@@ -2420,7 +2529,10 @@ async function runContentSchedulerCycleUnlocked(params: {
   } else if (state.publishWindowOpen && !state.canPublishNow) {
     finalReason = '当前处于发布窗口，但已达到日上限或未满足最小发布时间间隔';
   } else if (state.canPublishNow) {
-    finalReason = '当前允许发布，但没有达到阈值的优质草稿';
+    finalReason = state.minutesSinceLastPublish !== undefined &&
+      state.minutesSinceLastPublish >= getContentSchedulerPublishStaleRelaxMinutes()
+      ? '发布窗口内允许发布，但候选仍未达阈值（已启用断粮放宽策略，下一轮继续）'
+      : '当前允许发布，但没有达到阈值的优质草稿';
   }
 
   const run: ContentSchedulerRunRecord = {

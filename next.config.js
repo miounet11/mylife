@@ -60,6 +60,18 @@ const nextConfig = {
     workerThreads: false,
     optimizePackageImports: ['lucide-react']
   },
+  // === Stability Hardening (2026-05-31) ===
+  // - Bounded app-level caches (see lib/utils BoundedSizeCache) + page force-dynamic for heavy paths
+  //   protect against "Single item size exceeds maxSize" in Next IncrementalCache / fetch-cache.
+  // - Heavy content gen (World Yi v2, knowledge synthesis, promote, agentic) MUST run exclusively
+  //   on dedicated content-workers (life-kline-content-worker-*) via PM2. Web replicas (3001-3) stay
+  //   render-only + light API.
+  // - ISR revalidate kept only where safe; bulk publish paths use on-demand reval or dynamic.
+  // - DB projections (lightweight list* in content-store) prevent full sections-JSON materialization
+  //   on every snapshot/polling call from admin surfaces or health.
+  // Verify: pm2 logs life-kline-stability-monitor ; curl http://127.0.0.1:3000/api/admin/system/health
+  // Runbook: docs/stability-engineering-plan.md + OPERATIONS.md
+  // === end ===
   webpack: (config, { isServer }) => {
     if (isServer) {
       config.externals = [...(config.externals || []), 'lunar-javascript', 'better-sqlite3'];

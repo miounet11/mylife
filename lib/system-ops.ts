@@ -10,6 +10,7 @@ import {
   readKnowledgeAcquisitionLockStatus,
   readKnowledgeAcquisitionSnapshot,
 } from '@/lib/knowledge-runtime-state';
+import { contentSnapshotCache, worldYiPublicationCache, heavyGenerationCache, BoundedSizeCache } from '@/lib/utils';
 
 export type SystemHealthSeverity = 'healthy' | 'warning' | 'critical';
 
@@ -18,6 +19,9 @@ export interface SystemOpsSnapshot {
   title: string;
   summary: string;
   checkedAt: string;
+  // Stability metrics (added without breaking existing consumers)
+  process?: any;
+  caches?: any;
   blockers: string[];
   healthySignals: string[];
   services: {
@@ -358,6 +362,37 @@ export function getSystemOpsSnapshot(params?: {
         },
         acquisition: knowledgeOps.acquisition,
       },
+      // === Stability Hardening Observability (v5-Stability 2026-05-31) ===
+      // Process + bounded cache metrics for heap/lag/maxSize prevention.
+      // Exposed via /api/admin/system/health (and system:health npm).
+      // Web instances should show low cachePressure; content-workers may show higher during gen.
+      process: (() => {
+        const mu = process.memoryUsage();
+        const cpu = process.cpuUsage();
+        return {
+          heapUsedMB: Math.round(mu.heapUsed / 1024 / 1024),
+          heapTotalMB: Math.round(mu.heapTotal / 1024 / 1024),
+          rssMB: Math.round(mu.rss / 1024 / 1024),
+          externalMB: Math.round((mu.external || 0) / 1024 / 1024),
+          heapPercent: Math.round((mu.heapUsed / Math.max(1, mu.heapTotal)) * 1000) / 10,
+          uptimeSec: Math.round(process.uptime()),
+          cpuUser: cpu.user,
+          cpuSystem: cpu.system,
+          isContentWorker: process.env.IS_CONTENT_WORKER === '1',
+          workerId: process.env.CONTENT_WORKER_ID || null,
+        };
+      })(),
+      caches: {
+        contentSnapshot: contentSnapshotCache.getStats(),
+        worldYiPublication: worldYiPublicationCache.getStats(),
+        heavyGeneration: heavyGenerationCache.getStats(),
+        pressure: {
+          content: contentSnapshotCache.getMemoryPressure(),
+          worldYi: worldYiPublicationCache.getMemoryPressure(),
+          heavy: heavyGenerationCache.getMemoryPressure(),
+        },
+      },
+      // === end stability metrics ===
     },
   };
 }

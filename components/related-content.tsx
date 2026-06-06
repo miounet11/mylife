@@ -6,6 +6,8 @@ import {
   getFeaturedKnowledgeArticles,
   isPublicKnowledgeEntry,
   listPublishedManagedContentEntriesByType,
+  getWorldYiV2MatchesForReport,
+  type WorldYiV2Reference,
 } from '@/lib/content-store';
 import { getEntityTypeLabel } from '@/lib/content';
 import { appendSourceToHref } from '@/lib/source-url';
@@ -14,7 +16,21 @@ import { appendSourceToHref } from '@/lib/source-url';
 const _qaContract = ['intro-copy', 'action-secondary'] as const;
 void _qaContract;
 
-export default function RelatedContent({ source }: { source?: string }) {
+export default function RelatedContent({ source, reportContext }: {
+  source?: string;
+  /** Optional: pass pillar/theme/agent context from result report to personalize World Yi v2 doctrine surfacing (uses schedulePublishedAt + meta) */
+  reportContext?: {
+    pillars?: string[];
+    themes?: string[];
+    agentModules?: string[];
+    yongShen?: string[];
+  };
+}) {
+  // v2 doctrine bridge: prefer live personalized matches from publication program meta (schedulePublishedAt auto-surfaces new pieces)
+  const v2DoctrineRefs: WorldYiV2Reference[] = reportContext
+    ? getWorldYiV2MatchesForReport(reportContext, 3)
+    : getWorldYiV2MatchesForReport({ themes: ['career', 'timing', 'relationship'], agentModules: ['core_constitution', 'strategy_advisor'] }, 3);
+
   const worldYiArticles = listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-'))
     .slice(0, 3);
@@ -71,6 +87,25 @@ export default function RelatedContent({ source }: { source?: string }) {
               <ArrowRight className="h-3 w-3" />
             </div>
           </Link>
+
+          {/* World Yi v2.0 Doctrine Spine — first-class in reports via rich meta + schedulePublishedAt */}
+          {v2DoctrineRefs.length > 0 && (
+            <div className="rounded-[var(--radius-md)] border-2 border-[color:var(--brand)] bg-[color:var(--brand-tint)] p-3">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">World Yi v2 教义脊柱 · 报告直连</div>
+              <div className="mt-1 text-xs text-[color:var(--ink-3)]">已匹配你的四柱/用神/主题的易学判断框架（publication 自动上线）</div>
+              {v2DoctrineRefs.slice(0, 2).map((ref) => (
+                <Link
+                  key={ref.slug}
+                  href={appendSourceToHref(ref.url, source)}
+                  className="mt-2 block rounded border border-[color:var(--brand-soft-2)] bg-white/70 p-2 text-sm font-semibold text-[color:var(--ink-1)] hover:border-[color:var(--brand)]"
+                >
+                  {ref.title}
+                  <span className="ml-1 text-[10px] text-[color:var(--brand-strong)]">→ {ref.layer || 'doctrine'} · {ref.matchedReasons?.[0]}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+
           {articles.map((article) => (
             <Link
               key={article.slug}

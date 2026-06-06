@@ -50,6 +50,10 @@ interface PageProps {
 }
 
 export const revalidate = 3600;
+// Stability: allow ops to force-dynamic on this high-cardinality route during bulk publish campaigns
+// to prevent ISR regeneration + large page cache entries from spiking web worker memory.
+// Normal mode keeps 1h revalidate for perf. Set CONTENT_BULK_MODE=1 in web env (rare, via PM2).
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;

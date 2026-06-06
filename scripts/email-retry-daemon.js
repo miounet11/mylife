@@ -1,5 +1,5 @@
 const intervalMs = Math.max(30_000, Number(process.env.EMAIL_RETRY_INTERVAL_MS || 1000 * 60 * 2));
-const runUrl = process.env.EMAIL_RETRY_RUN_URL || 'http://127.0.0.1:3000/api/admin/email/retry/cron';
+const runUrl = process.env.EMAIL_RETRY_RUN_URL || 'http://127.0.0.1:8080/api/admin/email/retry/cron';
 const token = process.env.EMAIL_RETRY_CRON_TOKEN || process.env.REPORT_UPGRADE_CRON_TOKEN || '';
 const requestTimeoutMs = Math.max(10_000, Number(process.env.EMAIL_RETRY_REQUEST_TIMEOUT_MS || 60_000));
 const startupDelayMs = Math.max(5_000, Number(process.env.EMAIL_RETRY_STARTUP_DELAY_MS || 15_000));

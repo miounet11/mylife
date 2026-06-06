@@ -32,6 +32,8 @@ jest.mock('@/lib/content-store', () => {
   return {
     ...actual,
     listManagedContentEntries: (...args: unknown[]) => mockListManagedContentEntries(...args),
+    listManagedContentEntriesLight: (...args: unknown[]) => mockListManagedContentEntries(...args), // stability: light projection shares mock for scheduler paths
+    countManagedContentEntries: () => (mockListManagedContentEntries.mock.results?.[0]?.value?.length || 12),
     refreshManagedContentJourneyMetadata: (...args: unknown[]) => mockRefreshManagedContentJourneyMetadata(...args),
     saveManagedContentEntry: (...args: unknown[]) => mockSaveManagedContentEntry(...args),
   };

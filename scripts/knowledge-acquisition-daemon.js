@@ -1,5 +1,5 @@
 const intervalMs = Math.max(60_000, Number(process.env.KNOWLEDGE_ACQUISITION_INTERVAL_MS || 1000 * 60 * 30));
-const runUrl = process.env.KNOWLEDGE_ACQUISITION_RUN_URL || 'http://127.0.0.1:3000/api/admin/knowledge/sources/cron';
+const runUrl = process.env.KNOWLEDGE_ACQUISITION_RUN_URL || 'http://127.0.0.1:8080/api/admin/knowledge/sources/cron';
 const token = process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || '';
 const requestTimeoutMs = Math.max(10_000, Number(process.env.KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS || 180_000));
 const startupDelayMs = Math.max(5_000, Number(process.env.KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS || 25_000));

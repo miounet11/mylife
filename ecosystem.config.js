@@ -1,12 +1,11 @@
 // PM2配置文件
-const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS !== '0';
+const ecosystemSecrets = require('./scripts/load-ecosystem-env.js');
+// 默认只启动主站。后台 daemon 必须显式开启，避免小机器被 worker + cron 抢死。
+const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS === '1';
 const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '1';
 const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '1';
 
-// v5-D83 (2026-05-24): daemon 回调改走本机 nginx :8080（内部 upstream 入口）。
-// 之前所有 daemon 硬编码 127.0.0.1:3000，把单进程打爆。
-// 现在 nginx 在 :8080 监听，按 least_conn 把回调分到 3000/3001/3002，
-// 公网入口与 daemon 共享 3 实例池，瞬间扩容 3 倍处理能力。
+// v5-D83: daemon 回调走本机 nginx :8080，让内部请求也经过 upstream 分流。
 const INTERNAL_API_HOST = process.env.INTERNAL_API_HOST || '127.0.0.1:8080';
 const cronEnv = {
   CONTENT_RADAR_CRON_TOKEN: 'life-kline-radar-local-2026',
@@ -33,12 +32,13 @@ const nextApp = {
   cwd: '/home/life-kline-next',
   // v5-D83 (2026-05-24): cluster 模式与 next start 内部 fork 互不兼容，
   // 改用「多 fork 实例 + 不同端口 + nginx upstream 负载均衡」方案。
-  // 主端口 3000 留给现有 daemon 回调（避免改 12 处 daemon 配置）。
+  // 端口 3000 = 用户测算专实例（与 cron/SEO 物理隔离）。
   instances: 1,
   exec_mode: 'fork',
   env: {
     NODE_ENV: 'production',
     PORT: 3000,
+    WEB_TIER_ROLE: 'user',
     ENABLE_AGENTIC_PIPELINE: enableAgenticPipeline,
     DEFAULT_MODEL: PRIMARY_LLM_MODEL,
     OPEN_AGENT_RUNTIME_MODEL: PRIMARY_LLM_MODEL,
@@ -50,6 +50,8 @@ const nextApp = {
     CONTENT_GENERATION_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
     CHAT_LLM_TIMEOUT_MS: process.env.CHAT_LLM_TIMEOUT_MS || '240000',
     OPEN_AGENT_RUNTIME_ENABLED: openAgentRuntimeEnabled,
+    // Agent enrichment 只在后台/upgrade 路径补强，默认串行，避免上游 auto 抖动时并发雪崩。
+    AGENT_PARALLEL_CONCURRENCY: process.env.AGENT_PARALLEL_CONCURRENCY || '1',
     // v5-A5d (2026-05-09): 熔断阈值放宽 — 之前 IMMEDIATE_OPEN=2 + CONSECUTIVE=3，并发 7 个 agent 同时失败时雪崩
     // 现在 main IMMEDIATE_OPEN=4 + CONSECUTIVE=5 + 冷却缩到 2 分钟，给系统更多自愈空间
     LLM_HEALTH_WINDOW_MINUTES: '15',
@@ -86,9 +88,10 @@ const nextApp = {
   autorestart: true,
   max_restarts: 10,
   min_uptime: '10s',
-  max_memory_restart: '2500M',
+  max_memory_restart: '1800M',
   watch: false,
   restart_delay: 4000,
+  node_args: '--max-old-space-size=1536 --expose-gc',
   // v5-D52 (2026-05-20): 重启期 502 防护
   // - kill_timeout 15s 给 Next.js 把 inflight 请求处理完（默认 1600ms 太短，长 LLM 请求会被腰斩）
   // - listen_timeout 给冷启动充足时间，避免 PM2 误判后强杀
@@ -405,9 +408,186 @@ const makeWebReplica = (suffix, port) => ({
 const webReplicas = [
   makeWebReplica('web1', 3001),
   makeWebReplica('web2', 3002),
-  makeWebReplica('web3', 3003),
 ];
 
+// Daemon /api/admin/* 专实例 — nginx :8080 与公网 /api/admin/ 打到 3004，避免拖死 3000。
+const cronReplicaBase = makeWebReplica('cron', 3004);
+const cronReplica = {
+  ...cronReplicaBase,
+  env: { ...cronReplicaBase.env, WEB_TIER_ROLE: 'cron' },
+  // cron 堆满后 event loop 卡死；早于 2200M 重启，避免 daemon 全挂
+  max_memory_restart: process.env.CRON_MAX_MEMORY_RESTART || '1100M',
+};
+
+// v5-Stability + High-Concurrency Orchestration (2026-05-31 highest-dimension):
+// Dedicated content-workers ONLY for heavy work (World Yi v2 elevation, knowledge synthesis,
+// growth promote, visual, publication, bulk LLM).
+// - User web replicas (life-kline-next-web*) are pure render tier. Heavy work here prevents
+//   the "maxSize", 90%+ heap, 70s eventLoop disasters.
+// - The high-concurrency-world-yi-generator.ts is now the full orchestrator:
+//   supports --worker (queue poll + fallback seeds), advanced circuit/retry/backpressure,
+//   v2 rubric gate, direct content-store + schedulePublishedAt + v2 meta.
+// - Multiple workers share the DB queue safely via claimNextWorldYiV2Task.
+// - Stability-monitor only reloads web* instances (content workers are intentionally heavy).
+// - Start workers: pm2 startOrReload ecosystem... --only "life-kline-content-worker-*"
+// - To run one-off: pm2 start "node --import tsx scripts/high-concurrency-world-yi-generator.ts --count=20 --concurrency=10 --lane=main" --name temp-v2-gen
+const contentWorkers = [
+  {
+    name: 'life-kline-content-worker-1',
+    script: 'scripts/world-yi-worker-entry.js',
+    args: '--worker --lane=main',
+    cwd: '/home/life-kline-next',
+    instances: 1,
+    exec_mode: 'fork',
+    node_args: '--max-old-space-size=4352 --expose-gc',
+    env: {
+      NODE_ENV: 'production',
+      OPENAI_API_KEY: ecosystemSecrets.OPENAI_API_KEY,
+      API_BASE_URL: ecosystemSecrets.API_BASE_URL,
+      CHAT_API_KEY: ecosystemSecrets.CHAT_API_KEY,
+      CHAT_API_URL: process.env.CHAT_API_URL || 'https://ttqq.inping.com/v1/chat/completions',
+      CHAT_API_MODEL: process.env.CHAT_API_MODEL || 'auto',
+      CONTENT_GEN_CONCURRENCY: '8',
+      CONTENT_GEN_MAX_PARALLEL: '40',
+      IS_CONTENT_WORKER: '1',
+      CONTENT_WORKER_ID: '1',
+    },
+    error_file: '/root/.pm2/logs/life-kline-content-worker-1-error.log',
+    out_file: '/root/.pm2/logs/life-kline-content-worker-1-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true,
+    autorestart: true,
+    max_restarts: 12,
+    min_uptime: '45s',
+    max_memory_restart: '4350M',
+    watch: false,
+    restart_delay: 10000,
+    kill_timeout: 90000,
+  },
+  {
+    name: 'life-kline-content-worker-2',
+    script: 'scripts/world-yi-worker-entry.js',
+    args: '--worker --lane=wave2',
+    cwd: '/home/life-kline-next',
+    instances: 1,
+    exec_mode: 'fork',
+    node_args: '--max-old-space-size=4096 --expose-gc',
+    env: {
+      NODE_ENV: 'production',
+      OPENAI_API_KEY: ecosystemSecrets.OPENAI_API_KEY,
+      API_BASE_URL: ecosystemSecrets.API_BASE_URL,
+      CHAT_API_KEY: ecosystemSecrets.CHAT_API_KEY,
+      CHAT_API_URL: process.env.CHAT_API_URL || 'https://ttqq.inping.com/v1/chat/completions',
+      CHAT_API_MODEL: process.env.CHAT_API_MODEL || 'auto',
+      CONTENT_GEN_CONCURRENCY: '6',
+      CONTENT_GEN_MAX_PARALLEL: '30',
+      IS_CONTENT_WORKER: '1',
+      CONTENT_WORKER_ID: '2',
+    },
+    error_file: '/root/.pm2/logs/life-kline-content-worker-2-error.log',
+    out_file: '/root/.pm2/logs/life-kline-content-worker-2-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true,
+    autorestart: true,
+    max_restarts: 10,
+    min_uptime: '30s',
+    max_memory_restart: '4100M',
+    watch: false,
+    restart_delay: 11000,
+    kill_timeout: 90000,
+  },
+];
+
+// Lightweight stability self-healing monitor (Phase 0 from engineering plan)
+const stabilityMonitor = {
+  name: 'life-kline-stability-monitor',
+  script: 'scripts/stability-monitor.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    WEB_MEMORY_THRESHOLD_MB: '1100',
+    WEB_RESTART_THRESHOLD_MB: '1350',
+    EVENT_LOOP_P95_MS: '2500',
+    CHECK_INTERVAL_MS: '45000',
+    RELOAD_COOLDOWN_MS: '300000',
+  },
+  error_file: '/root/.pm2/logs/life-kline-stability-monitor-error.log',
+  out_file: '/root/.pm2/logs/life-kline-stability-monitor-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 20,
+  min_uptime: '10s',
+  max_memory_restart: '256M',
+  watch: false,
+};
+
+// stability-monitor 易触发 web 副本 reload 循环；默认改 user-tier-watchdog 只护 3000。
+const stabilityApps =
+  process.env.ENABLE_STABILITY_MONITOR === '1' ? [stabilityMonitor] : [];
+
+const userTierWatchdog = {
+  name: 'life-kline-user-tier-watchdog',
+  script: 'scripts/user-tier-watchdog.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    USER_TIER_PORT: '3000',
+    CHECK_INTERVAL_MS: '60000',
+    RECOVERY_COOLDOWN_MS: '900000',
+    FAIL_STREAK_BEFORE_ACT: '3',
+  },
+  error_file: '/root/.pm2/logs/life-kline-user-tier-watchdog-error.log',
+  out_file: '/root/.pm2/logs/life-kline-user-tier-watchdog-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 20,
+  min_uptime: '10s',
+  max_memory_restart: '128M',
+  watch: false,
+};
+
+const publicSurfaceWatchdog = {
+  name: 'life-kline-public-surface-watchdog',
+  script: 'scripts/public-surface-watchdog.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    PUBLIC_SURFACE_HOST: 'www.life-kline.com',
+    CHECK_INTERVAL_MS: '45000',
+    RECOVERY_COOLDOWN_MS: '600000',
+    FAIL_STREAK_BEFORE_ACT: '2',
+    PROBE_TIMEOUT_MS: '8000',
+  },
+  error_file: '/root/.pm2/logs/life-kline-public-surface-watchdog-error.log',
+  out_file: '/root/.pm2/logs/life-kline-public-surface-watchdog-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 20,
+  min_uptime: '10s',
+  max_memory_restart: '128M',
+  watch: false,
+};
+
+const enablePublicSurfaceWatchdog = process.env.ENABLE_PUBLIC_SURFACE_WATCHDOG !== '0';
+
+const watchdogApps = [];
+
 module.exports = {
-  apps: [nextApp, ...webReplicas, ...backgroundWorkers],
+  apps: [
+    nextApp,
+    ...webReplicas,
+    cronReplica,
+    ...backgroundWorkers,
+    ...watchdogApps,
+    ...stabilityApps,
+  ],
 };

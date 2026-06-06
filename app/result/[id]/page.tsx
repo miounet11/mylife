@@ -1111,7 +1111,19 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
                   delayMs={760}
                 >
-                  <RelatedContent source={entrySource || `result_report:${id}`} />
+                  <RelatedContent
+                    source={entrySource || `result_report:${id}`}
+                    reportContext={{
+                      pillars: [
+                        result.pattern?.type,
+                        result.fortune?.currentDaYun,
+                        ...(result.advice?.yongShen || []),
+                      ].filter(Boolean) as string[],
+                      themes: ['career', 'wealth', 'relationship', 'health', 'timing', 'kline'],
+                      agentModules: ['core_constitution', 'career_wealth', 'strategy_advisor', 'temporal_spatial_advisor'],
+                      yongShen: [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])],
+                    }}
+                  />
                 </ResultDeferredSection>
               </div>
             </div>

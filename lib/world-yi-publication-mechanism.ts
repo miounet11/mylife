@@ -1,6 +1,6 @@
 import publicationProgram from '@/data/world-yi-publication-program.json';
 import { getContentSchedulerOverview } from '@/lib/content-ops';
-import { listManagedContentEntries, type ManagedContentEntry, type ManagedContentType } from '@/lib/content-store';
+import { listManagedContentEntries, listManagedContentEntriesLight, type ManagedContentEntry, type ManagedContentEntryLight, type ManagedContentType } from '@/lib/content-store';
 import {
   buildWorldYiPublicationLaneSummaries,
   buildWorldYiPublicationReserveSignal,
@@ -12,6 +12,7 @@ import {
   type SourceType,
 } from '@/lib/world-yi-publication-lanes';
 import { buildWorldYiAutoresearchSnapshot } from '@/lib/world-yi-autoresearch';
+import { worldYiPublicationCache } from '@/lib/utils';
 
 export interface PublicationLogicLayer {
   key: string;
@@ -163,11 +164,15 @@ function buildExpansionSignal(
 export function buildWorldYiPublicationMechanismSnapshot(
   options: BuildWorldYiPublicationMechanismOptions = {}
 ): WorldYiPublicationMechanismSnapshot {
-  const entries = options.entries || listManagedContentEntries();
+  const cacheKey = 'world-yi-pub-mech:v1';
+  const cached = worldYiPublicationCache.get(cacheKey);
+  if (cached && !options.entries) return cached; // use cache only for default full load path
+
+  const entries = options.entries || (listManagedContentEntriesLight() as ManagedContentEntry[]); // light projection for stability (no sections)
   const lanes = buildWorldYiPublicationLaneSummaries(entries);
   const autoresearch = buildWorldYiAutoresearchSnapshot({ entries });
 
-  return {
+  const result: WorldYiPublicationMechanismSnapshot = {
     checkedAt: new Date().toISOString(),
     logicLayers: (publicationProgram.logicLayers || []) as PublicationLogicLayer[],
     weeklySlots: publicationProgram.weeklySlots,
@@ -179,4 +184,11 @@ export function buildWorldYiPublicationMechanismSnapshot(
     lanes,
     nextSlots: buildNextSlots(lanes),
   };
+
+  if (!options.entries) {
+    // Guard large decision ledger + lane graphs from polluting web worker caches/heap
+    const rough = (entries.length * 420) + 180 * 1024;
+    worldYiPublicationCache.set(cacheKey, result, rough);
+  }
+  return result;
 }

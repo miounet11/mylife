@@ -1,5 +1,5 @@
 const intervalMs = Math.max(60_000, Number(process.env.REPORT_MONTHLY_DIGEST_INTERVAL_MS || 1000 * 60 * 60 * 6));
-const runUrl = process.env.REPORT_MONTHLY_DIGEST_RUN_URL || 'http://127.0.0.1:3000/api/admin/report-monthly-digest/cron';
+const runUrl = process.env.REPORT_MONTHLY_DIGEST_RUN_URL || 'http://127.0.0.1:8080/api/admin/report-monthly-digest/cron';
 const token = process.env.REPORT_MONTHLY_DIGEST_CRON_TOKEN || '';
 
 function sleep(ms) {

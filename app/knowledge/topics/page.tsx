@@ -26,6 +26,8 @@ export const metadata = createPublicContentMetadata({
 });
 
 export const revalidate = 3600;
+// Stability guard (see next.config + BoundedSizeCache)
+export const dynamic = 'force-dynamic';
 
 export default function KnowledgeTopicsPage() {
   const topicHubs = listKnowledgeTopicHubs({ limit: 24 });

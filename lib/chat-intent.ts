@@ -151,7 +151,6 @@ export function getChatIntentSystemPrompt(intent?: string | null) {
   if (normalized) {
     try {
       // 动态引入避免循环依赖（chat-intent.ts 被 chat-context.ts 早期引用）
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { getPrompt, buildPrompt } = require('@/lib/prompts');
       const idMap: Record<ChatIntent, string> = {
         'event-simulation': 'chat.intent.event_simulation',
@@ -164,7 +163,6 @@ export function getChatIntentSystemPrompt(intent?: string | null) {
       const id = idMap[normalized];
       if (id && getPrompt(id)) {
         // 触发注册（首次调用前） + 取 system 段
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
         require('@/lib/prompts/chat/intents');
         const built = buildPrompt(id, {});
         return built.system;

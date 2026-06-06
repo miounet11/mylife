@@ -23,6 +23,8 @@ export interface WorldYiAutoresearchSnapshot {
 export interface BuildWorldYiAutoresearchSnapshotOptions {
   entries?: ManagedContentEntry[];
   stats?: WorldYiPublicStats;
+  /** Report feedback loop can inject ideas (from drift/correction) to seed new v2 content backlog */
+  reportDerivedIdeas?: string[];
 }
 
 const FLAGSHIP_DOCTRINE_SLUGS = [
@@ -189,6 +191,7 @@ export function buildWorldYiAutoresearchSnapshot(
 ): WorldYiAutoresearchSnapshot {
   const entries = options.entries || listManagedContentEntries();
   const stats = options.stats || getWorldYiPublicStats();
+  const reportIdeas = options.reportDerivedIdeas || [];
   const publicGrowthAudit = buildPublicGrowthAudit(entries);
   const publishedGrowthEntries = entries.filter((entry) => isPublishedEntry(entry) && isGrowthDistributionEntry(entry));
   const recentPublishedGrowthEntries = publishedGrowthEntries.filter((entry) => isWithinDays(getEntryPublishedAt(entry), 7));
@@ -285,12 +288,17 @@ export function buildWorldYiAutoresearchSnapshot(
 
   const score = round1(metrics.reduce((sum, item) => sum + item.points, 0));
 
+  const baseRecs = buildRecommendations(metrics);
+  const ideaRecs = reportIdeas.length > 0
+    ? reportIdeas.slice(0, 2).map((idea) => `Report feedback → 新 v2 内容选题：${idea}（经由 feedbackLoop.worldYiContentIdeas 注入 autoresearch）`)
+    : [];
+
   return {
     checkedAt: new Date().toISOString(),
     score,
     maxScore: 100,
     headline: getHeadline(score),
     metrics,
-    recommendations: buildRecommendations(metrics),
+    recommendations: [...baseRecs, ...ideaRecs],
   };
 }

@@ -275,3 +275,141 @@ export const sessionStorage = {
     window.sessionStorage.clear();
   },
 };
+
+/**
+ * BoundedSizeCache - Production stability guard (highest-dimension fix).
+ * Prevents unbounded in-memory growth that triggers Next IncrementalCache "maxSize" errors,
+ * heap bloat on web instances, and event-loop stalls during content/LLM work.
+ *
+ * Used for: content-ops snapshots, world-yi publication ledgers, generator outputs, agentic results.
+ * Default caps keep individual snapshots <4-8MB and entry counts low.
+ * Eviction: TTL + size-based LRU (oldest first) + entry count cap.
+ *
+ * IMPORTANT: Server-side only. Do not import in client components.
+ * Usage:
+ *   import { BoundedSizeCache, contentSnapshotCache } from '@/lib/utils';
+ *   const key = `snapshot-${Date.now()}`;
+ *   let snap = contentSnapshotCache.get(key);
+ *   if (!snap) { snap = expensiveBuild(); contentSnapshotCache.set(key, snap, roughSize); }
+ */
+export interface BoundedCacheOptions {
+  maxSizeBytes?: number;
+  maxEntries?: number;
+  ttlMs?: number;
+}
+
+export class BoundedSizeCache<T> {
+  private store = new Map<string, { value: T; size: number; expiresAt: number }>();
+  private currentSize = 0;
+  private readonly maxSize: number;
+  private readonly maxEntries: number;
+  private readonly ttl: number;
+
+  constructor(opts: BoundedCacheOptions = {}) {
+    this.maxSize = opts.maxSizeBytes ?? 8 * 1024 * 1024; // 8MB hard cap per cache instance
+    this.maxEntries = opts.maxEntries ?? 200;
+    this.ttl = opts.ttlMs ?? 3 * 60 * 1000; // 3min default short TTL for heavy objects
+  }
+
+  private evictExpired() {
+    const now = Date.now();
+    for (const [k, v] of this.store) {
+      if (v.expiresAt < now) {
+        this.currentSize -= v.size;
+        this.store.delete(k);
+      }
+    }
+  }
+
+  private evictIfNeeded(neededBytes: number) {
+    this.evictExpired();
+    while (
+      (this.currentSize + neededBytes > this.maxSize || this.store.size >= this.maxEntries) &&
+      this.store.size > 0
+    ) {
+      // Evict oldest (Map preserves insertion order)
+      const firstKey = this.store.keys().next().value as string | undefined;
+      if (!firstKey) break;
+      const entry = this.store.get(firstKey);
+      if (entry) {
+        this.currentSize -= entry.size;
+        this.store.delete(firstKey);
+      }
+    }
+  }
+
+  set(key: string, value: T, estimatedSizeBytes?: number): void {
+    // Rough size: prefer caller estimate; fallback to JSON (expensive but only on set path)
+    let size = estimatedSizeBytes;
+    if (size == null) {
+      try {
+        size = Buffer.byteLength(JSON.stringify(value), 'utf8');
+      } catch {
+        size = 1024; // conservative fallback
+      }
+    }
+    this.evictIfNeeded(size);
+
+    const expiresAt = Date.now() + this.ttl;
+    const old = this.store.get(key);
+    if (old) {
+      this.currentSize -= old.size;
+    }
+    this.store.set(key, { value, size, expiresAt });
+    this.currentSize += size;
+  }
+
+  get(key: string): T | undefined {
+    const entry = this.store.get(key);
+    if (!entry) return undefined;
+    if (entry.expiresAt < Date.now()) {
+      this.currentSize -= entry.size;
+      this.store.delete(key);
+      return undefined;
+    }
+    return entry.value;
+  }
+
+  getStats() {
+    this.evictExpired();
+    return {
+      entries: this.store.size,
+      approxBytes: this.currentSize,
+      maxBytes: this.maxSize,
+      maxEntries: this.maxEntries,
+      utilization: this.maxSize > 0 ? Math.round((this.currentSize / this.maxSize) * 1000) / 10 : 0,
+    };
+  }
+
+  clear(): void {
+    this.store.clear();
+    this.currentSize = 0;
+  }
+
+  // For stability-monitor / metrics
+  getMemoryPressure(): number {
+    this.evictExpired();
+    return this.maxSize > 0 ? this.currentSize / this.maxSize : 0;
+  }
+}
+
+// Shared singleton for content snapshot / scheduler state (used across ops + admin surfaces)
+export const contentSnapshotCache = new BoundedSizeCache<any>({
+  maxSizeBytes: 6 * 1024 * 1024, // ~6MB cap - protects against full 4000+ entry graphs
+  maxEntries: 12,
+  ttlMs: 90 * 1000, // 90s - long enough for admin polling, short for heavy campaigns
+});
+
+// Shared for world-yi publication mechanism snapshots (ledgers can be large)
+export const worldYiPublicationCache = new BoundedSizeCache<any>({
+  maxSizeBytes: 4 * 1024 * 1024,
+  maxEntries: 8,
+  ttlMs: 60 * 1000,
+});
+
+// Shared for agentic / generator intermediate large outputs (before DB persist)
+export const heavyGenerationCache = new BoundedSizeCache<any>({
+  maxSizeBytes: 12 * 1024 * 1024, // allow bigger for LLM structured results during worker runs
+  maxEntries: 30,
+  ttlMs: 4 * 60 * 1000,
+});

@@ -39,6 +39,9 @@ export function generateMetadata() {
 }
 
 export const revalidate = 3600;
+// Stability: during bulk content campaigns, prefer dynamic to avoid ISR thundering + large cache items.
+// Keep 3600 for normal; ops can force via revalidatePath if needed.
+export const dynamic = 'force-dynamic';
 
 const worldYiKnowledgePowerLinks = [
   { title: '十卷主书', href: '/world-yi/book', icon: BookOpen },

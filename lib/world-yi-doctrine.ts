@@ -11,3 +11,16 @@ export const WORLD_YI_DELIVERY_DIRECTIVE = [
   '允许综合默会知识做判断，但不要写成空泛玄谈或神秘表演。',
   '不要用“也许、可能、仅供参考”消解判断力，除非输入事实本身冲突。',
 ].join('\n');
+
+// v2 Application Frameworks layer cross-refs (6 domains reusable protocols)
+export const WORLD_YI_V2_APPLICATION_FRAMEWORKS = [
+  'career-timing-protocol-v2',
+  'migration-environment-fit-protocol',
+  'relationship-family-order-protocol',
+  'health-recovery-yixue-bazi-protocol',
+  'wealth-cashflow-safety-protocol',
+  'education-naming-pathway-protocol',
+  'family-duty-career-balance-protocol',
+] as const;
+
+export const WORLD_YI_V2_APP_FRAMEWORK_GUIDE = '每个应用框架协议均包含：Yixue lens（卦群+变易原理）+ Bazi check（四柱/十神/用神实例）+ 现代/diaspora overlay（真太阳时、时区、文化资本）+ 可执行 action matrix/checklist + “在自己报告中验证”步骤。所有协议声明 feedsAgentModules 与 report pillars 互连，可直接注入 agentic-report 与 fortune-engine。';

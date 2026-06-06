@@ -217,17 +217,22 @@ async function enhanceToolResultWithLlm(params: {
     };
   }
 
+  const configuredModel = readString(runtime.llmModel, getModelFallbackChain(undefined, 'agent')[0] || 'auto');
+  const configuredChain = readStringArray(runtime.llmModelChain);
+  const modelChain = configuredChain.length
+    ? configuredChain
+    : getModelFallbackChain(configuredModel, 'agent');
+
   const raw = await callJsonLLM<RawToolLlmEnhancement>({
     system: buildToolEnhancementSystemPrompt(),
     user: buildToolEnhancementUserPrompt(params),
-    model: getModelFallbackChain(undefined, 'agent')[0],
-    modelChain: getModelFallbackChain(undefined, 'agent'),
+    model: modelChain[0] || configuredModel,
+    modelChain,
     timeoutMs: readNumber(runtime.llmTimeoutMs, 12_000, 1000),
     maxTokens: readNumber(runtime.llmMaxTokens, 1200, 400),
     temperature: 0.45,
     traceLabel: `tool-run:${params.tool.slug}`,
     scope: 'agent',
-    disableHealthReorder: true,
     reasoningEffort: 'low',
   });
 

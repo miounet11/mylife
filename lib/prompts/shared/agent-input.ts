@@ -22,6 +22,7 @@ const ALL_LABELS = [
   'CONTEXT_SPATIAL',
   'CONTEXT_HUMAN',
   'CONTEXT_WORLD_STATE',
+  'WORLD_YI_V2_DOCTRINE_PRIMITIVES',  // World Yi v2.0 report engine bridge: live Yixue/Bazi/Judgment primitives from published doctrine spine (auto-matched via pillars/yongShen + meta)
 ];
 
 export interface AgentInputOptions {

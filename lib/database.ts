@@ -1,3 +1,5 @@
+import '@/lib/assert-server-only';
+
 // 数据库配置 - SQLite
 import Database from 'better-sqlite3';
 import { resolveCtaSourceFamilyFromMeta, type CtaStrategyBreakdownRow } from '@/lib/cta-strategy';
@@ -1554,14 +1556,16 @@ export const db = new Database(dbPath);
 // - cache_size=-65536：64MB 页缓存（之前 16MB），909k 行 analytics 索引扫描受益最大
 // - mmap_size=256MB：让 SQLite 用 mmap 直读 db 文件，绕过 page cache 拷贝
 // - temp_store=MEMORY：临时表/排序走内存（之前走磁盘）
-// - busy_timeout=10000：高并发写阻塞时多等 5s 再报 SQLITE_BUSY
+// - busy_timeout：cron 实例 10s；用户测算专实例 30s，减少与 3004 写库竞争时的 SQLITE_BUSY 雪崩
 // - wal_autocheckpoint=2000：WAL 满 8MB 才 checkpoint（之前 4MB），减少 fsync 抖动
+const sqliteBusyTimeoutMs =
+  process.env.WEB_TIER_ROLE === 'user' ? 30000 : 10000;
 db.pragma('journal_mode = WAL');
 db.pragma('synchronous = NORMAL');
 db.pragma('cache_size = -65536');
 db.pragma('mmap_size = 268435456');
 db.pragma('temp_store = MEMORY');
-db.pragma('busy_timeout = 10000');
+db.pragma(`busy_timeout = ${sqliteBusyTimeoutMs}`);
 db.pragma('wal_autocheckpoint = 2000');
 
 // 初始化数据库

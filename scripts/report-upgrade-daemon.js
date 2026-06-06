@@ -1,5 +1,5 @@
 const intervalMs = Math.max(30_000, Number(process.env.REPORT_UPGRADE_INTERVAL_MS || 1000 * 60 * 3));
-const runUrl = process.env.REPORT_UPGRADE_RUN_URL || 'http://127.0.0.1:3000/api/admin/report-upgrade/cron';
+const runUrl = process.env.REPORT_UPGRADE_RUN_URL || 'http://127.0.0.1:8080/api/admin/report-upgrade/cron';
 const token = process.env.REPORT_UPGRADE_CRON_TOKEN || '';
 const requestTimeoutMs = Math.max(10_000, Number(process.env.REPORT_UPGRADE_REQUEST_TIMEOUT_MS || 60_000));
 const startupDelayMs = Math.max(5_000, Number(process.env.REPORT_UPGRADE_STARTUP_DELAY_MS || 20_000));

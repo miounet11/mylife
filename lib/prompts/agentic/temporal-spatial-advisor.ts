@@ -48,11 +48,13 @@ export const TEMPORAL_SPATIAL_ADVISOR_SPEC: PromptSpec<StructuredAgenticContext>
         'CONTEXT_MACRO',
         'ENGINE_KLINE_WINDOWS',
         'ENGINE_DAYUN_WINDOWS',
+        'WORLD_YI_V2_DOCTRINE_PRIMITIVES',
       ],
       notes: [
         'temporalSignal 必须含节气或流年',
         'spatialSignal 必须含 currentPlace 或 favorableDirections',
         'macroSignal 必须含一个具体行业或国运信号',
+        'structure-timing / environment-fit 判断必须引用 doctrine primitives 中的 structure-timing / diaspora-variable（v2 报告集成必做）',
       ],
     }),
   hardConstraints: [

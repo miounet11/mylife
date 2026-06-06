@@ -1,5 +1,5 @@
 const intervalMs = Math.max(60_000, Number(process.env.CONTENT_SCHEDULER_INTERVAL_MS || 1000 * 60 * 20));
-const runUrl = process.env.CONTENT_SCHEDULER_RUN_URL || 'http://127.0.0.1:3000/api/admin/content/scheduler/cron';
+const runUrl = process.env.CONTENT_SCHEDULER_RUN_URL || 'http://127.0.0.1:8080/api/admin/content/scheduler/cron';
 const token = process.env.CONTENT_SCHEDULER_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || '';
 const requestTimeoutMs = Math.max(10_000, Number(process.env.CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS || 1000 * 60 * 15));
 const startupDelayMs = Math.max(5_000, Number(process.env.CONTENT_SCHEDULER_STARTUP_DELAY_MS || 20_000));

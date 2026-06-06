@@ -3,6 +3,7 @@ import { eventOperations, fortuneOperations } from '@/lib/database';
 import { buildConfidenceAnalysis, buildMonthlyWindows, buildReportCorrectionInsight, buildReportValidationInsights, buildScenarioViews } from '@/lib/report-v2';
 import type { FortuneRecord } from '@/lib/user-types';
 import { getCurrentLocalMonthKey } from '@/lib/utils';
+import { getWorldYiV2MatchesForReport } from '@/lib/content-store';
 
 type ReportFeedbackSyncSuccess = {
   success: true;
@@ -84,6 +85,15 @@ export function syncReportFeedbackLoop(reportId: string, options?: {
       linkedReportId: reportId,
       validationInsights,
       correctionInsight,
+      // World Yi v2 feedback bridge: high-drift / correction insights auto-generate content ideas
+      // for autoresearch → new doctrine / application / case pieces (bidirectional integration)
+      worldYiContentIdeas: (correctionInsight.level === 'high' || validationInsights.driftCount > validationInsights.accurateCount)
+        ? [
+            `基于本报告 correction: 补充 ${report.pattern?.type || '当前格局'} 在 structure-timing 下的 ${report.fortune?.currentDaYun || '当前大运'} 具体判断案例`,
+            `Yixue primitives 细化：${(report.advice?.yongShen || []).join(' ')} 与 judgment-five-elements 的交叉验证`,
+            `World Yi v2 应用框架建议：${reportId} 对应 timing window 的 environment-fit 决策协议`,
+          ]
+        : [],
     },
   } as NonNullable<FortuneRecord['analysis']>;
 

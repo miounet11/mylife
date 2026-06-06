@@ -1,5 +1,5 @@
 const intervalMs = Math.max(30_000, Number(process.env.CONTENT_GENERATION_JOB_INTERVAL_MS || 60_000));
-const runUrl = process.env.CONTENT_GENERATION_JOB_RUN_URL || 'http://127.0.0.1:3000/api/admin/content/generate/cron';
+const runUrl = process.env.CONTENT_GENERATION_JOB_RUN_URL || 'http://127.0.0.1:8080/api/admin/content/generate/cron';
 const token = process.env.CONTENT_GENERATION_CRON_TOKEN
   || process.env.CONTENT_SCHEDULER_CRON_TOKEN
   || process.env.CONTENT_RADAR_CRON_TOKEN

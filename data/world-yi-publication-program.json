@@ -1,8 +1,16 @@
 {
+  "version": "v2.0-elevation-2026-05",
   "northStar": [
     "获取持续搜索流量",
     "普及世界易与易学判断框架",
-    "把现实困境翻译成结构、时机、环境与下一步动作"
+    "把现实困境翻译成结构、时机、环境与下一步动作",
+    "把世界易建成AI时代 definitive 高维判断知识体系，驱动报告升级与有机增长"
+  ],
+  "elevationGoals": [
+    "将 Yixue/易学体系从辅助应用内容升级为核心 doctrine spine（教义脊柱）",
+    "实现系统性、深度互连、高信号、可操作框架的质的飞跃",
+    "所有内容均可反哺核心 fortune report engine（四柱、timing、agentic modules）",
+    "支持 50-100 并发的高容量 CHAT_API 规模化生产，同时保持质量门禁"
   ],
   "weeklySlots": 9,
   "laneQuotas": {
@@ -11,15 +19,15 @@
     "global": 3
   },
   "contentTypeMix": {
-    "knowledge": 0.4,
-    "case": 0.5,
+    "knowledge": 0.45,
+    "case": 0.45,
     "insight": 0.1
   },
   "logicLayers": [
     {
       "key": "doctrine-spine",
       "title": "Doctrine Spine",
-      "description": "固定世界易主张、六域框架、结构-时机-环境-动作的核心解释。"
+      "description": "固定世界易主张、六域框架、结构-时机-环境-动作的核心解释。v2 重点：易学机理、卦象决策映射、与 Bazi 的实例化关系。"
     },
     {
       "key": "traffic-capture",
@@ -34,7 +42,7 @@
     {
       "key": "conversion-bridge",
       "title": "Conversion Bridge",
-      "description": "每篇公开内容都要承接到世界易入口、工具或个人分析动作。"
+      "description": "每篇公开内容都要承接到世界易入口、工具或个人分析动作，并显式链接报告升级路径。"
     },
     {
       "key": "refresh-loop",
@@ -42,13 +50,389 @@
       "description": "持续复盘已发布内容，更新标题、摘要、内链，并把高频问题回写成新选题。"
     }
   ],
+  "architecture": {
+    "layeredOntology": {
+      "description": "World Yi v2 目标知识本体：从古典易学到现代决策系统的分层映射，确保系统性与互连。",
+      "layers": [
+        {
+          "id": "foundational",
+          "name": "Foundational Principles",
+          "focus": "变易本体论、阴阳极性作为决策极性、卦作为情境-状态地图",
+          "artifacts": ["charter", "methodology", "era-cognition"]
+        },
+        {
+          "id": "mechanics",
+          "name": "Yixue & Bazi Mechanics",
+          "focus": "64卦决策原型映射、四柱作为易学个人化时位实例、十神关系运算符、五行系统动力",
+          "artifacts": ["yixue-core-mechanics-v2", "bazi-as-yixue-instantiation", "64-gua-decision-maps"]
+        },
+        {
+          "id": "judgment",
+          "name": "Judgment Primitives (World Yi Signature)",
+          "focus": "结构-时位-环境-动作-风险 五元法 + 六层引力模型 + 版本化教义",
+          "artifacts": ["judgment-five-elements-deep", "gravity-model-operational"]
+        },
+        {
+          "id": "application",
+          "name": "Application Frameworks",
+          "focus": "六域（事业、关系、健康、财富、迁移、教育/家族）可复用决策协议，每协议含 Yixue lens + Bazi check + 现代 overlay + 动作矩阵",
+          "artifacts": ["career-timing-protocol", "migration-environment-fit", "relationship-pacing-framework"]
+        },
+        {
+          "id": "cases",
+          "name": "Case Libraries with Decision Traces",
+          "focus": "带判断轨迹的案例：输入情境 → 触发原语/卦/柱 → 误判 vs 正判 → 动作 → 结果 + 报告验证点",
+          "artifacts": ["decision-trace-case-series", "annotated-burnout", "annotated-migration"]
+        },
+        {
+          "id": "overlays",
+          "name": "Temporal / Strategic / Diaspora Overlays",
+          "focus": "时代认知（工业→信息→AI）、 diaspora 变量（时区、真太阳时、跨文化资本）、版本演进",
+          "artifacts": ["ai-era-judgment", "diaspora-timing-variables", "doctrine-v2-diff"]
+        }
+      ]
+    },
+    "qualityRubric": {
+      "description": "v2 硬性质量门禁。生成后必须经自评/修订循环，overall >= 82 且无单项 <65 方可进入 publish 队列。用于 high-concurrency generator 的 critique pass。",
+      "minPublishOverall": 82,
+      "weights": {
+        "yixueFidelityDepth": 20,
+        "actionabilityFrameworks": 25,
+        "originalitySynthesis": 15,
+        "reportIntegration": 20,
+        "claritySignal": 10,
+        "seoGeoConversion": 5,
+        "interconnectCoherence": 5
+      },
+      "scoringGuide": {
+        "yixueFidelityDepth": "古典概念映射准确、非稀释性现代翻译、提供非平凡洞见（避免泛泛而谈易经）。",
+        "actionabilityFrameworks": "包含可立即复用的决策矩阵、if-then 协议、检查清单、'如何在自己四柱中验证' 步骤。",
+        "originalitySynthesis": "世界易独特翻译/合成，非网文重述或 pop-psych 拼贴。体现 v1 charter 的时代定位。",
+        "reportIntegration": "显式、非表面地桥接到 fortune-engine、4 pillars、timing windows、agentic-report 模块、升级路径。",
+        "claritySignal": "高信息密度、克制专业语气、结构清晰、无玄虚填充。",
+        "seoGeoConversion": "自然实体词覆盖真实搜索；首段可被生成式引擎提取答案；明确下一步个人分析动作。",
+        "interconnectCoherence": "正确引用其他 World Yi 层/篇目，meta 中声明 corePrimitives 与 crossRefs。"
+      }
+    },
+    "interconnectionGraph": {
+      "description": "所有 World Yi 内容必须在 meta 中声明互连图，实现双向可导航：内容→报告、报告→内容、内容↔内容。驱动 retention 与 upgrade。",
+      "requiredMetaFields": [
+        "worldYiLayer",
+        "coreJudgmentPrimitives",
+        "relatedReportThemes",
+        "relatedReportPillars",
+        "feedsAgentModules",
+        "crossRefs",
+        "decisionModel",
+        "qualityRubricScores"
+      ],
+      "coreJudgmentPrimitivesEnum": [
+        "structure-timing",
+        "gua-64-phase",
+        "bazi-instantiation",
+        "yin-yang-polarity",
+        "wuxing-dynamics",
+        "ten-gods-relational",
+        "environment-fit",
+        "action-risk-loop",
+        "era-translation",
+        "diaspora-variable"
+      ],
+      "exampleCrossRefs": {
+        "knowledge": ["world-yi-methodology", "bazi-system-topic-overview"],
+        "cases": ["world-yi-case-burnout-manager"],
+        "reportThemes": ["career", "timing", "relationship"]
+      }
+    }
+  },
+  "yixuePrioritizedBacklog": [
+    {
+      "priority": "P0",
+      "category": "doctrine-spine",
+      "key": "yixue-core-mechanics-v2",
+      "title": "易学核心机理 v2：64卦决策态映射与变易判断法",
+      "type": "knowledge",
+      "rationale": "把古典卦象从符号系统翻译成现代可操作的 64 种情境-决策原型。成为所有后续应用框架的引用根源。必须与四柱实例化深度互连。",
+      "targetLayer": "mechanics",
+      "minLengthChars": 3200,
+      "focusPrimitives": ["gua-64-phase", "structure-timing", "bazi-instantiation"]
+    },
+    {
+      "priority": "P0",
+      "category": "doctrine-spine",
+      "key": "bazi-as-yixue-instantiation",
+      "title": "八字作为易学个人化实例：四柱如何体现卦象时位与变易",
+      "type": "knowledge",
+      "rationale": "弥合易学与现有 report engine 的核心差距。解释 4 pillars 不是孤立命理，而是 Yixue 变易思想在个人时间结构上的具体化。直接提升报告可信度与升级意愿。",
+      "targetLayer": "mechanics",
+      "minLengthChars": 2800,
+      "focusPrimitives": ["bazi-instantiation", "structure-timing", "gua-64-phase"]
+    },
+    {
+      "priority": "P0",
+      "category": "judgment",
+      "key": "judgment-five-elements-deep-v2",
+      "title": "世界易判断五元法深度版：结构-时位-环境-动作-风险的操作化",
+      "type": "knowledge",
+      "rationale": "把 v1 框架从描述升级为带检查表、量表、反例的工程化判断协议。每条均可 trace 到具体卦/柱模式。",
+      "targetLayer": "judgment",
+      "minLengthChars": 2600,
+      "focusPrimitives": ["structure-timing", "action-risk-loop"]
+    },
+    {
+      "priority": "P1",
+      "category": "mechanics",
+      "key": "64-gua-modern-decision-prototypes",
+      "title": "六十四卦现代决策原型（高频情境簇）：8-12 个核心卦群的判断地图",
+      "type": "knowledge",
+      "rationale": "不写全 64 卦，而是选用户最常遇到的情境原型（事业卡点、关系节奏、迁移窗口等），给出卦象+变易线+现代案例+报告验证点。",
+      "targetLayer": "mechanics",
+      "minLengthChars": 2400
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "career-timing-protocol-v2",
+      "title": "职业时位重排协议：Yixue + Bazi + 现代系统动力学的可执行框架",
+      "type": "knowledge",
+      "rationale": "针对 diaspora 职业决策高频痛点（转工、行业切换、创业窗口），提供带具体 pillar/gua 模式的协议 + 动作矩阵。",
+      "targetLayer": "application",
+      "minLengthChars": 2200,
+      "complementsExistingTargets": ["hong-kong-career-window", "singapore-malaysia-career", "occupation-decision"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "migration-environment-fit-protocol",
+      "title": "迁移环境匹配决策模型：成本结构、时位窗口与文化资本翻译",
+      "type": "knowledge",
+      "rationale": "把海外华人最关心的迁移从'可行性'升级为'结构-环境-时机'三维判断。直接服务 global lane。",
+      "targetLayer": "application",
+      "minLengthChars": 2400,
+      "complementsExistingTargets": ["hong-kong-migration-city", "overseas-decision"]
+    },
+    {
+      "priority": "P1",
+      "category": "cases",
+      "key": "decision-trace-case-library-p1",
+      "title": "带判断轨迹的决策案例库（第一批 12 例）：从误判到正判的完整复盘",
+      "type": "case",
+      "rationale": "案例不再是故事，而是可复制的判断训练场。每例必须声明触发了哪些 primitives、对应卦/柱、如果用 report 会看到什么信号。",
+      "targetLayer": "cases",
+      "minLengthChars": 1800
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "career-industry-gua-switch-protocol",
+      "title": "行业切换与职业重启卦象决策协议：Yixue 64卦高频原型 + Bazi 用神调候 + 文化资本 overlay",
+      "type": "knowledge",
+      "rationale": "为 diaspora 职业卡点提供可执行的卦-柱-动作矩阵，含真太阳时校正对大运启动的影响。",
+      "targetLayer": "application",
+      "minLengthChars": 2400,
+      "focusPrimitives": ["gua-64-phase", "bazi-instantiation", "structure-timing", "environment-fit", "diaspora-variable"],
+      "complementsExistingTargets": ["hong-kong-career-window", "singapore-malaysia-career", "diaspora-second-career-rebuild", "occupation-decision"],
+      "feedsAgentModules": ["career_wealth", "strategy_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "relationship-family-order-protocol",
+      "title": "关系与家庭排序决策协议：阴阳极性时位对齐 + 互动成本检查表 + 报告验证路径",
+      "type": "knowledge",
+      "rationale": "把家庭/亲密关系中的顺序错位问题翻译成可诊断的五元判断 + Bazi 十神关系运算 + 现代跨文化成本模型。",
+      "targetLayer": "application",
+      "minLengthChars": 2300,
+      "focusPrimitives": ["yin-yang-polarity", "ten-gods-relational", "structure-timing", "action-risk-loop", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-relationship-timing", "diaspora-family-career-tradeoff", "relationship-decision", "parents-relation-decision"],
+      "feedsAgentModules": ["relationship_family", "strategy_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "health-recovery-yixue-bazi-protocol",
+      "title": "健康恢复与生活节奏协议：五行生克调候 + 流年体用 + 真太阳时作息 overlay",
+      "type": "knowledge",
+      "rationale": "为身心耗竭、慢性压力提供 Yixue-Bazi 联合恢复框架，含动作矩阵与 diaspora 时区适应检查清单。",
+      "targetLayer": "application",
+      "minLengthChars": 2200,
+      "focusPrimitives": ["wuxing-dynamics", "bazi-instantiation", "structure-timing", "environment-fit"],
+      "complementsExistingTargets": ["diaspora-midlife-reset-order"],
+      "feedsAgentModules": ["health_lifestyle", "temporal_spatial_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "wealth-cashflow-safety-protocol",
+      "title": "财富现金流与安全感顺序协议：财星结构 + 比劫印绶动态 + 时代环境 fit 检查表",
+      "type": "knowledge",
+      "rationale": "把海外高成本场景下的财富焦虑转化为结构-时机-动作协议，含买房/投资/债务的具体 if-then 矩阵与报告验证步骤。",
+      "targetLayer": "application",
+      "minLengthChars": 2350,
+      "focusPrimitives": ["structure-timing", "wuxing-dynamics", "ten-gods-relational", "environment-fit", "era-translation"],
+      "complementsExistingTargets": ["diaspora-money-security-order", "diaspora-house-buy-or-keep-cash", "diaspora-business-or-job-stability"],
+      "feedsAgentModules": ["career_wealth", "strategy_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "migration-diaspora-fit-protocol-v2",
+      "title": "迁移/重定位环境匹配 v2 协议：成本-时位-文化资本三维模型 + 真太阳时/时区校正 + 报告锚点",
+      "type": "knowledge",
+      "rationale": "升级迁移判断为完整 Application Framework，整合 Yixue 环境论、Bazi 时空、diaspora 身份变量，直接可注入 temporal_spatial agent。",
+      "targetLayer": "application",
+      "minLengthChars": 2600,
+      "focusPrimitives": ["environment-fit", "bazi-instantiation", "structure-timing", "diaspora-variable", "action-risk-loop"],
+      "complementsExistingTargets": ["hong-kong-migration-city", "diaspora-relocation-risk-window", "diaspora-aging-parents-relocation"],
+      "feedsAgentModules": ["temporal_spatial_advisor", "strategy_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "education-naming-pathway-protocol",
+      "title": "教育路径与命名决策协议：卦象启蒙/择时 + Bazi 学业用神 + 文化资本与时区教育节奏 overlay",
+      "type": "knowledge",
+      "rationale": "为子女教育、起名、留学/本地选择提供可复用协议，含 action matrix + '在自己/孩子报告中验证' 步骤。直接服务 global 家庭 lane。",
+      "targetLayer": "application",
+      "minLengthChars": 2250,
+      "focusPrimitives": ["gua-64-phase", "bazi-instantiation", "structure-timing", "environment-fit", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-children-schooling-timing", "diaspora-global-child-education"],
+      "feedsAgentModules": ["strategy_advisor", "relationship_family"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "family-duty-career-balance-protocol",
+      "title": "家庭责任与事业平衡协议：长辈照护/伴侣/子女 vs 职业时位的阴阳五元判断框架",
+      "type": "knowledge",
+      "rationale": "专门针对海外华人多重拉扯场景，Yixue 极性 + Bazi 十神耗扶 + 现代 diaspora 文化资本成本的检查清单与优先级矩阵。",
+      "targetLayer": "application",
+      "minLengthChars": 2300,
+      "focusPrimitives": ["yin-yang-polarity", "ten-gods-relational", "action-risk-loop", "environment-fit", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-family-career-tradeoff", "diaspora-aging-parents-relocation", "diaspora-should-you-pause-career-for-caregiving"],
+      "feedsAgentModules": ["relationship_family", "career_wealth", "strategy_advisor"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "investment-wealth-timing-protocol",
+      "title": "投资与财富增长时位协议：财运卦群 + 流年大运叠加 + 风险-承载力 action matrix",
+      "type": "knowledge",
+      "rationale": "为股市、创业、资产配置提供非 pop-finance 的 Yixue-Bazi 判断协议，含 diaspora 货币/税/身份 overlay 与报告验证。",
+      "targetLayer": "application",
+      "minLengthChars": 2200,
+      "focusPrimitives": ["gua-64-phase", "wuxing-dynamics", "structure-timing", "action-risk-loop"],
+      "complementsExistingTargets": ["diaspora-money-security-order", "diaspora-business-or-job-stability"],
+      "feedsAgentModules": ["career_wealth"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "health-prevention-lifestyle-protocol",
+      "title": "健康预防与日常习惯协议：五行调和 + 作息/饮食/运动的 Bazi 个性化 + 跨时区适应检查",
+      "type": "knowledge",
+      "rationale": "把健康从被动治疗转向主动框架，Yixue 象数 + 现代生活变量，附带可执行日常 checklist 与个人报告自查步骤。",
+      "targetLayer": "application",
+      "minLengthChars": 2150,
+      "focusPrimitives": ["wuxing-dynamics", "environment-fit", "bazi-instantiation"],
+      "complementsExistingTargets": ["diaspora-midlife-reset-order"],
+      "feedsAgentModules": ["health_lifestyle"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "naming-cultural-identity-protocol",
+      "title": "命名与文化身份协议：字义五行 + 卦象声韵 + 海外 diaspora 身份建构与教育路径的联合判断",
+      "type": "knowledge",
+      "rationale": "为起名提供深度框架，不止音义好听，而是结构-时机-环境-未来路径的完整协议 + 报告验证。",
+      "targetLayer": "application",
+      "minLengthChars": 2100,
+      "focusPrimitives": ["gua-64-phase", "wuxing-dynamics", "bazi-instantiation", "environment-fit", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-global-child-education"],
+      "feedsAgentModules": ["strategy_advisor", "relationship_family"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "relationship-crosscultural-pacing-protocol",
+      "title": "跨文化亲密关系推进协议：时位阴阳 + 文化资本差异成本 + Bazi 合婚/互动动态矩阵",
+      "type": "knowledge",
+      "rationale": "针对 bicultural marriage / 异地恋等高频 diaspora 痛点，提供可诊断、可执行的判断协议与风险 checklist。",
+      "targetLayer": "application",
+      "minLengthChars": 2250,
+      "focusPrimitives": ["yin-yang-polarity", "ten-gods-relational", "structure-timing", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-relationship-timing", "diaspora-bicultural-marriage"],
+      "feedsAgentModules": ["relationship_family"]
+    },
+    {
+      "priority": "P1",
+      "category": "application",
+      "key": "migration-parenting-education-protocol",
+      "title": "迁移中的子女教育与家庭重构协议：时区/文化资本/学业用神 + 父母自身命盘影响的联合框架",
+      "type": "knowledge",
+      "rationale": "把孩子教育决策与父母迁移/职业/健康放在同一五元判断系统，含具体 action matrix 和 verify in report 指引。",
+      "targetLayer": "application",
+      "minLengthChars": 2300,
+      "focusPrimitives": ["environment-fit", "structure-timing", "bazi-instantiation", "action-risk-loop", "diaspora-variable"],
+      "complementsExistingTargets": ["diaspora-children-schooling-timing", "diaspora-global-child-education", "diaspora-aging-parents-relocation"],
+      "feedsAgentModules": ["relationship_family", "temporal_spatial_advisor", "strategy_advisor"]
+    },
+    {
+      "priority": "P2",
+      "category": "application",
+      "key": "relationship-pacing-order-framework",
+      "title": "关系节奏与推进顺序框架：时位对齐、阴阳极性与互动成本",
+      "type": "knowledge",
+      "rationale": "把 '很多关系不是没感情而是顺序错了' 从观察升级为可诊断的相位模型。",
+      "targetLayer": "application",
+      "minLengthChars": 2100,
+      "complementsExistingTargets": ["relationship-decision", "parents-relation-decision"]
+    },
+    {
+      "priority": "P2",
+      "category": "overlays",
+      "key": "ai-era-judgment-language",
+      "title": "AI 时代的高维判断语言：世界易如何站在 AI 之上解决判断稀缺",
+      "type": "knowledge",
+      "rationale": "把 charter 的时代定位做成可操作的认知工具，解释 AI 能做什么、World Yi 必须由人完成的判断层。",
+      "targetLayer": "overlays"
+    }
+  ],
   "expansionRules": {
     "expandWhenMetricBelow": {
       "content-scale": 0.25,
       "non-seed-momentum": 0.65,
-      "publication-cadence": 0.75
+      "publication-cadence": 0.75,
+      "doctrine-spine-coverage": 0.4
     },
     "minQueuedTargetsPerLane": 3,
-    "targetMode": "evergreen-expansion"
+    "targetMode": "evergreen-expansion",
+    "v2ElevationMode": true
+  },
+  "meta": {
+    "lastArchitectureUpdate": "2026-05-31",
+    "applicationFrameworksP1CountTarget": 14,
+    "currentDoctrineVersion": "v2.0 Yixue spine - P0 doctrine delivered (64-gua decision maps + 变易判断法 + Bazi instantiation bridge to fortune-engine + 五元法 operational protocol)",
+    "highConcurrencyTarget": "50-100 parallel via CHAT_API (ttqq.inping.com auto) with backpressure & quality gates",
+    "doctrineSpineP0Delivered": 9,
+    "p0Keys": ["yixue-core-mechanics-v2", "bazi-as-yixue-instantiation", "judgment-five-elements-deep-v2", "bianyi-judgment-protocol", "four-pillars-gua-mapping", "daymaster-yongshen-yixue-operators", "64-gua-decision-clusters", "five-elements-checklist-trace", "five-elements-agent-instantiation"],
+    "crossRefPolicy": "All generated spine pieces include mutual + legacy crossRefs, exact feedsAgentModules (CORE_AGENT_KEYS), relatedReportPillars (day-master/useful-god etc) for live surfacing in prompt-injector and report-pipeline"
+  },
+  "reportEngineIntegration": {
+    "description": "Deep bidirectional bridges (Report Engine Integration Specialist v2.0 mandate). New v2 content (rich meta) feeds fortune report pipeline + agentic modules; reports surface live pieces (via schedulePublishedAt) and drive autoresearch ideas.",
+    "requiredForAllContent": ["worldYiLayer", "coreJudgmentPrimitives", "relatedReportPillars", "relatedReportThemes", "feedsAgentModules", "decisionModel", "qualityRubricScores"],
+    "reportPipelineHooks": [
+      "lib/content-store.ts:getWorldYiV2MatchesForReport + getLiveWorldYiV2Entries (schedulePublishedAt filter + meta scoring)",
+      "lib/report-pipeline.ts: mergeLLMResult injects worldYiV2References + enhancementNotes",
+      "lib/agentic-report/prompt-injector.ts: WORLD_YI_V2_DOCTRINE_PRIMITIVES module (auto-matched from engine pillars/yongShen)",
+      "lib/prompts/shared/agent-input.ts + agentic/*: readingOrder includes v2 primitives for all agents (core, career, temporal etc)",
+      "app/result/[id]/page.tsx + components/related-content.tsx + report-continue-exploration-nav.tsx: personalized doctrine links + v2 section in report surfaces"
+    ],
+    "feedbackLoop": [
+      "lib/report-feedback-loop.ts: worldYiContentIdeas auto-derived from correction/drift → feeds autoresearch",
+      "lib/world-yi-autoresearch.ts: accepts reportDerivedIdeas in build fn"
+    ],
+    "highConcurrencyGeneratorContract": "Outputs must populate requiredMetaFields so publication flow (schedulePublishedAt) automatically makes pieces first-class in user fortune reports and concurrent agents.",
+    "verification": "npm run system:health (content.metrics), npx jest tests/lib/report-pipeline.test.ts -t worldYi, npx jest tests/lib/agentic-report.test.ts"
   }
 }
