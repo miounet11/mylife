@@ -86,7 +86,7 @@ export default async function CommunityPage({ searchParams }: PageProps) {
   return (
     <div className="page-shell">
       <AnalyticsPageView
-        eventName="content_card_clicked"
+        eventName="knowledge_page_viewed"
         page="/community"
         meta={{ surfaceKey: 'community_index', category: category || null, industry: industry || null }}
       />
@@ -106,7 +106,7 @@ export default async function CommunityPage({ searchParams }: PageProps) {
               覆盖八字、紫微斗数、六爻、奇门遁甲、择日、风水堪舆、姓名学、面相手相、占星、塔罗。
               提问者隐去敏感信息，专业老师与官方答主解答。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">今日 {todayCount} 条新提问</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">总 {total} 条</span>
             </div>
@@ -115,10 +115,10 @@ export default async function CommunityPage({ searchParams }: PageProps) {
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
           {/* 中流：题目列表 */}
-          <div className="space-y-2">
+          <div className="order-2 space-y-2 lg:order-none">
             {/* 分类 chip 横滚 */}
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 按主题筛选
               </div>
               <div className="flex flex-wrap gap-1.5 px-3 py-2.5">
@@ -147,11 +147,17 @@ export default async function CommunityPage({ searchParams }: PageProps) {
                       <div className="flex items-center gap-2 mb-1.5">
                         <Avatar seed={author?.avatarSeed || ''} />
                         <div className="flex-1 min-w-0">
-                          <div className="text-[12px] font-bold text-[color:var(--fb-ink-1)] truncate">
+                          <div
+                            className="text-[12px] font-bold text-[color:var(--fb-ink-1)] truncate"
+                            title={`${author?.displayName || '匿名用户'}${author?.province || author?.city ? ` · ${author?.province || ''}${author?.city || ''}` : ''}`}
+                          >
                             {author?.displayName || '匿名用户'}
                             <span className="ml-1.5 font-normal text-[color:var(--fb-ink-3)]">· {author?.province || ''}{author?.city || ''}</span>
                           </div>
-                          <div className="text-[11px] text-[color:var(--fb-ink-3)] truncate">
+                          <div
+                            className="text-xs text-[color:var(--fb-ink-3)] truncate"
+                            title={`${author?.occupation || ''} · ${timeAgo(q.publishedAt)}`}
+                          >
                             {author?.occupation || ''} · {timeAgo(q.publishedAt)}
                           </div>
                         </div>
@@ -166,7 +172,7 @@ export default async function CommunityPage({ searchParams }: PageProps) {
                         </p>
                       </Link>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                         <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                           {getCategoryLabel(q.category)}
                         </span>
@@ -178,7 +184,7 @@ export default async function CommunityPage({ searchParams }: PageProps) {
                             #{t}
                           </span>
                         ))}
-                        <span className="ml-auto text-[11px] text-[color:var(--fb-ink-3)]">
+                        <span className="w-full flex justify-between text-xs text-[color:var(--fb-ink-3)] lg:w-auto lg:ml-auto lg:justify-end">
                           {q.answerCount} 答 · {q.viewCount} 阅读
                         </span>
                       </div>
@@ -198,9 +204,9 @@ export default async function CommunityPage({ searchParams }: PageProps) {
           </div>
 
           {/* 右栏 */}
-          <aside className="space-y-3">
+          <aside className="order-first space-y-3 lg:order-none">
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 按行业筛选
               </div>
               <div className="px-3 py-2 max-h-[360px] overflow-y-auto">
@@ -220,7 +226,7 @@ export default async function CommunityPage({ searchParams }: PageProps) {
             </div>
 
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 自己也想问？
               </div>
               <div className="px-3 py-3 text-[12px] text-[color:var(--fb-ink-2)] leading-[1.5]">
@@ -245,8 +251,8 @@ function CategoryChip({ href, active, label }: { href: string; active: boolean; 
       href={href}
       className={
         active
-          ? 'inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-2 py-0.5 text-[11px] font-bold text-white'
-          : 'inline-flex items-center rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#1d2129] hover:bg-[#ebedf0]'
+          ? 'inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-2 py-0.5 text-xs font-bold text-white'
+          : 'inline-flex items-center rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#1d2129] hover:bg-[#ebedf0]'
       }
     >
       {label}

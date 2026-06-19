@@ -307,11 +307,11 @@ export function getContentSchedulerPublishHoursRaw() {
 }
 
 export function getContentSchedulerDailyPublishLimit() {
-  return readNumber('CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT', 200, 1);
+  return readNumber('CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT', 6, 1);
 }
 
 export function getContentSchedulerMinPublishGapMinutes() {
-  return readNumber('CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES', 180, 30);
+  return readNumber('CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES', 240, 30);
 }
 
 /** After this many minutes without a publish, scheduler relaxes gates to avoid feed starvation. */

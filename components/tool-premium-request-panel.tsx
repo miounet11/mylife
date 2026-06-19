@@ -9,10 +9,20 @@ import { getRememberedClientAttribution } from '@/lib/client-attribution';
 import { getPremiumServiceLabel } from '@/lib/report-premium-services';
 import type { ToolDefinition } from '@/lib/tools';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel' literals.
 const _qaContract = ['intro-copy', 'intro-panel'] as const;
 void _qaContract;
+
+type ToolPremiumServiceSubmitResponse = {
+  success?: boolean;
+  error?: string;
+  data?: PremiumServiceRequestRecord;
+};
+
+const TOOL_PREMIUM_SERVICE_TIMEOUT_MS = 12_000;
+
 export default function ToolPremiumRequestPanel({
   tool,
   reportId,
@@ -58,7 +68,7 @@ export default function ToolPremiumRequestPanel({
     setMessage('');
 
     try {
-      const response = await fetch('/api/premium-services', {
+      const { response, data } = await fetchJsonWithTimeout<ToolPremiumServiceSubmitResponse>('/api/premium-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -71,15 +81,15 @@ export default function ToolPremiumRequestPanel({
           question,
           attribution: getRememberedClientAttribution(),
         }),
+        timeoutMs: TOOL_PREMIUM_SERVICE_TIMEOUT_MS,
+        timeoutReason: 'tool-premium-service-submit-timeout',
       });
-
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '提交失败，请稍后再试');
         return;
       }
 
-      const created = data.data as PremiumServiceRequestRecord | undefined;
+      const created = data.data;
       setMessage(created ? '专项需求已提交，系统会把当前工具和你的历史测算一起带入后续跟进。' : '专项需求已提交。');
       void trackClientEvent({
         eventName: 'result_cta_clicked',
@@ -93,7 +103,12 @@ export default function ToolPremiumRequestPanel({
           attributionTarget: getRememberedClientAttribution()?.target || null,
         },
       });
-    } catch {
+    } catch (requestError) {
+      if (isAbortLikeError(requestError)) {
+        setError('专项需求提交等待时间过长，请稍后重试');
+        return;
+      }
+
       setError('网络异常，请稍后重试');
     } finally {
       setSubmitting(false);
@@ -118,13 +133,13 @@ export default function ToolPremiumRequestPanel({
           </div>
 
           <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <Bot className="h-3 w-3" />
               下一步动作
             </div>
             <div className="mt-3 space-y-2">
               <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-6 text-[color:var(--ink-2)]">
-                <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+                <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">
                   CURRENT
                 </span>
                 <div className="mt-0.5">{tool.paidValueLine}</div>
@@ -134,7 +149,7 @@ export default function ToolPremiumRequestPanel({
                   key={item}
                   className="rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 text-xs leading-6 text-[color:var(--brand-strong)]"
                 >
-                  <span className="font-mono text-[10px] font-bold">DEEPER</span>
+                  <span className="font-mono text-xs font-bold">DEEPER</span>
                   <div className="mt-0.5">{item}</div>
                 </div>
               ))}
@@ -170,7 +185,7 @@ export default function ToolPremiumRequestPanel({
 
           <div className="mt-4 space-y-2">
             <div className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--signal-strong)]">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
+              <span className="font-mono text-xs font-bold uppercase tracking-wider">
                 推荐专项
               </span>
               <div className="mt-0.5 text-[color:var(--ink-1)] font-semibold">
@@ -178,7 +193,7 @@ export default function ToolPremiumRequestPanel({
               </div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3 text-xs leading-6 text-[color:var(--ink-2)]">
-              <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+              <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">
                 CURRENT
               </span>
               <div className="mt-0.5">{tool.paidValueLine}</div>
@@ -188,7 +203,7 @@ export default function ToolPremiumRequestPanel({
                 key={item}
                 className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3 text-xs leading-6 text-[color:var(--brand-strong)]"
               >
-                <span className="font-mono text-[10px] font-bold">UNLOCK</span>
+                <span className="font-mono text-xs font-bold">UNLOCK</span>
                 <div className="mt-0.5">{item}</div>
               </div>
             ))}
@@ -199,7 +214,7 @@ export default function ToolPremiumRequestPanel({
           onSubmit={handleSubmit}
           className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
         >
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
             <Sparkles className="h-3 w-3" />
             提交专项需求
           </div>

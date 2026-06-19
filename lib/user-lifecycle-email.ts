@@ -4,11 +4,12 @@ import {
   eventOperations,
   fortuneOperations,
   questionOperations,
+  systemLockOperations,
   toolSessionOperations,
   userLifecycleEmailRunOperations,
   userOperations,
 } from '@/lib/database';
-import { getAppBaseUrl } from '@/lib/env';
+import { getAppBaseUrl, getUserLifecycleEmailBatchSize } from '@/lib/env';
 import { deliverMailWithRetry, isEmailDeliveryConfigured, sendUserLifecycleEmail } from '@/lib/email';
 import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
 import { backfillEmailSubscriptionsFromUsers } from '@/lib/subscription-backfill';
@@ -19,6 +20,10 @@ import { buildSourceCtaStrategy } from '@/lib/source-context';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
 type LifecycleTrigger = 'cron' | 'manual';
+
+const DEFAULT_BATCH_SIZE = getUserLifecycleEmailBatchSize();
+const MAX_BATCH_SIZE = 50;
+const LOCK_TTL_MS = 1000 * 60 * 15;
 
 type LifecycleStageDefinition = {
   key: string;
@@ -815,7 +820,66 @@ export async function runUserLifecycleEmailCycle(params?: {
 }) {
   const trigger = params?.trigger || 'cron';
   const now = params?.now || new Date();
-  const batchSize = Math.max(1, params?.batchSize || 25);
+  const batchSize = normalizeBatchSize(params?.batchSize, DEFAULT_BATCH_SIZE);
+
+  const lockedResult = await withUserLifecycleEmailLock({
+    trigger,
+    now,
+  }, () => runUserLifecycleEmailCycleUnlocked({
+    trigger,
+    now,
+    batchSize,
+  }));
+
+  if (lockedResult) {
+    return lockedResult;
+  }
+
+  return {
+    success: true,
+    trigger,
+    sentCount: 0,
+    skippedCount: 0,
+    errorCount: 0,
+    reason: 'already_running',
+    details: [],
+  };
+}
+
+async function withUserLifecycleEmailLock<T>(
+  params: {
+    trigger: LifecycleTrigger;
+    now: Date;
+  },
+  run: () => Promise<T>
+): Promise<T | null> {
+  if (process.env.USER_LIFECYCLE_EMAIL_DISABLE_LOCK === '1') {
+    return run();
+  }
+
+  const owner = `user-lifecycle-email-${params.trigger}-${generateId()}`;
+  const acquired = systemLockOperations.acquire('user_lifecycle_email_cycle', owner, LOCK_TTL_MS, {
+    trigger: params.trigger,
+    localDate: formatLocalDateKey(params.now),
+  });
+
+  if (!acquired) {
+    return null;
+  }
+
+  try {
+    return await run();
+  } finally {
+    systemLockOperations.release('user_lifecycle_email_cycle', owner);
+  }
+}
+
+async function runUserLifecycleEmailCycleUnlocked(params: {
+  trigger: LifecycleTrigger;
+  batchSize: number;
+  now: Date;
+}) {
+  const { trigger, batchSize, now } = params;
 
   if (!isEmailDeliveryConfigured()) {
     return {
@@ -903,4 +967,10 @@ export async function runUserLifecycleEmailCycle(params?: {
     reason: sentCount > 0 ? 'sent' : 'no_deliveries',
     details,
   };
+}
+
+function normalizeBatchSize(value: number | undefined, fallback: number) {
+  const rawSize = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  const size = Math.floor(rawSize || fallback);
+  return Math.min(MAX_BATCH_SIZE, Math.max(1, size));
 }

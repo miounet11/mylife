@@ -57,14 +57,14 @@ export default function PublicSurfaceHero({
         {/* 右：highlights 网格（如有）— 决策台风 stat 块 */}
         {hasHighlights ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 md:p-5">
-            <div className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
               {actionLabel}
             </div>
             <div className={`grid gap-3 ${highlightsColumns}`}>
               {highlights.map((item, index) => (
                 <div key={index} className="border-l-2 border-[color:var(--hairline)] pl-3">
                   {item.title ? (
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                       {item.title}
                     </div>
                   ) : null}

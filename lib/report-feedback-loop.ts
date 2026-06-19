@@ -87,7 +87,7 @@ export function syncReportFeedbackLoop(reportId: string, options?: {
       correctionInsight,
       // World Yi v2 feedback bridge: high-drift / correction insights auto-generate content ideas
       // for autoresearch → new doctrine / application / case pieces (bidirectional integration)
-      worldYiContentIdeas: (correctionInsight.level === 'high' || validationInsights.driftCount > validationInsights.accurateCount)
+      worldYiContentIdeas: (correctionInsight.level === 'action' || validationInsights.driftCount > validationInsights.accurateCount)
         ? [
             `基于本报告 correction: 补充 ${report.pattern?.type || '当前格局'} 在 structure-timing 下的 ${report.fortune?.currentDaYun || '当前大运'} 具体判断案例`,
             `Yixue primitives 细化：${(report.advice?.yongShen || []).join(' ')} 与 judgment-five-elements 的交叉验证`,

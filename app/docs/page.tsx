@@ -104,7 +104,7 @@ export default function DocsPage() {
               key={playbook.title}
               className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
             >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                 {playbook.title}
               </div>
               <div className="mt-3 space-y-1">
@@ -148,10 +148,10 @@ export default function DocsPage() {
                       className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
                     >
                       <div className="flex items-center justify-between gap-2">
-                        <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+                        <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
                           {doc.priority}
                         </span>
-                        <span className="font-mono text-[10px] font-semibold text-[color:var(--ink-5)]">
+                        <span className="font-mono text-xs font-semibold text-[color:var(--ink-5)]">
                           {doc.readTime}
                         </span>
                       </div>
@@ -162,7 +162,7 @@ export default function DocsPage() {
                         {doc.tags.slice(0, 3).map((tag) => (
                           <span
                             key={tag}
-                            className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+                            className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
                           >
                             {tag}
                           </span>

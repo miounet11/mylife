@@ -37,7 +37,7 @@ export default function ToolMemoryPanel({
 
       <div className="mt-5 grid gap-3 lg:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             已继承内容
           </div>
           <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">{memory.summary}</p>
@@ -45,7 +45,7 @@ export default function ToolMemoryPanel({
             {memory.focusAreas.map((item) => (
               <span
                 key={item}
-                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-[10px] font-bold text-[color:var(--brand-strong)]"
+                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-xs font-bold text-[color:var(--brand-strong)]"
               >
                 {item}
               </span>
@@ -54,7 +54,7 @@ export default function ToolMemoryPanel({
         </div>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             <History className="h-3 w-3" />
             最近几次工具记录
           </div>
@@ -70,7 +70,7 @@ export default function ToolMemoryPanel({
                   </div>
                   <Link
                     href={`/tool-result/${item.id}`}
-                    className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-2.5 text-[10px] font-bold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+                    className="inline-flex h-7 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-2.5 text-xs font-bold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
                   >
                     查看结果
                     <ArrowRight className="h-3 w-3" />

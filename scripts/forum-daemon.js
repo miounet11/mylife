@@ -13,13 +13,14 @@ const fs = require('fs');
 // 用 tsx 子进程驱动 ts 实现，避免在 daemon 里直接 require ts
 const { spawnSync } = require('child_process');
 const Database = require('better-sqlite3');
+const { readPositiveIntegerEnv } = require('./ops-env.js');
 
 const ROOT = path.resolve(__dirname, '..');
-const TICK_MS = Number(process.env.FORUM_TICK_MS || 5 * 60 * 1000);
-const DAILY_TARGET = Number(process.env.FORUM_DAILY_TARGET || 300);
-const TITLE_POOL_LOW_WATER = Number(process.env.FORUM_TITLE_POOL_LOW || 50);
-const TITLE_POOL_REFILL = Number(process.env.FORUM_TITLE_POOL_REFILL || 220);
-const TITLE_POOL_MAX_PER_DAY = Number(process.env.FORUM_TITLE_POOL_MAX_PER_DAY || 2);
+const TICK_MS = readPositiveIntegerEnv('FORUM_TICK_MS', 5 * 60 * 1000, { min: 60_000, max: 24 * 60 * 60 * 1000 });
+const DAILY_TARGET = readPositiveIntegerEnv('FORUM_DAILY_TARGET', 300, { min: 1, max: 5000 });
+const TITLE_POOL_LOW_WATER = readPositiveIntegerEnv('FORUM_TITLE_POOL_LOW', 50, { min: 1, max: 5000 });
+const TITLE_POOL_REFILL = readPositiveIntegerEnv('FORUM_TITLE_POOL_REFILL', 220, { min: 1, max: 5000 });
+const TITLE_POOL_MAX_PER_DAY = readPositiveIntegerEnv('FORUM_TITLE_POOL_MAX_PER_DAY', 2, { min: 1, max: 100 });
 const DB_PATH = path.resolve(ROOT, 'data', 'lifekline.db');
 
 let llmRefillsToday = 0;

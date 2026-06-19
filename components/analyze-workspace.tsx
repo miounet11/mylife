@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Calendar, ChevronRight, Clock3, FileText, Layers3, UserRound } from 'lucide-react';
 import FortuneForm from '@/components/fortune-form';
+import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
@@ -38,6 +39,8 @@ type HistoryResponse = {
   fortunes?: FortuneItem[];
   error?: string;
 };
+
+const ANALYZE_HISTORY_TIMEOUT_MS = 12_000;
 
 function truncate(text: string, max = 54) {
   if (!text) return '已完成综合判断，点击查看详情。';
@@ -87,10 +90,20 @@ export default function AnalyzeWorkspace({
   const [selectedName, setSelectedName] = useState('全部');
 
   useEffect(() => {
+    let cancelled = false;
+    const controllerRef = { current: null as AbortController | null };
+
     const load = async () => {
       try {
-        const response = await fetch('/api/history', { cache: 'no-store' });
-        const data: HistoryResponse = await response.json();
+        const { response, data } = await fetchJsonWithTimeout<HistoryResponse>('/api/history', {
+          cache: 'no-store',
+          timeoutMs: ANALYZE_HISTORY_TIMEOUT_MS,
+          timeoutReason: 'analyze-history-timeout',
+          controllerRef,
+        });
+        if (cancelled) {
+          return;
+        }
 
         if (!response.ok || !data.success) {
           setError(data.error || '加载判断列表失败');
@@ -99,14 +112,23 @@ export default function AnalyzeWorkspace({
 
         setUser(data.user || null);
         setFortunes(data.fortunes || []);
-      } catch {
-        setError('网络异常，无法加载判断列表');
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(isAbortLikeError(loadError) ? '加载判断列表等待时间过长，请稍后重试' : '网络异常，无法加载判断列表');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    load();
+    void load();
+
+    return () => {
+      cancelled = true;
+      abortControllerRef(controllerRef, 'analyze-workspace-unmounted');
+    };
   }, []);
 
   const nameGroups = useMemo(() => {
@@ -156,13 +178,13 @@ export default function AnalyzeWorkspace({
                   新建判断在左，历史记录在这里回看。
                 </div>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex gap-1.5 overflow-x-auto scrollbar-none flex-nowrap md:flex-wrap">
                 {nameGroups.slice(0, 8).map((name) => (
                   <button
                     key={name}
                     type="button"
                     onClick={() => setSelectedName(name)}
-                    className={`inline-flex h-7 items-center rounded-[var(--radius-sm)] border px-2.5 text-xs font-semibold transition ${
+                    className={`inline-flex h-7 shrink-0 items-center rounded-[var(--radius-sm)] border px-2.5 text-xs font-semibold transition ${
                       selectedName === name
                         ? 'border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
                         : 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-4)] hover:border-[color:var(--brand)]'
@@ -196,22 +218,22 @@ export default function AnalyzeWorkspace({
                 <Link
                   key={item.id}
                   href={`/result/${item.id}`}
-                  className="block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] md:px-5"
+                  className="fb-card block px-4 py-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline md:px-5"
                 >
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-[10px] font-bold text-[color:var(--brand-strong)]">
+                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-xs font-bold text-[color:var(--brand-strong)]">
                           <UserRound className="h-2.5 w-2.5" />
                           {item.name || '未命名对象'}
                         </span>
-                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-[10px] font-bold text-[color:var(--ink-4)]">
+                        <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-xs font-bold text-[color:var(--ink-4)]">
                           <Layers3 className="h-2.5 w-2.5" />
                           {item.pattern?.type || '综合判断'}
                         </span>
                       </div>
 
-                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] tabular-nums text-[color:var(--ink-5)]">
+                      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 font-mono text-xs tabular-nums text-[color:var(--ink-5)]">
                         <span className="inline-flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
                           {item.birth_date || '—'}
@@ -232,7 +254,7 @@ export default function AnalyzeWorkspace({
                     </div>
 
                     <div className="flex shrink-0 items-center gap-2">
-                      <div className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-[10px] font-bold text-[color:var(--signal-strong)]">
+                      <div className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-xs font-bold text-[color:var(--signal-strong)]">
                         {mapStrengthLabel(item.pattern?.strength)}
                       </div>
                       <ChevronRight className="h-4 w-4 text-[color:var(--ink-5)]" />
@@ -250,7 +272,7 @@ export default function AnalyzeWorkspace({
           )}
 
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               辅助入口
             </div>
             <p className="mt-1.5 text-xs leading-5 text-[color:var(--ink-4)]">

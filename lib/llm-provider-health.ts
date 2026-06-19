@@ -43,24 +43,44 @@ function formatRate(value: number) {
   return `${Math.round(value * 100)}%`;
 }
 
-function getIntEnv(name: string, fallback: number) {
-  const value = Number(process.env[name] || '');
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+export function readBoundedPositiveIntEnv(
+  name: string,
+  fallback: number,
+  options: { min?: number; max?: number } = {},
+) {
+  const min = typeof options.min === 'number' && Number.isInteger(options.min) ? options.min : 1;
+  const max = typeof options.max === 'number' && Number.isInteger(options.max) ? options.max : Number.MAX_SAFE_INTEGER;
+  const raw = `${process.env[name] || ''}`.trim();
+  const value = raw ? Number(raw) : fallback;
+
+  return Number.isInteger(value) && value >= min && value <= max ? value : fallback;
 }
 
-function getFloatEnv(name: string, fallback: number) {
-  const value = Number(process.env[name] || '');
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+export function readBoundedUnitRateEnv(
+  name: string,
+  fallback: number,
+  options: { min?: number; max?: number } = {},
+) {
+  const min = typeof options.min === 'number' ? options.min : 0.01;
+  const max = typeof options.max === 'number' ? options.max : 1;
+  const raw = `${process.env[name] || ''}`.trim();
+  const value = raw ? Number(raw) : fallback;
+
+  return Number.isFinite(value) && value >= min && value <= max ? value : fallback;
 }
 
-const HEALTH_WINDOW_MINUTES = getIntEnv('LLM_HEALTH_WINDOW_MINUTES', 30);
-const OPEN_FAILURE_RATE = getFloatEnv('LLM_CIRCUIT_OPEN_FAILURE_RATE', 0.7);
-const DEGRADE_FAILURE_RATE = getFloatEnv('LLM_CIRCUIT_DEGRADE_FAILURE_RATE', 0.45);
-const OPEN_MIN_ATTEMPTS = getIntEnv('LLM_CIRCUIT_OPEN_MIN_ATTEMPTS', 6);
-const OPEN_CONSECUTIVE_FAILURES = getIntEnv('LLM_CIRCUIT_OPEN_CONSECUTIVE_FAILURES', 4);
-const RECOVERY_SUCCESS_STREAK = getIntEnv('LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK', 2);
-const OPEN_COOLDOWN_MINUTES = getIntEnv('LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES', 8);
-const IMMEDIATE_OPEN_CONSECUTIVE_FAILURES = getIntEnv('LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES', 2);
+const HEALTH_WINDOW_MINUTES = readBoundedPositiveIntEnv('LLM_HEALTH_WINDOW_MINUTES', 30, { min: 1, max: 1440 });
+const OPEN_FAILURE_RATE = readBoundedUnitRateEnv('LLM_CIRCUIT_OPEN_FAILURE_RATE', 0.7, { min: 0.05, max: 1 });
+const DEGRADE_FAILURE_RATE = readBoundedUnitRateEnv('LLM_CIRCUIT_DEGRADE_FAILURE_RATE', 0.45, { min: 0.05, max: 1 });
+const OPEN_MIN_ATTEMPTS = readBoundedPositiveIntEnv('LLM_CIRCUIT_OPEN_MIN_ATTEMPTS', 6, { min: 1, max: 100 });
+const OPEN_CONSECUTIVE_FAILURES = readBoundedPositiveIntEnv('LLM_CIRCUIT_OPEN_CONSECUTIVE_FAILURES', 4, { min: 1, max: 100 });
+const RECOVERY_SUCCESS_STREAK = readBoundedPositiveIntEnv('LLM_CIRCUIT_RECOVERY_SUCCESS_STREAK', 2, { min: 1, max: 20 });
+const OPEN_COOLDOWN_MINUTES = readBoundedPositiveIntEnv('LLM_CIRCUIT_OPEN_COOLDOWN_MINUTES', 8, { min: 1, max: 1440 });
+const IMMEDIATE_OPEN_CONSECUTIVE_FAILURES = readBoundedPositiveIntEnv(
+  'LLM_CIRCUIT_IMMEDIATE_OPEN_CONSECUTIVE_FAILURES',
+  2,
+  { min: 1, max: 20 },
+);
 
 function toIso(date: Date) {
   return date.toISOString();

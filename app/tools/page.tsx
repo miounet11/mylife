@@ -181,7 +181,7 @@ export default function ToolsPage() {
                     toolSlug={tool.slug}
                     category={tool.category}
                     page="/tools"
-                    className="group block rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-px hover:shadow-[var(--shadow-pop)]"
+                    className="group p-5 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                   >
                     <Eyebrow tone="signal" className="mb-3">
                       {growthProfile?.stageLabel || tool.category}
@@ -226,15 +226,15 @@ export default function ToolsPage() {
             </div>
           </Inline>
 
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {categories.map((category) => (
               <Link
                 key={category.key}
                 href={`/tools/category/${category.key}`}
-                className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:shadow-[var(--shadow-card)]"
+                className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
               >
                 <Inline justify="between" align="center">
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <span className="font-mono text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {category.count} TOOLS
                   </span>
                   <ArrowRight className="h-4 w-4 text-[color:var(--ink-5)] transition-all group-hover:translate-x-0.5 group-hover:text-[color:var(--brand-strong)]" />
@@ -245,7 +245,7 @@ export default function ToolsPage() {
                 <p className="mt-2 line-clamp-2 text-xs leading-5 text-[color:var(--ink-4)]">
                   {toolProblemLineGuides[category.key]?.prompt || category.description}
                 </p>
-                <div className="mt-3 rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] px-2.5 py-1.5 text-[11px] leading-4 text-[color:var(--brand-strong)]">
+                <div className="mt-3 rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] px-2.5 py-1.5 text-xs leading-4 text-[color:var(--brand-strong)]">
                   {toolProblemLineGuides[category.key]?.firstStep || category.headline}
                 </div>
               </Link>
@@ -302,7 +302,7 @@ export default function ToolsPage() {
                 href={mode.href}
                 className="group block rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
               >
-                <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                   {mode.action}
                 </div>
                 <h3 className="mt-2 text-sm font-bold text-[color:var(--ink-1)]">{mode.title}</h3>

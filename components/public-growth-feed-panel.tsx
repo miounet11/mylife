@@ -60,26 +60,26 @@ export default function PublicGrowthFeedPanel({
   }
 
   return (
-    <section className="mt-10 rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+    <section className="fb-card mt-10 overflow-hidden">
+      <div className="flex flex-col gap-3 border-b border-[color:var(--fb-border)] bg-white px-4 py-3 md:flex-row md:items-end md:justify-between">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--signal-strong)]">
-            <FileQuestion className="h-3.5 w-3.5" />
+          <div className="fb-section-title inline-flex items-center gap-1.5">
+            <FileQuestion className="h-3.5 w-3.5 text-[color:var(--fb-blue)]" />
             公开内容流
           </div>
-          <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)]">{title}</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-4)]">{description}</p>
+          <h2 className="mt-1.5 text-[18px] font-bold leading-tight text-[color:var(--fb-ink-1)]">{title}</h2>
+          <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.5] text-[color:var(--fb-ink-2)]">{description}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Link
             href="/reports"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+            className="fb-btn inline-flex items-center gap-1.5 px-3"
           >
             查看全部公开内容
           </Link>
           <Link
             href="/analyze"
-            className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+            className="fb-btn fb-btn-primary inline-flex items-center gap-1.5 px-4"
           >
             生成我的判断
             <ArrowRight className="h-4 w-4" />
@@ -87,28 +87,28 @@ export default function PublicGrowthFeedPanel({
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
         {reports.length > 0 ? (
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-[color:var(--ink-1)]">
-              <Layers3 className="h-4 w-4 text-[color:var(--brand-strong)]" />
+          <div className="border-b border-[color:var(--fb-border)] p-3 lg:border-b-0 lg:border-r">
+            <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
+              <Layers3 className="h-4 w-4 text-[color:var(--fb-blue)]" />
               相关匿名报告
             </div>
-            <div className="grid gap-3">
+            <div className="divide-y divide-[color:var(--fb-border)] border border-[color:var(--fb-border)] bg-white">
               {reports.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:border-[color:var(--brand)]"
+                  className="group block px-3 py-2.5 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                 >
-                  <div className="flex flex-wrap gap-1.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
-                    <span className="rounded-full bg-[color:var(--paper)] px-2 py-0.5">{item.patternType}</span>
-                    <span className="rounded-full bg-[color:var(--paper)] px-2 py-0.5">{item.dayMaster}</span>
+                  <div className="flex flex-wrap gap-1.5 text-xs font-semibold text-[color:var(--fb-ink-2)]">
+                    <span className="fb-tag-static">{item.patternType}</span>
+                    <span className="fb-tag-static">{item.dayMaster}</span>
                   </div>
-                  <h3 className="mt-2 line-clamp-2 text-sm font-black leading-6 text-[color:var(--ink-1)] group-hover:text-[color:var(--brand-strong)]">
+                  <h3 className="mt-1.5 line-clamp-2 text-[13px] font-bold leading-[1.45] text-[color:var(--fb-ink-1)] group-hover:text-[color:var(--fb-blue-link)]">
                     {item.title}
                   </h3>
-                  <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[color:var(--ink-4)]">{item.description}</p>
+                  <p className="mt-1 line-clamp-2 text-[12px] leading-[1.5] text-[color:var(--fb-ink-2)]">{item.description}</p>
                 </Link>
               ))}
             </div>
@@ -116,27 +116,27 @@ export default function PublicGrowthFeedPanel({
         ) : null}
 
         {questions.length > 0 ? (
-          <div>
-            <div className="mb-3 flex items-center gap-2 text-sm font-black text-[color:var(--ink-1)]">
-              <FileQuestion className="h-4 w-4 text-[color:var(--brand-strong)]" />
+          <div className="p-3">
+            <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
+              <FileQuestion className="h-4 w-4 text-[color:var(--fb-blue)]" />
               相关公开追问
             </div>
-            <div className="grid gap-3">
+            <div className="divide-y divide-[color:var(--fb-border)] border border-[color:var(--fb-border)] bg-white">
               {questions.map((item) => (
                 <Link
                   key={item.id}
                   href={item.href}
-                  className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:border-[color:var(--brand)]"
+                  className="group block px-3 py-2.5 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                 >
-                  <div className="inline-flex rounded-full bg-[color:var(--paper)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                  <div className="fb-tag-static inline-flex">
                     {item.contextLabel}
                   </div>
-                  <h3 className="mt-2 line-clamp-2 text-sm font-black leading-6 text-[color:var(--ink-1)] group-hover:text-[color:var(--brand-strong)]">
+                  <h3 className="mt-1.5 line-clamp-2 text-[13px] font-bold leading-[1.45] text-[color:var(--fb-ink-1)] group-hover:text-[color:var(--fb-blue-link)]">
                     {item.question}
                   </h3>
-                  <p className="mt-1.5 line-clamp-2 text-xs leading-5 text-[color:var(--ink-4)]">{item.answerSummary}</p>
+                  <p className="mt-1 line-clamp-2 text-[12px] leading-[1.5] text-[color:var(--fb-ink-2)]">{item.answerSummary}</p>
                   {item.reportHref ? (
-                    <div className="mt-2 text-[11px] font-semibold text-[color:var(--brand-strong)]">有关联匿名报告 →</div>
+                    <div className="mt-1.5 text-xs font-semibold text-[color:var(--fb-blue-link)]">有关联匿名报告 →</div>
                   ) : null}
                 </Link>
               ))}

@@ -33,10 +33,10 @@ export default function DegradeNotice({
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[color:var(--signal-strong)]">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--signal-strong)]">
               基础版报告
             </span>
-            <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]">
+            <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]">
               内容补全中
             </span>
           </div>

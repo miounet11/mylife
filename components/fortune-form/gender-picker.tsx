@@ -36,7 +36,7 @@ export default function GenderPicker({ value, onChange }: GenderPickerProps) {
 
   return (
     <div className="rounded-md border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 md:py-3">
-      <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">性别</div>
+      <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">性别</div>
       <div
         ref={groupRef}
         role="radiogroup"

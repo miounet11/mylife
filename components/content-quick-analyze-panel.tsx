@@ -39,7 +39,7 @@ export default function ContentQuickAnalyzePanel({
   contentMeta = {},
 }: ContentQuickAnalyzePanelProps) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || undefined;
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [birthDate, setBirthDate] = useState<BirthDateValue>({ year: null, month: null, day: null });
   const [birthTime, setBirthTime] = useState<BirthTimeValue>({ hour: null, minute: null, second: null });
@@ -51,13 +51,13 @@ export default function ContentQuickAnalyzePanel({
   const canSubmit = dateValid && timeValid && hasCompleteDate && hasCompleteTime;
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-5 md:p-6">
+    <div className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 shadow-[var(--shadow-card)] md:p-5">
       <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
         <Sparkles className="h-3 w-3" />
         {sourceLabel}
       </div>
 
-      <h3 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
+      <h3 className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
         {title}
       </h3>
 
@@ -85,7 +85,7 @@ export default function ContentQuickAnalyzePanel({
         ))}
       </div>
 
-      <div className="mt-4 grid gap-3 xl:grid-cols-2">
+      <div className="mt-4 grid gap-3">
         <BirthDateInput
           value={birthDate}
           onChange={setBirthDate}

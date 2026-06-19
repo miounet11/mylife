@@ -23,7 +23,7 @@ const adminNavItems: AdminNavItem[] = [
 export function AdminHeader() {
   const pathname = usePathname();
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(`${href}/`);
+    pathname === href || (pathname || '').startsWith(`${href}/`);
 
   return (
     <header className="sticky top-0 z-50 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/95 backdrop-blur-xl">

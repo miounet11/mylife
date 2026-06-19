@@ -132,7 +132,7 @@ export default function PublicReportInteractionPanel({
   ];
 
   return (
-    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+    <section className="fb-card p-5 md:p-6">
       <div className="grid gap-5 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -151,7 +151,7 @@ export default function PublicReportInteractionPanel({
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+              className="fb-btn fb-btn-primary inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[color:var(--fb-blue-strong)]"
             >
               <Share2 className="h-4 w-4" />
               分享公开页
@@ -159,7 +159,7 @@ export default function PublicReportInteractionPanel({
             <button
               type="button"
               onClick={handleCopy}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+              className="fb-btn inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition-colors hover:border-[color:var(--fb-blue)]"
             >
               <Copy className="h-4 w-4" />
               复制链接
@@ -167,7 +167,7 @@ export default function PublicReportInteractionPanel({
           </div>
 
           {message ? (
-            <div className="mt-3 inline-flex h-7 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
+            <div className="mt-3 inline-flex h-7 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2.5 text-xs font-bold text-[color:var(--brand-strong)]">
               {message}
             </div>
           ) : null}
@@ -181,10 +181,10 @@ export default function PublicReportInteractionPanel({
               <Link
                 key={action.key}
                 href={action.href}
-                className={`group block rounded-[var(--radius)] border p-4 transition hover:-translate-y-px ${
+                className={`group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline ${
                   isPrimary
-                    ? 'border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] hover:border-[color:var(--brand)]'
-                    : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]'
+                    ? 'border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)]'
+                    : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3">

@@ -1,9 +1,11 @@
-const intervalMs = Math.max(60_000, Number(process.env.CONTENT_SCHEDULER_INTERVAL_MS || 1000 * 60 * 20));
+const { readPositiveIntegerEnv } = require('./ops-env.js');
+
+const intervalMs = readPositiveIntegerEnv('CONTENT_SCHEDULER_INTERVAL_MS', 1000 * 60 * 20, { min: 60_000, max: 86_400_000 });
 const runUrl = process.env.CONTENT_SCHEDULER_RUN_URL || 'http://127.0.0.1:8080/api/admin/content/scheduler/cron';
 const token = process.env.CONTENT_SCHEDULER_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || '';
-const requestTimeoutMs = Math.max(10_000, Number(process.env.CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS || 1000 * 60 * 15));
-const startupDelayMs = Math.max(5_000, Number(process.env.CONTENT_SCHEDULER_STARTUP_DELAY_MS || 20_000));
-const retryDelayMs = Math.max(15_000, Number(process.env.CONTENT_SCHEDULER_RETRY_DELAY_MS || Math.min(intervalMs, 60_000)));
+const requestTimeoutMs = readPositiveIntegerEnv('CONTENT_SCHEDULER_REQUEST_TIMEOUT_MS', 1000 * 60 * 15, { min: 10_000, max: 1_800_000 });
+const startupDelayMs = readPositiveIntegerEnv('CONTENT_SCHEDULER_STARTUP_DELAY_MS', 20_000, { min: 5_000, max: 300_000 });
+const retryDelayMs = readPositiveIntegerEnv('CONTENT_SCHEDULER_RETRY_DELAY_MS', Math.min(intervalMs, 60_000), { min: 15_000, max: 900_000 });
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

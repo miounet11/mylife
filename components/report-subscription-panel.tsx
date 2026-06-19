@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { ArrowRight, BellRing, Mail, RefreshCcw, Sparkles, Stars } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { buildChatHref } from '@/lib/chat-entry';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-primary', 'action-secondary'] as const;
@@ -14,6 +15,13 @@ type MonthlyHighlight = {
   theme: string;
   status: 'push' | 'steady' | 'caution';
 };
+
+type NewsletterSubscribeResponse = {
+  success?: boolean;
+  error?: string;
+};
+
+const REPORT_SUBSCRIPTION_TIMEOUT_MS = 12_000;
 
 export default function ReportSubscriptionPanel({
   reportId,
@@ -69,7 +77,7 @@ export default function ReportSubscriptionPanel({
         },
       });
 
-      const response = await fetch('/api/newsletter', {
+      const { response, data } = await fetchJsonWithTimeout<NewsletterSubscribeResponse>('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -77,8 +85,9 @@ export default function ReportSubscriptionPanel({
           source: 'result_report',
           tags: ['monthly_report', 'report_upgrade', 'knowledge_updates'],
         }),
+        timeoutMs: REPORT_SUBSCRIPTION_TIMEOUT_MS,
+        timeoutReason: 'report-subscription-submit-timeout',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '订阅失败，请稍后重试');
         return;
@@ -89,7 +98,12 @@ export default function ReportSubscriptionPanel({
       try {
         localStorage.setItem('newsletter-subscribed', 'done');
       } catch {}
-    } catch {
+    } catch (requestError) {
+      if (isAbortLikeError(requestError)) {
+        setError('订阅等待时间过长，请稍后重试');
+        return;
+      }
+
       setError('网络异常，请稍后重试');
     } finally {
       setLoading(false);
@@ -112,14 +126,14 @@ export default function ReportSubscriptionPanel({
           </p>
 
           <div className="mt-4 flex flex-wrap gap-1.5">
-            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
               交付 {deliveryTierLabel}
             </span>
-            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 font-mono text-[10px] font-bold tabular-nums text-[color:var(--brand-strong)]">
+            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 font-mono text-xs font-bold tabular-nums text-[color:var(--brand-strong)]">
               可信度 {qualityScore || '--'}
             </span>
             <span
-              className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-[10px] font-bold uppercase tracking-wider ${
+              className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-xs font-bold uppercase tracking-wider ${
  targetAchieved
                   ? 'border-[color:var(--data-up)] bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]'
                   : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
@@ -131,10 +145,10 @@ export default function ReportSubscriptionPanel({
 
           {monthlyHighlights.length > 0 ? (
             <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                 接下来值得关注
               </div>
-              <div className="mt-2 grid gap-2 sm:grid-cols-3">
+              <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
                 {monthlyHighlights.map((item) => (
                   <div
                     key={item.label}
@@ -143,7 +157,7 @@ export default function ReportSubscriptionPanel({
                     <div className="font-mono text-xs font-bold tabular-nums text-[color:var(--brand-strong)]">
                       {item.label}
                     </div>
-                    <div className="mt-0.5 text-[10px] leading-4 text-[color:var(--brand-strong)]">
+                    <div className="mt-0.5 text-xs leading-4 text-[color:var(--brand-strong)]">
                       {item.theme}
                     </div>
                   </div>
@@ -171,7 +185,7 @@ export default function ReportSubscriptionPanel({
         </div>
 
         <div className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-4">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
             立即建立长期关系
           </div>
           <div className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">

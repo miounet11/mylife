@@ -11,6 +11,10 @@ jest.mock('@/lib/database', () => ({
   questionOperations: {
     getByUserId: jest.fn(),
   },
+  systemLockOperations: {
+    acquire: jest.fn(() => true),
+    release: jest.fn(),
+  },
   toolSessionOperations: {
     listByUser: jest.fn(),
   },
@@ -46,6 +50,7 @@ jest.mock('@/lib/subscription-backfill', () => ({
 
 jest.mock('@/lib/env', () => ({
   getAppBaseUrl: jest.fn(() => 'https://www.life-kline.com'),
+  getUserLifecycleEmailBatchSize: jest.fn(() => 25),
 }));
 
 import {
@@ -53,6 +58,7 @@ import {
   eventOperations,
   fortuneOperations,
   questionOperations,
+  systemLockOperations,
   toolSessionOperations,
   userLifecycleEmailRunOperations,
   userOperations,
@@ -64,6 +70,7 @@ const mockedAnalyticsOperations = analyticsOperations as jest.Mocked<typeof anal
 const mockedEventOperations = eventOperations as jest.Mocked<typeof eventOperations>;
 const mockedFortuneOperations = fortuneOperations as jest.Mocked<typeof fortuneOperations>;
 const mockedQuestionOperations = questionOperations as jest.Mocked<typeof questionOperations>;
+const mockedSystemLockOperations = systemLockOperations as jest.Mocked<typeof systemLockOperations>;
 const mockedToolSessionOperations = toolSessionOperations as jest.Mocked<typeof toolSessionOperations>;
 const mockedLifecycleRuns = userLifecycleEmailRunOperations as jest.Mocked<typeof userLifecycleEmailRunOperations>;
 const mockedUserOperations = userOperations as jest.Mocked<typeof userOperations>;
@@ -101,6 +108,8 @@ describe('user lifecycle email cycle', () => {
     mockedQuestionOperations.getByUserId.mockReturnValue([]);
     mockedToolSessionOperations.listByUser.mockReturnValue([]);
     mockedLifecycleRuns.getByStageAndEmail.mockReturnValue(null);
+    mockedSystemLockOperations.acquire.mockReturnValue(true);
+    mockedSystemLockOperations.release.mockReturnValue({ changes: 1 } as any);
     mockedDeliverMailWithRetry.mockResolvedValue({ success: true, message: 'ok' } as any);
   });
 
@@ -405,5 +414,29 @@ describe('user lifecycle email cycle', () => {
         recentToolToRunRate: 0,
       }),
     }));
+  });
+
+  it('skips overlapping cycles when the lifecycle lock is already held', async () => {
+    mockedSystemLockOperations.acquire.mockReturnValue(false);
+    mockedUserOperations.listWithEmail.mockReturnValue([
+      {
+        id: 'user_locked',
+        email: 'locked@example.com',
+        name: '并发用户',
+        createdAt: '2026-04-18T00:00:00.000Z',
+        emailVerified: 1,
+      },
+    ] as any);
+
+    const result = await runUserLifecycleEmailCycle({
+      trigger: 'cron',
+      now: new Date('2026-04-20T00:00:00.000Z'),
+    });
+
+    expect(result.reason).toBe('already_running');
+    expect(result.sentCount).toBe(0);
+    expect(mockedUserOperations.listWithEmail).not.toHaveBeenCalled();
+    expect(mockedDeliverMailWithRetry).not.toHaveBeenCalled();
+    expect(mockedSystemLockOperations.release).not.toHaveBeenCalled();
   });
 });

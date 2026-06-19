@@ -102,7 +102,7 @@
 **Goal**: Safely run 50-100 concurrent World Yi v2 content threads using dedicated `life-kline-content-worker-*` processes + the CHAT_API (ttqq.inping.com/v1) while keeping all user web instances (3000-3003) stable (<200ms p95, no maxSize explosions).
 
 ### Architecture
-- **Queue**: DB-backed via `content_generation_jobs` table (special `meta.isWorldYiV2HighConc=true` + `worldYiV2`). 
+- **Queue**: DB-backed via `content_generation_jobs` table (special `meta.isWorldYiV2HighConc=true` + `worldYiV2`).
   - Submit from any agent/script: `enqueueWorldYiV2Task({tasks: [{topic, lane}], lane})` (see lib/content-generation-jobs.ts).
   - Workers claim via `claimNextWorldYiV2Task()` (atomic, stale-lock recovery, misroute protection).
   - Alternative (future extreme scale): file queue under `data/runtime/world-yi-v2-queue/`.

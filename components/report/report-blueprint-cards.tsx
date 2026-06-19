@@ -57,13 +57,13 @@ export default function ReportBlueprintCards({ section }: ReportBlueprintCardsPr
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
       aria-label="核心结构卡片"
     >
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         结构蓝图
       </div>
       <div className="mt-3 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-5">
         {cards.map((card) => (
           <article key={card.key} className={`rounded-[var(--radius)] border px-3 py-3 ${card.tone}`}>
-            <div className={`font-mono text-[10px] font-bold uppercase tracking-wider ${card.labelColor}`}>
+            <div className={`font-mono text-xs font-bold uppercase tracking-wider ${card.labelColor}`}>
               {card.label}
             </div>
             <div className="mt-1.5 text-xs font-bold leading-5 text-[color:var(--ink-1)]">
@@ -78,7 +78,7 @@ export default function ReportBlueprintCards({ section }: ReportBlueprintCardsPr
           {compactFacts.map((fact) => (
             <span
               key={fact}
-              className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+              className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
             >
               {fact}
             </span>

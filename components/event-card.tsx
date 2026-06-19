@@ -1,7 +1,6 @@
 // 事件卡片组件
 'use client';
 
-import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Bell, Check, Calendar, Clock, AlertTriangle, Edit, Sparkles, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -28,8 +27,6 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onEdit, onDelete, onToggleReminder }: EventCardProps) {
-  const [isHovered, setIsHovered] = useState(false);
-
   const typeIcons = {
     career: '👔',
     wealth: '💰',
@@ -62,12 +59,9 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
       className={cn(
-        'rounded-[var(--radius-md)] border border-[color:var(--hairline)] border-l-4 bg-[color:var(--paper)] p-4 transition',
+        'fb-card border-l-4 p-4',
         impactBorderColors[event.impact],
-        isHovered && 'shadow-[var(--shadow-card)]',
       )}
     >
       {/* 事件头部 */}
@@ -79,27 +73,27 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
               {event.title}
             </h4>
             <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-1.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
+              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-1.5 text-xs font-bold text-[color:var(--brand-strong)]">
                 {typeLabels[event.type]}
               </span>
               {event.impact === 'positive' && (
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] px-1.5 text-[10px] font-bold text-[color:var(--data-up)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)] px-1.5 text-xs font-bold text-[color:var(--data-up)]">
                   {impactLabels[event.impact]}
                 </span>
               )}
               {event.impact === 'negative' && (
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(189,76,66,0.20)] bg-[rgba(189,76,66,0.08)] px-1.5 text-[10px] font-bold text-[color:var(--data-down)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[rgba(189,76,66,0.20)] bg-[rgba(189,76,66,0.08)] px-1.5 text-xs font-bold text-[color:var(--data-down)]">
                   {impactLabels[event.impact]}
                 </span>
               )}
               {event.reminder?.enabled && (
-                <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--env)] bg-[color:var(--env-soft)] px-1.5 text-[10px] font-bold text-[color:var(--env)]">
+                <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--env)] bg-[color:var(--env-soft)] px-1.5 text-xs font-bold text-[color:var(--env)]">
                   <Bell className="h-2.5 w-2.5" />
                   已提醒
                 </span>
               )}
               {event.isEstimatedPastEvent && (
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-1.5 text-[10px] font-bold text-[color:var(--signal-strong)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-1.5 text-xs font-bold text-[color:var(--signal-strong)]">
                   日期待补
                 </span>
               )}
@@ -188,7 +182,7 @@ export default function EventCard({ event, onEdit, onDelete, onToggleReminder }:
 
       {/* 预测准确度 */}
       {event.predictionAccuracy !== undefined && (
-        <div className="flex items-center gap-1.5 text-[10px] font-mono uppercase tracking-wider text-[color:var(--ink-5)]">
+        <div className="flex items-center gap-1.5 text-xs font-mono uppercase tracking-wider text-[color:var(--ink-5)]">
           <Check
             className={cn(
               'h-3 w-3',
@@ -246,7 +240,7 @@ export function DisasterWarningCard({ warning }: { warning: DisasterWarning }) {
 
   return (
     <Card className={cn(
-      'transition-all duration-200 hover:shadow-[var(--shadow-pop)]',
+      'fb-card',
       severityColors[warning.severity || 'medium']
     )}>
       <CardContent className="p-4">

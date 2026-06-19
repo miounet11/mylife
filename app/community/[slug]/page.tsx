@@ -121,7 +121,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
                       {author?.displayName || '匿名用户'}
                       <span className="ml-1.5 text-[12px] font-normal text-[color:var(--fb-ink-3)]">· {author?.province || ''}{author?.city || ''}</span>
                     </div>
-                    <div className="text-[11px] text-[color:var(--fb-ink-3)]">
+                    <div className="text-xs text-[color:var(--fb-ink-3)]">
                       {author?.occupation || ''} · {timeAgo(q.publishedAt)} 提问
                     </div>
                   </div>
@@ -131,7 +131,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
                 <h1 className="text-[20px] font-bold text-[color:var(--fb-ink-1)] leading-[1.3] mb-2">
                   {T(q.title)}
                 </h1>
-                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-[11px]">
+                <div className="flex flex-wrap items-center gap-1.5 mb-3 text-xs">
                   <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                     {getCategoryLabel(q.category)}
                   </span>
@@ -148,12 +148,12 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
                   {T(q.body)}
                 </div>
                 {q.metadata.visibilityMask?.length ? (
-                  <div className="mt-3 rounded-[2px] border border-[#dddfe2] bg-[#fdfdfd] px-2.5 py-2 text-[11px] text-[color:var(--fb-ink-3)]">
+                  <div className="mt-3 rounded-[2px] border border-[#dddfe2] bg-[#fdfdfd] px-2.5 py-2 text-xs text-[color:var(--fb-ink-3)]">
                     提问者隐去：{q.metadata.visibilityMask.join('、')}
                   </div>
                 ) : null}
               </div>
-              <div className="flex items-center gap-2 border-t border-[color:var(--fb-border)] bg-[#f5f6f7] px-4 py-2 text-[11px] text-[color:var(--fb-ink-3)]">
+              <div className="flex items-center gap-2 border-t border-[color:var(--fb-border)] bg-[#f5f6f7] px-4 py-2 text-xs text-[color:var(--fb-ink-3)]">
                 <span>{q.viewCount} 阅读</span>
                 <span>·</span>
                 <span>{answers.length} 答</span>
@@ -183,20 +183,20 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
                         <div className="text-[13px] font-bold text-[color:var(--fb-ink-1)]">
                           {r?.displayName || '匿名'}
                           {a.isOfficial ? (
-                            <span className="ml-1.5 inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-1 py-0.5 text-[10px] font-bold text-white">
+                            <span className="ml-1.5 inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-1 py-0.5 text-xs font-bold text-white">
                               官方答主
                             </span>
                           ) : r?.role === 'master' ? (
-                            <span className="ml-1.5 inline-flex items-center rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1 py-0.5 text-[10px] font-semibold text-[#1d2129]">
+                            <span className="ml-1.5 inline-flex items-center rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1 py-0.5 text-xs font-semibold text-[#1d2129]">
                               专业老师
                             </span>
                           ) : null}
                         </div>
-                        <div className="text-[11px] text-[color:var(--fb-ink-3)]">
+                        <div className="text-xs text-[color:var(--fb-ink-3)]">
                           {r?.bio || ''} · {timeAgo(a.publishedAt)} 解读 · 距提问 {a.responseDelayMinutes} 分钟
                         </div>
                       </div>
-                      <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                      <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                         ▲ {a.upvoteCount}
                       </div>
                     </div>
@@ -229,7 +229,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
           {/* 右栏：相关 + CTA */}
           <aside className="space-y-3">
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 相关 {getCategoryLabel(q.category)}
               </div>
               <div className="divide-y divide-[color:var(--fb-border)]">
@@ -238,7 +238,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
                     <div className="text-[12px] font-bold text-[color:var(--fb-ink-1)] line-clamp-2 leading-[1.35]">
                       {r.title}
                     </div>
-                    <div className="text-[10px] text-[color:var(--fb-ink-3)] mt-0.5">
+                    <div className="text-xs text-[color:var(--fb-ink-3)] mt-0.5">
                       {r.answerCount} 答 · {timeAgo(r.publishedAt)}
                     </div>
                   </Link>
@@ -247,7 +247,7 @@ export default async function CommunityDetailPage({ params, searchParams }: Page
             </div>
 
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
                 关于隐私
               </div>
               <div className="px-3 py-3 text-[12px] leading-[1.5] text-[color:var(--fb-ink-2)]">

@@ -18,20 +18,54 @@ interface SendMailV2Options {
   text?: string // 纯文本版本（用于HTML邮件的fallback）
 }
 
+function readString(name: string, fallback = '') {
+  const value = process.env[name]
+  return typeof value === 'string' ? value.trim() || fallback : fallback
+}
+
+function readBooleanFlag(name: string, fallback = false) {
+  const raw = readString(name)
+  if (!raw) return fallback
+  return ['1', 'true', 'yes', 'on'].includes(raw.toLowerCase())
+}
+
+function readPositiveIntegerEnv(
+  name: string,
+  defaultValue: number,
+  options: { min?: number; max?: number } = {}
+) {
+  const raw = readString(name)
+  const value = raw ? Number(raw) : defaultValue
+
+  if (!Number.isInteger(value) || value <= 0) {
+    return defaultValue
+  }
+
+  if (typeof options.min === 'number' && value < options.min) {
+    return defaultValue
+  }
+
+  if (typeof options.max === 'number' && value > options.max) {
+    return defaultValue
+  }
+
+  return value
+}
+
 function getMailRuntimeConfig() {
   const host =
-    process.env.MAIL_SMTP_HOST_IP ||
-    process.env.MAIL_SMTP_HOST ||
-    'mail.recva.cn';
-  const port = process.env.MAIL_SMTP_PORT ? +process.env.MAIL_SMTP_PORT : 25;
-  const secure = process.env.MAIL_SMTP_SECURE === 'true' || port === 465;
+    readString('MAIL_SMTP_HOST_IP') ||
+    readString('MAIL_SMTP_HOST');
+  const port = readPositiveIntegerEnv('MAIL_SMTP_PORT', 25, { min: 1, max: 65535 });
+  const secure = readBooleanFlag('MAIL_SMTP_SECURE') || port === 465;
   const ignoreTLS =
-    process.env.MAIL_SMTP_IGNORE_TLS === 'false' ? false : !secure;
-  const mailFrom = process.env.MAIL_FROM || 'code@recva.cn';
-  const password = process.env.MAIL_PASSWORD || '52vx3Z94';
-  const authUser = process.env.MAIL_AUTH_USER || mailFrom;
-  const authPassword = process.env.MAIL_AUTH_PASSWORD || password;
-  const disableAuth = process.env.MAIL_SMTP_DISABLE_AUTH === 'true';
+    readString('MAIL_SMTP_IGNORE_TLS') === 'false' ? false : !secure;
+  const mailFrom = readString('MAIL_FROM');
+  const password = readString('MAIL_PASSWORD');
+  const authUser = readString('MAIL_AUTH_USER') || mailFrom;
+  const authPassword = readString('MAIL_AUTH_PASSWORD') || password;
+  const disableAuth = readBooleanFlag('MAIL_SMTP_DISABLE_AUTH');
+  const timeoutMs = readPositiveIntegerEnv('MAIL_SMTP_TIMEOUT_MS', 8000, { min: 1000, max: 60000 });
 
   return {
     host,
@@ -43,18 +77,22 @@ function getMailRuntimeConfig() {
     authUser,
     authPassword,
     disableAuth,
+    connectionTimeoutMs: readPositiveIntegerEnv('MAIL_SMTP_CONNECTION_TIMEOUT_MS', timeoutMs, { min: 1000, max: 60000 }),
+    greetingTimeoutMs: readPositiveIntegerEnv('MAIL_SMTP_GREETING_TIMEOUT_MS', timeoutMs, { min: 1000, max: 60000 }),
+    socketTimeoutMs: readPositiveIntegerEnv('MAIL_SMTP_SOCKET_TIMEOUT_MS', timeoutMs, { min: 1000, max: 60000 }),
   };
 }
 
-function getTransportOptions() {
-  const config = getMailRuntimeConfig();
-
+function getTransportOptions(config = getMailRuntimeConfig()) {
   return {
     host: config.host,
     port: config.port,
     secure: config.secure,
     ignoreTLS: config.ignoreTLS,
     requireTLS: false,
+    connectionTimeout: config.connectionTimeoutMs,
+    greetingTimeout: config.greetingTimeoutMs,
+    socketTimeout: config.socketTimeoutMs,
     tls: {
       rejectUnauthorized: false
     },
@@ -69,8 +107,24 @@ function getTransportOptions() {
   };
 }
 
-function buildTransporter() {
-  return nodemailer.createTransport(getTransportOptions());
+function getMailConfigError(config = getMailRuntimeConfig()) {
+  if (!config.mailFrom) {
+    return 'MAIL_FROM 未配置'
+  }
+
+  if (!config.host) {
+    return 'MAIL_SMTP_HOST 未配置'
+  }
+
+  if (!config.disableAuth && (!config.authUser || !config.authPassword)) {
+    return 'MAIL_AUTH_USER 或 MAIL_AUTH_PASSWORD 未配置'
+  }
+
+  return ''
+}
+
+function buildTransporter(config = getMailRuntimeConfig()) {
+  return nodemailer.createTransport(getTransportOptions(config));
 }
 
 export function getMailDebugConfig() {
@@ -84,24 +138,44 @@ export function getMailDebugConfig() {
     disableAuth: config.disableAuth,
     from: config.mailFrom,
     authUser: config.authUser,
+    connectionTimeoutMs: config.connectionTimeoutMs,
+    greetingTimeoutMs: config.greetingTimeoutMs,
+    socketTimeoutMs: config.socketTimeoutMs,
+    configured: !getMailConfigError(config),
   };
 }
 
 export async function verifyMailConnection() {
-  const transporter = buildTransporter();
-  await transporter.verify();
-  return {
-    success: true,
-    config: getMailDebugConfig(),
-  };
+  const config = getMailRuntimeConfig();
+  const configError = getMailConfigError(config);
+  if (configError) {
+    throw new Error(configError);
+  }
+
+  const transporter = buildTransporter(config);
+  try {
+    await transporter.verify();
+    return {
+      success: true,
+      config: getMailDebugConfig(),
+    };
+  } finally {
+    transporter.close();
+  }
 }
 
 /**
  * 通过 SMTP 发送邮件（同 docs/邮件发送/demo.py 逻辑）
  */
 export async function sendMail(options: SendMailOptions) {
-  const transporter = buildTransporter()
-  const { mailFrom } = getMailRuntimeConfig()
+  const config = getMailRuntimeConfig()
+  const configError = getMailConfigError(config)
+  if (configError) {
+    return { success: false, message: configError, errorCode: 'MAIL_NOT_CONFIGURED' }
+  }
+
+  const transporter = buildTransporter(config)
+  const { mailFrom } = config
 
   const mailTo = typeof options.to === 'string' ? options.to : `${options.to}`
 
@@ -121,6 +195,8 @@ export async function sendMail(options: SendMailOptions) {
   } catch (error: any) {
     console.error('发送邮件失败:', error)
     return { success: false, message: error?.message || '发送邮件失败' }
+  } finally {
+    transporter.close()
   }
 }
 
@@ -128,11 +204,17 @@ export async function sendMail(options: SendMailOptions) {
  * 发送邮件 V2（支持HTML模板）
  */
 export async function sendMailV2(options: SendMailV2Options) {
-  const { mailFrom } = getMailRuntimeConfig()
-  const mailFromName = process.env.MAIL_FROM_NAME || 'xxxAI'
+  const config = getMailRuntimeConfig()
+  const configError = getMailConfigError(config)
+  if (configError) {
+    return { success: false, message: configError, errorCode: 'MAIL_NOT_CONFIGURED' }
+  }
+
+  const { mailFrom } = config
+  const mailFromName = readString('MAIL_FROM_NAME') || readString('EMAIL_APP_NAME') || '人生K线'
 
   const transporter = nodemailer.createTransport({
-    ...getTransportOptions(),
+    ...getTransportOptions(config),
     // 启用调试日志（仅在开发环境）
     debug: process.env.NODE_ENV === 'development',
     logger: process.env.NODE_ENV === 'development'
@@ -242,6 +324,8 @@ export async function sendMailV2(options: SendMailV2Options) {
       errorCode: error?.code,
       errorResponse: error?.response
     }
+  } finally {
+    transporter.close()
   }
 }
 

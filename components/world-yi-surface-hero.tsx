@@ -109,7 +109,7 @@ export default function WorldYiSurfaceHero({
                 key={`${item.title || ''}-${item.body}`}
                 className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
               >
-                <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="font-mono text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                   WORLD YI SIGNAL {String(index + 1).padStart(2, '0')}
                 </div>
                 {item.title ? (

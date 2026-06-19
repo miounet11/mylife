@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { adminPasswordRequiredFor, createLoginCode } from '@/lib/auth';
+import { adminPasswordRequiredFor, createLoginCode, deletePendingLoginCode } from '@/lib/auth';
 import { shouldShowAuthPreviewCode } from '@/lib/env';
 import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
 import { validateEmail } from '@/lib/validators';
@@ -21,16 +21,39 @@ export async function POST(request: NextRequest) {
     const emailConfigured = isEmailDeliveryConfigured();
 
     if (emailConfigured) {
-      const deliveryResult = await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
+      let deliveryResult;
+      try {
+        deliveryResult = await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
+      } catch (deliveryError) {
+        const reason = deliveryError instanceof Error ? deliveryError.message : 'unknown';
+        deletePendingLoginCode(result.email, result.code);
+        console.error('[Auth] 登录验证码邮件发送异常:', deliveryError);
+        trackServerEvent({
+          eventName: 'email_delivery_failed',
+          page: '/login',
+          userAgent: request.headers.get('user-agent'),
+          meta: {
+            channel: 'auth_code',
+            emailDomain: result.email.split('@')[1] || '',
+            reason,
+          },
+        });
+
+        return NextResponse.json(
+          { success: false, error: '邮件服务暂时不可用，请稍后重试' },
+          { status: 503 }
+        );
+      }
 
       if (!deliveryResult?.success) {
-      trackServerEvent({
-        eventName: 'email_delivery_failed',
-        page: '/login',
-        userAgent: request.headers.get('user-agent'),
-        meta: {
-          channel: 'auth_code',
-          emailDomain: result.email.split('@')[1] || '',
+        deletePendingLoginCode(result.email, result.code);
+        trackServerEvent({
+          eventName: 'email_delivery_failed',
+          page: '/login',
+          userAgent: request.headers.get('user-agent'),
+          meta: {
+            channel: 'auth_code',
+            emailDomain: result.email.split('@')[1] || '',
             reason: deliveryResult?.message || 'unknown',
           },
         });

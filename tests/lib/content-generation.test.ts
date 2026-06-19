@@ -1,4 +1,5 @@
 import {
+  assessGeneratedManagedContentDraftQuality,
   buildReasoningPlanPrompt,
   generateManagedContentDrafts,
   getEffectiveContentGenerationTimeoutMs,
@@ -219,6 +220,58 @@ describe('content generation helpers', () => {
     expect(draft.sections[1]?.title).toBe('真正该先判断哪些变量');
     expect(draft.sections[3]?.title).toBe('怎样把判断转成下一步行动');
     expect(draft.sections.map((section) => section.title)).not.toContain('这一页为什么值得被发布');
+  });
+
+  it('rejects thin or internal-facing generated drafts from automated publication', () => {
+    const thin = normalizeGeneratedContentDraft({
+      raw: {
+        title: 'SEO 内容自动化占位稿',
+        slug: 'thin-seo-placeholder',
+        excerpt: '短摘要。',
+        seoTitle: '短标题',
+        seoDescription: '短描述。',
+        tags: ['SEO'],
+        sections: [
+          { title: '为什么值得发布', paragraphs: ['当前内容不足。'] },
+        ],
+      },
+      input: {
+        topic: 'SEO 内容自动化占位稿',
+        platform: 'seo',
+        status: 'draft',
+      },
+      contentType: 'knowledge',
+      subtype: null,
+      llmUsed: true,
+    });
+
+    const quality = assessGeneratedManagedContentDraftQuality(thin);
+
+    expect(quality.ready).toBe(false);
+    expect(quality.score).toBeLessThan(76);
+    expect(quality.reasons.join(' ')).toContain('正文含内部工程词或占位表达');
+  });
+
+  it('accepts deep public-facing generated drafts', () => {
+    const draft = normalizeGeneratedContentDraft({
+      raw: null,
+      input: {
+        topic: '海外华人怎么看流年节奏与职业窗口',
+        platform: 'public-growth',
+        keywords: ['海外华人', '职业', '流年', '决策'],
+        locale: 'zh-CN',
+        market: '海外华人用户',
+        status: 'draft',
+      },
+      contentType: 'knowledge',
+      subtype: null,
+      llmUsed: true,
+    });
+
+    expect(assessGeneratedManagedContentDraftQuality(draft)).toEqual(expect.objectContaining({
+      ready: true,
+      score: expect.any(Number),
+    }));
   });
 
   it('builds locale-aware fallback drafts for traditional chinese markets', () => {

@@ -58,10 +58,10 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
       aria-label="验证与可信层"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
           验证与可信层
         </div>
-        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-[10px] font-bold uppercase tracking-wider ${tone.chip}`}>
+        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-xs font-bold uppercase tracking-wider ${tone.chip}`}>
           {confidenceLabel}
         </span>
       </div>
@@ -73,7 +73,7 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
 
       <div className="mt-3 grid gap-2.5 sm:grid-cols-2">
         <article className="rounded-[var(--radius)] border border-[color:var(--data-up)] bg-[rgba(47,125,82,0.06)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--data-up)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--data-up)]">
             高可信点
           </div>
           <ul className="mt-2 space-y-1.5">
@@ -89,7 +89,7 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
         </article>
 
         <article className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
             敏感点
           </div>
           <ul className="mt-2 space-y-1.5">
@@ -107,7 +107,7 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
 
       {correctionSummary ? (
         <div className={`mt-2.5 rounded-[var(--radius)] border px-3 py-2.5 text-xs leading-5 ${tone.panel}`}>
-          <span className="font-mono text-[10px] font-bold uppercase tracking-wider opacity-80">
+          <span className="font-mono text-xs font-bold uppercase tracking-wider opacity-80">
             纠偏提示
           </span>
           <div className="mt-0.5 text-[color:var(--ink-2)]">{correctionSummary}</div>
@@ -115,7 +115,7 @@ export default function ReportValidationPanel({ section }: ReportValidationPanel
       ) : null}
 
       <div className="mt-2.5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
-        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
           事件提示
         </div>
         <ul className="mt-2 space-y-1.5">

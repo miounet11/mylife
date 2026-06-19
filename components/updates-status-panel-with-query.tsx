@@ -17,7 +17,7 @@ export default function UpdatesStatusPanelWithQuery({
   initialAuthenticated?: boolean;
 }) {
   const searchParams = useSearchParams();
-  const reportId = searchParams.get('reportId') || '';
+  const reportId = searchParams?.get('reportId') || '';
 
   return (
     <UpdatesStatusPanel

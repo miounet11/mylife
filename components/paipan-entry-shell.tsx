@@ -68,7 +68,7 @@ export default function PaipanEntryShell({ compact = false }: PaipanEntryShellPr
                     <div className="flex h-8 w-8 items-center justify-center rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]">
                       <Icon className="h-4 w-4" />
                     </div>
-                    <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                       {String(index + 1).padStart(2, '0')}
                     </div>
                   </div>

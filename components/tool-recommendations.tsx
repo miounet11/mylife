@@ -42,7 +42,7 @@ export default function ToolRecommendations({
   }
 
   return (
-    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+    <section className="fb-card p-5 md:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -61,7 +61,7 @@ export default function ToolRecommendations({
       {enableQuickStart && report && primaryItem?.tool ? (
         <div className="mt-5 grid gap-3 xl:grid-cols-[1.08fr_0.92fr]">
           <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4 md:p-5">
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               报告后直接开跑
             </div>
             <h3 className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
@@ -72,7 +72,7 @@ export default function ToolRecommendations({
             </div>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   FREE
                 </span>
                 <div className="mt-0.5 text-[color:var(--ink-2)]">
@@ -80,7 +80,7 @@ export default function ToolRecommendations({
                 </div>
               </div>
               <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   ASK
                 </span>
                 <div className="mt-0.5 text-[color:var(--ink-2)]">
@@ -104,9 +104,9 @@ export default function ToolRecommendations({
             source={source}
             ctaStrategyKey={ctaStrategyKey}
             sourceFamily={sourceFamily}
-            className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
+            className="group p-4 transition-colors hover:no-underline"
           >
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               {tool.category}
             </div>
             <h3 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">

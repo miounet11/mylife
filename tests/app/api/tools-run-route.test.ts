@@ -183,8 +183,8 @@ describe('POST /api/tools/run', () => {
 
     expect(response.status).toBe(200);
     expect(mockedCallJsonLLM).toHaveBeenCalledWith(expect.objectContaining({
-      model: 'grok-420-fast',
-      modelChain: ['grok-420-fast', 'auto'],
+      model: 'auto',
+      modelChain: ['auto'],
     }));
     const session = mockedToolSessionOperations.create.mock.calls[0]?.[0] as any;
     expect(session.result.headline).toContain('岗位匹配增强判断');

@@ -1412,6 +1412,113 @@ function mapContentGenerationJobRow(row: RawContentGenerationJobRow): ContentGen
   };
 }
 
+type ContentGenerationClaimScope = 'all' | 'standard' | 'worldYiV2';
+
+function getContentGenerationClaimMetaClause(scope: ContentGenerationClaimScope) {
+  if (scope === 'standard') {
+    return `
+      AND COALESCE(json_extract(meta, '$.isWorldYiV2HighConc'), 0) <> 1
+      AND COALESCE(json_extract(meta, '$.worldYiV2'), 0) <> 1
+    `;
+  }
+
+  if (scope === 'worldYiV2') {
+    return `
+      AND (
+        json_extract(meta, '$.isWorldYiV2HighConc') = 1
+        OR json_extract(meta, '$.worldYiV2') = 1
+      )
+    `;
+  }
+
+  return '';
+}
+
+function claimNextContentGenerationJob(
+  scope: ContentGenerationClaimScope,
+  staleLockMinutes = 40,
+) {
+  const staleLockCutoff = new Date(Date.now() - staleLockMinutes * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
+  const metaClause = getContentGenerationClaimMetaClause(scope);
+
+  db.prepare(`
+    UPDATE content_generation_jobs
+    SET status = 'retry',
+        locked_at = NULL,
+        next_run_at = COALESCE(next_run_at, ?),
+        updated_at = ?,
+        last_error = COALESCE(last_error, 'LOCK_STALE_REQUEUED')
+    WHERE status = 'running'
+      AND locked_at IS NOT NULL
+      AND datetime(locked_at) <= datetime(?)
+      AND attempts < max_attempts
+      ${metaClause}
+  `).run(now, now, staleLockCutoff);
+
+  db.prepare(`
+    UPDATE content_generation_jobs
+    SET status = 'failed',
+        locked_at = NULL,
+        updated_at = ?,
+        last_error = COALESCE(last_error, 'LOCK_STALE_MAX_ATTEMPTS')
+    WHERE status = 'running'
+      AND locked_at IS NOT NULL
+      AND datetime(locked_at) <= datetime(?)
+      AND attempts >= max_attempts
+      ${metaClause}
+  `).run(now, staleLockCutoff);
+
+  const row = db.prepare(`
+    SELECT * FROM content_generation_jobs
+    WHERE status IN ('pending', 'retry')
+      AND attempts < max_attempts
+      AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
+      ${metaClause}
+    ORDER BY attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
+    LIMIT 1
+  `).get(now) as RawContentGenerationJobRow | undefined;
+
+  if (!row) {
+    return null;
+  }
+
+  const updated = db.prepare(`
+    UPDATE content_generation_jobs
+    SET status = 'running',
+        attempts = attempts + 1,
+        locked_at = ?,
+        updated_at = ?
+    WHERE id = ? AND status IN ('pending', 'retry')
+  `).run(now, now, row.id);
+
+  if (!updated.changes) {
+    return null;
+  }
+
+  const claimed = db.prepare(`
+    SELECT * FROM content_generation_jobs
+    WHERE id = ?
+    LIMIT 1
+  `).get(row.id) as RawContentGenerationJobRow | undefined;
+
+  return claimed ? mapContentGenerationJobRow(claimed) : null;
+}
+
+function buildLockedAtPredicate(expectedLockedAt?: string) {
+  if (!expectedLockedAt) {
+    return {
+      sql: '',
+      params: [] as string[],
+    };
+  }
+
+  return {
+    sql: ' AND status = ? AND locked_at = ?',
+    params: ['running', expectedLockedAt],
+  };
+}
+
 function mapEmailDeliveryJobRow(row: RawEmailDeliveryJobRow): EmailDeliveryJobRecord {
   return {
     id: row.id,
@@ -2340,6 +2447,10 @@ export function initializeDatabase() {
       answer_count INTEGER DEFAULT 0
     );
     CREATE INDEX IF NOT EXISTS idx_forum_questions_status_pub ON forum_questions(status, published_at);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_visible_pub_desc ON forum_questions(status, published_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_visible_category_pub_desc ON forum_questions(status, category, published_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_visible_industry_pub_desc ON forum_questions(status, industry, published_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_forum_questions_visible_category_industry_pub_desc ON forum_questions(status, category, industry, published_at DESC);
     CREATE INDEX IF NOT EXISTS idx_forum_questions_category ON forum_questions(category);
     CREATE INDEX IF NOT EXISTS idx_forum_questions_industry ON forum_questions(industry);
     CREATE INDEX IF NOT EXISTS idx_forum_questions_slug ON forum_questions(slug);
@@ -5676,72 +5787,15 @@ export const contentGenerationJobOperations = {
     return row ? mapContentGenerationJobRow(row) : null;
   },
 
-  claimNextRunnable: (staleLockMinutes = 40) => {
-    const staleLockCutoff = new Date(Date.now() - staleLockMinutes * 60 * 1000).toISOString();
-    const now = new Date().toISOString();
+  claimNextRunnable: (staleLockMinutes = 40) => claimNextContentGenerationJob('all', staleLockMinutes),
 
-    db.prepare(`
-      UPDATE content_generation_jobs
-      SET status = 'retry',
-          locked_at = NULL,
-          next_run_at = COALESCE(next_run_at, ?),
-          updated_at = ?,
-          last_error = COALESCE(last_error, 'LOCK_STALE_REQUEUED')
-      WHERE status = 'running'
-        AND locked_at IS NOT NULL
-        AND datetime(locked_at) <= datetime(?)
-        AND attempts < max_attempts
-    `).run(now, now, staleLockCutoff);
+  claimNextRunnableStandard: (staleLockMinutes = 40) => claimNextContentGenerationJob('standard', staleLockMinutes),
 
-    db.prepare(`
-      UPDATE content_generation_jobs
-      SET status = 'failed',
-          locked_at = NULL,
-          updated_at = ?,
-          last_error = COALESCE(last_error, 'LOCK_STALE_MAX_ATTEMPTS')
-      WHERE status = 'running'
-        AND locked_at IS NOT NULL
-        AND datetime(locked_at) <= datetime(?)
-        AND attempts >= max_attempts
-    `).run(now, staleLockCutoff);
-
-    const row = db.prepare(`
-      SELECT * FROM content_generation_jobs
-      WHERE status IN ('pending', 'retry')
-        AND attempts < max_attempts
-        AND (next_run_at IS NULL OR datetime(next_run_at) <= datetime(?))
-      ORDER BY attempts ASC, datetime(next_run_at) ASC, datetime(created_at) ASC
-      LIMIT 1
-    `).get(now) as RawContentGenerationJobRow | undefined;
-
-    if (!row) {
-      return null;
-    }
-
-    const updated = db.prepare(`
-      UPDATE content_generation_jobs
-      SET status = 'running',
-          attempts = attempts + 1,
-          locked_at = ?,
-          updated_at = ?
-      WHERE id = ? AND status IN ('pending', 'retry')
-    `).run(now, now, row.id);
-
-    if (!updated.changes) {
-      return null;
-    }
-
-    const claimed = db.prepare(`
-      SELECT * FROM content_generation_jobs
-      WHERE id = ?
-      LIMIT 1
-    `).get(row.id) as RawContentGenerationJobRow | undefined;
-
-    return claimed ? mapContentGenerationJobRow(claimed) : null;
-  },
+  claimNextWorldYiV2Runnable: (staleLockMinutes = 45) => claimNextContentGenerationJob('worldYiV2', staleLockMinutes),
 
   markCompleted: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE content_generation_jobs
       SET status = 'completed',
@@ -5754,6 +5808,7 @@ export const contentGenerationJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       JSON.stringify(updates?.result || {}),
       updates?.generatedCount || 0,
@@ -5761,12 +5816,14 @@ export const contentGenerationJobOperations = {
       updates?.fallbackCount || 0,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markRetry: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE content_generation_jobs
       SET status = 'retry',
@@ -5780,6 +5837,7 @@ export const contentGenerationJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       JSON.stringify(updates?.result || {}),
       updates?.generatedCount || 0,
@@ -5789,12 +5847,14 @@ export const contentGenerationJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markFailed: (id: string, updates?: Partial<ContentGenerationJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE content_generation_jobs
       SET status = 'failed',
@@ -5807,6 +5867,7 @@ export const contentGenerationJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       JSON.stringify(updates?.result || {}),
       updates?.generatedCount || 0,
@@ -5815,7 +5876,8 @@ export const contentGenerationJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
@@ -5888,6 +5950,11 @@ export const reportUpgradeJobOperations = {
 
   getByReportId: (reportId: string) => {
     const row = db.prepare('SELECT * FROM report_upgrade_jobs WHERE report_id = ?').get(reportId) as RawReportUpgradeJobRow | undefined;
+    return row ? mapReportUpgradeJobRow(row) : null;
+  },
+
+  getById: (id: string) => {
+    const row = db.prepare('SELECT * FROM report_upgrade_jobs WHERE id = ? LIMIT 1').get(id) as RawReportUpgradeJobRow | undefined;
     return row ? mapReportUpgradeJobRow(row) : null;
   },
 
@@ -5984,6 +6051,7 @@ export const reportUpgradeJobOperations = {
 
   markCompleted: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE report_upgrade_jobs
       SET status = 'completed',
@@ -5995,18 +6063,21 @@ export const reportUpgradeJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       updates?.lastScore || 0,
       updates?.bestScore || updates?.lastScore || 0,
       updates?.bestGrade || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markRetry: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE report_upgrade_jobs
       SET status = 'retry',
@@ -6019,6 +6090,7 @@ export const reportUpgradeJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       updates?.lastScore || 0,
       updates?.bestScore || updates?.lastScore || 0,
@@ -6027,12 +6099,14 @@ export const reportUpgradeJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markDeferred: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE report_upgrade_jobs
       SET status = 'retry',
@@ -6046,6 +6120,7 @@ export const reportUpgradeJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       updates?.lastScore ?? null,
       updates?.bestScore ?? null,
@@ -6054,12 +6129,14 @@ export const reportUpgradeJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markFailed: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE report_upgrade_jobs
       SET status = 'failed',
@@ -6071,6 +6148,7 @@ export const reportUpgradeJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       updates?.lastScore || 0,
       updates?.bestScore || updates?.lastScore || 0,
@@ -6078,12 +6156,14 @@ export const reportUpgradeJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
   markCancelled: (id: string, updates?: Partial<ReportUpgradeJobRecord>) => {
     const now = new Date().toISOString();
+    const lease = buildLockedAtPredicate(updates?.lockedAt);
     return db.prepare(`
       UPDATE report_upgrade_jobs
       SET status = 'cancelled',
@@ -6095,6 +6175,7 @@ export const reportUpgradeJobOperations = {
           meta = ?,
           updated_at = ?
       WHERE id = ?
+        ${lease.sql}
     `).run(
       updates?.lastScore ?? null,
       updates?.bestScore ?? null,
@@ -6102,7 +6183,8 @@ export const reportUpgradeJobOperations = {
       updates?.lastError || null,
       JSON.stringify(updates?.meta || {}),
       now,
-      id
+      id,
+      ...lease.params
     );
   },
 
@@ -6960,17 +7042,17 @@ export const forumQuestionOperations = {
   listVisible: (params: { limit?: number; offset?: number; category?: string; industry?: string; tag?: string } = {}) => {
     const limit = Math.min(Math.max(params.limit ?? 30, 1), 100);
     const offset = Math.max(params.offset ?? 0, 0);
-    const where: string[] = [`status = 'visible'`, `datetime(published_at) <= datetime('now')`];
+    const where: string[] = [`status = 'visible'`, `published_at <= datetime('now')`];
     const args: unknown[] = [];
     if (params.category) { where.push('category = ?'); args.push(params.category); }
     if (params.industry) { where.push('industry = ?'); args.push(params.industry); }
     if (params.tag) { where.push(`tags LIKE ?`); args.push(`%"${params.tag}"%`); }
-    const sql = `SELECT * FROM forum_questions WHERE ${where.join(' AND ')} ORDER BY datetime(published_at) DESC LIMIT ? OFFSET ?`;
+    const sql = `SELECT * FROM forum_questions WHERE ${where.join(' AND ')} ORDER BY published_at DESC LIMIT ? OFFSET ?`;
     const rows = db.prepare(sql).all(...args, limit, offset) as RawForumQuestionRow[];
     return rows.map(mapForumQuestion);
   },
   countVisible: (params: { category?: string; industry?: string; tag?: string } = {}) => {
-    const where: string[] = [`status = 'visible'`, `datetime(published_at) <= datetime('now')`];
+    const where: string[] = [`status = 'visible'`, `published_at <= datetime('now')`];
     const args: unknown[] = [];
     if (params.category) { where.push('category = ?'); args.push(params.category); }
     if (params.industry) { where.push('industry = ?'); args.push(params.industry); }
@@ -6979,7 +7061,7 @@ export const forumQuestionOperations = {
     return (db.prepare(sql).get(...args) as { n: number }).n;
   },
   countTotal: () => (db.prepare('SELECT COUNT(*) as n FROM forum_questions').get() as { n: number }).n,
-  countToday: () => (db.prepare(`SELECT COUNT(*) as n FROM forum_questions WHERE date(published_at) = date('now')`).get() as { n: number }).n,
+  countToday: () => (db.prepare(`SELECT COUNT(*) as n FROM forum_questions WHERE status = 'visible' AND published_at >= date('now') AND published_at < datetime(date('now'), '+1 day')`).get() as { n: number }).n,
   bumpView: (slug: string) => {
     db.prepare(`UPDATE forum_questions SET view_count = view_count + 1 WHERE slug = ?`).run(slug);
   },

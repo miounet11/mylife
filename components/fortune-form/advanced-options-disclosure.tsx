@@ -66,7 +66,7 @@ export default function AdvancedOptionsDisclosure({
     >
       <div className="grid gap-3">
         <label className="block rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
-          <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">命主姓名</div>
+          <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">命主姓名</div>
           <input
             value={infoData.username}
             onChange={(event) => onInfoDataChange({ username: event.target.value })}
@@ -74,13 +74,13 @@ export default function AdvancedOptionsDisclosure({
             maxLength={30}
             className="mt-2 h-11 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-base text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
           />
-          <div className="mt-1 text-[11px] text-[color:var(--ink-5)]">
+          <div className="mt-1 text-xs text-[color:var(--ink-5)]">
             最多 30 个字符（emoji 占 2 字符）
           </div>
         </label>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
-          <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">判断主题</div>
+          <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">判断主题</div>
           <div className="mt-2 flex flex-wrap gap-2">
             {caseTypes.map((item) => (
               <button
@@ -102,7 +102,7 @@ export default function AdvancedOptionsDisclosure({
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/70 px-3 py-3">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">时间修正与保存</div>
+              <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">时间修正与保存</div>
               <div className="mt-1 text-sm leading-6 text-[color:var(--ink-4)]">默认使用真太阳时。</div>
             </div>
             <div className="flex items-center gap-3">

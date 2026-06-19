@@ -698,7 +698,7 @@ export default async function AdminAnalyticsPage() {
                 基于近 {productExperience.days} 天 `analytics_events`，把页面角色、成功指标和真实动作放到同一张表，避免只看 PV 不知道哪里断。
               </div>
             </div>
-            <div className="grid gap-2 sm:grid-cols-4 lg:w-[34rem]">
+            <div className="grid gap-2 grid-cols-2 lg:grid-cols-4 lg:w-[34rem]">
               <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-3 text-sm text-[color:var(--ink)]">
                 浏览 {productExperience.totals.views}
               </div>
@@ -727,21 +727,21 @@ export default async function AdminAnalyticsPage() {
                   </div>
                 </div>
 
-                <div className="mt-4 grid gap-3 sm:grid-cols-4">
+                <div className="mt-4 grid gap-3 grid-cols-2 lg:grid-cols-4">
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">浏览</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">浏览</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.views}</div>
                   </div>
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">主动作</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">主动作</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.primaryActions}</div>
                   </div>
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">后续</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">后续</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--ink)]">{item.nextStepActions}</div>
                   </div>
                   <div className="rounded-[var(--radius)] bg-[color:var(--accent-soft)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--accent-strong)]">转化</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--accent-strong)]">转化</div>
                     <div className="mt-1 text-xl font-black text-[color:var(--accent-strong)]">{item.conversionRate}%</div>
                   </div>
                 </div>
@@ -792,17 +792,17 @@ export default async function AdminAnalyticsPage() {
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">查看</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">查看</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.viewedCount}</div>
                   </div>
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">质量</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">质量</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
                       {item.report.analysis?.qualityAudit?.grade || 'C'} / {item.report.analysis?.qualityAudit?.overallScore || 0}
                     </div>
                   </div>
                   <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] px-3 py-3">
-                    <div className="text-[11px] tracking-[0.16em] text-[color:var(--muted)]">层级</div>
+                    <div className="text-xs tracking-[0.16em] text-[color:var(--muted)]">层级</div>
                     <div className="mt-1 text-lg font-black text-[color:var(--ink)]">
                       {item.report.analysis?.qualityAudit?.deliveryTier || 'basic'}
                     </div>
@@ -1969,7 +1969,7 @@ export default async function AdminAnalyticsPage() {
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{mapSourceLabel(item.source)}</div>
                     <div className="text-lg font-black text-[color:var(--accent-strong)]">{item.total}</div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>准确 {item.accurate}</div>
                     <div>偏差 {item.drift}</div>
                     <div>待验证 {item.pending}</div>
@@ -2025,7 +2025,7 @@ export default async function AdminAnalyticsPage() {
                       {mapModelStateLabel(item.currentState)}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>请求 {item.attempts}</div>
                     <div>成功率 {item.successRate}%</div>
                     <div>平均延迟 {item.avgLatencyMs}ms</div>
@@ -2095,7 +2095,7 @@ export default async function AdminAnalyticsPage() {
                       {`${item.successRate}%`}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>{`成功 ${item.success}`}</div>
                     <div>{`失败 ${item.failed}`}</div>
                     <div>{`降级 ${item.fallbackCount}`}</div>
@@ -2316,7 +2316,7 @@ export default async function AdminAnalyticsPage() {
                       聊天完成率 {item.chatCompletionRate}%
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>CTA {item.ctaClicks}</div>
                     <div>到聊天页 {item.chatPageViews}</div>
                     <div>完成聊天 {item.chatCompleted}</div>
@@ -2435,7 +2435,7 @@ export default async function AdminAnalyticsPage() {
                       质量 {item.qualityScore}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>基础分 {item.baseQuality}</div>
                     <div>PV {item.views}</div>
                     <div>联动 {item.linkageScore}</div>
@@ -2468,7 +2468,7 @@ export default async function AdminAnalyticsPage() {
                       质量 {item.qualityScore}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>基础分 {item.baseQuality}</div>
                     <div>PV {item.detailViews}</div>
                     <div>首屏点击 {item.ctaStartRate}%</div>
@@ -2500,7 +2500,7 @@ export default async function AdminAnalyticsPage() {
                       跳出 {item.bounceRate}%
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>页面 {item.page}</div>
                     <div>PV {item.views}</div>
                     <div>有效会话 {item.engagedCount}</div>
@@ -2609,7 +2609,7 @@ export default async function AdminAnalyticsPage() {
                       {item.latestAt ? `最近一次 ${item.latestAt}` : '最近时间未知'}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>详情 {item.detailViews}</div>
                     <div>开跑 {item.runStarts}</div>
                     <div>结果 {item.resultViews}</div>
@@ -2649,7 +2649,7 @@ export default async function AdminAnalyticsPage() {
                       优先级 {item.priorityScore}
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>PV {item.detailViews}</div>
                     <div>首屏点击 {item.startCtaRate}%</div>
                     <div>点击到开跑 {item.ctaToRunRate}%</div>
@@ -2733,7 +2733,7 @@ export default async function AdminAnalyticsPage() {
                       失败率 {item.runFailureRate}%
                     </div>
                   </div>
-                  <div className="mt-3 grid gap-3 sm:grid-cols-4 text-xs text-[color:var(--muted)]">
+                  <div className="mt-3 grid gap-3 grid-cols-2 lg:grid-cols-4 text-xs text-[color:var(--muted)]">
                     <div>详情 PV {item.detailViews}</div>
                     <div>开始点击 {item.startCtaClicks}</div>
                     <div>实际开跑 {item.runStarts}</div>

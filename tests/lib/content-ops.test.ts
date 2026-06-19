@@ -43,9 +43,13 @@ jest.mock('@/lib/content-radar', () => ({
   runContentRadarCycle: (...args: unknown[]) => mockRunContentRadarCycle(...args),
 }));
 
-jest.mock('@/lib/content-generation', () => ({
-  generateManagedContentDrafts: (...args: unknown[]) => mockGenerateManagedContentDrafts(...args),
-}));
+jest.mock('@/lib/content-generation', () => {
+  const actual = jest.requireActual('@/lib/content-generation');
+  return {
+    ...actual,
+    generateManagedContentDrafts: (...args: unknown[]) => mockGenerateManagedContentDrafts(...args),
+  };
+});
 
 import {
   applyOpenAgentAnalysisToGenerationQueue,
@@ -79,13 +83,13 @@ function buildReadyDraftEntry(overrides: Partial<ManagedContentEntry>): ManagedC
     readTime: '6 分钟',
     tags: ['命理', '节奏', '窗口', '决策'],
     featured: false,
-    seoTitle: '默认可发布草稿 SEO 标题',
-    seoDescription: '这是一段足够长的 SEO 描述，用来确保自动发布质量门槛被满足，同时也模拟真实线上内容的搜索摘要、用户价值、执行节奏、常见误区、现实成本与进一步进入个人测算动作的完整说明。',
+    seoTitle: '默认可发布草稿搜索标题与用户决策入口',
+    seoDescription: '这是一段足够长的搜索描述，用来确保公开内容深度被满足，同时也模拟真实线上内容的搜索摘要、用户价值、执行节奏、常见误区、现实成本与进一步进入个人测算动作的完整说明。',
     sections: [
-      { title: 'section 1', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容。', '第二段内容同样足够长，用于模拟真实可发布内容。'] },
-      { title: 'section 2', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容。', '第二段内容同样足够长，用于模拟真实可发布内容。'] },
-      { title: 'section 3', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容。', '第二段内容同样足够长，用于模拟真实可发布内容。'] },
-      { title: 'section 4', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容。', '第二段内容同样足够长，用于模拟真实可发布内容。'] },
+      { title: 'section 1', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容，同时补充用户场景、判断变量和下一步行动建议。', '第二段内容同样足够长，用于模拟真实可发布内容，并覆盖风险提示、转化入口和可执行的复盘动作。'] },
+      { title: 'section 2', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容，同时补充用户场景、判断变量和下一步行动建议。', '第二段内容同样足够长，用于模拟真实可发布内容，并覆盖风险提示、转化入口和可执行的复盘动作。'] },
+      { title: 'section 3', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容，同时补充用户场景、判断变量和下一步行动建议。', '第二段内容同样足够长，用于模拟真实可发布内容，并覆盖风险提示、转化入口和可执行的复盘动作。'] },
+      { title: 'section 4', paragraphs: ['这一段内容长度足够，可以满足自动发布质量门槛，并模拟真实线上内容，同时补充用户场景、判断变量和下一步行动建议。', '第二段内容同样足够长，用于模拟真实可发布内容，并覆盖风险提示、转化入口和可执行的复盘动作。'] },
     ],
     status: 'draft',
     source: 'agent-llm:auto-ops',
@@ -1218,10 +1222,13 @@ describe('content scheduler cycle', () => {
     let generatedIndex = 0;
     mockGenerateManagedContentDrafts.mockImplementation(async () => {
       generatedIndex += 1;
+      const title = ['职业节奏补充草稿', '家庭关系补充草稿', '健康恢复补充草稿'][generatedIndex - 1] || `补充草稿主题${generatedIndex}`;
       const draft = buildReadyDraftEntry({
         id: `generated-${generatedIndex}`,
         slug: `generated-${generatedIndex}`,
-        title: `补充草稿 ${generatedIndex}`,
+        title,
+        excerpt: `${title} 的摘要聚焦不同用户需求、决策场景、风险提醒、执行节奏和下一步行动，明确区分题材角度，确保不是重复模板内容并满足公开发布深度。`,
+        tags: ['命理', '节奏', '窗口', `决策${generatedIndex}`],
       });
       return {
         entries: [{

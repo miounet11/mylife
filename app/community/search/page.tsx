@@ -40,7 +40,7 @@ export default async function CommunitySearchPage({ searchParams }: PageProps) {
   return (
     <div className="page-shell">
       <AnalyticsPageView
-        eventName="content_card_clicked"
+        eventName="knowledge_page_viewed"
         page="/community/search"
         meta={{ surfaceKey: 'community_search', query: q, resultCount: results.length }}
       />
@@ -94,7 +94,7 @@ export default async function CommunitySearchPage({ searchParams }: PageProps) {
             return (
               <article key={r.id} className="fb-card hover:border-[color:var(--fb-blue)]">
                 <div className="px-3 py-3">
-                  <div className="flex items-center gap-2 mb-1.5 text-[11px] text-[color:var(--fb-ink-3)]">
+                  <div className="flex items-center gap-2 mb-1.5 text-xs text-[color:var(--fb-ink-3)]">
                     <span className="font-semibold text-[color:var(--fb-ink-1)]">{author?.displayName || '匿名用户'}</span>
                     <span>·</span>
                     <span>{author?.occupation || ''}</span>
@@ -107,14 +107,14 @@ export default async function CommunitySearchPage({ searchParams }: PageProps) {
                       {highlight(r.body.replace(/\n/g, ' ').slice(0, 200), q)}
                     </p>
                   </Link>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                     <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                       {getCategoryLabel(r.category)}
                     </span>
                     <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 font-semibold text-[#1d2129]">
                       {getIndustryLabel(r.industry)}
                     </span>
-                    <span className="ml-auto text-[11px] text-[color:var(--fb-ink-3)]">
+                    <span className="ml-auto text-xs text-[color:var(--fb-ink-3)]">
                       {r.answerCount} 答 · {r.viewCount} 阅读
                     </span>
                   </div>

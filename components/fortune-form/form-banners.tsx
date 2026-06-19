@@ -23,7 +23,7 @@ export default function FormBanners({
     <div className="space-y-2">
       {returnHref && returnLabel ? (
         <div className="rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5">
-          <div className="font-mono text-[10px] tracking-[0.08em] uppercase text-[color:var(--signal-strong)]">
+          <div className="font-mono text-xs tracking-[0.08em] uppercase text-[color:var(--signal-strong)]">
             当前目标
           </div>
           <div className="mt-0.5 text-[color:var(--ink-2)]">
@@ -37,7 +37,7 @@ export default function FormBanners({
 
       {hasEmailDelivery && verifiedEmail ? (
         <div className="rounded-[var(--radius)] border border-[color:var(--data-up)]/40 bg-[rgba(47,125,82,0.06)] px-3 py-2 text-xs leading-5">
-          <div className="font-mono text-[10px] tracking-[0.08em] uppercase text-[color:var(--data-up)]">
+          <div className="font-mono text-xs tracking-[0.08em] uppercase text-[color:var(--data-up)]">
             结果通知
           </div>
           <div className="mt-0.5 text-[color:var(--ink-2)]">

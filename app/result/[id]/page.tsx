@@ -347,6 +347,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
+  const summaryHref = entrySource
+    ? `/r/${id}?source=${encodeURIComponent(entrySource)}`
+    : `/r/${id}`;
   const shouldShowFullReport = resolvedSearchParams.view === 'full';
   if (!shouldShowFullReport) {
     const query = entrySource ? `?source=${encodeURIComponent(entrySource)}` : '';
@@ -767,27 +770,48 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
         <ReportSurface>
           {/* v5-D60 FB 2017 timeline 三栏布局：左 rail / 中阅读流 / 右 meta sidebar */}
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
-            <ReportAnchorRail items={anchorRailItems} title="这份报告" />
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[160px_minmax(0,760px)_260px] 2xl:grid-cols-[180px_minmax(0,820px)_280px]">
+            <div className="lg:col-span-2 xl:col-span-1">
+              <ReportAnchorRail items={anchorRailItems} title="这份报告" />
+            </div>
 
-            <div className="min-w-0 flex-1 lg:max-w-[680px] space-y-2">
-              {/* Sub-Spec B1 软入口：让用户发现新版"未来时间地图" */}
-              <Link
-                href={`/r/${id}`}
-                className="fb-card block p-3 transition hover:border-[#3b5998]"
-              >
-                <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 space-y-5 md:space-y-6">
+              <section className="fb-card border-t-2 border-t-[#3b5998] p-4 md:p-6">
+                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
                   <div>
-                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998] mb-1">
-                      新版 · 时间地图
+                    <div className="text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+                      完整版 · 深入报告
                     </div>
-                    <div className="text-[14px] text-[color:var(--ink-1)] leading-[1.34]">
-                      看你未来 30 天 / 12 个月 / 5 年的命理时点 →
-                    </div>
+                    <h2 className="mt-2 text-[22px] font-bold leading-[1.28] text-[color:var(--ink-1)] md:text-[28px]">
+                      这里是完整内容，不只是时间地图摘要。
+                    </h2>
+                    <p className="mt-2 max-w-2xl text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
+                      下面会展开个人结构总览、深入命理细节、行动建议和验证闭环。想先看未来 30 天 / 12 个月 / 5 年关键时点，可以回到摘要版。
+                    </p>
                   </div>
-                  <span className="text-[#3b5998] font-bold text-lg">→</span>
+
+                  <div className="flex flex-col gap-2 md:min-w-[220px]">
+                    <a
+                      href="#deep-report"
+                      className="fb-btn fb-btn-primary inline-flex items-center justify-center"
+                    >
+                      直接看深入报告
+                    </a>
+                    <Link
+                      href={summaryHref}
+                      className="inline-flex items-center justify-center rounded-[3px] border border-[color:var(--hairline)] px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-3)] transition hover:bg-[#e9ebee] hover:text-[#3b5998]"
+                    >
+                      回到摘要版
+                    </Link>
+                  </div>
                 </div>
-              </Link>
+
+                <div className="mt-4 grid gap-2 text-[12px] font-semibold text-[color:var(--ink-3)] md:grid-cols-3">
+                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">完整报告：结构总览</div>
+                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">深入细节：节奏与场景</div>
+                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">下一步：行动与验证</div>
+                </div>
+              </section>
 
               <div className="fb-card overflow-hidden">
                 <ReportCover
@@ -807,7 +831,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
-              <section id="cockpit" className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5">
+              <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-6">
                 <div className="fb-section-title text-[16px] font-bold text-[color:var(--ink-1)]">
                   个人结构总览
                 </div>
@@ -894,91 +918,117 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ) : null}
               </section>
 
-              <section id="deep-report" className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5">
-                <header>
-                  <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+              <section id="deep-report" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-6">
+                <header className="border-b border-[color:var(--hairline)] pb-4">
+                  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
                     <div>
                       <div className="fb-section-title text-[16px] font-bold text-[color:var(--ink-1)]">深入报告</div>
-                      <p className="mt-1 text-[13px] leading-[1.5] text-[color:var(--ink-4)]">
-                        首屏总览和三步动作之后，下面是完整命理细节。
+                      <p className="mt-1 max-w-2xl text-[13px] leading-[1.5] text-[color:var(--ink-4)]">
+                        改成两区阅读：左边看结构和节奏，右边看行动和验证。别把所有模块像流水账一样往下堆。
                       </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs font-bold text-[color:var(--ink-3)] md:min-w-[260px]">
+                      <a href="#deep-structure" className="rounded-[3px] border border-[#3b5998]/30 bg-[#f6f7f9] px-3 py-2 text-center text-[#3b5998]">
+                        01 结构节奏
+                      </a>
+                      <a href="#deep-action" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-center hover:bg-[#f6f7f9]">
+                        02 行动验证
+                      </a>
                     </div>
                   </div>
                 </header>
 
-                <div id="trend" className="mt-4 grid gap-3 scroll-mt-24 xl:grid-cols-[1.08fr_0.92fr]">
-                  <LifeKLineSummaryCard
-                    section={reportV4Sections.lifeKLine}
-                    klineData={result.klineData}
-                  />
-                  <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
-                </div>
+                <div className="mt-4 grid gap-4 xl:grid xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:items-start">
+                  <div id="deep-structure" className="min-w-0 scroll-mt-header space-y-3">
+                    <div className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
+                      <div className="text-[12px] font-bold text-[#3b5998]">01 · 结构节奏</div>
+                      <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                        先看命盘底层结构、阶段节奏和当前运行状态。
+                      </p>
+                    </div>
 
-                <div id="overview" className="mt-3">
-                  <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
-                </div>
+                    <div id="trend" className="grid gap-3 scroll-mt-header">
+                      <LifeKLineSummaryCard
+                        section={reportV4Sections.lifeKLine}
+                        klineData={result.klineData}
+                      />
+                      <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
+                    </div>
 
-                <div id="current-state" className="mt-3 scroll-mt-24">
-                  <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
-                </div>
+                    <div id="overview" className="scroll-mt-header">
+                      <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
+                    </div>
 
-                <div id="scenario" className="mt-3 scroll-mt-24">
-                  <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
-                </div>
+                    <div id="current-state" className="scroll-mt-header">
+                      <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
+                    </div>
 
-                <div id="action-validation" className="mt-3 grid gap-3 scroll-mt-24 xl:grid-cols-2">
-                  <ReportActionBoard section={reportV4Sections.actionBoard} />
-                  <ReportValidationPanel section={reportV4Sections.validationLayer} />
-                </div>
-
-                {/* v5-D1: 主报告读完后的专项服务 teaser */}
-                {primaryPremiumOffer ? (
-                  <div className="mt-4">
-                    <PremiumTeaser
-                      reportId={id}
-                      offer={primaryPremiumOffer}
-                      anchorHref="#premium"
-                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                      sourceFamily={sourceCtaStrategy.sourceFamily}
-                    />
+                    <div id="scenario" className="scroll-mt-header">
+                      <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
+                    </div>
                   </div>
-                ) : null}
 
-                <div id="past-present-future" className="mt-3 scroll-mt-24">
-                  <PastPresentFutureRow
-                    past={pastValidationBlock}
-                    present={presentDiagnosisBlock}
-                    future={futureGuidanceBlock}
-                  />
+                  <aside id="deep-action" className="min-w-0 scroll-mt-header space-y-3 xl:sticky sticky-top-header">
+                    <div className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
+                      <div className="text-[12px] font-bold text-[#3b5998]">02 · 行动验证</div>
+                      <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                        再看下一步怎么做、怎么验证、哪些信息值得继续追问。
+                      </p>
+                    </div>
+
+                    <div id="action-validation" className="grid gap-3 scroll-mt-header">
+                      <ReportActionBoard section={reportV4Sections.actionBoard} />
+                      <ReportValidationPanel section={reportV4Sections.validationLayer} />
+                    </div>
+
+                    {/* v5-D1: 主报告读完后的专项服务 teaser */}
+                    {primaryPremiumOffer ? (
+                      <PremiumTeaser
+                        reportId={id}
+                        offer={primaryPremiumOffer}
+                        anchorHref="#premium"
+                        ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                        sourceFamily={sourceCtaStrategy.sourceFamily}
+                      />
+                    ) : null}
+
+                    <div id="past-present-future" className="scroll-mt-header">
+                      <PastPresentFutureRow
+                        past={pastValidationBlock}
+                        present={presentDiagnosisBlock}
+                        future={futureGuidanceBlock}
+                      />
+                    </div>
+
+                    <ReportStageProgress
+                      ladder={reportStageLadder}
+                      current={currentStageLadderItem}
+                      next={nextStageLadderItem}
+                      qualityAudit={qualityAudit}
+                      llmUsed={result.llmUsed}
+                      isEnhancementPending={isEnhancementPending}
+                      enhancementStatusMessage={enhancementStatusMessage}
+                      upgradeStatus={upgradeJob?.status}
+                      upgradeStatusLabel={upgradeStatusLabel}
+                    />
+
+                    {canManage ? (
+                      <ValidationFeedbackHero
+                        toneClass={feedbackHeroTone}
+                        label={feedbackHeroLabel}
+                        validationInsights={validationInsights}
+                        correctionInsight={correctionInsight}
+                      />
+                    ) : null}
+
+                    <ReportHighlightsGrid items={reportHighlights} />
+
+                    <ReadingPathPlanner
+                      coreSectionNames={coreSectionNames}
+                      deferredSectionNames={deferredSectionNames}
+                    />
+                  </aside>
                 </div>
-
-                <ReportStageProgress
-                  ladder={reportStageLadder}
-                  current={currentStageLadderItem}
-                  next={nextStageLadderItem}
-                  qualityAudit={qualityAudit}
-                  llmUsed={result.llmUsed}
-                  isEnhancementPending={isEnhancementPending}
-                  enhancementStatusMessage={enhancementStatusMessage}
-                  upgradeStatus={upgradeJob?.status}
-                  upgradeStatusLabel={upgradeStatusLabel}
-                />
-
-                {canManage ? (
-                  <ValidationFeedbackHero
-                    toneClass={feedbackHeroTone}
-                    label={feedbackHeroLabel}
-                    validationInsights={validationInsights}
-                    correctionInsight={correctionInsight}
-                  />
-                ) : null}
-
-                <ReportHighlightsGrid items={reportHighlights} />
-
-                <ReadingPathPlanner
-                  coreSectionNames={coreSectionNames}
-                  deferredSectionNames={deferredSectionNames}
-                />
               </section>
 
               {/* v5-D38 继续探索导航 */}
@@ -1030,7 +1080,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 description="当主报告已经指出方向，这里承接更聚焦的专项判断和深度服务需求。"
                 delayMs={180}
               >
-                <div className="scroll-mt-24">
+                <div className="scroll-mt-header">
                   <ReportPremiumServices
                     reportId={id}
                     canManage={canManage}
@@ -1049,7 +1099,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 description="把后续月度提醒、内容更新和邮件留存接回这份主报告，方便你持续复访。"
                 delayMs={320}
               >
-                <div className="scroll-mt-24">
+                <div className="scroll-mt-header">
                   <ReportSubscriptionPanel
                     reportId={id}
                     canManage={canManage}
@@ -1071,7 +1121,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 description="把这份报告转成接下来最值得执行、验证和复盘的几个动作，而不是停在阅读层。"
                 delayMs={620}
               >
-                <div className="scroll-mt-24">
+                <div className="scroll-mt-header">
                   <Suspense fallback={<GuideSkeleton />}>
                     <NextStepGuide
                       reportId={id}
@@ -1092,7 +1142,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
               />
 
-              <div id="tool-recommendations" className="scroll-mt-24">
+              <div id="tool-recommendations" className="scroll-mt-header">
                 <ToolRecommendations
                   report={experienceReport}
                   page={`/result/${id}`}
@@ -1105,7 +1155,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 />
               </div>
 
-              <div id="related-content" className="scroll-mt-24">
+              <div id="related-content" className="scroll-mt-header">
                 <ResultDeferredSection
                   title="延伸内容"
                   description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
@@ -1176,7 +1226,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <div className="mt-3 grid gap-2 sm:grid-cols-3">
                     {stateVectorCards.map((item) => (
                       <div key={item.label} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-2 py-2 text-center">
-                        <div className="text-[11px] text-[color:var(--ink-4)] tracking-[0.14em]">{item.label}</div>
+                        <div className="text-xs text-[color:var(--ink-4)] tracking-[0.14em]">{item.label}</div>
                         <div className="mt-1 text-[18px] font-bold text-[#3b5998]">{item.value.toFixed(1)}</div>
                       </div>
                     ))}
@@ -1184,13 +1234,13 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   {referenceAuthority ? (
                     <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-[11px] font-semibold text-[#3b5998]">
+                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[#3b5998]">
                           {`参考权威度 ${referenceAuthority.authorityScore}`}
                         </span>
-                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
                           {`来源 ${referenceAuthority.sourceCount}`}
                         </span>
-                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
                           {`经典 ${referenceAuthority.classicBookCount}`}
                         </span>
                       </div>
@@ -1200,7 +1250,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       {referenceSignals.length > 0 ? (
                         <div className="mt-2 flex flex-wrap gap-1">
                           {referenceSignals.map((signal) => (
-                            <span key={signal} className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-[11px] text-[color:var(--ink-2)]">
+                            <span key={signal} className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs text-[color:var(--ink-2)]">
                               {signal}
                             </span>
                           ))}

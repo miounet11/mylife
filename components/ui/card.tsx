@@ -36,7 +36,7 @@ const variantMap: Record<CardVariant, string> = {
   default:     'bg-[color:var(--paper)] border border-[color:var(--hairline)]',
   raised:      'bg-[color:var(--paper)] border border-[color:var(--hairline)] shadow-[var(--shadow-card)]',
   sunken:      'bg-[color:var(--bg-sunken)] border border-[color:var(--hairline)]',
-  interactive: 'bg-[color:var(--bg-elevated)] border border-[color:var(--hairline-strong)] shadow-[var(--shadow-card)] cursor-pointer transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)] hover:shadow-[var(--shadow-pop)]',
+  interactive: 'fb-card cursor-pointer transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)]',
   signal:      'bg-[color:var(--paper)] border border-[color:var(--signal)] shadow-[0_0_0_3px_var(--signal-soft)]',
   terminal:    'bg-[#1a2722] text-[#d8dfd9] border border-[rgba(245,247,242,0.10)]',
   // 旧值兼容

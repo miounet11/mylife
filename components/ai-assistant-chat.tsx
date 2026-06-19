@@ -39,19 +39,29 @@ import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
 import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
+import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 type ChatContextReport = ChatReportContext;
+
+const CHAT_HISTORY_TIMEOUT_MS = 12_000;
+const CHAT_REPLY_TIMEOUT_MS = 90_000;
+const CHAT_DELETE_TIMEOUT_MS = 10_000;
+
+function isSilentChatAbort(error: unknown) {
+  const value = error instanceof Error ? `${error.name} ${error.message}` : `${error || ''}`;
+  return /superseded|unmounted/i.test(value);
+}
 
 // v5-D60: FB Messenger 2017 风消息流 + 底部 sticky 输入区
 export default function AIAssistantChat() {
   const searchParams = useSearchParams();
-  const reportId = searchParams.get('reportId') || '';
-  const eventId = searchParams.get('eventId') || '';
-  const intent = searchParams.get('intent') || '';
-  const source = searchParams.get('source') || '';
-  const ctaStrategyKey = searchParams.get('ctaStrategyKey') || '';
-  const sourceFamily = searchParams.get('sourceFamily') || '';
-  const prefilledQuestion = searchParams.get('question') || '';
+  const reportId = searchParams?.get('reportId') || '';
+  const eventId = searchParams?.get('eventId') || '';
+  const intent = searchParams?.get('intent') || '';
+  const source = searchParams?.get('source') || '';
+  const ctaStrategyKey = searchParams?.get('ctaStrategyKey') || '';
+  const sourceFamily = searchParams?.get('sourceFamily') || '';
+  const prefilledQuestion = searchParams?.get('question') || '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [context, setContext] = useState<ChatContextState | null>(null);
   const [input, setInput] = useState('');
@@ -108,6 +118,10 @@ export default function AIAssistantChat() {
   } = useChatEvents({ context, reportId, source, setError });
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fetchHistoryRef = useRef<(showLoader?: boolean) => Promise<boolean>>(async () => false);
+  const mountedRef = useRef(true);
+  const historyControllerRef = useRef<AbortController | null>(null);
+  const replyControllerRef = useRef<AbortController | null>(null);
+  const messageActionControllerRef = useRef<AbortController | null>(null);
   const intentPreset = getIntentPreset(intent);
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
@@ -121,6 +135,15 @@ export default function AIAssistantChat() {
   const tacitSummary = buildTacitKnowledgeSummary(tacitContext);
   const hasTacitContext = hasTacitKnowledgeInput(tacitContext);
   const canRestoreTacit = hasTacitKnowledgeInput(restoredTacitContext) && !areTacitKnowledgeInputsEqual(restoredTacitContext, tacitContext);
+
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      abortControllerRef(historyControllerRef, 'chat-unmounted');
+      abortControllerRef(replyControllerRef, 'chat-unmounted');
+      abortControllerRef(messageActionControllerRef, 'chat-unmounted');
+    };
+  }, []);
 
   const fetchHistory = async (showLoader = false) => {
     try {
@@ -136,8 +159,13 @@ export default function AIAssistantChat() {
       if (ctaStrategyKey) queryParams.set('ctaStrategyKey', ctaStrategyKey);
       if (sourceFamily) queryParams.set('sourceFamily', sourceFamily);
       const query = queryParams.toString() ? `?${queryParams.toString()}` : '';
-      const response = await fetch(`/api/chat${query}`, { cache: 'no-store' });
-      const data = await response.json();
+      const { response, data } = await fetchJsonWithTimeout<any>(`/api/chat${query}`, {
+        cache: 'no-store',
+        timeoutMs: CHAT_HISTORY_TIMEOUT_MS,
+        timeoutReason: 'chat-history-timeout',
+        controllerRef: historyControllerRef,
+        supersedeReason: 'chat-history-superseded',
+      });
       if (!response.ok || !data.success) {
         setError(data.error || '加载聊天历史失败');
         return false;
@@ -168,8 +196,11 @@ export default function AIAssistantChat() {
       setTacitContext(cloneTacitKnowledgeInput(latestTacitContext));
       setShowTacitComposer(hasTacitKnowledgeInput(latestTacitContext));
       return true;
-    } catch {
-      setError('网络异常，加载聊天历史失败');
+    } catch (historyError) {
+      if (!mountedRef.current || isSilentChatAbort(historyError)) {
+        return false;
+      }
+      setError(isAbortLikeError(historyError) ? '加载聊天历史等待时间过长，请稍后重试' : '网络异常，加载聊天历史失败');
       return false;
     } finally {
       if (showLoader) {
@@ -276,7 +307,7 @@ export default function AIAssistantChat() {
     }
 
     try {
-      const response = await fetch('/api/chat', {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -285,8 +316,11 @@ export default function AIAssistantChat() {
           materials: toMaterialPayload(materialSnapshot),
           ...scopePayload,
         }),
+        timeoutMs: CHAT_REPLY_TIMEOUT_MS,
+        timeoutReason: 'chat-reply-timeout',
+        controllerRef: replyControllerRef,
+        supersedeReason: 'chat-reply-superseded',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setMessages((current) => current.filter((item) => item.id !== userMessage.id));
         setMaterials(materialSnapshot);
@@ -326,10 +360,13 @@ export default function AIAssistantChat() {
       if (!data.llmUsed) {
         setError('当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。');
       }
-    } catch {
+    } catch (replyError) {
       setMessages((current) => current.filter((item) => item.id !== userMessage.id));
       setMaterials(materialSnapshot);
-      setError('网络异常，AI 回复失败');
+      if (!mountedRef.current || isSilentChatAbort(replyError)) {
+        return;
+      }
+      setError(isAbortLikeError(replyError) ? 'AI 回复等待时间过长，请稍后重试' : '网络异常，AI 回复失败');
     } finally {
       setIsTyping(false);
     }
@@ -345,22 +382,28 @@ export default function AIAssistantChat() {
     setEditingMessageId(null);
 
     try {
-      const response = await fetch('/api/chat', {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messageId,
           ...scopePayload,
         }),
+        timeoutMs: CHAT_DELETE_TIMEOUT_MS,
+        timeoutReason: 'chat-delete-timeout',
+        controllerRef: messageActionControllerRef,
+        supersedeReason: 'chat-message-action-superseded',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '删除消息失败');
         return;
       }
       await fetchHistory(false);
-    } catch {
-      setError('网络异常，删除消息失败');
+    } catch (deleteError) {
+      if (!mountedRef.current || isSilentChatAbort(deleteError)) {
+        return;
+      }
+      setError(isAbortLikeError(deleteError) ? '删除消息等待时间过长，请稍后重试' : '网络异常，删除消息失败');
     } finally {
       setMessageActionKey(null);
     }
@@ -377,7 +420,7 @@ export default function AIAssistantChat() {
     setEditingMessageId(null);
 
     try {
-      const response = await fetch('/api/chat', {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -385,8 +428,11 @@ export default function AIAssistantChat() {
           messageId,
           ...scopePayload,
         }),
+        timeoutMs: CHAT_REPLY_TIMEOUT_MS,
+        timeoutReason: 'chat-regenerate-timeout',
+        controllerRef: messageActionControllerRef,
+        supersedeReason: 'chat-message-action-superseded',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '重新生成失败');
         return;
@@ -395,8 +441,11 @@ export default function AIAssistantChat() {
       if (!data.llmUsed) {
         setError('当前为简化回答版本，你可以稍后再试。');
       }
-    } catch {
-      setError('网络异常，重新生成失败');
+    } catch (regenerateError) {
+      if (!mountedRef.current || isSilentChatAbort(regenerateError)) {
+        return;
+      }
+      setError(isAbortLikeError(regenerateError) ? '重新生成等待时间过长，请稍后重试' : '网络异常，重新生成失败');
     } finally {
       setIsTyping(false);
       setMessageActionKey(null);
@@ -431,7 +480,7 @@ export default function AIAssistantChat() {
     setError('');
 
     try {
-      const response = await fetch('/api/chat', {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -440,8 +489,11 @@ export default function AIAssistantChat() {
           content,
           ...scopePayload,
         }),
+        timeoutMs: CHAT_REPLY_TIMEOUT_MS,
+        timeoutReason: 'chat-edit-timeout',
+        controllerRef: messageActionControllerRef,
+        supersedeReason: 'chat-message-action-superseded',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '修改消息失败');
         return;
@@ -452,8 +504,11 @@ export default function AIAssistantChat() {
       if (!data.llmUsed) {
         setError('当前为简化回答版本，你可以稍后再试。');
       }
-    } catch {
-      setError('网络异常，修改消息失败');
+    } catch (editError) {
+      if (!mountedRef.current || isSilentChatAbort(editError)) {
+        return;
+      }
+      setError(isAbortLikeError(editError) ? '修改消息等待时间过长，请稍后重试' : '网络异常，修改消息失败');
     } finally {
       setIsTyping(false);
       setMessageActionKey(null);
@@ -519,7 +574,7 @@ export default function AIAssistantChat() {
                   <Sparkles className="h-3 w-3" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#365899]">
+                  <div className="text-xs font-bold uppercase tracking-[0.12em] text-[#365899]">
                     系统已带上你的报告
                   </div>
                   <p className="mt-1.5 text-[13px] leading-5 text-[#1d2129]">
@@ -548,7 +603,7 @@ export default function AIAssistantChat() {
 
           {!loadingHistory && messages.length === 0 && !context && (
             <div className="space-y-3 rounded-[3px] border border-[#dddfe2] bg-white p-3">
-              <div className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
                 <Sparkles className="h-3 w-3" />
                 推荐追问
               </div>
@@ -680,7 +735,7 @@ export default function AIAssistantChat() {
               />
               {hasTacitContext ? (
                 <div className="mt-1 px-1">
-                  <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#3b5998]">
+                  <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#3b5998]">
                     已带入默会信息
                   </span>
                 </div>

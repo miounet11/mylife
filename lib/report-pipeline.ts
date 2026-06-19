@@ -140,6 +140,7 @@ export async function generateVersionedReport(params: {
   tacitSummary?: string;
   tacitSignals?: string[];
   source: PipelineSource;
+  userId?: string;
   upgradedFromVersion?: string;
   onProgress?: (event: {
     stage: ReportStage;
@@ -359,6 +360,7 @@ export async function regenerateReportFromRecord(record: FortuneRecord) {
     birthPlace: record.birthPlace || '北京',
     timezone: record.timezone || 8,
     gender: record.gender,
+    userId: record.userId,
     source: 'upgrade',
     upgradedFromVersion: record.reportVersion || 'v1',
   });

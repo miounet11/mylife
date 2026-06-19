@@ -79,7 +79,7 @@ export default function ReportStageProgress({
       <div className="mt-4 rounded-[var(--radius)] border border-white/70 bg-[color:var(--paper)] p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告阅读进度</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">报告阅读进度</div>
             <div className="mt-2 text-sm font-semibold text-[color:var(--ink)]">
               {`你现在拿到的是${current.label}。`}
             </div>
@@ -110,7 +110,7 @@ export default function ReportStageProgress({
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
                 <span
-                  className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+                  className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
                     item.status === 'current'
                       ? 'bg-[color:var(--paper)] text-[color:var(--accent-strong)]'
                       : item.status === 'completed'

@@ -94,7 +94,7 @@ export default function ResumeBar({ target, surface }: ResumeBarProps) {
             {iconForKind(target.kind)}
           </div>
           <div className="flex-1 min-w-0">
-            <div className={`text-[10px] font-bold uppercase tracking-[0.18em] ${tone.eyebrow}`}>
+            <div className={`text-xs font-bold uppercase tracking-[0.18em] ${tone.eyebrow}`}>
               {eyebrowText(target.kind)}
             </div>
             <div className="mt-1 truncate text-sm font-bold text-[color:var(--ink-1)] md:text-base">

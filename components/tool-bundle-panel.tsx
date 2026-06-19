@@ -23,7 +23,7 @@ export default function ToolBundlePanel({
   }
 
   return (
-    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+    <section className="fb-card p-5 md:p-6">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -36,7 +36,7 @@ export default function ToolBundlePanel({
         </div>
         <Link
           href="/tools"
-          className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+          className="fb-btn inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--fb-blue)] hover:no-underline"
         >
           回到工具中心
         </Link>
@@ -50,9 +50,9 @@ export default function ToolBundlePanel({
             toolSlug={tool.slug}
             category={tool.category}
             page={page}
-            className="group block rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
+            className="group p-4 transition-colors hover:no-underline"
           >
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               {tool.category}
             </div>
             <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">

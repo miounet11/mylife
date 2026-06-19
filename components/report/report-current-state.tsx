@@ -39,10 +39,10 @@ export default function ReportCurrentState({ section }: ReportCurrentStateProps)
       aria-label="当前运行状态"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
           当前操作系统
         </div>
-        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-[10px] font-bold uppercase tracking-wider ${stanceTone(section.stance)}`}>
+        <span className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 font-mono text-xs font-bold uppercase tracking-wider ${stanceTone(section.stance)}`}>
           {compactCopy(section.stanceLabel, 18) || fallbackStanceLabel(section.stance)}
         </span>
       </div>
@@ -71,7 +71,7 @@ export default function ReportCurrentState({ section }: ReportCurrentStateProps)
       )}
 
       <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-4)]">
-        <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
           USAGE
         </span>
         <div className="mt-0.5">

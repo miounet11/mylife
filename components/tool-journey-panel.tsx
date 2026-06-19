@@ -47,7 +47,7 @@ export default function ToolJourneyPanel({
             key={item.slug}
             className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
           >
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               STEP {String(index + 1).padStart(2, '0')}
             </div>
             <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">

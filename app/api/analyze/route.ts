@@ -392,6 +392,7 @@ async function executeAnalyze(
     sect: useSeparateZiHour ? 1 : 2,
     tacitSummary,
     tacitSignals,
+    userId,
     source: 'analyze',
     onProgress: async (progressEvent) => {
       const mapped = mapPipelineStage(progressEvent);
@@ -583,7 +584,7 @@ async function executeAnalyze(
     },
   });
 
-  await notifyRegisteredUserReportReady({
+  void notifyRegisteredUserReportReady({
     userId,
     reportId,
     reportName: data.name,

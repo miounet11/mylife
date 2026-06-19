@@ -99,7 +99,7 @@ export default async function PublicQuestionsPage() {
             <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               这里是用户实际发出的命理追问，全部匿名公开。每条都标注了创建时间，并尽可能保留关联的结构判断。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
@@ -158,7 +158,7 @@ export default async function PublicQuestionsPage() {
                       href={item.href}
                       className="group block h-full rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
                     >
-                      <div className="flex flex-wrap items-center gap-2 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                      <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-[color:var(--ink-4)]">
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">
                           <FileQuestion className="h-3 w-3" />
                           {item.contextLabel}

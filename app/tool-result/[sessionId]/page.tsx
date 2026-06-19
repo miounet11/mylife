@@ -122,9 +122,9 @@ export default async function ToolResultPage({
           <div className="min-w-0 flex-1 lg:max-w-[680px] space-y-2">
             <section
               id="tr-cockpit"
-              className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
                 <Sparkles className="h-3.5 w-3.5" />
                 {tool.title}
               </div>
@@ -158,9 +158,9 @@ export default async function ToolResultPage({
 
             <section
               id="tr-summary"
-              className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
                 <ScrollText className="h-3.5 w-3.5" />
                 免费结果摘要
               </div>
@@ -175,9 +175,9 @@ export default async function ToolResultPage({
 
             <section
               id="tr-next"
-              className="fb-card scroll-mt-24 border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
                 <Sparkles className="h-3.5 w-3.5" />
                 下一步承接
               </div>
@@ -206,9 +206,9 @@ export default async function ToolResultPage({
             </section>
 
             {growthProfile ? (
-              <section id="tr-growth" className="scroll-mt-24 grid gap-3 lg:grid-cols-[1fr_0.95fr]">
+              <section id="tr-growth" className="scroll-mt-header grid gap-3 xl:grid-cols-[1fr_0.95fr]">
                 <div className="fb-card border-t-2 border-t-[#3b5998] p-4 md:p-5">
-                  <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
                     <LockKeyhole className="h-3.5 w-3.5" />
                     免费结果之后
                   </div>
@@ -252,7 +252,7 @@ export default async function ToolResultPage({
               compact
             />
 
-            <section id="tr-deep" className="scroll-mt-24">
+            <section id="tr-deep" className="scroll-mt-header">
               <PriorityDisclosure
                 label="更多结果层"
                 title="深度解释、质检、历史上下文和升级入口"
@@ -262,7 +262,7 @@ export default async function ToolResultPage({
                 <div className="space-y-3">
                   {deepDiveSections.length > 0 ? (
                     <div className="fb-card p-4 md:p-5">
-                      <div className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
                         <Sparkles className="h-3.5 w-3.5" />
                         深度解释
                       </div>
@@ -350,7 +350,7 @@ export default async function ToolResultPage({
                   />
                   <ToolPremiumRequestPanel tool={tool} reportId={report?.id} page={`/tool-result/${session.id}`} />
                   {bundle ? <ToolBundlePanel bundle={bundle} page={`/tool-result/${session.id}`} /> : null}
-                  <div id="tr-tools" className="scroll-mt-24">
+                  <div id="tr-tools" className="scroll-mt-header">
                     <ToolRecommendations
                       report={report}
                       page={`/tool-result/${session.id}`}
@@ -419,7 +419,7 @@ export default async function ToolResultPage({
 function ResultCard({ title, value }: { title: string; value: string }) {
   return (
     <div className="fb-card p-3">
-      <div className="text-[11px] tracking-[0.14em] uppercase text-[color:var(--ink-4)]">{title}</div>
+      <div className="text-xs tracking-[0.14em] uppercase text-[color:var(--ink-4)]">{title}</div>
       <div className="mt-2 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">{value}</div>
     </div>
   );

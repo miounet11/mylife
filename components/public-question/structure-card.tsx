@@ -63,7 +63,7 @@ export default function PublicQuestionStructureCard({ structure }: Props) {
         <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
           结构速读
         </div>
-        <div className="text-[10px] text-[color:var(--ink-5)]">
+        <div className="text-xs text-[color:var(--ink-5)]">
           来自报告权威字段，仅供参考
         </div>
       </div>
@@ -71,7 +71,7 @@ export default function PublicQuestionStructureCard({ structure }: Props) {
       <div className="grid gap-3 md:grid-cols-3">
         {/* 主轴 */}
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-white/80 p-3">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">主轴</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">主轴</div>
           <div className="mt-1 text-base font-black text-[color:var(--ink-1)]">
             {structure.patternName || '未指定格局'}
           </div>
@@ -93,7 +93,7 @@ export default function PublicQuestionStructureCard({ structure }: Props) {
 
         {/* 用神 / 忌神 */}
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-white/80 p-3">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">用神 / 忌神</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">用神 / 忌神</div>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {(structure.favorable || []).map((el) => (
               <ElementChip key={`fav-${el}`} el={el} tone="favor" />
@@ -107,7 +107,7 @@ export default function PublicQuestionStructureCard({ structure }: Props) {
           </div>
           {hasDirections && (
             <div className="mt-3 border-t border-dashed border-[color:var(--hairline)] pt-2">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">推进方向</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">推进方向</div>
               <ul className="mt-1 space-y-0.5">
                 {structure.directions!.slice(0, 3).map((d, i) => (
                   <li key={i} className="text-xs leading-5 text-[color:var(--ink-3)]">
@@ -121,14 +121,14 @@ export default function PublicQuestionStructureCard({ structure }: Props) {
 
         {/* 时间窗口（简易甘特） */}
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-white/80 p-3 md:col-span-1">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">时间窗口</div>
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">时间窗口</div>
           {!hasWindows ? (
             <div className="mt-2 text-xs text-[color:var(--ink-5)]">未识别</div>
           ) : (
             <ol className="mt-2 space-y-1.5">
               {structure.windows.slice(0, 4).map((w, idx) => (
                 <li key={`${w.when}-${idx}`} className="flex items-baseline gap-2">
-                  <span className="inline-flex h-5 min-w-[3.5rem] items-center justify-center rounded bg-[color:var(--brand-soft)] px-1.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
+                  <span className="inline-flex h-5 min-w-[3.5rem] items-center justify-center rounded bg-[color:var(--brand-soft)] px-1.5 text-xs font-bold text-[color:var(--brand-strong)]">
                     {w.when}
                   </span>
                   <span className="text-xs leading-5 text-[color:var(--ink-3)]">{w.action}</span>

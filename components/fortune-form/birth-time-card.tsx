@@ -35,11 +35,11 @@ export default function BirthTimeCard({
         "
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
+          <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
             出生时间
           </div>
           <span
-            className={`text-[10px] tracking-[0.08em] uppercase ${
+            className={`text-xs tracking-[0.08em] uppercase ${
               confirmed
                 ? 'text-[color:var(--brand-strong)]'
                 : 'text-[color:var(--ink-5)]'
@@ -48,7 +48,10 @@ export default function BirthTimeCard({
             {confirmed ? '已确认' : '待确认'}
           </span>
         </div>
-        <div className="mt-1.5 truncate font-mono text-[20px] md:text-[26px] leading-[1.15] tracking-[0.01em]">
+        <div
+          title={label || undefined}
+          className="mt-1.5 break-all line-clamp-2 font-mono text-[20px] md:text-[26px] leading-[1.15] tracking-[0.01em]"
+        >
           {label || '点击选择出生时间'}
         </div>
         <div className="mt-1 text-xs text-[color:var(--ink-5)]">

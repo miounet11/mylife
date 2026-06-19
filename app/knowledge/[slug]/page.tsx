@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Fragment } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Clock3, Compass, LibraryBig, Sparkles } from 'lucide-react';
+import { ArrowLeft, Clock3, Compass, Globe2, LibraryBig, MapPinned, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PublicArticleHero from '@/components/public-article-hero';
 import ContentBreadcrumbs from '@/components/content-breadcrumbs';
@@ -93,14 +93,17 @@ export async function generateMetadata({ params }: PageProps) {
 export async function generateStaticParams() {
   // v5-D119 (2026-05-25): 限制 build-time SSG 仅生成 zh-Hans/zh-CN（约 1000 页），
   // 其它语种 (en/ja/zh-Hant 共 3000+ 页) 走 ISR (revalidate=3600) 首访生成。
-  // 修因：D90..D116 决策矩阵堆叠后 SSG 4247 页，单页 LLM/SQLite 同步触发 >60s 超时，build 失败。
+  // v5-D124: 低内存构建只预渲染最近一批，避免静态页生成阶段 OOM；其余继续走 ISR。
   // 风险控制：D85 nginx micro-cache 已在，bot 首访的延迟由 60s 缓存吸收。
+  const maxStaticParams = process.env.LOW_MEMORY_BUILD === '1' ? 240 : 1000;
+
   return listPublishedManagedContentEntriesByType('knowledge')
     .filter((entry) => isPublicKnowledgeEntry(entry))
     .filter((entry) => {
       const loc = typeof entry.meta?.locale === 'string' ? entry.meta.locale : '';
       return !loc || loc === 'zh-Hans' || loc === 'zh-CN';
     })
+    .slice(0, maxStaticParams)
     .map((entry) => ({
       slug: entry.slug,
     }));
@@ -123,6 +126,13 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
     : { injectAfterIndex: -1 };
   const isWorldYiArticle = article.slug.startsWith('world-yi-');
   const isWorldYiEnglishArticle = isWorldYiArticle && locale === 'en';
+  const isWorldYiGlobalLifeArticle = article.slug === 'world-yi-en-global-life';
+  const globalLifeSignals = [
+    { icon: <MapPinned className="h-4 w-4" />, label: 'Migration field', body: 'A move changes support, cost, law, family distance, and recovery capacity.' },
+    { icon: <UsersRound className="h-4 w-4" />, label: 'Identity load', body: 'Cross-cultural life often means several identities competing for the next move.' },
+    { icon: <Globe2 className="h-4 w-4" />, label: 'Environment fit', body: 'The same structure can be sustainable in one city and destructive in another.' },
+    { icon: <ShieldCheck className="h-4 w-4" />, label: 'Decision cost', body: 'A choice is good only when its money, attention, and relationship cost can be carried.' },
+  ];
   const worldYiReadingOrder = [
     ...(isWorldYiEnglishArticle ? [
       'world-yi-en-introduction',
@@ -259,9 +269,9 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
       <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <section className="grid gap-8 lg:grid-cols-[0.95fr_0.7fr]">
-          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
+      <main className="page-frame py-5 pb-14 md:py-8 md:pb-20">
+        <section className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5 shadow-[var(--shadow-card)] md:p-7">
             <PublicArticleHero
               breadcrumbs={(
                 <ContentBreadcrumbs
@@ -319,7 +329,7 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
               ]}
             />
 
-            <div className="mt-8">
+            <div className="mt-6">
               <PublicSearchIntentPanel
                 page={`/knowledge/${article.slug}`}
                 title={article.title}
@@ -337,6 +347,32 @@ export default async function KnowledgeArticlePage({ params }: PageProps) {
                 surfaceKey={surfaceKey}
               />
             </div>
+
+            {isWorldYiGlobalLifeArticle ? (
+              <section className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+                <div className="border-b border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-tint)] via-[color:var(--paper)] to-[color:var(--bg-sunken)] p-5 md:p-6">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--brand-strong)] ring-1 ring-[color:var(--hairline)]">
+                    <Globe2 className="h-3.5 w-3.5" />
+                    Global-life judgment map
+                  </div>
+                  <h2 className="mt-4 text-2xl font-black leading-tight text-[color:var(--ink)]">Migration is not a location question. It is a structure-field-cost question.</h2>
+                  <p className="mt-3 text-sm leading-7 text-[color:var(--ink-3)]">
+                    Read this article as a decision map: first locate the person, then the field, then the cost, then the action. Anything else becomes travel-blog advice.
+                  </p>
+                </div>
+                <div className="grid gap-0 md:grid-cols-2">
+                  {globalLifeSignals.map((item) => (
+                    <div key={item.label} className="border-t border-[color:var(--hairline)] p-4 md:p-5 md:odd:border-r">
+                      <div className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
+                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-tint)] text-[color:var(--brand-strong)]">{item.icon}</span>
+                        {item.label}
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-[color:var(--ink-4)]">{item.body}</p>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            ) : null}
 
             <div className="mt-8 space-y-8">
               {article.sections.map((section, index) => (

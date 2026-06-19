@@ -26,7 +26,7 @@ interface TagProps extends React.HTMLAttributes<HTMLSpanElement> {
 }
 
 const sizeMap: Record<TagSize, string> = {
-  xs: 'h-5 px-1.5 text-[10px] gap-1',
+  xs: 'h-5 px-1.5 text-xs gap-1',
   sm: 'h-6 px-2 text-xs gap-1.5',
 };
 

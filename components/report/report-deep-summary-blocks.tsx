@@ -65,7 +65,7 @@ export function ReportHighlightsGrid({
     <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
-          <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+          <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
           <div className="mt-2 text-lg font-bold text-[color:var(--ink)]">{item.value}</div>
         </div>
       ))}
@@ -101,7 +101,7 @@ export function PastPresentFutureRow({
           key={section.eyebrow}
           className={`rounded-[var(--radius)] border px-5 py-5 ${tones[index]}`}
         >
-          <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[color:var(--muted)]">
             {section.eyebrow}
           </div>
           <div className="mt-3 text-base font-bold leading-7 text-[color:var(--ink)]">

@@ -263,7 +263,7 @@ async function main() {
   // 跳过已存在 slug
   const dbPath = path.join(process.cwd(), 'data/lifekline.db');
   const db = new Database(dbPath, { readonly: true });
-  const existing = new Set(db.prepare("SELECT slug FROM content_entries WHERE content_type='knowledge'").all().map((r: { slug: string }) => r.slug));
+  const existing = new Set((db.prepare("SELECT slug FROM content_entries WHERE content_type='knowledge'").all() as Array<{ slug: string }>).map((r) => r.slug));
   db.close();
 
   const allSpecs = gatherSpecs();

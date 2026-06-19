@@ -95,7 +95,7 @@ export default function PublicSearchIntentPanel({
 
           <div className="mt-5 grid gap-2 md:grid-cols-3">
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                 <span>01</span>
                 <Sparkles className="h-3 w-3" />
                 先理解
@@ -103,7 +103,7 @@ export default function PublicSearchIntentPanel({
               <div className="mt-1.5 text-xs leading-5 text-[color:var(--ink-4)]">{title}</div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                 <span>02</span>
                 <Compass className="h-3 w-3" />
                 再落自己
@@ -113,7 +113,7 @@ export default function PublicSearchIntentPanel({
               </div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3">
-              <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                 <span>03</span>
                 <ArrowRight className="h-3 w-3" />
                 形成动作
@@ -126,7 +126,7 @@ export default function PublicSearchIntentPanel({
         </div>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-4">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             推荐下一步
           </div>
           <div className="mt-3 space-y-2">

@@ -89,7 +89,7 @@ export default function ReportTimingTabs({ record }: Props) {
               <span>{label}</span>
               {count > 0 && (
                 <span
-                  className={`rounded-full px-1.5 text-[10px] font-bold ${
+                  className={`rounded-full px-1.5 text-xs font-bold ${
                     selected
                       ? 'bg-white/25 text-white'
                       : 'bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'

@@ -25,7 +25,7 @@ export default function TimingPointCard({ point }: Props) {
       className="lk-readonly rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4 shadow-sm"
     >
       <div className="flex items-center gap-2 text-xs text-[color:var(--ink-3)]">
-        <span className={`px-2 py-0.5 rounded-full text-[11px] font-bold ${SEVERITY_BADGE_CLASS[point.severity]}`}>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${SEVERITY_BADGE_CLASS[point.severity]}`}>
           {SEVERITY_LABEL[point.severity]}
         </span>
         <span className="font-mono">{dateLabel}</span>

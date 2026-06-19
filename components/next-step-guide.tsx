@@ -96,7 +96,7 @@ export default function NextStepGuide({
                   key={item}
                   className="flex items-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5"
                 >
-                  <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">
+                  <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <CheckCircle2 className="h-3 w-3 shrink-0 text-[color:var(--brand)]" />
@@ -129,7 +129,7 @@ export default function NextStepGuide({
                       <Icon className="h-4 w-4" />
                     </div>
                     {action.highlight ? (
-                      <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                      <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                         重要
                       </span>
                     ) : null}

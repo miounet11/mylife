@@ -177,7 +177,7 @@ export default function WorldYiPage() {
             <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               这是世界易体系的总入口，用来连接总论、主书、人生六域、全球传播路径和个人判断入口。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>

@@ -170,11 +170,11 @@ export default function PreheatPanel({ birthday, unknownHour = false, gender }: 
   return (
     <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[linear-gradient(180deg,var(--brand-tint)_0%,var(--paper)_60%)] p-4 md:p-5">
       <div className="flex items-center justify-between gap-2">
-        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-strong)]">
+        <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.16em] text-[color:var(--brand-strong)]">
           <Sparkles className="h-3 w-3" />
           快算预览 · 报告生成中
         </div>
-        <div className="rounded-full bg-[color:var(--paper)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--ink-4)]">
+        <div className="rounded-full bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
           {state.zodiac ? `${state.zodiac}年` : ''}
         </div>
       </div>
@@ -197,7 +197,7 @@ export default function PreheatPanel({ birthday, unknownHour = false, gender }: 
                   : 'border-[color:var(--hairline)]'
               }`}
             >
-              <div className="text-[9px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                 {p.label}
               </div>
               {isUnknown ? (
@@ -242,7 +242,7 @@ export default function PreheatPanel({ birthday, unknownHour = false, gender }: 
 
       {/* 五行分布 */}
       <div className="mt-4 space-y-1.5">
-        <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
           五行分布（快算）
         </div>
         {state.fiveElements.map((f, idx) => {
@@ -275,7 +275,7 @@ export default function PreheatPanel({ birthday, unknownHour = false, gender }: 
         })}
       </div>
 
-      <div className="mt-3 text-[10px] leading-5 text-[color:var(--ink-5)]">
+      <div className="mt-3 text-xs leading-5 text-[color:var(--ink-5)]">
         以上为客户端快算预览。完整报告会基于真太阳时与节气分钟级修正后的结构生成，最终以报告为准。
       </div>
     </div>

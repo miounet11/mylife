@@ -960,23 +960,51 @@ export const worldYiKnowledgeArticles: KnowledgeArticle[] = [
     title: 'World Yi for Global Life: Migration, Identity, Environment, and Decision Cost',
     excerpt: 'For overseas Chinese and cross-cultural readers, World Yi is useful because it treats migration, identity, family pressure, and environment as part of the same judgment system.',
     category: 'World Yi English',
-    readTime: '11 min',
-    tags: ['World Yi', 'English', 'Global Life'],
+    readTime: '13 min',
+    tags: ['World Yi', 'English', 'Global Life', 'Migration', 'Identity'],
     seoTitle: 'World Yi for Global Life: Migration, Identity, Environment, and Decision Cost',
-    seoDescription: 'Shows how World Yi can be applied to migration, identity shifts, family obligations, and decision cost in global life.',
+    seoDescription: 'Shows how World Yi can be applied to migration, identity shifts, family obligations, environmental fit, and decision cost in global life.',
     sections: [
       {
         title: 'Global life is not a single-variable problem',
         paragraphs: [
           'For globally mobile readers, life is rarely just about career or just about relationship. It often includes migration pressure, visa or status uncertainty, family responsibility, culture switching, and the cost of maintaining multiple possible futures.',
-          'World Yi is useful here because it does not isolate the person from the world. It treats the person, the stage, and the environment as part of one picture.'
+          'World Yi is useful here because it does not isolate the person from the world. It treats the person, the stage, and the environment as part of one picture. A decision that looks rational on paper can become expensive when it ignores family distance, local cost, belonging, language load, and long-term recovery capacity.'
+        ]
+      },
+      {
+        title: 'Migration is a change of field, not just a change of address',
+        paragraphs: [
+          'Moving from one country or city to another changes more than geography. It changes the rules of opportunity, the emotional distance from family, the rhythm of work, the price of mistakes, and the kind of support a person can actually access.',
+          'World Yi reads migration as a field shift. The question is not only “should I move?” but “what part of my structure becomes stronger in this field, what becomes more fragile, and what cost must be paid before the new field becomes sustainable?”'
+        ]
+      },
+      {
+        title: 'Identity pressure becomes part of the judgment',
+        paragraphs: [
+          'Cross-cultural life often forces people to carry more than one identity at the same time: professional identity, family identity, ethnic or cultural identity, visa or citizenship identity, and the private self that still needs rest and belonging.',
+          'If these identities are pulled in different directions, the problem may look like anxiety, career hesitation, relationship conflict, or family guilt. World Yi does not flatten that into a personality flaw. It asks which identity is overloaded, which one is under-supported, and which one should lead the next stage.'
         ]
       },
       {
         title: 'Decision cost changes with environment',
         paragraphs: [
-          'The same person may function very differently in Vancouver, Singapore, New York, Shenzhen, or Melbourne. The same role can feel sustainable in one environment and destructive in another.',
-          'That is why World Yi insists that environment is not a footnote. It is a core variable in real-world judgment.'
+          'The same person may function very differently in Vancouver, Singapore, New York, Shenzhen, or Melbourne. The same role can feel sustainable in one environment and destructive in another. Salary, housing, commute, community density, industry rhythm, family distance, and healthcare access all change the real cost of a choice.',
+          'That is why World Yi insists that environment is not a footnote. It is a core variable in real-world judgment. A good decision is not the one that sounds most impressive. It is the one whose cost can be carried by the person, the stage, and the field together.'
+        ]
+      },
+      {
+        title: 'Family obligation must be placed, not erased',
+        paragraphs: [
+          'For many overseas Chinese and cross-cultural readers, family obligation is not an optional emotional detail. It can shape money decisions, relationship timing, housing choices, migration plans, and the tolerance for risk.',
+          'World Yi does not tell people to simply obey or reject family pressure. It places the obligation inside the judgment map: what must be honored, what must be bounded, what must be delayed, and what cannot be allowed to consume the whole life structure.'
+        ]
+      },
+      {
+        title: 'The practical order: structure, field, cost, action',
+        paragraphs: [
+          'A global-life reading should end with action, not vague inspiration. First identify the person’s stable structure. Then locate the current field: city, country, industry, family network, legal status, and support system. Then calculate the cost: money, attention, emotional load, recovery time, and relational pressure.',
+          'Only after that should the action be chosen: move, stay, test, delay, reduce density, change role, rebuild support, or set a family boundary. This is how World Yi turns migration and identity questions into usable judgment rather than abstract cultural commentary.'
         ]
       }
     ],

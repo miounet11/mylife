@@ -20,7 +20,7 @@ interface StatProps {
 }
 
 const sizeMap = {
-  sm: { value: 'text-lg',  label: 'text-[10px]' },
+  sm: { value: 'text-lg',  label: 'text-xs' },
   md: { value: 'text-xl',  label: 'text-xs'    },
   lg: { value: 'text-2xl', label: 'text-xs'    },
 } as const;

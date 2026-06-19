@@ -15,15 +15,15 @@ import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import TodayCardStrip from '@/components/today-card-strip';
 import ToolCardLink from '@/components/tool-card-link';
-import { getFeaturedCaseStudies } from '@/lib/content-store';
 import { getAuthSession } from '@/lib/auth';
+import { getFeaturedCaseStudies } from '@/lib/content-store';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
-import { getCurrentUserId } from '@/lib/user-utils';
 import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
 import { buildPersonalGrowthHub } from '@/lib/personal-growth-hub';
 import { createPublicContentMetadata } from '@/lib/public-content-seo';
-import { getPriorityGrowthTools, getToolGrowthProfile } from '@/lib/tools';
 import { buildTodayCardMemoized } from '@/lib/today-card';
+import { getPriorityGrowthTools, getToolGrowthProfile } from '@/lib/tools';
+import { getCurrentUserId } from '@/lib/user-utils';
 
 const FortuneForm = dynamic(() => import('@/components/fortune-form'), {
   loading: () => <FormSkeleton />,
@@ -71,7 +71,6 @@ export default async function HomePage() {
     toolSessions: initialToolSessions as any,
   });
 
-  // v5-D37/D39 今日一签条带：SSR 预算所有档案的今日卡，前端只切 active
   const todayStripItems = initialReports
     .map((f) => {
       const card = buildTodayCardMemoized(f as any);
@@ -98,18 +97,18 @@ export default async function HomePage() {
          v5-D60 三栏门户首页：左 sticky 导航 / 中流 News Feed / 右 sticky trending
          ───────────────────────────────────────────── */}
       <main className="mx-auto w-full max-w-[1180px] px-3 py-3 sm:px-4">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:gap-4">
           <HomeLeftRail
             reports={leftRailReports}
             hasPersonalHistory={hasPersonalHistory}
           />
 
           {/* 中流 News Feed */}
-          <div className="flex min-w-0 flex-1 flex-col gap-2 lg:max-w-[540px]">
+          <div className="flex min-w-0 flex-1 flex-col gap-2 lg:max-w-none xl:max-w-[540px]">
             {/* 段 0：HERO + 表单（FB Composer 风） */}
             <section
               id="analysis-form"
-              className="fb-card scroll-mt-24 overflow-hidden"
+              className="fb-card scroll-mt-header overflow-hidden"
             >
               <div className="border-b border-[color:var(--fb-border-strong)] bg-white px-4 py-3">
                 <div className="fb-section-title flex items-center gap-1.5">
@@ -196,7 +195,7 @@ export default async function HomePage() {
                           source={`home_priority_growth:${tool.slug}`}
                           className="group block rounded-[3px] border border-[color:var(--fb-border)] bg-white p-3 hover:border-[color:var(--fb-blue)] hover:no-underline"
                         >
-                          <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                          <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                             {growthProfile?.heroEyebrow || tool.themeLabel}
                           </div>
                           <h3 className="mt-1 text-[14px] font-bold leading-tight text-[color:var(--fb-ink-1)]">
@@ -252,7 +251,7 @@ export default async function HomePage() {
                         }}
                         className="block px-4 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                       >
-                        <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                        <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                           {item.topicName || item.entry.category}
                         </div>
                         <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -302,7 +301,7 @@ export default async function HomePage() {
                         }}
                         className="block px-4 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                       >
-                        <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                        <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                           {item.scenario}
                         </div>
                         <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -331,7 +330,7 @@ export default async function HomePage() {
                       href="/world-yi"
                       className="block px-4 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                     >
-                      <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                      <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                         World Yi
                       </div>
                       <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -344,7 +343,7 @@ export default async function HomePage() {
                       href="/insights"
                       className="block px-4 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                     >
-                      <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                      <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                         Insights
                       </div>
                       <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -356,6 +355,7 @@ export default async function HomePage() {
               </article>
             </section>
 
+            {/* 移动端：右栏在中流尾部继续渲染（lg:hidden） */}
             {/* 段 5：个人增长（条件渲染） */}
             {hasPersonalHistory && (
               <section className="fb-card overflow-hidden">
@@ -368,8 +368,7 @@ export default async function HomePage() {
               </section>
             )}
 
-            {/* 移动端：右栏在中流尾部继续渲染（lg:hidden） */}
-            <div className="lg:hidden">
+            <div className="xl:hidden">
               <HomeRightRail
                 featuredArticles={featuredArticles}
                 featuredCases={featuredCases}
@@ -378,7 +377,7 @@ export default async function HomePage() {
           </div>
 
           {/* 桌面右栏 sticky */}
-          <div className="hidden lg:block">
+          <div className="hidden xl:block">
             <HomeRightRail
               featuredArticles={featuredArticles}
               featuredCases={featuredCases}

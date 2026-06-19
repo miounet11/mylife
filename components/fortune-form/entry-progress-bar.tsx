@@ -31,7 +31,7 @@ export default function EntryProgressBar({ segments }: EntryProgressBarProps) {
       </div>
 
       {/* < 360px：退化为 Step X/N + 进度条 */}
-      <div className="flex items-center justify-between text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)] xs:hidden">
+      <div className="flex items-center justify-between text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)] xs:hidden">
         <span>
           Step {Math.max(1, currentIndex === -1 ? total : currentIndex + 1)}/{total}
         </span>
@@ -40,7 +40,7 @@ export default function EntryProgressBar({ segments }: EntryProgressBarProps) {
 
       {/* ≥ 360px：三段刻度 */}
       <div
-        className="hidden grid-cols-3 gap-2 text-[11px] tracking-[0.08em] uppercase xs:grid"
+        className="hidden grid-cols-3 gap-2 text-xs tracking-[0.08em] uppercase xs:grid"
         aria-hidden
       >
         {segments.map((seg, idx) => {

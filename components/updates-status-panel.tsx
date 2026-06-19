@@ -107,18 +107,18 @@ export default function UpdatesStatusPanel({
 
   return (
     <div
-      className={`rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] ${compact ? 'p-4' : 'p-5'}`}
+      className={`fb-card ${compact ? 'p-3' : 'p-4'}`}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            <BellRing className="h-3 w-3" />
+          <div className="fb-section-title flex items-center gap-1.5">
+            <BellRing className="h-3 w-3 text-[color:var(--fb-blue)]" />
             {title}
           </div>
         </div>
         <Link
           href={ctaHref}
-          className="inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+          className="fb-btn inline-flex h-8 items-center gap-1 px-3 text-[12px]"
         >
           {ctaLabel}
           <ArrowRight className="h-3.5 w-3.5" />
@@ -166,9 +166,9 @@ export default function UpdatesStatusPanel({
             />
           </div>
 
-          <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2.5">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-              <RefreshCcw className="h-3 w-3" />
+          <div className="mt-3 border border-[color:var(--fb-border)] bg-[#f5f6f7] px-3 py-2.5">
+            <div className="fb-section-title inline-flex items-center gap-1.5">
+              <RefreshCcw className="h-3 w-3 text-[color:var(--fb-blue)]" />
               当前进度
             </div>
             <div className="mt-1 text-xs leading-5 text-[color:var(--ink-2)]">{focusStatus}</div>
@@ -183,7 +183,7 @@ export default function UpdatesStatusPanel({
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 href={`/result/${focusReport.id}`}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+                className="fb-btn fb-btn-primary inline-flex h-9 items-center gap-1.5 px-4"
               >
                 打开这份报告
                 <ArrowRight className="h-4 w-4" />
@@ -196,7 +196,7 @@ export default function UpdatesStatusPanel({
                   ctaStrategyKey,
                   sourceFamily,
                 })}
-                className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+                className="fb-btn inline-flex h-9 items-center gap-1.5 px-3"
               >
                 围绕报告追问
                 <ArrowRight className="h-4 w-4" />
@@ -222,29 +222,29 @@ function StatusTile({
 }) {
   const toneClass =
     tone === 'accent'
-      ? 'border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)]'
+      ? 'border-[color:var(--fb-blue)] bg-[rgba(59,89,152,0.06)]'
       : tone === 'success'
-        ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.06)]'
+        ? 'border-[rgba(66,183,42,0.28)] bg-[rgba(66,183,42,0.06)]'
         : tone === 'warning'
-          ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]'
-          : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]';
+          ? 'border-[color:var(--fb-signal)] bg-[rgba(247,185,40,0.10)]'
+          : 'border-[color:var(--fb-border)] bg-[#f5f6f7]';
   const valueColor =
     tone === 'accent'
-      ? 'text-[color:var(--brand-strong)]'
+      ? 'text-[color:var(--fb-blue-link)]'
       : tone === 'success'
-        ? 'text-[color:var(--data-up)]'
+        ? 'text-[color:var(--fb-success)]'
         : tone === 'warning'
-          ? 'text-[color:var(--signal-strong)]'
-          : 'text-[color:var(--ink-1)]';
+          ? 'text-[#a66a00]'
+          : 'text-[color:var(--fb-ink-1)]';
   return (
-    <div className={`rounded-[var(--radius)] border px-3 py-2.5 ${toneClass}`}>
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+    <div className={`border px-3 py-2.5 ${toneClass}`}>
+      <div className="text-xs font-bold uppercase tracking-[0.04em] text-[color:var(--fb-ink-3)]">
         {label}
       </div>
-      <div className={`mt-1 break-all font-mono text-base font-black tabular-nums ${valueColor}`}>
+      <div className={`mt-1 break-all text-[15px] font-bold tabular-nums ${valueColor}`}>
         {value}
       </div>
-      <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{helper}</div>
+      <div className="mt-1 text-xs leading-4 text-[color:var(--fb-ink-2)]">{helper}</div>
     </div>
   );
 }

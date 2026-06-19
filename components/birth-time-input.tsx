@@ -214,16 +214,16 @@ export default function BirthTimeInput({
                   commitTime(option.midHour, 0, value.second ?? 0);
                 }}
                 className={`rounded-[var(--radius)] border px-3 py-3 text-left transition ${
- isSelected
+                  isSelected
                     ? `${getPeriodStyle(option.period)} border-transparent shadow-[0_16px_30px_rgba(23,32,51,0.12)]`
                     : 'border-[color:var(--line)] bg-[color:var(--paper)] hover:-translate-y-0.5'
                 }`}
               >
                 <div className="text-base font-bold">{option.name}</div>
-                <div className={`mt-1 text-[11px] ${isSelected ? 'text-current/80' : 'text-[color:var(--muted)]'}`}>
+                <div className={`mt-1 text-xs ${isSelected ? 'text-current/80' : 'text-[color:var(--muted)]'}`}>
                   {option.range}
                 </div>
-                <div className={`text-[11px] ${isSelected ? 'text-current/80' : 'text-[color:var(--muted)]'}`}>
+                <div className={`text-xs ${isSelected ? 'text-current/80' : 'text-[color:var(--muted)]'}`}>
                   {option.alias}
                 </div>
               </button>
@@ -242,7 +242,7 @@ export default function BirthTimeInput({
                 commitTime(nextHour, minuteValue, value.second ?? 0);
               }}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
- value.minute === minuteValue
+                value.minute === minuteValue
                   ? 'bg-[color:var(--accent)] text-white'
                   : 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)] hover:opacity-85'
               }`}

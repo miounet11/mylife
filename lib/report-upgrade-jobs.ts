@@ -28,6 +28,28 @@ const DEFAULT_BATCH_SIZE = getReportUpgradeBatchSize();
 const PROVIDER_DEFER_MS = getReportUpgradeProviderDeferMs();
 const PROVIDER_DEFER_MAX_MS = Math.max(PROVIDER_DEFER_MS, 1000 * 60 * 60 * 2);
 
+function isMutationApplied(result: unknown) {
+  return Number((result as { changes?: number } | undefined)?.changes || 0) > 0;
+}
+
+function buildLeaseLostResult(job: ReportUpgradeJobRecord) {
+  return {
+    processed: true,
+    status: 'lease_lost',
+    reportId: job.reportId,
+    reason: 'report_upgrade_job_lease_lost',
+  };
+}
+
+function stillOwnReportUpgradeLease(job: ReportUpgradeJobRecord) {
+  if (!job.lockedAt) {
+    return true;
+  }
+
+  const current = reportUpgradeJobOperations.getById(job.id);
+  return current?.status === 'running' && current.lockedAt === job.lockedAt;
+}
+
 export function enqueueReportUpgrade(params: {
   report: FortuneRecord;
   reason?: string;
@@ -122,16 +144,20 @@ export async function processNextReportUpgradeJob() {
 
   const report = fortuneOperations.getById(job.reportId);
   if (!report) {
-    reportUpgradeJobOperations.markFailed(job.id, {
+    const mutation = reportUpgradeJobOperations.markFailed(job.id, {
       lastError: 'REPORT_NOT_FOUND',
       lastScore: job.lastScore,
       bestScore: job.bestScore,
       bestGrade: job.bestGrade,
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         failure: 'report_missing',
       },
     });
+    if (!isMutationApplied(mutation)) {
+      return buildLeaseLostResult(job);
+    }
     return {
       processed: true,
       status: 'failed',
@@ -145,16 +171,20 @@ export async function processNextReportUpgradeJob() {
   const previousBestScore = Math.max(previousScore, job.bestScore || 0);
 
   if (isLikelyTestReportName(report.name)) {
-    reportUpgradeJobOperations.markCancelled(job.id, {
+    const mutation = reportUpgradeJobOperations.markCancelled(job.id, {
       lastScore: previousScore,
       bestScore: previousBestScore,
       bestGrade: job.bestGrade || previousAudit?.grade,
       lastError: 'LIKELY_TEST_SAMPLE',
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         skippedAsLikelyTest: true,
       },
     });
+    if (!isMutationApplied(mutation)) {
+      return buildLeaseLostResult(job);
+    }
 
     return {
       processed: true,
@@ -175,6 +205,10 @@ export async function processNextReportUpgradeJob() {
     });
 
     if (repairedApplied) {
+      if (!stillOwnReportUpgradeLease(job)) {
+        return buildLeaseLostResult(job);
+      }
+
       fortuneOperations.update(report.id, {
         name: report.name,
         bazi: repaired.basic,
@@ -193,7 +227,7 @@ export async function processNextReportUpgradeJob() {
     }
 
     const providerDefer = buildProviderDefer(job.meta);
-    reportUpgradeJobOperations.markDeferred(job.id, {
+    const mutation = reportUpgradeJobOperations.markDeferred(job.id, {
       lastScore: repairedApplied ? repairedAudit?.overallScore || previousScore : previousScore,
       bestScore: repairedApplied
         ? Math.max(previousBestScore, repairedAudit?.overallScore || 0)
@@ -208,6 +242,7 @@ export async function processNextReportUpgradeJob() {
         : (job.bestGrade || previousAudit?.grade),
       nextRunAt: new Date(Date.now() + providerDefer.delayMs).toISOString(),
       lastError: 'PROVIDER_UNHEALTHY',
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         deferredForProvider: true,
@@ -218,6 +253,9 @@ export async function processNextReportUpgradeJob() {
         providerHealth: providerHealth.summary,
       },
     });
+    if (!isMutationApplied(mutation)) {
+      return buildLeaseLostResult(job);
+    }
 
     return {
       processed: true,
@@ -247,6 +285,10 @@ export async function processNextReportUpgradeJob() {
     const improved = newScore >= previousScore;
 
     if (improved) {
+      if (!stillOwnReportUpgradeLease(job)) {
+        return buildLeaseLostResult(job);
+      }
+
       fortuneOperations.update(report.id, {
         name: report.name,
         bazi: result.basic,
@@ -266,12 +308,13 @@ export async function processNextReportUpgradeJob() {
 
     if (llmUnavailable && !newAudit?.targetAchieved) {
       const providerDefer = buildProviderDefer(job.meta);
-      reportUpgradeJobOperations.markDeferred(job.id, {
+      const mutation = reportUpgradeJobOperations.markDeferred(job.id, {
         lastScore: newScore,
         bestScore,
         bestGrade,
         nextRunAt: new Date(Date.now() + providerDefer.delayMs).toISOString(),
         lastError: deferredByProviderHealth ? 'PROVIDER_UNHEALTHY' : 'LLM_UNAVAILABLE',
+        lockedAt: job.lockedAt,
         meta: {
           ...(job.meta || {}),
           lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
@@ -283,6 +326,9 @@ export async function processNextReportUpgradeJob() {
           providerDeferMs: providerDefer.delayMs,
         },
       });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
 
       return {
         processed: true,
@@ -293,10 +339,11 @@ export async function processNextReportUpgradeJob() {
     }
 
     if (newAudit?.targetAchieved) {
-      reportUpgradeJobOperations.markCompleted(job.id, {
+      const mutation = reportUpgradeJobOperations.markCompleted(job.id, {
         lastScore: newScore,
         bestScore,
         bestGrade,
+        lockedAt: job.lockedAt,
         meta: {
           ...(job.meta || {}),
           lastDeliveryTier: newAudit.deliveryTier,
@@ -304,6 +351,9 @@ export async function processNextReportUpgradeJob() {
           improved,
         },
       });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
 
       trackServerEvent({
         userId: report.userId,
@@ -341,11 +391,12 @@ export async function processNextReportUpgradeJob() {
     }
 
     if ((job.attempts || 0) >= (job.maxAttempts || DEFAULT_MAX_ATTEMPTS)) {
-      reportUpgradeJobOperations.markFailed(job.id, {
+      const mutation = reportUpgradeJobOperations.markFailed(job.id, {
         lastScore: newScore,
         bestScore,
         bestGrade,
         lastError: 'TARGET_NOT_REACHED',
+        lockedAt: job.lockedAt,
         meta: {
           ...(job.meta || {}),
           lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
@@ -353,6 +404,9 @@ export async function processNextReportUpgradeJob() {
           improved,
         },
       });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
 
       return {
         processed: true,
@@ -362,7 +416,7 @@ export async function processNextReportUpgradeJob() {
       };
     }
 
-    reportUpgradeJobOperations.markRetry(job.id, {
+    const retryMutation = reportUpgradeJobOperations.markRetry(job.id, {
       lastScore: newScore,
       bestScore,
       bestGrade,
@@ -372,6 +426,7 @@ export async function processNextReportUpgradeJob() {
         nextScore: newScore,
       })).toISOString(),
       lastError: newAudit?.blockingIssues?.join(' | ') || 'TARGET_NOT_REACHED',
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
@@ -379,6 +434,9 @@ export async function processNextReportUpgradeJob() {
         improved,
       },
     });
+    if (!isMutationApplied(retryMutation)) {
+      return buildLeaseLostResult(job);
+    }
 
     return {
       processed: true,
@@ -389,16 +447,20 @@ export async function processNextReportUpgradeJob() {
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if ((job.attempts || 0) >= (job.maxAttempts || DEFAULT_MAX_ATTEMPTS)) {
-      reportUpgradeJobOperations.markFailed(job.id, {
+      const mutation = reportUpgradeJobOperations.markFailed(job.id, {
         lastScore: previousScore,
         bestScore: previousBestScore,
         bestGrade: job.bestGrade || previousAudit?.grade,
         lastError: message,
+        lockedAt: job.lockedAt,
         meta: {
           ...(job.meta || {}),
           failure: 'exception',
         },
       });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
       return {
         processed: true,
         status: 'failed',
@@ -407,7 +469,7 @@ export async function processNextReportUpgradeJob() {
       };
     }
 
-    reportUpgradeJobOperations.markRetry(job.id, {
+    const mutation = reportUpgradeJobOperations.markRetry(job.id, {
       lastScore: previousScore,
       bestScore: previousBestScore,
       bestGrade: job.bestGrade || previousAudit?.grade,
@@ -417,11 +479,15 @@ export async function processNextReportUpgradeJob() {
         nextScore: previousScore,
       })).toISOString(),
       lastError: message,
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         failure: 'exception',
       },
     });
+    if (!isMutationApplied(mutation)) {
+      return buildLeaseLostResult(job);
+    }
     return {
       processed: true,
       status: 'retry',

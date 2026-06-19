@@ -1,14 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, KeyRound, Mail, ShieldCheck } from 'lucide-react';
+import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'intro-panel', 'action-primary', 'action-secondary'] as const;
 void _qaContract;
+
+const LOGIN_REQUEST_CODE_TIMEOUT_MS = 15_000;
+const LOGIN_VERIFY_TIMEOUT_MS = 10_000;
+
 export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string }) {
   const router = useRouter();
+  const mountedRef = useRef(true);
+  const requestCodeControllerRef = useRef<AbortController | null>(null);
+  const verifyCodeControllerRef = useRef<AbortController | null>(null);
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -20,18 +28,35 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
   const [verifying, setVerifying] = useState(false);
   const [deliveryConfigured, setDeliveryConfigured] = useState(false);
 
+  useEffect(() => {
+    return () => {
+      mountedRef.current = false;
+      abortControllerRef(requestCodeControllerRef, 'login-flow-unmounted');
+      abortControllerRef(verifyCodeControllerRef, 'login-flow-unmounted');
+    };
+  }, []);
+
   const requestCode = async () => {
     setRequesting(true);
     setError('');
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/request-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await response.json();
+      const { response, data } = await fetchJsonWithTimeout<any>(
+        '/api/auth/request-code',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email }),
+          timeoutMs: LOGIN_REQUEST_CODE_TIMEOUT_MS,
+          timeoutReason: 'login-request-code-timeout',
+          controllerRef: requestCodeControllerRef,
+          supersedeReason: 'login-flow-superseded',
+        },
+      );
+      if (!mountedRef.current) {
+        return;
+      }
 
       if (!response.ok || !data.success) {
         setError(data.error || '获取验证码失败');
@@ -42,10 +67,15 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
       setDeliveryConfigured(Boolean(data.deliveryConfigured));
       setAdminPasswordRequired(Boolean(data.adminPasswordRequired));
       setMessage(data.deliveryConfigured ? '验证码已发送到邮箱，请查收后完成登录。' : '验证码已生成，请输入后完成登录。');
-    } catch {
-      setError('网络异常，请稍后重试');
+    } catch (requestError) {
+      if (!mountedRef.current) {
+        return;
+      }
+      setError(isAbortLikeError(requestError) ? '获取验证码等待时间过长，请稍后重试' : '网络异常，请稍后重试');
     } finally {
-      setRequesting(false);
+      if (mountedRef.current) {
+        setRequesting(false);
+      }
     }
   };
 
@@ -55,16 +85,25 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
     setMessage('');
 
     try {
-      const response = await fetch('/api/auth/verify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          code,
-          adminPassword: adminPasswordRequired ? adminPassword : undefined,
-        }),
-      });
-      const data = await response.json();
+      const { response, data } = await fetchJsonWithTimeout<any>(
+        '/api/auth/verify',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            code,
+            adminPassword: adminPasswordRequired ? adminPassword : undefined,
+          }),
+          timeoutMs: LOGIN_VERIFY_TIMEOUT_MS,
+          timeoutReason: 'login-verify-timeout',
+          controllerRef: verifyCodeControllerRef,
+          supersedeReason: 'login-flow-superseded',
+        },
+      );
+      if (!mountedRef.current) {
+        return;
+      }
 
       if (!response.ok || !data.success) {
         setError(data.error || '登录失败');
@@ -80,10 +119,15 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
         router.replace(nextHref);
         router.refresh();
       }
-    } catch {
-      setError('网络异常，请稍后重试');
+    } catch (verifyError) {
+      if (!mountedRef.current) {
+        return;
+      }
+      setError(isAbortLikeError(verifyError) ? '登录验证等待时间过长，请稍后重试' : '网络异常，请稍后重试');
     } finally {
-      setVerifying(false);
+      if (mountedRef.current) {
+        setVerifying(false);
+      }
     }
   };
 
@@ -115,7 +159,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
 
         {/* 验证码 + 获取 */}
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-          <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             验证码
           </div>
           <div className="mt-2 flex flex-col gap-2 md:flex-row">
@@ -141,7 +185,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
         {/* v5-D50 admin 二次密码（仅当后端命中 admin 邮箱才展示） */}
         {adminPasswordRequired && (
           <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] p-3">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--alert)]">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--alert)]">
               <KeyRound className="h-3 w-3" />
               管理员二次密码
             </div>
@@ -153,7 +197,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
               autoComplete="current-password"
               className="mt-2 h-10 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm text-[color:var(--ink-1)] outline-none transition focus:border-[color:var(--brand)] focus:ring-2 focus:ring-[color:var(--brand-soft-2)] placeholder:text-[color:var(--ink-5)]"
             />
-            <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
+            <p className="mt-1.5 text-xs text-[color:var(--ink-5)]">
               仅管理员邮箱需要此二次校验。
             </p>
           </div>
@@ -189,7 +233,7 @@ export default function LoginFlow({ nextHref = '/profile' }: { nextHref?: string
 
       {previewCode && (
         <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
             DEV PREVIEW · 仅本地可见
           </div>
           <div className="mt-1.5 font-mono text-2xl font-black tabular-nums tracking-[0.2em] text-[color:var(--ink-1)]">

@@ -427,7 +427,7 @@ export default function ResultPublicControls({
         className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(255,253,248,0.98),rgba(246,241,232,0.92))]"
       >
         <div className="border-b border-[color:var(--line)] bg-[linear-gradient(135deg,rgba(178,149,93,0.18),rgba(201,125,58,0.08))] px-5 py-5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
+          <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">
             {BRAND_NAME} · {getSiteOrigin().replace(/^https?:\/\//, '')}
           </div>
           <div className="mt-3 text-2xl font-black leading-tight text-[color:var(--ink)]">
@@ -446,14 +446,14 @@ export default function ResultPublicControls({
 
         <div className="grid gap-4 px-5 py-5 md:grid-cols-[1.08fr_0.92fr]">
           <div>
-            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">传播重点</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.22em] text-[color:var(--muted)]">传播重点</div>
             <div className="mt-3 rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4 text-xs leading-6 text-[color:var(--ink)]">
               {nextFocusSummary}
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {highlights.map((item) => (
                 <div key={item.label} className="rounded-[var(--radius)] border border-[color:var(--line)] bg-[color:var(--paper)] px-4 py-4">
-                  <div className="text-[11px] uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
+                  <div className="text-xs uppercase tracking-[0.18em] text-[color:var(--muted)]">{item.label}</div>
                   <div className="mt-2 text-base font-bold text-[color:var(--ink)]">{item.value}</div>
                 </div>
               ))}

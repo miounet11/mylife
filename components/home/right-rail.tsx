@@ -17,7 +17,7 @@ type CaseItem = {
 };
 
 // v5-D60 FB 风右栏：trending sidebar 风
-// 桌面 lg+ 显示 sticky；移动端外层让其出现在中流下方（流式布局）。
+// 桌面 xl+ 显示 sticky；移动端外层让其出现在中流下方（流式布局）。
 export default function HomeRightRail({
   featuredArticles,
   featuredCases,
@@ -27,7 +27,7 @@ export default function HomeRightRail({
 }) {
   return (
     <aside className="w-full lg:w-[300px] lg:shrink-0">
-      <div className="flex flex-col gap-2 lg:sticky lg:top-[88px]">
+      <div className="flex flex-col gap-2 xl:sticky-top-header">
         {/* Trending in 易学 */}
         <section className="fb-card overflow-hidden">
           <div className="flex items-center justify-between border-b border-[color:var(--fb-border)] px-3 py-2">
@@ -61,7 +61,7 @@ export default function HomeRightRail({
                   }}
                   className="block px-3 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                 >
-                  <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                  <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                     #{item.topicName || item.entry.category}
                   </div>
                   <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -103,7 +103,7 @@ export default function HomeRightRail({
                   }}
                   className="block px-3 py-2 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                 >
-                  <div className="text-[11px] font-semibold text-[color:var(--fb-ink-3)]">
+                  <div className="text-xs font-semibold text-[color:var(--fb-ink-3)]">
                     #{item.scenario}
                   </div>
                   <div className="mt-0.5 text-[13px] font-bold leading-[1.4] text-[color:var(--fb-ink-1)]">
@@ -166,7 +166,7 @@ export default function HomeRightRail({
                 <div className="text-[13px] font-semibold text-[color:var(--fb-blue-link)]">
                   按主题浏览
                 </div>
-                <div className="mt-0.5 text-[11px] text-[color:var(--fb-ink-3)]">
+                <div className="mt-0.5 text-xs text-[color:var(--fb-ink-3)]">
                   八字 · 紫微 · 六爻 · 奇门 · 择日
                 </div>
               </Link>
@@ -179,7 +179,7 @@ export default function HomeRightRail({
                 <div className="text-[13px] font-semibold text-[color:var(--fb-blue-link)]">
                   系统更新
                 </div>
-                <div className="mt-0.5 text-[11px] text-[color:var(--fb-ink-3)]">
+                <div className="mt-0.5 text-xs text-[color:var(--fb-ink-3)]">
                   方法论与算法迭代记录
                 </div>
               </Link>
@@ -192,7 +192,7 @@ export default function HomeRightRail({
                 <div className="text-[13px] font-semibold text-[color:var(--fb-blue-link)]">
                   公开追问
                 </div>
-                <div className="mt-0.5 text-[11px] text-[color:var(--fb-ink-3)]">
+                <div className="mt-0.5 text-xs text-[color:var(--fb-ink-3)]">
                   看别人怎么把命盘问透
                 </div>
               </Link>

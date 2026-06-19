@@ -8,21 +8,28 @@
  */
 
 const { performance } = require('perf_hooks');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
+const { withCurrentBuildEnv } = require('./pm2-build-env.js');
+const { readPositiveIntegerEnv } = require('./ops-env.js');
 
-const WEB_MEMORY_MB = parseFloat(process.env.WEB_MEMORY_THRESHOLD_MB || '1100');
-const WEB_RESTART_MB = parseFloat(process.env.WEB_RESTART_THRESHOLD_MB || '1350');
-const CHECK_INTERVAL_MS = parseInt(process.env.CHECK_INTERVAL_MS || '45000', 10);
-const RELOAD_COOLDOWN_MS = parseInt(process.env.RELOAD_COOLDOWN_MS || '300000', 10);
+const WEB_MEMORY_MB = readPositiveIntegerEnv('WEB_MEMORY_THRESHOLD_MB', 1100, { min: 256, max: 16384 });
+const WEB_RESTART_MB = readPositiveIntegerEnv('WEB_RESTART_THRESHOLD_MB', 1350, { min: 256, max: 16384 });
+const CHECK_INTERVAL_MS = readPositiveIntegerEnv('CHECK_INTERVAL_MS', 45000, { min: 5000, max: 300000 });
+const RELOAD_COOLDOWN_MS = readPositiveIntegerEnv('RELOAD_COOLDOWN_MS', 300000, { min: 60000, max: 3600000 });
 
 const TRANSITIONAL_STATUSES = new Set(['stopping', 'launching']);
 const DEAD_STATUSES = new Set(['errored', 'stopped']);
 
 let lastActionAt = 0;
+let tickRunning = false;
 
 function getPM2Status() {
   try {
-    const out = execSync('pm2 jlist 2>/dev/null', { encoding: 'utf8', timeout: 8000 });
+    const out = execFileSync('pm2', ['jlist'], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 8000,
+    });
     return JSON.parse(out);
   } catch {
     return null;
@@ -83,7 +90,11 @@ function reloadWebInstance(target, reason) {
 
   console.log(`[stability-monitor] Triggering reload of ${target.name} (${reason}, memory ${target.memoryMb}MB, status ${target.status})`);
   try {
-    execSync(`pm2 reload ${target.name} --update-env`, { stdio: 'inherit', timeout: 120000 });
+    execFileSync('pm2', ['reload', target.name, '--update-env'], {
+      stdio: 'inherit',
+      timeout: 120000,
+      env: withCurrentBuildEnv(),
+    });
     lastActionAt = now;
     return true;
   } catch (e) {
@@ -93,41 +104,50 @@ function reloadWebInstance(target, reason) {
 }
 
 function tick() {
-  const list = getPM2Status();
-  const web = list ? summarizeWebReplicas(list) : null;
-
-  if (!web) {
-    console.log('[stability-monitor] no web replicas in pm2 jlist');
+  if (tickRunning) {
+    console.log('[stability-monitor] skip tick; previous tick still running');
     return;
   }
+  tickRunning = true;
+  try {
+    const list = getPM2Status();
+    const web = list ? summarizeWebReplicas(list) : null;
 
-  const summary = web.rows.map((r) => `${r.name}=${r.memoryMb}MB/${r.status}`).join(' ');
-  const memoryHot = web.onlineMaxMb >= WEB_MEMORY_MB;
-  const memoryCritical = web.onlineMaxMb >= WEB_RESTART_MB;
-  const shouldAct = web.deadRows.length > 0 || memoryCritical || memoryHot;
+    if (!web) {
+      console.log('[stability-monitor] no web replicas in pm2 jlist');
+      return;
+    }
 
-  console.log(
-    `[stability-monitor] onlineMax=${web.onlineMaxMb}MB (warn>${WEB_MEMORY_MB} restart>${WEB_RESTART_MB})`
-    + `  action=${shouldAct}`
-    + (web.transitional.length ? `  transitional=[${web.transitional.map((r) => r.name).join(',')}]` : '')
-    + `  [${summary}]`
-  );
+    const summary = web.rows.map((r) => `${r.name}=${r.memoryMb}MB/${r.status}`).join(' ');
+    const memoryHot = web.onlineMaxMb >= WEB_MEMORY_MB;
+    const memoryCritical = web.onlineMaxMb >= WEB_RESTART_MB;
+    const shouldAct = web.deadRows.length > 0 || memoryCritical || memoryHot;
 
-  if (!shouldAct) {
-    return;
+    console.log(
+      `[stability-monitor] onlineMax=${web.onlineMaxMb}MB (warn>${WEB_MEMORY_MB} restart>${WEB_RESTART_MB})`
+      + `  action=${shouldAct}`
+      + (web.transitional.length ? `  transitional=[${web.transitional.map((r) => r.name).join(',')}]` : '')
+      + `  [${summary}]`
+    );
+
+    if (!shouldAct) {
+      return;
+    }
+
+    if (web.deadRows.length > 0) {
+      reloadWebInstance(web.deadRows[0], `dead-status`);
+      return;
+    }
+
+    const target = web.memoryCritical[0] || web.memoryPressure[0] || web.hottestOnline;
+    if (!target) {
+      return;
+    }
+
+    reloadWebInstance(target, memoryCritical ? 'critical-heap' : 'elevated-heap');
+  } finally {
+    tickRunning = false;
   }
-
-  if (web.deadRows.length > 0) {
-    reloadWebInstance(web.deadRows[0], `dead-status`);
-    return;
-  }
-
-  const target = web.memoryCritical[0] || web.memoryPressure[0] || web.hottestOnline;
-  if (!target) {
-    return;
-  }
-
-  reloadWebInstance(target, memoryCritical ? 'critical-heap' : 'elevated-heap');
 }
 
 console.log('[stability-monitor] starting (online-only memory actions, skip stopping/launching)');

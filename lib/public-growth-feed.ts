@@ -11,6 +11,11 @@ export interface PublicReportFeedItem {
   description: string;
   patternType: string;
   dayMaster: string;
+  userId: string;
+  ownerLabel: string;
+  publishedAt?: string;
+  publishedDate?: string;
+  publishedTime?: string;
   updatedAt?: string;
   createdAt?: string;
 }
@@ -155,8 +160,35 @@ export function buildPublicReportSeo(report: FortuneRecord) {
   };
 }
 
+function formatPublicReportOwnerLabel(userId: string) {
+  const suffix = userId.replace(/[^a-z0-9]/gi, '').slice(-6).toUpperCase() || 'PUBLIC';
+  return `匿名用户 ${suffix}`;
+}
+
+function splitIsoDateTime(value?: string) {
+  if (!value) {
+    return { date: undefined, time: undefined };
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    const [rawDate, rawTime = ''] = value.split('T');
+    return {
+      date: rawDate || undefined,
+      time: rawTime.slice(0, 5) || undefined,
+    };
+  }
+
+  return {
+    date: date.toISOString().slice(0, 10),
+    time: date.toISOString().slice(11, 16),
+  };
+}
+
 export function toPublicReportFeedItem(report: FortuneRecord): PublicReportFeedItem {
   const seo = buildPublicReportSeo(report);
+  const publishedAt = report.updatedAt || report.createdAt;
+  const publishedParts = splitIsoDateTime(publishedAt);
   return {
     id: report.id,
     href: `/result/${report.id}`,
@@ -164,6 +196,11 @@ export function toPublicReportFeedItem(report: FortuneRecord): PublicReportFeedI
     description: seo.description,
     patternType: seo.patternType,
     dayMaster: seo.dayMaster,
+    userId: report.userId,
+    ownerLabel: formatPublicReportOwnerLabel(report.userId),
+    publishedAt,
+    publishedDate: publishedParts.date,
+    publishedTime: publishedParts.time,
     updatedAt: report.updatedAt,
     createdAt: report.createdAt,
   };
@@ -199,6 +236,17 @@ export function listPublicReportFeedItems(limit = 48): PublicReportFeedItem[] {
   return value;
 }
 
+export interface PublicReportDailyBucket {
+  date: string;
+  count: number;
+  items: PublicReportFeedItem[];
+}
+
+export interface PublicReportFeedSummary {
+  latestPublishedAt?: string;
+  dailyBuckets: PublicReportDailyBucket[];
+}
+
 export interface PublicReportFeedPage {
   items: PublicReportFeedItem[];
   total: number;
@@ -220,6 +268,27 @@ export function listPublicReportFeedItemsPaged(
     .listPublicPaged(safePerPage, offset)
     .map(toPublicReportFeedItem);
   return { items, total, page: safePage, perPage: safePerPage, totalPages };
+}
+
+export function getPublicReportFeedSummary(limit = 120): PublicReportFeedSummary {
+  const reports = fortuneOperations
+    .listPublicPaged(Math.max(1, Math.min(200, Math.floor(limit))), 0)
+    .map(toPublicReportFeedItem);
+  const buckets = new Map<string, PublicReportFeedItem[]>();
+
+  reports.forEach((item) => {
+    const date = item.publishedDate || '日期待同步';
+    buckets.set(date, [...(buckets.get(date) || []), item]);
+  });
+
+  return {
+    latestPublishedAt: reports[0]?.publishedAt,
+    dailyBuckets: Array.from(buckets.entries()).map(([date, items]) => ({
+      date,
+      count: items.length,
+      items,
+    })),
+  };
 }
 
 function parseJson<T>(value: unknown, fallback: T): T {

@@ -62,7 +62,7 @@ export default function RelatedContent({ source, reportContext }: {
             <Link
               key={href}
               href={appendSourceToHref(href, source)}
-              className="inline-flex h-8 items-center rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+              className="fb-btn inline-flex h-8 items-center rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--fb-blue)] hover:no-underline"
             >
               {label}
             </Link>
@@ -74,9 +74,9 @@ export default function RelatedContent({ source, reportContext }: {
         <div className="grid gap-3">
           <Link
             href={appendSourceToHref('/world-yi', source)}
-            className="group block rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
+            className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
           >
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               世界易总入口
             </div>
             <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
@@ -91,16 +91,16 @@ export default function RelatedContent({ source, reportContext }: {
           {/* World Yi v2.0 Doctrine Spine — first-class in reports via rich meta + schedulePublishedAt */}
           {v2DoctrineRefs.length > 0 && (
             <div className="rounded-[var(--radius-md)] border-2 border-[color:var(--brand)] bg-[color:var(--brand-tint)] p-3">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">World Yi v2 教义脊柱 · 报告直连</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">World Yi v2 教义脊柱 · 报告直连</div>
               <div className="mt-1 text-xs text-[color:var(--ink-3)]">已匹配你的四柱/用神/主题的易学判断框架（publication 自动上线）</div>
               {v2DoctrineRefs.slice(0, 2).map((ref) => (
                 <Link
                   key={ref.slug}
                   href={appendSourceToHref(ref.url, source)}
-                  className="mt-2 block rounded border border-[color:var(--brand-soft-2)] bg-white/70 p-2 text-sm font-semibold text-[color:var(--ink-1)] hover:border-[color:var(--brand)]"
+                  className="mt-2 block rounded border border-[color:var(--fb-border)] bg-white p-2 text-sm font-semibold text-[color:var(--ink-1)] transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                 >
                   {ref.title}
-                  <span className="ml-1 text-[10px] text-[color:var(--brand-strong)]">→ {ref.layer || 'doctrine'} · {ref.matchedReasons?.[0]}</span>
+                  <span className="ml-1 text-xs text-[color:var(--brand-strong)]">→ {ref.layer || 'doctrine'} · {ref.matchedReasons?.[0]}</span>
                 </Link>
               ))}
             </div>
@@ -110,9 +110,9 @@ export default function RelatedContent({ source, reportContext }: {
             <Link
               key={article.slug}
               href={appendSourceToHref(`/knowledge/${article.slug}`, source)}
-              className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
+              className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
             >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                 {article.category}
               </div>
               <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
@@ -131,9 +131,9 @@ export default function RelatedContent({ source, reportContext }: {
             <Link
               key={item.slug}
               href={appendSourceToHref(`/insights/${item.type}/${item.slug}`, source)}
-              className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--signal)]"
+              className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
             >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                 {getEntityTypeLabel(item.type)}
               </div>
               <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
@@ -152,9 +152,9 @@ export default function RelatedContent({ source, reportContext }: {
             <Link
               key={item.slug}
               href={appendSourceToHref(`/cases/${item.slug}`, source)}
-              className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
+              className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
             >
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                 {item.scenario}
               </div>
               <div className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">

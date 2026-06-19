@@ -63,7 +63,7 @@ export default function ReportReadingPath({
             {route.primaryAction.label}
             <ArrowRight className="h-4 w-4" />
           </ResultCtaLink>
-          <div className="mt-1.5 text-[10px] leading-4 text-[color:var(--ink-5)]">
+          <div className="mt-1.5 text-xs leading-4 text-[color:var(--ink-5)]">
             {route.primaryAction.description}
           </div>
         </div>
@@ -93,7 +93,7 @@ export default function ReportReadingPath({
                   <Icon className="h-3.5 w-3.5" />
                   {layer.title}
                 </div>
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 font-mono text-xs font-bold uppercase tracking-wider">
                   {layer.badge}
                 </span>
               </div>
@@ -105,7 +105,7 @@ export default function ReportReadingPath({
 
       <div className="mt-4 grid gap-2.5 lg:grid-cols-2">
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             测算方式 / 结果组合
           </div>
           <div className="mt-2 text-sm font-bold text-[color:var(--ink-1)]">
@@ -119,7 +119,7 @@ export default function ReportReadingPath({
           {route.measurementSummary.strongStages.length > 0 ? (
             <div className="mt-2 grid gap-1.5 md:grid-cols-2">
               {route.measurementSummary.strongStages.slice(0, 4).map((stage) => (
-                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.25)] bg-[rgba(47,125,82,0.08)] px-2 py-1.5 text-[10px] leading-4 text-[color:var(--data-up)]">
+                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[rgba(47,125,82,0.25)] bg-[rgba(47,125,82,0.08)] px-2 py-1.5 text-xs leading-4 text-[color:var(--data-up)]">
                   {stage.label}：{Math.round(stage.score)} 分 · {stage.conclusion}
                 </div>
               ))}
@@ -128,7 +128,7 @@ export default function ReportReadingPath({
           {route.measurementSummary.optimizationPriorities.length > 0 ? (
             <div className="mt-2 space-y-1">
               {route.measurementSummary.optimizationPriorities.map((stage) => (
-                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 py-1.5 text-[10px] leading-4 text-[color:var(--signal-strong)]">
+                <div key={stage.id} className="rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 py-1.5 text-xs leading-4 text-[color:var(--signal-strong)]">
                   {stage.label}：{stage.reason} · 优先级建议：{stage.optimizationHint}
                 </div>
               ))}
@@ -143,13 +143,13 @@ export default function ReportReadingPath({
                     ? 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)]'
                     : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
                 return (
-                  <div key={stage.id} className={`rounded-[var(--radius-sm)] border px-2.5 py-2 text-[10px] leading-4 ${toneClass}`}>
-                    <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-[color:var(--ink-1)]">
+                  <div key={stage.id} className={`rounded-[var(--radius-sm)] border px-2.5 py-2 text-xs leading-4 ${toneClass}`}>
+                    <div className="flex items-center justify-between gap-2 text-xs font-bold text-[color:var(--ink-1)]">
                       <span className="truncate">{stage.order}. {stage.label}</span>
                       <span className="shrink-0 font-mono">{Math.round(stage.score)} 分</span>
                     </div>
-                    <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{stage.conclusion}</div>
-                    <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-5)]">优化建议：{stage.optimizationHint}</div>
+                    <div className="mt-1 text-xs leading-4 text-[color:var(--ink-4)]">{stage.conclusion}</div>
+                    <div className="mt-1 text-xs leading-4 text-[color:var(--ink-5)]">优化建议：{stage.optimizationHint}</div>
                   </div>
                 );
               })}
@@ -158,7 +158,7 @@ export default function ReportReadingPath({
         </div>
 
         <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             组合路线
           </div>
           <div className="mt-2 grid gap-2 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
@@ -179,8 +179,8 @@ export default function ReportReadingPath({
                 }}
               >
                 <div className="text-xs font-bold text-[color:var(--ink-1)]">{item.label}</div>
-                <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
-                {item.boundary ? <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-5)]">{item.boundary}</div> : null}
+                <div className="mt-1 text-xs leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
+                {item.boundary ? <div className="mt-1 text-xs leading-4 text-[color:var(--ink-5)]">{item.boundary}</div> : null}
               </ResultCtaLink>
             ))}
           </div>
@@ -189,7 +189,7 @@ export default function ReportReadingPath({
 
       {route.categoryRoutes.length > 0 ? (
         <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             专项推荐顺序
           </div>
           <div className="mt-2.5 grid gap-2 md:grid-cols-3">
@@ -210,14 +210,14 @@ export default function ReportReadingPath({
                   sourceFamily: sourceFamily || null,
                 }}
               >
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   {item.categoryLabel}
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2 text-sm font-bold text-[color:var(--ink-1)]">
                   <span className="truncate">{item.toolTitle}</span>
                   <ArrowRight className="h-3 w-3 shrink-0 text-[color:var(--ink-5)] transition group-hover:text-[color:var(--brand-strong)]" />
                 </div>
-                <div className="mt-1 text-[10px] leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
+                <div className="mt-1 text-xs leading-4 text-[color:var(--ink-4)]">{item.reason}</div>
               </ResultCtaLink>
             ))}
           </div>

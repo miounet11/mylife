@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthSession } from '@/lib/auth';
-import { generateManagedContentDrafts, type GeneratedManagedContentDraft } from '@/lib/content-generation';
+import {
+  assessGeneratedManagedContentDraftQuality,
+  generateManagedContentDrafts,
+  type GeneratedManagedContentDraft,
+} from '@/lib/content-generation';
 import { contentSignalOperations } from '@/lib/database';
 import { buildGenerationInputFromSignal } from '@/lib/content-radar';
 import { listManagedContentEntries, saveManagedContentEntry } from '@/lib/content-store';
@@ -62,7 +66,15 @@ export async function POST(request: NextRequest) {
       featured: body.featured === true,
     });
     const generated = await generateManagedContentDrafts(generationInput);
-    const uniqueEntries = ensureUniqueSlugs(generated.entries);
+    const assessedEntries = generated.entries.map((entry) => ({
+      entry,
+      quality: assessGeneratedManagedContentDraftQuality(entry),
+    }));
+    const rejectedEntries = assessedEntries.filter((item) => !item.quality.ready);
+    const uniqueEntries = ensureUniqueSlugs(assessedEntries
+      .filter((item) => item.quality.ready)
+      .map((item) => item.entry));
+    const qualityBySlug = new Map(assessedEntries.map((item) => [item.entry.slug, item.quality]));
 
     const savedEntries = uniqueEntries.map((entry) =>
       saveManagedContentEntry({
@@ -93,6 +105,9 @@ export async function POST(request: NextRequest) {
           radarKeywords: signal.matchedKeywords || [],
           radarScore: signal.score || 0,
           promotionMode: mode,
+          qualityScore: qualityBySlug.get(entry.slug)?.score || null,
+          qualityReasons: qualityBySlug.get(entry.slug)?.reasons || [],
+          averageParagraphLength: qualityBySlug.get(entry.slug)?.averageParagraphLength || null,
         },
       }, user.id)
     );
@@ -103,6 +118,12 @@ export async function POST(request: NextRequest) {
       entries: savedEntries,
       meta: {
         generatedCount: savedEntries.length,
+        rejectedCount: rejectedEntries.length,
+        rejectedEntries: rejectedEntries.map((item) => ({
+          title: item.entry.title,
+          score: item.quality.score,
+          reasons: item.quality.reasons,
+        })),
         llmSucceededCount: generated.llmSucceededCount,
         fallbackCount: generated.fallbackCount,
         promotionMode: mode,

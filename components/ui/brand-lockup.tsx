@@ -18,8 +18,8 @@ interface BrandLockupProps {
 }
 
 const sizeMap = {
-  sm: { mark: 24, title: 'text-sm',   sub: 'text-[9px]'  },
-  md: { mark: 32, title: 'text-base', sub: 'text-[10px]' },
+  sm: { mark: 24, title: 'text-sm',   sub: 'text-xs'  },
+  md: { mark: 32, title: 'text-base', sub: 'text-xs' },
   lg: { mark: 40, title: 'text-lg',   sub: 'text-xs'     },
 } as const;
 

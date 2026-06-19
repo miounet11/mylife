@@ -42,7 +42,11 @@ describe('surface journeys', () => {
     expect(journey.toolCards.length).toBeGreaterThan(0);
     expect(journey.knowledgeCards.length).toBeGreaterThan(0);
     expect(journey.caseCards.length).toBeGreaterThan(0);
-    expect(journey.toolCards[0]?.href).toContain('source=');
+    // knowledge_article: sources are not re-appended onto public content hrefs (see source-url contract).
+    expect(journey.toolCards[0]?.href).toMatch(/^\/tools\//);
+
+    const journeyWithToolSource = buildJourneyForReport(report, { source: 'tool_detail:career-window' });
+    expect(journeyWithToolSource.toolCards[0]?.href).toContain('source=');
   });
 
   test('shared journeys expose at least two related items per content column when inventory exists', () => {

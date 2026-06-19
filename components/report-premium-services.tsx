@@ -12,6 +12,7 @@ import {
   type PremiumServiceOffer,
 } from '@/lib/report-premium-services';
 import type { PremiumServiceRequestRecord } from '@/lib/user-types';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-secondary'] as const;
@@ -23,6 +24,14 @@ const iconMap = {
   'event-review': Compass,
   'meihua-enhancement': Sparkles,
 } as const;
+
+type PremiumServiceSubmitResponse = {
+  success?: boolean;
+  error?: string;
+  data?: PremiumServiceRequestRecord;
+};
+
+const REPORT_PREMIUM_SERVICE_TIMEOUT_MS = 12_000;
 
 export default function ReportPremiumServices({
   reportId,
@@ -90,7 +99,7 @@ export default function ReportPremiumServices({
     setMessage('');
 
     try {
-      const response = await fetch('/api/premium-services', {
+      const { response, data } = await fetchJsonWithTimeout<PremiumServiceSubmitResponse>('/api/premium-services', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -102,14 +111,15 @@ export default function ReportPremiumServices({
           question,
           attribution: getRememberedClientAttribution(),
         }),
+        timeoutMs: REPORT_PREMIUM_SERVICE_TIMEOUT_MS,
+        timeoutReason: 'report-premium-service-submit-timeout',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '提交失败，请稍后重试');
         return;
       }
 
-      const created = data.data as PremiumServiceRequestRecord | undefined;
+      const created = data.data;
       if (created) {
         setRequests((current) => [created, ...current.filter((item) => item.id !== created.id)].slice(0, 6));
       }
@@ -126,7 +136,12 @@ export default function ReportPremiumServices({
           attributionTarget: getRememberedClientAttribution()?.target || null,
         },
       });
-    } catch {
+    } catch (requestError) {
+      if (isAbortLikeError(requestError)) {
+        setError('专项需求提交等待时间过长，请稍后重试');
+        return;
+      }
+
       setError('网络异常，请稍后重试');
     } finally {
       setSubmitting(false);
@@ -173,7 +188,7 @@ export default function ReportPremiumServices({
                     <div className="mt-0.5 text-xs text-[color:var(--ink-4)]">{offer.tagline}</div>
                   </div>
                 </div>
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                   {offer.badge}
                 </span>
               </div>
@@ -184,7 +199,7 @@ export default function ReportPremiumServices({
 
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                     适合
                   </div>
                   <div className="mt-1.5 space-y-1">
@@ -197,7 +212,7 @@ export default function ReportPremiumServices({
                 </div>
 
                 <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                     交付
                   </div>
                   <div className="mt-1.5 space-y-1">

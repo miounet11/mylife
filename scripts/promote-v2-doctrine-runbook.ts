@@ -1,99 +1,119 @@
 #!/usr/bin/env tsx
 /**
- * Publication Subagent Runbook for World Yi v2.0 Doctrine Spine
- * Promotes high-rubric (overall >=82) recent v2 doctrine drafts to live for reports/UI/world-yi surfacing.
- * Sets schedulePublishedAt to a safe past window, publicationReady, v2ElevationPass.
+ * Promote recent high-rubric World Yi v2 doctrine drafts through the managed
+ * content store so publication metadata, journey enrichment, and caches stay coherent.
+ *
  * Run via: npx tsx scripts/promote-v2-doctrine-runbook.ts
  */
 
-import Database from 'better-sqlite3';
-import { readString } from './lib/content-store'; // reuse helpers if possible, else inline
+import {
+  listManagedContentEntries,
+  saveManagedContentEntry,
+  type ManagedContentEntry,
+} from '@/lib/content-store';
 
-const db = new Database('data/lifekline.db');
-
-interface Row {
-  id: string;
-  slug: string;
-  status: string;
-  meta: string;
-  updated_at: string;
-}
-
-function getMetaOverall(metaJson: string | null): number {
-  if (!metaJson) return 0;
-  try {
-    const m = JSON.parse(metaJson);
-    return Number(m?.qualityRubricScores?.overall) || 0;
-  } catch {
+function readOverallScore(entry: ManagedContentEntry): number {
+  const score = entry.meta?.qualityRubricScores;
+  if (!score || typeof score !== 'object' || Array.isArray(score)) {
     return 0;
   }
+
+  const overall = (score as Record<string, unknown>).overall;
+  return typeof overall === 'number' && Number.isFinite(overall) ? overall : 0;
 }
 
-function updateMetaForPromotion(currentMetaJson: string | null, topicHint: string) {
-  let meta: Record<string, any> = {};
-  try { meta = currentMetaJson ? JSON.parse(currentMetaJson) : {}; } catch {}
-  
+function isCoreP0Topic(entry: ManagedContentEntry): boolean {
+  const signal = `${entry.slug} ${entry.title}`;
+  return /易学核心机理|决策时序|64卦|变易判断|大运叠加|四柱-易学复合/.test(signal);
+}
+
+function isRecent(entry: ManagedContentEntry): boolean {
+  const updatedAt = new Date(entry.updatedAt).getTime();
+  return Number.isFinite(updatedAt) && updatedAt > Date.now() - 1000 * 60 * 60 * 6;
+}
+
+function buildPromotionMeta(entry: ManagedContentEntry) {
   const now = new Date();
-  // Safe past window (2-4 hours ago) to bypass family/time suppression gates
-  const safePast = new Date(now.getTime() - (1000 * 60 * 60 * (2 + Math.random() * 2))).toISOString();
+  const safePast = new Date(now.getTime() - 1000 * 60 * 60 * 3).toISOString();
+  const meta = {
+    ...(entry.meta || {}),
+    schedulePublishedAt: safePast,
+    publicationReady: true,
+    v2ElevationPass: true,
+    lastPromotedAt: now.toISOString(),
+    promotionRunbook: 'doctrine-spine-p0-2026-05-31',
+  } as Record<string, unknown>;
 
-  meta.schedulePublishedAt = safePast;
-  meta.publicationReady = true;
-  meta.v2ElevationPass = true;
-  meta.lastPromotedAt = now.toISOString();
-  meta.promotionRunbook = 'doctrine-spine-p0-2026-05-31';
-  if (!meta.worldYiLayer) meta.worldYiLayer = 'doctrine-core';
-
-  // Ensure it feeds report flywheel
+  if (typeof meta.worldYiLayer !== 'string' || !meta.worldYiLayer.trim()) {
+    meta.worldYiLayer = 'doctrine-core';
+  }
   if (!Array.isArray(meta.feedsAgentModules) || meta.feedsAgentModules.length === 0) {
-    meta.feedsAgentModules = ['core-constitution', 'temporal-spatial-advisor', 'strategy-advisor', 'life-kline-synthesizer'];
+    meta.feedsAgentModules = [
+      'core_constitution',
+      'temporal_spatial_advisor',
+      'strategy_advisor',
+      'kline_narrative',
+    ];
   }
 
-  return JSON.stringify(meta);
+  return meta;
 }
 
-console.log('=== World Yi v2 Doctrine Promotion Runbook ===');
-console.log('Targeting recent high-rubric doctrine-core entries (overall >= 82 or known P0 topics)...\n');
+function main() {
+  const candidates = listManagedContentEntries()
+    .filter((entry) => (
+      entry.contentType === 'knowledge' &&
+      (
+        entry.slug.includes('world-yi-') ||
+        entry.slug.includes('v2') ||
+        entry.title.includes('易学核心机理')
+      )
+    ))
+    .sort((left, right) => new Date(right.updatedAt).getTime() - new Date(left.updatedAt).getTime())
+    .slice(0, 40);
 
-const rows: Row[] = db.prepare(`
-  SELECT id, slug, status, meta, updated_at
-  FROM content_entries
-  WHERE (slug LIKE 'world-yi-%-v2-%' OR slug LIKE '%v2新体系%' OR slug LIKE '%易学核心机理%')
-    AND (content_type = 'knowledge' OR slug LIKE 'world-yi-%')
-  ORDER BY updated_at DESC
-  LIMIT 40
-`).all() as Row[];
+  let promoted = 0;
+  const promotedSlugs: string[] = [];
 
-let promoted = 0;
-const promotedSlugs: string[] = [];
+  for (const entry of candidates) {
+    const overall = readOverallScore(entry);
+    if (!isRecent(entry) || (overall < 82 && !isCoreP0Topic(entry))) {
+      continue;
+    }
 
-for (const row of rows) {
-  const overall = getMetaOverall(row.meta);
-  const isHighRubric = overall >= 82;
-  const isCoreP0Topic = /易学核心机理|决策时序|64卦|变易判断|大运叠加|四柱-易学复合/.test(row.slug);
-  const isRecent = new Date(row.updated_at).getTime() > Date.now() - 1000 * 60 * 60 * 6; // last 6h
+    const saved = saveManagedContentEntry({
+      id: entry.id,
+      contentType: entry.contentType,
+      subtype: entry.subtype,
+      slug: entry.slug,
+      title: entry.title,
+      name: entry.name,
+      excerpt: entry.excerpt,
+      category: entry.category,
+      readTime: entry.readTime,
+      tags: entry.tags,
+      featured: entry.featured,
+      seoTitle: entry.seoTitle,
+      seoDescription: entry.seoDescription,
+      sections: entry.sections,
+      status: 'published',
+      source: entry.source,
+      createdBy: entry.createdBy,
+      updatedBy: 'system:doctrine-promotion',
+      meta: buildPromotionMeta(entry),
+    }, 'system:doctrine-promotion');
 
-  if ((isHighRubric || isCoreP0Topic) && isRecent) {
-    const newMeta = updateMetaForPromotion(row.meta, row.slug);
-    db.prepare(`
-      UPDATE content_entries
-      SET status = 'published',
-          meta = ?,
-          updated_at = datetime('now')
-      WHERE id = ?
-    `).run(newMeta, row.id);
+    if (saved) {
+      promoted += 1;
+      promotedSlugs.push(saved.slug);
+      console.log(`Promoted: ${saved.slug} (overall=${overall || 'n/a'})`);
+    }
+  }
 
-    promoted++;
-    promotedSlugs.push(row.slug.slice(0, 75));
-    console.log(`✓ Promoted: ${row.slug.slice(0,75)} (overall=${overall || 'n/a'}) -> schedulePublishedAt set to safe past + publicationReady + v2ElevationPass`);
+  console.log(`Promotion complete: ${promoted} entries updated`);
+  if (promotedSlugs.length) {
+    console.log(`Promoted slugs: ${promotedSlugs.slice(0, 8).join(', ')}`);
   }
 }
 
-console.log(`\n=== Promotion complete: ${promoted} entries updated ===`);
-if (promotedSlugs.length) {
-  console.log('Promoted slugs (first 8):');
-  promotedSlugs.slice(0,8).forEach(s => console.log('  - ' + s));
-}
-
-db.close();
-process.exit(0);
+main();

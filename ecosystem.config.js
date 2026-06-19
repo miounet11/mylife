@@ -1,9 +1,30 @@
 // PM2配置文件
+const fs = require('fs');
+const path = require('path');
 const ecosystemSecrets = require('./scripts/load-ecosystem-env.js');
-// 默认只启动主站。后台 daemon 必须显式开启，避免小机器被 worker + cron 抢死。
+// 默认只启动主站。后台任务可显式开启；web/cron 隔离副本已废弃，避免 nginx/PM2 端口漂移。
+// 这是个简单网站 + LLM 引擎，默认不该用一堆常驻进程把小机器拖死。
 const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS === '1';
-const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '1';
-const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '1';
+const enableWebReplicas = false;
+const enableCronTier = false;
+const enableWatchdogs = process.env.ENABLE_WATCHDOGS === '1';
+const enableContentWorkers = process.env.ENABLE_CONTENT_WORKERS === '1';
+const enableKnowledgeWorker = process.env.ENABLE_KNOWLEDGE_WORKER === '1';
+const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '0';
+const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '0';
+
+function readCurrentBuildId() {
+  const processBuildId = `${process.env.LIFE_KLINE_BUILD_ID || ''}`.trim();
+  if (processBuildId) return processBuildId;
+
+  try {
+    return fs.readFileSync(path.join(__dirname, '.next', 'BUILD_ID'), 'utf8').trim();
+  } catch {
+    return '';
+  }
+}
+
+const currentBuildId = readCurrentBuildId();
 
 // v5-D83: daemon 回调走本机 nginx :8080，让内部请求也经过 upstream 分流。
 const INTERNAL_API_HOST = process.env.INTERNAL_API_HOST || '127.0.0.1:8080';
@@ -30,14 +51,13 @@ const nextApp = {
   script: 'node_modules/next/dist/bin/next',
   args: 'start',
   cwd: '/home/life-kline-next',
-  // v5-D83 (2026-05-24): cluster 模式与 next start 内部 fork 互不兼容，
-  // 改用「多 fork 实例 + 不同端口 + nginx upstream 负载均衡」方案。
-  // 端口 3000 = 用户测算专实例（与 cron/SEO 物理隔离）。
+  // 单 Next 实例：nginx 负责缓存、限流和长链路 timeout；不要再用端口副本做伪隔离。
   instances: 1,
   exec_mode: 'fork',
   env: {
     NODE_ENV: 'production',
     PORT: 3000,
+    LIFE_KLINE_BUILD_ID: currentBuildId,
     WEB_TIER_ROLE: 'user',
     ENABLE_AGENTIC_PIPELINE: enableAgenticPipeline,
     DEFAULT_MODEL: PRIMARY_LLM_MODEL,
@@ -99,6 +119,45 @@ const nextApp = {
   kill_timeout: 15000,
   listen_timeout: 30000,
   shutdown_with_message: true,
+};
+
+const knowledgeWorker = {
+  name: 'life-kline-knowledge',
+  script: 'scripts/knowledge-acquisition-daemon.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    KNOWLEDGE_ACQUISITION_ENABLED: '1',
+    KNOWLEDGE_ACQUISITION_CRON_TOKEN: cronEnv.KNOWLEDGE_ACQUISITION_CRON_TOKEN,
+    KNOWLEDGE_ACQUISITION_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/knowledge/sources/cron`,
+    KNOWLEDGE_ACQUISITION_INTERVAL_MS: '1800000',
+    KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS: '180000',
+    KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS: '25000',
+    KNOWLEDGE_ACQUISITION_RETRY_DELAY_MS: '60000',
+    KNOWLEDGE_ACQUISITION_LOCK_TTL_MS: '2700000',
+    KNOWLEDGE_ACQUISITION_REFRESH_RADAR: '1',
+    KNOWLEDGE_ACQUISITION_CORE_LIMIT: '18',
+    KNOWLEDGE_ACQUISITION_MAX_DOMAINS_PER_RUN: '3',
+    KNOWLEDGE_ACQUISITION_SIGNAL_MIN_SCORE: '18',
+    KNOWLEDGE_ACQUISITION_SIGNAL_PROMOTION_LIMIT: '10',
+    KNOWLEDGE_ACQUISITION_RADAR_LIMIT_PER_SOURCE: '8',
+    KNOWLEDGE_ACQUISITION_FOCUS_DOMAINS: 'metaphysics,psychology,philosophy,history,ai,statistics,programming,astrology,medicine',
+    KNOWLEDGE_SYNTHESIS_AUTO_PUBLISH: '1',
+    KNOWLEDGE_SYNTHESIS_PUBLISH_THRESHOLD: '78',
+    KNOWLEDGE_SYNTHESIS_ALLOWED_TYPES: 'topic-overview,concept-glossary,book-path,book-ladder',
+    KNOWLEDGE_SYNTHESIS_PUBLISH_BATCH_SIZE: '4',
+  },
+  error_file: '/root/.pm2/logs/life-kline-knowledge-error.log',
+  out_file: '/root/.pm2/logs/life-kline-knowledge-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 20,
+  min_uptime: '10s',
+  watch: false,
+  restart_delay: 5000,
 };
 
 const backgroundWorkers = enableBackgroundWorkers ? [
@@ -217,44 +276,6 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     },
     error_file: '/root/.pm2/logs/life-kline-scheduler-error.log',
     out_file: '/root/.pm2/logs/life-kline-scheduler-out.log',
-    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    merge_logs: true,
-    autorestart: true,
-    max_restarts: 20,
-    min_uptime: '10s',
-    watch: false,
-    restart_delay: 5000,
-  },
-  {
-    name: 'life-kline-knowledge',
-    script: 'scripts/knowledge-acquisition-daemon.js',
-    cwd: '/home/life-kline-next',
-    instances: 1,
-    exec_mode: 'fork',
-    env: {
-      NODE_ENV: 'production',
-      KNOWLEDGE_ACQUISITION_ENABLED: '1',
-      KNOWLEDGE_ACQUISITION_CRON_TOKEN: cronEnv.KNOWLEDGE_ACQUISITION_CRON_TOKEN,
-      KNOWLEDGE_ACQUISITION_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/knowledge/sources/cron`,
-      KNOWLEDGE_ACQUISITION_INTERVAL_MS: '1800000',
-      KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS: '180000',
-      KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS: '25000',
-      KNOWLEDGE_ACQUISITION_RETRY_DELAY_MS: '60000',
-      KNOWLEDGE_ACQUISITION_LOCK_TTL_MS: '2700000',
-      KNOWLEDGE_ACQUISITION_REFRESH_RADAR: '1',
-      KNOWLEDGE_ACQUISITION_CORE_LIMIT: '18',
-      KNOWLEDGE_ACQUISITION_MAX_DOMAINS_PER_RUN: '3',
-      KNOWLEDGE_ACQUISITION_SIGNAL_MIN_SCORE: '18',
-      KNOWLEDGE_ACQUISITION_SIGNAL_PROMOTION_LIMIT: '10',
-      KNOWLEDGE_ACQUISITION_RADAR_LIMIT_PER_SOURCE: '8',
-      KNOWLEDGE_ACQUISITION_FOCUS_DOMAINS: 'metaphysics,psychology,philosophy,history,ai,statistics,programming,astrology,medicine',
-      KNOWLEDGE_SYNTHESIS_AUTO_PUBLISH: '1',
-      KNOWLEDGE_SYNTHESIS_PUBLISH_THRESHOLD: '78',
-      KNOWLEDGE_SYNTHESIS_ALLOWED_TYPES: 'topic-overview,concept-glossary,book-path,book-ladder',
-      KNOWLEDGE_SYNTHESIS_PUBLISH_BATCH_SIZE: '4',
-    },
-    error_file: '/root/.pm2/logs/life-kline-knowledge-error.log',
-    out_file: '/root/.pm2/logs/life-kline-knowledge-out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
     autorestart: true,
@@ -392,10 +413,8 @@ const backgroundWorkers = enableBackgroundWorkers ? [
   },
 ] : [];
 
-// v5-D83 (2026-05-24): 横向扩展副本 — 在 3001/3002 起两个独立 fork。
-// 主端口 3000 留给 daemon 回调（避免改 12 处硬编码 URL）。
-// nginx upstream 会把公网流量按 least_conn 分到 3000/3001/3002。
-// 副本与 nextApp 共享同一份 .next 构建产物，无需重新 build。
+// Legacy port replicas are intentionally disabled. Keep the definitions only as an emergency manual template;
+// normal production topology is one Next process on 3000 behind nginx cache/rate-limit/timeout controls.
 const makeWebReplica = (suffix, port) => ({
   ...nextApp,
   name: `life-kline-next-${suffix}`,
@@ -410,7 +429,7 @@ const webReplicas = [
   makeWebReplica('web2', 3002),
 ];
 
-// Daemon /api/admin/* 专实例 — nginx :8080 与公网 /api/admin/ 打到 3004，避免拖死 3000。
+// Legacy cron replica template. Normal daemon/admin traffic goes through nginx :8080 to the same 3000 upstream.
 const cronReplicaBase = makeWebReplica('cron', 3004);
 const cronReplica = {
   ...cronReplicaBase,
@@ -524,7 +543,7 @@ const stabilityMonitor = {
   watch: false,
 };
 
-// stability-monitor 易触发 web 副本 reload 循环；默认改 user-tier-watchdog 只护 3000。
+// stability-monitor 默认关闭；主站只护 3000。
 const stabilityApps =
   process.env.ENABLE_STABILITY_MONITOR === '1' ? [stabilityMonitor] : [];
 
@@ -552,6 +571,30 @@ const userTierWatchdog = {
   watch: false,
 };
 
+const cronTierWatchdog = {
+  name: 'life-kline-cron-tier-watchdog',
+  script: 'scripts/cron-tier-watchdog.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    CRON_TIER_PORT: '3004',
+    CHECK_INTERVAL_MS: '60000',
+    RECOVERY_COOLDOWN_MS: '900000',
+    FAIL_STREAK_BEFORE_ACT: '3',
+  },
+  error_file: '/root/.pm2/logs/life-kline-cron-tier-watchdog-error.log',
+  out_file: '/root/.pm2/logs/life-kline-cron-tier-watchdog-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 20,
+  min_uptime: '10s',
+  max_memory_restart: '128M',
+  watch: false,
+};
+
 const publicSurfaceWatchdog = {
   name: 'life-kline-public-surface-watchdog',
   script: 'scripts/public-surface-watchdog.js',
@@ -565,6 +608,7 @@ const publicSurfaceWatchdog = {
     RECOVERY_COOLDOWN_MS: '600000',
     FAIL_STREAK_BEFORE_ACT: '2',
     PROBE_TIMEOUT_MS: '8000',
+    PUBLIC_SURFACE_RECOVERY_PM2: 'life-kline-next-web1,life-kline-next-web2',
   },
   error_file: '/root/.pm2/logs/life-kline-public-surface-watchdog-error.log',
   out_file: '/root/.pm2/logs/life-kline-public-surface-watchdog-out.log',
@@ -577,15 +621,18 @@ const publicSurfaceWatchdog = {
   watch: false,
 };
 
-const enablePublicSurfaceWatchdog = process.env.ENABLE_PUBLIC_SURFACE_WATCHDOG !== '0';
+const enablePublicSurfaceWatchdog = false;
 
-const watchdogApps = [];
+const watchdogApps = enableWatchdogs ? [
+  userTierWatchdog,
+] : [];
 
 module.exports = {
   apps: [
     nextApp,
-    ...webReplicas,
-    cronReplica,
+    ...(enableWebReplicas ? webReplicas : []),
+    ...(enableCronTier ? [cronReplica] : []),
+    ...(enableKnowledgeWorker ? [knowledgeWorker] : []),
     ...backgroundWorkers,
     ...watchdogApps,
     ...stabilityApps,

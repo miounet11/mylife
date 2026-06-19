@@ -109,7 +109,7 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-2 text-[13px] font-bold text-[#1d2129]">
                     <span>
                       {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
-                      {reportId ? <span className="ml-2 font-mono text-[11px] text-[#606770]">报告 {reportId.slice(0, 8)}</span> : null}
+                      {reportId ? <span className="ml-2 font-mono text-xs text-[#606770]">报告 {reportId.slice(0, 8)}</span> : null}
                     </span>
                     <span className="text-[12px] font-semibold text-[#3b5998]">展开</span>
                   </summary>
@@ -138,19 +138,19 @@ export default async function ChatPage({ searchParams }: ChatPageProps) {
                   </span>
                   <div>
                     <div className="text-[14px] font-bold text-[#1d2129]">WorldYi 结构追问</div>
-                    <div className="text-[11px] text-[#606770]">
+                    <div className="text-xs text-[#606770]">
                       {intentPreset ? `专项 · ${intentPreset.entryLabel}` : '自由结构追问'}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
                   {reportId ? (
-                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#1d2129]">
+                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#1d2129]">
                       报告 <span className="font-mono">{reportId.slice(0, 8)}</span>
                     </span>
                   ) : null}
                   {eventId ? (
-                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#1d2129]">
+                    <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#1d2129]">
                       事件 <span className="font-mono">{eventId.slice(0, 8)}</span>
                     </span>
                   ) : null}
@@ -198,7 +198,7 @@ function ChatSidebar({
             href={reportHref}
             className="block rounded-[3px] border border-[#dddfe2] bg-white px-2.5 py-2 text-[12px] text-[#1d2129] hover:border-[#3b5998]"
           >
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#606770]">报告</div>
+            <div className="text-xs font-bold uppercase tracking-[0.12em] text-[#606770]">报告</div>
             <div className="mt-0.5 truncate font-semibold">
               {reportId ? `报告 ${reportId.slice(0, 8)}` : '未绑定，点击查看档案'}
             </div>
@@ -207,7 +207,7 @@ function ChatSidebar({
             href={eventsHref}
             className="block rounded-[3px] border border-[#dddfe2] bg-white px-2.5 py-2 text-[12px] text-[#1d2129] hover:border-[#3b5998]"
           >
-            <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#606770]">事件</div>
+            <div className="text-xs font-bold uppercase tracking-[0.12em] text-[#606770]">事件</div>
             <div className="mt-0.5 truncate font-semibold">
               {eventId ? `事件 ${eventId.slice(0, 8)}` : '管理关联事件'}
             </div>
@@ -254,7 +254,7 @@ function ChatSidebar({
         </Suspense>
       </SidebarSection>
 
-      <div className="text-[11px] leading-4 text-[#606770]">
+      <div className="text-xs leading-4 text-[#606770]">
         <div className="font-bold text-[#1d2129]">追问的三个原则</div>
         <ol className="mt-1 list-decimal space-y-0.5 pl-4">
           <li>先钉住卡在结构、阶段还是环境。</li>
@@ -269,7 +269,7 @@ function ChatSidebar({
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-[#606770]">{title}</div>
+      <div className="mb-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#606770]">{title}</div>
       {children}
     </div>
   );

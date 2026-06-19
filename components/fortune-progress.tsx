@@ -398,7 +398,7 @@ export default function FortuneProgress({
 
             <div className="grid gap-2 sm:grid-cols-2">
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <Clock3 className="h-3 w-3" />
                   已等待
                 </div>
@@ -407,7 +407,7 @@ export default function FortuneProgress({
                 </div>
               </div>
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <Sparkles className="h-3 w-3" />
                   当前节奏
                 </div>

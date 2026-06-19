@@ -27,7 +27,11 @@ export default function ToolCardLink({
   sourceFamily?: string;
 }) {
   const resolvedHref = appendSourceToHref(href, source);
-  const resolvedClassName = className ? `${className} block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]` : 'block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]';
+  const baseClassName = 'block cursor-pointer transition-colors hover:no-underline';
+  const fbSurfaceClassName = 'fb-card hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)]';
+  const resolvedClassName = className
+    ? `${className} ${baseClassName} ${fbSurfaceClassName}`
+    : `${baseClassName} ${fbSurfaceClassName} p-3`;
   return (
     <Link
       href={resolvedHref}
@@ -47,7 +51,7 @@ export default function ToolCardLink({
       }}
       className={resolvedClassName}
     >
-      {children}
+      <div className="overflow-hidden">{children}</div>
     </Link>
   );
 }

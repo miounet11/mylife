@@ -138,7 +138,7 @@ export default function VisualAssetsPage() {
             <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               用图片看懂人生K线 / 世界易的判断路径。每张图都配有深度解读、相关工具和测算入口。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">精选 {visualAssets.length} 张</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">主题 {groupedAssets.length} 组</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">深度解读</span>
@@ -275,7 +275,7 @@ export default function VisualAssetsPage() {
           </div>
           <div className="mt-6 space-y-10">
             {groupedAssets.map((group) => (
-              <section key={group.key} id={moduleDomId(group.key)} className="scroll-mt-24">
+              <section key={group.key} id={moduleDomId(group.key)} className="scroll-mt-header">
                 <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                   <div>
                     <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">

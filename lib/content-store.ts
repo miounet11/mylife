@@ -15,7 +15,7 @@ import {
   knowledgeArticles as seededKnowledgeArticles,
 } from '@/lib/content';
 import { inferCategoryFromText, listToolsByCategory } from '@/lib/tools';
-import { generateId } from '@/lib/utils';
+import { contentSnapshotCache, generateId, worldYiPublicationCache } from '@/lib/utils';
 import { buildVisualAssetBindingForContentEntry } from '@/lib/visual-asset-library';
 
 export type ManagedContentType = 'knowledge' | 'case' | 'insight';
@@ -898,6 +898,8 @@ const PUBLISHED_LIST_TTL_MS = 30_000;
 
 function invalidatePublishedListCache() {
   publishedListCache.clear();
+  contentSnapshotCache.clear();
+  worldYiPublicationCache.clear();
 }
 
 function listPublishedEntriesByType(contentType: ManagedContentType) {
@@ -1114,8 +1116,9 @@ export function listManagedContentEntries() {
 
 export type ManagedContentEntryInput = Omit<
   ManagedContentEntry,
-  'createdAt' | 'updatedAt' | 'source' | 'createdBy' | 'updatedBy'
+  'id' | 'createdAt' | 'updatedAt' | 'source' | 'createdBy' | 'updatedBy'
 > & {
+  id?: string;
   source?: string;
   createdBy?: string | null;
   updatedBy?: string | null;

@@ -85,6 +85,83 @@ export function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+export type AbortControllerRef = {
+  current: AbortController | null;
+};
+
+export type FetchJsonWithTimeoutOptions = Omit<RequestInit, 'signal'> & {
+  timeoutMs: number;
+  timeoutReason: string;
+  controllerRef?: AbortControllerRef;
+  supersedeReason?: string;
+};
+
+export function isAbortLikeError(error: unknown) {
+  if (typeof error === 'string') {
+    return error.includes('abort') || error.includes('timeout') || error.includes('unmounted') || error.includes('superseded');
+  }
+
+  if (typeof DOMException !== 'undefined' && error instanceof DOMException && error.name === 'AbortError') {
+    return true;
+  }
+
+  if (error instanceof Error) {
+    const combined = `${error.name} ${error.message}`.toLowerCase();
+    return combined.includes('abort') || combined.includes('timeout') || combined.includes('timed out');
+  }
+
+  return false;
+}
+
+export function abortControllerRef(controllerRef: AbortControllerRef, reason: string) {
+  controllerRef.current?.abort(reason);
+  controllerRef.current = null;
+}
+
+export async function fetchJsonWithTimeout<T>(
+  url: string,
+  options: FetchJsonWithTimeoutOptions,
+) {
+  const {
+    timeoutMs,
+    timeoutReason,
+    controllerRef,
+    supersedeReason = 'request-superseded',
+    ...requestOptions
+  } = options;
+
+  controllerRef?.current?.abort(supersedeReason);
+
+  const controller = new AbortController();
+  if (controllerRef) {
+    controllerRef.current = controller;
+  }
+
+  const timeoutId = setTimeout(() => {
+    controller.abort(timeoutReason);
+  }, timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...requestOptions,
+      signal: controller.signal,
+    });
+    const data = (await response.json()) as T;
+    return { response, data };
+  } catch (error) {
+    if (controller.signal.aborted && controller.signal.reason) {
+      throw controller.signal.reason;
+    }
+
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+    if (controllerRef?.current === controller) {
+      controllerRef.current = null;
+    }
+  }
+}
+
 // 生成唯一ID
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;

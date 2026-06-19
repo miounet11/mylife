@@ -17,8 +17,8 @@ export default function RelationPicker({ value, label, onChange, onLabelChange }
   return (
     <div className="rounded-md border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 md:py-3">
       <div className="flex items-center justify-between">
-        <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
-          这是谁的命盘？<span className="ml-1 text-[10px] normal-case text-[color:var(--ink-5)]">（可选）</span>
+        <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
+          这是谁的命盘？<span className="ml-1 text-xs normal-case text-[color:var(--ink-5)]">（可选）</span>
         </div>
         {value && (
           <button
@@ -27,7 +27,7 @@ export default function RelationPicker({ value, label, onChange, onLabelChange }
               onChange(null);
               onLabelChange('');
             }}
-            className="text-[11px] text-[color:var(--ink-5)] hover:text-[color:var(--ink-3)]"
+            className="text-xs text-[color:var(--ink-5)] hover:text-[color:var(--ink-3)]"
           >
             清除
           </button>

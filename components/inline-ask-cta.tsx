@@ -53,7 +53,7 @@ export default function InlineAskCTA({
   if (variant === 'block') {
     return (
       <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-        <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+        <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
           <MessageCircleQuestion className="h-3 w-3" />
           这一段可以接着问
         </div>
@@ -84,7 +84,7 @@ export default function InlineAskCTA({
       href={href}
       page={`/result/${reportId}`}
       target={`result_chapter_ask:${chapter}`}
-      className="group inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-[11px] font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
+      className="group inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
       meta={{
         reportId,
         source: `result_chapter_ask:${chapter}`,

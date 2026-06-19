@@ -51,6 +51,7 @@
  */
 
 import { loadDefaultLocalEnv } from '@/scripts/load-local-env';
+import { readPositiveIntegerEnv, readPositiveIntegerValue } from '@/scripts/ops-env.js';
 loadDefaultLocalEnv();
 
 const DIRECT_API_URL = process.env.CHAT_API_URL || 'https://ttqq.inping.com/v1/chat/completions';
@@ -66,12 +67,13 @@ let MODEL = DIRECT_MODEL;
 const IS_DRY_RUN = process.env.DRY_RUN === '1' || process.env.DRY_RUN === 'true';
 const WORKER_MODE = process.argv.includes('--worker') || process.env.WORKER_MODE === '1';
 
-const CONCURRENCY = parseInt(
-  (process.argv.find(a => a.startsWith('--concurrency='))?.split('=')[1] ||
-   process.env.CONTENT_GEN_CONCURRENCY || '8'),
-  10
+const readArgValue = (name: string) => process.argv.find(a => a.startsWith(`--${name}=`))?.split('=')[1];
+const CONCURRENCY = readPositiveIntegerValue(
+  readArgValue('concurrency') || process.env.CONTENT_GEN_CONCURRENCY,
+  8,
+  { min: 1, max: 100 },
 );
-const MAX_PARALLEL = parseInt(process.env.CONTENT_GEN_MAX_PARALLEL || '50', 10);
+const MAX_PARALLEL = readPositiveIntegerEnv('CONTENT_GEN_MAX_PARALLEL', 50, { min: 1, max: 100 });
 
 if (!DIRECT_API_KEY && !getApiKey?.()) {
   // Will be resolved by internal init below; fatal only if both paths fail
@@ -245,7 +247,7 @@ if (!USE_DIRECT && !internalOpenAI) {
 // === Advanced Adaptive Concurrency Limiter (backpressure) ===
 function createAdvancedLimiter(initialMax: number) {
   let active = 0;
-  let currentMax = Math.min(initialMax, MAX_PARALLEL);
+  let currentMax = Math.max(1, Math.min(initialMax, MAX_PARALLEL));
   const queue: Array<() => void> = [];
   let successWindow: boolean[] = [];
   const WINDOW = 20;
@@ -1145,7 +1147,7 @@ async function persistV2DecisionTraceCase(genResult: any): Promise<ManagedConten
   if (sections.length < 3) {
     // Fallback flat
     const paras = content.split(/\n{2,}/).filter((p: string) => p.trim().length > 30).slice(0, 10);
-    paras.forEach((p, i) => sections.push({ title: i === 0 ? '决策轨迹全文' : `段落 ${i}`, paragraphs: [p] }));
+    paras.forEach((p: string, i: number) => sections.push({ title: i === 0 ? '决策轨迹全文' : `段落 ${i}`, paragraphs: [p] }));
   }
 
   const now = new Date().toISOString();
@@ -1257,9 +1259,11 @@ async function runWorkerLoop(lane: string, concurrency: number) {
     let job = claimNextWorldYiV2Task(50);
     let topic = '';
     let jobId: string | null = null;
+    let jobLockedAt: string | undefined;
 
     if (job) {
       jobId = job.id;
+      jobLockedAt = job.lockedAt;
       topic = (job.request as any)?.topic || '';
       log('info', 'claimed v2 queue job', { jobId, topic: topic.slice(0, 50), queuePending: q.pending });
     } else {
@@ -1296,6 +1300,16 @@ async function runWorkerLoop(lane: string, concurrency: number) {
     try {
       const piece = await limiter.limit(() => generateWorldYiV2Piece(topic, lane));
       const p0Cfg = P0_DOCTRINE_SPINE_TOPICS.find((t: any) => topic.includes(t.title) || topic.includes(t.key));
+      if (jobId && jobLockedAt && !IS_DRY_RUN) {
+        const { contentGenerationJobOperations } = await import('@/lib/database');
+        const current = contentGenerationJobOperations.getById(jobId);
+        if (current?.status !== 'running' || current.lockedAt !== jobLockedAt) {
+          log('warn', 'skip v2 persist; queue job lease lost', { jobId, topic: topic.slice(0, 80) });
+          idleCycles++;
+          continue;
+        }
+      }
+
       const saved = await persistV2Content(piece, p0Cfg);
 
       if (jobId && !IS_DRY_RUN) {
@@ -1305,6 +1319,7 @@ async function runWorkerLoop(lane: string, concurrency: number) {
           result: { v2Topic: topic, scores: piece.scores, slug: saved?.slug },
           generatedCount: 1,
           llmSucceededCount: 1,
+          lockedAt: jobLockedAt,
           meta: { completedWithV2Gate: piece.passedGate },
         });
       }
@@ -1320,6 +1335,7 @@ async function runWorkerLoop(lane: string, concurrency: number) {
         contentGenerationJobOperations.markRetry(jobId, {
           lastError: String(e).slice(0, 300),
           nextRunAt: new Date(Date.now() + 180_000).toISOString(),
+          lockedAt: jobLockedAt,
         });
       }
     }
@@ -1338,8 +1354,8 @@ async function main() {
   const args = process.argv.slice(2);
   const getArg = (name: string, def?: string) => args.find(a => a.startsWith(`--${name}=`))?.split('=')[1] || def;
   const lane = getArg('lane', 'main')!;
-  const count = parseInt(getArg('count', '8')!, 10);
-  const concurrency = parseInt(getArg('concurrency', String(CONCURRENCY))!, 10);
+  const count = readPositiveIntegerValue(getArg('count'), 8, { min: 1, max: 200 });
+  const concurrency = readPositiveIntegerValue(getArg('concurrency'), CONCURRENCY, { min: 1, max: MAX_PARALLEL });
   const doEnqueue = args.includes('--enqueue');
   const topicsArg = getArg('topics', '');
 

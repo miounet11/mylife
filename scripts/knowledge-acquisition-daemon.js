@@ -1,9 +1,11 @@
-const intervalMs = Math.max(60_000, Number(process.env.KNOWLEDGE_ACQUISITION_INTERVAL_MS || 1000 * 60 * 30));
+const { readPositiveIntegerEnv } = require('./ops-env.js');
+
+const intervalMs = readPositiveIntegerEnv('KNOWLEDGE_ACQUISITION_INTERVAL_MS', 1000 * 60 * 30, { min: 60_000, max: 86_400_000 });
 const runUrl = process.env.KNOWLEDGE_ACQUISITION_RUN_URL || 'http://127.0.0.1:8080/api/admin/knowledge/sources/cron';
 const token = process.env.KNOWLEDGE_ACQUISITION_CRON_TOKEN || process.env.CONTENT_RADAR_CRON_TOKEN || '';
-const requestTimeoutMs = Math.max(10_000, Number(process.env.KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS || 180_000));
-const startupDelayMs = Math.max(5_000, Number(process.env.KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS || 25_000));
-const retryDelayMs = Math.max(15_000, Number(process.env.KNOWLEDGE_ACQUISITION_RETRY_DELAY_MS || Math.min(intervalMs, 60_000)));
+const requestTimeoutMs = readPositiveIntegerEnv('KNOWLEDGE_ACQUISITION_REQUEST_TIMEOUT_MS', 180_000, { min: 10_000, max: 1_800_000 });
+const startupDelayMs = readPositiveIntegerEnv('KNOWLEDGE_ACQUISITION_STARTUP_DELAY_MS', 25_000, { min: 5_000, max: 300_000 });
+const retryDelayMs = readPositiveIntegerEnv('KNOWLEDGE_ACQUISITION_RETRY_DELAY_MS', Math.min(intervalMs, 60_000), { min: 15_000, max: 900_000 });
 
 async function fetchWithTimeout(url, options) {
   const controller = new AbortController();

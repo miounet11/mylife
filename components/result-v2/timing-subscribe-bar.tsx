@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 interface Props {
   surfaceKey: string;
@@ -20,6 +21,12 @@ const VISIT_KEY = 'lk-report-visited-ids';
 const VISIT_THRESHOLD = 3;
 const DISMISS_KEY = 'lk-timing-subscribe-dismissed-at';
 const DISMISS_TTL_MS = 1000 * 60 * 60 * 24 * 7; // 关闭后 7 天再出
+const TIMING_SUBSCRIBE_TIMEOUT_MS = 12_000;
+
+type TimingSubscribeResponse = {
+  success?: boolean;
+  error?: string;
+};
 
 function recordVisitAndCount(reportId: string): number {
   try {
@@ -115,7 +122,7 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
     setStatus('submitting');
     setErrorMsg('');
     try {
-      const res = await fetch('/api/newsletter', {
+      const { response, data } = await fetchJsonWithTimeout<TimingSubscribeResponse>('/api/newsletter', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
@@ -123,9 +130,10 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
           source: surfaceKey,
           tags: ['timing:monthly', 'timing:solar_terms', 'timing:major_events'],
         }),
+        timeoutMs: TIMING_SUBSCRIBE_TIMEOUT_MS,
+        timeoutReason: 'timing-subscribe-timeout',
       });
-      const data = await res.json();
-      if (!res.ok || data.success === false) {
+      if (!response.ok || data.success === false) {
         throw new Error(data.error || '提交失败');
       }
       setStatus('done');
@@ -137,7 +145,7 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
       });
     } catch (err) {
       setStatus('error');
-      setErrorMsg(err instanceof Error ? err.message : '提交失败');
+      setErrorMsg(isAbortLikeError(err) ? '订阅等待时间过长，请稍后重试' : err instanceof Error ? err.message : '提交失败');
     }
   };
 
@@ -178,7 +186,7 @@ export default function TimingSubscribeBar({ surfaceKey, reportId }: Props) {
       {errorMsg && (
         <p className="mt-2 text-xs text-red-600">{errorMsg}</p>
       )}
-      <p className="mt-2 text-[10px] text-[color:var(--ink-3)]">
+      <p className="mt-2 text-xs text-[color:var(--ink-3)]">
         完全免费 · 随时可退订
       </p>
     </div>

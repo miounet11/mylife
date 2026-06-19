@@ -83,6 +83,9 @@
   --surface:       var(--bg-elevated);
   --surface-strong:var(--paper);
   --surface-soft:  var(--bg-sunken);
+
+  /* 站点顶栏高度（SiteHeader 三行：42 + 40 + 36 = 118px） */
+  --site-header-offset: 118px;
 }
 
 /* 报告深读模式（terminal mode）：仅作用于 [data-mode="terminal"] 容器内 */
@@ -208,7 +211,7 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
 
   /* ============ 页面骨架 ============ */
   .page-shell {
-    @apply relative min-h-screen overflow-hidden;
+    @apply relative min-h-screen overflow-x-clip;
   }
 
   .page-shell::before {
@@ -264,6 +267,20 @@ body:has([data-mode="terminal"][data-mode-scope="root"]) {
 
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+
+  .scroll-fade-x {
+    mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+  }
+
+  /* 锚点跳转 / sticky 侧栏：与 SiteHeader 三行高度对齐 */
+  .scroll-mt-header {
+    scroll-margin-top: var(--site-header-offset);
+  }
+
+  .sticky-top-header {
+    position: sticky;
+    top: var(--site-header-offset);
   }
 
   /* ============ 数据语义（K 线、阶段、涨跌）============ */
@@ -403,9 +420,9 @@ html[data-theme="fb2017"] a:hover { text-decoration: underline; color: var(--fb-
 html[data-theme="fb2017"] .num,
 html[data-theme="fb2017"] [data-numeric="true"],
 html[data-theme="fb2017"] .tabular {
-  font-family: var(--font-sans);
-  font-variant-numeric: normal;
-  font-feature-settings: normal;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
 }
 
 html[data-theme="fb2017"] ::selection {
@@ -576,10 +593,10 @@ html[data-theme="fb2017"] .rounded-\[var\(--radius-lg\)\].border:hover {
   border-color: var(--fb-border-strong) !important;
 }
 
-/* 列表卡之间统一 8px 间隙（News Feed 风） */
-html[data-theme="fb2017"] .grid.gap-3 { gap: 8px; }
-html[data-theme="fb2017"] .grid.gap-4 { gap: 8px; }
-html[data-theme="fb2017"] .grid.gap-5 { gap: 10px; }
+/* 列表卡之间统一 8px 间隙（News Feed 风，仅 fb-card 内） */
+html[data-theme="fb2017"] .fb-card .grid.gap-3 { gap: 8px; }
+html[data-theme="fb2017"] .fb-card .grid.gap-4 { gap: 8px; }
+html[data-theme="fb2017"] .fb-card .grid.gap-5 { gap: 10px; }
 
 /* —— Hero 区：去掉装饰描边，改 FB Page 风白卡条 —— */
 html[data-theme="fb2017"] section.relative.overflow-hidden.rounded-\[var\(--radius-lg\)\] {
@@ -646,8 +663,10 @@ html[data-theme="fb2017"] button.bg-\[color\:var\(--brand\)\].text-white {
   background: var(--fb-blue) !important;
   border: 1px solid var(--fb-blue-strong);
   border-radius: 2px;
+  color: #fff !important;
   font-weight: 700;
   font-size: 13px;
+  text-decoration: none;
 }
 html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white:hover,
 html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white:hover {

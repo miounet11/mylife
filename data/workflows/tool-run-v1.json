@@ -10,8 +10,8 @@
     "llmEnhancementEnabled": true,
     "llmTimeoutMs": 12000,
     "llmMaxTokens": 1200,
-    "llmModel": "grok-420-fast",
-    "llmModelChain": ["grok-420-fast", "auto"]
+    "llmModel": "auto",
+    "llmModelChain": ["auto"]
   },
   "stages": [
     "validate-tool",

@@ -1,4 +1,8 @@
-import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/lib/content-generation';
+import {
+  assessGeneratedManagedContentDraftQuality,
+  generateManagedContentDrafts,
+  type ContentGenerationLocale,
+} from '@/lib/content-generation';
 import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations, systemLockOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
@@ -444,8 +448,15 @@ function rowText(meta: Record<string, unknown>) {
     `${meta.title || ''}`,
     `${meta.category || ''}`,
     `${meta.name || ''}`,
-    tags,
     `${meta.slug || ''}`,
+    `${meta.toolSlug || ''}`,
+    `${meta.toolCategory || ''}`,
+    `${meta.serviceKey || ''}`,
+    `${meta.reportTheme || ''}`,
+    `${meta.scenarioKey || ''}`,
+    `${meta.eventType || ''}`,
+    `${meta.source || ''}`,
+    tags,
   ].join(' '));
 }
 
@@ -467,16 +478,23 @@ function getPublishedTypesForCluster(entries: ManagedContentEntry[], cluster: St
 }
 
 function hasStructuredAutoPublishQuality(entry: ManagedContentEntry, relaxed = false) {
-  const minSections = relaxed ? 3 : 4;
+  const minSections = relaxed ? 4 : 4;
   const minParagraphLen = relaxed ? 12 : 18;
-  const minExcerpt = relaxed ? 48 : 72;
-  const minSeoDescription = relaxed ? 48 : 72;
-  const minTags = relaxed ? 3 : 4;
+  const minExcerpt = relaxed ? 60 : 72;
+  const minSeoDescription = relaxed ? 60 : 72;
+  const minTags = 4;
+  const paragraphs = entry.sections.flatMap((section) => section.paragraphs || []).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const averageParagraphLength = paragraphs.length > 0
+    ? paragraphs.reduce((sum, paragraph) => sum + paragraph.length, 0) / paragraphs.length
+    : 0;
   const paragraphQualityOk = entry.sections.every((section) => (
     section.title.trim().length >= 4 &&
     section.paragraphs.length >= 2 &&
     section.paragraphs.every((paragraph) => paragraph.trim().length >= minParagraphLen)
   ));
+  const publicQuality = typeof entry.meta?.qualityScore === 'number'
+    ? entry.meta.qualityScore >= (relaxed ? 76 : 82)
+    : true;
 
   return (
     entry.excerpt.trim().length >= minExcerpt &&
@@ -484,7 +502,10 @@ function hasStructuredAutoPublishQuality(entry: ManagedContentEntry, relaxed = f
     entry.seoDescription.trim().length >= minSeoDescription &&
     entry.tags.length >= minTags &&
     entry.sections.length >= minSections &&
-    paragraphQualityOk
+    paragraphs.length >= 8 &&
+    averageParagraphLength >= minParagraphLen &&
+    paragraphQualityOk &&
+    publicQuality
   );
 }
 
@@ -559,10 +580,68 @@ function normalizeTitleFamilyKey(value: string) {
     .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, ' ')
     .replace(/\b\d{4}\b/g, ' ')
     .replace(/\b\d{1,2}\b/g, ' ')
-    .replace(/[0-9]/g, ' ')
     .replace(/[-–—:："“”'’.,()/]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function tokenizeContentSignature(value: string) {
+  return normalizeText(value)
+    .replace(/[\s\-–—:："“”'’.,()/，。！？、]/g, ' ')
+    .split(' ')
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 2);
+}
+
+function contentSignatureSimilarity(left: string, right: string) {
+  const leftTokens = new Set(tokenizeContentSignature(left));
+  const rightTokens = new Set(tokenizeContentSignature(right));
+  if (leftTokens.size === 0 || rightTokens.size === 0) {
+    return { overlap: 0, shared: 0 };
+  }
+
+  let shared = 0;
+  leftTokens.forEach((token) => {
+    if (rightTokens.has(token)) {
+      shared += 1;
+    }
+  });
+
+  return {
+    overlap: shared / Math.min(leftTokens.size, rightTokens.size),
+    shared,
+  };
+}
+
+function buildDraftContentSignature(input: Pick<ManagedContentEntry, 'title' | 'excerpt' | 'tags' | 'contentType'>) {
+  return [input.contentType, input.title, input.excerpt, ...(input.tags || [])].join(' ');
+}
+
+function findSimilarExistingContent(params: {
+  draft: Pick<ManagedContentEntry, 'title' | 'excerpt' | 'tags' | 'contentType'>;
+  entries: ManagedContentEntry[];
+}) {
+  const draftSignature = buildDraftContentSignature(params.draft);
+
+  return params.entries.find((entry) => {
+    if (entry.contentType !== params.draft.contentType) {
+      return false;
+    }
+
+    const draftFamily = normalizeTitleFamilyKey(params.draft.title);
+    const entryFamily = normalizeTitleFamilyKey(entry.title);
+    if (draftFamily && entryFamily && draftFamily === entryFamily) {
+      return true;
+    }
+
+    const titleSimilarity = contentSignatureSimilarity(params.draft.title, entry.title);
+    if (titleSimilarity.shared === 0) {
+      return false;
+    }
+
+    const similarity = contentSignatureSimilarity(draftSignature, buildDraftContentSignature(entry));
+    return similarity.shared >= 3 && similarity.overlap >= 0.72;
+  }) || null;
 }
 
 function buildCandidateSuppressionIndex(): CandidateSuppressionIndex {
@@ -1438,11 +1517,14 @@ function getContentSchedulerConfig(): ContentSchedulerConfig {
 }
 
 function computeAutoPublishScore(entry: ManagedContentEntry) {
+  const qualityScore = typeof entry.meta?.qualityScore === 'number' ? entry.meta.qualityScore : 0;
+
   return (
     entry.sections.length * 12 +
     entry.tags.length * 6 +
     Math.min(entry.excerpt.length, 80) +
     Math.min(entry.seoDescription.length, 80) +
+    Math.round(qualityScore / 2) +
     (entry.meta?.origin === 'content-radar' ? 16 : 0)
   );
 }
@@ -1729,7 +1811,7 @@ export function buildContentOpsSnapshot(params: {
       .filter((type) => type === cluster.primaryType || (type === 'knowledge' && cluster.baseDemand >= 8) || (type === 'case' && cluster.baseDemand >= 8))
       .filter((type) => !coveredTypes.has(type));
     const demandScore = cluster.baseDemand * 10 + (clusterSignalBuckets[cluster.key] || 0) * 6;
-    const priorityScore = demandScore + Math.max(0, 3 - publishedCount) * 18 + missingTypes.length * 10 - draftCount * 4;
+    const priorityScore = demandScore + Math.max(0, 2 - publishedCount) * 18 + missingTypes.length * 10 - draftCount * 8 - Math.max(0, publishedCount - 2) * 22;
 
     return {
       key: cluster.key,
@@ -2025,6 +2107,8 @@ export async function runContentAutomationCycle(params: {
   const usedSlugs = new Set(listManagedContentEntries().map((entry) => entry.slug));
   const savedEntries: ManagedContentEntry[] = [];
   const skippedDuplicateTitles: { title: string; familyKey: string; draftCount: number; publishedCount: number }[] = [];
+  const skippedQualityDrafts: { title: string; score: number; reasons: string[] }[] = [];
+  const skippedSimilarDrafts: { title: string; similarTitle: string; similarSlug: string }[] = [];
   const analyticsRows = listRecentContentAnalyticsRows();
   const baseEntries = listManagedContentEntries();
 
@@ -2073,6 +2157,29 @@ export async function runContentAutomationCycle(params: {
     });
 
     for (const draft of generated.entries) {
+      const quality = assessGeneratedManagedContentDraftQuality(draft);
+      if (!quality.ready) {
+        skippedQualityDrafts.push({
+          title: draft.title,
+          score: quality.score,
+          reasons: quality.reasons,
+        });
+        continue;
+      }
+
+      const similarEntry = findSimilarExistingContent({
+        draft,
+        entries: [...baseEntries, ...savedEntries],
+      });
+      if (similarEntry) {
+        skippedSimilarDrafts.push({
+          title: draft.title,
+          similarTitle: similarEntry.title,
+          similarSlug: similarEntry.slug,
+        });
+        continue;
+      }
+
       // D31-A: 跳过题材族已饱和的草稿（含本批新增）
       const familyKey = normalizeTitleFamilyKey(draft.title);
       if (familyKey && familyKey.length >= 12) {
@@ -2156,6 +2263,9 @@ export async function runContentAutomationCycle(params: {
           locale: item.locale,
           sourceType: item.sourceType,
           automationReason: item.reason,
+          qualityScore: quality.score,
+          qualityReasons: quality.reasons,
+          averageParagraphLength: quality.averageParagraphLength,
           autoPublishScore: autoPublishDecision?.score,
           autoPublishReasons: autoPublishDecision?.reasons,
           autoPublishBlockedBy: autoPublishDecision?.hardBlockReasons,
@@ -2184,6 +2294,8 @@ export async function runContentAutomationCycle(params: {
     publishedCount: savedEntries.filter((entry) => entry.status === 'published').length,
     draftCount: savedEntries.filter((entry) => entry.status === 'draft').length,
     skippedDuplicateTitles,
+    skippedQualityDrafts,
+    skippedSimilarDrafts,
   };
 }
 

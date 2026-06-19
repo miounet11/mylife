@@ -150,7 +150,7 @@ export default function KnowledgePage() {
             <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               围绕真太阳时校正、结构判断、报告阅读和决策应用建立的可积累知识体系。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
@@ -197,7 +197,7 @@ export default function KnowledgePage() {
                 className="inline-flex h-7 items-center gap-1.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 text-xs font-semibold text-[color:var(--ink-2)] hover:border-[color:var(--brand)]"
               >
                 {group.groupLabel}
-                <span className="font-mono tabular-nums text-[10px] text-[color:var(--ink-5)]">
+                <span className="font-mono tabular-nums text-xs text-[color:var(--ink-5)]">
                   {group.entries.length}
                 </span>
               </a>
@@ -206,7 +206,7 @@ export default function KnowledgePage() {
 
           <div className="space-y-8">
             {groupedKnowledgeEntries.map((group) => (
-              <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-24">
+              <section key={group.groupKey} id={getLocaleAnchorId(group.groupKey)} className="space-y-4 scroll-mt-header">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   <BookOpen className="h-3.5 w-3.5" />
                   {group.groupLabel}

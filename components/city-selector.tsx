@@ -181,7 +181,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
             <div className="space-y-4">
               {recentLocations.length > 0 ? (
                 <div>
-                  <div className="mb-2 flex items-center gap-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                  <div className="mb-2 flex items-center gap-2 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
                     <Clock3 className="h-3.5 w-3.5" />
                     最近使用
                   </div>
@@ -200,7 +200,7 @@ export default function CitySelector({ value, onSelect }: CitySelectorProps) {
               ) : null}
 
               <div>
-                <div className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                <div className="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
                   常用地点
                 </div>
                 <div className="flex flex-wrap gap-2">
@@ -250,7 +250,7 @@ function LocationResultButton({
         <div className="truncate text-sm font-semibold text-[color:var(--ink)]">{location.displayName}</div>
         <div className="truncate text-xs text-[color:var(--muted)]">{location.fullName}</div>
       </div>
-      <div className="ml-3 shrink-0 text-right text-[11px] text-[color:var(--muted)]">
+      <div className="ml-3 shrink-0 text-right text-xs text-[color:var(--muted)]">
         <div>{getTimezoneDisplay(location)}</div>
         <div>东经 {location.lng.toFixed(2)}°</div>
       </div>

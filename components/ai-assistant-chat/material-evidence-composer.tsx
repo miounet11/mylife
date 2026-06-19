@@ -65,7 +65,7 @@ export function MaterialEvidenceComposer({
           </div>
           <div className="min-w-0">
             <div className="text-[13px] font-bold text-[#1d2129]">资料维度</div>
-            <div className="text-[11px] text-[#606770]">{materials.length} 份 · {imageCount} 张图片</div>
+            <div className="text-xs text-[#606770]">{materials.length} 份 · {imageCount} 张图片</div>
           </div>
         </div>
         <Link href="/docs/structured-chat" className="text-[12px] font-semibold text-[#3b5998] hover:underline">
@@ -84,7 +84,7 @@ export function MaterialEvidenceComposer({
               type="button"
               onClick={() => onKindChange(item.kind)}
               disabled={disabled}
-              className={`inline-flex shrink-0 items-center gap-1 rounded-[3px] border px-2 py-1 text-[11px] font-semibold transition ${
+              className={`inline-flex shrink-0 items-center gap-1 rounded-[3px] border px-2 py-1 text-xs font-semibold transition ${
                 active
                   ? 'border-[#3b5998] bg-[#e7f3ff] text-[#365899]'
                   : 'border-[#dddfe2] bg-white text-[#606770] hover:border-[#3b5998] hover:text-[#1d2129]'
@@ -138,7 +138,7 @@ export function MaterialEvidenceComposer({
         </div>
       ) : null}
 
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px] leading-4 text-[#606770]">
+      <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-xs leading-4 text-[#606770]">
         <span className="inline-flex items-center gap-1 rounded-[3px] border border-[#dddfe2] bg-white px-2 py-0.5 font-semibold">
           <ShieldCheck className="h-3 w-3" />
           先遮挡证件号、住址、手机号

@@ -10,7 +10,13 @@ jest.mock('@/lib/database', () => ({
 }));
 
 import { describe, expect, test, beforeEach } from '@jest/globals';
-import { deriveModelHealthSnapshots, isImmediateOpenFailure, recordModelAttempt } from '@/lib/llm-provider-health';
+import {
+  deriveModelHealthSnapshots,
+  isImmediateOpenFailure,
+  readBoundedPositiveIntEnv,
+  readBoundedUnitRateEnv,
+  recordModelAttempt,
+} from '@/lib/llm-provider-health';
 
 describe('llm provider health immediate open failures', () => {
   beforeEach(() => {
@@ -148,6 +154,29 @@ describe('llm provider health immediate open failures', () => {
       eventName: 'llm_model_circuit_changed',
       meta: expect.objectContaining({ state: 'closed', reason: 'recovered' }),
     }));
+  });
+
+  test('bounds integer and rate environment overrides', () => {
+    const originalEnv = process.env;
+    process.env = { ...originalEnv };
+    try {
+      process.env.TEST_INT = '0';
+      expect(readBoundedPositiveIntEnv('TEST_INT', 30, { min: 1, max: 1440 })).toBe(30);
+
+      process.env.TEST_INT = '1441';
+      expect(readBoundedPositiveIntEnv('TEST_INT', 30, { min: 1, max: 1440 })).toBe(30);
+
+      process.env.TEST_INT = '60';
+      expect(readBoundedPositiveIntEnv('TEST_INT', 30, { min: 1, max: 1440 })).toBe(60);
+
+      process.env.TEST_RATE = '1.5';
+      expect(readBoundedUnitRateEnv('TEST_RATE', 0.7, { min: 0.05, max: 1 })).toBe(0.7);
+
+      process.env.TEST_RATE = '0.8';
+      expect(readBoundedUnitRateEnv('TEST_RATE', 0.7, { min: 0.05, max: 1 })).toBe(0.8);
+    } finally {
+      process.env = originalEnv;
+    }
   });
 });
 

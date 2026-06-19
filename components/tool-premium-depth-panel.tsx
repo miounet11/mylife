@@ -40,7 +40,7 @@ export default function ToolPremiumDepthPanel({
                 key={item}
                 className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--ink-2)]"
               >
-                <span className="font-mono text-[10px] font-bold text-[color:var(--signal-strong)]">
+                <span className="font-mono text-xs font-bold text-[color:var(--signal-strong)]">
                   DELIVERABLE {String(index + 1).padStart(2, '0')}
                 </span>
                 <div className="mt-0.5">{item}</div>

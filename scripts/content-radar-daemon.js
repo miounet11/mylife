@@ -1,9 +1,11 @@
-const intervalMs = Math.max(60_000, Number(process.env.CONTENT_RADAR_INTERVAL_MS || 1000 * 60 * 45));
+const { readPositiveIntegerEnv } = require('./ops-env.js');
+
+const intervalMs = readPositiveIntegerEnv('CONTENT_RADAR_INTERVAL_MS', 1000 * 60 * 45, { min: 60_000, max: 86_400_000 });
 const runUrl = process.env.CONTENT_RADAR_RUN_URL || 'http://127.0.0.1:8080/api/admin/content/radar/cron';
 const token = process.env.CONTENT_RADAR_CRON_TOKEN || '';
-const requestTimeoutMs = Math.max(10_000, Number(process.env.CONTENT_RADAR_REQUEST_TIMEOUT_MS || 60_000));
-const startupDelayMs = Math.max(5_000, Number(process.env.CONTENT_RADAR_STARTUP_DELAY_MS || 15_000));
-const retryDelayMs = Math.max(15_000, Number(process.env.CONTENT_RADAR_RETRY_DELAY_MS || Math.min(intervalMs, 60_000)));
+const requestTimeoutMs = readPositiveIntegerEnv('CONTENT_RADAR_REQUEST_TIMEOUT_MS', 60_000, { min: 10_000, max: 900_000 });
+const startupDelayMs = readPositiveIntegerEnv('CONTENT_RADAR_STARTUP_DELAY_MS', 15_000, { min: 5_000, max: 300_000 });
+const retryDelayMs = readPositiveIntegerEnv('CONTENT_RADAR_RETRY_DELAY_MS', Math.min(intervalMs, 60_000), { min: 15_000, max: 900_000 });
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

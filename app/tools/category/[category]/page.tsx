@@ -1,4 +1,5 @@
-export const revalidate = 3600;
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -44,12 +45,6 @@ export async function generateMetadata({
     path: `/tools/category/${categoryInfo.key}`,
     type: 'website',
   });
-}
-
-export async function generateStaticParams() {
-  return listToolCategories().map((item) => ({
-    category: item.key,
-  }));
 }
 
 export default async function ToolCategoryPage({
@@ -129,7 +124,7 @@ export default async function ToolCategoryPage({
                 ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
                 : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">工具数 {tools.length}</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">前置 综合判断</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">后续 单项复测</span>
@@ -172,7 +167,7 @@ export default async function ToolCategoryPage({
               </div>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                     01 第一步
                   </div>
                   <div className="mt-1.5 text-sm leading-6 text-[color:var(--ink-2)]">
@@ -180,7 +175,7 @@ export default async function ToolCategoryPage({
                   </div>
                 </div>
                 <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
-                  <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                     02 下一步
                   </div>
                   <div className="mt-1.5 text-sm leading-6 text-[color:var(--brand-strong)]">
@@ -200,9 +195,9 @@ export default async function ToolCategoryPage({
               toolSlug={tool.slug}
               category={tool.category}
               page={`/tools/category/${categoryInfo.key}`}
-              className="group block rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
+              className="group p-4 transition-colors hover:no-underline"
             >
-              <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                 {tool.themeLabel}
               </div>
               <h2 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
@@ -212,7 +207,7 @@ export default async function ToolCategoryPage({
                 {tool.hookKeywords.slice(0, 3).map((keyword) => (
                   <span
                     key={keyword}
-                    className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+                    className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
                   >
                     {keyword}
                   </span>

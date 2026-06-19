@@ -21,7 +21,7 @@ export function QuickQuestionButton({ question, onClick, disabled = false }: Qui
       disabled={disabled}
       className="fb-btn block w-full px-3 py-2 text-left text-[13px] leading-5 text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[#606770]">结构化追问</div>
+      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#606770]">结构化追问</div>
       <div className="mt-1 text-[13px] text-[#1d2129]">{question}</div>
     </button>
   );
@@ -82,7 +82,7 @@ export function MaterialChip({ material, onRemove, readOnly = false }: MaterialC
       )}
       <span className="min-w-0">
         <span className="block font-semibold">{material.label}</span>
-        {detail ? <span className="block max-w-[14rem] truncate text-[11px] text-[#606770]">{detail}</span> : null}
+        {detail ? <span className="block max-w-[14rem] truncate text-xs text-[#606770]">{detail}</span> : null}
       </span>
       {!readOnly && onRemove ? (
         <button

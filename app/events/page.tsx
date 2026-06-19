@@ -17,7 +17,7 @@ import SiteHeader from '@/components/site-header';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { appendSourceToHref } from '@/lib/source-url';
-import { formatLocalDateKey, getTodayLocalDateKey } from '@/lib/utils';
+import { fetchJsonWithTimeout, formatLocalDateKey, getTodayLocalDateKey, isAbortLikeError } from '@/lib/utils';
 import { resolveResumeTarget } from '@/lib/resume-target';
 import {
   formatEventQueueDateKey,
@@ -69,6 +69,10 @@ type EventsResponse = {
   error?: string;
 };
 
+const EVENTS_LOAD_TIMEOUT_MS = 12_000;
+const EVENTS_SAVE_TIMEOUT_MS = 12_000;
+const EVENTS_DELETE_TIMEOUT_MS = 8_000;
+
 const formatDateForInput = (date: Date) => formatLocalDateKey(date);
 
 const DEFAULT_FORM: EventFormState = {
@@ -97,10 +101,10 @@ export default function EventsPage() {
 
 function EventsPageContent() {
   const searchParams = useSearchParams();
-  const focusedReportId = searchParams.get('reportId') || '';
+  const focusedReportId = searchParams?.get('reportId') || '';
   const pageSource = 'events_page';
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
-  const shouldOpenCreate = searchParams.get('create') === '1';
+  const shouldOpenCreate = searchParams?.get('create') === '1';
   const [view, setView] = useState<'calendar' | 'list'>('calendar');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -138,16 +142,19 @@ function EventsPageContent() {
     try {
       setError('');
       const query = focusedReportId ? `?reportId=${encodeURIComponent(focusedReportId)}` : '';
-      const res = await fetch(`/api/events${query}`, { cache: 'no-store' });
-      const data = await res.json() as EventsResponse;
+      const { response: res, data } = await fetchJsonWithTimeout<EventsResponse>(`/api/events${query}`, {
+        cache: 'no-store',
+        timeoutMs: EVENTS_LOAD_TIMEOUT_MS,
+        timeoutReason: 'events-load-timeout',
+      });
       if (!res.ok || !data.success) {
         showError(data.error || '加载事件失败');
         return;
       }
 
       setEvents(toEventViewModels(data.data?.events || []));
-    } catch {
-      showError('网络异常，无法加载事件');
+    } catch (loadError) {
+      showError(isAbortLikeError(loadError) ? '加载事件等待时间过长，请稍后重试' : '网络异常，无法加载事件');
     }
   }, [focusedReportId]);
 
@@ -288,12 +295,13 @@ function EventsPageContent() {
       };
 
       const isEditMode = !!editingEventId;
-      const res = await fetch('/api/events', {
+      const { response: res, data } = await fetchJsonWithTimeout<any>('/api/events', {
         method: isEditMode ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(isEditMode ? { id: editingEventId, ...payload } : payload),
+        timeoutMs: EVENTS_SAVE_TIMEOUT_MS,
+        timeoutReason: isEditMode ? 'events-update-timeout' : 'events-create-timeout',
       });
-      const data = await res.json();
       if (!res.ok || !data.success) {
         showError(data.error || (isEditMode ? '更新事件失败' : '创建事件失败'));
         return;
@@ -309,8 +317,11 @@ function EventsPageContent() {
             : '事件已创建'
       );
       await loadEvents();
-    } catch {
-      showError(editingEventId ? '网络异常，更新失败' : '网络异常，创建失败');
+    } catch (saveError) {
+      const isEditMode = !!editingEventId;
+      showError(isAbortLikeError(saveError)
+        ? (isEditMode ? '更新事件等待时间过长，请稍后重试' : '创建事件等待时间过长，请稍后重试')
+        : (isEditMode ? '网络异常，更新失败' : '网络异常，创建失败'));
     } finally {
       setSubmitting(false);
     }
@@ -321,16 +332,19 @@ function EventsPageContent() {
     if (!ok) return;
 
     try {
-      const res = await fetch(`/api/events?id=${encodeURIComponent(eventId)}`, { method: 'DELETE' });
-      const data = await res.json();
+      const { response: res, data } = await fetchJsonWithTimeout<any>(`/api/events?id=${encodeURIComponent(eventId)}`, {
+        method: 'DELETE',
+        timeoutMs: EVENTS_DELETE_TIMEOUT_MS,
+        timeoutReason: 'events-delete-timeout',
+      });
       if (!res.ok || !data.success) {
         showError(data.error || '删除失败');
         return;
       }
       showSuccess('事件已删除');
       await loadEvents();
-    } catch {
-      showError('网络异常，删除失败');
+    } catch (deleteError) {
+      showError(isAbortLikeError(deleteError) ? '删除事件等待时间过长，请稍后重试' : '网络异常，删除失败');
     }
   };
 
@@ -339,23 +353,24 @@ function EventsPageContent() {
     if (!target) return;
 
     try {
-      const res = await fetch('/api/events', {
+      const { response: res, data } = await fetchJsonWithTimeout<any>('/api/events', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: eventId,
           reminderEnabled: !target.reminder?.enabled,
         }),
+        timeoutMs: EVENTS_SAVE_TIMEOUT_MS,
+        timeoutReason: 'events-reminder-timeout',
       });
-      const data = await res.json();
       if (!res.ok || !data.success) {
         showError(data.error || '更新提醒失败');
         return;
       }
       showSuccess(target.reminder?.enabled ? '提醒已关闭' : '提醒已开启');
       await loadEvents();
-    } catch {
-      showError('网络异常，提醒更新失败');
+    } catch (reminderError) {
+      showError(isAbortLikeError(reminderError) ? '提醒更新等待时间过长，请稍后重试' : '网络异常，提醒更新失败');
     }
   };
 
@@ -370,7 +385,7 @@ function EventsPageContent() {
     if (notes === null) return;
 
     try {
-      const res = await fetch('/api/events', {
+      const { response: res, data } = await fetchJsonWithTimeout<any>('/api/events', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -381,16 +396,17 @@ function EventsPageContent() {
             userNotes: notes.trim(),
           },
         }),
+        timeoutMs: EVENTS_SAVE_TIMEOUT_MS,
+        timeoutReason: 'events-feedback-timeout',
       });
-      const data = await res.json();
       if (!res.ok || !data.success) {
         showError(data.error || '记录验证结果失败');
         return;
       }
       showSuccess(wasAccurate ? '已记录为准确' : '已记录为待修正');
       await loadEvents();
-    } catch {
-      showError('网络异常，验证结果保存失败');
+    } catch (feedbackError) {
+      showError(isAbortLikeError(feedbackError) ? '验证结果保存等待时间过长，请稍后重试' : '网络异常，验证结果保存失败');
     }
   };
 
@@ -593,7 +609,7 @@ function EventsPageContent() {
                   验证与纠偏
                 </h2>
               </div>
-              <div className="grid gap-3 sm:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <WorkbenchStat label="已过期待验证" value={validationWorkbench.overduePending.length} tone="bg-[color:var(--alert-soft)] text-[color:var(--alert)]" />
                 <WorkbenchStat label="已记录偏差" value={validationWorkbench.driftEvents.length} tone="bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]" />
                 <WorkbenchStat label="未来待验证" value={validationWorkbench.upcomingValidation.length} tone="bg-[color:var(--bg-elevated)] text-[color:var(--ink-3)]" />

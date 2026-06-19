@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution, type ClientAttributionRecord } from '@/lib/client-attribution';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
+
+const TOOL_RUN_TIMEOUT_MS = 20_000;
 
 export default function ToolRunner({
   toolSlug,
@@ -90,7 +93,7 @@ export default function ToolRunner({
     });
 
     try {
-      const response = await fetch('/api/tools/run', {
+      const { response, data: payload } = await fetchJsonWithTimeout<any>('/api/tools/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -101,8 +104,9 @@ export default function ToolRunner({
           note,
           attribution,
         }),
+        timeoutMs: TOOL_RUN_TIMEOUT_MS,
+        timeoutReason: 'tool-run-timeout',
       });
-      const payload = await response.json();
       if (!response.ok || !payload.success) {
         setError(payload.error || '运行失败，请稍后再试');
         void trackClientEvent({
@@ -127,8 +131,8 @@ export default function ToolRunner({
         ? `/tool-result/${payload.data.sessionId}?source=${encodeURIComponent(entrySource)}`
         : `/tool-result/${payload.data.sessionId}`;
       router.push(resultHref);
-    } catch {
-      setError('网络异常，暂时无法运行工具');
+    } catch (runError) {
+      setError(isAbortLikeError(runError) ? '工具运行等待时间过长，请稍后重试' : '网络异常，暂时无法运行工具');
       void trackClientEvent({
         eventName: 'result_cta_clicked',
         page: `/tools/${toolSlug}`,
@@ -150,7 +154,7 @@ export default function ToolRunner({
       onSubmit={handleSubmit}
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
     >
-      <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         补充一句当前场景
       </div>
       {!hasReport ? (
@@ -175,13 +179,13 @@ export default function ToolRunner({
         <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3 text-xs leading-6 text-[color:var(--ink-3)]">
           {signaturePromise ? (
             <div>
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">SCOPE</span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">SCOPE</span>
               <div className="mt-0.5 text-[color:var(--ink-2)]">{signaturePromise}</div>
             </div>
           ) : null}
           {decisionLens ? (
             <div className={signaturePromise ? 'mt-2' : ''}>
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">LENS</span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">LENS</span>
               <div className="mt-0.5 text-[color:var(--ink-2)]">{decisionLens}</div>
             </div>
           ) : null}
@@ -189,7 +193,7 @@ export default function ToolRunner({
       ) : null}
       {examples.length > 0 ? (
         <div className="mt-3">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             <Sparkles className="h-3 w-3" />
             不想自己组织问题，直接点一个
           </div>
@@ -199,7 +203,7 @@ export default function ToolRunner({
                 key={example}
                 type="button"
                 onClick={() => setNote(example)}
-                className="inline-flex items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 py-1 text-left text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
+                className="inline-flex max-w-full items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 py-1 text-left text-xs font-semibold text-[color:var(--ink-3)] line-clamp-2 transition hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
               >
                 {example}
               </button>
@@ -207,7 +211,7 @@ export default function ToolRunner({
           </div>
         </div>
       ) : null}
-      <div className="mt-2 text-right text-[10px] font-mono tabular-nums text-[color:var(--ink-5)]">
+      <div className="mt-2 text-right text-xs font-mono tabular-nums text-[color:var(--ink-5)]">
         {noteLength > 0 ? `${noteLength} chars` : 'optional · 也可直接运行'}
       </div>
       {error ? (

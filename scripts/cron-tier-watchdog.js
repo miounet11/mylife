@@ -1,28 +1,31 @@
 #!/usr/bin/env node
 /**
  * Keeps cron instance (3004) alive for :8080 daemons + /api/admin/*.
- * Must NOT receive public SEO traffic (nginx web_upstream → 3000 only).
+ * Must NOT receive public SEO traffic; nginx public upstream is 3001/3002.
  */
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const http = require('http');
+const { withCurrentBuildEnv } = require('./pm2-build-env.js');
+const { readPortEnv, readPositiveIntegerEnv } = require('./ops-env.js');
 
-const CHECK_INTERVAL_MS = parseInt(process.env.CHECK_INTERVAL_MS || '60000', 10);
-const RECOVERY_COOLDOWN_MS = parseInt(process.env.RECOVERY_COOLDOWN_MS || '300000', 10);
-const FAIL_STREAK_BEFORE_ACT = parseInt(process.env.FAIL_STREAK_BEFORE_ACT || '3', 10);
-const PROBE_TIMEOUT_MS = parseInt(process.env.PROBE_TIMEOUT_MS || '5000', 10);
-const CRON_PORT = process.env.CRON_TIER_PORT || '3004';
+const CHECK_INTERVAL_MS = readPositiveIntegerEnv('CHECK_INTERVAL_MS', 60000, { min: 5000, max: 300000 });
+const RECOVERY_COOLDOWN_MS = readPositiveIntegerEnv('RECOVERY_COOLDOWN_MS', 300000, { min: 60000, max: 3600000 });
+const FAIL_STREAK_BEFORE_ACT = readPositiveIntegerEnv('FAIL_STREAK_BEFORE_ACT', 3, { min: 1, max: 20 });
+const PROBE_TIMEOUT_MS = readPositiveIntegerEnv('PROBE_TIMEOUT_MS', 5000, { min: 1000, max: 60000 });
+const CRON_PORT = readPortEnv('CRON_TIER_PORT', 3004);
 const ROBOTS_PATH = process.env.CRON_TIER_ROBOTS_PATH || '/robots.txt';
 
 let failStreak = 0;
 let lastRecoveryAt = 0;
+let tickRunning = false;
 
 function probe() {
   return new Promise((resolve) => {
     const req = http.request(
       {
         hostname: '127.0.0.1',
-        port: Number(CRON_PORT),
+        port: CRON_PORT,
         path: ROBOTS_PATH,
         method: 'GET',
         timeout: PROBE_TIMEOUT_MS,
@@ -51,7 +54,11 @@ function recoverCron(reason) {
   }
   console.log(`[cron-tier-watchdog] RECOVERY (${reason}) — pm2 restart life-kline-next-cron`);
   try {
-    execSync('pm2 restart life-kline-next-cron --update-env', { stdio: 'inherit', timeout: 120000 });
+    execFileSync('pm2', ['restart', 'life-kline-next-cron', '--update-env'], {
+      stdio: 'inherit',
+      timeout: 120000,
+      env: withCurrentBuildEnv(),
+    });
   } catch (e) {
     console.error('[cron-tier-watchdog] pm2 restart failed:', e.message);
     return false;
@@ -62,21 +69,30 @@ function recoverCron(reason) {
 }
 
 async function tick() {
-  const r = await probe();
-  const healthy = r.ok && r.status >= 200 && r.status < 500;
-  if (healthy) {
-    if (failStreak > 0) {
-      console.log(`[cron-tier-watchdog] recovered status=${r.status}`);
-    }
-    failStreak = 0;
+  if (tickRunning) {
+    console.log('[cron-tier-watchdog] skip tick; previous tick still running');
     return;
   }
-  failStreak += 1;
-  console.warn(
-    `[cron-tier-watchdog] unhealthy streak=${failStreak} port=${CRON_PORT} status=${r.status} err=${r.error || ''}`,
-  );
-  if (failStreak >= FAIL_STREAK_BEFORE_ACT) {
-    recoverCron(`status=${r.status} err=${r.error || ''}`);
+  tickRunning = true;
+  try {
+    const r = await probe();
+    const healthy = r.ok && r.status >= 200 && r.status < 500;
+    if (healthy) {
+      if (failStreak > 0) {
+        console.log(`[cron-tier-watchdog] recovered status=${r.status}`);
+      }
+      failStreak = 0;
+      return;
+    }
+    failStreak += 1;
+    console.warn(
+      `[cron-tier-watchdog] unhealthy streak=${failStreak} port=${CRON_PORT} status=${r.status} err=${r.error || ''}`,
+    );
+    if (failStreak >= FAIL_STREAK_BEFORE_ACT) {
+      recoverCron(`status=${r.status} err=${r.error || ''}`);
+    }
+  } finally {
+    tickRunning = false;
   }
 }
 

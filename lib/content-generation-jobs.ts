@@ -1,4 +1,5 @@
 import {
+  assessGeneratedManagedContentDraftQuality,
   generateManagedContentDrafts,
   type ContentGenerationInput,
   type GeneratedManagedContentDraft,
@@ -48,8 +49,13 @@ function ensureUniqueSlugs(entries: GeneratedManagedContentDraft[]) {
 
 function saveGeneratedEntries(entries: GeneratedManagedContentDraft[], userId: string) {
   return ensureUniqueSlugs(entries)
-    .map((entry) =>
-      saveManagedContentEntry({
+    .map((entry) => {
+      const quality = assessGeneratedManagedContentDraftQuality(entry);
+      if (!quality.ready) {
+        return null;
+      }
+
+      return saveManagedContentEntry({
         id: '',
         contentType: entry.contentType,
         subtype: entry.subtype,
@@ -68,9 +74,12 @@ function saveGeneratedEntries(entries: GeneratedManagedContentDraft[], userId: s
         source: entry.source,
         meta: {
           contentGenerationJob: true,
+          qualityScore: quality.score,
+          qualityReasons: quality.reasons,
+          averageParagraphLength: quality.averageParagraphLength,
         },
-      } as unknown as Omit<ManagedContentEntry, 'source' | 'createdAt' | 'updatedAt'> & { source?: string }, userId)
-    )
+      } as unknown as Omit<ManagedContentEntry, 'source' | 'createdAt' | 'updatedAt'> & { source?: string }, userId);
+    })
     .filter((entry): entry is ManagedContentEntry => !!entry);
 }
 
@@ -94,6 +103,19 @@ function summarizeSavedEntries(entries: ManagedContentEntry[]) {
     source: entry.source,
     updatedAt: entry.updatedAt,
   }));
+}
+
+function isMutationApplied(result: unknown) {
+  return Number((result as { changes?: number } | undefined)?.changes || 0) > 0;
+}
+
+function stillOwnContentGenerationLease(job: ContentGenerationJobRecord) {
+  if (!job.lockedAt) {
+    return true;
+  }
+
+  const current = contentGenerationJobOperations.getById(job.id);
+  return current?.status === 'running' && current.lockedAt === job.lockedAt;
 }
 
 export function enqueueContentGenerationJob(params: {
@@ -132,7 +154,7 @@ export function getContentGenerationJob(jobId: string) {
 }
 
 export async function processNextContentGenerationJob() {
-  const job = contentGenerationJobOperations.claimNextRunnable(STALE_LOCK_MINUTES);
+  const job = contentGenerationJobOperations.claimNextRunnableStandard(STALE_LOCK_MINUTES);
   if (!job) {
     return {
       processed: false,
@@ -147,11 +169,20 @@ export async function processNextContentGenerationJob() {
   if (meta.isWorldYiV2HighConc === true || meta.worldYiV2 === true) {
     // Requeue for specialized worker; do not process via standard drafts generator.
     const nextRunAt = new Date(Date.now() + 60_000).toISOString();
-    contentGenerationJobOperations.markRetry(job.id, {
+    const mutation = contentGenerationJobOperations.markRetry(job.id, {
       result: { skippedForWorldYiV2Worker: true, requeuedAt: nextRunAt },
       nextRunAt,
       lastError: 'ROUTE_TO_WORLD_YI_HIGHCONC_WORKER',
+      lockedAt: job.lockedAt,
     });
+    if (!isMutationApplied(mutation)) {
+      return {
+        processed: true,
+        status: 'lease_lost',
+        jobId: job.id,
+        reason: 'content_generation_job_lease_lost',
+      };
+    }
     return {
       processed: true,
       status: 'retry',
@@ -163,6 +194,15 @@ export async function processNextContentGenerationJob() {
 
   try {
     const generated = await generateManagedContentDrafts(job.request as unknown as ContentGenerationInput);
+    if (!stillOwnContentGenerationLease(job)) {
+      return {
+        processed: true,
+        status: 'lease_lost',
+        jobId: job.id,
+        reason: 'content_generation_job_lease_lost',
+      };
+    }
+
     const savedEntries = saveGeneratedEntries(generated.entries, job.userId);
     const result = {
       entries: summarizeSavedEntries(savedEntries),
@@ -172,16 +212,26 @@ export async function processNextContentGenerationJob() {
       completedAt: new Date().toISOString(),
     };
 
-    contentGenerationJobOperations.markCompleted(job.id, {
+    const mutation = contentGenerationJobOperations.markCompleted(job.id, {
       result,
       generatedCount: savedEntries.length,
       llmSucceededCount: generated.llmSucceededCount,
       fallbackCount: generated.fallbackCount,
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         completedAt: result.completedAt,
       },
     });
+
+    if (!isMutationApplied(mutation)) {
+      return {
+        processed: true,
+        status: 'lease_lost',
+        jobId: job.id,
+        reason: 'content_generation_job_lease_lost',
+      };
+    }
 
     return {
       processed: true,
@@ -198,7 +248,7 @@ export async function processNextContentGenerationJob() {
     const maxAttempts = current?.maxAttempts || job.maxAttempts || DEFAULT_MAX_ATTEMPTS;
 
     if (attempts >= maxAttempts) {
-      contentGenerationJobOperations.markFailed(job.id, {
+      const mutation = contentGenerationJobOperations.markFailed(job.id, {
         result: {
           failedAt: new Date().toISOString(),
         },
@@ -206,11 +256,21 @@ export async function processNextContentGenerationJob() {
         llmSucceededCount: job.llmSucceededCount || 0,
         fallbackCount: job.fallbackCount || 0,
         lastError,
+        lockedAt: job.lockedAt,
         meta: {
           ...(job.meta || {}),
           failedAt: new Date().toISOString(),
         },
       });
+
+      if (!isMutationApplied(mutation)) {
+        return {
+          processed: true,
+          status: 'lease_lost',
+          jobId: job.id,
+          reason: 'content_generation_job_lease_lost',
+        };
+      }
 
       return {
         processed: true,
@@ -221,7 +281,7 @@ export async function processNextContentGenerationJob() {
     }
 
     const nextRunAt = new Date(Date.now() + RETRY_DELAY_MS).toISOString();
-    contentGenerationJobOperations.markRetry(job.id, {
+    const mutation = contentGenerationJobOperations.markRetry(job.id, {
       result: {
         retryScheduledAt: nextRunAt,
       },
@@ -230,11 +290,21 @@ export async function processNextContentGenerationJob() {
       fallbackCount: job.fallbackCount || 0,
       nextRunAt,
       lastError,
+      lockedAt: job.lockedAt,
       meta: {
         ...(job.meta || {}),
         retryScheduledAt: nextRunAt,
       },
     });
+
+    if (!isMutationApplied(mutation)) {
+      return {
+        processed: true,
+        status: 'lease_lost',
+        jobId: job.id,
+        reason: 'content_generation_job_lease_lost',
+      };
+    }
 
     return {
       processed: true,
@@ -351,25 +421,7 @@ export function enqueueWorldYiV2Task(params: {
 }
 
 export function claimNextWorldYiV2Task(staleLockMinutes = 45) {
-  // Leverage existing stale handling + custom filter for v2 flag.
-  // We re-use claimNextRunnable which does the heavy lifting, then verify tag.
-  // If mismatch, we immediately markRetry so it becomes available again (light penalty).
-  const candidate = contentGenerationJobOperations.claimNextRunnable(staleLockMinutes);
-  if (!candidate) return null;
-
-  const meta = (candidate.meta || {}) as Record<string, unknown>;
-  if (meta.isWorldYiV2HighConc === true || meta.worldYiV2 === true) {
-    return candidate;
-  }
-
-  // Not for us — immediately unlock for standard path
-  const next = new Date(Date.now() + 10_000).toISOString();
-  contentGenerationJobOperations.markRetry(candidate.id, {
-    result: { misrouted: true },
-    nextRunAt: next,
-    lastError: 'MISROUTED_FROM_WORLDYI_V2_CLAIM',
-  });
-  return null;
+  return contentGenerationJobOperations.claimNextWorldYiV2Runnable(staleLockMinutes);
 }
 
 export function listWorldYiV2QueueSummary() {

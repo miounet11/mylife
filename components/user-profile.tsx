@@ -66,7 +66,7 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
               </p>
             </div>
           </div>
-          <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+          <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
             {accountLabel}
           </span>
         </div>
@@ -106,7 +106,7 @@ export default function UserProfile({ user, fortunes = [], eventCount = 0 }: Use
 function MetricCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+      <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
         {label}
       </div>
       <div className="mt-1.5 font-mono text-lg font-black tabular-nums text-[color:var(--ink-1)]">
@@ -119,7 +119,7 @@ function MetricCard({ label, value }: { label: string; value: string }) {
 function InfoCard({ title, rows }: { title: string; rows: [string, string][] }) {
   return (
     <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         {title}
       </div>
       <div className="mt-3 space-y-1.5">

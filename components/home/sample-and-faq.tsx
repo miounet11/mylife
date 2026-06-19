@@ -68,7 +68,7 @@ export default function HomeSampleAndFaq() {
                 key={block.tag}
                 className="rounded-[3px] border border-[color:var(--fb-border)] bg-[color:var(--fb-action-bg)] px-3 py-2"
               >
-                <div className="inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                <div className="inline-flex items-center rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 text-xs font-bold text-white">
                   {block.tag}
                 </div>
                 <div className="mt-1.5 text-[13px] font-bold text-[color:var(--fb-ink-1)]">

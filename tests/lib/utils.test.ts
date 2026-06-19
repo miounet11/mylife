@@ -1,4 +1,12 @@
-import { formatDate, formatTime, getTodayLocalDateKey, parseLocalDate } from '@/lib/utils';
+import {
+  abortControllerRef,
+  fetchJsonWithTimeout,
+  formatDate,
+  formatTime,
+  getTodayLocalDateKey,
+  isAbortLikeError,
+  parseLocalDate,
+} from '@/lib/utils';
 
 describe('date utils', () => {
   it('parses YYYY-MM-DD as a local calendar date', () => {
@@ -48,5 +56,84 @@ describe('date utils', () => {
     const date = new Date(2026, 3, 20, 23, 59, 0);
 
     expect(getTodayLocalDateKey(date)).toBe('2026-04-20');
+  });
+});
+
+describe('client fetch timeout utils', () => {
+  const originalFetch = global.fetch;
+
+  afterEach(() => {
+    jest.useRealTimers();
+    global.fetch = originalFetch;
+  });
+
+  it('returns parsed json and clears the controller ref after success', async () => {
+    const controllerRef = { current: null as AbortController | null };
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({ success: true }),
+    } as any);
+
+    const result = await fetchJsonWithTimeout<{ success: boolean }>('/api/test', {
+      cache: 'no-store',
+      timeoutMs: 1000,
+      timeoutReason: 'test-timeout',
+      controllerRef,
+    });
+
+    expect(result.data).toEqual({ success: true });
+    expect(global.fetch).toHaveBeenCalledWith('/api/test', expect.objectContaining({
+      cache: 'no-store',
+      signal: expect.any(AbortSignal),
+    }));
+    expect(controllerRef.current).toBeNull();
+  });
+
+  it('aborts the previous controller before starting a superseding request', async () => {
+    const previous = new AbortController();
+    const controllerRef = { current: previous };
+    global.fetch = jest.fn().mockResolvedValue({
+      json: jest.fn().mockResolvedValue({ ok: true }),
+    } as any);
+
+    await fetchJsonWithTimeout('/api/test', {
+      timeoutMs: 1000,
+      timeoutReason: 'test-timeout',
+      controllerRef,
+      supersedeReason: 'newer-request',
+    });
+
+    expect(previous.signal.aborted).toBe(true);
+    expect(previous.signal.reason).toBe('newer-request');
+  });
+
+  it('detects abort-like errors and clears controller refs explicitly', () => {
+    const controllerRef = { current: new AbortController() };
+
+    abortControllerRef(controllerRef, 'manual-abort');
+
+    expect(controllerRef.current).toBeNull();
+    expect(isAbortLikeError(new DOMException('Aborted', 'AbortError'))).toBe(true);
+    expect(isAbortLikeError('profile-history-timeout')).toBe(true);
+    expect(isAbortLikeError(new Error('socket timeout'))).toBe(true);
+    expect(isAbortLikeError(new Error('validation failed'))).toBe(false);
+  });
+
+  it('rethrows abort reasons so callers can distinguish timeout from superseded requests', async () => {
+    const controllerRef = { current: null as AbortController | null };
+    global.fetch = jest.fn((_url, init) => {
+      const signal = (init as RequestInit).signal as AbortSignal;
+      return new Promise((_resolve, reject) => {
+        signal.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+      });
+    }) as any;
+
+    const request = fetchJsonWithTimeout('/api/test', {
+      timeoutMs: 1,
+      timeoutReason: 'reason-timeout',
+      controllerRef,
+    });
+
+    await expect(request).rejects.toBe('reason-timeout');
+    expect(controllerRef.current).toBeNull();
   });
 });

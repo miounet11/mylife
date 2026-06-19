@@ -3,17 +3,19 @@
 const fs = require('fs');
 const http = require('http');
 const https = require('https');
+const { readPositiveIntegerEnv } = require('./ops-env.js');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
-const EXPECTED_TOOL_COUNT = Number(process.env.EXPECTED_TOOL_COUNT || 121);
+const EXPECTED_TOOL_COUNT = readPositiveIntegerEnv('EXPECTED_TOOL_COUNT', 121, { min: 1, max: 1000 });
+const REQUEST_TIMEOUT_MS = readPositiveIntegerEnv('REQUEST_TIMEOUT_MS', 8000, { min: 1000, max: 60000 });
 const DOC_PATH = process.env.TOOL_DOC_PATH || 'docs/tool-center-120-catalog.md';
 
 function request(pathOrUrl) {
   const url = pathOrUrl.startsWith('http') ? pathOrUrl : `${BASE_URL}${pathOrUrl}`;
   const client = url.startsWith('https') ? https : http;
   return new Promise((resolve, reject) => {
-    client
-      .get(url, (res) => {
+    const req = client
+      .get(url, { timeout: REQUEST_TIMEOUT_MS }, (res) => {
         let body = '';
         res.on('data', (chunk) => {
           body += chunk;
@@ -28,6 +30,9 @@ function request(pathOrUrl) {
         });
       })
       .on('error', reject);
+    req.on('timeout', () => {
+      req.destroy(new Error(`Request timeout after ${REQUEST_TIMEOUT_MS}ms: ${url}`));
+    });
   });
 }
 

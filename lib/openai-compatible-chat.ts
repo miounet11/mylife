@@ -11,7 +11,7 @@ export function normalizeModelId(model?: string | null) {
 
 export function isNativeOpenAiModel(model?: string | null) {
   const normalized = normalizeModelId(model);
-  return /^(gpt-|o[1345](?:$|[-.])|codex-)/.test(normalized);
+  return normalized === 'auto' || /^(gpt-|o[1345](?:$|[-.])|codex-)/.test(normalized);
 }
 
 export function isGpt5FamilyModel(model?: string | null) {
@@ -23,7 +23,8 @@ export function resolveChatCompletionMaxTokensField(model?: string | null) {
 }
 
 export function supportsTemperatureParameter(model?: string | null) {
-  return !isGpt5FamilyModel(model);
+  const normalized = normalizeModelId(model);
+  return normalized !== 'auto' && !isGpt5FamilyModel(model);
 }
 
 export function resolveReasoningEffortFromBudgetTokens(budgetTokens?: number | null): OpenAiCompatibleReasoningEffort | undefined {

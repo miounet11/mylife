@@ -26,7 +26,7 @@ export default function ToolConversionPanel({
                 key={item}
                 className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-3 text-xs leading-6 text-[color:var(--ink-2)]"
               >
-                <span className="font-mono text-[10px] font-bold text-[color:var(--signal-strong)]">
+                <span className="font-mono text-xs font-bold text-[color:var(--signal-strong)]">
                   PREMIUM {String(index + 1).padStart(2, '0')}
                 </span>
                 <div className="mt-0.5">{item}</div>
@@ -37,7 +37,7 @@ export default function ToolConversionPanel({
 
         <div className="space-y-3">
           <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <Sparkles className="h-3 w-3" />
               常见疑虑
             </div>
@@ -59,7 +59,7 @@ export default function ToolConversionPanel({
           </div>
 
           <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <HelpCircle className="h-3 w-3" />
               FAQ
             </div>

@@ -10,6 +10,7 @@ import {
   buildEstimatedPastEventDescription,
   getEstimatedPastEventDateKey,
 } from '@/lib/event-view';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'action-secondary'] as const;
@@ -31,6 +32,13 @@ interface ReportEventCaptureProps {
   }>;
 }
 
+type EventSaveResponse = {
+  success?: boolean;
+  error?: string;
+};
+
+const REPORT_EVENT_CAPTURE_TIMEOUT_MS = 12_000;
+
 export default function ReportEventCapture({
   reportId,
   suggestions,
@@ -48,7 +56,7 @@ export default function ReportEventCapture({
     setError('');
 
     try {
-      const response = await fetch('/api/events', {
+      const { response, data } = await fetchJsonWithTimeout<EventSaveResponse>('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -74,8 +82,9 @@ export default function ReportEventCapture({
             longTerm: '记录事件结果后回到聊天页复盘。',
           },
         }),
+        timeoutMs: REPORT_EVENT_CAPTURE_TIMEOUT_MS,
+        timeoutReason: 'report-event-save-timeout',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '保存事件失败');
         return;
@@ -92,8 +101,8 @@ export default function ReportEventCapture({
           suggestionSource: item.source,
         },
       });
-    } catch {
-      setError('网络异常，保存事件失败');
+    } catch (requestError) {
+      setError(isAbortLikeError(requestError) ? '保存事件等待时间过长，请稍后重试' : '网络异常，保存事件失败');
     } finally {
       setSavingKey(null);
     }
@@ -105,7 +114,7 @@ export default function ReportEventCapture({
     setError('');
 
     try {
-      const response = await fetch('/api/events', {
+      const { response, data } = await fetchJsonWithTimeout<EventSaveResponse>('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -136,8 +145,9 @@ export default function ReportEventCapture({
             userNotes: '用户在结果页标记：这条过去事件确实发生过。',
           },
         }),
+        timeoutMs: REPORT_EVENT_CAPTURE_TIMEOUT_MS,
+        timeoutReason: 'report-past-event-save-timeout',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '保存历史事件失败');
         return;
@@ -154,8 +164,8 @@ export default function ReportEventCapture({
           confidenceLabel: item.confidenceLabel || 'medium',
         },
       });
-    } catch {
-      setError('网络异常，保存历史事件失败');
+    } catch (requestError) {
+      setError(isAbortLikeError(requestError) ? '保存历史事件等待时间过长，请稍后重试' : '网络异常，保存历史事件失败');
     } finally {
       setSavingKey(null);
     }
@@ -193,7 +203,7 @@ export default function ReportEventCapture({
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-bold text-[color:var(--ink-1)]">{item.title}</div>
-                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 font-mono text-[10px] tabular-nums text-[color:var(--ink-5)]">
+                  <div className="mt-1 flex flex-wrap gap-x-2 gap-y-1 font-mono text-xs tabular-nums text-[color:var(--ink-5)]">
                     <span>{item.date}</span>
                     <span>·</span>
                     <span>{mapEventTypeLabel(item.type)}</span>
@@ -250,16 +260,16 @@ export default function ReportEventCapture({
                     <div className="min-w-0 flex-1">
                       <div className="text-sm font-bold text-[color:var(--ink-1)]">{item.title}</div>
                       <div className="mt-1 flex flex-wrap gap-1.5">
-                        <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] font-semibold text-[color:var(--ink-4)]">
+                        <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-xs font-semibold text-[color:var(--ink-4)]">
                           {mapEventTypeLabel(item.type)}
                         </span>
                         {item.occurrenceWindow ? (
-                          <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] tabular-nums text-[color:var(--ink-4)]">
+                          <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-xs tabular-nums text-[color:var(--ink-4)]">
                             {item.occurrenceWindow}
                           </span>
                         ) : null}
                         <span
-                          className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 text-[10px] font-bold ${
+                          className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 text-xs font-bold ${
                             item.confidenceLabel === 'high'
                               ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
                               : 'border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] text-[color:var(--ink-4)]'

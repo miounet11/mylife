@@ -83,7 +83,7 @@ export default function TodayCard({ fortuneId, displayName, card, page = '/' }: 
       {/* 宜 / 忌 双栏 */}
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         <div className="rounded-[var(--radius-md)] border border-emerald-200/70 bg-white/70 p-3 backdrop-blur">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-emerald-700">
             宜
           </div>
           <ul className="space-y-1.5 text-sm text-[color:var(--ink-2)]">
@@ -96,7 +96,7 @@ export default function TodayCard({ fortuneId, displayName, card, page = '/' }: 
           </ul>
         </div>
         <div className="rounded-[var(--radius-md)] border border-rose-200/70 bg-white/70 p-3 backdrop-blur">
-          <div className="mb-2 text-[11px] font-bold uppercase tracking-wider text-rose-700">
+          <div className="mb-2 text-xs font-bold uppercase tracking-wider text-rose-700">
             忌
           </div>
           <ul className="space-y-1.5 text-sm text-[color:var(--ink-2)]">

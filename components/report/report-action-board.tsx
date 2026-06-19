@@ -31,7 +31,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
       aria-label="行动执行板"
     >
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         行动执行板
       </div>
       <h3 className="mt-1.5 text-base font-black leading-snug text-[color:var(--ink-1)] md:text-lg">
@@ -44,7 +44,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
 
       <div className="mt-4 grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         <article className="rounded-[var(--radius)] border border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.06)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--data-up)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--data-up)]">
             NOW · 现在
           </div>
           <ul className="mt-2 space-y-1.5">
@@ -60,7 +60,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
         </article>
 
         <article className="rounded-[var(--radius)] border border-[color:var(--env)] bg-[color:var(--env-soft)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--env)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--env)]">
             30D
           </div>
           <ul className="mt-2 space-y-1.5">
@@ -76,7 +76,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
         </article>
 
         <article className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
             90D
           </div>
           <ul className="mt-2 space-y-1.5">
@@ -92,7 +92,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
         </article>
 
         <article className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-3">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--alert)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--alert)]">
             AVOID · 先别做
           </div>
           <ul className="mt-2 space-y-1.5">

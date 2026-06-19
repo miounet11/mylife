@@ -3,6 +3,7 @@ import publicGrowthTargets from '@/data/public-growth-targets.json';
 import { generateManagedContentDrafts, type ContentGenerationLocale } from '@/lib/content-generation';
 import { getContentOpsSnapshot } from '@/lib/content-ops';
 import { listManagedContentEntries, saveManagedContentEntry } from '@/lib/content-store';
+import type { EntityInsightType } from '@/lib/content';
 
 type PublicGrowthTarget = {
   key: string;
@@ -14,6 +15,22 @@ type PublicGrowthTarget = {
   market: string;
   keywords: string[];
   audience: string;
+};
+
+type PublicGrowthQueueItem = {
+  key: string;
+  title: string;
+  locale: ContentGenerationLocale;
+  market: string;
+  contentType: 'knowledge' | 'case' | 'insight';
+  subtype?: EntityInsightType;
+  topic: string;
+  angle: string;
+  keywords: string[];
+  audience: string;
+  reason?: string;
+  priorityScore: number;
+  sourceType?: string;
 };
 
 function parseLimitArg() {
@@ -45,7 +62,7 @@ async function main() {
   const limit = parseLimitArg();
   const existingEntries = listManagedContentEntries();
   const repairDrafts = parseRepairDraftsFlag();
-  const queue = repairDrafts
+  const queue: PublicGrowthQueueItem[] = repairDrafts
     ? existingEntries
       .filter((entry) => entry.status === 'draft')
       .filter((entry) => entry.meta?.sourceType === 'public-growth')
@@ -70,7 +87,7 @@ async function main() {
       })
       .filter((item): item is NonNullable<typeof item> => !!item)
       .slice(0, limit)
-    : getContentOpsSnapshot().generationQueue
+    : (getContentOpsSnapshot().generationQueue as PublicGrowthQueueItem[])
       .filter((item) => item.sourceType === 'public-growth')
       .slice(0, limit);
   const usedSlugs = new Set(existingEntries.map((entry) => entry.slug));

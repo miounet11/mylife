@@ -45,6 +45,13 @@ export function createLoginCode(email: string) {
   };
 }
 
+export function deletePendingLoginCode(email: string, code: string) {
+  return db.prepare(`
+    DELETE FROM auth_codes
+    WHERE email = ? AND code = ? AND purpose = ? AND used_at IS NULL
+  `).run(normalizeEmail(email), code.trim(), LOGIN_PURPOSE);
+}
+
 function markCodeUsed(id: string) {
   db.prepare(`UPDATE auth_codes SET used_at = datetime('now') WHERE id = ?`).run(id);
 }

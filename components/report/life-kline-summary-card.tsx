@@ -50,7 +50,7 @@ export default function LifeKLineSummaryCard({ section, klineData }: LifeKLineSu
             const toneClasses = getLifeKLineMetricToneClasses(item.tone);
             return (
               <div key={item.label} className={`rounded-[var(--radius)] border px-4 py-3 ${toneClasses.card}`}>
-                <div className={`text-[11px] font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
+                <div className={`text-xs font-semibold uppercase tracking-[0.18em] ${toneClasses.label}`}>
                   {item.label}
                 </div>
                 <div className={`mt-2 text-base font-bold ${toneClasses.value}`}>{item.value}</div>

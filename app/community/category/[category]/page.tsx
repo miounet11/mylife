@@ -126,7 +126,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(bcLd) }} />
       {faqLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} /> : null}
       <AnalyticsPageView
-        eventName="content_card_clicked"
+        eventName="knowledge_page_viewed"
         page={`/community/category/${category}`}
         meta={{ surfaceKey: 'community_category', category }}
       />
@@ -155,7 +155,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
               {T(`聚焦 ${cat.label} 的真实命理提问与专业老师解读。覆盖 ${cat.topics.join('、')} 等核心命题，提问者隐去敏感信息，每条问题均有官方与社区双重解读。`)}
             </p>
             {keywords.length ? (
-              <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+              <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
                 {keywords.slice(0, 8).map((k) => (
                   <Link key={k} href={`${FORUM_BASE}/search?q=${encodeURIComponent(k)}`}
                     className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 font-semibold text-[#365899] hover:bg-[#ebedf0]">
@@ -164,7 +164,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
                 ))}
               </div>
             ) : null}
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">
                 共 {total} 条提问
               </span>
@@ -174,7 +174,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
           {/* 列表 */}
-          <div className="space-y-2">
+          <div className="order-2 space-y-2 lg:order-none">
             {list.length === 0 ? (
               <div className="fb-card p-6 text-center text-[13px] text-[color:var(--fb-ink-3)]">
                 此类目暂无提问，稍后回来看看。
@@ -185,7 +185,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
                 return (
                   <article key={q.id} className="fb-card hover:border-[color:var(--fb-blue)]">
                     <div className="px-3 py-3">
-                      <div className="text-[11px] text-[color:var(--fb-ink-3)] mb-1.5">
+                      <div className="text-xs text-[color:var(--fb-ink-3)] mb-1.5">
                         <span className="font-semibold text-[color:var(--fb-ink-1)]">{author?.displayName || '匿名用户'}</span>
                         {' · '}{author?.occupation || ''}{' · '}{author?.province || ''}{author?.city || ''}
                       </div>
@@ -197,14 +197,14 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
                           {T(q.body.replace(/\n/g, ' '))}
                         </p>
                       </Link>
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                         <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                           {getCategoryLabel(q.category)}
                         </span>
                         <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 font-semibold text-[#1d2129]">
                           {getIndustryLabel(q.industry)}
                         </span>
-                        <span className="ml-auto text-[11px] text-[color:var(--fb-ink-3)]">
+                        <span className="ml-auto text-xs text-[color:var(--fb-ink-3)]">
                           {q.answerCount} 答 · {q.viewCount} 阅读
                         </span>
                       </div>
@@ -277,9 +277,9 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
           </div>
 
           {/* 右栏：其它分类 */}
-          <aside className="space-y-3">
+          <aside className="order-first space-y-3 lg:order-none">
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 其他命理主题
               </div>
               <div className="divide-y divide-[color:var(--fb-border)]">
@@ -293,7 +293,7 @@ export default async function CommunityCategoryPage({ params, searchParams }: Pa
             </div>
 
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
                 自己也想问？
               </div>
               <div className="px-3 py-3 text-[12px] text-[color:var(--fb-ink-2)] leading-[1.5]">

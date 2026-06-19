@@ -33,17 +33,17 @@ export default function BirthPlaceCard({
         "
       >
         <div className="flex items-center justify-between gap-3">
-          <div className="text-[11px] tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
+          <div className="text-xs tracking-[0.08em] uppercase text-[color:var(--ink-4)]">
             出生地点
           </div>
           <div className="flex items-center gap-2">
             {bjTime ? (
-              <span className="rounded-sm border border-[color:var(--env)]/30 bg-[color:var(--env-soft)] px-2 py-0.5 text-[10px] tracking-[0.08em] uppercase text-[color:var(--env)]">
+              <span className="rounded-sm border border-[color:var(--env)]/30 bg-[color:var(--env-soft)] px-2 py-0.5 text-xs tracking-[0.08em] uppercase text-[color:var(--env)]">
                 北京时间
               </span>
             ) : null}
             <span
-              className={`text-[10px] tracking-[0.08em] uppercase ${
+              className={`text-xs tracking-[0.08em] uppercase ${
                 confirmed
                   ? 'text-[color:var(--brand-strong)]'
                   : 'text-[color:var(--ink-5)]'
@@ -53,7 +53,10 @@ export default function BirthPlaceCard({
             </span>
           </div>
         </div>
-        <div className="mt-1.5 truncate font-mono text-[20px] md:text-[26px] leading-[1.15] tracking-[0.01em]">
+        <div
+          title={label || undefined}
+          className="mt-1.5 break-all line-clamp-2 font-mono text-[20px] md:text-[26px] leading-[1.15] tracking-[0.01em]"
+        >
           {label || '点击选择出生地点'}
         </div>
         <div className="mt-1 text-xs text-[color:var(--ink-5)]">

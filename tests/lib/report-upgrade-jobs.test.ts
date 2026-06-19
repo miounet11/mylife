@@ -16,6 +16,7 @@ jest.mock('@/lib/database', () => ({
   reportUpgradeJobOperations: {
     enqueue: jest.fn(),
     getByReportId: jest.fn(),
+    getById: jest.fn(),
     listRunnablePending: jest.fn(),
     claimNextRunnable: jest.fn(),
     markCompleted: jest.fn(),
@@ -62,6 +63,7 @@ jest.mock('@/lib/report-version-lineage', () => ({
 }));
 
 import { analyticsOperations, fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
+import { trackServerEvent } from '@/lib/analytics';
 import {
   assessScopeProviderHealth,
   hasRunnableModelsForSnapshots,
@@ -78,6 +80,7 @@ const mockedHasRunnableModelsForSnapshots = hasRunnableModelsForSnapshots as jes
 const mockedShouldConservativelyDeferForSnapshots = shouldConservativelyDeferForSnapshots as jest.MockedFunction<typeof shouldConservativelyDeferForSnapshots>;
 const mockedRegenerateReportFromRecord = regenerateReportFromRecord as jest.MockedFunction<typeof regenerateReportFromRecord>;
 const mockedRepairStoredReportNarrative = repairStoredReportNarrative as jest.MockedFunction<typeof repairStoredReportNarrative>;
+const mockedTrackServerEvent = trackServerEvent as jest.MockedFunction<typeof trackServerEvent>;
 
 describe('report upgrade jobs', () => {
   beforeEach(() => {
@@ -87,6 +90,13 @@ describe('report upgrade jobs', () => {
     mockedReportUpgradeJobOperations.listRunnablePending.mockReturnValue([]);
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReset();
     mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue(null as any);
+    mockedReportUpgradeJobOperations.getById.mockReset();
+    mockedReportUpgradeJobOperations.getById.mockReturnValue(null as any);
+    mockedReportUpgradeJobOperations.markCompleted.mockReturnValue({ changes: 1 } as any);
+    mockedReportUpgradeJobOperations.markDeferred.mockReturnValue({ changes: 1 } as any);
+    mockedReportUpgradeJobOperations.markFailed.mockReturnValue({ changes: 1 } as any);
+    mockedReportUpgradeJobOperations.markCancelled.mockReturnValue({ changes: 1 } as any);
+    mockedReportUpgradeJobOperations.markRetry.mockReturnValue({ changes: 1 } as any);
     mockedRegenerateReportFromRecord.mockReset();
     mockedRepairStoredReportNarrative.mockReset();
     mockedRepairStoredReportNarrative.mockImplementation((report) => report as any);
@@ -491,6 +501,86 @@ describe('report upgrade jobs', () => {
       })
     );
     expect(mockedReportUpgradeJobOperations.markRetry).not.toHaveBeenCalled();
+  });
+
+  it('does not emit completion side effects when the claimed upgrade lease is lost', async () => {
+    mockedReportUpgradeJobOperations.claimNextRunnable.mockReturnValue({
+      id: 'job_lease_lost',
+      reportId: 'report_lease_lost',
+      userId: 'user_lease_lost',
+      status: 'running',
+      attempts: 1,
+      maxAttempts: 6,
+      targetScore: 95,
+      lastScore: 98,
+      bestScore: 98,
+      bestGrade: 'S',
+      lockedAt: 'old-lease',
+      meta: {},
+    } as any);
+    mockedFortuneOperations.getById.mockReturnValue({
+      id: 'report_lease_lost',
+      userId: 'user_lease_lost',
+      name: '许文昊',
+      gender: 'male',
+      birthDate: '1991-01-01',
+      birthTime: '09:00',
+      birthPlace: '北京',
+      timezone: 8,
+      reportVersion: 'v3',
+      analysis: {
+        qualityAudit: {
+          overallScore: 98,
+          grade: 'S',
+          deliveryTier: 'expert',
+        },
+      },
+    } as any);
+    mockedRegenerateReportFromRecord.mockResolvedValue({
+      result: {
+        basic: {},
+        fiveElements: {},
+        tenGods: {},
+        pattern: {},
+        fortune: {},
+        advice: {},
+        evidence: {},
+        dayun: [],
+        shenSha: [],
+        klineData: null,
+        analysis: {
+          qualityAudit: {
+            overallScore: 95,
+            grade: 'S',
+            deliveryTier: 'expert',
+            targetAchieved: true,
+          },
+        },
+      },
+      llmUsed: true,
+      llmUnavailable: false,
+      deferredByProviderHealth: false,
+    } as any);
+    mockedReportUpgradeJobOperations.markCompleted.mockReturnValueOnce({ changes: 0 } as any);
+
+    const result = await processNextReportUpgradeJob();
+
+    expect(result).toMatchObject({
+      processed: true,
+      status: 'lease_lost',
+      reportId: 'report_lease_lost',
+      reason: 'report_upgrade_job_lease_lost',
+    });
+    expect(mockedReportUpgradeJobOperations.markCompleted).toHaveBeenCalledWith(
+      'job_lease_lost',
+      expect.objectContaining({
+        lockedAt: 'old-lease',
+      })
+    );
+    expect(mockedTrackServerEvent).not.toHaveBeenCalledWith(expect.objectContaining({
+      eventName: 'report_generated',
+    }));
+    expect(mockedFortuneOperations.update).not.toHaveBeenCalled();
   });
 
   it('cancels queued likely test samples instead of upgrading them', async () => {

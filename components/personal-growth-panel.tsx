@@ -40,7 +40,7 @@ export default function PersonalGrowthPanel({
       <div className="mt-5 grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
         {/* 主工具卡 */}
         <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-5">
-          <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             <Sparkles className="h-3 w-3" />
             现在最该继续的工具
           </div>
@@ -49,15 +49,15 @@ export default function PersonalGrowthPanel({
           </h3>
           <div className="mt-4 space-y-2">
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-6 text-[color:var(--ink-3)]">
-              <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">CURRENT</span>
+              <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">CURRENT</span>
               <div className="mt-0.5">{summary.focusLine}</div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-6 text-[color:var(--ink-3)]">
-              <span className="font-mono text-[10px] font-bold text-[color:var(--ink-5)]">FREE</span>
+              <span className="font-mono text-xs font-bold text-[color:var(--ink-5)]">FREE</span>
               <div className="mt-0.5">{summary.primaryTool.freeValueLine}</div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-6 text-[color:var(--signal-strong)]">
-              <span className="font-mono text-[10px] font-bold">PREMIUM</span>
+              <span className="font-mono text-xs font-bold">PREMIUM</span>
               <div className="mt-0.5">{summary.primaryTool.paidValueLine}</div>
             </div>
           </div>
@@ -85,7 +85,7 @@ export default function PersonalGrowthPanel({
         {/* 副入口 */}
         <div className="grid gap-4">
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               <FileBarChart2 className="h-3 w-3" />
               继续放大的入口
             </div>
@@ -97,7 +97,7 @@ export default function PersonalGrowthPanel({
                   target="personal_growth_secondary_tool"
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">补一个工具</div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">补一个工具</div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">{summary.secondaryTool.title}</div>
                 </TrackedLink>
               ) : null}
@@ -108,7 +108,7 @@ export default function PersonalGrowthPanel({
                   target="personal_growth_knowledge"
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">读相关文章</div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">读相关文章</div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">{summary.knowledgeCard.title}</div>
                 </TrackedLink>
               ) : null}
@@ -119,7 +119,7 @@ export default function PersonalGrowthPanel({
                   target="personal_growth_case"
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">看相关案例</div>
+                  <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">看相关案例</div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">{summary.caseCard.title}</div>
                 </TrackedLink>
               ) : null}
@@ -127,7 +127,7 @@ export default function PersonalGrowthPanel({
           </div>
 
           <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft)] bg-[color:var(--paper)] p-5">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <BookOpen className="h-3 w-3" />
               下一步可以测什么
             </div>

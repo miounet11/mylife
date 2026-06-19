@@ -19,6 +19,7 @@ import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { resolveResumeTarget } from '@/lib/resume-target';
 import { appendSourceToHref } from '@/lib/source-url';
 import { toEventViewModels, type EventTransportRecord } from '@/lib/event-view';
+import { abortControllerRef, fetchJsonWithTimeout } from '@/lib/utils';
 
 // 动态导入
 const UserProfile = dynamic(() => import('@/components/user-profile'), {
@@ -79,6 +80,9 @@ type UpdatesSummaryResponse = {
   } | null;
 };
 
+const PROFILE_HISTORY_TIMEOUT_MS = 12_000;
+const PROFILE_UPDATES_SUMMARY_TIMEOUT_MS = 5_000;
+
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -88,16 +92,23 @@ export default function ProfilePage() {
   const [updatesSummary, setUpdatesSummary] = useState<UpdatesSummaryResponse['data'] | null>(null);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [historyRes, updatesRes] = await Promise.all([
-          fetch('/api/history', { cache: 'no-store' }),
-          fetch('/api/updates/summary', { cache: 'no-store' }),
-        ]);
-        const data: ProfileResponse = await historyRes.json();
-        const updatesData: UpdatesSummaryResponse = await updatesRes.json();
+    let cancelled = false;
+    const historyControllerRef = { current: null as AbortController | null };
+    const updatesControllerRef = { current: null as AbortController | null };
 
-        if (!historyRes.ok || !data.success) {
+    const loadHistory = async () => {
+      try {
+        const { response, data } = await fetchJsonWithTimeout<ProfileResponse>('/api/history', {
+          cache: 'no-store',
+          timeoutMs: PROFILE_HISTORY_TIMEOUT_MS,
+          timeoutReason: 'profile-history-timeout',
+          controllerRef: historyControllerRef,
+        });
+        if (cancelled) {
+          return;
+        }
+
+        if (!response.ok || !data.success) {
           setError(data.error || '加载档案失败');
           return;
         }
@@ -110,17 +121,41 @@ export default function ProfilePage() {
         setUser(userData);
         setFortunes(fortunesData);
         setEvents(eventsData);
-        if (updatesRes.ok && updatesData.success) {
-          setUpdatesSummary(updatesData.data || null);
-        }
       } catch {
-        setError('网络异常，无法加载档案');
+        if (!cancelled) {
+          setError('网络异常，无法加载档案');
+        }
       } finally {
-        setLoading(false);
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
     };
 
-    load();
+    const loadUpdatesSummary = async () => {
+      try {
+        const { response, data } = await fetchJsonWithTimeout<UpdatesSummaryResponse>('/api/updates/summary', {
+          cache: 'no-store',
+          timeoutMs: PROFILE_UPDATES_SUMMARY_TIMEOUT_MS,
+          timeoutReason: 'profile-updates-summary-timeout',
+          controllerRef: updatesControllerRef,
+        });
+        if (!cancelled && response.ok && data.success) {
+          setUpdatesSummary(data.data || null);
+        }
+      } catch {
+        // 更新摘要是附加信息，失败时保留页面主内容和默认空状态。
+      }
+    };
+
+    void loadHistory();
+    void loadUpdatesSummary();
+
+    return () => {
+      cancelled = true;
+      abortControllerRef(historyControllerRef, 'profile-page-unmounted');
+      abortControllerRef(updatesControllerRef, 'profile-page-unmounted');
+    };
   }, []);
 
   const mappedEvents = useMemo(() => {
@@ -239,7 +274,7 @@ export default function ProfilePage() {
                   href="/docs/profile-history"
                   page="/profile"
                   target="profile_header_docs"
-                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                  className="hidden sm:inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
                   meta={{
                     source: pageSource,
                     ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -280,7 +315,7 @@ export default function ProfilePage() {
                 { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, mono: false },
               ].map((item) => (
                 <div key={item.label} className="flex flex-col gap-1">
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {item.label}
                   </div>
                   <div
@@ -456,7 +491,7 @@ export default function ProfilePage() {
             />
           </PriorityDisclosure>
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius)] p-4 md:p-5">
+          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
               <div>
                 <div className="flex items-center gap-3">
@@ -482,7 +517,7 @@ export default function ProfilePage() {
               </ResultCtaLink>
             </div>
 
-            <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <ProfileStatusTile
                 label="订阅状态"
                 value={updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活'}
@@ -561,7 +596,7 @@ export default function ProfilePage() {
           />
 
           {!loading && !hasProfileData && (
-            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-8 text-center">
+            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md p-8 text-center">
               <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
               <ResultCtaLink
                 href="/analyze"

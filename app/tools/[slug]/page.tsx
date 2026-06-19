@@ -183,7 +183,7 @@ export default async function ToolDetailPage({
               {growthProfile?.heroEyebrow || tool.themeLabel}
             </div>
             {growthProfile ? (
-              <div className="mt-3 inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+              <div className="mt-3 inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-2 text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                 {growthProfile.stageLabel}
               </div>
             ) : null}
@@ -197,7 +197,7 @@ export default async function ToolDetailPage({
               {(growthProfile?.keywords || tool.hookKeywords).map((keyword) => (
                 <span
                   key={keyword}
-                  className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-[11px] font-semibold text-[color:var(--ink-4)]"
+                  className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-xs font-semibold text-[color:var(--ink-4)]"
                 >
                   {keyword}
                 </span>
@@ -237,7 +237,7 @@ export default async function ToolDetailPage({
                 key={item}
                 className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] p-4"
               >
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+                <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
                   FREE VALUE {String(index + 1).padStart(2, '0')}
                 </div>
                 <p className="mt-2 text-sm leading-6 text-[color:var(--ink-2)]">{item}</p>

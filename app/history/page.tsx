@@ -31,6 +31,7 @@ import { buildChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { appendSourceToHref } from '@/lib/source-url';
 import { resolveResumeTarget } from '@/lib/resume-target';
+import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 import ResumeBar from '@/components/resume-bar';
 import {
   formatEventDateKey,
@@ -94,6 +95,8 @@ type HistoryResponse = {
   error?: string;
 };
 
+const HISTORY_PAGE_TIMEOUT_MS = 12_000;
+
 const mapStrengthToResult = (strength?: string) => {
   if (strength === 'strong') return '大吉';
   if (strength === 'medium') return '中吉';
@@ -133,23 +136,42 @@ export default function HistoryPage() {
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
+    const controllerRef = { current: null as AbortController | null };
+
     const load = async () => {
       try {
-        const response = await fetch('/api/history', { cache: 'no-store' });
-        const data = (await response.json()) as HistoryResponse;
+        const { response, data } = await fetchJsonWithTimeout<HistoryResponse>('/api/history', {
+          cache: 'no-store',
+          timeoutMs: HISTORY_PAGE_TIMEOUT_MS,
+          timeoutReason: 'history-page-timeout',
+          controllerRef,
+        });
+        if (cancelled) {
+          return;
+        }
         if (!response.ok || !data.success) {
           setError(data.error || '加载历史失败');
           return;
         }
         setReports((data.fortunes || []) as HistoryFortune[]);
         setEvents(toEventViewModels(data.events || []));
-      } catch {
-        setError('网络异常，无法加载历史数据');
+      } catch (loadError) {
+        if (!cancelled) {
+          setError(isAbortLikeError(loadError) ? '加载历史等待时间过长，请稍后重试' : '网络异常，无法加载历史数据');
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     };
-    load();
+    void load();
+
+    return () => {
+      cancelled = true;
+      abortControllerRef(controllerRef, 'history-page-unmounted');
+    };
   }, []);
 
   const reportCards = useMemo<HistoryReportCard[]>(() => {
@@ -674,14 +696,14 @@ export default function HistoryPage() {
                     reportId: item.id,
                   }}
                 >
-                  <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:shadow-[var(--shadow-card)] md:px-5">
+                  <div className="fb-card px-4 py-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] md:px-5">
                     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0 flex-1">
                         <Inline gap={2} wrap>
                           <Tag tone="brand" variant="soft" size="sm">
                             {item.title}
                           </Tag>
-                          <span className="inline-flex items-center gap-1 font-mono text-[10px] tabular-nums text-[color:var(--ink-5)]">
+                          <span className="inline-flex items-center gap-1 font-mono text-xs tabular-nums text-[color:var(--ink-5)]">
                             <Calendar className="h-3 w-3" />
                             {formatDateLabel(item.createdAt)}
                           </span>
@@ -693,11 +715,14 @@ export default function HistoryPage() {
                           {item.summary}
                         </p>
                         <Inline gap={2} wrap className="mt-3">
-                          <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[10px] font-semibold text-[color:var(--ink-4)]">
+                          <span
+                            className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]"
+                            title={item.stage}
+                          >
                             <Target className="h-3 w-3" />
                             {item.stage}
                           </span>
-                          <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)] px-2 py-0.5 font-mono text-[10px] font-semibold text-[color:var(--ink-4)]">
+                          <span className="inline-flex items-center gap-1 rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)] px-2 py-0.5 font-mono text-xs font-semibold text-[color:var(--ink-4)]">
                             <CheckCircle2 className="h-3 w-3" />
                             可信度 {item.scoreLabel}
                           </span>

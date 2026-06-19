@@ -45,7 +45,7 @@ export default function PremiumTeaser({
 
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+            <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--signal)] bg-[color:var(--paper)] px-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
               {offer.badge}
             </span>
             <h3 className="text-base font-black text-[color:var(--ink-1)]">{offer.title}</h3>

@@ -143,7 +143,7 @@ export default async function AnalyzeEntryPage({
           className="scroll-mt-28 grid gap-5 lg:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)] lg:items-start"
         >
           {/* 左主区 */}
-          <Card variant="raised" padding="md" className="border-[color:var(--brand-soft-2)]">
+          <Card variant="raised" padding="none" className="border-[color:var(--brand-soft-2)] p-2 md:p-3">
             <AnalyzeWorkspace
               returnHref={returnTool ? `/tools/${returnTool.slug}` : undefined}
               returnLabel={returnTool ? `回到${returnTool.shortTitle}` : undefined}
@@ -160,7 +160,7 @@ export default async function AnalyzeEntryPage({
                   <Eyebrow>最近报告</Eyebrow>
                   <Link
                     href="/history"
-                    className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
+                    className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-4)] hover:text-[color:var(--brand-strong)]"
                   >
                     全部 ({totalUserReports}) →
                   </Link>
@@ -180,7 +180,7 @@ export default async function AnalyzeEntryPage({
                           可继续阅读
                         </Tag>
                       </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-[10px] text-[color:var(--ink-5)]">
+                      <div className="mt-0.5 flex items-center gap-2 text-xs text-[color:var(--ink-5)]">
                         <span className="font-mono tabular-nums">
                           {formatRelative((report as any).updatedAt || (report as any).createdAt)}
                         </span>
@@ -273,7 +273,7 @@ export default async function AnalyzeEntryPage({
                     key={item.label}
                     className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2"
                   >
-                    <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                       {item.label}
                     </div>
                     <div className="mt-1 text-sm font-bold leading-snug text-[color:var(--ink-2)]">

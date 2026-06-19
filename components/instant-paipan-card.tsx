@@ -148,7 +148,7 @@ export default function InstantPaipanCard({ sex, onConfirm, disabled = false, su
         </div>
         <div className="mt-2 text-[12px] text-[#7b7b7b]">农历：{clockState.lunarText}</div>
         <div className="mt-1 text-[12px] text-[#7b7b7b]">公历：{clockState.datetime}</div>
-        <div className="mt-2 text-[11px] text-[#a7a7a7]">
+        <div className="mt-2 text-xs text-[#a7a7a7]">
           {isProcessing ? '已锁定本次提交，等待结果返回。' : canSubmit ? '点击后将跳过上方出生信息，直接用此刻时间生成判断。' : '当前入口暂不可用，请稍候。'}
         </div>
       </div>

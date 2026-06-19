@@ -23,7 +23,7 @@ export default function SurfaceJourneyPanel({
   return (
     <PriorityDisclosure label="协同路径" title={title} description={description} defaultOpen={defaultOpen}>
       {badge ? (
-        <div className="mt-3 inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        <div className="mt-3 inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
           {badge}
         </div>
       ) : null}
@@ -65,7 +65,7 @@ function JourneyColumn({
 }) {
   return (
     <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-      <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         {icon}
         {heading}
       </div>
@@ -77,7 +77,7 @@ function JourneyColumn({
               href={item.href}
               className="group block rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 transition hover:border-[color:var(--brand)]"
             >
-              <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+              <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                 {item.eyebrow}
               </div>
               <div className="mt-1 flex items-center justify-between gap-2 text-sm font-bold leading-snug text-[color:var(--ink-1)]">

@@ -72,7 +72,7 @@ export default function FortuneKLineChart({ data, showLegend = true, height = 38
                 key={item.key}
                 className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2"
               >
-                <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <span className="inline-block h-2 w-2 rounded-full" style={{ background: item.color }} />
                   {item.label}
                 </div>

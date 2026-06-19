@@ -78,7 +78,7 @@ export default function ToolHistoryPanel({
   );
 
   return (
-    <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-6">
+    <section className="fb-card p-5 md:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -91,7 +91,7 @@ export default function ToolHistoryPanel({
         </div>
         <Link
           href="/tools"
-          className="inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)]"
+          className="fb-btn inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--fb-blue)] hover:no-underline"
         >
           全部工具
         </Link>
@@ -116,20 +116,20 @@ export default function ToolHistoryPanel({
             <Link
               key={item.id}
               href={`/tool-result/${item.id}`}
-              className="group rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
+              className="group fb-card p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
             >
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-bold leading-snug text-[color:var(--ink-1)]">
                   {item.tool?.shortTitle}
                 </div>
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                   {item.tool?.category}
                 </span>
               </div>
               <div className="mt-2 text-xs leading-5 text-[color:var(--ink-3)]">
                 {item.result?.headline || item.result?.recommendedAction || '已生成结果'}
               </div>
-              <div className="mt-3 flex items-center justify-between text-[10px] text-[color:var(--ink-5)]">
+              <div className="mt-3 flex items-center justify-between text-xs text-[color:var(--ink-5)]">
                 <span className="inline-flex items-center gap-1 font-mono tabular-nums">
                   <Clock3 className="h-3 w-3" />
                   {formatDate(item.createdAt)}

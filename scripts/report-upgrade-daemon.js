@@ -1,9 +1,11 @@
-const intervalMs = Math.max(30_000, Number(process.env.REPORT_UPGRADE_INTERVAL_MS || 1000 * 60 * 3));
+const { readPositiveIntegerEnv } = require('./ops-env.js');
+
+const intervalMs = readPositiveIntegerEnv('REPORT_UPGRADE_INTERVAL_MS', 1000 * 60 * 3, { min: 30_000, max: 86_400_000 });
 const runUrl = process.env.REPORT_UPGRADE_RUN_URL || 'http://127.0.0.1:8080/api/admin/report-upgrade/cron';
 const token = process.env.REPORT_UPGRADE_CRON_TOKEN || '';
-const requestTimeoutMs = Math.max(10_000, Number(process.env.REPORT_UPGRADE_REQUEST_TIMEOUT_MS || 60_000));
-const startupDelayMs = Math.max(5_000, Number(process.env.REPORT_UPGRADE_STARTUP_DELAY_MS || 20_000));
-const retryDelayMs = Math.max(15_000, Number(process.env.REPORT_UPGRADE_RETRY_DELAY_MS || Math.min(intervalMs, 60_000)));
+const requestTimeoutMs = readPositiveIntegerEnv('REPORT_UPGRADE_REQUEST_TIMEOUT_MS', 60_000, { min: 10_000, max: 900_000 });
+const startupDelayMs = readPositiveIntegerEnv('REPORT_UPGRADE_STARTUP_DELAY_MS', 20_000, { min: 5_000, max: 300_000 });
+const retryDelayMs = readPositiveIntegerEnv('REPORT_UPGRADE_RETRY_DELAY_MS', Math.min(intervalMs, 60_000), { min: 15_000, max: 900_000 });
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

@@ -8,11 +8,13 @@ import {
   Boxes,
   Compass,
   FileText,
+  GitBranch,
   Image as ImageIcon,
   LibraryBig,
   MousePointer2,
   Network,
   Route,
+  ShieldCheck,
   Sparkles,
   Target,
   Wrench,
@@ -163,6 +165,15 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
   const reading = buildVisualAssetReading(asset);
   const relatedTools = getRelatedTools(asset);
   const relatedVisualAssets = getRelatedVisualAssets(asset, 3);
+  const isTraditionalTermsBridge = asset.slug === 'traditional-terms-to-modern-judgment';
+  const translationPairs = [
+    { from: '旺衰', to: 'capacity', body: 'Do not ask whether a label is lucky. Ask whether the person can carry the load.' },
+    { from: '吉凶', to: 'cost', body: 'Good or bad becomes a cost question: what can be gained, paid, delayed, or avoided.' },
+    { from: '用神', to: 'support', body: 'Useful force becomes the support that should be strengthened in this stage.' },
+    { from: '行运', to: 'stage', body: 'Luck cycle becomes timing: expand, test, recover, reduce density, or hold position.' },
+    { from: '卦象', to: 'change', body: 'Image becomes change pattern, not mystical decoration.' },
+    { from: '复盘', to: 'review', body: 'Every judgment must return to evidence and lived feedback.' },
+  ];
   const journey = buildJourneyForVisualAsset({
     title: asset.title,
     description: asset.description,
@@ -264,6 +275,41 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
             </aside>
           </section>
 
+          {isTraditionalTermsBridge ? (
+            <section className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+              <div className="border-b border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-tint)] via-[color:var(--paper)] to-[color:var(--bg-sunken)] p-5 md:p-7">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--brand-strong)] ring-1 ring-[color:var(--hairline)]">
+                  <GitBranch className="h-3.5 w-3.5" />
+                  Translation bridge
+                </div>
+                <h2 className="mt-4 text-3xl font-black leading-tight text-[color:var(--ink)]">Traditional terms are inputs. Modern judgment is the output.</h2>
+                <p className="mt-3 max-w-3xl text-sm leading-7 text-[color:var(--ink-3)]">
+                  This image should not make old terms heavier. It should strip them down until each term becomes a clear decision variable: capacity, cost, support, stage, change, and review.
+                </p>
+              </div>
+              <div className="grid gap-0 md:grid-cols-2 xl:grid-cols-3">
+                {translationPairs.map((item) => (
+                  <div key={item.from} className="border-t border-[color:var(--hairline)] p-4 md:p-5 xl:border-r xl:[&:nth-child(3n)]:border-r-0">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-sm font-black text-[color:var(--ink)]">{item.from}</span>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-[color:var(--brand-strong)]" />
+                      <span className="rounded-full bg-[color:var(--brand-tint)] px-2.5 py-1 text-sm font-black text-[color:var(--brand-strong)]">{item.to}</span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-[color:var(--ink-4)]">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t border-[color:var(--hairline)] p-5 md:p-6">
+                <div className="flex items-start gap-3 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+                  <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-[color:var(--signal-strong)]" />
+                  <p className="text-sm leading-7 text-[color:var(--ink-3)]">
+                    Boundary: this bridge does not promise guaranteed outcomes. It turns inherited vocabulary into reviewable decisions and safer next actions.
+                  </p>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
               <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -319,7 +365,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
                   <Link
                     key={tool.slug}
                     href={`/tools/${tool.slug}?source=visual_asset:${asset.slug}`}
-                    className="block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)] rounded-[var(--radius)] p-4"
+                    className="fb-card block cursor-pointer p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
@@ -356,7 +402,7 @@ export default async function VisualAssetDetailPage({ params }: PageProps) {
               { icon: <LibraryBig className="h-5 w-5" />, title: '回到知识体系', body: '把图片中的概念接回知识库，继续阅读世界易和命理基础。', href: '/knowledge', cta: '看知识库' },
               { icon: <MousePointer2 className="h-5 w-5" />, title: '进入工具动作', body: '选择一个相关工具，把图里的结构转成一次单项判断。', href: relatedTools[0] ? `/tools/${relatedTools[0].slug}?source=visual_asset:${asset.slug}` : '/tools', cta: '进入工具' },
             ].map((item) => (
-              <Link key={item.title} href={item.href} className="block cursor-pointer rounded-[var(--radius-md)] border border-[color:var(--hairline-strong)] bg-[color:var(--bg-elevated)] transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
+              <Link key={item.title} href={item.href} className="fb-card block cursor-pointer p-5 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
                   {item.icon}
                 </div>

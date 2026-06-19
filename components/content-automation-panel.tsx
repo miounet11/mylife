@@ -798,10 +798,10 @@ export default function ContentAutomationPanel({
                     <div key={item.id} className={`rounded-[var(--radius)] px-4 py-4 ${severityTone(item.severity)}`}>
                       <div className="flex items-center justify-between gap-3">
                         <div className="text-sm font-semibold">{item.title}</div>
-                        <div className="text-[10px] font-bold uppercase tracking-[0.18em]">{item.severity}</div>
+                        <div className="text-xs font-bold uppercase tracking-[0.18em]">{item.severity}</div>
                       </div>
                       {item.source ? (
-                        <div className="mt-2 text-[10px] font-semibold uppercase tracking-[0.16em] opacity-75">{item.source}</div>
+                        <div className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] opacity-75">{item.source}</div>
                       ) : null}
                       <div className={`${item.source ? 'mt-1' : 'mt-2'} text-xs leading-6`}>{item.detail}</div>
                     </div>
@@ -912,7 +912,7 @@ export default function ContentAutomationPanel({
                         { label: '策略差异', value: openAgentOpsTriage?.plan.policyDiffs.length || 0 },
                       ].map((item) => (
                         <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">
-                          <div className="text-[10px] font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
+                          <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.value}</div>
                         </div>
                       ))}
@@ -936,7 +936,7 @@ export default function ContentAutomationPanel({
                         { label: '建议', value: reportReliabilityReview?.plan.recommendedActions.length || 0 },
                       ].map((item) => (
                         <div key={item.label} className="rounded-[var(--radius)] bg-[color:var(--sand)]/70 px-3 py-3">
-                          <div className="text-[10px] font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
+                          <div className="text-xs font-semibold tracking-[0.16em] text-[color:var(--muted)]">{item.label}</div>
                           <div className="mt-1 text-lg font-black text-[color:var(--ink)]">{item.value}</div>
                         </div>
                       ))}
@@ -1011,7 +1011,7 @@ export default function ContentAutomationPanel({
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
                       <div className="text-right">
                         <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{formatOpsActionKind(item.kind)}</div>
-                        <div className="text-[10px] text-[color:var(--muted)]">{item.autoExecutable ? '可自动执行' : '人工确认'}</div>
+                        <div className="text-xs text-[color:var(--muted)]">{item.autoExecutable ? '可自动执行' : '人工确认'}</div>
                       </div>
                     </div>
                     <div className="mt-2 text-xs leading-6 text-[color:var(--muted)]">{item.reason}</div>
@@ -1035,7 +1035,7 @@ export default function ContentAutomationPanel({
                       <div className="text-sm font-semibold text-[color:var(--ink)]">{item.name}</div>
                       <div className="text-right">
                         <div className="text-xs font-semibold text-[color:var(--accent-strong)]">{item.action}</div>
-                        <div className="text-[10px] text-[color:var(--muted)]">{item.reportId}</div>
+                        <div className="text-xs text-[color:var(--muted)]">{item.reportId}</div>
                       </div>
                     </div>
                     <div className="mt-2 text-xs text-[color:var(--muted)]">

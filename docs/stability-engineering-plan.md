@@ -111,9 +111,9 @@ pm2 logs life-kline-stability-monitor --lines 50
 pm2 show life-kline-next-web1          # memory / uptime
 pm2 show life-kline-content-worker-1
 curl -H "x-system-health-token: $(grep -o 'HEALTH.*' .env.local 2>/dev/null || echo '')" http://127.0.0.1:3000/api/admin/system/health | python3 -c '
-import sys, json; d=json.load(sys.stdin); 
-p=d.get("snapshot",{}).get("process",{}); 
-c=d.get("snapshot",{}).get("caches",{}); 
+import sys, json; d=json.load(sys.stdin);
+p=d.get("snapshot",{}).get("process",{});
+c=d.get("snapshot",{}).get("caches",{});
 print("HEAP%:", p.get("heapPercent"), "RSS_MB:", p.get("rssMB"), "ContentWorker:", p.get("isContentWorker"));
 print("Cache pressures:", c.get("pressure"));
 '
@@ -173,4 +173,3 @@ sleep 25 && npm run system:health
 
 All fixes prioritize: (1) user-facing web stability, (2) zero data loss, (3) minimal code surface.
 See also: CLAUDE.md §2.4 (PM2), §7 checklist, docs/OPERATIONS.md
-

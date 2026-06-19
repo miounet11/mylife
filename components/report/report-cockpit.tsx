@@ -55,16 +55,16 @@ export default function ReportCockpit({
     <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
       <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-4 py-4 md:px-5 md:py-5">
         <div className="flex flex-wrap items-center gap-1.5">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             驾驶舱判断
           </div>
           {section.stageLabel ? (
-            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] px-2 text-[10px] font-bold text-[color:var(--brand-strong)]">
+            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] px-2 text-xs font-bold text-[color:var(--brand-strong)]">
               {section.stageLabel}
             </span>
           ) : null}
           {section.confidenceLabel ? (
-            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 font-mono text-[10px] font-bold text-[color:var(--ink-4)]">
+            <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 font-mono text-xs font-bold text-[color:var(--ink-4)]">
               {section.confidenceLabel}
             </span>
           ) : null}
@@ -79,14 +79,14 @@ export default function ReportCockpit({
         {section.identityLabel || section.focusChips.length > 0 ? (
           <div className="mt-3 flex flex-wrap gap-1.5">
             {section.identityLabel ? (
-              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand)] bg-[color:var(--paper)] px-1.5 text-[10px] font-bold text-[color:var(--brand-strong)]">
+              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand)] bg-[color:var(--paper)] px-1.5 text-xs font-bold text-[color:var(--brand-strong)]">
                 {section.identityLabel}
               </span>
             ) : null}
             {section.focusChips.map((item) => (
               <span
                 key={item}
-                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-3)]"
+                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-xs font-semibold text-[color:var(--ink-3)]"
               >
                 {item}
               </span>
@@ -101,11 +101,11 @@ export default function ReportCockpit({
                 key={`${card.label}-${card.value}`}
                 className={`rounded-[var(--radius)] border px-3 py-2.5 ${toneClasses(card.tone)}`}
               >
-                <div className="font-mono text-[10px] font-bold uppercase tracking-wider opacity-80">
+                <div className="font-mono text-xs font-bold uppercase tracking-wider opacity-80">
                   {card.label}
                 </div>
                 <div className="mt-1 font-mono text-sm font-black tabular-nums">{card.value}</div>
-                {card.note ? <div className="mt-1 text-[10px] leading-4 opacity-90">{card.note}</div> : null}
+                {card.note ? <div className="mt-1 text-xs leading-4 opacity-90">{card.note}</div> : null}
               </div>
             ))}
           </div>
@@ -114,12 +114,12 @@ export default function ReportCockpit({
 
       <div className="space-y-3">
         <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 md:px-5 md:py-5">
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             现在先做什么
           </div>
           <div className="mt-3 grid gap-2">
             <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-3 py-2.5">
-              <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+              <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                 先做
               </div>
               <div className="mt-1.5 space-y-1.5 text-xs leading-5 text-[color:var(--ink-2)]">
@@ -129,7 +129,7 @@ export default function ReportCockpit({
               </div>
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2.5">
-              <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--alert)]">
+              <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--alert)]">
                 先别做
               </div>
               <div className="mt-1.5 space-y-1.5 text-xs leading-5 text-[color:var(--alert)]">
@@ -149,7 +149,7 @@ export default function ReportCockpit({
             {/* v5-B1: 3 条上下文化追问 chips（替代原单条 PREFILL）*/}
             {hasSuggestions ? (
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-                <div className="flex items-center gap-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <MessageCircleQuestion className="h-3 w-3" />
                   继续追问
                 </div>

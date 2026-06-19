@@ -74,7 +74,7 @@ export default function PublicEvidencePanel({
       <div className={`grid gap-4 ${columnClassName}`}>
         {toolItems?.length ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <Compass className="h-3 w-3" />
               相关工具
             </div>
@@ -88,7 +88,7 @@ export default function PublicEvidencePanel({
                   page={page}
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {tool.themeLabel}
                   </div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
@@ -102,7 +102,7 @@ export default function PublicEvidencePanel({
 
         {knowledgeItems?.length ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <BookOpenText className="h-3 w-3" />
               相关知识
             </div>
@@ -119,7 +119,7 @@ export default function PublicEvidencePanel({
                   }}
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {item.category}
                   </div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
@@ -133,7 +133,7 @@ export default function PublicEvidencePanel({
 
         {caseItems?.length ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
               <LibraryBig className="h-3 w-3" />
               相关案例
             </div>
@@ -150,7 +150,7 @@ export default function PublicEvidencePanel({
                   }}
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {item.scenario}
                   </div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">
@@ -164,7 +164,7 @@ export default function PublicEvidencePanel({
 
         {insightItems?.length ? (
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
+            <div className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
               <Sparkles className="h-3 w-3" />
               相关洞察
             </div>
@@ -181,7 +181,7 @@ export default function PublicEvidencePanel({
                   }}
                   className="block border-l-2 border-[color:var(--hairline)] pl-3 py-1 transition hover:border-[color:var(--signal)]"
                 >
-                  <div className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
                     {item.name}
                   </div>
                   <div className="mt-0.5 text-sm font-bold leading-snug text-[color:var(--ink-2)]">

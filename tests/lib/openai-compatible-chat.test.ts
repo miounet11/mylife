@@ -27,6 +27,24 @@ describe('openai-compatible chat helper', () => {
     expect(body).not.toHaveProperty('temperature');
   });
 
+  it('uses OpenAI-compatible token field for auto gateway routing', () => {
+    const body = buildOpenAiCompatibleChatCompletionBody({
+      model: 'auto',
+      messages: [{ role: 'user', content: 'test' }],
+      maxTokens: 480,
+      temperature: 0.55,
+      reasoningEffort: 'low',
+    });
+
+    expect(body).toMatchObject({
+      model: 'auto',
+      max_completion_tokens: 480,
+    });
+    expect(body).not.toHaveProperty('max_tokens');
+    expect(body).not.toHaveProperty('temperature');
+    expect(body).not.toHaveProperty('reasoning_effort');
+  });
+
   it('keeps standard max_tokens and temperature for non-OpenAI-compatible gateway models', () => {
     const body = buildOpenAiCompatibleChatCompletionBody({
       model: 'grok-420-fast',
@@ -45,11 +63,13 @@ describe('openai-compatible chat helper', () => {
 
   it('detects model families and reasoning effort defaults correctly', () => {
     expect(isNativeOpenAiModel('gpt-5.4')).toBe(true);
+    expect(isNativeOpenAiModel('auto')).toBe(true);
     expect(isNativeOpenAiModel('grok-420-fast')).toBe(false);
     expect(isGpt5FamilyModel('gpt-5.4')).toBe(true);
     expect(supportsTemperatureParameter('gpt-5.4')).toBe(false);
     expect(supportsTemperatureParameter('grok-420-fast')).toBe(true);
     expect(resolveChatCompletionMaxTokensField('gpt-5.4')).toBe('max_completion_tokens');
+    expect(resolveChatCompletionMaxTokensField('auto')).toBe('max_completion_tokens');
     expect(resolveChatCompletionMaxTokensField('grok-420-fast')).toBe('max_tokens');
     expect(resolveReasoningEffortFromBudgetTokens(2000)).toBe('low');
     expect(resolveReasoningEffortFromBudgetTokens(5000)).toBe('medium');

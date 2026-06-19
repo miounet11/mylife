@@ -42,7 +42,7 @@ export function ContextCard({
     <div className="fb-card space-y-3 p-3">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div>
-          <div className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.12em] text-[#3b5998]">
+          <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
             <Compass className="h-3 w-3" />
             这次世界易追问
           </div>
@@ -64,7 +64,7 @@ export function ContextCard({
           {context.focusAreas.map((item) => (
             <span
               key={item}
-              className="rounded-[4px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-[11px] font-semibold text-[#3b5998]"
+              className="rounded-[4px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#3b5998]"
             >
               {item}
             </span>
@@ -100,7 +100,7 @@ export function ContextCard({
             {context.recentEvents.map((event) => (
               <div key={event.id} className="rounded-[3px] bg-white px-2.5 py-2">
                 <div className="text-[13px] font-semibold text-[#1d2129]">{event.title}</div>
-                <div className="mt-0.5 text-[11px] text-[#606770]">
+                <div className="mt-0.5 text-xs text-[#606770]">
                   {event.date} · {mapEventTypeLabel(event.type)} · {mapImpactLabel(event.impact)}
                 </div>
               </div>
@@ -111,14 +111,14 @@ export function ContextCard({
 
       {context.validationSummary?.headline && (
         <div className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-3 py-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#606770]">最近反馈</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#606770]">最近反馈</div>
           <div className="mt-1 text-[12px] leading-5 text-[#1d2129]">{context.validationSummary.headline}</div>
         </div>
       )}
 
       {context.focusedEvent && (
         <div className="rounded-[3px] border border-[#bd4c42] bg-[#fdecea] px-3 py-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#bd4c42]">本次重点问题</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#bd4c42]">本次重点问题</div>
           <div className="mt-1 text-[14px] font-semibold text-[#1d2129]">{context.focusedEvent.title}</div>
           <div className="mt-1 text-[13px] text-[#1d2129]">
             {context.focusedEvent.reason || context.focusedEvent.notes || '当前对话应优先围绕这条已出现偏差的事件做纠偏分析。'}
@@ -128,7 +128,7 @@ export function ContextCard({
 
       {context.correctionPrompts.length > 0 && (
         <div className="rounded-[3px] border border-[#f0c674] bg-[#fff7e6] px-3 py-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#a87f2c]">建议先问</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#a87f2c]">建议先问</div>
           <div className="mt-2 grid gap-2 md:grid-cols-2">
             {context.correctionPrompts.map((item) => (
               <CorrectionPromptButton
@@ -145,7 +145,7 @@ export function ContextCard({
 
       {context.suggestedEventDrafts.length > 0 && (
         <div className="rounded-[3px] border border-dashed border-[#dddfe2] bg-[#f5f6f7] px-3 py-2">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#606770]">可以顺手记下的提醒</div>
+          <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#606770]">可以顺手记下的提醒</div>
           <div className="mt-2 grid gap-2">
             {context.suggestedEventDrafts.slice(0, 2).map((item) => {
               const eventKey = `suggestion:${item.key}`;
@@ -156,7 +156,7 @@ export function ContextCard({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[13px] font-semibold text-[#1d2129]">{item.title}</div>
-                      <div className="mt-0.5 text-[11px] text-[#606770]">
+                      <div className="mt-0.5 text-xs text-[#606770]">
                         {item.date} · {mapEventTypeLabel(item.type)} · {mapImpactLabel(item.impact)}
                       </div>
                     </div>
@@ -164,7 +164,7 @@ export function ContextCard({
                       type="button"
                       onClick={() => onSaveSuggestedEvent(item)}
                       disabled={disabled || isSaved || savingEventKey === eventKey}
-                      className="fb-btn inline-flex shrink-0 items-center gap-1 px-2 py-1 text-[11px] font-semibold text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
+                      className="fb-btn inline-flex shrink-0 items-center gap-1 px-2 py-1 text-xs font-semibold text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isSaved ? <CheckCircle2 className="h-3 w-3 text-[#2f7d52]" /> : null}
                       {isSaved ? '已保存' : savingEventKey === eventKey ? '保存中...' : '记下来'}

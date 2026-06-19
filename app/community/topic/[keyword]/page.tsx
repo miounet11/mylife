@@ -156,7 +156,7 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(bcLd) }} />
       {faqLd ? <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqLd) }} /> : null}
       <AnalyticsPageView
-        eventName="content_card_clicked"
+        eventName="knowledge_page_viewed"
         page={`/community/topic/${keyword}`}
         meta={{ surfaceKey: 'community_topic', keyword, category: cat }}
       />
@@ -185,7 +185,7 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
             <p className="mt-1 text-[13px] leading-[1.5] text-[color:var(--fb-ink-2)] max-w-[720px]">
               {T(`本页聚合社区内与「${keyword}」相关的真实命理提问与官方解读。所有内容均经隐私脱敏处理，由专业老师与官方答主提供解答。${catLabel}主题门户提供更系统的内容入口。`)}
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                 {T(catLabel)}
               </span>
@@ -197,7 +197,7 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
         </section>
 
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_240px]">
-          <div className="space-y-2">
+          <div className="order-2 space-y-2 lg:order-none">
             {list.length === 0 ? (
               <div className="fb-card p-6 text-center text-[13px] text-[color:var(--fb-ink-3)]">
                 {T(`暂无与「${keyword}」直接相关的提问，去`)}
@@ -212,7 +212,7 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
                 return (
                   <article key={q.id} className="fb-card hover:border-[color:var(--fb-blue)]">
                     <div className="px-3 py-3">
-                      <div className="text-[11px] text-[color:var(--fb-ink-3)] mb-1.5">
+                      <div className="text-xs text-[color:var(--fb-ink-3)] mb-1.5">
                         <span className="font-semibold text-[color:var(--fb-ink-1)]">{author?.displayName || (locale === 'zh-Hant' ? '匿名用戶' : '匿名用户')}</span>
                         {' · '}{T(author?.occupation || '')}
                       </div>
@@ -224,14 +224,14 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
                           {T(q.body.replace(/\n/g, ' '))}
                         </p>
                       </Link>
-                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+                      <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs">
                         <span className="rounded-[2px] bg-[color:var(--fb-blue)] px-1.5 py-0.5 font-bold text-white">
                           {T(getCategoryLabel(q.category))}
                         </span>
                         <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 font-semibold text-[#1d2129]">
                           {T(getIndustryLabel(q.industry))}
                         </span>
-                        <span className="ml-auto text-[11px] text-[color:var(--fb-ink-3)]">
+                        <span className="ml-auto text-xs text-[color:var(--fb-ink-3)]">
                           {q.answerCount} {T('答')} · {q.viewCount} {T('阅读')}
                         </span>
                       </div>
@@ -282,9 +282,9 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
           </div>
 
           {/* 右栏 */}
-          <aside className="space-y-3">
+          <aside className="order-first space-y-3 lg:order-none">
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
+              <div className="border-b border-[color:var(--fb-border)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--fb-ink-3)]">
                 {T('其他命理主题')}
               </div>
               <div className="divide-y divide-[color:var(--fb-border)]">
@@ -298,7 +298,7 @@ export default async function CommunityTopicPage({ params, searchParams }: PageP
             </div>
 
             <div className="fb-card overflow-hidden">
-              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-[11px] font-bold uppercase tracking-[0.14em] text-white">
+              <div className="border-b border-[color:var(--fb-border)] bg-[color:var(--fb-blue)] px-3 py-2 text-xs font-bold uppercase tracking-[0.14em] text-white">
                 {T('开始你的判断')}
               </div>
               <div className="px-3 py-3 text-[12px] text-[color:var(--fb-ink-2)] leading-[1.5]">

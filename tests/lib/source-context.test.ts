@@ -62,9 +62,14 @@ describe('source context', () => {
     expect(context.toolHeadline).toContain('工具详情');
   });
 
-  test('appends source to internal href without dropping hash', () => {
+  test('does not append content source to public content hrefs', () => {
     expect(appendSourceToHref('/tools/career?foo=1#runner', 'knowledge_article:career-plan-source-context'))
-      .toBe('/tools/career?foo=1&source=knowledge_article%3Acareer-plan-source-context#runner');
+      .toBe('/tools/career?foo=1#runner');
+  });
+
+  test('appends non-content source to internal href without dropping hash', () => {
+    expect(appendSourceToHref('/tools/career?foo=1#runner', 'tool_detail:career'))
+      .toBe('/tools/career?foo=1&source=tool_detail%3Acareer#runner');
   });
 
   test('does not overwrite an existing source query', () => {

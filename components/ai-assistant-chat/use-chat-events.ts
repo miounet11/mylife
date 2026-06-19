@@ -6,6 +6,9 @@ import {
   type ChatExperienceContext,
 } from '@/lib/chat-context';
 import type { SuggestedEventDraft } from '@/components/ai-assistant-chat/chat-helpers';
+import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
+
+const CHAT_EVENT_SAVE_TIMEOUT_MS = 12_000;
 
 interface UseChatEventsParams {
   context: ChatExperienceContext | null;
@@ -24,19 +27,20 @@ export function useChatEvents({ context, reportId, source, setError }: UseChatEv
     setError('');
 
     try {
-      const response = await fetch('/api/events', {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
+        timeoutMs: CHAT_EVENT_SAVE_TIMEOUT_MS,
+        timeoutReason: 'chat-event-save-timeout',
       });
-      const data = await response.json();
       if (!response.ok || !data.success) {
         setError(data.error || '保存事件失败');
         return;
       }
       setSavedEventKeys((current) => (current.includes(eventKey) ? current : [...current, eventKey]));
-    } catch {
-      setError('网络异常，保存事件失败');
+    } catch (saveError) {
+      setError(isAbortLikeError(saveError) ? '保存事件等待时间过长，请稍后重试' : '网络异常，保存事件失败');
     } finally {
       setSavingEventKey(null);
     }

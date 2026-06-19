@@ -421,6 +421,15 @@ export default function FortuneForm({
             <div className="space-y-3 md:space-y-4">
               <EntryProgressBar segments={progressSegments} />
 
+              <div className="space-y-1 md:hidden">
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                  填写出生信息
+                </div>
+                <h2 className="text-base font-black leading-tight text-[color:var(--ink-1)]">
+                  确认出生时间与地点
+                </h2>
+              </div>
+
               <div className="hidden space-y-1.5 md:block">
                 <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                   填写出生信息

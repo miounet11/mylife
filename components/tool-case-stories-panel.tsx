@@ -40,7 +40,7 @@ export default function ToolCaseStoriesPanel({
             key={story.title}
             className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4"
           >
-            <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               {story.persona}
             </div>
             <h3 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">

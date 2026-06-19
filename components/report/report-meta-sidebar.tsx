@@ -85,7 +85,7 @@ export default function ReportMetaSidebar({
           {items.map((item) => (
             <div key={`${item.label}-${item.value}`} className="flex items-baseline justify-between gap-2 py-1">
               <dt className="text-[12px] text-[color:var(--ink-4)]">{item.label}</dt>
-              <dd className="text-right font-semibold text-[color:var(--ink-1)]">{item.value}</dd>
+              <dd className="min-w-0 text-right font-semibold text-[color:var(--ink-1)]">{item.value}</dd>
             </div>
           ))}
         </dl>

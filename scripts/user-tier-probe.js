@@ -5,11 +5,13 @@
  */
 
 const http = require('http');
+const { readPositiveIntegerEnv, readPositiveIntegerValue } = require('./ops-env.js');
 
 const args = process.argv.slice(2);
-const rounds = parseInt(args.find((a) => a.startsWith('--rounds='))?.split('=')[1] || '12', 10);
-const intervalSec = parseInt(args.find((a) => a.startsWith('--interval='))?.split('=')[1] || '15', 10);
-const timeoutMs = parseInt(process.env.PROBE_TIMEOUT_MS || '5000', 10);
+const readFlagValue = (name) => args.find((arg) => arg.startsWith(`--${name}=`))?.split('=')[1];
+const rounds = readPositiveIntegerValue(readFlagValue('rounds'), 12, { min: 1, max: 120 });
+const intervalSec = readPositiveIntegerValue(readFlagValue('interval'), 15, { min: 1, max: 300 });
+const timeoutMs = readPositiveIntegerEnv('PROBE_TIMEOUT_MS', 5000, { min: 1000, max: 60000 });
 
 function request(opts, body) {
   return new Promise((resolve) => {

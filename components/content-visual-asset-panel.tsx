@@ -60,7 +60,7 @@ export default function ContentVisualAssetPanel({
 
   return (
     <section
-      className={`rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 ${className}`}
+      className={`fb-card p-5 ${className}`}
     >
       <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
         <ImageIcon className="h-3 w-3" />
@@ -100,7 +100,7 @@ export default function ContentVisualAssetPanel({
         </ContentCardLink>
 
         <div>
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
             {primary.id} · {moduleLabels[primary.module]}
           </div>
           <h2 className="mt-1.5 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
@@ -120,7 +120,7 @@ export default function ContentVisualAssetPanel({
               contentType: 'visual_asset',
               assetId: primary.id,
             }}
-            className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
+            className="fb-btn fb-btn-primary mt-4 inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition-colors hover:bg-[color:var(--fb-blue-strong)] hover:no-underline"
           >
             查看图片解读
             <ArrowRight className="h-4 w-4" />
@@ -143,7 +143,7 @@ export default function ContentVisualAssetPanel({
                 assetId: asset.id,
                 assetModule: asset.module,
               }}
-              className="grid grid-cols-[7.5rem_1fr] gap-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-2.5 transition hover:-translate-y-px hover:border-[color:var(--brand)]"
+              className="fb-card grid grid-cols-[7.5rem_1fr] gap-3 p-2.5 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
             >
               <div className="aspect-video overflow-hidden rounded-[var(--radius-sm)] bg-[color:var(--bg-sunken)]">
                 <Image
@@ -156,7 +156,7 @@ export default function ContentVisualAssetPanel({
                 />
               </div>
               <div>
-                <div className="inline-flex items-center gap-1 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                <div className="inline-flex items-center gap-1 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <Sparkles className="h-2.5 w-2.5" />
                   {moduleLabels[asset.module]}
                 </div>

@@ -68,8 +68,15 @@ type AnalyzeEvent =
     }
   | { type: 'error'; error: string };
 
+const ANALYZE_REQUEST_TIMEOUT_MS = 90_000;
+const ANALYZE_IDLE_TIMEOUT_MS = 45_000;
+
 function wait(ms: number) {
-  return new Promise((resolve) => window.setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isAbortError(error: unknown) {
+  return error instanceof Error && error.name === 'AbortError';
 }
 
 function buildCaseName() {
@@ -107,6 +114,8 @@ export type AnalyzeSubmitContext = {
 export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
   const router = useRouter();
   const requestRef = useRef<AbortController | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loading, setLoading] = useState(false);
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [loadingSummary, setLoadingSummary] = useState<LoadingSummary | null>(null);
@@ -115,6 +124,14 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
   const [error, setError] = useState('');
 
   const reset = useCallback(() => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+      timeoutRef.current = null;
+    }
+    if (idleTimeoutRef.current) {
+      clearTimeout(idleTimeoutRef.current);
+      idleTimeoutRef.current = null;
+    }
     setLoadingSummary(null);
     setServerStage(null);
     setCompletionMeta(null);
@@ -132,6 +149,12 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
   useEffect(() => {
     return () => {
       requestRef.current?.abort();
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -177,6 +200,19 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
 
         const controller = new AbortController();
         requestRef.current = controller;
+        timeoutRef.current = setTimeout(() => {
+          controller.abort('request-timeout');
+        }, ANALYZE_REQUEST_TIMEOUT_MS);
+        const refreshIdleTimeout = () => {
+          if (idleTimeoutRef.current) {
+            clearTimeout(idleTimeoutRef.current);
+          }
+          idleTimeoutRef.current = setTimeout(() => {
+            controller.abort('idle-timeout');
+          }, ANALYZE_IDLE_TIMEOUT_MS);
+        };
+        refreshIdleTimeout();
+
         const response = await fetch('/api/analyze', {
           method: 'POST',
           signal: controller.signal,
@@ -215,6 +251,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
             relationLabel: ctx.relationLabel ?? null,
           }),
         });
+        refreshIdleTimeout();
 
         if (!response.ok || !response.body) {
           const failed = await response.json().catch(() => null);
@@ -233,7 +270,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
           setError(message);
           setLoadingSummary(null);
           setLoading(false);
-          requestRef.current = null;
+          reset();
           return;
         }
 
@@ -246,6 +283,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
         while (true) {
           const { value, done } = await reader.read();
           if (done) break;
+          refreshIdleTimeout();
 
           buffer += decoder.decode(value, { stream: true });
           const lines = buffer.split('\n');
@@ -273,7 +311,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
               setServerStage(null);
               setCompletionMeta(null);
               setLoading(false);
-              requestRef.current = null;
+              reset();
               return;
             }
 
@@ -313,7 +351,7 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
           setServerStage(null);
           setCompletionMeta(null);
           setLoading(false);
-          requestRef.current = null;
+          reset();
           return;
         }
 
@@ -336,6 +374,14 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
                 : '结果页已经生成并保存完成，核心内容会先打开，扩展区块随后继续加载。',
         });
         await wait(220);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        if (idleTimeoutRef.current) {
+          clearTimeout(idleTimeoutRef.current);
+          idleTimeoutRef.current = null;
+        }
         requestRef.current = null;
         router.push(
           ctx.returnHref
@@ -349,8 +395,13 @@ export function useAnalyzeSubmit(ctx: AnalyzeSubmitContext) {
               }),
         );
       } catch (err) {
-        if (err instanceof Error && err.name === 'AbortError') {
-          setError('已取消本次判断，你可以继续修改信息后重新提交');
+        if (isAbortError(err)) {
+          const reason = requestRef.current?.signal.reason;
+          setError(
+            reason === 'request-timeout' || reason === 'idle-timeout'
+              ? '本次连接等待时间过长，已自动停止。请稍后重试；如果报告已生成，可在判断记录中查看。'
+              : '已取消本次判断，你可以继续修改信息后重新提交',
+          );
         } else {
           setError(
             ctx.hasEmailDelivery

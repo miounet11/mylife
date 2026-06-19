@@ -130,7 +130,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
                   <div className={`text-lg font-bold ${dayMasterInfo.info.color}`}>
                     {dayMasterInfo.gan}{dayMasterInfo.element}
                   </div>
-                  <div className="text-[10px] text-neutral-400">
+                  <div className="text-xs text-neutral-400">
                     {dayMasterInfo.element === '木' && '生机勃勃'}
                     {dayMasterInfo.element === '火' && '热情奔放'}
                     {dayMasterInfo.element === '土' && '稳重厚实'}
@@ -160,7 +160,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
                   );
                 })}
               </div>
-              <div className="text-[10px] text-neutral-400 mt-1.5">
+              <div className="text-xs text-neutral-400 mt-1.5">
                 喜用五行 助运开运
               </div>
             </div>
@@ -205,7 +205,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
                     {yearsToPeak > 0 && <span className="text-xs ml-1">后</span>}
                     {yearsToPeak < 0 && <span className="text-xs ml-1">前</span>}
                   </div>
-                  <div className="text-[10px] text-neutral-400">
+                  <div className="text-xs text-neutral-400">
                     {peakYear.year}年 ({peakYear.score}分)
                   </div>
                 </div>
@@ -226,7 +226,7 @@ export const CoreInsightsCard: React.FC<CoreInsightsCardProps> = ({
                   <div className="text-lg font-bold text-[color:var(--alert)]">
                     {yearsToTrough}年<span className="text-xs ml-1">后</span>
                   </div>
-                  <div className="text-[10px] text-neutral-400">
+                  <div className="text-xs text-neutral-400">
                     {troughYear.year}年 需谨慎
                   </div>
                 </div>

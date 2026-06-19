@@ -1,27 +1,29 @@
 #!/usr/bin/env node
 /**
  * Probes the real user-facing paths via nginx (443), not just port 3000.
- * Recovers by restarting life-kline-next only — never changes nginx routing.
- *
- * @see docs/ops/nginx-lifekline.conf — lifekline_web_upstream must stay on 3000
+ * Recovers public web replicas only; user tier (3000) and cron tier (3004) are
+ * guarded by their own watchdogs.
  */
 
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const https = require('https');
+const { withCurrentBuildEnv } = require('./pm2-build-env.js');
+const { readNonEmptyCsvEnv, readPositiveIntegerEnv } = require('./ops-env.js');
 
-const CHECK_INTERVAL_MS = parseInt(process.env.CHECK_INTERVAL_MS || '45000', 10);
-const RECOVERY_COOLDOWN_MS = parseInt(process.env.RECOVERY_COOLDOWN_MS || '600000', 10);
-const FAIL_STREAK_BEFORE_ACT = parseInt(process.env.FAIL_STREAK_BEFORE_ACT || '2', 10);
-const PROBE_TIMEOUT_MS = parseInt(process.env.PROBE_TIMEOUT_MS || '8000', 10);
+const CHECK_INTERVAL_MS = readPositiveIntegerEnv('CHECK_INTERVAL_MS', 45000, { min: 5000, max: 300000 });
+const RECOVERY_COOLDOWN_MS = readPositiveIntegerEnv('RECOVERY_COOLDOWN_MS', 600000, { min: 60000, max: 3600000 });
+const FAIL_STREAK_BEFORE_ACT = readPositiveIntegerEnv('FAIL_STREAK_BEFORE_ACT', 2, { min: 1, max: 20 });
+const PROBE_TIMEOUT_MS = readPositiveIntegerEnv('PROBE_TIMEOUT_MS', 8000, { min: 1000, max: 60000 });
 const NGINX_HOST = process.env.PUBLIC_SURFACE_HOST || 'www.life-kline.com';
-
-const PATHS = (process.env.PUBLIC_SURFACE_PATHS || '/,/analyze,/robots.txt')
-  .split(',')
-  .map((p) => p.trim())
-  .filter(Boolean);
+const RECOVERY_PM2_NAMES = readNonEmptyCsvEnv('PUBLIC_SURFACE_RECOVERY_PM2', [
+  'life-kline-next-web1',
+  'life-kline-next-web2',
+]);
+const PATHS = readNonEmptyCsvEnv('PUBLIC_SURFACE_PATHS', ['/', '/analyze', '/robots.txt']);
 
 let failStreak = 0;
 let lastRecoveryAt = 0;
+let tickRunning = false;
 
 function probeGet(path) {
   return new Promise((resolve) => {
@@ -82,9 +84,15 @@ function recoverPublicSurface(reason) {
     );
     return false;
   }
-  console.log(`[public-surface-watchdog] RECOVERY (${reason}) — pm2 restart life-kline-next`);
+  console.log(`[public-surface-watchdog] RECOVERY (${reason}) — pm2 restart ${RECOVERY_PM2_NAMES.join(', ')}`);
   try {
-    execSync('pm2 restart life-kline-next --update-env', { stdio: 'inherit', timeout: 120000 });
+    for (const name of RECOVERY_PM2_NAMES) {
+      execFileSync('pm2', ['restart', name, '--update-env'], {
+        stdio: 'inherit',
+        timeout: 120000,
+        env: withCurrentBuildEnv(),
+      });
+    }
   } catch (e) {
     console.error('[public-surface-watchdog] pm2 restart failed:', e.message);
     return false;
@@ -95,24 +103,33 @@ function recoverPublicSurface(reason) {
 }
 
 async function tick() {
-  const { healthy, detail } = await publicSurfaceHealthy();
-  if (healthy) {
-    if (failStreak > 0) {
-      console.log(`[public-surface-watchdog] recovered ${detail}`);
-    }
-    failStreak = 0;
+  if (tickRunning) {
+    console.log('[public-surface-watchdog] skip tick; previous tick still running');
     return;
   }
-  failStreak += 1;
-  console.warn(`[public-surface-watchdog] unhealthy streak=${failStreak} ${detail}`);
-  if (failStreak >= FAIL_STREAK_BEFORE_ACT) {
-    recoverPublicSurface(detail);
+  tickRunning = true;
+  try {
+    const { healthy, detail } = await publicSurfaceHealthy();
+    if (healthy) {
+      if (failStreak > 0) {
+        console.log(`[public-surface-watchdog] recovered ${detail}`);
+      }
+      failStreak = 0;
+      return;
+    }
+    failStreak += 1;
+    console.warn(`[public-surface-watchdog] unhealthy streak=${failStreak} ${detail}`);
+    if (failStreak >= FAIL_STREAK_BEFORE_ACT) {
+      recoverPublicSurface(detail);
+    }
+  } finally {
+    tickRunning = false;
   }
 }
 
 async function main() {
   console.log(
-    `[public-surface-watchdog] host=${NGINX_HOST} paths=${PATHS.join(',')} interval=${CHECK_INTERVAL_MS}ms`,
+    `[public-surface-watchdog] host=${NGINX_HOST} paths=${PATHS.join(',')} recovery=${RECOVERY_PM2_NAMES.join(',')} interval=${CHECK_INTERVAL_MS}ms`,
   );
   if (process.argv.includes('--once')) {
     const { healthy, detail } = await publicSurfaceHealthy();

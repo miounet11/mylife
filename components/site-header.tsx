@@ -65,7 +65,7 @@ export default function SiteHeader({
   const pathname = usePathname();
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+    href === '/' ? pathname === href : pathname === href || (pathname || '').startsWith(`${href}/`);
 
   return (
     <header className="sticky top-0 z-50">
@@ -85,7 +85,7 @@ export default function SiteHeader({
                 人生<span className="font-serif">K</span>线
               </span>
               <span
-                className="mt-0.5 text-[9px] font-semibold uppercase opacity-80"
+                className="mt-0.5 text-xs font-semibold uppercase opacity-80"
                 style={{ letterSpacing: '0.18em' }}
               >
                 LIFE KLINE
@@ -110,9 +110,14 @@ export default function SiteHeader({
           </form>
 
           <div className="ml-auto flex shrink-0 items-center gap-2 text-white">
-            <div className="hidden md:block">
-              <AuthStatus />
-            </div>
+            <AuthStatus />
+            <Link
+              href="/community/search"
+              aria-label="站内搜索"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-[#29487d] bg-white/10 text-white transition hover:bg-white/20 md:hidden"
+            >
+              <Search className="h-3.5 w-3.5" />
+            </Link>
             {ctaAnalytics ? (
               <ResultCtaLink
                 href={ctaHref}
@@ -139,7 +144,7 @@ export default function SiteHeader({
 
       {/* Row 2 : 白底主导航 */}
       <div className="border-b border-[color:var(--fb-border)] bg-white">
-        <div className="scrollbar-none mx-auto flex h-10 max-w-7xl items-center gap-1 overflow-x-auto px-3 sm:px-4 lg:px-6">
+        <div className="scrollbar-none scroll-fade-x mx-auto flex h-10 max-w-7xl items-center gap-1 overflow-x-auto px-3 sm:px-4 lg:px-6">
           <nav className="flex items-center gap-0.5" aria-label="核心产品导航">
             {primaryNavItems.map((item) => {
               const Icon = item.icon;
@@ -149,7 +154,7 @@ export default function SiteHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'inline-flex h-9 shrink-0 items-center gap-1.5 px-3 text-[13px] font-semibold no-underline hover:no-underline',
+                    'inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap px-3 text-[13px] font-semibold no-underline hover:no-underline',
                     active
                       ? 'border-b-2 border-[color:var(--fb-blue)] text-[color:var(--fb-blue-link-hover)]'
                       : 'border-b-2 border-transparent text-[color:var(--fb-ink-2)] hover:text-[color:var(--fb-blue-link-hover)]',
@@ -166,9 +171,9 @@ export default function SiteHeader({
 
       {/* Row 3 : 易学栏目副带 */}
       <div className="border-b border-[color:var(--fb-border)] bg-[#f6f7f9]">
-        <div className="mx-auto flex h-9 max-w-7xl items-center gap-4 px-3 sm:px-4 lg:px-6">
+        <div className="mx-auto flex h-9 max-w-7xl items-center gap-3 px-3 sm:px-4 lg:px-6">
           <Sparkles className="h-3.5 w-3.5 shrink-0 text-[color:var(--fb-blue)]" aria-hidden />
-          <div className="scrollbar-none flex min-w-0 items-center gap-3 overflow-x-auto whitespace-nowrap text-[12px]">
+          <div className="scrollbar-none scroll-fade-x flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-[12px]">
             {portalSubLinks.map((item) => {
               const active = isActive(item.href);
               return (
@@ -176,7 +181,7 @@ export default function SiteHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'shrink-0 font-semibold no-underline hover:underline',
+                    'shrink-0 whitespace-nowrap font-semibold no-underline hover:underline',
                     active
                       ? 'text-[color:var(--fb-blue-link-hover)]'
                       : 'text-[color:var(--fb-blue-link)]',
@@ -186,12 +191,12 @@ export default function SiteHeader({
                 </Link>
               );
             })}
-            <span className="text-[color:var(--fb-ink-4)]">·</span>
+            <span className="shrink-0 whitespace-nowrap text-[color:var(--fb-ink-4)]">·</span>
             {priorityGrowthHeaderLinks.slice(0, 3).map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="shrink-0 font-semibold text-[color:var(--fb-ink-3)] no-underline hover:text-[color:var(--fb-blue-link)] hover:underline"
+                className="shrink-0 whitespace-nowrap font-semibold text-[color:var(--fb-ink-3)] no-underline hover:text-[color:var(--fb-blue-link)] hover:underline"
               >
                 {item.shortLabel}
               </Link>

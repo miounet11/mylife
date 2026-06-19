@@ -10,7 +10,7 @@ import {
   readKnowledgeAcquisitionLockStatus,
   readKnowledgeAcquisitionSnapshot,
 } from '@/lib/knowledge-runtime-state';
-import { contentSnapshotCache, worldYiPublicationCache, heavyGenerationCache, BoundedSizeCache } from '@/lib/utils';
+import { contentSnapshotCache, worldYiPublicationCache, heavyGenerationCache } from '@/lib/utils';
 
 export type SystemHealthSeverity = 'healthy' | 'warning' | 'critical';
 
@@ -282,6 +282,33 @@ export function getSystemOpsSnapshot(params?: {
     ...contentHealthySignals,
     ...knowledgeHealthySignals,
   ]).slice(0, 8);
+  const processSnapshot = (() => {
+    const memory = process.memoryUsage();
+    const cpu = process.cpuUsage();
+
+    return {
+      heapUsedMB: Math.round(memory.heapUsed / 1024 / 1024),
+      heapTotalMB: Math.round(memory.heapTotal / 1024 / 1024),
+      rssMB: Math.round(memory.rss / 1024 / 1024),
+      externalMB: Math.round((memory.external || 0) / 1024 / 1024),
+      heapPercent: Math.round((memory.heapUsed / Math.max(1, memory.heapTotal)) * 1000) / 10,
+      uptimeSec: Math.round(process.uptime()),
+      cpuUser: cpu.user,
+      cpuSystem: cpu.system,
+      isContentWorker: process.env.IS_CONTENT_WORKER === '1',
+      workerId: process.env.CONTENT_WORKER_ID || null,
+    };
+  })();
+  const cacheSnapshot = {
+    contentSnapshot: contentSnapshotCache.getStats(),
+    worldYiPublication: worldYiPublicationCache.getStats(),
+    heavyGeneration: heavyGenerationCache.getStats(),
+    pressure: {
+      content: contentSnapshotCache.getMemoryPressure(),
+      worldYi: worldYiPublicationCache.getMemoryPressure(),
+      heavy: heavyGenerationCache.getMemoryPressure(),
+    },
+  };
 
   return {
     severity,
@@ -296,6 +323,8 @@ export function getSystemOpsSnapshot(params?: {
         ? '主站仍可持续运行，但知识或内容链路的储备、刷新频率、候选池已经出现偏弱信号。'
         : '主站经营健康、内容补给和知识采集当前都没有明显硬阻塞，可以继续观察真实用户反馈。',
     checkedAt: new Date().toISOString(),
+    process: processSnapshot,
+    caches: cacheSnapshot,
     blockers,
     healthySignals,
     services: {
@@ -362,37 +391,6 @@ export function getSystemOpsSnapshot(params?: {
         },
         acquisition: knowledgeOps.acquisition,
       },
-      // === Stability Hardening Observability (v5-Stability 2026-05-31) ===
-      // Process + bounded cache metrics for heap/lag/maxSize prevention.
-      // Exposed via /api/admin/system/health (and system:health npm).
-      // Web instances should show low cachePressure; content-workers may show higher during gen.
-      process: (() => {
-        const mu = process.memoryUsage();
-        const cpu = process.cpuUsage();
-        return {
-          heapUsedMB: Math.round(mu.heapUsed / 1024 / 1024),
-          heapTotalMB: Math.round(mu.heapTotal / 1024 / 1024),
-          rssMB: Math.round(mu.rss / 1024 / 1024),
-          externalMB: Math.round((mu.external || 0) / 1024 / 1024),
-          heapPercent: Math.round((mu.heapUsed / Math.max(1, mu.heapTotal)) * 1000) / 10,
-          uptimeSec: Math.round(process.uptime()),
-          cpuUser: cpu.user,
-          cpuSystem: cpu.system,
-          isContentWorker: process.env.IS_CONTENT_WORKER === '1',
-          workerId: process.env.CONTENT_WORKER_ID || null,
-        };
-      })(),
-      caches: {
-        contentSnapshot: contentSnapshotCache.getStats(),
-        worldYiPublication: worldYiPublicationCache.getStats(),
-        heavyGeneration: heavyGenerationCache.getStats(),
-        pressure: {
-          content: contentSnapshotCache.getMemoryPressure(),
-          worldYi: worldYiPublicationCache.getMemoryPressure(),
-          heavy: heavyGenerationCache.getMemoryPressure(),
-        },
-      },
-      // === end stability metrics ===
     },
   };
 }

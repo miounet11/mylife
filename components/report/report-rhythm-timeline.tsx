@@ -52,7 +52,7 @@ export default function ReportRhythmTimeline({ section }: ReportRhythmTimelinePr
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+          <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
             节奏时间板
           </div>
           <h3 className="mt-1.5 text-base font-black leading-snug text-[color:var(--ink-1)] md:text-lg">
@@ -82,7 +82,7 @@ export default function ReportRhythmTimeline({ section }: ReportRhythmTimelinePr
                     {compactCopy(item.label, 14) || '本月'}
                   </div>
                   <span
-                    className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider ${tone.chip}`}
+                    className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 font-mono text-xs font-bold uppercase tracking-wider ${tone.chip}`}
                   >
                     {compactCopy(item.statusLabel, 8) || '稳住'}
                   </span>
@@ -91,7 +91,7 @@ export default function ReportRhythmTimeline({ section }: ReportRhythmTimelinePr
                   {compactCopy(item.theme, 30) || '先聚焦一个关键主题。'}
                 </div>
                 {item.reason ? (
-                  <div className="mt-1.5 text-[10px] leading-4 text-[color:var(--ink-4)]">
+                  <div className="mt-1.5 text-xs leading-4 text-[color:var(--ink-4)]">
                     {compactCopy(item.reason, 48)}
                   </div>
                 ) : null}

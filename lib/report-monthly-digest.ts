@@ -1,5 +1,11 @@
 import { trackServerEvent } from '@/lib/analytics';
-import { emailSubscriptionOperations, fortuneOperations, reportMonthlyDigestRunOperations, userOperations } from '@/lib/database';
+import {
+  emailSubscriptionOperations,
+  fortuneOperations,
+  reportMonthlyDigestRunOperations,
+  systemLockOperations,
+  userOperations,
+} from '@/lib/database';
 import {
   getReportMonthlyDigestBatchSize,
   getReportMonthlyDigestTimezoneOffsetMinutes,
@@ -12,6 +18,8 @@ import type { FortuneRecord } from '@/lib/user-types';
 
 const DEFAULT_BATCH_SIZE = getReportMonthlyDigestBatchSize();
 const DEFAULT_TIMEZONE_OFFSET_MINUTES = getReportMonthlyDigestTimezoneOffsetMinutes();
+const MAX_BATCH_SIZE = 50;
+const LOCK_TTL_MS = 1000 * 60 * 15;
 
 type CycleTrigger = 'cron' | 'manual';
 
@@ -21,10 +29,72 @@ export async function runReportMonthlyDigestCycle(params?: {
   cycleDate?: Date;
 }) {
   const trigger = params?.trigger || 'cron';
-  const batchSize = Math.max(1, params?.batchSize || DEFAULT_BATCH_SIZE);
+  const batchSize = normalizeBatchSize(params?.batchSize, DEFAULT_BATCH_SIZE);
   const cycleDate = params?.cycleDate || new Date();
   const cycleKey = getCycleKey(cycleDate);
   const cycleLabel = getCycleLabel(cycleDate);
+
+  const lockedResult = await withReportMonthlyDigestLock({
+    trigger,
+    cycleKey,
+  }, () => runReportMonthlyDigestCycleUnlocked({
+    trigger,
+    batchSize,
+    cycleKey,
+    cycleLabel,
+  }));
+
+  if (lockedResult) {
+    return lockedResult;
+  }
+
+  return {
+    success: true,
+    trigger,
+    cycleKey,
+    sentCount: 0,
+    skippedCount: 0,
+    errorCount: 0,
+    reason: 'already_running',
+    details: [],
+  };
+}
+
+async function withReportMonthlyDigestLock<T>(
+  params: {
+    trigger: CycleTrigger;
+    cycleKey: string;
+  },
+  run: () => Promise<T>
+): Promise<T | null> {
+  if (process.env.REPORT_MONTHLY_DIGEST_DISABLE_LOCK === '1') {
+    return run();
+  }
+
+  const owner = `report-monthly-digest-${params.trigger}-${generateId()}`;
+  const acquired = systemLockOperations.acquire('report_monthly_digest_cycle', owner, LOCK_TTL_MS, {
+    trigger: params.trigger,
+    cycleKey: params.cycleKey,
+  });
+
+  if (!acquired) {
+    return null;
+  }
+
+  try {
+    return await run();
+  } finally {
+    systemLockOperations.release('report_monthly_digest_cycle', owner);
+  }
+}
+
+async function runReportMonthlyDigestCycleUnlocked(params: {
+  trigger: CycleTrigger;
+  batchSize: number;
+  cycleKey: string;
+  cycleLabel: string;
+}) {
+  const { trigger, batchSize, cycleKey, cycleLabel } = params;
 
   if (!isEmailDeliveryConfigured()) {
     return {
@@ -236,6 +306,12 @@ export async function runReportMonthlyDigestCycle(params?: {
     reason: sentCount > 0 ? 'sent' : 'no_deliveries',
     details,
   };
+}
+
+function normalizeBatchSize(value: number | undefined, fallback: number) {
+  const rawSize = typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+  const size = Math.floor(rawSize || fallback);
+  return Math.min(MAX_BATCH_SIZE, Math.max(1, size));
 }
 
 function buildDigestFromReport(report: FortuneRecord) {

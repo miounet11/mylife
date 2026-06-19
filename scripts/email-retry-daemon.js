@@ -1,9 +1,11 @@
-const intervalMs = Math.max(30_000, Number(process.env.EMAIL_RETRY_INTERVAL_MS || 1000 * 60 * 2));
+const { readPositiveIntegerEnv } = require('./ops-env.js');
+
+const intervalMs = readPositiveIntegerEnv('EMAIL_RETRY_INTERVAL_MS', 1000 * 60 * 2, { min: 30_000, max: 86_400_000 });
 const runUrl = process.env.EMAIL_RETRY_RUN_URL || 'http://127.0.0.1:8080/api/admin/email/retry/cron';
 const token = process.env.EMAIL_RETRY_CRON_TOKEN || process.env.REPORT_UPGRADE_CRON_TOKEN || '';
-const requestTimeoutMs = Math.max(10_000, Number(process.env.EMAIL_RETRY_REQUEST_TIMEOUT_MS || 60_000));
-const startupDelayMs = Math.max(5_000, Number(process.env.EMAIL_RETRY_STARTUP_DELAY_MS || 15_000));
-const retryDelayMs = Math.max(15_000, Number(process.env.EMAIL_RETRY_RETRY_DELAY_MS || Math.min(intervalMs, 60_000)));
+const requestTimeoutMs = readPositiveIntegerEnv('EMAIL_RETRY_REQUEST_TIMEOUT_MS', 60_000, { min: 10_000, max: 900_000 });
+const startupDelayMs = readPositiveIntegerEnv('EMAIL_RETRY_STARTUP_DELAY_MS', 15_000, { min: 5_000, max: 300_000 });
+const retryDelayMs = readPositiveIntegerEnv('EMAIL_RETRY_RETRY_DELAY_MS', Math.min(intervalMs, 60_000), { min: 15_000, max: 900_000 });
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));

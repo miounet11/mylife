@@ -38,7 +38,7 @@ export default function ReportScenarioPanels({ section }: ReportScenarioPanelsPr
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
       aria-label="场景判断面板"
     >
-      <div className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+      <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
         场景判断板
       </div>
       <h3 className="mt-1.5 text-base font-black leading-snug text-[color:var(--ink-1)] md:text-lg">
@@ -66,21 +66,21 @@ export default function ReportScenarioPanels({ section }: ReportScenarioPanelsPr
                     {compactCopy(panel.title, 10) || '场景'}
                   </div>
                   <span
-                    className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 font-mono text-[10px] font-bold tabular-nums ${tone.chip}`}
+                    className={`inline-flex h-5 items-center rounded-[var(--radius-sm)] border px-1.5 font-mono text-xs font-bold tabular-nums ${tone.chip}`}
                   >
                     {compactCopy(panel.scoreLabel, 10) || '评分 --'}
                   </span>
                 </div>
 
                 <div className="mt-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--ink-2)]">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                     结论
                   </span>
                   <div className="mt-0.5">{compactCopy(panel.verdict, 42) || '先稳住节奏。'}</div>
                 </div>
 
                 <div className="mt-2 text-xs leading-5">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                     理由
                   </span>
                   <div className="mt-0.5 text-[color:var(--ink-3)]">
@@ -89,7 +89,7 @@ export default function ReportScenarioPanels({ section }: ReportScenarioPanelsPr
                 </div>
 
                 <div className="mt-1.5 text-xs leading-5">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
                     动作
                   </span>
                   <div className="mt-0.5 text-[color:var(--ink-2)]">

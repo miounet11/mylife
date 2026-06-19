@@ -56,7 +56,7 @@ export default function ContentConversionPanel({
       </h3>
 
       <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-        <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
+        <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
           <Sparkles className="h-3 w-3" />
           建议动作顺序
         </div>
@@ -66,7 +66,7 @@ export default function ContentConversionPanel({
               key={`${label}-${index}`}
               className="flex items-start gap-2.5 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3"
             >
-              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] font-mono text-[10px] font-black text-[color:var(--brand-strong)]">
+              <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-[color:var(--brand-soft)] font-mono text-xs font-black text-[color:var(--brand-strong)]">
                 {String(index + 1).padStart(2, '0')}
               </div>
               <div className="text-xs leading-6 text-[color:var(--ink-2)]">{label}</div>

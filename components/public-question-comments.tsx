@@ -108,7 +108,7 @@ export default function PublicQuestionComments({ questionId, initialComments }: 
             {comment.assetTags.length > 0 && (
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {comment.assetTags.slice(0, 4).map((tag) => (
-                  <span key={tag} className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--ink-5)]">
+                  <span key={tag} className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-xs font-bold text-[color:var(--ink-5)]">
                     {tag}
                   </span>
                 ))}
@@ -116,7 +116,7 @@ export default function PublicQuestionComments({ questionId, initialComments }: 
             )}
             {comment.engineReply && (
               <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3">
-                <div className="text-[11px] font-black text-[color:var(--brand-strong)]">WorldYi 回应</div>
+                <div className="text-xs font-black text-[color:var(--brand-strong)]">WorldYi 回应</div>
                 <p className="mt-1 text-xs leading-6 text-[color:var(--ink-3)]">{comment.engineReply}</p>
               </div>
             )}

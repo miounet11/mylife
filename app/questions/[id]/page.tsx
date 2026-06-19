@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight, CheckCircle2, FileQuestion, Layers3, MessageSquareText, Sparkles } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Clock3, FileQuestion, Layers3, MessageSquareText, ShieldCheck, Sparkles, Target } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ChatMarkdown from '@/components/chat-markdown';
 import PublicQuestionComments from '@/components/public-question-comments';
@@ -20,6 +20,24 @@ interface PageProps {
 }
 
 export const dynamic = 'force-dynamic';
+
+function formatQuestionPublishedAt(value?: string | null) {
+  if (!value) return null;
+  const iso = value.includes('T') ? value : `${value.replace(' ', 'T')}Z`;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  const y = date.getUTCFullYear();
+  const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(date.getUTCDate()).padStart(2, '0');
+  const hh = String(date.getUTCHours()).padStart(2, '0');
+  const mm = String(date.getUTCMinutes()).padStart(2, '0');
+  return {
+    iso: date.toISOString(),
+    date: `${y}-${m}-${d}`,
+    time: `${hh}:${mm} UTC`,
+    label: `${y}-${m}-${d} ${hh}:${mm} UTC`,
+  };
+}
 
 function createQuestionPageSchema(item: NonNullable<ReturnType<typeof getPublicQuestionFeedItem>>) {
   return {
@@ -77,6 +95,9 @@ export default async function PublicQuestionPage({ params }: PageProps) {
     authoritative: item.structured,
   });
   const answerMarkdown = shapeAnswerMarkdown(item.answerText || item.answerSummary);
+  const publishedMeta = formatQuestionPublishedAt(item.createdAt);
+  const primaryActionPoint = item.actionPoints[0] || structure.windows[0]?.action || '先把自己的问题、时间点和风险边界写清楚，再做个人判断。';
+  const primaryAnalysisPoint = item.analysisPoints[0] || item.answerSummary;
   const schemas = [
     createBreadcrumbSchema([
       { name: '首页', path: '/' },
@@ -99,37 +120,56 @@ export default async function PublicQuestionPage({ params }: PageProps) {
         </Link>
 
         <div className="mt-5 grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] xl:items-start">
-          <article className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5 md:p-7">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-bold text-[color:var(--ink-4)]">
-                <FileQuestion className="h-3.5 w-3.5" />
-                {item.contextLabel}
-              </div>
-              {item.createdAt ? (() => {
-                const iso = item.createdAt.includes('T') ? item.createdAt : `${item.createdAt.replace(' ', 'T')}Z`;
-                const date = new Date(iso);
-                if (Number.isNaN(date.getTime())) return null;
-                const y = date.getUTCFullYear();
-                const m = String(date.getUTCMonth() + 1).padStart(2, '0');
-                const d = String(date.getUTCDate()).padStart(2, '0');
-                const hh = String(date.getUTCHours()).padStart(2, '0');
-                const mm = String(date.getUTCMinutes()).padStart(2, '0');
-                const abs = `${y}-${m}-${d} ${hh}:${mm} UTC`;
-                return (
+          <article className="overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+            <header className="border-b border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-tint)] via-[color:var(--paper)] to-[color:var(--bg-sunken)] p-5 md:p-7">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-bold text-[color:var(--brand-strong)] ring-1 ring-[color:var(--hairline)]">
+                  <FileQuestion className="h-3.5 w-3.5" />
+                  公开追问
+                </div>
+                <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-[color:var(--ink-4)] ring-1 ring-[color:var(--hairline)]">
+                  <Target className="h-3.5 w-3.5" />
+                  {item.contextLabel}
+                </div>
+                {publishedMeta ? (
                   <time
-                    dateTime={date.toISOString()}
-                    title={abs}
-                    className="inline-flex items-center rounded-full bg-[color:var(--bg-sunken)] px-2.5 py-1 text-xs font-semibold text-[color:var(--ink-4)]"
+                    dateTime={publishedMeta.iso}
+                    title={publishedMeta.label}
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-[color:var(--ink-4)] ring-1 ring-[color:var(--hairline)]"
                   >
-                    创建于 {abs}
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    {publishedMeta.date}
+                    <Clock3 className="h-3.5 w-3.5" />
+                    {publishedMeta.time}
                   </time>
-                );
-              })() : null}
-            </div>
-            <h1 className="mt-4 text-2xl font-black leading-tight tracking-tight text-[color:var(--ink-1)] md:text-3xl">
-              {item.title}
-            </h1>
-            <p className="mt-4 text-base leading-8 text-[color:var(--ink-2)]">{item.question}</p>
+                ) : null}
+              </div>
+              <h1 className="mt-4 text-2xl font-black leading-tight tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+                {item.title}
+              </h1>
+              <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-white/85 p-4">
+                <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-5)]">用户原始问题</div>
+                <p className="mt-2 text-base leading-8 text-[color:var(--ink-2)]">{item.question}</p>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-white/75 p-3">
+                  <div className="flex items-center gap-2 text-xs font-black text-[color:var(--ink-1)]">
+                    <Sparkles className="h-4 w-4 text-[color:var(--brand-strong)]" />
+                    核心判断
+                  </div>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-[color:var(--ink-3)]">{primaryAnalysisPoint}</p>
+                </div>
+                <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-white/75 p-3">
+                  <div className="flex items-center gap-2 text-xs font-black text-[color:var(--ink-1)]">
+                    <ShieldCheck className="h-4 w-4 text-[color:var(--signal-strong)]" />
+                    下一步动作
+                  </div>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-[color:var(--ink-3)]">{primaryActionPoint}</p>
+                </div>
+              </div>
+            </header>
+
+            <div className="p-5 md:p-7">
 
             <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
               <div className="flex items-center gap-2 text-sm font-black text-[color:var(--ink-1)]">
@@ -174,6 +214,7 @@ export default async function PublicQuestionPage({ params }: PageProps) {
                 </ul>
               </section>
             )}
+            </div>
           </article>
 
           <aside className="grid gap-4 xl:sticky xl:top-20">
@@ -243,7 +284,7 @@ export default async function PublicQuestionPage({ params }: PageProps) {
                       href={question.href}
                       className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3 transition hover:border-[color:var(--brand)]"
                     >
-                      <div className="text-[11px] font-semibold text-[color:var(--ink-5)]">{question.contextLabel}</div>
+                      <div className="text-xs font-semibold text-[color:var(--ink-5)]">{question.contextLabel}</div>
                       <div className="mt-1 flex items-start justify-between gap-2 text-xs font-bold leading-5 text-[color:var(--ink-2)] group-hover:text-[color:var(--brand-strong)]">
                         {question.question}
                         <ArrowRight className="mt-0.5 h-4 w-4 shrink-0" />

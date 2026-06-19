@@ -523,7 +523,7 @@ export default function BirthPlaceModal({
             {activeTab === 1 ? (
               <div className="flex items-center justify-end gap-2 text-[14px] text-[color:var(--ink)]">
                 <span>换算北京时间</span>
-                <span className="text-[10px] text-[color:var(--muted)]">(默认关闭)</span>
+                <span className="text-xs text-[color:var(--muted)]">(默认关闭)</span>
                 <button
                   type="button"
                   onClick={() => setIsBeijingTime((current) => !current)}

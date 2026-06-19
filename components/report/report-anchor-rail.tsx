@@ -15,14 +15,11 @@ interface ReportAnchorRailProps {
   items: ReportAnchorRailItem[];
   /** 顶部小标题，例如「这份报告」 */
   title?: string;
-  /** 桌面端 sticky 顶部偏移，px */
-  topOffset?: number;
 }
 
 export default function ReportAnchorRail({
   items,
   title = '这份报告',
-  topOffset = 80,
 }: ReportAnchorRailProps) {
   if (!items.length) return null;
   return (
@@ -30,12 +27,9 @@ export default function ReportAnchorRail({
       {/* 桌面端 sticky 列 */}
       <aside
         aria-label="报告板块导航"
-        className="hidden lg:block lg:w-[220px] lg:shrink-0"
+        className="hidden xl:block xl:w-[220px] xl:shrink-0"
       >
-        <nav
-          className="fb-card sticky"
-          style={{ top: `${topOffset}px` }}
-        >
+        <nav className="fb-card sticky-top-header">
           <div className="fb-section-title border-b border-[color:var(--hairline)] px-3 py-2 text-[13px] font-bold text-[#3b5998]">
             {title}
           </div>
@@ -49,7 +43,7 @@ export default function ReportAnchorRail({
                     className="flex items-center gap-2 px-3 py-1.5 leading-[1.34] text-[color:var(--ink-2)] transition hover:bg-[#e9ebee] hover:text-[#3b5998]"
                   >
                     {Icon ? <Icon className="h-3.5 w-3.5 text-[#3b5998]" /> : null}
-                    <span className="truncate">{item.label}</span>
+                    <span className="truncate" title={item.label}>{item.label}</span>
                   </a>
                 </li>
               );
@@ -59,12 +53,13 @@ export default function ReportAnchorRail({
       </aside>
 
       {/* 移动端水平 chip 滚动 */}
-      <div className="lg:hidden -mx-4 mb-2 overflow-x-auto px-4">
+      <div className="xl:hidden -mx-4 mb-2 overflow-x-auto px-4">
         <ul className="flex gap-1.5 whitespace-nowrap pb-1 text-[12px]">
           {items.map((item) => (
             <li key={item.id}>
               <a
                 href={`#${item.id}`}
+                title={item.label}
                 className="inline-flex items-center gap-1 rounded-[3px] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 py-1 text-[color:var(--ink-2)] hover:border-[#3b5998] hover:text-[#3b5998]"
               >
                 {item.label}

@@ -1,10 +1,10 @@
 import Link from 'next/link';
-import { ArrowRight, FileQuestion, Layers3, MessageSquareText } from 'lucide-react';
+import { ArrowRight, CalendarDays, Clock3, FileQuestion, Layers3, MessageSquareText, UserRound } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
-import { listPublicQuestionFeedItems, listPublicReportFeedItemsPaged } from '@/lib/public-growth-feed';
+import { getPublicReportFeedSummary, listPublicQuestionFeedItems, listPublicReportFeedItemsPaged } from '@/lib/public-growth-feed';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +29,9 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
   const reportPage = listPublicReportFeedItemsPaged(requestedPage, PER_PAGE);
   const reports = reportPage.items;
   const questions = listPublicQuestionFeedItems(60);
+  const reportSummary = getPublicReportFeedSummary();
+  const dailyBuckets = reportSummary.dailyBuckets;
+  const latestPublishedAt = reportSummary.latestPublishedAt;
   const schemas = [
     createCollectionPageSchema({
       headline: '公开测算结果与用户追问',
@@ -73,7 +76,7 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
             <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
               这里不展示姓名、生日、出生地等敏感信息，只保留格局、日主、阶段判断、行动建议和用户真实问题。
             </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-[11px]">
+            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">八字</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">紫微</span>
               <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">六爻</span>
@@ -92,18 +95,57 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
           </div>
         </section>
 
-        <section className="mt-6 grid gap-4 md:grid-cols-3">
+        <section className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
             <div className="text-2xl font-black text-[color:var(--ink-1)]">{reportPage.total}</div>
             <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">公开匿名报告</div>
+          </div>
+          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
+            <div className="text-2xl font-black text-[color:var(--ink-1)]">{dailyBuckets[0]?.count || 0}</div>
+            <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">最近一天发布</div>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
             <div className="text-2xl font-black text-[color:var(--ink-1)]">{questions.length}</div>
             <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">公开用户追问</div>
           </div>
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
-            <div className="text-2xl font-black text-[color:var(--ink-1)]">SEO</div>
-            <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">结果页 + 问题内容双入口</div>
+            <div className="text-sm font-black text-[color:var(--ink-1)]">{formatDateTime(latestPublishedAt) || '暂无'}</div>
+            <div className="mt-1 text-xs font-semibold text-[color:var(--ink-4)]">最新发布时间</div>
+          </div>
+        </section>
+
+        <section className="mt-6 rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
+          <div className="flex flex-col gap-1 md:flex-row md:items-end md:justify-between">
+            <div>
+              <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">Publication Ledger</div>
+              <h2 className="mt-1 text-lg font-black text-[color:var(--ink-1)]">每日公开发布情况</h2>
+            </div>
+            <div className="text-xs text-[color:var(--ink-4)]">按公开报告更新时间/创建时间汇总，用户身份已匿名化。</div>
+          </div>
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {dailyBuckets.length ? dailyBuckets.slice(0, 6).map((bucket) => (
+              <div key={bucket.date} className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="text-sm font-black text-[color:var(--ink-1)]">{bucket.date}</div>
+                  <div className="rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-xs font-bold text-white">{bucket.count} 条</div>
+                </div>
+                <div className="mt-2 space-y-1.5">
+                  {bucket.items.slice(0, 4).map((item) => (
+                    <Link key={item.id} href={item.href} className="block rounded-[var(--radius)] bg-[color:var(--paper)] px-2.5 py-2 text-xs hover:text-[color:var(--brand-strong)]">
+                      <div className="flex items-center justify-between gap-2 font-semibold text-[color:var(--ink-2)]">
+                        <span className="truncate" title={item.title}>{item.title}</span>
+                        <span className="shrink-0 text-[color:var(--ink-5)]">{item.publishedTime || '--:--'}</span>
+                      </div>
+                      <div className="mt-1 truncate text-xs text-[color:var(--ink-4)]" title={`隶属 ${item.ownerLabel}`}>隶属 {item.ownerLabel}</div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )) : (
+              <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-sm text-[color:var(--ink-4)] md:col-span-3">
+                暂无公开发布记录。
+              </div>
+            )}
           </div>
         </section>
 
@@ -120,9 +162,21 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
                   href={item.href}
                   className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="flex flex-wrap gap-2 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                  <div className="flex flex-wrap gap-2 text-xs font-semibold text-[color:var(--ink-4)]">
                     <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">{item.patternType}</span>
                     <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">{item.dayMaster}</span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">
+                      <CalendarDays className="h-3 w-3" />
+                      {item.publishedDate || '日期待同步'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">
+                      <Clock3 className="h-3 w-3" />
+                      {item.publishedTime || '时间待同步'}
+                    </span>
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5">
+                      <UserRound className="h-3 w-3" />
+                      {item.ownerLabel}
+                    </span>
                   </div>
                   <h3 className="mt-2 text-base font-black leading-snug text-[color:var(--ink-1)] group-hover:text-[color:var(--brand-strong)]">
                     {item.title}
@@ -182,7 +236,7 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
                   href={item.href}
                   className="group rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 transition hover:border-[color:var(--brand)]"
                 >
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                  <div className="inline-flex items-center gap-1.5 rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
                     <FileQuestion className="h-3 w-3" />
                     {item.contextLabel}
                   </div>
@@ -190,7 +244,7 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
                     {item.question}
                   </h3>
                   {item.reportHref && (
-                    <div className="mt-2 text-[11px] font-semibold text-[color:var(--brand-strong)]">有关联匿名报告 →</div>
+                    <div className="mt-2 text-xs font-semibold text-[color:var(--brand-strong)]">有关联匿名报告 →</div>
                   )}
                 </Link>
               ))}
@@ -241,4 +295,11 @@ export default async function PublicReportsPage({ searchParams }: PageProps) {
       <SiteFooter />
     </div>
   );
+}
+
+function formatDateTime(value?: string) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.replace('T', ' ').slice(0, 16);
+  return date.toISOString().replace('T', ' ').slice(0, 16);
 }

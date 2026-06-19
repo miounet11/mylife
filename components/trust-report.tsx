@@ -639,7 +639,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                     }`}
                   >
                     {isDayMaster && (
-                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--accent-strong)] px-3 py-1 text-[11px] font-semibold text-white">
+                      <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-[color:var(--accent-strong)] px-3 py-1 text-xs font-semibold text-white">
                         日主
                       </div>
                     )}
@@ -872,7 +872,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div key={`${item.ganZhi}-${item.startYear}`} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-lg font-bold text-[color:var(--ink)]">{item.ganZhi}</div>
-                    <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${mapDayunBadge(item.quality)}`}>
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${mapDayunBadge(item.quality)}`}>
                       {mapDayunQuality(item.quality)}
                     </span>
                   </div>
@@ -974,7 +974,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
                 <div key={item.key} className="rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="text-sm font-semibold text-[color:var(--ink)]">{item.label}</div>
-                    <span className={`rounded-full px-2 py-1 text-[11px] font-semibold ${mapScenarioBadge(item.status)}`}>
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${mapScenarioBadge(item.status)}`}>
                       {mapMonthlyStatus(item.status)}
                     </span>
                   </div>

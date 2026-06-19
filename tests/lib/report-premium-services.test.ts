@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import {
   buildPremiumServiceOffers,
   isPremiumServiceKey,
@@ -75,5 +77,21 @@ describe('buildPremiumServiceOffers', () => {
     expect(normalizePremiumServiceKey(' event-review ')).toBe('event-review');
     expect(isPremiumServiceKey('home-layout-diagnosis')).toBe(false);
     expect(normalizePremiumServiceKey('home-layout-diagnosis')).toBeUndefined();
+  });
+});
+
+describe('report premium services client request stability', () => {
+  const source = fs.readFileSync(
+    path.join(process.cwd(), 'components/report-premium-services.tsx'),
+    'utf8',
+  );
+
+  it('bounds premium service submits with the shared timeout helper', () => {
+    expect(source).toContain('REPORT_PREMIUM_SERVICE_TIMEOUT_MS = 12_000');
+    expect(source).toContain('fetchJsonWithTimeout<PremiumServiceSubmitResponse>');
+    expect(source).toContain('isAbortLikeError(requestError)');
+    expect(source).toContain("timeoutReason: 'report-premium-service-submit-timeout'");
+    expect(source).toContain('专项需求提交等待时间过长，请稍后重试');
+    expect(source).not.toContain("await fetch('/api/premium-services'");
   });
 });

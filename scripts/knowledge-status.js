@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { readPositiveIntegerEnv } = require('./ops-env.js');
 
 const runtimeDir = path.join(process.cwd(), 'data', 'runtime');
 const snapshotFile = path.join(runtimeDir, 'knowledge-acquisition.snapshot.json');
@@ -15,7 +16,10 @@ function readJson(filePath) {
 
 const snapshot = readJson(snapshotFile);
 const lock = readJson(lockFile);
-const ttlMs = Math.max(60_000, Number(process.env.KNOWLEDGE_ACQUISITION_LOCK_TTL_MS || 1000 * 60 * 45));
+const ttlMs = readPositiveIntegerEnv('KNOWLEDGE_ACQUISITION_LOCK_TTL_MS', 1000 * 60 * 45, {
+  min: 60_000,
+  max: 24 * 60 * 60 * 1000,
+});
 const lockAgeMs = lock?.startedAt ? Math.max(0, Date.now() - new Date(lock.startedAt).getTime()) : 0;
 const lockStale = !!lock && (!Number.isFinite(lockAgeMs) || lockAgeMs > ttlMs);
 

@@ -190,7 +190,7 @@ describe('env helpers', () => {
       getAutonomousGrowthIntervalMinutes,
     } = await import('@/lib/env');
 
-    expect(getContentSchedulerDailyPublishLimit()).toBe(200);
+    expect(getContentSchedulerDailyPublishLimit()).toBe(6);
     expect(getContentSchedulerDraftReserveTarget()).toBe(240);
     expect(getContentSchedulerDraftBatchSize()).toBe(24);
     expect(getContentGenerationJobBatchSize()).toBe(24);

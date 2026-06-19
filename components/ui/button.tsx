@@ -29,22 +29,22 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantMap: Record<ButtonVariant, string> = {
   primary:
-    'bg-[color:var(--brand-strong)] text-white border border-[color:var(--brand-deep)] hover:bg-[color:var(--brand-deep)]',
+    'fb-btn fb-btn-primary bg-[color:var(--brand-strong)] text-white border border-[color:var(--brand-deep)] hover:bg-[color:var(--brand-deep)]',
   secondary:
-    'bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
+    'fb-btn bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
   ghost:
-    'bg-transparent text-[color:var(--ink-3)] border border-transparent hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+    'fb-btn bg-transparent text-[color:var(--ink-3)] border border-transparent hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
   signal:
-    'bg-[color:var(--signal)] text-[color:var(--ink-1)] border border-[color:var(--signal-strong)] hover:bg-[color:var(--signal-strong)] hover:text-white',
+    'fb-btn bg-[color:var(--signal)] text-[color:var(--ink-1)] border border-[color:var(--signal-strong)] hover:bg-[color:var(--signal-strong)] hover:text-white',
   danger:
-    'bg-[color:var(--alert)] text-white border border-[color:var(--alert)] hover:opacity-92',
+    'fb-btn bg-[color:var(--alert)] text-white border border-[color:var(--alert)] hover:opacity-92',
   // 旧值兼容映射
   default:
-    'bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
+    'fb-btn bg-[color:var(--paper)] text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)] hover:bg-[color:var(--bg-elevated)]',
   outline:
-    'bg-transparent text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)]',
+    'fb-btn bg-transparent text-[color:var(--ink-2)] border border-[color:var(--hairline-strong)] hover:border-[color:var(--brand)]',
   gradient:
-    'bg-[linear-gradient(135deg,var(--ink-1),var(--brand-deep))] text-white border border-transparent hover:opacity-95',
+    'fb-btn fb-btn-primary bg-[linear-gradient(135deg,var(--ink-1),var(--brand-deep))] text-white border border-transparent hover:opacity-95',
 };
 
 const sizeMap: Record<ButtonSize, string> = {
@@ -77,7 +77,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         type={type}
         className={cn(
-          'inline-flex items-center justify-center gap-2 rounded-[var(--radius)] font-semibold whitespace-nowrap transition',
+          'inline-flex items-center justify-center gap-2 rounded-[var(--radius)] font-semibold whitespace-nowrap transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--brand)] focus-visible:ring-offset-2',
           variantMap[variant],
           sizeMap[size],

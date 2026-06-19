@@ -109,17 +109,17 @@ export default async function ProductDocPage({ params }: PageProps) {
               {doc.title}
             </h1>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
+              <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
                 {doc.priority}
               </span>
-              <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-[10px] font-semibold text-[color:var(--ink-4)]">
+              <span className="inline-flex h-5 items-center gap-1 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 font-mono text-xs font-semibold text-[color:var(--ink-4)]">
                 <Clock3 className="h-3 w-3" />
                 {doc.readTime}
               </span>
               {doc.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+                  className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
                 >
                   {tag}
                 </span>
@@ -128,7 +128,7 @@ export default async function ProductDocPage({ params }: PageProps) {
           </div>
 
           <aside className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">入口</div>
+            <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">入口</div>
             <div className="mt-3 flex flex-wrap gap-2">
               {doc.entryHrefs.map((item, index) => (
                 <Link
@@ -193,7 +193,7 @@ export default async function ProductDocPage({ params }: PageProps) {
                             {step.tips.map((tip) => (
                               <span
                                 key={tip}
-                                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-[10px] font-semibold text-[color:var(--ink-4)]"
+                                className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
                               >
                                 {tip}
                               </span>
@@ -252,9 +252,9 @@ export default async function ProductDocPage({ params }: PageProps) {
             ) : null}
           </article>
 
-          <aside className="space-y-3 lg:sticky lg:top-24">
+          <aside className="space-y-3 xl:sticky sticky-top-header">
             <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">相关文档</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">相关文档</div>
               <div className="mt-3 space-y-1">
                 {relatedDocs.map((item) => (
                   <Link
@@ -269,7 +269,7 @@ export default async function ProductDocPage({ params }: PageProps) {
             </div>
 
             <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-              <div className="text-[10px] font-bold uppercase tracking-wider text-[color:var(--ink-5)]">全部文档</div>
+              <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">全部文档</div>
               <div className="mt-3 space-y-1">
                 {listProductDocRoutes().slice(0, 8).map((route) => {
                   const item = getProductDocBySlug(route.replace('/docs/', ''));

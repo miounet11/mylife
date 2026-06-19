@@ -116,10 +116,12 @@ export default async function DashboardPage() {
             <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
               <div className="min-w-0">
                 <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
-                  {authenticated ? '继续推进，' : '欢迎，先生成第一份报告'}
-                  <span className="text-[color:var(--brand-strong)]">
-                    {authenticated ? `${session.user?.email || ''}` : ''}
-                  </span>
+                  {authenticated ? '继续推进' : '欢迎，先生成第一份报告'}
+                  {authenticated && session.user?.email ? (
+                    <span className="mt-1 block break-all text-base text-[color:var(--brand-strong)]">
+                      {session.user.email}
+                    </span>
+                  ) : null}
                 </h1>
                 <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
                   这里把你的报告、事件、工具历史、订阅状态和下一步入口收在一个面板，无需跨页跳转。
@@ -211,7 +213,7 @@ export default async function DashboardPage() {
                       <Link
                         key={r.id}
                         href={`/result/${r.id}`}
-                        className="group block rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 transition hover:-translate-y-px hover:border-[color:var(--brand)] hover:bg-[color:var(--paper)]"
+                        className="group fb-card block p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-1.5">
@@ -235,7 +237,7 @@ export default async function DashboardPage() {
                               </Tag>
                             ) : null}
                           </div>
-                          <span className="font-mono text-[10px] tabular-nums text-[color:var(--ink-5)] group-hover:text-[color:var(--brand-strong)]">
+                          <span className="font-mono text-xs tabular-nums text-[color:var(--ink-5)] group-hover:text-[color:var(--brand-strong)]">
                             {r.birthDate || '—'}
                           </span>
                         </div>
@@ -257,14 +259,14 @@ export default async function DashboardPage() {
                   事件中心 →
                 </Link>
               </Inline>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 <Stat label="已验证" value={String(validatedEvents)} size="sm" deltaDirection="up" />
                 <Stat label="待验证" value={String(pendingEvents)} size="sm" deltaDirection="flat" />
                 <Stat label="待纠偏" value={String(driftEvents)} size="sm" deltaDirection={driftEvents > 0 ? 'down' : 'flat'} />
               </div>
               {pendingEvents > 0 || driftEvents > 0 ? (
                 <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--signal-soft)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--signal-strong)]">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider">
+                  <span className="font-mono text-xs font-bold uppercase tracking-wider">
                     NEXT
                   </span>
                   <div className="mt-0.5 text-[color:var(--ink-2)]">
@@ -326,14 +328,14 @@ export default async function DashboardPage() {
               </Inline>
               <Stack gap={2}>
                 <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2">
-                  <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">邮箱</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">邮箱</span>
                   <div className="mt-0.5 font-mono text-xs text-[color:var(--ink-2)]">
                     {updatesSummary?.email || '未绑定'}
                   </div>
                 </div>
                 {latestDigest ? (
                   <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">最近月度更新</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">最近月度更新</span>
                     <div className="mt-0.5 font-mono text-xs tabular-nums text-[color:var(--ink-2)]">
                       {latestDigest.cycleKey} · {mapDigestStatus(latestDigest.status)}
                     </div>
@@ -402,7 +404,7 @@ export default async function DashboardPage() {
                       href={step.href}
                       className="group flex items-start gap-2 rounded-[var(--radius-sm)] px-2 py-1.5 transition hover:bg-[color:var(--bg-sunken)]"
                     >
-                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] font-mono text-[10px] font-black tabular-nums text-[color:var(--brand-strong)]">
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] font-mono text-xs font-black tabular-nums text-[color:var(--brand-strong)]">
                         {String(index + 1).padStart(2, '0')}
                       </span>
                       <Icon className="h-3 w-3 shrink-0 text-[color:var(--brand-strong)]" />

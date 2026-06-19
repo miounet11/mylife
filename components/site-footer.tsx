@@ -51,7 +51,7 @@ export default function SiteFooter() {
                   人生<span className="font-serif">K</span>线
                 </span>
                 <span
-                  className="mt-0.5 text-[9px] font-semibold uppercase text-[color:var(--fb-ink-3)]"
+                  className="mt-0.5 text-xs font-semibold uppercase text-[color:var(--fb-ink-3)]"
                   style={{ letterSpacing: '0.18em' }}
                 >
                   LIFE KLINE
@@ -120,7 +120,7 @@ export default function SiteFooter() {
       </div>
 
       <div className="border-t border-[color:var(--fb-border)] bg-[#f6f7f9]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-[11px] text-[color:var(--fb-ink-3)] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-[color:var(--fb-ink-3)] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
           <div>人生K线 © {year} · LIFE KLINE · 世界易学说命理门户</div>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <span>真太阳时校正</span>
@@ -130,7 +130,7 @@ export default function SiteFooter() {
             <span>600+ 大师话术库</span>
           </div>
         </div>
-        <div className="mx-auto max-w-7xl border-t border-[color:var(--fb-border)] px-4 py-3 text-[11px] leading-[1.5] text-[color:var(--fb-ink-4)] sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl border-t border-[color:var(--fb-border)] px-4 py-3 text-xs leading-[1.5] text-[color:var(--fb-ink-4)] sm:px-6 lg:px-8">
           本平台所有产品拒绝向未成年人提供服务，仅供 18 岁以上成年人参考与娱乐使用，
           不构成任何医疗、法律、投资或人生重大决策的建议。
         </div>

@@ -421,7 +421,7 @@ export async function runWorldYiAutonomousCycle(params?: {
         radarRefreshed: result.radarRefreshed,
         weakLaneKeys: result.opsSnapshot?.publicationReserve?.weakLaneKeys || [],
         autonomyFocusKeys: result.opsSnapshot?.autonomyFocus?.focusKeys || [],
-        nextGenerationKeys: (result.opsSnapshot?.generationQueue || []).slice(0, 3).map((item) => item.key),
+        nextGenerationKeys: (result.opsSnapshot?.generationQueue || []).slice(0, 3).map((item: { key: string }) => item.key),
         decisionLedgerSummary: result.decisionLedgerSummary || null,
         executionMode: mode,
         preview: result.preview || null,

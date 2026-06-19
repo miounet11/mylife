@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { Compass, FileBarChart2, Newspaper, Sparkles, BookOpenText, Layers3, Globe2 } from 'lucide-react';
 
 // v5-D60 FB 风左 rail：sticky 锚导航 + 最近报告 + 我的档案入口
-// 仅在桌面 lg+ 显示。移动端隐藏（通过外层 className 控制）。
+// 仅在桌面 xl+ 显示。移动端隐藏（通过外层 className 控制）。
 
 type LeftRailReport = {
   id: string;
@@ -37,8 +37,8 @@ export default function HomeLeftRail({
   const recent = reports.slice(0, 5);
 
   return (
-    <aside className="hidden lg:block w-[240px] shrink-0">
-      <div className="sticky top-[88px] flex flex-col gap-2">
+    <aside className="hidden xl:block w-[240px] shrink-0">
+      <div className="sticky-top-header flex flex-col gap-2">
         {/* 门户导航卡 */}
         <nav
           aria-label="首页导航"
@@ -111,10 +111,11 @@ export default function HomeLeftRail({
                   <li key={r.id}>
                     <Link
                       href={`/result/${r.id}`}
+                      title={r.name || tag}
                       className="flex items-center gap-2 px-3 py-1.5 hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
                     >
                       <span
-                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[2px] text-[11px] font-bold ${
+                        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-[2px] text-xs font-bold ${
                           isSelf
                             ? 'bg-[color:var(--fb-blue)] text-white'
                             : 'bg-[color:var(--fb-action-bg)] text-[color:var(--fb-ink-2)]'
@@ -125,7 +126,7 @@ export default function HomeLeftRail({
                       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-[color:var(--fb-ink-1)]">
                         {r.name || tag}
                       </span>
-                      <span className="shrink-0 text-[11px] text-[color:var(--fb-ink-3)]">{tag}</span>
+                      <span className="shrink-0 text-xs text-[color:var(--fb-ink-3)]">{tag}</span>
                     </Link>
                   </li>
                 );

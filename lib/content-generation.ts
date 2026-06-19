@@ -359,6 +359,49 @@ function normalizeFallbackSectionsDepth(sections: ContentSection[], input?: Cont
   }));
 }
 
+const BLOCKED_PUBLIC_CONTENT_PATTERN = /当前尚未|当前.*不足|应继续补|仍薄|还没有足够|内容自动化|GEO|SEO|转化价值|平台策略|流量承接|站点内容库/i;
+
+export function assessGeneratedManagedContentDraftQuality(draft: Pick<GeneratedManagedContentDraft, 'title' | 'excerpt' | 'tags' | 'seoTitle' | 'seoDescription' | 'sections' | 'llmUsed'>) {
+  const paragraphs = draft.sections.flatMap((section) => section.paragraphs || []).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const paragraphChars = paragraphs.reduce((sum, paragraph) => sum + paragraph.length, 0);
+  const averageParagraphLength = paragraphs.length > 0 ? Math.round(paragraphChars / paragraphs.length) : 0;
+  const fullText = [
+    draft.title,
+    draft.excerpt,
+    draft.seoTitle,
+    draft.seoDescription,
+    ...(draft.tags || []),
+    ...draft.sections.flatMap((section) => [section.title, ...(section.paragraphs || [])]),
+  ].join('\n');
+  const reasons: string[] = [];
+  let score = 0;
+
+  if (draft.llmUsed !== false) score += 10;
+  if (draft.sections.length >= 4) score += 15; else reasons.push('小节少于 4 个');
+  if (paragraphs.length >= 8) score += 15; else reasons.push('正文段落少于 8 段');
+  if (averageParagraphLength >= 72) score += 20;
+  else if (averageParagraphLength >= 36) score += 14;
+  else reasons.push(`平均段落长度过短：${averageParagraphLength}`);
+  if ((draft.tags || []).length >= 4) score += 10; else reasons.push('标签少于 4 个');
+  if (draft.excerpt.trim().length >= 60) score += 10; else reasons.push('摘要过短');
+  if (draft.seoTitle.trim().length >= 12) score += 8; else reasons.push('SEO 标题过短');
+  if (draft.seoDescription.trim().length >= 72) score += 12;
+  else if (draft.seoDescription.trim().length >= 56) score += 8;
+  else reasons.push('SEO 描述过短');
+
+  if (BLOCKED_PUBLIC_CONTENT_PATTERN.test(fullText)) {
+    score -= 30;
+    reasons.push('正文含内部工程词或占位表达');
+  }
+
+  return {
+    ready: score >= 76 && reasons.length === 0,
+    score: Math.max(0, Math.min(100, score)),
+    averageParagraphLength,
+    reasons,
+  };
+}
+
 function buildFallbackSections(topic: string, contentType: ManagedContentType, input?: ContentGenerationInput): ContentSection[] {
   const { traditional, english, marketLabel } = buildLocalizedLabels(input);
 
