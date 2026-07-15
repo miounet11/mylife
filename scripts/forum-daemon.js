@@ -84,7 +84,38 @@ function refillTitlePoolIfLow() {
 }
 
 logLine(`启动 · TICK_MS=${TICK_MS}ms · DAILY_TARGET=${DAILY_TARGET} · POOL_LOW=${TITLE_POOL_LOW_WATER} · REFILL=${TITLE_POOL_REFILL}/d max ${TITLE_POOL_MAX_PER_DAY}`);
+
+function writeHeartbeat() {
+  try {
+    const db = new Database(DB_PATH, { fileMustExist: true });
+    db.pragma('journal_mode=WAL');
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS ops_daemon_heartbeat (
+        daemon TEXT NOT NULL UNIQUE,
+        last_tick_at TEXT NOT NULL,
+        tick_count INTEGER NOT NULL DEFAULT 0,
+        last_status TEXT,
+        last_error TEXT
+      )
+    `);
+    const row = db.prepare('SELECT tick_count FROM ops_daemon_heartbeat WHERE daemon = ?').get('forum-daemon');
+    const nextCount = (row?.tick_count ?? 0) + 1;
+    db.prepare(`
+      INSERT INTO ops_daemon_heartbeat (daemon, last_tick_at, tick_count, last_status)
+      VALUES (?, ?, ?, ?)
+      ON CONFLICT(daemon) DO UPDATE SET
+        last_tick_at = excluded.last_tick_at,
+        tick_count = excluded.tick_count,
+        last_status = excluded.last_status
+    `).run('forum-daemon', new Date().toISOString(), nextCount, 'ok');
+    db.close();
+  } catch (err) {
+    // heartbeat failure must not crash the daemon
+  }
+}
+
 function loop() {
+  writeHeartbeat();
   refillTitlePoolIfLow();
   tickOnce();
 }

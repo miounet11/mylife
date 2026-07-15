@@ -1,6 +1,14 @@
 import { analyzeFortune } from '@/lib/fortune-engine';
 import { createAgenticContext, runAgenticPipeline } from '@/lib/agentic-report';
 import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-definitions';
+import {
+  attachChartCalculationIdentity,
+  flattenGroundTruthFromReport,
+  lockStructuralChartFields,
+  readChartCalculationIdentity,
+  resolveRegenerationTiming,
+} from '@/lib/calculation-identity';
+import { localizeElementList, presentReportText } from '@/lib/report-presentation';
 import { isAgenticPipelineEnabled } from '@/lib/env';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
 import {
@@ -167,11 +175,9 @@ export async function generateVersionedReport(params: {
     status: 'completed',
     detail: '基础命盘与运势结构已完成，开始进入增强分析层。',
   });
+  const groundTruth = flattenGroundTruthFromReport(params.birthDate, baseResult);
   const preLlmContext = createAgenticContext({
-    groundTruth: {
-      birthDate: params.birthDate,
-      report: baseResult,
-    },
+    groundTruth,
     context: {
       birthDate: params.birthDate,
       birthPlace: params.birthPlace,
@@ -268,10 +274,7 @@ export async function generateVersionedReport(params: {
       enableRetry: params.source !== 'analyze',
       mainTaskTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS : undefined,
       mainLlmTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS : undefined,
-      groundTruth: {
-        birthDate: params.birthDate,
-        report: baseResult,
-      },
+      groundTruth,
       context: {
         birthDate: params.birthDate,
         birthPlace: params.birthPlace,
@@ -347,23 +350,64 @@ export async function generateVersionedReport(params: {
 }
 
 export async function regenerateReportFromRecord(record: FortuneRecord) {
-  const parsedBirthDate = parseLocalDate(record.birthDate);
+  const regeneration = resolveRegenerationTiming(record);
 
-  if (!parsedBirthDate) {
+  if (!regeneration.birthDate || !Number.isFinite(regeneration.birthDate.getTime())) {
     throw new Error(`Invalid birthDate in record: ${record.birthDate}`);
   }
 
-  return generateVersionedReport({
+  const generated = await generateVersionedReport({
     name: record.name,
-    birthDate: parsedBirthDate,
-    birthTime: record.birthTime,
-    birthPlace: record.birthPlace || '北京',
-    timezone: record.timezone || 8,
-    gender: record.gender,
+    birthDate: regeneration.birthDate,
+    birthTime: regeneration.birthTime,
+    birthPlace: regeneration.birthPlace,
+    timezone: regeneration.timezone,
+    gender: regeneration.gender,
+    sect: regeneration.sect,
     userId: record.userId,
     source: 'upgrade',
     upgradedFromVersion: record.reportVersion || 'v1',
   });
+
+  // 双保险：即使 timing 回退失败，也不允许写回与原盘不同的四柱结构
+  const locked = lockStructuralChartFields(
+    generated.result,
+    record,
+    regeneration.chartFingerprint
+  );
+
+  // 继承并续写 calculation identity（升级不得丢失真太阳时参数）
+  const existingIdentity =
+    regeneration.identity || readChartCalculationIdentity(record);
+  if (existingIdentity) {
+    locked.result.analysis = attachChartCalculationIdentity(
+      locked.result.analysis,
+      existingIdentity
+    );
+  }
+
+  if (locked.chartLocked) {
+    const notes = ((locked.result.analysis as { enhancementNotes?: string[] } | undefined)
+      ?.enhancementNotes || []) as string[];
+    console.warn(
+      `[report-pipeline] chart identity lock engaged for ${record.id}: expected=${regeneration.chartFingerprint} regenerated=${locked.regeneratedFingerprint}`
+    );
+    locked.result.analysis = {
+      ...(locked.result.analysis || {}),
+      enhancementNotes: notes,
+    } as FortuneAnalysisResult['analysis'];
+  }
+
+  return {
+    ...generated,
+    result: locked.result,
+    chartIdentity: {
+      source: regeneration.source,
+      expectedFingerprint: regeneration.chartFingerprint,
+      regeneratedFingerprint: locked.regeneratedFingerprint,
+      chartLocked: locked.chartLocked,
+    },
+  };
 }
 
 export function finalizeReportForDelivery(result: FortuneAnalysisResult): FortuneAnalysisResult {
@@ -869,10 +913,12 @@ function buildNarrativeJudgmentBlocks(
     temporalSummary?: string;
   }
 ): NarrativeJudgmentBlocks {
-  const favored = uniqueList([
-    ...(result.advice?.yongShen || []),
-    ...(result.advice?.xiShen || []),
-  ]).slice(0, 3);
+  const favored = uniqueList(
+    localizeElementList([
+      ...(result.advice?.yongShen || []),
+      ...(result.advice?.xiShen || []),
+    ])
+  ).slice(0, 3);
   const actionFocus = firstNonEmpty([
     ...(result.advice?.career?.specific || []),
     ...(result.advice?.wealth?.specific || []),

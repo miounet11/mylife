@@ -41,6 +41,45 @@ function buildLeaseLostResult(job: ReportUpgradeJobRecord) {
   };
 }
 
+
+function readNoImproveStreak(meta: ReportUpgradeJobRecord['meta'] | undefined) {
+  const raw = (meta as Record<string, unknown> | undefined)?.noImproveStreak;
+  const n = typeof raw === 'number' ? raw : Number(raw);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+}
+
+/**
+ * Stop burning retries when quality has plateaued near the expert target.
+ * Observed prod failure mode: best 91–94 vs target 95 with TARGET_NOT_REACHED.
+ */
+function shouldStopForQualityPlateau(params: {
+  job: ReportUpgradeJobRecord;
+  bestScore: number;
+  newScore: number;
+  improved: boolean;
+  targetScore: number;
+}) {
+  const attempts = params.job.attempts || 0;
+  const target = params.targetScore || REPORT_EXPERT_TARGET_SCORE || 95;
+  const best = params.bestScore || 0;
+  const streak = params.improved ? 0 : readNoImproveStreak(params.job.meta) + 1;
+
+  // Within 5 points of target, no improvement this attempt, already tried 2+ times
+  if (best >= target - 5 && !params.improved && attempts >= 2) {
+    return { stop: true as const, reason: 'QUALITY_PLATEAU_NEAR_TARGET', streak };
+  }
+  // Soft ceiling: score >= 90 stuck for 3 attempts without improvement
+  if (best >= 90 && !params.improved && attempts >= 3) {
+    return { stop: true as const, reason: 'QUALITY_PLATEAU_SOFT_CEILING', streak };
+  }
+  // Explicit streak: 3 consecutive non-improving attempts while already decent
+  if (best >= 85 && streak >= 3 && !params.improved) {
+    return { stop: true as const, reason: 'QUALITY_PLATEAU_NO_IMPROVE_STREAK', streak };
+  }
+  return { stop: false as const, reason: '', streak };
+}
+
+
 function stillOwnReportUpgradeLease(job: ReportUpgradeJobRecord) {
   if (!job.lockedAt) {
     return true;
@@ -75,16 +114,60 @@ export function enqueueReportUpgrade(params: {
   }
 
   const existing = reportUpgradeJobOperations.getByReportId(params.report.id);
-  if (
-    existing &&
-    !params.force &&
-    ['pending', 'running', 'retry'].includes(existing.status)
-  ) {
-    return {
-      queued: false,
-      reason: 'already_queued',
-      job: existing,
-    };
+  if (existing && !params.force) {
+    if (['pending', 'running', 'retry'].includes(existing.status)) {
+      return {
+        queued: false,
+        reason: 'already_queued',
+        job: existing,
+      };
+    }
+
+    const existingBest = Number(existing.bestScore || 0);
+    const existingTarget = Number(existing.targetScore || REPORT_EXPERT_TARGET_SCORE || 95);
+    const existingError = `${existing.lastError || ''}`;
+    const existingMeta = (existing.meta || {}) as Record<string, unknown>;
+    const plateauMarked =
+      existingError.includes('QUALITY_PLATEAU')
+      || existingError.includes('TARGET_NOT_REACHED')
+      || existingError.includes('OPS_CANCEL')
+      || existingError.includes('PLATEAU')
+      || Boolean(existingMeta.plateauReason)
+      || Boolean(existingMeta.plateau);
+    const attemptsExhausted =
+      (existing.attempts || 0) >= (existing.maxAttempts || DEFAULT_MAX_ATTEMPTS);
+
+    // Do not reopen terminal plateau / ops-cancelled jobs (prevents zombie pending).
+    if (
+      existing.status === 'cancelled'
+      && (plateauMarked || attemptsExhausted || existingBest >= existingTarget - 5)
+    ) {
+      return {
+        queued: false,
+        reason: 'already_plateau_cancelled',
+        job: existing,
+      };
+    }
+
+    if (
+      existing.status === 'failed'
+      && plateauMarked
+      && (existingBest >= existingTarget - 5 || existingBest >= 90 || attemptsExhausted)
+    ) {
+      return {
+        queued: false,
+        reason: 'already_plateau_failed',
+        job: existing,
+      };
+    }
+
+    if (attemptsExhausted && existingBest >= 85) {
+      return {
+        queued: false,
+        reason: 'attempts_exhausted_near_ceiling',
+        job: existing,
+      };
+    }
   }
 
   const now = new Date();
@@ -100,13 +183,18 @@ export function enqueueReportUpgrade(params: {
     existing?.bestScore || 0
   );
 
+  // Fresh cycle only when reopening a terminal job that was not plateau-blocked above.
+  const reopenFresh = Boolean(
+    existing && ['failed', 'cancelled', 'completed'].includes(existing.status),
+  );
+
   const job: ReportUpgradeJobRecord = {
     id: existing?.id || `upgrade_${generateId()}`,
     reportId: params.report.id,
     userId: params.report.userId,
     status: deferredForProvider ? 'retry' : 'pending',
     targetScore: REPORT_EXPERT_TARGET_SCORE,
-    attempts: existing?.attempts || 0,
+    attempts: reopenFresh ? 0 : (existing?.attempts || 0),
     maxAttempts: existing?.maxAttempts || DEFAULT_MAX_ATTEMPTS,
     lastScore: qualityAudit?.overallScore || 0,
     bestScore,
@@ -120,6 +208,7 @@ export function enqueueReportUpgrade(params: {
       targetAchieved: !!qualityAudit?.targetAchieved,
       deferredForProvider,
       providerHealth: deferredForProvider ? providerHealth.summary : undefined,
+      reopenedFrom: reopenFresh ? existing?.status : undefined,
       ...(params.meta || {}),
     },
   };
@@ -266,7 +355,14 @@ export async function processNextReportUpgradeJob() {
   }
 
   try {
-    const { result, llmUsed, llmUnavailable, deferredByProviderHealth } = await regenerateReportFromRecord(report);
+    const regenerated = await regenerateReportFromRecord(report);
+    const { result, llmUsed, llmUnavailable, deferredByProviderHealth } = regenerated;
+    const chartIdentity = (regenerated as { chartIdentity?: {
+      source?: string;
+      expectedFingerprint?: string;
+      regeneratedFingerprint?: string;
+      chartLocked?: boolean;
+    } }).chartIdentity;
     result.analysis = withReportVersionLineage({
       previousAnalysis: report.analysis,
       previousReportVersion: report.reportVersion || 'v1',
@@ -289,6 +385,8 @@ export async function processNextReportUpgradeJob() {
         return buildLeaseLostResult(job);
       }
 
+      // 结构字段已由 regenerateReportFromRecord 的 chart lock 保护；
+      // 升级只允许增强叙事与质量元数据，不得改变命盘身份。
       fortuneOperations.update(report.id, {
         name: report.name,
         bazi: result.basic,
@@ -304,6 +402,13 @@ export async function processNextReportUpgradeJob() {
         shenSha: result.shenSha,
         reportVersion: CURRENT_REPORT_VERSION,
       });
+
+      if (chartIdentity?.chartLocked) {
+        console.warn(
+          `[report-upgrade] chart lock retained original pillars for ${report.id}: ` +
+            `expected=${chartIdentity.expectedFingerprint} regenerated=${chartIdentity.regeneratedFingerprint}`
+        );
+      }
     }
 
     if (llmUnavailable && !newAudit?.targetAchieved) {
@@ -390,6 +495,46 @@ export async function processNextReportUpgradeJob() {
       };
     }
 
+    const targetScore = Number(job.targetScore || REPORT_EXPERT_TARGET_SCORE || 95);
+    const plateau = shouldStopForQualityPlateau({
+      job,
+      bestScore,
+      newScore,
+      improved,
+      targetScore,
+    });
+    const nextMeta = {
+      ...(job.meta || {}),
+      lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
+      llmUsed,
+      improved,
+      noImproveStreak: plateau.streak,
+      plateauReason: plateau.stop ? plateau.reason : undefined,
+      targetScore,
+    };
+
+    if (plateau.stop) {
+      const mutation = reportUpgradeJobOperations.markCancelled(job.id, {
+        lastScore: newScore,
+        bestScore,
+        bestGrade,
+        lastError: plateau.reason,
+        lockedAt: job.lockedAt,
+        meta: nextMeta,
+      });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
+
+      return {
+        processed: true,
+        status: 'cancelled',
+        reportId: report.id,
+        score: newScore,
+        reason: plateau.reason,
+      };
+    }
+
     if ((job.attempts || 0) >= (job.maxAttempts || DEFAULT_MAX_ATTEMPTS)) {
       const mutation = reportUpgradeJobOperations.markFailed(job.id, {
         lastScore: newScore,
@@ -397,12 +542,7 @@ export async function processNextReportUpgradeJob() {
         bestGrade,
         lastError: 'TARGET_NOT_REACHED',
         lockedAt: job.lockedAt,
-        meta: {
-          ...(job.meta || {}),
-          lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
-          llmUsed,
-          improved,
-        },
+        meta: nextMeta,
       });
       if (!isMutationApplied(mutation)) {
         return buildLeaseLostResult(job);
@@ -427,12 +567,7 @@ export async function processNextReportUpgradeJob() {
       })).toISOString(),
       lastError: newAudit?.blockingIssues?.join(' | ') || 'TARGET_NOT_REACHED',
       lockedAt: job.lockedAt,
-      meta: {
-        ...(job.meta || {}),
-        lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
-        llmUsed,
-        improved,
-      },
+      meta: nextMeta,
     });
     if (!isMutationApplied(retryMutation)) {
       return buildLeaseLostResult(job);

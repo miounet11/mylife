@@ -1,139 +1,109 @@
+'use client';
+
 import Link from 'next/link';
-import { Eyebrow } from '@/components/ui/eyebrow';
-import { getPriorityGrowthToolLinks } from '@/lib/tools';
+import { Github, Send } from 'lucide-react';
+import SystemCapabilityFooterSignalsClient from '@/components/system-capability-footer-signals-client';
+import { useLocale } from '@/components/i18n/locale-provider';
+import LocaleSwitcher from '@/components/i18n/locale-switcher';
+import {
+  OFFICIAL_GITHUB_LABEL,
+  OFFICIAL_GITHUB_URL,
+  OFFICIAL_TELEGRAM_HANDLE,
+  OFFICIAL_TELEGRAM_URL,
+} from '@/lib/site-social';
 
-// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
-const _qaContract = ['intro-copy', 'action-secondary'] as const;
-void _qaContract;
-
-const productLinks = [
-  { href: '/analyze', label: '开始判断' },
-  { href: '/chat',    label: '结构追问' },
-  { href: '/tools',   label: '工具中心' },
-  { href: '/events',  label: '事件日历' },
-  { href: '/profile', label: '我的档案' },
-];
-
-const knowledgeLinks = [
-  { href: '/community', label: '社区 Q&A' },
-  { href: '/knowledge', label: '知识库' },
-  { href: '/cases',     label: '案例库' },
-  { href: '/reports',   label: '公开结果库' },
-  { href: '/insights',  label: '洞察' },
-  { href: '/world-yi',  label: '世界易' },
-  { href: '/visual-assets', label: '图片库' },
-];
-
-const accountLinks = [
-  { href: '/updates', label: '邮件更新' },
-  { href: '/login',   label: '邮箱登录' },
-  { href: '/docs',    label: '文档中心' },
+const footerLinks: Array<{ href: string; labelKey?: string; label?: string }> = [
+  { href: '/world-yi', labelKey: 'navWorldYi' },
+  { href: '/knowledge', labelKey: 'navKnowledge' },
+  { href: '/cases', labelKey: 'navCases' },
+  { href: '/learn', labelKey: 'navLearn' },
+  { href: '/docs', labelKey: 'navDocs' },
+  { href: '/membership', labelKey: 'navMembership' },
+  { href: '/movement', label: '运动与传播' },
 ];
 
 export default function SiteFooter() {
-  const year = new Date().getFullYear();
-  // QA contract: site-footer must reference these legacy utilities so it stays in
-  // the public surface inventory until P5+ migration of the QA scripts themselves.
-  // text-sm leading-7 text-[color:var(--ink-4)] + inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] are still wired through globals.css to new tokens.
-  const priorityGrowthFooterLinks = getPriorityGrowthToolLinks('footer_priority_growth');
+  const { t, locale } = useLocale();
+  const brand = t('brandName');
 
   return (
-    <footer className="mt-10 border-t border-[color:var(--fb-border)] bg-white">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2.4fr)]">
+    <footer className="mt-auto border-t border-[color:var(--hairline)] bg-[color:var(--paper)]">
+      <div className="page-frame py-10 md:py-12">
+        <div className="lk-grid-2 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <div>
-            <Link href="/" className="flex items-center gap-2 no-underline hover:no-underline">
-              <span className="flex h-8 w-8 items-center justify-center rounded-[2px] bg-[color:var(--fb-blue)] text-[16px] font-black text-white">
-                <span className="font-serif">K</span>
-              </span>
-              <span className="flex flex-col leading-none">
-                <span className="text-[15px] font-extrabold text-[color:var(--fb-ink-1)]">
-                  人生<span className="font-serif">K</span>线
-                </span>
-                <span
-                  className="mt-0.5 text-xs font-semibold uppercase text-[color:var(--fb-ink-3)]"
-                  style={{ letterSpacing: '0.18em' }}
-                >
-                  LIFE KLINE
-                </span>
-              </span>
-            </Link>
-            <p className="intro-copy mt-3 max-w-md text-[13px] leading-[1.5] text-[color:var(--fb-ink-3)]">
-              世界易学说命理门户：基于真太阳时校正与世界易判断框架，
-              整合八字、紫微、六爻、奇门、择日等命理工具与全球易学资料，
-              为成年用户提供可持续使用的现代判断系统。
+            <div className="text-[14px] font-semibold tracking-[-0.015em] text-[color:var(--ink-1)]">
+              {locale === 'en' ? (
+                <>
+                  Life <span className="font-serif">K</span>-Line · LIFE KLINE
+                </>
+              ) : (
+                <>
+                  {brand.includes('K') ? (
+                    <>
+                      {brand.slice(0, brand.indexOf('K'))}
+                      <span className="font-serif">K</span>
+                      {brand.slice(brand.indexOf('K') + 1)}
+                    </>
+                  ) : (
+                    brand
+                  )}{' '}
+                  · LIFE KLINE
+                </>
+              )}
+            </div>
+            <p className="mt-3 max-w-md text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
+              {t('footerTagline')}
             </p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {priorityGrowthFooterLinks.slice(0, 4).map((item) => (
+            <nav className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5" aria-label="footer">
+              {footerLinks.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="action-secondary inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-2.5 text-[12px] font-semibold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
+                  className="text-[12px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
                 >
-                  {item.shortLabel}
+                  {item.labelKey ? t(item.labelKey) : item.label}
                 </Link>
               ))}
+            </nav>
+
+            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+              <a
+                href={OFFICIAL_TELEGRAM_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                <Send className="h-3.5 w-3.5" strokeWidth={2} />
+                <span>
+                  {t('footerTelegram')} · {OFFICIAL_TELEGRAM_HANDLE}
+                </span>
+              </a>
+              <a
+                href={OFFICIAL_GITHUB_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                <Github className="h-3.5 w-3.5" strokeWidth={2} />
+                <span>{OFFICIAL_GITHUB_LABEL}</span>
+              </a>
+            </div>
+            <p className="mt-1.5 text-[11px] leading-[1.45] text-[color:var(--ink-5)]">
+              {t('footerTelegramCta')}
+            </p>
+
+            <div className="mt-5">
+              <LocaleSwitcher variant="light" />
             </div>
           </div>
-
-          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3">
-            <div>
-              <Eyebrow tone="muted" className="fb-section-title mb-2.5">产品</Eyebrow>
-              <ul className="space-y-1.5">
-                {productLinks.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <Eyebrow tone="muted" className="fb-section-title mb-2.5">易学内容</Eyebrow>
-              <ul className="space-y-1.5">
-                {knowledgeLinks.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <Eyebrow tone="muted" className="fb-section-title mb-2.5">账户</Eyebrow>
-              <ul className="space-y-1.5">
-                {accountLinks.map((item) => (
-                  <li key={item.href}>
-                    <Link href={item.href} className="text-[13px] text-[color:var(--fb-blue-link)] hover:underline">
-                      {item.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
+          <SystemCapabilityFooterSignalsClient />
         </div>
-      </div>
-
-      <div className="border-t border-[color:var(--fb-border)] bg-[#f6f7f9]">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-4 text-xs text-[color:var(--fb-ink-3)] sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div>人生K线 © {year} · LIFE KLINE · 世界易学说命理门户</div>
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            <span>真太阳时校正</span>
-            <span>·</span>
-            <span>分钟级节气精度</span>
-            <span>·</span>
-            <span>600+ 大师话术库</span>
-          </div>
+        <div className="mt-8 border-t border-[color:var(--hairline)] pt-5 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+          © {new Date().getFullYear()} Life K-Line · {t('footerLegal')}
         </div>
-        <div className="mx-auto max-w-7xl border-t border-[color:var(--fb-border)] px-4 py-3 text-xs leading-[1.5] text-[color:var(--fb-ink-4)] sm:px-6 lg:px-8">
-          本平台所有产品拒绝向未成年人提供服务，仅供 18 岁以上成年人参考与娱乐使用，
-          不构成任何医疗、法律、投资或人生重大决策的建议。
-        </div>
+        {locale === 'en' && t('contentLangNote') ? (
+          <div className="mt-2 text-[12px] text-[color:var(--ink-4)]">{t('contentLangNote')}</div>
+        ) : null}
       </div>
     </footer>
   );

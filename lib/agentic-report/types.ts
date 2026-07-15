@@ -1,277 +1,258 @@
-import type { DayunResult } from '@/lib/dayun-calculator';
-import type { ReferenceContextOverlay } from '@/lib/reference-engine-bridge';
-import type { ReferenceCorpusInput, ReferenceIntelligencePack } from '@/lib/reference-intelligence';
-import type { FortuneAnalysisResult, Pillar } from '@/lib/user-types';
+// ── Agentic Report Types V6 ──
+// Core types for the multi-agent orchestration pipeline
 
-export type EngineStrength = 'strong' | 'weak' | 'follow' | 'balanced';
-export type ContextDirection = 'supportive' | 'neutral' | 'pressured';
-export type IndustryDirection = 'up' | 'flat' | 'down';
-export type MacroDirection = 'expansion' | 'transition' | 'contraction';
-export type LifeStage = 'early' | 'rising' | 'prime' | 'transition' | 'later';
+import type { KlinePointV6, KlineAnchorV6 } from '@/lib/kline-v6';
+
+// ── Life Profile Context ──
+
+export interface LifeProfileContext {
+  hasPreviousReports: boolean;
+  calibrationScore?: number;
+  calibrationByCategory?: Record<string, number>;
+  recentEvents: Array<{
+    category: string;
+    title: string;
+    date: string;
+    impact?: string;
+  }>;
+  focusAreas: string[];
+  pastPredictionsSummary?: Array<{
+    category: string;
+    total: number;
+    hitRate: number;
+    pending: number;
+  }>;
+  preferredTone?: string;
+  learningProgress?: Record<string, number>;
+  uncertaintyNotes?: string[];
+}
+
+// ── Engine Ground Truth ──
 
 export interface EngineGroundTruth {
-  version: string;
-  generatedAt: string;
   constitution: {
     dayMaster: string;
-    strength: EngineStrength;
+    strength: 'strong' | 'weak' | 'balanced' | 'follow';
     patternType: string;
     yongShen: string[];
     xiShen: string[];
     jiShen: string[];
     seasonContext: string;
   };
-  pillars: {
-    year: string;
-    month: string;
-    day: string;
-    hour: string;
-    details: Pillar[];
-  };
-  tenGodsTable: Array<{
-    pillar: 'year' | 'month' | 'day' | 'hour';
-    stem: string;
-    branch: string;
-    stemShiShen?: string;
-    hiddenShiShen?: string[];
+  pillars: Array<{
+    label: string;
+    ganZhi: string;
+    celestialStem: string;
+    earthlyBranch: string;
+    nayin: string;
+    hiddenStems: string[];
   }>;
-  dayun: {
-    startAge: number;
-    direction: 'forward' | 'backward' | 'unknown';
-    currentDayun?: string;
-    currentRange?: string;
-    windows: Array<{
+  tenGodsTable: Array<{
+    pillar: string;
+    stemShiShen: string;
+    branchShiShen: string;
+    hiddenShiShen: string[];
+  }>;
+  kline: {
+    points: KlinePointV6[];
+    anchorPoints: KlineAnchorV6[];
+    phases: Array<{
       label: string;
-      startAge: number;
-      endAge: number;
       startYear: number;
       endYear: number;
-      ganZhi: string;
-      quality?: string;
-      yongShenMatch?: string;
-      isCurrent: boolean;
+      trend: 'up' | 'down' | 'flat';
+      avgScore: number;
     }>;
-  };
-  shenSha: {
-    list: Array<{
-      name: string;
-      pillar?: string;
-      impact: 'positive' | 'negative' | 'neutral';
+    windows: Array<{
+      label: string;
+      startYear: number;
+      endYear: number;
+      type: 'peak' | 'trough' | 'turning' | 'stable';
+      score: number;
     }>;
-  };
-  kline: {
-    version: string;
-    points: KlineStructuredPoint[];
-    anchorPoints: KlineAnchorPoint[];
-    phases: KlinePhase[];
-    windows: TimeWindowSummary[];
   };
   timeWindows: {
-    career: TimeWindowSummary[];
-    wealth: TimeWindowSummary[];
-    relationship: TimeWindowSummary[];
-    health: TimeWindowSummary[];
+    career: Array<{ label: string; startYear: number; endYear: number; score: number }>;
+    wealth: Array<{ label: string; startYear: number; endYear: number; score: number }>;
+    relationship: Array<{ label: string; startYear: number; endYear: number; score: number }>;
+    health: Array<{ label: string; startYear: number; endYear: number; score: number }>;
   };
+  dayun: {
+    windows: Array<{
+      ganZhi: string;
+      startAge: number;
+      endAge: number;
+      quality: 'excellent' | 'good' | 'neutral' | 'poor';
+      yongShenMatch: 'good' | 'neutral' | 'bad';
+      isCurrent: boolean;
+    }>;
+    direction: string;
+  };
+  shenSha: Array<{
+    name: string;
+    pillar: string;
+    impact: 'positive' | 'negative' | 'neutral';
+  }>;
   derivedFacts: {
     currentAge: number;
     currentYear: number;
-    currentScore: number | null;
-    peakScore: number | null;
-    troughScore: number | null;
+    currentScore: number;
+    peakScore: number;
+    troughScore: number;
   };
+  lifeProfile?: LifeProfileContext;
 }
 
-export interface KlineStructuredPoint {
-  year: number;
-  age: number;
-  score: number;
-  open: number;
-  close: number;
-  high: number;
-  low: number;
-  career: number;
-  wealth: number;
-  marriage: number;
-  health: number;
-  reason: string;
-}
-
-export interface KlineAnchorPoint {
-  year: number;
-  age: number;
-  score: number;
-  type: 'peak' | 'trough' | 'turning' | 'stable';
-  reason: string;
-}
-
-export interface KlinePhase {
-  label: string;
-  startYear: number;
-  endYear: number;
-  startAge: number;
-  endAge: number;
-  averageScore: number;
-  trend: 'up' | 'down' | 'stable';
-}
-
-export interface TimeWindowSummary {
-  startYear: number;
-  endYear: number;
-  startAge: number;
-  endAge: number;
-  label: string;
-  score: number;
-}
+// ── Context Signal Pack ──
 
 export interface ContextSignalPack {
-  version: string;
-  generatedAt: string;
   temporal: {
-    currentDate: string;
-    currentYear: number;
-    currentMonth: number;
-    currentSolarTerm?: string;
-    nextSolarTerm?: string;
-    isBeforeLichun: boolean;
-    currentLunarYear?: string;
-    currentLiuNian?: string;
-    currentDaYun?: string;
-    currentPhaseLabel?: string;
+    currentSolarTerm: string;
+    nextSolarTerm: string;
+    lunarYear: string;
+    liuNian: string;
+    season: string;
   };
   macroCycles: {
-    nationalCycle?: {
-      label: string;
-      direction: ContextDirection;
-      reason: string;
-    };
-    economicCycle?: {
-      label: string;
-      direction: MacroDirection;
-      reason: string;
-    };
-    industryCycle?: Array<{
-      industry: string;
-      direction: IndustryDirection;
-      confidence: number;
-      reason: string;
-    }>;
+    nationalCycle: string;
+    nationalStage: string;
+    economicCycle: string;
+    economicStage: string;
+    industryCycle: string;
   };
   geoClimate: {
-    birthPlace?: string;
-    currentPlace?: string;
-    targetPlaces?: string[];
-    climateBias?: string[];
-    geographyPreference?: string[];
-    cityEnergyTags?: string[];
+    climateBias: string;
+    geographyPreference: string;
+    cityEnergyTags: string[];
   };
   spatialFactors: {
     favorableDirections: string[];
     unfavorableDirections: string[];
-    movementAdvice?: string[];
-    environmentAdvice?: string[];
+    movementAdvice: string[];
+    environmentAdvice: string[];
   };
   humanFactors: {
-    lifeStage: LifeStage;
-    relationshipFocus?: string;
-    familyRolePressure?: string[];
-    collaborationMode?: string[];
-    tacitSummary?: string;
-    tacitSignals?: string[];
+    lifeStage: string;
+    relationshipFocus: string;
+    familyRolePressure: string;
+    collaborationMode: string;
   };
   worldState: {
     summary: string;
-    currentPriority: string;
-    actionBias: string;
-    timingBias: string;
-    environmentBias: string;
+    priority: string;
+    bias: string;
     guardrails: string[];
-    tacitLeverage?: string;
-  };
-  referenceIntelligence?: {
-    pack: ReferenceIntelligencePack;
-    overlay: ReferenceContextOverlay;
   };
 }
 
-export interface AgentExecutionContext {
-  reportId?: string;
-  userId?: string;
-  timeoutMs?: number;
-}
-
-export interface AgentTask<TInput = unknown, TOutput = unknown> {
-  key: string;
-  input: TInput;
-  execute: (input: TInput) => Promise<TOutput>;
-  timeoutMs?: number;
-}
-
-export interface AgentTaskResult<TOutput = unknown> {
-  key: string;
-  ok: boolean;
-  output?: TOutput;
-  error?: string;
-  startedAt: string;
-  finishedAt: string;
-  durationMs: number;
-}
-
-export interface ParallelAgentRunResult {
-  startedAt: string;
-  finishedAt: string;
-  durationMs: number;
-  results: Record<string, AgentTaskResult>;
-  succeeded: string[];
-  failed: string[];
-}
-
-export interface AgentPromptModule {
-  label: string;
-  content: string;
-}
-
-export interface BuildGroundTruthInput {
-  birthDate: Date;
-  report: Pick<
-    FortuneAnalysisResult,
-    'basic' | 'pattern' | 'advice' | 'tenGods' | 'klineData' | 'dayun' | 'shenSha'
-  > & {
-    advice?: FortuneAnalysisResult['advice'] & {
-      yongShen?: string[];
-      xiShen?: string[];
-      jiShen?: string[];
-    };
-  };
-  version?: string;
-}
-
-export interface BuildContextSignalsInput {
-  birthDate: Date;
-  birthPlace?: string;
-  currentPlace?: string;
-  targetPlaces?: string[];
-  industries?: string[];
-  referenceCorpus?: ReferenceCorpusInput;
-  engine: EngineGroundTruth;
-  report?: {
-    advice?: FortuneAnalysisResult['advice'];
-    fortune?: FortuneAnalysisResult['fortune'];
-    tacitSummary?: string;
-    tacitSignals?: string[];
-  };
-  now?: Date;
-  version?: string;
-}
+// ── Structured Agentic Context ──
 
 export interface StructuredAgenticContext {
   engine: EngineGroundTruth;
   context: ContextSignalPack;
-  report?: {
-    advice?: FortuneAnalysisResult['advice'];
-    fortune?: FortuneAnalysisResult['fortune'];
-    tacitSummary?: string;
-    tacitSignals?: string[];
+  report: {
+    input: Record<string, any>;
+    raw: any;
   };
+  lifeProfile?: LifeProfileContext;
 }
 
-export type CurrentDayunLike = DayunResult['currentDayun'];
+// ── Agent Task & Result ──
+
+export type CoreAgentKey =
+  | 'core_constitution'
+  | 'kline_narrative'
+  | 'temporal_spatial_advisor'
+  | 'career_wealth'
+  | 'relationship_family'
+  | 'health_lifestyle'
+  | 'strategy_advisor';
+
+export type GovernanceKey =
+  | 'consensus_reviewer'
+  | 'repair_executor'
+  | 'verify_engine';
+
+export type AgentRole = 'interpret' | 'synthesize' | 'decide' | 'review';
+
+export interface AgentTask {
+  id: string;
+  key: CoreAgentKey | GovernanceKey;
+  role: AgentRole;
+  wave: number;
+  dependsOn: CoreAgentKey[];
+  run: (ctx: StructuredAgenticContext) => Promise<any>;
+  timeoutMs?: number;
+  retryable?: boolean;
+}
+
+export interface AgentTaskResult<T = any> {
+  agentKey: string;
+  status: 'ok' | 'error' | 'timeout' | 'empty';
+  data: T | null;
+  timing: { startMs: number; endMs: number; durationMs: number };
+  model?: string;
+  error?: string;
+}
+
+export interface AgentRun {
+  tasks: AgentTaskResult[];
+  successRate: number;
+  durationMs: number;
+}
+
+export interface MergedAgentResults {
+  merged: Record<string, any>;
+  errors: Array<{ agentKey: string; error: string }>;
+  successRate: number;
+}
+
+// ── Pipeline Result ──
+
+export interface PipelineResult {
+  context: StructuredAgenticContext;
+  run: AgentRun;
+  merged: MergedAgentResults;
+  review?: ReviewResult;
+  repair?: RepairResult;
+  verify?: VerifyResult;
+}
+
+// ── Review / Repair / Verify ──
+
+export interface ReviewResult {
+  consistencyScore: number;
+  hardIssues: string[];
+  softIssues: string[];
+  verdict: 'PASS' | 'WARN' | 'FAIL';
+}
+
+export interface RepairResult {
+  repaired: string[];
+  unchanged: string[];
+}
+
+export interface VerifyResult {
+  rulesPassed: number;
+  rulesFailed: number;
+  totalRules: number;
+  checks: Array<{ rule: string; passed: boolean; detail: string }>;
+  verdict: 'PASS' | 'WARN' | 'FAIL';
+}
+
+// ── LLM Client Types ──
+
+export interface LLMCallParams {
+  system: string;
+  user: string;
+  temperature?: number;
+  timeoutMs?: number;
+  model?: string;
+}
+
+export interface LLMCallResult<T> {
+  data: T | null;
+  error?: string;
+  model: string;
+  durationMs: number;
+}

@@ -49,6 +49,15 @@ export default function ToolPremiumDepthPanel({
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
+            {!reportId ? (
+              <Link
+                href={`/analyze?intent=career&source=tool_premium_depth_panel&from=${encodeURIComponent(tool.slug)}`}
+                className="action-primary inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white hover:bg-[color:var(--brand-deep)]"
+              >
+                先生成结构报告
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            ) : null}
             <Link
               href={buildChatHref({
                 reportId: reportId || undefined,
@@ -58,9 +67,9 @@ export default function ToolPremiumDepthPanel({
                 ctaStrategyKey,
                 sourceFamily,
               })}
-              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--signal-strong)] hover:text-white"
+              className="action-secondary inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--signal-strong)] hover:text-white"
             >
-              继续追问
+              {reportId ? '继续追问' : '无报告先聊（依据弱）'}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

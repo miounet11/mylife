@@ -8,7 +8,12 @@ import { buildAnalysisWorkflowSnapshot, loadMingliAnalysisWorkflow } from '@/lib
 import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
 import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
-import { calculateTrueSolarTime } from '@/lib/solar-time';
+import {
+  attachChartCalculationIdentity,
+  buildChartCalculationIdentity,
+  extractPillarsFromBasic,
+  resolveEffectiveTiming,
+} from '@/lib/calculation-identity';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { appendToolMemoryToNarrative, summarizeToolSessions } from '@/lib/tool-context';
 import {
@@ -360,9 +365,19 @@ async function executeAnalyze(
   const tacitSignals = buildTacitKnowledgeFocusTags(tacitContext);
   const source = typeof data.source === 'string' ? data.source.trim() : '';
   const toolSlug = typeof data.toolSlug === 'string' ? data.toolSlug.trim() : '';
-  const timing = resolveEffectiveTiming(data);
-  const timezone = (data.timezone as number) || 8;
-  const useSeparateZiHour = Boolean(data.useSeparateZiHour);
+  const timing = resolveEffectiveTiming({
+    birthDate: data.birthDate,
+    birthTime: data.birthTime,
+    birthSecond: data.birthSecond,
+    timezone: data.timezone,
+    longitude: data.longitude,
+    useSolarTime: data.useSolarTime,
+    useDaylightSaving: data.useDaylightSaving,
+    useSeparateZiHour: data.useSeparateZiHour,
+  });
+  const timezone = timing.timezone;
+  const useSeparateZiHour = timing.useSeparateZiHour;
+  const sect: 1 | 2 = useSeparateZiHour ? 1 : 2;
 
   if (timing.usedSolarTime) {
     stage({
@@ -384,12 +399,12 @@ async function executeAnalyze(
 
   const { result: finalResult, llmUsed } = await generateVersionedReport({
     name: data.name,
-    birthDate: timing.effectiveBirthDate,
+    birthDate: timing.effectiveBirthDateObj,
     birthTime: timing.effectiveBirthTime,
     birthPlace: data.birthPlace || '北京',
     timezone,
     gender: data.gender || 'male',
-    sect: useSeparateZiHour ? 1 : 2,
+    sect,
     tacitSummary,
     tacitSignals,
     userId,
@@ -401,6 +416,14 @@ async function executeAnalyze(
       }
     },
   });
+
+  // 锁定命盘计算身份：升级/重算必须复用同一有效时间与四柱指纹
+  const calculationIdentity = buildChartCalculationIdentity({
+    timing,
+    pillars: extractPillarsFromBasic(finalResult.basic),
+    sect,
+  });
+  finalResult.analysis = attachChartCalculationIdentity(finalResult.analysis, calculationIdentity);
 
   const toolMemory = summarizeToolSessions(recentToolSessions, null, 5);
   finalResult.analysis = {
@@ -483,7 +506,14 @@ async function executeAnalyze(
       fortune: finalResult.fortune,
       advice: finalResult.advice as FortuneAdvice,
       evidence: finalResult.evidence,
-      analysis: finalResult.analysis,
+      analysis: {
+        ...(finalResult.analysis || {}),
+        intent: (typeof data.intent === 'string' && data.intent.trim()) || finalResult.analysis?.intent || 'yearly',
+        birthAccuracy:
+          data.birthAccuracy === 'exact' || data.birthAccuracy === 'unknown' || data.birthAccuracy === 'range'
+            ? data.birthAccuracy
+            : (data.unknowhour ? 'unknown' : (data.birthTime && data.birthTime !== '12:00' ? 'exact' : 'range')),
+      },
       klineData: finalResult.klineData,
       dayun: finalResult.dayun,
       shenSha: finalResult.shenSha,
@@ -491,6 +521,11 @@ async function executeAnalyze(
       isPublic: true,
       relation: sanitizedRelation.relation ?? undefined,
       relationLabel: sanitizedRelation.relationLabel ?? undefined,
+      intent: (typeof data.intent === 'string' && data.intent.trim()) || 'yearly',
+      birthAccuracy:
+        data.birthAccuracy === 'exact' || data.birthAccuracy === 'unknown' || data.birthAccuracy === 'range'
+          ? data.birthAccuracy
+          : (data.unknowhour ? 'unknown' : (data.birthTime && data.birthTime !== '12:00' ? 'exact' : 'range')),
     }
   );
   const savedReport = createSavedReportSnapshot({
@@ -838,80 +873,6 @@ function mapPipelineStageDetail(
   return status === 'started'
     ? '正在汇总结构、趋势和行动建议。'
     : '最终报告已整理完成。';
-}
-
-function resolveEffectiveTiming(data: AnalyzeInput) {
-  const [year, month, day] = data.birthDate.split('-').map(Number);
-  const [hour, minute] = data.birthTime.split(':').map(Number);
-  const second = (data.birthSecond as number) || 0;
-  const longitude = (data.longitude as number) || 116.407;
-  const timezone = (data.timezone as number) || 8;
-  const useDaylightSaving = Boolean(data.useDaylightSaving);
-  const normalizedClock = useDaylightSaving
-    ? toStandardClockTime(year, month, day, hour, minute, second)
-    : { year, month, day, hour, minute, second };
-
-  let effectiveYear = normalizedClock.year;
-  let effectiveMonth = normalizedClock.month;
-  let effectiveDay = normalizedClock.day;
-  let effectiveHour = normalizedClock.hour;
-  let effectiveMinute = normalizedClock.minute;
-  let effectiveSecond = normalizedClock.second;
-  let solarTimeDetail = '本次未启用真太阳时修正。';
-  let usedSolarTime = false;
-
-  if (data.useSolarTime && longitude !== undefined) {
-    const solarTimeInfo = calculateTrueSolarTime(
-      normalizedClock.year,
-      normalizedClock.month,
-      normalizedClock.day,
-      normalizedClock.hour,
-      normalizedClock.minute,
-      normalizedClock.second,
-      longitude,
-      timezone
-    );
-    effectiveYear = solarTimeInfo.year;
-    effectiveMonth = solarTimeInfo.month;
-    effectiveDay = solarTimeInfo.day;
-    effectiveHour = solarTimeInfo.hour;
-    effectiveMinute = solarTimeInfo.minute;
-    effectiveSecond = solarTimeInfo.second;
-    usedSolarTime = true;
-    solarTimeDetail = `钟表时间 ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} 已修正为真太阳时 ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond}。`;
-    console.log(
-      `[Solar Time] 钟表时间: ${normalizedClock.year}-${normalizedClock.month}-${normalizedClock.day} ${normalizedClock.hour}:${normalizedClock.minute}:${normalizedClock.second} → 真太阳时: ${effectiveYear}-${effectiveMonth}-${effectiveDay} ${effectiveHour}:${effectiveMinute}:${effectiveSecond}`
-    );
-  }
-
-  return {
-    usedSolarTime,
-    solarTimeDetail,
-    effectiveBirthDate: new Date(effectiveYear, effectiveMonth - 1, effectiveDay),
-    effectiveBirthTime: `${String(effectiveHour).padStart(2, '0')}:${String(effectiveMinute).padStart(2, '0')}`,
-    effectiveSecond,
-  };
-}
-
-function toStandardClockTime(
-  year: number,
-  month: number,
-  day: number,
-  hour: number,
-  minute: number,
-  second: number
-) {
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute, second));
-  utcDate.setUTCMinutes(utcDate.getUTCMinutes() - 60);
-
-  return {
-    year: utcDate.getUTCFullYear(),
-    month: utcDate.getUTCMonth() + 1,
-    day: utcDate.getUTCDate(),
-    hour: utcDate.getUTCHours(),
-    minute: utcDate.getUTCMinutes(),
-    second: utcDate.getUTCSeconds(),
-  };
 }
 
 export async function GET() {

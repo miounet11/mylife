@@ -1,4 +1,5 @@
 import type { ReportActionSuggestion } from '@/lib/report-v2';
+import { buildTeacherChatHref, teacherFromTopicKey } from '@/lib/teachers';
 
 function cleanQueryValue(value?: string | null) {
   const normalized = `${value || ''}`.trim();
@@ -33,6 +34,8 @@ export function buildChatHref(params: {
   eventId?: string | null;
   intent?: string | null;
   question?: string | null;
+  /** alias used by dual-track workspace */
+  q?: string | null;
   source?: string | null;
   ctaStrategyKey?: string | null;
   sourceFamily?: string | null;
@@ -41,7 +44,7 @@ export function buildChatHref(params: {
   const reportId = cleanQueryValue(params.reportId);
   const eventId = cleanQueryValue(params.eventId);
   const intent = cleanQueryValue(params.intent);
-  const question = cleanQueryValue(params.question);
+  const question = cleanQueryValue(params.question || params.q);
   const source = normalizeAttributionSource(params.source);
   const ctaStrategyKey = cleanQueryValue(params.ctaStrategyKey);
   const sourceFamily = cleanQueryValue(params.sourceFamily);
@@ -49,7 +52,11 @@ export function buildChatHref(params: {
   if (reportId) query.set('reportId', reportId);
   if (eventId) query.set('eventId', eventId);
   if (intent) query.set('intent', intent);
-  if (question) query.set('question', question);
+  // production chat uses `question`; dual-track workspace also accepts `q`
+  if (question) {
+    query.set('question', question);
+    query.set('q', question);
+  }
   if (source) query.set('source', source);
   if (ctaStrategyKey) query.set('ctaStrategyKey', ctaStrategyKey);
   if (sourceFamily) query.set('sourceFamily', sourceFamily);
@@ -61,7 +68,7 @@ export function buildChatHref(params: {
 export function buildReportFollowupQuestion(params: {
   actionSuggestions?: ReportActionSuggestion[] | null;
   defaultQuestion?: string | null;
-}) {
+} = {}) {
   const primarySuggestion = params.actionSuggestions?.[0];
   if (primarySuggestion) {
     return `请围绕“${primarySuggestion.title}”这个动作，按结构、阶段、环境、动作四层继续拆解：我现在该怎么推进，先满足什么条件，最需要防什么偏差？`;
@@ -98,7 +105,7 @@ export function buildReportFollowupSuggestions(params: {
   correctionLevel?: 'healthy' | 'watch' | 'action' | null;
   correctionSummary?: string | null;
   pendingOverdueEvent?: { title?: string; date?: string; overdueDays?: number } | null;
-}): ReportFollowupSuggestion[] {
+} = {}): ReportFollowupSuggestion[] {
   const suggestions: ReportFollowupSuggestion[] = [];
   const name = params.publicName || '我';
 
@@ -194,3 +201,94 @@ export function buildReportFollowupSuggestions(params: {
   return suggestions.slice(0, 3);
 }
 
+/** 场景化持续追问（普通人主路径 / dual-track） */
+export type FollowupScene =
+  | 'general'
+  | 'career'
+  | 'wealth'
+  | 'marriage'
+  | 'health'
+  | 'month'
+  | 'risk'
+  | 'move'
+  | 'job';
+
+const SCENE_QUESTIONS: Record<FollowupScene, string[]> = {
+  general: [
+    '基于这份报告，我现在最该优先处理的一件事是什么？',
+    '如果只能改一个习惯，接下来 30 天先改什么？',
+    '我怎样判断自己是不是在“用神方向”上发力？',
+  ],
+  career: [
+    '结合我的事业评分，未来 3–6 个月是该换赛道、深耕，还是先稳住？',
+    '以 2026 年的行业节奏，我更适合进攻还是先做能力复利？',
+    '跳槽/升职窗口大概怎么看，有哪些不宜硬推的信号？',
+  ],
+  wealth: [
+    '按我的财运结构，现在更适合稳健储蓄、技能变现，还是试探性投入？',
+    '未来半年哪些财务动作要避免杠杆和冲动？',
+    '如何把用神方向落到可执行的收入结构上？',
+  ],
+  marriage: [
+    '结合婚配与关系评分，现阶段该主动推进关系，还是先把自身节奏理顺？',
+    '沟通和边界上，我最容易踩的坑是什么？',
+    '未来半年适合结婚/同居/认真交往的窗口怎么判断？',
+  ],
+  health: [
+    '按健康系统建议，我最该先调整作息、运动还是压力管理？',
+    '哪些身体信号需要优先重视（非医疗诊断，仅生活节奏）？',
+    '接下来 90 天，一条可持续的养护计划怎么排？',
+  ],
+  month: [
+    '本月运势下，我这周最该完成的一件事是什么？',
+    '本月有哪些日子适合谈事、签约或公开表达？',
+    '如果本月偏紧，如何用最小动作守住底盘？',
+  ],
+  risk: [
+    '报告里的避险时段，我具体该怎么安排工作与决策？',
+    '如何把“不宜”写成日历上的可执行提醒？',
+    '风险过了之后，怎样安全地恢复推进？',
+  ],
+  move: [
+    '结合地理与方位建议，搬家/城市选择要优先看什么？',
+    '暂时不能迁移时，怎样用办公与出差方向做局部修正？',
+  ],
+  job: [
+    '结合十神与行业映射，我更匹配哪类岗位画像？',
+    '转行时，如何用用神方向筛行业而不是跟风？',
+  ],
+};
+
+export function buildSceneFollowupQuestion(scene: FollowupScene = 'general', index = 0): string {
+  const list = SCENE_QUESTIONS[scene] || SCENE_QUESTIONS.general;
+  return list[Math.abs(index) % list.length]!;
+}
+
+export function buildSceneFollowupSuggestions(scene: FollowupScene = 'general'): string[] {
+  return (SCENE_QUESTIONS[scene] || SCENE_QUESTIONS.general).slice(0, 3);
+}
+
+/** 议题 key → 追问场景 */
+export function topicKeyToScene(key: string): FollowupScene {
+  if (key === 'career') return 'career';
+  if (key === 'wealth') return 'wealth';
+  if (key === 'marriage') return 'marriage';
+  if (key === 'health') return 'health';
+  return 'general';
+}
+
+export function buildTopicChatHref(reportId: string, topicKey: string, topicTitle?: string) {
+  // 议题 → 对应老师（统一深链）
+  const teacher = teacherFromTopicKey(topicKey);
+  const scene = topicKeyToScene(topicKey);
+  const q =
+    topicTitle && scene === 'general'
+      ? `关于「${topicTitle}」，结合我的报告我现在该怎么做？`
+      : buildSceneFollowupQuestion(scene, 0);
+  return buildTeacherChatHref({
+    teacherId: teacher.id,
+    reportId,
+    question: q,
+    source: `report:${reportId}:topic:${topicKey}`,
+  });
+}

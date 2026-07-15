@@ -1,155 +1,180 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowRight, Clock3, Layers3, Sparkles } from 'lucide-react';
-import { getToolDefinition } from '@/lib/tools';
+import { ArrowRight, Loader2, Wrench } from 'lucide-react';
+import {
+  fetchToolSessionHistory,
+  readToolHistory,
+  type ToolHistoryEntry,
+  type ToolSessionHistoryItem,
+} from '@/lib/tool-history';
 
-// QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
-const _qaContract = ['intro-copy', 'action-secondary'] as const;
-void _qaContract;
-type ToolHistoryItem = {
-  id: string;
-  toolSlug: string;
-  reportId?: string;
-  status: 'completed' | 'locked';
-  result?: {
-    headline?: string;
-    recommendedAction?: string;
-  };
-  createdAt?: string;
-};
-
-type ToolHistoryResponse = {
-  success: boolean;
-  data?: ToolHistoryItem[];
-  error?: string;
-};
-
-function formatDate(value?: string) {
-  if (!value) return '刚刚';
-  const matched = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (matched) {
-    return `${matched[1]}-${matched[2]}-${matched[3]}`;
-  }
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-  return `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, '0')}-${String(parsed.getDate()).padStart(2, '0')}`;
+function formatWhen(value?: string) {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value.slice(0, 10);
+  return date.toLocaleString('zh-CN', {
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 export default function ToolHistoryPanel({
-  compact = false,
-  title = '工具历史',
-  description = '',
+  title,
+  description,
+  compact,
+  limit = 8,
+  showVisits = true,
 }: {
-  compact?: boolean;
   title?: string;
   description?: string;
+  compact?: boolean;
+  limit?: number;
+  /** Show localStorage page visits under server runs. */
+  showVisits?: boolean;
 }) {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [items, setItems] = useState<ToolHistoryItem[]>([]);
+  const [sessions, setSessions] = useState<ToolSessionHistoryItem[]>([]);
+  const [visits, setVisits] = useState<ToolHistoryEntry[]>([]);
 
   useEffect(() => {
+    let cancelled = false;
     const load = async () => {
-      try {
-        const response = await fetch('/api/tools/history', { cache: 'no-store' });
-        const payload: ToolHistoryResponse = await response.json();
-        if (!response.ok || !payload.success) {
-          setError(payload.error || '加载工具历史失败');
-          return;
-        }
-        setItems(payload.data || []);
-      } catch {
-        setError('网络异常，无法加载工具历史');
-      } finally {
-        setLoading(false);
+      setLoading(true);
+      const [serverSessions] = await Promise.all([fetchToolSessionHistory(limit)]);
+      if (cancelled) return;
+      setSessions(serverSessions);
+      if (showVisits) {
+        setVisits(readToolHistory().slice(0, Math.max(4, Math.floor(limit / 2))));
       }
+      setLoading(false);
     };
-    load();
-  }, []);
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [limit, showVisits]);
 
-  const mapped = useMemo(
-    () =>
-      items
-        .map((item) => ({ ...item, tool: getToolDefinition(item.toolSlug) }))
-        .filter((item) => item.tool),
-    [items],
-  );
+  const hasSessions = sessions.length > 0;
+  const visitOnly = !hasSessions && visits.length > 0;
 
   return (
-    <section className="fb-card p-5 md:p-6">
+    <section className={`fb-card ${compact ? 'p-3' : 'p-4 md:p-5'}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            <Sparkles className="h-3 w-3" />
-            {title}
-          </div>
+          <h2 className="inline-flex items-center gap-1.5 text-sm font-bold text-[color:var(--ink-2)]">
+            <Wrench className="h-3.5 w-3.5 text-[color:var(--brand)]" />
+            {title || '工具使用记录'}
+          </h2>
           {description ? (
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">{description}</p>
-          ) : null}
+            <p className="mt-1 text-xs leading-5 text-[color:var(--ink-4)]">{description}</p>
+          ) : (
+            <p className="mt-1 text-xs leading-5 text-[color:var(--ink-4)]">
+              已完成的工具结果会保存在本会话，可点开快速回看结论与建议。
+            </p>
+          )}
         </div>
         <Link
           href="/tools"
-          className="fb-btn inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--fb-blue)] hover:no-underline"
+          className="shrink-0 text-[12px] font-semibold text-[color:var(--brand)] hover:no-underline"
         >
-          全部工具
+          工具中心
         </Link>
       </div>
 
-      {error ? (
-        <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--alert)]">
-          {error}
+      {loading ? (
+        <div className="mt-3 flex items-center gap-2 text-[12px] text-[color:var(--ink-4)]">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          加载工具记录…
         </div>
       ) : null}
 
-      <div className={`mt-4 grid gap-3 ${compact ? '' : 'md:grid-cols-2'}`}>
-        {loading ? (
-          [...Array(compact ? 2 : 4)].map((_, index) => (
-            <div
-              key={index}
-              className="h-24 animate-pulse rounded-[var(--radius)] bg-[color:var(--bg-sunken)]"
-            />
-          ))
-        ) : mapped.length > 0 ? (
-          mapped.slice(0, compact ? 3 : 6).map((item) => (
-            <Link
-              key={item.id}
-              href={`/tool-result/${item.id}`}
-              className="group fb-card p-4 transition-colors hover:border-[color:var(--fb-blue)] hover:bg-[color:var(--fb-action-bg)] hover:no-underline"
-            >
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-bold leading-snug text-[color:var(--ink-1)]">
-                  {item.tool?.shortTitle}
+      {!loading && hasSessions ? (
+        <ul className="mt-3 space-y-2">
+          {sessions.map((session) => (
+            <li key={session.id}>
+              <Link
+                href={session.resultHref}
+                className="block rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-3 py-2.5 transition hover:border-[color:var(--brand-soft-2)] hover:bg-[color:var(--bg-sunken)] hover:no-underline"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="text-[13px] font-bold text-[color:var(--ink-1)]">
+                      {session.title}
+                      <span className="ml-1.5 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--brand)]">
+                        {session.status === 'completed' ? '已完成' : session.status}
+                      </span>
+                    </div>
+                    {session.headline ? (
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--ink-3)]">
+                        {session.headline}
+                      </p>
+                    ) : session.summary ? (
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-5 text-[color:var(--ink-3)]">
+                        {session.summary}
+                      </p>
+                    ) : null}
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-[color:var(--ink-4)]">
+                      <span>{formatWhen(session.createdAt)}</span>
+                      {session.reportId ? (
+                        <span className="truncate">报告 {session.reportId.slice(0, 18)}…</span>
+                      ) : null}
+                    </div>
+                  </div>
+                  <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-bold text-[color:var(--brand)]">
+                    看结果
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </span>
                 </div>
-                <span className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-                  {item.tool?.category}
-                </span>
-              </div>
-              <div className="mt-2 text-xs leading-5 text-[color:var(--ink-3)]">
-                {item.result?.headline || item.result?.recommendedAction || '已生成结果'}
-              </div>
-              <div className="mt-3 flex items-center justify-between text-xs text-[color:var(--ink-5)]">
-                <span className="inline-flex items-center gap-1 font-mono tabular-nums">
-                  <Clock3 className="h-3 w-3" />
-                  {formatDate(item.createdAt)}
-                </span>
-                <span className="inline-flex items-center gap-1 font-bold uppercase tracking-wider text-[color:var(--ink-4)] group-hover:gap-1.5 group-hover:text-[color:var(--brand-strong)] transition-all">
-                  查看结果
-                  <ArrowRight className="h-3 w-3" />
-                </span>
-              </div>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {!loading && !hasSessions ? (
+        <div className="mt-3 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--hairline)] px-3 py-3">
+          <p className="text-[13px] leading-5 text-[color:var(--ink-3)]">
+            {visitOnly
+              ? '你浏览过工具页，但还没有完整跑出可回看的结果。先生成报告再运行工具。'
+              : '暂无工具运行记录。完成一次综合报告后，可在工具中心做单项聚焦判断。'}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <Link href="/tools" className="fb-btn fb-btn-primary h-8 px-3 text-[12px] hover:no-underline">
+              去工具中心
             </Link>
-          ))
-        ) : (
-          <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-xs leading-5 text-[color:var(--ink-4)]">
-            <div className="inline-flex items-center gap-1.5 font-semibold text-[color:var(--ink-3)]">
-              <Layers3 className="h-3.5 w-3.5" />
-              还没有单项工具记录
-            </div>
+            <Link href="/analyze" className="fb-btn h-8 px-3 text-[12px] hover:no-underline">
+              先生成报告
+            </Link>
           </div>
-        )}
-      </div>
+        </div>
+      ) : null}
+
+      {!loading && showVisits && visits.length ? (
+        <div className="mt-3 border-t border-[color:var(--hairline)] pt-3">
+          <div className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--ink-4)]">
+            最近浏览
+          </div>
+          <ul className="mt-1.5 space-y-1">
+            {visits.map((entry) => (
+              <li key={entry.href}>
+                <Link
+                  href={entry.href}
+                  className="flex items-center justify-between rounded-[var(--radius-sm)] px-1 py-1.5 text-[12px] font-semibold text-[color:var(--ink-3)] hover:text-[color:var(--brand)] hover:no-underline"
+                >
+                  <span className="truncate">{entry.title}</span>
+                  <span className="ml-2 shrink-0 text-[10px] font-normal text-[color:var(--ink-4)]">
+                    {formatWhen(entry.usedAt)}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
     </section>
   );
 }

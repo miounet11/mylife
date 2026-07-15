@@ -17,8 +17,8 @@ import {
   isProfileFresh,
   type TimingProfileRecord,
 } from './timing-profile-store';
-import { fallbackNarrate } from './timing-narrator';
-import type { DetectorInput } from './types';
+import { attachFallbackUserCopy } from './timing-narrator';
+import type { DetectorInput, TimingPoint, TimingProfile } from './types';
 
 interface FortuneShape {
   id: string;
@@ -72,7 +72,9 @@ export function resolveTimingProfileForFortune(fortune: FortuneShape): ResolvePr
   let record = getTimingProfile(userId);
 
   if (isProfileFresh(record, birthSignature, currentLiuNian)) {
-    return { record: record!, freshlyComputed: false };
+    // Old cache may only have zh userCopy — fill EN fallback without full recompute
+    const hydrated = hydrateBilingualCopy(record!);
+    return { record: hydrated, freshlyComputed: false };
   }
 
   // 重算
@@ -105,11 +107,11 @@ export function resolveTimingProfileForFortune(fortune: FortuneShape): ResolvePr
 
   const profile = buildTimingProfile(input);
 
-  // 立即填 fallback narrator copy
+  // Bilingual fallback narrator (zh userCopy + en userCopyEn) at generation time
   const profileWithFallback = {
     ...profile,
-    next_30_days: profile.next_30_days.map((p) => ({ ...p, userCopy: fallbackNarrate(p) })),
-    next_12_months: profile.next_12_months.map((p) => ({ ...p, userCopy: fallbackNarrate(p) })),
+    next_30_days: attachFallbackUserCopy(profile.next_30_days),
+    next_12_months: attachFallbackUserCopy(profile.next_12_months),
   };
 
   saveTimingProfile({
@@ -139,4 +141,18 @@ function extractPatternFromAnalysis(analysis: unknown): string | undefined {
     return undefined;
   }
   return undefined;
+}
+
+function hydrateBilingualCopy<T extends TimingProfile>(record: T): T {
+  const need30 = (record.next_30_days || []).some((p) => !p.userCopyEn);
+  const need12 = (record.next_12_months || []).some((p) => !p.userCopyEn);
+  if (!need30 && !need12) return record;
+
+  const next_30_days = attachFallbackUserCopy(
+    (record.next_30_days || []).map((p) => ({ ...p } as TimingPoint))
+  );
+  const next_12_months = attachFallbackUserCopy(
+    (record.next_12_months || []).map((p) => ({ ...p } as TimingPoint))
+  );
+  return { ...record, next_30_days, next_12_months };
 }

@@ -54,6 +54,12 @@ interface RawFortuneRow {
   /** v5-D39 多档案：可选关系字段；老档案为 NULL，等价 self */
   relation?: string | null;
   relation_label?: string | null;
+  birth_accuracy?: string | null;
+  intent?: string | null;
+  is_primary?: number | null;
+  birth_signature?: string | null;
+  profile_completeness?: number | null;
+
 }
 
 interface RawAnalyticsEventRow {
@@ -1313,6 +1319,12 @@ function mapFortuneRow(row: RawFortuneRow): FortuneRecord {
     updatedAt: row.updated_at,
     relation: row.relation || undefined,
     relationLabel: row.relation_label || undefined,
+    birthAccuracy: row.birth_accuracy || undefined,
+    intent: row.intent || undefined,
+    isPrimary: row.is_primary === 1,
+    birthSignature: row.birth_signature || undefined,
+    profileCompleteness: row.profile_completeness ?? undefined,
+    deletedAt: row.deleted_at || undefined,
   } as FortuneRecord;
 }
 
@@ -1943,6 +1955,11 @@ export function initializeDatabase() {
     db.exec(`ALTER TABLE content_entries ADD COLUMN meta JSON`);
   }
 
+  const emailSubscriptionColumns = db.prepare(`PRAGMA table_info(email_subscriptions)`).all() as Array<{ name: string }>;
+  if (!emailSubscriptionColumns.some((column) => column.name === 'meta')) {
+    db.exec(`ALTER TABLE email_subscriptions ADD COLUMN meta JSON`);
+  }
+
   db.exec(`
     CREATE TABLE IF NOT EXISTS analytics_events (
       id TEXT PRIMARY KEY,
@@ -2278,6 +2295,95 @@ export function initializeDatabase() {
     )
   `);
 
+
+
+  // Profile settings schema (P1 documents)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS profile_documents (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      fortune_id TEXT,
+      title TEXT NOT NULL,
+      category TEXT NOT NULL DEFAULT 'other',
+      content TEXT NOT NULL,
+      visibility TEXT NOT NULL DEFAULT 'engine',
+      pinned INTEGER DEFAULT 0,
+      word_count INTEGER DEFAULT 0,
+      source TEXT DEFAULT 'manual',
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      deleted_at TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (fortune_id) REFERENCES fortunes(id) ON DELETE SET NULL
+    )
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_profile_documents_user
+      ON profile_documents(user_id, datetime(updated_at) DESC)
+  `);
+
+  const fortuneDeletedColumn = db.prepare('PRAGMA table_info(fortunes)').all() as Array<{ name: string }>;
+  if (!fortuneDeletedColumn.some((column) => column.name === 'deleted_at')) {
+    db.exec(`ALTER TABLE fortunes ADD COLUMN deleted_at TEXT`);
+  }
+
+  // Profile settings schema (P0)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS profile_supplements (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      fortune_id TEXT,
+      domain TEXT NOT NULL,
+      fields JSON NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (fortune_id) REFERENCES fortunes(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_profile_supplements_scope
+      ON profile_supplements(user_id, COALESCE(fortune_id, ''), domain)
+  `);
+
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS profile_change_log (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      fortune_id TEXT,
+      change_type TEXT NOT NULL,
+      field_path TEXT,
+      old_value TEXT,
+      new_value TEXT,
+      triggered_recalc INTEGER DEFAULT 0,
+      meta JSON,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    )
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_profile_change_log_user
+      ON profile_change_log(user_id, datetime(created_at) DESC)
+  `);
+
+  const fortuneProfileColumns = db.prepare('PRAGMA table_info(fortunes)').all() as Array<{ name: string }>;
+  const fortuneProfileColumnNames = new Set(fortuneProfileColumns.map((column) => column.name));
+  const fortuneProfileMigrations: Array<[string, string]> = [
+    ['birth_accuracy', "TEXT DEFAULT 'range'"],
+    ['intent', 'TEXT'],
+    ['is_primary', 'INTEGER DEFAULT 0'],
+    ['birth_signature', 'TEXT'],
+    ['profile_completeness', 'INTEGER DEFAULT 0'],
+  ];
+  for (const [name, definition] of fortuneProfileMigrations) {
+    if (!fortuneProfileColumnNames.has(name)) {
+      db.exec(`ALTER TABLE fortunes ADD COLUMN ${name} ${definition}`);
+    }
+  }
+
   // 索引
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
@@ -2288,6 +2394,7 @@ export function initializeDatabase() {
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
     CREATE INDEX IF NOT EXISTS idx_enhancements_user_id ON enhancements(user_id);
     CREATE INDEX IF NOT EXISTS idx_email_subscriptions_email ON email_subscriptions(email);
+
     CREATE INDEX IF NOT EXISTS idx_auth_codes_email ON auth_codes(email);
     CREATE INDEX IF NOT EXISTS idx_content_entries_type_status ON content_entries(content_type, status);
     CREATE INDEX IF NOT EXISTS idx_content_entries_slug ON content_entries(slug);
@@ -2582,9 +2689,14 @@ export const userOperations = {
 // 命理数据操作
 export const fortuneOperations = {
   create: (fortune: FortuneRecord) => {
+    const resolvedAccuracy =
+      fortune.birthAccuracy === 'exact' || fortune.birthAccuracy === 'unknown' || fortune.birthAccuracy === 'range'
+        ? fortune.birthAccuracy
+        : (fortune.birthTime && fortune.birthTime !== '12:00' ? 'exact' : 'range');
+    const resolvedIntent = (fortune.intent && String(fortune.intent).trim()) || 'yearly';
     const stmt = db.prepare(`
-      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, dayun, shen_sha, report_version, is_public, relation, relation_label)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO fortunes (id, user_id, name, birth_date, birth_time, birth_place, timezone, gender, bazi, five_elements, ten_gods, pattern, fortune, advice, evidence, analysis, kline_data, dayun, shen_sha, report_version, is_public, relation, relation_label, birth_accuracy, intent)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
       fortune.id,
@@ -2609,7 +2721,9 @@ export const fortuneOperations = {
       fortune.reportVersion || 'v1',
       fortune.isPublic === false ? 0 : 1,
       fortune.relation || null,
-      fortune.relationLabel || null
+      fortune.relationLabel || null,
+      resolvedAccuracy,
+      resolvedIntent
     );
   },
 
@@ -2668,6 +2782,13 @@ export const fortuneOperations = {
       birthPlace: 'birth_place',
       userId: 'user_id',
       reportVersion: 'report_version',
+      birthAccuracy: 'birth_accuracy',
+      birthSignature: 'birth_signature',
+      profileCompleteness: 'profile_completeness',
+      intent: 'intent',
+      isPrimary: 'is_primary',
+      relationLabel: 'relation_label',
+      deletedAt: 'deleted_at',
     };
     const setClause = Object.keys(updates)
       .map((key) => `${COLUMN_MAP[key] || key} = ?`)
@@ -5903,7 +6024,11 @@ export const reportUpgradeJobOperations = {
         SET user_id = ?,
             status = ?,
             target_score = ?,
+            attempts = ?,
             max_attempts = ?,
+            last_score = ?,
+            best_score = ?,
+            best_grade = ?,
             next_run_at = ?,
             locked_at = NULL,
             last_error = ?,
@@ -5914,7 +6039,11 @@ export const reportUpgradeJobOperations = {
         job.userId,
         job.status,
         job.targetScore || 95,
+        job.attempts || 0,
         job.maxAttempts || 6,
+        job.lastScore || 0,
+        job.bestScore || job.lastScore || 0,
+        job.bestGrade || null,
         job.nextRunAt || now,
         job.lastError || null,
         JSON.stringify(job.meta || {}),
@@ -6276,6 +6405,216 @@ export const eventOperations = {
 };
 
 // 问答操作
+
+let lifeProfileTableReady = false;
+function ensureLifeProfileTable() {
+  if (lifeProfileTableReady) return;
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS life_profiles (
+      user_id TEXT NOT NULL,
+      birth_signature TEXT NOT NULL,
+      profile_json TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      PRIMARY KEY (user_id, birth_signature),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_life_profiles_user_id ON life_profiles(user_id);
+  `);
+  lifeProfileTableReady = true;
+}
+
+function mapLifeProfileRow(row) {
+  try {
+    const profile = JSON.parse(row.profile_json || '{}');
+    if (!profile || typeof profile !== 'object') return null;
+    return {
+      birthSignature: row.birth_signature,
+      profile: {
+        ...profile,
+        birthSignature: row.birth_signature,
+      },
+    };
+  } catch {
+    return null;
+  }
+}
+
+export const lifeProfileOperations = {
+  listByUserId(userId) {
+    ensureLifeProfileTable();
+    const rows = db.prepare(`
+      SELECT birth_signature, profile_json
+      FROM life_profiles
+      WHERE user_id = ?
+      ORDER BY updated_at DESC
+    `).all(userId);
+    return rows.map(mapLifeProfileRow).filter(Boolean);
+  },
+
+  upsertMany(userId, profiles) {
+    ensureLifeProfileTable();
+    const stmt = db.prepare(`
+      INSERT INTO life_profiles (user_id, birth_signature, profile_json, updated_at)
+      VALUES (@user_id, @birth_signature, @profile_json, datetime('now'))
+      ON CONFLICT(user_id, birth_signature) DO UPDATE SET
+        profile_json = excluded.profile_json,
+        updated_at = datetime('now')
+      WHERE life_profiles.user_id = @user_id
+    `);
+
+    const tx = db.transaction((items) => {
+      for (const item of items) {
+        if (!item?.birthSignature) continue;
+        stmt.run({
+          user_id: userId,
+          birth_signature: item.birthSignature,
+          profile_json: JSON.stringify(item),
+        });
+      }
+    });
+    tx(profiles);
+  },
+};
+let predictionTableReady = false;
+function ensurePredictionTable() {
+  if (predictionTableReady) return;
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS report_predictions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      report_id TEXT NOT NULL,
+      birth_signature TEXT NOT NULL DEFAULT '',
+      category TEXT NOT NULL,
+      statement TEXT NOT NULL,
+      confidence REAL NOT NULL DEFAULT 0.5,
+      due_date TEXT NOT NULL,
+      window_label TEXT,
+      evidence TEXT,
+      verify_checklist TEXT,
+      outcome TEXT DEFAULT 'pending',
+      user_feedback TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_report_predictions_user_id ON report_predictions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_report_predictions_report_id ON report_predictions(report_id);
+  `);
+  predictionTableReady = true;
+}
+
+function mapPredictionRow(row) {
+  let verifyChecklist = [];
+  try {
+    const parsed = JSON.parse(row.verify_checklist || '[]');
+    verifyChecklist = Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch {
+    verifyChecklist = [];
+  }
+  return {
+    id: row.id,
+    reportId: row.report_id,
+    birthSignature: row.birth_signature || '',
+    category: row.category,
+    statement: row.statement,
+    confidence: row.confidence,
+    dueDate: row.due_date,
+    window: row.window_label || undefined,
+    evidence: row.evidence || '',
+    verifyChecklist,
+    outcome: row.outcome || 'pending',
+    userFeedback: row.user_feedback || undefined,
+    createdAt: row.created_at,
+  };
+}
+
+export const predictionOperations = {
+  listByUserId(userId) {
+    ensurePredictionTable();
+    const rows = db.prepare(`
+      SELECT * FROM report_predictions
+      WHERE user_id = ?
+      ORDER BY due_date ASC
+    `).all(userId);
+    return rows.map(mapPredictionRow);
+  },
+
+  upsertMany(userId, predictions) {
+    ensurePredictionTable();
+    const stmt = db.prepare(`
+      INSERT INTO report_predictions (
+        id, user_id, report_id, birth_signature, category, statement, confidence,
+        due_date, window_label, evidence, verify_checklist, outcome, user_feedback, updated_at
+      ) VALUES (
+        @id, @user_id, @report_id, @birth_signature, @category, @statement, @confidence,
+        @due_date, @window_label, @evidence, @verify_checklist, @outcome, @user_feedback, datetime('now')
+      )
+      ON CONFLICT(id) DO UPDATE SET
+        report_id = excluded.report_id,
+        birth_signature = excluded.birth_signature,
+        category = excluded.category,
+        statement = excluded.statement,
+        confidence = excluded.confidence,
+        due_date = excluded.due_date,
+        window_label = excluded.window_label,
+        evidence = excluded.evidence,
+        verify_checklist = excluded.verify_checklist,
+        outcome = CASE
+          WHEN report_predictions.outcome IS NOT NULL
+            AND report_predictions.outcome != 'pending'
+            AND excluded.outcome = 'pending'
+          THEN report_predictions.outcome
+          ELSE excluded.outcome
+        END,
+        user_feedback = COALESCE(excluded.user_feedback, report_predictions.user_feedback),
+        updated_at = datetime('now')
+      WHERE report_predictions.user_id = @user_id
+    `);
+
+    const tx = db.transaction((items) => {
+      for (const item of items) {
+        stmt.run({
+          id: item.id,
+          user_id: userId,
+          report_id: item.reportId,
+          birth_signature: item.birthSignature || '',
+          category: item.category,
+          statement: item.statement,
+          confidence: item.confidence,
+          due_date: item.dueDate,
+          window_label: item.window || null,
+          evidence: item.evidence || null,
+          verify_checklist: JSON.stringify(item.verifyChecklist || []),
+          outcome: item.outcome || 'pending',
+          user_feedback: item.userFeedback || null,
+        });
+      }
+    });
+    tx(predictions);
+  },
+
+  updateOutcome(userId, id, outcome, feedback) {
+    ensurePredictionTable();
+    const existing = db.prepare(`
+      SELECT * FROM report_predictions WHERE id = ? AND user_id = ? LIMIT 1
+    `).get(id, userId);
+    if (!existing) return null;
+
+    db.prepare(`
+      UPDATE report_predictions
+      SET outcome = ?, user_feedback = COALESCE(?, user_feedback), updated_at = datetime('now')
+      WHERE id = ? AND user_id = ?
+    `).run(outcome, feedback || null, id, userId);
+
+    const row = db.prepare(`
+      SELECT * FROM report_predictions WHERE id = ? AND user_id = ? LIMIT 1
+    `).get(id, userId);
+    return row ? mapPredictionRow(row) : null;
+  },
+};;;
+
+
 export const questionOperations = {
   create: (question: QuestionRecord) => {
     const stmt = db.prepare(`
@@ -6346,30 +6685,48 @@ export const questionOperations = {
 };
 
 export const emailSubscriptionOperations = {
-  upsert: (email: string, source = 'site', tags: string[] = []) => {
+  upsert: (email: string, source = 'site', tags: string[] = [], metaPatch: Record<string, unknown> = {}) => {
     const normalizedEmail = email.trim().toLowerCase();
     const existing = emailSubscriptionOperations.getByEmail(normalizedEmail);
     const mergedTags = [...new Set([...(existing?.tags || []), ...tags])];
+    const existingMeta = existing?.meta && typeof existing.meta === 'object' ? existing.meta : {};
+    const mergedMeta = { ...existingMeta, ...metaPatch };
     const stmt = db.prepare(`
-      INSERT INTO email_subscriptions (id, email, status, source, tags)
-      VALUES (?, ?, 'active', ?, ?)
+      INSERT INTO email_subscriptions (id, email, status, source, tags, meta)
+      VALUES (?, ?, 'active', ?, ?, ?)
       ON CONFLICT(email) DO UPDATE SET
         status = 'active',
         source = excluded.source,
         tags = excluded.tags,
+        meta = excluded.meta,
         updated_at = datetime('now')
     `);
-    const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    return stmt.run(id, normalizedEmail, source, JSON.stringify(mergedTags));
+    const id = existing?.id || `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    return stmt.run(
+      id,
+      normalizedEmail,
+      source,
+      JSON.stringify(mergedTags),
+      JSON.stringify(mergedMeta),
+    );
   },
 
   getByEmail: (email: string) => {
     const stmt = db.prepare('SELECT * FROM email_subscriptions WHERE email = ?');
     const row = stmt.get(email.trim().toLowerCase()) as any;
     if (!row) return null;
+    let meta: Record<string, unknown> = {};
+    if (row.meta) {
+      try {
+        meta = JSON.parse(row.meta);
+      } catch {
+        meta = {};
+      }
+    }
     return {
       ...row,
       tags: row.tags ? JSON.parse(row.tags) : [],
+      meta,
     };
   },
 
@@ -6393,6 +6750,44 @@ export const emailSubscriptionOperations = {
         }
         return row.tags.some((tag: string) => normalizedTags.includes(tag));
       });
+  },
+
+
+  updatePreferences: (email: string, enabledTags: string[] = [], metaPatch: Record<string, unknown> = {}) => {
+    const normalizedEmail = email.trim().toLowerCase();
+    const existing = emailSubscriptionOperations.getByEmail(normalizedEmail);
+    const systemTags = ['auth', 'welcome'];
+    const preservedSystemTags = (existing?.tags || []).filter((tag: string) => systemTags.includes(tag));
+    const mergedTags = [...new Set([...preservedSystemTags, ...enabledTags.filter(Boolean)])];
+    const existingMeta = existing?.meta && typeof existing.meta === 'object' ? existing.meta : {};
+    const mergedMeta = { ...existingMeta, ...metaPatch };
+
+    if (!existing) {
+      const id = `sub_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      return db.prepare(`
+        INSERT INTO email_subscriptions (id, email, status, source, tags, meta)
+        VALUES (?, ?, 'active', ?, ?, ?)
+      `).run(
+        id,
+        normalizedEmail,
+        'subscription_settings',
+        JSON.stringify(mergedTags),
+        JSON.stringify(mergedMeta),
+      );
+    }
+
+    return db.prepare(`
+      UPDATE email_subscriptions
+      SET status = 'active',
+          tags = ?,
+          meta = ?,
+          updated_at = datetime('now')
+      WHERE email = ?
+    `).run(
+      JSON.stringify(mergedTags),
+      JSON.stringify(mergedMeta),
+      normalizedEmail,
+    );
   },
 
   unsubscribe: (email: string) => {

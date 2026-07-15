@@ -506,8 +506,16 @@ export function normalizeManagedContentMeta(entry: Pick<ManagedContentEntry, 'co
       // Default conservative passing scores for hand-authored or post-critique app frameworks (generator enforces real rubric >=82)
       nextMeta.qualityRubricScores = { yixueFidelityDepth: 85, actionabilityFrameworks: 88, originalitySynthesis: 82, reportIntegration: 87, claritySignal: 86, seoGeoConversion: 78, interconnectCoherence: 84, overall: 84 };
     }
+    // Never backfill with Date.now(): seed/resync would flood publishedToday and block the daily scheduler.
+    // Prefer original created/updated times; leave empty if neither is available (scheduler sets real stamps).
     if (!readString(nextMeta, 'schedulePublishedAt') && entry.status === 'published') {
-      nextMeta.schedulePublishedAt = new Date().toISOString();
+      const stable = entry.createdAt || entry.updatedAt || '';
+      if (stable && entry.source !== 'seed') {
+        nextMeta.schedulePublishedAt = stable;
+      } else if (stable && entry.source === 'seed') {
+        // Seeds keep historical createdAt only — never count as fresh auto-publish.
+        nextMeta.schedulePublishedAt = stable;
+      }
     }
     if (!Array.isArray(nextMeta.crossRefs) || (nextMeta.crossRefs as any[]).length === 0) {
       nextMeta.crossRefs = ['yixue-core-mechanics-v2', 'bazi-as-yixue-instantiation', 'judgment-five-elements-deep-v2', 'bazi-system-topic-overview', 'world-yi-methodology'];
@@ -932,6 +940,10 @@ function getPublishedEntryBySlug(contentType: ManagedContentType, slug: string) 
 }
 
 function toKnowledgeArticle(entry: ManagedContentEntry): KnowledgeArticle {
+  const meta = (entry.meta || {}) as Record<string, unknown>;
+  const geo = meta.geoOptimization && typeof meta.geoOptimization === 'object'
+    ? (meta.geoOptimization as Record<string, unknown>)
+    : null;
   return {
     slug: entry.slug,
     title: entry.title,
@@ -943,10 +955,18 @@ function toKnowledgeArticle(entry: ManagedContentEntry): KnowledgeArticle {
     seoTitle: entry.seoTitle,
     seoDescription: entry.seoDescription,
     sections: entry.sections,
-  };
+    locale: typeof meta.locale === 'string' ? meta.locale : undefined,
+    market: typeof meta.market === 'string' ? meta.market : undefined,
+    geoReady: geo?.geoReady === true,
+    geoOptimization: geo || undefined,
+  } as KnowledgeArticle;
 }
 
 function toCaseStudy(entry: ManagedContentEntry): CaseStudy {
+  const meta = (entry.meta || {}) as Record<string, unknown>;
+  const geo = meta.geoOptimization && typeof meta.geoOptimization === 'object'
+    ? (meta.geoOptimization as Record<string, unknown>)
+    : null;
   return {
     slug: entry.slug,
     title: entry.title,
@@ -957,7 +977,11 @@ function toCaseStudy(entry: ManagedContentEntry): CaseStudy {
     seoTitle: entry.seoTitle,
     seoDescription: entry.seoDescription,
     sections: entry.sections,
-  };
+    locale: typeof meta.locale === 'string' ? meta.locale : undefined,
+    market: typeof meta.market === 'string' ? meta.market : undefined,
+    geoReady: geo?.geoReady === true,
+    geoOptimization: geo || undefined,
+  } as CaseStudy;
 }
 
 function toEntityInsight(entry: ManagedContentEntry): EntityInsight {

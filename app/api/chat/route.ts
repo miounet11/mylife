@@ -17,6 +17,14 @@ import { buildPrompt, getPrompt } from '@/lib/prompts';
 import '@/lib/prompts/chat/main';
 import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
+import {
+  appendTeacherToSystemPrompt,
+  extractGeoLinesFromChatContext,
+  extractPracticeLinesFromChatContext,
+  resolveChatTeacher,
+} from '@/lib/chat-teacher-runtime';
+import { buildProfileContextLines, snapshotFromSupplementList } from '@/lib/progressive-profile';
+import { profileSupplementOperations } from '@/lib/profile-settings-store';
 
 // 设置 API 路由超时为 240 秒
 export const maxDuration = 240;
@@ -130,6 +138,43 @@ function shouldRecordChatContextLoaded(sessionId: string): boolean {
   }
   return true;
 }
+
+function shouldSkipChatContextAnalytics(userAgent?: string | null): boolean {
+  const ua = `${userAgent || ''}`.trim().toLowerCase();
+  // Empty UA is almost never a real browser product session.
+  if (!ua) return true;
+  return /bot|crawler|spider|slurp|facebookexternalhit|preview|headless|phantom|selenium|puppeteer|playwright|curl\/|wget|python-requests|go-http-client|scrapy|bytespider|baiduspider|yandex|semrush|ahrefs|petalbot|gptbot|claudebot|anthropic|bingpreview/.test(ua);
+}
+
+function isLikelyEmptyChatNoise(params: {
+  requestedReportId?: string;
+  boundReportId?: string | null;
+  historyCount: number;
+  source?: string | null;
+  userAgent?: string | null;
+}): boolean {
+  if (shouldSkipChatContextAnalytics(params.userAgent)) return true;
+  // Bound report or prior history = real product session.
+  if (params.boundReportId || params.historyCount > 0) return false;
+
+  const source = `${params.source || ''}`;
+  // Cold / unowned opens dominate chat_context_loaded volume.
+  // If the guest cannot bind the report and has no history, the load is not a real conversation start.
+  // chat_page_viewed still captures the click intent via client analytics.
+  if (
+    /content_conversion_panel|content_detail_followup|tool_detail_runner_tip_chat|tool_premium_depth_panel|visual_asset|result_report_followup|result_cockpit|next_step_guide|report_event_capture|events_page|profile_page/.test(
+      source,
+    )
+  ) {
+    return true;
+  }
+  // Unowned reportId deep-link without history is low-signal (scrapers / stale shares).
+  if (params.requestedReportId) return true;
+  // Bare /chat cold open
+  if (!source) return true;
+  return false;
+}
+
 
 function clampChatText(value: unknown, maxLength: number) {
   return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -260,6 +305,9 @@ async function generateAIResponse(
     context?: ChatExperienceContext;
     materials?: SanitizedChatMaterial[];
     materialSummary?: string;
+    teacherId?: string | null;
+    city?: string | null;
+    profileLines?: string[] | null;
   }
 ): Promise<{ answer: string; llmUsed: boolean; fallbackReason?: string }> {
   const apiKey = getApiKey();
@@ -324,7 +372,22 @@ async function generateAIResponse(
     ].join('\n');
   }
 
-  const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
+  
+  // 老师人设 + 地理/实践（对标 GPTs × Project 上下文）
+  {
+    const teacherBits = {
+      teacher: options?.teacherId,
+      intent: options?.intent,
+      city: options?.city,
+      practiceLines: extractPracticeLinesFromChatContext(options?.context),
+      geoLines: extractGeoLinesFromChatContext(options?.context, options?.city),
+      profileLines: options?.profileLines || [],
+    };
+    const withTeacher = appendTeacherToSystemPrompt(systemContent, teacherBits);
+    systemContent = withTeacher.systemContent;
+  }
+
+const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
     {
       role: 'system',
       content: systemContent,
@@ -485,6 +548,31 @@ function trackChatFailed(params: {
   });
 }
 
+
+function resolveFallbackContextLabels(context?: ChatExperienceContext) {
+  const report = context?.report;
+  if (report?.topScenario || report?.bestWindow || report?.riskWindow) {
+    return {
+      topScenario: report.topScenario || '当前阶段主轴',
+      bestWindow: report.bestWindow || '近期可参考窗口',
+      riskWindow: report.riskWindow || '近期需收敛的窗口',
+      hasReport: true,
+    };
+  }
+
+  const focusAreas = (context?.focusAreas || []).filter(Boolean);
+  const topScenario = focusAreas[0] || '尚未绑定结构报告';
+  const bestWindow = focusAreas.find((item) => /窗口|阶段|用神|格局|大运|流年/.test(item)) || '需先生成报告后再判断窗口';
+  const riskWindow = focusAreas.find((item) => /风险|规避|透支|压力/.test(item)) || '需结合你的具体时间和担心点再判断';
+
+  return {
+    topScenario,
+    bestWindow,
+    riskWindow,
+    hasReport: false,
+  };
+}
+
 function buildFallbackChatAnswer(
   question: string,
   context?: ChatExperienceContext,
@@ -492,9 +580,7 @@ function buildFallbackChatAnswer(
 ) {
   const report = context?.report;
   const focusedEvent = context?.focusedEvent;
-  const bestWindow = report?.bestWindow || '近期更强窗口';
-  const riskWindow = report?.riskWindow || '当前风险窗口';
-  const topScenario = report?.topScenario || '当前主线';
+  const { topScenario, bestWindow, riskWindow, hasReport } = resolveFallbackContextLabels(context);
 
   switch (intent) {
     case 'event-simulation':
@@ -542,11 +628,17 @@ function buildFallbackChatAnswer(
         '边界先说清：这里只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳和收纳，不替代建筑、消防、装修或物业专业意见。',
       ].join('\n');
     default:
-      return [
-        '这次没有拿到可用的深度解析结果，所以不硬编答案。',
-        `已保留你的问题和当前报告上下文：主线“${topScenario}”，参考窗口 ${bestWindow}，风险窗口 ${riskWindow}。`,
-        '你可以直接点“重生成”。如果问题很急，请补一句“对象 + 时间点 + 最担心的风险”，系统会用同一上下文重新尝试。',
-      ].join('\n');
+      return hasReport
+        ? [
+            '这次解析服务暂时不可用，所以不硬编答案。',
+            `已保留你的问题和当前报告上下文：主线“${topScenario}”，参考窗口 ${bestWindow}，风险窗口 ${riskWindow}。`,
+            '你可以直接点“重生成”。如果问题很急，请补一句“对象 + 时间点 + 最担心的风险”，系统会用同一上下文重新尝试。',
+          ].join('\n')
+        : [
+            '这次解析服务暂时不可用，且你还没有绑定八字结构报告，所以不硬编命局答案。',
+            `已保留你的问题，当前只能先按通用框架收敛：关注“${topScenario}”。`,
+            '请先到工作台生成你的结构报告，再回到这里追问；或补一句“对象 + 时间点 + 最担心的风险”后点“重生成”。',
+          ].join('\n');
   }
 }
 
@@ -784,6 +876,8 @@ export async function POST(request: NextRequest) {
     requestedReportId = resolveRequestedReportId(request, typeof data?.reportId === 'string' ? data.reportId : undefined);
     requestedEventId = resolveRequestedEventId(request, typeof data?.eventId === 'string' ? data.eventId : undefined);
     requestedIntent = resolveRequestedIntent(request, typeof data?.intent === 'string' ? data.intent : undefined);
+    const requestedTeacherId = typeof data?.teacher === 'string' ? data.teacher.trim() : (typeof data?.teacherId === 'string' ? data.teacherId.trim() : '');
+    const requestedCity = typeof data?.city === 'string' ? data.city.trim() : '';
     requestedSource = resolveRequestedSource(request, typeof data?.source === 'string' ? data.source : undefined);
     requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request, typeof data?.ctaStrategyKey === 'string' ? data.ctaStrategyKey : undefined);
     requestedSourceFamily = resolveRequestedSourceFamily(request, typeof data?.sourceFamily === 'string' ? data.sourceFamily : undefined);
@@ -805,11 +899,22 @@ export async function POST(request: NextRequest) {
       context.summary,
       tacitSummary ? `用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
     ].filter(Boolean).join('\n');
+        let profileLinesForTeacher: string[] = [];
+    try {
+      const rows = profileSupplementOperations.listByUser(userId, null);
+      const snap = snapshotFromSupplementList(rows.map((r: any) => ({ domain: r.domain, fields: r.fields || {} })));
+      profileLinesForTeacher = buildProfileContextLines(snap);
+    } catch (e) {
+      console.warn('[chat] profile lines load failed', e);
+    }
     const { answer, llmUsed, fallbackReason } = await generateAIResponse(question, userHistory, contextSummary, {
       intent: requestedIntent,
       context,
       materials,
       materialSummary,
+      teacherId: requestedTeacherId || null,
+      city: requestedCity || null,
+      profileLines: profileLinesForTeacher || [],
     });
     const turnId = generateId();
     const userMessageId = generateId();
@@ -1393,7 +1498,16 @@ export async function GET(request: NextRequest) {
     // v5-D84 (2026-05-24): chat_context_loaded 抑制噪音 — 同 session 10 分钟内只写一次。
     // 之前 90 天累计 695k 条 = 76% 全部 analytics 体量，DB 严重膨胀。
     // 真实业务诉求是「这个 session 进入过 chat 页」，不是「轮询了多少次」。
-    if (shouldRecordChatContextLoaded(sessionId)) {
+    const boundReportId = context.report?.id || null;
+    const skipNoise = isLikelyEmptyChatNoise({
+      requestedReportId,
+      boundReportId,
+      historyCount: history.length,
+      source: requestedSource || null,
+      userAgent,
+    });
+    // Keep product signal: only record non-noise loads (or always record with flags if bound/history).
+    if (!skipNoise && shouldRecordChatContextLoaded(sessionId)) {
       trackServerEvent({
         userId,
         sessionId,
@@ -1401,7 +1515,11 @@ export async function GET(request: NextRequest) {
         eventName: 'chat_context_loaded',
         page: '/chat',
         meta: {
-          reportId: context.report?.id || null,
+          // bound report for this guest (ownership-checked)
+          reportId: boundReportId,
+          requestedReportId: requestedReportId || null,
+          boundReportId,
+          reportBound: Boolean(boundReportId),
           eventId: context.focusedEvent?.id || null,
           durationMs: Date.now() - requestStartedAt,
           historyCount: history.length,
@@ -1410,6 +1528,7 @@ export async function GET(request: NextRequest) {
           source: requestedSource || null,
           ctaStrategyKey: requestedCtaStrategyKey || null,
           sourceFamily: requestedSourceFamily || null,
+          noiseFiltered: false,
         },
       });
     }
@@ -1424,6 +1543,13 @@ export async function GET(request: NextRequest) {
       history,
       context,
       intent: requestedIntent || null,
+      requestedReportId: requestedReportId || null,
+      boundReportId,
+      contextBound: Boolean(boundReportId),
+      contextBindError:
+        requestedReportId && !boundReportId
+          ? 'report_not_owned_by_session'
+          : null,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

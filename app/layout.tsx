@@ -1,58 +1,77 @@
-import type { Metadata } from 'next';
-import { Suspense } from 'react';
+import type { Metadata, Viewport } from 'next';
 import Script from 'next/script';
-import BuildVersionGuard from '@/components/build-version-guard';
-import ChatFab from '@/components/chat-fab';
-import GoogleAnalyticsRouteTracker from '@/components/google-analytics-route-tracker';
-import { GOOGLE_ANALYTICS_ID } from '@/lib/google-analytics-config';
-import { getRuntimeBuildId } from '@/lib/runtime-build';
 import './globals.css';
+import { cookies, headers } from 'next/headers';
+import { LocaleProvider } from '@/components/i18n/locale-provider';
+import AutoLocalize from '@/components/i18n/auto-localize';
+import SiteFeedbackWidget from '@/components/site-feedback-widget';
+import {
+  LOCALE_COOKIE,
+  LOCALE_HEADER,
+  htmlLangAttr,
+  resolveSiteLocale,
+} from '@/lib/i18n/site-locale';
+import { getGoogleAnalyticsId } from '@/lib/env';
+
+const siteUrl = 'https://www.life-kline.com';
+const siteName = 'Life K-Line 命运K线';
+const siteDescription =
+  '免费输入出生信息生成八字命盘、人生K线运势曲线与流年大运；十维度深度研判覆盖事业行业、投资节奏、婚恋、健康、起名与迁移择城，结论可回访验证。';
+const seoKeywords = [
+  '免费八字命理分析',
+  '八字排盘',
+  '出生日期八字分析',
+  '生辰八字测算',
+  '人生运势曲线',
+  '人生K线',
+  '流年大运',
+  '十维度研判',
+  '运势节奏分析',
+  '事业行业匹配',
+  '投资理财节奏',
+  '谈婚论嫁择时',
+  '海外华人运势',
+  '迁移择城',
+  '世界易',
+  '会员命理报告',
+];
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://www.life-kline.com'),
-  title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
-  description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
-  applicationName: '人生K线',
-  keywords: [
-    '人生K线',
-    '世界易',
-    '结构判断',
-    '真太阳时',
-    '判断报告',
-    '阶段判断',
-    '决策框架',
-  ],
-  authors: [{ name: '人生K线' }],
-  creator: '人生K线',
-  publisher: '人生K线',
-  category: 'Education',
+  metadataBase: new URL(siteUrl),
+  applicationName: siteName,
+  title: {
+    default: 'Life K-Line 命运K线｜免费八字排盘、人生运势曲线与会员报告',
+    template: '%s｜Life K-Line 命运K线',
+  },
+  description: siteDescription,
+  keywords: seoKeywords,
   alternates: {
     canonical: '/',
     languages: {
       'zh-CN': '/',
-      'en-US': '/world-yi/en',
+      'zh-Hant': '/?lang=zh-Hant',
+      'zh-TW': '/?lang=zh-Hant',
+      'zh-HK': '/?lang=zh-Hant',
+      en: '/?lang=en',
       'x-default': '/',
     },
   },
+  authors: [{ name: siteName, url: siteUrl }],
+  creator: siteName,
+  publisher: siteName,
+  category: '八字命理分析与人生运势工具',
   openGraph: {
     type: 'website',
     locale: 'zh_CN',
-    alternateLocale: ['en_US'],
     url: '/',
-    siteName: '人生K线',
-    title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
-    description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
-    // images 由 app/opengraph-image.tsx 自动注入（1200x630 决策台风）
+    siteName,
+    title: 'Life K-Line 命运K线｜八字命理结构分析与人生运势曲线',
+    description: siteDescription,
   },
   twitter: {
     card: 'summary_large_image',
-    title: '人生K线 | 世界易系统入口，帮你看清结构、阶段与下一步动作',
-    description: '基于世界易与真太阳时校正，把个人结构、阶段节奏、环境变量与行动建议组织成可持续使用的现代判断系统。',
-    // images 由 app/twitter-image.tsx 自动注入（同 og 图）
-  },
-  other: {
-    'geo.region': 'CN',
-    'geo.placename': 'China',
+    title: 'Life K-Line 命运K线｜八字命理结构分析与人生运势曲线',
+    description: siteDescription,
   },
   robots: {
     index: true,
@@ -60,73 +79,154 @@ export const metadata: Metadata = {
     googleBot: {
       index: true,
       follow: true,
-      'max-image-preview': 'large',
       'max-snippet': -1,
+      'max-image-preview': 'large',
       'max-video-preview': -1,
     },
   },
-  // icons / manifest 由 app/icon.svg + app/apple-icon.tsx + app/manifest.ts 自动注入
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const runtimeBuildId = getRuntimeBuildId();
-  const structuredData = {
-    '@context': 'https://schema.org',
-    '@graph': [
-      {
-        '@type': 'WebSite',
-        '@id': 'https://www.life-kline.com/#website',
-        url: 'https://www.life-kline.com',
-        name: '人生K线',
-        alternateName: 'Life Kline',
-        inLanguage: ['zh-CN', 'en'],
-        description: '世界易现代判断系统入口，连接结构、阶段、环境与行动建议。',
-      },
-      {
-        '@type': 'Organization',
-        '@id': 'https://www.life-kline.com/#organization',
-        name: '人生K线',
-        alternateName: 'Life Kline',
-        url: 'https://www.life-kline.com',
-        logo: 'https://www.life-kline.com/icon.svg',
-      },
-    ],
-  };
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  themeColor: '#3b5998',
+};
+
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: siteName,
+  url: siteUrl,
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteName,
+  url: siteUrl,
+  description: siteDescription,
+  inLanguage: 'zh-CN',
+  potentialAction: [
+    {
+      '@type': 'SearchAction',
+      target: `${siteUrl}/analyze?keyword={search_term_string}&source=seo_search`,
+      'query-input': 'required name=search_term_string',
+    },
+    {
+      '@type': 'RegisterAction',
+      name: '绑定邮箱保存会员报告',
+      target: `${siteUrl}/analyze?source=global_register_action`,
+    },
+  ],
+};
+
+const webApplicationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: siteName,
+  url: siteUrl,
+  applicationCategory: 'LifestyleApplication',
+  operatingSystem: 'Web',
+  inLanguage: 'zh-CN',
+  description: siteDescription,
+  featureList: [
+    '免费八字命盘生成',
+    '人生运势曲线可视化',
+    '十维度深度场景研判',
+    '可验证预测回访',
+    '流年大运趋势分析',
+    '海外华人 GEO 城市观察',
+    '邮箱保存会员完整报告',
+  ],
+  audience: {
+    '@type': 'Audience',
+    audienceType: '关注八字命理、流年运势、十维度场景判断与海外迁移决策的中文用户',
+  },
+  areaServed: [
+    { '@type': 'Place', name: '中国' },
+    { '@type': 'Place', name: '海外华人社区' },
+  ],
+  offers: {
+    '@type': 'Offer',
+    category: '会员命理分析报告',
+    availability: 'https://schema.org/InStock',
+    url: `${siteUrl}/membership?source=global_jsonld_offer`,
+  },
+};
+
+const conversionFunnelJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ItemList',
+  name: 'Life K-Line 免费报告到会员完整报告路径',
+  itemListElement: [
+    {
+      '@type': 'ListItem',
+      position: 1,
+      name: '免费生成八字命理报告',
+      url: `${siteUrl}/analyze?source=global_funnel_generate`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 2,
+      name: '绑定邮箱保存报告',
+      url: `${siteUrl}/analyze?source=global_funnel_email`,
+    },
+    {
+      '@type': 'ListItem',
+      position: 3,
+      name: '开通会员解锁完整分析',
+      url: `${siteUrl}/membership?source=global_funnel_member`,
+    },
+  ],
+};
+
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const cookieStore = await cookies();
+  const headerStore = await headers();
+  const locale = resolveSiteLocale({
+    cookieLang: cookieStore.get(LOCALE_COOKIE)?.value || headerStore.get(LOCALE_HEADER),
+    acceptLanguage: headerStore.get('accept-language'),
+  });
+  const googleAnalyticsId = getGoogleAnalyticsId();
 
   return (
-    <html lang="zh-CN" data-theme="fb2017">
-      <body className="bg-[color:var(--bg)] font-sans text-[color:var(--ink)] antialiased selection:bg-[color:var(--accent-soft)] selection:text-[color:var(--ink)]">
-        <BuildVersionGuard initialBuildId={runtimeBuildId} />
-        <Script id="site-structured-data" type="application/ld+json" strategy="beforeInteractive">
-          {JSON.stringify(structuredData)}
-        </Script>
-        {GOOGLE_ANALYTICS_ID ? (
+    <html lang={htmlLangAttr(locale)} data-locale={locale}>
+      <body className="min-h-screen antialiased">
+        {googleAnalyticsId ? (
           <>
             <Script
-              src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ANALYTICS_ID}`}
+              src={`https://www.googletagmanager.com/gtag/js?id=${googleAnalyticsId}`}
               strategy="afterInteractive"
             />
             <Script id="google-analytics" strategy="afterInteractive">
-              {`
-                window.dataLayer = window.dataLayer || [];
-                function gtag(){dataLayer.push(arguments);}
-                gtag('js', new Date());
-                gtag('config', '${GOOGLE_ANALYTICS_ID}', {
-                  send_page_view: false
-                });
-              `}
+              {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${googleAnalyticsId}');`}
             </Script>
-            <Suspense fallback={null}>
-              <GoogleAnalyticsRouteTracker />
-            </Suspense>
           </>
         ) : null}
-        {children}
-        <ChatFab />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(webApplicationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(conversionFunnelJsonLd) }}
+        />
+        <LocaleProvider initialLocale={locale}>
+          {children}
+          <AutoLocalize />
+          <SiteFeedbackWidget />
+        </LocaleProvider>
       </body>
     </html>
   );

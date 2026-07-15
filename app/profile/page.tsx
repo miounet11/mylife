@@ -3,15 +3,25 @@
 import dynamic from 'next/dynamic';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'lucide-react';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
+import { AppPage } from '@/components/layout/app-page';
+import { AlertBanner } from '@/components/layout/alert-banner';
+import { FocusHero } from '@/components/layout/focus-hero';
+import { PortalLayout } from '@/components/layout/portal-layout';
+import { SectionHeader } from '@/components/layout/section-header';
+import { StatGrid } from '@/components/layout/stat-grid';
+import { StatusTile } from '@/components/layout/status-tile';
+import { ProfileRailRight } from '@/components/profile/profile-rail';
+import FreeMembershipClaimBanner from '@/components/membership/free-membership-claim-banner';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
 import PriorityDisclosure from '@/components/priority-disclosure';
 import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
+import ProfileSettingsSummaryBanner from '@/components/profile-settings-summary-banner';
+import ProgressiveProfileHub from '@/components/profile/progressive-profile-hub';
 import ResumeBar from '@/components/resume-bar';
+import DimensionRecommendations from '@/components/dimensions/dimension-recommendations';
 import ToolHistoryPanel from '@/components/tool-history-panel';
 import { buildChatHref } from '@/lib/chat-entry';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
@@ -197,7 +207,22 @@ export default function ProfilePage() {
   const hasChartData = chartData.length > 0;
 
   return (
-    <div className="page-shell">
+    <AppPage
+      header={{
+        ctaHref: profileChatHref,
+        ctaLabel: '继续追问',
+        ctaAnalytics: {
+          page: '/profile',
+          target: 'profile_header_chat',
+          meta: {
+            source: pageSource,
+            ctaStrategyKey: sourceCtaStrategy.strategyKey,
+            sourceFamily: sourceCtaStrategy.sourceFamily,
+            reportId: latestResultId || null,
+          },
+        },
+      }}
+    >
       <AnalyticsPageView
         eventName="profile_page_viewed"
         page="/profile"
@@ -208,129 +233,85 @@ export default function ProfilePage() {
           hasSubscription: !!updatesSummary?.subscription,
         }}
       />
-      <SiteHeader
-        ctaHref={profileChatHref}
-        ctaLabel="继续追问"
-        ctaAnalytics={{
-          page: '/profile',
-          target: 'profile_header_chat',
-          meta: {
-            source: pageSource,
-            ctaStrategyKey: sourceCtaStrategy.strategyKey,
-            sourceFamily: sourceCtaStrategy.sourceFamily,
-            reportId: latestResultId || null,
-          },
-        }}
+      <FocusHero
+        eyebrow="我的档案"
+        title="恢复下一步"
+        description="续接最新报告、工具历史与事件反馈。"
+        actions={
+          <>
+            <ResultCtaLink
+              href={latestReportHref}
+              page="/profile"
+              target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
+              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+                reportId: latestResultId || null,
+              }}
+            >
+              {latestResultId ? '打开最新报告' : '开始分析'}
+            </ResultCtaLink>
+            <ResultCtaLink
+              href={profileChatHref}
+              page="/profile"
+              target="profile_header_chat"
+              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+                reportId: latestResultId || null,
+              }}
+            >
+              继续追问
+            </ResultCtaLink>
+            <ResultCtaLink
+              href={latestResultId ? `/profile/settings?fortuneId=${encodeURIComponent(latestResultId)}` : '/profile/settings'}
+              page="/profile"
+              target="profile_header_settings"
+              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              meta={{
+                source: pageSource,
+                ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                sourceFamily: sourceCtaStrategy.sourceFamily,
+                surface: 'profile_header',
+                reportId: latestResultId || null,
+              }}
+            >
+              编辑资料
+            </ResultCtaLink>
+            <ResultCtaLink
+              href="/teachers"
+              page="/profile"
+              target="profile_header_teachers"
+              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              meta={{
+                source: pageSource,
+                surface: 'profile_header',
+              }}
+            >
+              请老师
+            </ResultCtaLink>
+          </>
+        }
       />
 
-      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        {/* HERO 区 */}
-        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
-          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
-            我的档案
-          </div>
-          <div className="px-4 py-3">
-            <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-              <div className="min-w-0">
-                <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
-                  恢复你的<span className="text-[color:var(--brand-strong)]">下一步</span>
-                </h1>
-                <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
-                  续接你的最新报告、工具历史和事件反馈，从这里直接恢复上次没完成的判断任务。
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2 md:justify-end md:shrink-0">
-                <ResultCtaLink
-                  href={latestReportHref}
-                  page="/profile"
-                  target={latestResultId ? 'profile_header_latest_report' : 'profile_header_analyze'}
-                  className="inline-flex h-7 items-center rounded-[2px] bg-[color:var(--fb-blue)] px-3 text-[13px] font-bold text-white hover:bg-[color:var(--fb-blue-strong)] hover:no-underline"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_header',
-                    reportId: latestResultId || null,
-                  }}
-                >
-                  {latestResultId ? '打开最新报告' : '开始分析'}
-                </ResultCtaLink>
-                <ResultCtaLink
-                  href={profileChatHref}
-                  page="/profile"
-                  target="profile_header_chat"
-                  className="inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_header',
-                    reportId: latestResultId || null,
-                  }}
-                >
-                  继续追问
-                </ResultCtaLink>
-                <ResultCtaLink
-                  href="/docs/profile-history"
-                  page="/profile"
-                  target="profile_header_docs"
-                  className="hidden sm:inline-flex h-7 items-center rounded-[2px] border border-[color:var(--fb-border-strong)] bg-[#f5f6f7] px-3 text-[13px] font-bold text-[color:var(--fb-ink-1)] no-underline hover:bg-[#ebedf0] hover:no-underline"
-                  meta={{
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                    surface: 'profile_header',
-                  }}
-                >
-                  使用方法
-                </ResultCtaLink>
-              </div>
-            </div>
-          </div>
-        </section>
+      {resumeTarget ? <ResumeBar target={resumeTarget} surface="profile" /> : null}
 
-        {/* v5-C2 决策台风「继续上次」恢复条 — 仅当有可恢复目标时显示 */}
-        {resumeTarget ? (
-          <div className="mb-6">
-            <ResumeBar target={resumeTarget} surface="profile" />
-          </div>
-        ) : null}
+      <PortalLayout
+        main={
+          <div className="space-y-4">
+            <ProfileSettingsSummaryBanner />
+            <ProgressiveProfileHub />
+            {error ? <AlertBanner>{error}</AlertBanner> : null}
 
-        <div className="space-y-5">
-          {error && (
-            <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-4 py-3 text-sm font-semibold text-[color:var(--alert)]">
-              {error}
-            </div>
-          )}
+            <FreeMembershipClaimBanner source="profile_page" />
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4 md:p-5">
-            <div className="mb-4 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-5)]">
-              个人底盘指标
-            </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-              {[
-                { label: '累计分析', value: `${fortunes.length}`, mono: true },
-                { label: '关键事件', value: `${mappedEvents.length}`, mono: true },
-                { label: '趋势年份', value: `${chartData.length || 0}`, mono: true },
-                { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}`, mono: false },
-              ].map((item) => (
-                <div key={item.label} className="flex flex-col gap-1">
-                  <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    {item.label}
-                  </div>
-                  <div
-                    className={`text-xl font-black text-[color:var(--ink-1)] ${
- item.mono ? 'font-mono tabular-nums' : ''
-                    }`}
-                  >
-                    {item.value}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {!loading && (
+            {!loading ? (
             <RetentionResumePanel
               page="/profile"
               source={pageSource}
@@ -376,7 +357,64 @@ export default function ProfilePage() {
                 },
               ]}
             />
-          )}
+            ) : null}
+
+            <DimensionRecommendations
+              loadFromServer
+              intent={(latestFortune?.intent as 'career' | 'wealth' | 'relationship' | 'yearly' | undefined) || null}
+              limit={3}
+              title="下一步：进入场景维度研判"
+              description="结合你的档案主题与已探索进度，优先推荐最值得先做的窄场景研判。"
+            />
+
+            <section className="fb-card p-4 md:p-5">
+              <div className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-5)]">
+                长期档案
+              </div>
+              <p className="mb-3 text-[13px] text-[color:var(--ink-3)]">
+                记录真实人生事件、验证历史预测，让下次报告记住你的处境与命中率。
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <ProfileAction
+                  href={appendSourceToHref('/profile/events', pageSource)}
+                  label="人生事件回填"
+                  icon={CalendarClock}
+                  page="/profile"
+                  target="profile_life_events"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                />
+                <ProfileAction
+                  href={appendSourceToHref('/predictions', pageSource)}
+                  label="预测验证"
+                  icon={History}
+                  page="/profile"
+                  target="profile_predictions"
+                  meta={{
+                    source: pageSource,
+                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                    sourceFamily: sourceCtaStrategy.sourceFamily,
+                  }}
+                />
+              </div>
+            </section>
+
+            <section className="fb-card p-4 md:p-5">
+              <div className="mb-3 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--ink-5)]">
+                个人底盘指标
+              </div>
+              <StatGrid
+                items={[
+                  { label: '累计分析', value: fortunes.length, mono: true },
+                  { label: '关键事件', value: mappedEvents.length, mono: true },
+                  { label: '趋势年份', value: chartData.length || 0, mono: true },
+                  { label: '最近格局', value: `${latestFortune?.pattern?.type || '待生成'}` },
+                ]}
+              />
+            </section>
 
           <section>
             <PriorityDisclosure
@@ -474,8 +512,9 @@ export default function ProfilePage() {
 
           <ToolHistoryPanel
             compact
-            title="最近使用的单项工具"
-            description="最近做过的聚焦判断会沉淀在这里，方便继续深问与复访。"
+            title="工具运行结果"
+            description="已完成的工具结论可点开回看；浏览记录附在下方。"
+            limit={8}
           />
 
           <PriorityDisclosure
@@ -491,19 +530,23 @@ export default function ProfilePage() {
             />
           </PriorityDisclosure>
 
-          <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md p-4 md:p-5">
+          <section className="fb-card p-4 md:p-5">
             <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-              <div>
-                <div className="flex items-center gap-3">
-                  <BellRing className="h-5 w-5 text-[color:var(--accent-strong)]" />
-                  <div className="text-lg font-bold text-[color:var(--ink)]">我的更新状态</div>
-                </div>
-              </div>
+              <SectionHeader
+                eyebrow={
+                  <span className="inline-flex items-center gap-2">
+                    <BellRing className="h-4 w-4 text-[color:var(--accent-strong)]" />
+                    更新状态
+                  </span>
+                }
+                title="我的更新状态"
+                description="订阅、月度回执与最新可回访报告一览。"
+              />
               <ResultCtaLink
                 href={user?.email ? '/updates' : '/login?next=%2Fupdates'}
                 page="/profile"
                 target={user?.email ? 'profile_updates_center' : 'profile_updates_login'}
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+                className="fb-btn h-9 shrink-0 px-3 text-sm hover:no-underline"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -517,26 +560,26 @@ export default function ProfilePage() {
               </ResultCtaLink>
             </div>
 
-            <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <ProfileStatusTile
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <StatusTile
                 label="订阅状态"
                 value={updatesSummary?.subscription?.status === 'active' ? '已激活' : '未激活'}
                 helper={updatesSummary?.email || '尚未绑定邮箱'}
                 tone={updatesSummary?.subscription?.status === 'active' ? 'success' : 'neutral'}
               />
-              <ProfileStatusTile
+              <StatusTile
                 label="内容补全中"
                 value={`${updatesSummary?.activeUpgradeCount || 0}`}
                 helper="正在继续完善的报告数量"
                 tone={(updatesSummary?.activeUpgradeCount || 0) > 0 ? 'accent' : 'neutral'}
               />
-              <ProfileStatusTile
+              <StatusTile
                 label="最近月度更新"
                 value={updatesSummary?.latestDigest?.cycleKey || '暂无'}
                 helper={mapDigestStatus(updatesSummary?.latestDigest?.status)}
                 tone={updatesSummary?.latestDigest?.status === 'sent' ? 'success' : updatesSummary?.latestDigest?.status === 'error' ? 'warning' : 'neutral'}
               />
-              <ProfileStatusTile
+              <StatusTile
                 label="最新报告"
                 value={updatesSummary?.latestReport ? '可回访' : '待生成'}
                 helper={updatesSummary?.latestReport?.qualityScore
@@ -547,10 +590,10 @@ export default function ProfilePage() {
             </div>
 
             {(updatesSummary?.latestReport || updatesSummary?.latestDigest) ? (
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
-                <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次可回访报告</div>
-                  <div className="mt-2 text-sm text-[color:var(--ink)]">
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink-1)]">最近一次可回访报告</div>
+                  <div className="mt-2 text-sm text-[color:var(--ink-2)]">
                     {updatesSummary?.latestReport
                       ? `${updatesSummary.latestReport.name || '我的报告'}，可以继续回看和追问。`
                       : '当前还没有最近报告。'}
@@ -560,7 +603,7 @@ export default function ProfilePage() {
                       href={appendSourceToHref(`/result/${updatesSummary.latestReport.id}`, pageSource)}
                       page="/profile"
                       target="profile_updates_latest_report"
-                      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-3"
+                      className="fb-btn mt-3 h-9 px-3 text-sm hover:no-underline"
                       meta={{
                         source: pageSource,
                         ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -575,14 +618,14 @@ export default function ProfilePage() {
                   ) : null}
                 </div>
 
-                <div className="rounded-[var(--radius)] bg-[color:var(--paper)] px-4 py-4">
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">最近一次更新回执</div>
-                  <div className="mt-2 text-sm text-[color:var(--ink)]">
+                <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-4 py-4">
+                  <div className="text-sm font-semibold text-[color:var(--ink-1)]">最近一次更新回执</div>
+                  <div className="mt-2 text-sm text-[color:var(--ink-2)]">
                     {updatesSummary?.latestDigest
                       ? `${updatesSummary.latestDigest.cycleKey || '本周期'}：${mapDigestStatus(updatesSummary.latestDigest.status)}`
                       : '当前还没有月度更新回执。'}
                   </div>
-                  <div className="mt-1 text-sm text-[color:var(--muted)]">{updatesSummary?.latestDigest?.reason || '暂无回执说明'}</div>
+                  <div className="mt-1 text-sm text-[color:var(--ink-3)]">{updatesSummary?.latestDigest?.reason || '暂无回执说明'}</div>
                 </div>
               </div>
             ) : null}
@@ -596,13 +639,14 @@ export default function ProfilePage() {
           />
 
           {!loading && !hasProfileData && (
-            <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md p-8 text-center">
-              <h2 className="text-2xl font-black text-[color:var(--ink)]">你的档案还没有形成</h2>
+            <section className="fb-card p-8 text-center">
+              <h2 className="text-xl font-black text-[color:var(--ink-1)]">你的档案还没有形成</h2>
+              <p className="mt-2 text-[13px] text-[color:var(--ink-3)]">完成第一次分析后，报告、事件和工具历史会在这里形成可恢复的连续路径。</p>
               <ResultCtaLink
                 href="/analyze"
                 page="/profile"
                 target="profile_empty_analyze"
-                className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)] mt-6"
+                className="fb-btn fb-btn-primary mt-6 h-10 px-4 text-sm hover:no-underline"
                 meta={{
                   source: pageSource,
                   ctaStrategyKey: sourceCtaStrategy.strategyKey,
@@ -626,7 +670,7 @@ export default function ProfilePage() {
 
           {/* 用户档案和重要事件 */}
           {hasProfileData && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             {/* 左侧：用户档案 */}
             <div className="lg:col-span-2">
               <Suspense fallback={<ProfileSkeleton />}>
@@ -655,11 +699,18 @@ export default function ProfilePage() {
             </div>
           </div>
           )}
-        </div>
-      </main>
-
-      <SiteFooter />
-    </div>
+          </div>
+        }
+        right={
+          <ProfileRailRight
+            latestReportHref={latestReportHref}
+            chatHref={profileChatHref}
+            settingsHref={latestResultId ? `/profile/settings?fortuneId=${encodeURIComponent(latestResultId)}` : '/profile/settings'}
+            hasReport={!!latestResultId}
+          />
+        }
+      />
+    </AppPage>
   );
 }
 
@@ -712,40 +763,13 @@ function ProfileAction({
       href={href}
       page={page}
       target={target}
-      className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
+      className="fb-btn h-10 w-full px-3 text-sm hover:no-underline"
       meta={meta}
     >
       <Icon className="h-4 w-4" />
       {label}
     </ResultCtaLink>
   );
-}
-
-function ProfileStatusTile({
-  label,
-  value,
-  helper,
-  tone,
-}: {
-  label: string;
-  value: string;
-  helper: string;
-  tone: 'neutral' | 'accent' | 'success' | 'warning';
-}) {
-  return (
-    <div className={`rounded-[var(--radius)] px-4 py-5 ${mapProfileStatusTone(tone)}`}>
-      <div className="text-xs tracking-[0.18em]">{label}</div>
-      <div className="mt-2 break-all text-2xl font-black">{value}</div>
-      <div className="mt-2 text-xs leading-6 opacity-85">{helper}</div>
-    </div>
-  );
-}
-
-function mapProfileStatusTone(tone: 'neutral' | 'accent' | 'success' | 'warning') {
-  if (tone === 'accent') return 'bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]';
-  if (tone === 'success') return 'bg-[rgba(47,125,82,0.08)] text-[color:var(--data-up)]';
-  if (tone === 'warning') return 'bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]';
-  return 'bg-[color:var(--paper)] text-[color:var(--ink)]';
 }
 
 function mapDigestStatus(status?: string | null) {

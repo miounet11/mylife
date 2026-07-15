@@ -1,12 +1,15 @@
 import { callJsonLLM } from '@/lib/agentic-report/llm-client';
 import type { TimingPoint } from './types';
+import {
+  type NarratorOutput,
+  TIMING_NARRATOR_SYSTEM_EN,
+  fallbackNarrate,
+  withBilingualUserCopy,
+} from './user-copy-i18n';
 
-interface NarratorOutput {
-  title: string;
-  summary: string;
-  todoSuggestions: string[];
-  avoidSuggestions: string[];
-}
+// re-export for callers that imported fallbackNarrate from this module
+export { fallbackNarrate, withBilingualUserCopy };
+export type { NarratorOutput };
 
 const TIMING_NARRATOR_SYSTEM = `你是一个把命理时点翻译成生活语言的助手。
 
@@ -26,20 +29,8 @@ const TIMING_NARRATOR_SYSTEM = `你是一个把命理时点翻译成生活语言
   "avoidSuggestions": ["<具体回避 1>", "<具体回避 2>"]
 }`;
 
-export async function narrateTimingPoint(point: TimingPoint): Promise<NarratorOutput | null> {
-  const userPrompt = buildUserPrompt(point);
-  const result = await callJsonLLM<NarratorOutput>({
-    system: TIMING_NARRATOR_SYSTEM,
-    user: userPrompt,
-    temperature: 0.4,
-    maxTokens: 250,
-    timeoutMs: 18000,
-    traceLabel: `timing-narrator:${point.type}`,
-    scope: 'content',
-    reasoningEffort: 'low',
-  });
-  if (!result) return null;
-  if (!result.title || !result.summary) return null;
+function normalizeNarrator(result: NarratorOutput | null): NarratorOutput | null {
+  if (!result || !result.title || !result.summary) return null;
   return {
     title: result.title,
     summary: result.summary,
@@ -48,8 +39,47 @@ export async function narrateTimingPoint(point: TimingPoint): Promise<NarratorOu
   };
 }
 
-function buildUserPrompt(point: TimingPoint): string {
-  const dateInfo = point.endDate ? `时间：${point.startDate} 至 ${point.endDate}` : `时间：${point.startDate}`;
+export async function narrateTimingPoint(
+  point: TimingPoint,
+  locale: 'zh-CN' | 'en' = 'zh-CN'
+): Promise<NarratorOutput | null> {
+  const system = locale === 'en' ? TIMING_NARRATOR_SYSTEM_EN : TIMING_NARRATOR_SYSTEM;
+  const userPrompt = buildUserPrompt(point, locale);
+  const result = await callJsonLLM<NarratorOutput>({
+    system,
+    user: userPrompt,
+    temperature: 0.4,
+    maxTokens: 280,
+    timeoutMs: 18000,
+    traceLabel: `timing-narrator:${locale}:${point.type}`,
+    scope: 'content',
+    reasoningEffort: 'low',
+  });
+  return normalizeNarrator(result);
+}
+
+function buildUserPrompt(point: TimingPoint, locale: 'zh-CN' | 'en'): string {
+  const dateInfo = point.endDate
+    ? locale === 'en'
+      ? `Window: ${point.startDate} to ${point.endDate}`
+      : `时间：${point.startDate} 至 ${point.endDate}`
+    : locale === 'en'
+      ? `Date: ${point.startDate}`
+      : `时间：${point.startDate}`;
+
+  if (locale === 'en') {
+    return [
+      `Timing type: ${point.type}`,
+      `Severity: ${point.severity}`,
+      dateInfo,
+      `Structural basis (Chinese engine): ${point.rawReason}`,
+      `Context: ${JSON.stringify(point.context)}`,
+      '',
+      'Rewrite into plain English life language: how the user will feel, what to do, what to avoid.',
+      'Do not dump jargon. Keep engine facts consistent (same window, same severity intent).',
+    ].join('\n');
+  }
+
   return [
     `命理时点类型：${point.type}`,
     `严重程度：${point.severity}`,
@@ -58,140 +88,46 @@ function buildUserPrompt(point: TimingPoint): string {
     `上下文：${JSON.stringify(point.context)}`,
     '',
     '请把以上命理依据翻译成"未来这段时间，你会怎样"的生活语言。'
-    + '不要 paraphrase 命理依据，要写"用户层面会怎么感受/可以怎么做/该避什么"。',
+      + '不要 paraphrase 命理依据，要写"用户层面会怎么感受/可以怎么做/该避什么"。',
   ].join('\n');
 }
 
-/** 规则模板回退（LLM 失败时用） */
-export function fallbackNarrate(point: TimingPoint): NarratorOutput {
-  const presets = FALLBACK_PRESETS[point.type];
-  if (presets) return presets;
-  return {
-    title: '留意这段时间',
-    summary: point.rawReason.slice(0, 60),
-    todoSuggestions: ['节奏放慢一档'],
-    avoidSuggestions: ['不做大决定'],
-  };
-}
-
-/** 给一组 TimingPoint 批量加 userCopy。失败的用 fallback 模板。 */
+/**
+ * Generate bilingual userCopy (zh + en) for a list of points.
+ * LLM preferred; fallback templates always fill both languages.
+ */
 export async function narrateTimingPoints(points: TimingPoint[]): Promise<TimingPoint[]> {
   if (points.length === 0) return points;
   const concurrency = 3;
   const result: TimingPoint[] = new Array(points.length);
   let i = 0;
+
   async function worker() {
     while (true) {
       const idx = i++;
       if (idx >= points.length) break;
       const point = points[idx];
       try {
-        const narrated = await narrateTimingPoint(point);
-        result[idx] = { ...point, userCopy: narrated || fallbackNarrate(point) };
+        const [zh, en] = await Promise.all([
+          narrateTimingPoint(point, 'zh-CN'),
+          narrateTimingPoint(point, 'en'),
+        ]);
+        result[idx] = {
+          ...point,
+          userCopy: zh || fallbackNarrate(point, 'zh-CN'),
+          userCopyEn: en || fallbackNarrate(point, 'en'),
+        };
       } catch {
-        result[idx] = { ...point, userCopy: fallbackNarrate(point) };
+        result[idx] = withBilingualUserCopy(point);
       }
     }
   }
+
   await Promise.all(Array.from({ length: concurrency }, () => worker()));
   return result;
 }
 
-const FALLBACK_PRESETS: Partial<Record<TimingPoint['type'], NarratorOutput>> = {
-  solar_term: {
-    title: '节气过渡期',
-    summary: '能量切换的 7 天，作息和情绪都更敏感。',
-    todoSuggestions: ['早睡早起', '减少应酬'],
-    avoidSuggestions: ['熬夜决策', '签长期合约'],
-  },
-  tai_sui_value: {
-    title: '本命年',
-    summary: '这一年命理上不宜大动，主守不主进。',
-    todoSuggestions: ['专注现有事的稳定', '把扩张推到明年立春后'],
-    avoidSuggestions: ['一次性押注', '高杠杆决策'],
-  },
-  tai_sui_clash: {
-    title: '冲太岁年',
-    summary: '今年容易遇到外部强冲击，节奏会被打乱。',
-    todoSuggestions: ['留现金流缓冲', '减少长期承诺'],
-    avoidSuggestions: ['硬扛对抗', '搬迁/换工作仓促决定'],
-  },
-  tai_sui_punish: {
-    title: '刑太岁年',
-    summary: '关系/合作上摩擦多，容易被牵连进麻烦。',
-    todoSuggestions: ['合作前白纸黑字', '边界写清楚'],
-    avoidSuggestions: ['替人担保', '介入他人纠纷'],
-  },
-  tai_sui_harm: {
-    title: '害太岁年',
-    summary: '隐性消耗多，容易"看似平稳但持续被吃掉"。',
-    todoSuggestions: ['每月盘点开支与精力', '定期清理无效关系'],
-    avoidSuggestions: ['碍于面子答应不情愿的事'],
-  },
-  tai_sui_break: {
-    title: '破太岁年',
-    summary: '变化频繁，但多为小波折非大事。',
-    todoSuggestions: ['留弹性空间'],
-    avoidSuggestions: ['硬定死时间表'],
-  },
-  dayun_transition: {
-    title: '换大运',
-    summary: '人生节奏从此切换 10 年，前 30 天最易做错决定。',
-    todoSuggestions: ['先观察 1-2 个月再下大决定', '完成手上未结的事'],
-    avoidSuggestions: ['立刻换赛道', '冲动结束当前阶段'],
-  },
-  sui_yun_bing_lin: {
-    title: '岁运并临年',
-    summary: '命理大忌，能量集中度极高，容易极端化。',
-    todoSuggestions: ['一切重大决策延后 30 天再看', '加强健康监测'],
-    avoidSuggestions: ['任何不可逆的承诺', '过度透支'],
-  },
-  liuyue_clash: {
-    title: '变动月',
-    summary: '这个月外部冲击多，节奏被打乱。',
-    todoSuggestions: ['弹性安排日程'],
-    avoidSuggestions: ['锁死的承诺'],
-  },
-  liuyue_fuyin: {
-    title: '原局加倍月',
-    summary: '原本就强的特质这个月会更明显，容易"用力过猛"。',
-    todoSuggestions: ['有意识地慢一档'],
-    avoidSuggestions: ['争对错', '硬碰硬'],
-  },
-  liuyue_combine: {
-    title: '能量增强月',
-    summary: '资源容易聚集，适合推进已经准备好的事。',
-    todoSuggestions: ['集中精力推主线'],
-    avoidSuggestions: ['同时开新摊子'],
-  },
-  liuyue_shensha_tianyi: {
-    title: '贵人月',
-    summary: '这个月关键时刻容易得到帮忙，主动开口求助有效。',
-    todoSuggestions: ['主动联系可能给你建议的人'],
-    avoidSuggestions: ['闷头硬抗'],
-  },
-  liuyue_shensha_wenchang: {
-    title: '灵感月',
-    summary: '学习、写作、表达类的事这个月特别顺。',
-    todoSuggestions: ['集中输出', '写下重要思考'],
-    avoidSuggestions: ['把这种月份用来做琐事'],
-  },
-  liuyue_shensha_taohua: {
-    title: '社交活跃月',
-    summary: '人际关系活跃，容易出现机会和诱惑。',
-    todoSuggestions: ['多见人但留判断力'],
-    avoidSuggestions: ['冲动承诺关系'],
-  },
-  liuyue_shensha_yima: {
-    title: '变动月',
-    summary: '可能涉及出差、搬迁、远行或环境改变。',
-    todoSuggestions: ['提前预留弹性'],
-    avoidSuggestions: ['这个月的长期承诺'],
-  },
-  liuyue_shensha_jiangxing: {
-    title: '担当月',
-    summary: '适合主导和担纲，能量足够支撑你站出来。',
-    todoSuggestions: ['接下你犹豫的责任'],
-    avoidSuggestions: ['继续躲在后面'],
-  },
-};
+/** Sync bilingual fallback only (used at resolve/cache write). */
+export function attachFallbackUserCopy(points: TimingPoint[]): TimingPoint[] {
+  return points.map((p) => withBilingualUserCopy(p));
+}

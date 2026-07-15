@@ -2,7 +2,18 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeft, BarChart3, FileText, Package, Repeat2, ShieldCheck } from 'lucide-react';
+import {
+  ArrowLeft,
+  BarChart3,
+  Bot,
+  FileText,
+  LayoutDashboard,
+  MessageSquareWarning,
+  Package,
+  Repeat2,
+  ShieldCheck,
+  Users,
+} from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import AuthStatus from '@/components/auth-status';
 import { cn } from '@/lib/utils';
@@ -14,10 +25,15 @@ type AdminNavItem = {
 };
 
 const adminNavItems: AdminNavItem[] = [
-  { href: '/admin/usage',            label: '频率留存',   icon: Repeat2 },
-  { href: '/admin/analytics',        label: '经营分析',   icon: BarChart3 },
-  { href: '/admin/content',          label: '内容后台',   icon: FileText },
-  { href: '/admin/premium-services', label: '增值服务',   icon: Package },
+  { href: '/admin/dashboard', label: '总览看板', icon: LayoutDashboard },
+  { href: '/admin/feedback', label: '用户反馈', icon: MessageSquareWarning },
+  { href: '/admin/users', label: '用户', icon: Users },
+  { href: '/admin/llm', label: 'LLM', icon: Bot },
+  { href: '/admin/usage', label: '频率留存', icon: Repeat2 },
+  { href: '/admin/analytics', label: '经营分析', icon: BarChart3 },
+  { href: '/admin/product-funnel', label: '双轨漏斗', icon: BarChart3 },
+  { href: '/admin/content', label: '内容后台', icon: FileText },
+  { href: '/admin/premium-services', label: '增值服务', icon: Package },
 ];
 
 export function AdminHeader() {
@@ -30,7 +46,7 @@ export function AdminHeader() {
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Link
-            href="/admin/usage"
+            href="/admin/dashboard"
             className="inline-flex items-center gap-2 text-sm font-black tracking-tight text-[color:var(--ink-1)]"
             aria-label="人生K线 管理后台"
           >
@@ -39,7 +55,7 @@ export function AdminHeader() {
           </Link>
         </div>
 
-        <nav className="hidden items-center gap-0.5 md:flex" aria-label="管理后台导航">
+        <nav className="hidden items-center gap-0.5 lg:flex" aria-label="管理后台导航">
           {adminNavItems.map((item) => {
             const Icon = item.icon;
             const active = isActive(item.href);
@@ -48,7 +64,7 @@ export function AdminHeader() {
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] px-3 text-sm font-semibold transition',
+                  'inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] px-2.5 text-sm font-semibold transition',
                   active
                     ? 'bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
                     : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
@@ -75,8 +91,7 @@ export function AdminHeader() {
         </div>
       </div>
 
-      {/* 中小屏：横向滚动导航 */}
-      <div className="scrollbar-none border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] md:hidden">
+      <div className="scrollbar-none border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] lg:hidden">
         <div className="mx-auto flex max-w-7xl gap-1 overflow-x-auto px-4 py-2 sm:px-6">
           {adminNavItems.map((item) => {
             const Icon = item.icon;
@@ -109,11 +124,12 @@ export function AdminFooter() {
     <footer className="mt-12 border-t border-[color:var(--hairline)] bg-[color:var(--bg-elevated)]/60">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-2 px-4 py-6 text-xs text-[color:var(--ink-4)] sm:flex-row sm:items-center sm:px-6 lg:px-8">
         <div>© {year} 人生K线 · 管理后台 · 仅限授权管理员访问</div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link href="/admin/dashboard" className="hover:text-[color:var(--ink-1)]">总览</Link>
+          <Link href="/admin/users" className="hover:text-[color:var(--ink-1)]">用户</Link>
+          <Link href="/admin/llm" className="hover:text-[color:var(--ink-1)]">LLM</Link>
           <Link href="/admin/usage" className="hover:text-[color:var(--ink-1)]">频率留存</Link>
           <Link href="/admin/analytics" className="hover:text-[color:var(--ink-1)]">经营分析</Link>
-          <Link href="/admin/content" className="hover:text-[color:var(--ink-1)]">内容后台</Link>
-          <Link href="/admin/premium-services" className="hover:text-[color:var(--ink-1)]">增值服务</Link>
         </div>
       </div>
     </footer>

@@ -1,25 +1,43 @@
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import { timingMapCopy } from '@/lib/i18n/timing-map-copy';
+import { presentReportText } from '@/lib/report-presentation';
+
 interface Props {
   baziPillars: string;
   pattern?: string;
+  locale?: SiteLocale;
 }
 
-export default function PortraitBlock({ baziPillars, pattern }: Props) {
-  // B1 直接命理依据，B2 LLM 重写为人话
-  const summary = pattern
-    ? `${pattern}结构：你不是靠拼命赢的人，你的发力靠节奏和复利。`
-    : '你的命局有清晰的结构，发力点不在硬扛，在节奏。';
+export default function PortraitBlock({ baziPillars, pattern, locale = 'zh-CN' }: Props) {
+  const copy = timingMapCopy(locale);
+  const summary = presentReportText(
+    pattern ? copy.portraitWithPattern(pattern) : copy.portraitFallback,
+    120,
+  );
+  const pillars = `${baziPillars || ''}`.trim();
 
   return (
-    <section className="h-full rounded-[var(--radius-md)] border border-white/60 bg-white/75 p-5 shadow-sm backdrop-blur md:p-6">
-      <div className="inline-flex rounded-full bg-[color:var(--brand-soft)] px-3 py-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-        你是这样的人
+    <section className="h-full rounded-[10px] border border-[color:var(--hairline)] bg-gradient-to-br from-white to-[#f7f9fc] p-4 shadow-sm md:p-5">
+      <div className="inline-flex rounded-full border border-[#3b5998]/20 bg-[#3b5998]/08 px-2.5 py-1 text-[11px] font-bold tracking-[0.06em] text-[#3b5998]">
+        {copy.portraitEyebrow}
       </div>
-      <h2 className="mt-4 text-2xl font-black leading-tight tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+      <h2 className="mt-3 text-[18px] font-bold leading-snug tracking-tight text-[color:var(--ink-1)] md:text-[20px]">
         {summary}
       </h2>
-      <div className="mt-4 inline-flex max-w-full rounded-full border border-[color:var(--line)] bg-[color:var(--paper)] px-3 py-1.5 text-xs text-[color:var(--ink-3)] font-mono">
-        八字：{baziPillars}
-      </div>
+      {pillars ? (
+        <div className="mt-3 inline-flex max-w-full flex-wrap items-center gap-1.5 rounded-[8px] border border-[color:var(--hairline)] bg-white px-2.5 py-1.5 font-mono text-[12px] font-semibold text-[color:var(--ink-2)]">
+          <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--ink-4)]">
+            {copy.baziLabel}
+          </span>
+          <span className="break-all">{pillars}</span>
+        </div>
+      ) : null}
+      {pattern ? (
+        <div className="mt-2 text-[12px] text-[color:var(--ink-4)]">
+          {locale === 'en' ? 'Pattern' : '格局'}：
+          <span className="font-semibold text-[color:var(--ink-2)]">{pattern}</span>
+        </div>
+      ) : null}
     </section>
   );
 }

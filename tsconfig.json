@@ -1,49 +1,24 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
     "strict": true,
-    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "incremental": true,
+    "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
     "isolatedModules": true,
     "jsx": "preserve",
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
-    "baseUrl": ".",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+      "@/*": ["./*"]
+    },
+    "baseUrl": "."
   },
-  "include": [
-    "**/*.ts",
-    "**/*.tsx",
-    ".next-build-561192-1781515870933/types/**/*.ts",
-    ".next-build-561934-1781516046547/types/**/*.ts",
-    ".next-build-570993-1781518868017/types/**/*.ts",
-    ".next-build-626559-1781536061394/types/**/*.ts",
-    ".next-build-714391-1781567572758/types/**/*.ts",
-    ".next/types/**/*.ts",
-    "next-env.d.ts",
-    ".next-build-729280-1781572576702/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", "_prod_sync", "lib/forum-trend-generator.ts", "lib/forum-trend-scanner.ts"]
 }

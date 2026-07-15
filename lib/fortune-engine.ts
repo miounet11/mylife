@@ -10,6 +10,8 @@ import { MasterPhrases, generatePersonalizedPhrase, describeMonth } from './mast
 import { GAN_TO_WUXING, GAN_HE, GAN_CHONG, ZHI_CANG_GAN, ZHI_CHONG, ZHI_HE, ZHI_XING, ZHI_HAI, ZHI_SAN_HE, WUXING_SEASON_SCORE,
   calculateShiShen } from './bazi-constants';
 import { determineYongShen, generateBaziShiShenAnalysis, getLuckyElements, calculateWuxingStrength, analyzeShenSha } from './bazi-analyzer';
+import { calculateTrueSolarTimeOffset } from './solar-time';
+import { generateLifeKlineV6 } from './kline-v6';
 
 // 天干五行映射 (English key for frontend compat)
 const STEM_ELEMENT: Record<string, string> = {
@@ -103,9 +105,14 @@ export const buildCalculationProfile = (
   }
 ): CalculationProfile => {
   const location = resolveBirthLocationProfile(birthPlace, timezone);
-  const standardMeridian = timezone * 15;
-  const offset = location.longitude === null ? 0 : Math.round((location.longitude - standardMeridian) * 4);
-  const adjusted = options?.useTrueSolarTime ? addMinutesToDateAndTime(birthDate, birthTime, offset) : { date: birthDate, time: birthTime };
+  // 与 lib/solar-time 对齐：经度差 + 均时差，避免引擎路径与 analyze 路径偏移不一致
+  const offset =
+    location.longitude === null
+      ? 0
+      : calculateTrueSolarTimeOffset(location.longitude, birthDate, timezone);
+  const adjusted = options?.useTrueSolarTime
+    ? addMinutesToDateAndTime(birthDate, birthTime, offset)
+    : { date: birthDate, time: birthTime };
 
   return {
     calendar: 'solar',
@@ -114,14 +121,16 @@ export const buildCalculationProfile = (
     timezone,
     birthPlace: location.input,
     longitudeEstimate: location.longitude,
-    trueSolarTimeOffsetMinutes: offset,
+    trueSolarTimeOffsetMinutes: Math.round(offset * 10) / 10,
     trueSolarTimeApplied: Boolean(options?.useTrueSolarTime),
     localBirthTime: birthTime,
     adjustedBirthDate: adjusted.date,
     adjustedBirthTime: adjusted.time,
     notes: [
       `calculation profile: ${location.note}`,
-      options?.useTrueSolarTime ? '已按经度偏移校正真太阳时。' : '默认仍按标准时间排盘，避免改变历史结果。',
+      options?.useTrueSolarTime
+        ? '已按经度差+均时差校正真太阳时（与 solar-time 模块一致）。'
+        : '默认仍按标准时间排盘，避免改变历史结果。',
     ],
   };
 };
@@ -277,12 +286,16 @@ export const analyzeFortune = (
       enhancementNotes: expertEvidence.notes,
       contextSignals: {
         engineEvidence: expertEvidence,
+        // 供 agentic groundTruth 直接消费，避免只嵌在 report 包内导致空真值
+        yongShen: yongShenResult,
       },
     },
     klineData,
     dayun: dayunResult,
     shenSha: shenShaResult ?? undefined,
-  };
+    // 顶层用神真值：完整报告 / 升级 / Agent 统一读取
+    yongShen: yongShenResult ?? undefined,
+  } as FortuneAnalysisResult & { yongShen?: YongShenResult | null };
 };
 
 // ==================== 体型推算 ====================
@@ -1315,12 +1328,26 @@ export const generateLifeKlineData = (
   yongShen: ReturnType<typeof determineYongShen>,
   dayunResult?: DayunResult
 ): NonNullable<FortuneAnalysisResult['klineData']> => {
+  // 优先 V6：出生起 80 年年线（大运/流年/用神加权，无 sin 周期）
+  try {
+    const v6 = generateLifeKlineV6(birthDate, gender, pillars, yongShen as any, dayunResult, {
+      fromBirth: true,
+      lifeYears: 80,
+    });
+    if (Array.isArray(v6) && v6.length >= 20) {
+      return v6 as NonNullable<FortuneAnalysisResult['klineData']>;
+    }
+  } catch {
+    // fall through to legacy path
+  }
+
   const currentYear = new Date().getFullYear();
   const birthYear = birthDate.getFullYear();
   const dayunStartAge = dayunResult?.startAge ?? 8;
   const klineData: NonNullable<FortuneAnalysisResult['klineData']> = [];
-  const startYear = Math.max(birthYear, currentYear - 10);
-  const endYear = currentYear + 10;
+  // legacy 兜底也尽量覆盖人生主段
+  const startYear = birthYear;
+  const endYear = Math.max(currentYear + 5, birthYear + 79);
   const dayMasterElement = GAN_TO_WUXING[pillars[2]?.celestialStem] || '';
   const baseElementDrivers = buildNatalKlineDrivers(pillars, yongShen);
 

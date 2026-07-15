@@ -52,32 +52,68 @@ export function injectKnowledgeLinks(input: string): string {
  * 把 LLM 写出来的「公开解析」文本切成 markdown 段落 + 列表，
  * 让 react-markdown 能渲染出层级感。
  *
- * 规则（保守版，避免误伤）：
- *  - 句号 / 分号后跟「判断依据是：/ 当前阶段建议：/ 风险提醒：/ 建议你在」=> 新段
- *  - 句中出现「围绕事业版/婚恋版/财富版」=> 加粗
- *  - 「2026年5月 / 5月 / 7月」=> 加粗
+ * 规则：
+ *  - **1) 判断依据** / **2) 当前阶段建议** 等章节 → ## 标题
+ *  - 行首 * / - / 1. 规范为 GFM 列表
+ *  - 句号后关键引导词 → 新段
+ *  - 时间窗口 / 「围绕XX版」→ 加粗
+ *  - 知识术语内链
  */
 export function shapeAnswerMarkdown(input: string): string {
   if (!input) return '';
-  const stripped = input.replace(/\r\n/g, '\n').trim();
+  let text = input.replace(/\r\n/g, '\n').trim();
 
-  // 1. 关键引导词后换行（变成新段）
-  // 注意：「建议你在」后面紧跟时间词，不强制加冒号，仅换行 + 加粗
-  const headedSegments = stripped
+  // 0. If the whole answer was flattened to one line (legacy path), re-break
+  //    common section / bullet markers so lists can render.
+  if (!text.includes('\n') || text.split('\n').length < 3) {
+    text = text
+      .replace(/\s*(\*\*\d+\)\s*[^*]+?\*\*)\s*/g, '\n\n$1\n\n')
+      .replace(/\s+([*•·▪])\s+(\*\*[^*]+?\*\*)/g, '\n- $2')
+      .replace(/\s+(\d+)[.、．)]\s+(\*\*[^*]+?\*\*)/g, '\n$1. $2')
+      .trim();
+  }
+
+  // 1. Section headings: **1) 判断依据** → ## 1) 判断依据
+  text = text.replace(
+    /^\s*\*\*\s*(\d+\)\s*[^*\n]+?)\s*\*\*\s*$/gm,
+    '\n\n## $1\n',
+  );
+  // Also plain 1) 判断依据 lines
+  text = text.replace(
+    /^\s*(\d+\))\s*(判断依据|当前阶段建议|风险提醒|节点落成|阶段建议|行动建议|核心结论)([^\n]*)$/gm,
+    '\n\n## $1 $2$3\n',
+  );
+
+  // 2. Bullet lines: "* **label**：" / "• xxx" → GFM list (preserve indent for nesting)
+  text = text.replace(/^(\s*)[*•·▪]\s+/gm, (_m, spaces: string) => {
+    const depth = Math.min(2, Math.floor(String(spaces || '').length / 2));
+    return `${'  '.repeat(depth)}- `;
+  });
+
+  // 3. Numbered sub-points "1. **专业壁垒**" stay as ordered lists; fix Chinese dots
+  text = text.replace(/^(\s*)(\d+)[、．](\s*)/gm, '$1$2.$3');
+
+  // 4. Blank line before list / heading so GFM parses correctly
+  text = text
+    .replace(/([^\n])\n(#{1,3} )/g, '$1\n\n$2')
+    .replace(/([^\n])\n([-*] |\d+\. )/g, '$1\n\n$2')
+    .replace(/\n{3,}/g, '\n\n');
+
+  // 5. Legacy inline section cues after punctuation
+  text = text
     .replace(
       /([。；])\s*(判断依据是|当前阶段建议|风险提醒|顺势重点|当前主轴|当前阶段|接下来最容易起变化的是|这一段，?动作要提前收口)[：:]?/g,
-      '$1\n\n**$2**：'
+      '$1\n\n**$2**：',
     )
     .replace(/([。；])\s*(建议你在)/g, '$1\n\n**$2**');
 
-  // 2. 时间窗口加粗
-  const timeMarked = headedSegments.replace(/(20\d{2}年\d{1,2}月|\d{1,2}月(?:初|底)?)/g, '**$1**');
+  // 6. Emphasize windows / product variants (avoid double-bold)
+  text = text
+    .replace(/(?<!\*)(20\d{2}年\d{1,2}月(?:初|底)?|\d{1,2}月(?:初|底)?)(?!\*)/g, '**$1**')
+    .replace(/(?<!\*)(围绕[\u4e00-\u9fa5]{1,3}版)(?!\*)/g, '**$1**');
 
-  // 3. 「围绕XX版」加粗
-  const versionMarked = timeMarked.replace(/(围绕[\u4e00-\u9fa5]{1,3}版)/g, '**$1**');
-
-  // 4. 内链
-  return injectKnowledgeLinks(versionMarked);
+  // 7. Knowledge links
+  return injectKnowledgeLinks(text.trim());
 }
 
 // ---- 结构卡数据抽取 ----

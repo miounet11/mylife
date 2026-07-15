@@ -44,7 +44,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
         <div className="flex items-center justify-between">
           <div className="inline-flex h-10 w-10 rounded-full bg-[color:var(--bg-sunken)]" />
           <div className="text-center">
-            <h2 className="text-2xl font-black text-[color:var(--ink)]">事件日历</h2>
+            <h2 className="text-[18px] font-semibold text-[color:var(--ink-1)]">事件日历</h2>
             <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
           </div>
           <div className="inline-flex h-10 w-10 rounded-full bg-[color:var(--bg-sunken)]" />
@@ -74,7 +74,7 @@ export default function EventCalendar({ events = [] }: EventCalendarProps) {
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="text-center">
-          <h2 className="text-2xl font-black text-[color:var(--ink)]">{format(resolvedCurrentDate, 'yyyy年 M月')}</h2>
+          <h2 className="text-[18px] font-semibold text-[color:var(--ink-1)]">{format(resolvedCurrentDate, 'yyyy年 M月')}</h2>
           <p className="text-xs tracking-[0.18em] text-[color:var(--muted)]">CALENDAR VIEW</p>
         </div>
         <button

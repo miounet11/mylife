@@ -1,25 +1,89 @@
-import type { AgentTaskResult } from '@/lib/agentic-report/types';
+// ── Merge Agent Results V6 ──
+// Accepts both shapes:
+//   A) AgentTaskResult[] (local / task-list pipeline)
+//   B) Record<string, { ok, output } | { status, data }> (prod runParallelAgents)
 
-export function mergeAgentResults(results: Record<string, AgentTaskResult>) {
-  const merged: Record<string, unknown> = {};
-  const errors: Array<{ key: string; error: string }> = [];
+import type { AgentTaskResult, MergedAgentResults } from './types';
 
-  for (const [key, result] of Object.entries(results)) {
-    if (result.ok) {
-      merged[key] = result.output;
+type LooseAgentResult =
+  | AgentTaskResult
+  | {
+      ok?: boolean;
+      output?: unknown;
+      data?: unknown;
+      status?: string;
+      error?: string;
+      key?: string;
+      agentKey?: string;
+    };
+
+function normalizeEntries(
+  results: AgentTaskResult[] | Record<string, LooseAgentResult> | null | undefined,
+): Array<{ key: string; ok: boolean; data: unknown; error?: string }> {
+  if (!results) return [];
+
+  if (Array.isArray(results)) {
+    return results.map((r, index) => {
+      const key = r.agentKey || (r as { key?: string }).key || `agent_${index}`;
+      const ok = r.status === 'ok' || Boolean((r as { ok?: boolean }).ok);
+      const data = r.data ?? (r as { output?: unknown }).output;
+      return {
+        key,
+        ok,
+        data,
+        error: r.error || (ok ? undefined : r.status),
+      };
+    });
+  }
+
+  if (typeof results === 'object') {
+    return Object.entries(results).map(([key, result]) => {
+      const r = result || {};
+      const ok =
+        (r as { ok?: boolean }).ok === true ||
+        (r as { status?: string }).status === 'ok';
+      const data =
+        (r as { output?: unknown }).output ??
+        (r as { data?: unknown }).data;
+      return {
+        key,
+        ok,
+        data,
+        error:
+          (r as { error?: string }).error ||
+          (ok ? undefined : (r as { status?: string }).status || 'UNKNOWN_AGENT_ERROR'),
+      };
+    });
+  }
+
+  return [];
+}
+
+export function mergeAgentResults(
+  results: AgentTaskResult[] | Record<string, LooseAgentResult> | null | undefined,
+): MergedAgentResults {
+  const merged: Record<string, any> = {};
+  const errors: Array<{ agentKey: string; error: string }> = [];
+
+  const entries = normalizeEntries(results);
+  for (const item of entries) {
+    if (item.ok && item.data != null) {
+      merged[item.key] = item.data;
     } else {
       errors.push({
-        key,
-        error: result.error || 'UNKNOWN_AGENT_ERROR',
+        agentKey: item.key,
+        error: item.error || 'UNKNOWN_AGENT_ERROR',
       });
     }
   }
 
+  const successRate = entries.length > 0 ? Object.keys(merged).length / entries.length : 0;
+
   return {
     merged,
     errors,
-    successRate: Object.keys(results).length
-      ? (Object.keys(merged).length / Object.keys(results).length)
-      : 0,
-  };
+    successRate,
+    // prod pipeline historically used `key` in errors; keep agentKey as canonical
+    failedAgents: errors.map((e) => e.agentKey),
+  } as MergedAgentResults;
 }

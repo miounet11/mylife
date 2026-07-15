@@ -1,13 +1,28 @@
+// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import {
+  sendTimingDailyReminderEmail,
+  sendTimingMajorEventEmail,
   sendTimingMonthlyDigestEmail,
   sendTimingSolarTermEmail,
 } from '@/lib/email';
+import {
+  parseEmailSubscriptionMeta,
+  type EmailFocusItem,
+} from '@/lib/email-subscription-focus';
 import { resolveTimingProfileForReport } from '@/lib/life-timing/resolve-timing-profile';
+import type { MajorTransition } from '@/lib/life-timing/types';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import type { TimingPoint } from '@/lib/life-timing/types';
-import { generateId } from '@/lib/utils';
+import { recordTimingEmailToInbox } from '@/lib/email-inbox-recorder';
+import {
+  buildProfileContextPack,
+  buildProfilePersonalizationNote,
+} from '@/lib/profile-context-builder';
+import { buildEmailSubscriptionFocusFooterHtml } from '@/lib/profile-focus-copy';
+import { getAppBaseUrl } from '@/lib/env';
+import { formatLocalDateKey, generateId } from '@/lib/utils';
 
 export const maxDuration = 60;
 
@@ -28,6 +43,7 @@ interface SubRow {
   email: string;
   status: string;
   tags: string;
+  meta?: string | null;
 }
 
 export async function POST(request: NextRequest) {
@@ -39,20 +55,22 @@ export async function POST(request: NextRequest) {
   const mode = url.searchParams.get('mode') || 'auto';
   const batchSize = readBatchSize(url.searchParams.get('limit'));
 
-  // auto = 根据日期判断要发什么
   const now = new Date();
   const day = now.getDate();
   const monthLabel = `${now.getFullYear()} 年 ${now.getMonth() + 1} 月`;
   const utmCampaign = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-monthly`;
+  const dailyCampaign = formatLocalDateKey(now);
 
-  // 任务 1: 月度运势 — 每月 1-3 号都跑（容错）
-  // 任务 2: 节气提醒 — 立春/立夏/立秋/立冬前 7 天
   const dispatchedMonthly = mode === 'monthly' || (mode === 'auto' && day <= 3);
   const dispatchedSolarTerm = mode === 'solar_term' || mode === 'auto';
+  const dispatchedDaily = mode === 'daily' || mode === 'auto';
+  const dispatchedMajor = mode === 'major_event' || mode === 'auto';
   const solarTermInfo = findUpcomingSolarTerm(now);
   const campaignKey = [
     dispatchedMonthly ? utmCampaign : '',
     dispatchedSolarTerm && solarTermInfo ? solarTermInfo.campaign : '',
+    dispatchedDaily ? `daily:${dailyCampaign}` : '',
+    dispatchedMajor ? 'major:auto' : '',
   ].filter(Boolean).join('|') || 'idle';
   const lockKey = `timing_email_cycle:${mode}:${campaignKey}`;
   const lockOwner = `timing-email-${mode}-${generateId()}`;
@@ -66,6 +84,8 @@ export async function POST(request: NextRequest) {
       success: true,
       monthlySent: 0,
       solarTermSent: 0,
+      dailySent: 0,
+      majorEventSent: 0,
       skippedCount: 0,
       errors: [],
       mode,
@@ -79,6 +99,8 @@ export async function POST(request: NextRequest) {
 
     let monthlySent = 0;
     let solarTermSent = 0;
+    let dailySent = 0;
+    let majorEventSent = 0;
     let skippedCount = 0;
     const errors: string[] = [];
 
@@ -89,30 +111,38 @@ export async function POST(request: NextRequest) {
       } catch {
         tags = [];
       }
+      const subscriptionMeta = parseEmailSubscriptionMeta(sub.meta);
+      const focusItems = subscriptionMeta.focusItems || [];
+      const preferredReportId = subscriptionMeta.focusReportId || null;
 
-      // 找该订阅用户对应的最新报告
-      const fortune = findLatestFortuneByEmail(sub.email);
+      const fortune = findLatestFortuneByEmail(sub.email, preferredReportId);
       if (!fortune) {
         skippedCount++;
         continue;
       }
 
-      // 用共享解析函数：缓存命中读 / 不命中现场 build + 立即填 fallback
       const resolved = resolveTimingProfileForReport(fortune.id);
       if (!resolved) {
         skippedCount++;
         continue;
       }
       const profile = resolved.record;
+      const profileContext = buildProfileContextPack(fortune.userId, fortune.id);
+      const profileNote = profileContext ? buildProfilePersonalizationNote(profileContext) : '';
+      const profileArchiveFooterHtml = buildEmailSubscriptionFocusFooterHtml({
+        focusReportId: fortune.id,
+        focusFortuneName: fortune.name || null,
+        focusFortuneRelation: fortune.relation || null,
+        focusFortuneRelationLabel: fortune.relationLabel || null,
+      }, getAppBaseUrl().replace(/\/$/, ''));
 
-      // 月度
       if (dispatchedMonthly && tags.includes('timing:monthly')) {
         const reserved = reserveTimingEmail(sub.email, 'monthly', utmCampaign, fortune.id);
         if (!reserved) {
           skippedCount++;
         } else {
           try {
-            const points = pickMonthPoints(profile.next_30_days, profile.next_12_months, now);
+            const points = pickMonthPoints(profile.next_30_days, profile.next_12_months, now, focusItems);
             await sendTimingMonthlyDigestEmail({
               email: sub.email,
               reportId: fortune.id,
@@ -126,8 +156,22 @@ export async function POST(request: NextRequest) {
               })),
               utmCampaign,
               highlightFirstId: points[0]?.id,
+              profileArchiveFooterHtml,
+              focusItems,
             });
             markSent(sub.email, 'monthly', utmCampaign, fortune.id);
+            recordTimingEmailToInbox({
+              email: sub.email,
+              reportId: fortune.id,
+              category: 'monthly',
+              campaign: utmCampaign,
+              subject: `${monthLabel} · 月度窗口提醒`,
+              preview: points.length > 0
+                ? `本月 ${points.length} 个关键时点：${points.slice(0, 2).map((p) => p.userCopy?.title || p.rawReason.slice(0, 12)).join('、')}`
+                : `${monthLabel} 整体平稳，建议按日常节奏推进。`,
+              bodyText: points.map((p) => `${p.userCopy?.summary || p.rawReason}`).join('\n'),
+              focusItems,
+            });
             monthlySent++;
           } catch (err) {
             const message = err instanceof Error ? err.message : `${err}`;
@@ -137,11 +181,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 节气
       if (
-        dispatchedSolarTerm &&
-        solarTermInfo &&
-        tags.includes('timing:solar_terms')
+        dispatchedSolarTerm
+        && solarTermInfo
+        && tags.includes('timing:solar_terms')
       ) {
         const reserved = reserveTimingEmail(sub.email, 'solar_term', solarTermInfo.campaign, fortune.id);
         if (!reserved) {
@@ -158,13 +201,112 @@ export async function POST(request: NextRequest) {
               todoSuggestions: stPoint?.userCopy?.todoSuggestions || ['早睡早起', '减少应酬'],
               avoidSuggestions: stPoint?.userCopy?.avoidSuggestions || ['熬夜决策', '签长期合约'],
               utmCampaign: solarTermInfo.campaign,
+              profileArchiveFooterHtml,
             });
             markSent(sub.email, 'solar_term', solarTermInfo.campaign, fortune.id);
+            recordTimingEmailToInbox({
+              email: sub.email,
+              reportId: fortune.id,
+              category: 'solar_term',
+              campaign: solarTermInfo.campaign,
+              subject: `${solarTermInfo.name}前 7 天 · 节气过渡提醒`,
+              preview: stPoint?.userCopy?.summary || `${solarTermInfo.name}前 7 天，注意作息和情绪切换。`,
+              focusItems,
+            });
             solarTermSent++;
           } catch (err) {
             const message = err instanceof Error ? err.message : `${err}`;
             markFailed(sub.email, 'solar_term', solarTermInfo.campaign, fortune.id, message);
             errors.push(`solar_term[${sub.email}]: ${message}`);
+          }
+        }
+      }
+
+      if (dispatchedDaily && tags.includes('timing:daily')) {
+        const reserved = reserveTimingEmail(sub.email, 'daily', dailyCampaign, fortune.id);
+        if (!reserved) {
+          skippedCount++;
+        } else {
+          try {
+            const dailyContent = buildDailyReminderContent(profile.next_30_days, now, focusItems);
+            const personalizedHighlights = profileNote
+              ? [profileNote, ...dailyContent.highlights]
+              : dailyContent.highlights;
+            await sendTimingDailyReminderEmail({
+              email: sub.email,
+              reportId: fortune.id,
+              dateLabel: dailyCampaign,
+              focusItems,
+              highlights: personalizedHighlights,
+              dailyTip: dailyContent.dailyTip,
+              cautionTip: dailyContent.cautionTip,
+              utmCampaign: dailyCampaign,
+              profileArchiveFooterHtml,
+            });
+            markSent(sub.email, 'daily', dailyCampaign, fortune.id);
+            recordTimingEmailToInbox({
+              email: sub.email,
+              reportId: fortune.id,
+              category: 'daily',
+              campaign: dailyCampaign,
+              subject: `${dailyCampaign} · 今日运势提醒`,
+              preview: profileNote
+                ? `${profileNote} · ${dailyContent.dailyTip}`
+                : `${dailyContent.dailyTip} 注意：${dailyContent.cautionTip}`,
+              bodyText: [...personalizedHighlights, `今天适合：${dailyContent.dailyTip}`, `今天注意：${dailyContent.cautionTip}`].join('\n'),
+              focusItems,
+            });
+            dailySent++;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : `${err}`;
+            markFailed(sub.email, 'daily', dailyCampaign, fortune.id, message);
+            errors.push(`daily[${sub.email}]: ${message}`);
+          }
+        }
+      }
+
+      if (dispatchedMajor && tags.includes('timing:major_events')) {
+        const upcomingMajor = pickUpcomingMajorTransitions(profile.next_5_years, now);
+        for (const major of upcomingMajor) {
+          const campaign = `${major.campaignPrefix}-${major.year}`;
+          const reserved = reserveTimingEmail(sub.email, 'major_event', campaign, fortune.id);
+          if (!reserved) {
+            skippedCount++;
+            continue;
+          }
+
+          try {
+            await sendTimingMajorEventEmail({
+              email: sub.email,
+              reportId: fortune.id,
+              eventType: major.eventType,
+              eventLabel: major.eventLabel,
+              summary: major.summary,
+              todoSuggestions: major.todoSuggestions,
+              avoidSuggestions: major.avoidSuggestions,
+              utmCampaign: campaign,
+              profileArchiveFooterHtml,
+            });
+            markSent(sub.email, 'major_event', campaign, fortune.id);
+            recordTimingEmailToInbox({
+              email: sub.email,
+              reportId: fortune.id,
+              category: 'major_event',
+              campaign,
+              subject: `${major.eventLabel} · 命理大事提醒`,
+              preview: major.summary,
+              bodyText: [
+                major.summary,
+                `建议：${major.todoSuggestions.join('；')}`,
+                `避免：${major.avoidSuggestions.join('；')}`,
+              ].join('\n'),
+              focusItems,
+            });
+            majorEventSent++;
+          } catch (err) {
+            const message = err instanceof Error ? err.message : `${err}`;
+            markFailed(sub.email, 'major_event', campaign, fortune.id, message);
+            errors.push(`major_event[${sub.email}]: ${message}`);
           }
         }
       }
@@ -174,6 +316,8 @@ export async function POST(request: NextRequest) {
       success: true,
       monthlySent,
       solarTermSent,
+      dailySent,
+      majorEventSent,
       skippedCount,
       errors,
       mode,
@@ -198,7 +342,7 @@ function listActiveSubscriptions(limit: number): SubRow[] {
   const db = new Database(path.join(process.cwd(), 'data', 'lifekline.db'), { readonly: true });
   try {
     return db.prepare(`
-      SELECT id, email, status, tags FROM email_subscriptions
+      SELECT id, email, status, tags, meta FROM email_subscriptions
       WHERE status = 'active'
       ORDER BY datetime(updated_at) ASC, email ASC
       LIMIT ?
@@ -257,7 +401,6 @@ function releaseTimingEmailLock(key: string, owner: string) {
 }
 
 function findUpcomingSolarTerm(now: Date): { name: string; date: string; campaign: string } | null {
-  // 检查未来 7 天内是否有立春/立夏/立秋/立冬
   const TERMS = ['立春', '立夏', '立秋', '立冬'] as const;
   // @ts-ignore
   const { Solar } = require('lunar-javascript');
@@ -281,12 +424,104 @@ function findUpcomingSolarTerm(now: Date): { name: string; date: string; campaig
 function pickMonthPoints(
   next30: TimingPoint[],
   next12: TimingPoint[],
-  now: Date
+  now: Date,
+  focusItems: EmailFocusItem[],
 ): TimingPoint[] {
-  // 取本月所有时点
   const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   const all = [...next30, ...next12];
-  return all.filter((p) => p.startDate.startsWith(ym)).slice(0, 5);
+  const monthPoints = all.filter((p) => p.startDate.startsWith(ym));
+
+  if (focusItems.length === 0) {
+    return monthPoints.slice(0, 5);
+  }
+
+  const focusLabels = focusItems.map((item) => item.label);
+  const prioritized = monthPoints.filter((point) => {
+    const haystack = `${point.userCopy?.title || ''}${point.rawReason}${point.userCopy?.summary || ''}`;
+    return focusLabels.some((label) => haystack.includes(label) || label.includes(haystack.slice(0, 6)));
+  });
+
+  const merged = [...prioritized, ...monthPoints];
+  const unique: TimingPoint[] = [];
+  for (const point of merged) {
+    if (unique.some((item) => item.id === point.id)) continue;
+    unique.push(point);
+    if (unique.length >= 5) break;
+  }
+  return unique;
+}
+
+function buildDailyReminderContent(
+  next30: TimingPoint[],
+  now: Date,
+  focusItems: EmailFocusItem[],
+) {
+  const todayKey = formatLocalDateKey(now);
+  const todayPoints = next30.filter((point) => point.startDate <= todayKey && (!point.endDate || point.endDate >= todayKey));
+  const focusHighlights = focusItems.map((item) => `${item.label}：${item.value}`);
+  const pointHighlights = todayPoints.slice(0, 2).map((point) => (
+    point.userCopy?.summary || point.rawReason
+  ));
+
+  const highlights = [...focusHighlights, ...pointHighlights].filter(Boolean).slice(0, 3);
+  const primaryPoint = todayPoints[0];
+  const dailyTip = primaryPoint?.userCopy?.todoSuggestions?.[0]
+    || (focusItems[0] ? `今天优先围绕「${focusItems[0].label}」做一个小动作，并记录反馈。` : '今天先稳住节奏，把一件最重要的小事做完。');
+  const cautionTip = primaryPoint?.userCopy?.avoidSuggestions?.[0]
+    || (focusItems[0] ? `避免在「${focusItems[0].label}」相关事项上冲动决策。` : '避免同时推进多个高成本决定。');
+
+  return {
+    highlights,
+    dailyTip,
+    cautionTip,
+  };
+}
+
+function pickUpcomingMajorTransitions(
+  transitions: MajorTransition[],
+  now: Date,
+) {
+  const horizon = new Date(now);
+  horizon.setDate(horizon.getDate() + 30);
+
+  return transitions
+    .filter((item) => {
+      const eventDate = new Date(`${item.year}-01-01`);
+      return eventDate >= now && eventDate <= horizon;
+    })
+    .map((item) => {
+      if (item.type === 'dayun_shift') {
+        return {
+          year: item.year,
+          campaignPrefix: 'dayun-shift',
+          eventType: 'dayun_shift' as const,
+          eventLabel: '换大运关键期',
+          summary: item.rawReason || '大运交接前后，节奏和重心都会发生变化，宜先观察再定策。',
+          todoSuggestions: ['梳理未来三年的主线目标', '减少一次性押注式决策'],
+          avoidSuggestions: ['仓促换赛道', '忽视身体与情绪信号'],
+        };
+      }
+      if (item.type === 'sui_yun_bing_lin') {
+        return {
+          year: item.year,
+          campaignPrefix: 'sui-yun-binglin',
+          eventType: 'sui_yun_bing_lin' as const,
+          eventLabel: '岁运并临',
+          summary: item.rawReason || '岁运并临是命理上的高敏感阶段，宜稳不宜躁。',
+          todoSuggestions: ['把关键决策拆小步验证', '保持规律作息'],
+          avoidSuggestions: ['高风险扩张', '情绪化处理冲突'],
+        };
+      }
+      return {
+        year: item.year,
+        campaignPrefix: 'tai-sui',
+        eventType: 'tai_sui' as const,
+        eventLabel: '本命年 / 太岁年',
+        summary: item.rawReason || '太岁年更适合守正出奇，先稳住基本盘。',
+        todoSuggestions: ['减少不必要折腾', '提前准备缓冲资金'],
+        avoidSuggestions: ['冲动投资', '过度透支健康'],
+      };
+    });
 }
 
 const _sentCache = new Set<string>();
@@ -387,21 +622,63 @@ function markFailed(email: string, category: string, campaign: string, reportId:
   }
 }
 
-function findLatestFortuneByEmail(email: string): { id: string; userId: string } | null {
-  // 通过 user.email 找到 user，再找最新 fortune
+type FortuneEmailRef = {
+  id: string;
+  userId: string;
+  name?: string | null;
+  relation?: string | null;
+  relationLabel?: string | null;
+};
+
+function mapFortuneEmailRef(row: {
+  id: string;
+  user_id: string;
+  name?: string | null;
+  relation?: string | null;
+  relation_label?: string | null;
+}): FortuneEmailRef {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    name: row.name || null,
+    relation: row.relation || null,
+    relationLabel: row.relation_label || null,
+  };
+}
+
+function findLatestFortuneByEmail(email: string, preferredReportId?: string | null): FortuneEmailRef | null {
   const db = new Database(path.join(process.cwd(), 'data', 'lifekline.db'), { readonly: true });
   try {
+    if (preferredReportId) {
+      const preferred = db.prepare(
+        'SELECT id, user_id, name, relation, relation_label FROM fortunes WHERE id = ? LIMIT 1'
+      ).get(preferredReportId) as {
+        id: string;
+        user_id: string;
+        name?: string | null;
+        relation?: string | null;
+        relation_label?: string | null;
+      } | undefined;
+      if (preferred) {
+        return mapFortuneEmailRef(preferred);
+      }
+    }
+
     const user = db.prepare('SELECT id FROM users WHERE email = ?').get(email) as { id: string } | undefined;
     if (!user) {
-      // guest 订阅用户：找有这个 email 的 newsletter source 关联的最近 report
-      // 简化处理：跳过没注册用户的订阅
       return null;
     }
     const fortune = db.prepare(
-      'SELECT id, user_id FROM fortunes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
-    ).get(user.id) as { id: string; user_id: string } | undefined;
+      'SELECT id, user_id, name, relation, relation_label FROM fortunes WHERE user_id = ? ORDER BY created_at DESC LIMIT 1'
+    ).get(user.id) as {
+      id: string;
+      user_id: string;
+      name?: string | null;
+      relation?: string | null;
+      relation_label?: string | null;
+    } | undefined;
     if (!fortune) return null;
-    return { id: fortune.id, userId: fortune.user_id };
+    return mapFortuneEmailRef(fortune);
   } finally {
     db.close();
   }

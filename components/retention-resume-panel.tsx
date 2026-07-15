@@ -1,7 +1,6 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { ArrowRight } from 'lucide-react';
 import ResultCtaLink from '@/components/result-cta-link';
 
 type RetentionResumeAction = {
@@ -19,6 +18,7 @@ type RetentionResumeStat = {
   helper?: string;
 };
 
+/** Quiet resume strip — text links, no brand gradient chrome. */
 export default function RetentionResumePanel({
   page,
   source,
@@ -40,70 +40,50 @@ export default function RetentionResumePanel({
   stats: RetentionResumeStat[];
   actions: RetentionResumeAction[];
 }) {
-  const [primaryAction, ...secondaryActions] = actions;
-
   return (
-    <section className="rounded-[var(--radius)] border border-[rgba(18,125,111,0.22)] bg-[color:var(--accent-strong)] p-4 text-white shadow-[0_18px_42px_rgba(11,95,85,0.16)] md:p-5">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-stretch">
-        <div className="space-y-3">
-          <div className="inline-flex rounded-md bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold tracking-[0.16em] text-white/82">
-            {eyebrow}
-          </div>
-          <div>
-            <h2 className="text-2xl font-black leading-tight">{title}</h2>
-          </div>
-          {primaryAction ? (
-            <div className="flex flex-wrap gap-3">
-              <ResultCtaLink
-                href={primaryAction.href}
-                page={page}
-                target={primaryAction.target}
-                className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[color:var(--paper)] px-5 py-3 text-sm font-black text-[color:var(--ink)] shadow-[0_12px_30px_rgba(255,255,255,0.16)] transition hover:-translate-y-0.5"
-                meta={{
-                  source,
-                  ctaStrategyKey,
-                  sourceFamily,
-                  surface: 'retention_resume_panel',
-                  cta: primaryAction.target,
-                  ...primaryAction.meta,
-                }}
-              >
-                {primaryAction.label}
-                <ArrowRight className="h-4 w-4" />
-              </ResultCtaLink>
-              {secondaryActions.map((action) => (
-                <ResultCtaLink
-                  key={action.target}
-                  href={action.href}
-                  page={page}
-                  target={action.target}
-                  className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/25 bg-[color:var(--paper)] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:bg-[color:var(--paper)]"
-                  meta={{
-                    source,
-                    ctaStrategyKey,
-                    sourceFamily,
-                    surface: 'retention_resume_panel',
-                    cta: action.target,
-                    ...action.meta,
-                  }}
-                >
-                  {action.label}
-                </ResultCtaLink>
-              ))}
-            </div>
-          ) : null}
-        </div>
+    <section className="border-y border-[color:var(--hairline)] py-4">
+      <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{eyebrow}</div>
+      <h2 className="mt-1 text-[15px] font-semibold text-[color:var(--ink-1)]">{title}</h2>
 
-        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-          {stats.map((item) => (
-            <div key={item.label} className="rounded-lg border border-white/12 bg-[color:var(--paper)] px-4 py-3 backdrop-blur">
-              <div className="text-xs font-semibold tracking-[0.16em] text-white/82">{item.label}</div>
-              <div className="mt-1 text-2xl font-black text-white">{item.value}</div>
-              {item.helper ? <div className="mt-1 text-xs leading-5 text-white/68">{item.helper}</div> : null}
-            </div>
+      {actions.length ? (
+        <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+          {actions.map((action, i) => (
+            <ResultCtaLink
+              key={action.target}
+              href={action.href}
+              page={page}
+              target={action.target}
+              className={
+                i === 0
+                  ? 'text-[color:var(--ink-1)] underline-offset-2 hover:underline'
+                  : 'text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline'
+              }
+              meta={{
+                source,
+                ctaStrategyKey,
+                sourceFamily,
+                surface: 'retention_resume_panel',
+                cta: action.target,
+                ...action.meta,
+              }}
+            >
+              {action.label}
+            </ResultCtaLink>
           ))}
         </div>
-      </div>
+      ) : null}
+
+      {stats.length ? (
+        <dl className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-[color:var(--ink-5)]">
+          {stats.map((item) => (
+            <div key={item.label} className="flex items-baseline gap-1.5">
+              <dt>{item.label}</dt>
+              <dd className="font-medium text-[color:var(--ink-2)]">{item.value}</dd>
+              {item.helper ? <span className="text-[11px]">· {item.helper}</span> : null}
+            </div>
+          ))}
+        </dl>
+      ) : null}
     </section>
   );
 }

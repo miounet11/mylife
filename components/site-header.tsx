@@ -2,47 +2,32 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import {
-  ArrowRight,
-  CalendarDays,
-  LayoutDashboard,
-  MessageSquareText,
-  UserRound,
-  Users,
-  Wrench,
-  BookOpenText,
-  Search,
-  Sparkles,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { ArrowRight, Search } from 'lucide-react';
 import AuthStatus from '@/components/auth-status';
 import ResultCtaLink from '@/components/result-cta-link';
+import LocaleSwitcher from '@/components/i18n/locale-switcher';
+import { useLocale } from '@/components/i18n/locale-provider';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 
-type NavItem = {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-};
+type NavItem = { href: string; labelKey: string };
 
 const primaryNavItems: NavItem[] = [
-  { href: '/analyze', label: '工作台', icon: LayoutDashboard },
-  { href: '/chat',    label: '结构追问', icon: MessageSquareText },
-  { href: '/community', label: '社区', icon: Users },
-  { href: '/tools',   label: '工具中心', icon: Wrench },
-  { href: '/events',  label: '事件日历', icon: CalendarDays },
-  { href: '/profile', label: '我的档案', icon: UserRound },
-  { href: '/docs',    label: '文档', icon: BookOpenText },
+  { href: '/analyze', labelKey: 'navWorkbench' },
+  { href: '/dimensions', labelKey: 'navDimensions' },
+  { href: '/tools', labelKey: 'navTools' },
+  { href: '/teachers', labelKey: 'navTeachers' },
+  { href: '/knowledge', labelKey: 'navKnowledge' },
+  { href: '/predictions', labelKey: 'navPredictions' },
+  { href: '/chat', labelKey: 'navChat' },
+  { href: '/profile', labelKey: 'navProfile' },
 ];
 
-const portalSubLinks = [
-  { href: '/world-yi',      label: '世界易' },
-  { href: '/knowledge',     label: '知识库' },
-  { href: '/cases',         label: '案例库' },
-  { href: '/reports',       label: '公开结果' },
-  { href: '/insights',      label: '洞察' },
-  { href: '/visual-assets', label: '图片库' },
+const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
+  { href: '/cases', labelKey: 'navCases' },
+  { href: '/events', labelKey: 'navEvents' },
+  { href: '/annual-review', labelKey: 'navAnnual' },
+  { href: '/docs', labelKey: 'navDocs' },
 ];
 
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
@@ -50,6 +35,7 @@ const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_gr
 interface SiteHeaderProps {
   ctaHref?: string;
   ctaLabel?: string;
+  compact?: boolean;
   ctaAnalytics?: {
     page: string;
     target: string;
@@ -59,34 +45,52 @@ interface SiteHeaderProps {
 
 export default function SiteHeader({
   ctaHref = '/analyze',
-  ctaLabel = '立即开始',
+  ctaLabel,
+  compact = false,
   ctaAnalytics,
 }: SiteHeaderProps) {
   const pathname = usePathname();
+  const { t, L, locale } = useLocale();
+  const resolvedCta = ctaLabel ? L(ctaLabel) : t('ctaStart');
 
   const isActive = (href: string) =>
     href === '/' ? pathname === href : pathname === href || (pathname || '').startsWith(`${href}/`);
 
+  const ctaClass =
+    'inline-flex h-8 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3 text-[13px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
+
+  const brandName = t('brandName');
+  const brandMain =
+    locale === 'en' ? (
+      <>
+        Life <span className="font-serif">K</span>-Line
+      </>
+    ) : (
+      <>
+        {brandName.slice(0, brandName.indexOf('K') >= 0 ? brandName.indexOf('K') : 2)}
+        <span className="font-serif">K</span>
+        {brandName.includes('K') ? brandName.slice(brandName.indexOf('K') + 1) : brandName.slice(2)}
+      </>
+    );
+
   return (
-    <header className="sticky top-0 z-50">
-      {/* Row 1 : FB 蓝顶栏（chrome） */}
-      <div className="fb-chrome border-b border-[#1e3160]">
-        <div className="mx-auto flex h-[42px] max-w-7xl items-center gap-4 px-3 sm:px-4 lg:px-6">
+    <header className="sticky top-0 z-50 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/95 backdrop-blur-md">
+      {/* Top bar — Linear-style light chrome */}
+      <div className="border-b border-[color:var(--hairline)]">
+        <div className="page-frame flex h-14 items-center gap-3">
           <Link
             href="/"
-            aria-label="回到人生K线首页"
-            className="flex shrink-0 items-center gap-2 text-white hover:opacity-90"
+            aria-label={t('brandAria')}
+            className="flex shrink-0 items-center gap-2.5 text-[color:var(--ink-1)] hover:opacity-90 hover:no-underline"
           >
-            <span className="flex h-7 w-7 items-center justify-center rounded-[2px] bg-white/12 text-[15px] font-black leading-none">
+            <span className="brand-mark text-[13px] leading-none">
               <span className="font-serif">K</span>
             </span>
             <span className="flex flex-col leading-none">
-              <span className="text-[15px] font-extrabold tracking-tight">
-                人生<span className="font-serif">K</span>线
-              </span>
+              <span className="text-[14px] font-semibold tracking-[-0.02em]">{brandMain}</span>
               <span
-                className="mt-0.5 text-xs font-semibold uppercase opacity-80"
-                style={{ letterSpacing: '0.18em' }}
+                className="mt-0.5 text-[10px] font-medium uppercase text-[color:var(--ink-4)]"
+                style={{ letterSpacing: '0.14em' }}
               >
                 LIFE KLINE
               </span>
@@ -96,45 +100,43 @@ export default function SiteHeader({
           <form
             action="/community/search"
             method="get"
-            className="relative ml-1 hidden min-w-0 max-w-[420px] flex-1 md:block"
+            className="relative ml-2 hidden min-w-0 max-w-md flex-1 md:block"
             role="search"
           >
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[color:var(--ink-4)]" />
             <input
               type="text"
               name="q"
-              placeholder="搜索：八字 / 紫微 / 六爻 / 风水 / 塔罗 …"
-              className="h-7 w-full rounded-[2px] border border-[#29487d] bg-white px-2 pr-7 text-[13px] text-[color:var(--fb-ink-1)] placeholder:text-[color:var(--fb-ink-4)] focus:border-white focus:outline-none"
-              aria-label="站内搜索"
+              placeholder={t('searchPlaceholder')}
+              className="fb-input h-8 w-full pl-8 pr-3 text-[13px] text-[color:var(--ink-1)] placeholder:text-[color:var(--ink-4)]"
+              aria-label={t('navSearch')}
             />
-            <Search className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[color:var(--fb-ink-3)]" />
           </form>
 
-          <div className="ml-auto flex shrink-0 items-center gap-2 text-white">
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <LocaleSwitcher variant="light" className="hidden sm:inline-flex" />
             <AuthStatus />
             <Link
               href="/community/search"
-              aria-label="站内搜索"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-[2px] border border-[#29487d] bg-white/10 text-white transition hover:bg-white/20 md:hidden"
+              aria-label={t('navSearch')}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)] transition hover:bg-[color:var(--bg-sunken)] md:hidden"
             >
-              <Search className="h-3.5 w-3.5" />
+              <Search className="h-4 w-4" />
             </Link>
             {ctaAnalytics ? (
               <ResultCtaLink
                 href={ctaHref}
                 page={ctaAnalytics.page}
                 target={ctaAnalytics.target}
-                className="inline-flex h-7 items-center gap-1 rounded-[2px] border border-[#29487d] bg-[#4267b2] px-3 text-[13px] font-bold text-white hover:bg-[#365899]"
+                className={ctaClass}
                 meta={{ surface: 'site_header', ...ctaAnalytics.meta }}
               >
-                {ctaLabel}
+                {resolvedCta}
                 <ArrowRight className="h-3.5 w-3.5" />
               </ResultCtaLink>
             ) : (
-              <Link
-                href={ctaHref}
-                className="inline-flex h-7 items-center gap-1 rounded-[2px] border border-[#29487d] bg-[#4267b2] px-3 text-[13px] font-bold text-white hover:bg-[#365899]"
-              >
-                {ctaLabel}
+              <Link href={ctaHref} className={ctaClass}>
+                {resolvedCta}
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             )}
@@ -142,66 +144,65 @@ export default function SiteHeader({
         </div>
       </div>
 
-      {/* Row 2 : 白底主导航 */}
-      <div className="border-b border-[color:var(--fb-border)] bg-white">
-        <div className="scrollbar-none scroll-fade-x mx-auto flex h-10 max-w-7xl items-center gap-1 overflow-x-auto px-3 sm:px-4 lg:px-6">
-          <nav className="flex items-center gap-0.5" aria-label="核心产品导航">
+      {/* Primary nav strip */}
+      <div className="bg-[color:var(--paper)]">
+        <div className="page-frame scrollbar-none flex h-11 items-center gap-0.5 overflow-x-auto">
+          <nav className="flex min-w-0 items-center gap-0.5" aria-label="core">
             {primaryNavItems.map((item) => {
-              const Icon = item.icon;
               const active = isActive(item.href);
+              const label =
+                item.labelKey === 'navTeachers' ? '请老师' : t(item.labelKey);
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'inline-flex h-9 shrink-0 items-center gap-1.5 whitespace-nowrap px-3 text-[13px] font-semibold no-underline hover:no-underline',
+                    'inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline',
                     active
-                      ? 'border-b-2 border-[color:var(--fb-blue)] text-[color:var(--fb-blue-link-hover)]'
-                      : 'border-b-2 border-transparent text-[color:var(--fb-ink-2)] hover:text-[color:var(--fb-blue-link-hover)]',
+                      ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
+                      : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
                   )}
                 >
-                  <Icon className="h-4 w-4" />
-                  {item.label}
+                  {label}
                 </Link>
               );
             })}
+            {!compact ? (
+              <>
+                <span className="mx-1.5 hidden h-4 w-px shrink-0 bg-[color:var(--hairline)] lg:block" />
+                {secondaryNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      'hidden h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2 text-[12px] font-medium no-underline transition hover:no-underline lg:inline-flex',
+                      isActive(item.href)
+                        ? 'text-[color:var(--brand-strong)]'
+                        : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)]',
+                    )}
+                  >
+                    {t(item.labelKey)}
+                  </Link>
+                ))}
+                {priorityGrowthHeaderLinks.slice(0, 1).map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="hidden h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2 text-[12px] font-medium text-[color:var(--ink-4)] no-underline transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)] hover:no-underline xl:inline-flex"
+                  >
+                    {L(item.shortLabel)}
+                  </Link>
+                ))}
+                <div className="ml-auto flex shrink-0 items-center sm:hidden">
+                  <LocaleSwitcher variant="light" />
+                </div>
+              </>
+            ) : (
+              <div className="ml-auto flex shrink-0 items-center sm:hidden">
+                <LocaleSwitcher variant="light" />
+              </div>
+            )}
           </nav>
-        </div>
-      </div>
-
-      {/* Row 3 : 易学栏目副带 */}
-      <div className="border-b border-[color:var(--fb-border)] bg-[#f6f7f9]">
-        <div className="mx-auto flex h-9 max-w-7xl items-center gap-3 px-3 sm:px-4 lg:px-6">
-          <Sparkles className="h-3.5 w-3.5 shrink-0 text-[color:var(--fb-blue)]" aria-hidden />
-          <div className="scrollbar-none scroll-fade-x flex min-w-0 flex-1 items-center gap-3 overflow-x-auto text-[12px]">
-            {portalSubLinks.map((item) => {
-              const active = isActive(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cn(
-                    'shrink-0 whitespace-nowrap font-semibold no-underline hover:underline',
-                    active
-                      ? 'text-[color:var(--fb-blue-link-hover)]'
-                      : 'text-[color:var(--fb-blue-link)]',
-                  )}
-                >
-                  {item.label}
-                </Link>
-              );
-            })}
-            <span className="shrink-0 whitespace-nowrap text-[color:var(--fb-ink-4)]">·</span>
-            {priorityGrowthHeaderLinks.slice(0, 3).map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="shrink-0 whitespace-nowrap font-semibold text-[color:var(--fb-ink-3)] no-underline hover:text-[color:var(--fb-blue-link)] hover:underline"
-              >
-                {item.shortLabel}
-              </Link>
-            ))}
-          </div>
         </div>
       </div>
     </header>

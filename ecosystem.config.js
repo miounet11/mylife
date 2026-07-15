@@ -8,20 +8,23 @@ const enableBackgroundWorkers = process.env.ENABLE_BACKGROUND_WORKERS === '1';
 const enableWebReplicas = false;
 const enableCronTier = false;
 const enableWatchdogs = process.env.ENABLE_WATCHDOGS === '1';
+const enableOpsLoop = process.env.ENABLE_OPS_LOOP !== '0';
 const enableContentWorkers = process.env.ENABLE_CONTENT_WORKERS === '1';
-const enableKnowledgeWorker = process.env.ENABLE_KNOWLEDGE_WORKER === '1';
+// Knowledge freshness is part of the public content promise. Keep it on unless
+// explicitly disabled during incident mitigation.
+const enableKnowledgeWorker = process.env.ENABLE_KNOWLEDGE_WORKER !== '0';
 const enableAgenticPipeline = process.env.ENABLE_AGENTIC_PIPELINE ?? '0';
 const openAgentRuntimeEnabled = process.env.OPEN_AGENT_RUNTIME_ENABLED ?? '0';
 
 function readCurrentBuildId() {
-  const processBuildId = `${process.env.LIFE_KLINE_BUILD_ID || ''}`.trim();
-  if (processBuildId) return processBuildId;
-
+  // Prefer on-disk .next/BUILD_ID after deploy; process env can stick stale via PM2 dump.
   try {
-    return fs.readFileSync(path.join(__dirname, '.next', 'BUILD_ID'), 'utf8').trim();
+    const fileBuildId = fs.readFileSync(path.join(__dirname, '.next', 'BUILD_ID'), 'utf8').trim();
+    if (fileBuildId) return fileBuildId;
   } catch {
-    return '';
+    // fall through
   }
+  return `${process.env.LIFE_KLINE_BUILD_ID || ''}`.trim();
 }
 
 const currentBuildId = readCurrentBuildId();
@@ -37,6 +40,7 @@ const cronEnv = {
   REPORT_MONTHLY_DIGEST_CRON_TOKEN: 'life-kline-monthly-digest-local-2026',
   EMAIL_RETRY_CRON_TOKEN: 'life-kline-email-retry-local-2026',
   TIMING_EMAIL_CRON_TOKEN: 'life-kline-timing-email-local-2026',
+  PREDICTION_EMAIL_CRON_TOKEN: 'life-kline-timing-email-local-2026',
   USER_LIFECYCLE_EMAIL_CRON_TOKEN: 'life-kline-user-lifecycle-local-2026',
 };
 
@@ -63,6 +67,13 @@ const nextApp = {
     DEFAULT_MODEL: PRIMARY_LLM_MODEL,
     OPEN_AGENT_RUNTIME_MODEL: PRIMARY_LLM_MODEL,
     CONTENT_GENERATION_MODEL: PRIMARY_LLM_MODEL,
+    // Image gen: turbo first, then gpt-image-2
+    VISUAL_ASSET_DEFAULT_MODEL: process.env.VISUAL_ASSET_DEFAULT_MODEL || 'z-image-turbo',
+    VISUAL_ASSET_FALLBACK_MODEL: process.env.VISUAL_ASSET_FALLBACK_MODEL || 'gpt-image-2',
+    VISUAL_ASSET_MODEL_FALLBACK_CHAIN: process.env.VISUAL_ASSET_MODEL_FALLBACK_CHAIN || 'z-image-turbo,gpt-image-2',
+    VISUAL_ASSET_CORE_MODEL: process.env.VISUAL_ASSET_CORE_MODEL || 'gpt-image-2',
+    LLM_IMAGE_PRIMARY_MODEL: process.env.LLM_IMAGE_PRIMARY_MODEL || 'z-image-turbo',
+    LLM_IMAGE_FALLBACK_MODEL: process.env.LLM_IMAGE_FALLBACK_MODEL || 'gpt-image-2',
     // v5-C1 (2026-05-11): 统一文本生成主链路、备用链路与兜底链路。
     MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
     REPORT_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
@@ -92,6 +103,7 @@ const nextApp = {
     NEXT_PUBLIC_ARTICLE_CTA_V1: process.env.NEXT_PUBLIC_ARTICLE_CTA_V1 || '1',
     // Sub-Spec C (2026-05-10) 命理时间提醒 cron token
     TIMING_EMAIL_CRON_TOKEN: 'life-kline-timing-email-local-2026',
+    PREDICTION_EMAIL_CRON_TOKEN: cronEnv.PREDICTION_EMAIL_CRON_TOKEN,
     ...cronEnv,
     CONTENT_RADAR_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content/radar/cron`,
     CONTENT_RADAR_INTERVAL_MS: '2700000',
@@ -100,6 +112,17 @@ const nextApp = {
     CONTENT_RADAR_RETRY_DELAY_MS: '60000',
     CONTENT_RADAR_AUTO_GENERATE: '0',
     CONTENT_RADAR_AUTO_PUBLISH: '0',
+    CONTENT_SCHEDULER_TIMEZONE_OFFSET_MINUTES: '480',
+    CONTENT_SCHEDULER_PUBLISH_HOURS: '8,9,10,11,12,14,15,16,17,18,19,20,21',
+    CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT: '8',
+    CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES: '90',
+    CONTENT_SCHEDULER_DRAFT_BATCH_SIZE: '4',
+    CONTENT_SCHEDULER_INTEREST_PUBLISH_ENABLED: '1',
+    CONTENT_SCHEDULER_BACKLOG_PRESSURE_RATIO: '2',
+    CONTENT_SCHEDULER_DRAFT_RESERVE_TARGET: '12',
+    CONTENT_SCHEDULER_GENERATE_COOLDOWN_MINUTES: '240',
+    CONTENT_SCHEDULER_RADAR_REFRESH_MAX_AGE_HOURS: '4',
+    CONTENT_SCHEDULER_PUBLISH_STALE_RELAX_MINUTES: '180',
   },
   error_file: '/root/.pm2/logs/life-kline-next-error.log',
   out_file: '/root/.pm2/logs/life-kline-next-out.log',
@@ -263,11 +286,13 @@ const backgroundWorkers = enableBackgroundWorkers ? [
       CONTENT_SCHEDULER_STARTUP_DELAY_MS: '20000',
       CONTENT_SCHEDULER_RETRY_DELAY_MS: '60000',
       CONTENT_SCHEDULER_TIMEZONE_OFFSET_MINUTES: '480',
-      CONTENT_SCHEDULER_PUBLISH_HOURS: '10,15,20',
-      CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT: '3',
-      CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES: '180',
+      CONTENT_SCHEDULER_PUBLISH_HOURS: '8,9,10,11,12,14,15,16,17,18,19,20,21',
+      CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT: '8',
+      CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES: '90',
+      CONTENT_SCHEDULER_INTEREST_PUBLISH_ENABLED: '1',
+      CONTENT_SCHEDULER_BACKLOG_PRESSURE_RATIO: '2',
       CONTENT_SCHEDULER_DRAFT_RESERVE_TARGET: '12',
-      CONTENT_SCHEDULER_DRAFT_BATCH_SIZE: '3',
+      CONTENT_SCHEDULER_DRAFT_BATCH_SIZE: '4',
       CONTENT_SCHEDULER_GENERATE_COOLDOWN_MINUTES: '240',
       CONTENT_SCHEDULER_RADAR_REFRESH_MAX_AGE_HOURS: '4',
       CONTENT_SCHEDULER_ADAPTIVE_TYPE_WEIGHT: '10',
@@ -382,6 +407,32 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     },
     error_file: '/root/.pm2/logs/life-kline-timing-email-error.log',
     out_file: '/root/.pm2/logs/life-kline-timing-email-out.log',
+    log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+    merge_logs: true,
+    autorestart: true,
+    max_restarts: 20,
+    min_uptime: '10s',
+    watch: false,
+    restart_delay: 5000,
+  },
+  {
+    name: 'life-kline-prediction-due-email',
+    script: 'scripts/prediction-due-email-daemon.js',
+    cwd: '/home/life-kline-next',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PREDICTION_EMAIL_CRON_TOKEN: cronEnv.PREDICTION_EMAIL_CRON_TOKEN,
+      TIMING_EMAIL_CRON_TOKEN: cronEnv.TIMING_EMAIL_CRON_TOKEN,
+      PREDICTION_DUE_EMAIL_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/predictions/email/cron?limit=50`,
+      PREDICTION_DUE_EMAIL_INTERVAL_MS: '43200000', // 12 小时
+      PREDICTION_DUE_EMAIL_REQUEST_TIMEOUT_MS: '60000',
+      PREDICTION_DUE_EMAIL_STARTUP_DELAY_MS: '60000',
+      PREDICTION_DUE_EMAIL_RETRY_DELAY_MS: '120000',
+    },
+    error_file: '/root/.pm2/logs/life-kline-prediction-due-email-error.log',
+    out_file: '/root/.pm2/logs/life-kline-prediction-due-email-out.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
     merge_logs: true,
     autorestart: true,
@@ -547,6 +598,42 @@ const stabilityMonitor = {
 const stabilityApps =
   process.env.ENABLE_STABILITY_MONITOR === '1' ? [stabilityMonitor] : [];
 
+const opsLoopApp = {
+  name: 'life-kline-ops-loop',
+  script: 'scripts/autonomous-ops-loop.js',
+  cwd: '/home/life-kline-next',
+  instances: 1,
+  exec_mode: 'fork',
+  env: {
+    NODE_ENV: 'production',
+    OPS_LOOP_PROJECT_ROOT: '/home/life-kline-next',
+    OPS_LOOP_INTERVAL_MS: '600000',
+    OPS_LOOP_STARTUP_DELAY_MS: '30000',
+    OPS_LOOP_DISK_WARN_PERCENT: '80',
+    OPS_LOOP_DISK_CRITICAL_PERCENT: '90',
+    OPS_LOOP_DISK_MIN_FREE_GB: '8',
+    OPS_LOOP_PM2_LOG_MAX_MB: '180',
+    OPS_LOOP_SCHEDULER_MAX_IDLE_MS: '2700000',
+    OPS_LOOP_RECOVERY_COOLDOWN_MS: '600000',
+    OPS_LOOP_REQUIRED_DAEMONS: 'life-kline-next,life-kline-knowledge,life-kline-content-generation,life-kline-scheduler,life-kline-radar,forum-daemon',
+    OPS_LOOP_HEALTH_TOKEN: cronEnv.CONTENT_SCHEDULER_CRON_TOKEN,
+    OPS_LOOP_HEALTH_URL: `http://${INTERNAL_API_HOST}/api/admin/system/health`,
+    OPS_LOOP_SCHEDULER_URL: `http://${INTERNAL_API_HOST}/api/admin/content/scheduler/cron`,
+  },
+  error_file: '/root/.pm2/logs/life-kline-ops-loop-error.log',
+  out_file: '/root/.pm2/logs/life-kline-ops-loop-out.log',
+  log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+  merge_logs: true,
+  autorestart: true,
+  max_restarts: 30,
+  min_uptime: '10s',
+  max_memory_restart: '192M',
+  watch: false,
+  restart_delay: 5000,
+};
+
+const opsLoopApps = enableOpsLoop ? [opsLoopApp] : [];
+
 const userTierWatchdog = {
   name: 'life-kline-user-tier-watchdog',
   script: 'scripts/user-tier-watchdog.js',
@@ -630,6 +717,7 @@ const watchdogApps = enableWatchdogs ? [
 module.exports = {
   apps: [
     nextApp,
+    ...opsLoopApps,
     ...(enableWebReplicas ? webReplicas : []),
     ...(enableCronTier ? [cronReplica] : []),
     ...(enableKnowledgeWorker ? [knowledgeWorker] : []),

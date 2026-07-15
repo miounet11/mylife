@@ -3,6 +3,7 @@
 // spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md §5.2
 
 import type { FortuneRecord } from '@/lib/user-types';
+import { localizeElementList, presentReportLines, presentReportText } from '@/lib/report-presentation';
 
 export function getPublicDisplayName(name?: string | null) {
   const cleaned = `${name || ''}`.trim();
@@ -31,10 +32,7 @@ export function sanitizePublicFortuneRecord<T extends FortuneRecord>(record: T):
 }
 
 export function compactCopy(value?: string | null, maxLength = 92) {
-  const normalized = `${value || ''}`.replace(/\s+/g, ' ').trim();
-  if (!normalized) return '';
-  if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, maxLength - 1).trim()}…`;
+  return presentReportText(value, maxLength);
 }
 
 export function getLifeKLineMetricToneClasses(tone?: 'strong' | 'steady' | 'watch') {
@@ -85,7 +83,7 @@ export function buildPastValidationBlock(params: {
         params.structuredBlock?.headline ||
           '你过去的人生里，已经反复出现过与这份命理结构一致的信号。',
       ),
-      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 3),
+      evidence: presentReportLines(params.structuredBlock?.evidence || [], { limit: 3 }),
     };
   }
 
@@ -149,7 +147,7 @@ export function buildPresentDiagnosisBlock(params: {
       headline: compactCopy(
         params.structuredBlock?.headline || params.decisionHeadline || params.currentStageSummary,
       ),
-      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 3),
+      evidence: presentReportLines(params.structuredBlock?.evidence || [], { limit: 3 }),
     };
   }
 
@@ -162,8 +160,8 @@ export function buildPresentDiagnosisBlock(params: {
     params.currentDaYun
       ? `阶段位置：现在正落在 ${params.currentDaYun} 这一步运，重点是认清这一步到底要你收、要你守，还是要你推。`
       : '',
-    params.favoredElements.length > 0
-      ? `顺势方向：现阶段优先放大 ${params.favoredElements.join('、')} 对应的动作和环境。`
+    localizeElementList(params.favoredElements).length > 0
+      ? `顺势方向：现阶段优先放大 ${localizeElementList(params.favoredElements).join('、')} 对应的动作和环境。`
       : '',
     strongestVector && weakestVector
       ? `现实侧重点：${strongestVector.label}相对占优，${weakestVector.label}更容易拖后腿，决策时不要平均用力。`
@@ -197,7 +195,7 @@ export function buildFutureGuidanceBlock(params: {
       headline: compactCopy(
         params.structuredBlock?.headline || '接下来不要分散出击，先把当前阶段最该落地的动作做出来。',
       ),
-      evidence: (params.structuredBlock?.evidence || []).filter(Boolean).slice(0, 4),
+      evidence: presentReportLines(params.structuredBlock?.evidence || [], { limit: 4 }),
     };
   }
 

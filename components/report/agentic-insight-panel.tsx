@@ -4,6 +4,7 @@ import {
   deriveReportReasoningMode,
   type ReportReasoningMode,
 } from '@/lib/report-reasoning-mode';
+import { presentReportLines, presentReportText } from '@/lib/report-presentation';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel' literals.
 const _qaContract = ['intro-copy', 'intro-panel'] as const;
@@ -210,13 +211,19 @@ function normalizeInsightEntry(key: string, value: unknown, _source?: 'llm' | 'f
     windows?: Array<{ label?: string }>;
   };
 
+  const summary = presentReportText(data.summary);
+  const highlights = presentReportLines(data.highlights, { limit: 6 });
+  const actions = presentReportLines(data.actions, { limit: 6 });
+
   return {
     key,
     label: INSIGHT_LABELS[key] || key,
-    summary: data.summary || '',
-    highlights: data.highlights || [],
-    actions: data.actions || [],
-    windows: (data.windows || []).map((item) => ({ label: item.label || '关键窗口' })),
+    summary,
+    highlights,
+    actions,
+    windows: (data.windows || []).map((item) => ({
+      label: presentReportText(item.label) || '关键窗口',
+    })),
   };
 }
 

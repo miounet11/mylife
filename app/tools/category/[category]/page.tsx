@@ -1,247 +1,86 @@
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
-import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowRight, BookOpenText } from 'lucide-react';
+import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
-import PublicEvidencePanel from '@/components/public-evidence-panel';
-import PublicGrowthFeedPanel from '@/components/public-growth-feed-panel';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
-import ToolCardLink from '@/components/tool-card-link';
-import { createContentSignalMatcher } from '@/lib/content';
-import { getEntityInsights, getKnowledgeArticles, getCaseStudies } from '@/lib/content-store';
+import DimensionsShowcase from '@/components/dimensions/dimensions-showcase';
+import { AppPage } from '@/components/layout/app-page';
+import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
+import { FocusHero } from '@/components/layout/focus-hero';
+import ToolRecommendations from '@/components/tool-recommendations';
+import { toolCategoryToIntent } from '@/lib/content-crosslinks';
 import {
-  createBreadcrumbSchema,
-  createCollectionPageSchema,
-  createItemListSchema,
-  createPublicContentMetadata,
-} from '@/lib/public-content-seo';
-import { toolProblemLineGuides } from '@/lib/product-experience';
-import { listToolCategories, listToolsByCategory, type ToolCategoryKey } from '@/lib/tools';
+  getToolCategory,
+  getToolsForCategory,
+  TOOL_CATEGORY_META,
+} from '@/lib/portal-tools';
 
-export async function generateMetadata({
-  params,
-}: {
+interface PageProps {
   params: Promise<{ category: string }>;
-}): Promise<Metadata> {
-  const { category } = await params;
-  const categoryInfo = listToolCategories().find((item) => item.key === category);
-
-  if (!categoryInfo) {
-    return createPublicContentMetadata({
-      title: '工具分类 | 人生K线',
-      description: '围绕高频问题组织的单项工具分类页。',
-      path: `/tools/category/${category}`,
-      type: 'website',
-    });
-  }
-
-  return createPublicContentMetadata({
-    title: `${categoryInfo.title} | 人生K线工具中心`,
-    description: categoryInfo.description,
-    path: `/tools/category/${categoryInfo.key}`,
-    type: 'website',
-  });
 }
 
-export default async function ToolCategoryPage({
-  params,
-}: {
-  params: Promise<{ category: string }>;
-}) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { category } = await params;
-  const categoryInfo = listToolCategories().find((item) => item.key === category);
-  if (!categoryInfo) {
-    notFound();
-  }
+  const key = getToolCategory(category);
+  if (!key) return { title: '工具分类' };
+  return { title: `${TOOL_CATEGORY_META[key].title}｜工具中心` };
+}
 
-  const tools = listToolsByCategory(category as ToolCategoryKey);
-  const problemLineGuide = toolProblemLineGuides[categoryInfo.key as keyof typeof toolProblemLineGuides];
-  const matchesCategorySignal = createContentSignalMatcher([
-    categoryInfo.title,
-    categoryInfo.headline,
-    ...tools.flatMap((tool) => [tool.shortTitle, tool.themeLabel, ...tool.hookKeywords]),
-  ]);
-  const knowledgeItems = getKnowledgeArticles()
-    .filter((item) => matchesCategorySignal([item.title, item.excerpt, item.category, ...item.tags].join(' ')))
-    .slice(0, 3);
-  const caseItems = getCaseStudies()
-    .filter((item) => matchesCategorySignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
-    .slice(0, 2);
-  const insightItems = getEntityInsights()
-    .filter((item) => matchesCategorySignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
-    .slice(0, 2);
-  const schemas = [
-    createCollectionPageSchema({
-      headline: categoryInfo.headline,
-      description: categoryInfo.description,
-      path: `/tools/category/${categoryInfo.key}`,
-      keywords: [categoryInfo.title, categoryInfo.headline, ...tools.slice(0, 6).map((tool) => tool.shortTitle)],
-    }),
-    createBreadcrumbSchema([
-      { name: '首页', path: '/' },
-      { name: '工具中心', path: '/tools' },
-      { name: categoryInfo.title, path: `/tools/category/${categoryInfo.key}` },
-    ]),
-    createItemListSchema(
-      `${categoryInfo.title}清单`,
-      tools.map((tool, index) => ({
-        name: tool.title,
-        path: `/tools/${tool.slug}`,
-        position: index + 1,
-      })),
-    ),
-  ].filter(Boolean);
+export default async function ToolCategoryPage({ params }: PageProps) {
+  const { category } = await params;
+  const key = getToolCategory(category);
+  if (!key) notFound();
+
+  const meta = TOOL_CATEGORY_META[key];
+  const intent = toolCategoryToIntent(key);
 
   return (
-    <div className="page-shell">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度', compact: true }}>
       <AnalyticsPageView
         eventName="tools_page_viewed"
-        page={`/tools/category/${categoryInfo.key}`}
-        meta={{ surfaceKey: 'tool_category', category: categoryInfo.key, toolCount: tools.length }}
+        page={`/tools/category/${key}`}
+        meta={{ surfaceKey: 'tools', category: key }}
       />
-      <SiteHeader ctaHref="/tools" ctaLabel="回到工具中心" />
-
-      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
-        {/* HERO 区 */}
-        <section className="fb-card mb-3 overflow-hidden border-t-2 border-[color:var(--fb-blue)]">
-          <div className="bg-[color:var(--fb-blue)] px-4 py-2.5 text-white text-[12px] font-bold uppercase tracking-[0.14em]">
-            {categoryInfo.title} · 命理/易学门户
-          </div>
-          <div className="px-4 py-3">
-            <h1 className="text-[22px] font-bold text-[color:var(--fb-ink-1)] leading-[1.2]">
-              {categoryInfo.headline}
-            </h1>
-            <p className="mt-1 text-[13px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
-              {categoryInfo.description}
-            </p>
-            <p className="mt-1 text-[12px] leading-[1.4] text-[color:var(--fb-ink-2)] max-w-[640px]">
-              {problemLineGuide
-                ? `${problemLineGuide.firstStep} ${problemLineGuide.nextStep}`
-                : '这一组工具适合在完成综合判断后继续细分问题；如果还没有个人底盘，建议先做综合判断。'}
-            </p>
-            <div className="flex flex-wrap gap-1.5 mt-2 text-xs">
-              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">工具数 {tools.length}</span>
-              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">前置 综合判断</span>
-              <span className="rounded-[2px] border border-[#dddfe2] bg-[#f5f6f7] px-1.5 py-0.5 text-[#1d2129] font-semibold">后续 单项复测</span>
-            </div>
-            <div className="flex flex-wrap gap-2 mt-3">
+      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+        <FocusHero
+          eyebrow="工具分类"
+          title={meta.title}
+          description={meta.description}
+          actions={
+            <>
               <Link
-                href="/tools"
-                className="inline-flex h-8 items-center gap-1.5 bg-[color:var(--fb-blue)] px-3 text-[12px] font-bold text-white hover:bg-[#365899]"
+                href={`/dimensions?source=tool_category_${key}`}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                回到工具中心
-                <ArrowRight className="h-3.5 w-3.5" />
+                相关十维度
               </Link>
               <Link
-                href="/analyze"
-                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
+                href={`/analyze?intent=${intent}&source=tool_category_${key}`}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                先做综合判断
+                完整报告
               </Link>
-              <Link
-                href="/docs/use-tools"
-                className="inline-flex h-8 items-center gap-1.5 border border-[#bec3c9] bg-[#f5f6f7] px-3 text-[12px] font-bold text-[#1d2129] hover:bg-[#ebedf0]"
-              >
-                <BookOpenText className="h-3.5 w-3.5" />
-                使用方法
+              <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                全部工具
               </Link>
-            </div>
-          </div>
-        </section>
-
-        {problemLineGuide ? (
-          <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5">
-            <div className="grid gap-4 lg:grid-cols-[0.85fr_1.15fr] lg:items-start">
-              <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-                  问题线规则
-                </div>
-                <h2 className="mt-2 text-xl font-black text-[color:var(--ink-1)]">
-                  先确认问题线，再选择一个工具
-                </h2>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
-                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    01 第一步
-                  </div>
-                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--ink-2)]">
-                    {problemLineGuide.firstStep}
-                  </div>
-                </div>
-                <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
-                  <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-                    02 下一步
-                  </div>
-                  <div className="mt-1.5 text-sm leading-6 text-[color:var(--brand-strong)]">
-                    {problemLineGuide.nextStep}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-        ) : null}
-
-        <section className="mt-6 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {tools.map((tool) => (
-            <ToolCardLink
-              key={tool.slug}
-              href={`/tools/${tool.slug}`}
-              toolSlug={tool.slug}
-              category={tool.category}
-              page={`/tools/category/${categoryInfo.key}`}
-              className="group p-4 transition-colors hover:no-underline"
-            >
-              <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                {tool.themeLabel}
-              </div>
-              <h2 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
-                {tool.title}
-              </h2>
-              <div className="mt-3 flex flex-wrap gap-1.5">
-                {tool.hookKeywords.slice(0, 3).map((keyword) => (
-                  <span
-                    key={keyword}
-                    className="inline-flex h-5 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-1.5 text-xs font-semibold text-[color:var(--ink-4)]"
-                  >
-                    {keyword}
-                  </span>
-                ))}
-              </div>
-            </ToolCardLink>
-          ))}
-        </section>
-
-        <PublicGrowthFeedPanel
-          title={`${categoryInfo.title}相关公开查询`}
-          description="分类页直接露出同类匿名报告和用户追问，避免工具页只有静态入口，搜索引擎和用户都能继续顺着问题走。"
-          signals={[
-            categoryInfo.title,
-            categoryInfo.headline,
-            categoryInfo.description,
-            ...tools.flatMap((tool) => [tool.shortTitle, tool.themeLabel, ...tool.hookKeywords]),
-          ]}
-          reportLimit={2}
-          questionLimit={4}
+            </>
+          }
         />
 
-        <PublicEvidencePanel
-          page={`/tools/category/${categoryInfo.key}`}
-          title="把这组工具接到内容证据层"
-          description="这类问题不该只停留在工具列表里。先用工具做判断，再顺着知识解释、案例证据和实体洞察继续下钻，信息密度会更高，也更适合搜索与问答引擎理解。"
-          surfaceKey="tool_category_content"
-          knowledgeItems={knowledgeItems}
-          caseItems={caseItems}
-          insightItems={insightItems}
+        <DimensionsShowcase
+          title="同类场景"
+          description="工具适合快测；场景研判带结构判断。"
+          limit={3}
+          source={`tool_category_${key}`}
+          compact
         />
-      </main>
 
-      <SiteFooter />
-    </div>
+        <section>
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">本类工具</h2>
+          <EntryLinkGrid items={getToolsForCategory(key)} />
+        </section>
+
+        <ToolRecommendations category={key} />
+      </div>
+    </AppPage>
   );
 }

@@ -122,9 +122,9 @@ export default async function ToolResultPage({
           <div className="min-w-0 flex-1 lg:max-w-[680px] space-y-2">
             <section
               id="tr-cockpit"
-              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[color:var(--brand-strong)] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 {tool.title}
               </div>
@@ -158,32 +158,43 @@ export default async function ToolResultPage({
 
             <section
               id="tr-summary"
-              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[color:var(--brand-strong)] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <ScrollText className="h-3.5 w-3.5" />
                 免费结果摘要
               </div>
+              {typeof result.summary === 'string' && result.summary.trim() ? (
+                <p className="mt-3 text-[14px] leading-[1.65] text-[color:var(--ink-2)]">
+                  {result.summary.trim()}
+                </p>
+              ) : null}
               <div className="mt-3 grid gap-2">
                 {Array.isArray(result.evidence) ? (result.evidence as string[]).map((item) => (
-                  <div key={item} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] p-3 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
+                  <div key={item} className="rounded-[3px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
                     {item}
                   </div>
                 )) : null}
               </div>
+              {!(typeof result.summary === 'string' && result.summary.trim())
+                && !(Array.isArray(result.evidence) && (result.evidence as string[]).length) ? (
+                <p className="mt-3 text-[13px] leading-[1.5] text-[color:var(--ink-4)]">
+                  本次结果以驾驶舱卡片为主；可点击「继续深问」把判断拆成可执行动作。
+                </p>
+              ) : null}
             </section>
 
             <section
               id="tr-next"
-              className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5"
+              className="fb-card scroll-mt-header border-t-2 border-t-[color:var(--brand-strong)] p-4 md:p-5"
             >
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                 <Sparkles className="h-3.5 w-3.5" />
                 下一步承接
               </div>
               <div className="mt-3 grid gap-2">
                 {Array.isArray(result.premiumPreview) ? (result.premiumPreview as string[]).map((item) => (
-                  <div key={item} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] p-3 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
+                  <div key={item} className="rounded-[3px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
                     {item}
                   </div>
                 )) : null}
@@ -207,8 +218,8 @@ export default async function ToolResultPage({
 
             {growthProfile ? (
               <section id="tr-growth" className="scroll-mt-header grid gap-3 xl:grid-cols-[1fr_0.95fr]">
-                <div className="fb-card border-t-2 border-t-[#3b5998] p-4 md:p-5">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+                <div className="fb-card border-t-2 border-t-[color:var(--brand-strong)] p-4 md:p-5">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                     <LockKeyhole className="h-3.5 w-3.5" />
                     免费结果之后
                   </div>
@@ -220,7 +231,7 @@ export default async function ToolResultPage({
                   </p>
                   <div className="mt-3 grid gap-2 md:grid-cols-3">
                     {growthProfile.upgradeBullets.map((item) => (
-                      <div key={item} className="rounded-[3px] border border-dashed border-[#3b5998] bg-[#eef3fb] px-3 py-2 text-[12px] leading-[1.5] text-[color:var(--ink-1)]">
+                      <div key={item} className="rounded-[3px] border border-dashed border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-3 py-2 text-[12px] leading-[1.5] text-[color:var(--ink-1)]">
                         {item}
                       </div>
                     ))}
@@ -262,20 +273,20 @@ export default async function ToolResultPage({
                 <div className="space-y-3">
                   {deepDiveSections.length > 0 ? (
                     <div className="fb-card p-4 md:p-5">
-                      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
+                      <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
                         <Sparkles className="h-3.5 w-3.5" />
                         深度解释
                       </div>
                       <div className="mt-3 grid gap-2 md:grid-cols-3">
                         {deepDiveSections.map((section: { heading: string; body: string }) => (
-                          <div key={section.heading} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] p-3">
+                          <div key={section.heading} className="rounded-[3px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
                             <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{section.heading}</div>
                             <div className="mt-2 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">{section.body}</div>
                           </div>
                         ))}
                       </div>
                       {llmEnhancement.conversionBridge ? (
-                        <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-[#eef3fb] px-3 py-2 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
+                        <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-[color:var(--brand-soft)] px-3 py-2 text-[13px] leading-[1.5] text-[color:var(--ink-1)]">
                           {String(llmEnhancement.conversionBridge)}
                         </div>
                       ) : null}
@@ -317,8 +328,8 @@ export default async function ToolResultPage({
                       </div>
                     ))}
                     {tool.premiumModules.map((item) => (
-                      <div key={item} className="rounded-[3px] border border-dashed border-[#3b5998] bg-[#eef3fb] p-3">
-                        <div className="text-[13px] font-bold text-[#3b5998]">继续付费可展开</div>
+                      <div key={item} className="rounded-[3px] border border-dashed border-[color:var(--brand)] bg-[color:var(--brand-soft)] p-3">
+                        <div className="text-[13px] font-bold text-[color:var(--brand-strong)]">继续付费可展开</div>
                         <div className="mt-2 text-[12px] leading-[1.5] text-[color:var(--ink-1)]">{item}</div>
                       </div>
                     ))}
@@ -385,14 +396,14 @@ export default async function ToolResultPage({
             <section className="fb-card p-3">
               <div className="text-[13px] font-bold text-[color:var(--ink-1)] mb-2">快速跳转</div>
               <div className="flex flex-col gap-1.5 text-[13px]">
-                <Link href={reportHref} className="text-[#3b5998] hover:underline">
+                <Link href={reportHref} className="text-[color:var(--brand-strong)] hover:underline">
                   ← 返回综合判断
                 </Link>
-                <Link href="/tools" className="text-[#3b5998] hover:underline">
+                <Link href="/tools" className="text-[color:var(--brand-strong)] hover:underline">
                   浏览全部工具
                 </Link>
                 {bundle ? (
-                  <Link href={`/tools/${tool.slug}`} className="text-[#3b5998] hover:underline">
+                  <Link href={`/tools/${tool.slug}`} className="text-[color:var(--brand-strong)] hover:underline">
                     查看工具详情
                   </Link>
                 ) : null}
@@ -400,7 +411,7 @@ export default async function ToolResultPage({
             </section>
             <section className="fb-card p-3">
               <div className="text-[13px] font-bold text-[color:var(--ink-1)] mb-1">
-                <FileQuestion className="inline h-3.5 w-3.5 text-[#3b5998] mr-1" />
+                <FileQuestion className="inline h-3.5 w-3.5 text-[color:var(--brand-strong)] mr-1" />
                 免费 vs 深测
               </div>
               <p className="text-[12px] leading-[1.5] text-[color:var(--ink-4)]">

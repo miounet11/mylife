@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, ShieldCheck, UserRound } from 'lucide-react';
+import { LogOut, Mail, ShieldCheck, UserRound } from 'lucide-react';
 
 interface SessionState {
   authenticated: boolean;
@@ -53,16 +53,17 @@ export default function AuthStatus() {
 
   if (!session?.authenticated || !session.user) {
     return (
-      <Link
-        href="/login"
-        className="inline-flex h-7 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-2 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--ink-1)] md:h-9 md:gap-1.5 md:px-3 md:text-sm"
-      >
+      <Link href="/login" className="fb-btn h-7 px-2 text-xs hover:no-underline md:h-9 md:gap-1.5 md:px-3 md:text-sm">
         <UserRound className="h-3.5 w-3.5 md:hidden" aria-hidden />
         <span className="md:hidden">登录</span>
         <span className="hidden md:inline">邮箱登录</span>
       </Link>
     );
   }
+
+  const messagesHref = session.user.email
+    ? `/updates/messages?email=${encodeURIComponent(session.user.email)}`
+    : '/updates/messages';
 
   return (
     <div className="flex items-center gap-1 md:gap-1.5">
@@ -76,6 +77,30 @@ export default function AuthStatus() {
           <span className="hidden md:inline">后台</span>
         </Link>
       )}
+      <Link
+        href={messagesHref}
+        aria-label="邮件中心"
+        title="邮件中心"
+        className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] text-[color:var(--ink-2)] transition hover:border-[color:var(--brand)] md:h-9 md:w-9"
+      >
+        <Mail className="h-3.5 w-3.5 shrink-0" />
+      </Link>
+      <Link
+        href="/updates"
+        aria-label="订阅设置"
+        title="订阅设置"
+        className="hidden h-9 items-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] md:inline-flex"
+      >
+        订阅
+      </Link>
+      <Link
+        href="/profile/settings"
+        aria-label="测算资料"
+        title="测算资料"
+        className="hidden h-9 items-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-2 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] md:inline-flex"
+      >
+        资料
+      </Link>
       <Link
         href="/profile"
         aria-label="进入档案"

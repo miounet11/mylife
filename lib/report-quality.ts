@@ -332,21 +332,22 @@ export interface UserFacingReportStageLadderItem extends UserFacingReportStage {
 const USER_FACING_REPORT_STAGES: Record<ReportDeliveryTier, UserFacingReportStage> = {
   basic: {
     key: 'simple',
-    label: '简单报告',
-    shortLabel: '简单版',
-    description: '先给你一个可读的主结论，方便尽快完成第一次报告体验。',
+    // 用户向：避免「简单报告」听起来像内容很少 / 不可用
+    label: '标准版',
+    shortLabel: '标准版',
+    description: '命盘主结构与核心结论已可读，适合先完成第一轮阅读。',
   },
   enhanced: {
     key: 'deep',
-    label: '深度报告',
+    label: '深度版',
     shortLabel: '深度版',
-    description: '会补足更完整的结构解释、阶段判断和重点建议。',
+    description: '结构解释、阶段判断和重点建议更完整，可作日常决策参考。',
   },
   expert: {
     key: 'detailed',
-    label: '更细致的报告',
-    shortLabel: '细致版',
-    description: '会补足更多细节拆解、阶段窗口和动作颗粒度，适合继续深挖。',
+    label: '完整版',
+    shortLabel: '完整版',
+    description: '细节拆解、阶段窗口与动作颗粒度更细，适合持续深挖与复访。',
   },
 };
 
@@ -614,10 +615,12 @@ function getReportDeliveryTier(params: {
   if (params.narrativeSignals.severeUserVisibleDefect) {
     return 'basic';
   }
-  if (params.providerHealthDeferred && params.verifyVerdict !== 'FAIL') {
+  // 交付档位描述「内容深度」，不要被 verify FAIL 单独打成「基础/简单」：
+  // 对齐检查失败应体现在「状态/留意点」，而不是让用户以为报告很薄。
+  if (params.llmUsed || params.providerHealthDeferred) {
     return 'enhanced';
   }
-  if (params.llmUsed && params.verifyVerdict !== 'FAIL' && params.agentSuccessRate >= 0.3) {
+  if (params.agentSuccessRate >= 0.5) {
     return 'enhanced';
   }
   return 'basic';

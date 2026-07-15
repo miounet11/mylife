@@ -1,127 +1,53 @@
-import { ArrowRight, Sparkles } from 'lucide-react';
-import type { FortuneRecord } from '@/lib/user-types';
-import { buildToolRecommendations, getToolDefinition } from '@/lib/tools';
-import ToolCardLink from '@/components/tool-card-link';
-import ToolRunner from '@/components/tool-runner';
+'use client';
 
-// QA contract (qa:public-product-components): file must include 'intro-copy' literals.
-const _qaContract = ['intro-copy'] as const;
-void _qaContract;
-export default function ToolRecommendations({
-  report,
-  page,
-  title = '推荐工具',
-  description = '',
-  enableQuickStart = false,
-  source,
-  ctaStrategyKey,
-  sourceFamily,
-}: {
-  report?: FortuneRecord | null;
-  page: string;
-  title?: string;
-  description?: string;
-  enableQuickStart?: boolean;
-  source?: string;
-  ctaStrategyKey?: string;
-  sourceFamily?: string;
-}) {
-  const items = buildToolRecommendations({
-    report,
-    limit: 6,
-  })
-    .map((item) => ({
-      ...item,
-      tool: getToolDefinition(item.slug),
-    }))
-    .filter((item): item is typeof item & { tool: NonNullable<typeof item.tool> } => !!item.tool);
-  const [primaryItem, ...secondaryItems] = items;
+import Link from 'next/link';
+import type { ToolCategoryKey } from '@/lib/portal-tools';
+import { LEARNING_TRACKS } from '@/lib/learning-tracks';
 
-  if (items.length === 0) {
-    return null;
-  }
+const TRACK_BY_KEY = new Map(LEARNING_TRACKS.map((track) => [track.key, track]));
+
+const CATEGORY_TRACK: Partial<Record<ToolCategoryKey, string>> = {
+  career: 'career',
+  wealth: 'wealth',
+  relationship: 'relationship',
+  family: 'family',
+  health: 'health',
+  migration: 'migration',
+  application: 'application',
+};
+
+export default function ToolRecommendations({ category }: { category?: ToolCategoryKey }) {
+  const trackKey = category ? CATEGORY_TRACK[category] : 'intro';
+  const track = trackKey ? TRACK_BY_KEY.get(trackKey as 'career') : LEARNING_TRACKS[0];
+  if (!track) return null;
+
+  const steps = track.steps
+    .filter((step) => step.kind === 'knowledge' || step.kind === 'case')
+    .slice(0, 3);
 
   return (
-    <section className="fb-card p-5 md:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            <Sparkles className="h-3 w-3" />
-            {title}
-          </div>
-          <h2 className="mt-2 text-xl font-black leading-tight text-[color:var(--ink-1)] md:text-2xl">
-            把综合报告继续拆成可复访的单项工具
-          </h2>
-          {description ? (
-            <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">{description}</p>
-          ) : null}
-        </div>
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">{track.title}推荐阅读</h2>
+        <Link
+          href={`/learn/${track.key}`}
+          className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+        >
+          完整专题
+        </Link>
       </div>
-
-      {enableQuickStart && report && primaryItem?.tool ? (
-        <div className="mt-5 grid gap-3 xl:grid-cols-[1.08fr_0.92fr]">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4 md:p-5">
-            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-              报告后直接开跑
-            </div>
-            <h3 className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
-              {primaryItem.tool.shortTitle}
-            </h3>
-            <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] px-3 py-2 text-xs leading-5 text-[color:var(--brand-strong)]">
-              {primaryItem.reason}
-            </div>
-            <div className="mt-3 grid gap-2 md:grid-cols-2">
-              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  FREE
-                </span>
-                <div className="mt-0.5 text-[color:var(--ink-2)]">
-                  {primaryItem.tool.freeOutputFields.join('、')}
-                </div>
-              </div>
-              <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-xs leading-5">
-                <span className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  ASK
-                </span>
-                <div className="mt-0.5 text-[color:var(--ink-2)]">
-                  {primaryItem.tool.rightQuestion}
-                </div>
-              </div>
-            </div>
-          </div>
-          <ToolRunner toolSlug={primaryItem.tool.slug} reportId={report.id} entrySource={source || ''} />
-        </div>
-      ) : null}
-
-      <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-        {(enableQuickStart ? secondaryItems : items).map(({ tool, reason }) => (
-          <ToolCardLink
-            key={tool.slug}
-            href={`/tools/${tool.slug}`}
-            toolSlug={tool.slug}
-            category={tool.category}
-            page={page}
-            source={source}
-            ctaStrategyKey={ctaStrategyKey}
-            sourceFamily={sourceFamily}
-            className="group p-4 transition-colors hover:no-underline"
-          >
-            <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-              {tool.category}
-            </div>
-            <h3 className="mt-2 text-base font-bold leading-snug text-[color:var(--ink-1)]">
-              {tool.shortTitle}
-            </h3>
-            <div className="mt-3 rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2.5 py-1.5 text-xs leading-5 text-[color:var(--brand-strong)]">
-              {reason}
-            </div>
-            <div className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-[color:var(--ink-4)] group-hover:gap-1.5 group-hover:text-[color:var(--brand-strong)] transition-all">
-              进入工具
-              <ArrowRight className="h-3 w-3" />
-            </div>
-          </ToolCardLink>
+      <ul className="mt-1 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+        {steps.map((step) => (
+          <li key={step.key}>
+            <Link
+              href={step.href}
+              className="block py-2.5 text-[13px] text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+            >
+              {step.label}
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </section>
   );
 }

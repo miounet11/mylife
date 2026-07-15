@@ -1,106 +1,98 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminPasswordRequiredFor, createLoginCode, deletePendingLoginCode } from '@/lib/auth';
-import { shouldShowAuthPreviewCode } from '@/lib/env';
+import { NextResponse } from 'next/server';
+import { adminPasswordRequiredFor, createLoginCode } from '@/lib/auth';
 import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
+import { resolveEmailLocale } from '@/lib/email-locale';
 import { validateEmail } from '@/lib/validators';
-import { trackServerEvent } from '@/lib/analytics';
 
-export async function POST(request: NextRequest) {
+export const runtime = 'nodejs';
+
+export async function POST(request: Request) {
   try {
     const body = await request.json();
     const email = `${body.email || ''}`;
-    const error = validateEmail(email);
-    if (error) {
-      return NextResponse.json(
-        { success: false, error: error.message },
-        { status: 400 }
-      );
+    const validation = validateEmail(email);
+    if (validation) {
+      return NextResponse.json({ success: false, error: validation.message }, { status: 400 });
     }
 
-    const result = createLoginCode(email);
-    const emailConfigured = isEmailDeliveryConfigured();
+    const acceptLanguage = request.headers.get('accept-language');
+    const locale = resolveEmailLocale({
+      email,
+      locale: body.locale || body.language || body.lang,
+      language: body.language || body.locale || body.lang,
+      acceptLanguage,
+    });
 
-    if (emailConfigured) {
-      let deliveryResult;
+    const issued = createLoginCode(email);
+
+    let emailSent = false;
+    let emailError: string | null = null;
+
+    if (isEmailDeliveryConfigured()) {
       try {
-        deliveryResult = await sendLoginCodeEmail(result.email, result.code, result.expiresAt);
-      } catch (deliveryError) {
-        const reason = deliveryError instanceof Error ? deliveryError.message : 'unknown';
-        deletePendingLoginCode(result.email, result.code);
-        console.error('[Auth] 登录验证码邮件发送异常:', deliveryError);
-        trackServerEvent({
-          eventName: 'email_delivery_failed',
-          page: '/login',
-          userAgent: request.headers.get('user-agent'),
-          meta: {
-            channel: 'auth_code',
-            emailDomain: result.email.split('@')[1] || '',
-            reason,
-          },
+        await sendLoginCodeEmail(issued.email, issued.code, issued.expiresAt, {
+          locale,
+          acceptLanguage,
         });
-
-        return NextResponse.json(
-          { success: false, error: '邮件服务暂时不可用，请稍后重试' },
-          { status: 503 }
-        );
+        emailSent = true;
+      } catch (error) {
+        emailError = error instanceof Error ? error.message : String(error);
+        console.error('[auth/request-code] sendLoginCodeEmail failed:', error);
       }
-
-      if (!deliveryResult?.success) {
-        deletePendingLoginCode(result.email, result.code);
-        trackServerEvent({
-          eventName: 'email_delivery_failed',
-          page: '/login',
-          userAgent: request.headers.get('user-agent'),
-          meta: {
-            channel: 'auth_code',
-            emailDomain: result.email.split('@')[1] || '',
-            reason: deliveryResult?.message || 'unknown',
-          },
-        });
-
-        return NextResponse.json(
-          { success: false, error: '邮件服务暂时不可用，请稍后重试' },
-          { status: 503 }
-        );
-      }
-
-      trackServerEvent({
-        eventName: 'email_delivery_succeeded',
-        page: '/login',
-        userAgent: request.headers.get('user-agent'),
-        meta: {
-          channel: 'auth_code',
-          emailDomain: result.email.split('@')[1] || '',
-        },
-      });
     } else {
-      console.log(`[Auth] Login code for ${result.email}: ${result.code}`);
+      emailError = 'EMAIL_NOT_CONFIGURED';
+      console.warn('[auth/request-code] mail delivery not configured; code stored only');
     }
 
-    trackServerEvent({
-      eventName: 'auth_code_requested',
-      page: '/login',
-      userAgent: request.headers.get('user-agent'),
-      meta: {
-        emailDomain: result.email.split('@')[1] || '',
-        deliveryConfigured: emailConfigured,
-      },
+    // Always log server-side for ops recovery (do not expose in production response).
+    console.info('[auth/request-code] issued', {
+      email: issued.email,
+      expiresAt: issued.expiresAt,
+      emailSent,
+      emailError,
+      locale,
     });
 
-    return NextResponse.json({
+    const messageByLocale = {
+      'zh-CN': emailSent
+        ? '验证码已发送到你的邮箱，请查收（含垃圾箱）'
+        : '验证码已生成。若未收到邮件，请稍后重试或联系管理员查看服务器邮件配置',
+      'zh-Hant': emailSent
+        ? '驗證碼已發送到你的郵箱，請查收（含垃圾箱）'
+        : '驗證碼已生成。若未收到郵件，請稍後重試或聯繫管理員查看伺服器郵件配置',
+      en: emailSent
+        ? 'A verification code has been sent to your email (check spam too).'
+        : 'Code generated. If you did not receive the email, retry later or contact support.',
+    } as const;
+
+    const payload: Record<string, unknown> = {
       success: true,
-      message: emailConfigured ? '验证码已发送至邮箱' : '验证码已生成',
-      expiresAt: result.expiresAt,
-      deliveryConfigured: emailConfigured,
-      previewCode: shouldShowAuthPreviewCode() ? result.code : undefined,
-      // v5-D50 通知前端展示 admin 二次密码输入框（仅 admin 邮箱命中）
-      adminPasswordRequired: adminPasswordRequiredFor(result.email),
-    });
-  } catch (error) {
-    console.error('[API] 请求登录验证码失败:', error);
-    return NextResponse.json(
-      { success: false, error: '发送验证码失败，请稍后重试' },
-      { status: 500 }
-    );
+      message: messageByLocale[locale],
+      adminPasswordRequired: adminPasswordRequiredFor(email),
+      expiresAt: issued.expiresAt,
+      emailSent,
+      locale,
+    };
+
+    // Dev convenience only.
+    if (process.env.NODE_ENV === 'development') {
+      payload.devCode = issued.code;
+    }
+
+    // If mail failed but code exists, still 200 so UI can proceed with admin recovery;
+    // surface soft warning via emailSent=false.
+    if (!emailSent && emailError) {
+      payload.warning =
+        locale === 'en'
+          ? 'Email delivery failed. Check SMTP or retry shortly.'
+          : locale === 'zh-Hant'
+            ? '郵件發送未成功，請檢查 SMTP 或稍後重試'
+            : '邮件发送未成功，请检查 SMTP 或稍后重试';
+    }
+
+    return NextResponse.json(payload);
+  } catch (error: unknown) {
+    console.error('[auth/request-code]', error);
+    return NextResponse.json({ success: false, error: '发送验证码失败' }, { status: 500 });
   }
 }

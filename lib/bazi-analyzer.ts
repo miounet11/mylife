@@ -1,744 +1,686 @@
-/**
- * 八字命局分析器 - 移植自历史版本权威引擎
- * 计算日主强弱、用神、忌神、格局等核心命理数据
- * 这些数据是确定性计算，不依赖AI
- */
+// ── 八字分析器 V6 ──
 
 import {
-  GAN_TO_WUXING, GAN_YIN_YANG, TIAN_GAN,
-  ZHI_TO_WUXING, ZHI_CANG_GAN,
-  WUXING_SHENG, WUXING_KE, WUXING_BEI_SHENG, WUXING_BEI_KE,
-  WUXING_SEASON_SCORE, WUXING_COLOR, WUXING_DIRECTION, WUXING_NUMBER,
-  calculateShiShen, getZhiCangGan, SHISHEN_CATEGORY,
-} from './bazi-constants';
-import { calculateShenSha, ShenShaResult } from './shensha-calculator';
+  GAN_TO_WUXING,
+  ZHI_CANG_GAN,
+  calculateShiShen,
+} from '@/lib/bazi-constants';
+import type { ShenShaResult } from '@/lib/shensha-calculator';
 
-// ==================== 五行力量计算 ====================
-
-/**
- * 计算八字中某个五行的总力量
- */
-export function calculateWuxingStrength(bazi: string[], targetWuxing: string): number {
-  let strength = 0;
-
-  bazi.forEach((pillar, idx) => {
-    if (!pillar || pillar.length < 2) return;
-    const tianGan = pillar[0];
-    const diZhi = pillar[1];
-    const cangGan = getZhiCangGan(diZhi);
-
-    // 天干力量 (月柱天干权重更高)
-    const tianGanWeight = idx === 1 ? 1.5 : 1;
-    if (GAN_TO_WUXING[tianGan] === targetWuxing) {
-      strength += tianGanWeight;
-    }
-
-    // 地支本气力量
-    if (ZHI_TO_WUXING[diZhi] === targetWuxing) {
-      strength += idx === 1 ? 2.5 : 1.5; // 月支最重要
-    }
-
-    // 藏干力量
-    cangGan.forEach((gan, i) => {
-      if (GAN_TO_WUXING[gan] === targetWuxing) {
-        const weight = i === 0 ? 1 : i === 1 ? 0.6 : 0.3;
-        strength += weight * (idx === 1 ? 1.5 : 1);
-      }
-    });
-  });
-
-  return Math.round(strength * 10) / 10;
-}
-
-// ==================== 日主强弱分析 ====================
-
-export interface StrengthAnalysis {
+export interface YongShenResult {
   dayMaster: string;
   dayMasterElement: string;
-  strength: 'very_strong' | 'strong' | 'neutral' | 'weak' | 'very_weak';
+  strength: string;
   strengthDesc: string;
   score: number;
-  confidence: {
-    level: 'high' | 'medium' | 'low';
-    score: number;
-    boundary: boolean;
-    reasonChain: string[];
-  };
-  threeGain: {
-    seasonCommandScore: number;
-    rootSupportScore: number;
-    supportScore: number;
-    drainControlScore: number;
-    totalScore: number;
-    reasonChain: string[];
-  };
+  yongShen: string[];
+  xiShen: string[];
+  jiShen: string[];
+  qiuShen: string[];
+  analysis: string;
+  tiaohuo?: { element: string; reason: string; note: string };
+  tongguan?: { element: string; reason: string; note: string };
+  pattern?: { pattern: string; description: string };
+  confidence?: { score: number; boundary?: string };
+  threeGain?: { reasonChain: string[] };
   details: {
     helpStrength: number;
     drainStrength: number;
     seasonBonus: number;
   };
+  priority: Array<{ element: string; reason: string }>;
 }
 
-/**
- * 计算日主强弱
- */
-export function analyzeDayMasterStrength(bazi: string[]): StrengthAnalysis | null {
-  if (!bazi || bazi.length < 4) return null;
+const ELEMENTS = ['wood', 'fire', 'earth', 'metal', 'water'] as const;
+type Element = (typeof ELEMENTS)[number];
 
-  const dayPillar = bazi[2];
-  const monthPillar = bazi[1];
-  if (!dayPillar || dayPillar.length < 2) return null;
-
-  const dayMaster = dayPillar[0];
-  const dayMasterElement = GAN_TO_WUXING[dayMaster];
-  const monthBranch = monthPillar?.[1];
-
-  // 帮扶日主的力量（比劫+印星）
-  const selfElement = dayMasterElement;
-  const parentElement = WUXING_BEI_SHENG[selfElement];
-
-  const selfStrength = calculateWuxingStrength(bazi, selfElement);
-  const parentStrength = calculateWuxingStrength(bazi, parentElement);
-  const helpStrength = selfStrength + parentStrength * 0.8;
-
-  // 克泄日主的力量（财星+官杀+食伤）
-  const childElement = WUXING_SHENG[selfElement];
-  const wealthElement = WUXING_KE[selfElement];
-  const officerElement = WUXING_BEI_KE[selfElement];
-
-  const childStrength = calculateWuxingStrength(bazi, childElement);
-  const wealthStrength = calculateWuxingStrength(bazi, wealthElement);
-  const officerStrength = calculateWuxingStrength(bazi, officerElement);
-  const drainStrength = childStrength * 0.7 + wealthStrength * 0.9 + officerStrength;
-
-  // 月令得令加成
-  const seasonScore = WUXING_SEASON_SCORE[selfElement]?.[monthBranch] || 0;
-  const seasonBonus = seasonScore * 1.5;
-
-  const rootSupportScore = bazi.reduce((sum, pillar) => {
-    const branch = pillar?.[1];
-    const hiddenStems = ZHI_CANG_GAN[branch] || [];
-    return sum + hiddenStems.reduce((inner, stem, index) => inner + (GAN_TO_WUXING[stem] === selfElement ? [2.5, 1.5, 1][index] || 0.5 : 0), 0);
-  }, 0);
-  const supportScore = helpStrength;
-  const drainControlScore = drainStrength;
-  const totalScore = (supportScore + seasonBonus + rootSupportScore) - drainControlScore;
-  const roundedTotalScore = Math.round(totalScore * 10) / 10;
-
-  let strength: StrengthAnalysis['strength'];
-  let strengthDesc: string;
-  if (totalScore >= 3) { strength = 'very_strong'; strengthDesc = '极旺'; }
-  else if (totalScore >= 1) { strength = 'strong'; strengthDesc = '偏旺'; }
-  else if (totalScore >= -1) { strength = 'neutral'; strengthDesc = '中和'; }
-  else if (totalScore >= -3) { strength = 'weak'; strengthDesc = '偏弱'; }
-  else { strength = 'very_weak'; strengthDesc = '极弱'; }
-
-  const boundaryDistance = Math.min(...[-3, -1, 1, 3].map((threshold) => Math.abs(roundedTotalScore - threshold)));
-  const boundary = boundaryDistance <= 0.4;
-  const confidenceScore = Math.max(0.45, Math.min(0.95, 0.82 + (boundary ? -0.22 : 0) + (Math.abs(roundedTotalScore) >= 2 ? 0.08 : 0)));
-  const reasonChain = [
-    `得令${Math.round(seasonBonus * 10) / 10}`,
-    `得地${Math.round(rootSupportScore * 10) / 10}`,
-    `得助${Math.round(supportScore * 10) / 10}`,
-    `克泄耗${Math.round(drainControlScore * 10) / 10}`,
-    `强弱总分${roundedTotalScore}，判为${strengthDesc}`,
-  ];
-
-  return {
-    dayMaster, dayMasterElement, strength, strengthDesc,
-    score: roundedTotalScore,
-    confidence: {
-      level: confidenceScore >= 0.82 ? 'high' : confidenceScore >= 0.62 ? 'medium' : 'low',
-      score: Math.round(confidenceScore * 100) / 100,
-      boundary,
-      reasonChain,
-    },
-    threeGain: {
-      seasonCommandScore: Math.round(seasonBonus * 10) / 10,
-      rootSupportScore: Math.round(rootSupportScore * 10) / 10,
-      supportScore: Math.round(supportScore * 10) / 10,
-      drainControlScore: Math.round(drainControlScore * 10) / 10,
-      totalScore: roundedTotalScore,
-      reasonChain,
-    },
-    details: {
-      helpStrength: Math.round(helpStrength * 10) / 10,
-      drainStrength: Math.round(drainStrength * 10) / 10,
-      seasonBonus: Math.round(seasonBonus * 10) / 10,
-    },
-  };
-}
-
-// ==================== 特殊格局检测 ====================
-
-interface PatternInfo {
-  pattern: string;
-  element: string;
-  description: string;
-  note: string;
-}
-
-function detectSpecialPattern(bazi: string[], sa: StrengthAnalysis): PatternInfo | null {
-  const { dayMasterElement, strength, score } = sa;
-  if (strength !== 'very_weak' && strength !== 'very_strong') return null;
-
-  const elementCount: Record<string, number> = { '木': 0, '火': 0, '土': 0, '金': 0, '水': 0 };
-
-  bazi.forEach(pillar => {
-    if (!pillar || pillar.length < 2) return;
-    const ganEl = GAN_TO_WUXING[pillar[0]];
-    const zhiEl = ZHI_TO_WUXING[pillar[1]];
-    if (ganEl) elementCount[ganEl]++;
-    if (zhiEl) elementCount[zhiEl]++;
-  });
-
-  const selfElement = dayMasterElement;
-  const wealthElement = WUXING_KE[selfElement];
-  const officerElement = WUXING_BEI_KE[selfElement];
-  const childElement = WUXING_SHENG[selfElement];
-  const selfCount = elementCount[selfElement];
-
-  if (strength === 'very_weak' && score < -3 && selfCount <= 1) {
-    if (elementCount[wealthElement] >= 4) {
-      return { pattern: '从财格', element: wealthElement,
-        description: `日主极弱无根，财星${wealthElement}满盘，弃命从财。用神取财星及食伤生财，忌印比扶身。`,
-        note: '《子平真诠》：从财者，身弱财旺，不能任财，则从财势。' };
-    }
-    if (elementCount[officerElement] >= 4) {
-      return { pattern: '从杀格', element: officerElement,
-        description: `日主极弱无根，官杀${officerElement}满盘，弃命从杀。用神取官杀及财星生杀，忌印比扶身。`,
-        note: '《子平真诠》：从杀者，身弱杀旺，不能任杀，则从杀势。' };
-    }
-    if (elementCount[childElement] >= 4) {
-      return { pattern: '从儿格', element: childElement,
-        description: `日主极弱无根，食伤${childElement}满盘，弃命从儿。用神取食伤及财星，忌印星克制食伤。`,
-        note: '《子平真诠》：从儿者，身弱食伤旺，不能任食伤，则从食伤势。' };
-    }
-  }
-
-  if (strength === 'very_strong' && score > 3) {
-    const maxEl = Object.entries(elementCount)
-      .filter(([el]) => el !== selfElement)
-      .reduce((max, [el, count]) => count > max.count ? { element: el, count } : max, { element: '', count: 0 });
-    if (maxEl.count >= 4) {
-      return { pattern: '专旺格', element: maxEl.element,
-        description: `命局${maxEl.element}气专旺，占据多数位置。顺其旺势，用神取${maxEl.element}及生扶之五行。`,
-        note: '专旺格需顺势而为，不可逆势克制。' };
-    }
-  }
-
-  return null;
-}
-
-// ==================== 通关用神检测 ====================
-
-interface TongguanInfo {
-  element: string;
-  reason: string;
-  conflict: [string, string];
-  note: string;
-}
-
-function detectMediatingElement(bazi: string[], sa: StrengthAnalysis): TongguanInfo | null {
-  const wuxingStrength: Record<string, number> = {
-    '木': calculateWuxingStrength(bazi, '木'),
-    '火': calculateWuxingStrength(bazi, '火'),
-    '土': calculateWuxingStrength(bazi, '土'),
-    '金': calculateWuxingStrength(bazi, '金'),
-    '水': calculateWuxingStrength(bazi, '水'),
-  };
-
-  const sorted = Object.entries(wuxingStrength).sort((a, b) => b[1] - a[1]);
-  const [strongest, second] = sorted;
-
-  if (strongest[1] < 3 || second[1] < 2.5) return null;
-  if (strongest[1] - second[1] > strongest[1] * 0.3) return null;
-
-  const mediatingMap: Record<string, string> = {
-    '金-木': '水', '木-金': '水', '木-土': '火', '土-木': '火',
-    '土-水': '金', '水-土': '金', '水-火': '木', '火-水': '木',
-    '火-金': '土', '金-火': '土',
-  };
-
-  const key = `${strongest[0]}-${second[0]}`;
-  const mediatingElement = mediatingMap[key];
-
-  if (mediatingElement) {
-    return {
-      element: mediatingElement,
-      reason: `命局${strongest[0]}(${strongest[1].toFixed(1)})与${second[0]}(${second[1].toFixed(1)})两行交战，用${mediatingElement}通关。`,
-      conflict: [strongest[0], second[0]],
-      note: '《滴天髓》："两神成象，非通关而不解"',
-    };
-  }
-  return null;
-}
-
-// ==================== 调候用神检测 ====================
-
-interface TiaohouInfo {
-  needed: boolean;
-  element: string;
-  priority: 'high' | 'medium';
-  reason: string;
-  note: string;
-}
-
-function checkSeasonalRegulation(bazi: string[], monthBranch: string): TiaohouInfo | null {
-  const fireCount = calculateWuxingStrength(bazi, '火');
-  const waterCount = calculateWuxingStrength(bazi, '水');
-
-  // 冬月（亥子丑）：寒命需火
-  if (['亥', '子', '丑'].includes(monthBranch)) {
-    const priority = monthBranch === '子' ? 'high' as const : 'medium' as const;
-    if (fireCount < 1.5) {
-      return {
-        needed: true, element: '火', priority,
-        reason: `冬月${monthBranch}生人，天寒地冻，必用火调候暖局。《穷通宝鉴》："冬月非火不暖"`,
-        note: fireCount === 0 ? '命局无火，调候失宜，一生多阻' : '命局火弱，需借流年运势补火',
-      };
-    }
-  }
-
-  // 夏月（巳午未）：热命需水
-  if (['巳', '午', '未'].includes(monthBranch)) {
-    const priority = monthBranch === '午' ? 'high' as const : 'medium' as const;
-    if (waterCount < 1.5) {
-      return {
-        needed: true, element: '水', priority,
-        reason: `夏月${monthBranch}生人，炎热燥烈，必用水调候润局。《穷通宝鉴》："夏月非水不凉"`,
-        note: waterCount === 0 ? '命局无水，燥土焦木，一生多劳' : '命局水弱，需借流年运势补水',
-      };
-    }
-  }
-
-  return null;
-}
-
-// ==================== 完整用神分析 ====================
-
-export interface YongShenLayer {
-  element: string | null;
-  priority: 'primary' | 'secondary' | 'supporting' | 'none';
-  confidence: number;
-  reasonChain: string[];
-}
-
-export interface YongShenResult extends StrengthAnalysis {
-  yongShen: string[];
-  xiShen: string[];
-  jiShen: string[];
-  qiuShen: string[];
-  primaryYongShen: YongShenLayer;
-  tiaohouYongShen: YongShenLayer;
-  tongguanYongShen: YongShenLayer;
-  balanceYongShen: YongShenLayer;
-  bingyaoYongShen: YongShenLayer;
-  priority: string[];
-  yongShenConfidence: {
-    level: 'high' | 'medium' | 'low';
-    score: number;
-    reasonChain: string[];
-  };
-  pattern: PatternInfo | null;
-  tiaohuo: TiaohouInfo | null;
-  tongguan: TongguanInfo | null;
-  analysis: string;
-}
-
-/**
- * 确定用神和忌神（四步法）
- * 1. 特殊格局优先
- * 2. 调候次之
- * 3. 通关用神
- * 4. 强弱平衡
- */
-function buildYongShenLayers(params: {
-  sa: StrengthAnalysis;
-  yongShen: string[];
-  xiShen: string[];
-  jiShen: string[];
-  pattern: PatternInfo | null;
-  tiaohuo: TiaohouInfo | null;
-  tongguan: TongguanInfo | null;
-  balanceElement: string | null;
-}): Pick<YongShenResult, 'primaryYongShen' | 'tiaohouYongShen' | 'tongguanYongShen' | 'balanceYongShen' | 'bingyaoYongShen' | 'priority' | 'yongShenConfidence'> {
-  const { sa, yongShen, xiShen, jiShen, pattern, tiaohuo, tongguan, balanceElement } = params;
-  const primary = yongShen[0] || null;
-  const reasonChain = [
-    pattern ? `格局优先：${pattern.pattern}` : '',
-    tiaohuo ? `调候：${tiaohuo.element}，${tiaohuo.priority}` : '',
-    tongguan ? `通关：${tongguan.element}` : '',
-    balanceElement ? `扶抑平衡：${balanceElement}` : '',
-    `强弱：${sa.strengthDesc}，${sa.threeGain.reasonChain.join('；')}`,
-  ].filter(Boolean);
-  const score = Math.max(0.45, Math.min(0.96, sa.confidence.score + (primary ? 0.04 : -0.08) + (tiaohuo?.priority === 'high' || tongguan ? 0.03 : 0)));
-
-  return {
-    primaryYongShen: { element: primary, priority: primary ? 'primary' : 'none', confidence: Math.round(score * 100) / 100, reasonChain },
-    tiaohouYongShen: { element: tiaohuo?.element || null, priority: tiaohuo ? (tiaohuo.priority === 'high' ? 'primary' : 'supporting') : 'none', confidence: tiaohuo ? 0.82 : 0.5, reasonChain: tiaohuo ? [tiaohuo.reason, tiaohuo.note] : ['无强制调候信号'] },
-    tongguanYongShen: { element: tongguan?.element || null, priority: tongguan ? 'secondary' : 'none', confidence: tongguan ? 0.78 : 0.5, reasonChain: tongguan ? [tongguan.reason, tongguan.note] : ['未发现必须通关的五行冲突'] },
-    balanceYongShen: { element: balanceElement, priority: balanceElement ? 'secondary' : 'none', confidence: 0.76, reasonChain: [`按日主${sa.strengthDesc}取扶抑平衡`] },
-    bingyaoYongShen: { element: primary, priority: primary ? 'supporting' : 'none', confidence: 0.72, reasonChain: [`病在${jiShen.join('、') || '偏枯'}，药取${[...yongShen, ...xiShen].filter(Boolean).join('、') || '节律平衡'}`] },
-    priority: [primary ? `primary:${primary}` : '', tiaohuo ? `tiaohou:${tiaohuo.element}` : '', tongguan ? `tongguan:${tongguan.element}` : '', balanceElement ? `balance:${balanceElement}` : ''].filter(Boolean),
-    yongShenConfidence: { level: score >= 0.82 ? 'high' : score >= 0.62 ? 'medium' : 'low', score: Math.round(score * 100) / 100, reasonChain },
-  };
-}
-
-export function determineYongShen(bazi: string[]): YongShenResult | null {
-  const sa = analyzeDayMasterStrength(bazi);
-  if (!sa) return null;
-
-  const { dayMasterElement, strength } = sa;
-  const monthBranch = bazi[1]?.[1];
-
-  const selfElement = dayMasterElement;
-  const parentElement = WUXING_BEI_SHENG[selfElement];
-  const siblingElement = selfElement;
-  const childElement = WUXING_SHENG[selfElement];
-  const wealthElement = WUXING_KE[selfElement];
-  const officerElement = WUXING_BEI_KE[selfElement];
-
-  let yongShen: string[] = [];
-  let xiShen: string[] = [];
-  let jiShen: string[] = [];
-  let qiuShen: string[] = [];
-  let pattern: PatternInfo | null = null;
-  let tiaohuo: TiaohouInfo | null = null;
-  let tongguan: TongguanInfo | null = null;
-  let balanceElement: string | null = null;
-
-  // 第一步：检测特殊格局
-  pattern = detectSpecialPattern(bazi, sa);
-  if (pattern) {
-    if (pattern.pattern.includes('从财')) {
-      yongShen = [wealthElement, childElement];
-      jiShen = [parentElement, siblingElement];
-    } else if (pattern.pattern.includes('从杀')) {
-      yongShen = [officerElement, wealthElement];
-      jiShen = [parentElement, siblingElement];
-    } else if (pattern.pattern.includes('从儿')) {
-      yongShen = [childElement, wealthElement];
-      jiShen = [parentElement]; qiuShen = [siblingElement];
-    } else if (pattern.pattern.includes('专旺')) {
-      yongShen = [pattern.element];
-      xiShen = [WUXING_BEI_SHENG[pattern.element]];
-      jiShen = [WUXING_BEI_KE[pattern.element]];
-    }
-    const layers = buildYongShenLayers({ sa, yongShen, xiShen, jiShen, pattern, tiaohuo: null, tongguan: null, balanceElement: yongShen[0] || null });
-    return { ...sa, yongShen, xiShen, jiShen, qiuShen, ...layers, pattern, tiaohuo: null, tongguan: null,
-      analysis: generateAnalysisText(sa, { yongShen, xiShen, jiShen, qiuShen, pattern, tiaohuo: null, tongguan: null }) };
-  }
-
-  // 第二步：检查调候用神
-  tiaohuo = checkSeasonalRegulation(bazi, monthBranch);
-  if (tiaohuo && tiaohuo.priority === 'high') {
-    yongShen = [tiaohuo.element];
-    if (strength === 'very_strong' || strength === 'strong') {
-      xiShen = [officerElement, wealthElement, childElement].filter(el => el !== tiaohuo!.element);
-      jiShen = [parentElement]; qiuShen = [siblingElement];
-    } else if (strength === 'very_weak' || strength === 'weak') {
-      xiShen = [parentElement, siblingElement].filter(el => el !== tiaohuo!.element);
-      jiShen = [childElement, wealthElement].filter(el => el !== tiaohuo!.element);
-      qiuShen = [officerElement].filter(el => el !== tiaohuo!.element);
-    } else {
-      xiShen = [parentElement].filter(el => el !== tiaohuo!.element);
-      jiShen = [officerElement].filter(el => el !== tiaohuo!.element);
-    }
-    const layers = buildYongShenLayers({ sa, yongShen, xiShen, jiShen, pattern: null, tiaohuo, tongguan: null, balanceElement: xiShen[0] || yongShen[0] || null });
-    return { ...sa, yongShen, xiShen, jiShen, qiuShen, ...layers, pattern: null, tiaohuo, tongguan: null,
-      analysis: generateAnalysisText(sa, { yongShen, xiShen, jiShen, qiuShen, pattern: null, tiaohuo, tongguan: null }) };
-  }
-
-  // 第三步：检查通关用神
-  tongguan = detectMediatingElement(bazi, sa);
-  if (tongguan) {
-    yongShen = [tongguan.element];
-    if (strength === 'very_strong' || strength === 'strong') {
-      xiShen = [officerElement, wealthElement, childElement].filter(el => el !== tongguan!.element);
-      jiShen = [parentElement]; qiuShen = [siblingElement];
-    } else if (strength === 'very_weak' || strength === 'weak') {
-      xiShen = [parentElement, siblingElement].filter(el => el !== tongguan!.element);
-      jiShen = [childElement, wealthElement].filter(el => el !== tongguan!.element);
-      qiuShen = [officerElement].filter(el => el !== tongguan!.element);
-    } else {
-      xiShen = [parentElement].filter(el => el !== tongguan!.element);
-      jiShen = [officerElement].filter(el => el !== tongguan!.element);
-    }
-    const layers = buildYongShenLayers({ sa, yongShen, xiShen, jiShen, pattern: null, tiaohuo, tongguan, balanceElement: xiShen[0] || yongShen[0] || null });
-    return { ...sa, yongShen, xiShen, jiShen, qiuShen, ...layers, pattern: null, tiaohuo, tongguan,
-      analysis: generateAnalysisText(sa, { yongShen, xiShen, jiShen, qiuShen, pattern: null, tiaohuo, tongguan }) };
-  }
-
-  // 第四步：基于日主强弱确定用神
-  if (strength === 'very_strong' || strength === 'strong') {
-    balanceElement = officerElement;
-    yongShen = [officerElement, wealthElement];
-    xiShen = [childElement];
-    jiShen = [parentElement];
-    qiuShen = [siblingElement];
-  } else if (strength === 'very_weak' || strength === 'weak') {
-    balanceElement = parentElement;
-    yongShen = [parentElement];
-    xiShen = [siblingElement];
-    jiShen = [childElement, wealthElement];
-    qiuShen = [officerElement];
-  } else {
-    balanceElement = parentElement;
-    yongShen = [parentElement];
-    xiShen = [siblingElement];
-    jiShen = [officerElement];
-    qiuShen = [wealthElement];
-  }
-
-  // 中优先级调候加入喜神
-  if (tiaohuo && tiaohuo.priority === 'medium') {
-    if (!yongShen.includes(tiaohuo.element) && !xiShen.includes(tiaohuo.element)) {
-      xiShen = [tiaohuo.element, ...xiShen];
-    }
-  }
-
-  const layers = buildYongShenLayers({ sa, yongShen, xiShen, jiShen, pattern, tiaohuo, tongguan, balanceElement });
-  return { ...sa, yongShen, xiShen, jiShen, qiuShen, ...layers, pattern, tiaohuo, tongguan,
-    analysis: generateAnalysisText(sa, { yongShen, xiShen, jiShen, qiuShen, pattern, tiaohuo, tongguan }) };
-}
-
-// ==================== 分析文本生成 ====================
-
-function generateAnalysisText(sa: StrengthAnalysis, data: {
-  yongShen: string[]; xiShen: string[]; jiShen: string[]; qiuShen: string[];
-  pattern: PatternInfo | null; tiaohuo: TiaohouInfo | null; tongguan: TongguanInfo | null;
-}): string {
-  const { dayMaster, dayMasterElement, strengthDesc } = sa;
-  const { yongShen, xiShen, jiShen, qiuShen, pattern, tiaohuo, tongguan } = data;
-
-  let text = `日主${dayMaster}(${dayMasterElement})${strengthDesc}`;
-
-  if (pattern) {
-    text += `，成${pattern.pattern}。${pattern.description}`;
-    return text;
-  }
-
-  if (tiaohuo && tiaohuo.priority === 'high') text += `，${tiaohuo.reason}`;
-  if (tongguan) text += `，${tongguan.reason}`;
-
-  text += `，用神取${yongShen.join('、')}`;
-  if (xiShen.length > 0) text += `，喜${xiShen.join('、')}`;
-  text += `，忌${jiShen.join('、')}`;
-  if (qiuShen.length > 0) text += `，最忌${qiuShen.join('、')}`;
-
-  if (tiaohuo && tiaohuo.priority === 'medium') text += `。${tiaohuo.note}`;
-
-  return text;
-}
-
-// ==================== 十神分布分析 ====================
-
-export interface PillarShiShen {
-  pillarName: string;
-  pillar: string;
-  tianGan: string;
-  diZhi: string;
-  tianGanShiShen: string | null;
-  cangGan: Array<{ gan: string; shiShen: string | null; type: string }>;
-}
-
-export type TenGodStructure = {
-  dominantTenGod: { name: string; score: number; category: string; pillar?: string | null; visibility: '天干透出' | '地支藏干' | '混合透藏' } | null;
-  categoryBalance: Array<{ category: string; score: number; percentage: number; gods: string[] }>;
-  byPillar: Array<{ pillarName: string; pillar: string; tianGan: string | null; diZhiMain: string | null; hidden: string[] }>;
-  byVisibility: {
-    visible: Array<{ name: string; score: number }>;
-    hidden: Array<{ name: string; score: number }>;
-  };
-  lifeDomains: Array<{ domain: 'career' | 'wealth' | 'relationship' | 'health' | 'growth'; driver: string; evidence: string[] }>;
-  combinations: Array<{ name: string; type: 'opportunity' | 'risk' | 'mixed'; evidence: string[] }>;
-  riskPatterns: Array<{ name: string; severity: 'high' | 'medium' | 'low'; evidence: string[] }>;
-  opportunityPatterns: Array<{ name: string; strength: 'high' | 'medium' | 'low'; evidence: string[] }>;
-  favorableSignals: string[];
-  evidenceChain: string[];
+const CN_TO_EN: Record<string, Element> = {
+  '木': 'wood', '火': 'fire', '土': 'earth', '金': 'metal', '水': 'water',
+};
+const EN_TO_CN: Record<Element, string> = {
+  wood: '木', fire: '火', earth: '土', metal: '金', water: '水',
 };
 
-const roundShiShenScore = (value: number) => Math.round(value * 10) / 10;
-const shiShenScore = (count: Record<string, number>, name: string) => roundShiShenScore(count[name] || 0);
-const shiShenCategoryScore = (count: Record<string, number>, category: string) => roundShiShenScore(
-  Object.entries(count).reduce((sum, [god, score]) => sum + (SHISHEN_CATEGORY[god] === category ? Number(score) : 0), 0)
-);
-const scoreLevel = (score: number): 'high' | 'medium' | 'low' => score >= 2.4 ? 'high' : score >= 1.2 ? 'medium' : 'low';
+const GENERATES: Record<Element, Element> = {
+  wood: 'fire', fire: 'earth', earth: 'metal', metal: 'water', water: 'wood',
+};
+const CONTROLS: Record<Element, Element> = {
+  wood: 'earth', earth: 'water', water: 'fire', fire: 'metal', metal: 'wood',
+};
 
-const buildTenGodStructure = (pillarsAnalysis: PillarShiShen[], shiShenCount: Record<string, number>): TenGodStructure => {
-  const visibleCount: Record<string, number> = {};
-  const hiddenCount: Record<string, number> = {};
-  const pillarHits: Record<string, string[]> = {};
+const GENERATED_BY: Record<Element, Element> = {
+  wood: 'water', fire: 'wood', earth: 'fire', metal: 'earth', water: 'metal',
+};
+const CONTROLLED_BY: Record<Element, Element> = {
+  wood: 'metal', fire: 'water', earth: 'wood', water: 'earth', metal: 'fire',
+};
 
-  pillarsAnalysis.forEach((pillar) => {
-    const visible = pillar.tianGanShiShen && pillar.tianGanShiShen !== '日主' ? pillar.tianGanShiShen : null;
-    if (visible) {
-      visibleCount[visible] = (visibleCount[visible] || 0) + 1;
-      pillarHits[visible] = [...(pillarHits[visible] || []), `${pillar.pillarName}干`];
-    }
-    pillar.cangGan.forEach((hidden) => {
-      if (!hidden.shiShen) return;
-      const weight = hidden.type === '本气' ? 1 : hidden.type === '中气' ? 0.6 : 0.3;
-      hiddenCount[hidden.shiShen] = (hiddenCount[hidden.shiShen] || 0) + weight;
-      pillarHits[hidden.shiShen] = [...(pillarHits[hidden.shiShen] || []), `${pillar.pillarName}支${hidden.type}`];
-    });
-  });
+const PILLAR_LABELS = ['年柱', '月柱', '日柱', '时柱'];
 
-  const ranked = Object.entries(shiShenCount)
-    .map(([name, score]) => ({ name, score: roundShiShenScore(Number(score)), category: SHISHEN_CATEGORY[name] || '其他' }))
-    .sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh-Hans-CN'));
-  const total = ranked.reduce((sum, item) => sum + item.score, 0) || 1;
-  const dominant = ranked[0] || null;
-  const dominantVisibility = dominant
-    ? visibleCount[dominant.name] && hiddenCount[dominant.name] ? '混合透藏' : visibleCount[dominant.name] ? '天干透出' : '地支藏干'
-    : '地支藏干';
+/** 月令四季旺相休囚死 */
+const SEASON_STATE: Record<string, Record<Element, number>> = {
+  spring: { wood: 15, fire: 10, earth: -5, metal: 0, water: 5 },
+  summer: { wood: 5, fire: 15, earth: 10, metal: -5, water: 0 },
+  autumn: { wood: -5, fire: 0, earth: 5, metal: 15, water: 10 },
+  winter: { wood: 10, fire: -5, earth: 0, metal: 5, water: 15 },
+};
 
-  const categoryBalance = ['比劫', '食伤', '财星', '官杀', '印星']
-    .map((category) => {
-      const gods = ranked.filter((item) => item.category === category).map((item) => item.name);
-      const score = shiShenCategoryScore(shiShenCount, category);
-      return { category, score, percentage: Math.round((score / total) * 100), gods };
-    })
-    .sort((a, b) => b.score - a.score || a.category.localeCompare(b.category, 'zh-Hans-CN'));
+const MONTH_TO_SEASON: Record<string, keyof typeof SEASON_STATE> = {
+  '寅': 'spring', '卯': 'spring', '辰': 'spring',
+  '巳': 'summer', '午': 'summer', '未': 'summer',
+  '申': 'autumn', '酉': 'autumn', '戌': 'autumn',
+  '亥': 'winter', '子': 'winter', '丑': 'winter',
+};
 
-  const byPillar = pillarsAnalysis.map((pillar) => ({
-    pillarName: pillar.pillarName,
-    pillar: pillar.pillar,
-    tianGan: pillar.tianGanShiShen,
-    diZhiMain: pillar.cangGan[0]?.shiShen || null,
-    hidden: pillar.cangGan.map((item) => `${item.gan}:${item.shiShen || '无'}:${item.type}`),
+const ROOT_WEIGHTS = [12, 7, 4];
+const HIDDEN_WEIGHTS = [1.0, 0.6, 0.35];
+const STEM_WEIGHTS = { helpSame: 6, helpGenerate: 5, drainOutput: 4, drainWealth: 5, drainControl: 7 };
+
+const TIAN_YI_GUI_REN: Record<string, string[]> = {
+  '甲': ['丑', '未'], '戊': ['丑', '未'], '庚': ['丑', '未'],
+  '乙': ['子', '申'], '己': ['子', '申'],
+  '丙': ['亥', '酉'], '丁': ['亥', '酉'],
+  '壬': ['卯', '巳'], '癸': ['卯', '巳'],
+  '辛': ['寅', '午'],
+};
+
+const TAO_HUA: Record<string, string> = {
+  '寅': '卯', '午': '卯', '戌': '卯',
+  '申': '酉', '子': '酉', '辰': '酉',
+  '亥': '子', '卯': '子', '未': '子',
+  '巳': '午', '酉': '午', '丑': '午',
+};
+
+const YANG_REN: Record<string, string> = {
+  '甲': '卯', '乙': '寅', '丙': '午', '丁': '巳',
+  '戊': '午', '己': '巳', '庚': '酉', '辛': '申',
+  '壬': '子', '癸': '亥',
+};
+
+const YI_MA: Record<string, string> = {
+  '寅': '申', '午': '申', '戌': '申',
+  '申': '寅', '子': '寅', '辰': '寅',
+  '巳': '亥', '酉': '亥', '丑': '亥',
+  '亥': '巳', '卯': '巳', '未': '巳',
+};
+
+const WEN_CHANG: Record<string, string> = {
+  '甲': '巳', '乙': '午', '丙': '申', '丁': '酉',
+  '戊': '申', '己': '酉', '庚': '亥', '辛': '子',
+  '壬': '寅', '癸': '卯',
+};
+
+const LUCKY_COLORS: Record<Element, string[]> = {
+  wood: ['绿色', '青色'], fire: ['红色', '紫色'], earth: ['黄色', '棕色'],
+  metal: ['白色', '金色'], water: ['黑色', '蓝色'],
+};
+const LUCKY_DIRECTIONS: Record<Element, string> = {
+  wood: '东方', fire: '南方', earth: '中央', metal: '西方', water: '北方',
+};
+const LUCKY_NUMBERS: Record<Element, number[]> = {
+  wood: [3, 8], fire: [2, 7], earth: [5, 0], metal: [4, 9], water: [1, 6],
+};
+
+function parseBazi(bazi: string[]) {
+  if (!bazi || bazi.length < 4) return null;
+  const pillars = bazi.slice(0, 4).map((gz) => ({
+    gan: gz[0] || '',
+    zhi: gz[1] || '',
+    ganZhi: gz,
   }));
+  if (pillars.some((p) => !p.gan || !p.zhi)) return null;
+  return pillars;
+}
 
-  const visible = Object.entries(visibleCount).map(([name, score]) => ({ name, score: roundShiShenScore(score) })).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh-Hans-CN'));
-  const hidden = Object.entries(hiddenCount).map(([name, score]) => ({ name, score: roundShiShenScore(score) })).sort((a, b) => b.score - a.score || a.name.localeCompare(b.name, 'zh-Hans-CN'));
-  const topCategory = categoryBalance[0];
+function toElement(gan: string): Element | null {
+  const el = GAN_TO_WUXING[gan];
+  return (el as Element) || null;
+}
 
-  const careerEvidence = ['正官', '七杀', '正印', '偏印', '食神', '伤官'].filter((god) => shiShenScore(shiShenCount, god) > 0).map((god) => `${god}${shiShenScore(shiShenCount, god)}`);
-  const wealthEvidence = ['正财', '偏财', '食神', '伤官', '比肩', '劫财'].filter((god) => shiShenScore(shiShenCount, god) > 0).map((god) => `${god}${shiShenScore(shiShenCount, god)}`);
-  const relationshipEvidence = ['正官', '七杀', '正财', '偏财', '劫财', '伤官'].filter((god) => shiShenScore(shiShenCount, god) > 0).map((god) => `${god}${shiShenScore(shiShenCount, god)}`);
-  const growthEvidence = ['正印', '偏印', '食神', '伤官'].filter((god) => shiShenScore(shiShenCount, god) > 0).map((god) => `${god}${shiShenScore(shiShenCount, god)}`);
+function uniqElements(elements: Element[]): Element[] {
+  return [...new Set(elements)];
+}
 
-  const lifeDomains: TenGodStructure['lifeDomains'] = [
-    { domain: 'career', driver: careerEvidence.length ? '官杀定压力边界，印星定资质背书，食伤定输出方式。' : '事业侧十神信号偏弱，先看五行用忌和大运触发。', evidence: careerEvidence },
-    { domain: 'wealth', driver: wealthEvidence.length ? '财星看资源与现金流，食伤看生财能力，比劫看分财与竞争。' : '财富侧十神信号偏弱，避免只凭单点财星判断。', evidence: wealthEvidence },
-    { domain: 'relationship', driver: relationshipEvidence.length ? '配偶星、伤官与比劫共同决定关系张力。' : '关系侧十神信号偏弱，日支合冲优先级更高。', evidence: relationshipEvidence },
-    { domain: 'growth', driver: growthEvidence.length ? '印星看学习吸收，食伤看表达产出。' : '成长侧缺少显性十神，靠阶段节奏补强。', evidence: growthEvidence },
-  ];
+function getSeasonBonus(monthZhi: string, dmElement: Element): number {
+  const season = MONTH_TO_SEASON[monthZhi] || 'spring';
+  return SEASON_STATE[season][dmElement] || 0;
+}
 
-  const combinations: TenGodStructure['combinations'] = [];
-  if (shiShenScore(shiShenCount, '伤官') > 0 && shiShenScore(shiShenCount, '正官') > 0) combinations.push({ name: '伤官见官', type: 'risk', evidence: [`伤官${shiShenScore(shiShenCount, '伤官')}`, `正官${shiShenScore(shiShenCount, '正官')}`] });
-  if (shiShenScore(shiShenCount, '食神') > 0 && shiShenScore(shiShenCount, '七杀') > 0) combinations.push({ name: '食神制杀', type: 'opportunity', evidence: [`食神${shiShenScore(shiShenCount, '食神')}`, `七杀${shiShenScore(shiShenCount, '七杀')}`] });
-  if (shiShenCategoryScore(shiShenCount, '官杀') > 0 && shiShenCategoryScore(shiShenCount, '印星') > 0) combinations.push({ name: '杀印/官印相生', type: 'opportunity', evidence: [`官杀${shiShenCategoryScore(shiShenCount, '官杀')}`, `印星${shiShenCategoryScore(shiShenCount, '印星')}`] });
-  if (shiShenCategoryScore(shiShenCount, '财星') > 0 && shiShenCategoryScore(shiShenCount, '官杀') > 0) combinations.push({ name: '财生官杀', type: 'opportunity', evidence: [`财星${shiShenCategoryScore(shiShenCount, '财星')}`, `官杀${shiShenCategoryScore(shiShenCount, '官杀')}`] });
-  if (shiShenCategoryScore(shiShenCount, '财星') > 0 && shiShenCategoryScore(shiShenCount, '印星') > 0) combinations.push({ name: '财印相战', type: 'mixed', evidence: [`财星${shiShenCategoryScore(shiShenCount, '财星')}`, `印星${shiShenCategoryScore(shiShenCount, '印星')}`] });
-  if (shiShenCategoryScore(shiShenCount, '比劫') > 0 && shiShenCategoryScore(shiShenCount, '财星') > 0) combinations.push({ name: '比劫夺财', type: 'risk', evidence: [`比劫${shiShenCategoryScore(shiShenCount, '比劫')}`, `财星${shiShenCategoryScore(shiShenCount, '财星')}`] });
-
-  const riskPatterns = combinations
-    .filter((item) => item.type === 'risk' || item.type === 'mixed')
-    .map((item) => ({ name: item.name, severity: item.type === 'risk' && item.evidence.some((value) => Number(value.replace(/[^0-9.]/g, '')) >= 2) ? 'high' : 'medium', evidence: item.evidence })) as TenGodStructure['riskPatterns'];
-  const opportunityPatterns = combinations
-    .filter((item) => item.type === 'opportunity')
-    .map((item) => ({ name: item.name, strength: scoreLevel(item.evidence.reduce((sum, value) => sum + Number(value.replace(/[^0-9.]/g, '') || 0), 0) / item.evidence.length), evidence: item.evidence })) as TenGodStructure['opportunityPatterns'];
-
-  const favorableSignals = [
-    dominant ? `主导十神：${dominant.name}${dominant.score}，${dominantVisibility}` : '',
-    topCategory ? `主导类别：${topCategory.category}${topCategory.score}，占${topCategory.percentage}%` : '',
-    opportunityPatterns[0] ? `机会组合：${opportunityPatterns[0].name}` : '',
-  ].filter(Boolean);
-
-  return {
-    dominantTenGod: dominant ? { ...dominant, pillar: (pillarHits[dominant.name] || [null])[0], visibility: dominantVisibility as NonNullable<TenGodStructure['dominantTenGod']>['visibility'] } : null,
-    categoryBalance,
-    byPillar,
-    byVisibility: { visible, hidden },
-    lifeDomains,
-    combinations,
-    riskPatterns,
-    opportunityPatterns,
-    favorableSignals,
-    evidenceChain: [
-      dominant ? `十神第一权重为${dominant.name}${dominant.score}。` : '十神权重不足，不能生成主导判断。',
-      topCategory ? `${topCategory.category}合计${topCategory.score}，占比${topCategory.percentage}%。` : '',
-      combinations.length ? `结构组合：${combinations.map((item) => item.name).join('、')}。` : '未触发高优先级十神组合。',
-    ].filter(Boolean),
-  };
-};
-
-/**
- * 生成完整八字十神分析
- */
-export function generateBaziShiShenAnalysis(bazi: string[]) {
-  if (!bazi || bazi.length < 4) return null;
-  const dayMaster = bazi[2]?.[0];
-  if (!dayMaster) return null;
-
-  const pillarNames = ['年', '月', '日', '时'];
-  const pillarsAnalysis: PillarShiShen[] = bazi.map((pillar, idx) => {
-    if (!pillar || pillar.length < 2) return null as any;
-    const tianGan = pillar[0];
-    const diZhi = pillar[1];
-    const cangGan = getZhiCangGan(diZhi);
-    return {
-      pillarName: pillarNames[idx],
-      pillar, tianGan, diZhi,
-      tianGanShiShen: idx === 2 ? '日主' : calculateShiShen(dayMaster, tianGan),
-      cangGan: cangGan.map((gan, i) => ({
-        gan,
-        shiShen: calculateShiShen(dayMaster, gan),
-        type: i === 0 ? '本气' : i === 1 ? '中气' : '余气',
-      })),
-    };
-  }).filter(Boolean);
-
-  // 统计十神分布
-  const shiShenCount: Record<string, number> = {};
-  pillarsAnalysis.forEach(p => {
-    if (p.tianGanShiShen && p.tianGanShiShen !== '日主') {
-      shiShenCount[p.tianGanShiShen] = (shiShenCount[p.tianGanShiShen] || 0) + 1;
-    }
-    p.cangGan.forEach(c => {
-      if (c.shiShen) {
-        const weight = c.type === '本气' ? 1 : c.type === '中气' ? 0.6 : 0.3;
-        shiShenCount[c.shiShen] = (shiShenCount[c.shiShen] || 0) + weight;
+function calculateRootStrength(pillars: ReturnType<typeof parseBazi>, dmElement: Element): number {
+  if (!pillars) return 0;
+  let score = 0;
+  pillars.forEach((pillar, idx) => {
+    const hidden = ZHI_CANG_GAN[pillar.zhi] || [];
+    hidden.forEach((gan, hIdx) => {
+      if (toElement(gan) === dmElement) {
+        const base = idx === 2 ? ROOT_WEIGHTS[0] : ROOT_WEIGHTS[Math.min(hIdx, 2)];
+        score += base * HIDDEN_WEIGHTS[hIdx];
       }
     });
   });
+  return score;
+}
 
-  const dayMasterElement = GAN_TO_WUXING[dayMaster];
-  const dayMasterYinYang = GAN_YIN_YANG[dayMaster] === 0 ? '阳' : '阴';
-  const tenGodStructure = buildTenGodStructure(pillarsAnalysis, shiShenCount);
+function calculateStemHelpDrain(
+  pillars: ReturnType<typeof parseBazi>,
+  dayMaster: string,
+  dmElement: Element,
+): { help: number; drain: number } {
+  if (!pillars) return { help: 0, drain: 0 };
+  let help = 0;
+  let drain = 0;
 
+  pillars.forEach((pillar, idx) => {
+    if (idx === 2) return;
+    const gan = pillar.gan;
+    const el = toElement(gan);
+    if (!el) return;
+
+    if (el === dmElement) help += STEM_WEIGHTS.helpSame;
+    else if (el === GENERATED_BY[dmElement]) help += STEM_WEIGHTS.helpGenerate;
+    else if (el === GENERATES[dmElement]) drain += STEM_WEIGHTS.drainOutput;
+    else if (el === CONTROLS[dmElement]) drain += STEM_WEIGHTS.drainWealth;
+    else if (el === CONTROLLED_BY[dmElement]) drain += STEM_WEIGHTS.drainControl;
+  });
+
+  const dayStem = pillars[2].gan;
+  if (dayStem !== dayMaster) {
+    const el = toElement(dayStem);
+    if (el === dmElement) help += STEM_WEIGHTS.helpSame * 0.5;
+  }
+
+  return { help, drain };
+}
+
+function calculateElementScores(bazi: string[]): Record<Element, number> {
+  const pillars = parseBazi(bazi);
+  const scores: Record<Element, number> = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+  if (!pillars) return scores;
+
+  pillars.forEach((pillar, idx) => {
+    const ganEl = toElement(pillar.gan);
+    if (ganEl) scores[ganEl] += idx === 1 ? 12 : idx === 2 ? 10 : 8;
+
+    const hidden = ZHI_CANG_GAN[pillar.zhi] || [];
+    hidden.forEach((gan, hIdx) => {
+      const el = toElement(gan);
+      if (!el) return;
+      const weight = (idx === 1 ? 10 : 8) * HIDDEN_WEIGHTS[hIdx];
+      scores[el] += weight;
+    });
+  });
+
+  return scores;
+}
+
+function normalizeElementScores(scores: Record<Element, number>): Record<Element, number> {
+  const total = ELEMENTS.reduce((sum, el) => sum + scores[el], 0) || 1;
+  const normalized: Record<Element, number> = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
+  ELEMENTS.forEach((el) => { normalized[el] = (scores[el] / total) * 100; });
+  return normalized;
+}
+
+function resolveStrengthLevel(score: number): { strength: string; strengthDesc: string } {
+  if (score >= 72) return { strength: 'very_strong', strengthDesc: '身极旺' };
+  if (score >= 58) return { strength: 'strong', strengthDesc: '身偏旺' };
+  if (score >= 42) return { strength: 'neutral', strengthDesc: '中和' };
+  if (score >= 28) return { strength: 'weak', strengthDesc: '身偏弱' };
+  return { strength: 'very_weak', strengthDesc: '身极弱' };
+}
+
+function detectCongPattern(
+  normalized: Record<Element, number>,
+  dmElement: Element,
+  strengthScore: number,
+): { pattern: string; description: string } | null {
+  const selfGroup = normalized[dmElement] + normalized[GENERATED_BY[dmElement]];
+  const sorted = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct);
+  const dominant = sorted[0];
+
+  if (strengthScore >= 68 && selfGroup >= 55 && dominant.el === dmElement) {
+    return {
+      pattern: '从旺格',
+      description: `${EN_TO_CN[dmElement]}气独旺，全局顺势而从，宜顺其旺势取用神。`,
+    };
+  }
+
+  if (strengthScore >= 62 && selfGroup >= 50) {
+    return {
+      pattern: '从强格',
+      description: `印比助身过旺，宜顺旺势，以泄耗为调节。`,
+    };
+  }
+
+  if (strengthScore <= 32 && selfGroup <= 18) {
+    const drainEl = sorted[0].el;
+    const patternName = drainEl === CONTROLS[dmElement] ? '从财格'
+      : drainEl === CONTROLLED_BY[dmElement] ? '从杀格'
+        : drainEl === GENERATES[dmElement] ? '从儿格' : '从弱格';
+    return {
+      pattern: patternName,
+      description: `日主${EN_TO_CN[dmElement]}极弱，${EN_TO_CN[drainEl]}势成主导，宜从势而行。`,
+    };
+  }
+
+  if (strengthScore <= 38 && selfGroup <= 25) {
+    return {
+      pattern: '从弱格',
+      description: `日主失令少根，全局克泄耗重，宜从顺势五行。`,
+    };
+  }
+
+  return null;
+}
+
+function detectTiaohuo(monthZhi: string): YongShenResult['tiaohuo'] | undefined {
+  const season = MONTH_TO_SEASON[monthZhi];
+  if (season === 'winter') {
+    return {
+      element: 'fire',
+      reason: '冬月水寒木冻，需火调候暖局',
+      note: '优先见丙丁或南方火气，改善寒凝之弊',
+    };
+  }
+  if (season === 'summer') {
+    return {
+      element: 'water',
+      reason: '夏月火旺土燥，需水调候润局',
+      note: '优先见壬癸或北方水气，缓解炎燥之弊',
+    };
+  }
+  return undefined;
+}
+
+function detectTongguan(normalized: Record<Element, number>): YongShenResult['tongguan'] | undefined {
+  const pairs: Array<{ a: Element; b: Element; bridge: Element; label: string }> = [
+    { a: 'wood', b: 'earth', bridge: 'fire', label: '木土相战' },
+    { a: 'earth', b: 'water', bridge: 'metal', label: '土水相战' },
+    { a: 'water', b: 'fire', bridge: 'wood', label: '水火相战' },
+    { a: 'fire', b: 'metal', bridge: 'earth', label: '火金相战' },
+    { a: 'metal', b: 'wood', bridge: 'water', label: '金木相战' },
+  ];
+
+  for (const pair of pairs) {
+    const scoreA = normalized[pair.a];
+    const scoreB = normalized[pair.b];
+    if (scoreA >= 22 && scoreB >= 22 && Math.abs(scoreA - scoreB) <= 12) {
+      return {
+        element: pair.bridge,
+        reason: `${pair.label}，以${EN_TO_CN[pair.bridge]}通关`,
+        note: `当${EN_TO_CN[pair.a]}与${EN_TO_CN[pair.b]}两旺相峙时，${EN_TO_CN[pair.bridge]}可化对峙为流通`,
+      };
+    }
+  }
+  return undefined;
+}
+
+function buildYongXiJiQiu(
+  dmElement: Element,
+  strength: string,
+  pattern: { pattern: string; description: string } | null,
+  normalized: Record<Element, number>,
+  tiaohuo?: YongShenResult['tiaohuo'],
+  tongguan?: YongShenResult['tongguan'],
+): Pick<YongShenResult, 'yongShen' | 'xiShen' | 'jiShen' | 'qiuShen' | 'priority'> {
+  let yong: Element[] = [];
+  let xi: Element[] = [];
+  let ji: Element[] = [];
+  let qiu: Element[] = [];
+
+  if (pattern?.pattern.includes('从旺') || pattern?.pattern === '从强格') {
+    yong = [dmElement];
+    xi = [GENERATES[dmElement]];
+    ji = [CONTROLLED_BY[dmElement], CONTROLLED_BY[GENERATES[dmElement]]];
+    qiu = [CONTROLLED_BY[dmElement]];
+  } else if (pattern?.pattern.includes('从')) {
+    const sorted = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct);
+    const dominant = sorted[0].el;
+    yong = [dominant];
+    xi = [GENERATED_BY[dominant], GENERATES[dominant]].filter((el) => el !== dmElement);
+    ji = [dmElement, GENERATED_BY[dmElement]];
+    qiu = [GENERATED_BY[dmElement]];
+  } else if (strength === 'very_strong' || strength === 'strong') {
+    yong = uniqElements([CONTROLLED_BY[dmElement], CONTROLS[dmElement], GENERATES[dmElement]]);
+    xi = uniqElements([CONTROLS[dmElement], GENERATES[dmElement]]);
+    ji = uniqElements([dmElement, GENERATED_BY[dmElement]]);
+    qiu = uniqElements([GENERATED_BY[dmElement], GENERATED_BY[GENERATED_BY[dmElement]]]);
+  } else if (strength === 'very_weak' || strength === 'weak') {
+    yong = uniqElements([GENERATED_BY[dmElement], dmElement]);
+    xi = uniqElements([GENERATED_BY[dmElement], dmElement]);
+    ji = uniqElements([GENERATES[dmElement], CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
+    qiu = uniqElements([CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
+  } else {
+    const weakest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => a.pct - b.pct)[0].el;
+    const strongest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct)[0].el;
+    yong = [weakest];
+    xi = [weakest, GENERATED_BY[weakest]];
+    ji = [strongest];
+    qiu = [GENERATES[strongest]];
+  }
+
+  if (tiaohuo && !yong.includes(tiaohuo.element as Element)) {
+    yong = uniqElements([tiaohuo.element as Element, ...yong]);
+  }
+  if (tongguan && !xi.includes(tongguan.element as Element)) {
+    xi = uniqElements([tongguan.element as Element, ...xi]);
+  }
+
+  yong = yong.filter((el) => !ji.includes(el)).slice(0, 3);
+  xi = xi.filter((el) => !ji.includes(el) && !yong.includes(el)).slice(0, 3);
+  ji = ji.filter((el) => !yong.includes(el)).slice(0, 3);
+  qiu = qiu.filter((el) => !yong.includes(el) && !xi.includes(el)).slice(0, 2);
+
+  const priority = [
+    ...yong.map((element) => ({ element, reason: '用神：扶抑/格局/调候主线' })),
+    ...xi.map((element) => ({ element, reason: '喜神：辅助用神成势' })),
+    ...ji.map((element) => ({ element, reason: '忌神：加重失衡' })),
+    ...qiu.map((element) => ({ element, reason: '仇神：助忌伤用' })),
+  ];
+
+  return { yongShen: yong, xiShen: xi, jiShen: ji, qiuShen: qiu, priority };
+}
+
+function buildConfidence(score: number): YongShenResult['confidence'] {
+  const distance = Math.abs(score - 50);
+  const boundary = distance < 8 ? '日主强弱接近中和边界' : distance < 14 ? '日主强弱处于临界区间' : undefined;
+  const clarity = Math.min(1, distance / 35);
   return {
-    dayMaster, dayMasterElement, dayMasterYinYang,
-    dayMasterDesc: `${dayMasterYinYang}${dayMasterElement}`,
-    pillarsAnalysis, shiShenCount, tenGodStructure,
+    score: Math.round((0.45 + clarity * 0.55) * 100) / 100,
+    boundary,
   };
 }
 
-// ==================== 幸运元素推算 ====================
+function buildAnalysisText(
+  dmElement: Element,
+  strengthDesc: string,
+  pattern: { pattern: string; description: string } | null,
+  yong: Element[],
+  ji: Element[],
+): string {
+  const parts = [
+    `日主${EN_TO_CN[dmElement]}，${strengthDesc}`,
+    pattern ? `格局为${pattern.pattern}` : '按正格扶抑取用',
+    yong.length ? `用神取${yong.map((e) => EN_TO_CN[e]).join('、')}` : '',
+    ji.length ? `忌神为${ji.map((e) => EN_TO_CN[e]).join('、')}` : '',
+  ].filter(Boolean);
+  return parts.join('；') + '。';
+}
 
-export function getLuckyElements(yongShenResult: YongShenResult) {
-  const yong = yongShenResult.yongShen[0] || yongShenResult.dayMasterElement;
+export function determineYongShen(bazi: string[]): YongShenResult | null {
+  const pillars = parseBazi(bazi);
+  if (!pillars) return null;
+
+  const dayMaster = pillars[2].gan;
+  const dmElement = toElement(dayMaster);
+  if (!dmElement) return null;
+
+  const monthZhi = pillars[1].zhi;
+  const seasonBonus = getSeasonBonus(monthZhi, dmElement);
+  const rootStrength = calculateRootStrength(pillars, dmElement);
+  const { help, drain } = calculateStemHelpDrain(pillars, dayMaster, dmElement);
+
+  const rawScore = 50 + seasonBonus + rootStrength + help - drain;
+  const score = Math.max(5, Math.min(95, Math.round(rawScore)));
+  const { strength, strengthDesc } = resolveStrengthLevel(score);
+
+  const elementScores = calculateElementScores(bazi);
+  const normalized = normalizeElementScores(elementScores);
+  const pattern = detectCongPattern(normalized, dmElement, score);
+  const tiaohuo = detectTiaohuo(monthZhi);
+  const tongguan = detectTongguan(normalized);
+  const { yongShen, xiShen, jiShen, qiuShen, priority } = buildYongXiJiQiu(
+    dmElement, strength, pattern, normalized, tiaohuo, tongguan,
+  );
+
+  const confidence = buildConfidence(score);
+  const threeGain: YongShenResult['threeGain'] = {
+    reasonChain: [
+      `月令${monthZhi}令，季节加成${seasonBonus > 0 ? '+' : ''}${seasonBonus}`,
+      `通根${Math.round(rootStrength)}，天干帮扶${help}、克泄${drain}`,
+      tiaohuo ? `调候：${tiaohuo.reason}` : '调候需求不显',
+      tongguan ? `通关：${tongguan.reason}` : '无明显两神交战',
+      `综合取用：${yongShen.map((e) => EN_TO_CN[e as Element]).join('、')}`,
+    ],
+  };
+
   return {
-    colors: WUXING_COLOR[yong] || ['红色', '紫色'],
-    directions: [WUXING_DIRECTION[yong] || '南'].concat(
-      yongShenResult.xiShen.map(x => WUXING_DIRECTION[x]).filter(Boolean)
-    ),
-    numbers: WUXING_NUMBER[yong] || [1, 6],
+    dayMaster,
+    dayMasterElement: EN_TO_CN[dmElement],
+    strength,
+    strengthDesc,
+    score,
+    yongShen,
+    xiShen,
+    jiShen,
+    qiuShen,
+    analysis: buildAnalysisText(dmElement, strengthDesc, pattern, yongShen as Element[], jiShen as Element[]),
+    tiaohuo,
+    tongguan,
+    pattern: pattern || { pattern: '正格', description: '日主强弱适中，按扶抑、调候、通关综合取用。' },
+    confidence,
+    threeGain,
+    details: {
+      helpStrength: Math.round(help * 10) / 10,
+      drainStrength: Math.round(drain * 10) / 10,
+      seasonBonus,
+    },
+    priority,
   };
 }
 
-/**
- * 从四柱字符串数组计算神煞
- * @param bazi 四柱数组，每项为两字字符串，如 ['甲子', '丙寅', '戊午', '庚申']
- */
+export function generateBaziShiShenAnalysis(bazi: string[]) {
+  const pillars = parseBazi(bazi);
+  const empty = {
+    tenGodStructure: {
+      self: '',
+      output: [] as string[],
+      wealth: [] as string[],
+      input: [] as string[],
+      control: [] as string[],
+      controlled: [] as string[],
+      lifeDomains: [] as Array<{ domain: string; driver: string; evidence: string[] }>,
+      riskPatterns: [] as Array<{ name: string; note: string }>,
+      opportunityPatterns: [] as Array<{ name: string; note: string }>,
+      evidenceChain: [] as string[],
+      byPillar: [] as Array<{ pillar: string; stem: string; branch: string; shiShen: string }>,
+    },
+    shiShenCount: {} as Record<string, number>,
+    pillarsAnalysis: [] as Array<{ pillar: string; ganZhi: string; tianGanShiShen: string; branchShiShen: string[] }>,
+  };
+
+  if (!pillars) return empty;
+
+  const dayMaster = pillars[2].gan;
+  const shiShenCount: Record<string, number> = {};
+  const pillarsAnalysis: typeof empty.pillarsAnalysis = [];
+  const byPillar: typeof empty.tenGodStructure.byPillar = [];
+
+  const output: string[] = [];
+  const wealth: string[] = [];
+  const input: string[] = [];
+  const control: string[] = [];
+  const controlled: string[] = [];
+
+  const addGod = (name: string | null, weight = 1) => {
+    if (!name) return;
+    shiShenCount[name] = (shiShenCount[name] || 0) + weight;
+    if (name === '正印' || name === '偏印') output.push(name);
+    else if (name === '正财' || name === '偏财') input.push(name);
+    else if (name === '正官' || name === '七杀') control.push(name);
+    else if (name === '食神' || name === '伤官') controlled.push(name);
+    else if (name === '比肩' || name === '劫财') wealth.push(name);
+  };
+
+  pillars.forEach((pillar, idx) => {
+    const stemGod = idx === 2 ? '日主' : calculateShiShen(dayMaster, pillar.gan);
+    const branchGods = (ZHI_CANG_GAN[pillar.zhi] || [])
+      .map((gan) => calculateShiShen(dayMaster, gan))
+      .filter((g): g is string => Boolean(g));
+
+    if (idx !== 2) addGod(stemGod, 1.2);
+    branchGods.forEach((g, hIdx) => addGod(g, hIdx === 0 ? 1 : 0.6));
+
+    pillarsAnalysis.push({
+      pillar: PILLAR_LABELS[idx],
+      ganZhi: pillar.ganZhi,
+      tianGanShiShen: stemGod || '',
+      branchShiShen: branchGods,
+    });
+
+    byPillar.push({
+      pillar: PILLAR_LABELS[idx],
+      stem: pillar.gan,
+      branch: pillar.zhi,
+      shiShen: stemGod || '',
+    });
+  });
+
+  const dominant = Object.entries(shiShenCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+  const riskPatterns: Array<{ name: string; note: string }> = [];
+  const opportunityPatterns: Array<{ name: string; note: string }> = [];
+
+  if ((shiShenCount['伤官'] || 0) > 0 && (shiShenCount['正官'] || 0) > 0) {
+    riskPatterns.push({ name: '伤官见官', note: '表达、规则与职位压力并存，注意分寸。' });
+  }
+  if ((shiShenCount['劫财'] || 0) >= 1.5 && (shiShenCount['正财'] || 0) > 0) {
+    riskPatterns.push({ name: '比劫夺财', note: '合作与现金流边界需提前约定。' });
+  }
+  if ((shiShenCount['正印'] || 0) > 0 && (shiShenCount['正财'] || 0) > 0) {
+    riskPatterns.push({ name: '财印相战', note: '现实收益与长期投入容易互相挤压。' });
+  }
+  if ((shiShenCount['食神'] || 0) > 0 || (shiShenCount['伤官'] || 0) > 0) {
+    opportunityPatterns.push({ name: '食伤泄秀', note: '适合表达、作品与长期输出。' });
+  }
+  if ((shiShenCount['正财'] || 0) > 0 || (shiShenCount['偏财'] || 0) > 0) {
+    opportunityPatterns.push({ name: '财星得用', note: '机会捕捉与资源配置能力可放大。' });
+  }
+
+  const lifeDomains = [
+    {
+      domain: 'career',
+      driver: control.length ? `官杀${[...new Set(control)].join('、')}主导事业压力与职位` : '事业看月柱、官杀与印星结构',
+      evidence: [...new Set(control), ...new Set(output)].slice(0, 4),
+    },
+    {
+      domain: 'wealth',
+      driver: input.length ? `财星${[...new Set(input)].join('、')}主资源与现金流` : '财富看财星、食伤生财与比劫分财',
+      evidence: [...new Set(input), ...new Set(controlled)].slice(0, 4),
+    },
+    {
+      domain: 'relationship',
+      driver: '婚恋看日支、配偶星与合冲刑害',
+      evidence: [...new Set([...input, ...control])].slice(0, 3),
+    },
+    {
+      domain: 'growth',
+      driver: output.length ? `印星${[...new Set(output)].join('、')}主学习恢复与底层能量` : '成长看印星、根气与调候',
+      evidence: [...new Set(output)].slice(0, 3),
+    },
+  ];
+
+  const evidenceChain = [
+    `月令十神：${pillarsAnalysis[1]?.tianGanShiShen || '未知'}`,
+    `时柱十神：${pillarsAnalysis[3]?.tianGanShiShen || '未知'}`,
+    dominant ? `最显十神：${dominant}` : '',
+    riskPatterns[0] ? `风险：${riskPatterns[0].name}` : '',
+    opportunityPatterns[0] ? `机会：${opportunityPatterns[0].name}` : '',
+  ].filter(Boolean);
+
+  return {
+    tenGodStructure: {
+      self: dayMaster,
+      output: [...new Set(output)],
+      wealth: [...new Set(wealth)],
+      input: [...new Set(input)],
+      control: [...new Set(control)],
+      controlled: [...new Set(controlled)],
+      lifeDomains,
+      riskPatterns,
+      opportunityPatterns,
+      evidenceChain,
+      byPillar,
+    },
+    shiShenCount,
+    pillarsAnalysis,
+  };
+}
+
+export function getLuckyElements(yongShen: YongShenResult) {
+  const primary = (yongShen.yongShen[0] as Element) || 'fire';
+  const secondary = (yongShen.xiShen[0] as Element) || primary;
+
+  return {
+    colors: [...new Set([...LUCKY_COLORS[primary], ...LUCKY_COLORS[secondary]])].slice(0, 4),
+    directions: [...new Set([LUCKY_DIRECTIONS[primary], LUCKY_DIRECTIONS[secondary]])],
+    numbers: [...new Set([...LUCKY_NUMBERS[primary], ...LUCKY_NUMBERS[secondary]])].slice(0, 4),
+    yongShen: yongShen.yongShen,
+    jiShen: yongShen.jiShen,
+    xiShen: yongShen.xiShen,
+  };
+}
+
+export function calculateWuxingStrength(bazi: string[], element: string): number {
+  const enElement = CN_TO_EN[element] || (ELEMENTS.includes(element as Element) ? element as Element : null);
+  if (!enElement) return 0;
+
+  const scores = calculateElementScores(bazi);
+  const total = ELEMENTS.reduce((sum, el) => sum + scores[el], 0) || 1;
+  return Math.round((scores[enElement] / total) * 1000) / 10;
+}
+
 export function analyzeShenSha(bazi: string[]): ShenShaResult | null {
-  if (bazi.length < 4) return null;
-  const pillars = bazi.slice(0, 4).map(p => ({
-    gan: p[0],
-    zhi: p[1],
-  }));
-  if (pillars.some(p => !p.gan || !p.zhi)) return null;
-  return calculateShenSha(pillars);
+  const pillars = parseBazi(bazi);
+  if (!pillars) return null;
+
+  const dayMaster = pillars[2].gan;
+  const dayBranch = pillars[2].zhi;
+  const yearBranch = pillars[0].zhi;
+  const list: ShenShaResult['list'] = [];
+
+  const allBranches = pillars.map((p, idx) => ({ zhi: p.zhi, label: PILLAR_LABELS[idx] }));
+
+  const tianYi = TIAN_YI_GUI_REN[dayMaster] || [];
+  allBranches.forEach(({ zhi, label }) => {
+    if (tianYi.includes(zhi)) {
+      list.push({ name: '天乙贵人', pillar: label, description: `${zhi}为${dayMaster}日贵人位` });
+    }
+  });
+
+  const peachTarget = TAO_HUA[dayBranch] || TAO_HUA[yearBranch];
+  if (peachTarget) {
+    allBranches.forEach(({ zhi, label }) => {
+      if (zhi === peachTarget) {
+        list.push({ name: '桃花', pillar: label, description: '人缘、魅力与关系机缘增强' });
+      }
+    });
+  }
+
+  const yangRen = YANG_REN[dayMaster];
+  if (yangRen) {
+    allBranches.forEach(({ zhi, label }) => {
+      if (zhi === yangRen) {
+        list.push({ name: '羊刃', pillar: label, description: '魄力与风险并存，注意冲动与外伤' });
+      }
+    });
+  }
+
+  const yiMa = YI_MA[yearBranch] || YI_MA[dayBranch];
+  if (yiMa) {
+    allBranches.forEach(({ zhi, label }) => {
+      if (zhi === yiMa) {
+        list.push({ name: '驿马', pillar: label, description: '变动、出行与跨域机会' });
+      }
+    });
+  }
+
+  const wenChang = WEN_CHANG[dayMaster];
+  if (wenChang) {
+    allBranches.forEach(({ zhi, label }) => {
+      if (zhi === wenChang) {
+        list.push({ name: '文昌', pillar: label, description: '学习、考试与表达力提升' });
+      }
+    });
+  }
+
+  return { list };
 }

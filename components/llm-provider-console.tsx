@@ -36,9 +36,9 @@ type FormState = {
 const emptyForm: FormState = {
   id: '',
   purpose: 'image',
-  name: 'ttqq image primary',
+  name: 'ttqq image primary (z-image-turbo)',
   baseUrl: 'https://ttqq.inping.com/v1',
-  model: 'gpt-image-2-my',
+  model: 'z-image-turbo',
   apiKey: '',
   priority: '10',
   enabled: true,

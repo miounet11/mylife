@@ -6,7 +6,9 @@ import {
   getVisualAssetApiBaseUrl,
   getVisualAssetApiKey,
   getVisualAssetDefaultModel,
+  getVisualAssetFallbackModel,
   getVisualAssetGenerationTimeoutMs,
+  getVisualAssetModelFallbackChainRaw,
   normalizeApiKey,
 } from '@/lib/env';
 
@@ -215,6 +217,23 @@ export type RuntimeLlmProvider = {
   source: 'admin' | 'env';
 };
 
+function parseImageModelFallbackChain(): string[] {
+  const raw = getVisualAssetModelFallbackChainRaw()
+    || `${getVisualAssetDefaultModel()},${getVisualAssetFallbackModel()}`;
+  const seen = new Set<string>();
+  const models: string[] = [];
+  for (const part of raw.split(',')) {
+    const model = part.trim();
+    if (!model || seen.has(model)) continue;
+    seen.add(model);
+    models.push(model);
+  }
+  if (models.length === 0) {
+    models.push(getVisualAssetDefaultModel() || 'z-image-turbo');
+  }
+  return models;
+}
+
 export function resolveRuntimeLlmProviders(purpose: LlmProviderPurpose): RuntimeLlmProvider[] {
   const configured = listLlmProviderConfigs({ purpose })
     .filter((config) => config.enabled && Boolean(config.apiKey))
@@ -233,36 +252,113 @@ export function resolveRuntimeLlmProviders(purpose: LlmProviderPurpose): Runtime
 
   const envApiKey = purpose === 'image' ? getVisualAssetApiKey() : getApiKey();
   const envBaseUrl = purpose === 'image' ? getVisualAssetApiBaseUrl() : getApiBaseUrl();
-  const envModel = purpose === 'image' ? getVisualAssetDefaultModel() : getContentGenerationModel();
-  const envProvider = envApiKey ? [{
-    id: `env_${purpose}`,
-    name: purpose === 'image' ? 'Env Visual Asset Provider' : 'Env Article Provider',
-    purpose,
-    baseUrl: normalizeProviderBaseUrl(envBaseUrl),
-    apiKey: envApiKey,
-    model: envModel,
-    priority: 10_000,
-    timeoutMs: purpose === 'image' ? getVisualAssetGenerationTimeoutMs() : 45_000,
-    maxRetries: 0,
-    source: 'env' as const,
-  }] : [];
+  const envTimeout = purpose === 'image' ? getVisualAssetGenerationTimeoutMs() : 45_000;
+  const envProviders: RuntimeLlmProvider[] = [];
 
-  return [...configured, ...envProvider]
+  if (envApiKey) {
+    if (purpose === 'image') {
+      // Expand chain so requestVisualAssetImage can try z-image-turbo then gpt-image-2.
+      parseImageModelFallbackChain().forEach((model, index) => {
+        envProviders.push({
+          id: index === 0 ? `env_${purpose}` : `env_${purpose}_fallback_${index}`,
+          name: index === 0
+            ? `Env Visual Asset (${model})`
+            : `Env Visual Asset fallback (${model})`,
+          purpose,
+          baseUrl: normalizeProviderBaseUrl(envBaseUrl),
+          apiKey: envApiKey,
+          model,
+          priority: 10_000 + index,
+          timeoutMs: envTimeout,
+          maxRetries: 0,
+          source: 'env',
+        });
+      });
+    } else {
+      envProviders.push({
+        id: `env_${purpose}`,
+        name: 'Env Article Provider',
+        purpose,
+        baseUrl: normalizeProviderBaseUrl(envBaseUrl),
+        apiKey: envApiKey,
+        model: getContentGenerationModel(),
+        priority: 10_000,
+        timeoutMs: envTimeout,
+        maxRetries: 0,
+        source: 'env',
+      });
+    }
+  }
+
+  return [...configured, ...envProviders]
     .filter((provider) => provider.baseUrl && provider.model && provider.apiKey)
     .sort((left, right) => left.priority - right.priority || left.id.localeCompare(right.id));
 }
 
 export function ensureDefaultLlmProviderConfigs(userId = 'system_llm_provider_seed') {
-  const existingImage = listLlmProviderConfigs({ purpose: 'image', includeDisabled: true })
-    .some((config) => config.id === 'llm_provider_image_ttqq_gpt_image_2_my');
-  if (!existingImage) {
+  const primaryModel = process.env.LLM_IMAGE_PRIMARY_MODEL || getVisualAssetDefaultModel() || 'z-image-turbo';
+  const fallbackModel = process.env.LLM_IMAGE_FALLBACK_MODEL || getVisualAssetFallbackModel() || 'gpt-image-2';
+  const primaryBase = process.env.LLM_IMAGE_PRIMARY_BASE_URL || 'https://ttqq.inping.com/v1';
+  const primaryKey = process.env.LLM_IMAGE_PRIMARY_API_KEY
+    || process.env.VISUAL_ASSET_PRIMARY_API_KEY
+    || null;
+
+  const primaryId = 'llm_provider_image_ttqq_z_image_turbo';
+  const fallbackId = 'llm_provider_image_ttqq_gpt_image_2';
+  const legacyId = 'llm_provider_image_ttqq_gpt_image_2_my';
+
+  const existing = listLlmProviderConfigs({ purpose: 'image', includeDisabled: true });
+  const hasPrimary = existing.some((config) => config.id === primaryId);
+  const hasFallback = existing.some((config) => config.id === fallbackId);
+  const legacy = existing.find((config) => config.id === legacyId);
+
+  // Migrate legacy gpt-image-2-my primary → z-image-turbo (keep api key / base).
+  if (legacy && !hasPrimary) {
     saveLlmProviderConfig({
-      id: 'llm_provider_image_ttqq_gpt_image_2_my',
+      id: primaryId,
       purpose: 'image',
-      name: 'ttqq image primary',
-      baseUrl: process.env.LLM_IMAGE_PRIMARY_BASE_URL || 'https://ttqq.inping.com/v1',
-      model: process.env.LLM_IMAGE_PRIMARY_MODEL || 'gpt-image-2-my',
-      apiKey: process.env.LLM_IMAGE_PRIMARY_API_KEY || process.env.VISUAL_ASSET_PRIMARY_API_KEY || null,
+      name: 'ttqq image primary (z-image-turbo)',
+      baseUrl: legacy.baseUrl || primaryBase,
+      model: primaryModel,
+      apiKey: legacy.apiKey || primaryKey,
+      priority: 10,
+      enabled: true,
+      timeoutMs: legacy.timeoutMs || getVisualAssetGenerationTimeoutMs(),
+      maxRetries: legacy.maxRetries ?? 0,
+      meta: {
+        ...(legacy.meta || {}),
+        seeded: true,
+        role: 'primary_image_generation',
+        migratedFrom: legacyId,
+        chain: 'z-image-turbo→gpt-image-2',
+      },
+    }, userId);
+    // Demote legacy row so it does not race as first choice.
+    saveLlmProviderConfig({
+      id: legacyId,
+      purpose: 'image',
+      name: legacy.name || 'ttqq image legacy',
+      baseUrl: legacy.baseUrl || primaryBase,
+      model: fallbackModel,
+      apiKey: legacy.apiKey || primaryKey,
+      priority: 30,
+      enabled: false,
+      timeoutMs: legacy.timeoutMs || getVisualAssetGenerationTimeoutMs(),
+      maxRetries: legacy.maxRetries ?? 0,
+      meta: {
+        ...(legacy.meta || {}),
+        role: 'legacy_image_generation',
+        supersededBy: primaryId,
+      },
+    }, userId);
+  } else if (!hasPrimary) {
+    saveLlmProviderConfig({
+      id: primaryId,
+      purpose: 'image',
+      name: 'ttqq image primary (z-image-turbo)',
+      baseUrl: primaryBase,
+      model: primaryModel,
+      apiKey: primaryKey,
       priority: 10,
       enabled: true,
       timeoutMs: getVisualAssetGenerationTimeoutMs(),
@@ -270,6 +366,51 @@ export function ensureDefaultLlmProviderConfigs(userId = 'system_llm_provider_se
       meta: {
         seeded: true,
         role: 'primary_image_generation',
+        chain: 'z-image-turbo→gpt-image-2',
+      },
+    }, userId);
+  } else {
+    // Keep primary model aligned with env default when still on old gpt-image names.
+    const primary = existing.find((config) => config.id === primaryId);
+    if (primary && /gpt-image/i.test(primary.model) && primaryModel === 'z-image-turbo') {
+      saveLlmProviderConfig({
+        id: primaryId,
+        purpose: 'image',
+        name: primary.name || 'ttqq image primary (z-image-turbo)',
+        baseUrl: primary.baseUrl || primaryBase,
+        model: primaryModel,
+        apiKey: primary.apiKey || primaryKey,
+        priority: 10,
+        enabled: primary.enabled !== false,
+        timeoutMs: primary.timeoutMs || getVisualAssetGenerationTimeoutMs(),
+        maxRetries: primary.maxRetries ?? 0,
+        meta: {
+          ...(primary.meta || {}),
+          role: 'primary_image_generation',
+          chain: 'z-image-turbo→gpt-image-2',
+        },
+      }, userId);
+    }
+  }
+
+  if (!hasFallback) {
+    const keySource = existing.find((config) => config.apiKey)?.apiKey || primaryKey;
+    const baseSource = existing.find((config) => config.baseUrl)?.baseUrl || primaryBase;
+    saveLlmProviderConfig({
+      id: fallbackId,
+      purpose: 'image',
+      name: 'ttqq image fallback (gpt-image-2)',
+      baseUrl: baseSource,
+      model: fallbackModel,
+      apiKey: keySource,
+      priority: 20,
+      enabled: true,
+      timeoutMs: getVisualAssetGenerationTimeoutMs(),
+      maxRetries: 0,
+      meta: {
+        seeded: true,
+        role: 'fallback_image_generation',
+        chain: 'z-image-turbo→gpt-image-2',
       },
     }, userId);
   }

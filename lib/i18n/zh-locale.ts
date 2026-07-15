@@ -1,28 +1,39 @@
-// v5-D63 简繁互转 helper
-import * as cc from 'chinese-conv';
+/**
+ * Backward-compatible helpers used by community pages.
+ * Prefer `@/lib/i18n/site-locale` for new code (includes English).
+ */
 
-export type Locale = 'zh-CN' | 'zh-Hant';
+import {
+  type SiteLocale,
+  resolveSiteLocale,
+  toSiteLocaleText,
+} from '@/lib/i18n/site-locale';
+
+/** @deprecated use SiteLocale — kept for community imports */
+export type Locale = SiteLocale;
 
 export function detectLocaleFromQuery(lang?: string | null): Locale {
-  if (!lang) return 'zh-CN';
-  const l = lang.toLowerCase();
-  if (l === 'zh-hant' || l === 'zh-tw' || l === 'zh-hk' || l === 'zh-mo' || l === 'hant') return 'zh-Hant';
-  return 'zh-CN';
+  return resolveSiteLocale({ queryLang: lang });
 }
 
 export function toLocale(text: string, locale: Locale): string {
-  if (!text) return text;
-  if (locale === 'zh-Hant') return cc.tify(text);
-  return text;
+  return toSiteLocaleText(text || '', locale);
 }
 
-// 批量转换对象的指定字段
-export function localizeFields<T extends Record<string, unknown>>(obj: T, fields: (keyof T)[], locale: Locale): T {
-  if (locale === 'zh-CN') return obj;
+export function localizeFields<T extends Record<string, unknown>>(
+  obj: T,
+  fields: (keyof T)[],
+  locale: Locale
+): T {
+  if (locale === 'zh-CN' || locale === 'en') return obj;
   const out = { ...obj };
   for (const f of fields) {
     const v = out[f];
-    if (typeof v === 'string') (out as Record<string, unknown>)[f as string] = cc.tify(v);
+    if (typeof v === 'string') {
+      (out as Record<string, unknown>)[f as string] = toSiteLocaleText(v, locale);
+    }
   }
   return out;
 }
+
+export { resolveSiteLocale, toSiteLocaleText };

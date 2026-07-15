@@ -171,13 +171,13 @@ export default async function PublicQuestionPage({ params }: PageProps) {
 
             <div className="p-5 md:p-7">
 
-            <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
+            <section className="mt-6 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
               <div className="flex items-center gap-2 text-sm font-black text-[color:var(--ink-1)]">
                 <Sparkles className="h-4 w-4 text-[color:var(--brand-strong)]" />
                 公开解析
               </div>
-              <div className="mt-3 text-sm leading-7 text-[color:var(--ink-2)]">
-                <ChatMarkdown content={answerMarkdown} />
+              <div className="mt-3.5">
+                <ChatMarkdown content={answerMarkdown} variant="article" />
               </div>
             </section>
 

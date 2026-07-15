@@ -1,4 +1,4 @@
-import { analyticsOperations, fortuneOperations } from '@/lib/database';
+import { analyticsOperations, fortuneOperations, reportUpgradeJobOperations } from '@/lib/database';
 import { enqueueReportUpgrade } from '@/lib/report-upgrade-jobs';
 import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
 import type { FortuneRecord } from '@/lib/user-types';
@@ -80,6 +80,32 @@ export function listRealUserReportUpgradeCandidates(windowDays = 7, limit = 12):
 
       if (priorityScore <= 0 || targetAchieved) {
         return null;
+      }
+
+      // Skip reports already terminal on quality plateau / exhausted attempts.
+      const existingJob = reportUpgradeJobOperations.getByReportId(report.id);
+      if (existingJob) {
+        const best = Number(existingJob.bestScore || 0);
+        const target = Number(existingJob.targetScore || 95);
+        const err = `${existingJob.lastError || ''}`;
+        const attemptsExhausted =
+          (existingJob.attempts || 0) >= (existingJob.maxAttempts || 0);
+        const plateau =
+          err.includes('QUALITY_PLATEAU')
+          || err.includes('TARGET_NOT_REACHED')
+          || err.includes('OPS_CANCEL')
+          || err.includes('PLATEAU')
+          || best >= target - 5
+          || (best >= 90 && attemptsExhausted);
+        if (
+          ['cancelled', 'failed'].includes(existingJob.status)
+          && (plateau || attemptsExhausted)
+        ) {
+          return null;
+        }
+        if (['pending', 'running', 'retry'].includes(existingJob.status)) {
+          return null;
+        }
       }
 
       return {

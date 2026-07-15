@@ -4,6 +4,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import AgenticInsightPanel from '@/components/report/agentic-insight-panel';
+import { presentReportText, withPresentedAdvice } from '@/lib/report-presentation';
 import { deriveReportReasoningMode, type ReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type {
   ConfidenceAnalysis,
@@ -266,9 +267,20 @@ const tenGodGroupMeta = [
   },
 ] as const;
 
-export default function TrustReport({ result }: { result: ReportResult }) {
+type TrustChapterId = 'core' | 'phase' | 'action' | 'trust';
+
+const TRUST_CHAPTERS: Array<{ id: TrustChapterId; label: string; hint: string }> = [
+  { id: 'core', label: '① 命盘证据', hint: '四柱 · 五行 · 格局 · 十神' },
+  { id: 'phase', label: '② 阶段场景', hint: '场景版 · 大运 · 窗口' },
+  { id: 'action', label: '③ 行动路线', hint: '剧本 · 路线图 · 建议' },
+  { id: 'trust', label: '④ 可信校验', hint: '可信度 · 验证 · 纠偏' },
+];
+
+export default function TrustReport({ result: rawResult }: { result: ReportResult }) {
   const [selectedScenario, setSelectedScenario] = useState<ScenarioKey>('overall');
-  if (!result) return null;
+  const [activeChapter, setActiveChapter] = useState<TrustChapterId>('core');
+  if (!rawResult) return null;
+  const result = withPresentedAdvice(rawResult as any) as ReportResult;
   const analysis = result.analysis || {};
   const basic = result.basic || { dayMaster: '', pillars: [] };
   const pillars = basic.pillars || [];
@@ -446,51 +458,100 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       ]
     : [];
 
+  const hideUnless = (id: TrustChapterId) => (activeChapter === id ? '' : 'hidden');
+
   return (
-    <div className="mx-auto max-w-6xl space-y-8 pb-12">
-      <Card id="overview" variant="gradient" className="relative overflow-hidden scroll-mt-28">
-        <div className="absolute -right-12 top-0 h-48 w-48 rounded-full bg-[color:var(--paper)] blur-3xl" />
-        <div className="absolute bottom-0 left-10 h-32 w-32 rounded-full bg-[rgba(255,255,255,0.08)] blur-3xl" />
+    <div className="mx-auto max-w-6xl space-y-4 pb-8 md:space-y-5">
+      {/* 证据层总览：浅底深字，避免 gradient 失效导致白字叠白底 */}
+      <section
+        id="overview"
+        className="scroll-mt-28 overflow-hidden rounded-[var(--radius-md)] border border-[#3b5998]/25 bg-gradient-to-br from-[#f7f9fc] via-[color:var(--paper)] to-[#eef2f8] p-4 md:p-5"
+      >
+        <div className="inline-flex w-fit items-center gap-1.5 rounded-full border border-[#3b5998]/20 bg-white px-2.5 py-1 text-[11px] font-bold tracking-[0.06em] text-[#3b5998]">
+          <ShieldCheck className="h-3.5 w-3.5" />
+          命理证据层 · 按章节阅读
+        </div>
+        <h3 className="mt-2.5 max-w-3xl text-[18px] font-bold leading-snug text-[color:var(--ink-1)] md:text-[20px]">
+          先看结构底座，再看阶段窗口，最后落到动作
+        </h3>
+        <p className="mt-2 max-w-3xl text-[13px] leading-[1.65] text-[color:var(--ink-3)] line-clamp-4 whitespace-pre-wrap">
+          {presentReportText(analysis.explanation) ||
+            '本报告已基于四柱、五行、十神、大运与趋势曲线完成结构化归纳。'}
+        </p>
 
-        <CardHeader className="relative z-10 pb-2">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-white/10 bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold tracking-[0.18em] text-white/80">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            EXPERT ENGINE REPORT
-          </div>
-          <CardTitle className="mt-4 max-w-4xl text-3xl font-black text-white md:text-5xl">
-            这份报告要把结构引擎、阶段引擎与人生 K 线引擎
-            <span className="font-serif">落成用户真正看得懂的判断链。</span>
-          </CardTitle>
-        </CardHeader>
-
-        <CardContent className="relative z-10 space-y-6 pt-2">
-          <p className="max-w-4xl whitespace-pre-wrap text-sm leading-6 text-white/82">
-            {analysis.explanation || '本报告已基于四柱、五行、十神、大运与趋势曲线完成结构化归纳。'}
-          </p>
-
-          <div className="grid gap-4 md:grid-cols-4">
+        {quickStats.length > 0 ? (
+          <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-2.5">
             {quickStats.map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-[color:var(--paper)] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
-                <div className="mt-2 text-lg font-bold text-white">{item.value}</div>
+              <div
+                key={item.label}
+                className="rounded-[8px] border border-[color:var(--hairline)] bg-white px-3 py-2.5 shadow-sm"
+              >
+                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--ink-4)]">
+                  {item.label}
+                </div>
+                <div className="mt-1 text-[14px] font-bold leading-snug text-[color:var(--ink-1)]">
+                  {item.value}
+                </div>
               </div>
             ))}
           </div>
+        ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-3">
+        {expertCards.length > 0 ? (
+          <div className="mt-2.5 grid gap-2 md:grid-cols-3 md:gap-2.5">
             {expertCards.map((item) => (
-              <div key={item.label} className="rounded-[var(--radius-md)] border border-white/10 bg-[color:var(--paper)] px-4 py-4">
-                <div className="text-xs uppercase tracking-[0.18em] text-white/60">{item.label}</div>
-                <div className="mt-2 text-lg font-bold leading-8 text-white">{item.value}</div>
-                <div className="mt-2 text-xs leading-6 text-white/76">{item.detail}</div>
+              <div
+                key={item.label}
+                className="rounded-[8px] border border-[color:var(--hairline)] bg-white px-3 py-2.5 shadow-sm"
+              >
+                <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#3b5998]">
+                  {item.label}
+                </div>
+                <div className="mt-1 text-[13px] font-bold leading-snug text-[color:var(--ink-1)]">
+                  {item.value}
+                </div>
+                {item.detail ? (
+                  <div className="mt-1 line-clamp-3 text-[11px] leading-[1.55] text-[color:var(--ink-3)]">
+                    {item.detail}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
-        </CardContent>
-      </Card>
+        ) : null}
+      </section>
+
+      {/* 章节导航：避免证据层一次性摊开 */}
+      <nav
+        aria-label="证据层章节"
+        className="sticky top-[calc(var(--header-h,56px)+8px)] z-20 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)]/95 p-1.5 shadow-sm backdrop-blur"
+      >
+        <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+          {TRUST_CHAPTERS.map((chapter) => {
+            const active = activeChapter === chapter.id;
+            return (
+              <button
+                key={chapter.id}
+                type="button"
+                onClick={() => setActiveChapter(chapter.id)}
+                className={`rounded-[var(--radius-sm,6px)] px-2.5 py-2 text-left transition ${
+                  active
+                    ? 'bg-[#3b5998] text-white shadow-sm'
+                    : 'text-[color:var(--ink-2)] hover:bg-[#e9ebee]'
+                }`}
+              >
+                <div className="text-[12px] font-bold leading-tight">{chapter.label}</div>
+                <div className={`mt-0.5 text-[10px] leading-tight ${active ? 'text-white/80' : 'text-[color:var(--ink-4)]'}`}>
+                  {chapter.hint}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {scenarioViews.length > 0 && activeScenario && (
-        <Card id="scenario" className="scroll-mt-28">
+        <Card id="scenario" className={`${hideUnless('phase')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <ArrowRightLeft className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -575,7 +636,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {expertInterpretation.length > 0 && (
-        <Card id="expert" className="scroll-mt-28">
+        <Card id="expert" className={`${hideUnless('phase')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <BookOpen className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -603,7 +664,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {(result.agenticUsed || result.verify?.verdict || Object.keys(result.agentResults || {}).length > 0) && (
-        <div id="agentic" className="scroll-mt-28">
+        <div id="agentic" className={`scroll-mt-28 ${hideUnless('phase')}`}>
           <AgenticInsightPanel
             agenticUsed={result.agenticUsed || analysis.agenticUsed}
             reasoningMode={reasoningMode}
@@ -616,7 +677,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         </div>
       )}
 
-      <div id="pillars" className="grid scroll-mt-28 gap-6 lg:grid-cols-[1.15fr_0.85fr]">
+      <div id="pillars" className={`grid scroll-mt-28 gap-6 lg:grid-cols-[1.15fr_0.85fr] ${hideUnless('core')}`}>
         <Card>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
@@ -698,7 +759,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         </Card>
       </div>
 
-      <div id="engine" className="grid scroll-mt-28 gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div id="engine" className={`grid scroll-mt-28 gap-6 lg:grid-cols-[1.05fr_0.95fr] ${hideUnless('core')}`}>
         <Card>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
@@ -753,7 +814,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       </div>
 
       {reasoningMode !== 'engine' && (
-        <Card id="context-view" className="scroll-mt-28">
+        <Card id="context-view" className={`${hideUnless('phase')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -786,7 +847,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         </Card>
       )}
 
-      <div id="elements" className="grid scroll-mt-28 gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+      <div id="elements" className={`grid scroll-mt-28 gap-6 lg:grid-cols-[0.95fr_1.05fr] ${hideUnless('core')}`}>
         <Card>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="text-lg">五行力量分布</CardTitle>
@@ -844,7 +905,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         </Card>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
+      <div className={`grid gap-6 lg:grid-cols-[1.05fr_0.95fr] ${hideUnless('phase')}`}>
         <Card>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
@@ -961,7 +1022,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       </div>
 
       {monthlyWindows.length > 0 && (
-        <Card id="windows" className="scroll-mt-28">
+        <Card id="windows" className={`${hideUnless('phase')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <CalendarClock className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -989,7 +1050,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {decisionPlaybook.length > 0 && (
-        <Card id="playbook" className="scroll-mt-28">
+        <Card id="playbook" className={`${hideUnless('action')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Sparkles className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -1032,7 +1093,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {yearlyRoadmap.length > 0 && (
-        <Card id="roadmap" className="scroll-mt-28">
+        <Card id="roadmap" className={`${hideUnless('action')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Compass className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -1089,7 +1150,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {yearlyTrendSnapshots.length > 0 && (
-        <Card id="trajectory" className="scroll-mt-28">
+        <Card id="trajectory" className={`${hideUnless('action')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <TrendingUp className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -1119,7 +1180,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {confidence && (
-        <div id="confidence" className="grid scroll-mt-28 gap-6 lg:grid-cols-[1fr_1fr]">
+        <div id="confidence" className={`grid scroll-mt-28 gap-6 lg:grid-cols-[1fr_1fr] ${hideUnless('trust')}`}>
           <Card>
             <CardHeader className="border-b border-[color:var(--line)] pb-4">
               <CardTitle className="flex items-center gap-3 text-lg">
@@ -1195,7 +1256,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {validationInsights && validationInsights.totalLinkedEvents > 0 && (
-        <Card id="validation" className="scroll-mt-28">
+        <Card id="validation" className={`${hideUnless('trust')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <ShieldCheck className="h-5 w-5 text-[color:var(--accent-strong)]" />
@@ -1227,7 +1288,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
       )}
 
       {correctionInsight && validationInsights && validationInsights.totalLinkedEvents > 0 && (
-        <Card id="correction" className="scroll-mt-28">
+        <Card id="correction" className={`${hideUnless('trust')} scroll-mt-28`.trim()}>
           <CardHeader className="border-b border-[color:var(--line)] pb-4">
             <CardTitle className="flex items-center gap-3 text-lg">
               <Scale className="h-5 w-5 text-[color:var(--warm)]" />
@@ -1279,7 +1340,7 @@ export default function TrustReport({ result }: { result: ReportResult }) {
         </Card>
       )}
 
-      <Card id="advice" className="scroll-mt-28">
+      <Card id="advice" className={`${hideUnless('action')} scroll-mt-28`.trim()}>
         <CardHeader className="border-b border-[color:var(--line)] pb-4">
           <CardTitle className="text-lg">行动建议与执行顺序</CardTitle>
         </CardHeader>

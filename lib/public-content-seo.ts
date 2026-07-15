@@ -1,8 +1,16 @@
-import type { Metadata } from 'next';
+/**
+ * Public content SEO helpers (synced shape with production).
+ * Product pages prefer lib/seo.ts buildPageMetadata for full hreflang matrix.
+ */
 
-const SITE_URL = 'https://www.life-kline.com';
-const SITE_NAME = '人生K线';
-const DEFAULT_OG_IMAGE = `${SITE_URL}/icon.svg`;
+import type { Metadata } from 'next';
+import {
+  absoluteUrl,
+  buildProductLanguageAlternates,
+  SITE_NAME,
+  SITE_URL,
+  DEFAULT_OG_IMAGE,
+} from '@/lib/seo';
 
 type DateLike = string | Date | null | undefined;
 
@@ -36,6 +44,8 @@ interface PublicMetadataInput {
   entityKeywords?: string[];
   geoRegion?: string;
   geoPlaceName?: string;
+  /** When true (default for product-like pages), attach full product hreflang matrix */
+  multiLanguage?: boolean;
 }
 
 interface ArticleSchemaInput {
@@ -73,39 +83,23 @@ interface ItemListElementInput {
 }
 
 function toAbsoluteUrl(path: string) {
-  return path.startsWith('http') ? path : `${SITE_URL}${path}`;
+  return path.startsWith('http') ? path : `${SITE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
 function toIsoDate(value?: DateLike) {
-  if (!value) {
-    return undefined;
-  }
-
+  if (!value) return undefined;
   if (value instanceof Date) {
     return Number.isNaN(value.getTime()) ? undefined : value.toISOString();
   }
-
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? undefined : parsed.toISOString();
 }
 
 function normalizeLocale(locale?: string) {
-  if (!locale) {
-    return 'zh-CN';
-  }
-
-  if (locale === 'en') {
-    return 'en-US';
-  }
-
-  if (locale === 'zh' || locale === 'zh-Hans') {
-    return 'zh-CN';
-  }
-
-  if (locale === 'zh-Hant') {
-    return 'zh-TW';
-  }
-
+  if (!locale) return 'zh-CN';
+  if (locale === 'en' || locale.startsWith('en')) return 'en-US';
+  if (locale === 'zh' || locale === 'zh-Hans') return 'zh-CN';
+  if (locale === 'zh-Hant') return 'zh-TW';
   return locale;
 }
 
@@ -125,10 +119,7 @@ function normalizeImages(images?: PublicContentImage[]) {
     }))
     .filter((image) => image.url);
 
-  if (normalized.length > 0) {
-    return normalized;
-  }
-
+  if (normalized.length > 0) return normalized;
   return [{ url: DEFAULT_OG_IMAGE, alt: SITE_NAME }];
 }
 
@@ -155,16 +146,27 @@ export function normalizeAlternateLanguagePaths(input: {
   languages?: Record<string, string>;
   defaultLocale?: string;
   defaultPath: string;
+  multiLanguage?: boolean;
 }) {
+  if (input.languages) {
+    return {
+      ...input.languages,
+      'x-default':
+        input.languages['x-default']
+        || input.languages[normalizeLocale(input.defaultLocale)]
+        || input.defaultPath,
+    };
+  }
+
+  if (input.multiLanguage !== false) {
+    // Full product matrix (path prefixes) — Globalization Standard §3.3
+    return buildProductLanguageAlternates(input.defaultPath);
+  }
+
   const defaultLocale = normalizeLocale(input.defaultLocale);
-  const languageEntries = input.languages ?? {
+  return {
     [defaultLocale]: input.defaultPath,
     'x-default': input.defaultPath,
-  };
-
-  return {
-    ...languageEntries,
-    'x-default': languageEntries['x-default'] ?? languageEntries[defaultLocale] ?? input.defaultPath,
   };
 }
 
@@ -182,16 +184,22 @@ export function createPublicContentMetadata(input: PublicMetadataInput): Metadat
   const other: NonNullable<Metadata['other']> = {
     ...(input.answerSummary ? { 'ai-answer-summary': input.answerSummary } : {}),
     ...(input.searchIntents?.length ? { 'search-intent': input.searchIntents.join(' | ') } : {}),
-    ...(input.entityKeywords?.length ? { 'entity-keywords': input.entityKeywords.join(', ') } : {}),
+    ...(input.entityKeywords?.length
+      ? { 'entity-keywords': input.entityKeywords.join(', ') }
+      : {}),
     ...(input.geoRegion ? { 'geo.region': input.geoRegion } : {}),
     ...(input.geoPlaceName ? { 'geo.placename': input.geoPlaceName } : {}),
   };
+
   const languages = Object.fromEntries(
-    Object.entries(normalizeAlternateLanguagePaths({
-      languages: input.languages,
-      defaultLocale: pageLocale,
-      defaultPath: input.path,
-    })).map(([key, value]) => [key, toAbsoluteUrl(value)]),
+    Object.entries(
+      normalizeAlternateLanguagePaths({
+        languages: input.languages,
+        defaultLocale: pageLocale,
+        defaultPath: input.path,
+        multiLanguage: input.multiLanguage,
+      })
+    ).map(([key, value]) => [key, toAbsoluteUrl(value)])
   );
 
   return {
@@ -202,29 +210,30 @@ export function createPublicContentMetadata(input: PublicMetadataInput): Metadat
       canonical: url,
       languages,
     },
-    openGraph: input.type === 'website'
-      ? {
-          type: 'website',
-          url,
-          siteName: SITE_NAME,
-          title: input.title,
-          description: input.description,
-          locale: normalizeOgLocale(pageLocale),
-          images,
-        }
-      : {
-          type: 'article',
-          url,
-          siteName: SITE_NAME,
-          title: input.title,
-          description: input.description,
-          locale: normalizeOgLocale(pageLocale),
-          images,
-          publishedTime,
-          modifiedTime,
-          section: input.section,
-          tags: input.tags,
-        },
+    openGraph:
+      input.type === 'website'
+        ? {
+            type: 'website',
+            url,
+            siteName: SITE_NAME,
+            title: input.title,
+            description: input.description,
+            locale: normalizeOgLocale(pageLocale),
+            images,
+          }
+        : {
+            type: 'article',
+            url,
+            siteName: SITE_NAME,
+            title: input.title,
+            description: input.description,
+            locale: normalizeOgLocale(pageLocale),
+            images,
+            publishedTime,
+            modifiedTime,
+            section: input.section,
+            tags: input.tags,
+          },
     twitter: {
       card: 'summary_large_image',
       title: input.title,
@@ -271,16 +280,20 @@ export function createArticleSchema(input: ArticleSchemaInput) {
       '@type': 'WebPage',
       '@id': url,
     },
-    mainEntity: input.mainEntityName ? {
-      '@type': 'Thing',
-      name: input.mainEntityName,
-    } : undefined,
+    mainEntity: input.mainEntityName
+      ? {
+          '@type': 'Thing',
+          name: input.mainEntityName,
+        }
+      : undefined,
     about: about.length ? about : undefined,
     mentions: mentions.length ? mentions : undefined,
-    audience: input.audience ? {
-      '@type': 'Audience',
-      audienceType: input.audience,
-    } : undefined,
+    audience: input.audience
+      ? {
+          '@type': 'Audience',
+          audienceType: input.audience,
+        }
+      : undefined,
     isAccessibleForFree: input.isAccessibleForFree ?? true,
     url,
     author: {
@@ -325,9 +338,7 @@ export function createCollectionPageSchema(input: CollectionSchemaInput) {
 }
 
 export function createItemListSchema(name: string, items: ItemListElementInput[]) {
-  if (items.length === 0) {
-    return null;
-  }
+  if (items.length === 0) return null;
 
   return {
     '@context': 'https://schema.org',
@@ -341,3 +352,6 @@ export function createItemListSchema(name: string, items: ItemListElementInput[]
     })),
   };
 }
+
+// re-export absoluteUrl for callers that imported from here historically
+export { absoluteUrl, SITE_URL, SITE_NAME };

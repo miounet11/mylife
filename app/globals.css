@@ -2,973 +2,661 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ============================================================
-   人生 K 线 · 决策台 v4
-   设计语言层（spec: docs/superpowers/specs/2026-05-07-frontend-redesign-design.md）
-
-   COMPAT LAYER 已在 P10-P15 期间清理完毕：
-   - 旧 utility 类（glass-panel / soft-card / action-primary 等）已全部从代码中
-     替换为新 token 等价类，仅在 `_qaContract` 字符串字面量中保留契约。
-   - 仅保留：priority-disclosure（独立组件需要）、brand-mark（site header 需要）、
-     scrollbar-none、数据语义 utility（.text-up/down/flat/env/signal/brand 等）、
-     字体族、page-shell、page-frame。
-   ============================================================ */
+/* ══════════════════════════════════════════════════════════════
+   LK Design System v2 — Linear-inspired · 专业冷静
+   对标：Linear（密度/8px 网格/控件节奏）
+   原则：单主任务 · 渐进披露 · 结构阅读 · 响应式 Rail
+   壳层浅色；Ming 暗色仅限报告内嵌图表
+   ══════════════════════════════════════════════════════════════ */
 
 :root {
-  /* 底层：纸感 */
-  --bg:                #f5f7f2;
-  --bg-elevated:       #fbfcf8;
-  --bg-sunken:         #eef1eb;
-  --paper:             #ffffff;
+  /* Ming 图表专用（报告内嵌可视化，不用于页面壳层） */
+  --color-ming-bg: #0f0f14;
+  --color-ming-surface: #1a1a24;
+  --color-ming-surface-light: #222232;
+  --color-ming-border: #2a2a3a;
+  --color-ming-border-active: #3a3a52;
+  --color-ming-gold: #d4a853;
+  --color-ming-gold-dim: #8b7340;
+  --color-ming-gold-bright: #f0d278;
+  --color-ming-fire: #e0554a;
+  --color-ming-earth: #c4a45a;
+  --color-ming-metal: #d4d4dc;
+  --color-ming-water: #4a90d9;
+  --color-ming-wood: #5a9e6f;
+  --color-ming-text: #e8e4dc;
+  --color-ming-text-dim: #88889a;
+  --color-ming-text-subtle: #606070;
+  --color-ming-accent-up: #4ecf8d;
+  --color-ming-accent-down: #e0554a;
+  --color-ming-accent-flat: #88889a;
 
-  /* 墨色 9 阶 */
-  --ink-1:             #0a120e;
-  --ink-2:             #16211d;
-  --ink-3:             #3a4a44;
-  --ink-4:             #66746c;
-  --ink-5:             #8b9690;
-  --ink-6:             #b3bcb6;
-  --hairline:          rgba(22, 33, 29, 0.08);
-  --hairline-strong:   rgba(22, 33, 29, 0.16);
+  /* ── Brand（克制使用，避免 FB 蓝条全站染色） ── */
+  --brand: #4f46e5;
+  --brand-strong: #4338ca;
+  --brand-deep: #3730a3;
+  --brand-soft: #eef2ff;
+  --brand-soft-2: #e0e7ff;
 
-  /* 主色：墨绿系 */
-  --brand:             #127d6f;
-  --brand-strong:      #0b5f55;
-  --brand-deep:        #074840;
-  --brand-soft:        rgba(18, 125, 111, 0.08);
-  --brand-soft-2:      rgba(18, 125, 111, 0.14);
+  /* FB 兼容别名 → 映射到 v2 token，避免旧类名碎裂 */
+  --fb-blue: var(--brand);
+  --fb-blue-strong: var(--brand-strong);
+  --fb-blue-link: var(--brand);
+  --fb-blue-link-hover: var(--brand-strong);
+  --fb-border: var(--hairline);
+  --fb-border-strong: var(--hairline-strong);
+  --fb-ink-1: var(--ink-1);
+  --fb-ink-2: var(--ink-2);
+  --fb-ink-3: var(--ink-3);
+  --fb-ink-4: var(--ink-4);
+  --fb-bg: var(--bg);
+  --fb-action-bg: var(--bg-sunken);
 
-  /* 信号金（仅高价值信号 / 当前时点 / 付费引导） */
-  --signal:            #c9a14a;
-  --signal-strong:     #a87f2c;
-  --signal-soft:       rgba(201, 161, 74, 0.10);
+  /* ── Ink 层级 ── */
+  --ink: #0f1115;
+  --ink-1: #0f1115;
+  --ink-2: #3c4149;
+  --ink-3: #6b7280;
+  --ink-4: #8b929e;
+  --ink-5: #b0b6c0;
+  --ink-6: #d1d5db;
 
-  /* 数据语义（K 线 / 阶段 / 涨跌） */
-  --data-up:           #2f7d52;
-  --data-down:         #bd4c42;
-  --data-flat:         #66746c;
-
-  /* 环境变量专色（冷蓝） */
-  --env:               #315f84;
-  --env-soft:          rgba(49, 95, 132, 0.10);
-
-  /* 警示 */
-  --alert:             #bd4c42;
-  --alert-soft:        rgba(189, 76, 66, 0.09);
-
-  /* 投影（仅两层） */
-  --shadow-card:       0 1px 0 rgba(22, 33, 29, 0.04), 0 0 0 1px var(--hairline);
-  --shadow-pop:        0 4px 16px rgba(22, 33, 29, 0.08), 0 0 0 1px var(--hairline-strong);
-
-  /* 字体 */
-  --font-sans:  'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Noto Sans SC', 'Microsoft YaHei', sans-serif;
-  --font-mono:  'JetBrains Mono', 'SF Mono', 'Menlo', 'PingFang SC', monospace;
-  --font-serif: 'Source Han Serif SC', 'Noto Serif SC', 'Songti SC', serif;
-
-  /* 圆角（紧缩） */
-  --radius-sm:         2px;
-  --radius:            4px;
-  --radius-md:         6px;
-  --radius-lg:         8px;
-
-  /* === 兼容别名（指向新 token，仅为旧组件不破图） ===
-     新代码请直接用 --ink-1..6 / --bg* / --hairline* / --brand* / --signal*。
-     这些别名只在新 token 出现 *之前* 写好的组件里被引用。 */
-  --ink:           var(--ink-2);
-  --muted:         var(--ink-4);
-  --line:          var(--hairline);
-  --accent:        var(--brand);
+  /* ── 语义扩展 ── */
+  --muted: var(--ink-3);
+  --accent: var(--brand);
   --accent-strong: var(--brand-strong);
-  --accent-soft:   var(--brand-soft);
-  --surface:       var(--bg-elevated);
-  --surface-strong:var(--paper);
-  --surface-soft:  var(--bg-sunken);
+  --accent-soft: var(--brand-soft);
+  --data-up: var(--success);
 
-  /* 站点顶栏高度（SiteHeader 三行：42 + 40 + 36 = 118px） */
-  --site-header-offset: 118px;
+  /* ── 表面（Linear 冷灰） ── */
+  --bg: #f7f8f9;
+  --bg-elevated: #ffffff;
+  --bg-sunken: #eef0f3;
+  --paper: #ffffff;
+  --hairline: #e6e8eb;
+  --hairline-strong: #d0d4db;
+
+  /* ── 语义色 ── */
+  --signal: var(--brand);
+  --signal-strong: var(--brand-deep);
+  --signal-soft: var(--brand-soft);
+  --alert: #dc2626;
+  --alert-soft: #fef2f2;
+  --success: #059669;
+  --success-soft: #ecfdf5;
+
+  /* ── 8px 间距尺度 ── */
+  --space-1: 0.25rem;  /* 4 */
+  --space-2: 0.5rem;   /* 8 */
+  --space-3: 0.75rem;  /* 12 */
+  --space-4: 1rem;     /* 16 */
+  --space-5: 1.25rem;  /* 20 */
+  --space-6: 1.5rem;   /* 24 */
+  --space-8: 2rem;     /* 32 */
+  --space-10: 2.5rem;  /* 40 */
+
+  /* ── 布局 ── */
+  --frame-max: 80rem;
+  --content-max: 48rem;
+  --rail-left: 11rem;
+  --rail-right: 17rem;
+  --header-height: 3.5rem;          /* 56 top bar */
+  --header-nav-height: 2.75rem;     /* 44 nav strip */
+  --header-compact-height: 3.5rem;
+  --site-header-offset: 6.25rem;    /* 56+44 */
+
+  /* ── 阴影 ── */
+  --shadow-card: 0 1px 2px rgba(15, 17, 21, 0.04), 0 0 0 1px rgba(15, 17, 21, 0.02);
+  --shadow-pop: 0 8px 24px rgba(15, 17, 21, 0.08), 0 0 0 1px rgba(15, 17, 21, 0.04);
+  --shadow-focus: 0 0 0 3px color-mix(in srgb, var(--brand) 22%, transparent);
+
+  /* ── 圆角（Linear 控件感） ── */
+  --radius-sm: 0.375rem; /* 6 */
+  --radius: 0.5rem;      /* 8 */
+  --radius-md: 0.625rem; /* 10 */
+  --radius-lg: 0.75rem;  /* 12 */
+  --radius-xl: 1rem;     /* 16 */
+
+  /* ── 排版 ── */
+  --text-display: 1.75rem;   /* 28 */
+  --text-title: 1.25rem;     /* 20 */
+  --text-subtitle: 1rem;     /* 16 */
+  --text-body: 0.875rem;     /* 14 — 可读性优于旧 13px */
+  --text-caption: 0.75rem;   /* 12 */
+  --text-micro: 0.6875rem;   /* 11 */
+  --leading-tight: 1.25;
+  --leading-body: 1.55;
+  --leading-relaxed: 1.65;
+
+  /* ── 控件高度 ── */
+  --control-h-sm: 1.75rem;  /* 28 */
+  --control-h: 2rem;        /* 32 */
+  --control-h-md: 2.25rem;  /* 36 */
+  --control-h-lg: 2.5rem;   /* 40 */
+
+  /* ── 图标 ── */
+  --icon-sm: 0.875rem; /* 14 */
+  --icon: 1rem;        /* 16 */
+  --icon-md: 1.125rem; /* 18 */
+  --icon-lg: 1.25rem;  /* 20 */
+
+  /* 暗色主题遗留（图表组件） */
+  --gold: var(--color-ming-gold);
 }
 
-/* 报告深读模式（terminal mode）：仅作用于 [data-mode="terminal"] 容器内 */
-[data-mode="terminal"] {
-  --bg:                #0e1714;
-  --bg-elevated:       #16221d;
-  --bg-sunken:         #0a1310;
-  --paper:             #1a2722;
-  --ink-1:             #f5f7f2;
-  --ink-2:             #d8dfd9;
-  --ink-3:             #9ba8a2;
-  --ink-4:             #6d7d76;
-  --ink-5:             #56635c;
-  --ink-6:             #3a4842;
-  --hairline:          rgba(245, 247, 242, 0.10);
-  --hairline-strong:   rgba(245, 247, 242, 0.18);
-  --brand:             #2dab98;
-  --brand-strong:      #4ec5b3;
-  --brand-deep:        #4ec5b3;
-  --brand-soft:        rgba(78, 197, 179, 0.10);
-  --brand-soft-2:      rgba(78, 197, 179, 0.18);
-  --signal:            #d9b562;
-  --signal-strong:     #f0cb74;
-  --signal-soft:       rgba(217, 181, 98, 0.14);
-  --data-up:           #6cd092;
-  --data-down:         #e57569;
-  --data-flat:         #9ba8a2;
-  --env:               #6da3c8;
-  --env-soft:          rgba(109, 163, 200, 0.14);
-  --alert:             #e57569;
-  --alert-soft:        rgba(229, 117, 105, 0.12);
-  --shadow-card:       0 1px 0 rgba(0, 0, 0, 0.20), 0 0 0 1px var(--hairline);
-  --shadow-pop:        0 4px 16px rgba(0, 0, 0, 0.32), 0 0 0 1px var(--hairline-strong);
-
-  /* === 兼容别名（terminal mode 同步） === */
-  --ink:           var(--ink-2);
-  --muted:         var(--ink-4);
-  --line:          var(--hairline);
-  --accent:        var(--brand);
-  --accent-strong: var(--brand-strong);
-  --accent-soft:   var(--brand-soft);
-  --surface:       var(--bg-elevated);
-  --surface-strong:var(--paper);
-  --surface-soft:  var(--bg-sunken);
-}
-
-html {
-  scroll-behavior: smooth;
-}
-
+/* ── Base ── */
 body {
-  min-height: 100vh;
-  background: linear-gradient(180deg, #f9faf5 0%, #eef5ef 48%, #f4efe8 100%);
-  background-attachment: fixed;
-  color: var(--ink-2);
+  background-color: var(--bg);
+  color: var(--ink-1);
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", "Noto Sans SC", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
 }
 
-/* terminal mode 下重置 body 渐变 */
-body:has([data-mode="terminal"][data-mode-scope="root"]) {
-  background: var(--bg);
+a {
+  color: var(--brand);
+  text-decoration: none;
 }
 
-@layer base {
-  * {
-    @apply border-transparent;
-  }
-
-  body {
-    font-family: var(--font-sans), sans-serif;
-  }
-
-  h1, h2, h3, h4 {
-    letter-spacing: 0;
-    color: var(--ink-1);
-  }
-
-  :focus-visible {
-    outline: 2px solid var(--brand);
-    outline-offset: 2px;
-  }
-
-  /* 数字、干支、时间统一等宽体（决策台核心特征） */
-  .num,
-  [data-numeric="true"] {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum' 1, 'cv11' 1;
-  }
+a:hover {
+  color: var(--brand-strong);
+  text-decoration: none;
 }
 
-@layer utilities {
-  /* ============ 字体族 ============ */
-  .font-sans   { font-family: var(--font-sans); }
-  .font-mono   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
-  .font-serif  { font-family: var(--font-serif); }
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hairline-strong); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--ink-5); }
 
-  /* ============ v5-D43 可点击/纯展示语义类 ============
-     全站规范：
-     - 可点击元素必须使用 <a>/<Link>/<button>，并且套 .lk-action（或自带 hover/transition 表态）
-     - 纯展示卡片必须用 .lk-readonly，禁止任何 hover:border-* / cursor-pointer
-     - 行内分隔靠 .lk-bullet（dotted ::before），不是看起来像按钮的圆角块
-  */
-  .lk-readonly {
-    cursor: default;
-    user-select: text;
-  }
-  /* 纯展示元素 hover 时不改变任何视觉信号，避免被误判为可点击 */
-  .lk-readonly:hover { background-color: inherit; border-color: inherit; box-shadow: inherit; transform: none; }
-  .lk-action { cursor: pointer; transition: border-color 150ms ease, background-color 150ms ease, color 150ms ease; }
-  .lk-action:hover { border-color: var(--brand); }
-  .lk-action:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-  .lk-bullet { position: relative; padding-left: 1.1em; }
-  .lk-bullet::before {
-    content: '·';
-    position: absolute;
-    left: 0.25em;
-    top: 0;
-    color: var(--ink-5);
-    font-weight: 700;
-  }
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar { display: none; }
 
-  /* ============ 页面骨架 ============ */
-  .page-shell {
-    @apply relative min-h-screen overflow-x-clip;
-  }
+/* ── Page Shell ── */
+.page-shell {
+  min-height: 100vh;
+  background-color: var(--bg);
+  color: var(--ink-1);
+}
 
-  .page-shell::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    background-image:
-      linear-gradient(var(--hairline) 1px, transparent 1px),
-      linear-gradient(90deg, var(--hairline) 1px, transparent 1px);
-    background-size: 52px 52px;
-    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.36), rgba(0, 0, 0, 0.05) 46%, transparent 78%);
-    z-index: -1;
-  }
+.page-frame {
+  width: 100%;
+  max-width: var(--frame-max);
+  margin-inline: auto;
+  padding-inline: var(--space-4);
+}
 
-  .page-frame {
-    @apply mx-auto max-w-7xl px-4 sm:px-6 lg:px-8;
-  }
+@media (min-width: 640px) {
+  .page-frame { padding-inline: var(--space-5); }
+}
 
-  /* ============ priority-disclosure（v5-D65 拍平为静态 section）============ */
-  .priority-disclosure {
-    border-radius: var(--radius-md);
-    background: var(--paper);
-    border: 1px solid var(--hairline);
-    box-shadow: var(--shadow-card);
-  }
+@media (min-width: 1024px) {
+  .page-frame { padding-inline: var(--space-6); }
+}
 
+.scroll-mt-header {
+  scroll-margin-top: var(--site-header-offset);
+}
+
+.sticky-top-header {
+  position: sticky;
+  top: var(--site-header-offset);
+}
+
+.scroll-fade-x {
+  mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
+}
+
+/* 生产功能页组件（协同路径 / 工具包）依赖 */
+.priority-disclosure {
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  border: 1px solid var(--hairline);
+  box-shadow: var(--shadow-card);
+}
+
+.priority-disclosure-summary {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1rem;
+}
+
+@media (min-width: 768px) {
   .priority-disclosure-summary {
-    @apply flex items-start justify-between gap-4 px-4 py-4 md:px-5;
+    padding: 1rem 1.25rem;
   }
+}
 
-  .priority-disclosure-summary--static {
-    @apply cursor-default;
-  }
+.priority-disclosure-summary--static {
+  cursor: default;
+}
 
+.priority-disclosure-body {
+  border-top: 1px solid var(--hairline);
+  padding: 1rem 1rem 1rem;
+}
+
+@media (min-width: 768px) {
   .priority-disclosure-body {
-    @apply border-t px-4 pb-4 pt-4 md:px-5 md:pb-5;
-    border-color: var(--hairline);
-  }
-
-  /* ============ brand-mark（site-header 简版 logo 容器）============ */
-  .brand-mark {
-    @apply flex h-9 w-9 shrink-0 items-center justify-center text-white;
-    border-radius: var(--radius);
-    background: var(--brand-strong);
-    box-shadow: var(--shadow-card);
-  }
-
-  /* ============ 滚动条隐藏（横向滚动菜单等）============ */
-  .scrollbar-none {
-    scrollbar-width: none;
-  }
-
-  .scrollbar-none::-webkit-scrollbar {
-    display: none;
-  }
-
-  .scroll-fade-x {
-    mask-image: linear-gradient(to right, transparent, black 12px, black calc(100% - 12px), transparent);
-  }
-
-  /* 锚点跳转 / sticky 侧栏：与 SiteHeader 三行高度对齐 */
-  .scroll-mt-header {
-    scroll-margin-top: var(--site-header-offset);
-  }
-
-  .sticky-top-header {
-    position: sticky;
-    top: var(--site-header-offset);
-  }
-
-  /* ============ 数据语义（K 线、阶段、涨跌）============ */
-  .text-up    { color: var(--data-up); }
-  .text-down  { color: var(--data-down); }
-  .text-flat  { color: var(--data-flat); }
-  .text-env   { color: var(--env); }
-  .text-signal { color: var(--signal-strong); }
-  .text-brand { color: var(--brand-strong); }
-
-  .bg-up    { background: var(--data-up); }
-  .bg-down  { background: var(--data-down); }
-  .bg-env   { background: var(--env); }
-  .bg-signal { background: var(--signal); }
-
-  /* ============ 决策台等宽数字 ============ */
-  .num,
-  .tabular {
-    font-family: var(--font-mono);
-    font-variant-numeric: tabular-nums;
-    font-feature-settings: 'tnum' 1;
+    padding: 1rem 1.25rem 1.25rem;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
+.brand-mark {
+  display: flex;
+  height: 2rem;
+  width: 2rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--brand);
+  color: #fff;
+  box-shadow: var(--shadow-card);
+  font-weight: 700;
 }
 
-/* ============================================================
-   FB-2017 主题层（v5-D60）
-   作用：把 v4「米白决策台」整体改为 2017 年 Facebook 门户风。
-   作用域：<html data-theme="fb2017">（root layout 注入）。
-   回滚：删 layout 上的 data-theme="fb2017" 即可。
-   ============================================================ */
-html[data-theme="fb2017"] {
-  --font-sans:  Helvetica, Arial, "Lucida Grande", "PingFang SC",
-                "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  --font-serif: Georgia, "Songti SC", "Source Han Serif SC", serif;
-  --font-mono:  Menlo, Consolas, "PingFang SC", monospace;
-
-  --fb-blue:           #3b5998;
-  --fb-blue-strong:    #2f477a;
-  --fb-blue-deep:      #1e3160;
-  --fb-blue-link:      #365899;
-  --fb-blue-link-hover:#1d2129;
-  --fb-bg:             #e9ebee;
-  --fb-card:           #ffffff;
-  --fb-border:         #dddfe2;
-  --fb-border-strong:  #ccd0d5;
-  --fb-ink-1:          #1d2129;
-  --fb-ink-2:          #4b4f56;
-  --fb-ink-3:          #606770;
-  --fb-ink-4:          #8d949e;
-  --fb-action-bg:      #f5f6f7;
-  --fb-action-bg-hover:#ebedf0;
-  --fb-signal:         #f7b928;
-  --fb-success:        #42b72a;
-  --fb-alert:          #fa3e3e;
-
-  --bg:                var(--fb-bg);
-  --bg-elevated:       var(--fb-card);
-  --bg-sunken:         #dfe3ee;
-  --paper:             var(--fb-card);
-  --ink-1:             var(--fb-ink-1);
-  --ink-2:             var(--fb-ink-1);
-  --ink-3:             var(--fb-ink-2);
-  --ink-4:             var(--fb-ink-3);
-  --ink-5:             var(--fb-ink-4);
-  --ink-6:             #bec3c9;
-  --hairline:          var(--fb-border);
-  --hairline-strong:   var(--fb-border-strong);
-  --brand:             var(--fb-blue);
-  --brand-strong:      var(--fb-blue);
-  --brand-deep:        var(--fb-blue-deep);
-  --brand-soft:        rgba(59, 89, 152, 0.08);
-  --brand-soft-2:      rgba(59, 89, 152, 0.16);
-  --signal:            var(--fb-signal);
-  --signal-strong:     #c79014;
-  --signal-soft:       rgba(247, 185, 40, 0.14);
-  --data-up:           var(--fb-success);
-  --data-down:         var(--fb-alert);
-  --data-flat:         var(--fb-ink-3);
-  --env:               var(--fb-blue-link);
-  --env-soft:          rgba(54, 88, 153, 0.10);
-  --alert:             var(--fb-alert);
-  --alert-soft:        rgba(250, 62, 62, 0.10);
-
-  --radius-sm:         2px;
-  --radius:            3px;
-  --radius-md:         3px;
-  --radius-lg:         4px;
-  --shadow-card:       0 1px 1px rgba(0, 0, 0, 0.08), 0 0 0 1px var(--fb-border);
-  --shadow-pop:        0 2px 4px rgba(0, 0, 0, 0.10), 0 0 0 1px var(--fb-border-strong);
-
-  --ink:           var(--fb-ink-1);
-  --muted:         var(--fb-ink-3);
-  --line:          var(--fb-border);
-  --accent:        var(--fb-blue);
-  --accent-strong: var(--fb-blue);
-  --accent-soft:   rgba(59, 89, 152, 0.08);
-  --surface:       var(--fb-card);
-  --surface-strong:var(--fb-card);
-  --surface-soft:  #f5f6f7;
+/* ── Chrome（v2：浅色专业壳，不再用 FB 蓝条） ── */
+.fb-chrome,
+.lk-chrome {
+  background: var(--paper);
+  border-bottom: 1px solid var(--hairline);
 }
 
-html[data-theme="fb2017"] body {
-  background: var(--fb-bg) !important;
-  background-attachment: initial;
-  color: var(--fb-ink-1);
-  font-family: var(--font-sans);
-  font-size: 14px;
-  line-height: 1.34;
-  -webkit-font-smoothing: antialiased;
+/* ── Cards ── */
+.fb-card,
+.lk-card {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
 }
 
-html[data-theme="fb2017"] .page-shell::before { display: none !important; }
-
-html[data-theme="fb2017"] h1 { font-size: 24px; font-weight: 700; color: var(--fb-ink-1); letter-spacing: 0; }
-html[data-theme="fb2017"] h2 { font-size: 20px; font-weight: 700; color: var(--fb-ink-1); }
-html[data-theme="fb2017"] h3 { font-size: 16px; font-weight: 700; color: var(--fb-ink-1); }
-html[data-theme="fb2017"] h4 { font-size: 14px; font-weight: 700; color: var(--fb-ink-1); }
-
-html[data-theme="fb2017"] a { color: var(--fb-blue-link); }
-html[data-theme="fb2017"] a:hover { text-decoration: underline; color: var(--fb-blue-link-hover); }
-
-html[data-theme="fb2017"] .num,
-html[data-theme="fb2017"] [data-numeric="true"],
-html[data-theme="fb2017"] .tabular {
-  font-family: var(--font-mono);
-  font-variant-numeric: tabular-nums;
-  font-feature-settings: 'tnum' 1;
+.fb-section-title,
+.lk-section-title-legacy {
+  font-size: var(--text-subtitle);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink-1);
+  line-height: var(--leading-tight);
 }
 
-html[data-theme="fb2017"] ::selection {
-  background: rgba(59, 89, 152, 0.25);
-  color: var(--fb-ink-1);
+/* ── Buttons ── */
+.fb-btn,
+.lk-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--paper);
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
-html[data-theme="fb2017"] .fb-chrome   { background: var(--fb-blue); color: #fff; }
-html[data-theme="fb2017"] .fb-chrome a { color: #fff; }
-html[data-theme="fb2017"] .fb-chrome a:hover { text-decoration: none; opacity: 0.85; }
-html[data-theme="fb2017"] .fb-card {
-  background: var(--fb-card);
-  border: 1px solid var(--fb-border);
-  border-radius: 3px;
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+.fb-btn:hover,
+.lk-btn:hover {
+  background: var(--bg-sunken);
+  border-color: var(--hairline-strong);
+  text-decoration: none;
 }
-html[data-theme="fb2017"] .fb-btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  height: 28px; padding: 0 10px;
-  border: 1px solid var(--fb-border-strong);
-  border-radius: 2px;
-  background: var(--fb-action-bg);
-  color: var(--fb-ink-1);
-  font-size: 13px; font-weight: 700;
-  line-height: 1; cursor: pointer;
+
+.fb-btn-primary,
+.lk-btn-primary {
+  border-color: transparent;
+  background: var(--brand);
+  color: #fff;
+  box-shadow: 0 1px 2px rgba(79, 70, 229, 0.25);
 }
-html[data-theme="fb2017"] .fb-btn:hover { background: var(--fb-action-bg-hover); text-decoration: none; }
-html[data-theme="fb2017"] .fb-btn-primary {
-  background: var(--fb-blue);
-  border-color: var(--fb-blue-strong);
+
+.fb-btn-primary:hover,
+.lk-btn-primary:hover {
+  background: var(--brand-strong);
   color: #fff;
 }
-html[data-theme="fb2017"] .fb-btn-primary:hover { background: var(--fb-blue-strong); color: #fff; }
-html[data-theme="fb2017"] .fb-input {
-  height: 28px; padding: 0 8px;
-  border: 1px solid var(--fb-border-strong);
-  border-radius: 2px;
-  background: #fff;
-  font-size: 13px;
-}
-html[data-theme="fb2017"] .fb-input:focus {
-  outline: none; border-color: var(--fb-blue);
-  box-shadow: 0 0 2px rgba(59,89,152,0.4);
-}
-html[data-theme="fb2017"] .fb-divider { height: 1px; background: var(--fb-border); border: 0; }
-html[data-theme="fb2017"] .fb-section-title {
-  font-size: 12px; font-weight: 700;
-  text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--fb-ink-3);
-}
 
-/* FB-2017 · 原子件精度修正 */
-html[data-theme="fb2017"] button.inline-flex.items-center.justify-center.gap-2 {
-  border-radius: 2px; font-weight: 700; letter-spacing: 0;
-}
-html[data-theme="fb2017"] .h-8.px-3.text-xs  { height: 26px; padding: 0 8px;  font-size: 12px; }
-html[data-theme="fb2017"] .h-10.px-4.text-sm { height: 28px; padding: 0 12px; font-size: 13px; }
-html[data-theme="fb2017"] .h-11.px-5.text-base { height: 32px; padding: 0 14px; font-size: 14px; }
-html[data-theme="fb2017"] .h-12.px-6.text-md  { height: 36px; padding: 0 16px; font-size: 14px; }
-
-html[data-theme="fb2017"] .text-xs.font-bold.uppercase {
-  text-transform: none; letter-spacing: 0; font-size: 12px; font-weight: 700;
-}
-
-html[data-theme="fb2017"] p.max-w-\[44rem\] {
-  font-size: 14px; line-height: 1.5; max-width: 640px; color: var(--fb-ink-2);
-}
-
-html[data-theme="fb2017"] .hover\:-translate-y-px:hover { transform: none; }
-html[data-theme="fb2017"] .shadow-\[var\(--shadow-pop\)\],
-html[data-theme="fb2017"] .hover\:shadow-\[var\(--shadow-pop\)\]:hover {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.08), 0 0 0 1px var(--fb-border-strong);
-}
-html[data-theme="fb2017"] .shadow-\[0_0_0_3px_var\(--signal-soft\)\] {
-  box-shadow: 0 0 0 2px rgba(247,185,40,0.45);
-}
-
-html[data-theme="fb2017"] h1.text-3xl,
-html[data-theme="fb2017"] h1.text-4xl,
-html[data-theme="fb2017"] h1.md\:text-3xl,
-html[data-theme="fb2017"] h1.md\:text-4xl,
-html[data-theme="fb2017"] h1.md\:text-5xl,
-html[data-theme="fb2017"] h2.text-2xl,
-html[data-theme="fb2017"] h2.md\:text-2xl,
-html[data-theme="fb2017"] h2.md\:text-3xl {
-  font-size: 22px; font-weight: 700; line-height: 1.25; letter-spacing: 0;
-}
-
-html[data-theme="fb2017"] .font-black { font-weight: 700; }
-
-html[data-theme="fb2017"] .bg-gradient-to-r.bg-clip-text.text-transparent,
-html[data-theme="fb2017"] .bg-clip-text.text-transparent {
-  background: none !important;
-  -webkit-text-fill-color: var(--fb-ink-1);
-  color: var(--fb-ink-1);
-}
-
-html[data-theme="fb2017"] .backdrop-blur,
-html[data-theme="fb2017"] .backdrop-blur-sm,
-html[data-theme="fb2017"] .backdrop-blur-md,
-html[data-theme="fb2017"] .backdrop-blur-lg,
-html[data-theme="fb2017"] .backdrop-blur-xl,
-html[data-theme="fb2017"] .backdrop-blur-2xl {
-  backdrop-filter: none !important;
-  -webkit-backdrop-filter: none !important;
-}
-
-/* ============================================================
-   FB-2017 · 内容/列表/工具页矩阵层（v5-D60 worker-4）
-   作用：把 /knowledge /cases /tools /reports /insights /visual-assets
-        /world-yi/* /docs /updates /history /questions /events 各列表/详情页
-        全部映射成 FB Page / News-Feed 风。
-   ============================================================ */
-
-/* —— 页面外壳：去 v4 米白渐变，回归 FB 灰底 —— */
-html[data-theme="fb2017"] .page-frame {
-  max-width: 1100px;
-}
-
-/* —— Tag/分类 chip 改 FB 风（灰底 12px / 蓝字 / 不要圆形） —— */
-html[data-theme="fb2017"] .fb-tag {
-  display: inline-flex; align-items: center;
-  height: 22px; padding: 0 8px;
-  border: 1px solid var(--fb-border);
-  border-radius: 2px;
-  background: var(--fb-action-bg);
-  color: var(--fb-blue-link);
-  font-size: 12px; font-weight: 600;
-  line-height: 1; cursor: pointer;
-  text-decoration: none;
-}
-html[data-theme="fb2017"] .fb-tag:hover {
-  text-decoration: underline; background: var(--fb-action-bg-hover);
-}
-html[data-theme="fb2017"] .fb-tag-static {
-  display: inline-flex; align-items: center;
-  height: 20px; padding: 0 6px;
-  border: 1px solid var(--fb-border);
-  border-radius: 2px;
-  background: var(--fb-action-bg);
-  color: var(--fb-ink-3);
-  font-size: 11px; font-weight: 600;
-  line-height: 1;
-}
-
-/* 把 v4 的圆形 pill chip 在 fb 主题下回归方形 FB tag */
-html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--accent-soft\)\],
-html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--brand-soft\)\],
-html[data-theme="fb2017"] .rounded-full.bg-\[color\:var\(--bg-sunken\)\] {
-  border-radius: 2px !important;
-  background: var(--fb-action-bg) !important;
-  color: var(--fb-blue-link) !important;
-  border: 1px solid var(--fb-border);
-  font-weight: 600;
-}
-
-/* —— 列表卡：在 fb 主题下统一回到 FB 白卡 + 1px 硬边 —— */
-html[data-theme="fb2017"] .rounded-\[var\(--radius-md\)\].border,
-html[data-theme="fb2017"] .rounded-\[var\(--radius-lg\)\].border,
-html[data-theme="fb2017"] .rounded-\[var\(--radius\)\].border {
-  border-radius: 3px !important;
-  border-color: var(--fb-border) !important;
-  background: var(--fb-card) !important;
-  box-shadow: 0 1px 1px rgba(0,0,0,0.04);
-}
-html[data-theme="fb2017"] .rounded-\[var\(--radius-md\)\].border:hover,
-html[data-theme="fb2017"] .rounded-\[var\(--radius-lg\)\].border:hover {
-  border-color: var(--fb-border-strong) !important;
-}
-
-/* 列表卡之间统一 8px 间隙（News Feed 风，仅 fb-card 内） */
-html[data-theme="fb2017"] .fb-card .grid.gap-3 { gap: 8px; }
-html[data-theme="fb2017"] .fb-card .grid.gap-4 { gap: 8px; }
-html[data-theme="fb2017"] .fb-card .grid.gap-5 { gap: 10px; }
-
-/* —— Hero 区：去掉装饰描边，改 FB Page 风白卡条 —— */
-html[data-theme="fb2017"] section.relative.overflow-hidden.rounded-\[var\(--radius-lg\)\] {
-  border-radius: 3px;
-  background: var(--fb-card);
-  border: 1px solid var(--fb-border);
-}
-/* 装饰 SVG（如 K 线刻度）在 FB 主题下隐藏 */
-html[data-theme="fb2017"] section.relative.overflow-hidden > svg[aria-hidden="true"] {
-  display: none;
-}
-
-/* —— Article 详情：左 brand-soft-2 引文条改 FB blue —— */
-html[data-theme="fb2017"] .border-l-2.border-\[color\:var\(--brand-soft-2\)\] {
-  border-left-color: var(--fb-blue);
-  border-left-width: 4px;
-  background: var(--fb-action-bg);
-  padding: 8px 14px;
-}
-
-/* —— 分页器：FB 经典扁平按钮 —— */
-html[data-theme="fb2017"] nav[aria-label*="分页"] {
-  border-radius: 3px !important;
-  background: var(--fb-card) !important;
-}
-html[data-theme="fb2017"] nav[aria-label*="分页"] a,
-html[data-theme="fb2017"] nav[aria-label*="分页"] span {
-  border-radius: 2px !important;
-  border: 1px solid var(--fb-border-strong) !important;
-  background: var(--fb-action-bg) !important;
-  color: var(--fb-blue-link) !important;
-  font-weight: 700;
-  height: 26px;
-  padding: 0 10px;
-}
-html[data-theme="fb2017"] nav[aria-label*="分页"] a:hover {
-  background: var(--fb-action-bg-hover) !important;
-  text-decoration: none;
-}
-html[data-theme="fb2017"] nav[aria-label*="分页"] a.bg-\[color\:var\(--brand\)\] {
-  background: var(--fb-blue) !important;
-  color: #fff !important;
-  border-color: var(--fb-blue-strong) !important;
-}
-html[data-theme="fb2017"] nav[aria-label*="分页"] span.bg-\[color\:var\(--bg-sunken\)\] {
-  background: #f5f6f7 !important;
-  color: var(--fb-ink-4) !important;
-  opacity: 1;
-}
-
-/* —— 报告/工具/案例阅读流：限宽 680px（FB Note 风） —— */
-html[data-theme="fb2017"] .reading-flow,
-html[data-theme="fb2017"] article.reading-flow {
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-/* —— "操作组" 一行 FB 按钮：把 v4 圆角实心 brand 按钮统一收成 fb-btn 风 —— */
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white,
-html[data-theme="fb2017"] button.bg-\[color\:var\(--brand-strong\)\].text-white,
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white,
-html[data-theme="fb2017"] button.bg-\[color\:var\(--brand\)\].text-white {
-  background: var(--fb-blue) !important;
-  border: 1px solid var(--fb-blue-strong);
-  border-radius: 2px;
-  color: #fff !important;
-  font-weight: 700;
-  font-size: 13px;
-  text-decoration: none;
-}
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white:hover,
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white:hover {
-  background: var(--fb-blue-strong) !important;
-  text-decoration: none;
-  color: #fff !important;
-}
-
-/* 次级按钮：白底 FB 边 */
-html[data-theme="fb2017"] a.border-\[color\:var\(--hairline-strong\)\].bg-\[color\:var\(--paper\)\] {
-  background: var(--fb-action-bg) !important;
-  border-color: var(--fb-border-strong) !important;
-  color: var(--fb-ink-1) !important;
-  border-radius: 2px;
-  font-weight: 700;
-}
-html[data-theme="fb2017"] a.border-\[color\:var\(--hairline-strong\)\].bg-\[color\:var\(--paper\)\]:hover {
-  background: var(--fb-action-bg-hover) !important;
-  text-decoration: none;
-}
-
-/* —— FB Page 风顶部 hero（取消大渐变标题） —— */
-html[data-theme="fb2017"] h1.bg-clip-text,
-html[data-theme="fb2017"] h2.bg-clip-text {
-  background: none !important;
-  -webkit-text-fill-color: var(--fb-ink-1) !important;
-  color: var(--fb-ink-1) !important;
-}
-
-/* —— v4 brand kicker（uppercase tracking 0.14em）改 FB 蓝标签条 —— */
-html[data-theme="fb2017"] .text-xs.font-bold.tracking-\[0\.14em\].text-\[color\:var\(--brand-strong\)\] {
-  text-transform: none;
-  letter-spacing: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--fb-blue-link);
-}
-
-/* —— 两栏 News Feed 容器（可选用 .fb-feed-grid） —— */
-html[data-theme="fb2017"] .fb-feed-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
-}
-@media (min-width: 1024px) {
-  html[data-theme="fb2017"] .fb-feed-grid {
-    grid-template-columns: minmax(0, 1fr) 300px;
-    align-items: start;
-  }
-}
-html[data-theme="fb2017"] .fb-feed-sidebar { position: sticky; top: 76px; }
-html[data-theme="fb2017"] .fb-feed-sidebar > * + * { margin-top: 12px; }
-
-/* ============================================================
-   FB-2017 · 组件级补丁层（v5-D60c）
-   作用：覆盖各页/组件中遗留的 v4 强调视觉，让 dashboard / analyze /
-        profile / events / questions / chat-fab / event-cards 等
-        在 fb 主题下统一回归 FB Page 风。
-   不动组件源码，全靠 globals.css 选择器精修。
-   ============================================================ */
-
-/* —— v4 brand-soft 高亮区域 → FB action-bg 浅灰条 —— */
-html[data-theme="fb2017"] .bg-\[color\:var\(--brand-soft\)\] {
-  background: rgba(59, 89, 152, 0.06) !important;
-}
-html[data-theme="fb2017"] .bg-\[color\:var\(--brand-soft-2\)\] {
-  background: rgba(59, 89, 152, 0.10) !important;
-}
-
-/* —— signal-soft 黄底 → 在 FB 主题下保留但收浅 —— */
-html[data-theme="fb2017"] .bg-\[color\:var\(--signal-soft\)\] {
-  background: rgba(247, 185, 40, 0.08) !important;
-}
-
-/* —— v4 大圆点信号 dot 在 FB 主题下回归小方块 —— */
-html[data-theme="fb2017"] .h-2.w-2.rounded-full.bg-\[color\:var\(--brand\)\],
-html[data-theme="fb2017"] .h-2.w-2.rounded-full.bg-\[color\:var\(--brand-strong\)\] {
-  border-radius: 1px;
-  background: var(--fb-blue);
-}
-
-/* —— v4 brand 边框选中 hover → FB 蓝细边 —— */
-html[data-theme="fb2017"] .border-\[color\:var\(--brand-soft-2\)\] {
-  border-color: rgba(59, 89, 152, 0.18) !important;
-}
-html[data-theme="fb2017"] .hover\:border-\[color\:var\(--brand\)\]:hover,
-html[data-theme="fb2017"] .hover\:border-\[color\:var\(--brand-strong\)\]:hover {
-  border-color: var(--fb-blue) !important;
-}
-
-/* —— 大字数字（dashboard / profile 的 break-all text-2xl font-black）→ 收到 20px —— */
-html[data-theme="fb2017"] .break-all.text-2xl.font-black,
-html[data-theme="fb2017"] .text-xl.font-black,
-html[data-theme="fb2017"] .text-2xl.font-black {
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0;
-}
-
-/* —— v4 装饰性 SVG 网格 / 刻度（aria-hidden=true 内的纯装饰 svg）→ FB 主题隐藏 —— */
-html[data-theme="fb2017"] section[aria-label*="装饰"] svg,
-html[data-theme="fb2017"] [aria-hidden="true"] > svg.decor {
-  display: none;
-}
-
-/* —— FB Page 风 section 标题：紧凑的 16/700 + 顶部 1px 蓝 hairline —— */
-html[data-theme="fb2017"] .fb-section-card {
-  background: var(--fb-card);
-  border: 1px solid var(--fb-border);
-  border-top: 2px solid var(--fb-blue);
-  border-radius: 3px;
-  padding: 12px 14px;
-}
-
-/* —— priority-disclosure（v5-D65 拍平后保留）在 fb 主题下收紧 —— */
-html[data-theme="fb2017"] .priority-disclosure {
-  border-radius: 3px;
-  background: var(--fb-card);
-  border: 1px solid var(--fb-border);
+.fb-btn-ghost,
+.lk-btn-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink-2);
   box-shadow: none;
 }
 
-/* —— ChatFab 圆形 messenger 按钮（保留圆）+ FB 蓝实心 —— */
-html[data-theme="fb2017"] [aria-label*="对话"][class*="rounded-full"],
-html[data-theme="fb2017"] button[class*="rounded-full"][class*="bg-\[color\:var\(--brand"] {
-  background: var(--fb-blue) !important;
-  border: 1px solid var(--fb-blue-strong);
-  color: #fff;
+.fb-btn-ghost:hover,
+.lk-btn-ghost:hover {
+  background: var(--bg-sunken);
+  color: var(--ink-1);
 }
 
-/* —— event-card 之类卡的左侧色条 → FB 蓝 —— */
-html[data-theme="fb2017"] .border-l-4.border-\[color\:var\(--brand\)\],
-html[data-theme="fb2017"] .border-l-4.border-\[color\:var\(--brand-strong\)\],
-html[data-theme="fb2017"] .border-l-2.border-\[color\:var\(--brand\)\] {
-  border-left-color: var(--fb-blue) !important;
+/* ── Inputs ── */
+.fb-input,
+.lk-input {
+  height: var(--control-h);
+  border-radius: var(--radius);
+  border: 1px solid var(--hairline-strong);
+  background: var(--paper);
+  padding: 0 var(--space-3);
+  font-size: var(--text-body);
+  color: var(--ink-1);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
 }
 
-/* —— 表单 input/textarea/select 在 fb 主题下统一 FB 输入框风 —— */
-html[data-theme="fb2017"] input[type="text"],
-html[data-theme="fb2017"] input[type="email"],
-html[data-theme="fb2017"] input[type="number"],
-html[data-theme="fb2017"] input[type="search"],
-html[data-theme="fb2017"] input[type="tel"],
-html[data-theme="fb2017"] input[type="url"],
-html[data-theme="fb2017"] textarea,
-html[data-theme="fb2017"] select {
-  border-radius: 2px;
-}
-html[data-theme="fb2017"] input:focus,
-html[data-theme="fb2017"] textarea:focus,
-html[data-theme="fb2017"] select:focus {
-  border-color: var(--fb-blue) !important;
-  box-shadow: 0 0 2px rgba(59,89,152,0.45) !important;
-  outline: none !important;
+.fb-input:focus,
+.lk-input:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: var(--shadow-focus);
 }
 
-/* —— 表单 label 收紧成 FB 风 13px/600 —— */
-html[data-theme="fb2017"] label.text-sm.font-semibold,
-html[data-theme="fb2017"] label.text-base.font-semibold {
-  font-size: 13px;
+textarea.fb-input,
+textarea.lk-input {
+  height: auto;
+  min-height: 5.5rem;
+  padding: var(--space-3);
+  line-height: var(--leading-body);
+}
+
+select.fb-input,
+select.lk-input {
+  appearance: auto;
+}
+
+/* ── Icon helpers ── */
+.lk-icon-sm { width: var(--icon-sm); height: var(--icon-sm); }
+.lk-icon { width: var(--icon); height: var(--icon); }
+.lk-icon-md { width: var(--icon-md); height: var(--icon-md); }
+.lk-icon-lg { width: var(--icon-lg); height: var(--icon-lg); }
+
+/* ── Progress ── */
+.lk-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.lk-progress-step {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: var(--text-caption);
   font-weight: 600;
-  color: var(--fb-ink-2);
+  color: var(--ink-4);
 }
 
-/* —— Lede（大段引言）在 fb 主题下 14/1.5，max 640 —— */
-html[data-theme="fb2017"] p.text-base.md\:text-md.leading-7,
-html[data-theme="fb2017"] p.text-sm.md\:text-base.leading-7 {
-  font-size: 14px;
-  line-height: 1.5;
-  max-width: 640px;
-  color: var(--fb-ink-2);
+.lk-progress-step.is-active { color: var(--brand); }
+.lk-progress-step.is-done { color: var(--success); }
+
+.lk-progress-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 9999px;
+  background: var(--hairline-strong);
 }
 
-/* —— priority disclosure 在 fb 主题下 padding/字号收紧（v5-D65 后是 header 不是 summary） —— */
-html[data-theme="fb2017"] .priority-disclosure .priority-disclosure-summary {
-  padding: 10px 14px;
-  font-size: 14px;
-  font-weight: 700;
+.lk-progress-step.is-active .lk-progress-dot { background: var(--brand); }
+.lk-progress-step.is-done .lk-progress-dot { background: var(--success); }
+
+.lk-progress-line {
+  flex: 1;
+  height: 2px;
+  background: var(--hairline);
+  max-width: 2rem;
 }
 
-/* —— 通用 Card padding 收紧（FB 卡 12-14px 内边） —— */
-html[data-theme="fb2017"] .p-5.md\:p-6 { padding: 14px; }
-html[data-theme="fb2017"] .p-6.md\:p-8 { padding: 16px; }
+.lk-progress-step.is-done + .lk-progress-line,
+.lk-progress-line.is-done { background: var(--success); }
 
-/* —— 移除剩余 hover 大幅上移效果 —— */
-html[data-theme="fb2017"] .hover\:-translate-y-0\.5:hover,
-html[data-theme="fb2017"] .hover\:-translate-y-1:hover {
-  transform: none;
+/* ── Portal 三栏栅格 ──
+   Column count MUST match rendered slots. A fixed 3-col template with only
+   main+right would place main into --rail-left (~11rem) and crush Chinese text. */
+.portal-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  width: 100%;
 }
 
-/* —— 关闭 group hover 上移（group-hover:gap-2 等微动效保留） —— */
-html[data-theme="fb2017"] .group:hover .group-hover\:-translate-y-px {
-  transform: none;
+@media (min-width: 1024px) {
+  .portal-grid {
+    display: grid;
+    align-items: start;
+    gap: var(--space-5);
+    /* default: main + right */
+    grid-template-columns: minmax(0, 1fr) var(--rail-right);
+  }
+
+  .portal-grid.portal-grid--no-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .portal-grid.portal-grid--no-left.portal-grid--no-right {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
-/* —— v4 圆形 chip 单选/多选样式 → FB 方形 —— */
-html[data-theme="fb2017"] .rounded-full.border-\[color\:var\(--hairline-strong\)\] {
-  border-radius: 2px;
+@media (min-width: 1280px) {
+  /* full three-slot only when left rail is actually rendered */
+  .portal-grid.portal-grid--with-left.portal-grid--with-right {
+    grid-template-columns: var(--rail-left) minmax(0, var(--content-max)) var(--rail-right);
+  }
+
+  .portal-grid.portal-grid--with-left.portal-grid--no-right {
+    grid-template-columns: var(--rail-left) minmax(0, 1fr);
+  }
+
+  .portal-grid.portal-grid--no-left.portal-grid--with-right {
+    grid-template-columns: minmax(0, 1fr) var(--rail-right);
+  }
 }
 
-/* ============================================================
-   FB-2017 · a11y 对比度修复层（v5-D118 2026-05-25）
-   背景：用户反馈"字体颜色与背景重合"，主要发生在：
-   1) fb-section-title (12px ink-3) 配 fb-action-bg 灰底，对比度临界
-   2) 11px text-[--fb-ink-3] / text-[--fb-ink-4] 在卡内灰条上几乎看不见
-   3) 标题栏 hairline 太浅，section header 与 body 分不开
-   策略：不动单个组件，在 css 尾部统一拉对比度。
-   ============================================================ */
-
-/* —— section 标题统一加深，从 ink-3 → ink-2，加粗到 700 —— */
-html[data-theme="fb2017"] .fb-section-title {
-  color: var(--fb-ink-2);
-  font-weight: 700;
-  letter-spacing: 0.02em;
+.portal-main {
+  min-width: 0;
+  max-width: 100%;
 }
 
-/* —— section header 条改白底 + 蓝顶线，告别灰底糊脸 —— */
-html[data-theme="fb2017"] .fb-card > .border-b.border-\[color\:var\(--fb-border\)\].bg-\[color\:var\(--fb-action-bg\)\] {
-  background: #fff !important;
-  border-bottom-color: var(--fb-border-strong) !important;
-  border-top: 2px solid var(--fb-blue);
-  border-top-left-radius: 3px;
-  border-top-right-radius: 3px;
+.portal-rail-left,
+.portal-rail-right {
+  min-width: 0;
 }
 
-/* —— 卡内 11px / 12px 元信息颜色加深，避免 ink-3 在白底/灰底两可的低对比 —— */
-html[data-theme="fb2017"] .text-\[11px\].text-\[color\:var\(--fb-ink-3\)\],
-html[data-theme="fb2017"] .text-\[11px\].font-semibold.text-\[color\:var\(--fb-ink-3\)\],
-html[data-theme="fb2017"] .text-\[12px\].text-\[color\:var\(--fb-ink-3\)\] {
-  color: var(--fb-ink-2) !important;
+@media (max-width: 1279px) {
+  .portal-rail-left { display: none; }
 }
 
-/* —— ink-4 在卡内提升到 ink-3（保持灰，但够清晰） —— */
-html[data-theme="fb2017"] .text-\[color\:var\(--fb-ink-4\)\] {
-  color: var(--fb-ink-3) !important;
+@media (max-width: 1023px) {
+  .portal-rail-right { order: 3; }
 }
 
-/* —— 链接文本加深、强化下划线信号 —— */
-html[data-theme="fb2017"] a.text-\[color\:var\(--fb-blue-link\)\] {
-  color: #1c3d8a;
+/* ── Section 区块 ── */
+.lk-section {
+  margin-bottom: var(--space-6);
+}
+
+.lk-section-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.lk-section-eyebrow {
+  font-size: var(--text-micro);
   font-weight: 600;
-}
-html[data-theme="fb2017"] a.text-\[color\:var\(--fb-blue-link\)\]:hover {
-  color: var(--fb-blue-deep);
-  text-decoration: underline;
-}
-
-/* —— 主标题再补一层保险：v4 渐变标题在 fb 主题完全 ink-1 —— */
-html[data-theme="fb2017"] .text-transparent {
-  color: var(--fb-ink-1) !important;
-  -webkit-text-fill-color: var(--fb-ink-1) !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
 }
 
-/* —— Hero 表单下两行 tips（"使用方法 / 填写 tips"）在白底卡里改 ink-2 —— */
-html[data-theme="fb2017"] section#analysis-form .text-\[12px\].text-\[color\:var\(--fb-ink-3\)\] {
-  color: var(--fb-ink-2) !important;
+.lk-section-title {
+  font-size: var(--text-subtitle);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  color: var(--ink-1);
+  line-height: var(--leading-tight);
 }
 
-/* —— 列表卡 hover 用浅蓝调，告别灰糊蓝 —— */
-html[data-theme="fb2017"] a.hover\:bg-\[color\:var\(--fb-action-bg\)\]:hover,
-html[data-theme="fb2017"] button.hover\:bg-\[color\:var\(--fb-action-bg\)\]:hover {
-  background: rgba(59, 89, 152, 0.06) !important;
+/* ── Content grids ── */
+.lk-grid-2 {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
 }
 
-/* —— 卡片顶 section title 行下方 1px 用 border-strong，不再吃显示器糊脸 —— */
-html[data-theme="fb2017"] .fb-card .border-b.border-\[color\:var\(--fb-border\)\] {
-  border-bottom-color: var(--fb-border-strong) !important;
+@media (min-width: 768px) {
+  .lk-grid-2 { grid-template-columns: repeat(2, 1fr); }
 }
 
-/* —— 段落主体行高、字重微调：14/1.55，避免 1.34 紧到看不清 —— */
-html[data-theme="fb2017"] p {
-  line-height: 1.55;
+.lk-grid-3 {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: 1fr;
 }
 
-/* —— 表单 placeholder 太浅 → 提高到 ink-3 —— */
-html[data-theme="fb2017"] input::placeholder,
-html[data-theme="fb2017"] textarea::placeholder {
-  color: var(--fb-ink-3);
-  opacity: 1;
+@media (min-width: 768px) {
+  .lk-grid-3 { grid-template-columns: repeat(3, 1fr); }
 }
 
-/* —— focus 描边蓝色加重，让键盘用户能看见 —— */
-html[data-theme="fb2017"] :focus-visible {
-  outline: 2px solid var(--fb-blue) !important;
-  outline-offset: 2px !important;
+/* ── Sticky CTA ── */
+.lk-sticky-cta {
+  position: sticky;
+  bottom: 0;
+  z-index: 40;
+  margin-top: 1rem;
+  padding: 0.75rem 0;
+  background: linear-gradient(180deg, transparent 0%, var(--bg) 30%);
 }
 
-/* —— 主按钮（fb-blue 实心）字号提到 14px、字距 0、padding 拉开 —— */
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand-strong\)\].text-white,
-html[data-theme="fb2017"] button.bg-\[color\:var\(--brand-strong\)\].text-white,
-html[data-theme="fb2017"] a.bg-\[color\:var\(--brand\)\].text-white,
-html[data-theme="fb2017"] button.bg-\[color\:var\(--brand\)\].text-white {
-  font-size: 14px !important;
-  letter-spacing: 0;
-  padding-left: 14px;
-  padding-right: 14px;
+/* ── Report reading surface (Notion-like section rhythm) ── */
+.lk-report-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
-/* —— 全站 secondary 按钮文字加重 —— */
-html[data-theme="fb2017"] .fb-btn { font-size: 13px; font-weight: 700; color: var(--fb-ink-1); }
-
-/* —— Hero h1 内嵌的强调蓝色 span 太亮，统一到 fb-blue-deep（更稳） —— */
-html[data-theme="fb2017"] section#analysis-form h1 .text-\[color\:var\(--fb-blue\)\] {
-  color: var(--fb-blue-deep) !important;
+.lk-report-section {
+  scroll-margin-top: var(--site-header-offset);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--hairline);
+  background: var(--paper);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
 }
+
+@media (min-width: 768px) {
+  .lk-report-section {
+    padding: var(--space-6);
+  }
+}
+
+.lk-report-section-title {
+  font-size: var(--text-subtitle);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  line-height: var(--leading-tight);
+  color: var(--ink-1);
+}
+
+.lk-report-prose {
+  font-size: 0.9375rem; /* 15px — reading comfort */
+  line-height: 1.65;
+  color: var(--ink-2);
+}
+
+.lk-report-prose-muted {
+  font-size: var(--text-body);
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+
+/* ── Ming 暗色图表区（仅 dashboard 内嵌） ── */
+.theme-ming {
+  --bg: var(--color-ming-bg);
+  color: var(--color-ming-text);
+  background-color: var(--color-ming-bg);
+}
+
+.premium-card {
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-ming-border);
+  background: var(--color-ming-surface);
+  padding: 1.5rem;
+  backdrop-filter: blur(8px);
+}
+
+.premium-card-gold {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(212, 168, 83, 0.2);
+  background: linear-gradient(135deg, rgba(212, 168, 83, 0.08) 0%, rgba(26, 26, 36, 1) 100%);
+  padding: 1.5rem;
+}
+
+.text-gold { color: var(--color-ming-gold); }
+.text-gold-bright { color: var(--color-ming-gold-bright); }
+.text-muted { color: var(--color-ming-text-dim); }
+.text-subtle { color: var(--color-ming-text-subtle); }
+
+.h1-premium {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  background: linear-gradient(135deg, var(--color-ming-gold) 0%, var(--color-ming-gold-bright) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.element-wood { color: var(--color-ming-wood); }
+.element-fire { color: var(--color-ming-fire); }
+.element-earth { color: var(--color-ming-earth); }
+.element-metal { color: var(--color-ming-metal); }
+.element-water { color: var(--color-ming-water); }
+
+.kline-up { color: var(--color-ming-accent-up); }
+.kline-down { color: var(--color-ming-accent-down); }
+
+.pillar-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-ming-border);
+  background: var(--color-ming-surface-light);
+  padding: 0.75rem;
+  min-width: 4.5rem;
+}
+
+.pillar-box .ganzhi { font-size: 1.125rem; font-weight: 700; }
+.pillar-box .nayin { font-size: 0.75rem; color: var(--color-ming-text-dim); }
+
+@keyframes pulse-gold {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.pulse-gold { animation: pulse-gold 2s ease-in-out infinite; }
+
+.heat-cell {
+  border-radius: 2px;
+  transition: transform 0.15s ease;
+}
+.heat-cell:hover { transform: scale(1.5); z-index: 10; }

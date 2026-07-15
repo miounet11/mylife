@@ -369,6 +369,19 @@ export interface FortuneAnalysisResult {
     dayMaster: string;
     pillars: Pillar[];
   };
+
+  /** 确定性用神真值（引擎输出；Agent 必须消费此字段而非自行重推） */
+  yongShen?: {
+    dayMaster?: string;
+    dayMasterElement?: string;
+    strength?: string;
+    strengthDesc?: string;
+    score?: number;
+    yongShen?: string[];
+    xiShen?: string[];
+    jiShen?: string[];
+    [key: string]: unknown;
+  } | null;
   
   // 五行分析
   fiveElements: FiveElements;

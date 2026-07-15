@@ -5,20 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 import { Suspense } from 'react';
-import {
-  Compass,
-  Layers,
-  Activity,
-  CalendarDays,
-  Target,
-  CheckCircle2,
-  LineChart,
-  ScrollText,
-  Bell,
-  Footprints,
-  Wrench,
-  BookOpen,
-} from 'lucide-react';
+import { Compass } from 'lucide-react';
 
 // 动态导入以减少首屏加载
 const TrustReport = NextDynamic(() => import('@/components/trust-report'), {
@@ -47,13 +34,13 @@ import {
   userOperations,
 } from '@/lib/database';
 import SiteFooter from '@/components/site-footer';
+import ReportMembershipPanel from '@/components/membership/report-membership-panel';
 import SiteHeader from '@/components/site-header';
 import ResultPublicControls from '@/components/result-public-controls';
 import PublicReportInteractionPanel from '@/components/public-report-interaction-panel';
 import ReportEnginePanel from '@/components/report-engine-panel';
 import ReportPremiumServices from '@/components/report-premium-services';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
-import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
 import SurfaceJourneyPanel from '@/components/surface-journey-panel';
 import UpdatesStatusPanel from '@/components/updates-status-panel';
 import ToolRecommendations from '@/components/tool-recommendations';
@@ -67,8 +54,6 @@ import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import ReportStageProgress from '@/components/report/report-stage-progress';
 import {
   PastPresentFutureRow,
-  ReadingPathPlanner,
-  ReportHighlightsGrid,
   ValidationFeedbackHero,
 } from '@/components/report/report-deep-summary-blocks';
 import PremiumTeaser from '@/components/premium-teaser';
@@ -80,11 +65,11 @@ import ReportRhythmTimeline from '@/components/report/report-rhythm-timeline';
 import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
-import ReportNextActions from '@/components/report/report-next-actions';
-import ReportReadingPath from '@/components/report/report-reading-path';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
 import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
-import ReportAnchorRail, { type ReportAnchorRailItem } from '@/components/report/report-anchor-rail';
+import ReportChapterDock, {
+  type ReportChapterDockItem,
+} from '@/components/report/report-chapter-dock';
 import ReportMetaSidebar from '@/components/report/report-meta-sidebar';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { resolveTimingProfileForFortune } from '@/lib/life-timing/resolve-timing-profile';
@@ -106,6 +91,13 @@ import {
   buildYearlyTrendSnapshots,
   buildYearlyRoadmap,
 } from '@/lib/report-v2';
+import { localizeElementList, presentReportText, withPresentedAdvice } from '@/lib/report-presentation';
+import { buildProReportView } from '@/lib/report-pro-view';
+import ProReportShell from '@/components/report-pro/pro-report-shell';
+import ProExpertBanner from '@/components/report-pro/pro-expert-banner';
+import ProUserCalibration from '@/components/report-pro/pro-user-calibration';
+import { buildExpertDeskView } from '@/lib/report-expert-view';
+import ExpertDesk from '@/components/report-expert/expert-desk';
 import { buildStateVectorData } from '@/lib/state-vector';
 import { ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
 import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
@@ -350,11 +342,20 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const summaryHref = entrySource
     ? `/r/${id}?source=${encodeURIComponent(entrySource)}`
     : `/r/${id}`;
-  const shouldShowFullReport = resolvedSearchParams.view === 'full';
-  if (!shouldShowFullReport) {
+  const viewParam = `${resolvedSearchParams.view || ''}`.trim().toLowerCase();
+  // 默认 / 空 / full = 正常用户主报告；classic|expert = 专业版细读；summary = 短摘要 /r
+  if (viewParam === 'summary' || viewParam === 'short') {
     const query = entrySource ? `?source=${encodeURIComponent(entrySource)}` : '';
     redirect(`/r/${encodeURIComponent(id)}${query}`);
   }
+  const isExpertOnly = viewParam === 'classic' || viewParam === 'expert' || viewParam === 'pro';
+  const isClassicOnly = isExpertOnly;
+  const expertHref = entrySource
+    ? `/result/${id}?view=expert&source=${encodeURIComponent(entrySource)}`
+    : `/result/${id}?view=expert`;
+  const massHref = entrySource
+    ? `/result/${id}?source=${encodeURIComponent(entrySource)}`
+    : `/result/${id}`;
   const currentUserId = await getCurrentUserId();
   const rawFortuneData = fortuneOperations.getById(id);
 
@@ -441,6 +442,36 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     expertInterpretation: result.expertInterpretation,
     yearlyTrendSnapshots: result.yearlyTrendSnapshots,
   });
+  const proReportView = buildProReportView({
+    result: result as any,
+    scenarioViews: result.scenarioViews,
+    monthlyWindows: result.monthlyWindows,
+    yearlyTrendSnapshots: result.yearlyTrendSnapshots,
+    expertInterpretation: result.expertInterpretation,
+    decisionPlaybook: result.decisionPlaybook,
+    cockpitHeadline: reportV4Sections.cockpit?.headline,
+  });
+  const expertDeskView = buildExpertDeskView({
+    result: result as any,
+    raw: {
+      birthDate: (rawFortuneData as any).birthDate || (rawFortuneData as any).birth_date,
+      birthTime: (rawFortuneData as any).birthTime || (rawFortuneData as any).birth_time,
+      birthPlace: (rawFortuneData as any).birthPlace || (rawFortuneData as any).birth_place,
+      timezone: (rawFortuneData as any).timezone,
+      gender: (rawFortuneData as any).gender,
+      name: (rawFortuneData as any).name,
+    },
+    dayun: (result as any).dayun || (rawFortuneData as any).dayun || null,
+    scenarioViews: result.scenarioViews,
+    stateVector: result.stateVector,
+    monthlyWindows: result.monthlyWindows,
+    decisionPlaybook: result.decisionPlaybook,
+    contextSignals:
+      (result as any).contextSignals ||
+      (result as any).analysis?.contextSignals ||
+      (rawFortuneData as any).analysis?.contextSignals ||
+      null,
+  });
   const premiumServiceOffers = buildPremiumServiceOffers({
     scenarioViews: result.scenarioViews,
     monthlyWindows: result.monthlyWindows,
@@ -522,22 +553,27 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     : '接下来应优先结合人生K线、当前大运和场景建议看清阶段主线。';
   const leadPlaybook = result.decisionPlaybook?.[0];
   const leadWindow = topMonthlyWindows[0];
-  const favoredElements = [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])].slice(0, 3);
+  const favoredElements = localizeElementList([
+    ...(result.advice?.yongShen || []),
+    ...(result.advice?.xiShen || []),
+  ]).slice(0, 3);
   const decisionEvidence = [
     result.pattern?.type
       ? `结构主轴：当前以 ${result.pattern.type} 为主判断。`
       : '',
     result.fortune?.currentDaYun
-      ? `阶段位置：当前行运落在 ${result.fortune.currentDaYun}。`
+      ? `阶段位置：当前行运落在 ${presentReportText(result.fortune.currentDaYun)}。`
       : '',
     favoredElements.length > 0
       ? `顺势重点：优先放大 ${favoredElements.join('、')} 对应动作。`
-      : result.confidence?.stablePoints?.[0] || '',
+      : presentReportText(result.confidence?.stablePoints?.[0] || ''),
   ].filter(Boolean).slice(0, 3);
   const decisionHeadline = compactCopy(
-    leadPlaybook?.whyNow
-      || currentStageSummary
-      || result.confidence?.summary
+    presentReportText(
+      leadPlaybook?.whyNow
+        || currentStageSummary
+        || result.confidence?.summary
+    )
   );
   const decisionWindowLabel = leadWindow
     ? `${leadWindow.label} · ${leadWindow.theme}`
@@ -675,8 +711,6 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,
   });
-  const coreSectionNames = ['总览', '当前阶段', '命局结构', '立即动作', '报告状态', '天时地利人和'];
-  const deferredSectionNames = ['可信报告', '专项服务', '订阅更新', '趋势图', '下一步', '延伸内容'];
   const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
   const enhancementStatusMessage = isEnhancementPending
     ? '当前先显示可读版，内容补全仍在继续，不需要反复刷新页面。'
@@ -709,21 +743,26 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     }
   };
 
-  // v5-D60 FB 2017 timeline 风：左 sticky 锚 rail
-  const anchorRailItems: ReportAnchorRailItem[] = [
-    { id: 'cockpit', label: '总览与下一步', icon: Compass },
-    { id: 'deep-report', label: '深入报告', icon: Layers },
-    { id: 'current-state', label: '当前状态', icon: Activity },
-    { id: 'trend', label: '趋势与节奏', icon: LineChart },
-    { id: 'scenario', label: '场景视图', icon: ScrollText },
-    { id: 'action-validation', label: '行动与验证', icon: Target },
-    { id: 'past-present-future', label: '过去 · 现在 · 未来', icon: CalendarDays },
-    { id: 'validation', label: '可信报告', icon: CheckCircle2 },
-    { id: 'subscription', label: '订阅与更新', icon: Bell },
-    { id: 'next-step', label: '下一步行动', icon: Footprints },
-    { id: 'tool-recommendations', label: '推荐工具', icon: Wrench },
-    { id: 'related-content', label: '延伸内容', icon: BookOpen },
-  ];
+  // 悬浮章节：Pro 一览优先；详细长文折叠时仍可跳转
+  // 只传可序列化字段（iconKey），禁止传 Lucide 组件函数给 Client Component
+  const chapterDockItems: ReportChapterDockItem[] = isClassicOnly
+    ? [
+        { id: 'expert-desk', label: '排盘', iconKey: 'layers' },
+        { id: 'ex-dayun', label: '大运', iconKey: 'calendar' },
+        { id: 'ex-cosmos', label: '时空', iconKey: 'compass' },
+        { id: 'ex-domains', label: '专项', iconKey: 'target' },
+        { id: 'ex-probe', label: '点盘', iconKey: 'check' },
+        { id: 'ex-print', label: '打印', iconKey: 'bell' },
+      ]
+    : [
+        { id: 'pro-action', label: '行动', iconKey: 'target' },
+        { id: 'pro-guide', label: '结论', iconKey: 'compass' },
+        { id: 'pro-kline', label: 'K线', iconKey: 'layers' },
+        { id: 'pro-overview', label: '总评', iconKey: 'check' },
+        { id: 'pro-elements', label: '喜用', iconKey: 'layers' },
+        { id: 'pro-time', label: '时间', iconKey: 'calendar' },
+        { id: 'pro-calibration', label: '校准', iconKey: 'bell' },
+      ];
 
   // v5-D60 右栏元数据
   const modelChainLabel = result.orchestration?.mode
@@ -767,51 +806,74 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       {/* v5-B5: 追问建议补全（fire-and-forget，不阻塞渲染） */}
       <ReportFollowupAugmenterTrigger reportId={id} shouldTrigger={shouldTriggerAugmenter} />
 
-      <main className="page-frame py-6 pb-16 md:py-8 md:pb-20">
+      <main className="page-frame py-6 pb-24 md:py-8 md:pb-20">
         <ReportSurface>
-          {/* v5-D60 FB 2017 timeline 三栏布局：左 rail / 中阅读流 / 右 meta sidebar */}
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[160px_minmax(0,760px)_260px] 2xl:grid-cols-[180px_minmax(0,820px)_280px]">
-            <div className="lg:col-span-2 xl:col-span-1">
-              <ReportAnchorRail items={anchorRailItems} title="这份报告" />
-            </div>
+          {/* 章节导航悬浮，不占左栏；正文 + 右侧 meta */}
+          <ReportChapterDock items={chapterDockItems} title="报告章节" />
 
-            <div className="min-w-0 space-y-5 md:space-y-6">
-              <section className="fb-card border-t-2 border-t-[#3b5998] p-4 md:p-6">
-                <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
-                  <div>
-                    <div className="text-xs font-bold uppercase tracking-[0.14em] text-[#3b5998]">
-                      完整版 · 深入报告
-                    </div>
-                    <h2 className="mt-2 text-[22px] font-bold leading-[1.28] text-[color:var(--ink-1)] md:text-[28px]">
-                      这里是完整内容，不只是时间地图摘要。
-                    </h2>
-                    <p className="mt-2 max-w-2xl text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
-                      下面会展开个人结构总览、深入命理细节、行动建议和验证闭环。想先看未来 30 天 / 12 个月 / 5 年关键时点，可以回到摘要版。
-                    </p>
-                  </div>
+          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:max-w-[1100px] 2xl:mx-auto">
+            <div className="min-w-0 space-y-4 md:space-y-5">
+              {!isClassicOnly ? (
+                <>
+                  <ProReportShell
+                    view={proReportView}
+                    klineData={result.klineData}
+                    summaryHref={summaryHref}
+                    expertHref={expertHref}
+                    publicName={publicName}
+                    reportId={id}
+                    canManage={canManage}
+                    birthYear={(() => {
+                      const raw =
+                        (rawFortuneData as any).birthDate ||
+                        (rawFortuneData as any).birth_date ||
+                        (result.basic as any)?.birthDate ||
+                        '';
+                      const m = String(raw).match(/^(\d{4})/);
+                      return m ? Number(m[1]) : undefined;
+                    })()}
+                    currentDayun={
+                      (result as any).dayun?.currentDayun ||
+                      (result as any).dayun?.current ||
+                      expertDeskView?.dayun?.current ||
+                      null
+                    }
+                    currentDaYunText={
+                      (result as any).fortune?.currentDaYun ||
+                      proReportView.subtitle ||
+                      ''
+                    }
+                    birthTimeUncertain={(() => {
+                      const t = String(
+                        (rawFortuneData as any).birthTime ||
+                          (result.basic as any)?.birthTime ||
+                          ''
+                      ).trim();
+                      if (!t || /未知|不详|不清楚|noon|12:00|12：00/.test(t)) return true;
+                      const certainty = (result.analysis as any)?.birthTimeCertainty;
+                      if (certainty === 'low' || certainty === 'unknown') return true;
+                      return false;
+                    })()}
+                  />
+                  <ProUserCalibration
+                    reportId={id}
+                    canManage={canManage}
+                    pastEventTemplates={result.analysis?.pastEventTemplates || []}
+                  />
+                  <ProExpertBanner mode="entry" expertHref={expertHref} />
+                </>
+              ) : (
+                <ProExpertBanner mode="header" massHref={massHref} />
+              )}
 
-                  <div className="flex flex-col gap-2 md:min-w-[220px]">
-                    <a
-                      href="#deep-report"
-                      className="fb-btn fb-btn-primary inline-flex items-center justify-center"
-                    >
-                      直接看深入报告
-                    </a>
-                    <Link
-                      href={summaryHref}
-                      className="inline-flex items-center justify-center rounded-[3px] border border-[color:var(--hairline)] px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-3)] transition hover:bg-[#e9ebee] hover:text-[#3b5998]"
-                    >
-                      回到摘要版
-                    </Link>
-                  </div>
-                </div>
+              {/* 专业版：排盘工作台为主；仅 view=expert|classic|pro */}
+              {isClassicOnly ? (
+              <div id="classic-report" className="scroll-mt-header space-y-4 md:space-y-5">
+              <ExpertDesk desk={expertDeskView} klineData={result.klineData} reportId={id} />
 
-                <div className="mt-4 grid gap-2 text-[12px] font-semibold text-[color:var(--ink-3)] md:grid-cols-3">
-                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">完整报告：结构总览</div>
-                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">深入细节：节奏与场景</div>
-                  <div className="rounded-[3px] bg-[#f6f7f9] px-3 py-2">下一步：行动与验证</div>
-                </div>
-              </section>
+              <div className="rounded-[10px] border border-dashed border-[#94a3b8] bg-[#f8fafc] px-4 py-3 text-[12px] text-[#64748b]">
+                以下为报告叙述层（驾驶舱 / 场景 / 证据），可与上方排盘交叉验证。
+              </div>
 
               <div className="fb-card overflow-hidden">
                 <ReportCover
@@ -820,38 +882,47 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     ? `${(result.basic as any).birthDate}${
                         (result.basic as any).birthTime ? ' ' + (result.basic as any).birthTime : ''
                       }`
+                    : rawFortuneData.birthDate
+                      ? `${rawFortuneData.birthDate}${rawFortuneData.birthTime ? ` ${rawFortuneData.birthTime}` : ''}`
                     : undefined}
-                  birthLocation={canManage ? (result.basic as any)?.birthPlace || undefined : undefined}
-                  pillarSummary={
-                    result.basic && (result.basic as any).year && (result.basic as any).month
-                      ? `${(result.basic as any).year} ${(result.basic as any).month} ${(result.basic as any).day} ${(result.basic as any).hour}`
+                  birthLocation={
+                    canManage
+                      ? (result.basic as any)?.birthPlace || rawFortuneData.birthPlace || undefined
                       : undefined
+                  }
+                  pillarSummary={
+                    expertDeskView.pillars.map((p) => p.ganZhi).join(' ') ||
+                    (result.basic && (result.basic as any).year && (result.basic as any).month
+                      ? `${(result.basic as any).year} ${(result.basic as any).month} ${(result.basic as any).day} ${(result.basic as any).hour}`
+                      : undefined)
                   }
                   qualityTier={deliveryTierLabel}
                 />
               </div>
 
-              <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-6">
-                <div className="fb-section-title text-[16px] font-bold text-[color:var(--ink-1)]">
-                  个人结构总览
-                </div>
-
-                <div className="mt-2 flex flex-wrap items-center gap-2 text-[12px] font-semibold text-[color:var(--ink-4)]">
-                  {isEnhancementPending ? (
-                    <span className="rounded-[3px] bg-[color:var(--signal-soft)] px-2 py-0.5 text-[color:var(--signal-strong)]">
-                      内容补全中
+              {/* ① 核心结论：只保留驾驶舱 + 一条紧凑行动条 */}
+              <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
+                    专业① 核心结论（排盘研判）
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
+                    {isEnhancementPending ? (
+                      <span className="rounded-[3px] bg-[color:var(--signal-soft)] px-2 py-0.5 text-[color:var(--signal-strong)]">
+                        内容补全中
+                      </span>
+                    ) : null}
+                    <span className="rounded-[3px] bg-[#f6f7f9] px-2 py-0.5">
+                      {`${result.llmUsed ? '内容已完善' : '基础可读版'} · ${deliveryTierLabel}`}
                     </span>
-                  ) : null}
-                  <span>
-                    {`${result.llmUsed ? '内容已完善' : '基础可读版'} · ${deliveryTierLabel}`}
-                  </span>
+                  </div>
                 </div>
 
-                <h1 className="mt-3 max-w-4xl text-[22px] md:text-[26px] font-bold leading-[1.34] text-[color:var(--ink-1)]">
+                <h1 className="mt-2.5 max-w-4xl text-[20px] font-bold leading-[1.35] text-[color:var(--ink-1)] md:text-[24px]">
                   {reportV4Sections.cockpit.headline || `${publicName}当前最重要的，`}
                 </h1>
 
-                <div className="mt-4">
+                <div className="mt-3">
                   <ReportCockpit
                     section={reportV4Sections.cockpit}
                     reportId={id}
@@ -868,9 +939,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   />
                 </div>
 
-                {/* v5-A3 (2026-05-08) basic 报告仍在补强时，明确告诉用户 */}
                 {isEnhancementPending ? (
-                  <div className="mt-4">
+                  <div className="mt-3">
                     <DegradeNotice
                       pending={isEnhancementPending}
                       lastError={upgradeJob?.lastError}
@@ -879,110 +949,210 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   </div>
                 ) : null}
 
-                <div className="mt-4">
-                  <ReportReadingPath
-                    route={layeredReportJourney}
-                    reportId={id}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                  />
+                {/* 紧凑跳转，不再堆叠完整 ReadingPath / NextActions 双模块 */}
+                <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-3">
+                  <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                    下一步 → 看时间地图
+                  </a>
+                  <a href="#deep-structure" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
+                    或 → 看结构节奏
+                  </a>
+                  <a href={reportChatHref} className="rounded-[3px] border border-[#3b5998]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                    {sourceCtaStrategy.reportPrimaryLabel || '去 AI 深问'}
+                  </a>
                 </div>
-
-                <div className="mt-4">
-                  <ReportNextActions
-                    reportId={id}
-                    chatHref={reportChatHref}
-                    eventsHref={`/events?reportId=${encodeURIComponent(id)}`}
-                    deepReportHref={layeredReportJourney.primaryAction.href}
-                    toolHref={primaryToolRoute?.href}
-                    actionSuggestionCount={result.actionSuggestions?.length || 0}
-                    pastEventTemplateCount={result.analysis?.pastEventTemplates?.length || 0}
-                    followupQuestion={reportFollowupQuestion}
-                    title={entrySource ? `先接住“${sourceContext.shortLabel}”带回来的这次回访` : undefined}
-                    description={entrySource ? sourceContext.reportDescription : undefined}
-                    deepReportLabel={layeredReportJourney.primaryAction.label}
-                    toolLabel={primaryToolRoute ? `进入${primaryToolRoute.categoryLabel}` : undefined}
-                    chatLabel={sourceCtaStrategy.reportPrimaryLabel}
-                    eventLabel={sourceCtaStrategy.reportEventLabel}
-                    pastEventLabel={sourceCtaStrategy.reportPastEventLabel}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                  />
-                </div>
-
-                {/* v5-D38 时间地图 Tab：30d / 12m / 5y 一键切换 */}
-                {timingRecord ? (
-                  <div className="mt-4">
-                    <ReportTimingTabs record={timingRecord} />
-                  </div>
-                ) : null}
               </section>
 
-              <section id="deep-report" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-6">
-                <header className="border-b border-[color:var(--hairline)] pb-4">
-                  <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-                    <div>
-                      <div className="fb-section-title text-[16px] font-bold text-[color:var(--ink-1)]">深入报告</div>
-                      <p className="mt-1 max-w-2xl text-[13px] leading-[1.5] text-[color:var(--ink-4)]">
-                        改成两区阅读：左边看结构和节奏，右边看行动和验证。别把所有模块像流水账一样往下堆。
-                      </p>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 text-xs font-bold text-[color:var(--ink-3)] md:min-w-[260px]">
-                      <a href="#deep-structure" className="rounded-[3px] border border-[#3b5998]/30 bg-[#f6f7f9] px-3 py-2 text-center text-[#3b5998]">
-                        01 结构节奏
-                      </a>
-                      <a href="#deep-action" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-center hover:bg-[#f6f7f9]">
-                        02 行动验证
-                      </a>
-                    </div>
+              {/* ② 时间地图：独立成章，不再塞进结论卡 */}
+              {timingRecord ? (
+                <section id="timing-map" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                  <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
+                    ② 时间地图
                   </div>
-                </header>
-
-                <div className="mt-4 grid gap-4 xl:grid xl:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] xl:items-start">
-                  <div id="deep-structure" className="min-w-0 scroll-mt-header space-y-3">
-                    <div className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
-                      <div className="text-[12px] font-bold text-[#3b5998]">01 · 结构节奏</div>
-                      <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                        先看命盘底层结构、阶段节奏和当前运行状态。
-                      </p>
-                    </div>
-
-                    <div id="trend" className="grid gap-3 scroll-mt-header">
-                      <LifeKLineSummaryCard
-                        section={reportV4Sections.lifeKLine}
-                        klineData={result.klineData}
-                      />
-                      <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
-                    </div>
-
-                    <div id="overview" className="scroll-mt-header">
-                      <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
-                    </div>
-
-                    <div id="current-state" className="scroll-mt-header">
-                      <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
-                    </div>
-
-                    <div id="scenario" className="scroll-mt-header">
-                      <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
-                    </div>
+                  <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                    未来 30 天 / 12 个月 / 5 年关键时点。先定位窗口，再读结构细节。
+                  </p>
+                  <div className="mt-3">
+                    <ReportTimingTabs record={timingRecord} />
                   </div>
+                </section>
+              ) : null}
 
-                  <aside id="deep-action" className="min-w-0 scroll-mt-header space-y-3 xl:sticky sticky-top-header">
-                    <div className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
-                      <div className="text-[12px] font-bold text-[#3b5998]">02 · 行动验证</div>
-                      <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                        再看下一步怎么做、怎么验证、哪些信息值得继续追问。
-                      </p>
-                    </div>
+              {/* ③ 结构节奏：单列清晰阅读（宽屏再双列） */}
+              <section id="deep-structure" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
+                  ③ 结构与节奏
+                </div>
+                <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                  命盘底层、阶段节奏、当前状态与四场景判断。同一结论只在这里展开一次。
+                </p>
+                <div className="mt-3 space-y-3">
+                  <div id="trend" className="scroll-mt-header space-y-3">
+                    <LifeKLineSummaryCard
+                      section={reportV4Sections.lifeKLine}
+                      klineData={result.klineData}
+                    />
+                    <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
+                  </div>
+                  <div id="overview" className="scroll-mt-header">
+                    <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
+                  </div>
+                  <div id="current-state" className="scroll-mt-header">
+                    <ReportCurrentState section={reportV4Sections.currentOperatingSystem} />
+                  </div>
+                  <div id="scenario" className="scroll-mt-header">
+                    <ReportScenarioPanels section={reportV4Sections.scenarioPanels} />
+                  </div>
+                </div>
+              </section>
 
-                    <div id="action-validation" className="grid gap-3 scroll-mt-header">
-                      <ReportActionBoard section={reportV4Sections.actionBoard} />
-                      <ReportValidationPanel section={reportV4Sections.validationLayer} />
-                    </div>
+              {/* ④ 行动方案：只放行动/验证/阶段，不塞专项推销 */}
+              <section id="deep-action" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
+                  ④ 行动与验证
+                </div>
+                <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                  对应「治疗方案 / 干预建议」：先做什么、不做什么，以及可信度与阶段进度。
+                </p>
+                <div id="action-validation" className="mt-3 space-y-3 scroll-mt-header">
+                  <ReportActionBoard section={reportV4Sections.actionBoard} />
+                  <ReportValidationPanel section={reportV4Sections.validationLayer} />
+                </div>
+                <div id="past-present-future" className="mt-3 scroll-mt-header">
+                  <PastPresentFutureRow
+                    past={pastValidationBlock}
+                    present={presentDiagnosisBlock}
+                    future={futureGuidanceBlock}
+                  />
+                </div>
+                <div className="mt-3">
+                  <ReportStageProgress
+                    ladder={reportStageLadder}
+                    current={currentStageLadderItem}
+                    next={nextStageLadderItem}
+                    qualityAudit={qualityAudit}
+                    llmUsed={result.llmUsed}
+                    isEnhancementPending={isEnhancementPending}
+                    enhancementStatusMessage={enhancementStatusMessage}
+                    upgradeStatus={upgradeJob?.status}
+                    upgradeStatusLabel={upgradeStatusLabel}
+                  />
+                </div>
+                {canManage ? (
+                  <div className="mt-3">
+                    <ValidationFeedbackHero
+                      toneClass={feedbackHeroTone}
+                      label={feedbackHeroLabel}
+                      validationInsights={validationInsights}
+                      correctionInsight={correctionInsight}
+                    />
+                  </div>
+                ) : null}
+                <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2">
+                  <a href="#event-samples" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                    下一步 → 样本回填校准
+                  </a>
+                  <a href="#services" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
+                    或 → 回访与专项服务
+                  </a>
+                </div>
+              </section>
 
-                    {/* v5-D1: 主报告读完后的专项服务 teaser */}
-                    {primaryPremiumOffer ? (
+              {/* ⑤ 样本回填：从窄侧栏挪到正文，避免中文竖排与碎片感 */}
+              {(result.actionSuggestions?.length || result.analysis?.pastEventTemplates?.length) ? (
+                <section id="event-samples" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                  <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
+                    ⑤ 样本回填
+                  </div>
+                  <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+                    对应「病史核对 / 基线样本」：把报告判断与真实经历对齐，供后续纠偏。
+                  </p>
+                  <div className="mt-4">
+                    <ReportEventCapture
+                      reportId={id}
+                      suggestions={result.actionSuggestions || []}
+                      pastEventTemplates={result.analysis?.pastEventTemplates || []}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
+                      variant="document"
+                    />
+                  </div>
+                </section>
+              ) : null}
+
+              {/* 分享与公开：轻量条，不打断主阅读流 */}
+              <div className="space-y-3">
+                <PublicReportInteractionPanel
+                  reportId={id}
+                  publicName={publicName}
+                  canManage={canManage}
+                  isPublic={result.isPublic}
+                  reportChatHref={reportChatHref}
+                  toolHref={primaryToolRoute?.href}
+                />
+                <ResultPublicControls
+                  reportId={id}
+                  initialIsPublic={result.isPublic}
+                  canManage={canManage}
+                  publicName={publicName}
+                  deliveryTierLabel={deliveryTierLabel}
+                  summary={currentStageSummary}
+                  nextFocusSummary={nextFocusSummary}
+                  highlights={reportHighlights}
+                />
+              </div>
+
+              {/* ⑥ 证据附录 */}
+              <ResultDeferredSection
+                id="validation"
+                title="⑥ 证据附录"
+                description="四柱、五行、大运、窗口与可信度——技术细节放在结论之后，默认按需展开。"
+                delayMs={0}
+              >
+                <Suspense fallback={<ReportSkeleton />}>
+                  <TrustReport
+                    result={{
+                      ...withPresentedAdvice(result as any),
+                      validationInsights,
+                      correctionInsight,
+                    }}
+                  />
+                </Suspense>
+              </ResultDeferredSection>
+              </div>
+              ) : null}
+
+              {/* 回访与服务：正常页与专业版均可 */}
+              <div id="services" className="scroll-mt-header space-y-4">
+                <div className="fb-card border-t-2 border-t-[#3b5998] px-4 py-3 md:px-5">
+                  <div className="text-[15px] font-bold text-[color:var(--ink-1)]">回访与服务</div>
+                  <p className="mt-0.5 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
+                    读完主判断后再处理：会员权限、深度专项、订阅提醒与延伸工具。
+                  </p>
+                </div>
+
+                <div className="fb-card p-4 md:p-5">
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">会员与权限</div>
+                  <div className="mt-3">
+                    <ReportMembershipPanel reportId={id} source="result_full_report" />
+                  </div>
+                </div>
+
+                <div id="premium" className="fb-card scroll-mt-header p-4 md:p-5">
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">深度专项服务</div>
+                  <div className="mt-3">
+                    <ReportPremiumServices
+                      reportId={id}
+                      canManage={canManage}
+                      offers={premiumServiceOffers}
+                      initialEmail={initialPremiumEmail}
+                      initialRequests={initialPremiumRequests}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
+                    />
+                  </div>
+                  {primaryPremiumOffer ? (
+                    <div className="mt-4 border-t border-[color:var(--hairline)] pt-3">
                       <PremiumTeaser
                         reportId={id}
                         offer={primaryPremiumOffer}
@@ -990,138 +1160,35 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                         ctaStrategyKey={sourceCtaStrategy.strategyKey}
                         sourceFamily={sourceCtaStrategy.sourceFamily}
                       />
-                    ) : null}
-
-                    <div id="past-present-future" className="scroll-mt-header">
-                      <PastPresentFutureRow
-                        past={pastValidationBlock}
-                        present={presentDiagnosisBlock}
-                        future={futureGuidanceBlock}
-                      />
                     </div>
+                  ) : null}
+                </div>
 
-                    <ReportStageProgress
-                      ladder={reportStageLadder}
-                      current={currentStageLadderItem}
-                      next={nextStageLadderItem}
-                      qualityAudit={qualityAudit}
-                      llmUsed={result.llmUsed}
-                      isEnhancementPending={isEnhancementPending}
-                      enhancementStatusMessage={enhancementStatusMessage}
-                      upgradeStatus={upgradeJob?.status}
+                <div id="subscription" className="fb-card scroll-mt-header p-4 md:p-5">
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">订阅与更新</div>
+                  <div className="mt-3">
+                    <ReportSubscriptionPanel
+                      reportId={id}
+                      canManage={canManage}
+                      deliveryTierLabel={deliveryTierLabel}
+                      qualityScore={qualityAudit?.overallScore}
+                      qualityGrade={qualityAudit?.grade}
+                      targetAchieved={qualityAudit?.targetAchieved}
                       upgradeStatusLabel={upgradeStatusLabel}
+                      monthlyHighlights={topMonthlyWindows}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
                     />
-
-                    {canManage ? (
-                      <ValidationFeedbackHero
-                        toneClass={feedbackHeroTone}
-                        label={feedbackHeroLabel}
-                        validationInsights={validationInsights}
-                        correctionInsight={correctionInsight}
-                      />
-                    ) : null}
-
-                    <ReportHighlightsGrid items={reportHighlights} />
-
-                    <ReadingPathPlanner
-                      coreSectionNames={coreSectionNames}
-                      deferredSectionNames={deferredSectionNames}
-                    />
-                  </aside>
+                  </div>
                 </div>
-              </section>
 
-              {/* v5-D38 继续探索导航 */}
-              <div>
-                <ReportContinueExplorationNav reportId={id} />
-              </div>
-
-              <ProductSurfaceRolePanel
-                surface="result"
-                title="结果页先解决阅读顺序，再进入深入判断"
-                description="这一页不把所有命理内容一次性摊开，而是先让用户看懂主判断和下一步动作，再按追问、工具、事件验证逐层深入。"
-                compact
-              />
-
-              <PublicReportInteractionPanel
-                reportId={id}
-                publicName={publicName}
-                canManage={canManage}
-                isPublic={result.isPublic}
-                reportChatHref={reportChatHref}
-                toolHref={primaryToolRoute?.href}
-              />
-
-              <ResultPublicControls
-                reportId={id}
-                initialIsPublic={result.isPublic}
-                canManage={canManage}
-                publicName={publicName}
-                deliveryTierLabel={deliveryTierLabel}
-                summary={currentStageSummary}
-                nextFocusSummary={nextFocusSummary}
-                highlights={reportHighlights}
-              />
-
-              <ResultDeferredSection
-                id="validation"
-                title="可信报告与验证"
-                description="把这份报告放回真实事件中持续验证，帮助你区分哪些判断已经落地，哪些还需要校正。"
-                delayMs={0}
-              >
-                <Suspense fallback={<ReportSkeleton />}>
-                  <TrustReport result={{ ...result, validationInsights, correctionInsight }} />
-                </Suspense>
-              </ResultDeferredSection>
-
-              <ResultDeferredSection
-                id="premium"
-                title="专项服务"
-                description="当主报告已经指出方向，这里承接更聚焦的专项判断和深度服务需求。"
-                delayMs={180}
-              >
-                <div className="scroll-mt-header">
-                  <ReportPremiumServices
-                    reportId={id}
-                    canManage={canManage}
-                    offers={premiumServiceOffers}
-                    initialEmail={initialPremiumEmail}
-                    initialRequests={initialPremiumRequests}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                  />
-                </div>
-              </ResultDeferredSection>
-
-              <ResultDeferredSection
-                id="subscription"
-                title="订阅与更新"
-                description="把后续月度提醒、内容更新和邮件留存接回这份主报告，方便你持续复访。"
-                delayMs={320}
-              >
-                <div className="scroll-mt-header">
-                  <ReportSubscriptionPanel
-                    reportId={id}
-                    canManage={canManage}
-                    deliveryTierLabel={deliveryTierLabel}
-                    qualityScore={qualityAudit?.overallScore}
-                    qualityGrade={qualityAudit?.grade}
-                    targetAchieved={qualityAudit?.targetAchieved}
-                    upgradeStatusLabel={upgradeStatusLabel}
-                    monthlyHighlights={topMonthlyWindows}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                  />
-                </div>
-              </ResultDeferredSection>
-
-              <ResultDeferredSection
-                id="next-step"
-                title="下一步行动"
-                description="把这份报告转成接下来最值得执行、验证和复盘的几个动作，而不是停在阅读层。"
-                delayMs={620}
-              >
-                <div className="scroll-mt-header">
+                <div id="next-step" className="fb-card scroll-mt-header space-y-4 p-4 md:p-5">
+                  <div>
+                    <div className="text-[13px] font-bold text-[color:var(--ink-1)]">延伸与下一步</div>
+                    <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
+                      可执行清单、路径与延伸阅读，按需展开。
+                    </p>
+                  </div>
                   <Suspense fallback={<GuideSkeleton />}>
                     <NextStepGuide
                       reportId={id}
@@ -1132,49 +1199,41 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       sourceFamily={sourceCtaStrategy.sourceFamily}
                     />
                   </Suspense>
-                </div>
-              </ResultDeferredSection>
-
-              <SurfaceJourneyPanel
-                journey={reportJourney}
-                title={reportJourneyCopy.title}
-                description={reportJourneyCopy.description}
-                badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
-              />
-
-              <div id="tool-recommendations" className="scroll-mt-header">
-                <ToolRecommendations
-                  report={experienceReport}
-                  page={`/result/${id}`}
-                  title="推荐单项工具"
-                  description="根据这份主报告的结构和当前重点，优先给出最值得继续细化的单项工具。"
-                  enableQuickStart
-                  source={entrySource || `result_report:${id}`}
-                  ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                  sourceFamily={sourceCtaStrategy.sourceFamily}
-                />
-              </div>
-
-              <div id="related-content" className="scroll-mt-header">
-                <ResultDeferredSection
-                  title="延伸内容"
-                  description="把相关知识、案例和后续阅读接到这份报告后面，方便你继续补全判断上下文。"
-                  delayMs={760}
-                >
-                  <RelatedContent
-                    source={entrySource || `result_report:${id}`}
-                    reportContext={{
-                      pillars: [
-                        result.pattern?.type,
-                        result.fortune?.currentDaYun,
-                        ...(result.advice?.yongShen || []),
-                      ].filter(Boolean) as string[],
-                      themes: ['career', 'wealth', 'relationship', 'health', 'timing', 'kline'],
-                      agentModules: ['core_constitution', 'career_wealth', 'strategy_advisor', 'temporal_spatial_advisor'],
-                      yongShen: [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])],
-                    }}
+                  <ReportContinueExplorationNav reportId={id} />
+                  <SurfaceJourneyPanel
+                    journey={reportJourney}
+                    title={reportJourneyCopy.title}
+                    description={reportJourneyCopy.description}
+                    badge={entrySource ? `${sourceContext.guidanceLabel} · 来源已保留` : undefined}
                   />
-                </ResultDeferredSection>
+                  <div id="tool-recommendations" className="scroll-mt-header">
+                    <ToolRecommendations
+                      report={experienceReport}
+                      page={`/result/${id}`}
+                      title="推荐单项工具"
+                      description="根据这份主报告的结构和当前重点，优先给出最值得继续细化的单项工具。"
+                      enableQuickStart
+                      source={entrySource || `result_report:${id}`}
+                      ctaStrategyKey={sourceCtaStrategy.strategyKey}
+                      sourceFamily={sourceCtaStrategy.sourceFamily}
+                    />
+                  </div>
+                  <div id="related-content" className="scroll-mt-header">
+                    <RelatedContent
+                      source={entrySource || `result_report:${id}`}
+                      reportContext={{
+                        pillars: [
+                          result.pattern?.type,
+                          result.fortune?.currentDaYun,
+                          ...(result.advice?.yongShen || []),
+                        ].filter(Boolean) as string[],
+                        themes: ['career', 'wealth', 'relationship', 'health', 'timing', 'kline'],
+                        agentModules: ['core_constitution', 'career_wealth', 'strategy_advisor', 'temporal_spatial_advisor'],
+                        yongShen: [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])],
+                      }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1194,6 +1253,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 canManage={canManage}
                 reportVersion={result.reportVersion || 'v1'}
                 llmUsed={result.llmUsed}
+                agenticUsed={!!result.agenticUsed || !!result.analysis?.agenticUsed}
                 consistencyScore={result.verify?.consistencyScore}
                 verifyVerdict={result.verify?.verdict}
                 qualityAudit={result.qualityAudit}
@@ -1201,6 +1261,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 generatedFrom={result.generatedFrom}
                 engineBuilds={result.engineBuilds || ENGINE_BUILD_VERSIONS}
                 enhancementNotes={canManage ? (result.enhancementNotes || []) : []}
+                orchestration={result.orchestration || result.analysis?.orchestration}
                 feedbackLoop={result.analysis?.feedbackLoop}
               />
 
@@ -1217,17 +1278,18 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 />
               ) : null}
 
+              {/* 侧栏只放轻量元信息；事件回填已迁到正文⑤，避免 260px 窄栏竖排 */}
               {stateVectorCards.length > 0 && (
                 <div className="fb-card p-4">
                   <div className="flex items-center gap-2">
                     <Compass className="h-4 w-4 text-[#3b5998]" />
                     <div className="text-[14px] font-bold text-[color:var(--ink-1)]">天时地利人和</div>
                   </div>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                  <div className="mt-3 grid grid-cols-3 gap-2">
                     {stateVectorCards.map((item) => (
-                      <div key={item.label} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-2 py-2 text-center">
-                        <div className="text-xs text-[color:var(--ink-4)] tracking-[0.14em]">{item.label}</div>
-                        <div className="mt-1 text-[18px] font-bold text-[#3b5998]">{item.value.toFixed(1)}</div>
+                      <div key={item.label} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-1.5 py-2 text-center">
+                        <div className="text-[10px] text-[color:var(--ink-4)] tracking-[0.08em]">{item.label}</div>
+                        <div className="mt-1 text-[16px] font-bold tabular-nums text-[#3b5998]">{item.value.toFixed(1)}</div>
                       </div>
                     ))}
                   </div>
@@ -1235,39 +1297,25 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[#3b5998]">
-                          {`参考权威度 ${referenceAuthority.authorityScore}`}
+                          {`权威度 ${referenceAuthority.authorityScore}`}
                         </span>
                         <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
                           {`来源 ${referenceAuthority.sourceCount}`}
                         </span>
-                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
-                          {`经典 ${referenceAuthority.classicBookCount}`}
-                        </span>
                       </div>
                       {referenceLeadDirective ? (
-                        <div className="mt-2 text-[12px] leading-[1.5] text-[color:var(--ink-1)]">{referenceLeadDirective}</div>
-                      ) : null}
-                      {referenceSignals.length > 0 ? (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {referenceSignals.map((signal) => (
-                            <span key={signal} className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs text-[color:var(--ink-2)]">
-                              {signal}
-                            </span>
-                          ))}
-                        </div>
+                        <div className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-1)] break-words">{referenceLeadDirective}</div>
                       ) : null}
                     </div>
                   ) : null}
+                  <a
+                    href={isClassicOnly ? '#event-samples' : '#pro-calibration'}
+                    className="mt-3 flex h-9 items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]"
+                  >
+                    {isClassicOnly ? '去样本回填' : '去校准互动'}
+                  </a>
                 </div>
               )}
-
-              <ReportEventCapture
-                reportId={id}
-                suggestions={result.actionSuggestions || []}
-                pastEventTemplates={result.analysis?.pastEventTemplates || []}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-              />
             </ReportMetaSidebar>
           </div>
         </ReportSurface>

@@ -11,6 +11,13 @@ import type {
   ReportValidationSection,
 } from './report-types';
 import type { EventDateKey, EventViewImpact, EventViewType } from './event-view';
+import {
+  localizeElementList,
+  localizeElementToken,
+  presentReportLines,
+  presentReportText,
+  withPresentedAdvice,
+} from './report-presentation';
 import { formatLocalDateKey } from './utils';
 
 type KlinePoint = {
@@ -291,8 +298,9 @@ export function buildScenarioViews(result: ReportV2Input): ScenarioView[] {
 }
 
 export function buildMonthlyWindows(result: ReportV2Input, startDate: CalendarAnchor = new Date()): MonthlyWindow[] {
-  const favored = [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])];
-  const avoided = result.advice?.jiShen || [];
+  // 月令元素是中文「金木水火土」；用神若仍是 metal/fire 必须先归一，否则 includes 永远 false
+  const favored = localizeElementList([...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])]);
+  const avoided = localizeElementList(result.advice?.jiShen || []);
   const source = getFutureKlineSource(result.klineData || []);
   const baseOverall = source.length > 0
     ? average(source.map((point) => average([point.career, point.wealth, point.marriage, point.health])))
@@ -720,7 +728,7 @@ export function buildExpertInterpretation(result: ReportV2Input & {
   const bestWindow = [...windows].sort((left, right) => right.score - left.score)[0];
   const riskWindow = [...windows].sort((left, right) => left.score - right.score)[0];
   const confidence = result.confidence || buildConfidenceAnalysis(result);
-  const favored = [...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])].filter(Boolean);
+  const favored = localizeElementList([...(result.advice?.yongShen || []), ...(result.advice?.xiShen || [])]);
   const avoided = (result.advice?.jiShen || []).filter(Boolean);
 
   return [
@@ -804,15 +812,15 @@ export function buildReportCockpitSection(params: ReportV4BuilderInput): ReportC
   const strongestScenario = scenarios.find((item) => item.key !== 'overall') || scenarios[0];
   const bestWindow = [...windows].sort((left, right) => right.score - left.score)[0];
   const riskWindow = [...windows].sort((left, right) => left.score - right.score)[0];
-  const favored = compactUniqueLines([
+  const favored = localizeElementList([
     ...(params.result.advice?.yongShen || []),
     ...(params.result.advice?.xiShen || []),
-  ], 3);
+  ]).slice(0, 3);
 
   return {
     headline: compactSentence(params.result.analysis?.opening || strongestScenario?.summary || '先看结构主轴，再决定当前动作节奏。', 54),
     judgment: compactSentence(playbook[0]?.whyNow || strongestScenario?.summary || '', 88),
-    stageLabel: params.result.fortune?.currentDaYun || confidence.summary,
+    stageLabel: presentReportText(params.result.fortune?.currentDaYun || confidence.summary),
     identityLabel: compactSentence(params.result.pattern?.type || params.result.basic?.dayMaster || '', 36),
     confidenceLabel: `${mapConfidenceLabel(confidence.level)} · ${confidence.overallScore}`,
     topActions: compactUniqueLines([
@@ -856,17 +864,43 @@ export function buildReportCockpitSection(params: ReportV4BuilderInput): ReportC
 export function buildReportLifeKLineSection(params: ReportV4BuilderInput): ReportLifeKLineSection {
   const snapshots = params.yearlyTrendSnapshots || buildYearlyTrendSnapshots(params.result);
   const latest = snapshots[0];
+  const next = snapshots[1];
   const current = params.stateVector?.current;
+  const kline = Array.isArray(params.result.klineData) ? params.result.klineData : [];
+  const sampleHint = kline.length > 0 ? `基于 ${kline.length} 年 K 线样本。` : '';
+
+  const summaryParts = [
+    latest?.headline,
+    next?.headline ? `随后 ${next.year}：${next.headline}` : '',
+    latest?.pressureTrack ? `${latest.pressureTrack} 是主要压力位，先降噪减法。` : '',
+    latest?.dominantTrack ? `再围绕 ${latest.dominantTrack} 保持最小推进。` : '',
+    params.result.fortune?.interaction,
+    sampleHint,
+  ].filter(Boolean);
 
   return {
-    headline: latest ? `${latest.year} - ${latest.year + 2} 长弧线` : '人生长弧线',
-    summary: compactSentence(latest?.headline || params.result.fortune?.interaction || '', 88),
-    arcLabel: compactSentence(latest?.advice || '', 60),
+    headline: latest
+      ? `${latest.year} - ${(next?.year || latest.year + 2)} 长弧线`
+      : kline.length
+        ? `${kline[0]!.year} - ${kline[kline.length - 1]!.year} 长弧线`
+        : '人生长弧线',
+    summary: compactSentence(summaryParts.join(' '), 140),
+    arcLabel: compactSentence(
+      latest?.advice ||
+        (latest?.pressureTrack
+          ? `${latest.year} 先稳结构，重点防守 ${latest.pressureTrack} 板块波动`
+          : ''),
+      72
+    ),
     latestMetrics: [
       current ? { label: '天时', value: current.tianShi.toFixed(1), tone: mapMetricTone(current.tianShi) } : null,
       current ? { label: '地利', value: current.diLi.toFixed(1), tone: mapMetricTone(current.diLi) } : null,
       current ? { label: '人和', value: current.renHe.toFixed(1), tone: mapMetricTone(current.renHe) } : null,
-      latest ? { label: '主导板块', value: latest.dominantTrack, tone: 'strong' as const } : null,
+      latest
+        ? { label: '主导板块', value: latest.dominantTrack, tone: 'strong' as const }
+        : kline.length
+          ? { label: '样本跨度', value: `${kline.length}年`, tone: 'steady' as const }
+          : null,
     ].filter(Boolean) as ReportLifeKLineSection['latestMetrics'],
   };
 }
@@ -882,17 +916,18 @@ export function buildReportBlueprintSection(params: ReportV4BuilderInput): Repor
   const weakestScenario = [...(params.scenarioViews || buildScenarioViews(params.result))]
     .filter((item) => item.key !== 'overall')
     .sort((left, right) => left.score - right.score)[0];
-  const favored = compactUniqueLines([
+  const favored = localizeElementList([
     ...(params.result.advice?.yongShen || []),
     ...(params.result.advice?.xiShen || []),
-  ], 3);
+  ]).slice(0, 3);
+  const avoided = localizeElementList(params.result.advice?.jiShen || []).slice(0, 3);
 
   return {
     typeLabel: params.result.pattern?.type,
     strongestAdvantage: compactSentence(strongestScenario?.summary || expert[0]?.headline || '', 56),
     recurringRisk: compactSentence(weakestScenario?.risks?.[0] || expert[2]?.detail || '', 56),
     usefulDirection: compactSentence(favored.length > 0 ? `优先放大 ${favored.join('、')} 对应动作。` : expert[1]?.headline || '', 56),
-    unsuitablePattern: compactSentence((params.result.advice?.jiShen || []).length > 0 ? `避免 ${params.result.advice?.jiShen?.join('、')} 失衡放大。` : weakestScenario?.actionLabel || '', 56),
+    unsuitablePattern: compactSentence(avoided.length > 0 ? `避免 ${avoided.join('、')} 失衡放大。` : weakestScenario?.actionLabel || '', 56),
     facts: compactUniqueLines([
       expert[0]?.headline,
       expert[1]?.headline,
@@ -1035,37 +1070,138 @@ export function buildReportPersonalityBridgeSection(params: ReportV4BuilderInput
 }
 
 export function buildReportV4Sections(params: ReportV4BuilderInput): ReportV4Sections {
-  const scenarioViews = params.scenarioViews || buildScenarioViews(params.result);
-  const monthlyWindows = params.monthlyWindows || buildMonthlyWindows(params.result);
-  const confidence = params.confidence || buildConfidenceAnalysis(params.result);
-  const decisionPlaybook = params.decisionPlaybook || buildDecisionPlaybook({
-    ...params.result,
-    scenarioViews,
-    monthlyWindows,
-  });
-  const actionSuggestions = params.actionSuggestions || buildReportActionSuggestions({
-    ...params.result,
-    scenarioViews,
-    monthlyWindows,
-  });
-  const expertInterpretation = params.expertInterpretation || buildExpertInterpretation({
-    ...params.result,
+  // 展示层先归一化：用神中文化、去掉“待补强”占位，避免整页英文五行与噪音刷屏
+  const presentedResult = withPresentedAdvice(params.result);
+
+  // 即使 DB 里已缓存 scenarioViews / expertInterpretation，也要再过一遍展示清洗
+  const scenarioViews = presentScenarioViews(
+    params.scenarioViews || buildScenarioViews(presentedResult)
+  );
+  const monthlyWindows = presentMonthlyWindows(
+    params.monthlyWindows || buildMonthlyWindows(presentedResult)
+  );
+  const confidence = presentConfidenceAnalysis(
+    params.confidence || buildConfidenceAnalysis(presentedResult)
+  );
+  const decisionPlaybook = presentDecisionPlaybook(
+    params.decisionPlaybook ||
+      buildDecisionPlaybook({
+        ...presentedResult,
+        scenarioViews,
+        monthlyWindows,
+      })
+  );
+  const actionSuggestions = presentActionSuggestions(
+    params.actionSuggestions ||
+      buildReportActionSuggestions({
+        ...presentedResult,
+        scenarioViews,
+        monthlyWindows,
+      })
+  );
+  const expertInterpretation = presentExpertInterpretation(
+    params.expertInterpretation ||
+      buildExpertInterpretation({
+        ...presentedResult,
+        scenarioViews,
+        monthlyWindows,
+        confidence,
+      })
+  );
+
+  const normalizedParams = {
+    ...params,
+    result: presentedResult,
     scenarioViews,
     monthlyWindows,
     confidence,
-  });
+    decisionPlaybook,
+    actionSuggestions,
+    expertInterpretation,
+  };
 
   return {
-    cockpit: buildReportCockpitSection({ ...params, scenarioViews, monthlyWindows, confidence, decisionPlaybook, actionSuggestions }),
-    lifeKLine: buildReportLifeKLineSection({ ...params, scenarioViews, monthlyWindows }),
-    coreBlueprint: buildReportBlueprintSection({ ...params, scenarioViews, monthlyWindows, confidence, expertInterpretation }),
-    currentOperatingSystem: buildReportCurrentStateSection({ ...params, scenarioViews, confidence }),
-    timeline12Months: buildReportTimelineSection({ ...params, monthlyWindows }),
-    scenarioPanels: buildReportScenarioPanelSection({ ...params, scenarioViews }),
-    actionBoard: buildReportActionBoardSection({ ...params, scenarioViews, monthlyWindows, decisionPlaybook, actionSuggestions }),
-    validationLayer: buildReportValidationSection({ ...params, confidence }),
-    personalityBridge: buildReportPersonalityBridgeSection({ ...params, expertInterpretation }),
+    cockpit: buildReportCockpitSection({ ...normalizedParams, scenarioViews, monthlyWindows, confidence, decisionPlaybook, actionSuggestions }),
+    lifeKLine: buildReportLifeKLineSection({ ...normalizedParams, scenarioViews, monthlyWindows }),
+    coreBlueprint: buildReportBlueprintSection({ ...normalizedParams, scenarioViews, monthlyWindows, confidence, expertInterpretation }),
+    currentOperatingSystem: buildReportCurrentStateSection({ ...normalizedParams, scenarioViews, confidence }),
+    timeline12Months: buildReportTimelineSection({ ...normalizedParams, monthlyWindows }),
+    scenarioPanels: buildReportScenarioPanelSection({ ...normalizedParams, scenarioViews }),
+    actionBoard: buildReportActionBoardSection({ ...normalizedParams, scenarioViews, monthlyWindows, decisionPlaybook, actionSuggestions }),
+    validationLayer: buildReportValidationSection({ ...normalizedParams, confidence }),
+    personalityBridge: buildReportPersonalityBridgeSection({ ...normalizedParams, expertInterpretation }),
   };
+}
+
+function presentScenarioViews(views: ScenarioView[]): ScenarioView[] {
+  return (views || []).map((view) => ({
+    ...view,
+    title: presentReportText(view.title) || view.title,
+    summary: presentReportText(view.summary),
+    actionLabel: presentReportText(view.actionLabel) || view.actionLabel,
+    focus: presentReportLines(view.focus, { limit: 6 }),
+    risks: presentReportLines(view.risks, { limit: 6 }),
+  }));
+}
+
+function presentMonthlyWindows(windows: MonthlyWindow[]): MonthlyWindow[] {
+  return (windows || []).map((window) => ({
+    ...window,
+    element: localizeElementToken(window.element) || window.element,
+    theme: presentReportText(window.theme) || window.theme,
+    reason: presentReportText(window.reason) || window.reason,
+  }));
+}
+
+function presentConfidenceAnalysis(confidence: ConfidenceAnalysis | null | undefined): ConfidenceAnalysis {
+  if (!confidence) {
+    return confidence as ConfidenceAnalysis;
+  }
+  return {
+    ...confidence,
+    summary: presentReportText(confidence.summary) || confidence.summary,
+    stablePoints: presentReportLines(confidence.stablePoints, { limit: 8 }),
+    sensitivePoints: presentReportLines(confidence.sensitivePoints, { limit: 8 }),
+    birthTimeSensitivity: confidence.birthTimeSensitivity
+      ? {
+          ...confidence.birthTimeSensitivity,
+          explanation:
+            presentReportText(confidence.birthTimeSensitivity.explanation) ||
+            confidence.birthTimeSensitivity.explanation,
+          affectedAreas: presentReportLines(confidence.birthTimeSensitivity.affectedAreas, { limit: 6 }),
+        }
+      : confidence.birthTimeSensitivity,
+  };
+}
+
+function presentDecisionPlaybook(items: DecisionPlaybookItem[]): DecisionPlaybookItem[] {
+  return (items || []).map((item) => ({
+    ...item,
+    title: presentReportText(item.title) || item.title,
+    whyNow: presentReportText(item.whyNow) || item.whyNow,
+    nowAction: presentReportText(item.nowAction) || item.nowAction,
+    avoidAction: presentReportText(item.avoidAction) || item.avoidAction,
+    bestWindow: presentReportText(item.bestWindow) || item.bestWindow,
+  }));
+}
+
+function presentActionSuggestions(items: ReportActionSuggestion[]): ReportActionSuggestion[] {
+  return (items || []).map((item) => ({
+    ...item,
+    title: presentReportText(item?.title) || item?.title,
+    reason: presentReportText(item?.reason) || item?.reason,
+    description: presentReportText(item?.description) || item?.description,
+  }));
+}
+
+function presentExpertInterpretation(items: ExpertInterpretationBlock[]): ExpertInterpretationBlock[] {
+  return (items || []).map((item) => ({
+    ...item,
+    title: presentReportText(item.title) || item.title,
+    headline: presentReportText(item.headline) || item.headline,
+    detail: presentReportText(item.detail) || item.detail,
+    tags: presentReportLines(item.tags, { limit: 8 }),
+  }));
 }
 
 function getFutureKlineSource(data: KlinePoint[]) {
@@ -1077,41 +1213,21 @@ function getFutureKlineSource(data: KlinePoint[]) {
 }
 
 function compactList(values?: string[], extra?: string) {
-  const list = [...(values || [])];
-  if (extra) list.unshift(extra);
-  return list.filter(Boolean).slice(0, 4);
+  const list = presentReportLines([...(extra ? [extra] : []), ...(values || [])], { limit: 4 });
+  return list;
 }
 
 function ensureFallback(values: string[], fallback: string) {
-  return values.filter(Boolean).length > 0 ? values.filter(Boolean) : [fallback];
+  const cleaned = presentReportLines(values, { limit: 6 });
+  return cleaned.length > 0 ? cleaned : [presentReportText(fallback) || fallback];
 }
 
 function compactUniqueLines(values: Array<string | null | undefined>, limit: number) {
-  const seen = new Set<string>();
-  const result: string[] = [];
-
-  for (const value of values) {
-    const cleaned = `${value || ''}`.replace(/\s+/g, ' ').trim();
-    if (!cleaned) continue;
-
-    const signature = cleaned
-      .replace(/[，。,.；;：:\s]/g, '')
-      .slice(0, 42);
-    if (seen.has(signature)) continue;
-
-    seen.add(signature);
-    result.push(cleaned);
-    if (result.length >= limit) break;
-  }
-
-  return result;
+  return presentReportLines(values, { limit });
 }
 
 function compactSentence(value?: string | null, maxLength = 80) {
-  const cleaned = `${value || ''}`.replace(/\s+/g, ' ').trim();
-  if (!cleaned) return '';
-  if (cleaned.length <= maxLength) return cleaned;
-  return `${cleaned.slice(0, maxLength - 1).trim()}…`;
+  return presentReportText(value, maxLength);
 }
 
 function compactPeriodCards(cards: Array<ReportCockpitSection['periodCards'][number] | null>) {
@@ -1205,11 +1321,14 @@ function buildMonthlyReason({
   status: MonthlyWindow['status'];
   currentDaYun: string;
 }) {
-  const relation = favored.includes(element)
-    ? `本月属${element}，与用神/喜神方向更接近。`
-    : avoided.includes(element)
-      ? `本月属${element}，与忌神方向更接近，宜防节奏失衡。`
-      : `本月属${element}，与命局关系中性，更适合稳步推进。`;
+  const favoredCn = localizeElementList(favored);
+  const avoidedCn = localizeElementList(avoided);
+  const elementCn = localizeElementToken(element);
+  const relation = favoredCn.includes(elementCn)
+    ? `本月属${elementCn}，与用神/喜神方向更接近。`
+    : avoidedCn.includes(elementCn)
+      ? `本月属${elementCn}，与忌神方向更接近，宜防节奏失衡。`
+      : `本月属${elementCn}，与命局关系中性，更适合稳步推进。`;
 
   const statusText = status === 'push'
     ? '适合主动推进关键动作。'

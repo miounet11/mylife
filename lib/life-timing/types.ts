@@ -33,7 +33,15 @@ export interface TimingPoint {
   endDate?: string;
   rawReason: string;
   context: Record<string, unknown>;
+  /** Primary (zh-CN) decision copy from narrator / fallback */
   userCopy?: {
+    title: string;
+    summary: string;
+    todoSuggestions: string[];
+    avoidSuggestions: string[];
+  };
+  /** English L2 decision copy (generated alongside zh) */
+  userCopyEn?: {
     title: string;
     summary: string;
     todoSuggestions: string[];
@@ -56,6 +64,8 @@ export interface PastValidation {
   id: string;
   category: 'pattern' | 'shen_sha' | 'dayun_imprint';
   rawTemplate: string;
+  /** Optional English L2 template (generation side) */
+  rawTemplateEn?: string;
   context: Record<string, unknown>;
 }
 

@@ -1081,8 +1081,69 @@ function buildToolDefinitions(): ToolDefinition[] {
 }
 
 const toolDefinitions = buildToolDefinitions();
+const dailySignSeed = toolDefinitions.find((item) => item.slug === 'timing-monthly-rhythm');
+if (dailySignSeed && !toolDefinitions.some((item) => item.slug === 'daily-sign')) {
+  toolDefinitions.push({
+    ...dailySignSeed,
+    slug: 'daily-sign',
+    title: '今日一签',
+    shortTitle: '今日一签',
+    themeKey: 'daily-sign',
+    themeLabel: '今日一签',
+    description: '每日轻量节律提示，适合作为日常复访入口。',
+    userIntent: '我今天更适合推进、观察还是收敛？',
+    promptHint: '给我今天最值得记住的一条节律提示。',
+    targetUser: '想快速获得今日状态提示的用户',
+    valuePromise: '用一条可执行的今日提示帮助用户形成复访习惯。',
+    hook: '不是天天都要做大决定，但每天都值得先校准一下节奏。',
+    triggerMoment: '早上开工前、晚上复盘前，或想快速抽一签的时候。',
+    wrongQuestion: '我今天运气好不好？',
+    rightQuestion: '我今天更适合推进、观察还是收敛？',
+    freeValueLine: '免费先给你今日主轴和一个立即动作。',
+    paidValueLine: '深测版会把今日提示接到完整报告与时间地图。',
+    hookKeywords: ['今日一签', '每日节律', '日运', 'daily sign'],
+    relatedReportThemes: ['阶段', '窗口', '行动'],
+    featuredBadge: '每日复访',
+    signaturePromise: '把命理判断收成一条今天就能用的节律提示。',
+    decisionLens: '每日入口重在形成复访，而不是一次性深读。',
+    premiumWhyNow: '当你想把今日提示接到完整时间地图时，再进入深测报告。',
+  });
+}
+
 
 const toolGrowthProfiles: Record<string, ToolGrowthProfile> = {
+  'daily-sign': {
+    slug: 'daily-sign',
+    stageLabel: 'P0 每日复访入口',
+    seoTitle: '今日一签 | 每日节律提示 | 人生K线工具',
+    seoDescription: '免费抽取今日节律提示：推进、观察还是收敛。适合作为每日轻量复访入口。',
+    heroEyebrow: '今日一签 / 每日节律 / 轻量复访',
+    heroSubtitle: '不必先填完整报告。先拿一条今天就能用的节律提示，再按需进入工作台生成结构化判断。',
+    primaryCtaLabel: '抽今日一签',
+    secondaryCtaLabel: '生成完整报告',
+    freeValueBullets: [
+      '先判断今天更偏推进、观察还是收敛。',
+      '给出一条可立即执行的小动作，而不是大段术语。',
+      '适合作为每日复访与邮件回访的轻入口。',
+    ],
+    upgradeBullets: [
+      '把今日提示接到完整八字结构报告',
+      '查看未来 30 天与 12 个月时间地图',
+      '绑定邮箱后保存历史节律记录',
+    ],
+    geoQuestions: [
+      '今日一签和完整八字报告有什么区别？',
+      '每日节律提示能代替正式报告吗？',
+      '怎么把今日提示用到实际决策里？',
+    ],
+    socialHooks: [
+      '不是天天都要算命，但每天都值得先校准节奏。',
+      '今日一签只回答一个问题：今天该推进还是收敛。',
+      '轻量入口，深度判断仍交给完整报告。',
+    ],
+    keywords: ['今日一签', '每日运势', '日运', 'daily sign', '八字每日提示'],
+  },
+
   'timing-yearly-window': {
     slug: 'timing-yearly-window',
     stageLabel: 'P0 SEO/GEO 冷启动工具',

@@ -223,11 +223,29 @@ export function getContentGenerationModel() {
 }
 
 export function getVisualAssetDefaultModel() {
-  return readString('VISUAL_ASSET_DEFAULT_MODEL', 'gpt-image-2');
+  // Primary image model: fast turbo first; see getVisualAssetFallbackModel for fallback.
+  return readString('VISUAL_ASSET_DEFAULT_MODEL', 'z-image-turbo');
+}
+
+/** Fallback when primary image model fails (provider loop / env expansion). */
+export function getVisualAssetFallbackModel() {
+  return readString('VISUAL_ASSET_FALLBACK_MODEL', 'gpt-image-2');
+}
+
+/**
+ * Comma-separated image model attempt chain.
+ * Default: z-image-turbo → gpt-image-2
+ */
+export function getVisualAssetModelFallbackChainRaw() {
+  const primary = getVisualAssetDefaultModel();
+  const fallback = getVisualAssetFallbackModel();
+  const chainDefault = primary === fallback ? primary : `${primary},${fallback}`;
+  return readString('VISUAL_ASSET_MODEL_FALLBACK_CHAIN', chainDefault);
 }
 
 export function getVisualAssetCoreModel() {
-  return readString('VISUAL_ASSET_CORE_MODEL', 'gpt-image-2-pro');
+  // Higher-quality pass still defaults to gpt-image-2 family.
+  return readString('VISUAL_ASSET_CORE_MODEL', 'gpt-image-2');
 }
 
 export function getVisualAssetNarrativeModel() {
@@ -303,15 +321,23 @@ export function getContentSchedulerTimezoneOffsetMinutes() {
 }
 
 export function getContentSchedulerPublishHoursRaw() {
-  return readString('CONTENT_SCHEDULER_PUBLISH_HOURS', '10,15,20');
+  return readString('CONTENT_SCHEDULER_PUBLISH_HOURS', '8,9,10,11,12,14,15,16,17,18,19,20,21');
+}
+
+export function isContentSchedulerInterestPublishEnabled() {
+  return readBooleanFlag('CONTENT_SCHEDULER_INTEREST_PUBLISH_ENABLED', true);
+}
+
+export function getContentSchedulerBacklogPressureRatio() {
+  return readNumber('CONTENT_SCHEDULER_BACKLOG_PRESSURE_RATIO', 2, 1);
 }
 
 export function getContentSchedulerDailyPublishLimit() {
-  return readNumber('CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT', 6, 1);
+  return readNumber('CONTENT_SCHEDULER_DAILY_PUBLISH_LIMIT', 8, 1);
 }
 
 export function getContentSchedulerMinPublishGapMinutes() {
-  return readNumber('CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES', 240, 30);
+  return readNumber('CONTENT_SCHEDULER_MIN_PUBLISH_GAP_MINUTES', 90, 30);
 }
 
 /** After this many minutes without a publish, scheduler relaxes gates to avoid feed starvation. */
@@ -324,7 +350,7 @@ export function getContentSchedulerDraftReserveTarget() {
 }
 
 export function getContentSchedulerDraftBatchSize() {
-  return readNumber('CONTENT_SCHEDULER_DRAFT_BATCH_SIZE', 24, 1);
+  return readNumber('CONTENT_SCHEDULER_DRAFT_BATCH_SIZE', 4, 1);
 }
 
 export function getContentSchedulerGenerateCooldownMinutes() {

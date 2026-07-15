@@ -1,709 +1,255 @@
-import { notFound } from 'next/navigation';
-import { Fragment } from 'react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft, Clock3, Compass, Globe2, LibraryBig, MapPinned, ShieldCheck, Sparkles, UsersRound } from 'lucide-react';
+import { notFound } from 'next/navigation';
+import ContentActionRail from '@/components/content/content-action-rail';
+import JourneyStrip from '@/components/content/journey-strip';
+import JsonLd from '@/components/seo/json-ld';
+import { AppPage } from '@/components/layout/app-page';
+import { FocusHero } from '@/components/layout/focus-hero';
+import EncyclopediaWorldYiSidebar from '@/components/encyclopedia-world-yi-sidebar';
+import RelatedContent from '@/components/related-content';
 import AnalyticsPageView from '@/components/analytics-page-view';
-import PublicArticleHero from '@/components/public-article-hero';
-import ContentBreadcrumbs from '@/components/content-breadcrumbs';
-import ContentCardLink from '@/components/content-card-link';
-import ContentConversionPanel from '@/components/content-conversion-panel';
-import ContentLocaleBadge from '@/components/content-locale-badge';
-import ContentQuickAnalyzePanel from '@/components/content-quick-analyze-panel';
-import ArticleAnalyzeLink from '@/components/article/article-analyze-link';
-import ArticleInlineCTA from '@/components/article/article-inline-cta';
-import ArticleStickyCTA from '@/components/article/article-sticky-cta';
-import ArticleScrollTracker from '@/components/article/article-scroll-tracker';
-import { findInjectionPoint, isArticleCtaEnabled } from '@/lib/article-cta';
-import ContentVisualAssetPanel from '@/components/content-visual-asset-panel';
-import NewsletterSignup from '@/components/newsletter-signup';
-import ProductSurfaceRolePanel from '@/components/product-surface-role-panel';
-import PublicSearchIntentPanel from '@/components/public-search-intent-panel';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
-import SurfaceJourneyPanel from '@/components/surface-journey-panel';
-import ToolCardLink from '@/components/tool-card-link';
-// v5-D57 (2026-05-21): C 端移除 ToolPremiumRequestPanel
-import { appendSourceToHref, buildSourceCtaStrategy, buildSourceJourneyCopy } from '@/lib/source-context';
+import ContentVisitTracker from '@/components/content-visit-tracker';
 import {
-  getCaseStudies,
-  getEntityInsights,
-  getKnowledgeArticleBySlug,
-  getManagedContentEntryBySlug,
-  getManagedContentGeoOptimizationMeta,
-  getManagedContentJourneyMeta,
-  isPublicKnowledgeEntry,
-  listPublishedManagedContentEntriesByType,
-} from '@/lib/content-store';
-import { listFeaturedKnowledgeEditorialEntries } from '@/lib/knowledge-editorial';
-import { getKnowledgeTopicHubBySlug, getRelatedKnowledgeEntries } from '@/lib/knowledge-network-feed';
-import { buildJourneyForContent } from '@/lib/surface-journeys';
-import { getToolDefinition } from '@/lib/tools';
-import { getVisualAssetsForContentEntry } from '@/lib/visual-asset-library';
+  articleGeoFields,
+  articleReadLabel,
+  articleSummary,
+  articleTrackKey,
+  normalizeSections,
+} from '@/lib/content-article-view';
+import { resolveContentCrosslinks } from '@/lib/content-crosslinks';
+import { getEncyclopediaWorldYiLens } from '@/lib/encyclopedia-world-yi-lens';
+import { getKnowledgeArticleBySlug } from '@/lib/content-store';
+import { CONTENT_BY_SLUG } from '@/lib/content-seeds';
+import { ContentLocaleBadge } from '@/components/content/content-locale-filter';
+import { ContentArticleBody } from '@/components/content/content-article-body';
 import {
-  createArticleSchema,
-  createBreadcrumbSchema,
-  createPublicContentMetadata,
-} from '@/lib/public-content-seo';
+  buildContentEntityLanguageAlternates,
+  resolveContentSisterLink,
+} from '@/lib/content-locale-pairs';
+import {
+  illustrationSeoImages,
+  resolveContentIllustrations,
+} from '@/lib/content-illustrations';
+import {
+  articleDatesFrom,
+  articleSeo,
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
+} from '@/lib/seo';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ source?: string }>;
 }
 
-export const revalidate = 3600;
-// Stability: allow ops to force-dynamic on this high-cardinality route during bulk publish campaigns
-// to prevent ISR regeneration + large page cache entries from spiking web worker memory.
-// Normal mode keeps 1h revalidate for perf. Set CONTENT_BULK_MODE=1 in web env (rare, via PM2).
-export const dynamic = 'force-dynamic';
+function knowledgeSisterExists(slug: string): boolean {
+  return Boolean(getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug));
+}
 
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const article = getKnowledgeArticleBySlug(slug);
-  const managedEntry = getManagedContentEntryBySlug('knowledge', slug);
-  if (!article) {
-    return {
-      title: '文章未找到 | 人生K线',
-    };
-  }
-  const visualAssets = managedEntry ? getVisualAssetsForContentEntry(managedEntry, 1) : [];
-  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
-
-  return createPublicContentMetadata({
-    title: article.seoTitle,
-    description: article.seoDescription,
-    path: `/knowledge/${article.slug}`,
-    type: 'article',
-    locale: typeof managedEntry?.meta?.locale === 'string' ? managedEntry.meta.locale : undefined,
-    keywords: article.tags,
-    images: visualAssets.map((asset) => ({
-      url: asset.publicUrl,
-      alt: asset.altText,
-      width: asset.ratio === '4:5' ? 1280 : 2048,
-      height: asset.ratio === '4:5' ? 1600 : 1152,
-    })),
-    publishedTime: managedEntry?.createdAt,
-    modifiedTime: managedEntry?.updatedAt,
-    section: article.category,
-    tags: article.tags,
-    answerSummary: geoMeta?.answerSummary || article.excerpt,
-    searchIntents: geoMeta?.searchIntents,
-    entityKeywords: geoMeta?.entityKeywords,
+  const article = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug);
+  if (!article) return { title: '知识库' };
+  const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
+  const dates = articleDatesFrom(article);
+  const geo = articleGeoFields(article);
+  const languages = buildContentEntityLanguageAlternates({
+    kind: 'knowledge',
+    slug,
+    contentLocale: geo.locale,
+    sisterExists: knowledgeSisterExists,
   });
-}
-
-export async function generateStaticParams() {
-  // v5-D119 (2026-05-25): 限制 build-time SSG 仅生成 zh-Hans/zh-CN（约 1000 页），
-  // 其它语种 (en/ja/zh-Hant 共 3000+ 页) 走 ISR (revalidate=3600) 首访生成。
-  // v5-D124: 低内存构建只预渲染最近一批，避免静态页生成阶段 OOM；其余继续走 ISR。
-  // 风险控制：D85 nginx micro-cache 已在，bot 首访的延迟由 60s 缓存吸收。
-  const maxStaticParams = process.env.LOW_MEMORY_BUILD === '1' ? 240 : 1000;
-
-  return listPublishedManagedContentEntriesByType('knowledge')
-    .filter((entry) => isPublicKnowledgeEntry(entry))
-    .filter((entry) => {
-      const loc = typeof entry.meta?.locale === 'string' ? entry.meta.locale : '';
-      return !loc || loc === 'zh-Hans' || loc === 'zh-CN';
-    })
-    .slice(0, maxStaticParams)
-    .map((entry) => ({
-      slug: entry.slug,
-    }));
-}
-
-export default async function KnowledgeArticlePage({ params }: PageProps) {
-  const { slug } = await params;
-  const article = getKnowledgeArticleBySlug(slug);
-  const managedEntry = getManagedContentEntryBySlug('knowledge', slug);
-  if (!article || !managedEntry || !isPublicKnowledgeEntry(managedEntry)) notFound();
-  const locale = typeof managedEntry.meta?.locale === 'string' ? managedEntry.meta.locale : '';
-  const market = typeof managedEntry.meta?.market === 'string' ? managedEntry.meta.market : '';
-
-  const topicHub = getKnowledgeTopicHubBySlug(article.slug);
-  const related = getRelatedKnowledgeEntries(article.slug, 4);
-  const ctaEnabled = isArticleCtaEnabled();
-  const surfaceKey = `knowledge_article:${article.slug}`;
-  const inlineCtaPoint = ctaEnabled
-    ? findInjectionPoint(article.sections.map((s) => ({ content: (s.paragraphs || []).join('\n') })))
-    : { injectAfterIndex: -1 };
-  const isWorldYiArticle = article.slug.startsWith('world-yi-');
-  const isWorldYiEnglishArticle = isWorldYiArticle && locale === 'en';
-  const isWorldYiGlobalLifeArticle = article.slug === 'world-yi-en-global-life';
-  const globalLifeSignals = [
-    { icon: <MapPinned className="h-4 w-4" />, label: 'Migration field', body: 'A move changes support, cost, law, family distance, and recovery capacity.' },
-    { icon: <UsersRound className="h-4 w-4" />, label: 'Identity load', body: 'Cross-cultural life often means several identities competing for the next move.' },
-    { icon: <Globe2 className="h-4 w-4" />, label: 'Environment fit', body: 'The same structure can be sustainable in one city and destructive in another.' },
-    { icon: <ShieldCheck className="h-4 w-4" />, label: 'Decision cost', body: 'A choice is good only when its money, attention, and relationship cost can be carried.' },
-  ];
-  const worldYiReadingOrder = [
-    ...(isWorldYiEnglishArticle ? [
-      'world-yi-en-introduction',
-      'world-yi-en-judgment-language',
-      'world-yi-en-global-life',
-      'world-yi-en-wealth-pattern',
-      'world-yi-en-relationship-environment',
-    ] : [
-      'world-yi-v1-manifesto',
-      'world-yi-era-cognition',
-      'world-yi-judgment-crisis',
-      'world-yi-attraction-model',
-      'world-yi-five-foundations',
-      'world-yi-methodology',
-      'world-yi-decision-language',
-      'world-yi-life-domains',
-      'world-yi-wealth-rhythm',
-      'world-yi-relationship-order',
-      'world-yi-relationship-conflict-repair',
-      'world-yi-partner-selection',
-      'world-yi-family-generational-order',
-      'world-yi-health-recovery-order',
-      'world-yi-migration-stage-logic',
-      'world-yi-home-recovery-system',
-      'world-yi-daily-application-discipline',
-      'world-yi-product-language',
-      'world-yi-version-governance',
-      'world-yi-home-order',
-      'world-yi-timing-selection',
-      'world-yi-version-faq',
-    ]),
-  ];
-  const worldYiSeriesEntries = isWorldYiArticle
-    ? worldYiReadingOrder
-        .map((entrySlug) => getManagedContentEntryBySlug('knowledge', entrySlug))
-        .filter((entry): entry is NonNullable<typeof entry> => !!entry && isPublicKnowledgeEntry(entry))
-        .filter((entry) => entry.slug !== article.slug)
-        .slice(0, 6)
-    : [];
-  const fallbackWorldYiEntries = !isWorldYiArticle
-    ? listPublishedManagedContentEntriesByType('knowledge')
-        .filter((entry) => isPublicKnowledgeEntry(entry) && entry.slug.startsWith('world-yi-') && !entry.slug.startsWith('world-yi-en-'))
-        .slice(0, 4)
-    : [];
-  const fallbackRelated = related.length === 0
-    ? listFeaturedKnowledgeEditorialEntries(4)
-      .map((item) => item.entry)
-      .filter((item) => item.slug !== article.slug)
-      .slice(0, 3)
-    : [];
-  const breadcrumbItems = [
-    { name: '首页', path: '/' },
-    { name: '知识库', path: '/knowledge' },
-    ...(topicHub ? [{ name: `${topicHub.topicName}专题地图`, path: `/knowledge/topics/${topicHub.topicSlug}` }] : []),
-    { name: article.title, path: `/knowledge/${article.slug}` },
-  ];
-  const visualAssets = getVisualAssetsForContentEntry(managedEntry, 3);
-  const primaryVisualAsset = visualAssets[0] || null;
-  const geoMeta = getManagedContentGeoOptimizationMeta(managedEntry);
-  const schemas = [
-    createArticleSchema({
-      headline: article.seoTitle,
-      description: article.seoDescription,
-      path: `/knowledge/${article.slug}`,
-      articleSection: article.category,
-      keywords: [...article.tags, ...(geoMeta?.entityKeywords || [])],
-      image: primaryVisualAsset ? [{
-        url: primaryVisualAsset.publicUrl,
-        alt: primaryVisualAsset.altText,
-        width: primaryVisualAsset.ratio === '4:5' ? 1280 : 2048,
-        height: primaryVisualAsset.ratio === '4:5' ? 1600 : 1152,
-      }] : undefined,
-      datePublished: managedEntry.createdAt,
-      dateModified: managedEntry.updatedAt,
-      inLanguage: locale || 'zh-CN',
-      abstract: geoMeta?.answerSummary || article.excerpt,
-      about: geoMeta?.entityKeywords || article.tags,
-      mentions: geoMeta?.searchIntents,
-      audience: geoMeta?.audience,
-      mainEntityName: geoMeta?.canonicalTopic || article.title,
+  const seoImages = illustrationSeoImages(
+    resolveContentIllustrations({
+      contentType: 'knowledge',
+      slug,
+      title: article.title,
+      excerpt: summary,
+      category: (article as { category?: string }).category,
+      tags: (article as { tags?: string[] }).tags,
+      meta: (article as { meta?: Record<string, unknown> }).meta,
     }),
-    createBreadcrumbSchema(breadcrumbItems),
-  ];
-  const journey = buildJourneyForContent({
+  );
+  return articleSeo({
     title: article.title,
-    excerpt: article.excerpt,
-    tags: article.tags,
-    category: article.category,
-    contentType: 'knowledge',
-    slug: article.slug,
-  }, {
-    source: `knowledge_article:${article.slug}`,
+    summary,
+    path: `/knowledge/${slug}`,
+    trackKey: articleTrackKey(article as never),
+    type: 'knowledge',
+    keywords: (article as { keywords?: string[] }).keywords,
+    publishedTime: dates.publishedTime,
+    modifiedTime: dates.modifiedTime,
+    locale: geo.locale,
+    canonicalPath: `/knowledge/${slug}`,
+    answerSummary: geo.answerSummary,
+    searchIntents: geo.geo?.searchIntents,
+    entityKeywords: geo.geo?.entityKeywords,
+    languages,
+    images: seoImages.map((item) => item.url),
   });
-  const pageSource = surfaceKey;
-  const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
-  const journeyCopy = buildSourceJourneyCopy(pageSource, {
-    title: '相关入口',
-    description: '把这篇文章接回专题、工具和后续动作入口，帮助你从理解方法继续走向个人判断。',
+}
+
+export default async function KnowledgeArticlePage({ params, searchParams }: PageProps) {
+  const { slug } = await params;
+  const source = (await searchParams)?.source;
+  // Prefer DB/content-store; fall back to local enriched seeds (SEO pillars / dimension guides)
+  const article = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
+  if (!article || (article.type && article.type !== 'knowledge')) notFound();
+
+  const lens = getEncyclopediaWorldYiLens({ slug, source });
+  const sections = normalizeSections(article.sections as never);
+  const trackKey = articleTrackKey(article as never);
+  const readLabel = articleReadLabel(article as never);
+  const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
+  const crosslinks = resolveContentCrosslinks({
+    slug,
+    title: article.title,
+    summary,
+    trackKey,
+    source: source || 'knowledge_article',
   });
-  const journeyMeta = getManagedContentJourneyMeta(managedEntry);
-  const pageSignals = [article.title, article.excerpt, article.category, ...article.tags, ...(topicHub ? [topicHub.topicName, ...topicHub.relatedTopicNames] : [])];
-  const matchesPageSignal = (text: string) => {
-    const lowered = text.toLowerCase();
-    return pageSignals.some((signal) => signal && lowered.includes(signal.toLowerCase()));
-  };
-  const toolItems = journeyMeta.relatedToolSlugs
-    .map((toolSlug) => getToolDefinition(toolSlug))
-    .filter((tool): tool is NonNullable<typeof tool> => !!tool)
-    .slice(0, 3);
-  const caseItems = getCaseStudies()
-    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.scenario, ...item.tags].join(' ')))
-    .slice(0, 2);
-  const insightItems = getEntityInsights()
-    .filter((item) => matchesPageSignal([item.title, item.excerpt, item.name, ...item.tags].join(' ')))
-    .slice(0, 2);
-  const primaryTool = toolItems[0] || null;
-  const primaryCase = caseItems[0] || null;
-  const queryIntent = article.tags[0] || article.category || article.title;
+
+  const seed = CONTENT_BY_SLUG.get(slug);
+  const geo = articleGeoFields(article);
+  const sister = resolveContentSisterLink({
+    kind: 'knowledge',
+    slug,
+    contentLocale: geo.locale,
+    sisterExists: knowledgeSisterExists,
+  });
+  const faqPairs = sections
+    .filter((section) => section.heading.startsWith('常见问题'))
+    .map((section) => ({
+      question: section.heading.replace(/^常见问题：?/, ''),
+      answer: section.body,
+    }));
 
   return (
-    <div className="page-shell">
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度研判' }}>
+      <JsonLd
+        data={buildBreadcrumbJsonLd([
+          { name: '首页', path: '/' },
+          { name: '知识库', path: '/knowledge' },
+          { name: article.title, path: `/knowledge/${slug}` },
+        ])}
+      />
+      <JsonLd
+        data={buildArticleJsonLd({
+          title: article.title,
+          description: geo.answerSummary || summary || article.title,
+          path: `/knowledge/${slug}`,
+          keywords: [
+            ...(seed?.keywords || [trackKey, '世界易', '人生K线']),
+            ...(geo.geo?.entityKeywords || []),
+          ],
+          datePublished: articleDatesFrom(article).publishedTime,
+          dateModified: articleDatesFrom(article).modifiedTime,
+          inLanguage: geo.locale,
+          abstract: geo.answerSummary,
+          about: geo.geo?.entityKeywords,
+        })}
+      />
+      {faqPairs.length ? <JsonLd data={buildFaqJsonLd(faqPairs)} /> : null}
       <AnalyticsPageView
         eventName="knowledge_article_viewed"
-        page={`/knowledge/${article.slug}`}
+        page={`/knowledge/${slug}`}
         meta={{
-          surfaceKey: `knowledge_article:${article.slug}`,
+          surfaceKey: 'knowledge',
           contentType: 'knowledge',
-          slug: article.slug,
+          slug,
           title: article.title,
-          category: article.category,
-          tags: article.tags,
+          trackKey,
+          source: source || null,
+          contentLocale: geo.locale,
+          geoReady: geo.geoReady,
         }}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
-      <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
-
-      <main className="page-frame py-5 pb-14 md:py-8 md:pb-20">
-        <section className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
-          <article className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-5 shadow-[var(--shadow-card)] md:p-7">
-            <PublicArticleHero
-              breadcrumbs={(
-                <ContentBreadcrumbs
-                  items={breadcrumbItems.map((item, index) => ({
-                    label: item.name,
-                    href: index === breadcrumbItems.length - 1 ? undefined : item.path,
-                  }))}
-                />
-              )}
-              backLink={(
-                <Link href="/knowledge" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] inline-flex">
-                  <ArrowLeft className="h-4 w-4" />
-                  返回知识库
-                </Link>
-              )}
-              label={(
-                <>
-                  <Sparkles className="h-3.5 w-3.5" />
-                  {article.category}
-                </>
-              )}
-              title={article.title}
-              meta={(
-                <>
-                  <Clock3 className="h-4 w-4" />
-                  {article.readTime}
-                  {(locale || market) ? <ContentLocaleBadge locale={locale} market={market} /> : null}
-                  {market ? <span>{market}</span> : null}
-                </>
-              )}
-              excerpt={article.excerpt}
-              hint="把这篇文章落到自己身上验证：先看结构，再进入个人分析，不做泛泛阅读。"
-              actionLabel={sourceCtaStrategy.actionGuide}
-              actions={[
-                <ArticleAnalyzeLink
-                  key="analyze"
-                  href={appendSourceToHref('/analyze', pageSource)}
-                  surfaceKey={surfaceKey}
-                  slug={article.slug}
-                  contentType="knowledge"
-                  position="hero"
-                  sourceLabel="文章首屏快速分析"
-                  extraMeta={{
-                    title: article.title,
-                    category: article.category,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                  }}
-                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-4 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)]"
-                >
-                  {sourceCtaStrategy.searchAnalyzeLabel}
-                </ArticleAnalyzeLink>,
-                <Link key="knowledge" href={appendSourceToHref('/knowledge', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">返回知识库</Link>,
-                ...(topicHub ? [<Link key="topic" href={appendSourceToHref(`/knowledge/topics/${topicHub.topicSlug}`, pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">查看专题地图</Link>] : []),
-              ]}
+      <ContentVisitTracker href={`/knowledge/${slug}`} title={article.title} kind="article" />
+      <FocusHero
+        eyebrow="知识库"
+        title={article.title}
+        description={summary}
+        footer={
+          <div className="flex flex-wrap items-center gap-2">
+            <ContentLocaleBadge
+              groupLabel={geo.groupLabel}
+              localeLabel={geo.localeLabel}
+              geoReady={geo.geoReady}
             />
-
-            <div className="mt-6">
-              <PublicSearchIntentPanel
-                page={`/knowledge/${article.slug}`}
-                title={article.title}
-                queryIntent={queryIntent}
-                toolHref={primaryTool ? `/tools/${primaryTool.slug}` : undefined}
-                caseHref={primaryCase ? `/cases/${primaryCase.slug}` : undefined}
-                source={pageSource}
-                analyzeLabel={sourceCtaStrategy.searchAnalyzeLabel}
-                toolLabel={sourceCtaStrategy.searchToolLabel}
-                caseLabel={sourceCtaStrategy.searchCaseLabel}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-                contentType="knowledge"
-                slug={article.slug}
-                surfaceKey={surfaceKey}
-              />
-            </div>
-
-            {isWorldYiGlobalLifeArticle ? (
-              <section className="mt-8 overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
-                <div className="border-b border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-tint)] via-[color:var(--paper)] to-[color:var(--bg-sunken)] p-5 md:p-6">
-                  <div className="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-2.5 py-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--brand-strong)] ring-1 ring-[color:var(--hairline)]">
-                    <Globe2 className="h-3.5 w-3.5" />
-                    Global-life judgment map
-                  </div>
-                  <h2 className="mt-4 text-2xl font-black leading-tight text-[color:var(--ink)]">Migration is not a location question. It is a structure-field-cost question.</h2>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--ink-3)]">
-                    Read this article as a decision map: first locate the person, then the field, then the cost, then the action. Anything else becomes travel-blog advice.
-                  </p>
-                </div>
-                <div className="grid gap-0 md:grid-cols-2">
-                  {globalLifeSignals.map((item) => (
-                    <div key={item.label} className="border-t border-[color:var(--hairline)] p-4 md:p-5 md:odd:border-r">
-                      <div className="flex items-center gap-2 text-sm font-black text-[color:var(--ink)]">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[color:var(--brand-tint)] text-[color:var(--brand-strong)]">{item.icon}</span>
-                        {item.label}
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-[color:var(--ink-4)]">{item.body}</p>
-                    </div>
-                  ))}
-                </div>
-              </section>
+            {sister ? (
+              <Link
+                href={sister.href}
+                className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+              >
+                {sister.label}
+              </Link>
             ) : null}
-
-            <div className="mt-8 space-y-8">
-              {article.sections.map((section, index) => (
-                <Fragment key={section.title}>
-                  <section>
-                    <h2 className="text-2xl font-bold text-[color:var(--ink)]">{section.title}</h2>
-                    <div className="mt-4 space-y-4">
-                      {section.paragraphs.map((paragraph, idx) => (
-                        <p key={`${section.title}-${idx}`} className="text-sm leading-6 text-[color:var(--ink)]">
-                          {paragraph}
-                        </p>
-                      ))}
-                    </div>
-                  </section>
-                  {ctaEnabled && index === inlineCtaPoint.injectAfterIndex && (
-                    <ArticleInlineCTA surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
-                  )}
-                </Fragment>
-              ))}
-            </div>
-
-            <ProductSurfaceRolePanel
-              surface="knowledgeArticle"
-              className="mt-10"
-              title="文章读完后要知道下一步验证什么"
-              description="知识详情页的目标不是让用户停在解释层，而是把一个概念接到个人测算、专题、工具和案例路径。"
-              compact
-            />
-
-            <ContentVisualAssetPanel
-              assets={visualAssets}
-              page={`/knowledge/${article.slug}`}
-              source={pageSource}
-              contentLabel="知识文章"
-              contentTitle={article.title}
-              className="mt-10"
-            />
-
-            {topicHub ? (
-              <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--line)] bg-[color:var(--paper)] p-5">
-                <div className="text-sm font-semibold text-[color:var(--muted)]">所属专题路径</div>
-                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{topicHub.topicName}专题地图</h2>
-                <p className="text-sm leading-7 text-[color:var(--ink-4)] mt-3">这篇文章已进入稳定专题节点，可直接回专题继续扩展。</p>
-                <ContentCardLink
-                  href={`/knowledge/topics/${topicHub.topicSlug}`}
-                  source={pageSource}
-                  page={`/knowledge/${article.slug}`}
-                  meta={{
-                    surfaceKey: `knowledge_article:${article.slug}`,
-                    targetSurfaceKey: `knowledge_topic:${topicHub.topicSlug}`,
-                    contentType: 'knowledge',
-                    topicName: topicHub.topicName,
-                  }}
-                  className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-4"
-                >
-                  返回专题地图
-                </ContentCardLink>
-              </section>
-            ) : null}
-
-            <section className="mt-10">
-              <SurfaceJourneyPanel
-                journey={journey}
-                title={journeyCopy.title}
-                description={journeyCopy.description}
-                badge="知识文章来源 · 已保留"
-              />
-            </section>
-          </article>
-
-          <div className="space-y-5">
-            <ContentQuickAnalyzePanel
-              sourceLabel="文章页快速分析"
-              sourceKey={`knowledge_article:${article.slug}`}
-              contentMeta={{
-                contentType: 'knowledge',
-                surfaceKey: `knowledge_article:${article.slug}`,
-                slug: article.slug,
-                title: article.title,
-                category: article.category,
-                tags: article.tags,
-              }}
-              title="看懂原理之后，直接测自己的生日"
-              description="把出生日期、时间和性别先带进分析入口，看看这套方法落到你自己身上时，重点到底在哪里。"
-            />
-
-            {primaryTool ? (
-              <ContentConversionPanel
-                tool={primaryTool}
-                page={`/knowledge/${article.slug}`}
-                contentLabel="文章"
-                contentTitle={article.title}
-                source={pageSource}
-                ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                sourceFamily={sourceCtaStrategy.sourceFamily}
-              />
-            ) : null}
-
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-                <Compass className="h-4 w-4" />
-                相关工具
-              </div>
-              <div className="mt-4 grid gap-3">
-                {toolItems.length > 0 ? toolItems.map((tool) => (
-                  <ToolCardLink
-                    key={tool.slug}
-                    href={`/tools/${tool.slug}`}
-                    toolSlug={tool.slug}
-                    category={tool.category}
-                    page={`/knowledge/${article.slug}`}
-                    source={pageSource}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                    className="block rounded-[var(--radius)] bg-[color:var(--accent-soft)]/70 p-4 transition hover:bg-[color:var(--accent-soft)]"
-                  >
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{tool.themeLabel}</div>
-                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{tool.shortTitle}</div>
-                  </ToolCardLink>
-                )) : (
-                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应工具</div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-                <LibraryBig className="h-4 w-4" />
-                相关案例
-              </div>
-              <div className="mt-4 grid gap-3">
-                {caseItems.length > 0 ? caseItems.map((item) => (
-                  <ContentCardLink
-                    key={item.slug}
-                    href={`/cases/${item.slug}`}
-                    source={pageSource}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                    page={`/knowledge/${article.slug}`}
-                    meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `case_article:${item.slug}`, contentType: 'case' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                  >
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.scenario}</div>
-                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
-                  </ContentCardLink>
-                )) : (
-                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应案例</div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
-                <Sparkles className="h-4 w-4" />
-                相关洞察
-              </div>
-              <div className="mt-4 grid gap-3">
-                {insightItems.length > 0 ? insightItems.map((item) => (
-                  <ContentCardLink
-                    key={item.slug}
-                    href={`/insights/${item.type}/${item.slug}`}
-                    source={pageSource}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                    page={`/knowledge/${article.slug}`}
-                    meta={{ surfaceKey: `knowledge_article:${article.slug}`, targetSurfaceKey: `insight_article:${item.slug}`, contentType: 'insight' }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                  >
-                    <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{item.name}</div>
-                    <div className="mt-2 text-base font-semibold text-[color:var(--ink)]">{item.title}</div>
-                  </ContentCardLink>
-                )) : (
-                  <div className="rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 text-sm text-[color:var(--ink)]">暂无对应洞察</div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-              {isWorldYiArticle ? (
-                <>
-                  <div className="text-sm font-semibold text-[color:var(--muted)]">
-                    {isWorldYiEnglishArticle ? 'World Yi Reading Path' : '世界易阅读路径'}
-                  </div>
-                  <Link href={appendSourceToHref(isWorldYiEnglishArticle ? '/world-yi/en' : '/world-yi', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-3 inline-flex">
-                    {isWorldYiEnglishArticle ? 'Back to World Yi English Gateway' : '先回世界易总入口'}
-                    <ArrowLeft className="h-4 w-4 rotate-180" />
-                  </Link>
-                  <div className="mt-4 space-y-4">
-                    {worldYiSeriesEntries.map((item) => (
-                      <ContentCardLink
-                        key={item.slug}
-                        href={`/knowledge/${item.slug}`}
-                        source={pageSource}
-                        ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                        sourceFamily={sourceCtaStrategy.sourceFamily}
-                        page={`/knowledge/${article.slug}`}
-                        meta={{
-                          surfaceKey: `world_yi_series:${article.slug}`,
-                          targetSurfaceKey: `knowledge_article:${item.slug}`,
-                          contentType: 'knowledge',
-                          slug: item.slug,
-                          title: item.title,
-                          category: item.category,
-                          tags: item.tags,
-                          series: 'world-yi',
-                        }}
-                        className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                      >
-                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                        <div className="text-sm leading-7 text-[color:var(--ink-4)] mt-2">{item.excerpt}</div>
-                      </ContentCardLink>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-sm font-semibold text-[color:var(--muted)]">世界易入口</div>
-                  <Link href={appendSourceToHref('/world-yi', pageSource)} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-4 inline-flex">
-                    进入世界易总入口
-                    <ArrowLeft className="h-4 w-4 rotate-180" />
-                  </Link>
-                  {fallbackWorldYiEntries.length > 0 ? (
-                    <div className="mt-4 space-y-4">
-                      {fallbackWorldYiEntries.map((item) => (
-                        <ContentCardLink
-                          key={item.slug}
-                          href={`/knowledge/${item.slug}`}
-                          source={pageSource}
-                          ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                          sourceFamily={sourceCtaStrategy.sourceFamily}
-                          page={`/knowledge/${article.slug}`}
-                          meta={{
-                            surfaceKey: `knowledge_article:${article.slug}`,
-                            targetSurfaceKey: `knowledge_article:${item.slug}`,
-                            contentType: 'knowledge',
-                            slug: item.slug,
-                            title: item.title,
-                            category: item.category,
-                            tags: item.tags,
-                            series: 'world-yi',
-                        }}
-                        className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                      >
-                        <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                      </ContentCardLink>
-                    ))}
-                  </div>
-                ) : null}
-                </>
-              )}
-            </div>
-
-            <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-5">
-              <div className="text-sm font-semibold text-[color:var(--muted)]">
-                {topicHub ? `同专题继续阅读：${topicHub.topicName}` : '相关文章'}
-              </div>
-              {topicHub?.relatedTopicNames.length ? (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {topicHub.relatedTopicNames.slice(0, 4).map((item) => (
-                    <span key={item} className="rounded-full bg-[color:var(--accent-soft)] px-3 py-1 text-xs font-semibold text-[color:var(--accent-strong)]">
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-              <div className="mt-4 space-y-4">
-                {related.map((item) => (
-                  <ContentCardLink
-                    key={item.entry.slug}
-                    href={`/knowledge/${item.entry.slug}`}
-                    source={pageSource}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                    page={`/knowledge/${article.slug}`}
-                    meta={{
-                      surfaceKey: `knowledge_article:${article.slug}`,
-                      targetSurfaceKey: `knowledge_article:${item.entry.slug}`,
-                      contentType: 'knowledge',
-                      slug: item.entry.slug,
-                      title: item.entry.title,
-                      category: item.entry.category,
-                      tags: item.entry.tags,
-                      topicName: item.topicName,
-                      synthesisType: item.synthesisType,
-                    }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                  >
-                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.entry.title}</div>
-                  </ContentCardLink>
-                ))}
-                {fallbackRelated.map((item) => (
-                  <ContentCardLink
-                    key={item.slug}
-                    href={`/knowledge/${item.slug}`}
-                    source={pageSource}
-                    ctaStrategyKey={sourceCtaStrategy.strategyKey}
-                    sourceFamily={sourceCtaStrategy.sourceFamily}
-                    page={`/knowledge/${article.slug}`}
-                    meta={{
-                      surfaceKey: `knowledge_article:${article.slug}`,
-                      targetSurfaceKey: `knowledge_article:${item.slug}`,
-                      contentType: 'knowledge',
-                      slug: item.slug,
-                      title: item.title,
-                      category: item.category,
-                      tags: item.tags,
-                    }}
-                    className="block rounded-[var(--radius)] bg-[color:var(--bg-elevated)] p-4 transition hover:bg-[color:var(--paper)]"
-                  >
-                    <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                  </ContentCardLink>
-                ))}
-              </div>
-            </div>
-
-            <NewsletterSignup
-              source={`knowledge_article:${article.slug}`}
-              title="订阅内容更新"
-              description="接收相关文章、专题扩写和方法更新，方便你把零散阅读逐步串成完整体系。"
-            />
+            {readLabel ? <span className="text-[12px] text-[color:var(--ink-5)]">{readLabel}</span> : null}
+            <Link href="/dimensions" className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:underline">
+              场景研判
+            </Link>
+            <Link href="/tools" className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:underline">
+              工具
+            </Link>
           </div>
-        </section>
-      </main>
+        }
+        actions={
+          <>
+            <Link href={crosslinks.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              {crosslinks.primaryLabel}
+            </Link>
+            {crosslinks.dimensions[0] ? (
+              <Link
+                href={crosslinks.dimensions[0].href}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                {crosslinks.dimensions[0].title}
+              </Link>
+            ) : null}
+          </>
+        }
+      />
+      <JourneyStrip active="content" />
+      {lens ? <EncyclopediaWorldYiSidebar lens={lens} /> : null}
+      <article className="space-y-4 border-t border-[color:var(--hairline)] pt-5">
+        <ContentArticleBody
+          sections={sections}
+          entry={{
+            contentType: 'knowledge',
+            slug,
+            title: article.title,
+            excerpt: summary,
+            category: (article as { category?: string }).category,
+            tags: (article as { tags?: string[] }).tags,
+            meta: (article as { meta?: Record<string, unknown> }).meta,
+          }}
+        />
+        <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
+          <Link href={crosslinks.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+            {crosslinks.primaryLabel}
+          </Link>
+          <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+            十维度
+          </Link>
+          <Link href={`/learn/${trackKey}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+            回到专题
+          </Link>
+        </div>
+      </article>
 
-      {ctaEnabled && (
-        <>
-          <ArticleScrollTracker surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
-          <ArticleStickyCTA surfaceKey={surfaceKey} slug={article.slug} contentType="knowledge" />
-        </>
-      )}
-      <SiteFooter />
-    </div>
+      <div className="mt-4">
+        <ContentActionRail
+          crosslinks={crosslinks}
+          title="把这篇文章接到功能"
+          description="相关十维度研判、免费工具与完整报告入口，帮助你从「读懂」走到「验证」。"
+        />
+      </div>
+
+      <div className="mt-4">
+        <RelatedContent slug={slug} trackKey={trackKey} type="knowledge" />
+      </div>
+    </AppPage>
   );
 }

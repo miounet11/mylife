@@ -82,15 +82,42 @@ export function sanitizePublicContent(value: unknown, maxLength = 180) {
   return sanitizePublicIdentityText(value, maxLength);
 }
 
-function sanitizePublicBlock(value: unknown, maxLength = 900) {
-  return redactPublicContent(`${value || ''}`)
-    .replace(/\r\n/g, '\n')
+/**
+ * Preserve line breaks for markdown answers. Only collapse horizontal whitespace
+ * within a line — never turn the whole block into one paragraph.
+ */
+function sanitizePublicBlock(value: unknown, maxLength = 4000) {
+  const raw = redactPublicContent(`${value || ''}`).replace(/\r\n/g, '\n');
+  const normalized = raw
     .split('\n')
-    .map((line) => line.replace(/\s+/g, ' ').trim())
-    .filter(Boolean)
+    .map((line) => line.replace(/[ \t\u00a0]+/g, ' ').trimEnd())
+    // keep empty lines (paragraph breaks); only drop pure-whitespace lines that
+    // would collapse structure if we used filter(Boolean) aggressively mid-stream
     .join('\n')
-    .slice(0, maxLength)
+    // collapse 3+ blank lines to one blank line
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
+
+  if (normalized.length <= maxLength) return normalized;
+
+  // Prefer cutting at a paragraph / sentence boundary so markdown stays valid.
+  const sliced = normalized.slice(0, maxLength);
+  const cut =
+    sliced.lastIndexOf('\n\n') > maxLength * 0.6
+      ? sliced.lastIndexOf('\n\n')
+      : sliced.lastIndexOf('。') > maxLength * 0.6
+        ? sliced.lastIndexOf('。') + 1
+        : maxLength;
+  return sliced.slice(0, cut).trim();
+}
+
+/** Multi-line block picker — must NOT use asText (which flattens newlines). */
+function firstNonEmptyBlock(values: unknown[], maxLength = 4000) {
+  for (const value of values) {
+    const text = sanitizePublicBlock(value, maxLength);
+    if (text) return text;
+  }
+  return '';
 }
 
 export function buildSeoPublicQuestionTitle(question: string, contextLabel: string) {
@@ -540,15 +567,21 @@ function toPublicQuestionFeedItems(rows: PublicQuestionRow[], limit: number): Pu
       fortune.interaction,
       fortune.trend,
     ], 260);
-    const assistantAnswer = row.assistant_answer ? sanitizePublicBlock(row.assistant_answer, 900) : '';
+    const assistantAnswer = row.assistant_answer ? sanitizePublicBlock(row.assistant_answer, 4000) : '';
     const hasDomainMismatch = hasPublicContentDomainMismatch(question, questionAnalysis, assistantAnswer);
-    const answerText = hasDomainMismatch ? '' : firstNonEmpty([
-      assistantAnswer,
-      reportAnalysis.explanation ? sanitizePublicBlock(reportAnalysis.explanation, 900) : '',
-      reportAnalysis.opening,
-      reportAnalysis.summary,
-      reportSummary,
-    ], 900);
+    // Preserve markdown newlines — firstNonEmpty() flattens via asText and breaks list rendering.
+    const answerText = hasDomainMismatch
+      ? ''
+      : firstNonEmptyBlock(
+          [
+            assistantAnswer,
+            reportAnalysis.explanation ? sanitizePublicBlock(reportAnalysis.explanation, 4000) : '',
+            reportAnalysis.opening,
+            reportAnalysis.summary,
+            reportSummary,
+          ],
+          4000,
+        );
     const analysisPoints = uniquePublicPoints([
       reportAnalysis.judgmentBlocks?.presentDiagnosis?.headline,
       reportAnalysis.judgmentBlocks?.presentDiagnosis?.evidence,

@@ -1,342 +1,288 @@
-// @ts-ignore
-import { Solar } from 'lunar-javascript';
+// ── Build Engine Ground Truth V6 ──
+// Converts raw FortuneAnalysisResult into StructuredAgenticGroundTruth
+
+import type { EngineGroundTruth, LifeProfileContext } from './types';
+import type { KlinePointV6, KlineAnchorV6 } from '@/lib/kline-v6';
+import type { FortuneAnalysisResult, Pillar } from '@/lib/user-types';
+import type { YongShenResult } from '@/lib/bazi-analyzer';
 import type { DayunResult } from '@/lib/dayun-calculator';
-import type { Pillar } from '@/lib/user-types';
-import type {
-  BuildGroundTruthInput,
-  EngineGroundTruth,
-  EngineStrength,
-  KlineAnchorPoint,
-  KlinePhase,
-  KlineStructuredPoint,
-  TimeWindowSummary,
-} from '@/lib/agentic-report/types';
+import type { LifeProfile } from '@/lib/life-profile/types';
 
-const PILLAR_KEYS = ['year', 'month', 'day', 'hour'] as const;
+export interface GroundTruthInput {
+  birthDate: Date;
+  pillars: Pillar[];
+  yongShen: YongShenResult | null;
+  dayun: DayunResult | null;
+  kline: KlinePointV6[];
+  anchors: KlineAnchorV6[];
+  shenSha: string[];
+  pattern?: string;
+  lifeProfile?: LifeProfile | null;
+}
 
-export function buildEngineGroundTruth({
-  birthDate,
-  report,
-  version = 'engine-ground-truth-v1',
-}: BuildGroundTruthInput): EngineGroundTruth {
-  const pillars = report.basic.pillars || [];
-  const now = new Date();
-  const currentYear = now.getFullYear();
-  const currentAge = currentYear - birthDate.getFullYear();
-  const structuredPoints = buildStructuredKlinePoints(birthDate, report.klineData || []);
-  const anchorPoints = buildKlineAnchors(structuredPoints);
-  const phases = buildKlinePhases(structuredPoints);
-  const timeWindows = buildTimeWindows(structuredPoints);
-  const overallWindows = summarizeOverallWindows(structuredPoints);
-  const dayun = buildDayunWindows(report.dayun, birthDate.getFullYear(), currentAge);
-  const currentPoint = structuredPoints.find((point) => point.year === currentYear) || null;
+export function buildEngineGroundTruth(input: GroundTruthInput): EngineGroundTruth {
+  const birthDate = input.birthDate instanceof Date ? input.birthDate : new Date(input.birthDate);
+  const pillars = Array.isArray(input.pillars) ? input.pillars : [];
+  const yongShen = input.yongShen || null;
+  const dayun = input.dayun || null;
+  const kline = Array.isArray(input.kline) ? input.kline : [];
+  const anchors = Array.isArray(input.anchors) ? input.anchors : [];
+  const shenSha = Array.isArray(input.shenSha) ? input.shenSha : [];
 
-  return {
-    version,
-    generatedAt: now.toISOString(),
-    constitution: {
-      dayMaster: report.basic.dayMaster,
-      strength: normalizeStrength(report.pattern?.strength),
-      patternType: report.pattern?.type || '未定格局',
-      yongShen: report.advice?.yongShen || [],
-      xiShen: report.advice?.xiShen || [],
-      jiShen: report.advice?.jiShen || [],
-      seasonContext: buildSeasonContext(birthDate),
-    },
-    pillars: {
-      year: stringifyPillar(pillars[0]),
-      month: stringifyPillar(pillars[1]),
-      day: stringifyPillar(pillars[2]),
-      hour: stringifyPillar(pillars[3]),
-      details: pillars,
-    },
-    tenGodsTable: buildTenGodsTable(pillars),
-    dayun,
-    shenSha: {
-      list: normalizeShenSha(report.shenSha),
-    },
-    kline: {
-      version: 'life-kline-v3-grounded',
-      points: structuredPoints,
-      anchorPoints,
-      phases,
-      windows: overallWindows,
-    },
-    timeWindows,
-    derivedFacts: {
-      currentAge,
-      currentYear,
-      currentScore: currentPoint?.score ?? null,
-      peakScore: anchorPoints.find((point) => point.type === 'peak')?.score ?? null,
-      troughScore: anchorPoints.find((point) => point.type === 'trough')?.score ?? null,
-    },
+  const dayMaster = pillars[2]?.celestialStem || '';
+  const currentYear = new Date().getFullYear();
+  const currentAge = Number.isFinite(birthDate.getTime())
+    ? currentYear - birthDate.getFullYear()
+    : 0;
+
+  // ── Constitution ──
+  const constitution: EngineGroundTruth['constitution'] = {
+    dayMaster,
+    strength: normalizeStrength(yongShen?.strength || '中和'),
+    patternType: input.pattern || '正格',
+    yongShen: yongShen?.yongShen || [],
+    xiShen: yongShen?.xiShen || [],
+    jiShen: yongShen?.jiShen || [],
+    seasonContext: getSeasonContext(birthDate.getMonth() + 1),
   };
-}
 
-function buildStructuredKlinePoints(
-  birthDate: Date,
-  klineData: Array<{ year: number; career: number; wealth: number; marriage: number; health: number }>
-): KlineStructuredPoint[] {
-  return klineData.map((point, index) => {
-    const score = average([point.career, point.wealth, point.marriage, point.health]);
-    const prevScore = index > 0
-      ? average([
-          klineData[index - 1].career,
-          klineData[index - 1].wealth,
-          klineData[index - 1].marriage,
-          klineData[index - 1].health,
-        ])
-      : score;
-    const delta = score - prevScore;
-    const open = clampScore(Math.round(score - delta * 0.6));
-    const close = clampScore(score);
-    const high = clampScore(Math.max(open, close) + 4);
-    const low = clampScore(Math.min(open, close) - 4);
-
-    return {
-      year: point.year,
-      age: point.year - birthDate.getFullYear(),
-      score: close,
-      open,
-      close,
-      high,
-      low,
-      career: point.career,
-      wealth: point.wealth,
-      marriage: point.marriage,
-      health: point.health,
-      reason: describePoint(point, delta),
-    };
-  });
-}
-
-function buildKlineAnchors(points: KlineStructuredPoint[]): KlineAnchorPoint[] {
-  if (!points.length) return [];
-
-  const sorted = [...points].sort((a, b) => b.score - a.score);
-  const peak = sorted[0];
-  const trough = sorted[sorted.length - 1];
-  const currentIndex = Math.floor(points.length / 2);
-  const turningCandidate = points[currentIndex];
-  const anchors: KlineAnchorPoint[] = [];
-
-  if (peak) {
-    anchors.push({
-      year: peak.year,
-      age: peak.age,
-      score: peak.score,
-      type: 'peak',
-      reason: '综合分数最高，适合作为关键峰值窗口。',
-    });
-  }
-
-  if (trough && trough.year !== peak?.year) {
-    anchors.push({
-      year: trough.year,
-      age: trough.age,
-      score: trough.score,
-      type: 'trough',
-      reason: '综合分数最低，适合作为关键回撤窗口。',
-    });
-  }
-
-  if (turningCandidate && turningCandidate.year !== peak?.year && turningCandidate.year !== trough?.year) {
-    anchors.push({
-      year: turningCandidate.year,
-      age: turningCandidate.age,
-      score: turningCandidate.score,
-      type: 'turning',
-      reason: '处于当前 K 线区间中部，适合作为阶段转折观察点。',
-    });
-  }
-
-  return anchors.sort((a, b) => a.year - b.year);
-}
-
-function buildKlinePhases(points: KlineStructuredPoint[]): KlinePhase[] {
-  const phases: KlinePhase[] = [];
-
-  for (let index = 0; index < points.length; index += 5) {
-    const segment = points.slice(index, index + 5);
-    if (!segment.length) continue;
-
-    const start = segment[0];
-    const end = segment[segment.length - 1];
-    const avgScore = average(segment.map((item) => item.score));
-    const trend = end.score - start.score >= 6 ? 'up' : start.score - end.score >= 6 ? 'down' : 'stable';
-
-    phases.push({
-      label: `${start.year}-${end.year}阶段`,
-      startYear: start.year,
-      endYear: end.year,
-      startAge: start.age,
-      endAge: end.age,
-      averageScore: avgScore,
-      trend,
-    });
-  }
-
-  return phases;
-}
-
-function buildTimeWindows(points: KlineStructuredPoint[]): EngineGroundTruth['timeWindows'] {
-  return {
-    career: summarizeDimensionWindows(points, 'career'),
-    wealth: summarizeDimensionWindows(points, 'wealth'),
-    relationship: summarizeDimensionWindows(points, 'marriage'),
-    health: summarizeDimensionWindows(points, 'health'),
-  };
-}
-
-function summarizeOverallWindows(points: KlineStructuredPoint[]): TimeWindowSummary[] {
-  const phases = buildKlinePhases(points);
-
-  return phases.map((phase) => ({
-    startYear: phase.startYear,
-    endYear: phase.endYear,
-    startAge: phase.startAge,
-    endAge: phase.endAge,
-    label: phase.label,
-    score: phase.averageScore,
-  }));
-}
-
-function summarizeDimensionWindows(
-  points: KlineStructuredPoint[],
-  key: 'career' | 'wealth' | 'marriage' | 'health'
-): TimeWindowSummary[] {
-  const windows: TimeWindowSummary[] = [];
-
-  for (let index = 0; index < points.length; index += 3) {
-    const segment = points.slice(index, index + 3);
-    if (!segment.length) continue;
-
-    const start = segment[0];
-    const end = segment[segment.length - 1];
-    const score = average(segment.map((item) => item[key]));
-    windows.push({
-      startYear: start.year,
-      endYear: end.year,
-      startAge: start.age,
-      endAge: end.age,
-      label: `${start.year}-${end.year}`,
-      score,
-    });
-  }
-
-  return windows;
-}
-
-function buildDayunWindows(
-  dayunResult: DayunResult | undefined,
-  birthYear: number,
-  currentAge: number
-): EngineGroundTruth['dayun'] {
-  const windows = (dayunResult?.dayuns || []).map((item) => ({
-    label: `${item.ganZhi}大运`,
-    startAge: item.startAge,
-    endAge: item.endAge,
-    startYear: item.startYear || birthYear + item.startAge,
-    endYear: item.endYear || birthYear + item.endAge,
-    ganZhi: item.ganZhi,
-    quality: item.quality,
-    yongShenMatch: item.yongShenMatch,
-    isCurrent: item.isCurrent,
+  // ── Pillars ──
+  const pillarLabels = ['年柱', '月柱', '日柱', '时柱'];
+  const groundPillars = pillars.map((p, i) => ({
+    label: pillarLabels[i] || `柱${i + 1}`,
+    ganZhi: `${p.celestialStem}${p.earthlyBranch}`,
+    celestialStem: p.celestialStem,
+    earthlyBranch: p.earthlyBranch,
+    nayin: p.nayin || '',
+    hiddenStems: p.hiddenStems || [],
   }));
 
-  return {
-    startAge: dayunResult?.startAge || 0,
-    direction: inferDayunDirection(dayunResult, currentAge),
-    currentDayun: dayunResult?.currentDayun?.ganZhi,
-    currentRange: dayunResult?.currentDayun
-      ? `${dayunResult.currentDayun.startAge}-${dayunResult.currentDayun.endAge}岁`
-      : undefined,
+  // ── Ten Gods Table ──
+  const tenGodsTable = pillars.map(p => ({
+    pillar: p.celestialStem + p.earthlyBranch,
+    stemShiShen: '',
+    branchShiShen: '',
+    hiddenShiShen: [] as string[],
+  }));
+
+  // ── K-line ──
+  const phases = computePhases(kline);
+  const windows = anchorsToWindows(anchors);
+
+  const klineSection: EngineGroundTruth['kline'] = {
+    points: kline,
+    anchorPoints: anchors,
+    phases,
     windows,
   };
-}
 
-function inferDayunDirection(
-  dayunResult: DayunResult | undefined,
-  currentAge: number
-): EngineGroundTruth['dayun']['direction'] {
-  if (!dayunResult?.dayuns?.length) return 'unknown';
-  return dayunResult.dayuns[0].startAge <= currentAge ? 'forward' : 'unknown';
-}
+  // ── Time Windows (3-year rolling per dimension) ──
+  const timeWindows: EngineGroundTruth['timeWindows'] = {
+    career: buildDimWindows(kline, 'career', 3),
+    wealth: buildDimWindows(kline, 'wealth', 3),
+    relationship: buildDimWindows(kline, 'marriage', 3),
+    health: buildDimWindows(kline, 'health', 3),
+  };
 
-function buildTenGodsTable(pillars: Pillar[]) {
-  return PILLAR_KEYS.map((pillarKey, index) => {
-    const pillar = pillars[index];
-    return {
-      pillar: pillarKey,
-      stem: pillar?.celestialStem || '',
-      branch: pillar?.earthlyBranch || '',
-      hiddenShiShen: pillar?.hiddenStems || [],
-    };
-  });
-}
+  // ── Dayun ──
+  const dayunList = Array.isArray(dayun?.dayunList)
+    ? dayun.dayunList
+    : Array.isArray((dayun as { dayuns?: typeof dayun.dayunList } | null | undefined)?.dayuns)
+      ? (dayun as { dayuns: NonNullable<typeof dayun.dayunList> }).dayuns
+      : [];
+  const dayunWindows = dayunList.map((d, i) => ({
+    ganZhi: d.ganZhi,
+    startAge: d.startAge,
+    endAge: d.endAge,
+    quality: d.quality,
+    yongShenMatch: d.yongShenMatch,
+    isCurrent: i === (dayun?.currentDayunIndex ?? 0),
+  }));
 
-function normalizeShenSha(shenSha: unknown): EngineGroundTruth['shenSha']['list'] {
-  const rawList = (shenSha as { list?: Array<Record<string, unknown>> } | undefined)?.list || [];
-  return rawList.map((item) => {
-    const name = `${item.name || item.label || item.shenSha || '未知神煞'}`;
-    const text = JSON.stringify(item);
-    const impact = /(贵人|文昌|天喜|福星|天德|月德)/.test(text)
-      ? 'positive'
-      : /(劫煞|羊刃|亡神|灾煞|孤辰|寡宿)/.test(text)
-        ? 'negative'
-        : 'neutral';
+  const dayunSection: EngineGroundTruth['dayun'] = {
+    windows: dayunWindows,
+    direction: yongShen?.yongShen?.[0] ? '顺势' : '待定',
+  };
 
-    return {
-      name,
-      pillar: typeof item.pillar === 'string' ? item.pillar : undefined,
-      impact,
-    };
-  });
-}
+  // ── ShenSha ──
+  const shenShaList: EngineGroundTruth['shenSha'] = (shenSha || []).map(name => ({
+    name,
+    pillar: '日柱',
+    impact: 'neutral' as const,
+  }));
 
-function buildSeasonContext(birthDate: Date) {
+  // ── Derived Facts ──
+  const safeKline = Array.isArray(kline) ? kline : [];
+  const currentPoint = safeKline.find((p) => p?.year === currentYear);
+  const avgScore = (p: KlinePointV6) =>
+    ((Number(p?.career) || 0) + (Number(p?.wealth) || 0) + (Number(p?.marriage) || 0) + (Number(p?.health) || 0)) / 4;
+  const scores = safeKline.map(avgScore).filter((n) => Number.isFinite(n));
+
+  const derivedFacts: EngineGroundTruth['derivedFacts'] = {
+    currentAge,
+    currentYear,
+    currentScore: currentPoint ? Math.round(avgScore(currentPoint)) : 50,
+    peakScore: scores.length ? Math.round(Math.max(...scores)) : 50,
+    troughScore: scores.length ? Math.round(Math.min(...scores)) : 50,
+  };
+
+  let lifeProfile: LifeProfileContext | undefined;
   try {
-    const solar = Solar.fromYmdHms(
-      birthDate.getFullYear(),
-      birthDate.getMonth() + 1,
-      birthDate.getDate(),
-      12,
-      0,
-      0
-    );
-    const lunar = solar.getLunar();
-    return `${lunar.getMonthInChinese()}月，前节气为${lunar.getPrevJie().getName()}。`;
+    lifeProfile = buildLifeProfileContext(input.lifeProfile ?? null, input.yongShen);
   } catch {
-    return `${birthDate.getMonth() + 1}月出生，按当月季节环境理解命局。`;
+    lifeProfile = undefined;
   }
+
+  return {
+    constitution,
+    pillars: groundPillars,
+    tenGodsTable,
+    kline: klineSection,
+    timeWindows,
+    dayun: dayunSection,
+    shenSha: shenShaList,
+    derivedFacts,
+    lifeProfile,
+  };
 }
 
-function normalizeStrength(strength?: string): EngineStrength {
-  if (!strength) return 'balanced';
-  if (/(强|旺)/.test(strength)) return 'strong';
-  if (/(弱|衰)/.test(strength)) return 'weak';
-  if (/从/.test(strength)) return 'follow';
+// ── Helpers ──
+
+const EVENT_FOCUS_MAP: Record<string, string> = {
+  job_change: 'career',
+  entrepreneurship: 'career',
+  study: 'career',
+  marriage: 'relationship',
+  birth: 'relationship',
+  move: 'spatial',
+  illness: 'health',
+  other: 'general',
+};
+
+function buildLifeProfileContext(
+  profile?: LifeProfile | null,
+  yongShen?: YongShenResult | null,
+): LifeProfileContext | undefined {
+  if (!profile) return undefined;
+
+  const keyEvents = Array.isArray(profile.keyEvents) ? profile.keyEvents : [];
+  const predictionOutcomes = Array.isArray(profile.predictionOutcomes) ? profile.predictionOutcomes : [];
+  const calibrationByCategory =
+    profile.calibrationByCategory && typeof profile.calibrationByCategory === 'object'
+      ? profile.calibrationByCategory
+      : {};
+  const learningProgress =
+    profile.learningProgress && typeof profile.learningProgress === 'object'
+      ? profile.learningProgress
+      : {};
+
+  const recentEvents = [...keyEvents]
+    .sort((a, b) => String(b.date || '').localeCompare(String(a.date || '')))
+    .slice(0, 5)
+    .map((event) => ({
+      category: event.category,
+      title: event.title,
+      date: event.date,
+      impact: event.impact,
+    }));
+
+  const focusAreas = Array.from(
+    new Set([
+      ...keyEvents.map((event) => EVENT_FOCUS_MAP[event.category] || event.category),
+      ...predictionOutcomes
+        .filter((item) => (item.pending || 0) > 0 || (item.hitRate || 0) < 0.6)
+        .map((item) => item.category),
+    ]),
+  ).slice(0, 5);
+
+  const uncertaintyNotes: string[] = [];
+  const boundary = yongShen?.confidence?.boundary || profile.yongShen?.confidence?.boundary;
+  if (boundary) {
+    uncertaintyNotes.push(boundary);
+  }
+  if (keyEvents.length < 2) {
+    uncertaintyNotes.push('用户人生事件反馈较少，趋势解读应保留更大不确定性边界。');
+  }
+  if ((profile.calibrationScore || 0) > 0 && (profile.calibrationScore || 0) < 0.5) {
+    uncertaintyNotes.push(`历史命中率 ${Math.round((profile.calibrationScore || 0) * 100)}%，低命中领域应明确标注不确定性。`);
+  }
+
+  return {
+    hasPreviousReports: (profile.reportCount || 0) > 0 || !!profile.lastReportId,
+    calibrationScore: profile.calibrationScore || 0,
+    calibrationByCategory,
+    recentEvents,
+    focusAreas,
+    pastPredictionsSummary: predictionOutcomes.map((item) => ({
+      category: item.category,
+      total: item.total,
+      hitRate: item.hitRate,
+      pending: item.pending,
+    })),
+    preferredTone: profile.preferredTone,
+    learningProgress,
+    uncertaintyNotes,
+  };
+}
+
+function normalizeStrength(raw: string): 'strong' | 'weak' | 'balanced' | 'follow' {
+  const s = raw.toLowerCase();
+  if (s.includes('强') || s.includes('旺') || s.includes('strong')) return 'strong';
+  if (s.includes('弱') || s.includes('weak')) return 'weak';
+  if (s.includes('从') || s.includes('follow')) return 'follow';
   return 'balanced';
 }
 
-function stringifyPillar(pillar?: Pillar) {
-  return pillar ? `${pillar.celestialStem}${pillar.earthlyBranch}` : '';
+function getSeasonContext(month: number): string {
+  if (month >= 3 && month <= 5) return '春木当令';
+  if (month >= 6 && month <= 8) return '夏火当令';
+  if (month >= 9 && month <= 11) return '秋金当令';
+  return '冬水当令';
 }
 
-function describePoint(
-  point: { career: number; wealth: number; marriage: number; health: number },
-  delta: number
-) {
-  const score = average([point.career, point.wealth, point.marriage, point.health]);
-  const trend = delta >= 6 ? '整体加速上行' : delta <= -6 ? '整体承压回调' : '整体维持震荡';
-  return `${trend}，综合分约${score}分，事业${point.career}、财富${point.wealth}、关系${point.marriage}、健康${point.health}。`;
+function computePhases(kline: KlinePointV6[]): EngineGroundTruth['kline']['phases'] {
+  if (kline.length < 5) return [];
+  const phases: EngineGroundTruth['kline']['phases'] = [];
+  const segSize = 5;
+  for (let i = 0; i < kline.length; i += segSize) {
+    const seg = kline.slice(i, i + segSize);
+    if (seg.length < 2) break;
+    const avg = seg.reduce((s, p) => s + (p.career + p.wealth + p.marriage + p.health) / 4, 0) / seg.length;
+    const first = (seg[0]!.career + seg[0]!.wealth + seg[0]!.marriage + seg[0]!.health) / 4;
+    const last = (seg[seg.length - 1]!.career + seg[seg.length - 1]!.wealth + seg[seg.length - 1]!.marriage + seg[seg.length - 1]!.health) / 4;
+    phases.push({
+      label: `${seg[0]!.year}-${seg[seg.length - 1]!.year}`,
+      startYear: seg[0]!.year,
+      endYear: seg[seg.length - 1]!.year,
+      trend: last - first > 3 ? 'up' : first - last > 3 ? 'down' : 'flat',
+      avgScore: Math.round(avg),
+    });
+  }
+  return phases;
 }
 
-function clampScore(value: number) {
-  return Math.max(20, Math.min(95, value));
+function anchorsToWindows(anchors: KlineAnchorV6[]): EngineGroundTruth['kline']['windows'] {
+  return anchors.slice(0, 8).map(a => ({
+    label: a.type === 'peak' ? '高点' : a.type === 'trough' ? '低点' : '转折',
+    startYear: a.year,
+    endYear: a.year + 1,
+    type: a.type as 'peak' | 'trough' | 'turning' | 'stable',
+    score: a.score || 50,
+  }));
 }
 
-function average(values: number[]) {
-  if (!values.length) return 0;
-  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+function buildDimWindows(kline: KlinePointV6[], dim: string, size: number): Array<{ label: string; startYear: number; endYear: number; score: number }> {
+  if (kline.length < size) return [];
+  const windows: Array<{ label: string; startYear: number; endYear: number; score: number }> = [];
+  for (let i = 0; i + size <= kline.length; i += 2) {
+    const seg = kline.slice(i, i + size);
+    const avg = seg.reduce((s, p) => s + ((p as any)[dim] || 0), 0) / seg.length;
+    windows.push({
+      label: `${seg[0]!.year}-${seg[seg.length - 1]!.year}`,
+      startYear: seg[0]!.year,
+      endYear: seg[seg.length - 1]!.year,
+      score: Math.round(avg),
+    });
+  }
+  return windows;
 }

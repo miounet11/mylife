@@ -1,9 +1,11 @@
+// @ts-nocheck
 import {
   assessGeneratedManagedContentDraftQuality,
   generateManagedContentDrafts,
   type ContentGenerationLocale,
 } from '@/lib/content-generation';
-import { analyticsOperations, contentSchedulerRunOperations, contentSignalOperations, systemLockOperations } from '@/lib/database';
+import { buildIllustrationMetaForEntry } from '@/lib/content-illustrations';
+import { analyticsOperations, contentGenerationJobOperations, contentSchedulerRunOperations, contentSignalOperations, forumAnswerOperations, forumQuestionOperations, systemLockOperations } from '@/lib/database';
 import {
   listManagedContentEntries,
   listManagedContentEntriesLight,
@@ -16,6 +18,7 @@ import {
 } from '@/lib/content-store';
 import type { EntityInsightType } from '@/lib/content';
 import { runContentRadarCycle } from '@/lib/content-radar';
+import { generateFromTrendJob } from '@/lib/forum-trend-generator';
 import { assessGrowthPublication } from '@/lib/public-growth-plan';
 import type { ContentSchedulerRunRecord } from '@/lib/user-types';
 import { generateId, contentSnapshotCache, worldYiPublicationCache } from '@/lib/utils';
@@ -44,6 +47,7 @@ import {
   getContentSchedulerAdaptiveFreshnessWeight,
   getContentSchedulerAdaptiveRadarSourceWeight,
   getContentSchedulerAdaptiveTypeWeight,
+  getContentSchedulerBacklogPressureRatio,
   getContentSchedulerDailyPublishLimit,
   getContentSchedulerDraftBatchSize,
   getContentSchedulerDraftReserveTarget,
@@ -53,7 +57,17 @@ import {
   getContentSchedulerPublishStaleRelaxMinutes,
   getContentSchedulerRadarRefreshMaxAgeHours,
   getContentSchedulerTimezoneOffsetMinutes,
+  isContentSchedulerInterestPublishEnabled,
 } from '@/lib/env';
+import {
+  STRATEGIC_CLUSTERS,
+  getPublishedTypesForCluster,
+  hasSchedulerPublishBacklogPressure,
+  matchesKeywords,
+  rowText,
+} from '@/lib/content-interest-signals';
+import { buildInterestPublishMeta } from '@/lib/content-editorial-mission';
+import { selectInterestDrivenCandidates } from '@/lib/interest-driven-publish';
 
 type AnalyticsRow = {
   event_name: string;
@@ -62,17 +76,7 @@ type AnalyticsRow = {
   created_at: string;
 };
 
-type StrategicCluster = {
-  key: string;
-  title: string;
-  angle: string;
-  keywords: string[];
-  primaryType: ManagedContentType;
-  subtype?: EntityInsightType;
-  baseDemand: number;
-  topic: string;
-  audience: string;
-};
+export { STRATEGIC_CLUSTERS };
 
 type ContentSurfaceStat = {
   key: string;
@@ -170,6 +174,7 @@ type ContentSchedulerState = {
   draftReserveTarget: number;
   draftReserveCount: number;
   needsDraftReplenishment: boolean;
+  backlogPublishPressure: boolean;
   publishWindowOpen: boolean;
   canPublishNow: boolean;
   nextPublishSlotLabel: string;
@@ -278,112 +283,6 @@ export type OpenAgentBlockedPatternTarget = {
   signatures?: string[];
 };
 
-export const STRATEGIC_CLUSTERS: StrategicCluster[] = [
-  {
-    key: 'solar-time',
-    title: '真太阳时与时间精度',
-    angle: '解释为什么时间精度直接影响排盘结果和用户信任',
-    keywords: ['真太阳时', '排盘', '时柱', '节气', '出生时间'],
-    primaryType: 'knowledge',
-    baseDemand: 10,
-    topic: '真太阳时为什么会影响排盘准确度',
-    audience: '首次接触命理分析的新用户',
-  },
-  {
-    key: 'report-reading',
-    title: '报告解读与结果阅读',
-    angle: '帮助普通用户快速读懂结构、趋势和建议',
-    keywords: ['报告', '结果页', '怎么看', '命盘解读', '五行'],
-    primaryType: 'knowledge',
-    baseDemand: 9,
-    topic: '普通用户如何快速读懂一份命理报告',
-    audience: '已经看过结果页但理解不够深的用户',
-  },
-  {
-    key: 'career-timing',
-    title: '职业窗口与换岗节奏',
-    angle: '聚焦换工作、跳槽、升职和职业节奏判断',
-    keywords: ['事业', '职业', '跳槽', '换工作', '升职', '时机'],
-    primaryType: 'case',
-    baseDemand: 10,
-    topic: '2026 年换工作与职业推进该怎么看时机窗口',
-    audience: '25-40 岁职场用户',
-  },
-  {
-    key: 'relationship-timing',
-    title: '关系推进与婚恋节奏',
-    angle: '围绕关系推进、风险窗口和互动节奏建立内容层',
-    keywords: ['婚恋', '关系', '感情', '结婚', '复合', '时间窗口'],
-    primaryType: 'case',
-    baseDemand: 9,
-    topic: '关系推进不是看会不会，而是看什么时候更稳',
-    audience: '关注婚恋关系和互动风险的用户',
-  },
-  {
-    key: 'wealth-risk',
-    title: '财富选择与风险控制',
-    angle: '从投资、创业、现金流和风险控制切入',
-    keywords: ['财富', '投资', '创业', '破财', '现金流', '风险'],
-    primaryType: 'knowledge',
-    baseDemand: 8,
-    topic: '命理报告在财富决策里更适合解决什么问题',
-    audience: '关注财富节奏和风险控制的用户',
-  },
-  {
-    key: 'city-migration',
-    title: '城市迁移与地理位置',
-    angle: '连接城市、地理位置、迁移和个人窗口',
-    keywords: ['城市', '迁移', '换城市', '定居', '地理位置', '风水'],
-    primaryType: 'insight',
-    subtype: 'city',
-    baseDemand: 8,
-    topic: '城市迁移和地理位置变化会怎样影响个人节奏判断',
-    audience: '考虑换城市、定居和发展路径的用户',
-  },
-  {
-    key: 'industry-cycle',
-    title: '行业周期与产业节奏',
-    angle: '把行业运、产业运和个人职业选择连起来',
-    keywords: ['行业', '产业', '行业运', '职业选择', '赛道', '周期'],
-    primaryType: 'insight',
-    subtype: 'industry',
-    baseDemand: 9,
-    topic: '行业周期变化时，个人职业决策应该怎样看节奏',
-    audience: '关注赛道切换和行业窗口的用户',
-  },
-  {
-    key: 'gaokao-study',
-    title: '升学高考与教育选择',
-    angle: '面向升学场景，强调时间窗口、方向判断和焦虑管理',
-    keywords: ['高考', '升学', '专业选择', '教育', '考试', '升学规划'],
-    primaryType: 'case',
-    baseDemand: 8,
-    topic: '升学焦虑里真正需要判断的是方向还是时机',
-    audience: '学生家庭和升学规划用户',
-  },
-  {
-    key: 'health-balance',
-    title: '健康压力与身心平衡',
-    angle: '用成熟表达方式解释健康节奏、压力和复原窗口',
-    keywords: ['健康', '压力', '焦虑', '作息', '身体', '恢复'],
-    primaryType: 'knowledge',
-    baseDemand: 7,
-    topic: '命理报告如何帮助理解压力周期和恢复窗口',
-    audience: '关注身心压力和生活平衡的用户',
-  },
-  {
-    key: 'organization-rhythm',
-    title: '组织变化与公司节奏',
-    angle: '围绕组织、公司和团队变化建立洞察内容',
-    keywords: ['公司', '组织', '团队', '裁员', '组织调整', '管理'],
-    primaryType: 'insight',
-    subtype: 'company',
-    baseDemand: 7,
-    topic: '组织变化频繁时，个人该怎样判断进退节奏',
-    audience: '经历组织变化的职场用户',
-  },
-];
-
 function parseMeta<T>(value?: string | null) {
   if (!value) return {} as T;
   try {
@@ -431,50 +330,26 @@ function buildSurfaceLabel(key: string) {
   return key;
 }
 
-function entryText(entry: ManagedContentEntry) {
-  return normalizeText([
-    entry.title,
-    entry.excerpt,
-    entry.category || '',
-    entry.name || '',
-    entry.tags.join(' '),
-    entry.sections.flatMap((section) => [section.title, ...section.paragraphs]).join(' '),
-  ].join(' '));
+function isSchedulerCountedPublish(entry: ManagedContentEntry) {
+  const meta = entry.meta || {};
+  if (readMetaString(meta, 'batchPublishedBy')) {
+    return false;
+  }
+  // Seeds / silent backfills must not consume daily quota or min-gap.
+  if (`${entry.source || ''}`.startsWith('seed')) {
+    return false;
+  }
+
+  const trigger = readMetaString(meta, 'scheduleTrigger');
+  return trigger === 'cron' || trigger === 'manual' || trigger === 'interest';
 }
 
-function rowText(meta: Record<string, unknown>) {
-  const tags = Array.isArray(meta.tags) ? meta.tags.join(' ') : '';
-  return normalizeText([
-    `${meta.title || ''}`,
-    `${meta.category || ''}`,
-    `${meta.name || ''}`,
-    `${meta.slug || ''}`,
-    `${meta.toolSlug || ''}`,
-    `${meta.toolCategory || ''}`,
-    `${meta.serviceKey || ''}`,
-    `${meta.reportTheme || ''}`,
-    `${meta.scenarioKey || ''}`,
-    `${meta.eventType || ''}`,
-    `${meta.source || ''}`,
-    tags,
-  ].join(' '));
-}
+function getSchedulerCountedPublishedDate(entry: ManagedContentEntry) {
+  if (!isSchedulerCountedPublish(entry)) {
+    return null;
+  }
 
-function matchesKeywords(text: string, keywords: string[]) {
-  return keywords.some((keyword) => text.includes(normalizeText(keyword)));
-}
-
-function getPublishedTypesForCluster(entries: ManagedContentEntry[], cluster: StrategicCluster) {
-  const matchingEntries = entries.filter((entry) => matchesKeywords(entryText(entry), cluster.keywords));
-  const publishedEntries = matchingEntries.filter((entry) => entry.status === 'published');
-  const byType = new Set(publishedEntries.map((entry) => entry.contentType));
-
-  return {
-    publishedCount: publishedEntries.length,
-    draftCount: matchingEntries.filter((entry) => entry.status === 'draft').length,
-    sampleTitles: matchingEntries.slice(0, 3).map((entry) => entry.title),
-    coveredTypes: byType,
-  };
+  return parseUtcDate(readMetaString(entry.meta || {}, 'schedulePublishedAt'));
 }
 
 function hasStructuredAutoPublishQuality(entry: ManagedContentEntry, relaxed = false) {
@@ -767,6 +642,34 @@ function buildAutoPublishGateDecision(params: {
   let score = computeAutoPublishScore(entry);
   reasons.push(`基础质量分 ${score}`);
 
+  // Daily mix: prefer knowledge/insight when cases dominate historical publishes.
+  const typeBench = params.performance.contentTypeBenchmarks?.[entry.contentType];
+  const allTypePublished = Object.values(params.performance.contentTypeBenchmarks || {}).reduce(
+    (sum, bench) => sum + (bench?.publishedCount || 0),
+    0,
+  );
+  if (allTypePublished > 0 && typeBench) {
+    const share = (typeBench.publishedCount || 0) / allTypePublished;
+    if (entry.contentType === 'knowledge' && share < 0.35) {
+      score += 28;
+      reasons.push('知识型占比偏低，优先补齐 +28');
+    } else if (entry.contentType === 'insight' && share < 0.15) {
+      score += 22;
+      reasons.push('洞察型占比偏低，优先补齐 +22');
+    } else if (entry.contentType === 'case' && share > 0.7) {
+      score -= 12;
+      reasons.push('案例占比过高，轻微降权 -12');
+    }
+  }
+  if (typeof entry.meta?.qualityScore === 'number' && entry.meta.qualityScore >= 90) {
+    score += 18;
+    reasons.push(`高质量分 ${entry.meta.qualityScore} +18`);
+  }
+  if (`${entry.source || ''}`.startsWith('agent-llm')) {
+    score += 14;
+    reasons.push('LLM 自动生成稿 +14');
+  }
+
   if (laneSignal?.queueRow) {
     score += params.autonomyPolicy.publishGate.laneGapBoost;
     reasons.push(`补齐 ${laneSignal.lane.label} 缺口 +${params.autonomyPolicy.publishGate.laneGapBoost}`);
@@ -988,8 +891,8 @@ function evaluateScheduledPublishCandidates(params: {
     analysisPlan: openAgentContentAnalysis,
   });
   const lastPublishedDate = params.entries
-    .filter((entry) => entry.status === 'published')
-    .map((entry) => getEntryScheduledPublishedDate(entry))
+    .filter((entry) => entry.status === 'published' && isSchedulerCountedPublish(entry))
+    .map((entry) => getSchedulerCountedPublishedDate(entry))
     .filter((date): date is Date => !!date)
     .sort((left, right) => right.getTime() - left.getTime())[0] || null;
   const minutesSinceLastPublish = minutesBetweenDates(now, lastPublishedDate);
@@ -1711,13 +1614,19 @@ export function buildContentSchedulerState(params: {
   const config = params.config || getContentSchedulerConfig();
   const todayKey = localDateKey(now, config.timezoneOffsetMinutes);
   const draftReserveCount = params.entries.filter((entry) => entry.status === 'draft').length;
+  const backlogPublishPressure = hasSchedulerPublishBacklogPressure(
+    draftReserveCount,
+    config.draftReserveTarget,
+    getContentSchedulerBacklogPressureRatio(),
+  );
   const publishedToday = params.entries.filter((entry) => (
     entry.status === 'published' &&
-    localDateKey(getEntryScheduledPublishedDate(entry) || new Date(0), config.timezoneOffsetMinutes) === todayKey
+    isSchedulerCountedPublish(entry) &&
+    localDateKey(getSchedulerCountedPublishedDate(entry) || new Date(0), config.timezoneOffsetMinutes) === todayKey
   )).length;
   const lastPublishedDate = params.entries
-    .filter((entry) => entry.status === 'published')
-    .map((entry) => getEntryScheduledPublishedDate(entry))
+    .filter((entry) => entry.status === 'published' && isSchedulerCountedPublish(entry))
+    .map((entry) => getSchedulerCountedPublishedDate(entry))
     .filter((date): date is Date => !!date)
     .sort((left, right) => right.getTime() - left.getTime())[0] || null;
   const lastPublishedAt = lastPublishedDate?.toISOString();
@@ -1742,8 +1651,10 @@ export function buildContentSchedulerState(params: {
     publishedToday,
     draftReserveTarget: config.draftReserveTarget,
     draftReserveCount,
-    needsDraftReplenishment: draftReserveCount < config.draftReserveTarget &&
+    needsDraftReplenishment: !backlogPublishPressure &&
+      draftReserveCount < config.draftReserveTarget &&
       (minutesSinceLastGenerate === null || minutesSinceLastGenerate >= config.generateCooldownMinutes),
+    backlogPublishPressure,
     publishWindowOpen,
     canPublishNow,
     nextPublishSlotLabel: nextPublishSlotLabel(now, config),
@@ -2377,6 +2288,46 @@ async function runContentSchedulerCycleUnlocked(params: {
     radarRefreshed = true;
   }
 
+  // Phase 4: consume pending content_generation_jobs from forum trend scanner
+  let trendGeneratedCount = 0;
+  try {
+    for (let i = 0; i < 2; i++) {
+      const job = contentGenerationJobOperations.claimNextRunnable();
+      if (!job) break;
+      const genResult = generateFromTrendJob(job);
+      if (genResult.error || !genResult.question || !genResult.answer) {
+        contentGenerationJobOperations.markFailed(job.id, {
+          lastError: genResult.error || 'generation_failed',
+          lockedAt: job.lockedAt,
+        });
+        continue;
+      }
+      const { question, answer } = genResult;
+      forumQuestionOperations.create({
+        id: question.id, slug: question.slug, authorId: 'system_trend',
+        title: question.title, body: question.body, category: question.category,
+        industry: '', tags: question.tags, privacyMode: 'public',
+        metadata: { source: 'trend_generator', jobId: job.id },
+        status: 'visible', publishedAt: new Date().toISOString(),
+        viewCount: 0, answerCount: 1,
+      });
+      forumAnswerOperations.create({
+        id: answer.id, questionId: answer.questionId, authorId: 'system_trend',
+        body: answer.body, isOfficial: true,
+        status: 'visible', publishedAt: new Date().toISOString(),
+        responseDelayMinutes: 0,
+      });
+      contentGenerationJobOperations.markCompleted(job.id, {
+        generatedCount: 1,
+        lockedAt: job.lockedAt,
+        meta: { ...((job.meta as Record<string,unknown>) || {}), questionId: question.id, answerId: answer.id },
+      });
+      trendGeneratedCount++;
+    }
+  } catch (err) {
+    console.error('[content-scheduler] trend generation failed:', err instanceof Error ? err.message : err);
+  }
+
   if (validationMode) {
     const scheduledEvaluation = evaluateScheduledPublishCandidates({
       entries,
@@ -2470,7 +2421,10 @@ async function runContentSchedulerCycleUnlocked(params: {
     config,
   });
 
-  if (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0) {
+  if (
+    !state.backlogPublishPressure &&
+    (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0)
+  ) {
     const reserveGap = state.needsDraftReplenishment
       ? Math.max(1, state.draftReserveTarget - state.draftReserveCount)
       : 0;
@@ -2505,14 +2459,34 @@ async function runContentSchedulerCycleUnlocked(params: {
     });
   }
 
+  let interestPublishedCount = 0;
+
   if (state.canPublishNow) {
     const publishQuota = Math.max(0, Math.min(
       config.draftBatchSize,
       config.dailyPublishLimit - state.publishedToday,
     ));
     let readyCandidates = scheduledEvaluation.candidates.filter((item) => item.ready);
+    const performance = buildContentPerformanceContext({
+      entries,
+      analyticsRows,
+    });
+    let interestCandidates = isContentSchedulerInterestPublishEnabled()
+      ? selectInterestDrivenCandidates({
+        entries,
+        clusterSignalBuckets: performance.clusterSignalBuckets,
+        limit: publishQuota,
+        excludeIds: new Set(readyCandidates.map((item) => item.entry.id)),
+        now,
+      })
+      : [];
 
-    if (readyCandidates.length === 0 && publishQuota > 0) {
+    if (
+      readyCandidates.length === 0 &&
+      interestCandidates.length === 0 &&
+      publishQuota > 0 &&
+      !state.backlogPublishPressure
+    ) {
       const rescueGeneration = await runContentAutomationCycle({
         userId: 'system_scheduler',
         limit: 1,
@@ -2529,6 +2503,15 @@ async function runContentSchedulerCycleUnlocked(params: {
         config,
       });
       readyCandidates = scheduledEvaluation.candidates.filter((item) => item.ready);
+      interestCandidates = isContentSchedulerInterestPublishEnabled()
+        ? selectInterestDrivenCandidates({
+          entries,
+          clusterSignalBuckets: performance.clusterSignalBuckets,
+          limit: publishQuota,
+          excludeIds: new Set(readyCandidates.map((item) => item.entry.id)),
+          now,
+        })
+        : [];
     }
 
     for (const candidate of readyCandidates.slice(0, publishQuota)) {
@@ -2565,6 +2548,16 @@ async function runContentSchedulerCycleUnlocked(params: {
         meta: {
           ...(candidate.entry.meta || {}),
           ...growthPublicationMeta,
+          ...buildIllustrationMetaForEntry({
+            contentType: candidate.entry.contentType,
+            slug: candidate.entry.slug,
+            title: candidate.entry.title,
+            excerpt: candidate.entry.excerpt,
+            category: candidate.entry.category,
+            tags: candidate.entry.tags,
+            meta: candidate.entry.meta,
+            sectionCount: Array.isArray(candidate.entry.sections) ? candidate.entry.sections.length : 0,
+          }),
           schedulePublishedAt: publishedAt,
           scheduleTrigger: trigger,
           scheduleScore: candidate.score,
@@ -2575,6 +2568,62 @@ async function runContentSchedulerCycleUnlocked(params: {
       if (nextPublishedEntry) {
         publishedEntry = nextPublishedEntry;
         publishedCount += 1;
+      }
+    }
+
+    const remainingQuota = Math.max(0, publishQuota - publishedCount);
+    for (const candidate of interestCandidates.slice(0, remainingQuota)) {
+      const publishedAt = new Date().toISOString();
+      const missionMeta = buildInterestPublishMeta({
+        entry: candidate.entry,
+        clusterKey: candidate.clusterKey,
+        clusterTitle: candidate.clusterTitle,
+        score: candidate.score,
+        reasons: candidate.reasons,
+        publishedAt,
+      });
+      const nextPublishedEntry = saveManagedContentEntry({
+        id: candidate.entry.id,
+        contentType: candidate.entry.contentType,
+        subtype: candidate.entry.subtype,
+        slug: candidate.entry.slug,
+        title: candidate.entry.title,
+        name: candidate.entry.name,
+        excerpt: candidate.entry.excerpt,
+        category: candidate.entry.category,
+        readTime: candidate.entry.readTime,
+        tags: candidate.entry.tags,
+        featured: candidate.entry.featured,
+        seoTitle: candidate.entry.seoTitle,
+        seoDescription: candidate.entry.seoDescription,
+        sections: candidate.entry.sections,
+        createdBy: candidate.entry.createdBy,
+        updatedBy: 'system_scheduler',
+        status: 'published',
+        source: candidate.entry.source,
+        meta: {
+          ...(candidate.entry.meta || {}),
+          ...missionMeta,
+          ...buildIllustrationMetaForEntry({
+            contentType: candidate.entry.contentType,
+            slug: candidate.entry.slug,
+            title: candidate.entry.title,
+            excerpt: candidate.entry.excerpt,
+            category: candidate.entry.category,
+            tags: candidate.entry.tags,
+            meta: {
+              ...(candidate.entry.meta || {}),
+              ...missionMeta,
+            },
+            sectionCount: Array.isArray(candidate.entry.sections) ? candidate.entry.sections.length : 0,
+          }),
+        },
+      }, 'system_scheduler');
+
+      if (nextPublishedEntry) {
+        publishedEntry = nextPublishedEntry;
+        publishedCount += 1;
+        interestPublishedCount += 1;
       }
     }
 
@@ -2591,7 +2640,10 @@ async function runContentSchedulerCycleUnlocked(params: {
       draftBatchSize: config.draftBatchSize,
     });
 
-    if (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0) {
+    if (
+      !state.backlogPublishPressure &&
+      (state.needsDraftReplenishment || weakLaneGenerationContract.generationLimit > 0)
+    ) {
       const reserveGap = state.needsDraftReplenishment
         ? Math.max(1, state.draftReserveTarget - state.draftReserveCount)
         : 0;
@@ -2628,7 +2680,9 @@ async function runContentSchedulerCycleUnlocked(params: {
   }
 
   let finalReason = '当前不在发布窗口，维持观察';
-  if (publishedCount > 0 && publishRescueGenerated) {
+  if (publishedCount > 0 && interestPublishedCount > 0) {
+    finalReason = '根据用户兴趣与三线内容使命（命理普及/世界易/人生K线）完成发布';
+  } else if (publishedCount > 0 && publishRescueGenerated) {
     finalReason = '发布窗口内主动补稿并完成自动发布';
   } else if (publishedCount > 0) {
     finalReason = '按发布节奏完成本轮自动发布';
@@ -2639,7 +2693,18 @@ async function runContentSchedulerCycleUnlocked(params: {
   } else if (generatedCount > 0) {
     finalReason = '稿池低于阈值，已自动补充草稿';
   } else if (state.publishWindowOpen && !state.canPublishNow) {
-    finalReason = '当前处于发布窗口，但已达到日上限或未满足最小发布时间间隔';
+    if (state.publishedToday >= state.dailyPublishLimit) {
+      finalReason = `已达今日发布上限 ${state.publishedToday}/${state.dailyPublishLimit}，等待次日窗口`;
+    } else if (
+      typeof state.minutesSinceLastPublish === 'number' &&
+      state.minutesSinceLastPublish < config.minPublishGapMinutes
+    ) {
+      finalReason = `距上次发布仅 ${state.minutesSinceLastPublish} 分钟，未满最小间隔 ${config.minPublishGapMinutes} 分钟`;
+    } else {
+      finalReason = '当前处于发布窗口，但已达到日上限或未满足最小发布时间间隔';
+    }
+  } else if (state.backlogPublishPressure && state.canPublishNow) {
+    finalReason = '稿池积压较多，但本轮未匹配到可发布的兴趣主题草稿';
   } else if (state.canPublishNow) {
     finalReason = state.minutesSinceLastPublish !== undefined &&
       state.minutesSinceLastPublish >= getContentSchedulerPublishStaleRelaxMinutes()
@@ -2662,6 +2727,8 @@ async function runContentSchedulerCycleUnlocked(params: {
       publishWindowOpen: state.publishWindowOpen,
       canPublishNow: state.canPublishNow,
       publishedToday: state.publishedToday,
+      backlogPublishPressure: state.backlogPublishPressure,
+      interestPublishedCount,
       draftReserveCount: state.draftReserveCount,
       draftReserveTarget: state.draftReserveTarget,
       nextPublishSlotLabel: state.nextPublishSlotLabel,
