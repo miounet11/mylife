@@ -64,3 +64,8 @@ data/*.before-d*
 
 .secrets/
 .env.local
+__pycache__/
+*.py[cod]
+_deploy_backup/
+*.bak-*
+**/*.bak*

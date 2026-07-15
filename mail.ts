@@ -359,139 +359,116 @@ export async function deliverMailWithRetry<T extends { success?: boolean; messag
 }
 
 /**
- * 发送邮箱验证码
+ * 发送邮箱验证码（官网蓝顶栏风格 · 简/繁/英）
  */
-export async function sendVerificationCode(email: string, code: string, type: 'login' | 'register' | 'reset' = 'login') {
-  const typeText = {
-    login: '登录',
-    register: '注册',
-    reset: '重置密码'
-  }[type] || '验证'
+export async function sendVerificationCode(
+  email: string,
+  code: string,
+  type: 'login' | 'register' | 'reset' = 'login',
+  options?: { locale?: string | null; language?: string | null; acceptLanguage?: string | null }
+) {
+  const {
+    getEmailChrome,
+    pickLocaleString,
+    resolveEmailLocale,
+  } = await import('@/lib/email-locale');
+  const { renderBrandedEmail, renderInfoCard, escapeHtml } = await import('@/lib/email-layout');
 
-  const html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <style>
-        body {
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-          line-height: 1.6;
-          color: #333;
-          background-color: #f5f5f5;
-          margin: 0;
-          padding: 0;
-        }
-        .container {
-          max-width: 600px;
-          margin: 40px auto;
-          background: white;
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .header {
-          background: linear-gradient(135deg, #7c3aed 0%, #3b82f6 100%);
-          padding: 40px 30px;
-          text-align: center;
-        }
-        .header h1 {
-          color: white;
-          margin: 0;
-          font-size: 28px;
-          font-weight: 600;
-        }
-        .content {
-          padding: 40px 30px;
-        }
-        .verification-code {
-          background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-          border-radius: 12px;
-          padding: 30px;
-          margin: 30px 0;
-          text-align: center;
-          border: 2px dashed #9ca3af;
-        }
-        .code {
-          font-size: 36px;
-          font-weight: bold;
-          color: #7c3aed;
-          letter-spacing: 8px;
-          margin: 20px 0;
-          font-family: 'Courier New', monospace;
-        }
-        .expiry {
-          color: #6b7280;
-          font-size: 14px;
-          margin-top: 15px;
-        }
-        .tips {
-          background: #fef3c7;
-          border-left: 4px solid #f59e0b;
-          padding: 15px 20px;
-          margin: 20px 0;
-          border-radius: 0 8px 8px 0;
-        }
-        .tips p {
-          margin: 5px 0;
-          color: #92400e;
-        }
-        h2 {
-          color: #1f2937;
-          font-size: 24px;
-          margin: 0 0 20px 0;
-          text-align: center;
-        }
-        .footer {
-          background: #f9fafb;
-          padding: 30px;
-          text-align: center;
-          color: #6b7280;
-          font-size: 14px;
-          border-top: 1px solid #e5e7eb;
-        }
-        .footer a {
-          color: #7c3aed;
-          text-decoration: none;
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1>🔐 邮箱验证码</h1>
-        </div>
-        <div class="content">
-          <h2>您正在进行${typeText}操作</h2>
-          <p style="text-align: center; color: #6b7280; margin-bottom: 30px;">
-            您好！您的验证码如下：
-          </p>
-          <div class="verification-code">
-            <div class="code">${code}</div>
-            <div class="expiry">验证码有效期为 5 分钟</div>
-          </div>
-          <div class="tips">
-            <p>⚠️ 安全提示：</p>
-            <p>• 请勿将验证码告诉他人</p>
-            <p>• 此验证码仅用于${typeText}操作</p>
-            <p>• 如非本人操作，请忽略此邮件</p>
-          </div>
-        </div>
-        <div class="footer">
-          <p>这是一封自动发送的邮件，请勿直接回复。</p>
-          <p>
-            <a href="${process.env.NEXT_PUBLIC_APP_URL || ''}">访问xxx</a>
-          </p>
-        </div>
+  const locale = resolveEmailLocale({
+    email,
+    locale: options?.locale,
+    language: options?.language,
+    acceptLanguage: options?.acceptLanguage,
+  });
+  const chrome = getEmailChrome(locale);
+  const appName =
+    (typeof process !== 'undefined' && (process.env.MAIL_APP_NAME || process.env.NEXT_PUBLIC_APP_NAME))
+    || pickLocaleString(locale, {
+      'zh-CN': '人生K线',
+      'zh-Hant': '人生K線',
+      en: 'Life K-Line',
+    });
+  const baseUrl = (
+    (typeof process !== 'undefined'
+      && (process.env.NEXT_PUBLIC_APP_URL || process.env.APP_BASE_URL || process.env.API_BASE_URL))
+    || 'https://www.life-kline.com'
+  ).replace(/\/$/, '');
+
+  const typeText = ({
+    login: pickLocaleString(locale, { 'zh-CN': '登录', 'zh-Hant': '登入', en: 'sign-in' }),
+    register: pickLocaleString(locale, { 'zh-CN': '注册', 'zh-Hant': '註冊', en: 'registration' }),
+    reset: pickLocaleString(locale, { 'zh-CN': '重置密码', 'zh-Hant': '重設密碼', en: 'password reset' }),
+  } as const)[type] || pickLocaleString(locale, { 'zh-CN': '验证', 'zh-Hant': '驗證', en: 'verification' });
+
+  const title = pickLocaleString(locale, {
+    'zh-CN': '邮箱验证码',
+    'zh-Hant': '郵箱驗證碼',
+    en: 'Email verification code',
+  });
+  const subject = pickLocaleString(locale, {
+    'zh-CN': `${appName} · ${typeText}验证码`,
+    'zh-Hant': `${appName} · ${typeText}驗證碼`,
+    en: `${appName} · ${typeText} code`,
+  });
+  const actionLine = pickLocaleString(locale, {
+    'zh-CN': `你正在进行${typeText}操作。`,
+    'zh-Hant': `你正在進行${typeText}操作。`,
+    en: `You are completing ${typeText}.`,
+  });
+  const codeOnlyFor = pickLocaleString(locale, {
+    'zh-CN': `此验证码仅用于${typeText}`,
+    'zh-Hant': `此驗證碼僅用於${typeText}`,
+    en: `This code is only for ${typeText}`,
+  });
+
+  const bodyHtml = `
+    <p style="margin:0 0 14px;color:#444950">${escapeHtml(actionLine)}</p>
+    <p style="margin:0 0 10px;color:#65676b;font-size:13px">${escapeHtml(chrome.yourCodeIs)}</p>
+    <div style="text-align:center;background:#e7f0ff;border:1px solid #c5d8f5;border-radius:8px;padding:22px 16px;margin:0 0 16px">
+      <div style="font-size:32px;font-weight:800;letter-spacing:0.28em;color:#3b5998;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace">
+        ${escapeHtml(code)}
       </div>
-    </body>
-    </html>
+      <div style="margin-top:10px;font-size:12px;color:#65676b">${escapeHtml(chrome.codeExpires)}</div>
+    </div>
+    ${renderInfoCard({
+      tone: 'amber',
+      title: chrome.securityTip,
+      bodyHtml: `
+        <div style="font-size:13px;line-height:1.7">
+          · ${escapeHtml(chrome.doNotShareCode)}<br/>
+          · ${escapeHtml(codeOnlyFor)}<br/>
+          · ${escapeHtml(chrome.ignoreIfNotYou)}
+        </div>
+      `,
+    })}
   `;
+
+  const { html, text } = renderBrandedEmail({
+    locale,
+    appName,
+    baseUrl,
+    email,
+    preheader: `${chrome.yourCodeIs}: ${code}`,
+    title,
+    bodyHtml,
+    textBody: [
+      actionLine,
+      '',
+      `${chrome.yourCodeIs}: ${code}`,
+      chrome.codeExpires,
+      '',
+      chrome.doNotShareCode,
+      codeOnlyFor,
+      chrome.ignoreIfNotYou,
+    ].join('\n'),
+    showUnsubscribe: false,
+  });
 
   return sendMailV2({
     to: email,
-    subject: `🔐 xxx- ${typeText}验证码`,
+    subject,
     content: html,
-    subtype: 'html'
+    text,
+    subtype: 'html',
   });
 }
