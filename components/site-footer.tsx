@@ -51,7 +51,7 @@ export default function SiteFooter() {
                 </>
               )}
             </div>
-            <p className="mt-3 max-w-md text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
+            <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[color:var(--ink-3)]">
               {t('footerTagline')}
             </p>
             <nav className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5" aria-label="footer">
@@ -59,14 +59,14 @@ export default function SiteFooter() {
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-[12px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
+                  className="text-[14px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
                 >
                   {item.labelKey ? t(item.labelKey) : item.label}
                 </Link>
               ))}
             </nav>
 
-            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
+            <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-[14px]">
               <a
                 href={OFFICIAL_TELEGRAM_URL}
                 target="_blank"
@@ -98,11 +98,11 @@ export default function SiteFooter() {
           </div>
           <SystemCapabilityFooterSignalsClient />
         </div>
-        <div className="mt-8 border-t border-[color:var(--hairline)] pt-5 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
+        <div className="mt-8 border-t border-[color:var(--hairline)] pt-5 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">
           © {new Date().getFullYear()} Life K-Line · {t('footerLegal')}
         </div>
         {locale === 'en' && t('contentLangNote') ? (
-          <div className="mt-2 text-[12px] text-[color:var(--ink-4)]">{t('contentLangNote')}</div>
+          <div className="mt-2 text-[13px] text-[color:var(--ink-4)]">{t('contentLangNote')}</div>
         ) : null}
       </div>
     </footer>

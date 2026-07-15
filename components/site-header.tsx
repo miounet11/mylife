@@ -7,6 +7,7 @@ import AuthStatus from '@/components/auth-status';
 import ResultCtaLink from '@/components/result-cta-link';
 import LocaleSwitcher from '@/components/i18n/locale-switcher';
 import { useLocale } from '@/components/i18n/locale-provider';
+import TextScaleToggle from '@/components/text-scale-toggle';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 
@@ -57,7 +58,7 @@ export default function SiteHeader({
     href === '/' ? pathname === href : pathname === href || (pathname || '').startsWith(`${href}/`);
 
   const ctaClass =
-    'inline-flex h-8 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3 text-[13px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
+    'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
 
   const brandName = t('brandName');
   const brandMain =
@@ -114,12 +115,13 @@ export default function SiteHeader({
           </form>
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <TextScaleToggle variant="light" className="hidden sm:inline-flex" />
             <LocaleSwitcher variant="light" className="hidden sm:inline-flex" />
             <AuthStatus />
             <Link
               href="/community/search"
               aria-label={t('navSearch')}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)] transition hover:bg-[color:var(--bg-sunken)] md:hidden"
+              className="inline-flex h-9 w-9 min-h-[var(--control-h)] min-w-[var(--control-h)] items-center justify-center rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-2)] transition hover:bg-[color:var(--bg-sunken)] md:hidden"
             >
               <Search className="h-4 w-4" />
             </Link>
@@ -146,7 +148,7 @@ export default function SiteHeader({
 
       {/* Primary nav strip */}
       <div className="bg-[color:var(--paper)]">
-        <div className="page-frame scrollbar-none flex h-11 items-center gap-0.5 overflow-x-auto">
+        <div className="page-frame scrollbar-none flex min-h-11 items-center gap-0.5 overflow-x-auto py-1">
           <nav className="flex min-w-0 items-center gap-0.5" aria-label="core">
             {primaryNavItems.map((item) => {
               const active = isActive(item.href);
@@ -157,7 +159,7 @@ export default function SiteHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'inline-flex h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline',
+                    'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-3 text-[14px] font-medium no-underline transition hover:no-underline',
                     active
                       ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
                       : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
@@ -175,9 +177,9 @@ export default function SiteHeader({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'hidden h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2 text-[12px] font-medium no-underline transition hover:no-underline lg:inline-flex',
+                      'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline lg:inline-flex',
                       isActive(item.href)
-                        ? 'text-[color:var(--brand-strong)]'
+                        ? 'text-[color:var(--ink-1)]'
                         : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)]',
                     )}
                   >
@@ -188,17 +190,19 @@ export default function SiteHeader({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="hidden h-9 shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2 text-[12px] font-medium text-[color:var(--ink-4)] no-underline transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)] hover:no-underline xl:inline-flex"
+                    className="hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium text-[color:var(--ink-4)] no-underline transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)] hover:no-underline xl:inline-flex"
                   >
                     {L(item.shortLabel)}
                   </Link>
                 ))}
-                <div className="ml-auto flex shrink-0 items-center sm:hidden">
+                <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:hidden">
+                  <TextScaleToggle variant="light" />
                   <LocaleSwitcher variant="light" />
                 </div>
               </>
             ) : (
-              <div className="ml-auto flex shrink-0 items-center sm:hidden">
+              <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:hidden">
+                <TextScaleToggle variant="light" />
                 <LocaleSwitcher variant="light" />
               </div>
             )}

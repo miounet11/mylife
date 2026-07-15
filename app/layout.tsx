@@ -12,6 +12,7 @@ import {
   resolveSiteLocale,
 } from '@/lib/i18n/site-locale';
 import { getGoogleAnalyticsId } from '@/lib/env';
+import { TEXT_SCALE_BOOT_SCRIPT } from '@/lib/text-scale';
 
 const siteUrl = 'https://www.life-kline.com';
 const siteName = 'Life K-Line 命运K线';
@@ -89,7 +90,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#3b5998',
+  maximumScale: 5,
+  themeColor: '#f7f8f9',
 };
 
 const organizationJsonLd = {
@@ -192,6 +194,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang={htmlLangAttr(locale)} data-locale={locale}>
       <body className="min-h-screen antialiased">
+        <Script id="text-scale-boot" strategy="beforeInteractive">
+          {TEXT_SCALE_BOOT_SCRIPT}
+        </Script>
         {googleAnalyticsId ? (
           <>
             <Script

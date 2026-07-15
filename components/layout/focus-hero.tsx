@@ -28,28 +28,28 @@ export function FocusHero({
       )}
     >
       {eyebrow ? (
-        <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{eyebrow}</div>
+        <div className="text-[13px] font-medium text-[color:var(--ink-4)]">{eyebrow}</div>
       ) : null}
       <h1
         className={cn(
-          'text-[22px] font-semibold leading-[1.2] tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[24px]',
+          'text-[24px] font-semibold leading-[1.25] tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[26px]',
           eyebrow ? 'mt-1' : '',
         )}
       >
         {title}
       </h1>
       {description ? (
-        <div className="mt-2 max-w-2xl text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
+        <div className="mt-2.5 max-w-2xl text-[15px] leading-[1.65] text-[color:var(--ink-3)]">
           {description}
         </div>
       ) : null}
       {actions ? (
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[13px]">
+        <div className="mt-3.5 flex flex-wrap items-center gap-x-5 gap-y-2 text-[15px]">
           {actions}
         </div>
       ) : null}
       {footer ? (
-        <div className="mt-3 text-[12px] leading-[1.5] text-[color:var(--ink-5)]">{footer}</div>
+        <div className="mt-3 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">{footer}</div>
       ) : null}
     </header>
   );
