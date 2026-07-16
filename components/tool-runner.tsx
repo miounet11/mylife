@@ -8,7 +8,7 @@ import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution, type ClientAttributionRecord } from '@/lib/client-attribution';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
-const TOOL_RUN_TIMEOUT_MS = 20_000;
+const TOOL_RUN_TIMEOUT_MS = 45_000;
 
 export default function ToolRunner({
   toolSlug,
@@ -35,7 +35,14 @@ export default function ToolRunner({
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [birthTime, setBirthTime] = useState('12:00');
+  const [gender, setGender] = useState<'male' | 'female'>('male');
+  const [name, setName] = useState('');
   const noteLength = note.trim().length;
+  const birthReady = Boolean(birthDate && /^\d{4}-\d{2}-\d{2}/.test(birthDate));
+  const canRunWithBirth = !hasReport && birthReady;
+  const canSubmit = hasReport || canRunWithBirth;
 
   const buildAttribution = (): ClientAttributionRecord | null => {
     const remembered = getRememberedClientAttribution();
@@ -60,23 +67,15 @@ export default function ToolRunner({
     event.preventDefault();
     if (submitting) return;
 
-    if (!hasReport) {
-      void trackClientEvent({
-        eventName: 'result_cta_clicked',
-        page: `/tools/${toolSlug}`,
-        meta: {
-          target: 'tool_runner_requires_report',
-          toolSlug,
-          source: 'tool_runner',
-        },
-      });
-      router.push(analyzeHref);
+    if (!hasReport && !birthReady) {
+      setError('请填写出生日期，或先完成综合判断');
       return;
     }
 
     setSubmitting(true);
     setError('');
     const attribution = buildAttribution();
+    const birthOnly = !hasReport && birthReady;
     void trackClientEvent({
       eventName: 'tool_run_started',
       page: `/tools/${toolSlug}`,
@@ -85,6 +84,7 @@ export default function ToolRunner({
         confirmed: false,
         toolSlug,
         reportId: reportId || null,
+        birthOnly,
         noteLength: note.trim().length,
         source: entrySource || attribution?.source || null,
         attributionSource: attribution?.source || null,
@@ -93,17 +93,26 @@ export default function ToolRunner({
     });
 
     try {
+      const body: Record<string, unknown> = {
+        toolSlug,
+        note,
+        attribution,
+      };
+      if (hasReport && reportId) {
+        body.reportId = reportId;
+      } else if (birthOnly) {
+        body.birthDate = birthDate;
+        body.birthTime = birthTime || '12:00';
+        body.gender = gender;
+        if (name.trim()) body.name = name.trim();
+      }
+
       const { response, data: payload } = await fetchJsonWithTimeout<any>('/api/tools/run', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          toolSlug,
-          reportId,
-          note,
-          attribution,
-        }),
+        body: JSON.stringify(body),
         timeoutMs: TOOL_RUN_TIMEOUT_MS,
         timeoutReason: 'tool-run-timeout',
       });
@@ -116,20 +125,27 @@ export default function ToolRunner({
             target: 'tool_run_failed',
             toolSlug,
             reportId: reportId || null,
+            birthOnly,
             reason: payload.error || 'unknown',
             attributionSource: attribution?.source || null,
             attributionTarget: attribution?.target || null,
           },
         });
-        if (payload.redirectTo) {
+        // Prefer birth form over hard redirect when allowBirthOnly
+        if (payload.redirectTo && !payload.allowBirthOnly && !birthOnly) {
           router.push(payload.redirectTo);
         }
         return;
       }
 
+      const sessionId = payload.data?.sessionId;
+      if (!sessionId) {
+        setError('结果已生成但缺少会话 ID，请重试');
+        return;
+      }
       const resultHref = entrySource
-        ? `/tool-result/${payload.data.sessionId}?source=${encodeURIComponent(entrySource)}`
-        : `/tool-result/${payload.data.sessionId}`;
+        ? `/tool-result/${sessionId}?source=${encodeURIComponent(entrySource)}`
+        : `/tool-result/${sessionId}`;
       router.push(resultHref);
     } catch (runError) {
       setError(isAbortLikeError(runError) ? '工具运行等待时间过长，请稍后重试' : '网络异常，暂时无法运行工具');
@@ -155,17 +171,63 @@ export default function ToolRunner({
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-5"
     >
       <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-        补充一句当前场景
+        {hasReport ? '补充一句当前场景' : '填生日即可测 · 可选场景'}
       </div>
+
       {!hasReport ? (
-        <div className="mt-2 rounded-[var(--radius)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2 text-xs leading-5 text-[color:var(--signal-strong)]">
-          这个工具需要先读取你的综合报告。先完成一次综合判断，再回来运行，会更快也更准。
+        <div className="mt-3 space-y-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+          <p className="text-xs leading-5 text-[color:var(--ink-3)]">
+            尚未关联综合报告时，可先用出生信息即时重算引擎真值，再给出本工具主题判断。完整报告会更细。
+          </p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+              出生日期 <span className="text-[color:var(--alert)]">*</span>
+              <input
+                type="date"
+                required={!hasReport}
+                value={birthDate}
+                onChange={(e) => setBirthDate(e.target.value)}
+                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+              />
+            </label>
+            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+              出生时辰
+              <input
+                type="time"
+                value={birthTime}
+                onChange={(e) => setBirthTime(e.target.value)}
+                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+              />
+            </label>
+            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+              性别（排大运）
+              <select
+                value={gender}
+                onChange={(e) => setGender(e.target.value === 'female' ? 'female' : 'male')}
+                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+              >
+                <option value="male">男</option>
+                <option value="female">女</option>
+              </select>
+            </label>
+            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+              称呼（可选）
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="例如：本人"
+                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)] placeholder:text-[color:var(--ink-5)]"
+              />
+            </label>
+          </div>
         </div>
       ) : null}
+
       {submitting ? (
         <div className="mt-2 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs text-[color:var(--ink-4)]">
           <Loader2 className="mr-1.5 inline-block h-3 w-3 animate-spin" />
-          生成中…
+          {hasReport ? '生成中…' : '正在按出生信息重算引擎并生成…'}
         </div>
       ) : null}
       <textarea
@@ -221,7 +283,7 @@ export default function ToolRunner({
       ) : null}
       <button
         type="submit"
-        disabled={submitting}
+        disabled={submitting || !canSubmit}
         className="mt-4 inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand-strong)] px-5 text-sm font-semibold text-white transition hover:bg-[color:var(--brand-deep)] disabled:cursor-not-allowed disabled:opacity-50"
       >
         {submitting ? (
@@ -231,8 +293,10 @@ export default function ToolRunner({
           </>
         ) : hasReport ? (
           noteLength > 0 ? '开始这个工具' : '直接开始这个工具'
+        ) : birthReady ? (
+          '用出生信息开始这个工具'
         ) : (
-          '先完成综合判断'
+          '请先填写出生日期'
         )}
       </button>
       {!hasReport ? (
@@ -240,7 +304,7 @@ export default function ToolRunner({
           href={analyzeHref}
           className="mt-2 inline-flex h-10 w-full items-center justify-between rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-4 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
         >
-          去生成综合报告
+          或生成完整综合报告（更细）
           <ArrowRight className="h-4 w-4" />
         </Link>
       ) : null}

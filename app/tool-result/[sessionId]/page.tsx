@@ -56,12 +56,21 @@ export default async function ToolResultPage({
   const memory = summarizeToolSessions(recentSessions, report, 6);
   const result = (session.result || {}) as Record<string, unknown>;
   const sessionMeta = (session.meta || {}) as Record<string, any>;
+  const sessionInput = (session.input || {}) as Record<string, unknown>;
   const llmEnhancement = sessionMeta.llmEnhancement || {};
   const deepDiveSections = Array.isArray(llmEnhancement.deepDiveSections)
     ? llmEnhancement.deepDiveSections.filter((item: any) => item?.heading && item?.body).slice(0, 5)
     : [];
   const quality = sessionMeta.quality || null;
   const conversion = sessionMeta.conversion || null;
+  const birthOnly = Boolean(
+    sessionMeta.birthOnly ||
+      sessionMeta.engineSource === 'birth' ||
+      sessionInput.birthOnly ||
+      `${result.engineSource || ''}` === 'birth' ||
+      `${result.confidenceLabel || ''}`.includes('出生信息重算'),
+  );
+  const dayMasterHint = sessionMeta.dayMaster ? `日主 ${sessionMeta.dayMaster}` : '';
   const premiumOffer = buildToolPremiumOffer(tool);
   const growthProfile = getToolGrowthProfile(tool.slug);
   const bundle = getToolBundleForSlug(tool.slug);
@@ -131,6 +140,14 @@ export default async function ToolResultPage({
               <h1 className="mt-2 text-[22px] md:text-[26px] font-bold leading-[1.34] text-[color:var(--ink-1)]">
                 {String(result.headline || `${tool.shortTitle}结果已生成`)}
               </h1>
+
+              {birthOnly ? (
+                <div className="mt-2 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2 text-xs leading-5 text-[color:var(--ink-3)]">
+                  <span className="font-semibold text-[color:var(--brand-strong)]">由出生信息即时重算</span>
+                  {dayMasterHint ? ` · ${dayMasterHint}` : ''}
+                  。本次未绑定完整综合报告；若需更细的主轴与事件校验，可再生成完整报告。
+                </div>
+              ) : null}
 
               <div className="mt-3 grid gap-2 md:grid-cols-2">
                 <ResultCard title="当前建议" value={String(result.recommendedAction || '先回到一个真实问题场景，不要把所有问题混在一起问。')} />

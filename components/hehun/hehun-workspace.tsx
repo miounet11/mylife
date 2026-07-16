@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { analyzeHehun, type HehunPersonInput, type HehunResult } from '@/lib/hehun-engine';
-import { hehunPersonFromQuery, personFromPillarSummary } from '@/lib/hehun-prefill';
+import {
+  hehunFromBirthPair,
+  hehunPersonFromQuery,
+  personFromPillarSummary,
+} from '@/lib/hehun-prefill';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import type { ProfileFortuneView, ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { trackProductEvent } from '@/lib/product-analytics';
@@ -36,6 +40,10 @@ export default function HehunWorkspace() {
   const [result, setResult] = useState<HehunResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [booted, setBooted] = useState(false);
+  const [birthA, setBirthA] = useState({ date: '', time: '12:00', gender: 'male' as 'male' | 'female', name: '本人' });
+  const [birthB, setBirthB] = useState({ date: '', time: '12:00', gender: 'female' as 'male' | 'female', name: '对方' });
+  const [birthBusy, setBirthBusy] = useState(false);
+  const [birthNote, setBirthNote] = useState('');
 
   useEffect(() => {
     trackProductEvent('hehun_page_viewed', {
@@ -119,7 +127,53 @@ export default function HehunWorkspace() {
       score: r.score,
       layers: r.layers.length,
       hasDayun: Boolean(a.currentDayunGanZhi || b.currentDayunGanZhi),
+      source: 'manual_or_profile',
     });
+  }
+
+  function runFromBirth() {
+    if (!birthA.date || !birthB.date) {
+      setBirthNote('请填写双方出生日期');
+      return;
+    }
+    setBirthBusy(true);
+    setBirthNote('');
+    try {
+      const { personA, personB } = hehunFromBirthPair(
+        {
+          birthDate: birthA.date,
+          birthTime: birthA.time || '12:00',
+          gender: birthA.gender,
+          name: birthA.name || '甲方',
+        },
+        {
+          birthDate: birthB.date,
+          birthTime: birthB.time || '12:00',
+          gender: birthB.gender,
+          name: birthB.name || '乙方',
+        },
+      );
+      setA(personA);
+      setB(personB);
+      const r = analyzeHehun(personA, personB);
+      setResult(r);
+      setBirthNote(
+        `已用双方出生信息重算引擎：${personA.name} ${personA.dayMaster}${personA.dayBranch}` +
+          (personA.currentDayunGanZhi ? ` · 运${personA.currentDayunGanZhi}` : '') +
+          ` × ${personB.name} ${personB.dayMaster}${personB.dayBranch}` +
+          (personB.currentDayunGanZhi ? ` · 运${personB.currentDayunGanZhi}` : ''),
+      );
+      trackProductEvent('hehun_run', {
+        score: r.score,
+        layers: r.layers.length,
+        hasDayun: Boolean(personA.currentDayunGanZhi || personB.currentDayunGanZhi),
+        source: 'birth_pair',
+      });
+    } catch (error) {
+      setBirthNote(error instanceof Error ? error.message : '出生信息无法排盘，请检查日期时辰');
+    } finally {
+      setBirthBusy(false);
+    }
   }
 
   async function copyPlain() {
@@ -153,6 +207,30 @@ export default function HehunWorkspace() {
           {loadNote}
         </p>
       ) : null}
+
+      <div className="rounded-[12px] border border-[#e2e8f0] bg-white p-4">
+        <div className="text-[13px] font-semibold text-[#0f172a]">双方生日对盘（无需完整报告）</div>
+        <p className="mt-1 text-[11px] text-[#64748b]">
+          填双方出生信息，引擎即时排出日主、用忌与现行大运后再合婚对照。
+        </p>
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <BirthSideForm title="甲方出生" value={birthA} onChange={setBirthA} />
+          <BirthSideForm title="乙方出生" value={birthB} onChange={setBirthB} />
+        </div>
+        {birthNote ? (
+          <p className="mt-2 rounded-[8px] border border-[#e9e5ff] bg-[#f5f3ff] px-3 py-2 text-[12px] text-[#5b21b6]">
+            {birthNote}
+          </p>
+        ) : null}
+        <button
+          type="button"
+          disabled={birthBusy || !birthA.date || !birthB.date}
+          onClick={runFromBirth}
+          className="mt-3 inline-flex h-10 items-center justify-center rounded-[var(--radius-sm)] border border-[color:var(--ink-1)] bg-white px-5 text-[14px] font-medium text-[color:var(--ink-1)] disabled:opacity-50"
+        >
+          {birthBusy ? '排盘中…' : '用双方生日开始合婚'}
+        </button>
+      </div>
 
       {fortunes.length > 0 ? (
         <div className="grid gap-3 rounded-[12px] border border-[#e2e8f0] bg-white p-4 sm:grid-cols-2">
@@ -315,6 +393,63 @@ export default function HehunWorkspace() {
           </p>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+function BirthSideForm({
+  title,
+  value,
+  onChange,
+}: {
+  title: string;
+  value: { date: string; time: string; gender: 'male' | 'female'; name: string };
+  onChange: (v: { date: string; time: string; gender: 'male' | 'female'; name: string }) => void;
+}) {
+  return (
+    <div className="rounded-[8px] border border-[#e2e8f0] bg-[#f8fafc] p-3">
+      <div className="text-[12px] font-semibold text-[#0f172a]">{title}</div>
+      <div className="mt-2 grid grid-cols-2 gap-2">
+        <label className="block text-[11px] font-semibold text-[#64748b]">
+          日期
+          <input
+            type="date"
+            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            value={value.date}
+            onChange={(e) => onChange({ ...value, date: e.target.value })}
+          />
+        </label>
+        <label className="block text-[11px] font-semibold text-[#64748b]">
+          时辰
+          <input
+            type="time"
+            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            value={value.time}
+            onChange={(e) => onChange({ ...value, time: e.target.value })}
+          />
+        </label>
+        <label className="block text-[11px] font-semibold text-[#64748b]">
+          性别
+          <select
+            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            value={value.gender}
+            onChange={(e) =>
+              onChange({ ...value, gender: e.target.value === 'female' ? 'female' : 'male' })
+            }
+          >
+            <option value="male">男</option>
+            <option value="female">女</option>
+          </select>
+        </label>
+        <label className="block text-[11px] font-semibold text-[#64748b]">
+          称呼
+          <input
+            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            value={value.name}
+            onChange={(e) => onChange({ ...value, name: e.target.value })}
+          />
+        </label>
+      </div>
     </div>
   );
 }
