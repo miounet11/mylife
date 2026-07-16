@@ -208,6 +208,52 @@ html[data-text-scale='large'] body {
   letter-spacing: 0.015em;
 }
 
+/* ── 生日表单（工具 / 合婚）：吃 text-scale token，大字模式可读 ── */
+.birth-form-label {
+  display: block;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: var(--leading-body);
+  color: var(--ink-4);
+}
+
+.birth-form-control {
+  margin-top: 0.25rem;
+  display: block;
+  width: 100%;
+  min-height: var(--control-h);
+  border-radius: var(--radius, 8px);
+  border: 1px solid var(--hairline-strong, #e2e8f0);
+  background: var(--paper, #fff);
+  padding: 0.5rem 0.75rem;
+  font-size: var(--text-body);
+  line-height: var(--leading-body);
+  color: var(--ink-1);
+  outline: none;
+}
+
+.birth-form-control:focus {
+  border-color: var(--brand, #6366f1);
+}
+
+.birth-form-hint {
+  font-size: var(--text-caption);
+  line-height: var(--leading-body);
+  color: var(--brand-strong, #4f46e5);
+}
+
+.birth-form-title {
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--ink-1);
+}
+
+html[data-text-scale='large'] .birth-form-control {
+  min-height: var(--control-h-md);
+  padding: 0.625rem 0.875rem;
+}
+
 a {
   color: var(--brand);
   text-decoration: none;

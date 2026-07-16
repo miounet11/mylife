@@ -74,8 +74,14 @@ export function personFromPillarSummary(
   };
 }
 
-function appendPersonQuery(q: URLSearchParams, prefix: 'a' | 'b', person: HehunPersonInput) {
-  if (person.name) q.set(`${prefix}Name`, person.name);
+function appendPersonQuery(
+  q: URLSearchParams,
+  prefix: 'a' | 'b',
+  person: HehunPersonInput,
+  options?: { includeName?: boolean },
+) {
+  const includeName = options?.includeName !== false;
+  if (includeName && person.name) q.set(`${prefix}Name`, person.name);
   if (person.dayMaster) q.set(`${prefix}Dm`, person.dayMaster);
   if (person.dayBranch) q.set(`${prefix}Db`, person.dayBranch);
   if (person.yongShen?.length) q.set(`${prefix}Yong`, person.yongShen.join(','));
@@ -93,23 +99,30 @@ export function buildHehunHref(params: {
   /** Optional birth pair for share / reopen (engine can recompute on open) */
   birthA?: { birthDate: string; birthTime?: string; gender?: string; name?: string } | null;
   birthB?: { birthDate: string; birthTime?: string; gender?: string; name?: string } | null;
+  /**
+   * 分享隐私模式（默认 false）。
+   * true 时不写入真实姓名参数（aName/bName），仅结构字段 + 出生日期/时辰/性别。
+   */
+  privacy?: boolean;
 }) {
+  const privacy = params.privacy === true;
   const q = new URLSearchParams();
   if (params.reportId) q.set('reportId', params.reportId);
-  if (params.personA) appendPersonQuery(q, 'a', params.personA);
-  if (params.personB) appendPersonQuery(q, 'b', params.personB);
+  if (params.personA) appendPersonQuery(q, 'a', params.personA, { includeName: !privacy });
+  if (params.personB) appendPersonQuery(q, 'b', params.personB, { includeName: !privacy });
   if (params.birthA?.birthDate) {
     q.set('aBirth', params.birthA.birthDate);
     if (params.birthA.birthTime) q.set('aTime', params.birthA.birthTime);
     if (params.birthA.gender) q.set('aGender', params.birthA.gender);
-    if (params.birthA.name) q.set('aName', params.birthA.name);
+    if (!privacy && params.birthA.name) q.set('aName', params.birthA.name);
   }
   if (params.birthB?.birthDate) {
     q.set('bBirth', params.birthB.birthDate);
     if (params.birthB.birthTime) q.set('bTime', params.birthB.birthTime);
     if (params.birthB.gender) q.set('bGender', params.birthB.gender);
-    if (params.birthB.name) q.set('bName', params.birthB.name);
+    if (!privacy && params.birthB.name) q.set('bName', params.birthB.name);
   }
+  if (privacy) q.set('privacy', '1');
   const qs = q.toString();
   return qs ? `/hehun?${qs}` : '/hehun';
 }

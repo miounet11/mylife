@@ -467,6 +467,36 @@ export default function AnalyzeWorkspace({
             </div>
           </section>
 
+          {/* 填生日即可测 — 无完整报告时的轻量入口 */}
+          <section
+            aria-label="填生日即可测"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3.5 md:px-5"
+          >
+            <div className="text-[length:var(--text-caption)] font-semibold text-[color:var(--ink-1)]">
+              填生日即可测
+            </div>
+            <p className={cn('mt-1', muteNote)}>
+              还没生成完整报告时，也可先用出生信息跑单项工具或合婚双盘；本机会记住生日。
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2">
+              {[
+                { href: '/tools/timing-yearly-window', label: '年度主窗口' },
+                { href: '/tools/daily-sign', label: '今日一签' },
+                { href: '/tools/career-role-fit', label: '岗位匹配' },
+                { href: '/hehun', label: '合婚双盘' },
+                { href: '/tools', label: '全部工具' },
+              ].map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-[length:var(--text-caption)] font-medium text-[color:var(--brand-strong)] no-underline underline-offset-2 hover:underline"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          </section>
+
           {/* 以下均为静音链接区：可点的是链接，说明文字淡化 */}
           <nav
             aria-label="站点入口"

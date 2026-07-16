@@ -31,6 +31,10 @@ const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
   { href: '/docs', labelKey: 'navDocs' },
 ];
 
+/** Always-visible quick entry (compact header 也显示) */
+const BIRTH_QUICK_HREF = '/tools/timing-yearly-window';
+const BIRTH_QUICK_LABEL = '填生日测';
+
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
 
 interface SiteHeaderProps {
@@ -159,7 +163,7 @@ export default function SiteHeader({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-3 text-[14px] font-medium no-underline transition hover:no-underline',
+                    'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-3 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline sm:text-[14px]',
                     active
                       ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
                       : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
@@ -169,6 +173,18 @@ export default function SiteHeader({
                 </Link>
               );
             })}
+            <Link
+              href={BIRTH_QUICK_HREF}
+              className={cn(
+                'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline sm:text-[13px]',
+                isActive(BIRTH_QUICK_HREF)
+                  ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
+                  : 'text-[color:var(--brand-strong)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+              )}
+              title="无报告也可填生日即时测算"
+            >
+              {BIRTH_QUICK_LABEL}
+            </Link>
             {!compact ? (
               <>
                 <span className="mx-1.5 hidden h-4 w-px shrink-0 bg-[color:var(--hairline)] lg:block" />
@@ -177,7 +193,7 @@ export default function SiteHeader({
                     key={item.href}
                     href={item.href}
                     className={cn(
-                      'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline lg:inline-flex',
+                      'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline lg:inline-flex',
                       isActive(item.href)
                         ? 'text-[color:var(--ink-1)]'
                         : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)]',
@@ -190,7 +206,7 @@ export default function SiteHeader({
                   <Link
                     key={item.href}
                     href={item.href}
-                    className="hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium text-[color:var(--ink-4)] no-underline transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)] hover:no-underline xl:inline-flex"
+                    className="hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[length:var(--text-caption)] font-medium text-[color:var(--ink-4)] no-underline transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)] hover:no-underline xl:inline-flex"
                   >
                     {L(item.shortLabel)}
                   </Link>

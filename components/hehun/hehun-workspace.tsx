@@ -279,6 +279,7 @@ export default function HehunWorkspace() {
   }
 
   async function copyShareLink() {
+    // 隐私默认：不附带真实姓名，仅结构 + 生日参数
     const href = buildHehunHref({
       personA: a,
       personB: b,
@@ -287,7 +288,6 @@ export default function HehunWorkspace() {
             birthDate: birthA.date,
             birthTime: birthA.time,
             gender: birthA.gender,
-            name: birthA.name,
           }
         : null,
       birthB: birthB.date
@@ -295,17 +295,21 @@ export default function HehunWorkspace() {
             birthDate: birthB.date,
             birthTime: birthB.time,
             gender: birthB.gender,
-            name: birthB.name,
           }
         : null,
+      privacy: true,
     });
     const url =
       typeof window !== 'undefined' ? `${window.location.origin}${href}` : href;
     try {
       await navigator.clipboard.writeText(url);
-      setShareNote('分享链接已复制（含双方日柱/生日参数，对方打开可重算）');
-      setTimeout(() => setShareNote(''), 2500);
-      trackProductEvent('hehun_run', { score: result?.score || 0, layers: result?.layers.length || 0, source: 'share_link' });
+      setShareNote('分享链接已复制（不含姓名；仅日柱/生日参数，对方打开可重算）');
+      setTimeout(() => setShareNote(''), 2800);
+      trackProductEvent('hehun_run', {
+        score: result?.score || 0,
+        layers: result?.layers.length || 0,
+        source: 'share_link_privacy',
+      });
     } catch {
       setShareNote('复制失败，请手动复制地址栏参数');
     }
@@ -543,31 +547,31 @@ function BirthSideForm({
   onChange: (v: { date: string; time: string; gender: 'male' | 'female'; name: string }) => void;
 }) {
   return (
-    <div className="rounded-[8px] border border-[#e2e8f0] bg-[#f8fafc] p-3">
-      <div className="text-[12px] font-semibold text-[#0f172a]">{title}</div>
+    <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
+      <div className="birth-form-title">{title}</div>
       <div className="mt-2 grid grid-cols-2 gap-2">
-        <label className="block text-[11px] font-semibold text-[#64748b]">
+        <label className="birth-form-label">
           日期
           <input
             type="date"
-            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            className="birth-form-control"
             value={value.date}
             onChange={(e) => onChange({ ...value, date: e.target.value })}
           />
         </label>
-        <label className="block text-[11px] font-semibold text-[#64748b]">
+        <label className="birth-form-label">
           时辰
           <input
             type="time"
-            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            className="birth-form-control"
             value={value.time}
             onChange={(e) => onChange({ ...value, time: e.target.value })}
           />
         </label>
-        <label className="block text-[11px] font-semibold text-[#64748b]">
+        <label className="birth-form-label">
           性别
           <select
-            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            className="birth-form-control"
             value={value.gender}
             onChange={(e) =>
               onChange({ ...value, gender: e.target.value === 'female' ? 'female' : 'male' })
@@ -577,10 +581,10 @@ function BirthSideForm({
             <option value="female">女</option>
           </select>
         </label>
-        <label className="block text-[11px] font-semibold text-[#64748b]">
+        <label className="birth-form-label">
           称呼
           <input
-            className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] bg-white px-2 py-2 text-[13px]"
+            className="birth-form-control"
             value={value.name}
             onChange={(e) => onChange({ ...value, name: e.target.value })}
           />

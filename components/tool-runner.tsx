@@ -195,51 +195,49 @@ export default function ToolRunner({
 
       {!hasReport ? (
         <div className="mt-3 space-y-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
-          <p className="text-xs leading-5 text-[color:var(--ink-3)]">
+          <p className="text-[length:var(--text-caption)] leading-[var(--leading-body)] text-[color:var(--ink-3)]">
             尚未关联综合报告时，可先用出生信息即时重算引擎真值，再给出本工具主题判断。完整报告会更细。
           </p>
-          {rememberedHint ? (
-            <p className="text-[11px] text-[color:var(--brand-strong)]">{rememberedHint}</p>
-          ) : null}
+          {rememberedHint ? <p className="birth-form-hint">{rememberedHint}</p> : null}
           <div className="grid gap-2 sm:grid-cols-2">
-            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+            <label className="birth-form-label">
               出生日期 <span className="text-[color:var(--alert)]">*</span>
               <input
                 type="date"
                 required={!hasReport}
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
-                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+                className="birth-form-control"
               />
             </label>
-            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+            <label className="birth-form-label">
               出生时辰
               <input
                 type="time"
                 value={birthTime}
                 onChange={(e) => setBirthTime(e.target.value)}
-                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+                className="birth-form-control"
               />
             </label>
-            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+            <label className="birth-form-label">
               性别（排大运）
               <select
                 value={gender}
                 onChange={(e) => setGender(e.target.value === 'female' ? 'female' : 'male')}
-                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
+                className="birth-form-control"
               >
                 <option value="male">男</option>
                 <option value="female">女</option>
               </select>
             </label>
-            <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
+            <label className="birth-form-label">
               称呼（可选）
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="例如：本人"
-                className="mt-1 w-full rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 py-2 text-sm text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)] placeholder:text-[color:var(--ink-5)]"
+                className="birth-form-control placeholder:text-[color:var(--ink-5)]"
               />
             </label>
           </div>

@@ -15,6 +15,7 @@ type RailLink = {
 const primaryLinks: RailLink[] = [
   { href: '/', label: '首页' },
   { href: '/analyze', label: '开始排盘' },
+  { href: '/tools/timing-yearly-window', label: '填生日测' },
   { href: '/teachers', label: '请老师' },
   { href: '/dimensions', label: '十维度' },
   { href: '/predictions', label: '预测回访' },
@@ -104,9 +105,11 @@ export function PortalRailRight() {
         <div className="text-[11px] font-medium tracking-[0.04em] text-[color:var(--ink-5)]">常用</div>
         <ul className="mt-2 space-y-0.5">
           {[
+            { href: '/tools/timing-yearly-window', label: '填生日·年度窗口' },
             { href: '/dimensions/fortune-rhythm', label: '运势节奏' },
             { href: '/dimensions/career-industry', label: '工作行业' },
             { href: '/tools/daily-sign', label: '今日一签' },
+            { href: '/hehun', label: '合婚双盘' },
             { href: '/cases', label: '案例' },
             { href: '/knowledge', label: '知识库' },
           ].map((item) => (
