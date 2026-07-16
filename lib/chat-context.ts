@@ -60,6 +60,11 @@ export interface ChatCorrectionPrompt {
 export interface ChatExperienceContext {
   intent?: ChatIntent;
   summary: string;
+  /**
+   * 引擎真值 EFC 块（供老师 addon 独立注入；summary 内也有副本）。
+   * /api/chat 应传给 appendTeacherToSystemPrompt.engineFactBlock。
+   */
+  engineFactBlock?: string;
   focusAreas: string[];
   suggestedPrompts: string[];
   correctionPrompts: ChatCorrectionPrompt[];
@@ -269,6 +274,7 @@ export function buildChatExperienceContext(params: {
 
   return {
     intent: params.intent,
+    engineFactBlock: engineFactBlock || undefined,
     summary: [
       ENGINE_HARD_CONTRACT,
       engineFactBlock ? `【引擎真值锁定 · EFC】\n${engineFactBlock}` : '',

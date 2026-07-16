@@ -155,6 +155,27 @@ function buildPromptContext(
 ) {
   const definition = getDimension(slug);
   const yongShen = pack?.truthInput?.yongShen;
+  const dayun = pack?.truthInput?.dayun as
+    | {
+        currentDayunIndex?: number;
+        dayunList?: Array<{ ganZhi?: string; startAge?: number; endAge?: number; quality?: string }>;
+      }
+    | undefined;
+  const current =
+    dayun && typeof dayun.currentDayunIndex === 'number'
+      ? dayun.dayunList?.[dayun.currentDayunIndex]
+      : dayun?.dayunList?.[0];
+  const currentDayun = current?.ganZhi
+    ? `${current.ganZhi}（${current.startAge ?? '?'}-${current.endAge ?? '?'}岁${current.quality ? `，${current.quality}` : ''}）`
+    : undefined;
+
+  const lockedBits = [
+    yongShen?.dayMaster ? `dayMaster:${yongShen.dayMaster}` : '',
+    yongShen?.yongShen?.length ? `yongShen:${yongShen.yongShen.join(',')}` : '',
+    yongShen?.jiShen?.length ? `jiShen:${yongShen.jiShen.join(',')}` : '',
+    current?.ganZhi ? `dayun:${current.ganZhi}` : '',
+    pack?.truthInput?.pattern ? `pattern:${pack.truthInput.pattern}` : '',
+  ].filter(Boolean);
 
   return {
     slug,
@@ -167,6 +188,9 @@ function buildPromptContext(
     jiShen: yongShen?.jiShen,
     name,
     gender,
+    pattern: pack?.truthInput?.pattern,
+    currentDayun,
+    lockedFactsBlock: lockedBits.length ? lockedBits.join('\n') : undefined,
   };
 }
 

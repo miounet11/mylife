@@ -19,6 +19,7 @@ import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
 import {
   appendTeacherToSystemPrompt,
+  extractEngineFactBlockFromChatContext,
   extractGeoLinesFromChatContext,
   extractPracticeLinesFromChatContext,
   resolveChatTeacher,
@@ -373,7 +374,7 @@ async function generateAIResponse(
   }
 
   
-  // 老师人设 + 地理/实践（对标 GPTs × Project 上下文）
+  // 老师人设 + 地理/实践 + 引擎 EFC（对标 GPTs × Project 上下文）
   {
     const teacherBits = {
       teacher: options?.teacherId,
@@ -382,6 +383,11 @@ async function generateAIResponse(
       practiceLines: extractPracticeLinesFromChatContext(options?.context),
       geoLines: extractGeoLinesFromChatContext(options?.context, options?.city),
       profileLines: options?.profileLines || [],
+      // 优先 structured engineFactBlock，否则从 summary 截取 EFC 段
+      engineFactBlock: extractEngineFactBlockFromChatContext(options?.context),
+      reportHint: options?.context?.report
+        ? `日主${options.context.report.dayMaster} · 用神${(options.context.report.yongShen || []).join('、') || '—'} · 大运${options.context.report.currentDaYun}`
+        : null,
     };
     const withTeacher = appendTeacherToSystemPrompt(systemContent, teacherBits);
     systemContent = withTeacher.systemContent;

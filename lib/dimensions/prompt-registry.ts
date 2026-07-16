@@ -1,4 +1,5 @@
 import type { DimensionSlug } from './types';
+import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
 
 export interface DimensionPromptContext {
   slug: DimensionSlug;
@@ -11,13 +12,19 @@ export interface DimensionPromptContext {
   jiShen?: string[];
   name?: string;
   gender?: string;
+  /** 可选：LOCKED 字面块（日主/用神/大运/锚点年） */
+  lockedFactsBlock?: string;
+  currentDayun?: string;
+  pattern?: string;
 }
 
 const SHARED_SYSTEM = [
   '你是「人生K线」十维度研判的文案润色师。引擎已给出结构化结论，你的任务是把每条 bullet 改写成更自然、连贯、有温度的中文，方便用户阅读与行动。',
   '',
+  ENGINE_HARD_CONTRACT,
+  '',
   '硬性约束（违反则视为失败）：',
-  '1. 不得篡改引擎事实：年份、日期、分数、百分比、五行名称、行业/资产名称等必须原样保留',
+  '1. 不得篡改引擎事实：年份、日期、分数、百分比、五行名称、行业/资产名称、日主、用神/忌神、大运干支等必须原样保留',
   '2. 不得新增引擎未给出的具体预测、收益承诺、医疗诊断或投资建议',
   '3. 每条 items 数量必须与输入一致，顺序不变',
   '4. section 的 key 必须与输入一致，不要增删 section',
@@ -25,6 +32,7 @@ const SHARED_SYSTEM = [
   '6. 仅输出合法 JSON，不要 markdown 围栏或额外说明',
   '7. predictions 若输出，必须覆盖输入中全部 index（0..n-1），且不得改 dueDate/window 语义',
   '8. 禁止出现：收益率、稳赚、保本、翻倍、必涨、保证收益、确诊、处方、治愈',
+  '9. 不得把忌神说成主用方向；不得新造大运干支或 K 线锚点年',
 ].join('\n');
 
 const OUTPUT_SCHEMA = [
@@ -62,9 +70,11 @@ export function buildDimensionEnhancePrompt(
 
   const profileLines = [
     context.dayMaster ? `日主：${context.dayMaster}` : '',
+    context.pattern ? `格局：${context.pattern}` : '',
     context.yongShen?.length ? `用神：${context.yongShen.join('、')}` : '',
     context.xiShen?.length ? `喜神：${context.xiShen.join('、')}` : '',
     context.jiShen?.length ? `忌神：${context.jiShen.join('、')}` : '',
+    context.currentDayun ? `当前大运：${context.currentDayun}` : '',
     context.name ? `姓名：${context.name}` : '',
     context.gender ? `性别：${context.gender === 'male' ? '男' : '女'}` : '',
   ].filter(Boolean);
@@ -75,6 +85,9 @@ export function buildDimensionEnhancePrompt(
     `润色侧重：${hint}`,
     context.disclaimer ? `免责声明（勿改写或弱化）：${context.disclaimer}` : '',
     profileLines.length ? `命盘摘要：\n${profileLines.join('\n')}` : '',
+    context.lockedFactsBlock
+      ? `【LOCKED_ENGINE_FACTS · 输出中须保留字面】\n${context.lockedFactsBlock}`
+      : '',
     '',
     '以下是引擎输出的 JSON，请润色 sections[].items 与可选的 predictions[].statement：',
     engineJson,

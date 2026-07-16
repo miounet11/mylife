@@ -109,6 +109,25 @@ export function buildTeacherSystemAddon(bits: ChatTeacherRequestBits): {
 }
 
 /**
+ * 从 chat context 提取引擎 EFC（优先 structured 字段，否则从 summary 截取）。
+ */
+export function extractEngineFactBlockFromChatContext(context: unknown): string {
+  if (!context || typeof context !== 'object') return '';
+  const c = context as Record<string, unknown>;
+  const direct = `${c.engineFactBlock || ''}`.trim();
+  if (direct) return direct;
+
+  const summary = `${c.summary || ''}`;
+  const marker = '【引擎真值锁定 · EFC】';
+  const idx = summary.indexOf(marker);
+  if (idx < 0) return '';
+  const after = summary.slice(idx + marker.length).trim();
+  // Stop at next major section if present
+  const cut = after.search(/\n(?:【|你正在继续|当前会话|报告核心|用户最近)/);
+  return (cut >= 0 ? after.slice(0, cut) : after).trim().slice(0, 1200);
+}
+
+/**
  * 从 chat context 粗抽实践行（结构宽松，兼容不同字段）
  */
 export function extractPracticeLinesFromChatContext(context: unknown): string[] {
