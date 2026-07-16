@@ -1,11 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution, type ClientAttributionRecord } from '@/lib/client-attribution';
+import { loadRememberedBirthForm, saveRememberedBirthForm } from '@/lib/birth-form-storage';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 const TOOL_RUN_TIMEOUT_MS = 45_000;
@@ -39,10 +40,22 @@ export default function ToolRunner({
   const [birthTime, setBirthTime] = useState('12:00');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [name, setName] = useState('');
+  const [rememberedHint, setRememberedHint] = useState('');
   const noteLength = note.trim().length;
   const birthReady = Boolean(birthDate && /^\d{4}-\d{2}-\d{2}/.test(birthDate));
   const canRunWithBirth = !hasReport && birthReady;
   const canSubmit = hasReport || canRunWithBirth;
+
+  useEffect(() => {
+    if (hasReport) return;
+    const remembered = loadRememberedBirthForm();
+    if (!remembered) return;
+    setBirthDate(remembered.birthDate);
+    setBirthTime(remembered.birthTime || '12:00');
+    setGender(remembered.gender);
+    if (remembered.name) setName(remembered.name);
+    setRememberedHint('已填入本机记住的出生信息，可修改后再运行。');
+  }, [hasReport]);
 
   const buildAttribution = (): ClientAttributionRecord | null => {
     const remembered = getRememberedClientAttribution();
@@ -105,6 +118,12 @@ export default function ToolRunner({
         body.birthTime = birthTime || '12:00';
         body.gender = gender;
         if (name.trim()) body.name = name.trim();
+        saveRememberedBirthForm({
+          birthDate,
+          birthTime: birthTime || '12:00',
+          gender,
+          name: name.trim(),
+        });
       }
 
       const { response, data: payload } = await fetchJsonWithTimeout<any>('/api/tools/run', {
@@ -179,6 +198,9 @@ export default function ToolRunner({
           <p className="text-xs leading-5 text-[color:var(--ink-3)]">
             尚未关联综合报告时，可先用出生信息即时重算引擎真值，再给出本工具主题判断。完整报告会更细。
           </p>
+          {rememberedHint ? (
+            <p className="text-[11px] text-[color:var(--brand-strong)]">{rememberedHint}</p>
+          ) : null}
           <div className="grid gap-2 sm:grid-cols-2">
             <label className="block text-[11px] font-semibold text-[color:var(--ink-4)]">
               出生日期 <span className="text-[color:var(--alert)]">*</span>

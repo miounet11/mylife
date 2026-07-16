@@ -90,13 +90,51 @@ export function buildHehunHref(params: {
   reportId?: string;
   personA?: HehunPersonInput | null;
   personB?: HehunPersonInput | null;
+  /** Optional birth pair for share / reopen (engine can recompute on open) */
+  birthA?: { birthDate: string; birthTime?: string; gender?: string; name?: string } | null;
+  birthB?: { birthDate: string; birthTime?: string; gender?: string; name?: string } | null;
 }) {
   const q = new URLSearchParams();
   if (params.reportId) q.set('reportId', params.reportId);
   if (params.personA) appendPersonQuery(q, 'a', params.personA);
   if (params.personB) appendPersonQuery(q, 'b', params.personB);
+  if (params.birthA?.birthDate) {
+    q.set('aBirth', params.birthA.birthDate);
+    if (params.birthA.birthTime) q.set('aTime', params.birthA.birthTime);
+    if (params.birthA.gender) q.set('aGender', params.birthA.gender);
+    if (params.birthA.name) q.set('aName', params.birthA.name);
+  }
+  if (params.birthB?.birthDate) {
+    q.set('bBirth', params.birthB.birthDate);
+    if (params.birthB.birthTime) q.set('bTime', params.birthB.birthTime);
+    if (params.birthB.gender) q.set('bGender', params.birthB.gender);
+    if (params.birthB.name) q.set('bName', params.birthB.name);
+  }
   const qs = q.toString();
   return qs ? `/hehun?${qs}` : '/hehun';
+}
+
+/** Read birth pair from query (for share links). */
+export function hehunBirthPairFromQuery(search: URLSearchParams): {
+  a: { birthDate: string; birthTime: string; gender: 'male' | 'female'; name: string } | null;
+  b: { birthDate: string; birthTime: string; gender: 'male' | 'female'; name: string } | null;
+} {
+  const parseSide = (prefix: 'a' | 'b') => {
+    const birthDate = (search.get(`${prefix}Birth`) || '').trim();
+    if (!/^\d{4}-\d{2}-\d{2}/.test(birthDate)) return null;
+    const genderRaw = (search.get(`${prefix}Gender`) || '').toLowerCase();
+    const gender =
+      genderRaw === 'female' || genderRaw === '女' ? ('female' as const) : ('male' as const);
+    return {
+      birthDate,
+      birthTime: (search.get(`${prefix}Time`) || '12:00').trim() || '12:00',
+      gender,
+      name:
+        (search.get(`${prefix}Name`) || (prefix === 'a' ? '本人' : '对方')).trim() ||
+        (prefix === 'a' ? '本人' : '对方'),
+    };
+  };
+  return { a: parseSide('a'), b: parseSide('b') };
 }
 
 export function hehunPersonFromQuery(

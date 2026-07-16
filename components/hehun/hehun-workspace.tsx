@@ -5,10 +5,16 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { analyzeHehun, type HehunPersonInput, type HehunResult } from '@/lib/hehun-engine';
 import {
+  buildHehunHref,
+  hehunBirthPairFromQuery,
   hehunFromBirthPair,
   hehunPersonFromQuery,
   personFromPillarSummary,
 } from '@/lib/hehun-prefill';
+import {
+  loadRememberedHehunBirthPair,
+  saveRememberedHehunBirthPair,
+} from '@/lib/birth-form-storage';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import type { ProfileFortuneView, ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { trackProductEvent } from '@/lib/product-analytics';
@@ -44,10 +50,11 @@ export default function HehunWorkspace() {
   const [birthB, setBirthB] = useState({ date: '', time: '12:00', gender: 'female' as 'male' | 'female', name: '对方' });
   const [birthBusy, setBirthBusy] = useState(false);
   const [birthNote, setBirthNote] = useState('');
+  const [shareNote, setShareNote] = useState('');
 
   useEffect(() => {
     trackProductEvent('hehun_page_viewed', {
-      hasPrefill: Boolean(search.get('aDm') || search.get('reportId')),
+      hasPrefill: Boolean(search.get('aDm') || search.get('reportId') || search.get('aBirth')),
       reportId: search.get('reportId') || '',
     });
   }, [search]);
@@ -57,6 +64,76 @@ export default function HehunWorkspace() {
     (async () => {
       const fromQueryA = hehunPersonFromQuery('a', search);
       const fromQueryB = hehunPersonFromQuery('b', search);
+      const birthPair = hehunBirthPairFromQuery(search);
+      let usedBirthShare = false;
+
+      if (birthPair.a) {
+        setBirthA({
+          date: birthPair.a.birthDate,
+          time: birthPair.a.birthTime,
+          gender: birthPair.a.gender,
+          name: birthPair.a.name,
+        });
+      }
+      if (birthPair.b) {
+        setBirthB({
+          date: birthPair.b.birthDate,
+          time: birthPair.b.birthTime,
+          gender: birthPair.b.gender,
+          name: birthPair.b.name,
+        });
+      }
+
+      // Share link with birth pair → recompute engine persons
+      if (birthPair.a && birthPair.b && !fromQueryA) {
+        try {
+          const { personA, personB } = hehunFromBirthPair(
+            {
+              birthDate: birthPair.a.birthDate,
+              birthTime: birthPair.a.birthTime,
+              gender: birthPair.a.gender,
+              name: birthPair.a.name,
+            },
+            {
+              birthDate: birthPair.b.birthDate,
+              birthTime: birthPair.b.birthTime,
+              gender: birthPair.b.gender,
+              name: birthPair.b.name,
+            },
+          );
+          if (!cancelled) {
+            setA(personA);
+            setB(personB);
+            const r = analyzeHehun(personA, personB);
+            setResult(r);
+            usedBirthShare = true;
+            setLoadNote('已从分享链接用双方生日重算合婚结果。');
+            setBirthNote(
+              `${personA.name} ${personA.dayMaster}${personA.dayBranch} × ${personB.name} ${personB.dayMaster}${personB.dayBranch}`,
+            );
+          }
+        } catch {
+          // fall through
+        }
+      } else if (!birthPair.a && !birthPair.b) {
+        const remembered = loadRememberedHehunBirthPair();
+        if (remembered && !cancelled) {
+          setBirthA({
+            date: remembered.a.birthDate,
+            time: remembered.a.birthTime,
+            gender: remembered.a.gender,
+            name: remembered.a.name,
+          });
+          setBirthB({
+            date: remembered.b.birthDate,
+            time: remembered.b.birthTime,
+            gender: remembered.b.gender,
+            name: remembered.b.name,
+          });
+          setBirthNote('已填入本机记住的双方生日，可直接对盘。');
+        }
+      }
+
       if (fromQueryA) {
         setA(fromQueryA);
         if (fromQueryA.currentDayunGanZhi || fromQueryA.dayMaster) {
@@ -73,7 +150,7 @@ export default function HehunWorkspace() {
         const data = (await res.json()) as ProfileSettingsResponse & { success?: boolean };
         if (!cancelled && res.ok && data.success && Array.isArray(data.fortunes)) {
           setFortunes(data.fortunes);
-          if (!fromQueryA) {
+          if (!fromQueryA && !usedBirthShare) {
             const primary = data.fortunes.find((f) => f.isPrimary) || data.fortunes[0];
             if (primary) {
               const person = personFromPillarSummary(primary.pillarSummary, {
@@ -86,14 +163,14 @@ export default function HehunWorkspace() {
                 setLoadNote('档案有命盘但缺四柱摘要，请手动选日柱；完整报告页可一键带入。');
               }
             }
-          } else {
+          } else if (fromQueryA) {
             setLoadNote('已从报告/链接预填甲方，可再从档案选乙方伴侣。');
           }
-        } else if (!fromQueryA && !cancelled) {
-          setLoadNote('未登录或无档案时，可手动填写双方日柱；登录后可一键载入多档案。');
+        } else if (!fromQueryA && !usedBirthShare && !cancelled) {
+          setLoadNote('未登录或无档案时，可填双方生日对盘，或手动填写日柱。');
         }
       } catch {
-        if (!cancelled) setLoadNote('档案读取失败，请手动填写日柱。');
+        if (!cancelled && !usedBirthShare) setLoadNote('档案读取失败，可填双方生日或手动日柱。');
       } finally {
         if (!cancelled) setBooted(true);
       }
@@ -157,6 +234,20 @@ export default function HehunWorkspace() {
       setB(personB);
       const r = analyzeHehun(personA, personB);
       setResult(r);
+      saveRememberedHehunBirthPair({
+        a: {
+          birthDate: birthA.date,
+          birthTime: birthA.time || '12:00',
+          gender: birthA.gender,
+          name: birthA.name || '本人',
+        },
+        b: {
+          birthDate: birthB.date,
+          birthTime: birthB.time || '12:00',
+          gender: birthB.gender,
+          name: birthB.name || '对方',
+        },
+      });
       setBirthNote(
         `已用双方出生信息重算引擎：${personA.name} ${personA.dayMaster}${personA.dayBranch}` +
           (personA.currentDayunGanZhi ? ` · 运${personA.currentDayunGanZhi}` : '') +
@@ -184,6 +275,39 @@ export default function HehunWorkspace() {
       setTimeout(() => setCopied(false), 2000);
     } catch {
       // ignore
+    }
+  }
+
+  async function copyShareLink() {
+    const href = buildHehunHref({
+      personA: a,
+      personB: b,
+      birthA: birthA.date
+        ? {
+            birthDate: birthA.date,
+            birthTime: birthA.time,
+            gender: birthA.gender,
+            name: birthA.name,
+          }
+        : null,
+      birthB: birthB.date
+        ? {
+            birthDate: birthB.date,
+            birthTime: birthB.time,
+            gender: birthB.gender,
+            name: birthB.name,
+          }
+        : null,
+    });
+    const url =
+      typeof window !== 'undefined' ? `${window.location.origin}${href}` : href;
+    try {
+      await navigator.clipboard.writeText(url);
+      setShareNote('分享链接已复制（含双方日柱/生日参数，对方打开可重算）');
+      setTimeout(() => setShareNote(''), 2500);
+      trackProductEvent('hehun_run', { score: result?.score || 0, layers: result?.layers.length || 0, source: 'share_link' });
+    } catch {
+      setShareNote('复制失败，请手动复制地址栏参数');
     }
   }
 
@@ -362,16 +486,28 @@ export default function HehunWorkspace() {
           </div>
 
           <div className="border-t border-[color:var(--hairline)] pt-3">
-            <div className="flex items-baseline justify-between gap-2">
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
               <div className="text-[12px] font-medium text-[color:var(--ink-1)]">白话交付</div>
-              <button
-                type="button"
-                onClick={copyPlain}
-                className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
-                {copied ? '已复制' : '复制'}
-              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  onClick={copyPlain}
+                  className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  {copied ? '已复制白话' : '复制白话'}
+                </button>
+                <button
+                  type="button"
+                  onClick={copyShareLink}
+                  className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  复制分享链接
+                </button>
+              </div>
             </div>
+            {shareNote ? (
+              <p className="mt-1 text-[11px] text-[color:var(--brand-strong)]">{shareNote}</p>
+            ) : null}
             <pre className="mt-2 whitespace-pre-wrap font-sans text-[12px] leading-[1.65] text-[color:var(--ink-3)]">
               {result.plainForCouple}
             </pre>

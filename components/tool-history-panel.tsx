@@ -139,8 +139,8 @@ export default function ToolHistoryPanel({
         <div className="mt-3 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--hairline)] px-3 py-3">
           <p className="text-[13px] leading-5 text-[color:var(--ink-3)]">
             {visitOnly
-              ? '你浏览过工具页，但还没有完整跑出可回看的结果。先生成报告再运行工具。'
-              : '暂无工具运行记录。完成一次综合报告后，可在工具中心做单项聚焦判断。'}
+              ? '你浏览过工具页，但还没有完整跑出可回看的结果。也可在工具页填生日即时测算。'
+              : '暂无工具运行记录。可先填生日跑单项工具，或完成综合报告后再聚焦判断。'}
           </p>
           <div className="mt-2 flex flex-wrap gap-2">
             <Link href="/tools" className="fb-btn fb-btn-primary h-8 px-3 text-[12px] hover:no-underline">

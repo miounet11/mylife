@@ -32,9 +32,15 @@ export default function ToolsPage() {
         <FocusHero
           eyebrow="工具"
           title="快速测试，或进入场景研判"
-          description="单项工具适合快速验证；十维度适合结构判断。两者都可接到完整报告。"
+          description="无报告也可填生日即时测算；十维度适合结构判断。两者都可接到完整报告。"
           actions={
             <>
+              <Link
+                href="/tools/timing-yearly-window"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                填生日测年度窗口
+              </Link>
               <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 十维度
               </Link>
@@ -49,6 +55,51 @@ export default function ToolsPage() {
         />
 
         <JourneyStrip active="tools" />
+
+        <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
+          <h2 className="text-[13px] font-semibold text-[color:var(--ink-1)]">填生日即可测</h2>
+          <p className="mt-1 text-[12px] leading-5 text-[color:var(--ink-4)]">
+            还没有综合报告时，在工具页填写出生日期，引擎即时重算用神与大运后再给主题判断。本机会记住你的生日，换工具不用重填。
+          </p>
+          <ul className="mt-3 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+            {[
+              {
+                href: '/tools/timing-yearly-window',
+                title: '年度主窗口',
+                desc: '看今年推进与防守节奏',
+              },
+              {
+                href: '/tools/daily-sign',
+                title: '今日一签',
+                desc: '短周期节奏参考',
+              },
+              {
+                href: '/tools/career-role-fit',
+                title: '岗位匹配',
+                desc: '事业方向与阶段动作',
+              },
+              {
+                href: '/hehun',
+                title: '合婚双盘',
+                desc: '双方生日对盘，无需完整报告',
+              },
+            ].map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="group flex flex-col gap-0.5 py-2.5 no-underline hover:no-underline sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+                >
+                  <span className="text-[13px] font-medium text-[color:var(--ink-1)] group-hover:underline">
+                    {item.title}
+                  </span>
+                  <span className="min-w-0 text-[12px] text-[color:var(--ink-5)] sm:max-w-[55%] sm:truncate sm:text-right">
+                    {item.desc}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         <DimensionsShowcase
           title="场景研判"
