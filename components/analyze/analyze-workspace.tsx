@@ -263,7 +263,7 @@ export default function AnalyzeWorkspace({
       left={<PortalRailLeft activePath={activePath} />}
       right={<PortalRailRight />}
       main={
-        <div className="space-y-5">
+        <div className="mx-auto w-full max-w-[var(--content-max)] space-y-4 md:space-y-5">
           {entryBanner ? (
             <p className={cn('rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/50 px-3 py-2', muteNote)}>
               {entryBanner}
@@ -279,7 +279,7 @@ export default function AnalyzeWorkspace({
               eyebrow={copy.heroEyebrow}
               title={copy.heroTitle}
               description={
-                <span className="text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
+                <span className="text-[13px] leading-[1.55] text-[color:var(--ink-5)] md:text-[14px]">
                   {copy.heroDescription}
                 </span>
               }
@@ -296,28 +296,30 @@ export default function AnalyzeWorkspace({
               }
             />
 
-            <div className="border-t border-[color:var(--hairline)] px-4 py-5 md:px-5 md:py-6">
-              <div className="grid gap-4 md:grid-cols-3">
-                <label className="space-y-2">
+            <div className="px-4 py-5 md:px-5 md:py-6">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <label className="space-y-2 sm:col-span-2 lg:col-span-1">
                   <span className={fieldLabel}>{copy.birthTime}</span>
-                  <input
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    className="fb-input h-9 w-full px-3 text-[13px]"
-                  />
-                  {!timeUnknown ? (
+                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
                     <input
-                      type="time"
-                      value={birthTime}
-                      onChange={(e) => {
-                        setBirthTime(e.target.value);
-                        setTimeTouched(true);
-                      }}
-                      className="fb-input mt-2 h-9 w-full px-3 text-[13px]"
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
                     />
-                  ) : null}
-                  <label className="mt-2 flex items-center gap-2 text-[12px] text-[color:var(--ink-3)]">
+                    {!timeUnknown ? (
+                      <input
+                        type="time"
+                        value={birthTime}
+                        onChange={(e) => {
+                          setBirthTime(e.target.value);
+                          setTimeTouched(true);
+                        }}
+                        className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
+                      />
+                    ) : null}
+                  </div>
+                  <label className="mt-1 flex items-center gap-2 text-[12px] text-[color:var(--ink-3)]">
                     <input
                       type="checkbox"
                       checked={timeUnknown}
@@ -334,7 +336,7 @@ export default function AnalyzeWorkspace({
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
                     placeholder={copy.placePlaceholder}
-                    className="fb-input h-9 w-full px-3 text-[13px]"
+                    className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
                   />
                   <p className={fieldHint}>{copy.placeHint}</p>
                 </label>
@@ -348,7 +350,7 @@ export default function AnalyzeWorkspace({
                         type="button"
                         onClick={() => setGender(value)}
                         className={cn(
-                          'h-9 flex-1 rounded-[var(--radius)] border text-[13px] font-medium transition',
+                          'h-10 min-h-[var(--control-h)] flex-1 rounded-[var(--radius)] border text-[13px] font-medium transition',
                           gender === value ? chipActive : chipIdle,
                         )}
                       >
@@ -467,18 +469,13 @@ export default function AnalyzeWorkspace({
             </div>
           </section>
 
-          {/* 填生日即可测 — 无完整报告时的轻量入口 */}
+          {/* 下游入口：合并为一块，避免多卡片错位堆叠 */}
           <section
-            aria-label="填生日即可测"
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3.5 md:px-5"
+            aria-label="继续探索"
+            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 md:px-5"
           >
-            <div className="text-[length:var(--text-caption)] font-semibold text-[color:var(--ink-1)]">
-              填生日即可测
-            </div>
-            <p className={cn('mt-1', muteNote)}>
-              还没生成完整报告时，也可先用出生信息跑单项工具或合婚双盘；本机会记住生日。
-            </p>
-            <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-2">
+            <div className="text-[12px] font-medium text-[color:var(--ink-5)]">填生日即可测</div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {[
                 { href: '/tools/timing-yearly-window', label: '年度主窗口' },
                 { href: '/tools/daily-sign', label: '今日一签' },
@@ -489,59 +486,53 @@ export default function AnalyzeWorkspace({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className="text-[length:var(--text-caption)] font-medium text-[color:var(--brand-strong)] no-underline underline-offset-2 hover:underline"
+                  className="text-[13px] font-medium text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
                 >
                   {item.label}
                 </Link>
               ))}
             </div>
-          </section>
 
-          {/* 以下均为静音链接区：可点的是链接，说明文字淡化 */}
-          <nav
-            aria-label="站点入口"
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3.5 md:px-5"
-          >
-            <div className="flex flex-wrap gap-x-4 gap-y-2">
-              {[
-                { href: '/dimensions', label: copy.openDimensions || '十维度' },
-                { href: '/teachers', label: '请老师' },
-                { href: '/predictions', label: copy.predictions || '预测回访' },
-                { href: '/events', label: '事件日历' },
-                { href: '/tools', label: copy.allTools || '工具' },
-                { href: '/knowledge', label: copy.knowledge || '知识库' },
-                { href: '/cases', label: '案例' },
-                { href: '/learn', label: '专题' },
-                { href: '/profile', label: '资料' },
-                { href: '/membership', label: '会员' },
-              ].map((item) => (
-                <Link key={item.href} href={item.href} className={quietLink}>
-                  {item.label}
-                </Link>
-              ))}
-            </div>
-          </nav>
-
-          {copy.tools?.length ? (
-            <nav aria-label="常用工具" className="px-0.5">
-              <div className={cn('mb-2', muteNote)}>常用工具</div>
-              <ul className="space-y-1.5">
-                {copy.tools.map((item) => (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className="group flex items-baseline justify-between gap-3 border-b border-[color:var(--hairline)] py-2 no-underline hover:no-underline"
-                    >
-                      <span className="text-[13px] text-[color:var(--ink-1)] group-hover:underline">
-                        {item.title}
-                      </span>
-                      <span className={muteNote}>{item.cta || '打开'}</span>
-                    </Link>
-                  </li>
+            <div className="mt-4 border-t border-[color:var(--hairline)] pt-3">
+              <div className="text-[12px] font-medium text-[color:var(--ink-5)]">站点入口</div>
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+                {[
+                  { href: '/dimensions', label: copy.openDimensions || '十维度' },
+                  { href: '/teachers', label: '请老师' },
+                  { href: '/predictions', label: copy.predictions || '预测回访' },
+                  { href: '/events', label: '事件日历' },
+                  { href: '/knowledge', label: copy.knowledge || '知识库' },
+                  { href: '/cases', label: '案例' },
+                  { href: '/profile', label: '资料' },
+                ].map((item) => (
+                  <Link key={item.href} href={item.href} className={quietLink}>
+                    {item.label}
+                  </Link>
                 ))}
-              </ul>
-            </nav>
-          ) : null}
+              </div>
+            </div>
+
+            {copy.tools?.length ? (
+              <div className="mt-4 border-t border-[color:var(--hairline)] pt-3">
+                <div className="text-[12px] font-medium text-[color:var(--ink-5)]">常用工具</div>
+                <ul className="mt-1 divide-y divide-[color:var(--hairline)]">
+                  {copy.tools.slice(0, 4).map((item) => (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className="group flex items-baseline justify-between gap-3 py-2.5 no-underline hover:no-underline"
+                      >
+                        <span className="text-[13px] text-[color:var(--ink-1)] group-hover:underline">
+                          {item.title}
+                        </span>
+                        <span className={cn('shrink-0', muteNote)}>{item.cta || '打开'}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </section>
 
           {copy.faq?.length ? (
             <section className="px-0.5">

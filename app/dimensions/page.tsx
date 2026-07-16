@@ -7,6 +7,12 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { listDimensionsByPriority, MVP_DIMENSION_SLUGS, DIMENSIONS } from '@/lib/dimensions/config';
 import {
+  INTENT_HINT,
+  INTENT_LABEL,
+  intentPrimaryCta,
+  parseSourceIntent,
+} from '@/lib/dimensions/intent-source';
+import {
   buildFaqJsonLd,
   buildItemListJsonLd,
   buildPageMetadata,
@@ -29,10 +35,21 @@ export const metadata: Metadata = buildPageMetadata({
   ],
 });
 
-export default function DimensionsPage() {
+export default async function DimensionsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ source?: string; intent?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const source = `${sp.source || sp.intent || ''}`.trim();
+  const intent = parseSourceIntent(source);
   const p0 = listDimensionsByPriority('p0');
   const p1Count = listDimensionsByPriority('p1').length;
   const p2Count = listDimensionsByPriority('p2').length;
+  const primary = intentPrimaryCta(intent);
+  const primaryHref = source
+    ? `${primary.href}${primary.href.includes('?') ? '&' : '?'}source=${encodeURIComponent(source)}`
+    : primary.href;
 
   const itemList = buildItemListJsonLd(
     '人生K线十维度深度研判',
@@ -66,32 +83,55 @@ export default function DimensionsPage() {
       <AnalyticsPageView
         eventName="dimensions_page_viewed"
         page="/dimensions"
-        meta={{ surfaceKey: 'dimensions', p0Count: p0.length, p1Count, p2Count }}
+        meta={{
+          surfaceKey: 'dimensions',
+          p0Count: p0.length,
+          p1Count,
+          p2Count,
+          source: source || null,
+          intent,
+        }}
       />
       <JsonLd data={itemList} />
       <JsonLd data={service} />
       <JsonLd data={faq} />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 pb-16 md:space-y-6 md:py-8">
         <FocusHero
           eyebrow="十维度"
-          title="场景研判"
-          description="先选一个具体问题进入。结论可回到预测回访对照。"
+          title={intent === 'general' ? '场景研判' : INTENT_LABEL[intent]}
+          description={INTENT_HINT[intent]}
           actions={
             <>
+              <Link
+                href={primaryHref}
+                className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+              >
+                {primary.label}
+              </Link>
               <Link href="/predictions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 预测回访
               </Link>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 工具
               </Link>
-              <Link href="/knowledge" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                知识库
+              <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                完整报告
               </Link>
             </>
           }
         />
 
-        <DimensionGrid />
+        {intent !== 'general' ? (
+          <p className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
+            来源：工作台主题「{INTENT_LABEL[intent]}」。下面已把更相关的维度排在前面，也可直接
+            <Link href={primaryHref} className="mx-1 text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              {primary.label}
+            </Link>
+            。
+          </p>
+        ) : null}
+
+        <DimensionGrid intent={intent} source={source} />
 
         <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
           <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
@@ -99,6 +139,9 @@ export default function DimensionsPage() {
           </Link>
           <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
             请老师
+          </Link>
+          <Link href="/hehun" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+            合婚
           </Link>
           <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
             专题

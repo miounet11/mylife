@@ -553,21 +553,26 @@ select.lk-input {
 @media (min-width: 1280px) {
   /* full three-slot only when left rail is actually rendered */
   .portal-grid.portal-grid--with-left.portal-grid--with-right {
+    /* 居中三栏：避免宽屏下主栏顶左、右侧空一大块的错位感 */
+    justify-content: center;
     grid-template-columns: var(--rail-left) minmax(0, var(--content-max)) var(--rail-right);
   }
 
   .portal-grid.portal-grid--with-left.portal-grid--no-right {
-    grid-template-columns: var(--rail-left) minmax(0, 1fr);
+    justify-content: center;
+    grid-template-columns: var(--rail-left) minmax(0, var(--content-max));
   }
 
   .portal-grid.portal-grid--no-left.portal-grid--with-right {
-    grid-template-columns: minmax(0, 1fr) var(--rail-right);
+    justify-content: center;
+    grid-template-columns: minmax(0, var(--content-max)) var(--rail-right);
   }
 }
 
 .portal-main {
   min-width: 0;
   max-width: 100%;
+  width: 100%;
 }
 
 .portal-rail-left,

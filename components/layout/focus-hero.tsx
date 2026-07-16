@@ -23,7 +23,9 @@ export function FocusHero({
   return (
     <header
       className={cn(
-        embedded ? 'mb-4' : 'mb-6 border-b border-[color:var(--hairline)] pb-5',
+        embedded
+          ? 'mb-0 border-b border-[color:var(--hairline)] px-4 pb-4 pt-5 md:px-5 md:pb-5 md:pt-6'
+          : 'mb-6 border-b border-[color:var(--hairline)] pb-5',
         className,
       )}
     >

@@ -65,17 +65,14 @@ export default function SiteHeader({
     'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
 
   const brandName = t('brandName');
+  // 避免中文品牌名被错误切片成多行「人 / K / 线」
   const brandMain =
     locale === 'en' ? (
       <>
         Life <span className="font-serif">K</span>-Line
       </>
     ) : (
-      <>
-        {brandName.slice(0, brandName.indexOf('K') >= 0 ? brandName.indexOf('K') : 2)}
-        <span className="font-serif">K</span>
-        {brandName.includes('K') ? brandName.slice(brandName.indexOf('K') + 1) : brandName.slice(2)}
-      </>
+      <span className="whitespace-nowrap">{brandName || '人生K线'}</span>
     );
 
   return (
@@ -176,10 +173,10 @@ export default function SiteHeader({
             <Link
               href={BIRTH_QUICK_HREF}
               className={cn(
-                'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline sm:text-[13px]',
+                'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline sm:inline-flex',
                 isActive(BIRTH_QUICK_HREF)
                   ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
-                  : 'text-[color:var(--brand-strong)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+                  : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
               )}
               title="无报告也可填生日即时测算"
             >
