@@ -11,6 +11,15 @@ import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 const TOOL_RUN_TIMEOUT_MS = 45_000;
 
+function readSourceFromLocation(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return new URLSearchParams(window.location.search).get('source') || '';
+  } catch {
+    return '';
+  }
+}
+
 export default function ToolRunner({
   toolSlug,
   reportId,
@@ -33,6 +42,8 @@ export default function ToolRunner({
   entrySource?: string;
 }) {
   const router = useRouter();
+  const [sourceFromUrl, setSourceFromUrl] = useState('');
+  const effectiveEntrySource = entrySource || sourceFromUrl || '';
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -45,6 +56,10 @@ export default function ToolRunner({
   const birthReady = Boolean(birthDate && /^\d{4}-\d{2}-\d{2}/.test(birthDate));
   const canRunWithBirth = !hasReport && birthReady;
   const canSubmit = hasReport || canRunWithBirth;
+
+  useEffect(() => {
+    setSourceFromUrl(readSourceFromLocation());
+  }, []);
 
   useEffect(() => {
     if (hasReport) return;
@@ -63,14 +78,14 @@ export default function ToolRunner({
       return remembered;
     }
 
-    if (!entrySource) {
+    if (!effectiveEntrySource) {
       return null;
     }
 
     return {
       eventName: 'tool_detail_viewed',
       page: `/tools/${toolSlug}`,
-      source: entrySource,
+      source: effectiveEntrySource,
       toolSlug,
       timestamp: new Date().toISOString(),
     };
@@ -99,7 +114,7 @@ export default function ToolRunner({
         reportId: reportId || null,
         birthOnly,
         noteLength: note.trim().length,
-        source: entrySource || attribution?.source || null,
+        source: effectiveEntrySource || attribution?.source || null,
         attributionSource: attribution?.source || null,
         attributionTarget: attribution?.target || null,
       },
@@ -109,7 +124,15 @@ export default function ToolRunner({
       const body: Record<string, unknown> = {
         toolSlug,
         note,
-        attribution,
+        attribution: attribution || (effectiveEntrySource
+          ? {
+              eventName: 'tool_run_started',
+              page: `/tools/${toolSlug}`,
+              source: effectiveEntrySource,
+              toolSlug,
+              timestamp: new Date().toISOString(),
+            }
+          : null),
       };
       if (hasReport && reportId) {
         body.reportId = reportId;

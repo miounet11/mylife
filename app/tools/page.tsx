@@ -6,6 +6,7 @@ import JourneyStrip from '@/components/content/journey-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
+import ToolEntryLink from '@/components/tools/tool-entry-link';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata } from '@/lib/seo';
@@ -20,35 +21,61 @@ export const metadata: Metadata = buildPageMetadata({
 
 const CATEGORY_KEYS = Object.keys(TOOL_CATEGORY_META) as ToolCategoryKey[];
 
+const BIRTH_QUICK = [
+  {
+    href: '/tools/timing-yearly-window',
+    title: '年度主窗口',
+    desc: '看今年推进与防守节奏 · 填生日即可',
+    primary: true,
+  },
+  {
+    href: '/tools/daily-sign',
+    title: '今日一签',
+    desc: '短周期节奏参考',
+  },
+  {
+    href: '/tools/career-role-fit',
+    title: '岗位匹配',
+    desc: '事业方向与阶段动作',
+  },
+  {
+    href: '/hehun',
+    title: '合婚双盘',
+    desc: '双方生日对盘，无需完整报告',
+  },
+] as const;
+
 export default function ToolsPage() {
   return (
-    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度', compact: true }}>
+    <AppPage header={{ ctaHref: '/tools/timing-yearly-window', ctaLabel: '填生日测', compact: true }}>
       <AnalyticsPageView
         eventName="tools_page_viewed"
         page="/tools"
-        meta={{ surfaceKey: 'tools' }}
+        meta={{ surfaceKey: 'tools', funnel: 'tools_hub' }}
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="工具"
-          title="快速测试，或进入场景研判"
-          description="无报告也可填生日即时测算；十维度适合结构判断。两者都可接到完整报告。"
+          title="填生日即可测"
+          description="不用先出完整报告。选一个问题，填出生信息，引擎即时给主题判断；需要时再升级完整报告与老师追问。"
           actions={
             <>
-              <Link
+              <ToolEntryLink
                 href="/tools/timing-yearly-window"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                source="tools_hub_hero"
+                title="年度主窗口"
+                className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
               >
-                填生日测年度窗口
-              </Link>
+                先测年度主窗口
+              </ToolEntryLink>
               <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 十维度
               </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 完整报告
               </Link>
-              <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                请老师
+              <Link href="/hehun" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                合婚
               </Link>
             </>
           }
@@ -56,46 +83,39 @@ export default function ToolsPage() {
 
         <JourneyStrip active="tools" />
 
-        <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-          <h2 className="text-[13px] font-semibold text-[color:var(--ink-1)]">填生日即可测</h2>
-          <p className="mt-1 text-[12px] leading-5 text-[color:var(--ink-4)]">
-            还没有综合报告时，在工具页填写出生日期，引擎即时重算用神与大运后再给主题判断。本机会记住你的生日，换工具不用重填。
-          </p>
-          <ul className="mt-3 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
-            {[
-              {
-                href: '/tools/timing-yearly-window',
-                title: '年度主窗口',
-                desc: '看今年推进与防守节奏',
-              },
-              {
-                href: '/tools/daily-sign',
-                title: '今日一签',
-                desc: '短周期节奏参考',
-              },
-              {
-                href: '/tools/career-role-fit',
-                title: '岗位匹配',
-                desc: '事业方向与阶段动作',
-              },
-              {
-                href: '/hehun',
-                title: '合婚双盘',
-                desc: '双方生日对盘，无需完整报告',
-              },
-            ].map((item) => (
+        {/* 转化主路径 */}
+        <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-[14px] font-semibold text-[color:var(--ink-1)]">三步走通</h2>
+              <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+                1）填生日跑单项 → 2）看日主/用神与窗口 → 3）需要时生成完整报告并追问
+              </p>
+            </div>
+            <ToolEntryLink
+              href="/tools/timing-yearly-window"
+              source="tools_hub_primary_cta"
+              title="年度主窗口"
+              className="inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center justify-center rounded-[var(--radius)] bg-[color:var(--ink-1)] px-4 text-[13px] font-medium text-white no-underline hover:bg-black hover:no-underline"
+            >
+              开始：年度主窗口
+            </ToolEntryLink>
+          </div>
+
+          <ul className="mt-4 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+            {BIRTH_QUICK.map((item) => (
               <li key={item.href}>
-                <Link
+                <ToolEntryLink
                   href={item.href}
-                  className="group flex flex-col gap-0.5 py-2.5 no-underline hover:no-underline sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
-                >
-                  <span className="text-[13px] font-medium text-[color:var(--ink-1)] group-hover:underline">
-                    {item.title}
-                  </span>
-                  <span className="min-w-0 text-[12px] text-[color:var(--ink-5)] sm:max-w-[55%] sm:truncate sm:text-right">
-                    {item.desc}
-                  </span>
-                </Link>
+                  title={item.title}
+                  description={item.desc}
+                  source="tools_hub_birth_quick"
+                  titleClassName={
+                    'primary' in item && item.primary
+                      ? 'text-[14px] font-semibold text-[color:var(--ink-1)]'
+                      : undefined
+                  }
+                />
               </li>
             ))}
           </ul>
@@ -122,7 +142,7 @@ export default function ToolsPage() {
               return (
                 <li key={key}>
                   <Link
-                    href={`/tools/category/${key}`}
+                    href={`/tools/category/${key}?source=tools_hub_category`}
                     className="group flex flex-col gap-0.5 py-2.5 no-underline hover:no-underline sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
                   >
                     <span className="text-[13px] font-medium text-[color:var(--ink-1)] group-hover:underline">
@@ -137,6 +157,10 @@ export default function ToolsPage() {
             })}
           </ul>
         </section>
+
+        <p className="text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+          工具结论锚定引擎真值（日主/用神/大运）。需要细拆时，再到完整报告或请老师。
+        </p>
       </div>
     </AppPage>
   );
