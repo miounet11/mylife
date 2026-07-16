@@ -112,13 +112,6 @@ function computePopularitySlice() {
       )
       : 0;
 
-  const calculationsTotalAnalytics = tableExists('analytics_events')
-    ? safeCount(
-      `SELECT COUNT(*) as n FROM analytics_events
-       WHERE event_name IN ('report_generated', 'analyze_completed')`,
-    )
-    : 0;
-
   const fortuneProfiles = tableExists('fortunes')
     ? safeCount(`SELECT COUNT(*) as n FROM fortunes`)
     : 0;
@@ -145,8 +138,8 @@ function computePopularitySlice() {
     : 0;
 
   const onlineNow = estimateOnlineNow(recentActivityEvents);
-  // Prefer fortune rows; analytics may double-count submitted+completed.
-  const calculationsTotal = Math.max(fortuneProfiles, calculationsTotalAnalytics);
+  // Lifetime charts = fortune rows only (analytics double-counts submitted+completed).
+  const calculationsTotal = fortuneProfiles;
   const emailBase = Math.max(emailSubscribers, timingSubs);
 
   return {
