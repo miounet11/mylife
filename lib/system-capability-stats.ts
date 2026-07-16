@@ -17,9 +17,9 @@ export interface SystemCapabilityStats {
   worldYiContentCount: number;
   /** Soft “who’s here” estimate from recent activity + diurnal curve. */
   onlineNow: number;
-  /** Charts / reports completed today (CST). */
+  /** Charts / reports completed today (CST) — fortunes table truth. */
   calculationsToday: number;
-  /** Lifetime chart/report attempts. */
+  /** Lifetime fortune profiles / completed charts. */
   calculationsTotal: number;
   /** Registered accounts. */
   registeredUsers: number;
@@ -98,13 +98,19 @@ function computePopularitySlice() {
     )
     : 0;
 
-  const calculationsToday = tableExists('analytics_events')
+  // Real completed charts today (Beijing calendar). No atmosphere inflation.
+  const calculationsToday = tableExists('fortunes')
     ? safeCount(
-      `SELECT COUNT(*) as n FROM analytics_events
-       WHERE event_name IN ('report_generated', 'analyze_completed', 'analyze_submitted')
-         AND date(created_at, '+8 hours') = date('now', '+8 hours')`,
+      `SELECT COUNT(*) as n FROM fortunes
+       WHERE date(created_at, '+8 hours') = date('now', '+8 hours')`,
     )
-    : 0;
+    : tableExists('analytics_events')
+      ? safeCount(
+        `SELECT COUNT(*) as n FROM analytics_events
+         WHERE event_name IN ('report_generated', 'analyze_completed')
+           AND date(created_at, '+8 hours') = date('now', '+8 hours')`,
+      )
+      : 0;
 
   const calculationsTotalAnalytics = tableExists('analytics_events')
     ? safeCount(
@@ -132,37 +138,24 @@ function computePopularitySlice() {
     )
     : 0;
 
-  // Timing / lifecycle mail recipients as soft subscription depth
   const timingSubs = tableExists('timing_email_log')
-    ? safeCount(`SELECT COUNT(DISTINCT email) as n FROM timing_email_log WHERE email IS NOT NULL AND email != ''`)
+    ? safeCount(
+      `SELECT COUNT(DISTINCT email) as n FROM timing_email_log WHERE email IS NOT NULL AND email != ''`,
+    )
     : 0;
 
   const onlineNow = estimateOnlineNow(recentActivityEvents);
-  const calculationsTotal = Math.max(calculationsTotalAnalytics, fortuneProfiles);
-
-  // Soft atmosphere floors: keep numbers anchored to real users/activity, avoid "1 会员" dead look.
-  // Still scales with real growth when tables fill in.
+  // Prefer fortune rows; analytics may double-count submitted+completed.
+  const calculationsTotal = Math.max(fortuneProfiles, calculationsTotalAnalytics);
   const emailBase = Math.max(emailSubscribers, timingSubs);
-  const livelyMembers =
-    activeMembers >= 40
-      ? activeMembers
-      : Math.max(activeMembers, Math.min(registeredUsers, Math.round(registeredUsers * 0.055) + 24));
-  const livelySubs =
-    emailBase >= 60
-      ? emailBase
-      : Math.max(emailBase, Math.min(registeredUsers, Math.round(registeredUsers * 0.035) + 32));
-  const livelyToday =
-    calculationsToday >= 20
-      ? calculationsToday
-      : Math.max(calculationsToday, Math.min(180, 12 + recentActivityEvents * 2 + shanghaiHour() ));
 
   return {
     onlineNow,
-    calculationsToday: livelyToday,
-    calculationsTotal: Math.max(calculationsTotal, registeredUsers),
+    calculationsToday,
+    calculationsTotal,
     registeredUsers,
-    activeMembers: livelyMembers,
-    emailSubscribers: livelySubs,
+    activeMembers,
+    emailSubscribers: emailBase,
     fortuneProfiles,
     recentActivityEvents,
   };

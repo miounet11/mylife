@@ -178,29 +178,57 @@ export default function AnalyzeWorkspace({
       relation,
     });
 
+    const payload = {
+      birthDate,
+      birthTime: timeUnknown ? '12:00' : birthTime,
+      birthPlace: birthPlace.trim() || copy.defaultPlace,
+      gender,
+      intent,
+      name: name.trim() || copy.guestName,
+      email: email.trim() || sessionEmail || undefined,
+      birthAccuracy: resolvedAccuracy,
+      source: resolvedSource,
+      unknowhour: timeUnknown ? 1 : 0,
+      relation,
+      relationLabel,
+      locale,
+    };
+
+    /** Deploy/restart may return 502/503/504 once — retry once after short wait. */
+    async function postAnalyze(attempt: number): Promise<Response> {
+      try {
+        const res = await fetch('/api/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if ([502, 503, 504].includes(res.status) && attempt < 1) {
+          await new Promise((r) => setTimeout(r, 1600));
+          return postAnalyze(attempt + 1);
+        }
+        return res;
+      } catch (networkErr) {
+        if (attempt < 1) {
+          await new Promise((r) => setTimeout(r, 1600));
+          return postAnalyze(attempt + 1);
+        }
+        throw networkErr;
+      }
+    }
+
     try {
       // Primary funnel: full engine + LLM + quality audit (not the thin /api/report agentic-only path).
-      const res = await fetch('/api/analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          birthDate,
-          birthTime: timeUnknown ? '12:00' : birthTime,
-          birthPlace: birthPlace.trim() || copy.defaultPlace,
-          gender,
-          intent,
-          name: name.trim() || copy.guestName,
-          email: email.trim() || sessionEmail || undefined,
-          birthAccuracy: resolvedAccuracy,
-          source: resolvedSource,
-          unknowhour: timeUnknown ? 1 : 0,
-          relation,
-          relationLabel,
-          locale,
-        }),
-      });
+      const res = await postAnalyze(0);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || data.message || copy.errors.generateFailed);
+      if (!res.ok) {
+        const msg =
+          data.error ||
+          data.message ||
+          (res.status === 502 || res.status === 503
+            ? '服务刚在更新，请再点一次生成'
+            : copy.errors.generateFailed);
+        throw new Error(msg);
+      }
 
       const reportId = data?.reportId || data?.meta?.reportId;
       if (reportId) {
