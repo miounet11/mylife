@@ -4,6 +4,7 @@
 
 import type { CoreAgentKey, GovernanceKey } from './types';
 import { USER_FACING_VOICE_PROMPT } from '@/lib/content-voice';
+import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
 
 export interface AgentPrompt {
   system: string;
@@ -21,6 +22,7 @@ const PREDICTIONS_JSON_SCHEMA = [
 ].join('\n');
 
 const VOICE = USER_FACING_VOICE_PROMPT;
+const HARD = ENGINE_HARD_CONTRACT;
 
 const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
   // ── Wave 0: Interpret ──
@@ -28,8 +30,11 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是一位把八字结构翻译成「普通人能用的判断」的分析师。',
       VOICE,
+      HARD,
       '规则：',
       '- 仅基于提供的 ENGINE_CONSTITUTION 和 ENGINE_TEN_GODS_TABLE 输出',
+      '- favorableElements/unfavorableElements 必须 ⊆ 用神/忌神字面',
+      '- constitutionSummary 须点名日主与格局字面',
       '- 不要臆测数据中没有的信息；术语必须跟白话',
       '- 用神/忌神判断必须引用数据中的字段，并说明「对生活意味着什么」',
       '- 结合 USER_LIFE_CONTEXT 校准表达重点，但不得推翻命局结构结论',
@@ -43,6 +48,9 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '',
       '十神表：',
       '{{ENGINE_TEN_GODS_TABLE}}',
+      '',
+      '锁定事实：',
+      '{{LOCKED_ENGINE_FACTS}}',
       '',
       '用户长期档案：',
       '{{USER_LIFE_CONTEXT}}',
@@ -63,8 +71,10 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是一位人生周期讲解员：把 K 线高低点翻译成「现在该攻还是守」。',
       VOICE,
+      HARD,
       '规则：',
       '- 基于 K-line 锚点和窗口数据输出',
+      '- peakYears/troughYears.year 必须 ∈ ENGINE_KLINE_ANCHORS.year',
       '- currentPhase 需要结合时间窗口，并解释「普通人怎么用」',
       '- 必须输出 predictions[]，至少 2 条 timing 类可验证预测',
       PREDICTIONS_JSON_SCHEMA,
@@ -75,6 +85,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '',
       '锚点：{{ENGINE_KLINE_ANCHORS}}',
       '窗口：{{ENGINE_KLINE_WINDOWS}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '请用 JSON 输出：currentPhase，phasePlain（150字以上白话），peakYears，troughYears，howToUse（如何读高低点），actions（3–5条），',
       '以及 predictions[]（至少 2 条，category 以 timing 为主，statement 含具体年份/季度，dueDate 为验证截止日）。',
@@ -85,6 +96,8 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是时空与环境顾问。把节气、流年、宏观、地理气候写成「居住/出行/节奏」建议。',
       VOICE,
+      HARD,
+      '流年/节气以 CONTEXT_TEMPORAL 为准，禁止自造干支年。',
       '不可神神叨叨；输出 JSON：temporalSignal, spatialSignal, macroSignal, actions, plainAdvice。',
     ].join('\n'),
     user: [
@@ -94,6 +107,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '宏观：{{CONTEXT_MACRO}}',
       '地理气候：{{CONTEXT_GEO_CLIMATE}}',
       '空间：{{CONTEXT_SPATIAL}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '请用 JSON 输出：各 signal 字段用完整句子；plainAdvice 200字以上；actions 3–5 条。',
     ].join('\n'),
@@ -104,7 +118,9 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是事业与财富教练：结论要可执行，解释要耐心。',
       VOICE,
+      HARD,
       '规则：',
+      '- 大运表述须对齐 ENGINE_DAYUN_WINDOWS；不得另起一套大运干支',
       '- primaryTrack 需结合用神和行业周期，并说明「为什么适合普通人」',
       '- capitalDiscipline 基于命局财星配置，写成现金流纪律而不是鸡汤',
       '- 必须输出 predictions[]，至少 2 条 career/wealth 类可验证预测',
@@ -118,6 +134,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '趋势：{{ENGINE_KLINE_ANCHORS}}',
       '宏观：{{CONTEXT_MACRO}}',
       '大运窗口：{{ENGINE_DAYUN_WINDOWS}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '请输出事业和财富策略 JSON：每个关键字段写完整；actions 3–5 条；faq 回答「要不要跳槽/能不能加杠杆」这类真实问题；含 predictions[]。',
     ].join('\n'),
@@ -127,6 +144,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是关系教练。重点是节奏与边界，不是「合不合命」。',
       VOICE,
+      HARD,
       '输出 JSON：relationshipFocus, collaborationAdvice, actions, plainReading, faq（至少2条）。',
     ].join('\n'),
     user: [
@@ -135,6 +153,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '命局：{{ENGINE_CONSTITUTION}}',
       '人类因素：{{CONTEXT_HUMAN}}',
       '趋势：{{ENGINE_KLINE_WINDOWS}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '请输出关系分析 JSON：plainReading 200字以上；actions 3–5 条；faq 覆盖常见顾虑。',
     ].join('\n'),
@@ -144,6 +163,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是健康生活方式顾问。从五行平衡、体质偏见和时空因素出发，给出生活节律建议。',
       VOICE,
+      HARD,
       '注意：不可给出医疗诊断，只提供生活方式和预防方向的建议；涉及不适请就医。',
       '输出 JSON：bodyFocus, recoveryAdvice, actions, plainReading, disclaimer。',
     ].join('\n'),
@@ -154,6 +174,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '十神：{{ENGINE_TEN_GODS_TABLE}}',
       '地理气候：{{CONTEXT_GEO_CLIMATE}}',
       '时空：{{CONTEXT_TEMPORAL}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '请输出健康生活方式 JSON：plainReading 说明「这不是看病」；actions 给出 14 天可验证小闭环。',
     ].join('\n'),
@@ -164,9 +185,11 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
     system: [
       '你是首席决策教练。综合所有前序产出，给用户「先做什么、别做什么、如何验证」。',
       VOICE,
+      HARD,
       '规则：',
       '- topPriority 必须具体可执行，并解释为什么是第一优先',
-      '- avoidNow 要有明确的忌神方向与生活含义',
+      '- avoidNow 要有明确的忌神方向与生活含义（对齐 ENGINE 忌神字面）',
+      '- windows.label 必须取自引擎窗口集合',
       '- 优先响应 USER_LIFE_CONTEXT 中的 recentEvents 与 focusAreas',
       '- 命中率较低或 UNCERTAINTY_NOTES 提示的领域，应给出更保守、可验证的建议',
       '- 必须输出 predictions[]，至少 2 条跨领域可验证预测（可覆盖 career/wealth/timing）',
@@ -181,6 +204,7 @@ const REGISTRY: Partial<Record<CoreAgentKey | GovernanceKey, AgentPrompt>> = {
       '大运窗口：{{ENGINE_DAYUN_WINDOWS}}',
       '宏观周期：{{CONTEXT_MACRO}}',
       '世界状态：{{CONTEXT_WORLD_STATE}}',
+      '锁定事实：{{LOCKED_ENGINE_FACTS}}',
       '',
       '用户长期档案：',
       '{{USER_LIFE_CONTEXT}}',

@@ -102,6 +102,60 @@ export function runReview(context: StructuredAgenticContext, agentResults: Recor
     }
   }
 
+  // 用神/忌神字面：core_constitution.favorableElements ⊆ yong∪xi；不得把忌神标成有利
+  const coreRaw = agentResults.core_constitution as
+    | {
+        favorableElements?: string[];
+        unfavorableElements?: string[];
+        constitutionSummary?: string;
+      }
+    | undefined;
+  if (coreRaw) {
+    const yongSet = new Set([
+      ...(context.engine.constitution.yongShen || []),
+      ...(context.engine.constitution.xiShen || []),
+    ]);
+    const jiSet = new Set(context.engine.constitution.jiShen || []);
+    const favorable = (coreRaw.favorableElements || []).filter(Boolean);
+    const dayMaster = context.engine.constitution.dayMaster || '';
+
+    if (favorable.length > 0) {
+      // 有利元素落入忌神 → HIGH；完全不在用/喜神集合 → MEDIUM
+      const asJi = favorable.filter((el) => jiSet.has(el));
+      if (asJi.length) {
+        conflicts.push({
+          id: 'conflict_ji_as_favorable',
+          type: 'YONG_SHEN_CONFLICT',
+          severity: 'HIGH',
+          explanation: `结构专家把忌神标成有利元素：${asJi.join('、')}。`,
+        });
+      } else if (yongSet.size > 0) {
+        const unknown = favorable.filter((el) => !yongSet.has(el));
+        if (unknown.length) {
+          conflicts.push({
+            id: 'conflict_favorable_not_in_engine',
+            type: 'YONG_SHEN_CONFLICT',
+            severity: 'MEDIUM',
+            explanation: `结构专家输出了引擎用/喜神之外的有利元素：${unknown.join('、')}。`,
+          });
+        }
+      }
+    }
+
+    if (
+      dayMaster &&
+      coreRaw.constitutionSummary &&
+      !String(coreRaw.constitutionSummary).includes(dayMaster)
+    ) {
+      conflicts.push({
+        id: 'conflict_day_master_omitted',
+        type: 'YONG_SHEN_CONFLICT',
+        severity: 'MEDIUM',
+        explanation: `结构专家摘要未点名引擎日主「${dayMaster}」。`,
+      });
+    }
+  }
+
   // ===== SOFT 提示层：风格信号未引用，作为 repair 输入但不致命 =====
 
   if (!temporal.currentSolarTerm) {
@@ -187,7 +241,9 @@ export function runReview(context: StructuredAgenticContext, agentResults: Recor
   // 违反则 MEDIUM 扣分，并在 explanation 里点名上游集合，方便 repair 收敛。
   const engineWindowLabels = new Set([
     ...context.engine.kline.windows.map((w) => w.label),
-    ...context.engine.dayun.windows.map((w) => w.label),
+    ...context.engine.dayun.windows.flatMap((w) =>
+      [w.ganZhi, `${w.ganZhi}运`, `${w.startAge}-${w.endAge}`, `${w.startAge}-${w.endAge}岁`].filter(Boolean),
+    ),
   ]);
   for (const key of CORE_AGENT_KEYS) {
     const meta = AGENT_DEPENDENCIES[key];
@@ -236,12 +292,22 @@ export function runReview(context: StructuredAgenticContext, agentResults: Recor
 function asAgentResult(value: unknown) {
   const data = (value || {}) as {
     summary?: string;
+    constitutionSummary?: string;
+    plainReading?: string;
+    favorableElements?: string[];
     highlights?: string[];
     windows?: Array<{ label?: string }>;
   };
 
   return {
-    summary: [data.summary || '', ...(data.highlights || []), ...(data.windows || []).map((item) => item.label || '')].join(' '),
+    summary: [
+      data.summary || '',
+      data.constitutionSummary || '',
+      data.plainReading || '',
+      ...(data.favorableElements || []),
+      ...(data.highlights || []),
+      ...(data.windows || []).map((item) => item.label || ''),
+    ].join(' '),
     windows: (data.windows || []).map((item) => ({ label: item.label || '' })),
   };
 }
@@ -250,10 +316,28 @@ function containsAny(text: string, fragments: string[]) {
   return fragments.some((fragment) => fragment && text.includes(fragment));
 }
 
+function dayunWindowLabels(context: StructuredAgenticContext): string[] {
+  return context.engine.dayun.windows.flatMap((item) =>
+    [
+      item.ganZhi,
+      `${item.ganZhi}运`,
+      `${item.startAge}-${item.endAge}`,
+      `${item.startAge}-${item.endAge}岁`,
+    ].filter(Boolean),
+  );
+}
+
 function isKnownWindow(label: string, context: StructuredAgenticContext) {
+  if (!label) return false;
   const labels = [
     ...context.engine.kline.windows.map((item) => item.label),
-    ...context.engine.dayun.windows.map((item) => item.label),
+    ...dayunWindowLabels(context),
   ];
-  return labels.includes(label);
+  if (labels.includes(label)) return true;
+  // Accept year-containing labels that match kline window years
+  const years = label.match(/\d{4}/g) || [];
+  if (years.length && context.engine.kline.windows.some((w) => years.every((y) => w.label.includes(y) || String(w.startYear) === y || String(w.endYear) === y))) {
+    return true;
+  }
+  return false;
 }

@@ -21,6 +21,7 @@ import type { DayunResult } from './dayun-calculator';
 import type { DashboardData } from './dashboard-builder';
 import type { KlinePointV6, KlineAnchorV6 } from './kline-v6';
 import { USER_FACING_VOICE_PROMPT } from './content-voice';
+import { ENGINE_HARD_CONTRACT } from './ground-truth/hard-contract';
 
 // ── 风格模式 ──
 
@@ -128,6 +129,8 @@ ${USER_FACING_VOICE_PROMPT}
 - 神煞列表
 
 你基于这些数据进行分析，不会自行推算（所有计算已在服务端完成）。
+
+${ENGINE_HARD_CONTRACT}
 
 ## 风格设定`;
 

@@ -159,7 +159,7 @@ export async function runAgenticPipeline(params: {
     keys.map((key) => [key, finalResults[key]?.ok ? 'llm' : 'fallback'])
   ) as Record<string, 'llm' | 'fallback'>;
   const review = runReview(context, hydratedResults);
-  const repair = runRepair(hydratedResults, review);
+  const repair = runRepair(hydratedResults, review, context);
   const verify = runVerify(context, repair.repairedResults);
   const durationMs = Date.now() - startedAt;
   const used = merged.successRate > 0;
@@ -195,7 +195,7 @@ function buildDeterministicFallbackPipelineResult(params: {
 }) {
   const fallbackResults = buildFallbackAgentResults(params.context, [...params.keys]);
   const review = runReview(params.context, fallbackResults);
-  const repair = runRepair(fallbackResults, review);
+  const repair = runRepair(fallbackResults, review, params.context);
   const verify = runVerify(params.context, repair.repairedResults);
 
   return {

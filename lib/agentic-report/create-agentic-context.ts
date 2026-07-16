@@ -87,6 +87,21 @@ function normalizeTruthInput(input: any): GroundTruthInput {
 }
 
 export function createAgenticContext(input: any): StructuredAgenticContext {
+  // Accept prebuilt GroundTruthPack: { pack: GroundTruthPack } or pack.engine
+  if (input?.pack?.engine && input?.pack?.truthInput) {
+    const pack = input.pack;
+    const truthInput = {
+      ...pack.truthInput,
+      lifeProfile: pack.lifeProfile ?? pack.truthInput.lifeProfile ?? input?.lifeProfile ?? null,
+    };
+    return createAgenticContext({
+      truthInput,
+      signalsInput: input?.signalsInput || input?.context || {},
+      reportRaw: input?.reportRaw,
+      lifeProfile: truthInput.lifeProfile,
+    });
+  }
+
   const truthInput = normalizeTruthInput(input || {});
   const lifeProfile = input?.lifeProfile ?? truthInput.lifeProfile ?? null;
   truthInput.lifeProfile = lifeProfile ?? null;

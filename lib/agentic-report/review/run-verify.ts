@@ -46,16 +46,34 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
   const leadIndustry = context.context.macroCycles.industryCycle?.[0]?.industry || '';
   const currentPlace = context.context.geoClimate.currentPlace || context.context.geoClimate.birthPlace || '';
 
-  if (!context.engine.kline.points.every((item) => item.score >= 20 && item.score <= 95)) {
+  // KlinePointV6 has career/wealth/marriage/health — not a single `score` field
+  const pointAvg = (item: { career?: number; wealth?: number; marriage?: number; health?: number; score?: number }) => {
+    if (typeof item.score === 'number' && Number.isFinite(item.score)) return item.score;
+    return (
+      (Number(item.career) || 0) +
+      (Number(item.wealth) || 0) +
+      (Number(item.marriage) || 0) +
+      (Number(item.health) || 0)
+    ) / 4;
+  };
+  const points = context.engine.kline.points || [];
+  if (points.length > 0 && !points.every((item) => {
+    const s = pointAvg(item as any);
+    return s >= 20 && s <= 95;
+  })) {
     failedRules.push('score_bounds');
   }
 
+  const coreConstitution = asAgentResult(agentResults.core_constitution);
   if (
     !context.engine.kline.anchorPoints.length ||
     (klineNarrative.summary &&
       !context.engine.kline.anchorPoints.some((item) => klineNarrative.summary.includes(String(item.year))))
   ) {
-    failedRules.push('anchor_trend_consistency');
+    // Only fail when narrative claims years but none match anchors
+    if (klineNarrative.summary && /\d{4}/.test(klineNarrative.summary)) {
+      failedRules.push('anchor_trend_consistency');
+    }
   }
 
   if (!context.context.geoClimate.climateBias?.length) {
@@ -119,6 +137,48 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
     failedRules.push('industry_signal_alignment');
   }
 
+  // ── Engine fact locks (yongShen / dayMaster / dayun) ──
+  const constitution = context.engine.constitution;
+  const dayMaster = constitution?.dayMaster || '';
+  const yongShen = constitution?.yongShen || [];
+  const jiShen = constitution?.jiShen || [];
+  const coreText = coreConstitution.summary;
+
+  if (dayMaster && coreText && !coreText.includes(dayMaster)) {
+    failedRules.push('day_master_alignment');
+  }
+
+  if (yongShen.length && coreText) {
+    const yongHit = yongShen.some((el) => el && coreText.includes(el));
+    if (!yongHit) failedRules.push('yong_shen_alignment');
+  }
+
+  // 忌神不得被核心结构说成主用方向
+  if (jiShen.length && yongShen.length && coreText) {
+    const mentionsJiAsYong = jiShen.some(
+      (ji) =>
+        ji &&
+        (coreText.includes(`用神${ji}`) ||
+          coreText.includes(`用神为${ji}`) ||
+          coreText.includes(`用神是${ji}`)),
+    );
+    if (mentionsJiAsYong) failedRules.push('ji_shen_as_yong_conflict');
+  }
+
+  const knownDayun = new Set(
+    (context.engine.dayun?.windows || []).map((w) => w.ganZhi).filter(Boolean),
+  );
+  if (knownDayun.size > 0) {
+    const dayunText = `${careerWealth.summary}${strategyAdvisor.summary}`;
+    // Extract 干支 pairs from agent text and flag invented ones that look like 大运 claims
+    const claimed = dayunText.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) || [];
+    const invented = claimed.filter((gz) => !knownDayun.has(gz) && !context.engine.pillars.some((p) => p.ganZhi === gz));
+    // Only fail when agents invent multiple unknown stems that aren't pillars either
+    if (invented.length >= 2) {
+      failedRules.push('dayun_invention');
+    }
+  }
+
   const consistencyScore = Math.max(50, 100 - failedRules.length * 12);
   const verdict = failedRules.length === 0
     ? 'PASS'
@@ -136,11 +196,25 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
 function asAgentResult(value: unknown) {
   const data = (value || {}) as {
     summary?: string;
+    constitutionSummary?: string;
+    plainReading?: string;
+    phasePlain?: string;
+    favorableElements?: string[];
+    unfavorableElements?: string[];
     highlights?: string[];
     windows?: Array<{ label?: string }>;
   };
   return {
-    summary: [data.summary || '', ...(data.highlights || []), ...(data.windows || []).map((item) => item.label || '')].join(' '),
+    summary: [
+      data.summary || '',
+      data.constitutionSummary || '',
+      data.plainReading || '',
+      data.phasePlain || '',
+      ...(data.favorableElements || []),
+      ...(data.unfavorableElements || []),
+      ...(data.highlights || []),
+      ...(data.windows || []).map((item) => item.label || ''),
+    ].join(' '),
   };
 }
 

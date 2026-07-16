@@ -6,6 +6,7 @@ import {
   type WorldYiDomainKey,
 } from '@/lib/world-yi-surfaces';
 import { summarizeToolSessions } from '@/lib/tool-context';
+import { buildEngineToolRunSummary } from '@/lib/tool-run-summary';
 
 export type ToolCategoryKey =
   | WorldYiDomainKey
@@ -1451,6 +1452,34 @@ export function buildToolPremiumOffer(tool: ToolDefinition): ToolPremiumOffer {
 }
 
 export function buildToolRunSummary(params: {
+  tool: ToolDefinition;
+  report: FortuneRecord;
+  recentSessions?: ToolSessionRecord[];
+  note?: string;
+}): ToolRunSummary {
+  try {
+    return buildEngineToolRunSummary({
+      tool: {
+        slug: params.tool.slug,
+        shortTitle: params.tool.shortTitle,
+        title: params.tool.title,
+        valuePromise: params.tool.valuePromise,
+        relatedReportThemes: params.tool.relatedReportThemes,
+        chatIntent: params.tool.chatIntent,
+        premiumServiceKey: params.tool.premiumServiceKey,
+        category: params.tool.category,
+      },
+      report: params.report as any,
+      recentSessions: params.recentSessions as any,
+      note: params.note,
+    }) as ToolRunSummary;
+  } catch (error) {
+    console.warn('[tools] engine tool summary failed, using legacy rehash', error);
+  }
+  return buildToolRunSummaryLegacy(params);
+}
+
+function buildToolRunSummaryLegacy(params: {
   tool: ToolDefinition;
   report: FortuneRecord;
   recentSessions?: ToolSessionRecord[];

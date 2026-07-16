@@ -5,6 +5,8 @@
  */
 
 import { KNOWLEDGE_BASE } from '@/lib/knowledge-base-meta';
+import { buildGroundTruthPackFromReport } from '@/lib/ground-truth/pack';
+import { packToChatReportContext } from '@/lib/ground-truth/projections';
 
 function resolveFallbackContextLabels(context?: {
   report?: { topScenario?: string; bestWindow?: string; riskWindow?: string };
@@ -285,7 +287,7 @@ function asText(v: unknown, max = 80): string {
   return t.length > max ? `${t.slice(0, max)}…` : t;
 }
 
-/** 从公开报告页/API 尽力抽取聊天上下文 */
+/** 从公开报告页/API 尽力抽取聊天上下文（优先 GroundTruthPack 密度） */
 export function extractChatContextFromSnapshot(
   reportId: string,
   snapshot: unknown
@@ -328,7 +330,7 @@ export function extractChatContextFromSnapshot(
   const yongList = advice.yongShen || yong.yongShen || [];
   const jiList = advice.jiShen || yong.jiShen || [];
 
-  return {
+  let scraped: ReportChatContext = {
     reportId,
     dayMaster: basic.dayMaster || '',
     pattern: result.pattern?.type || basic.pattern || '',
@@ -371,6 +373,22 @@ export function extractChatContextFromSnapshot(
     ].filter(Boolean),
     evidenceLines: evidenceLines.slice(0, 4),
   };
+
+  // Prefer denser engine pack when snapshot has enough structure
+  try {
+    const birthRaw = s.birthDate || result.birthDate || basic.birthDate;
+    const birthDate = birthRaw ? new Date(birthRaw) : new Date();
+    if (Number.isFinite(birthDate.getTime()) && (basic.pillars?.length || result.yongShen || result.basic)) {
+      const pack = buildGroundTruthPackFromReport(birthDate, result as any);
+      if (pack.lockedFacts.dayMaster) {
+        scraped = packToChatReportContext(pack, reportId, scraped);
+      }
+    }
+  } catch {
+    // keep scrape
+  }
+
+  return scraped;
 }
 
 function extractGz(text?: string): string {

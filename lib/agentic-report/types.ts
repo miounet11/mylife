@@ -87,6 +87,14 @@ export interface EngineGroundTruth {
       isCurrent: boolean;
     }>;
     direction: string;
+    /** Convenience pointer to the window marked isCurrent (if any). */
+    currentDayun?: {
+      ganZhi: string;
+      startAge: number;
+      endAge: number;
+      quality: 'excellent' | 'good' | 'neutral' | 'poor';
+      yongShenMatch: 'good' | 'neutral' | 'bad';
+    } | null;
   };
   shenSha: Array<{
     name: string;

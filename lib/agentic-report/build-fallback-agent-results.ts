@@ -22,14 +22,18 @@ export function buildFallbackAgentResults(
 
   for (const key of keys) {
     switch (key) {
-      case 'core_constitution':
+      case 'core_constitution': {
+        const constitutionSummary = `${engine.constitution.dayMaster}日主，${engine.constitution.patternType}，${engine.constitution.strength} — 用神${engine.constitution.yongShen.join('、') || '待定'}，忌神${engine.constitution.jiShen.join('、') || '待定'}`;
         results[key] = {
-          constitutionSummary: `${engine.constitution.dayMaster}日主，${engine.constitution.patternType}，${engine.constitution.strength} — 用神${engine.constitution.yongShen.join('、') || '待定'}`,
+          summary: constitutionSummary,
+          constitutionSummary,
+          plainReading: `日主${engine.constitution.dayMaster}，优先顺着用神${engine.constitution.yongShen.join('、') || '结构'}做可验证动作。`,
           favorableElements: engine.constitution.yongShen,
           unfavorableElements: engine.constitution.jiShen,
           actions: ['优先补充用神方向资源', '在忌神触达期保持谨慎'],
         };
         break;
+      }
 
       case 'kline_narrative': {
         const peakYears = engine.kline.anchorPoints.filter(a => a.type === 'peak').slice(0, 3).map(a => a.year);

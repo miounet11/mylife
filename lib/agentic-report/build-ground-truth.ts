@@ -3,10 +3,11 @@
 
 import type { EngineGroundTruth, LifeProfileContext } from './types';
 import type { KlinePointV6, KlineAnchorV6 } from '@/lib/kline-v6';
-import type { FortuneAnalysisResult, Pillar } from '@/lib/user-types';
+import type { Pillar } from '@/lib/user-types';
 import type { YongShenResult } from '@/lib/bazi-analyzer';
 import type { DayunResult } from '@/lib/dayun-calculator';
 import type { LifeProfile } from '@/lib/life-profile/types';
+import { calculateShiShen, ZHI_CANG_GAN } from '@/lib/bazi-constants';
 
 export interface GroundTruthInput {
   birthDate: Date;
@@ -15,7 +16,7 @@ export interface GroundTruthInput {
   dayun: DayunResult | null;
   kline: KlinePointV6[];
   anchors: KlineAnchorV6[];
-  shenSha: string[];
+  shenSha: Array<string | { name?: string; pillar?: string; impact?: string; description?: string }>;
   pattern?: string;
   lifeProfile?: LifeProfile | null;
 }
@@ -57,13 +58,25 @@ export function buildEngineGroundTruth(input: GroundTruthInput): EngineGroundTru
     hiddenStems: p.hiddenStems || [],
   }));
 
-  // ── Ten Gods Table ──
-  const tenGodsTable = pillars.map(p => ({
-    pillar: p.celestialStem + p.earthlyBranch,
-    stemShiShen: '',
-    branchShiShen: '',
-    hiddenShiShen: [] as string[],
-  }));
+  // ── Ten Gods Table（日主 vs 各柱天干/藏干，禁止留空供 LLM 臆造）──
+  const tenGodsTable = pillars.map((p, idx) => {
+    const ganZhi = `${p.celestialStem || ''}${p.earthlyBranch || ''}`;
+    const stemShiShen =
+      idx === 2 ? '日主' : calculateShiShen(dayMaster, p.celestialStem) || '';
+    const hiddenStems =
+      Array.isArray(p.hiddenStems) && p.hiddenStems.length > 0
+        ? p.hiddenStems
+        : ZHI_CANG_GAN[p.earthlyBranch] || [];
+    const hiddenShiShen = hiddenStems
+      .map((stem) => calculateShiShen(dayMaster, stem))
+      .filter((name): name is string => Boolean(name));
+    return {
+      pillar: ganZhi,
+      stemShiShen,
+      branchShiShen: hiddenShiShen[0] || '',
+      hiddenShiShen,
+    };
+  });
 
   // ── K-line ──
   const phases = computePhases(kline);
@@ -99,17 +112,41 @@ export function buildEngineGroundTruth(input: GroundTruthInput): EngineGroundTru
     isCurrent: i === (dayun?.currentDayunIndex ?? 0),
   }));
 
+  const currentDayunWindow = dayunWindows.find((w) => w.isCurrent) || null;
   const dayunSection: EngineGroundTruth['dayun'] = {
     windows: dayunWindows,
     direction: yongShen?.yongShen?.[0] ? '顺势' : '待定',
+    currentDayun: currentDayunWindow
+      ? {
+          ganZhi: currentDayunWindow.ganZhi,
+          startAge: currentDayunWindow.startAge,
+          endAge: currentDayunWindow.endAge,
+          quality: currentDayunWindow.quality,
+          yongShenMatch: currentDayunWindow.yongShenMatch,
+        }
+      : null,
   };
 
   // ── ShenSha ──
-  const shenShaList: EngineGroundTruth['shenSha'] = (shenSha || []).map(name => ({
-    name,
-    pillar: '日柱',
-    impact: 'neutral' as const,
-  }));
+  const shenShaList: EngineGroundTruth['shenSha'] = (shenSha || []).map((entry) => {
+    if (typeof entry === 'string') {
+      return { name: entry, pillar: '综合', impact: 'neutral' as const };
+    }
+    const item = entry as { name?: string; pillar?: string; impact?: string; description?: string };
+    const name = item.name || '';
+    const impactRaw = `${item.impact || item.description || ''}`.toLowerCase();
+    const impact =
+      /正|吉|贵|好|利|positive/.test(impactRaw)
+        ? ('positive' as const)
+        : /凶|忌|负|风险|negative/.test(impactRaw)
+          ? ('negative' as const)
+          : ('neutral' as const);
+    return {
+      name,
+      pillar: item.pillar || '综合',
+      impact,
+    };
+  }).filter((item) => item.name);
 
   // ── Derived Facts ──
   const safeKline = Array.isArray(kline) ? kline : [];
@@ -262,13 +299,17 @@ function computePhases(kline: KlinePointV6[]): EngineGroundTruth['kline']['phase
 }
 
 function anchorsToWindows(anchors: KlineAnchorV6[]): EngineGroundTruth['kline']['windows'] {
-  return anchors.slice(0, 8).map(a => ({
-    label: a.type === 'peak' ? '高点' : a.type === 'trough' ? '低点' : '转折',
-    startYear: a.year,
-    endYear: a.year + 1,
-    type: a.type as 'peak' | 'trough' | 'turning' | 'stable',
-    score: a.score || 50,
-  }));
+  return anchors.slice(0, 8).map((a) => {
+    const typeLabel = a.type === 'peak' ? '高点' : a.type === 'trough' ? '低点' : '转折';
+    return {
+      // Unique year-scoped labels so review H2 / agents can align without inventing windows
+      label: `${a.year}${typeLabel}`,
+      startYear: a.year,
+      endYear: a.year + 1,
+      type: a.type as 'peak' | 'trough' | 'turning' | 'stable',
+      score: a.score || 50,
+    };
+  });
 }
 
 function buildDimWindows(kline: KlinePointV6[], dim: string, size: number): Array<{ label: string; startYear: number; endYear: number; score: number }> {

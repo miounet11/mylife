@@ -8,6 +8,10 @@ import {
   readChartCalculationIdentity,
   resolveRegenerationTiming,
 } from '@/lib/calculation-identity';
+import {
+  buildGroundTruthPackFromReport,
+  packToAgenticGroundTruth,
+} from '@/lib/ground-truth/pack';
 import { localizeElementList, presentReportText } from '@/lib/report-presentation';
 import { isAgenticPipelineEnabled } from '@/lib/env';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
@@ -175,8 +179,14 @@ export async function generateVersionedReport(params: {
     status: 'completed',
     detail: '基础命盘与运势结构已完成，开始进入增强分析层。',
   });
-  const groundTruth = flattenGroundTruthFromReport(params.birthDate, baseResult);
+  // Unified GroundTruthPack: same locked facts for LLM narrative + agentic agents
+  const groundTruthPack = buildGroundTruthPackFromReport(params.birthDate, baseResult);
+  const groundTruth = {
+    ...flattenGroundTruthFromReport(params.birthDate, baseResult),
+    ...packToAgenticGroundTruth(groundTruthPack),
+  };
   const preLlmContext = createAgenticContext({
+    pack: groundTruthPack,
     groundTruth,
     context: {
       birthDate: params.birthDate,
@@ -194,6 +204,8 @@ export async function generateVersionedReport(params: {
     ...baseResult,
     tacitSummary: params.tacitSummary,
     tacitSignals: params.tacitSignals,
+    lockedEngineFacts: groundTruthPack.lockedFacts,
+    preserveTokens: groundTruthPack.preserveTokens,
     worldStateSnapshot: preLlmContext.context.worldState,
     contextSnapshot: {
       temporal: preLlmContext.context.temporal,

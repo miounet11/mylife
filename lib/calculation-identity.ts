@@ -484,6 +484,24 @@ export function flattenGroundTruthFromReport(
       ? shenShaObj.list.map((item) => (typeof item === 'string' ? item : item?.name || '')).filter(Boolean)
       : [];
 
+  const anchorsFromEvidence =
+    (report as { anchors?: unknown[] }).anchors ||
+    (engineEvidence.anchors as unknown[]) ||
+    [];
+  // Prefer explicit anchors; fall back to peak/trough years if present on evidence
+  const anchors =
+    Array.isArray(anchorsFromEvidence) && anchorsFromEvidence.length > 0
+      ? anchorsFromEvidence
+      : Array.isArray((engineEvidence as { klineAnchors?: unknown[] }).klineAnchors)
+        ? (engineEvidence as { klineAnchors: unknown[] }).klineAnchors
+        : [];
+
+  const tenGods =
+    report.tenGods ||
+    (engineEvidence as { tenGods?: unknown }).tenGods ||
+    (engineEvidence as { scoringBreakdown?: { tenGods?: unknown } }).scoringBreakdown?.tenGods ||
+    null;
+
   return {
     birthDate,
     pillars,
@@ -494,15 +512,13 @@ export function flattenGroundTruthFromReport(
       null,
     dayun: report.dayun || null,
     kline: Array.isArray(report.klineData) ? report.klineData : [],
-    anchors:
-      (report as { anchors?: unknown[] }).anchors ||
-      (engineEvidence.anchors as unknown[]) ||
-      [],
+    anchors,
     shenSha: shenShaList,
     pattern:
       (report.pattern as { type?: string } | undefined)?.type ||
       (report.pattern as { name?: string } | undefined)?.name ||
       undefined,
+    tenGods,
     // 保留 report 包以兼容旧适配器；新路径以顶层字段为准
     report,
     ...extras,

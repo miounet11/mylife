@@ -190,17 +190,17 @@ export function buildPredictionDueReminderEmail(params: {
     primaryCta: {
       href: predictionsUrl,
       label: pickLocaleString(locale, {
-        'zh-CN': '去预测回访中心打分',
-        'zh-Hant': '去預測回訪中心打分',
-        en: 'Score in prediction center',
+        'zh-CN': '回访：去预测中心打分',
+        'zh-Hant': '回訪：去預測中心打分',
+        en: 'Check-in: score predictions',
       }),
     },
     secondaryCta: {
       href: dimensionsUrl,
       label: pickLocaleString(locale, {
-        'zh-CN': '继续十维度研判',
-        'zh-Hant': '繼續十維度研判',
-        en: 'Continue 10 dimensions',
+        'zh-CN': '十维度：继续研判',
+        'zh-Hant': '十維度：繼續研判',
+        en: '10 dimensions: continue',
       }),
     },
     showUnsubscribe: true,

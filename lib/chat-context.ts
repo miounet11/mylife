@@ -20,6 +20,10 @@ import {
   buildTacitKnowledgeSummary,
   sanitizeTacitKnowledgeInput,
 } from '@/lib/tacit-knowledge';
+import { buildGroundTruthPackFromReport } from '@/lib/ground-truth/pack';
+import { buildTeacherEfcBlock, packToReportHint } from '@/lib/ground-truth/projections';
+import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
+import type { FortuneAnalysisResult } from '@/lib/user-types';
 
 export interface ChatContextEvent {
   id: string;
@@ -230,11 +234,47 @@ export function buildChatExperienceContext(params: {
     calendarAnchor
   );
 
+  // Engine fact lock (EFC) from GroundTruthPack — denser than prose scrape
+  let engineFactBlock = '';
+  let packHint = '';
+  try {
+    const birthDate = report.birthDate ? new Date(report.birthDate) : new Date();
+    const baseResult = {
+      basic: report.bazi,
+      fiveElements: report.fiveElements,
+      tenGods: report.tenGods,
+      pattern: report.pattern,
+      fortune: report.fortune,
+      advice: report.advice,
+      evidence: report.evidence,
+      analysis: report.analysis,
+      klineData: report.klineData,
+      dayun: report.dayun,
+      shenSha: report.shenSha,
+      yongShen: (report as { yongShen?: unknown }).yongShen || {
+        yongShen: report.advice?.yongShen,
+        xiShen: report.advice?.xiShen,
+        jiShen: report.advice?.jiShen,
+        dayMaster: report.bazi?.dayMaster,
+      },
+    } as FortuneAnalysisResult;
+    const pack = buildGroundTruthPackFromReport(birthDate, baseResult);
+    if (pack.lockedFacts.dayMaster) {
+      engineFactBlock = buildTeacherEfcBlock(pack);
+      packHint = packToReportHint(pack);
+    }
+  } catch {
+    engineFactBlock = '';
+  }
+
   return {
     intent: params.intent,
     summary: [
+      ENGINE_HARD_CONTRACT,
+      engineFactBlock ? `【引擎真值锁定 · EFC】\n${engineFactBlock}` : '',
       intentPreset ? `当前会话已进入${intentPreset.entryLabel}。${intentPreset.helper}` : '',
       '你正在继续追问同一份命理报告，请明确引用报告里的结构、行运、窗口和现实事件，不要给泛泛空话。',
+      packHint ? `报告提示：${packHint}` : '',
       `报告核心：日主${report.bazi?.dayMaster || '未知'}，格局${report.pattern?.type || '以当前结构为准'}，当前大运${report.fortune?.currentDaYun || '以当前阶段判断为准'}，当前流年${report.fortune?.currentLiuNian || '以当年节奏继续校验'}。`,
       (report.advice?.yongShen || []).length > 0 ? `用神/喜神：${[...(report.advice?.yongShen || []), ...(report.advice?.xiShen || [])].join('、')}。` : '',
       topScenario ? `当前最值得展开的方向：${topScenario.title}，结论是“${topScenario.actionLabel}”。` : '',
@@ -268,6 +308,9 @@ export function buildChatExperienceContext(params: {
         : '',
       validationSummary.headline ? `事件验证状态：${validationSummary.headline}。` : '',
       `报告可信度等级：${confidence.level}。回答时要区分稳定结论与短期时机判断。`,
+      engineFactBlock
+        ? '回答必须对齐上方引擎真值锁定字段；不得改写日主、四柱、用神/忌神、大运干支与年龄。'
+        : '',
     ]
       .filter(Boolean)
       .join('\n'),

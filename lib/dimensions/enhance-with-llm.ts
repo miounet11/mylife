@@ -1,19 +1,20 @@
-import * as agenticLlm from '@/lib/agentic-report/llm-client';
 import type { LLMCallParams, LLMCallResult } from '@/lib/agentic-report/types';
+import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-context';
 
-/** Prod llm-client may only export callJsonLLM; keep a compatible wrapper. */
+/** Lazy-load llm-client so pure token-merge helpers stay importable without openai. */
 async function callJsonLLMWithError<T>(params: LLMCallParams): Promise<LLMCallResult<T>> {
-  const mod = agenticLlm as {
-    callJsonLLMWithError?: <R>(p: LLMCallParams) => Promise<LLMCallResult<R>>;
-    callJsonLLM?: <R>(p: LLMCallParams) => Promise<R | null>;
-  };
-
-  if (typeof mod.callJsonLLMWithError === 'function') {
-    return mod.callJsonLLMWithError<T>(params);
-  }
-
   const started = Date.now();
   try {
+    const agenticLlm = await import('@/lib/agentic-report/llm-client');
+    const mod = agenticLlm as {
+      callJsonLLMWithError?: <R>(p: LLMCallParams) => Promise<LLMCallResult<R>>;
+      callJsonLLM?: <R>(p: LLMCallParams) => Promise<R | null>;
+    };
+
+    if (typeof mod.callJsonLLMWithError === 'function') {
+      return mod.callJsonLLMWithError<T>(params);
+    }
+
     const data = mod.callJsonLLM ? await mod.callJsonLLM<T>(params) : null;
     return {
       data,
@@ -30,7 +31,6 @@ async function callJsonLLMWithError<T>(params: LLMCallParams): Promise<LLMCallRe
     };
   }
 }
-import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-context';
 import { getDimension } from './config';
 import { buildDimensionEnhancePrompt } from './prompt-registry';
 import { containsForbiddenInvestmentClaim } from './shared';
@@ -51,38 +51,13 @@ export function isDimensionLlmEnabled(): boolean {
   return true;
 }
 
-/** Extract tokens that must survive LLM paraphrasing. */
-export function extractPreservedTokens(text: string): string[] {
-  const patterns = [
-    /\d{4}-\d{2}-\d{2}/g,
-    /\d{4}年(?:Q[1-4]|[上下]半年)?/g,
-    /\d{4}年/g,
-    /Q[1-4]/g,
-    /\d+(?:\.\d+)?分/g,
-    /\d+(?:\.\d+)?%/g,
-    /[甲乙丙丁戊己庚辛壬癸][木火土金水]/g,
-    /[木火土金水]/g,
-  ];
+// Shared with agentic/chat ground-truth fusion (ganzhi + ten gods + years/scores).
+import {
+  extractPreservedTokens,
+  tokensPreservedInItems,
+} from '@/lib/ground-truth/preserve-tokens';
 
-  const found = new Set<string>();
-  for (const pattern of patterns) {
-    const matches = text.match(pattern);
-    if (matches) {
-      for (const match of matches) found.add(match);
-    }
-  }
-  return [...found];
-}
-
-export function tokensPreservedInItems(original: string[], enhanced: string[]): boolean {
-  if (original.length !== enhanced.length) return false;
-
-  const originalTokens = extractPreservedTokens(original.join(' '));
-  if (!originalTokens.length) return true;
-
-  const enhancedText = enhanced.join(' ');
-  return originalTokens.every((token) => enhancedText.includes(token));
-}
+export { extractPreservedTokens, tokensPreservedInItems };
 
 export function mergeEnhancedSections(
   engineSections: DimensionReportSection[],

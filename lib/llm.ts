@@ -9,11 +9,31 @@ import {
   summarizeModelExecutionPlan,
 } from '@/lib/llm-provider-health';
 import { WORLD_YI_DELIVERY_DIRECTIVE, WORLD_YI_DOCTRINE_BRIEF } from '@/lib/world-yi-doctrine';
-import { buildPrompt, getPrompt } from '@/lib/prompts';
 import { sanitizeAdviceTiming } from '@/lib/advice-timing-filter';
-// 触发自注册
-import '@/lib/prompts/analyze/structure';
-import '@/lib/prompts/analyze/narrative';
+import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
+
+// Optional prod prompt registry (absent in partial local sandbox)
+let buildPrompt: ((id: string, ctx: unknown) => { system?: string; user: string; temperature?: number }) | null = null;
+let getPrompt: ((id: string) => unknown) | null = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const prompts = require('@/lib/prompts') as {
+    buildPrompt: typeof buildPrompt;
+    getPrompt: typeof getPrompt;
+  };
+  buildPrompt = prompts.buildPrompt;
+  getPrompt = prompts.getPrompt;
+  // Trigger self-registration when present
+  try {
+    require('@/lib/prompts/analyze/structure');
+    require('@/lib/prompts/analyze/narrative');
+  } catch {
+    // specs optional
+  }
+} catch {
+  buildPrompt = null;
+  getPrompt = null;
+}
 
 const toModelDisplayName = (model: string) => {
   if (model === 'claude-opus-4-7-high') {
@@ -461,10 +481,16 @@ function buildStructuredPrompt(baziData: Record<string, unknown>) {
   const compactBaziData = buildReportPromptPayload(baziData);
   const compactShenSha = compactForPrompt((baziData as Record<string, unknown>).shenSha);
   const compactDayun = compactForPrompt((baziData as Record<string, unknown>).dayun);
+  // Optional locked facts from GroundTruthPack (report-pipeline may attach)
+  const lockedFacts = (baziData as Record<string, unknown>).lockedEngineFacts
+    || (baziData as Record<string, unknown>).lockedFacts;
 
   return `
 你需要先生成一份稳定的结构化命理报告草案。目标是字段完整、可解析、可用于后续补强。
 
+${ENGINE_HARD_CONTRACT}
+
+${lockedFacts ? `【LOCKED_ENGINE_FACTS · 输出中须保留字面】\n${JSON.stringify(lockedFacts)}\n` : ''}
 【用户排盘数据】
 ${JSON.stringify(compactBaziData)}
 
@@ -479,6 +505,7 @@ ${JSON.stringify(compactDayun)}` : ''}
 2. 先保证字段完整和判断正确，再追求文采。
 3. 文本保持简洁，总体宁短勿长；不要为了显得完整而扩写。
 4. 必须结合大运、流年、神煞、用神/忌神去写，但每个判断只保留最关键证据。
+4.1 日主、用神/忌神、大运干支与起止年龄、四柱干支禁止改写或新造。
 5. analysis.summary 必须像一句世界易式决策结论，优先体现“结构 + 阶段 + 动作”，先给判断，不要空泛抒情。
 5.1 允许综合默会知识、经验判断和跨学科直觉，但必须回到现实取舍与行动，不要写成神秘表演。
 5.2 如果输入里有 worldStateSnapshot / tacitSummary / contextSnapshot，必须把它们当成正式判断输入，而不是边角补充。
@@ -581,7 +608,7 @@ ${JSON.stringify(compactDraft)}
  * 若 spec 未注册，回退到 legacy 实现（buildStructuredPrompt + buildPhaseSystemPrompt）。
  */
 function buildStructuredPromptV2(baziData: Record<string, unknown>): { prompt: string; systemOverride?: string } {
-  if (!getPrompt('analyze.structure')) {
+  if (!getPrompt || !buildPrompt || !getPrompt('analyze.structure')) {
     return { prompt: buildStructuredPrompt(baziData) };
   }
   const compactBaziData = buildReportPromptPayload(baziData);
@@ -592,20 +619,26 @@ function buildStructuredPromptV2(baziData: Record<string, unknown>): { prompt: s
     ? compactForPrompt((baziData as Record<string, unknown>).dayun)
     : undefined;
   const built = buildPrompt('analyze.structure', { compactBaziData, compactShenSha, compactDayun });
-  return { prompt: built.user, systemOverride: built.system };
+  const systemOverride = built.system
+    ? `${ENGINE_HARD_CONTRACT}\n\n${built.system}`
+    : ENGINE_HARD_CONTRACT;
+  return { prompt: built.user, systemOverride };
 }
 
 function buildNarrativePatchPromptV2(
   baziData: Record<string, unknown>,
   draft: Record<string, unknown>
 ): { prompt: string; systemOverride?: string } {
-  if (!getPrompt('analyze.narrative')) {
+  if (!getPrompt || !buildPrompt || !getPrompt('analyze.narrative')) {
     return { prompt: buildNarrativePatchPrompt(baziData, draft) };
   }
   const compactBaziData = buildReportPromptPayload(baziData);
   const compactDraft = compactForPrompt(draft);
   const built = buildPrompt('analyze.narrative', { compactBaziData, compactDraft });
-  return { prompt: built.user, systemOverride: built.system };
+  const systemOverride = built.system
+    ? `${ENGINE_HARD_CONTRACT}\n\n${built.system}`
+    : ENGINE_HARD_CONTRACT;
+  return { prompt: built.user, systemOverride };
 }
 
 function parseJsonContent<T>(content: string): T | null {

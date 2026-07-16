@@ -2,6 +2,8 @@
 // Injects structured context blocks into prompt templates via {{LABEL}} placeholders
 
 import type { StructuredAgenticContext } from './types';
+import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
+import { buildLockedFacts, type LockedEngineFacts } from '@/lib/ground-truth/pack';
 
 export interface PromptModule {
   label: string;
@@ -92,6 +94,16 @@ function buildUncertaintyNotes(ctx: StructuredAgenticContext): string {
   return '按引擎置信边界输出，时辰或地点不确定时主动标注降级范围。';
 }
 
+function buildLockedFactsModule(engine: StructuredAgenticContext['engine'] | undefined): string {
+  if (!engine) return '{}';
+  try {
+    const facts: LockedEngineFacts = buildLockedFacts(engine);
+    return compact(JSON.stringify(facts));
+  } catch {
+    return '{}';
+  }
+}
+
 export function buildPromptModules(ctx: StructuredAgenticContext): PromptModule[] {
   const engine = ctx?.engine;
   const context = ctx?.context;
@@ -105,6 +117,7 @@ export function buildPromptModules(ctx: StructuredAgenticContext): PromptModule[
   };
 
   return [
+    { label: 'ENGINE_HARD_CONTRACT', content: ENGINE_HARD_CONTRACT },
     { label: 'ENGINE_CONSTITUTION', content: safe(engine?.constitution, '{}') },
     {
       label: 'ENGINE_TEN_GODS_TABLE',
@@ -125,6 +138,11 @@ export function buildPromptModules(ctx: StructuredAgenticContext): PromptModule[
       label: 'ENGINE_DAYUN_WINDOWS',
       content: safe(Array.isArray(engine?.dayun?.windows) ? engine.dayun.windows : [], '[]'),
     },
+    {
+      label: 'ENGINE_PILLARS',
+      content: safe(Array.isArray(engine?.pillars) ? engine.pillars : [], '[]'),
+    },
+    { label: 'LOCKED_ENGINE_FACTS', content: buildLockedFactsModule(engine) },
     { label: 'CONTEXT_TEMPORAL', content: safe(context?.temporal, '{}') },
     { label: 'CONTEXT_MACRO', content: safe(context?.macroCycles, '{}') },
     { label: 'CONTEXT_GEO_CLIMATE', content: safe(context?.geoClimate, '{}') },
@@ -140,6 +158,15 @@ export function injectPromptModules(basePrompt: string, modules: PromptModule[])
   let result = basePrompt;
   for (const mod of modules) {
     result = result.replace(new RegExp(`\\{\\{${mod.label}\\}\\}`, 'g'), mod.content);
+  }
+  // Always append locked facts if template forgot the placeholder
+  const locked = modules.find((m) => m.label === 'LOCKED_ENGINE_FACTS');
+  const hard = modules.find((m) => m.label === 'ENGINE_HARD_CONTRACT');
+  if (hard?.content && !result.includes('【引擎硬约束')) {
+    result = `${hard.content}\n\n${result}`;
+  }
+  if (locked?.content && !result.includes('LOCKED_ENGINE_FACTS') && !result.includes(locked.content.slice(0, 40))) {
+    result = `${result}\n\n【LOCKED_ENGINE_FACTS · 输出中须保留字面】\n${locked.content}`;
   }
   return result;
 }

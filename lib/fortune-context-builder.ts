@@ -1,5 +1,9 @@
 import { calculateFourPillars } from '@/lib/fortune-engine';
-import { determineYongShen, type YongShenResult } from '@/lib/bazi-analyzer';
+import {
+  analyzeShenSha,
+  determineYongShen,
+  type YongShenResult,
+} from '@/lib/bazi-analyzer';
 import { calculateDayun, type DayunResult } from '@/lib/dayun-calculator';
 import { generateLifeKlineV6, detectKlineAnchorsV6 } from '@/lib/kline-v6';
 import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-context';
@@ -138,6 +142,20 @@ export function buildFortuneContextInput(input: BirthInput): CreateContextInput 
   const elements = elementScoresFromPillars(pillars);
   const pattern = yongShen?.pattern?.pattern || '正格';
 
+  const baziStr = pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`);
+  let shenSha: string[] = [];
+  try {
+    const shenShaResult = analyzeShenSha(baziStr);
+    const list = shenShaResult?.list;
+    if (Array.isArray(list)) {
+      shenSha = list
+        .map((item) => (typeof item === 'string' ? item : item?.name || ''))
+        .filter(Boolean);
+    }
+  } catch {
+    shenSha = [];
+  }
+
   const birthSignature = buildBirthSignature({
     birthDate: input.birthDate,
     birthTime,
@@ -168,7 +186,7 @@ export function buildFortuneContextInput(input: BirthInput): CreateContextInput 
       dayun,
       kline: Array.isArray(kline) ? kline : [],
       anchors: Array.isArray(anchors) ? anchors : [],
-      shenSha: [],
+      shenSha,
       pattern,
       lifeProfile,
     },

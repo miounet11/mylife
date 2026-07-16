@@ -24,6 +24,11 @@ export type ChatTeacherRequestBits = {
   profileLines?: string[] | null;
   /** 报告短摘要（已有 context.summary 时可不再重复） */
   reportHint?: string | null;
+  /**
+   * 引擎真值 EFC 块（GroundTruthPack → buildTeacherEfcBlock）。
+   * 有报告绑定时优先注入，禁止模型改写日主/用神/大运。
+   */
+  engineFactBlock?: string | null;
 };
 
 /** intent / teacher 参数 → 老师定义 */
@@ -73,10 +78,15 @@ export function buildTeacherSystemAddon(bits: ChatTeacherRequestBits): {
     (cityFromProfile ? cityFromProfile.replace(/^.*现居城市=/, '').split('；')[0]?.trim() : '') ||
     '';
 
+  const efc = `${bits.engineFactBlock || ''}`.trim();
+
   const lines = [
     '',
     '——',
     buildTeacherSystemPreamble(teacher),
+    efc
+      ? `——\n【引擎真值锁定 · EFC】\n${efc}`
+      : '',
     effectiveCity
       ? `用户关注/所在城市：${effectiveCity}。涉及节奏与选择时，把城市生活成本、行业环境与通勤现实纳入考虑；信息不足时说明边界。`
       : '',
@@ -88,6 +98,9 @@ export function buildTeacherSystemAddon(bits: ChatTeacherRequestBits): {
       ? `用户已记录的实践/事件（请优先对照，勿空谈）：\n${practice.map((p, i) => `${i + 1}. ${p}`).join('\n')}`
       : '若用户尚未提供实践记录，可建议其把关键节点记入事件本后再回访，但不要强迫。',
     bits.reportHint ? `报告提示：${bits.reportHint}` : '',
+    efc
+      ? '回答必须对齐上方引擎真值锁定字段；不得改写日主、四柱、用神/忌神、大运干支与年龄。'
+      : '',
     '若仍缺关键现实背景，可自然追问一句（例如城市、行业、关系状态），不要一次连问多项。',
     '回答时以该老师职责为边界；明显跨域时一句话点明，并建议换请对应老师深入。',
   ].filter(Boolean);
