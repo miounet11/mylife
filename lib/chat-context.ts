@@ -22,7 +22,7 @@ import {
 } from '@/lib/tacit-knowledge';
 import { buildGroundTruthPackFromReport } from '@/lib/ground-truth/pack';
 import { buildTeacherEfcBlock, packToReportHint } from '@/lib/ground-truth/projections';
-import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
+import { CHAT_NO_REPORT_CONTRACT, ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
 
 export interface ChatContextEvent {
@@ -138,15 +138,17 @@ export function buildChatExperienceContext(params: {
     return {
       intent: params.intent,
       summary: [
+        CHAT_NO_REPORT_CONTRACT,
         intentPreset ? `当前会话已进入${intentPreset.entryLabel}。${intentPreset.helper}` : '',
         buildNoReportSummary(events),
         mappedFocusedEvent
           ? `当前用户希望围绕事件“${mappedFocusedEvent.title}”做纠偏分析。请优先解释偏差更可能来自时机、执行还是信息缺口。`
           : '',
+        '若用户问「这份报告下一步」但无 reportId，直接说明需从报告页进入追问，不要编造用神/日主。',
       ].filter(Boolean).join('\n'),
       focusAreas: [
         intentPreset ? `专项：${intentPreset.entryLabel}` : '',
-        ...(events.length > 0 ? ['最近事件复盘', '现实节奏校验'] : ['命局主轴', '阶段节奏', '风险规避']),
+        ...(events.length > 0 ? ['最近事件复盘', '现实节奏校验'] : ['先绑定报告', '明确目标与时间', '风险与验证']),
         ...(toolMemory?.focusAreas?.length ? [`最近工具：${toolMemory.focusAreas.join('、')}`] : []),
         validationSummary.headline,
         confirmedPastEvents.length > 0 ? `已确认历史印证：${confirmedPastEvents.length} 条` : '',
@@ -487,10 +489,10 @@ function buildCorrectionPrompts(focusedEvent?: ChatContextEvent, report?: Fortun
 
 function buildNoReportSummary(events: EventRecord[]) {
   if (events.length === 0) {
-    return '当前没有锚定报告，也没有事件记录。先帮助用户把问题收敛成一个明确主题，再给出结构化建议。';
+    return '当前没有锚定报告，也没有事件记录。先帮助用户把问题收敛成「目标 + 时间点 + 风险」，给出通用决策框架；禁止空谈命盘字段。';
   }
 
-  return `当前没有锚定报告，但用户已经记录了${events.length}个事件。回答时可以先围绕最近事件做复盘，再建议用户回到报告或重新测算。`;
+  return `当前没有锚定报告，但用户已经记录了${events.length}个事件。回答时可以先围绕最近事件做复盘，并建议从报告页带入 reportId 后再做命局级追问。`;
 }
 
 function buildValidationSummary(events: EventRecord[]) {

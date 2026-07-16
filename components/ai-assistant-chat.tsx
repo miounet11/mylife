@@ -52,18 +52,41 @@ function isSilentChatAbort(error: unknown) {
   return /superseded|unmounted/i.test(value);
 }
 
+const LAST_REPORT_KEY = 'lk_last_report_id';
+
+function readLastReportId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return `${window.localStorage.getItem(LAST_REPORT_KEY) || ''}`.trim();
+  } catch {
+    return '';
+  }
+}
+
+function rememberReportId(id: string) {
+  if (typeof window === 'undefined' || !id) return;
+  try {
+    window.localStorage.setItem(LAST_REPORT_KEY, id);
+  } catch {
+    // ignore
+  }
+}
+
 // v5-D60: FB Messenger 2017 风消息流 + 底部 sticky 输入区
 export default function AIAssistantChat() {
   const searchParams = useSearchParams();
-  const reportId = searchParams?.get('reportId') || '';
+  const urlReportId = searchParams?.get('reportId') || '';
   const eventId = searchParams?.get('eventId') || '';
   const intent = searchParams?.get('intent') || '';
   const source = searchParams?.get('source') || '';
   const ctaStrategyKey = searchParams?.get('ctaStrategyKey') || '';
   const sourceFamily = searchParams?.get('sourceFamily') || '';
   const prefilledQuestion = searchParams?.get('question') || '';
+  const [rememberedReportId, setRememberedReportId] = useState('');
+  const reportId = urlReportId || rememberedReportId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [context, setContext] = useState<ChatContextState | null>(null);
+  const [bindError, setBindError] = useState('');
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
@@ -137,13 +160,25 @@ export default function AIAssistantChat() {
   const canRestoreTacit = hasTacitKnowledgeInput(restoredTacitContext) && !areTacitKnowledgeInputsEqual(restoredTacitContext, tacitContext);
 
   useEffect(() => {
+    mountedRef.current = true;
+    const last = readLastReportId();
+    if (last && !urlReportId) {
+      setRememberedReportId(last);
+    }
     return () => {
       mountedRef.current = false;
       abortControllerRef(historyControllerRef, 'chat-unmounted');
       abortControllerRef(replyControllerRef, 'chat-unmounted');
       abortControllerRef(messageActionControllerRef, 'chat-unmounted');
     };
-  }, []);
+  }, [urlReportId]);
+
+  useEffect(() => {
+    if (urlReportId) {
+      rememberReportId(urlReportId);
+      setRememberedReportId(urlReportId);
+    }
+  }, [urlReportId]);
 
   const fetchHistory = async (showLoader = false) => {
     try {
@@ -151,6 +186,7 @@ export default function AIAssistantChat() {
         setLoadingHistory(true);
       }
       setError('');
+      setBindError('');
       const queryParams = new URLSearchParams();
       if (reportId) queryParams.set('reportId', reportId);
       if (eventId) queryParams.set('eventId', eventId);
@@ -192,6 +228,20 @@ export default function AIAssistantChat() {
       setMessages(mapped);
       setPreviousUserQuestions(buildPreviousUserQuestionMap(mapped));
       setContext(data.context || null);
+      const boundId = `${data.boundReportId || data.context?.report?.id || ''}`.trim();
+      if (boundId) {
+        rememberReportId(boundId);
+        setRememberedReportId(boundId);
+        setBindError('');
+      } else if (data.contextBindError || (reportId && !data.contextBound)) {
+        setBindError(
+          data.contextBindError === 'report_not_owned_by_session'
+            ? '报告未能绑定到当前会话（可能换了浏览器或登录态）。请从报告页「继续追问」重新进入。'
+            : '尚未绑定结构报告，命盘级追问会缺少日主/用神真值。请从报告页进入或先完成排盘。',
+        );
+      } else if (!reportId) {
+        setBindError('尚未绑定结构报告。请从报告页进入追问，避免空谈用神。');
+      }
       setRestoredTacitContext(latestTacitContext);
       setTacitContext(cloneTacitKnowledgeInput(latestTacitContext));
       setShowTacitComposer(hasTacitKnowledgeInput(latestTacitContext));
@@ -562,6 +612,25 @@ export default function AIAssistantChat() {
               {error}
             </div>
           )}
+
+          {bindError && !context?.report ? (
+            <div className="rounded-[3px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2 text-[13px] leading-[1.5] text-[#7a5b00]">
+              {bindError}
+              <div className="mt-1.5 flex flex-wrap gap-3">
+                <a href="/analyze" className="font-semibold text-[#3b5998] hover:underline">
+                  去排盘
+                </a>
+                {reportId ? (
+                  <a
+                    href={`/result/${encodeURIComponent(reportId)}`}
+                    className="font-semibold text-[#3b5998] hover:underline"
+                  >
+                    打开报告再追问
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
 
           {loadingHistory && (
             <div className="py-10 text-center text-[13px] text-[#606770]">正在载入聊天记录...</div>

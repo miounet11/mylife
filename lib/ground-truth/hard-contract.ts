@@ -16,6 +16,16 @@ export const ENGINE_HARD_CONTRACT = [
   '8. 输出合法 JSON（若任务要求 JSON）；叙述用白话；术语必须立刻跟生活含义。',
 ].join('\n');
 
+/** When no report/EFC is bound — prevent invented day master / yong shen talk. */
+export const CHAT_NO_REPORT_CONTRACT = [
+  '【未绑定报告 · 硬约束】',
+  '1. 当前会话没有可用的引擎真值包（无日主、用神、大运、K线锚点）。',
+  '2. 禁止推演或编造日主、四柱、用神/忌神、十神、大运干支与具体年份分数。',
+  '3. 禁止假装已经读过用户命盘；不得写「根据你的用神/官杀/食伤…」一类空锚点句。',
+  '4. 应明确说明：请从报告页「继续追问」带入 reportId，或先完成排盘；在绑定前只给通用决策框架（目标、时间、风险、下一步验证）。',
+  '5. 若用户问题以「这份报告」开头，优先回复需要先绑定报告，而不是泛泛命理套话。',
+].join('\n');
+
 /** Soft teacher chat contract when report lock payload is present. */
 export const CHAT_ENGINE_CONTRACT = [
   '【报告真值约束】',

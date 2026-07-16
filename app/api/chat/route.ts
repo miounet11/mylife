@@ -787,8 +787,16 @@ function resolveRequestedSourceFamily(request: NextRequest, bodySourceFamily?: s
 function getChatReport(userId: string, requestedReportId?: string) {
   if (requestedReportId) {
     const report = fortuneOperations.getById(requestedReportId);
-    if (report && report.userId === userId) {
-      return report;
+    if (report) {
+      // Owner always OK
+      if (report.userId === userId) {
+        return report;
+      }
+      // Explicit deep-link / cookie 切换：公开报告允许只读锚定（不写回 ownership）
+      // DB 默认 is_public=1；私有报告 (isPublic===false) 仍拒绝跨 guest 读取
+      if (report.isPublic !== false) {
+        return report;
+      }
     }
   }
 
@@ -901,11 +909,15 @@ export async function POST(request: NextRequest) {
     const scopeEventId = context.focusedEvent?.id || requestedEventId;
     const previousRows = getScopedChatRows(userId, scopeReportId, scopeEventId, requestedIntent, 60);
     const userHistory = buildHistoryFromRows(previousRows).slice(-12);
+    const reportBound = Boolean(context.report?.id || context.engineFactBlock);
     const contextSummary = [
       context.summary,
+      !reportBound
+        ? '【系统】本轮未绑定引擎真值。若用户提及「这份报告/用神/日主」，先说明需从报告页进入，禁止编造命盘。'
+        : '',
       tacitSummary ? `用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
     ].filter(Boolean).join('\n');
-        let profileLinesForTeacher: string[] = [];
+    let profileLinesForTeacher: string[] = [];
     try {
       const rows = profileSupplementOperations.listByUser(userId, null);
       const snap = snapshotFromSupplementList(rows.map((r: any) => ({ domain: r.domain, fields: r.fields || {} })));
@@ -933,7 +945,7 @@ export async function POST(request: NextRequest) {
       category: 'chat_user',
       analysis: {
         source: 'chat_api',
-        reportId: context.report?.id || null,
+        reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         focusAreas: context.focusAreas,
         turnId,
@@ -954,7 +966,7 @@ export async function POST(request: NextRequest) {
         source: llmUsed ? 'llm' : 'fallback',
         answer,
         llmUsed,
-        reportId: context.report?.id || null,
+        reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         turnId,
         responseToQuestionId: userMessageId,
@@ -983,7 +995,7 @@ export async function POST(request: NextRequest) {
           materialCount: materials.length,
           palmPhotoCount,
           imageMaterialCount,
-          reportId: context.report?.id || null,
+          reportId: context.report?.id || requestedReportId || null,
           eventId: context.focusedEvent?.id || null,
         },
       });
@@ -1004,7 +1016,7 @@ export async function POST(request: NextRequest) {
         materialCount: materials.length,
         materialKinds: materials.map((item) => item.kind),
         imageMaterialCount,
-        reportId: context.report?.id || null,
+        reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
         source: requestedSource || null,
@@ -1017,7 +1029,7 @@ export async function POST(request: NextRequest) {
       sessionId,
       userAgent,
       action: 'ask',
-      reportId: context.report?.id || null,
+      reportId: context.report?.id || requestedReportId || null,
       eventId: context.focusedEvent?.id || null,
       intent: requestedIntent || null,
       source: requestedSource || null,
@@ -1152,7 +1164,7 @@ export async function PATCH(request: NextRequest) {
             source: llmUsed ? 'llm' : 'fallback',
             answer,
             llmUsed,
-            reportId: context.report?.id || null,
+            reportId: context.report?.id || requestedReportId || null,
             eventId: context.focusedEvent?.id || null,
             responseToQuestionId: rows[userIndex].id,
             regenerated: true,
@@ -1169,7 +1181,7 @@ export async function PATCH(request: NextRequest) {
         page: '/chat',
         meta: {
           action: 'regenerate',
-          reportId: context.report?.id || null,
+          reportId: context.report?.id || requestedReportId || null,
           eventId: context.focusedEvent?.id || null,
           llmUsed,
           durationMs: Date.now() - requestStartedAt,
@@ -1186,7 +1198,7 @@ export async function PATCH(request: NextRequest) {
         sessionId,
         userAgent,
         action: 'regenerate',
-        reportId: context.report?.id || null,
+        reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
         source: requestedSource || null,
@@ -1245,7 +1257,7 @@ export async function PATCH(request: NextRequest) {
           analysis: {
             ...(target.analysis || {}),
             source: 'chat_api',
-            reportId: context.report?.id || null,
+            reportId: context.report?.id || requestedReportId || null,
             eventId: context.focusedEvent?.id || null,
             focusAreas: context.focusAreas,
             edited: true,
@@ -1261,7 +1273,7 @@ export async function PATCH(request: NextRequest) {
               source: llmUsed ? 'llm' : 'fallback',
               answer,
               llmUsed,
-              reportId: context.report?.id || null,
+              reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,
               edited: true,
@@ -1279,7 +1291,7 @@ export async function PATCH(request: NextRequest) {
               source: llmUsed ? 'llm' : 'fallback',
               answer,
               llmUsed,
-              reportId: context.report?.id || null,
+              reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,
               turnId: target.analysis?.turnId || generateId(),
@@ -1303,7 +1315,7 @@ export async function PATCH(request: NextRequest) {
         page: '/chat',
         meta: {
           action: 'edit',
-          reportId: context.report?.id || null,
+          reportId: context.report?.id || requestedReportId || null,
           eventId: context.focusedEvent?.id || null,
           llmUsed,
           durationMs: Date.now() - requestStartedAt,
@@ -1320,7 +1332,7 @@ export async function PATCH(request: NextRequest) {
         sessionId,
         userAgent,
         action: 'edit',
-        reportId: context.report?.id || null,
+        reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         intent: requestedIntent || null,
         source: requestedSource || null,
@@ -1420,7 +1432,7 @@ export async function DELETE(request: NextRequest) {
       page: '/chat',
       meta: {
           action: 'delete',
-          reportId: context.report?.id || null,
+          reportId: context.report?.id || requestedReportId || null,
           eventId: context.focusedEvent?.id || null,
           durationMs: Date.now() - requestStartedAt,
           deletedCount: allIds.length,
@@ -1435,7 +1447,7 @@ export async function DELETE(request: NextRequest) {
       sessionId,
       userAgent,
       action: 'delete',
-      reportId: context.report?.id || null,
+      reportId: context.report?.id || requestedReportId || null,
       eventId: context.focusedEvent?.id || null,
       intent: requestedIntent || null,
       source: requestedSource || null,
