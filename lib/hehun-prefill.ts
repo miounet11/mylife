@@ -3,7 +3,13 @@
  */
 
 import type { HehunPersonInput } from '@/lib/hehun-engine';
-import { personFromReportResult } from '@/lib/hehun-engine';
+import {
+  personFromBirthInput,
+  personFromGroundTruthPack,
+  personFromReportResult,
+} from '@/lib/hehun-engine';
+import { buildGroundTruthPackFromBirth } from '@/lib/ground-truth/pack';
+import type { BirthInput } from '@/lib/fortune-context-builder';
 
 const GAN = '甲乙丙丁戊己庚辛壬癸';
 const ZHI = '子丑寅卯辰巳午未申酉戌亥';
@@ -170,3 +176,22 @@ export function hehunFromReportResult(
 ) {
   return personFromReportResult(result, name);
 }
+
+/** 从出生信息生成合婚单方（引擎 pack）。 */
+export function hehunPersonFromBirth(birth: BirthInput, name?: string): HehunPersonInput {
+  const pack = buildGroundTruthPackFromBirth(birth);
+  return personFromGroundTruthPack(pack, name || birth.name);
+}
+
+/** 双人出生信息 → 合婚对照（无需完整报告）。 */
+export function hehunFromBirthPair(
+  a: BirthInput,
+  b: BirthInput,
+): { personA: HehunPersonInput; personB: HehunPersonInput } {
+  return {
+    personA: hehunPersonFromBirth(a, a.name || '甲方'),
+    personB: hehunPersonFromBirth(b, b.name || '乙方'),
+  };
+}
+
+export { personFromBirthInput, personFromGroundTruthPack };

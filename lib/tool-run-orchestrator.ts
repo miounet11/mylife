@@ -13,6 +13,12 @@ import {
   mergeToolLlmWithPreserve,
 } from '@/lib/tool-llm-gate';
 import { resolveToolEnginePack } from '@/lib/tool-run-summary';
+import {
+  buildEphemeralReportFromBirth,
+  parseToolBirthInput,
+  sessionReportIdFor,
+} from '@/lib/tool-birth-context';
+import type { BirthInput } from '@/lib/fortune-context-builder';
 
 export const TOOL_RUN_WORKFLOW_PATH = 'data/workflows/tool-run-v1.json';
 
@@ -42,6 +48,11 @@ export type ToolRunInput = {
   note?: string;
   attribution?: Record<string, unknown> | null;
   userAgent?: string | null;
+  /**
+   * Birth-only path when no report: { birthDate, birthTime?, gender?, name? }.
+   * Builds ephemeral engine pack; session.reportId stays null (FK-safe).
+   */
+  birth?: BirthInput | Record<string, unknown> | null;
 };
 
 export type ToolRunExecution = {
@@ -381,20 +392,15 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     stage: 'load-report',
     status: 'started',
     detail: '正在加载用户报告上下文。',
-    meta: { reportId: input.reportId || null },
+    meta: { reportId: input.reportId || null, hasBirth: Boolean(input.birth) },
   });
-  const report = input.reportId
+  let report: FortuneRecord | null = input.reportId
     ? fortuneOperations.getById(input.reportId)
     : fortuneOperations.getByUserId(userId)[0] || null;
-  if (!report) {
-    recorder.push({
-      stage: 'load-report',
-      status: 'failed',
-      detail: '用户尚未完成综合报告。',
-    });
-    throw new Error('REPORT_REQUIRED');
-  }
-  if (report.userId !== userId) {
+  let birthPack: ReturnType<typeof buildEphemeralReportFromBirth>['pack'] | undefined;
+  let birthOnly = false;
+
+  if (report && report.userId !== userId) {
     recorder.push({
       stage: 'load-report',
       status: 'failed',
@@ -403,12 +409,51 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     });
     throw new Error('REPORT_FORBIDDEN');
   }
-  recorder.push({
-    stage: 'load-report',
-    status: 'completed',
-    detail: '报告上下文已加载。',
-    meta: { reportId: report.id, reportVersion: report.reportVersion || null },
-  });
+
+  if (!report) {
+    const birth = parseToolBirthInput(input.birth);
+    if (birth) {
+      try {
+        const ephemeral = buildEphemeralReportFromBirth({ userId, birth });
+        report = ephemeral.report;
+        birthPack = ephemeral.pack;
+        birthOnly = true;
+        recorder.push({
+          stage: 'load-report',
+          status: 'completed',
+          detail: '无报告：已用出生信息即时重算引擎真值包。',
+          meta: {
+            reportId: null,
+            birthOnly: true,
+            dayMaster: birthPack.lockedFacts.dayMaster,
+            engineSource: 'birth',
+          },
+        });
+      } catch (error) {
+        recorder.push({
+          stage: 'load-report',
+          status: 'failed',
+          detail: '出生信息无法重算引擎。',
+          meta: { error: error instanceof Error ? error.message : String(error) },
+        });
+        throw new Error('BIRTH_INVALID');
+      }
+    } else {
+      recorder.push({
+        stage: 'load-report',
+        status: 'failed',
+        detail: '用户尚未完成综合报告，且未提供出生信息。',
+      });
+      throw new Error('REPORT_REQUIRED');
+    }
+  } else {
+    recorder.push({
+      stage: 'load-report',
+      status: 'completed',
+      detail: '报告上下文已加载。',
+      meta: { reportId: report.id, reportVersion: report.reportVersion || null },
+    });
+  }
 
   recorder.push({
     stage: 'load-memory',
@@ -437,7 +482,8 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
       confirmed: true,
       workflowId: workflow.id,
       toolSlug: tool.slug,
-      reportId: report.id,
+      reportId: sessionReportIdFor(report),
+      birthOnly,
       category: tool.category,
       source: typeof input.attribution?.source === 'string' ? input.attribution.source : null,
       attribution: input.attribution || null,
@@ -447,13 +493,14 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
   recorder.push({
     stage: 'deterministic-summary',
     status: 'started',
-    detail: '正在生成确定性工具摘要。',
+    detail: birthOnly ? '正在用出生引擎真值生成工具摘要。' : '正在生成确定性工具摘要。',
   });
   const deterministicResult = buildToolRunSummary({
     tool,
     report,
     recentSessions: recentSessions as any,
     note: input.note || '',
+    ...(birthPack ? { pack: birthPack } as any : {}),
   });
   recorder.push({
     stage: 'deterministic-summary',
@@ -528,12 +575,15 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
   toolSessionOperations.create({
     id: sessionId,
     userId,
-    reportId: report.id,
+    // FK: only real fortunes.id; ephemeral birth uses null
+    reportId: sessionReportIdFor(report) || undefined,
     toolSlug: tool.slug,
     status: 'completed',
     input: {
       note: input.note || '',
       reportName: report.name,
+      birthOnly,
+      birthDate: birthOnly ? report.birthDate : undefined,
     },
     result: result as unknown as Record<string, unknown>,
     meta: {
@@ -554,6 +604,9 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
       inheritedCategories: inheritedCategories(recentSessions, inheritSessionLimit),
       attribution: input.attribution || null,
       orchestrationEvents: recorder.events,
+      birthOnly,
+      engineSource: birthOnly ? 'birth' : (result as any).engineSource || null,
+      dayMaster: birthPack?.lockedFacts.dayMaster || report.bazi?.dayMaster || null,
     },
   });
   recorder.push({
@@ -589,7 +642,8 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     meta: {
       workflowId: workflow.id,
       toolSlug: tool.slug,
-      reportId: report.id,
+      reportId: sessionReportIdFor(report),
+      birthOnly,
       category: tool.category,
       attribution: input.attribution || null,
     },

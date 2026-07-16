@@ -14,6 +14,11 @@ import {
   ZHI_XING,
 } from '@/lib/bazi-constants';
 import { KNOWLEDGE_BASE } from '@/lib/knowledge-base-meta';
+import {
+  buildGroundTruthPackFromBirth,
+  buildGroundTruthPackFromReport,
+} from '@/lib/ground-truth/pack';
+import type { BirthInput } from '@/lib/fortune-context-builder';
 
 const WX_CN: Record<string, string> = {
   wood: '木',
@@ -506,7 +511,76 @@ function unique(items: string[]) {
   return [...new Set(items.filter(Boolean))];
 }
 
-/** 从报告结果尽量抽出合婚输入（含当前大运） */
+/** 从 GroundTruthPack 抽出合婚输入（引擎真值对齐）。 */
+export function personFromGroundTruthPack(
+  pack: {
+    lockedFacts: {
+      dayMaster: string;
+      pillars: string[];
+      yongShen: string[];
+      jiShen: string[];
+      currentDayun: {
+        ganZhi: string;
+        startAge: number;
+        endAge: number;
+        quality: string;
+      } | null;
+    };
+    truthInput?: {
+      dayun?: {
+        dayunList?: Array<{
+          ganZhi?: string;
+          quality?: string;
+          yongShenMatch?: string;
+          startYear?: number;
+          endYear?: number;
+          startAge?: number;
+          endAge?: number;
+        }>;
+        currentDayunIndex?: number;
+      };
+    };
+  },
+  name?: string,
+): HehunPersonInput {
+  const f = pack.lockedFacts;
+  const dayPillar = f.pillars[2] || '';
+  const dayMaster = f.dayMaster || (dayPillar ? dayPillar[0] : '') || '';
+  const dayBranch = dayPillar.length >= 2 ? dayPillar[1] : '';
+  const dayun = pack.truthInput?.dayun;
+  const cur =
+    dayun && typeof dayun.currentDayunIndex === 'number'
+      ? dayun.dayunList?.[dayun.currentDayunIndex]
+      : dayun?.dayunList?.[0];
+  const dayunGz = f.currentDayun?.ganZhi || cur?.ganZhi || '';
+  const years =
+    cur?.startYear && cur?.endYear
+      ? `${cur.startYear}-${cur.endYear}`
+      : f.currentDayun
+        ? `${f.currentDayun.startAge}-${f.currentDayun.endAge}岁`
+        : undefined;
+
+  return {
+    name,
+    dayMaster,
+    dayBranch,
+    pillars: [...(f.pillars || [])],
+    yongShen: [...(f.yongShen || [])],
+    jiShen: [...(f.jiShen || [])],
+    currentDayunGanZhi: dayunGz || undefined,
+    currentDayunQuality: f.currentDayun?.quality || cur?.quality || undefined,
+    currentDayunYongMatch: cur?.yongShenMatch || undefined,
+    currentDayunYears: years,
+  };
+}
+
+/** 从出生信息即时建 pack 再投影合婚输入。 */
+export function personFromBirthInput(birth: BirthInput, name?: string): HehunPersonInput {
+  const pack = buildGroundTruthPackFromBirth(birth);
+  return personFromGroundTruthPack(pack, name || birth.name);
+}
+
+/** 从报告结果尽量抽出合婚输入（含当前大运）；优先可对齐 GroundTruthPack。 */
 export function personFromReportResult(
   result: {
     basic?: { dayMaster?: string; pillars?: Array<{ celestialStem?: string; earthlyBranch?: string; ganZhi?: string }> };
@@ -529,9 +603,23 @@ export function personFromReportResult(
         endYear?: number;
       } | null;
     };
+    birthDate?: string | Date;
   },
   name?: string
 ): HehunPersonInput {
+  // Prefer full engine pack when birthDate is available (fills dayun / yongShen gaps)
+  try {
+    if (result.birthDate) {
+      const pack = buildGroundTruthPackFromReport(result.birthDate, result as any);
+      if (pack.lockedFacts?.dayMaster) {
+        const fromPack = personFromGroundTruthPack(pack, name);
+        if (fromPack.dayMaster && fromPack.dayBranch) return fromPack;
+      }
+    }
+  } catch {
+    // fall through to legacy scrape
+  }
+
   const pillars = result.basic?.pillars || [];
   const day = pillars[2];
   const dayMaster =

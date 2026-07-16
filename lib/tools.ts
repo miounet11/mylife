@@ -1456,6 +1456,8 @@ export function buildToolRunSummary(params: {
   report: FortuneRecord;
   recentSessions?: ToolSessionRecord[];
   note?: string;
+  /** Optional prebuilt GroundTruthPack (birth-only path) */
+  pack?: unknown;
 }): ToolRunSummary {
   try {
     return buildEngineToolRunSummary({
@@ -1472,6 +1474,7 @@ export function buildToolRunSummary(params: {
       report: params.report as any,
       recentSessions: params.recentSessions as any,
       note: params.note,
+      pack: params.pack as any,
     }) as ToolRunSummary;
   } catch (error) {
     console.warn('[tools] engine tool summary failed, using legacy rehash', error);
