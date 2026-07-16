@@ -1,11 +1,16 @@
 /**
  * Engine-backed free-tool run summary.
  * Replaces report-opening rehash with GroundTruthPack projections.
- * Production `lib/tools.ts` / ToolRunner should call this instead of
- * re-labeling analysis.opening.
+ * Paths (in order):
+ * 1. explicit pack
+ * 2. pack from full report analysis
+ * 3. pack rebuilt from report.birth* when analysis is thin / missing dayMaster
+ * 4. pack from explicit birth input (no report)
+ * 5. legacy opening rehash (last resort)
  */
 
 import {
+  buildGroundTruthPackFromBirth,
   buildGroundTruthPackFromReport,
   type GroundTruthPack,
 } from '@/lib/ground-truth/pack';
@@ -15,6 +20,7 @@ import {
   type ToolThemeCategory,
 } from '@/lib/ground-truth/tool-projector';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
+import type { BirthInput } from '@/lib/fortune-context-builder';
 import { summarizeToolSessions, type ToolMemorySummary } from '@/lib/tool-context';
 
 export interface ToolRunSummaryShape {
@@ -26,6 +32,10 @@ export interface ToolRunSummaryShape {
   whyItMatches: string;
   evidence: string[];
   premiumPreview: string[];
+  /** Engine preserve tokens for optional LLM polish gate */
+  preserveTokens?: string[];
+  /** Which engine path produced this summary */
+  engineSource?: 'pack' | 'report' | 'birth-from-report' | 'birth' | 'legacy';
 }
 
 export interface ToolRunToolMeta {
@@ -39,26 +49,122 @@ export interface ToolRunToolMeta {
   category?: string;
 }
 
+export interface ToolRunReportLike {
+  name?: string;
+  birthDate?: string | Date;
+  birthTime?: string;
+  birthPlace?: string;
+  birthAccuracy?: BirthInput['birthAccuracy'];
+  gender?: 'male' | 'female' | string;
+  result?: FortuneAnalysisResult | null;
+  analysis?: FortuneAnalysisResult['analysis'] | null;
+  pattern?: { type?: string } | null;
+  advice?: FortuneAnalysisResult['advice'] | null;
+  yongShen?: unknown;
+  dayun?: unknown;
+  klineData?: unknown;
+  basic?: FortuneAnalysisResult['basic'];
+  bazi?: FortuneAnalysisResult['basic'];
+  reportVersion?: string;
+  shenSha?: unknown;
+  fiveElements?: unknown;
+  tenGods?: unknown;
+  fortune?: unknown;
+  evidence?: unknown;
+}
+
+function isUsablePack(pack: GroundTruthPack | undefined | null): pack is GroundTruthPack {
+  return Boolean(pack?.lockedFacts?.dayMaster);
+}
+
+function tryPackFromReport(report: ToolRunReportLike): GroundTruthPack | undefined {
+  try {
+    const birthDate = report.birthDate ? new Date(report.birthDate as string | Date) : new Date();
+    if (!Number.isFinite(birthDate.getTime())) return undefined;
+    const baseResult = (report.result || {
+      basic: report.basic || report.bazi,
+      fiveElements: report.fiveElements,
+      tenGods: report.tenGods,
+      pattern: report.pattern,
+      fortune: report.fortune,
+      advice: report.advice,
+      evidence: report.evidence,
+      analysis: report.analysis,
+      klineData: report.klineData,
+      dayun: report.dayun,
+      shenSha: report.shenSha,
+      yongShen: report.yongShen,
+    }) as FortuneAnalysisResult;
+    const pack = buildGroundTruthPackFromReport(birthDate, baseResult);
+    return isUsablePack(pack) ? pack : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function tryPackFromBirth(input: BirthInput): GroundTruthPack | undefined {
+  try {
+    if (!input.birthDate) return undefined;
+    const pack = buildGroundTruthPackFromBirth(input);
+    return isUsablePack(pack) ? pack : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function birthInputFromReport(report: ToolRunReportLike): BirthInput | null {
+  const birthDate = `${report.birthDate || ''}`.trim();
+  if (!birthDate) return null;
+  const gender =
+    report.gender === 'female' || report.gender === 'male' ? report.gender : undefined;
+  return {
+    birthDate,
+    birthTime: report.birthTime,
+    birthPlace: report.birthPlace,
+    birthAccuracy: report.birthAccuracy,
+    gender,
+    name: report.name,
+  };
+}
+
 /**
- * Build free-tool summary from report engine truth (preferred path).
+ * Resolve engine pack for free tools — prefer report, rebuild from birth when thin.
+ */
+export function resolveToolEnginePack(params: {
+  pack?: GroundTruthPack;
+  report?: ToolRunReportLike | null;
+  birth?: BirthInput | null;
+}): { pack?: GroundTruthPack; source: ToolRunSummaryShape['engineSource'] } {
+  if (isUsablePack(params.pack)) {
+    return { pack: params.pack, source: 'pack' };
+  }
+
+  if (params.report) {
+    const fromReport = tryPackFromReport(params.report);
+    if (fromReport) return { pack: fromReport, source: 'report' };
+
+    const birth = birthInputFromReport(params.report);
+    if (birth) {
+      const rebuilt = tryPackFromBirth(birth);
+      if (rebuilt) return { pack: rebuilt, source: 'birth-from-report' };
+    }
+  }
+
+  if (params.birth) {
+    const fromBirth = tryPackFromBirth(params.birth);
+    if (fromBirth) return { pack: fromBirth, source: 'birth' };
+  }
+
+  return { source: 'legacy' };
+}
+
+/**
+ * Build free-tool summary from report / birth engine truth (preferred path).
  */
 export function buildEngineToolRunSummary(params: {
   tool: ToolRunToolMeta;
-  /** Full analyze result or nested under report.result */
-  report: {
-    name?: string;
-    birthDate?: string | Date;
-    result?: FortuneAnalysisResult | null;
-    analysis?: FortuneAnalysisResult['analysis'] | null;
-    pattern?: { type?: string } | null;
-    advice?: FortuneAnalysisResult['advice'] | null;
-    yongShen?: FortuneAnalysisResult extends { yongShen?: infer Y } ? Y : unknown;
-    dayun?: unknown;
-    klineData?: unknown;
-    basic?: FortuneAnalysisResult['basic'];
-    reportVersion?: string;
-    shenSha?: unknown;
-  };
+  report?: ToolRunReportLike | null;
+  birth?: BirthInput | null;
   recentSessions?: Array<{
     toolSlug?: string;
     meta?: Record<string, unknown>;
@@ -68,20 +174,14 @@ export function buildEngineToolRunSummary(params: {
   note?: string;
   pack?: GroundTruthPack;
 }): ToolRunSummaryShape {
-  const { tool, report, note } = params;
-  const birthDate = report.birthDate ? new Date(report.birthDate as string | Date) : new Date();
-  const baseResult = (report.result || report) as FortuneAnalysisResult;
+  const { tool, note } = params;
+  const report = params.report || {};
 
-  let pack = params.pack;
-  try {
-    pack =
-      pack ||
-      buildGroundTruthPackFromReport(birthDate, baseResult, {
-        birthSignature: undefined,
-      });
-  } catch {
-    pack = undefined;
-  }
+  const { pack, source } = resolveToolEnginePack({
+    pack: params.pack,
+    report: params.report,
+    birth: params.birth,
+  });
 
   const category: ToolThemeCategory =
     (tool.category as ToolThemeCategory) || toolSlugToCategory(tool.slug);
@@ -101,6 +201,11 @@ export function buildEngineToolRunSummary(params: {
       note,
     });
 
+    const sourceLabel =
+      source === 'birth' || source === 'birth-from-report'
+        ? '（由出生信息重算引擎）'
+        : '';
+
     return {
       headline: projected.headline,
       summary: [
@@ -110,7 +215,7 @@ export function buildEngineToolRunSummary(params: {
       ]
         .filter(Boolean)
         .join(''),
-      confidenceLabel: projected.confidenceLabel,
+      confidenceLabel: `${projected.confidenceLabel}${sourceLabel}`,
       recommendedAction: projected.recommendedAction,
       riskReminder: projected.riskReminder,
       whyItMatches: [
@@ -124,37 +229,26 @@ export function buildEngineToolRunSummary(params: {
       ]
         .filter(Boolean)
         .join(''),
-      evidence: [
-        ...projected.evidence,
-        ...(memory?.evidence || []),
-      ].filter(Boolean).slice(0, 6),
+      evidence: [...projected.evidence, ...(memory?.evidence || [])].filter(Boolean).slice(0, 6),
       premiumPreview: [
         '完整版本会展开具体窗口、风险触发点和优先动作顺序（仍锚定引擎真值）',
         tool.chatIntent ? '可继续进入专项追问，围绕这一类问题深问' : '可继续回到聊天页做结构追问',
         tool.premiumServiceKey ? '如需高价值判断，可直接升级到专项服务' : '可继续搭配阶段窗口与十维度使用',
       ],
+      preserveTokens: projected.preserveTokens,
+      engineSource: source,
     };
   }
 
-  // Fallback when pack cannot be built (incomplete report)
-  return buildLegacyToolRunSummary({ tool, report, memory, note });
+  return {
+    ...buildLegacyToolRunSummary({ tool, report, memory, note }),
+    engineSource: 'legacy',
+  };
 }
 
 function buildLegacyToolRunSummary(params: {
   tool: ToolRunToolMeta;
-  report: {
-    name?: string;
-    analysis?: { opening?: string; explanation?: string } | null;
-    pattern?: { type?: string } | null;
-    advice?: {
-      career?: { general?: string };
-      wealth?: { general?: string };
-      marriage?: { general?: string };
-      health?: { general?: string };
-      overall?: string;
-    } | null;
-    reportVersion?: string;
-  };
+  report: ToolRunReportLike;
   memory: ToolMemorySummary | null;
   note?: string;
 }): ToolRunSummaryShape {

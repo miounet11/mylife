@@ -7,6 +7,12 @@ import { generateId } from '@/lib/utils';
 import { loadWorkflowContract, type LifeKlineWorkflowContract } from '@/lib/workflow-contract';
 import type { FortuneRecord, ToolSessionRecord } from '@/lib/user-types';
 import { getModelFallbackChain } from '@/lib/llm-model-fallback';
+import {
+  buildToolEnhancementSystemPrompt,
+  filterDeepDiveSections,
+  mergeToolLlmWithPreserve,
+} from '@/lib/tool-llm-gate';
+import { resolveToolEnginePack } from '@/lib/tool-run-summary';
 
 export const TOOL_RUN_WORKFLOW_PATH = 'data/workflows/tool-run-v1.json';
 
@@ -146,23 +152,13 @@ function normalizeDeepDiveSections(value: unknown) {
     .slice(0, 5);
 }
 
-function buildToolEnhancementSystemPrompt() {
-  return [
-    '你是人生K线 / 世界易的单项工具增强器。',
-    '你的任务是在 deterministic 工具结果基础上做更有用的深度解释，不改变底层命理结论。',
-    '输出严格 JSON，字段：headline, summary, recommendedAction, riskReminder, whyItMatches, evidence, premiumPreview, deepDiveSections, conversionBridge。',
-    'deepDiveSections 为 3-5 个对象：{"heading": string, "body": string}。',
-    '必须克制、现代、非恐吓、非决定论；只谈结构、阶段、环境、动作、风险和复盘。',
-    '不要声称百分百预测，不要替代法律、医疗、财务等专业建议。',
-  ].join('\n');
-}
-
 function buildToolEnhancementUserPrompt(params: {
   tool: ToolDefinition;
   report: FortuneRecord;
   result: ToolRunSummary;
   recentSessions: ToolSessionRecord[];
   note?: string;
+  lockedFacts?: Record<string, unknown> | null;
 }) {
   return JSON.stringify({
     tool: {
@@ -177,12 +173,17 @@ function buildToolEnhancementUserPrompt(params: {
     },
     userQuestion: params.note || '',
     deterministicResult: params.result,
+    lockedEngineFacts: params.lockedFacts || null,
     reportContext: {
       name: params.report.name,
+      dayMaster: params.report.bazi?.dayMaster,
       pattern: params.report.pattern,
       fortune: params.report.fortune,
-      advice: params.report.advice,
-      analysis: params.report.analysis,
+      advice: {
+        yongShen: params.report.advice?.yongShen,
+        xiShen: params.report.advice?.xiShen,
+        jiShen: params.report.advice?.jiShen,
+      },
       reportVersion: params.report.reportVersion,
     },
     recentToolSessions: params.recentSessions.slice(0, 4).map((item) => ({
@@ -195,6 +196,7 @@ function buildToolEnhancementUserPrompt(params: {
       'premiumPreview 只能说明深测会展开什么，不要制造焦虑。',
       'deepDiveSections 要能直接放进工具结果页。',
       'recommendedAction 必须是一个可执行的下一步动作。',
+      '不得改写 lockedEngineFacts 中的日主、用神、忌神、大运与年份分数。',
     ],
   }, null, 2);
 }
@@ -223,9 +225,21 @@ async function enhanceToolResultWithLlm(params: {
     ? configuredChain
     : getModelFallbackChain(configuredModel, 'agent');
 
+  // Resolve engine pack for LOCKED tokens (report thin → birth rebuild)
+  const resolved = resolveToolEnginePack({ report: params.report as any });
+  const preserveTokens =
+    (params.result as ToolRunSummary & { preserveTokens?: string[] }).preserveTokens ||
+    resolved.pack?.preserveTokens ||
+    [];
+
   const raw = await callJsonLLM<RawToolLlmEnhancement>({
-    system: buildToolEnhancementSystemPrompt(),
-    user: buildToolEnhancementUserPrompt(params),
+    system: buildToolEnhancementSystemPrompt(preserveTokens),
+    user: buildToolEnhancementUserPrompt({
+      ...params,
+      lockedFacts: resolved.pack?.lockedFacts
+        ? (resolved.pack.lockedFacts as unknown as Record<string, unknown>)
+        : null,
+    }),
     model: modelChain[0] || configuredModel,
     modelChain,
     timeoutMs: readNumber(runtime.llmTimeoutMs, 12_000, 1000),
@@ -245,19 +259,31 @@ async function enhanceToolResultWithLlm(params: {
     };
   }
 
+  const { result: gated } = mergeToolLlmWithPreserve(
+    {
+      headline: params.result.headline,
+      summary: params.result.summary,
+      recommendedAction: params.result.recommendedAction,
+      riskReminder: params.result.riskReminder,
+      whyItMatches: params.result.whyItMatches,
+      evidence: params.result.evidence,
+      premiumPreview: params.result.premiumPreview,
+    },
+    raw,
+    preserveTokens,
+  );
+
+  // Fallback string merge only if gate kept engine values (already applied)
   return {
     result: {
       ...params.result,
-      headline: mergeString(params.result.headline, raw.headline),
-      summary: mergeString(params.result.summary, raw.summary, 20),
-      recommendedAction: mergeString(params.result.recommendedAction, raw.recommendedAction),
-      riskReminder: mergeString(params.result.riskReminder, raw.riskReminder),
-      whyItMatches: mergeString(params.result.whyItMatches, raw.whyItMatches, 16),
-      evidence: mergeStringArray(params.result.evidence, raw.evidence, 2),
-      premiumPreview: mergeStringArray(params.result.premiumPreview, raw.premiumPreview, 2),
+      ...gated,
     },
     llmUsed: true,
-    deepDiveSections: normalizeDeepDiveSections(raw.deepDiveSections),
+    deepDiveSections: filterDeepDiveSections(
+      normalizeDeepDiveSections(raw.deepDiveSections),
+      preserveTokens,
+    ),
     conversionBridge: `${raw.conversionBridge || ''}`.trim(),
   };
 }
