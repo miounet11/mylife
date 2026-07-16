@@ -58,6 +58,30 @@ function asDate(value: unknown): Date {
   return new Date();
 }
 
+/** Normalize 五行 labels so tools/chat never surface English wood/fire. */
+const ELEMENT_TO_CN: Record<string, string> = {
+  wood: '木',
+  fire: '火',
+  earth: '土',
+  metal: '金',
+  water: '水',
+  木: '木',
+  火: '火',
+  土: '土',
+  金: '金',
+  水: '水',
+};
+
+export function normalizeElementLabels(values: string[] | undefined | null): string[] {
+  return (values || [])
+    .map((v) => {
+      const t = `${v || ''}`.trim();
+      if (!t) return '';
+      return ELEMENT_TO_CN[t] || ELEMENT_TO_CN[t.toLowerCase()] || t;
+    })
+    .filter(Boolean);
+}
+
 export function buildLockedFacts(engine: EngineGroundTruth): LockedEngineFacts {
   const current =
     engine.dayun.windows.find((w) => w.isCurrent) || engine.dayun.windows[0] || null;
@@ -67,9 +91,9 @@ export function buildLockedFacts(engine: EngineGroundTruth): LockedEngineFacts {
     strength: engine.constitution.strength || '',
     pattern: engine.constitution.patternType || '',
     pillars: (engine.pillars || []).map((p) => p.ganZhi).filter(Boolean),
-    yongShen: [...(engine.constitution.yongShen || [])],
-    xiShen: [...(engine.constitution.xiShen || [])],
-    jiShen: [...(engine.constitution.jiShen || [])],
+    yongShen: normalizeElementLabels(engine.constitution.yongShen),
+    xiShen: normalizeElementLabels(engine.constitution.xiShen),
+    jiShen: normalizeElementLabels(engine.constitution.jiShen),
     currentDayun: current
       ? {
           ganZhi: current.ganZhi,
