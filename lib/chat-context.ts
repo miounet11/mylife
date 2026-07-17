@@ -23,6 +23,7 @@ import {
 import { buildGroundTruthPackFromReport } from '@/lib/ground-truth/pack';
 import { buildTeacherEfcBlock, packToReportHint } from '@/lib/ground-truth/projections';
 import { CHAT_NO_REPORT_CONTRACT, ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
+import { buildVerifyEventFields } from '@/lib/chat-answer-contract';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
 
 export interface ChatContextEvent {
@@ -365,9 +366,34 @@ export function buildChatEventDraft(params: {
   const eventType = referenceDraft?.type
     ? (referenceDraft.type as ChatEventDraft['type'])
     : mapQuestionToEventType(params.question, context?.report?.topScenario);
-  const title = buildChatEventTitle(params.question, referenceDraft?.title);
+
+  // Prefer structured verify-point extraction for decision loop
+  let title = buildChatEventTitle(params.question, referenceDraft?.title);
+  let description = [
+    `问题：${compactText(params.question, 48)}`,
+    `结论：${compactText(params.answer, 120)}`,
+  ].join('\n');
+  let answerSummary = compactText(params.answer, 120);
+  let shortTerm = context?.report
+    ? `围绕${context.report.topScenario}持续跟踪这次决策是否与报告判断一致。`
+    : '记录结果后复盘这次建议是否有效，避免命理建议停留在抽象层。';
+  let longTerm = '事件发生后补充真实结果，再回到聊天页继续追问偏差原因和下一步动作。';
+
+  const fields = buildVerifyEventFields({
+    question: params.question,
+    answer: params.answer,
+    reportId: context?.report?.id,
+    topScenario: context?.report?.topScenario,
+  });
+  if (fields.verifyPoint) {
+    title = fields.title;
+    description = fields.description;
+    answerSummary = compactText(fields.verifyPoint, 120);
+    shortTerm = fields.shortTerm;
+    longTerm = fields.longTerm;
+  }
+
   const date = referenceDraft?.date || formatDate(now);
-  const answerSummary = compactText(params.answer, 120);
   const impact = mapAnswerImpact(params.answer);
 
   return {
@@ -375,10 +401,7 @@ export function buildChatEventDraft(params: {
     type: eventType,
     date,
     impact,
-    description: [
-      `问题：${compactText(params.question, 48)}`,
-      `结论：${answerSummary}`,
-    ].join('\n'),
+    description,
     reminderAdvanceDays: referenceDraft ? 5 : 3,
     fortuneAnalysis: {
       source: 'chat_message',
@@ -387,10 +410,8 @@ export function buildChatEventDraft(params: {
       answerSummary,
     },
     followUpAdvice: {
-      shortTerm: context?.report
-        ? `围绕${context.report.topScenario}持续跟踪这次决策是否与报告判断一致。`
-        : '记录结果后复盘这次建议是否有效，避免命理建议停留在抽象层。',
-      longTerm: '事件发生后补充真实结果，再回到聊天页继续追问偏差原因和下一步动作。',
+      shortTerm,
+      longTerm,
     },
   };
 }

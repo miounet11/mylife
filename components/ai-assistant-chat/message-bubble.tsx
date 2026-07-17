@@ -15,6 +15,7 @@ import {
   type ChatMessage,
   formatChatTime,
 } from '@/components/ai-assistant-chat/chat-helpers';
+import { parseChatAnswerStructure } from '@/lib/chat-answer-contract';
 
 // v5-D60: FB Messenger 2017 风气泡
 // 用户：靠右 #3b5998 白字圆角 18px
@@ -64,6 +65,9 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const time = formatChatTime(message.timestamp);
   const feedback = message.feedbackRating || null;
+  const structured =
+    message.role === 'assistant' ? parseChatAnswerStructure(message.content) : null;
+  const verifyHint = structured?.verify || '';
 
   if (message.role === 'user') {
     return (
@@ -186,6 +190,12 @@ export function MessageBubble({
         <div className="mt-1.5">
           <ChatMarkdown content={message.content} />
         </div>
+        {verifyHint ? (
+          <div className="mt-2 rounded-[6px] border border-[#d4e4f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
+            <span className="font-semibold">验证点</span>
+            <span className="ml-1">{verifyHint}</span>
+          </div>
+        ) : null}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#606770]">
           <span>
             {message.llmUsed
@@ -252,9 +262,10 @@ export function MessageBubble({
                 onClick={() => onSaveEvent(previousUserQuestion, message.content, message.id)}
                 disabled={isSaving || isSaved}
                 className="fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
+                title={verifyHint ? `将验证点记入事件：${verifyHint}` : '把结论记入事件日历以便回访'}
               >
                 {isSaved ? <CheckCircle2 className="h-3 w-3 text-[#2f7d52]" /> : null}
-                {isSaved ? '已记下' : isSaving ? '保存中...' : '记提醒'}
+                {isSaved ? '已记验证' : isSaving ? '保存中...' : '记验证点'}
               </button>
             )}
             <button

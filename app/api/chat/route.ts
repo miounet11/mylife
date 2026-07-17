@@ -17,6 +17,7 @@ import { buildPrompt, getPrompt } from '@/lib/prompts';
 import '@/lib/prompts/chat/main';
 import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
+import { appendAnswerStructureContract } from '@/lib/chat-answer-contract';
 import {
   appendTeacherToSystemPrompt,
   extractEngineFactBlockFromChatContext,
@@ -393,6 +394,9 @@ async function generateAIResponse(
     systemContent = withTeacher.systemContent;
   }
 
+  // Top-product: force 结论/依据/三时窗/验证点 for event loop
+  systemContent = appendAnswerStructureContract(systemContent);
+
 const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
     {
       role: 'system',
@@ -414,7 +418,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       model,
       messages: baseMessages,
       temperature: 0.7,
-      maxTokens: 900,
+      maxTokens: 1200,
       reasoningEffort: 'low',
     }, {
       signal: controller.signal,
