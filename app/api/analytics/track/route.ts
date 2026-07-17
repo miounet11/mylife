@@ -23,6 +23,8 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'insights_page_viewed',
   'insight_article_viewed',
   'tools_page_viewed',
+  'dimensions_page_viewed',
+  'dimension_page_viewed',
   'tool_detail_viewed',
   'tool_result_viewed',
   'content_card_clicked',

@@ -6,7 +6,9 @@ import { trackProductEvent } from '@/lib/product-analytics';
 import { cn } from '@/lib/utils';
 
 /**
- * Tracked link into a free tool / hehun — dual-writes product + analytics.
+ * Tracked link into a free tool / hehun.
+ * Fires both tool_entry_clicked (new) and tool_card_clicked (legacy, higher volume path).
+ * Uses sendBeacon-friendly client so SPA navigation does not drop the hit.
  */
 export default function ToolEntryLink({
   href,
@@ -41,22 +43,19 @@ export default function ToolEntryLink({
   })();
 
   const onClick = () => {
-    void trackClientEvent({
-      eventName: 'tool_entry_clicked',
-      page: typeof window !== 'undefined' ? window.location.pathname : '/tools',
-      meta: {
-        toolSlug,
-        href: withSource,
-        source,
-        title: title || toolSlug,
-      },
-    });
-    trackProductEvent('tool_entry_clicked', {
+    const page = typeof window !== 'undefined' ? window.location.pathname : '/tools';
+    const meta = {
       toolSlug,
       href: withSource,
       source,
       title: title || toolSlug,
-    });
+      channel: 'tool_entry_link',
+    };
+    // Primary (new funnel)
+    void trackClientEvent({ eventName: 'tool_entry_clicked', page, meta });
+    // Compatible legacy event already proven in production volume
+    void trackClientEvent({ eventName: 'tool_card_clicked', page, meta });
+    trackProductEvent('tool_entry_clicked', meta);
   };
 
   if (children) {
