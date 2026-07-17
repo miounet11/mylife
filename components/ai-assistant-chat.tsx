@@ -31,6 +31,7 @@ import {
 import {
   QuickQuestionButton,
 } from '@/components/ai-assistant-chat/chat-buttons';
+import { ChatOpeningPanel } from '@/components/ai-assistant-chat/chat-opening-panel';
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
 import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
 import { MessageBubble } from '@/components/ai-assistant-chat/message-bubble';
@@ -39,6 +40,12 @@ import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
 import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
+import {
+  buildTeacherOpening,
+  slotsFromChatReport,
+} from '@/lib/teacher-opening';
+import { resolveChatTeacher } from '@/lib/chat-teacher-runtime';
+import type { TeacherTopicChip } from '@/lib/teachers';
 import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 type ChatContextReport = ChatReportContext;
@@ -82,6 +89,7 @@ export default function AIAssistantChat() {
   const ctaStrategyKey = searchParams?.get('ctaStrategyKey') || '';
   const sourceFamily = searchParams?.get('sourceFamily') || '';
   const prefilledQuestion = searchParams?.get('question') || '';
+  const urlTeacher = searchParams?.get('teacher') || searchParams?.get('teacherId') || '';
   const [rememberedReportId, setRememberedReportId] = useState('');
   const reportId = urlReportId || rememberedReportId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -91,6 +99,9 @@ export default function AIAssistantChat() {
   const [isTyping, setIsTyping] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
   const [error, setError] = useState('');
+  const [openingTeacherId, setOpeningTeacherId] = useState('');
+  const [greetingIndex, setGreetingIndex] = useState(0);
+  const openingShownKeyRef = useRef('');
   const {
     editingMessageId,
     editingContent,
@@ -146,10 +157,26 @@ export default function AIAssistantChat() {
   const replyControllerRef = useRef<AbortController | null>(null);
   const messageActionControllerRef = useRef<AbortController | null>(null);
   const intentPreset = getIntentPreset(intent);
+  const resolvedOpeningTeacherId =
+    openingTeacherId ||
+    resolveChatTeacher({ teacher: urlTeacher || undefined, intent: intent || undefined }).id;
+  const openingView = buildTeacherOpening({
+    teacherId: resolvedOpeningTeacherId,
+    greetingIndex,
+    slots: context?.report
+      ? slotsFromChatReport({
+          name: context.report.name,
+          dayMaster: context.report.dayMaster,
+          pattern: context.report.pattern,
+          currentDaYun: context.report.currentDaYun,
+        })
+      : undefined,
+  });
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
     eventId: eventId || context?.focusedEvent?.id || undefined,
     intent: intent || undefined,
+    teacher: resolvedOpeningTeacherId || urlTeacher || undefined,
     source: source || undefined,
     ctaStrategyKey: ctaStrategyKey || undefined,
     sourceFamily: sourceFamily || undefined,
@@ -611,6 +638,75 @@ export default function AIAssistantChat() {
     void sendQuestion(question);
   };
 
+  const handleOpeningStarter = (question: string, meta?: { source?: string }) => {
+    void trackClientEvent({
+      eventName: 'chat_starter_clicked',
+      page: '/chat',
+      meta: {
+        teacherId: openingView.teacherId,
+        source: meta?.source || 'opening_starter',
+        reportId: reportId || context?.report?.id || null,
+        questionLength: question.length,
+      },
+    });
+    trackFollowupClick(question);
+    void sendQuestion(question);
+  };
+
+  const handleOpeningChip = (chip: TeacherTopicChip) => {
+    const nextId = chip.teacherId || chip.id;
+    setOpeningTeacherId(nextId);
+    setGreetingIndex(0);
+    void trackClientEvent({
+      eventName: 'chat_topic_chip',
+      page: '/chat',
+      meta: {
+        chipId: chip.id,
+        teacherId: nextId,
+        reportId: reportId || context?.report?.id || null,
+      },
+    });
+  };
+
+  const handleSwapGreeting = () => {
+    setGreetingIndex((i) => i + 1);
+    void trackClientEvent({
+      eventName: 'chat_greeting_swiped',
+      page: '/chat',
+      meta: {
+        teacherId: openingView.teacherId,
+        fromIndex: greetingIndex,
+        reportId: reportId || context?.report?.id || null,
+      },
+    });
+  };
+
+  // Fire once when empty + report ready
+  useEffect(() => {
+    if (loadingHistory || messages.length > 0 || !context?.report) return;
+    const key = `${context.report.id || reportId}:${openingView.teacherId}`;
+    if (openingShownKeyRef.current === key) return;
+    openingShownKeyRef.current = key;
+    void trackClientEvent({
+      eventName: 'chat_opening_shown',
+      page: '/chat',
+      meta: {
+        teacherId: openingView.teacherId,
+        reportId: context.report.id || reportId || null,
+        hasFirstMes: Boolean(openingView.firstMes),
+        starterCount: openingView.starters.length,
+      },
+    });
+  }, [
+    loadingHistory,
+    messages.length,
+    context?.report,
+    openingView.teacherId,
+    openingView.firstMes,
+    openingView.starters.length,
+    reportId,
+  ]);
+
 
   const handleCopyMessage = async (messageId: string, content: string) => {
     try {
@@ -678,55 +774,56 @@ export default function AIAssistantChat() {
           )}
 
           {!loadingHistory && messages.length === 0 && context?.report ? (
-            <div className="rounded-[3px] border border-[#3b5998] bg-[#e7f3ff] px-3 py-3">
-              <div className="flex items-start gap-2">
-                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-[3px] bg-white text-[#3b5998] border border-[#3b5998]">
-                  <Sparkles className="h-3 w-3" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-xs font-bold uppercase tracking-[0.12em] text-[#365899]">
-                    系统已带上你的报告
-                  </div>
-                  <p className="mt-1.5 text-[13px] leading-5 text-[#1d2129]">
-                    这次对话围绕 <span className="font-bold">{context.report.name || '你'}</span> 的报告：
-                    日主 <span className="font-mono font-bold">{context.report.dayMaster}</span>，
-                    格局 <span className="font-mono font-bold">{context.report.pattern}</span>，
-                    当前大运 <span className="font-mono font-bold">{context.report.currentDaYun}</span>。
-                    报告里的结构、阶段、五行、十神、近期窗口都已加载到上下文里。
-                  </p>
-                  {visibleQuickQuestions.length > 0 ? (
-                    <div className="mt-2.5 grid gap-1.5 sm:grid-cols-2">
-                      {visibleQuickQuestions.slice(0, 4).map((question) => (
-                        <QuickQuestionButton
-                          key={`hint-${question}`}
-                          question={question}
-                          onClick={() => handlePromptClick(question)}
-                          disabled={isTyping || loadingHistory}
-                        />
-                      ))}
-                    </div>
-                  ) : null}
-                </div>
+            <div className="space-y-2">
+              <div className="rounded-[3px] border border-[#e7f3ff] bg-[#f0f6ff] px-3 py-2 text-[12px] leading-5 text-[#365899]">
+                已载入 <span className="font-semibold">{context.report.name || '你'}</span>
+                的报告 · 日主{' '}
+                <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
+                · 格局{' '}
+                <span className="font-mono font-semibold">{context.report.pattern || '—'}</span>
+                · 大运{' '}
+                <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
               </div>
+              <ChatOpeningPanel
+                opening={openingView}
+                disabled={isTyping || loadingHistory}
+                onStarter={handleOpeningStarter}
+                onChip={handleOpeningChip}
+                onSwapGreeting={handleSwapGreeting}
+              />
             </div>
           ) : null}
 
-          {!loadingHistory && messages.length === 0 && !context && (
-            <div className="space-y-3 rounded-[3px] border border-[#dddfe2] bg-white p-3">
-              <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
-                <Sparkles className="h-3 w-3" />
-                推荐追问
-              </div>
-              <div className="grid gap-1.5 md:grid-cols-2">
-                {visibleQuickQuestions.slice(0, 2).map((question) => (
-                  <QuickQuestionButton
-                    key={question}
-                    question={question}
-                    onClick={() => handlePromptClick(question)}
-                    disabled={isTyping || loadingHistory}
-                  />
-                ))}
-              </div>
+          {!loadingHistory && messages.length === 0 && !context?.report && (
+            <div className="space-y-2">
+              <ChatOpeningPanel
+                opening={buildTeacherOpening({
+                  teacherId: resolvedOpeningTeacherId,
+                  greetingIndex,
+                })}
+                disabled={isTyping || loadingHistory}
+                onStarter={handleOpeningStarter}
+                onChip={handleOpeningChip}
+                onSwapGreeting={handleSwapGreeting}
+              />
+              {visibleQuickQuestions.length > 0 ? (
+                <div className="space-y-2 rounded-[3px] border border-[#dddfe2] bg-white p-3">
+                  <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
+                    <Sparkles className="h-3 w-3" />
+                    更多追问
+                  </div>
+                  <div className="grid gap-1.5 md:grid-cols-2">
+                    {visibleQuickQuestions.slice(0, 4).map((question) => (
+                      <QuickQuestionButton
+                        key={question}
+                        question={question}
+                        onClick={() => handlePromptClick(question)}
+                        disabled={isTyping || loadingHistory}
+                      />
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 
