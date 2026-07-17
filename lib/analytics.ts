@@ -62,6 +62,7 @@ export type AnalyticsEventName =
   | 'chat_starter_clicked'
   | 'chat_topic_chip'
   | 'chat_greeting_swiped'
+  | 'chat_efc_flagged'
   | 'chat_fab_clicked'
   | 'chat_fab_dismissed'
   | 'premium_service_requested'

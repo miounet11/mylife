@@ -18,6 +18,7 @@ import '@/lib/prompts/chat/main';
 import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
 import { appendAnswerStructureContract } from '@/lib/chat-answer-contract';
+import { applyEfcVerifyToAnswer } from '@/lib/chat-efc-verify';
 import {
   appendTeacherToSystemPrompt,
   extractEngineFactBlockFromChatContext,
@@ -452,8 +453,37 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       traceLabel: 'chat:main',
     });
 
+    // EFC integrity: soft flag if day master / yong shen contradicted
+    const report = options?.context?.report;
+    const verified = applyEfcVerifyToAnswer(content, report
+      ? {
+          dayMaster: report.dayMaster,
+          yongShen: report.yongShen,
+          // jiShen may not be on ChatReportContext — optional
+          jiShen: (report as { jiShen?: string[] }).jiShen,
+          currentDaYun: report.currentDaYun,
+        }
+      : null);
+
+    if (!verified.efcOk) {
+      try {
+        trackServerEvent({
+          eventName: 'chat_efc_flagged' as any,
+          page: '/chat',
+          meta: {
+            issues: verified.efcIssues,
+            reportId: report?.id || null,
+            intent: options?.intent || null,
+            teacherId: options?.teacherId || null,
+          },
+        });
+      } catch {
+        // never block answer
+      }
+    }
+
     return {
-      answer: content,
+      answer: verified.answer,
       llmUsed: true,
       fallbackReason: undefined,
     };

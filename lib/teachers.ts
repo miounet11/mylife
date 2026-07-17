@@ -292,10 +292,22 @@ export const TEACHERS: TeacherDefinition[] = [
     name: '实践老师',
     tagline: '对照你做过的事，调整下一步动作',
     boundary: '依据你的记录与反馈调整安排，不作命运定论',
+    firstMes:
+      '我是实践老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{windowHint}}\n我们按「记录 → 对照 → 纠偏」走，不作命运定论。\n\n这次你更想：复盘偏差原因，还是排下一步可验证动作？\n回「复盘」或「下一步」，或点下面一句。',
+    alternateGreetings: [
+      '实践对照：把事件结果放回结构里。{{yongShenLine}}偏差更像时机、执行还是信息判断？先选一个切口。',
+      '应验/未应验都有价值。说一件最近的事，我帮你拆：哪里准了、哪里要改动作。',
+    ],
     starters: [
       '对照上次建议，我这 30 天做得怎么样？下一步怎么改？',
       '事件本里最近几件事，说明我该推进还是收束？',
-      '预测回访里未命中的部分，我该如何调整动作？',
+      '未应验的部分，偏差更像时机、执行还是信息判断？',
+    ],
+    topicChips: [
+      { id: 'practice', label: '实践', teacherId: 'practice' },
+      { id: 'timing', label: '时机', teacherId: 'timing' },
+      { id: 'career', label: '事业', teacherId: 'career' },
+      { id: 'overview', label: '总览', teacherId: 'overview' },
     ],
     tier: 'p0',
     context: ['report', 'geo', 'practice'],

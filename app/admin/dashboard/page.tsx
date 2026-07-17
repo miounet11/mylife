@@ -269,6 +269,7 @@ export default async function AdminDashboardPage() {
                 { href: '/admin/usage', label: '频率与留存', icon: Activity },
                 { href: '/admin/analytics', label: '经营分析', icon: Sparkles },
                 { href: '/admin/product-funnel', label: '双轨漏斗', icon: Sparkles },
+                { href: '/admin/chat-ops', label: '对话运营', icon: Sparkles },
                 { href: '/admin/content', label: '内容后台', icon: Mail },
                 { href: '/tools', label: '前台工具中心', icon: Wrench },
               ].map((item) => {

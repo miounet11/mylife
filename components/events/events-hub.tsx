@@ -10,6 +10,7 @@ import {
   type EventViewImpact,
 } from '@/lib/event-view';
 import { trackProductEvent } from '@/lib/product-analytics';
+import { buildChatHref } from '@/lib/chat-entry';
 
 const TYPES: Array<{ key: EventViewType | 'all'; label: string }> = [
   { key: 'all', label: '全部' },
@@ -326,6 +327,18 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
                             : ev.userFeedback?.userNotes || '反馈'}
                       </span>
                     ) : null}
+                    {ev.fortuneAnalysis?.reportId ? (
+                      <Link
+                        href={buildEventReviewChatHref(ev)}
+                        className="mt-1 text-[11px] font-semibold text-[#3b5998] hover:underline"
+                      >
+                        {ev.userFeedback?.wasAccurate === false
+                          ? '带偏差回聊纠偏'
+                          : ev.userFeedback?.wasAccurate === true
+                            ? '带应验回聊复盘'
+                            : '回聊对照'}
+                      </Link>
+                    ) : null}
                   </div>
                 </li>
               ))}
@@ -412,6 +425,34 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
       );
     }
   }
+}
+
+/** After accurate/drift feedback → consultant-card chat opening for review */
+function buildEventReviewChatHref(ev: EventViewModel): string {
+  const reportId = ev.fortuneAnalysis?.reportId || undefined;
+  const accurate = ev.userFeedback?.wasAccurate;
+  const title = ev.title || '该事件';
+  const windowLabel =
+    accurate === false
+      ? `偏差复盘：${title}`
+      : accurate === true
+        ? `应验复盘：${title}`
+        : `事件对照：${title}`;
+
+  // Soft opening: land on practice/overview teacher with window context
+  return buildChatHref({
+    reportId: reportId || null,
+    teacher: accurate === false ? 'practice' : 'overview',
+    mode: 'opening',
+    window: windowLabel,
+    eventId: ev.id,
+    source:
+      accurate === false
+        ? `events_feedback:drift:${ev.id}`
+        : accurate === true
+          ? `events_feedback:accurate:${ev.id}`
+          : `events_feedback:open:${ev.id}`,
+  });
 }
 
 function FeedbackBtn({
