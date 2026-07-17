@@ -97,6 +97,52 @@ export function parseChatAnswerStructure(answer: string): ParsedChatAnswer {
   };
 }
 
+export type ChatAnswerStructureScore = {
+  /** 0–7 filled slots */
+  filled: number;
+  max: number;
+  /** ≥3 core slots → show compact decision card */
+  isRich: boolean;
+  /** <2 core slots and answer is long enough → soft incomplete hint */
+  isThin: boolean;
+  missing: string[];
+};
+
+/**
+ * Score how well an answer matches the decision-loop contract.
+ * Uses explicit section hits only (not raw-text fallback for 结论).
+ */
+export function scoreChatAnswerStructure(
+  answer: string | ParsedChatAnswer,
+): ChatAnswerStructureScore {
+  const raw = typeof answer === 'string' ? `${answer || ''}`.trim() : answer.raw;
+  const p = typeof answer === 'string' ? parseChatAnswerStructure(answer) : answer;
+
+  const hasExplicitConclusion = Boolean(
+    sectionAfter(raw, ['当前结论', '结论', '阶段建议', '当前阶段建议']),
+  );
+  const hasExplicitVerify = Boolean(
+    sectionAfter(raw, ['验证点', '可验证', '复盘点', '检查点']),
+  );
+
+  const slots: Array<{ label: string; ok: boolean }> = [
+    { label: '判断依据', ok: Boolean(p.basis) },
+    { label: '当前结论', ok: hasExplicitConclusion },
+    { label: '今天', ok: Boolean(p.today) },
+    { label: '7天', ok: Boolean(p.in7d) },
+    { label: '30天', ok: Boolean(p.in30d) },
+    { label: '风险', ok: Boolean(p.risk) },
+    { label: '验证点', ok: hasExplicitVerify || Boolean(p.verify) },
+  ];
+
+  const filled = slots.filter((s) => s.ok).length;
+  const missing = slots.filter((s) => !s.ok).map((s) => s.label);
+  const isRich = filled >= 3 && (hasExplicitConclusion || Boolean(p.today) || hasExplicitVerify);
+  const isThin = filled < 2 && raw.length >= 80;
+
+  return { filled, max: slots.length, isRich, isThin, missing };
+}
+
 export function appendAnswerStructureContract(systemContent: string): string {
   const base = `${systemContent || ''}`.trim();
   if (!base) return CHAT_ANSWER_STRUCTURE_CONTRACT;

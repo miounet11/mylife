@@ -16,7 +16,10 @@ import {
   formatChatTime,
   isSyntheticOpeningMessage,
 } from '@/components/ai-assistant-chat/chat-helpers';
-import { parseChatAnswerStructure } from '@/lib/chat-answer-contract';
+import {
+  parseChatAnswerStructure,
+  scoreChatAnswerStructure,
+} from '@/lib/chat-answer-contract';
 
 // v5-D60: FB Messenger 2017 风气泡
 // 用户：靠右 #3b5998 白字圆角 18px
@@ -71,7 +74,9 @@ export function MessageBubble({
     message.role === 'assistant' && !isOpening
       ? parseChatAnswerStructure(message.content)
       : null;
+  const structureScore = structured ? scoreChatAnswerStructure(structured) : null;
   const verifyHint = structured?.verify || '';
+  const showDecisionCard = Boolean(structured && structureScore?.isRich);
 
   if (message.role === 'user') {
     return (
@@ -203,10 +208,63 @@ export function MessageBubble({
             <ChatMarkdown content={message.content} />
           )}
         </div>
+        {showDecisionCard && structured ? (
+          <div className="mt-2 space-y-1.5 rounded-[8px] border border-[#e4e6eb] bg-white px-2.5 py-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8d91]">
+              决策摘要 · {structureScore?.filled}/{structureScore?.max}
+            </div>
+            {structured.conclusion ? (
+              <div className="text-[12px] leading-[1.45] text-[#1d2129]">
+                <span className="font-semibold text-[#3b5998]">结论</span>
+                <span className="ml-1.5">{structured.conclusion}</span>
+              </div>
+            ) : null}
+            {structured.today || structured.in7d || structured.in30d ? (
+              <div className="grid gap-1 sm:grid-cols-3">
+                {[
+                  { label: '今天', value: structured.today },
+                  { label: '7天', value: structured.in7d },
+                  { label: '30天', value: structured.in30d },
+                ]
+                  .filter((row) => row.value)
+                  .map((row) => (
+                    <div
+                      key={row.label}
+                      className="rounded-[4px] border border-[#f0f0f0] bg-[#fafbfc] px-2 py-1.5 text-[11px] leading-[1.4] text-[#1d2129]"
+                    >
+                      <div className="font-semibold text-[#606770]">{row.label}</div>
+                      <div className="mt-0.5">{row.value}</div>
+                    </div>
+                  ))}
+              </div>
+            ) : null}
+            {structured.risk ? (
+              <div className="text-[11px] leading-[1.4] text-[#7a5b00]">
+                <span className="font-semibold">风险</span>
+                <span className="ml-1">{structured.risk}</span>
+              </div>
+            ) : null}
+            {structured.basis ? (
+              <div className="text-[11px] leading-[1.4] text-[#606770]">
+                <span className="font-semibold">依据</span>
+                <span className="ml-1">{structured.basis}</span>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
         {verifyHint ? (
           <div className="mt-2 rounded-[6px] border border-[#d4e4f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
             <span className="font-semibold">验证点</span>
             <span className="ml-1">{verifyHint}</span>
+          </div>
+        ) : null}
+        {!isOpening && structureScore?.isThin && message.llmUsed !== false ? (
+          <div className="mt-1.5 text-[11px] leading-[1.4] text-[#8a8d91]">
+            本条未完全按「依据 → 结论 → 动作 → 验证」展开
+            {structureScore.missing.length > 0
+              ? `（缺 ${structureScore.missing.slice(0, 3).join('、')}）`
+              : ''}
+            ，可点重生成。
           </div>
         ) : null}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#606770]">

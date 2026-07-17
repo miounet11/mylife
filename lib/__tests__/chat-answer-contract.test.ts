@@ -4,6 +4,7 @@ import {
   appendAnswerStructureContract,
   buildVerifyEventFields,
   parseChatAnswerStructure,
+  scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
 
 describe('chat-answer-contract', () => {
@@ -44,5 +45,28 @@ describe('chat-answer-contract', () => {
     assert.ok(fields.title.includes('验证'));
     assert.ok(fields.description.includes('验证点'));
     assert.ok(fields.verifyPoint.length > 0);
+  });
+
+  it('scores rich vs thin structure', () => {
+    const rich = scoreChatAnswerStructure(`
+**判断依据** 日主甲木，用神水。
+**当前结论** 宜先稳住。
+**阶段动作**
+- 今天：列清单
+- 7 天内：投递
+- 30 天内：复盘
+**风险提醒** 勿冲动跳槽。
+**验证点** 两周内面试反馈。
+`);
+    assert.ok(rich.filled >= 5);
+    assert.equal(rich.isRich, true);
+    assert.equal(rich.isThin, false);
+
+    const thin = scoreChatAnswerStructure(
+      '命理上你最近运势一般，需要注意身体和情绪管理，多休息，少做重大决定，不必焦虑，按节奏推进日常事务即可。'.repeat(2),
+    );
+    assert.ok(thin.filled < 2);
+    assert.equal(thin.isThin, true);
+    assert.equal(thin.isRich, false);
   });
 });

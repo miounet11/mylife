@@ -14,6 +14,7 @@ import { trackFunnel } from '@/components/funnel-tracker';
 import { cn } from '@/lib/utils';
 import { useLocale } from '@/components/i18n/locale-provider';
 import { funnelCopy } from '@/lib/i18n/funnel-copy';
+import { buildTeacherChatHref } from '@/lib/teachers';
 
 const INTENT_KEYS = ['career', 'wealth', 'relationship', 'yearly'] as const;
 type IntentKey = (typeof INTENT_KEYS)[number];
@@ -271,6 +272,38 @@ export default function AnalyzeWorkspace({
           ) : null}
 
           <FreeMembershipClaimBanner source="analyze_workspace" compact />
+
+          {/* Linear-clean：有报告用户直接进顾问开场，不打断排盘主路径 */}
+          <section className="border-y border-[color:var(--hairline)] py-3.5">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div className="min-w-0">
+                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
+                <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
+                  已有报告？直接开场
+                </h2>
+                <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+                  不预填长问题。老师先开场，点议题或一键开口即可追问
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+                <Link
+                  href={buildTeacherChatHref({
+                    teacherId: 'overview',
+                    source: 'home_consultant_opening',
+                  })}
+                  className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+                >
+                  总览开场 →
+                </Link>
+                <Link
+                  href="/teachers"
+                  className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+                >
+                  全部老师
+                </Link>
+              </div>
+            </div>
+          </section>
 
           {/* 主表单：页面唯一重块 */}
           <section id="analyze-workspace" className="fb-card overflow-hidden">

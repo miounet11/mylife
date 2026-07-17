@@ -5,6 +5,7 @@ import {
   OFFICIAL_TELEGRAM_HANDLE,
   OFFICIAL_TELEGRAM_URL,
 } from '@/lib/site-social';
+import { buildTeacherChatHref } from '@/lib/teachers';
 import { cn } from '@/lib/utils';
 
 type RailLink = {
@@ -21,7 +22,7 @@ const primaryLinks: RailLink[] = [
   { href: '/predictions', label: '预测回访' },
   { href: '/events', label: '事件日历' },
   { href: '/hehun', label: '合婚' },
-  { href: '/chat', label: '对话' },
+  { href: '/chat?mode=opening&teacher=overview&source=portal_rail', label: '对话开场' },
   { href: '/profile', label: '资料' },
   { href: '/docs', label: '说明' },
 ];
@@ -75,9 +76,11 @@ export function PortalRailLeft({ activePath = '/analyze' }: { activePath?: strin
       <RailSectionTitle>导航</RailSectionTitle>
       <ul className="space-y-0.5 px-2 pb-2">
         {primaryLinks.map((item) => {
+          const pathOnly = item.href.split('?')[0] || item.href;
           const active =
+            activePath === pathOnly ||
             activePath === item.href ||
-            (item.href !== '/' && (activePath || '').startsWith(`${item.href}/`));
+            (pathOnly !== '/' && (activePath || '').startsWith(`${pathOnly}/`));
           return (
             <li key={item.href}>
               <RailLinkItem item={item} active={active} />
@@ -98,9 +101,46 @@ export function PortalRailLeft({ activePath = '/analyze' }: { activePath?: strin
   );
 }
 
+const consultantOpeningLinks = [
+  { teacherId: 'overview', label: '总览老师' },
+  { teacherId: 'career', label: '事业老师' },
+  { teacherId: 'timing', label: '时机老师' },
+  { teacherId: 'practice', label: '实践老师' },
+] as const;
+
 export function PortalRailRight() {
   return (
     <div className="space-y-4">
+      <section className="border-y border-[color:var(--hairline)] py-3">
+        <div className="text-[11px] font-medium tracking-[0.04em] text-[color:var(--ink-5)]">顾问开场</div>
+        <p className="mt-1.5 px-2 text-[11px] leading-[1.45] text-[color:var(--ink-5)]">
+          不预填长问题，老师先开场，再一键开口
+        </p>
+        <ul className="mt-2 space-y-0.5">
+          {consultantOpeningLinks.map((item) => (
+            <li key={item.teacherId}>
+              <Link
+                href={buildTeacherChatHref({
+                  teacherId: item.teacherId,
+                  source: 'portal_rail_opening',
+                })}
+                className="block rounded-[var(--radius)] px-2 py-1.5 text-[13px] text-[color:var(--ink-2)] no-underline hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)] hover:no-underline"
+              >
+                {item.label}
+              </Link>
+            </li>
+          ))}
+          <li>
+            <Link
+              href="/teachers"
+              className="block rounded-[var(--radius)] px-2 py-1.5 text-[13px] font-medium text-[color:var(--ink-1)] no-underline hover:bg-[color:var(--bg-sunken)] hover:no-underline"
+            >
+              全部老师 →
+            </Link>
+          </li>
+        </ul>
+      </section>
+
       <section className="border-y border-[color:var(--hairline)] py-3">
         <div className="text-[11px] font-medium tracking-[0.04em] text-[color:var(--ink-5)]">常用</div>
         <ul className="mt-2 space-y-0.5">
