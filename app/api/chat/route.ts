@@ -747,6 +747,12 @@ function toHistoryPayload(rows: TimelineMessage[]) {
     tacitSummary: row.role === 'user' ? row.analysis?.tacitSummary || null : null,
     materials: row.role === 'user' && Array.isArray(row.analysis?.materials) ? row.analysis.materials : [],
     materialSummary: row.role === 'user' ? row.analysis?.materialSummary || null : null,
+    feedbackRating:
+      row.role === 'assistant'
+        ? (row.analysis?.userFeedback?.rating as string | undefined) || null
+        : null,
+    fallbackReason:
+      row.role === 'assistant' ? (row.analysis?.fallbackReason as string | undefined) || null : null,
     timestamp: row.createdAt || row.created_at,
   }));
 }
@@ -966,6 +972,7 @@ export async function POST(request: NextRequest) {
         source: llmUsed ? 'llm' : 'fallback',
         answer,
         llmUsed,
+        fallbackReason: fallbackReason || null,
         reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         turnId,
@@ -1119,6 +1126,63 @@ export async function PATCH(request: NextRequest) {
     const target = rows[targetIndex];
     const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
 
+    // User rating on assistant reply — stores into analysis.userFeedback for optimization.
+    if (action === 'feedback') {
+      if (target.role !== 'assistant') {
+        return NextResponse.json({ success: false, error: '只能评价回答消息' }, { status: 400 });
+      }
+      const ratingRaw = typeof data?.rating === 'string' ? data.rating.trim() : '';
+      const rating =
+        ratingRaw === 'helpful' || ratingRaw === 'not_helpful' || ratingRaw === 'empty'
+          ? ratingRaw
+          : '';
+      if (!rating) {
+        return NextResponse.json(
+          { success: false, error: '评价类型无效（helpful / not_helpful / empty）' },
+          { status: 400 },
+        );
+      }
+      const note =
+        typeof data?.note === 'string' ? data.note.trim().slice(0, 200) : '';
+      const userFeedback = {
+        rating,
+        note: note || null,
+        at: new Date().toISOString(),
+      };
+      questionOperations.update(target.id, {
+        analysis: {
+          ...(target.analysis || {}),
+          userFeedback,
+        },
+        // Column exists on questions; update uses raw keys as SQL columns.
+        ...({ user_feedback: JSON.stringify(userFeedback) } as Record<string, unknown>),
+      } as any);
+
+      trackServerEvent({
+        userId,
+        sessionId,
+        userAgent,
+        eventName: 'chat_feedback',
+        page: '/chat',
+        meta: {
+          messageId: target.id,
+          rating,
+          hasNote: Boolean(note),
+          llmUsed: !!target.analysis?.llmUsed,
+          fallbackReason: target.analysis?.fallbackReason || null,
+          reportId: target.analysis?.reportId || requestedReportId || null,
+          intent: target.analysis?.intent || requestedIntent || null,
+          source: requestedSource || null,
+        },
+      });
+
+      return NextResponse.json({
+        success: true,
+        data: { messageId: target.id, rating, userFeedback },
+        timestamp: new Date().toISOString(),
+      });
+    }
+
     if (action === 'regenerate') {
       trackedAction = 'regenerate';
       if (target.role !== 'assistant') {
@@ -1164,6 +1228,7 @@ export async function PATCH(request: NextRequest) {
             source: llmUsed ? 'llm' : 'fallback',
             answer,
             llmUsed,
+            fallbackReason: fallbackReason || null,
             reportId: context.report?.id || requestedReportId || null,
             eventId: context.focusedEvent?.id || null,
             responseToQuestionId: rows[userIndex].id,
@@ -1273,6 +1338,7 @@ export async function PATCH(request: NextRequest) {
               source: llmUsed ? 'llm' : 'fallback',
               answer,
               llmUsed,
+              fallbackReason: fallbackReason || null,
               reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,
@@ -1291,6 +1357,7 @@ export async function PATCH(request: NextRequest) {
               source: llmUsed ? 'llm' : 'fallback',
               answer,
               llmUsed,
+              fallbackReason: fallbackReason || null,
               reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,

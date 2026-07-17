@@ -4,11 +4,14 @@ import {
   Copy,
   Pencil,
   RotateCcw,
+  ThumbsDown,
+  ThumbsUp,
   Trash2,
   X,
 } from 'lucide-react';
 import ChatMarkdown from '@/components/chat-markdown';
 import {
+  type ChatFeedbackRating,
   type ChatMessage,
   formatChatTime,
 } from '@/components/ai-assistant-chat/chat-helpers';
@@ -26,6 +29,7 @@ interface MessageBubbleProps {
   onStartEdit: (message: ChatMessage) => void;
   onCancelEdit: () => void;
   onSubmitEdit: (messageId: string) => void;
+  onFeedback?: (messageId: string, rating: ChatFeedbackRating) => void;
   isEditing: boolean;
   editingContent: string;
   onEditingContentChange: (value: string) => void;
@@ -48,6 +52,7 @@ export function MessageBubble({
   onStartEdit,
   onCancelEdit,
   onSubmitEdit,
+  onFeedback,
   isEditing,
   editingContent,
   onEditingContentChange,
@@ -58,6 +63,7 @@ export function MessageBubble({
   copied,
 }: MessageBubbleProps) {
   const time = formatChatTime(message.timestamp);
+  const feedback = message.feedbackRating || null;
 
   if (message.role === 'user') {
     return (
@@ -184,10 +190,53 @@ export function MessageBubble({
           <span>
             {message.llmUsed
               ? '结合当前报告与对话内容生成'
-              : '这次没有拿到可用解析，未硬编答案；可点重生成。'}
+              : message.fallbackReason
+                ? `简化回答（${message.fallbackReason}）；可点重生成。`
+                : '这次没有拿到可用解析，未硬编答案；可点重生成。'}
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
             <span>{time}</span>
+            {onFeedback ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onFeedback(message.id, 'helpful')}
+                  disabled={isActing}
+                  className={`fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+                    feedback === 'helpful' ? 'text-[#2f7d52]' : 'text-[#1d2129]'
+                  }`}
+                  aria-label="有用"
+                  title="有用"
+                >
+                  <ThumbsUp className="h-3 w-3" />
+                  有用
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onFeedback(message.id, 'not_helpful')}
+                  disabled={isActing}
+                  className={`fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+                    feedback === 'not_helpful' ? 'text-[#c0392b]' : 'text-[#1d2129]'
+                  }`}
+                  aria-label="不实或无帮助"
+                  title="不实或无帮助"
+                >
+                  <ThumbsDown className="h-3 w-3" />
+                  无帮助
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onFeedback(message.id, 'empty')}
+                  disabled={isActing}
+                  className={`fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-60 ${
+                    feedback === 'empty' ? 'text-[#a87f2c]' : 'text-[#1d2129]'
+                  }`}
+                  title="太空 / 套话"
+                >
+                  太空
+                </button>
+              </>
+            ) : null}
             <button
               type="button"
               onClick={() => onRegenerate(message.id)}
@@ -227,6 +276,12 @@ export function MessageBubble({
             </button>
           </div>
         </div>
+        {feedback ? (
+          <div className="mt-1.5 text-[11px] text-[#8a8d91]">
+            已记录反馈：
+            {feedback === 'helpful' ? '有用' : feedback === 'not_helpful' ? '无帮助' : '太空/套话'}
+          </div>
+        ) : null}
       </div>
     </div>
   );

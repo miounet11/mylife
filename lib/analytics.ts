@@ -57,6 +57,7 @@ export type AnalyticsEventName =
   | 'chat_context_loaded'
   | 'chat_followup_clicked'
   | 'chat_event_saved'
+  | 'chat_feedback'
   | 'chat_fab_clicked'
   | 'chat_fab_dismissed'
   | 'premium_service_requested'

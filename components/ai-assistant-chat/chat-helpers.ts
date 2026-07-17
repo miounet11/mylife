@@ -26,6 +26,9 @@ import { buildChatHref } from '@/lib/chat-entry';
 export type ChatContextState = ChatExperienceContext;
 export type SuggestedEventDraft = ReportActionSuggestion;
 
+/** User rating on an assistant reply — used for product/prompt optimization. */
+export type ChatFeedbackRating = 'helpful' | 'not_helpful' | 'empty';
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -41,6 +44,10 @@ export interface ChatMessage {
   tacitSummary?: string | null;
   materials?: ChatMaterialDisplay[];
   materialSummary?: string | null;
+  /** Assistant only: last stored feedback rating */
+  feedbackRating?: ChatFeedbackRating | null;
+  /** Assistant only: why LLM path fell back */
+  fallbackReason?: string | null;
 }
 
 export type IntentPreset = {

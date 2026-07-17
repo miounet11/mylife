@@ -222,6 +222,8 @@ export default function AIAssistantChat() {
         tacitSummary: item.tacitSummary || null,
         materials: Array.isArray(item.materials) ? item.materials : [],
         materialSummary: item.materialSummary || null,
+        feedbackRating: item.feedbackRating || null,
+        fallbackReason: item.fallbackReason || null,
       }));
       const latestTacitContext = findLatestScopedTacitContext(mapped);
 
@@ -502,6 +504,45 @@ export default function AIAssistantChat() {
     }
   };
 
+  const handleFeedback = async (
+    messageId: string,
+    rating: 'helpful' | 'not_helpful' | 'empty',
+  ) => {
+    if (loadingHistory) return;
+    setMessageActionKey(`feedback:${messageId}`);
+    // Optimistic UI
+    setMessages((prev) =>
+      prev.map((m) => (m.id === messageId ? { ...m, feedbackRating: rating } : m)),
+    );
+    try {
+      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'feedback',
+          messageId,
+          rating,
+          ...scopePayload,
+        }),
+        timeoutMs: 15_000,
+        timeoutReason: 'chat-feedback-timeout',
+        controllerRef: messageActionControllerRef,
+        supersedeReason: 'chat-message-action-superseded',
+      });
+      if (!response.ok || !data.success) {
+        setError(data.error || '反馈提交失败');
+        return;
+      }
+    } catch (feedbackError) {
+      if (!mountedRef.current || isSilentChatAbort(feedbackError)) {
+        return;
+      }
+      setError(isAbortLikeError(feedbackError) ? '反馈提交超时，请重试' : '网络异常，反馈提交失败');
+    } finally {
+      setMessageActionKey(null);
+    }
+  };
+
   const handleStartEdit = (message: ChatMessage) => {
     setEditingMessageId(message.id);
     setEditingContent(message.content);
@@ -700,12 +741,18 @@ export default function AIAssistantChat() {
               onStartEdit={handleStartEdit}
               onCancelEdit={handleCancelEdit}
               onSubmitEdit={handleSubmitEdit}
+              onFeedback={handleFeedback}
               isEditing={editingMessageId === message.id}
               editingContent={editingContent}
               onEditingContentChange={setEditingContent}
               isSaving={savingEventKey === `message:${message.id}`}
               isSaved={savedEventKeys.includes(`message:${message.id}`)}
-              isActing={messageActionKey === `delete:${message.id}` || messageActionKey === `regenerate:${message.id}` || messageActionKey === `edit:${message.id}`}
+              isActing={
+                messageActionKey === `delete:${message.id}` ||
+                messageActionKey === `regenerate:${message.id}` ||
+                messageActionKey === `edit:${message.id}` ||
+                messageActionKey === `feedback:${message.id}`
+              }
               onCopy={handleCopyMessage}
               copied={copiedMessageId === message.id}
             />

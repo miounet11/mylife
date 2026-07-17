@@ -37,6 +37,7 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'tool_run_completed',
   'report_viewed',
   'chat_followup_clicked',
+  'chat_feedback',
   'result_cta_clicked',
   'report_upgrade_requested',
   'report_past_event_saved_from_result',
