@@ -7,6 +7,7 @@ import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
+import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata } from '@/lib/seo';
@@ -82,6 +83,8 @@ export default function ToolsPage() {
         />
 
         <JourneyStrip active="tools" />
+
+        <ToolsHubBirthForm />
 
         {/* 转化主路径 */}
         <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">

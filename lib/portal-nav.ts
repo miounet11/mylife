@@ -33,8 +33,8 @@ export const TOOL_ENTRIES: PortalEntry[] = [
   {
     href: '/hehun',
     title: '合婚双盘',
-    description: '日主·夫妻宫·用忌·大运同步四层对照，报告可一键带入本盘。',
-    cta: '合婚对照',
+    description: '双方填生日即可对盘；也可从报告/档案一键预填。日主·夫妻宫·用忌·大运同步。',
+    cta: '双方生日对盘',
   },
   {
     href: '/teachers',

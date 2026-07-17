@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { trackServerEvent } from '@/lib/analytics';
 import { appendSearchParamsToHref } from '@/lib/source-url';
 import { runToolWorkflow } from '@/lib/tool-run-orchestrator';
-import { parseToolBirthInput } from '@/lib/tool-birth-context';
+import {
+  parseToolBirthInput,
+  parseToolBirthInputDetailed,
+} from '@/lib/tool-birth-context';
+import { hasBirthDatePayload } from '@/lib/birth-date-validate';
 
 export async function POST(request: NextRequest) {
   let requestedToolSlug = '';
@@ -15,17 +19,39 @@ export async function POST(request: NextRequest) {
     const reportId = typeof body?.reportId === 'string' ? body.reportId.trim() : '';
     const note = typeof body?.note === 'string' ? body.note.trim() : '';
     const attribution = body?.attribution && typeof body.attribution === 'object' ? body.attribution : null;
-    // Accept birth at top-level or nested under body.birth
-    const birth =
-      parseToolBirthInput(body?.birth) ||
-      parseToolBirthInput({
-        birthDate: body?.birthDate,
-        birthTime: body?.birthTime,
-        birthPlace: body?.birthPlace,
-        gender: body?.gender,
-        name: body?.name,
-        birthAccuracy: body?.birthAccuracy,
-      });
+
+    const nestedBirth = body?.birth && typeof body.birth === 'object' ? body.birth : null;
+    const flatBirth = {
+      birthDate: body?.birthDate,
+      birthTime: body?.birthTime,
+      birthPlace: body?.birthPlace,
+      gender: body?.gender,
+      name: body?.name,
+      birthAccuracy: body?.birthAccuracy,
+    };
+    const triedBirthPayload = hasBirthDatePayload(nestedBirth) || hasBirthDatePayload(flatBirth);
+
+    let birth = parseToolBirthInput(nestedBirth) || parseToolBirthInput(flatBirth);
+
+    // User sent birth fields but they failed validation → clear error, not REPORT_REQUIRED
+    if (!birth && triedBirthPayload) {
+      const detailed =
+        parseToolBirthInputDetailed(nestedBirth).ok === false && hasBirthDatePayload(nestedBirth)
+          ? parseToolBirthInputDetailed(nestedBirth)
+          : parseToolBirthInputDetailed(flatBirth);
+      const message =
+        detailed.ok === false ? detailed.message : '出生信息无法计算，请检查日期与时辰';
+      return NextResponse.json(
+        {
+          success: false,
+          error: message,
+          code: detailed.ok === false ? detailed.issue : 'invalid',
+          allowBirthOnly: true,
+        },
+        { status: 400 },
+      );
+    }
+
     requestedToolSlug = toolSlug;
     requestedAttribution = attribution;
 
@@ -45,7 +71,11 @@ export async function POST(request: NextRequest) {
         tool: execution.tool,
         result: execution.result,
         workflow: execution.workflowSnapshot,
-        birthOnly: Boolean((execution as { report?: { reportVersion?: string } }).report?.reportVersion?.includes('birth-ephemeral')),
+        birthOnly: Boolean(
+          (execution as { report?: { reportVersion?: string } }).report?.reportVersion?.includes(
+            'birth-ephemeral',
+          ),
+        ),
       },
       timestamp: new Date().toISOString(),
     });
@@ -56,25 +86,32 @@ export async function POST(request: NextRequest) {
     }
     if (message === 'BIRTH_INVALID') {
       return NextResponse.json(
-        { success: false, error: '出生信息无法计算，请检查日期与时辰' },
+        {
+          success: false,
+          error: '出生信息无法计算，请检查日期与时辰',
+          allowBirthOnly: true,
+        },
         { status: 400 },
       );
     }
     if (message === 'REPORT_REQUIRED') {
       const attributionSource = requestedAttribution?.source;
-      const analyzeSource = typeof attributionSource === 'string' && attributionSource.trim()
-        ? `tool_run_required:${attributionSource.trim()}`
-        : 'tool_run_required';
-      return NextResponse.json({
-        success: false,
-        error: '请先完成一次综合判断，或直接提供出生日期运行单项工具',
-        redirectTo: appendSearchParamsToHref('/analyze', {
-          toolSlug: requestedToolSlug,
-          source: analyzeSource,
-        }),
-        // Client may also open birth form instead of full analyze
-        allowBirthOnly: true,
-      }, { status: 400 });
+      const analyzeSource =
+        typeof attributionSource === 'string' && attributionSource.trim()
+          ? `tool_run_required:${attributionSource.trim()}`
+          : 'tool_run_required';
+      return NextResponse.json(
+        {
+          success: false,
+          error: '请先完成一次综合判断，或直接提供出生日期运行单项工具',
+          redirectTo: appendSearchParamsToHref('/analyze', {
+            toolSlug: requestedToolSlug,
+            source: analyzeSource,
+          }),
+          allowBirthOnly: true,
+        },
+        { status: 400 },
+      );
     }
     if (message === 'REPORT_FORBIDDEN') {
       return NextResponse.json({ success: false, error: '无权使用这份报告运行工具' }, { status: 403 });
@@ -95,9 +132,6 @@ export async function POST(request: NextRequest) {
         error: message,
       },
     });
-    return NextResponse.json(
-      { success: false, error: '运行工具失败' },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: '运行工具失败' }, { status: 500 });
   }
 }

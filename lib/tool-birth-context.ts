@@ -10,6 +10,11 @@ import {
 } from '@/lib/ground-truth/pack';
 import type { BirthInput } from '@/lib/fortune-context-builder';
 import type { FortuneRecord, Pillar } from '@/lib/user-types';
+import {
+  hasBirthDatePayload,
+  validateBirthDateString,
+  type BirthDateIssue,
+} from '@/lib/birth-date-validate';
 
 export const EPHEMERAL_REPORT_PREFIX = 'ephemeral_birth_';
 
@@ -17,17 +22,30 @@ export function isEphemeralBirthReportId(id: string | null | undefined): boolean
   return Boolean(id && `${id}`.startsWith(EPHEMERAL_REPORT_PREFIX));
 }
 
-export function parseToolBirthInput(raw: unknown): BirthInput | null {
-  if (!raw || typeof raw !== 'object') return null;
+export type ParseToolBirthResult =
+  | { ok: true; birth: BirthInput; ageYears?: number }
+  | { ok: false; issue: BirthDateIssue | 'empty_payload'; message: string };
+
+/**
+ * Strict parse with reason — use when the client sent birth fields.
+ */
+export function parseToolBirthInputDetailed(raw: unknown): ParseToolBirthResult {
+  if (!raw || typeof raw !== 'object') {
+    return { ok: false, issue: 'empty_payload', message: '请填写出生日期' };
+  }
   const o = raw as Record<string, unknown>;
-  const birthDate = `${o.birthDate || o.date || ''}`.trim();
-  if (!birthDate) return null;
-  const d = new Date(birthDate);
-  if (!Number.isFinite(d.getTime())) return null;
-  // Reject absurd future births > 1 year ahead
-  if (d.getTime() > Date.now() + 366 * 24 * 3600 * 1000) return null;
-  // Reject births before 1900
-  if (d.getFullYear() < 1900) return null;
+  if (!hasBirthDatePayload(o)) {
+    return { ok: false, issue: 'empty_payload', message: '请填写出生日期' };
+  }
+
+  const validated = validateBirthDateString(o.birthDate || o.date);
+  if (!validated.ok || !validated.dateKey) {
+    return {
+      ok: false,
+      issue: validated.issue || 'format',
+      message: validated.message || '出生信息无效',
+    };
+  }
 
   const genderRaw = `${o.gender || ''}`.trim().toLowerCase();
   const gender =
@@ -44,13 +62,22 @@ export function parseToolBirthInput(raw: unknown): BirthInput | null {
       : undefined;
 
   return {
-    birthDate,
-    birthTime: `${o.birthTime || o.time || ''}`.trim() || undefined,
-    birthPlace: `${o.birthPlace || o.place || ''}`.trim() || undefined,
-    birthAccuracy,
-    gender,
-    name: `${o.name || ''}`.trim() || undefined,
+    ok: true,
+    ageYears: validated.ageYears,
+    birth: {
+      birthDate: validated.dateKey,
+      birthTime: `${o.birthTime || o.time || ''}`.trim() || undefined,
+      birthPlace: `${o.birthPlace || o.place || ''}`.trim() || undefined,
+      birthAccuracy,
+      gender,
+      name: `${o.name || ''}`.trim() || undefined,
+    },
   };
+}
+
+export function parseToolBirthInput(raw: unknown): BirthInput | null {
+  const parsed = parseToolBirthInputDetailed(raw);
+  return parsed.ok ? parsed.birth : null;
 }
 
 function pillarsFromPack(pack: GroundTruthPack): Pillar[] {

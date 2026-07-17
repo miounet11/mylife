@@ -7,6 +7,11 @@ import { ArrowRight, Loader2, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution, type ClientAttributionRecord } from '@/lib/client-attribution';
 import { loadRememberedBirthForm, saveRememberedBirthForm } from '@/lib/birth-form-storage';
+import {
+  birthDateInputMax,
+  birthDateInputMin,
+  validateBirthDateString,
+} from '@/lib/birth-date-validate';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 const TOOL_RUN_TIMEOUT_MS = 45_000;
@@ -53,7 +58,8 @@ export default function ToolRunner({
   const [name, setName] = useState('');
   const [rememberedHint, setRememberedHint] = useState('');
   const noteLength = note.trim().length;
-  const birthReady = Boolean(birthDate && /^\d{4}-\d{2}-\d{2}/.test(birthDate));
+  const birthValidation = birthDate ? validateBirthDateString(birthDate) : null;
+  const birthReady = Boolean(birthValidation?.ok);
   const canRunWithBirth = !hasReport && birthReady;
   const canSubmit = hasReport || canRunWithBirth;
 
@@ -95,9 +101,12 @@ export default function ToolRunner({
     event.preventDefault();
     if (submitting) return;
 
-    if (!hasReport && !birthReady) {
-      setError('请填写出生日期，或先完成综合判断');
-      return;
+    if (!hasReport) {
+      const check = validateBirthDateString(birthDate);
+      if (!check.ok) {
+        setError(check.message || '请填写有效出生日期，或先完成综合判断');
+        return;
+      }
     }
 
     setSubmitting(true);
@@ -228,11 +237,18 @@ export default function ToolRunner({
               <input
                 type="date"
                 required={!hasReport}
+                min={birthDateInputMin()}
+                max={birthDateInputMax()}
                 value={birthDate}
                 onChange={(e) => setBirthDate(e.target.value)}
                 className="birth-form-control"
               />
             </label>
+            {birthDate && birthValidation && !birthValidation.ok ? (
+              <p className="sm:col-span-2 text-[12px] text-[color:var(--alert)]">
+                {birthValidation.message}
+              </p>
+            ) : null}
             <label className="birth-form-label">
               出生时辰
               <input

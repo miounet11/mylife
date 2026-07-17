@@ -206,6 +206,29 @@ export function buildEngineToolRunSummary(params: {
         ? '（由出生信息重算引擎）'
         : '';
 
+    // Young-age quality guard: structure ok, life-stage tools less actionable
+    let ageYears: number | null = null;
+    const birthRaw = `${params.report?.birthDate || params.birth?.birthDate || ''}`.trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(birthRaw)) {
+      const y = Number(birthRaw.slice(0, 4));
+      const m = Number(birthRaw.slice(5, 7));
+      const d = Number(birthRaw.slice(8, 10));
+      const bd = new Date(y, m - 1, d);
+      if (!Number.isNaN(bd.getTime())) {
+        const now = new Date();
+        ageYears = now.getFullYear() - bd.getFullYear();
+        const md = now.getMonth() - bd.getMonth();
+        if (md < 0 || (md === 0 && now.getDate() < bd.getDate())) ageYears -= 1;
+      }
+    }
+    const young = typeof ageYears === 'number' && ageYears < 6;
+    const confidenceLabel = young
+      ? `幼年结构仅供参考${sourceLabel}`
+      : `${projected.confidenceLabel}${sourceLabel}`;
+    const riskReminder = young
+      ? `当前年龄约 ${ageYears} 岁，大运与流年窗口仍处早期；结果侧重先天结构，不宜按成人节奏做推进/防守决策。${projected.riskReminder ? ` ${projected.riskReminder}` : ''}`
+      : projected.riskReminder;
+
     return {
       headline: projected.headline,
       summary: [
@@ -215,9 +238,9 @@ export function buildEngineToolRunSummary(params: {
       ]
         .filter(Boolean)
         .join(''),
-      confidenceLabel: `${projected.confidenceLabel}${sourceLabel}`,
+      confidenceLabel,
       recommendedAction: projected.recommendedAction,
-      riskReminder: projected.riskReminder,
+      riskReminder,
       whyItMatches: [
         projected.whyItMatches,
         tool.relatedReportThemes?.length

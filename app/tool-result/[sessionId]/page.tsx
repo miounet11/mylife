@@ -146,6 +146,11 @@ export default async function ToolResultPage({
                   <span className="font-semibold text-[color:var(--brand-strong)]">由出生信息即时重算</span>
                   {dayMasterHint ? ` · ${dayMasterHint}` : ''}
                   。本次未绑定完整综合报告；若需更细的主轴与事件校验，可再生成完整报告。
+                  {`${result.confidenceLabel || ''}`.includes('幼年') ? (
+                    <span className="mt-1 block text-[color:var(--ink-4)]">
+                      当前为幼年结构参考：流年/大运窗口仍处早期，请勿按成人节奏解读推进与防守。
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
 

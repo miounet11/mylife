@@ -15,6 +15,11 @@ import {
   loadRememberedHehunBirthPair,
   saveRememberedHehunBirthPair,
 } from '@/lib/birth-form-storage';
+import {
+  birthDateInputMax,
+  birthDateInputMin,
+  validateBirthDateString,
+} from '@/lib/birth-date-validate';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import type { ProfileFortuneView, ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { trackProductEvent } from '@/lib/product-analytics';
@@ -209,8 +214,14 @@ export default function HehunWorkspace() {
   }
 
   function runFromBirth() {
-    if (!birthA.date || !birthB.date) {
-      setBirthNote('请填写双方出生日期');
+    const checkA = validateBirthDateString(birthA.date);
+    const checkB = validateBirthDateString(birthB.date);
+    if (!checkA.ok) {
+      setBirthNote(`甲方：${checkA.message || '请填写有效出生日期'}`);
+      return;
+    }
+    if (!checkB.ok) {
+      setBirthNote(`乙方：${checkB.message || '请填写有效出生日期'}`);
       return;
     }
     setBirthBusy(true);
@@ -218,13 +229,13 @@ export default function HehunWorkspace() {
     try {
       const { personA, personB } = hehunFromBirthPair(
         {
-          birthDate: birthA.date,
+          birthDate: checkA.dateKey || birthA.date,
           birthTime: birthA.time || '12:00',
           gender: birthA.gender,
           name: birthA.name || '甲方',
         },
         {
-          birthDate: birthB.date,
+          birthDate: checkB.dateKey || birthB.date,
           birthTime: birthB.time || '12:00',
           gender: birthB.gender,
           name: birthB.name || '乙方',
@@ -555,6 +566,8 @@ function BirthSideForm({
           <input
             type="date"
             className="birth-form-control"
+            min={birthDateInputMin()}
+            max={birthDateInputMax()}
             value={value.date}
             onChange={(e) => onChange({ ...value, date: e.target.value })}
           />

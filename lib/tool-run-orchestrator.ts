@@ -438,6 +438,24 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
         });
         throw new Error('BIRTH_INVALID');
       }
+    } else if (input.birth && typeof input.birth === 'object') {
+      // Client sent birth-shaped payload that failed parse
+      const maybeDate = `${(input.birth as Record<string, unknown>).birthDate || (input.birth as Record<string, unknown>).date || ''}`.trim();
+      if (maybeDate) {
+        recorder.push({
+          stage: 'load-report',
+          status: 'failed',
+          detail: '出生信息无效。',
+          meta: { birthDate: maybeDate },
+        });
+        throw new Error('BIRTH_INVALID');
+      }
+      recorder.push({
+        stage: 'load-report',
+        status: 'failed',
+        detail: '用户尚未完成综合报告，且未提供出生信息。',
+      });
+      throw new Error('REPORT_REQUIRED');
     } else {
       recorder.push({
         stage: 'load-report',
