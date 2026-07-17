@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { MessageSquareText } from 'lucide-react';
 import { SectionHeader } from '@/components/layout/section-header';
 import type { MergedAgentResults } from '@/lib/agentic-report/types';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 
 function collectActions(merged: MergedAgentResults): string[] {
   const actions: string[] = [];
@@ -53,7 +54,7 @@ export default function ReportNextActions({
       </ol>
       <div className="mt-4 flex flex-wrap gap-2">
         <Link
-          href={`/chat?reportId=${encodeURIComponent(reportId)}&source=result_actions`}
+          href={buildReportContinueChatHref({ reportId: reportId, source: 'result_actions', teacher: 'overview' })}
           className="fb-btn fb-btn-primary h-9 px-4 text-[13px] hover:no-underline"
         >
           <MessageSquareText className="h-3.5 w-3.5" />

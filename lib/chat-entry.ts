@@ -39,6 +39,17 @@ export function buildChatHref(params: {
   source?: string | null;
   ctaStrategyKey?: string | null;
   sourceFamily?: string | null;
+  /** 顾问卡：指定老师（opening 用） */
+  teacher?: string | null;
+  /** 议题 key：career / wealth / marriage … */
+  topic?: string | null;
+  /** 窗口文案，注入 first_mes 的 {{windowHint}} */
+  window?: string | null;
+  /**
+   * opening = 不预填问题，展示老师开场（默认当无 question 时）
+   * prefill = 把 question 写入输入框
+   */
+  mode?: 'opening' | 'prefill' | null;
 }) {
   const query = new URLSearchParams();
   const reportId = cleanQueryValue(params.reportId);
@@ -48,21 +59,69 @@ export function buildChatHref(params: {
   const source = normalizeAttributionSource(params.source);
   const ctaStrategyKey = cleanQueryValue(params.ctaStrategyKey);
   const sourceFamily = cleanQueryValue(params.sourceFamily);
+  const teacher = cleanQueryValue(params.teacher);
+  const topic = cleanQueryValue(params.topic);
+  const windowHint = cleanQueryValue(params.window);
+  const mode = cleanQueryValue(params.mode);
 
   if (reportId) query.set('reportId', reportId);
   if (eventId) query.set('eventId', eventId);
   if (intent) query.set('intent', intent);
-  // production chat uses `question`; dual-track workspace also accepts `q`
-  if (question) {
+  if (teacher) query.set('teacher', teacher);
+  if (topic) query.set('topic', topic);
+  if (windowHint) query.set('window', windowHint);
+  if (mode) query.set('mode', mode);
+
+  // production chat uses `question`; dual-track also accepts `q`
+  // mode=opening：故意不带 question，让顾问卡 first_mes 接手
+  if (mode !== 'opening' && question) {
     query.set('question', question);
     query.set('q', question);
   }
+  if (mode === 'opening' || (!question && !mode)) {
+    // explicit opening, or bare link with only report/teacher
+    if (mode === 'opening') query.set('mode', 'opening');
+  } else if (mode === 'prefill') {
+    query.set('mode', 'prefill');
+  }
+
   if (source) query.set('source', source);
   if (ctaStrategyKey) query.set('ctaStrategyKey', ctaStrategyKey);
   if (sourceFamily) query.set('sourceFamily', sourceFamily);
 
   const serialized = query.toString();
   return serialized ? `/chat?${serialized}` : '/chat';
+}
+
+/** Map followup / cockpit intent → teacher id for opening */
+export function teacherIdFromFollowupIntent(intent?: string | null): string {
+  const key = `${intent || ''}`.trim().toLowerCase();
+  if (key === 'next-action' || key === 'job' || key === 'career') return 'career';
+  if (key === 'window' || key === 'month' || key === 'risk' || key === 'timing') return 'timing';
+  if (key === 'wealth') return 'wealth';
+  if (key === 'marriage' || key === 'relationship') return 'relationship';
+  if (key === 'health') return 'health';
+  return 'overview';
+}
+
+/** Primary “继续对话” — opening mode, no long prefilled question */
+export function buildReportContinueChatHref(params: {
+  reportId: string;
+  source?: string | null;
+  teacher?: string | null;
+  window?: string | null;
+  ctaStrategyKey?: string | null;
+  sourceFamily?: string | null;
+}) {
+  return buildChatHref({
+    reportId: params.reportId,
+    teacher: params.teacher || 'overview',
+    window: params.window || null,
+    mode: 'opening',
+    source: params.source || buildReportChatSource(null),
+    ctaStrategyKey: params.ctaStrategyKey,
+    sourceFamily: params.sourceFamily,
+  });
 }
 
 export function buildReportFollowupQuestion(params: {
@@ -277,18 +336,39 @@ export function topicKeyToScene(key: string): FollowupScene {
   return 'general';
 }
 
-export function buildTopicChatHref(reportId: string, topicKey: string, topicTitle?: string) {
-  // 议题 → 对应老师（统一深链）
+export function buildTopicChatHref(
+  reportId: string,
+  topicKey: string,
+  topicTitle?: string,
+  opts?: { prefillQuestion?: boolean; window?: string | null },
+) {
+  // 议题 → 对应老师；默认 opening（不预填长问），由顾问卡开场承接
   const teacher = teacherFromTopicKey(topicKey);
   const scene = topicKeyToScene(topicKey);
-  const q =
-    topicTitle && scene === 'general'
-      ? `关于「${topicTitle}」，结合我的报告我现在该怎么做？`
-      : buildSceneFollowupQuestion(scene, 0);
+  const windowHint =
+    cleanQueryValue(opts?.window) ||
+    (topicTitle ? `当前议题「${topicTitle}」` : '');
+
+  if (opts?.prefillQuestion) {
+    const q =
+      topicTitle && scene === 'general'
+        ? `关于「${topicTitle}」，结合我的报告我现在该怎么做？`
+        : buildSceneFollowupQuestion(scene, 0);
+    return buildTeacherChatHref({
+      teacherId: teacher.id,
+      reportId,
+      question: q,
+      topic: topicKey,
+      window: windowHint || null,
+      source: `report:${reportId}:topic:${topicKey}`,
+    });
+  }
+
   return buildTeacherChatHref({
     teacherId: teacher.id,
     reportId,
-    question: q,
-    source: `report:${reportId}:topic:${topicKey}`,
+    topic: topicKey,
+    window: windowHint || null,
+    source: `report:${reportId}:topic:${topicKey}:opening`,
   });
 }

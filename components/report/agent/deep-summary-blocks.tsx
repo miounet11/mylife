@@ -2,6 +2,7 @@
 
 import type { EngineGroundTruth, MergedAgentResults } from '@/lib/agentic-report/types';
 import { SectionHeader } from '@/components/layout/section-header';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 
 export function PastPresentFutureRow({ kline }: { kline: EngineGroundTruth['kline'] }) {
   const phases = kline.phases || [];
@@ -89,7 +90,7 @@ export function ValidationFeedbackHero({ reportId }: { reportId: string }) {
         <a href="/predictions" className="fb-btn h-9 px-4 text-[13px] hover:no-underline">
           预测回访
         </a>
-        <a href={`/chat?reportId=${encodeURIComponent(reportId)}`} className="fb-btn h-9 px-4 text-[13px] hover:no-underline">
+        <a href={buildReportContinueChatHref({ reportId: reportId, source: 'result_deep_summary', teacher: 'overview' })} className="fb-btn h-9 px-4 text-[13px] hover:no-underline">
           继续追问
         </a>
       </div>

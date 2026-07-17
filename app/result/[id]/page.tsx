@@ -107,7 +107,12 @@ import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report
 import { buildJourneyForReport } from '@/lib/surface-journeys';
 import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
-import { buildChatHref, buildReportChatSource, buildReportFollowupQuestion, buildReportFollowupSuggestions } from '@/lib/chat-entry';
+import {
+  buildReportChatSource,
+  buildReportContinueChatHref,
+  buildReportFollowupQuestion,
+  buildReportFollowupSuggestions,
+} from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 import { buildLayeredReportJourney } from '@/lib/report-journey-router';
 import type { ReferenceIntelligencePack } from '@/lib/reference-intelligence';
@@ -704,10 +709,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const finalFollowupSuggestions = followupCacheFresh ? cachedFollowupSuggestions : reportFollowupSuggestions;
   const shouldTriggerAugmenter = !followupCacheFresh;
   const reportChatSource = buildReportChatSource(entrySource);
-  const reportChatHref = buildChatHref({
+  // Primary continue: consultant-card opening (no long prefill)
+  const reportChatHref = buildReportContinueChatHref({
     reportId: id,
-    question: reportFollowupQuestion,
     source: reportChatSource,
+    teacher: 'overview',
+    window: (finalFollowupSuggestions?.[0] as { label?: string } | undefined)?.label || null,
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,
   });

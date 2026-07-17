@@ -66,7 +66,7 @@ export default function TeacherPicker({
             teacherId: t.id,
             reportId,
             city,
-            question: t.starters[0],
+            // Opening mode: teacher first_mes + starters (no auto prefill)
             source: source || (reportId ? `report:${reportId}:teacher_picker` : 'teacher_picker'),
           });
           if (variant === 'compact') {

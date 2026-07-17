@@ -45,7 +45,7 @@ import {
   slotsFromChatReport,
 } from '@/lib/teacher-opening';
 import { resolveChatTeacher } from '@/lib/chat-teacher-runtime';
-import type { TeacherTopicChip } from '@/lib/teachers';
+import { teacherFromTopicKey, type TeacherTopicChip } from '@/lib/teachers';
 import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 type ChatContextReport = ChatReportContext;
@@ -90,6 +90,9 @@ export default function AIAssistantChat() {
   const sourceFamily = searchParams?.get('sourceFamily') || '';
   const prefilledQuestion = searchParams?.get('question') || '';
   const urlTeacher = searchParams?.get('teacher') || searchParams?.get('teacherId') || '';
+  const urlTopic = searchParams?.get('topic') || '';
+  const urlWindow = searchParams?.get('window') || '';
+  const urlMode = searchParams?.get('mode') || '';
   const [rememberedReportId, setRememberedReportId] = useState('');
   const reportId = urlReportId || rememberedReportId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -157,9 +160,17 @@ export default function AIAssistantChat() {
   const replyControllerRef = useRef<AbortController | null>(null);
   const messageActionControllerRef = useRef<AbortController | null>(null);
   const intentPreset = getIntentPreset(intent);
+  const topicTeacherId = urlTopic ? teacherFromTopicKey(urlTopic).id : '';
   const resolvedOpeningTeacherId =
     openingTeacherId ||
+    urlTeacher ||
+    topicTeacherId ||
     resolveChatTeacher({ teacher: urlTeacher || undefined, intent: intent || undefined }).id;
+  const openingWindowHint = urlWindow
+    ? `当前关注：${urlWindow}`
+    : urlTopic
+      ? `当前议题：${urlTopic}`
+      : undefined;
   const openingView = buildTeacherOpening({
     teacherId: resolvedOpeningTeacherId,
     greetingIndex,
@@ -169,8 +180,11 @@ export default function AIAssistantChat() {
           dayMaster: context.report.dayMaster,
           pattern: context.report.pattern,
           currentDaYun: context.report.currentDaYun,
+          windowHint: openingWindowHint,
         })
-      : undefined,
+      : openingWindowHint
+        ? { windowHint: openingWindowHint }
+        : undefined,
   });
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,
@@ -303,6 +317,9 @@ export default function AIAssistantChat() {
   }, [input]);
 
   useEffect(() => {
+    // mode=opening：不预填，把舞台留给顾问卡 first_mes
+    if (urlMode === 'opening') return;
+
     if (prefilledQuestion && !input.trim() && messages.length === 0) {
       setInput(prefilledQuestion);
       return;
@@ -312,8 +329,11 @@ export default function AIAssistantChat() {
       return;
     }
 
+    // 有老师开场时不再塞 intent 默认长问，避免挡住 starters
+    if (openingView.firstMes) return;
+
     setInput(intentPreset.prefillQuestion);
-  }, [intentPreset, input, messages.length, prefilledQuestion]);
+  }, [intentPreset, input, messages.length, prefilledQuestion, urlMode, openingView.firstMes]);
 
   useEffect(() => {
     if (!copiedMessageId) return undefined;

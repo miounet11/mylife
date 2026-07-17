@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpen, MessageSquareText, Wrench } from 'lucide-react';
 import ReportAnchorRail from '@/components/report/report-anchor-rail';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 
 export function ReportRailRight({
   reportId,
@@ -21,7 +22,7 @@ export function ReportRailRight({
               继续追问
             </div>
             <Link
-              href={`/chat?reportId=${encodeURIComponent(reportId)}&source=result_rail`}
+              href={buildReportContinueChatHref({ reportId: reportId, source: 'result_rail', teacher: 'overview' })}
               className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-medium text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)] hover:no-underline"
             >
               基于报告追问 <ArrowRight className="h-3.5 w-3.5" />

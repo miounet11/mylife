@@ -3,11 +3,12 @@
 import Link from 'next/link';
 import { BookOpen, MessageSquareText, Wrench } from 'lucide-react';
 import { SectionHeader } from '@/components/layout/section-header';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 
 export default function ReportContinueExplorationNav({ reportId }: { reportId: string }) {
   const items = [
     {
-      href: `/chat?reportId=${encodeURIComponent(reportId)}&source=result_explore`,
+      href: buildReportContinueChatHref({ reportId: reportId, source: 'result_explore', teacher: 'overview' }),
       icon: MessageSquareText,
       title: '结构追问',
       description: '把结论拆成更具体的行动顺序。',

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { DecisionSheet } from '@/lib/report-decision-sheet';
 import { formatDecisionSheetPlain } from '@/lib/report-decision-sheet';
-import { buildChatHref, buildSceneFollowupQuestion } from '@/lib/chat-entry';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import { trackProductEvent } from '@/lib/product-analytics';
 
@@ -21,10 +21,10 @@ export default function ProDecisionSheet({
   publicName?: string;
 }) {
   const [copied, setCopied] = useState(false);
-  const continueHref = buildChatHref({
+  const continueHref = buildReportContinueChatHref({
     reportId,
-    question: buildSceneFollowupQuestion('general', 0),
-    source: `report:${reportId}:decision-sheet`,
+    teacher: 'overview',
+    source: `report:${reportId}:decision-sheet:opening`,
   });
 
   async function copyPlain() {

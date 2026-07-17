@@ -466,6 +466,9 @@ export function teacherFromScene(scene: string | null | undefined): TeacherDefin
 /**
  * 构建请教某位老师的链接
  * 对标 GPT/Gem 深链：固定专家 + Project（report）+ 可选 starter
+ *
+ * 默认不预填 question，进入 chat 展示顾问卡 first_mes（P0/P1 开场）。
+ * 需要预填时传 question，或 prefillStarter: true。
  */
 export function buildTeacherChatHref(params: {
   teacherId: TeacherId | string;
@@ -473,17 +476,29 @@ export function buildTeacherChatHref(params: {
   question?: string | null;
   city?: string | null;
   source?: string | null;
+  topic?: string | null;
+  window?: string | null;
+  /** 用该老师 starters[0] 预填输入框（默认 false） */
+  prefillStarter?: boolean;
 }): string {
   const teacher = getTeacher(params.teacherId);
   const q = new URLSearchParams();
   q.set('teacher', teacher.id);
   if (params.reportId) q.set('reportId', params.reportId);
   if (params.city) q.set('city', params.city.trim());
-  const question = (params.question || teacher.starters[0] || '').trim();
+  if (params.topic) q.set('topic', params.topic.trim());
+  if (params.window) q.set('window', params.window.trim());
+
+  const explicitQ = `${params.question || ''}`.trim();
+  const question = explicitQ || (params.prefillStarter ? `${teacher.starters[0] || ''}`.trim() : '');
   if (question) {
     q.set('question', question);
     q.set('q', question);
+    q.set('mode', 'prefill');
+  } else {
+    q.set('mode', 'opening');
   }
+
   const source =
     params.source ||
     (params.reportId ? `report:${params.reportId}:teacher:${teacher.id}` : `teacher:${teacher.id}`);

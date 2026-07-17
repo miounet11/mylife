@@ -2,7 +2,11 @@ import Link from 'next/link';
 import { ArrowRight, Compass, MessageCircleQuestion } from 'lucide-react';
 
 import type { ReportCockpitSection } from '@/lib/report-types';
-import { buildChatHref, type ReportFollowupSuggestion } from '@/lib/chat-entry';
+import {
+  buildChatHref,
+  teacherIdFromFollowupIntent,
+  type ReportFollowupSuggestion,
+} from '@/lib/chat-entry';
 import ResultCtaLink from '@/components/result-cta-link';
 
 type GuidedPath = {
@@ -160,7 +164,11 @@ export default function ReportCockpit({
                       href={buildChatHref({
                         reportId,
                         intent: sg.intent,
+                        teacher: teacherIdFromFollowupIntent(sg.intent),
+                        // High-intent card: keep prefill question, but land on right teacher
                         question: sg.question,
+                        mode: 'prefill',
+                        window: sg.label || null,
                         source: 'result_cockpit_followup_suggestion',
                         ctaStrategyKey: ctaStrategyKey || null,
                         sourceFamily: sourceFamily || null,
