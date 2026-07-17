@@ -11,6 +11,13 @@ import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata } from '@/lib/seo';
+import { buildTeacherChatHref } from '@/lib/teachers';
+
+const CONSULTANT_LINKS = [
+  { teacherId: 'career' as const, label: '事业' },
+  { teacherId: 'timing' as const, label: '时机' },
+  { teacherId: 'wealth' as const, label: '财务' },
+] as const;
 
 export const metadata: Metadata = buildPageMetadata({
   title: '工具中心｜流年窗口、今日一签与十维度入口',
@@ -131,6 +138,30 @@ export default function ToolsPage() {
           source="tools_hub"
           compact
         />
+
+        <section className="space-y-2">
+          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">问老师</h2>
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+            {CONSULTANT_LINKS.map((item) => (
+              <Link
+                key={item.teacherId}
+                href={buildTeacherChatHref({
+                  teacherId: item.teacherId,
+                  source: 'tools_hub_consultant',
+                })}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/teachers"
+              className="text-[12px] text-[color:var(--ink-5)] underline-offset-2 hover:text-[color:var(--ink-3)] hover:underline"
+            >
+              全部
+            </Link>
+          </nav>
+        </section>
 
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">推荐工具</h2>

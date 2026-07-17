@@ -113,6 +113,7 @@ import {
   buildReportFollowupQuestion,
   buildReportFollowupSuggestions,
 } from '@/lib/chat-entry';
+import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 import { buildLayeredReportJourney } from '@/lib/report-journey-router';
 import type { ReferenceIntelligencePack } from '@/lib/reference-intelligence';
@@ -534,6 +535,20 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     theme: item.theme,
     status: item.status,
   }));
+  // 首屏顾问卡：best = 高分窗，risk = 低分窗（与 report-v2 playbook 一致）
+  const consultantWindows = (() => {
+    const windows = [...(result.monthlyWindows || [])];
+    if (windows.length === 0) {
+      const lead = topMonthlyWindows[0]?.label;
+      return lead ? { best: lead, risk: undefined as string | undefined } : null;
+    }
+    const best = [...windows].sort((a, b) => b.score - a.score)[0];
+    const risk = [...windows].sort((a, b) => a.score - b.score)[0];
+    return {
+      best: best?.label || undefined,
+      risk: risk && risk.key !== best?.key ? risk.label : undefined,
+    };
+  })();
   const stateVectorCurrent = result.stateVector?.current;
   const stateVectorCards = stateVectorCurrent
     ? [
@@ -830,6 +845,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     publicName={publicName}
                     reportId={id}
                     canManage={canManage}
+                    consultantWindows={consultantWindows}
                     birthYear={(() => {
                       const raw =
                         (rawFortuneData as any).birthDate ||
@@ -967,6 +983,14 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <a href={reportChatHref} className="rounded-[3px] border border-[#3b5998]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
                     {sourceCtaStrategy.reportPrimaryLabel || '去 AI 深问'}
                   </a>
+                </div>
+
+                <div className="mt-4">
+                  <ReportConsultantCards
+                    reportId={id}
+                    windows={consultantWindows}
+                    source={`report:${id}:classic_cockpit`}
+                  />
                 </div>
               </section>
 

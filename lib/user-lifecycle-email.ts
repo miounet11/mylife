@@ -15,7 +15,11 @@ import { queueEmailDeliveryJob } from '@/lib/email-delivery-jobs';
 import { backfillEmailSubscriptionsFromUsers } from '@/lib/subscription-backfill';
 import { formatLocalDateKey, generateId } from '@/lib/utils';
 import type { FortuneRecord } from '@/lib/user-types';
-import { buildChatHref } from '@/lib/chat-entry';
+import {
+  buildChatHref,
+  buildReportContinueChatHref,
+  teacherIdFromFollowupIntent,
+} from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-context';
 import { getToolDefinition, type ToolDefinition } from '@/lib/tools';
 
@@ -349,10 +353,10 @@ function buildReportNoFollowupCandidate(params: {
     report,
     reasons: ['report_without_followup_action'],
     primaryCtaLabel: '继续围绕这份报告追问',
-    primaryCtaHref: buildChatHref({
+    primaryCtaHref: buildReportContinueChatHref({
       reportId: report.id,
-      question: '请围绕我这份已经生成的报告，按结构、阶段、环境、动作四层继续拆解：我现在最该先推进什么，为什么，最需要防什么偏差？',
-      source,
+      teacher: 'overview',
+      source: `${source}:opening`,
       ctaStrategyKey: sourceCtaStrategy.strategyKey,
       sourceFamily: sourceCtaStrategy.sourceFamily,
     }),
@@ -429,8 +433,9 @@ function buildToolInterestNoRunCandidate(params: {
     secondaryCtaHref: buildChatHref({
       reportId: report.id,
       intent: tool.chatIntent || tool.slug,
-      question: `我之前看过“${tool.shortTitle}”，但还没有真正开始。请结合我的报告判断：这个工具现在最适合解决什么问题，开跑前我应该先想清楚什么？`,
-      source: `lifecycle_tool_interest_secondary:${params.behavior.lastSource || tool.slug}`,
+      teacher: teacherIdFromFollowupIntent(tool.chatIntent || tool.slug),
+      mode: 'opening',
+      source: `lifecycle_tool_interest_secondary:${params.behavior.lastSource || tool.slug}:opening`,
       ctaStrategyKey: sourceCtaStrategy.strategyKey,
       sourceFamily: sourceCtaStrategy.sourceFamily,
     }),
@@ -591,8 +596,10 @@ function buildEventValidationOverdueCandidate(params: {
     reportId,
     eventId: oldest.id,
     intent: 'chapter:event-validation',
-    question: `${oldest.date} 我预设的"${eventTitle}"已经过去 ${overdueDays} 天，结果如何？请帮我对照原报告的判断，看哪一项验证准了、哪一项偏了，下次同类事件该怎么修正。`,
-    source,
+    teacher: 'overview',
+    mode: 'opening',
+    window: `事件对照：${eventTitle}（已过 ${overdueDays} 天）`,
+    source: `${source}:opening`,
   });
 
   return {

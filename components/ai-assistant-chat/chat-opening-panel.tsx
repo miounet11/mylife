@@ -77,7 +77,7 @@ export function ChatOpeningPanel({
                   className={`rounded-full border px-2.5 py-1 text-[12px] font-semibold transition disabled:opacity-50 ${
                     active
                       ? 'border-[#3b5998] bg-[#e7f3ff] text-[#3b5998]'
-                      : 'border-[#dddfe2] bg-white text-[#1d2129] hover:border-[#3b5998]/
+                      : 'border-[#dddfe2] bg-white text-[#1d2129] hover:border-[#3b5998]'
                   }`}
                 >
                   {chip.label}

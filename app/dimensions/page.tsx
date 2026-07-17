@@ -18,6 +18,15 @@ import {
   buildPageMetadata,
   buildServiceJsonLd,
 } from '@/lib/seo';
+import { buildTeacherChatHref } from '@/lib/teachers';
+
+/** Compact hub CTAs — opening mode, no reportId */
+const DIMENSIONS_CONSULTANT_LINKS = [
+  { teacherId: 'overview' as const, label: '总览' },
+  { teacherId: 'career' as const, label: '事业' },
+  { teacherId: 'timing' as const, label: '时机' },
+  { teacherId: 'wealth' as const, label: '财务' },
+] as const;
 
 export const metadata: Metadata = buildPageMetadata({
   title: '十维度深度研判｜运势节奏、事业行业、投资婚恋等场景入口',
@@ -132,6 +141,33 @@ export default async function DimensionsPage({
         ) : null}
 
         <DimensionGrid intent={intent} source={source} />
+
+        <section className="space-y-2 border-t border-[color:var(--hairline)] pt-4">
+          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">问老师</h2>
+          <p className="text-[12px] leading-[1.5] text-[color:var(--ink-5)]">
+            先选场景研判，或直接进入顾问开场继续拆。
+          </p>
+          <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+            {DIMENSIONS_CONSULTANT_LINKS.map((item) => (
+              <Link
+                key={item.teacherId}
+                href={buildTeacherChatHref({
+                  teacherId: item.teacherId,
+                  source: 'dimensions_hub_consultant',
+                })}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <Link
+              href="/teachers"
+              className="text-[12px] text-[color:var(--ink-5)] underline-offset-2 hover:text-[color:var(--ink-3)] hover:underline"
+            >
+              全部
+            </Link>
+          </nav>
+        </section>
 
         <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
           <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

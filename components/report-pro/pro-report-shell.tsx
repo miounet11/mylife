@@ -22,6 +22,7 @@ import ProDecisionPacks from '@/components/report-pro/pro-decision-packs';
 import ProRevisitStrip from '@/components/report-pro/pro-revisit-strip';
 import ProLearningPath from '@/components/report-pro/pro-learning-path';
 import TeacherPicker from '@/components/teachers/teacher-picker';
+import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 
@@ -42,6 +43,7 @@ export default function ProReportShell({
   currentDayun = null,
   currentDaYunText,
   birthYear,
+  consultantWindows,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -64,6 +66,8 @@ export default function ProReportShell({
   currentDaYunText?: string;
   /** 出生公历年，人生 80 年 K 线轴 */
   birthYear?: number;
+  /** 首屏顾问卡窗口（best / risk） */
+  consultantWindows?: { best?: string; risk?: string } | null;
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -190,6 +194,12 @@ export default function ProReportShell({
         reportId={reportId}
         birthTimeUncertain={birthTimeUncertain}
         publicName={publicName}
+      />
+
+      <ReportConsultantCards
+        reportId={reportId}
+        windows={consultantWindows}
+        source={`report:${reportId}:first_screen`}
       />
 
       <ProRevisitStrip reportId={reportId} revisitHint={decisionSheet.revisitWhen} />
