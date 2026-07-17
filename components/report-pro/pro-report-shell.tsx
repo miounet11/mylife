@@ -107,6 +107,9 @@ export default function ProReportShell({
             <a href="#pro-decision" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               决策一页通
             </a>
+            <a href="#report-consultants" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              问顾问
+            </a>
             <a href="#pro-action" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               现在怎么做
             </a>
@@ -142,48 +145,53 @@ export default function ProReportShell({
             </a>
           </li>
           <li>
+            <a href="#report-consultants" className="underline-offset-2 hover:underline">
+              ② 先问一位顾问
+            </a>
+          </li>
+          <li>
             <a href="#pro-action" className="underline-offset-2 hover:underline">
-              ② 现在怎么做
+              ③ 现在怎么做
             </a>
           </li>
           <li>
             <a href="#pro-kline" className="underline-offset-2 hover:underline">
-              ③ 人生 K 线
+              ④ 人生 K 线
             </a>
           </li>
           <li>
             <a href="#pro-overview" className="underline-offset-2 hover:underline">
-              ④ 命理总评
+              ⑤ 命理总评
             </a>
           </li>
           <li>
             <a href="#pro-elements" className="underline-offset-2 hover:underline">
-              ⑤ 喜用 / 趋利避害
+              ⑥ 喜用 / 趋利避害
             </a>
           </li>
           <li>
             <a href="#pro-time" className="underline-offset-2 hover:underline">
-              ⑥ 本月·今年·明年
+              ⑦ 本月·今年·明年
             </a>
           </li>
           <li>
             <a href="#pro-risks" className="underline-offset-2 hover:underline">
-              ⑦ 重点避险
+              ⑧ 重点避险
             </a>
           </li>
           <li>
             <a href="#pro-topics" className="underline-offset-2 hover:underline">
-              ⑧ 议题 · 继续问
+              ⑨ 议题 · 继续问
             </a>
           </li>
           <li>
             <a href="#pro-teachers" className="underline-offset-2 hover:underline">
-              ⑨ 问老师
+              ⑩ 问老师
             </a>
           </li>
           <li>
             <a href="#pro-learn" className="underline-offset-2 hover:underline">
-              ⑩ 相关阅读
+              ⑪ 相关阅读
             </a>
           </li>
         </ol>

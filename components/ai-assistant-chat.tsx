@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowDown, Send, Sparkles } from 'lucide-react';
 import {
@@ -23,9 +23,14 @@ import {
   type ChatContextState,
   type ChatMessage,
   buildPreviousUserQuestionMap,
+  buildSyntheticOpeningMessage,
+  buildSyntheticOpeningMessageId,
   defaultWorldYiQuestions,
   findLatestScopedTacitContext,
   getIntentPreset,
+  hasRealChatMessages,
+  isSyntheticOpeningMessage,
+  isSyntheticOpeningMessageId,
   toMaterialPayload,
 } from '@/components/ai-assistant-chat/chat-helpers';
 import {
@@ -106,6 +111,10 @@ export default function AIAssistantChat() {
   const [openingTeacherId, setOpeningTeacherId] = useState('');
   const [greetingIndex, setGreetingIndex] = useState(0);
   const openingShownKeyRef = useRef('');
+  /** Prevents double-inject of client-only first_mes for the same teacher/report key. */
+  const openingInjectedKeyRef = useRef('');
+  /** After user deletes a synthetic opening, suppress re-inject until key changes. */
+  const openingDeletedKeyRef = useRef('');
   const {
     editingMessageId,
     editingContent,
@@ -276,6 +285,13 @@ export default function AIAssistantChat() {
       }));
       const latestTacitContext = findLatestScopedTacitContext(mapped);
 
+      // Real history replaces the timeline; allow opening re-inject only when empty.
+      if (mapped.length === 0) {
+        openingInjectedKeyRef.current = '';
+        openingDeletedKeyRef.current = '';
+      } else {
+        openingInjectedKeyRef.current = '';
+      }
       setMessages(mapped);
       setPreviousUserQuestions(buildPreviousUserQuestionMap(mapped));
       setContext(data.context || null);
@@ -481,6 +497,19 @@ export default function AIAssistantChat() {
 
   const handleDeleteMessage = async (messageId: string) => {
     if (isTyping || loadingHistory) return;
+
+    // Client-only consultant opening — remove locally, never hit the API.
+    if (isSyntheticOpeningMessageId(messageId)) {
+      if (!window.confirm('删除这条开场白？')) {
+        return;
+      }
+      openingDeletedKeyRef.current = messageId;
+      openingInjectedKeyRef.current = messageId;
+      setMessages((current) => current.filter((item) => item.id !== messageId));
+      setEditingMessageId(null);
+      return;
+    }
+
     if (!window.confirm('删除这条消息后，这条消息之后的对话也会一并移除，确认继续吗？')) {
       return;
     }
@@ -518,6 +547,10 @@ export default function AIAssistantChat() {
 
   const handleRegenerateMessage = async (messageId: string) => {
     if (isTyping || loadingHistory) return;
+    if (isSyntheticOpeningMessageId(messageId)) {
+      // Opening is template text, not an LLM reply.
+      return;
+    }
     if (!window.confirm('重新生成会覆盖这条回答之后的对话分支，确认继续吗？')) {
       return;
     }
@@ -695,6 +728,8 @@ export default function AIAssistantChat() {
 
   const handleOpeningChip = (chip: TeacherTopicChip) => {
     const nextId = chip.teacherId || chip.id;
+    // Allow re-inject / in-place update after a local opening delete.
+    openingDeletedKeyRef.current = '';
     setOpeningTeacherId(nextId);
     setGreetingIndex(0);
     void trackClientEvent({
@@ -709,6 +744,7 @@ export default function AIAssistantChat() {
   };
 
   const handleSwapGreeting = () => {
+    openingDeletedKeyRef.current = '';
     setGreetingIndex((i) => i + 1);
     void trackClientEvent({
       eventName: 'chat_greeting_swiped',
@@ -721,9 +757,71 @@ export default function AIAssistantChat() {
     });
   };
 
-  // Fire once when empty + report ready
+  // Inject consultant first_mes into the timeline when history is empty.
+  // useLayoutEffect: before paint so we don't flash panel firstMes + bubble.
+  // Topic chip / greeting changes update the synthetic message in place.
+  useLayoutEffect(() => {
+    if (loadingHistory) return;
+    const firstMes = `${openingView.firstMes || ''}`.trim();
+    if (!firstMes) return;
+
+    const boundReportId = reportId || context?.report?.id || 'none';
+    const injectKey = buildSyntheticOpeningMessageId(openingView.teacherId, boundReportId);
+
+    setMessages((current) => {
+      if (hasRealChatMessages(current)) {
+        return current;
+      }
+
+      // User deleted this opening; stay empty until teacher/report key changes.
+      if (openingDeletedKeyRef.current === injectKey) {
+        const withoutOpening = current.filter((m) => !isSyntheticOpeningMessage(m));
+        return withoutOpening.length === current.length ? current : withoutOpening;
+      }
+
+      const openingMsg = buildSyntheticOpeningMessage({
+        teacherId: openingView.teacherId,
+        reportId: boundReportId,
+        content: firstMes,
+      });
+
+      const existingIdx = current.findIndex((m) => isSyntheticOpeningMessage(m));
+      if (existingIdx >= 0) {
+        const existing = current[existingIdx];
+        if (existing.id === openingMsg.id && existing.content === openingMsg.content) {
+          openingInjectedKeyRef.current = injectKey;
+          return current;
+        }
+        const next = current.slice();
+        next[existingIdx] = { ...existing, ...openingMsg, timestamp: existing.timestamp };
+        openingInjectedKeyRef.current = injectKey;
+        openingDeletedKeyRef.current = '';
+        return next;
+      }
+
+      // Only inject into a fully empty timeline (never beside real history).
+      if (current.length > 0) {
+        return current;
+      }
+
+      // Empty timeline → inject once. Concurrent setState both returning [openingMsg]
+      // still yields a single bubble (React keeps last updater result).
+      openingInjectedKeyRef.current = injectKey;
+      openingDeletedKeyRef.current = '';
+      return [openingMsg];
+    });
+  }, [
+    loadingHistory,
+    openingView.firstMes,
+    openingView.teacherId,
+    greetingIndex,
+    reportId,
+    context?.report?.id,
+  ]);
+
+  // Fire once when empty + report ready (synthetic opening counts as empty timeline).
   useEffect(() => {
-    if (loadingHistory || messages.length > 0 || !context?.report) return;
+    if (loadingHistory || hasRealChatMessages(messages) || !context?.report) return;
     const key = `${context.report.id || reportId}:${openingView.teacherId}`;
     if (openingShownKeyRef.current === key) return;
     openingShownKeyRef.current = key;
@@ -739,7 +837,7 @@ export default function AIAssistantChat() {
     });
   }, [
     loadingHistory,
-    messages.length,
+    messages,
     context?.report,
     openingView.teacherId,
     openingView.firstMes,
@@ -763,6 +861,11 @@ export default function AIAssistantChat() {
   const visibleQuickQuestions = intentPreset
     ? Array.from(new Set([...intentPreset.questions, ...quickQuestions])).slice(0, 4)
     : quickQuestions;
+  const hasRealMessages = hasRealChatMessages(messages);
+  const hasSyntheticOpening = messages.some((m) => isSyntheticOpeningMessage(m));
+  /** Chips + starters while timeline has no real turns (empty or opening-only). */
+  const showOpeningChrome = !loadingHistory && !hasRealMessages;
+  const hideOpeningFirstMes = hasSyntheticOpening;
 
   return (
     <div className="flex h-full flex-col bg-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
@@ -813,7 +916,7 @@ export default function AIAssistantChat() {
             <div className="py-10 text-center text-[13px] text-[#606770]">正在载入聊天记录...</div>
           )}
 
-          {!loadingHistory && messages.length === 0 && context?.report ? (
+          {showOpeningChrome && context?.report ? (
             <div className="space-y-2">
               <div className="rounded-[3px] border border-[#e7f3ff] bg-[#f0f6ff] px-3 py-2 text-[12px] leading-5 text-[#365899]">
                 已载入 <span className="font-semibold">{context.report.name || '你'}</span>
@@ -838,29 +941,36 @@ export default function AIAssistantChat() {
                   </>
                 ) : null}
               </div>
-              <ChatOpeningPanel
-                opening={openingView}
-                disabled={isTyping || loadingHistory}
-                onStarter={handleOpeningStarter}
-                onChip={handleOpeningChip}
-                onSwapGreeting={handleSwapGreeting}
-              />
+              {/* first_mes is injected as MessageBubble below; panel keeps chips + starters */}
+              {!hideOpeningFirstMes ? (
+                <ChatOpeningPanel
+                  opening={openingView}
+                  disabled={isTyping || loadingHistory}
+                  onStarter={handleOpeningStarter}
+                  onChip={handleOpeningChip}
+                  onSwapGreeting={handleSwapGreeting}
+                  hideFirstMes={false}
+                />
+              ) : null}
             </div>
           ) : null}
 
-          {!loadingHistory && messages.length === 0 && !context?.report && (
+          {showOpeningChrome && !context?.report ? (
             <div className="space-y-2">
-              <ChatOpeningPanel
-                opening={buildTeacherOpening({
-                  teacherId: resolvedOpeningTeacherId,
-                  greetingIndex,
-                })}
-                disabled={isTyping || loadingHistory}
-                onStarter={handleOpeningStarter}
-                onChip={handleOpeningChip}
-                onSwapGreeting={handleSwapGreeting}
-              />
-              {visibleQuickQuestions.length > 0 ? (
+              {!hideOpeningFirstMes ? (
+                <ChatOpeningPanel
+                  opening={buildTeacherOpening({
+                    teacherId: resolvedOpeningTeacherId,
+                    greetingIndex,
+                  })}
+                  disabled={isTyping || loadingHistory}
+                  onStarter={handleOpeningStarter}
+                  onChip={handleOpeningChip}
+                  onSwapGreeting={handleSwapGreeting}
+                  hideFirstMes={false}
+                />
+              ) : null}
+              {visibleQuickQuestions.length > 0 && !hasSyntheticOpening ? (
                 <div className="space-y-2 rounded-[3px] border border-[#dddfe2] bg-white p-3">
                   <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
                     <Sparkles className="h-3 w-3" />
@@ -879,7 +989,7 @@ export default function AIAssistantChat() {
                 </div>
               ) : null}
             </div>
-          )}
+          ) : null}
 
           {messages.map((message) => (
             <MessageBubble
@@ -909,8 +1019,20 @@ export default function AIAssistantChat() {
             />
           ))}
 
+          {/* After opening bubble: chips + starters (hide firstMes — already in timeline) */}
+          {showOpeningChrome && hideOpeningFirstMes ? (
+            <ChatOpeningPanel
+              opening={openingView}
+              disabled={isTyping || loadingHistory}
+              onStarter={handleOpeningStarter}
+              onChip={handleOpeningChip}
+              onSwapGreeting={handleSwapGreeting}
+              hideFirstMes
+            />
+          ) : null}
+
           {/* Mid-chat: keep conversation moving without blank input anxiety */}
-          {!loadingHistory && messages.length > 0 && !isTyping ? (
+          {!loadingHistory && hasRealMessages && !isTyping ? (
             <ChatMidRail
               opening={openingView}
               disabled={isTyping || loadingHistory}
@@ -931,7 +1053,7 @@ export default function AIAssistantChat() {
           )}
         </div>
 
-        {!isNearBottom && messages.length > 0 ? (
+        {!isNearBottom && hasRealMessages ? (
           <button
             type="button"
             onClick={() => scrollToBottom('smooth')}

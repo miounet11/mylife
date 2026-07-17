@@ -769,6 +769,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   // 只传可序列化字段（iconKey），禁止传 Lucide 组件函数给 Client Component
   const chapterDockItems: ReportChapterDockItem[] = isClassicOnly
     ? [
+        { id: 'report-consultants', label: '问顾问', iconKey: 'footprints' },
         { id: 'expert-desk', label: '排盘', iconKey: 'layers' },
         { id: 'ex-dayun', label: '大运', iconKey: 'calendar' },
         { id: 'ex-cosmos', label: '时空', iconKey: 'compass' },
@@ -777,6 +778,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
         { id: 'ex-print', label: '打印', iconKey: 'bell' },
       ]
     : [
+        { id: 'report-consultants', label: '问顾问', iconKey: 'footprints' },
         { id: 'pro-action', label: '行动', iconKey: 'target' },
         { id: 'pro-guide', label: '结论', iconKey: 'compass' },
         { id: 'pro-kline', label: 'K线', iconKey: 'layers' },
@@ -973,7 +975,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ) : null}
 
                 {/* 紧凑跳转，不再堆叠完整 ReadingPath / NextActions 双模块 */}
-                <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-3">
+                <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2 lg:grid-cols-4">
+                  <a href="#report-consultants" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
+                    先问一位顾问
+                  </a>
                   <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
                     下一步 → 看时间地图
                   </a>

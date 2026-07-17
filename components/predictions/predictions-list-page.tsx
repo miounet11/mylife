@@ -21,6 +21,8 @@ import {
 import { PredictionsPanel } from '@/components/predictions/predictions-panel';
 import RelatedDimensionsPanel from '@/components/dimensions/related-dimensions-panel';
 import { listDimensionsSorted } from '@/lib/dimensions/config';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
+import { buildTeacherChatHref } from '@/lib/teachers';
 
 const CATEGORY_LABELS: Record<Prediction['category'], string> = {
   career: '事业',
@@ -30,9 +32,34 @@ const CATEGORY_LABELS: Record<Prediction['category'], string> = {
   timing: '时序',
 };
 
+/** Prefer query reportId; else most frequent report among local predictions. */
+function resolveContextReportId(
+  queryReportId: string | null,
+  predictions: Prediction[],
+): string | null {
+  const fromQuery = `${queryReportId || ''}`.trim();
+  if (fromQuery) return fromQuery;
+  const counts = new Map<string, number>();
+  for (const item of predictions) {
+    const id = `${item.reportId || ''}`.trim();
+    if (!id) continue;
+    counts.set(id, (counts.get(id) || 0) + 1);
+  }
+  let best: string | null = null;
+  let bestCount = 0;
+  for (const [id, count] of counts) {
+    if (count > bestCount) {
+      best = id;
+      bestCount = count;
+    }
+  }
+  return best;
+}
+
 export default function PredictionsListPage() {
   const searchParams = useSearchParams();
   const dimensionFromQuery = searchParams.get('dimension') || 'all';
+  const reportIdFromQuery = searchParams.get('reportId');
   const [loading, setLoading] = useState(true);
   const [dimensionFilter, setDimensionFilter] = useState(dimensionFromQuery);
   const [upcoming, setUpcoming] = useState<Prediction[]>([]);
@@ -82,6 +109,26 @@ export default function PredictionsListPage() {
       .map((item) => ({ slug: item.slug, title: item.title, total: 0 }));
   }, [dimensionStats]);
 
+  const contextReportId = useMemo(
+    () => resolveContextReportId(reportIdFromQuery, all),
+    [reportIdFromQuery, all],
+  );
+
+  /** Opening chat: with report → continue; without → teachers gallery / opening chat. */
+  const continueChatHref = useMemo(() => {
+    if (contextReportId) {
+      return buildReportContinueChatHref({
+        reportId: contextReportId,
+        teacher: 'overview',
+        source: 'predictions_revisit_opening',
+      });
+    }
+    return buildTeacherChatHref({
+      teacherId: 'practice',
+      source: 'predictions_hub_consultant',
+    });
+  }, [contextReportId]);
+
   if (loading) {
     return (
       <div className="fb-card flex items-center justify-center gap-2 p-10 text-[13px] text-[color:var(--ink-3)]">
@@ -97,6 +144,50 @@ export default function PredictionsListPage() {
 
   return (
     <div className="space-y-4">
+      {/* Linear-clean：带报告回聊 / 顾问开场 */}
+      <section className="border-y border-[color:var(--hairline)] py-3.5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
+            <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
+              带报告回聊
+            </h2>
+            <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+              {contextReportId
+                ? '对照预测命中结果，结合本盘开场再问总览或实践老师'
+                : '验证后可带报告继续聊；暂无报告时先选一位顾问开场'}
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+            <Link
+              href={continueChatHref}
+              className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+            >
+              {contextReportId ? '继续聊 →' : '问顾问 →'}
+            </Link>
+            {!contextReportId ? (
+              <Link
+                href="/teachers"
+                className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+              >
+                全部老师
+              </Link>
+            ) : (
+              <Link
+                href={buildTeacherChatHref({
+                  teacherId: 'practice',
+                  reportId: contextReportId,
+                  source: 'predictions_hub_consultant',
+                })}
+                className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+              >
+                实践老师
+              </Link>
+            )}
+          </div>
+        </div>
+      </section>
+
       {stats.total > 0 || all.length > 0 ? (
         <section className="fb-card p-4 md:p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">

@@ -34,7 +34,7 @@ export function ChatMidRail({
               type="button"
               disabled={disabled}
               onClick={() => onChip(chip)}
-              className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold disabled:opacity-50 ${
+              className={`min-h-[44px] touch-manipulation rounded-full border px-3 py-2 text-[11px] font-semibold active:opacity-70 disabled:opacity-50 sm:min-h-0 sm:px-2 sm:py-0.5 ${
                 active
                   ? 'border-[#3b5998] bg-[#e7f3ff] text-[#3b5998]'
                   : 'border-[#dddfe2] bg-white text-[#4b4f56]'
@@ -45,14 +45,14 @@ export function ChatMidRail({
           );
         })}
       </div>
-      <div className="mt-1.5 flex flex-col gap-1">
+      <div className="mt-1.5 flex w-full flex-col gap-1">
         {opening.continuationStarters.map((text) => (
           <button
             key={text}
             type="button"
             disabled={disabled}
             onClick={() => onStarter(text, { source: 'mid_continuation' })}
-            className="rounded-[6px] border border-[#dddfe2] bg-white px-2.5 py-1.5 text-left text-[12px] leading-[1.45] text-[#1d2129] hover:border-[#3b5998] disabled:opacity-50"
+            className="min-h-[44px] w-full touch-manipulation rounded-[6px] border border-[#dddfe2] bg-white px-2.5 py-2.5 text-left text-[12px] leading-[1.45] text-[#1d2129] hover:border-[#3b5998] active:opacity-70 disabled:opacity-50 sm:min-h-0 sm:py-1.5"
           >
             {text}
           </button>

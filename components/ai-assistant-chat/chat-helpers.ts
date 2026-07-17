@@ -50,6 +50,40 @@ export interface ChatMessage {
   fallbackReason?: string | null;
 }
 
+/** Client-only consultant opening bubble (not persisted to chat history). */
+export function isSyntheticOpeningMessageId(id: string | null | undefined): boolean {
+  return String(id || '').startsWith('opening_');
+}
+
+export function isSyntheticOpeningMessage(message: Pick<ChatMessage, 'id'>): boolean {
+  return isSyntheticOpeningMessageId(message.id);
+}
+
+export function buildSyntheticOpeningMessageId(
+  teacherId: string,
+  reportId?: string | null,
+): string {
+  return `opening_${teacherId}_${reportId || 'none'}`;
+}
+
+export function buildSyntheticOpeningMessage(params: {
+  teacherId: string;
+  reportId?: string | null;
+  content: string;
+}): ChatMessage {
+  return {
+    id: buildSyntheticOpeningMessageId(params.teacherId, params.reportId),
+    role: 'assistant',
+    content: params.content,
+    timestamp: null,
+    llmUsed: false,
+  };
+}
+
+export function hasRealChatMessages(messages: Array<Pick<ChatMessage, 'id'>>): boolean {
+  return messages.some((m) => !isSyntheticOpeningMessage(m));
+}
+
 export type IntentPreset = {
   entryLabel: string;
   helper: string;

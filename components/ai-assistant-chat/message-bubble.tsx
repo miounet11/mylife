@@ -14,6 +14,7 @@ import {
   type ChatFeedbackRating,
   type ChatMessage,
   formatChatTime,
+  isSyntheticOpeningMessage,
 } from '@/components/ai-assistant-chat/chat-helpers';
 import { parseChatAnswerStructure } from '@/lib/chat-answer-contract';
 
@@ -65,8 +66,11 @@ export function MessageBubble({
 }: MessageBubbleProps) {
   const time = formatChatTime(message.timestamp);
   const feedback = message.feedbackRating || null;
+  const isOpening = isSyntheticOpeningMessage(message);
   const structured =
-    message.role === 'assistant' ? parseChatAnswerStructure(message.content) : null;
+    message.role === 'assistant' && !isOpening
+      ? parseChatAnswerStructure(message.content)
+      : null;
   const verifyHint = structured?.verify || '';
 
   if (message.role === 'user') {
@@ -172,23 +176,32 @@ export function MessageBubble({
   return (
     <div className="flex justify-start">
       <div
-        className="max-w-[80%] rounded-[18px] px-4 py-2.5 text-[14px] text-[#1d2129]"
+        className={`${isOpening ? 'max-w-[92%]' : 'max-w-[80%]'} rounded-[18px] px-4 py-2.5 text-[14px] text-[#1d2129]`}
         style={{ background: AI_BUBBLE_BG }}
       >
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className="font-bold text-[#1d2129]">结构回复</span>
-          {message.llmUsed === false && (
+          <span className="font-bold text-[#1d2129]">{isOpening ? '顾问开场' : '结构回复'}</span>
+          {isOpening ? (
+            <span className="rounded-[3px] bg-white px-1.5 py-0.5 font-semibold text-[#606770]">开场</span>
+          ) : null}
+          {!isOpening && message.llmUsed === false && (
             <span className="rounded-[3px] bg-[#fff7e6] px-1.5 py-0.5 font-semibold text-[#a87f2c]">待重试</span>
           )}
-          {message.regenerated ? (
+          {!isOpening && message.regenerated ? (
             <span className="rounded-[3px] bg-white px-1.5 py-0.5 font-semibold text-[#606770]">已重生成</span>
           ) : null}
-          {message.edited ? (
+          {!isOpening && message.edited ? (
             <span className="rounded-[3px] bg-white px-1.5 py-0.5 font-semibold text-[#606770]">源问题已编辑</span>
           ) : null}
         </div>
         <div className="mt-1.5">
-          <ChatMarkdown content={message.content} />
+          {isOpening ? (
+            <p className="whitespace-pre-wrap break-words text-[14px] leading-5 text-[#1d2129]">
+              {message.content}
+            </p>
+          ) : (
+            <ChatMarkdown content={message.content} />
+          )}
         </div>
         {verifyHint ? (
           <div className="mt-2 rounded-[6px] border border-[#d4e4f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
@@ -198,15 +211,17 @@ export function MessageBubble({
         ) : null}
         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-[#606770]">
           <span>
-            {message.llmUsed
-              ? '结合当前报告与对话内容生成'
-              : message.fallbackReason
-                ? `简化回答（${message.fallbackReason}）；可点重生成。`
-                : '这次没有拿到可用解析，未硬编答案；可点重生成。'}
+            {isOpening
+              ? '本地开场 · 点下方议题或一键开口即可开始'
+              : message.llmUsed
+                ? '结合当前报告与对话内容生成'
+                : message.fallbackReason
+                  ? `简化回答（${message.fallbackReason}）；可点重生成。`
+                  : '这次没有拿到可用解析，未硬编答案；可点重生成。'}
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
-            <span>{time}</span>
-            {onFeedback ? (
+            {time ? <span>{time}</span> : null}
+            {!isOpening && onFeedback ? (
               <>
                 <button
                   type="button"
@@ -247,16 +262,18 @@ export function MessageBubble({
                 </button>
               </>
             ) : null}
-            <button
-              type="button"
-              onClick={() => onRegenerate(message.id)}
-              disabled={isActing}
-              className="fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <RotateCcw className="h-3 w-3" />
-              {isActing ? '...' : '重生成'}
-            </button>
-            {previousUserQuestion && (
+            {!isOpening ? (
+              <button
+                type="button"
+                onClick={() => onRegenerate(message.id)}
+                disabled={isActing}
+                className="fb-btn inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <RotateCcw className="h-3 w-3" />
+                {isActing ? '...' : '重生成'}
+              </button>
+            ) : null}
+            {!isOpening && previousUserQuestion ? (
               <button
                 type="button"
                 onClick={() => onSaveEvent(previousUserQuestion, message.content, message.id)}
@@ -267,7 +284,7 @@ export function MessageBubble({
                 {isSaved ? <CheckCircle2 className="h-3 w-3 text-[#2f7d52]" /> : null}
                 {isSaved ? '已记验证' : isSaving ? '保存中...' : '记验证点'}
               </button>
-            )}
+            ) : null}
             <button
               type="button"
               onClick={() => onCopy(message.id, message.content)}
@@ -287,7 +304,7 @@ export function MessageBubble({
             </button>
           </div>
         </div>
-        {feedback ? (
+        {!isOpening && feedback ? (
           <div className="mt-1.5 text-[11px] text-[#8a8d91]">
             已记录反馈：
             {feedback === 'helpful' ? '有用' : feedback === 'not_helpful' ? '无帮助' : '太空/套话'}
