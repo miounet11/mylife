@@ -27,11 +27,16 @@ describe('teacher-opening', () => {
         dayMaster: '辛',
         pattern: '正格',
         currentDaYun: '乙酉',
+        yongShen: ['木'],
+        bestWindow: '2026.10 推进',
+        riskWindow: '2027.02 谨慎',
       }),
     });
     assert.equal(view.teacherId, 'career');
     assert.ok(view.firstMes.includes('辛'));
+    assert.ok(view.firstMes.includes('木') || view.firstMes.includes('推进'));
     assert.ok(view.starters.length >= 2);
+    assert.ok(view.continuationStarters.length >= 2);
     assert.ok(view.chips.some((c) => c.label.includes('事业') || c.id === 'career'));
   });
 

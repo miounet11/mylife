@@ -165,11 +165,10 @@ export default function ReportCockpit({
                         reportId,
                         intent: sg.intent,
                         teacher: teacherIdFromFollowupIntent(sg.intent),
-                        // High-intent card: keep prefill question, but land on right teacher
-                        question: sg.question,
-                        mode: 'prefill',
+                        // Soft opening: land on consultant card with window label (no long prefill)
+                        mode: 'opening',
                         window: sg.label || null,
-                        source: 'result_cockpit_followup_suggestion',
+                        source: 'result_cockpit_followup_suggestion:opening',
                         ctaStrategyKey: ctaStrategyKey || null,
                         sourceFamily: sourceFamily || null,
                       })}

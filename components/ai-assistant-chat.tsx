@@ -32,6 +32,7 @@ import {
   QuickQuestionButton,
 } from '@/components/ai-assistant-chat/chat-buttons';
 import { ChatOpeningPanel } from '@/components/ai-assistant-chat/chat-opening-panel';
+import { ChatMidRail } from '@/components/ai-assistant-chat/chat-mid-rail';
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
 import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
 import { MessageBubble } from '@/components/ai-assistant-chat/message-bubble';
@@ -175,13 +176,20 @@ export default function AIAssistantChat() {
     teacherId: resolvedOpeningTeacherId,
     greetingIndex,
     slots: context?.report
-      ? slotsFromChatReport({
-          name: context.report.name,
-          dayMaster: context.report.dayMaster,
-          pattern: context.report.pattern,
-          currentDaYun: context.report.currentDaYun,
-          windowHint: openingWindowHint,
-        })
+      ? slotsFromChatReport(
+          {
+            name: context.report.name,
+            dayMaster: context.report.dayMaster,
+            pattern: context.report.pattern,
+            currentDaYun: context.report.currentDaYun,
+            currentLiuNian: context.report.currentLiuNian,
+            yongShen: context.report.yongShen,
+            bestWindow: context.report.bestWindow,
+            riskWindow: context.report.riskWindow,
+            topScenario: context.report.topScenario,
+          },
+          { windowHint: openingWindowHint },
+        )
       : openingWindowHint
         ? { windowHint: openingWindowHint }
         : undefined,
@@ -659,16 +667,28 @@ export default function AIAssistantChat() {
   };
 
   const handleOpeningStarter = (question: string, meta?: { source?: string }) => {
+    const src = meta?.source || 'opening_starter';
     void trackClientEvent({
       eventName: 'chat_starter_clicked',
       page: '/chat',
       meta: {
         teacherId: openingView.teacherId,
-        source: meta?.source || 'opening_starter',
+        source: src,
         reportId: reportId || context?.report?.id || null,
         questionLength: question.length,
       },
     });
+    if (src === 'mid_continuation') {
+      void trackClientEvent({
+        eventName: 'chat_followup_clicked',
+        page: '/chat',
+        meta: {
+          teacherId: openingView.teacherId,
+          source: 'mid_continuation',
+          reportId: reportId || context?.report?.id || null,
+        },
+      });
+    }
     trackFollowupClick(question);
     void sendQuestion(question);
   };
@@ -803,6 +823,20 @@ export default function AIAssistantChat() {
                 <span className="font-mono font-semibold">{context.report.pattern || '—'}</span>
                 · 大运{' '}
                 <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
+                {(context.report.yongShen || []).length > 0 ? (
+                  <>
+                    {' '}
+                    · 用神{' '}
+                    <span className="font-semibold">{context.report.yongShen.join('、')}</span>
+                  </>
+                ) : null}
+                {context.report.bestWindow ? (
+                  <>
+                    {' '}
+                    · 窗口{' '}
+                    <span className="font-semibold">{context.report.bestWindow}</span>
+                  </>
+                ) : null}
               </div>
               <ChatOpeningPanel
                 opening={openingView}
@@ -874,6 +908,16 @@ export default function AIAssistantChat() {
               copied={copiedMessageId === message.id}
             />
           ))}
+
+          {/* Mid-chat: keep conversation moving without blank input anxiety */}
+          {!loadingHistory && messages.length > 0 && !isTyping ? (
+            <ChatMidRail
+              opening={openingView}
+              disabled={isTyping || loadingHistory}
+              onStarter={handleOpeningStarter}
+              onChip={handleOpeningChip}
+            />
+          ) : null}
 
           {isTyping && (
             <div className="flex justify-start">

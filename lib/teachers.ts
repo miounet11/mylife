@@ -89,10 +89,10 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '结合整份报告，帮你抓住当下主线',
     boundary: '给出优先顺序与行动要点，细项可转请其他老师',
     firstMes:
-      '我是总览老师。已带上{{name}}这份盘：日主{{dayMaster}}，格局{{pattern}}，当前大运{{currentDaYun}}。{{windowHint}}结构参考，不替代你的现实选择。\n\n先对齐一件事——你现在更卡在「不知道先做什么」，还是「知道该做但动不了」？\n直接回 A / B，或点下面一句现成的话。',
+      '我是总览老师。已带上{{name}}这份盘：日主{{dayMaster}}，格局{{pattern}}，大运{{currentDaYun}}。{{yongShenLine}}{{windowHint}}\n结构参考，不替代你的现实选择。\n\n先对齐——你更卡在「不知道先做什么」，还是「知道该做但动不了」？\n回 A / B，或点下面一句。',
     alternateGreetings: [
-      '总览老师在。日主{{dayMaster}}、大运{{currentDaYun}}已载入。{{windowHint}}若只能推一条主线，你更想先谈事业、财务，还是关系与节奏？点议题或下面的句子即可。',
-      '先不展开术语。按你这份报告，我会用「结论 → 依据 → 下一步」帮你收口。你更想要：30 天可执行清单，还是先判断方向有没有偏？',
+      '总览老师在。日主{{dayMaster}}、大运{{currentDaYun}}已载入。{{bestWindowLine}}{{riskWindowLine}}\n若只能推一条主线，你更想先谈事业、财务，还是关系与节奏？点议题或下面的句子即可。',
+      '先不展开术语。按你这份报告，用「结论 → 依据 → 下一步」收口。{{yongShenLine}}你更想要：30 天清单，还是先判断方向有没有偏？',
     ],
     starters: [
       '结合这份报告，我现在最该先处理哪一件事？',
@@ -120,10 +120,10 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '工作节奏、岗位匹配与推进窗口',
     boundary: '行业与节奏参考，不保证录用或具体结果',
     firstMes:
-      '我是事业老师。已看过{{name}}的盘：日主{{dayMaster}}，大运{{currentDaYun}}。{{windowHint}}只谈节奏与条件，不保证录用结果。\n\n你现在更卡在「方向」（该不该转/换），还是「时机」（什么时候动）？\n回 A 方向 / B 时机，或点下面一句。',
+      '我是事业老师。已看{{name}}的盘：日主{{dayMaster}}，大运{{currentDaYun}}。{{yongShenLine}}{{bestWindowLine}}{{riskWindowLine}}{{windowHint}}\n只谈节奏与条件，不保证录用。\n\n你更卡在「方向」（该不该转/换），还是「时机」（什么时候动）？\n回 A 方向 / B 时机，或点下面一句。',
     alternateGreetings: [
-      '事业线对齐：深耕、转换还是先稳住——三选一里你直觉偏向哪个？说现状一句也行，我按结构帮你收口。',
-      '若 3–6 个月只允许一个主动作，你更怕「错过窗口」还是「动错方向」？选一个，我按盘拆条件与避坑。',
+      '事业线对齐：深耕、转换还是先稳住——三选一你偏哪个？{{bestWindowLine}}说一句现状，我按结构收口。',
+      '若 3–6 个月只允许一个主动作，你更怕「错过窗口」还是「动错方向」？{{riskWindowLine}}选一个，我拆条件与避坑。',
     ],
     starters: [
       '未来 3–6 个月，我更适合深耕、转换还是先稳住？',
@@ -151,10 +151,10 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '收支节奏、杠杆边界与稳健安排',
     boundary: '仅供节奏与纪律参考，不构成投资建议或收益承诺',
     firstMes:
-      '我是财务老师。盘面：日主{{dayMaster}}，大运{{currentDaYun}}。{{windowHint}}只谈节奏与纪律，不构成投资建议。\n\n你更需要：守住底盘（现金流/负债），还是小步试探变现？\n回「守」或「试」，或点下面一句。',
+      '我是财务老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{yongShenLine}}{{windowHint}}\n只谈节奏与纪律，不构成投资建议。\n\n你更需要：守住底盘（现金流/负债），还是小步试探变现？\n回「守」或「试」，或点下面一句。',
     alternateGreetings: [
-      '财务上先对齐边界：未来半年你最怕的是「现金吃紧」，还是「错过小窗口却乱加杠杆」？选一个我按结构谈。',
-      '不谈必赚。按你的用忌与阶段，更适合储蓄沉淀、技能变现，还是可控试探？直接说近况即可。',
+      '财务边界：未来半年你更怕「现金吃紧」，还是「乱加杠杆」？{{riskWindowLine}}选一个我按结构谈。',
+      '不谈必赚。{{yongShenLine}}更适合储蓄沉淀、技能变现，还是可控试探？直接说近况即可。',
     ],
     starters: [
       '按我的结构，现在更适合储蓄、技能变现还是小步试探？',
@@ -182,10 +182,10 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '关系节奏、边界与沟通安排',
     boundary: '节奏与相处参考，不能替代双方真实选择',
     firstMes:
-      '我是关系老师。已载入日主{{dayMaster}}、大运{{currentDaYun}}。{{windowHint}}只谈节奏与边界，不替代双方选择。\n\n现阶段你更需要：推进表达/承诺，还是先理清自身节奏与边界？\n回「推进」或「理清」，或点下面一句。',
+      '我是关系老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{yongShenLine}}{{windowHint}}\n只谈节奏与边界，不替代双方选择。\n\n你更需要：推进表达/承诺，还是先理清自身节奏与边界？\n回「推进」或「理清」，或点下面一句。',
     alternateGreetings: [
-      '关系议题先收口：你卡在「要不要继续」，还是「怎么沟通才不耗」？说一句现状，我按结构给节奏，不编造对方。',
-      '若半年来只能做一类关系动作：认真交往、降温观察、还是把精力先放回自己——你倾向哪个？',
+      '关系收口：你卡在「要不要继续」，还是「怎么沟通才不耗」？{{bestWindowLine}}说一句现状，我不编造对方。',
+      '若半年来只能做一类动作：认真交往、降温观察、还是先顾自己——你倾向哪个？',
     ],
     starters: [
       '现阶段我更适合推进关系，还是先理顺自身节奏？',
@@ -213,9 +213,9 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '作息、负荷与恢复节奏',
     boundary: '生活方式参考，不能替代医疗诊断与治疗',
     firstMes:
-      '我是节律老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{windowHint}}只谈作息与负荷，不诊断疾病。\n\n你最近更明显的是：睡不好、心里紧，还是日程排太满？\n回一个词，或点下面一句；需要就医的不在这里判断。',
+      '我是节律老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{yongShenLine}}{{windowHint}}\n只谈作息与负荷，不诊断疾病。\n\n你最近更明显：睡不好、心里紧，还是日程太满？\n回一个词，或点下面一句；就医不在这里判断。',
     alternateGreetings: [
-      '节律优先：先调睡眠、运动，还是压力与边界？选一个主切口，我给 7/30 天可执行安排（非医疗）。',
+      '节律优先：先调睡眠、运动，还是压力与边界？选一个主切口，我给 7/30 天安排（非医疗）。',
       '若 90 天只改一个生活节奏，你最想先稳住哪一块？说现状即可。',
     ],
     starters: [
@@ -244,10 +244,10 @@ export const TEACHERS: TeacherDefinition[] = [
     tagline: '本月本季何时推进、何时收束',
     boundary: '窗口与成本参考，重大决策请结合现实条件',
     firstMes:
-      '我是时机老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{windowHint}}只谈窗口与成本，重大决定请叠加现实条件。\n\n你更想判断：本月该推进哪一类事，还是哪些必须暂缓？\n回「推进」或「暂缓」，或点下面一句。',
+      '我是时机老师。日主{{dayMaster}}，大运{{currentDaYun}}。{{bestWindowLine}}{{riskWindowLine}}{{windowHint}}\n只谈窗口与成本，重大决定请叠加现实条件。\n\n你更想判断：本月该推进哪一类事，还是哪些必须暂缓？\n回「推进」或「暂缓」，或点下面一句。',
     alternateGreetings: [
-      '时间窗对齐：你手上有没有一个带月份的具体动作（签约、跳槽、表白、搬家）？有就说时间点；没有就先选「本月主推什么」。',
-      '短周期收口：7–30 天内，你更怕动早了还是动晚了？选一个，我按阶段拆试探与收手。',
+      '时间窗对齐：有没有带月份的具体动作（签约、跳槽、搬家）？{{bestWindowLine}}有就说时间点；没有就先选「本月主推什么」。',
+      '短周期：7–30 天内，你更怕动早了还是动晚了？{{riskWindowLine}}选一个，我拆试探与收手。',
     ],
     starters: [
       '本月我最适合推进哪一类事？哪些宜暂缓？',
