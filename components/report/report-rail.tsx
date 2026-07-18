@@ -19,13 +19,13 @@ export function ReportRailRight({
           <section className="fb-card p-3.5">
             <div className="flex items-center gap-1.5 text-[13px] font-semibold text-[color:var(--ink-1)]">
               <MessageSquareText className="h-3.5 w-3.5 text-[color:var(--ink-3)]" strokeWidth={1.75} />
-              继续追问
+              顾问开场
             </div>
             <Link
               href={buildReportContinueChatHref({ reportId: reportId, source: 'result_rail', teacher: 'overview' })}
               className="mt-2.5 inline-flex items-center gap-1 text-[13px] font-medium text-[color:var(--brand)] transition hover:text-[color:var(--brand-strong)] hover:no-underline"
             >
-              基于报告追问 <ArrowRight className="h-3.5 w-3.5" />
+              带报告开场 <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </section>
         ) : null}

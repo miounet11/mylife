@@ -91,7 +91,7 @@ export function ValidationFeedbackHero({ reportId }: { reportId: string }) {
           预测回访
         </a>
         <a href={buildReportContinueChatHref({ reportId: reportId, source: 'result_deep_summary', teacher: 'overview' })} className="fb-btn h-9 px-4 text-[13px] hover:no-underline">
-          继续追问
+          顾问开场
         </a>
       </div>
     </section>

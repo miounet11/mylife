@@ -155,7 +155,7 @@ export default function ReportCockpit({
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
                 <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <MessageCircleQuestion className="h-3 w-3" />
-                  继续追问
+                  顾问开场
                 </div>
                 <div className="mt-2 grid gap-1.5">
                   {suggestions.map((sg, idx) => (

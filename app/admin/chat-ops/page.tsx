@@ -6,9 +6,31 @@ import { AppPage } from '@/components/layout/app-page';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminChatOpsPage() {
+const WINDOW_OPTIONS = [
+  { hours: 24, label: '24h' },
+  { hours: 72, label: '72h' },
+  { hours: 168, label: '7d' },
+] as const;
+
+interface PageProps {
+  searchParams?: Promise<{ hours?: string }>;
+}
+
+function parseWindowHours(raw?: string | null): number {
+  const n = Number(raw || 24);
+  if (!Number.isFinite(n)) return 24;
+  if (n <= 24) return 24;
+  if (n <= 72) return 72;
+  return 168;
+}
+
+export default async function AdminChatOpsPage({ searchParams }: PageProps) {
   await requireAdminUser('/admin/chat-ops');
-  const snap = getChatOpsSnapshot(24);
+  const sp = searchParams ? await searchParams : {};
+  const windowHours = parseWindowHours(sp.hours);
+  const snap = getChatOpsSnapshot(windowHours);
+  const windowLabel =
+    windowHours === 168 ? '7d' : windowHours === 72 ? '72h' : '24h';
 
   return (
     <AppPage header={{ ctaHref: '/admin/dashboard', ctaLabel: '运营看板' }}>
@@ -17,12 +39,32 @@ export default async function AdminChatOpsPage() {
           <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#6d28d9]">
             Chat Ops
           </div>
-          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">对话运营 · 24h</h1>
+          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">
+            对话运营 · {windowLabel}
+          </h1>
           <p className="mt-1 text-[12px] text-[#64748b]">
             顾问开场 · 结构合规 · 用户反馈 · EFC 校验 · 自 {snap.since}
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-[12px] font-semibold text-[#6d28d9]">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[#6d28d9]">
+          <div className="flex overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white">
+            {WINDOW_OPTIONS.map((opt) => {
+              const active = windowHours === opt.hours;
+              return (
+                <Link
+                  key={opt.hours}
+                  href={`/admin/chat-ops?hours=${opt.hours}`}
+                  className={`px-2.5 py-1.5 no-underline hover:no-underline ${
+                    active
+                      ? 'bg-[#6d28d9] text-white'
+                      : 'text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+                  }`}
+                >
+                  {opt.label}
+                </Link>
+              );
+            })}
+          </div>
           <Link href="/admin/chat-eval" className="hover:underline">
             评测导出
           </Link>
@@ -52,7 +94,7 @@ export default async function AdminChatOpsPage() {
           value={snap.structure.richRate != null ? snap.structure.richRate : snap.structure.scored}
           helper={
             snap.structure.richRate != null
-              ? `rich ${snap.structure.rich}/${snap.structure.scored} · 均填 ${snap.structure.avgFilled ?? '—'}`
+              ? `rich ${snap.structure.rich}/${snap.structure.scored} · repair ${snap.structure.repairRate ?? 0}%`
               : '尚无结构评分样本'
           }
           suffix={snap.structure.richRate != null ? '%' : undefined}
@@ -127,7 +169,8 @@ export default async function AdminChatOpsPage() {
 
       <p className="mt-6 text-[11px] leading-5 text-[#94a3b8]">
         目标：开场→starter 转化与「有用」占比上升；结构丰富率上升、thin 与 EFC 告警趋近 0。
-        数据来自 analytics_events（含 chat_structure_scored）。
+        数据来自 analytics_events（含 chat_structure_scored.repaired）。时段切换：
+        24h / 72h / 7d。
       </p>
     </AppPage>
   );

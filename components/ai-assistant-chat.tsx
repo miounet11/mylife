@@ -314,7 +314,7 @@ export default function AIAssistantChat() {
       } else if (data.contextBindError || (reportId && !data.contextBound)) {
         setBindError(
           data.contextBindError === 'report_not_owned_by_session'
-            ? '报告未能绑定到当前会话（可能换了浏览器或登录态）。请从报告页「继续追问」重新进入。'
+            ? '报告未能绑定到当前会话（可能换了浏览器或登录态）。请从报告页「顾问开场」重新进入。'
             : '尚未绑定结构报告，命盘级追问会缺少日主/用神真值。请从报告页进入或先完成排盘。',
         );
       } else if (!reportId) {

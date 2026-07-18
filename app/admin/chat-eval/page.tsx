@@ -6,13 +6,29 @@ import { AppPage } from '@/components/layout/app-page';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminChatEvalPage() {
+interface PageProps {
+  searchParams?: Promise<{ hours?: string }>;
+}
+
+function parseEvalHours(raw?: string | null): number {
+  const n = Number(raw || 168);
+  if (!Number.isFinite(n)) return 168;
+  if (n <= 24) return 24;
+  if (n <= 72) return 72;
+  return 168;
+}
+
+export default async function AdminChatEvalPage({ searchParams }: PageProps) {
   await requireAdminUser('/admin/chat-eval');
+  const sp = searchParams ? await searchParams : {};
+  const windowHours = parseEvalHours(sp.hours);
+  const windowLabel =
+    windowHours === 24 ? '24h' : windowHours === 72 ? '72h' : '7 天';
   const snap = exportChatEvalCases({
     limit: 60,
     onlyFeedback: true,
     prioritizeNegative: true,
-    windowHours: 168,
+    windowHours,
   });
   const buckets = summarizeBuckets(snap.byBucket);
 
@@ -23,25 +39,49 @@ export default async function AdminChatEvalPage() {
           <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#6d28d9]">
             Chat Eval
           </div>
-          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">对话评测导出 · 7 天</h1>
+          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">
+            对话评测导出 · {windowLabel}
+          </h1>
           <p className="mt-1 max-w-2xl text-[12px] text-[#64748b]">
             脱敏后的 Q/A 样本，优先「无帮助 / 太空」。用于 prompt 回归与结构验收，不做模型微调语料。
           </p>
         </div>
-        <div className="flex flex-wrap gap-3 text-[12px] font-semibold text-[#6d28d9]">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[#6d28d9]">
+          <div className="flex overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white">
+            {[
+              { hours: 24, label: '24h' },
+              { hours: 72, label: '72h' },
+              { hours: 168, label: '7d' },
+            ].map((opt) => {
+              const active = windowHours === opt.hours;
+              return (
+                <Link
+                  key={opt.hours}
+                  href={`/admin/chat-eval?hours=${opt.hours}`}
+                  className={`px-2.5 py-1.5 no-underline hover:no-underline ${
+                    active
+                      ? 'bg-[#6d28d9] text-white'
+                      : 'text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+                  }`}
+                >
+                  {opt.label}
+                </Link>
+              );
+            })}
+          </div>
           <a
-            href="/api/admin/chat-eval?format=jsonl&onlyFeedback=1&windowHours=168&limit=200"
+            href={`/api/admin/chat-eval?format=jsonl&onlyFeedback=1&windowHours=${windowHours}&limit=200`}
             className="hover:underline"
           >
             下载 JSONL
           </a>
           <a
-            href="/api/admin/chat-eval?format=json&onlyFeedback=0&windowHours=72&limit=100"
+            href={`/api/admin/chat-eval?format=json&onlyFeedback=0&windowHours=${windowHours}&limit=100`}
             className="hover:underline"
           >
-            近 72h 全量 JSON
+            全量 JSON
           </a>
-          <Link href="/admin/chat-ops" className="hover:underline">
+          <Link href={`/admin/chat-ops?hours=${windowHours}`} className="hover:underline">
             ← Chat Ops
           </Link>
         </div>

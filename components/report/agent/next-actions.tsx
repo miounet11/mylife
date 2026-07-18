@@ -58,7 +58,7 @@ export default function ReportNextActions({
           className="fb-btn fb-btn-primary h-9 px-4 text-[13px] hover:no-underline"
         >
           <MessageSquareText className="h-3.5 w-3.5" />
-          继续追问
+          顾问开场
         </Link>
         <Link
           href={`/events?reportId=${encodeURIComponent(reportId)}`}

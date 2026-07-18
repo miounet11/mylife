@@ -275,7 +275,7 @@ export default function ProfilePage() {
                 reportId: latestResultId || null,
               }}
             >
-              继续追问
+              顾问开场
             </ResultCtaLink>
             <ResultCtaLink
               href={latestResultId ? `/profile/settings?fortuneId=${encodeURIComponent(latestResultId)}` : '/profile/settings'}
