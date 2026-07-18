@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import HehunWorkspace from '@/components/hehun/hehun-workspace';
@@ -51,6 +52,7 @@ export default function HehunPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="hehun/hub" title="双盘对照" compact limit={1} />
         <Suspense fallback={<div className="py-6 text-[13px] text-[color:var(--ink-5)]">加载中…</div>}>
           <HehunWorkspace />
         </Suspense>

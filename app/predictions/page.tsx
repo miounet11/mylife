@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Suspense } from 'react';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import PredictionsListPage from '@/components/predictions/predictions-list-page';
@@ -35,6 +36,7 @@ export default function PredictionsPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="predictions/revisit" title="回访闭环" compact limit={1} />
         <Suspense
           fallback={
             <div className="py-8 text-center text-[13px] text-[color:var(--ink-5)]">加载预测清单…</div>

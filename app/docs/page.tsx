@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -36,6 +37,7 @@ export default function DocsPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="docs/hub" title="方法路径" compact limit={1} />
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">推荐阅读</h2>
           <EntryLinkGrid items={DOC_ENTRIES} />

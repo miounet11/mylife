@@ -88,5 +88,257 @@
     "complexity": "complex",
     "ready": true,
     "title": "一位老师专一事"
+  },
+  {
+    "id": "PI-DOCS-HUB-01",
+    "filename": "docs-method-before-conclusion.jpg",
+    "prompt": "Three-step educational path diagram for a Chinese decision-support app: 1 填写生辰 2 理解真太阳时 3 按顺序读报告. Clean Linear cards, soft paper background, muted ink blue, numbered steps, no superstition imagery.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "方法先于结论"
+  },
+  {
+    "id": "PI-PREDICTIONS-01",
+    "filename": "predictions-revisit-feedback.jpg",
+    "prompt": "Product timeline: prediction card with time window, calendar mark 到期, three feedback chips 命中 部分 未命中, arrow to chat with advisor. Calm educational diagram, Chinese labels, Linear UI, soft paper.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "预测回访：对照现实校准"
+  },
+  {
+    "id": "PI-HEHUN-01",
+    "filename": "hehun-dual-chart-compare.jpg",
+    "prompt": "Two calm side-by-side profile cards labeled 甲方 乙方, connecting lines for 日主互动 and 用忌互补, center label 对照而非定论. Soft paper, ink blue, geometric, Chinese labels, educational marriage chart comparison not romance stock photo.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "合婚：双盘对照"
+  },
+  {
+    "id": "PI-MEMBERSHIP-01",
+    "filename": "membership-report-access.jpg",
+    "prompt": "Clean product benefits diagram with four quiet cards: 完整报告, 窗口详解, 邮箱保存, 预测回访. Not flashy sales, Linear aesthetic, paper background, Chinese labels, membership as research access not destiny guarantee.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "会员：完整报告与回看"
+  },
+  {
+    "id": "PI-PROFILE-01",
+    "filename": "profile-progressive-fill.jpg",
+    "prompt": "Progressive profile ladder diagram: steps 生辰基础, 当前情境, 关键事件, 决策偏好 with progress bar. Minimal Linear forms aesthetic, soft paper, Chinese labels, calm product education.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "资料越完整，判断越稳"
+  },
+  {
+    "id": "PI-KLINE-01",
+    "filename": "life-kline-rhythm-concept.jpg",
+    "prompt": "Elegant abstract life K-line chart: gentle candlestick-like rhythm over multi-year axis, annotated 大运段落 and 流年波动, soft green favorable windows. Educational finance-chart aesthetic mixed with calm life planning, Chinese labels, no horror fate imagery.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "人生K线：节奏而不是宿命"
+  },
+  {
+    "id": "PI-FIVE-ELEMENTS-01",
+    "filename": "five-elements-cycle-edu.jpg",
+    "prompt": "Clean educational five-elements cycle diagram 木 火 土 金 水 with generation arrows and control dashed arrows. Soft pastel geometric nodes, textbook clarity, Chinese characters, paper background, not mystical altar art.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "五行生克（教学示意）"
+  },
+  {
+    "id": "PI-CHAT-STRUCTURE-01",
+    "filename": "chat-answer-five-parts.jpg",
+    "prompt": "Messenger-style answer card broken into five numbered sections: 1 判断依据 2 当前结论 3 阶段动作 4 风险提醒 5 验证点. Clean product UI illustration, Chinese text, Linear minimal, soft paper background.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "顾问回答五段结构"
+  },
+  {
+    "id": "PI-REPORT-RISK-01",
+    "filename": "report-risk-reading.jpg",
+    "prompt": "Soft amber callout cards labeled 脆弱面 回撤条件 需要验证, beside a calm document. Educational risk framing for decision support, Chinese labels, no horror, Linear product diagram.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "风险提醒怎么读"
+  },
+  {
+    "id": "PI-REPORT-ACTION-01",
+    "filename": "report-action-today-7-30.jpg",
+    "prompt": "Three horizontal time boxes labeled 今天 7天 30天 with simple checklist icons inside each. Clean Linear task board aesthetic, Chinese labels, paper background, action-oriented product diagram.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "阶段动作：今天 / 7天 / 30天"
+  },
+  {
+    "id": "PI-ANNUAL-01",
+    "filename": "annual-review-loop.jpg",
+    "prompt": "Circular year-in-review diagram: 回顾时间窗, 对照真实事件, 写下一年动作. Calm calendar and checklist motifs, Chinese labels, soft paper, Linear product education.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "年度复盘闭环"
+  },
+  {
+    "id": "PI-LEARN-01",
+    "filename": "learn-track-map.jpg",
+    "prompt": "Learning track map with connected nodes: 入门 结构 事业 财富 关系 健康 迁移 应用. Soft geometric path, Chinese labels, Linear education product aesthetic, paper background.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "学习路径：专题可读"
+  },
+  {
+    "id": "PI-KNOWLEDGE-01",
+    "filename": "knowledge-lookup-loop.jpg",
+    "prompt": "Three-step knowledge loop: 查术语, 看例子, 回报告对照. Book and document icons minimal, Chinese labels, calm library aesthetic for product, not mystic.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "知识库：概念可回查"
+  },
+  {
+    "id": "PI-MOVEMENT-01",
+    "filename": "movement-environment-layer.jpg",
+    "prompt": "Diagram with base layer 本盘结构 and overlay layer 城市环境/迁移选项. Two city pins connected by dashed arrow, Chinese labels 结构锚点 环境变量. Educational geo decision support, Linear style, no destiny magic.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "迁移与环境层"
+  },
+  {
+    "id": "PI-SOLAR-TIME-01",
+    "filename": "solar-time-longitude.jpg",
+    "prompt": "Educational diagram: clock, map longitude line, birth form fields 出生地 钟表时间 真太阳时. Arrows showing correction. Chinese labels, calm science-education style, Linear product, soft paper.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "真太阳时为什么重要"
+  },
+  {
+    "id": "PI-BAZI-PILLARS-01",
+    "filename": "bazi-four-pillars.jpg",
+    "prompt": "Four vertical pillar cards labeled 年柱 月柱 日柱 时柱 with 日主 highlighted on day pillar. Clean educational Chinese metaphysics chart, soft paper, ink blue accents, geometric, textbook clarity.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "四柱：年月日时"
+  },
+  {
+    "id": "PI-DAYUN-GRID-01",
+    "filename": "dayun-decade-grid.jpg",
+    "prompt": "Horizontal decade grid of life stages 大运 with one cell highlighted 当前大运 and small markers for year changes. Minimal table aesthetic, Chinese labels, educational, soft paper background.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "大运网格怎么看"
+  },
+  {
+    "id": "PI-TOOL-RESULT-01",
+    "filename": "tool-result-next-steps.jpg",
+    "prompt": "Three next-step cards after a tool result: 理解主题结论, 生成完整报告, 问顾问老师. Arrows between them, Linear product UI, Chinese labels, calm paper background.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "工具结果：下一步"
+  },
+  {
+    "id": "PI-ICON-OVERVIEW",
+    "filename": "icon-teacher-overview.jpg",
+    "prompt": "Simple square app icon: abstract compass or overview grid, muted ink blue on soft paper, minimal geometric, label 总览 small Chinese text optional, no face, Linear style icon.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "总览老师"
+  },
+  {
+    "id": "PI-ICON-CAREER",
+    "filename": "icon-teacher-career.jpg",
+    "prompt": "Simple square icon: minimal briefcase or building geometric mark, ink blue, soft paper, Chinese optional 事业, Linear product icon, no face.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "事业老师"
+  },
+  {
+    "id": "PI-ICON-WEALTH",
+    "filename": "icon-teacher-wealth.jpg",
+    "prompt": "Simple square icon: minimal coin stack or ledger geometric, muted blue-green, soft paper, optional 财务, Linear icon, no luxury bling, no face.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "财务老师"
+  },
+  {
+    "id": "PI-ICON-RELATION",
+    "filename": "icon-teacher-relationship.jpg",
+    "prompt": "Simple square icon: two geometric nodes connected by soft line, ink blue, soft paper, optional 关系, Linear, no faces, not romantic stock.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "关系老师"
+  },
+  {
+    "id": "PI-ICON-TIMING",
+    "filename": "icon-teacher-timing.jpg",
+    "prompt": "Simple square icon: minimal clock or calendar window, ink blue, soft paper, optional 时机, Linear product icon.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "时机老师"
+  },
+  {
+    "id": "PI-ICON-HEALTH",
+    "filename": "icon-teacher-health.jpg",
+    "prompt": "Simple square icon: gentle waveform or leaf geometric for life rhythm, soft green-blue, paper background, optional 节律, Linear, not medical cross spam.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "节律老师"
+  },
+  {
+    "id": "PI-ICON-PRACTICE",
+    "filename": "icon-teacher-practice.jpg",
+    "prompt": "Simple square icon: checklist with one checkmark geometric, ink blue, soft paper, optional 实践, Linear product icon.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "实践老师"
+  },
+  {
+    "id": "PI-ICON-GEO",
+    "filename": "icon-teacher-geo.jpg",
+    "prompt": "Simple square icon: minimal map pin over soft globe arc, ink blue, paper background, optional 地理, Linear icon.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "地理老师"
+  },
+  {
+    "id": "PI-ICON-VERIFY",
+    "filename": "icon-action-verify.jpg",
+    "prompt": "Simple square icon: check circle geometric, soft green-blue, paper, optional 验证, Linear.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "验证"
+  },
+  {
+    "id": "PI-ICON-BOUNDARY",
+    "filename": "icon-action-boundary.jpg",
+    "prompt": "Simple square icon: soft shield or dashed boundary box, amber-blue muted, paper, optional 边界, Linear, calm not alarming.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "边界"
   }
 ]

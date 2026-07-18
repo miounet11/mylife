@@ -8,6 +8,7 @@ import {
   LearningTrackMapSummary,
   LearningTrackQuickLinks,
 } from '@/components/learning-track-map';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { getLearningTracksOverview } from '@/lib/learning-track-stats';
 
@@ -37,6 +38,8 @@ export default function LearnPage() {
             <LearningTrackMapSummary overview={overview} />
           </div>
         </header>
+
+        <PageIllustrationStrip surface="learn/hub" title="专题路径" compact limit={1} />
 
         <LearningTrackMapGrid overview={overview} />
 

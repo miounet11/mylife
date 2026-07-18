@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import MembershipClient from './membership-client';
@@ -62,6 +63,7 @@ export default function MembershipPage() {
           title="¥0 开通会员"
           description="登录邮箱后可 0 元开通季度或年度会员；季度可免费升级年度。开通后立即生效。"
         />
+        <PageIllustrationStrip surface="membership/hub" title="会员能做什么" compact limit={1} />
         <MembershipClient />
       </div>
     </AppPage>
