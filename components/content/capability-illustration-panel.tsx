@@ -83,7 +83,7 @@ export function CapabilityIllustrationPanel({
         })
       : null;
 
-  // --- Chat dense layout: image band + chip groups ---
+  // --- Chat layout: large full-width 16:9 figure, then compact chips ---
   if (isChat) {
     return (
       <section className={`bg-[color:var(--paper)] ${className}`}>
@@ -94,61 +94,61 @@ export function CapabilityIllustrationPanel({
           />
         ) : null}
 
-        <div className="flex flex-col sm:flex-row sm:items-stretch">
-          {fig?.src ? (
-            <figure
-              className="relative w-full shrink-0 bg-[color:var(--bg-sunken)] sm:w-[42%] sm:max-w-[280px]"
-              itemScope
-              itemType="https://schema.org/ImageObject"
-            >
-              <div className="relative h-[5.75rem] w-full sm:h-full sm:min-h-[7.5rem]">
-                <Image
-                  src={fig.src}
-                  alt={fig.alt || fig.title}
-                  fill
-                  sizes="(min-width: 640px) 280px, 100vw"
-                  className="object-cover object-center"
-                  loading={priority ? 'eager' : 'lazy'}
-                  priority={priority}
-                  itemProp="contentUrl"
-                />
-              </div>
-              <meta itemProp="name" content={fig.title} />
-            </figure>
-          ) : null}
-
-          {showCopy && copy ? (
-            <div className="min-w-0 flex-1 divide-y divide-[color:var(--hairline)] sm:divide-y-0 sm:divide-x sm:grid sm:grid-cols-3">
-              {(
-                [
-                  ['能解决', copy.solves],
-                  ['典型问题', copy.problems],
-                  ['你会得到', copy.outputs],
-                ] as const
-              ).map(([label, items]) => (
-                <div key={label} className="px-2.5 py-2">
-                  <div className="text-[10px] font-semibold tracking-[0.04em] text-[color:var(--ink-5)]">
-                    {label}
-                  </div>
-                  <div className="mt-1 flex flex-wrap gap-1">
-                    {items.map((item) => (
-                      <span
-                        key={item}
-                        className="inline-flex max-w-full rounded-[4px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-1.5 py-0.5 text-[11px] leading-[1.35] text-[color:var(--ink-3)]"
-                      >
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        {fig?.src ? (
+          <figure
+            className="relative w-full bg-[color:var(--bg-sunken)]"
+            itemScope
+            itemType="https://schema.org/ImageObject"
+          >
+            {/* Full-width 16:9 — show the whole diagram (object-contain, not a cropped strip) */}
+            <div className="relative aspect-[16/9] w-full">
+              <Image
+                src={fig.src}
+                alt={fig.alt || fig.title}
+                fill
+                sizes="(min-width: 768px) 720px, 100vw"
+                className="object-contain object-center"
+                loading={priority ? 'eager' : 'lazy'}
+                priority={priority}
+                itemProp="contentUrl"
+              />
             </div>
-          ) : fig?.caption ? (
-            <p className="flex-1 px-3 py-2 text-[11px] leading-[1.45] text-[color:var(--ink-5)]">
-              {fig.caption}
-            </p>
-          ) : null}
-        </div>
+            <meta itemProp="name" content={fig.title} />
+            {fig.caption ? (
+              <figcaption className="border-t border-[color:var(--hairline)] px-3 py-1 text-[11px] leading-[1.4] text-[color:var(--ink-5)]">
+                {fig.caption}
+              </figcaption>
+            ) : null}
+          </figure>
+        ) : null}
+
+        {showCopy && copy ? (
+          <div className="grid grid-cols-1 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {(
+              [
+                ['能解决', copy.solves],
+                ['典型问题', copy.problems],
+                ['你会得到', copy.outputs],
+              ] as const
+            ).map(([label, items]) => (
+              <div key={label} className="px-3 py-2">
+                <div className="text-[10px] font-semibold tracking-[0.04em] text-[color:var(--ink-5)]">
+                  {label}
+                </div>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {items.map((item) => (
+                    <span
+                      key={item}
+                      className="inline-flex max-w-full rounded-[4px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-1.5 py-0.5 text-[11px] leading-[1.35] text-[color:var(--ink-3)]"
+                    >
+                      {item}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : null}
       </section>
     );
   }
