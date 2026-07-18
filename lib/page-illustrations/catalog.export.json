@@ -1,1586 +1,3311 @@
 [
   {
     "id": "PI-HOME-01",
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace"
+    ],
+    "role": "cover",
+    "title": "从生辰到可执行判断",
+    "caption": "排盘 → 报告结构 → 顾问开场 → 验证回访",
+    "alt": "人生K线从排盘到报告顾问验证的路径示意图",
     "filename": "home-path-from-birth-to-action.jpg",
-    "prompt": "Horizontal product journey diagram: four calm cards connected by arrows — 填生辰, 读报告, 顾问开场, 事件验证. Soft paper background, blue ink accents, minimal icons of calendar birth form, document report, chat bubble, checklist. Chinese labels only.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Horizontal product journey diagram: four calm cards connected by arrows — 填生辰, 读报告, 顾问开场, 事件验证. Soft paper background, blue ink accents, minimal icons of calendar birth form, document report, chat bubble, checklist. Chinese labels only.",
+    "reportCiteKeys": [
+      "cover"
+    ],
+    "tags": [
+      "首页",
+      "排盘",
+      "路径"
+    ],
     "ready": true,
-    "title": "从生辰到可执行判断",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-REPORT-READ-01",
+    "surfaces": [
+      "docs/read-first-report",
+      "report/cover"
+    ],
+    "role": "structure",
+    "title": "第一份报告怎么读",
+    "caption": "先结论与窗口，再看结构与风险",
+    "alt": "第一份命理报告阅读顺序图：结论窗口结构风险",
     "filename": "report-first-reading-path.jpg",
-    "prompt": "Infographic map of reading a fortune report: numbered steps 1 结论 2 时间窗口 3 结构依据 4 风险 5 验证点. Clean layered document illustration, blue accent numbers, paper texture, Chinese UI style.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Infographic map of reading a fortune report: numbered steps 1 结论 2 时间窗口 3 结构依据 4 风险 5 验证点. Clean layered document illustration, blue accent numbers, paper texture, Chinese UI style.",
+    "reportCiteKeys": [
+      "cover",
+      "reading-path"
+    ],
+    "tags": [
+      "报告",
+      "阅读"
+    ],
     "ready": true,
-    "title": "第一份报告怎么读",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-REPORT-TIMING-01",
+    "surfaces": [
+      "report/timing",
+      "dimensions/fortune-rhythm"
+    ],
+    "role": "timing",
+    "title": "大运与流年窗口",
+    "caption": "阶段节奏：有利窗 / 谨慎窗，而不是绝对吉凶",
+    "alt": "大运流年时间轴示意：有利窗口与谨慎窗口",
     "filename": "report-dayun-liunian-windows.jpg",
-    "prompt": "Timeline diagram of life phases (大运) with smaller yearly marks (流年). Soft green zones labeled 有利窗 and amber zones 谨慎窗. Minimal K-line rhythm below. Educational, not fatalistic. Chinese labels.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Timeline diagram of life phases (大运) with smaller yearly marks (流年). Soft green zones labeled 有利窗 and amber zones 谨慎窗. Minimal K-line rhythm below. Educational, not fatalistic. Chinese labels.",
+    "reportCiteKeys": [
+      "dayun",
+      "timing"
+    ],
+    "tags": [
+      "大运",
+      "流年",
+      "窗口"
+    ],
     "ready": true,
-    "title": "大运与流年窗口",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-REPORT-DECISION-01",
+    "surfaces": [
+      "report/decision",
+      "chat/structure"
+    ],
+    "role": "action",
+    "title": "决策闭环：依据→结论→动作→验证",
+    "caption": "今天 / 7 天 / 30 天 三步可执行",
+    "alt": "命理决策闭环图：判断依据当前结论阶段动作风险验证点",
     "filename": "decision-loop-basis-action-verify.jpg",
-    "prompt": "Five connected modules in a clean flow: 判断依据, 当前结论, 阶段动作 (今天 7天 30天), 风险提醒, 验证点. Messenger/product UI inspired cards, blue accent, Chinese labels, decision product diagram.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Five connected modules in a clean flow: 判断依据, 当前结论, 阶段动作 (今天 7天 30天), 风险提醒, 验证点. Messenger/product UI inspired cards, blue accent, Chinese labels, decision product diagram.",
+    "reportCiteKeys": [
+      "decision-loop"
+    ],
+    "tags": [
+      "决策",
+      "验证",
+      "动作"
+    ],
     "ready": true,
-    "title": "决策闭环：依据→结论→动作→验证",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-YONGSHEN-01",
+    "surfaces": [
+      "report/structure",
+      "teachers/overview"
+    ],
+    "role": "structure",
+    "title": "日主与用神喜忌（示意）",
+    "caption": "结构锚点：日主、用神、忌神 — 以报告锁定为准",
+    "alt": "日主用神忌神结构示意教学图",
     "filename": "structure-daymaster-yongshen.jpg",
-    "prompt": "Abstract educational diagram of Chinese metaphysics structure: center node 日主, supporting nodes 用神, caution nodes 忌神, surrounding five-element cycle lightly drawn. Soft colors, schematic not portrait, Chinese labels, textbook clarity.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Abstract educational diagram of Chinese metaphysics structure: center node 日主, supporting nodes 用神, caution nodes 忌神, surrounding five-element cycle lightly drawn. Soft colors, schematic not portrait, Chinese labels, textbook clarity.",
+    "reportCiteKeys": [
+      "yongshen",
+      "structure"
+    ],
+    "tags": [
+      "日主",
+      "用神",
+      "结构"
+    ],
     "ready": true,
-    "title": "日主与用神喜忌（示意）",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-CHAT-OPENING-01",
+    "surfaces": [
+      "chat/opening",
+      "chat/hub"
+    ],
+    "role": "summary",
+    "title": "顾问开场：老师先说，一点即发",
+    "caption": "不预填长问题；议题芯片 + 一键开口",
+    "alt": "顾问开场对话界面示意图：开场气泡与一键开口",
     "filename": "chat-consultant-opening.jpg",
-    "prompt": "Clean mobile chat UI mock: left gray bubble 顾问开场, topic chips, one large blue primary button 一键开口. Linear minimal interface, Chinese UI text, no clutter, product screenshot illustration style.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Clean mobile chat UI mock: left gray bubble 顾问开场, topic chips, one large blue primary button 一键开口. Linear minimal interface, Chinese UI text, no clutter, product screenshot illustration style.",
+    "reportCiteKeys": [],
+    "tags": [
+      "对话",
+      "开场",
+      "老师"
+    ],
     "ready": true,
-    "title": "顾问开场：老师先说，一点即发"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-EVENTS-01",
+    "surfaces": [
+      "events/validation",
+      "predictions/revisit"
+    ],
+    "role": "action",
+    "title": "事件验证闭环",
+    "caption": "记录 → 应验/偏差 → 带报告回聊",
+    "alt": "事件验证闭环：记录应验偏差回聊示意图",
     "filename": "events-validation-loop.jpg",
-    "prompt": "Circular loop diagram with four stations: 记录事件, 到期回访, 应验或偏差, 顾问回聊纠偏. Calm checklist aesthetic, blue and soft green, Chinese labels, product education.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Circular loop diagram with four stations: 记录事件, 到期回访, 应验或偏差, 顾问回聊纠偏. Calm checklist aesthetic, blue and soft green, Chinese labels, product education.",
+    "reportCiteKeys": [
+      "validation"
+    ],
+    "tags": [
+      "事件",
+      "验证",
+      "回访"
+    ],
     "ready": true,
-    "title": "事件验证闭环"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-BOUNDARY-01",
+    "surfaces": [
+      "boundary/not-fatalism",
+      "docs/read-first-report"
+    ],
+    "role": "risk",
+    "title": "判断边界：参考不是定论",
+    "caption": "不恐吓、不绝对化；医疗法律投资需专业意见",
+    "alt": "命理判断边界说明：参考框架非宿命定论",
     "filename": "boundary-not-fatalism.jpg",
-    "prompt": "Two-column comparison diagram: left 可做 (结构参考 窗口节奏 可验证动作), right 不做 (恐吓 绝对命运 替代医疗法律投资). Soft warning amber on right, calm blue on left, Chinese labels, ethical product illustration.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Two-column comparison diagram: left 可做 (结构参考 窗口节奏 可验证动作), right 不做 (恐吓 绝对命运 替代医疗法律投资). Soft warning amber on right, calm blue on left, Chinese labels, ethical product illustration.",
+    "reportCiteKeys": [
+      "boundary"
+    ],
+    "tags": [
+      "边界",
+      "风险",
+      "克制"
+    ],
     "ready": true,
-    "title": "判断边界：参考不是定论",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-TOOLS-01",
+    "surfaces": [
+      "tools/hub",
+      "home/workspace"
+    ],
+    "role": "action",
+    "title": "工具：把大问题拆成可测小问题",
+    "caption": "单项工具 → 报告深问 → 回访",
+    "alt": "工具中心问题拆解与报告衔接示意图",
     "filename": "tools-problem-breakdown.jpg",
-    "prompt": "Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. Minimal product diagram, Chinese labels 工具 报告 回访.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. Minimal product diagram, Chinese labels 工具 报告 回访.",
+    "reportCiteKeys": [],
+    "tags": [
+      "工具",
+      "拆解",
+      "十维度"
+    ],
     "ready": true,
-    "title": "工具：把大问题拆成可测小问题",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-TEACHERS-01",
+    "surfaces": [
+      "teachers/hub",
+      "chat/opening"
+    ],
+    "role": "cover",
+    "title": "一位老师专一事",
+    "caption": "总览 / 事业 / 财务 / 关系 / 时机… 按意图开场",
+    "alt": "多位顾问老师按议题分工示意图",
     "filename": "teachers-roles-map.jpg",
-    "prompt": "Horizontal set of six minimal advisor cards with Chinese titles 总览老师 事业老师 财务老师 关系老师 时机老师 实践老师, each with one-line duty. Clean Linear list aesthetic, no realistic faces, abstract avatars as simple geometric shapes.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Horizontal set of six minimal advisor cards with Chinese titles 总览老师 事业老师 财务老师 关系老师 时机老师 实践老师, each with one-line duty. Clean Linear list aesthetic, no realistic faces, abstract avatars as simple geometric shapes.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "顾问"
+    ],
     "ready": true,
-    "title": "一位老师专一事"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-DOCS-HUB-01",
+    "surfaces": [
+      "docs/hub",
+      "docs/read-first-report"
+    ],
+    "role": "structure",
+    "title": "方法先于结论",
+    "caption": "生辰填写 → 真太阳时 → 报告读法",
+    "alt": "文档中心方法路径：生辰真太阳时报告读法",
     "filename": "docs-method-before-conclusion.jpg",
-    "prompt": "Three-step educational path diagram for a Chinese decision-support app: 1 填写生辰 2 理解真太阳时 3 按顺序读报告. Clean Linear cards, soft paper background, muted ink blue, numbered steps, no superstition imagery.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Three-step educational path diagram for a Chinese decision-support app: 1 填写生辰 2 理解真太阳时 3 按顺序读报告. Clean Linear cards, soft paper background, muted ink blue, numbered steps, no superstition imagery.",
+    "reportCiteKeys": [
+      "reading-path"
+    ],
+    "tags": [
+      "文档",
+      "方法"
+    ],
     "ready": true,
-    "title": "方法先于结论"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-PREDICTIONS-01",
+    "surfaces": [
+      "predictions/revisit",
+      "events/validation"
+    ],
+    "role": "timing",
+    "title": "预测回访：对照现实校准",
+    "caption": "时间窗到期 → 命中/部分/未命中 → 带偏差回聊",
+    "alt": "预测回访流程：到期反馈校准",
     "filename": "predictions-revisit-feedback.jpg",
-    "prompt": "Product timeline: prediction card with time window, calendar mark 到期, three feedback chips 命中 部分 未命中, arrow to chat with advisor. Calm educational diagram, Chinese labels, Linear UI, soft paper.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Product timeline: prediction card with time window, calendar mark 到期, three feedback chips 命中 部分 未命中, arrow to chat with advisor. Calm educational diagram, Chinese labels, Linear UI, soft paper.",
+    "reportCiteKeys": [
+      "validation"
+    ],
+    "tags": [
+      "预测",
+      "回访"
+    ],
     "ready": true,
-    "title": "预测回访：对照现实校准"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-HEHUN-01",
+    "surfaces": [
+      "hehun/hub",
+      "dimensions/marriage"
+    ],
+    "role": "structure",
+    "title": "合婚：双盘对照",
+    "caption": "日主互动 · 用忌互补 · 不是简单合不合",
+    "alt": "合婚双盘对照示意：两人结构并排",
     "filename": "hehun-dual-chart-compare.jpg",
-    "prompt": "Two calm side-by-side profile cards labeled 甲方 乙方, connecting lines for 日主互动 and 用忌互补, center label 对照而非定论. Soft paper, ink blue, geometric, Chinese labels, educational marriage chart comparison not romance stock photo.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Two calm side-by-side profile cards labeled 甲方 乙方, connecting lines for 日主互动 and 用忌互补, center label 对照而非定论. Soft paper, ink blue, geometric, Chinese labels, educational marriage chart comparison not romance stock photo.",
+    "reportCiteKeys": [],
+    "tags": [
+      "合婚",
+      "关系"
+    ],
     "ready": true,
-    "title": "合婚：双盘对照"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-MEMBERSHIP-01",
+    "surfaces": [
+      "membership/hub"
+    ],
+    "role": "summary",
+    "title": "会员：完整报告与回看",
+    "caption": "结构全文 · 窗口详解 · 邮箱保存 · 持续回访",
+    "alt": "会员权益结构：报告回看回访",
     "filename": "membership-report-access.jpg",
-    "prompt": "Clean product benefits diagram with four quiet cards: 完整报告, 窗口详解, 邮箱保存, 预测回访. Not flashy sales, Linear aesthetic, paper background, Chinese labels, membership as research access not destiny guarantee.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Clean product benefits diagram with four quiet cards: 完整报告, 窗口详解, 邮箱保存, 预测回访. Not flashy sales, Linear aesthetic, paper background, Chinese labels, membership as research access not destiny guarantee.",
+    "reportCiteKeys": [],
+    "tags": [
+      "会员",
+      "权益"
+    ],
     "ready": true,
-    "title": "会员：完整报告与回看"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-PROFILE-01",
+    "surfaces": [
+      "profile/hub",
+      "profile/progressive"
+    ],
+    "role": "action",
+    "title": "资料越完整，判断越稳",
+    "caption": "生辰 → 情境 → 事件 → 偏好，渐进补全",
+    "alt": "渐进式资料完善路径示意图",
     "filename": "profile-progressive-fill.jpg",
-    "prompt": "Progressive profile ladder diagram: steps 生辰基础, 当前情境, 关键事件, 决策偏好 with progress bar. Minimal Linear forms aesthetic, soft paper, Chinese labels, calm product education.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Progressive profile ladder diagram: steps 生辰基础, 当前情境, 关键事件, 决策偏好 with progress bar. Minimal Linear forms aesthetic, soft paper, Chinese labels, calm product education.",
+    "reportCiteKeys": [],
+    "tags": [
+      "资料",
+      "档案"
+    ],
     "ready": true,
-    "title": "资料越完整，判断越稳"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-KLINE-01",
+    "surfaces": [
+      "report/kline",
+      "home/workspace",
+      "analyze/workspace"
+    ],
+    "role": "timing",
+    "title": "人生K线：节奏而不是宿命",
+    "caption": "大运段落 + 流年波动 + 可执行窗口",
+    "alt": "人生K线节奏示意：阶段与波动",
     "filename": "life-kline-rhythm-concept.jpg",
-    "prompt": "Elegant abstract life K-line chart: gentle candlestick-like rhythm over multi-year axis, annotated 大运段落 and 流年波动, soft green favorable windows. Educational finance-chart aesthetic mixed with calm life planning, Chinese labels, no horror fate imagery.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Elegant abstract life K-line chart: gentle candlestick-like rhythm over multi-year axis, annotated 大运段落 and 流年波动, soft green favorable windows. Educational finance-chart aesthetic mixed with calm life planning, Chinese labels, no horror fate imagery.",
+    "reportCiteKeys": [
+      "dayun",
+      "timing"
+    ],
+    "tags": [
+      "K线",
+      "节奏"
+    ],
     "ready": true,
-    "title": "人生K线：节奏而不是宿命"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-FIVE-ELEMENTS-01",
+    "surfaces": [
+      "report/structure",
+      "learn/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
+    "title": "五行生克（教学示意）",
+    "caption": "结构关系示意，具体以本盘报告锁定为准",
+    "alt": "五行生克循环教学示意图",
     "filename": "five-elements-cycle-edu.jpg",
-    "prompt": "Clean educational five-elements cycle diagram 木 火 土 金 水 with generation arrows and control dashed arrows. Soft pastel geometric nodes, textbook clarity, Chinese characters, paper background, not mystical altar art.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Clean educational five-elements cycle diagram 木 火 土 金 水 with generation arrows and control dashed arrows. Soft pastel geometric nodes, textbook clarity, Chinese characters, paper background, not mystical altar art.",
+    "reportCiteKeys": [
+      "structure"
+    ],
+    "tags": [
+      "五行",
+      "结构"
+    ],
     "ready": true,
-    "title": "五行生克（教学示意）",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-CHAT-STRUCTURE-01",
+    "surfaces": [
+      "chat/structure",
+      "chat/opening"
+    ],
+    "role": "action",
+    "title": "顾问回答五段结构",
+    "caption": "判断依据 · 结论 · 动作 · 风险 · 验证点",
+    "alt": "聊天回答五段结构卡片示意",
     "filename": "chat-answer-five-parts.jpg",
-    "prompt": "Messenger-style answer card broken into five numbered sections: 1 判断依据 2 当前结论 3 阶段动作 4 风险提醒 5 验证点. Clean product UI illustration, Chinese text, Linear minimal, soft paper background.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Messenger-style answer card broken into five numbered sections: 1 判断依据 2 当前结论 3 阶段动作 4 风险提醒 5 验证点. Clean product UI illustration, Chinese text, Linear minimal, soft paper background.",
+    "reportCiteKeys": [
+      "decision-loop"
+    ],
+    "tags": [
+      "对话",
+      "结构"
+    ],
     "ready": true,
-    "title": "顾问回答五段结构"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-REPORT-RISK-01",
+    "surfaces": [
+      "report/risk",
+      "report/decision"
+    ],
+    "role": "risk",
+    "title": "风险提醒怎么读",
+    "caption": "指出脆弱面与回撤条件，不是恐吓",
+    "alt": "报告风险提醒阅读示意图",
     "filename": "report-risk-reading.jpg",
-    "prompt": "Soft amber callout cards labeled 脆弱面 回撤条件 需要验证, beside a calm document. Educational risk framing for decision support, Chinese labels, no horror, Linear product diagram.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Soft amber callout cards labeled 脆弱面 回撤条件 需要验证, beside a calm document. Educational risk framing for decision support, Chinese labels, no horror, Linear product diagram.",
+    "reportCiteKeys": [
+      "boundary"
+    ],
+    "tags": [
+      "风险",
+      "报告"
+    ],
     "ready": true,
-    "title": "风险提醒怎么读"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-REPORT-ACTION-01",
+    "surfaces": [
+      "report/action",
+      "report/decision"
+    ],
+    "role": "action",
+    "title": "阶段动作：今天 / 7天 / 30天",
+    "caption": "把结论拆成可执行节奏",
+    "alt": "报告阶段动作三时间框示意图",
     "filename": "report-action-today-7-30.jpg",
-    "prompt": "Three horizontal time boxes labeled 今天 7天 30天 with simple checklist icons inside each. Clean Linear task board aesthetic, Chinese labels, paper background, action-oriented product diagram.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Three horizontal time boxes labeled 今天 7天 30天 with simple checklist icons inside each. Clean Linear task board aesthetic, Chinese labels, paper background, action-oriented product diagram.",
+    "reportCiteKeys": [
+      "decision-loop"
+    ],
+    "tags": [
+      "动作",
+      "报告"
+    ],
     "ready": true,
-    "title": "阶段动作：今天 / 7天 / 30天"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-ANNUAL-01",
+    "surfaces": [
+      "annual-review/hub",
+      "predictions/revisit"
+    ],
+    "role": "summary",
+    "title": "年度复盘闭环",
+    "caption": "回顾窗口 → 对照事件 → 调整下一年动作",
+    "alt": "年度复盘三步闭环图",
     "filename": "annual-review-loop.jpg",
-    "prompt": "Circular year-in-review diagram: 回顾时间窗, 对照真实事件, 写下一年动作. Calm calendar and checklist motifs, Chinese labels, soft paper, Linear product education.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Circular year-in-review diagram: 回顾时间窗, 对照真实事件, 写下一年动作. Calm calendar and checklist motifs, Chinese labels, soft paper, Linear product education.",
+    "reportCiteKeys": [
+      "validation"
+    ],
+    "tags": [
+      "复盘",
+      "年度"
+    ],
     "ready": true,
-    "title": "年度复盘闭环"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-LEARN-01",
+    "surfaces": [
+      "learn/hub",
+      "knowledge/hub"
+    ],
+    "role": "cover",
+    "title": "学习路径：专题可读",
+    "caption": "入门 → 结构 → 事业财运关系 → 应用",
+    "alt": "学习专题路径地图示意图",
     "filename": "learn-track-map.jpg",
-    "prompt": "Learning track map with connected nodes: 入门 结构 事业 财富 关系 健康 迁移 应用. Soft geometric path, Chinese labels, Linear education product aesthetic, paper background.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Learning track map with connected nodes: 入门 结构 事业 财富 关系 健康 迁移 应用. Soft geometric path, Chinese labels, Linear education product aesthetic, paper background.",
+    "reportCiteKeys": [],
+    "tags": [
+      "学习",
+      "专题"
+    ],
     "ready": true,
-    "title": "学习路径：专题可读"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-KNOWLEDGE-01",
+    "surfaces": [
+      "knowledge/hub",
+      "docs/hub"
+    ],
+    "role": "structure",
+    "title": "知识库：概念可回查",
+    "caption": "术语 → 例子 → 回到本盘报告",
+    "alt": "知识库概念回查路径图",
     "filename": "knowledge-lookup-loop.jpg",
-    "prompt": "Three-step knowledge loop: 查术语, 看例子, 回报告对照. Book and document icons minimal, Chinese labels, calm library aesthetic for product, not mystic.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Three-step knowledge loop: 查术语, 看例子, 回报告对照. Book and document icons minimal, Chinese labels, calm library aesthetic for product, not mystic.",
+    "reportCiteKeys": [],
+    "tags": [
+      "知识库"
+    ],
     "ready": true,
-    "title": "知识库：概念可回查",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-MOVEMENT-01",
+    "surfaces": [
+      "movement/hub",
+      "teachers/geo"
+    ],
+    "role": "action",
+    "title": "迁移与环境层",
+    "caption": "结构不变，环境可观察；迁移是变量不是仙丹",
+    "alt": "迁移环境层决策示意",
     "filename": "movement-environment-layer.jpg",
-    "prompt": "Diagram with base layer 本盘结构 and overlay layer 城市环境/迁移选项. Two city pins connected by dashed arrow, Chinese labels 结构锚点 环境变量. Educational geo decision support, Linear style, no destiny magic.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Diagram with base layer 本盘结构 and overlay layer 城市环境/迁移选项. Two city pins connected by dashed arrow, Chinese labels 结构锚点 环境变量. Educational geo decision support, Linear style, no destiny magic.",
+    "reportCiteKeys": [],
+    "tags": [
+      "迁移",
+      "环境"
+    ],
     "ready": true,
-    "title": "迁移与环境层"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-SOLAR-TIME-01",
+    "surfaces": [
+      "docs/solar-time",
+      "docs/hub",
+      "analyze/workspace"
+    ],
+    "role": "structure",
+    "title": "真太阳时为什么重要",
+    "caption": "经度与时差影响时柱精度",
+    "alt": "真太阳时与出生地经度关系示意图",
     "filename": "solar-time-longitude.jpg",
-    "prompt": "Educational diagram: clock, map longitude line, birth form fields 出生地 钟表时间 真太阳时. Arrows showing correction. Chinese labels, calm science-education style, Linear product, soft paper.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Educational diagram: clock, map longitude line, birth form fields 出生地 钟表时间 真太阳时. Arrows showing correction. Chinese labels, calm science-education style, Linear product, soft paper.",
+    "reportCiteKeys": [],
+    "tags": [
+      "真太阳时",
+      "文档"
+    ],
     "ready": true,
-    "title": "真太阳时为什么重要",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-BAZI-PILLARS-01",
+    "surfaces": [
+      "report/cover",
+      "report/structure",
+      "bazi/hub"
+    ],
+    "role": "structure",
+    "title": "四柱：年月日时",
+    "caption": "四柱各有分工，日主居中",
+    "alt": "八字四柱结构教学图",
     "filename": "bazi-four-pillars.jpg",
-    "prompt": "Four vertical pillar cards labeled 年柱 月柱 日柱 时柱 with 日主 highlighted on day pillar. Clean educational Chinese metaphysics chart, soft paper, ink blue accents, geometric, textbook clarity.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Four vertical pillar cards labeled 年柱 月柱 日柱 时柱 with 日主 highlighted on day pillar. Clean educational Chinese metaphysics chart, soft paper, ink blue accents, geometric, textbook clarity.",
+    "reportCiteKeys": [
+      "structure",
+      "cover"
+    ],
+    "tags": [
+      "四柱",
+      "八字"
+    ],
     "ready": true,
-    "title": "四柱：年月日时",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-DAYUN-GRID-01",
+    "surfaces": [
+      "report/timing",
+      "dimensions/fortune-rhythm"
+    ],
+    "role": "timing",
+    "title": "大运网格怎么看",
+    "caption": "十年一段，关注交接与主题切换",
+    "alt": "大运十年网格阅读示意图",
     "filename": "dayun-decade-grid.jpg",
-    "prompt": "Horizontal decade grid of life stages 大运 with one cell highlighted 当前大运 and small markers for year changes. Minimal table aesthetic, Chinese labels, educational, soft paper background.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Horizontal decade grid of life stages 大运 with one cell highlighted 当前大运 and small markers for year changes. Minimal table aesthetic, Chinese labels, educational, soft paper background.",
+    "reportCiteKeys": [
+      "dayun"
+    ],
+    "tags": [
+      "大运",
+      "网格"
+    ],
     "ready": true,
-    "title": "大运网格怎么看"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-TOOL-RESULT-01",
+    "surfaces": [
+      "tools/result",
+      "tools/hub"
+    ],
+    "role": "action",
+    "title": "工具结果：下一步",
+    "caption": "看主题结论 → 升级完整报告 → 问老师",
+    "alt": "工具结果页下一步路径图",
     "filename": "tool-result-next-steps.jpg",
-    "prompt": "Three next-step cards after a tool result: 理解主题结论, 生成完整报告, 问顾问老师. Arrows between them, Linear product UI, Chinese labels, calm paper background.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Three next-step cards after a tool result: 理解主题结论, 生成完整报告, 问顾问老师. Arrows between them, Linear product UI, Chinese labels, calm paper background.",
+    "reportCiteKeys": [],
+    "tags": [
+      "工具",
+      "转化"
+    ],
     "ready": true,
-    "title": "工具结果：下一步"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-ICON-OVERVIEW",
+    "surfaces": [
+      "teachers/overview",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "总览老师",
+    "caption": "全局结构与优先级",
+    "alt": "总览老师图标",
     "filename": "icon-teacher-overview.jpg",
-    "prompt": "Simple square app icon: abstract compass or overview grid, muted ink blue on soft paper, minimal geometric, label 总览 small Chinese text optional, no face, Linear style icon.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square app icon: abstract compass or overview grid, muted ink blue on soft paper, minimal geometric, label 总览 small Chinese text optional, no face, Linear style icon.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "老师"
+    ],
     "ready": true,
-    "title": "总览老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-CAREER",
+    "surfaces": [
+      "teachers/career",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "事业老师",
+    "caption": "岗位与阶段动作",
+    "alt": "事业老师图标",
     "filename": "icon-teacher-career.jpg",
-    "prompt": "Simple square icon: minimal briefcase or building geometric mark, ink blue, soft paper, Chinese optional 事业, Linear product icon, no face.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: minimal briefcase or building geometric mark, ink blue, soft paper, Chinese optional 事业, Linear product icon, no face.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "事业"
+    ],
     "ready": true,
-    "title": "事业老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-WEALTH",
+    "surfaces": [
+      "teachers/wealth",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "财务老师",
+    "caption": "现金流与配置节奏",
+    "alt": "财务老师图标",
     "filename": "icon-teacher-wealth.jpg",
-    "prompt": "Simple square icon: minimal coin stack or ledger geometric, muted blue-green, soft paper, optional 财务, Linear icon, no luxury bling, no face.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: minimal coin stack or ledger geometric, muted blue-green, soft paper, optional 财务, Linear icon, no luxury bling, no face.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "财务"
+    ],
     "ready": true,
-    "title": "财务老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-RELATION",
+    "surfaces": [
+      "teachers/relationship",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "关系老师",
+    "caption": "互动边界与节奏",
+    "alt": "关系老师图标",
     "filename": "icon-teacher-relationship.jpg",
-    "prompt": "Simple square icon: two geometric nodes connected by soft line, ink blue, soft paper, optional 关系, Linear, no faces, not romantic stock.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: two geometric nodes connected by soft line, ink blue, soft paper, optional 关系, Linear, no faces, not romantic stock.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "关系"
+    ],
     "ready": true,
-    "title": "关系老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-TIMING",
+    "surfaces": [
+      "teachers/timing",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "时机老师",
+    "caption": "窗口与先后次序",
+    "alt": "时机老师图标",
     "filename": "icon-teacher-timing.jpg",
-    "prompt": "Simple square icon: minimal clock or calendar window, ink blue, soft paper, optional 时机, Linear product icon.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: minimal clock or calendar window, ink blue, soft paper, optional 时机, Linear product icon.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "时机"
+    ],
     "ready": true,
-    "title": "时机老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-HEALTH",
+    "surfaces": [
+      "teachers/health",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "节律老师",
+    "caption": "身心节奏与恢复",
+    "alt": "节律老师图标",
     "filename": "icon-teacher-health.jpg",
-    "prompt": "Simple square icon: gentle waveform or leaf geometric for life rhythm, soft green-blue, paper background, optional 节律, Linear, not medical cross spam.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: gentle waveform or leaf geometric for life rhythm, soft green-blue, paper background, optional 节律, Linear, not medical cross spam.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "节律"
+    ],
     "ready": true,
-    "title": "节律老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-PRACTICE",
+    "surfaces": [
+      "teachers/practice",
+      "icon/teachers"
+    ],
+    "role": "summary",
+    "title": "实践老师",
+    "caption": "落地动作与复盘",
+    "alt": "实践老师图标",
     "filename": "icon-teacher-practice.jpg",
-    "prompt": "Simple square icon: checklist with one checkmark geometric, ink blue, soft paper, optional 实践, Linear product icon.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: checklist with one checkmark geometric, ink blue, soft paper, optional 实践, Linear product icon.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "实践"
+    ],
     "ready": true,
-    "title": "实践老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-GEO",
+    "surfaces": [
+      "teachers/geo",
+      "icon/teachers",
+      "movement/hub"
+    ],
+    "role": "summary",
+    "title": "地理老师",
+    "caption": "环境与迁移观察",
+    "alt": "地理老师图标",
     "filename": "icon-teacher-geo.jpg",
-    "prompt": "Simple square icon: minimal map pin over soft globe arc, ink blue, paper background, optional 地理, Linear icon.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: minimal map pin over soft globe arc, ink blue, paper background, optional 地理, Linear icon.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "地理"
+    ],
     "ready": true,
-    "title": "地理老师"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-VERIFY",
+    "surfaces": [
+      "events/validation",
+      "icon/actions"
+    ],
+    "role": "action",
+    "title": "验证",
+    "caption": "对照现实",
+    "alt": "验证动作图标",
     "filename": "icon-action-verify.jpg",
-    "prompt": "Simple square icon: check circle geometric, soft green-blue, paper, optional 验证, Linear.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: check circle geometric, soft green-blue, paper, optional 验证, Linear.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "验证"
+    ],
     "ready": true,
-    "title": "验证"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-BOUNDARY",
+    "surfaces": [
+      "boundary/not-fatalism",
+      "icon/actions"
+    ],
+    "role": "risk",
+    "title": "边界",
+    "caption": "参考不是定论",
+    "alt": "判断边界图标",
     "filename": "icon-action-boundary.jpg",
-    "prompt": "Simple square icon: soft shield or dashed boundary box, amber-blue muted, paper, optional 边界, Linear, calm not alarming.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon: soft shield or dashed boundary box, amber-blue muted, paper, optional 边界, Linear, calm not alarming.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "边界"
+    ],
     "ready": true,
-    "title": "边界"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-CASES-01",
+    "surfaces": [
+      "cases/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
+    "title": "案例：结构如何落到现实",
+    "caption": "问题场景 → 结构判断 → 时间窗 → 可对照结果",
+    "alt": "案例阅读路径：场景结构窗口结果",
     "filename": "cases-structure-to-reality.jpg",
-    "prompt": "Educational case-study reading map: four cards 问题场景 结构判断 时间窗口 现实对照 connected by arrows. Soft paper, ink blue, Chinese labels, Linear product diagram, no sensational fate imagery.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Educational case-study reading map: four cards 问题场景 结构判断 时间窗口 现实对照 connected by arrows. Soft paper, ink blue, Chinese labels, Linear product diagram, no sensational fate imagery.",
+    "reportCiteKeys": [
+      "reading-path"
+    ],
+    "tags": [
+      "案例",
+      "学习"
+    ],
     "ready": true,
-    "title": "案例：结构如何落到现实",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-DIMENSIONS-MAP-01",
+    "surfaces": [
+      "dimensions/hub",
+      "dimensions/map"
+    ],
+    "role": "structure",
+    "title": "十维度：一题一研判",
+    "caption": "运势节奏 · 事业 · 财务 · 婚恋 · 健康 · 迁移…",
+    "alt": "十维度场景地图示意图",
     "filename": "dimensions-ten-scene-map.jpg",
-    "prompt": "Grid of ten calm scene tiles labeled in Chinese: 运势节奏 事业行业 投资理财 谈婚论嫁 健康节律 起名 择时 迁移 人际 家庭. Soft paper background, muted ink blue, Linear product map, not mystical.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Grid of ten calm scene tiles labeled in Chinese: 运势节奏 事业行业 投资理财 谈婚论嫁 健康节律 起名 择时 迁移 人际 家庭. Soft paper background, muted ink blue, Linear product map, not mystical.",
+    "reportCiteKeys": [],
+    "tags": [
+      "十维度"
+    ],
     "ready": true,
-    "title": "十维度：一题一研判",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-WORLDYI-01",
+    "surfaces": [
+      "world-yi/hub",
+      "learn/hub"
+    ],
+    "role": "cover",
+    "title": "世界易：全球场景应用",
+    "caption": "结构方法可迁移到海外生活与决策",
+    "alt": "世界易全球应用路径示意图",
     "filename": "world-yi-global-path.jpg",
-    "prompt": "Minimal world arc with three hubs labeled 结构方法 海外场景 可验证动作. Soft paper, ink blue geometric, Chinese labels, educational product diagram about World Yi, no occult symbols.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Minimal world arc with three hubs labeled 结构方法 海外场景 可验证动作. Soft paper, ink blue geometric, Chinese labels, educational product diagram about World Yi, no occult symbols.",
+    "reportCiteKeys": [],
+    "tags": [
+      "世界易"
+    ],
     "ready": true,
-    "title": "世界易：全球场景应用",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-CHAT-NO-REPORT-01",
+    "surfaces": [
+      "chat/unbound",
+      "chat/opening"
+    ],
+    "role": "action",
+    "title": "暂无报告也能开场",
+    "caption": "先聊结构议题，再补生辰与完整报告",
+    "alt": "无报告顾问开场与补资料路径",
     "filename": "chat-unbound-then-report.jpg",
-    "prompt": "Two-step product flow: left chat bubble 先开场, right document 再排盘报告, middle dashed arrow 补生辰. Linear minimal UI illustration, Chinese labels, soft paper, calm decision-support tone.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Two-step product flow: left chat bubble 先开场, right document 再排盘报告, middle dashed arrow 补生辰. Linear minimal UI illustration, Chinese labels, soft paper, calm decision-support tone.",
+    "reportCiteKeys": [],
+    "tags": [
+      "对话",
+      "转化"
+    ],
     "ready": true,
-    "title": "暂无报告也能开场"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-HISTORY-01",
+    "surfaces": [
+      "history/hub",
+      "profile/hub"
+    ],
+    "role": "summary",
+    "title": "报告历史：版本可回看",
+    "caption": "多份报告对照，看阶段变化",
+    "alt": "多份报告历史时间线示意图",
     "filename": "report-history-timeline.jpg",
-    "prompt": "Timeline of stacked report cards labeled 第一份 进阶 年度复盘 with soft year marks. Linear archive aesthetic, Chinese labels, paper background, product education.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Timeline of stacked report cards labeled 第一份 进阶 年度复盘 with soft year marks. Linear archive aesthetic, Chinese labels, paper background, product education.",
+    "reportCiteKeys": [
+      "cover"
+    ],
+    "tags": [
+      "历史",
+      "报告"
+    ],
     "ready": true,
-    "title": "报告历史：版本可回看"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-EXPERT-01",
+    "surfaces": [
+      "expert-crm/hub",
+      "report/expert"
+    ],
+    "role": "action",
+    "title": "专家工作台：交接清单",
+    "caption": "结论摘要 · 窗口 · 待验证 · 沟通纪要",
+    "alt": "专家交接工作台结构示意图",
     "filename": "expert-desk-handoff.jpg",
-    "prompt": "Clean expert desk dashboard mock with four panels: 结论摘要 时间窗口 待验证点 沟通纪要. Linear professional UI, Chinese labels, soft paper, no faces, decision-support product.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Clean expert desk dashboard mock with four panels: 结论摘要 时间窗口 待验证点 沟通纪要. Linear professional UI, Chinese labels, soft paper, no faces, decision-support product.",
+    "reportCiteKeys": [
+      "decision-loop"
+    ],
+    "tags": [
+      "专家",
+      "CRM"
+    ],
     "ready": true,
-    "title": "专家工作台：交接清单"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-COMMUNITY-01",
+    "surfaces": [
+      "community/hub",
+      "questions/hub"
+    ],
+    "role": "summary",
+    "title": "社区提问：结构化讨论",
+    "caption": "问题 → 依据 → 不同意见 → 回访",
+    "alt": "社区结构化提问讨论示意图",
     "filename": "community-structured-qa.jpg",
-    "prompt": "Forum-style structured Q&A diagram: question card, evidence chips, calm reply threads, verification tag. Soft paper, ink blue, Chinese labels 问题 依据 讨论 回访, Linear product, not chaotic social feed.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Forum-style structured Q&A diagram: question card, evidence chips, calm reply threads, verification tag. Soft paper, ink blue, Chinese labels 问题 依据 讨论 回访, Linear product, not chaotic social feed.",
+    "reportCiteKeys": [],
+    "tags": [
+      "社区",
+      "问答"
+    ],
     "ready": true,
-    "title": "社区提问：结构化讨论"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-LIUNIAN-FOCUS-01",
+    "surfaces": [
+      "tools/yearly",
+      "report/timing",
+      "dimensions/fortune-rhythm"
+    ],
+    "role": "timing",
+    "title": "流年主窗口怎么用",
+    "caption": "一年里的推进窗与防守窗",
+    "alt": "流年主窗口推进与防守示意",
     "filename": "liunian-main-window.jpg",
-    "prompt": "Single-year calendar ribbon with two highlighted windows labeled 推进窗 and 防守窗, small monthly ticks. Soft green and amber zones, Chinese labels, educational timing diagram, Linear style.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Single-year calendar ribbon with two highlighted windows labeled 推进窗 and 防守窗, small monthly ticks. Soft green and amber zones, Chinese labels, educational timing diagram, Linear style.",
+    "reportCiteKeys": [
+      "timing"
+    ],
+    "tags": [
+      "流年",
+      "窗口"
+    ],
     "ready": true,
-    "title": "流年主窗口怎么用"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-UPDATES-01",
+    "surfaces": [
+      "updates/hub",
+      "profile/hub"
+    ],
+    "role": "summary",
+    "title": "消息与更新：该回看什么",
+    "caption": "预测到期 · 报告升级 · 重要提醒",
+    "alt": "产品消息类型示意图",
     "filename": "updates-message-types.jpg",
-    "prompt": "Three calm notification cards: 预测到期 报告升级 重要提醒. Linear inbox aesthetic, Chinese labels, soft paper, product education, not spammy marketing.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Three calm notification cards: 预测到期 报告升级 重要提醒. Linear inbox aesthetic, Chinese labels, soft paper, product education, not spammy marketing.",
+    "reportCiteKeys": [],
+    "tags": [
+      "消息",
+      "更新"
+    ],
     "ready": true,
-    "title": "消息与更新：该回看什么"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-FREE-PATH-01",
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace",
+      "tools/hub"
+    ],
+    "role": "action",
+    "title": "免费路径：先测再深",
+    "caption": "工具快测 → 完整报告 → 顾问深聊",
+    "alt": "免费到深度的产品路径图",
     "filename": "free-path-tool-to-report.jpg",
-    "prompt": "Ascending three-step path: 免费工具快测, 完整结构报告, 顾问深聊. Soft paper stairs or cards, ink blue, Chinese labels, Linear conversion diagram without hard sell.",
     "aspectRatio": "16:9",
     "complexity": "complex",
+    "prompt": "Ascending three-step path: 免费工具快测, 完整结构报告, 顾问深聊. Soft paper stairs or cards, ink blue, Chinese labels, Linear conversion diagram without hard sell.",
+    "reportCiteKeys": [],
+    "tags": [
+      "路径",
+      "转化"
+    ],
     "ready": true,
-    "title": "免费路径：先测再深",
-    "locale": "zh-CN"
+    "width": 1600,
+    "height": 900
   },
   {
     "id": "PI-ICON-CAT-CAREER",
+    "surfaces": [
+      "tools/category/career",
+      "tools/category/application",
+      "icon/tools"
+    ],
+    "role": "action",
+    "title": "事业工具",
+    "caption": "角色与阶段",
+    "alt": "事业工具分类图标",
     "filename": "icon-tool-career.jpg",
-    "prompt": "Simple square product icon geometric briefcase, muted ink blue on soft paper, optional small Chinese 事业, Linear icon, no face.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square product icon geometric briefcase, muted ink blue on soft paper, optional small Chinese 事业, Linear icon, no face.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "工具"
+    ],
     "ready": true,
-    "title": "事业工具"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-CAT-WEALTH",
+    "surfaces": [
+      "tools/category/wealth",
+      "icon/tools"
+    ],
+    "role": "action",
+    "title": "财富工具",
+    "caption": "节奏与配置",
+    "alt": "财富工具分类图标",
     "filename": "icon-tool-wealth.jpg",
-    "prompt": "Simple square icon geometric ledger or coin outline, soft blue-green, paper, optional 财富, Linear, not luxury bling.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon geometric ledger or coin outline, soft blue-green, paper, optional 财富, Linear, not luxury bling.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "工具"
+    ],
     "ready": true,
-    "title": "财富工具"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-CAT-RELATION",
+    "surfaces": [
+      "tools/category/relationship",
+      "tools/category/family",
+      "icon/tools"
+    ],
+    "role": "action",
+    "title": "关系工具",
+    "caption": "边界与节奏",
+    "alt": "关系工具分类图标",
     "filename": "icon-tool-relationship.jpg",
-    "prompt": "Simple square icon two linked geometric nodes, ink blue, paper, optional 关系, Linear, no faces.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon two linked geometric nodes, ink blue, paper, optional 关系, Linear, no faces.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "工具"
+    ],
     "ready": true,
-    "title": "关系工具"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-CAT-HEALTH",
+    "surfaces": [
+      "tools/category/health",
+      "icon/tools"
+    ],
+    "role": "action",
+    "title": "节律工具",
+    "caption": "恢复节奏",
+    "alt": "健康节律工具图标",
     "filename": "icon-tool-health.jpg",
-    "prompt": "Simple square icon gentle waveform, soft green-blue, paper, optional 节律, Linear, not medical red cross spam.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon gentle waveform, soft green-blue, paper, optional 节律, Linear, not medical red cross spam.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "工具"
+    ],
     "ready": true,
-    "title": "节律工具"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-ICON-CAT-MIGRATE",
+    "surfaces": [
+      "tools/category/migration",
+      "icon/tools",
+      "movement/hub"
+    ],
+    "role": "action",
+    "title": "迁移工具",
+    "caption": "环境变量",
+    "alt": "迁移工具分类图标",
     "filename": "icon-tool-migration.jpg",
-    "prompt": "Simple square icon map pin with small arc, ink blue, paper, optional 迁移, Linear product icon.",
     "aspectRatio": "1:1",
     "complexity": "simple",
+    "prompt": "Simple square icon map pin with small arc, ink blue, paper, optional 迁移, Linear product icon.",
+    "reportCiteKeys": [],
+    "tags": [
+      "icon",
+      "工具"
+    ],
     "ready": true,
-    "title": "迁移工具"
+    "width": 1024,
+    "height": 1024
   },
   {
     "id": "PI-HOME-01-EN",
-    "filename": "home-path-from-birth-to-action.en.jpg",
-    "prompt": "Horizontal product journey diagram: four calm cards connected by arrows labeled Birth form, Read report, Advisor opening, Event validation. Soft paper background, blue ink accents, minimal icons of calendar, document, chat bubble, checklist. English labels only. SEO educational diagram for Bazi / Life K-Line decision support.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace"
+    ],
+    "role": "structure",
     "title": "From birth data to actionable judgment",
     "caption": "Birth form → report structure → advisor opening → event validation",
     "alt": "Life K-Line product path diagram: birth chart to report advisor and validation",
+    "filename": "home-path-from-birth-to-action.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Horizontal product journey diagram: four calm cards connected by arrows labeled Birth form, Read report, Advisor opening, Event validation. Soft paper background, blue ink accents, minimal icons of calendar, document, chat bubble, checklist. English labels only. SEO educational diagram for Bazi / Life K-Line decision support.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-HOME-01",
-    "surfaces": []
+    "variantOf": "PI-HOME-01"
   },
   {
     "id": "PI-HOME-01-HANT",
-    "filename": "home-path-from-birth-to-action.zh-hant.jpg",
-    "prompt": "橫向產品旅程圖：四張平靜卡片以箭頭連接，標籤為 填生辰、讀報告、顧問開場、事件驗證。柔和紙質背景、墨藍色點綴。僅使用繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace"
+    ],
+    "role": "structure",
     "title": "從生辰到可執行判斷",
     "caption": "排盤 → 報告結構 → 顧問開場 → 事件驗證",
     "alt": "人生K線從排盤到報告顧問驗證的路徑示意圖",
+    "filename": "home-path-from-birth-to-action.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "橫向產品旅程圖：四張平靜卡片以箭頭連接，標籤為 填生辰、讀報告、顧問開場、事件驗證。柔和紙質背景、墨藍色點綴。僅使用繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-HOME-01",
-    "surfaces": []
+    "variantOf": "PI-HOME-01"
   },
   {
     "id": "PI-REPORT-READ-01-EN",
-    "filename": "report-first-reading-path.en.jpg",
-    "prompt": "Infographic map of reading a destiny report: numbered steps 1 Conclusion 2 Time windows 3 Structure basis 4 Risks 5 Verification points. Clean layered document illustration, blue accent numbers, paper texture. English labels only.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "docs/read-first-report",
+      "report/cover"
+    ],
+    "role": "structure",
     "title": "How to read your first report",
     "caption": "Conclusion and windows first, then structure and risks",
     "alt": "Infographic of reading a Bazi report: conclusion, timing windows, structure, risk, verification",
+    "filename": "report-first-reading-path.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Infographic map of reading a destiny report: numbered steps 1 Conclusion 2 Time windows 3 Structure basis 4 Risks 5 Verification points. Clean layered document illustration, blue accent numbers, paper texture. English labels only.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-REPORT-READ-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-READ-01"
   },
   {
     "id": "PI-REPORT-READ-01-HANT",
-    "filename": "report-first-reading-path.zh-hant.jpg",
-    "prompt": "報告閱讀資訊圖：編號步驟 1 結論 2 時間窗口 3 結構依據 4 風險 5 驗證點。乾淨文件分層插畫。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "docs/read-first-report",
+      "report/cover"
+    ],
+    "role": "structure",
     "title": "第一份報告怎麼讀",
     "caption": "先結論與窗口，再看結構與風險",
     "alt": "第一份命理報告閱讀順序圖：結論窗口結構風險",
+    "filename": "report-first-reading-path.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "報告閱讀資訊圖：編號步驟 1 結論 2 時間窗口 3 結構依據 4 風險 5 驗證點。乾淨文件分層插畫。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-REPORT-READ-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-READ-01"
   },
   {
     "id": "PI-REPORT-TIMING-01-EN",
-    "filename": "report-dayun-liunian-windows.en.jpg",
-    "prompt": "Timeline diagram of life phases labeled Dayun with smaller yearly marks Liunian. Soft green zones Favorable window and amber zones Caution window. Minimal K-line rhythm below. Educational English labels only.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/timing",
+      "dimensions/fortune-rhythm"
+    ],
+    "role": "structure",
     "title": "Dayun and yearly windows",
     "caption": "Phase rhythm: favorable vs caution windows — not absolute fate",
     "alt": "Timeline of life phases Dayun with yearly Liunian marks and favorable caution zones",
+    "filename": "report-dayun-liunian-windows.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Timeline diagram of life phases labeled Dayun with smaller yearly marks Liunian. Soft green zones Favorable window and amber zones Caution window. Minimal K-line rhythm below. Educational English labels only.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-REPORT-TIMING-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-TIMING-01"
   },
   {
     "id": "PI-REPORT-TIMING-01-HANT",
-    "filename": "report-dayun-liunian-windows.zh-hant.jpg",
-    "prompt": "人生階段時間軸圖（大運）與較小流年刻度。淺綠區標 有利窗、琥珀區標 謹慎窗。下方極簡K線節奏。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/timing",
+      "dimensions/fortune-rhythm"
+    ],
+    "role": "structure",
     "title": "大運與流年窗口",
     "caption": "階段節奏：有利窗 / 謹慎窗，而不是絕對吉凶",
     "alt": "大運流年時間軸示意：有利窗口與謹慎窗口",
+    "filename": "report-dayun-liunian-windows.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "人生階段時間軸圖（大運）與較小流年刻度。淺綠區標 有利窗、琥珀區標 謹慎窗。下方極簡K線節奏。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-REPORT-TIMING-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-TIMING-01"
   },
   {
     "id": "PI-REPORT-DECISION-01-EN",
-    "filename": "decision-loop-basis-action-verify.en.jpg",
-    "prompt": "Five connected modules: Judgment basis, Current conclusion, Stage actions (Today 7d 30d), Risk notes, Verification points. Product UI cards, blue accent, English labels only.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/decision",
+      "chat/structure"
+    ],
+    "role": "structure",
     "title": "Decision loop: basis → action → verify",
     "caption": "Today / 7 days / 30 days executable steps",
     "alt": "Decision loop modules: judgment basis, conclusion, stage actions, risk, verification",
+    "filename": "decision-loop-basis-action-verify.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Five connected modules: Judgment basis, Current conclusion, Stage actions (Today 7d 30d), Risk notes, Verification points. Product UI cards, blue accent, English labels only.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-REPORT-DECISION-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-DECISION-01"
   },
   {
     "id": "PI-REPORT-DECISION-01-HANT",
-    "filename": "decision-loop-basis-action-verify.zh-hant.jpg",
-    "prompt": "五個相連模組：判斷依據、當前結論、階段動作（今天 7天 30天）、風險提醒、驗證點。產品卡片風。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/decision",
+      "chat/structure"
+    ],
+    "role": "structure",
     "title": "決策閉環：依據→結論→動作→驗證",
     "caption": "今天 / 7 天 / 30 天 三步可執行",
     "alt": "命理決策閉環圖：判斷依據當前結論階段動作風險驗證點",
+    "filename": "decision-loop-basis-action-verify.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "五個相連模組：判斷依據、當前結論、階段動作（今天 7天 30天）、風險提醒、驗證點。產品卡片風。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-REPORT-DECISION-01",
-    "surfaces": []
+    "variantOf": "PI-REPORT-DECISION-01"
   },
   {
     "id": "PI-YONGSHEN-01-EN",
-    "filename": "structure-daymaster-yongshen.en.jpg",
-    "prompt": "Abstract educational diagram: center node Day master, supporting nodes Useful god, caution nodes Avoided god, light five-element cycle. Soft colors, schematic, English labels only. Textbook clarity for Bazi structure.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/structure",
+      "teachers/overview"
+    ],
+    "role": "structure",
     "title": "Day master and useful gods (schematic)",
     "caption": "Structure anchors locked by the report — educational only",
     "alt": "Abstract educational diagram of day master useful god and avoided god nodes",
+    "filename": "structure-daymaster-yongshen.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Abstract educational diagram: center node Day master, supporting nodes Useful god, caution nodes Avoided god, light five-element cycle. Soft colors, schematic, English labels only. Textbook clarity for Bazi structure.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-YONGSHEN-01",
-    "surfaces": []
+    "variantOf": "PI-YONGSHEN-01"
   },
   {
     "id": "PI-YONGSHEN-01-HANT",
-    "filename": "structure-daymaster-yongshen.zh-hant.jpg",
-    "prompt": "抽象教學圖：中心節點 日主，支撐節點 用神，警示節點 忌神，輕描五行循環。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/structure",
+      "teachers/overview"
+    ],
+    "role": "structure",
     "title": "日主與用神喜忌（示意）",
     "caption": "結構錨點以報告鎖定為準",
     "alt": "日主用神忌神結構示意教學圖",
+    "filename": "structure-daymaster-yongshen.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "抽象教學圖：中心節點 日主，支撐節點 用神，警示節點 忌神，輕描五行循環。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-YONGSHEN-01",
-    "surfaces": []
+    "variantOf": "PI-YONGSHEN-01"
   },
   {
     "id": "PI-FIVE-ELEMENTS-01-EN",
-    "filename": "five-elements-cycle-edu.en.jpg",
-    "prompt": "Clean educational five-elements cycle: Wood Fire Earth Metal Water with generation arrows and control dashed arrows. Soft pastel geometric nodes. English labels only. Not mystical altar art.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/structure",
+      "learn/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
     "title": "Five elements generation and control (education)",
     "caption": "Schematic relations; your chart follows the locked report",
     "alt": "Five elements Wood Fire Earth Metal Water cycle educational diagram",
+    "filename": "five-elements-cycle-edu.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Clean educational five-elements cycle: Wood Fire Earth Metal Water with generation arrows and control dashed arrows. Soft pastel geometric nodes. English labels only. Not mystical altar art.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-FIVE-ELEMENTS-01",
-    "surfaces": []
+    "variantOf": "PI-FIVE-ELEMENTS-01"
   },
   {
     "id": "PI-FIVE-ELEMENTS-01-HANT",
-    "filename": "five-elements-cycle-edu.zh-hant.jpg",
-    "prompt": "五行循環教學圖：木 火 土 金 水，相生箭頭與相剋虛線。柔和幾何節點。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/structure",
+      "learn/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
     "title": "五行生克（教學示意）",
     "caption": "結構關係示意，具體以本盤報告鎖定為準",
     "alt": "五行生克循環教學示意圖",
+    "filename": "five-elements-cycle-edu.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "五行循環教學圖：木 火 土 金 水，相生箭頭與相剋虛線。柔和幾何節點。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-FIVE-ELEMENTS-01",
-    "surfaces": []
+    "variantOf": "PI-FIVE-ELEMENTS-01"
   },
   {
     "id": "PI-TOOLS-01-EN",
-    "filename": "tools-problem-breakdown.en.jpg",
-    "prompt": "Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. English labels Tools Report Revisit. Minimal product diagram.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "tools/hub",
+      "home/workspace"
+    ],
+    "role": "structure",
     "title": "Tools: break big questions into testable ones",
     "caption": "Single tools → deep report → revisit",
     "alt": "Tool hub diagram: fuzzy question to tool cards into report",
+    "filename": "tools-problem-breakdown.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. English labels Tools Report Revisit. Minimal product diagram.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-TOOLS-01",
-    "surfaces": []
+    "variantOf": "PI-TOOLS-01"
   },
   {
     "id": "PI-TOOLS-01-HANT",
-    "filename": "tools-problem-breakdown.zh-hant.jpg",
-    "prompt": "小工具卡片矩陣圍繞中央報告文件。從模糊問題雲到清晰工具再到報告。標籤 工具 報告 回訪。僅繁體中文。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "tools/hub",
+      "home/workspace"
+    ],
+    "role": "structure",
     "title": "工具：把大問題拆成可測小問題",
     "caption": "單項工具 → 報告深問 → 回訪",
     "alt": "工具中心問題拆解與報告銜接示意圖",
+    "filename": "tools-problem-breakdown.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "小工具卡片矩陣圍繞中央報告文件。從模糊問題雲到清晰工具再到報告。標籤 工具 報告 回訪。僅繁體中文。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-TOOLS-01",
-    "surfaces": []
+    "variantOf": "PI-TOOLS-01"
   },
   {
     "id": "PI-DIMENSIONS-MAP-01-EN",
-    "filename": "dimensions-ten-scene-map.en.jpg",
-    "prompt": "Grid of ten calm scene tiles with English labels: Fortune rhythm, Career industry, Investing, Marriage timing, Health rhythm, Naming, Timing selection, Migration, Relations, Family. Soft paper, ink blue, Linear product map.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "dimensions/hub",
+      "dimensions/map"
+    ],
+    "role": "structure",
     "title": "Ten dimensions: one question one analysis",
     "caption": "Fortune rhythm, career, wealth, marriage, health, migration…",
     "alt": "Ten-scene map for Life K-Line dimensions hub",
+    "filename": "dimensions-ten-scene-map.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Grid of ten calm scene tiles with English labels: Fortune rhythm, Career industry, Investing, Marriage timing, Health rhythm, Naming, Timing selection, Migration, Relations, Family. Soft paper, ink blue, Linear product map.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-DIMENSIONS-MAP-01",
-    "surfaces": []
+    "variantOf": "PI-DIMENSIONS-MAP-01"
   },
   {
     "id": "PI-DIMENSIONS-MAP-01-HANT",
-    "filename": "dimensions-ten-scene-map.zh-hant.jpg",
-    "prompt": "十個平靜場景方塊：運勢節奏 事業行業 投資理財 談婚論嫁 健康節律 起名 擇時 遷移 人際 家庭。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "dimensions/hub",
+      "dimensions/map"
+    ],
+    "role": "structure",
     "title": "十維度：一題一研判",
     "caption": "運勢節奏 · 事業 · 財務 · 婚戀 · 健康 · 遷移…",
     "alt": "十維度場景地圖示意圖",
+    "filename": "dimensions-ten-scene-map.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "十個平靜場景方塊：運勢節奏 事業行業 投資理財 談婚論嫁 健康節律 起名 擇時 遷移 人際 家庭。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-DIMENSIONS-MAP-01",
-    "surfaces": []
+    "variantOf": "PI-DIMENSIONS-MAP-01"
   },
   {
     "id": "PI-CASES-01-EN",
-    "filename": "cases-structure-to-reality.en.jpg",
-    "prompt": "Educational case-study reading map: four cards Scene, Structure judgment, Time window, Reality check connected by arrows. Soft paper, ink blue, English labels only.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "cases/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
     "title": "Cases: structure meets reality",
     "caption": "Scene → structure judgment → window → comparable outcome",
     "alt": "Case study reading path diagram for Bazi decision support",
+    "filename": "cases-structure-to-reality.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Educational case-study reading map: four cards Scene, Structure judgment, Time window, Reality check connected by arrows. Soft paper, ink blue, English labels only.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-CASES-01",
-    "surfaces": []
+    "variantOf": "PI-CASES-01"
   },
   {
     "id": "PI-CASES-01-HANT",
-    "filename": "cases-structure-to-reality.zh-hant.jpg",
-    "prompt": "案例閱讀地圖：四卡片 問題場景 結構判斷 時間窗口 現實對照。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "cases/hub",
+      "knowledge/hub"
+    ],
+    "role": "structure",
     "title": "案例：結構如何落到現實",
     "caption": "問題場景 → 結構判斷 → 時間窗 → 可對照結果",
     "alt": "案例閱讀路徑：場景結構窗口結果",
+    "filename": "cases-structure-to-reality.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "案例閱讀地圖：四卡片 問題場景 結構判斷 時間窗口 現實對照。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-CASES-01",
-    "surfaces": []
+    "variantOf": "PI-CASES-01"
   },
   {
     "id": "PI-KNOWLEDGE-01-EN",
-    "filename": "knowledge-lookup-loop.en.jpg",
-    "prompt": "Three-step knowledge loop: Look up term, See example, Compare with report. Book and document icons minimal. English labels. Calm library aesthetic for product.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "knowledge/hub",
+      "docs/hub"
+    ],
+    "role": "structure",
     "title": "Knowledge base: look up and return to your chart",
     "caption": "Term → example → compare with your report",
     "alt": "Knowledge lookup loop diagram term example report",
+    "filename": "knowledge-lookup-loop.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-step knowledge loop: Look up term, See example, Compare with report. Book and document icons minimal. English labels. Calm library aesthetic for product.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-KNOWLEDGE-01",
-    "surfaces": []
+    "variantOf": "PI-KNOWLEDGE-01"
   },
   {
     "id": "PI-KNOWLEDGE-01-HANT",
-    "filename": "knowledge-lookup-loop.zh-hant.jpg",
-    "prompt": "三步知識閉環：查術語、看例子、回報告對照。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "knowledge/hub",
+      "docs/hub"
+    ],
+    "role": "structure",
     "title": "知識庫：概念可回查",
     "caption": "術語 → 例子 → 回到本盤報告",
     "alt": "知識庫概念回查路徑圖",
+    "filename": "knowledge-lookup-loop.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "三步知識閉環：查術語、看例子、回報告對照。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-KNOWLEDGE-01",
-    "surfaces": []
+    "variantOf": "PI-KNOWLEDGE-01"
   },
   {
     "id": "PI-WORLDYI-01-EN",
-    "filename": "world-yi-global-path.en.jpg",
-    "prompt": "Minimal world arc with three hubs: Structure method, Overseas scenes, Verifiable actions. Soft paper, ink blue geometric. English labels. Educational product diagram about World Yi.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "world-yi/hub",
+      "learn/hub"
+    ],
+    "role": "structure",
     "title": "World Yi: global scene application",
     "caption": "Structure method transferable to overseas life decisions",
     "alt": "World Yi global application path structure method overseas scenes actions",
+    "filename": "world-yi-global-path.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Minimal world arc with three hubs: Structure method, Overseas scenes, Verifiable actions. Soft paper, ink blue geometric. English labels. Educational product diagram about World Yi.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-WORLDYI-01",
-    "surfaces": []
+    "variantOf": "PI-WORLDYI-01"
   },
   {
     "id": "PI-WORLDYI-01-HANT",
-    "filename": "world-yi-global-path.zh-hant.jpg",
-    "prompt": "極簡世界弧線三樞紐：結構方法 海外場景 可驗證動作。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "world-yi/hub",
+      "learn/hub"
+    ],
+    "role": "structure",
     "title": "世界易：全球場景應用",
     "caption": "結構方法可遷移到海外生活與決策",
     "alt": "世界易全球應用路徑示意圖",
+    "filename": "world-yi-global-path.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "極簡世界弧線三樞紐：結構方法 海外場景 可驗證動作。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-WORLDYI-01",
-    "surfaces": []
+    "variantOf": "PI-WORLDYI-01"
   },
   {
     "id": "PI-FREE-PATH-01-EN",
-    "filename": "free-path-tool-to-report.en.jpg",
-    "prompt": "Ascending three-step path cards: Free tool check, Full structure report, Advisor deep chat. Soft paper stairs, ink blue, English labels. Linear conversion diagram without hard sell.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace",
+      "tools/hub"
+    ],
+    "role": "structure",
     "title": "Free path: test first then go deeper",
     "caption": "Quick tool → full report → advisor deep dive",
     "alt": "Free to deep product funnel tool report advisor",
+    "filename": "free-path-tool-to-report.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Ascending three-step path cards: Free tool check, Full structure report, Advisor deep chat. Soft paper stairs, ink blue, English labels. Linear conversion diagram without hard sell.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-FREE-PATH-01",
-    "surfaces": []
+    "variantOf": "PI-FREE-PATH-01"
   },
   {
     "id": "PI-FREE-PATH-01-HANT",
-    "filename": "free-path-tool-to-report.zh-hant.jpg",
-    "prompt": "三階上升路徑：免費工具快測、完整結構報告、顧問深聊。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "home/workspace",
+      "analyze/workspace",
+      "tools/hub"
+    ],
+    "role": "structure",
     "title": "免費路徑：先測再深",
     "caption": "工具快測 → 完整報告 → 顧問深聊",
     "alt": "免費到深度的產品路徑圖",
+    "filename": "free-path-tool-to-report.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "三階上升路徑：免費工具快測、完整結構報告、顧問深聊。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-FREE-PATH-01",
-    "surfaces": []
+    "variantOf": "PI-FREE-PATH-01"
   },
   {
     "id": "PI-BAZI-PILLARS-01-EN",
-    "filename": "bazi-four-pillars.en.jpg",
-    "prompt": "Four vertical pillar cards labeled Year Month Day Hour with Day master highlighted on day pillar. Clean educational Chinese metaphysics chart with English labels, soft paper, ink blue accents.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/cover",
+      "report/structure",
+      "bazi/hub"
+    ],
+    "role": "structure",
     "title": "Four pillars: year month day hour",
     "caption": "Each pillar has a role; day master sits in the day pillar",
     "alt": "Bazi four pillars educational chart Year Month Day Hour",
+    "filename": "bazi-four-pillars.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Four vertical pillar cards labeled Year Month Day Hour with Day master highlighted on day pillar. Clean educational Chinese metaphysics chart with English labels, soft paper, ink blue accents.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-BAZI-PILLARS-01",
-    "surfaces": []
+    "variantOf": "PI-BAZI-PILLARS-01"
   },
   {
     "id": "PI-BAZI-PILLARS-01-HANT",
-    "filename": "bazi-four-pillars.zh-hant.jpg",
-    "prompt": "四根豎柱卡片：年柱 月柱 日柱 時柱，日主在日柱高亮。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "report/cover",
+      "report/structure",
+      "bazi/hub"
+    ],
+    "role": "structure",
     "title": "四柱：年月日時",
     "caption": "四柱各有分工，日主居中",
     "alt": "八字四柱結構教學圖",
+    "filename": "bazi-four-pillars.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "四根豎柱卡片：年柱 月柱 日柱 時柱，日主在日柱高亮。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-BAZI-PILLARS-01",
-    "surfaces": []
+    "variantOf": "PI-BAZI-PILLARS-01"
   },
   {
     "id": "PI-BOUNDARY-01-EN",
-    "filename": "boundary-not-fatalism.en.jpg",
-    "prompt": "Two-column comparison: left Can do (structure reference, window rhythm, verifiable actions), right Do not (scare, absolute fate, replace medical legal investment). Soft amber on right, calm blue on left. English labels. Ethical product illustration.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "boundary/not-fatalism",
+      "docs/read-first-report"
+    ],
+    "role": "structure",
     "title": "Judgment boundary: reference not verdict",
     "caption": "No scare tactics; medical legal investment need professionals",
     "alt": "Do and do-not boundary diagram for ethical destiny decision support",
+    "filename": "boundary-not-fatalism.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Two-column comparison: left Can do (structure reference, window rhythm, verifiable actions), right Do not (scare, absolute fate, replace medical legal investment). Soft amber on right, calm blue on left. English labels. Ethical product illustration.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-BOUNDARY-01",
-    "surfaces": []
+    "variantOf": "PI-BOUNDARY-01"
   },
   {
     "id": "PI-BOUNDARY-01-HANT",
-    "filename": "boundary-not-fatalism.zh-hant.jpg",
-    "prompt": "雙欄對比：左 可做（結構參考 窗口節奏 可驗證動作），右 不做（恐嚇 絕對命運 替代醫療法律投資）。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "boundary/not-fatalism",
+      "docs/read-first-report"
+    ],
+    "role": "structure",
     "title": "判斷邊界：參考不是定論",
     "caption": "不恐嚇、不絕對化；醫療法律投資需專業意見",
     "alt": "命理判斷邊界說明：參考框架非宿命定論",
+    "filename": "boundary-not-fatalism.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "雙欄對比：左 可做（結構參考 窗口節奏 可驗證動作），右 不做（恐嚇 絕對命運 替代醫療法律投資）。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-BOUNDARY-01",
-    "surfaces": []
+    "variantOf": "PI-BOUNDARY-01"
   },
   {
     "id": "PI-SOLAR-TIME-01-EN",
-    "filename": "solar-time-longitude.en.jpg",
-    "prompt": "Educational diagram: clock, map longitude line, birth form fields Birth place Clock time True solar time. Arrows showing correction. English labels. Calm science-education style, Linear product.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "docs/solar-time",
+      "docs/hub",
+      "analyze/workspace"
+    ],
+    "role": "structure",
     "title": "Why true solar time matters",
     "caption": "Longitude and time difference affect hour pillar accuracy",
     "alt": "True solar time longitude correction educational diagram",
+    "filename": "solar-time-longitude.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Educational diagram: clock, map longitude line, birth form fields Birth place Clock time True solar time. Arrows showing correction. English labels. Calm science-education style, Linear product.",
+    "reportCiteKeys": [],
+    "tags": [
+      "en",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-SOLAR-TIME-01",
-    "surfaces": []
+    "variantOf": "PI-SOLAR-TIME-01"
   },
   {
     "id": "PI-SOLAR-TIME-01-HANT",
-    "filename": "solar-time-longitude.zh-hant.jpg",
-    "prompt": "教學圖：時鐘、經度線、出生地表單 出生地 鐘表時間 真太陽時。箭頭示意修正。僅繁體中文標籤。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "docs/solar-time",
+      "docs/hub",
+      "analyze/workspace"
+    ],
+    "role": "structure",
     "title": "真太陽時為什麼重要",
     "caption": "經度與時差影響時柱精度",
     "alt": "真太陽時與出生地經度關係示意圖",
+    "filename": "solar-time-longitude.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "教學圖：時鐘、經度線、出生地表單 出生地 鐘表時間 真太陽時。箭頭示意修正。僅繁體中文標籤。",
+    "reportCiteKeys": [],
+    "tags": [
+      "zh-Hant",
+      "seo",
+      "multi-locale"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "zh-Hant",
-    "variantOf": "PI-SOLAR-TIME-01",
-    "surfaces": []
+    "variantOf": "PI-SOLAR-TIME-01"
   },
   {
     "id": "PI-GEO-SHANGHAI",
-    "filename": "geo-city-shanghai.jpg",
-    "prompt": "Editorial city decision-support diagram for 上海 (中国华东). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 上海. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/shanghai",
+      "insights/city/world-yi-city-shanghai",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：上海",
     "caption": "中国华东 · 事业 · 居住 · 现金流",
     "alt": "人生K线上海城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/shanghai",
-      "insights/city/world-yi-city-shanghai",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-shanghai.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 上海 (中国华东). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 上海. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-SHANGHAI-EN",
-    "filename": "geo-city-shanghai.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Shanghai (East China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shanghai. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/shanghai",
+      "insights/city/world-yi-city-shanghai",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "City lens: Shanghai",
     "caption": "East China · Career · Housing · Cash flow",
     "alt": "Life K-Line city environment diagram for Shanghai: cost structure, role density, life rhythm",
+    "filename": "geo-city-shanghai.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Shanghai (East China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shanghai. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-GEO-SHANGHAI",
-    "surfaces": [
-      "geo/shanghai",
-      "insights/city/world-yi-city-shanghai",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "variantOf": "PI-GEO-SHANGHAI"
   },
   {
     "id": "PI-GEO-SHENZHEN",
-    "filename": "geo-city-shenzhen.jpg",
-    "prompt": "Editorial city decision-support diagram for 深圳 (中国华南). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 深圳. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/shenzhen",
+      "insights/city/world-yi-city-shenzhen",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：深圳",
     "caption": "中国华南 · 创业 · 行业 · 节奏",
     "alt": "人生K线深圳城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/shenzhen",
-      "insights/city/world-yi-city-shenzhen",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-shenzhen.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 深圳 (中国华南). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 深圳. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-SHENZHEN-EN",
-    "filename": "geo-city-shenzhen.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Shenzhen (South China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shenzhen. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Shenzhen",
-    "caption": "South China · Startup · Industry · Rhythm",
-    "alt": "Life K-Line city environment diagram for Shenzhen: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-SHENZHEN",
     "surfaces": [
       "geo/shenzhen",
       "insights/city/world-yi-city-shenzhen",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Shenzhen",
+    "caption": "South China · Startup · Industry · Rhythm",
+    "alt": "Life K-Line city environment diagram for Shenzhen: cost structure, role density, life rhythm",
+    "filename": "geo-city-shenzhen.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Shenzhen (South China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shenzhen. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-SHENZHEN"
   },
   {
     "id": "PI-GEO-BEIJING",
-    "filename": "geo-city-beijing.jpg",
-    "prompt": "Editorial city decision-support diagram for 北京 (中国华北). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 北京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/beijing",
+      "insights/city/world-yi-city-beijing",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：北京",
     "caption": "中国华北 · 事业 · 政策环境 · 关系网络",
     "alt": "人生K线北京城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/beijing",
-      "insights/city/world-yi-city-beijing",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-beijing.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 北京 (中国华北). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 北京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-BEIJING-EN",
-    "filename": "geo-city-beijing.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Beijing (North China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Beijing. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Beijing",
-    "caption": "North China · Career · Policy · Networks",
-    "alt": "Life K-Line city environment diagram for Beijing: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-BEIJING",
     "surfaces": [
       "geo/beijing",
       "insights/city/world-yi-city-beijing",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Beijing",
+    "caption": "North China · Career · Policy · Networks",
+    "alt": "Life K-Line city environment diagram for Beijing: cost structure, role density, life rhythm",
+    "filename": "geo-city-beijing.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Beijing (North China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Beijing. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-BEIJING"
   },
   {
     "id": "PI-GEO-NEW_YORK",
-    "filename": "geo-city-new-york.jpg",
-    "prompt": "Editorial city decision-support diagram for 纽约 (北美). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 纽约. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/new-york",
+      "insights/city/world-yi-city-new-york",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：纽约",
     "caption": "北美 · 迁移 · 职业 · 现金流",
     "alt": "人生K线纽约城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/new-york",
-      "insights/city/world-yi-city-new-york",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-new-york.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 纽约 (北美). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 纽约. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-NEW_YORK-EN",
-    "filename": "geo-city-new-york.en.jpg",
-    "prompt": "Editorial city decision-support diagram for New York (North America). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of New York. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: New York",
-    "caption": "North America · Migration · Career · Cash flow",
-    "alt": "Life K-Line city environment diagram for New York: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-NEW_YORK",
     "surfaces": [
       "geo/new-york",
       "insights/city/world-yi-city-new-york",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: New York",
+    "caption": "North America · Migration · Career · Cash flow",
+    "alt": "Life K-Line city environment diagram for New York: cost structure, role density, life rhythm",
+    "filename": "geo-city-new-york.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for New York (North America). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of New York. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-NEW_YORK"
   },
   {
     "id": "PI-GEO-SYDNEY",
-    "filename": "geo-city-sydney.jpg",
-    "prompt": "Editorial city decision-support diagram for 悉尼 (澳洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 悉尼. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/sydney",
+      "insights/city/world-yi-city-sydney",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：悉尼",
     "caption": "澳洲 · 迁移 · 家庭 · 就业",
     "alt": "人生K线悉尼城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/sydney",
-      "insights/city/world-yi-city-sydney",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-sydney.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 悉尼 (澳洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 悉尼. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-SYDNEY-EN",
-    "filename": "geo-city-sydney.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Sydney (Australia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Sydney. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Sydney",
-    "caption": "Australia · Migration · Family · Jobs",
-    "alt": "Life K-Line city environment diagram for Sydney: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-SYDNEY",
     "surfaces": [
       "geo/sydney",
       "insights/city/world-yi-city-sydney",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Sydney",
+    "caption": "Australia · Migration · Family · Jobs",
+    "alt": "Life K-Line city environment diagram for Sydney: cost structure, role density, life rhythm",
+    "filename": "geo-city-sydney.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Sydney (Australia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Sydney. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-SYDNEY"
   },
   {
     "id": "PI-GEO-LONDON",
-    "filename": "geo-city-london.jpg",
-    "prompt": "Editorial city decision-support diagram for 伦敦 (欧洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 伦敦. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/london",
+      "insights/city/world-yi-city-london",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：伦敦",
     "caption": "欧洲 · 迁移 · 事业 · 居住",
     "alt": "人生K线伦敦城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/london",
-      "insights/city/world-yi-city-london",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-london.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 伦敦 (欧洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 伦敦. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-LONDON-EN",
-    "filename": "geo-city-london.en.jpg",
-    "prompt": "Editorial city decision-support diagram for London (Europe). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of London. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: London",
-    "caption": "Europe · Migration · Career · Housing",
-    "alt": "Life K-Line city environment diagram for London: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-LONDON",
     "surfaces": [
       "geo/london",
       "insights/city/world-yi-city-london",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: London",
+    "caption": "Europe · Migration · Career · Housing",
+    "alt": "Life K-Line city environment diagram for London: cost structure, role density, life rhythm",
+    "filename": "geo-city-london.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for London (Europe). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of London. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-LONDON"
   },
   {
     "id": "PI-GEO-TOKYO",
-    "filename": "geo-city-tokyo.jpg",
-    "prompt": "Editorial city decision-support diagram for 东京 (东亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 东京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/tokyo",
+      "insights/city/world-yi-city-tokyo",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：东京",
     "caption": "东亚 · 节奏 · 事业 · 生活秩序",
     "alt": "人生K线东京城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/tokyo",
-      "insights/city/world-yi-city-tokyo",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-tokyo.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 东京 (东亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 东京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-TOKYO-EN",
-    "filename": "geo-city-tokyo.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Tokyo (East Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Tokyo. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Tokyo",
-    "caption": "East Asia · Rhythm · Career · Daily order",
-    "alt": "Life K-Line city environment diagram for Tokyo: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-TOKYO",
     "surfaces": [
       "geo/tokyo",
       "insights/city/world-yi-city-tokyo",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Tokyo",
+    "caption": "East Asia · Rhythm · Career · Daily order",
+    "alt": "Life K-Line city environment diagram for Tokyo: cost structure, role density, life rhythm",
+    "filename": "geo-city-tokyo.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Tokyo (East Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Tokyo. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-TOKYO"
   },
   {
     "id": "PI-GEO-LOS_ANGELES",
-    "filename": "geo-city-los-angeles.jpg",
-    "prompt": "Editorial city decision-support diagram for 洛杉矶 (北美西岸). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 洛杉矶. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/los-angeles",
+      "insights/city/world-yi-city-los-angeles",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：洛杉矶",
     "caption": "北美西岸 · 迁移 · 家庭 · 创业",
     "alt": "人生K线洛杉矶城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/los-angeles",
-      "insights/city/world-yi-city-los-angeles",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-los-angeles.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 洛杉矶 (北美西岸). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 洛杉矶. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-LOS_ANGELES-EN",
-    "filename": "geo-city-los-angeles.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Los Angeles (US West Coast). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Los Angeles. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Los Angeles",
-    "caption": "US West Coast · Migration · Family · Ventures",
-    "alt": "Life K-Line city environment diagram for Los Angeles: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-LOS_ANGELES",
     "surfaces": [
       "geo/los-angeles",
       "insights/city/world-yi-city-los-angeles",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Los Angeles",
+    "caption": "US West Coast · Migration · Family · Ventures",
+    "alt": "Life K-Line city environment diagram for Los Angeles: cost structure, role density, life rhythm",
+    "filename": "geo-city-los-angeles.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Los Angeles (US West Coast). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Los Angeles. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-LOS_ANGELES"
   },
   {
     "id": "PI-GEO-SINGAPORE",
-    "filename": "geo-city-singapore.jpg",
-    "prompt": "Editorial city decision-support diagram for 新加坡 (东南亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 新加坡. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/singapore",
+      "insights/city/world-yi-city-singapore",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：新加坡",
     "caption": "东南亚 · 迁移 · 职业 · 跨境家庭",
     "alt": "人生K线新加坡城市环境层观察示意图：成本结构角色密度节奏",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/singapore",
-      "insights/city/world-yi-city-singapore",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-singapore.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 新加坡 (东南亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 新加坡. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-SINGAPORE-EN",
-    "filename": "geo-city-singapore.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Singapore (Southeast Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Singapore. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "City lens: Singapore",
-    "caption": "Southeast Asia · Migration · Career · Cross-border family",
-    "alt": "Life K-Line city environment diagram for Singapore: cost structure, role density, life rhythm",
-    "locale": "en",
-    "variantOf": "PI-GEO-SINGAPORE",
     "surfaces": [
       "geo/singapore",
       "insights/city/world-yi-city-singapore",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "City lens: Singapore",
+    "caption": "Southeast Asia · Migration · Career · Cross-border family",
+    "alt": "Life K-Line city environment diagram for Singapore: cost structure, role density, life rhythm",
+    "filename": "geo-city-singapore.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Singapore (Southeast Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Singapore. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "en",
+    "variantOf": "PI-GEO-SINGAPORE"
   },
   {
     "id": "PI-GEO-SHANGHAI-HANT",
-    "filename": "geo-city-shanghai.zh-hant.jpg",
-    "prompt": "城市決策支援圖：上海（中国华东）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：上海",
-    "caption": "中国华东 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線上海城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-SHANGHAI",
     "surfaces": [
       "geo/shanghai",
       "insights/city/world-yi-city-shanghai",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：上海",
+    "caption": "中国华东 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線上海城市環境層觀察示意圖",
+    "filename": "geo-city-shanghai.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：上海（中国华东）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SHANGHAI"
   },
   {
     "id": "PI-GEO-SHENZHEN-HANT",
-    "filename": "geo-city-shenzhen.zh-hant.jpg",
-    "prompt": "城市決策支援圖：深圳（中国华南）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：深圳",
-    "caption": "中国华南 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線深圳城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-SHENZHEN",
     "surfaces": [
       "geo/shenzhen",
       "insights/city/world-yi-city-shenzhen",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：深圳",
+    "caption": "中国华南 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線深圳城市環境層觀察示意圖",
+    "filename": "geo-city-shenzhen.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：深圳（中国华南）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SHENZHEN"
   },
   {
     "id": "PI-GEO-BEIJING-HANT",
-    "filename": "geo-city-beijing.zh-hant.jpg",
-    "prompt": "城市決策支援圖：北京（中国华北）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：北京",
-    "caption": "中国华北 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線北京城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-BEIJING",
     "surfaces": [
       "geo/beijing",
       "insights/city/world-yi-city-beijing",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：北京",
+    "caption": "中国华北 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線北京城市環境層觀察示意圖",
+    "filename": "geo-city-beijing.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：北京（中国华北）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-BEIJING"
   },
   {
     "id": "PI-GEO-NEW_YORK-HANT",
-    "filename": "geo-city-new-york.zh-hant.jpg",
-    "prompt": "城市決策支援圖：纽约（北美）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：纽约",
-    "caption": "北美 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線纽约城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-NEW_YORK",
     "surfaces": [
       "geo/new-york",
       "insights/city/world-yi-city-new-york",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：纽约",
+    "caption": "北美 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線纽约城市環境層觀察示意圖",
+    "filename": "geo-city-new-york.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：纽约（北美）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-NEW_YORK"
   },
   {
     "id": "PI-GEO-SYDNEY-HANT",
-    "filename": "geo-city-sydney.zh-hant.jpg",
-    "prompt": "城市決策支援圖：悉尼（澳洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：悉尼",
-    "caption": "澳洲 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線悉尼城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-SYDNEY",
     "surfaces": [
       "geo/sydney",
       "insights/city/world-yi-city-sydney",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：悉尼",
+    "caption": "澳洲 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線悉尼城市環境層觀察示意圖",
+    "filename": "geo-city-sydney.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：悉尼（澳洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SYDNEY"
   },
   {
     "id": "PI-GEO-LONDON-HANT",
-    "filename": "geo-city-london.zh-hant.jpg",
-    "prompt": "城市決策支援圖：伦敦（欧洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：伦敦",
-    "caption": "欧洲 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線伦敦城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-LONDON",
     "surfaces": [
       "geo/london",
       "insights/city/world-yi-city-london",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：伦敦",
+    "caption": "欧洲 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線伦敦城市環境層觀察示意圖",
+    "filename": "geo-city-london.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：伦敦（欧洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-LONDON"
   },
   {
     "id": "PI-GEO-TOKYO-HANT",
-    "filename": "geo-city-tokyo.zh-hant.jpg",
-    "prompt": "城市決策支援圖：东京（东亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：东京",
-    "caption": "东亚 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線东京城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-TOKYO",
     "surfaces": [
       "geo/tokyo",
       "insights/city/world-yi-city-tokyo",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：东京",
+    "caption": "东亚 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線东京城市環境層觀察示意圖",
+    "filename": "geo-city-tokyo.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：东京（东亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-TOKYO"
   },
   {
     "id": "PI-GEO-LOS_ANGELES-HANT",
-    "filename": "geo-city-los-angeles.zh-hant.jpg",
-    "prompt": "城市決策支援圖：洛杉矶（北美西岸）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：洛杉矶",
-    "caption": "北美西岸 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線洛杉矶城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-LOS_ANGELES",
     "surfaces": [
       "geo/los-angeles",
       "insights/city/world-yi-city-los-angeles",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：洛杉矶",
+    "caption": "北美西岸 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線洛杉矶城市環境層觀察示意圖",
+    "filename": "geo-city-los-angeles.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：洛杉矶（北美西岸）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-LOS_ANGELES"
   },
   {
     "id": "PI-GEO-SINGAPORE-HANT",
-    "filename": "geo-city-singapore.zh-hant.jpg",
-    "prompt": "城市決策支援圖：新加坡（东南亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：新加坡",
-    "caption": "东南亚 · 成本結構 · 角色密度 · 生活節奏",
-    "alt": "人生K線新加坡城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-SINGAPORE",
     "surfaces": [
       "geo/singapore",
       "insights/city/world-yi-city-singapore",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：新加坡",
+    "caption": "东南亚 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線新加坡城市環境層觀察示意圖",
+    "filename": "geo-city-singapore.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：新加坡（东南亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SINGAPORE"
   },
   {
     "id": "PI-GEO-HONG_KONG",
-    "filename": "geo-city-hong-kong.jpg",
-    "prompt": "Editorial city decision-support diagram for 香港 (大湾区/港澳). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/hong-kong",
+      "insights/city/world-yi-city-hong-kong",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：香港",
     "caption": "大湾区/港澳 · 跨境 · 职业 · 居住成本",
     "alt": "人生K线香港城市环境层观察示意图",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/hong-kong",
-      "insights/city/world-yi-city-hong-kong",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-hong-kong.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 香港 (大湾区/港澳). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-HONG_KONG-EN",
-    "filename": "geo-city-hong-kong.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Hong Kong (Greater Bay Area). Three panels Cost structure, Role density, Life rhythm, soft skyline of Hong Kong. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/hong-kong",
+      "insights/city/world-yi-city-hong-kong",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "City lens: Hong Kong",
     "caption": "Greater Bay Area · Cross-border · Career · Housing cost",
     "alt": "Life K-Line city environment diagram for Hong Kong",
+    "filename": "geo-city-hong-kong.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Hong Kong (Greater Bay Area). Three panels Cost structure, Role density, Life rhythm, soft skyline of Hong Kong. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-GEO-HONG_KONG",
-    "surfaces": [
-      "geo/hong-kong",
-      "insights/city/world-yi-city-hong-kong",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "variantOf": "PI-GEO-HONG_KONG"
   },
   {
     "id": "PI-GEO-HONG_KONG-HANT",
-    "filename": "geo-city-hong-kong.zh-hant.jpg",
-    "prompt": "城市決策支援圖：香港（大湾区/港澳）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：香港",
-    "caption": "大湾区/港澳 · 跨境 · 职业 · 居住成本",
-    "alt": "人生K線香港城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-HONG_KONG",
     "surfaces": [
       "geo/hong-kong",
       "insights/city/world-yi-city-hong-kong",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：香港",
+    "caption": "大湾区/港澳 · 跨境 · 职业 · 居住成本",
+    "alt": "人生K線香港城市環境層觀察示意圖",
+    "filename": "geo-city-hong-kong.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：香港（大湾区/港澳）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-HONG_KONG"
   },
   {
     "id": "PI-GEO-VANCOUVER",
-    "filename": "geo-city-vancouver.jpg",
-    "prompt": "Editorial city decision-support diagram for 温哥华 (加拿大西岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/vancouver",
+      "insights/city/world-yi-city-vancouver",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：温哥华",
     "caption": "加拿大西岸 · 移民 · 家庭 · 就业节奏",
     "alt": "人生K线温哥华城市环境层观察示意图",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/vancouver",
-      "insights/city/world-yi-city-vancouver",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-vancouver.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 温哥华 (加拿大西岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-VANCOUVER-EN",
-    "filename": "geo-city-vancouver.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Vancouver (Canada West). Three panels Cost structure, Role density, Life rhythm, soft skyline of Vancouver. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/vancouver",
+      "insights/city/world-yi-city-vancouver",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "City lens: Vancouver",
     "caption": "Canada West · Immigration · Family · Work rhythm",
     "alt": "Life K-Line city environment diagram for Vancouver",
+    "filename": "geo-city-vancouver.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Vancouver (Canada West). Three panels Cost structure, Role density, Life rhythm, soft skyline of Vancouver. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-GEO-VANCOUVER",
-    "surfaces": [
-      "geo/vancouver",
-      "insights/city/world-yi-city-vancouver",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "variantOf": "PI-GEO-VANCOUVER"
   },
   {
     "id": "PI-GEO-VANCOUVER-HANT",
-    "filename": "geo-city-vancouver.zh-hant.jpg",
-    "prompt": "城市決策支援圖：温哥华（加拿大西岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：温哥华",
-    "caption": "加拿大西岸 · 移民 · 家庭 · 就业节奏",
-    "alt": "人生K線温哥华城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-VANCOUVER",
     "surfaces": [
       "geo/vancouver",
       "insights/city/world-yi-city-vancouver",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：温哥华",
+    "caption": "加拿大西岸 · 移民 · 家庭 · 就业节奏",
+    "alt": "人生K線温哥华城市環境層觀察示意圖",
+    "filename": "geo-city-vancouver.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：温哥华（加拿大西岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-VANCOUVER"
   },
   {
     "id": "PI-GEO-TORONTO",
-    "filename": "geo-city-toronto.jpg",
-    "prompt": "Editorial city decision-support diagram for 多伦多 (加拿大东岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/toronto",
+      "insights/city/world-yi-city-toronto",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "城市观察：多伦多",
     "caption": "加拿大东岸 · 移民 · 职业 · 多元社区",
     "alt": "人生K线多伦多城市环境层观察示意图",
-    "locale": "zh-CN",
-    "surfaces": [
-      "geo/toronto",
-      "insights/city/world-yi-city-toronto",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "filename": "geo-city-toronto.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for 多伦多 (加拿大东岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-CN"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   },
   {
     "id": "PI-GEO-TORONTO-EN",
-    "filename": "geo-city-toronto.en.jpg",
-    "prompt": "Editorial city decision-support diagram for Toronto (Canada East). Three panels Cost structure, Role density, Life rhythm, soft skyline of Toronto. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
+    "surfaces": [
+      "geo/toronto",
+      "insights/city/world-yi-city-toronto",
+      "insights/hub",
+      "movement/hub"
+    ],
+    "role": "action",
     "title": "City lens: Toronto",
     "caption": "Canada East · Immigration · Career · Multicultural hub",
     "alt": "Life K-Line city environment diagram for Toronto",
+    "filename": "geo-city-toronto.en.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Editorial city decision-support diagram for Toronto (Canada East). Three panels Cost structure, Role density, Life rhythm, soft skyline of Toronto. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "en"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
     "locale": "en",
-    "variantOf": "PI-GEO-TORONTO",
-    "surfaces": [
-      "geo/toronto",
-      "insights/city/world-yi-city-toronto",
-      "insights/hub",
-      "movement/hub"
-    ]
+    "variantOf": "PI-GEO-TORONTO"
   },
   {
     "id": "PI-GEO-TORONTO-HANT",
-    "filename": "geo-city-toronto.zh-hant.jpg",
-    "prompt": "城市決策支援圖：多伦多（加拿大东岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
-    "aspectRatio": "16:9",
-    "complexity": "complex",
-    "ready": true,
-    "title": "城市觀察：多伦多",
-    "caption": "加拿大东岸 · 移民 · 职业 · 多元社区",
-    "alt": "人生K線多伦多城市環境層觀察示意圖",
-    "locale": "zh-Hant",
-    "variantOf": "PI-GEO-TORONTO",
     "surfaces": [
       "geo/toronto",
       "insights/city/world-yi-city-toronto",
       "insights/hub",
       "movement/hub"
-    ]
+    ],
+    "role": "action",
+    "title": "城市觀察：多伦多",
+    "caption": "加拿大东岸 · 移民 · 职业 · 多元社区",
+    "alt": "人生K線多伦多城市環境層觀察示意圖",
+    "filename": "geo-city-toronto.zh-hant.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "城市決策支援圖：多伦多（加拿大东岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "reportCiteKeys": [],
+    "tags": [
+      "GEO",
+      "城市",
+      "zh-Hant"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-TORONTO"
+  },
+  {
+    "id": "PI-TEACHER-CAP-OVERVIEW",
+    "surfaces": [
+      "teachers/overview",
+      "chat/teacher/overview",
+      "chat/opening",
+      "teachers/hub"
+    ],
+    "role": "cover",
+    "title": "总览老师：抓住主线",
+    "caption": "能解决 · 典型问题 · 输出：优先清单与转介",
+    "alt": "总览老师能力图解：全局主线优先顺序30天动作",
+    "filename": "teacher-cap-overview.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel educational diagram titled 总览老师. Left panel 能解决: 抽出主线, 30天优先, 转介老师. Middle 典型问题: 不知先做什么, 信息过载, 方向散. Right 输出: 主线结论, 优先清单, 转介路径. Minimal geometric advisor mark (compass), Linear UI, soft paper, ink blue, Simplified Chinese labels only, no face, no superstition.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "总览",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-CAREER",
+    "surfaces": [
+      "teachers/career",
+      "chat/teacher/career",
+      "chat/opening",
+      "dimensions/career-industry",
+      "tools/category/career"
+    ],
+    "role": "cover",
+    "title": "事业老师：方向与窗口",
+    "caption": "深耕 / 转换 / 稳住 · 岗位匹配 · 推进窗口",
+    "alt": "事业老师能力图解：岗位匹配跳槽窗口阶段动作",
+    "filename": "teacher-cap-career.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel product diagram 事业老师. Left 能解决: 岗位匹配, 深耕转换稳住, 跳槽窗口. Middle 典型问题: 该不该转, 何时动, 怕动错方向. Right 输出: 阶段判断, 窗口条件, 7天30天动作. Briefcase geometric icon, Linear, soft paper, ink blue, Simplified Chinese only, no face, educational not marketing.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "事业",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-WEALTH",
+    "surfaces": [
+      "teachers/wealth",
+      "chat/teacher/wealth",
+      "dimensions/investment",
+      "tools/category/wealth"
+    ],
+    "role": "cover",
+    "title": "财务老师：节奏与边界",
+    "caption": "现金流 · 杠杆边界 · 宜守宜试（非投资建议）",
+    "alt": "财务老师能力图解：收支节奏杠杆边界稳健安排",
+    "filename": "teacher-cap-wealth.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 财务老师. Left 能解决: 现金流节奏, 杠杆边界, 半年守或试. Middle 典型问题: 现金吃紧, 乱加杠杆, 哪些动作要谨慎. Right 输出: 纪律框架, 风险边界, 节奏建议. Ledger geometric icon, muted blue-green accents, soft paper, Simplified Chinese, disclaimer tone educational, no luxury bling, no face.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "财务",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-RELATIONSHIP",
+    "surfaces": [
+      "teachers/relationship",
+      "chat/teacher/relationship",
+      "dimensions/marriage",
+      "dimensions/partnership",
+      "tools/category/relationship",
+      "tools/category/family"
+    ],
+    "role": "cover",
+    "title": "关系老师：边界与节奏",
+    "caption": "相处对齐 · 沟通顺序 · 可验证小动作",
+    "alt": "关系老师能力图解：关系边界沟通节奏相处对齐",
+    "filename": "teacher-cap-relationship.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 关系老师. Left 能解决: 关系节奏, 边界清晰, 沟通优先. Middle 典型问题: 推进还是收束, 边界不清, 双人节奏不对. Right 输出: 边界建议, 沟通顺序, 小步验证. Two nodes connected by soft line icon, Linear, soft paper, ink blue, Simplified Chinese, not romantic stock, no faces.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "关系",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-TIMING",
+    "surfaces": [
+      "teachers/timing",
+      "chat/teacher/timing",
+      "dimensions/fortune-rhythm",
+      "dimensions/timing-selection",
+      "tools/category/application"
+    ],
+    "role": "cover",
+    "title": "时机老师：窗口与次序",
+    "caption": "推进 / 收束 · 先后次序 · 避坑信号",
+    "alt": "时机老师能力图解：时间窗口先后次序忌宜提醒",
+    "filename": "teacher-cap-timing.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 时机老师. Left 能解决: 本季推进或收束, 动作先后, 窗口忌宜. Middle 典型问题: 何时推何时守, 多事谁先, 怕踩节奏雷. Right 输出: 时间窗, 先后次序, 避坑信号. Calendar/clock geometric icon, Linear, soft paper, ink blue, Simplified Chinese, educational.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "时机",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-HEALTH",
+    "surfaces": [
+      "teachers/health",
+      "chat/teacher/health",
+      "dimensions/health",
+      "tools/category/health"
+    ],
+    "role": "cover",
+    "title": "节律老师：负荷与恢复",
+    "caption": "身心节奏 · 减负时机 · 生活方式参考（非医疗）",
+    "alt": "节律老师能力图解：身心负荷恢复节奏作息匹配",
+    "filename": "teacher-cap-health.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 节律老师. Left 能解决: 负荷判断, 恢复优先, 作息匹配. Middle 典型问题: 长期过载, 节律乱, 何时该停. Right 输出: 节律判断, 恢复清单, 生活方式参考. Soft waveform icon, green-blue accents, soft paper, Simplified Chinese, not medical cross spam, educational disclaimer tone.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "节律",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-PRACTICE",
+    "surfaces": [
+      "teachers/practice",
+      "chat/teacher/practice",
+      "predictions/revisit",
+      "events/validation"
+    ],
+    "role": "cover",
+    "title": "实践老师：落地与复盘",
+    "caption": "动作清单 · 验证节点 · 闭环校准",
+    "alt": "实践老师能力图解：动作落地事件验证复盘校准",
+    "filename": "teacher-cap-practice.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 实践老师. Left 能解决: 判断落成动作, 事件回访, 下一步复盘. Middle 典型问题: 知道却不动, 做过不知对错, 缺闭环. Right 输出: 动作清单, 验证节点, 复盘结论. Checklist geometric icon, Linear, soft paper, ink blue, Simplified Chinese.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "实践",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-TEACHER-CAP-GEO",
+    "surfaces": [
+      "teachers/geo",
+      "chat/teacher/geo",
+      "dimensions/living-environment",
+      "tools/category/migration",
+      "movement/hub"
+    ],
+    "role": "cover",
+    "title": "地理老师：环境与迁移",
+    "caption": "城市匹配 · 成本结构 · 可逆小步验证",
+    "alt": "地理老师能力图解：城市环境迁移择城成本结构",
+    "filename": "teacher-cap-geo.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 地理老师. Left 能解决: 城市环境匹配, 迁移结构层, 居住成本节奏. Middle 典型问题: 该不该迁, 成本可否承受, 环境是否匹配发挥. Right 输出: 环境层判断, 成本对照, 可逆验证. Map pin geometric icon, Linear, soft paper, ink blue, Simplified Chinese, not tourism poster.",
+    "reportCiteKeys": [],
+    "tags": [
+      "老师",
+      "地理",
+      "能力"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
+  },
+  {
+    "id": "PI-DIM-CAP-NAMING",
+    "surfaces": [
+      "dimensions/naming",
+      "tools/category/application"
+    ],
+    "role": "structure",
+    "title": "起名维度：用神与字义",
+    "caption": "五行补益 · 字音字义 · 仅供参考",
+    "alt": "起名改名维度图解：用神匹配字义结构评估",
+    "filename": "dimension-cap-naming.jpg",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "prompt": "Three-panel diagram 起名改名. Left 能解决: 用神匹配, 字义结构, 改名方向. Middle 典型问题: 是否补用神, 改名怎么选, 期望边界. Right 输出: 匹配评估, 方向建议, 参考说明. Brush/character geometric icon, Linear, soft paper, Simplified Chinese, educational not superstition marketing.",
+    "reportCiteKeys": [],
+    "tags": [
+      "维度",
+      "起名"
+    ],
+    "ready": true,
+    "width": 1600,
+    "height": 900,
+    "locale": "zh-CN"
   }
 ]

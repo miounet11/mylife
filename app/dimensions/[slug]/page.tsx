@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentActionRail from '@/components/content/content-action-rail';
 import JourneyStrip from '@/components/content/journey-strip';
+import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import DimensionPageBody from '@/components/dimensions/dimension-page-body';
 import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
@@ -12,6 +13,7 @@ import { getDimension } from '@/lib/dimensions/config';
 import { isDimensionRunnable } from '@/lib/dimensions/run-dimension-advisor';
 import { resolveDimensionOutbound } from '@/lib/content-crosslinks';
 import type { DimensionSlug } from '@/lib/dimensions/types';
+import { dimensionCapabilitySurface } from '@/lib/page-illustrations/capability-map';
 import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
@@ -106,6 +108,15 @@ export default async function DimensionDetailPage({ params }: PageProps) {
         }
       />
       <JourneyStrip active="dimensions" />
+      <div className="mx-auto max-w-3xl px-4">
+        <CapabilityIllustrationPanel
+          surface={dimensionCapabilitySurface(slug)}
+          title={`${dimension.title}：能解决什么`}
+          compact
+          priority
+          showCopy={false}
+        />
+      </div>
       <DimensionPageBody dimension={dimension} runnable={runnable} />
       <div className="mt-4">
         <ContentActionRail

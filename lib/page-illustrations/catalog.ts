@@ -163,7 +163,8 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
   },
   {
     id: 'PI-CHAT-OPENING-01',
-    surfaces: ['chat/opening', 'teachers/hub'],
+    // chat-only — do not steal teachers/hub strip (was showing opening UI on 请老师 hub)
+    surfaces: ['chat/opening', 'chat/hub'],
     role: 'summary',
     title: '顾问开场：老师先说，一点即发',
     caption: '不预填长问题；议题芯片 + 一键开口',
@@ -2344,6 +2345,216 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     locale: "zh-Hant",
     variantOf: "PI-GEO-TORONTO",
   },
+
+  // --- Teacher capability explainers (chat / teachers / related dimensions) ---
+  {
+    id: 'PI-TEACHER-CAP-OVERVIEW',
+    surfaces: ['teachers/overview', 'chat/teacher/overview', 'chat/opening', 'teachers/hub'],
+    role: 'cover',
+    title: '总览老师：抓住主线',
+    caption: '能解决 · 典型问题 · 输出：优先清单与转介',
+    alt: '总览老师能力图解：全局主线优先顺序30天动作',
+    filename: 'teacher-cap-overview.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel educational diagram titled 总览老师. Left panel 能解决: 抽出主线, 30天优先, 转介老师. Middle 典型问题: 不知先做什么, 信息过载, 方向散. Right 输出: 主线结论, 优先清单, 转介路径. Minimal geometric advisor mark (compass), Linear UI, soft paper, ink blue, Simplified Chinese labels only, no face, no superstition.',
+    reportCiteKeys: [],
+    tags: ['老师', '总览', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-CAREER',
+    surfaces: [
+      'teachers/career',
+      'chat/teacher/career',
+      'chat/opening',
+      'dimensions/career-industry',
+      'tools/category/career',
+    ],
+    role: 'cover',
+    title: '事业老师：方向与窗口',
+    caption: '深耕 / 转换 / 稳住 · 岗位匹配 · 推进窗口',
+    alt: '事业老师能力图解：岗位匹配跳槽窗口阶段动作',
+    filename: 'teacher-cap-career.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel product diagram 事业老师. Left 能解决: 岗位匹配, 深耕转换稳住, 跳槽窗口. Middle 典型问题: 该不该转, 何时动, 怕动错方向. Right 输出: 阶段判断, 窗口条件, 7天30天动作. Briefcase geometric icon, Linear, soft paper, ink blue, Simplified Chinese only, no face, educational not marketing.',
+    reportCiteKeys: [],
+    tags: ['老师', '事业', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-WEALTH',
+    surfaces: [
+      'teachers/wealth',
+      'chat/teacher/wealth',
+      'dimensions/investment',
+      'tools/category/wealth',
+    ],
+    role: 'cover',
+    title: '财务老师：节奏与边界',
+    caption: '现金流 · 杠杆边界 · 宜守宜试（非投资建议）',
+    alt: '财务老师能力图解：收支节奏杠杆边界稳健安排',
+    filename: 'teacher-cap-wealth.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 财务老师. Left 能解决: 现金流节奏, 杠杆边界, 半年守或试. Middle 典型问题: 现金吃紧, 乱加杠杆, 哪些动作要谨慎. Right 输出: 纪律框架, 风险边界, 节奏建议. Ledger geometric icon, muted blue-green accents, soft paper, Simplified Chinese, disclaimer tone educational, no luxury bling, no face.',
+    reportCiteKeys: [],
+    tags: ['老师', '财务', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-RELATIONSHIP',
+    surfaces: [
+      'teachers/relationship',
+      'chat/teacher/relationship',
+      'dimensions/marriage',
+      'dimensions/partnership',
+      'tools/category/relationship',
+      'tools/category/family',
+    ],
+    role: 'cover',
+    title: '关系老师：边界与节奏',
+    caption: '相处对齐 · 沟通顺序 · 可验证小动作',
+    alt: '关系老师能力图解：关系边界沟通节奏相处对齐',
+    filename: 'teacher-cap-relationship.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 关系老师. Left 能解决: 关系节奏, 边界清晰, 沟通优先. Middle 典型问题: 推进还是收束, 边界不清, 双人节奏不对. Right 输出: 边界建议, 沟通顺序, 小步验证. Two nodes connected by soft line icon, Linear, soft paper, ink blue, Simplified Chinese, not romantic stock, no faces.',
+    reportCiteKeys: [],
+    tags: ['老师', '关系', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-TIMING',
+    surfaces: [
+      'teachers/timing',
+      'chat/teacher/timing',
+      'dimensions/fortune-rhythm',
+      'dimensions/timing-selection',
+      'tools/category/application',
+    ],
+    role: 'cover',
+    title: '时机老师：窗口与次序',
+    caption: '推进 / 收束 · 先后次序 · 避坑信号',
+    alt: '时机老师能力图解：时间窗口先后次序忌宜提醒',
+    filename: 'teacher-cap-timing.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 时机老师. Left 能解决: 本季推进或收束, 动作先后, 窗口忌宜. Middle 典型问题: 何时推何时守, 多事谁先, 怕踩节奏雷. Right 输出: 时间窗, 先后次序, 避坑信号. Calendar/clock geometric icon, Linear, soft paper, ink blue, Simplified Chinese, educational.',
+    reportCiteKeys: [],
+    tags: ['老师', '时机', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-HEALTH',
+    surfaces: [
+      'teachers/health',
+      'chat/teacher/health',
+      'dimensions/health',
+      'tools/category/health',
+    ],
+    role: 'cover',
+    title: '节律老师：负荷与恢复',
+    caption: '身心节奏 · 减负时机 · 生活方式参考（非医疗）',
+    alt: '节律老师能力图解：身心负荷恢复节奏作息匹配',
+    filename: 'teacher-cap-health.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 节律老师. Left 能解决: 负荷判断, 恢复优先, 作息匹配. Middle 典型问题: 长期过载, 节律乱, 何时该停. Right 输出: 节律判断, 恢复清单, 生活方式参考. Soft waveform icon, green-blue accents, soft paper, Simplified Chinese, not medical cross spam, educational disclaimer tone.',
+    reportCiteKeys: [],
+    tags: ['老师', '节律', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-PRACTICE',
+    surfaces: ['teachers/practice', 'chat/teacher/practice', 'predictions/revisit', 'events/validation'],
+    role: 'cover',
+    title: '实践老师：落地与复盘',
+    caption: '动作清单 · 验证节点 · 闭环校准',
+    alt: '实践老师能力图解：动作落地事件验证复盘校准',
+    filename: 'teacher-cap-practice.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 实践老师. Left 能解决: 判断落成动作, 事件回访, 下一步复盘. Middle 典型问题: 知道却不动, 做过不知对错, 缺闭环. Right 输出: 动作清单, 验证节点, 复盘结论. Checklist geometric icon, Linear, soft paper, ink blue, Simplified Chinese.',
+    reportCiteKeys: [],
+    tags: ['老师', '实践', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+  {
+    id: 'PI-TEACHER-CAP-GEO',
+    surfaces: [
+      'teachers/geo',
+      'chat/teacher/geo',
+      'dimensions/living-environment',
+      'tools/category/migration',
+      'movement/hub',
+    ],
+    role: 'cover',
+    title: '地理老师：环境与迁移',
+    caption: '城市匹配 · 成本结构 · 可逆小步验证',
+    alt: '地理老师能力图解：城市环境迁移择城成本结构',
+    filename: 'teacher-cap-geo.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 地理老师. Left 能解决: 城市环境匹配, 迁移结构层, 居住成本节奏. Middle 典型问题: 该不该迁, 成本可否承受, 环境是否匹配发挥. Right 输出: 环境层判断, 成本对照, 可逆验证. Map pin geometric icon, Linear, soft paper, ink blue, Simplified Chinese, not tourism poster.',
+    reportCiteKeys: [],
+    tags: ['老师', '地理', '能力'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
+
+  // --- Dimension dedicated explainers (when not fully covered by teacher cap) ---
+  {
+    id: 'PI-DIM-CAP-NAMING',
+    surfaces: ['dimensions/naming', 'tools/category/application'],
+    role: 'structure',
+    title: '起名维度：用神与字义',
+    caption: '五行补益 · 字音字义 · 仅供参考',
+    alt: '起名改名维度图解：用神匹配字义结构评估',
+    filename: 'dimension-cap-naming.jpg',
+    aspectRatio: '16:9',
+    complexity: 'complex',
+    prompt:
+      'Three-panel diagram 起名改名. Left 能解决: 用神匹配, 字义结构, 改名方向. Middle 典型问题: 是否补用神, 改名怎么选, 期望边界. Right 输出: 匹配评估, 方向建议, 参考说明. Brush/character geometric icon, Linear, soft paper, Simplified Chinese, educational not superstition marketing.',
+    reportCiteKeys: [],
+    tags: ['维度', '起名'],
+    ready: true,
+    width: 1600,
+    height: 900,
+    locale: 'zh-CN',
+  },
 ];
 
 export function buildFullPrompt(entry: PageIllustrationEntry): string {
@@ -2356,26 +2567,47 @@ export function publicSrc(entry: PageIllustrationEntry): string {
   return `/images/page-illustrations/${entry.filename}`;
 }
 
+const ROLE_RANK: Record<PageIllustRole, number> = {
+  cover: 0,
+  structure: 1,
+  summary: 2,
+  action: 3,
+  timing: 4,
+  risk: 5,
+};
+
+/** Prefer explainer diagrams over 1:1 icons; cover/structure over utility roles. */
+function surfaceSortKey(e: PageIllustrationEntry): [number, number, number, string] {
+  const isIcon = e.aspectRatio === '1:1' || e.complexity === 'simple' ? 1 : 0;
+  const role = ROLE_RANK[e.role] ?? 9;
+  const loc = e.locale || 'zh-CN';
+  const locRank = loc === 'zh-CN' ? 0 : loc === 'zh-Hant' ? 1 : 2;
+  return [isIcon, role, locRank, e.id];
+}
+
 export function listBySurface(
   surface: string,
   locale?: PageIllustLocale,
 ): PageIllustrationEntry[] {
   const rows = PAGE_ILLUSTRATION_CATALOG.filter((e) => e.surfaces.includes(surface));
-  if (!locale) {
-    // Prefer zh-CN canonical first for default surfaces
-    return [...rows].sort((a, b) => {
-      const la = a.locale || 'zh-CN';
-      const lb = b.locale || 'zh-CN';
-      if (la === 'zh-CN' && lb !== 'zh-CN') return -1;
-      if (lb === 'zh-CN' && la !== 'zh-CN') return 1;
-      return 0;
+  const sortRows = (list: PageIllustrationEntry[]) =>
+    [...list].sort((a, b) => {
+      const ka = surfaceSortKey(a);
+      const kb = surfaceSortKey(b);
+      for (let i = 0; i < 3; i += 1) {
+        if (ka[i] !== kb[i]) return (ka[i] as number) - (kb[i] as number);
+      }
+      return String(ka[3]).localeCompare(String(kb[3]));
     });
+
+  if (!locale) {
+    return sortRows(rows);
   }
   const matched = rows.filter((e) => (e.locale || 'zh-CN') === locale);
-  if (matched.length) return matched;
+  if (matched.length) return sortRows(matched);
   // Fallback chain: zh-CN → any
   const zh = rows.filter((e) => (e.locale || 'zh-CN') === 'zh-CN');
-  return zh.length ? zh : rows;
+  return sortRows(zh.length ? zh : rows);
 }
 
 export function listByReportKeys(keys: string[]): PageIllustrationEntry[] {

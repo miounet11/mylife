@@ -3,6 +3,12 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { AppPage } from '@/components/layout/app-page';
 import ChatPageClient from '@/components/chat/chat-page-client';
+import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
+import {
+  chatOpeningSurface,
+  isCapabilityTeacherId,
+} from '@/lib/page-illustrations/capability-map';
+import { getTeacher } from '@/lib/teachers';
 
 export const metadata: Metadata = {
   title: '顾问开场｜基于报告继续深问',
@@ -10,10 +16,20 @@ export const metadata: Metadata = {
 };
 
 /**
- * Compact messenger shell: title strip + one full-height panel.
- * Height accounts for site header + title + safe area (no footer).
+ * Compact messenger shell: title + teacher capability diagram + chat panel.
+ * Height accounts for site header + title + capability strip + safe area.
  */
-export default function ChatPage() {
+export default async function ChatPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ teacher?: string; mode?: string; source?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const teacherParam = `${sp.teacher || ''}`.trim();
+  const teacher = getTeacher(teacherParam || 'overview');
+  const surface = chatOpeningSurface(teacher.id);
+  const showCapability = isCapabilityTeacherId(teacher.id) || Boolean(teacherParam);
+
   return (
     <AppPage
       header={{ ctaHref: '/analyze', ctaLabel: '生成报告', compact: true }}
@@ -31,10 +47,10 @@ export default function ChatPage() {
         <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
           <div className="min-w-0">
             <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
-              顾问开场
+              {teacher.name} · 顾问开场
             </h1>
             <p className="mt-0.5 text-[12px] leading-[1.35] text-[color:var(--ink-5)]">
-              老师先说 · 一点即发
+              {teacher.tagline} · 一点即发
             </p>
           </div>
           <nav className="flex shrink-0 flex-wrap items-center gap-x-3 text-[12px] text-[color:var(--ink-3)]">
@@ -58,6 +74,18 @@ export default function ChatPage() {
             </Link>
           </nav>
         </div>
+
+        {showCapability ? (
+          <div className="mb-2 max-h-[38vh] shrink-0 overflow-y-auto sm:max-h-[32vh]">
+            <CapabilityIllustrationPanel
+              surface={surface}
+              teacherId={teacher.id}
+              compact
+              priority
+              showCopy
+            />
+          </div>
+        ) : null}
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           <Suspense

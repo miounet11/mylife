@@ -10,8 +10,12 @@ import {
   type TeacherId,
 } from '@/lib/teachers';
 import { teacherIdFromFollowupIntent } from '@/lib/chat-entry';
+import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import {
+  teacherCapabilitySurface,
+} from '@/lib/page-illustrations/capability-map';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 
 export const metadata: Metadata = {
@@ -117,8 +121,8 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
           priority
         />
 
-        {/* Intent → recommended consultant opening */}
-        <section className="border-y border-[color:var(--hairline)] py-3.5">
+        {/* Intent → recommended consultant opening + capability diagram */}
+        <section className="space-y-3 border-y border-[color:var(--hairline)] py-3.5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <div className="text-[11px] font-medium text-[color:var(--ink-5)]">按意图开场</div>
@@ -139,6 +143,13 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
               开始开场 →
             </Link>
           </div>
+          <CapabilityIllustrationPanel
+            surface={teacherCapabilitySurface(recommended.id)}
+            teacherId={recommended.id}
+            compact
+            priority
+            showCopy
+          />
           <div className="mt-3 flex flex-wrap gap-2">
             {INTENT_SHORTCUTS.map((item) => {
               const active = highlightId === item.teacherId || intent === item.intent;

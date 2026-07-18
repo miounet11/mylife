@@ -22,6 +22,8 @@ import ToolMemoryPanel from '@/components/tool-memory-panel';
 import ToolRecommendations from '@/components/tool-recommendations';
 import ResultCtaLink from '@/components/result-cta-link';
 import ToolRunner from '@/components/tool-runner';
+import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
+import { toolDetailCapabilitySurface } from '@/lib/page-illustrations/capability-map';
 import { getAuthSession } from '@/lib/auth';
 import { buildChatHref } from '@/lib/chat-entry';
 import { fortuneOperations, toolSessionOperations } from '@/lib/database';
@@ -229,6 +231,16 @@ export default async function ToolDetailPage({
             </Link>
           </div>
         </section>
+
+        <div className="mt-6 max-w-3xl">
+          <CapabilityIllustrationPanel
+            surface={toolDetailCapabilitySurface(tool.category)}
+            title={`${tool.shortTitle || tool.title}：能解决什么`}
+            compact
+            priority
+            showCopy={false}
+          />
+        </div>
 
         {growthProfile ? (
           <section className="mt-6 grid gap-3 md:grid-cols-3">
