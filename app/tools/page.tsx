@@ -3,6 +3,7 @@ import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import DimensionsShowcase from '@/components/dimensions/dimensions-showcase';
 import JourneyStrip from '@/components/content/journey-strip';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -90,6 +91,13 @@ export default function ToolsPage() {
         />
 
         <JourneyStrip active="tools" />
+
+        <PageIllustrationStrip
+          surface="tools/hub"
+          title="工具怎么用"
+          compact
+          limit={1}
+        />
 
         <ToolsHubBirthForm />
 

@@ -190,7 +190,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
   },
   {
     id: 'PI-TOOLS-01',
-    surfaces: ['tools/hub', 'home/workspace'],
+    surfaces: ['tools/hub', 'home/workspace', 'dimensions/hub'],
     role: 'action',
     title: '工具：把大问题拆成可测小问题',
     caption: '单项工具 → 报告深问 → 回访',
@@ -201,7 +201,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     prompt:
       'Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. Minimal product diagram, Chinese labels 工具 报告 回访.',
     reportCiteKeys: [],
-    tags: ['工具', '拆解'],
+    tags: ['工具', '拆解', '十维度'],
     ready: true,
     width: 1600,
     height: 900,
