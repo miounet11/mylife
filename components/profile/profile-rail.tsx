@@ -31,7 +31,7 @@ export function ProfileRailRight({
             className="flex items-center gap-1.5 rounded-[var(--radius)] px-2 py-1.5 text-[13px] font-medium text-[color:var(--ink-3)] transition hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)] hover:no-underline"
           >
             <MessageSquareText className="h-3.5 w-3.5" strokeWidth={1.75} />
-            继续追问
+            {hasReport ? '带报告开场' : '问顾问'}
           </Link>
           <Link
             href={settingsHref}

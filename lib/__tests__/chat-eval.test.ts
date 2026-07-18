@@ -56,4 +56,19 @@ describe('chat-eval', () => {
     assert.equal(c.bucket, 'grounded_ok');
     assert.ok(hitEngineTerms(c.answer).includes('日主'));
   });
+
+  it('flags negative feedback in notes', () => {
+    const c = buildChatEvalCase({
+      id: 't2',
+      question: '该不该跳槽',
+      answer: '你可以考虑一下再决定。',
+      llmUsed: true,
+      reportId: 'r1',
+      feedbackRating: 'not_helpful',
+      structureFilled: 1,
+      structureRich: false,
+    });
+    assert.ok(c.notes?.includes('not_helpful'));
+    assert.equal(c.meta.feedbackRating, 'not_helpful');
+  });
 });

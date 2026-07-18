@@ -3,6 +3,7 @@ import { describe, it } from 'node:test';
 import {
   appendAnswerStructureContract,
   buildVerifyEventFields,
+  CHAT_STRUCTURE_REPAIR_INSTRUCTION,
   parseChatAnswerStructure,
   scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
@@ -45,6 +46,11 @@ describe('chat-answer-contract', () => {
     assert.ok(fields.title.includes('验证'));
     assert.ok(fields.description.includes('验证点'));
     assert.ok(fields.verifyPoint.length > 0);
+  });
+
+  it('exposes structure repair instruction', () => {
+    assert.ok(CHAT_STRUCTURE_REPAIR_INSTRUCTION.includes('结构补全'));
+    assert.ok(CHAT_STRUCTURE_REPAIR_INSTRUCTION.includes('验证点'));
   });
 
   it('scores rich vs thin structure', () => {

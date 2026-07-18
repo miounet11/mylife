@@ -23,6 +23,9 @@ export default async function AdminChatOpsPage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-3 text-[12px] font-semibold text-[#6d28d9]">
+          <Link href="/admin/chat-eval" className="hover:underline">
+            评测导出
+          </Link>
           <Link href="/admin/product-funnel" className="hover:underline">
             双轨漏斗
           </Link>

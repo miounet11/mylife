@@ -19,6 +19,7 @@ import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
 import {
   appendAnswerStructureContract,
+  CHAT_STRUCTURE_REPAIR_INSTRUCTION,
   scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
 import { applyEfcVerifyToAnswer } from '@/lib/chat-efc-verify';
@@ -324,6 +325,7 @@ async function generateAIResponse(
   structureFilled?: number;
   structureRich?: boolean;
   structureThin?: boolean;
+  structureRepaired?: boolean;
 }> {
   const apiKey = getApiKey();
   const fallbackAnswer = buildFallbackChatAnswer(question, options?.context, options?.intent);
@@ -498,7 +500,88 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       }
     }
 
-    const structure = scoreChatAnswerStructure(verified.answer);
+    let finalAnswer = verified.answer;
+    let efcOk = verified.efcOk;
+    let efcIssues = verified.efcIssues;
+    let structure = scoreChatAnswerStructure(finalAnswer);
+    let structureRepaired = false;
+
+    // Soft one-shot repair when first pass is structure-thin (decision product quality).
+    if (structure.isThin && finalAnswer.length >= 40) {
+      try {
+        console.log('[LLM Chat] structure thin → one repair pass');
+        const repairCompletion = await createOpenAiCompatibleChatCompletion(
+          openai,
+          {
+            model,
+            messages: [
+              { role: 'system', content: systemContent },
+              ...userHistory.map((item) => ({
+                role: item.role as 'user' | 'assistant',
+                content: item.content,
+              })),
+              { role: 'user', content: userContent },
+              { role: 'assistant', content: finalAnswer },
+              { role: 'user', content: CHAT_STRUCTURE_REPAIR_INSTRUCTION },
+            ],
+            temperature: 0.35,
+            maxTokens: 1200,
+            reasoningEffort: 'low',
+          },
+          {
+            signal: controller.signal,
+            timeout: Math.min(chatTimeoutMs, 90_000),
+            maxRetries: 0,
+          },
+        );
+        const repairedRaw = repairCompletion.choices?.[0]?.message?.content?.trim() || '';
+        if (repairedRaw.length >= 60) {
+          const reVerified = applyEfcVerifyToAnswer(
+            repairedRaw,
+            report
+              ? {
+                  dayMaster: report.dayMaster,
+                  yongShen: report.yongShen,
+                  jiShen: (report as { jiShen?: string[] }).jiShen,
+                  currentDaYun: report.currentDaYun,
+                }
+              : null,
+          );
+          const reScore = scoreChatAnswerStructure(reVerified.answer);
+          if (
+            reScore.filled > structure.filled ||
+            reScore.isRich ||
+            (structure.isThin && !reScore.isThin)
+          ) {
+            finalAnswer = reVerified.answer;
+            efcOk = reVerified.efcOk;
+            efcIssues = reVerified.efcIssues;
+            structure = reScore;
+            structureRepaired = true;
+            if (!reVerified.efcOk) {
+              try {
+                trackServerEvent({
+                  eventName: 'chat_efc_flagged' as any,
+                  page: '/chat',
+                  meta: {
+                    issues: reVerified.efcIssues,
+                    reportId: report?.id || null,
+                    intent: options?.intent || null,
+                    teacherId: options?.teacherId || null,
+                    phase: 'structure_repair',
+                  },
+                });
+              } catch {
+                // ignore
+              }
+            }
+          }
+        }
+      } catch (repairError) {
+        console.warn('[LLM Chat] structure repair skipped', repairError);
+      }
+    }
+
     try {
       trackServerEvent({
         eventName: 'chat_structure_scored' as any,
@@ -508,8 +591,9 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
           max: structure.max,
           isRich: structure.isRich ? 1 : 0,
           isThin: structure.isThin ? 1 : 0,
+          repaired: structureRepaired ? 1 : 0,
           missing: structure.missing.slice(0, 5),
-          efcOk: verified.efcOk ? 1 : 0,
+          efcOk: efcOk ? 1 : 0,
           reportId: report?.id || null,
           intent: options?.intent || null,
           teacherId: options?.teacherId || null,
@@ -520,14 +604,15 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
     }
 
     return {
-      answer: verified.answer,
+      answer: finalAnswer,
       llmUsed: true,
       fallbackReason: undefined,
-      efcOk: verified.efcOk,
-      efcIssues: verified.efcIssues,
+      efcOk,
+      efcIssues,
       structureFilled: structure.filled,
       structureRich: structure.isRich,
       structureThin: structure.isThin,
+      structureRepaired,
     };
   } catch (error) {
     recordModelAttempt({
@@ -1040,6 +1125,7 @@ export async function POST(request: NextRequest) {
       structureFilled,
       structureRich,
       structureThin,
+      structureRepaired,
     } = await generateAIResponse(question, userHistory, contextSummary, {
       intent: requestedIntent,
       context,
@@ -1087,6 +1173,7 @@ export async function POST(request: NextRequest) {
         structureFilled: structureFilled ?? null,
         structureRich: structureRich ?? null,
         structureThin: structureThin ?? null,
+        structureRepaired: structureRepaired ? true : false,
         reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         turnId,
@@ -1338,6 +1425,7 @@ export async function PATCH(request: NextRequest) {
         structureFilled,
         structureRich,
         structureThin,
+        structureRepaired,
       } = await generateAIResponse(userQuestion, historyBefore, regenerationContextSummary, {
         intent: requestedIntent,
         context,
@@ -1364,6 +1452,7 @@ export async function PATCH(request: NextRequest) {
             structureFilled: structureFilled ?? null,
             structureRich: structureRich ?? null,
             structureThin: structureThin ?? null,
+            structureRepaired: structureRepaired ? true : false,
             reportId: context.report?.id || requestedReportId || null,
             eventId: context.focusedEvent?.id || null,
             responseToQuestionId: rows[userIndex].id,
@@ -1457,6 +1546,7 @@ export async function PATCH(request: NextRequest) {
         structureFilled,
         structureRich,
         structureThin,
+        structureRepaired,
       } = await generateAIResponse(content, historyBefore, editContextSummary, {
         intent: requestedIntent,
         context,
@@ -1472,6 +1562,7 @@ export async function PATCH(request: NextRequest) {
         structureFilled: structureFilled ?? null,
         structureRich: structureRich ?? null,
         structureThin: structureThin ?? null,
+        structureRepaired: structureRepaired ? true : false,
       };
 
       runInTransaction(() => {

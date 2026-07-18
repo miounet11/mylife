@@ -26,6 +26,10 @@ export type ChatEvalCase = {
     answerLen: number;
     engineTermsHit: string[];
     createdAt?: string | null;
+    feedbackRating?: string | null;
+    structureFilled?: number | null;
+    structureRich?: boolean | null;
+    efcOk?: boolean | null;
   };
   /** Soft expectations for scorers / manual review */
   mustIncludeAny?: string[];
@@ -84,6 +88,10 @@ export function buildChatEvalCase(raw: {
   reportId?: string | null;
   intent?: string | null;
   createdAt?: string | null;
+  feedbackRating?: string | null;
+  structureFilled?: number | null;
+  structureRich?: boolean | null;
+  efcOk?: boolean | null;
 }): ChatEvalCase {
   const question = desensitizeChatText(raw.question);
   const answer = desensitizeChatText(raw.answer);
@@ -109,6 +117,18 @@ export function buildChatEvalCase(raw: {
       ? ['必然发财', '一定能', '保证']
       : ['必然发财', '一定能找到工作'];
 
+  const rating = raw.feedbackRating ? `${raw.feedbackRating}` : null;
+  const notesParts: string[] = [];
+  if (bucket === 'grounded_ok') notesParts.push('Expect engine terms when report bound');
+  if (bucket === 'fallback_template') notesParts.push('Track fallback rate; do not treat as gold answer');
+  if (rating === 'not_helpful' || rating === 'empty') {
+    notesParts.push(`User rated ${rating} — prioritize for prompt review`);
+  }
+  if (raw.structureRich === false || (raw.structureFilled != null && raw.structureFilled < 2)) {
+    notesParts.push('Structure thin');
+  }
+  if (raw.efcOk === false) notesParts.push('EFC flagged');
+
   return {
     id: raw.id,
     bucket,
@@ -123,14 +143,13 @@ export function buildChatEvalCase(raw: {
       answerLen: answer.length,
       engineTermsHit,
       createdAt: raw.createdAt || null,
+      feedbackRating: rating,
+      structureFilled: raw.structureFilled ?? null,
+      structureRich: raw.structureRich ?? null,
+      efcOk: raw.efcOk ?? null,
     },
     mustIncludeAny,
     mustExclude,
-    notes:
-      bucket === 'grounded_ok'
-        ? 'Expect engine terms when report bound'
-        : bucket === 'fallback_template'
-          ? 'Track fallback rate; do not treat as gold answer'
-          : undefined,
+    notes: notesParts.length ? notesParts.join('; ') : undefined,
   };
 }

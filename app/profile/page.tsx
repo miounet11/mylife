@@ -23,7 +23,8 @@ import ProgressiveProfileHub from '@/components/profile/progressive-profile-hub'
 import ResumeBar from '@/components/resume-bar';
 import DimensionRecommendations from '@/components/dimensions/dimension-recommendations';
 import ToolHistoryPanel from '@/components/tool-history-panel';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
+import { buildTeacherChatHref } from '@/lib/teachers';
 import { buildProfileChartData, hasProfileContent } from '@/lib/profile-page';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { resolveResumeTarget } from '@/lib/resume-target';
@@ -192,13 +193,19 @@ export default function ProfilePage() {
 
   const sourceCtaStrategy = buildSourceCtaStrategy(pageSource);
   const latestReportHref = latestResultId ? appendSourceToHref(`/result/${latestResultId}`, pageSource) : '/analyze';
-  const profileChatHref = buildChatHref({
-    reportId: latestResultId || undefined,
-    question: '请根据我的档案、最近报告和事件记录，帮我判断：当前最值得优先推进的一条主线是什么，为什么？',
-    source: pageSource,
-    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-    sourceFamily: sourceCtaStrategy.sourceFamily,
-  });
+  /** Opening mode: consultant first_mes, not long prefilled task dump */
+  const profileChatHref = latestResultId
+    ? buildReportContinueChatHref({
+        reportId: latestResultId,
+        teacher: 'overview',
+        source: pageSource,
+        ctaStrategyKey: sourceCtaStrategy.strategyKey,
+        sourceFamily: sourceCtaStrategy.sourceFamily,
+      })
+    : buildTeacherChatHref({
+        teacherId: 'overview',
+        source: `${pageSource || 'profile'}_opening`,
+      });
   const hasProfileData = hasProfileContent({
     user,
     fortunes,
@@ -210,15 +217,16 @@ export default function ProfilePage() {
     <AppPage
       header={{
         ctaHref: profileChatHref,
-        ctaLabel: '继续追问',
+        ctaLabel: latestResultId ? '顾问开场' : '问顾问',
         ctaAnalytics: {
           page: '/profile',
-          target: 'profile_header_chat',
+          target: 'profile_header_chat_opening',
           meta: {
             source: pageSource,
             ctaStrategyKey: sourceCtaStrategy.strategyKey,
             sourceFamily: sourceCtaStrategy.sourceFamily,
             reportId: latestResultId || null,
+            mode: 'opening',
           },
         },
       }}
@@ -328,19 +336,14 @@ export default function ProfilePage() {
               ]}
               actions={[
                 {
-                  href: buildChatHref({
-                    reportId: latestResultId || undefined,
-                    question: '请基于我的个人档案、最新报告、事件记录和工具历史，直接告诉我现在最该恢复推进的一个任务是什么，并给我一个三步行动顺序。',
-                    source: pageSource,
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                  }),
-                  label: latestResultId ? '恢复上次任务' : '先问如何建立档案',
-                  target: 'retention_resume_chat',
+                  href: profileChatHref,
+                  label: latestResultId ? '带报告开场' : '先问顾问如何建档',
+                  target: 'retention_resume_chat_opening',
                   meta: {
                     reportId: latestResultId || null,
                     profileReportCount: fortunes.length,
                     profileEventCount: mappedEvents.length,
+                    mode: 'opening',
                   },
                 },
                 {
@@ -424,22 +427,30 @@ export default function ProfilePage() {
             >
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <ProfileAction
-                  href={buildChatHref({
-                    reportId: latestResultId || undefined,
-                    question: '请结合我的档案信息继续做结构追问，告诉我当前最值得先做的一步动作和最需要防的误判。',
-                    source: 'profile_actions',
-                    ctaStrategyKey: sourceCtaStrategy.strategyKey,
-                    sourceFamily: sourceCtaStrategy.sourceFamily,
-                  })}
-                  label="继续追问"
+                  href={
+                    latestResultId
+                      ? buildReportContinueChatHref({
+                          reportId: latestResultId,
+                          teacher: 'practice',
+                          source: 'profile_actions',
+                          ctaStrategyKey: sourceCtaStrategy.strategyKey,
+                          sourceFamily: sourceCtaStrategy.sourceFamily,
+                        })
+                      : buildTeacherChatHref({
+                          teacherId: 'practice',
+                          source: 'profile_actions_opening',
+                        })
+                  }
+                  label="顾问开场"
                   icon={Bot}
                   page="/profile"
-                  target="profile_actions_chat"
+                  target="profile_actions_chat_opening"
                   meta={{
                     source: 'profile_actions',
                     ctaStrategyKey: sourceCtaStrategy.strategyKey,
                     sourceFamily: sourceCtaStrategy.sourceFamily,
                     reportId: latestResultId || null,
+                    mode: 'opening',
                   }}
                 />
                 <ProfileAction

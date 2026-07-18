@@ -18,6 +18,21 @@ export const CHAT_ANSWER_STRUCTURE_CONTRACT = [
   '禁止恐吓、绝对化命运断言；不替代医疗、法律或具体投资标的建议。',
 ].join('\n');
 
+/**
+ * Soft repair instruction when first pass is structure-thin.
+ * Sent as a follow-up user turn so the model rewrites the whole answer once.
+ */
+export const CHAT_STRUCTURE_REPAIR_INSTRUCTION = [
+  '【结构补全 · 整段重写】',
+  '上一版未完整满足回答结构。请整段重写（不要只补几句，不要解释为何重写），必须包含以下小标题：',
+  '1. **判断依据**',
+  '2. **当前结论**',
+  '3. **阶段动作**（今天 / 7 天内 / 30 天内 三行）',
+  '4. **风险提醒**',
+  '5. **验证点**',
+  '有报告真值时禁止改写日主/用神/大运；无报告时禁止编造。',
+].join('\n');
+
 export type ParsedChatAnswer = {
   basis: string;
   conclusion: string;
