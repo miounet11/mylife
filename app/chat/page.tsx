@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { AppPage } from '@/components/layout/app-page';
 import ChatPageClient from '@/components/chat/chat-page-client';
+import { ChatCapabilityShell } from '@/components/chat/chat-capability-shell';
 import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import {
   chatOpeningSurface,
@@ -16,8 +17,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * Compact messenger shell: title + teacher capability diagram + chat panel.
- * Height accounts for site header + title + capability strip + safe area.
+ * Messenger shell layout:
+ *  - slim top bar (teacher + links)
+ *  - one card: collapsible capability strip + chat timeline
+ * Keeps diagram visible without stealing most of the viewport.
  */
 export default async function ChatPage({
   searchParams,
@@ -37,23 +40,25 @@ export default async function ChatPage({
       mainClassName="page-frame !py-0 md:!py-0"
     >
       <div
-        className="mx-auto flex w-full max-w-3xl flex-col px-3 pt-2 sm:px-4 sm:pt-2.5"
+        className="mx-auto flex w-full max-w-3xl flex-col px-3 pt-1.5 sm:px-4 sm:pt-2"
         style={{
           height: 'calc(100dvh - var(--site-header-offset))',
           maxHeight: 'calc(100dvh - var(--site-header-offset))',
-          paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))',
+          paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))',
         }}
       >
-        <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        {/* Slim page chrome — single row when possible */}
+        <header className="mb-1.5 flex shrink-0 items-center justify-between gap-2">
           <div className="min-w-0">
-            <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
-              {teacher.name} · 顾问开场
+            <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)] sm:text-[15px]">
+              {teacher.name}
+              <span className="font-normal text-[color:var(--ink-5)]"> · 开场</span>
             </h1>
-            <p className="mt-0.5 text-[12px] leading-[1.35] text-[color:var(--ink-5)]">
-              {teacher.tagline} · 一点即发
+            <p className="mt-0.5 truncate text-[11px] leading-[1.3] text-[color:var(--ink-5)] sm:text-[12px]">
+              {teacher.tagline}
             </p>
           </div>
-          <nav className="flex shrink-0 flex-wrap items-center gap-x-3 text-[12px] text-[color:var(--ink-3)]">
+          <nav className="flex shrink-0 items-center gap-x-2.5 text-[11px] text-[color:var(--ink-3)] sm:gap-x-3 sm:text-[12px]">
             <Link
               href="/teachers"
               className="underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
@@ -68,35 +73,44 @@ export default async function ChatPage({
             </Link>
             <Link
               href="/history"
-              className="underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+              className="hidden underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline sm:inline"
             >
               历史
             </Link>
           </nav>
-        </div>
+        </header>
 
-        {showCapability ? (
-          <div className="mb-2 max-h-[38vh] shrink-0 overflow-y-auto sm:max-h-[32vh]">
-            <CapabilityIllustrationPanel
-              surface={surface}
-              teacherId={teacher.id}
-              compact
-              priority
-              showCopy
-            />
-          </div>
-        ) : null}
-
+        {/* Unified messenger card */}
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
-          <Suspense
-            fallback={
-              <div className="flex flex-1 items-center justify-center text-[13px] text-[color:var(--ink-5)]">
-                加载中…
-              </div>
-            }
-          >
-            <ChatPageClient />
-          </Suspense>
+          {showCapability ? (
+            <ChatCapabilityShell
+              title={`${teacher.name}能做什么`}
+              subtitle={teacher.boundary}
+              defaultOpen
+            >
+              <CapabilityIllustrationPanel
+                surface={surface}
+                teacherId={teacher.id}
+                variant="chat"
+                priority
+                showCopy
+                hideHeader
+                className="!rounded-none !border-0"
+              />
+            </ChatCapabilityShell>
+          ) : null}
+
+          <div className="flex min-h-0 flex-1 flex-col">
+            <Suspense
+              fallback={
+                <div className="flex flex-1 items-center justify-center text-[13px] text-[color:var(--ink-5)]">
+                  加载中…
+                </div>
+              }
+            >
+              <ChatPageClient />
+            </Suspense>
+          </div>
         </div>
       </div>
     </AppPage>
