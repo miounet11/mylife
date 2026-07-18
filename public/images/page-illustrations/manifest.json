@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-18T13:13:53Z",
-  "backend": "ttqq wave D",
-  "count": 53,
+  "generatedAt": "2026-07-18T14:38:59Z",
+  "backend": "ttqq multi-locale zh-CN/en/zh-Hant",
+  "count": 83,
   "items": [
     {
       "src": "/images/page-illustrations/annual-review-loop.jpg",
@@ -9,9 +9,24 @@
       "bytes": 346652
     },
     {
+      "src": "/images/page-illustrations/bazi-four-pillars.en.jpg",
+      "file": "bazi-four-pillars.en.jpg",
+      "bytes": 372494
+    },
+    {
       "src": "/images/page-illustrations/bazi-four-pillars.jpg",
       "file": "bazi-four-pillars.jpg",
       "bytes": 323565
+    },
+    {
+      "src": "/images/page-illustrations/bazi-four-pillars.zh-hant.jpg",
+      "file": "bazi-four-pillars.zh-hant.jpg",
+      "bytes": 306897
+    },
+    {
+      "src": "/images/page-illustrations/boundary-not-fatalism.en.jpg",
+      "file": "boundary-not-fatalism.en.jpg",
+      "bytes": 399307
     },
     {
       "src": "/images/page-illustrations/boundary-not-fatalism.jpg",
@@ -19,9 +34,24 @@
       "bytes": 374905
     },
     {
+      "src": "/images/page-illustrations/boundary-not-fatalism.zh-hant.jpg",
+      "file": "boundary-not-fatalism.zh-hant.jpg",
+      "bytes": 398915
+    },
+    {
+      "src": "/images/page-illustrations/cases-structure-to-reality.en.jpg",
+      "file": "cases-structure-to-reality.en.jpg",
+      "bytes": 376641
+    },
+    {
       "src": "/images/page-illustrations/cases-structure-to-reality.jpg",
       "file": "cases-structure-to-reality.jpg",
       "bytes": 372321
+    },
+    {
+      "src": "/images/page-illustrations/cases-structure-to-reality.zh-hant.jpg",
+      "file": "cases-structure-to-reality.zh-hant.jpg",
+      "bytes": 389353
     },
     {
       "src": "/images/page-illustrations/chat-answer-five-parts.jpg",
@@ -49,14 +79,34 @@
       "bytes": 304348
     },
     {
+      "src": "/images/page-illustrations/decision-loop-basis-action-verify.en.jpg",
+      "file": "decision-loop-basis-action-verify.en.jpg",
+      "bytes": 373916
+    },
+    {
       "src": "/images/page-illustrations/decision-loop-basis-action-verify.jpg",
       "file": "decision-loop-basis-action-verify.jpg",
       "bytes": 301670
     },
     {
+      "src": "/images/page-illustrations/decision-loop-basis-action-verify.zh-hant.jpg",
+      "file": "decision-loop-basis-action-verify.zh-hant.jpg",
+      "bytes": 341604
+    },
+    {
+      "src": "/images/page-illustrations/dimensions-ten-scene-map.en.jpg",
+      "file": "dimensions-ten-scene-map.en.jpg",
+      "bytes": 393374
+    },
+    {
       "src": "/images/page-illustrations/dimensions-ten-scene-map.jpg",
       "file": "dimensions-ten-scene-map.jpg",
       "bytes": 374885
+    },
+    {
+      "src": "/images/page-illustrations/dimensions-ten-scene-map.zh-hant.jpg",
+      "file": "dimensions-ten-scene-map.zh-hant.jpg",
+      "bytes": 299979
     },
     {
       "src": "/images/page-illustrations/docs-method-before-conclusion.jpg",
@@ -74,9 +124,24 @@
       "bytes": 276681
     },
     {
+      "src": "/images/page-illustrations/five-elements-cycle-edu.en.jpg",
+      "file": "five-elements-cycle-edu.en.jpg",
+      "bytes": 305171
+    },
+    {
       "src": "/images/page-illustrations/five-elements-cycle-edu.jpg",
       "file": "five-elements-cycle-edu.jpg",
       "bytes": 320561
+    },
+    {
+      "src": "/images/page-illustrations/five-elements-cycle-edu.zh-hant.jpg",
+      "file": "five-elements-cycle-edu.zh-hant.jpg",
+      "bytes": 309819
+    },
+    {
+      "src": "/images/page-illustrations/free-path-tool-to-report.en.jpg",
+      "file": "free-path-tool-to-report.en.jpg",
+      "bytes": 350688
     },
     {
       "src": "/images/page-illustrations/free-path-tool-to-report.jpg",
@@ -84,14 +149,29 @@
       "bytes": 355542
     },
     {
+      "src": "/images/page-illustrations/free-path-tool-to-report.zh-hant.jpg",
+      "file": "free-path-tool-to-report.zh-hant.jpg",
+      "bytes": 346625
+    },
+    {
       "src": "/images/page-illustrations/hehun-dual-chart-compare.jpg",
       "file": "hehun-dual-chart-compare.jpg",
       "bytes": 329007
     },
     {
+      "src": "/images/page-illustrations/home-path-from-birth-to-action.en.jpg",
+      "file": "home-path-from-birth-to-action.en.jpg",
+      "bytes": 373246
+    },
+    {
       "src": "/images/page-illustrations/home-path-from-birth-to-action.jpg",
       "file": "home-path-from-birth-to-action.jpg",
       "bytes": 264335
+    },
+    {
+      "src": "/images/page-illustrations/home-path-from-birth-to-action.zh-hant.jpg",
+      "file": "home-path-from-birth-to-action.zh-hant.jpg",
+      "bytes": 325114
     },
     {
       "src": "/images/page-illustrations/icon-action-boundary.jpg",
@@ -169,9 +249,19 @@
       "bytes": 82608
     },
     {
+      "src": "/images/page-illustrations/knowledge-lookup-loop.en.jpg",
+      "file": "knowledge-lookup-loop.en.jpg",
+      "bytes": 271148
+    },
+    {
       "src": "/images/page-illustrations/knowledge-lookup-loop.jpg",
       "file": "knowledge-lookup-loop.jpg",
       "bytes": 308319
+    },
+    {
+      "src": "/images/page-illustrations/knowledge-lookup-loop.zh-hant.jpg",
+      "file": "knowledge-lookup-loop.zh-hant.jpg",
+      "bytes": 329657
     },
     {
       "src": "/images/page-illustrations/learn-track-map.jpg",
@@ -214,14 +304,34 @@
       "bytes": 355849
     },
     {
+      "src": "/images/page-illustrations/report-dayun-liunian-windows.en.jpg",
+      "file": "report-dayun-liunian-windows.en.jpg",
+      "bytes": 349217
+    },
+    {
       "src": "/images/page-illustrations/report-dayun-liunian-windows.jpg",
       "file": "report-dayun-liunian-windows.jpg",
       "bytes": 358284
     },
     {
+      "src": "/images/page-illustrations/report-dayun-liunian-windows.zh-hant.jpg",
+      "file": "report-dayun-liunian-windows.zh-hant.jpg",
+      "bytes": 306000
+    },
+    {
+      "src": "/images/page-illustrations/report-first-reading-path.en.jpg",
+      "file": "report-first-reading-path.en.jpg",
+      "bytes": 438378
+    },
+    {
       "src": "/images/page-illustrations/report-first-reading-path.jpg",
       "file": "report-first-reading-path.jpg",
       "bytes": 412352
+    },
+    {
+      "src": "/images/page-illustrations/report-first-reading-path.zh-hant.jpg",
+      "file": "report-first-reading-path.zh-hant.jpg",
+      "bytes": 303426
     },
     {
       "src": "/images/page-illustrations/report-history-timeline.jpg",
@@ -234,14 +344,34 @@
       "bytes": 292402
     },
     {
+      "src": "/images/page-illustrations/solar-time-longitude.en.jpg",
+      "file": "solar-time-longitude.en.jpg",
+      "bytes": 338558
+    },
+    {
       "src": "/images/page-illustrations/solar-time-longitude.jpg",
       "file": "solar-time-longitude.jpg",
       "bytes": 325823
     },
     {
+      "src": "/images/page-illustrations/solar-time-longitude.zh-hant.jpg",
+      "file": "solar-time-longitude.zh-hant.jpg",
+      "bytes": 382144
+    },
+    {
+      "src": "/images/page-illustrations/structure-daymaster-yongshen.en.jpg",
+      "file": "structure-daymaster-yongshen.en.jpg",
+      "bytes": 335593
+    },
+    {
       "src": "/images/page-illustrations/structure-daymaster-yongshen.jpg",
       "file": "structure-daymaster-yongshen.jpg",
       "bytes": 308597
+    },
+    {
+      "src": "/images/page-illustrations/structure-daymaster-yongshen.zh-hant.jpg",
+      "file": "structure-daymaster-yongshen.zh-hant.jpg",
+      "bytes": 321367
     },
     {
       "src": "/images/page-illustrations/teachers-roles-map.jpg",
@@ -254,9 +384,19 @@
       "bytes": 332382
     },
     {
+      "src": "/images/page-illustrations/tools-problem-breakdown.en.jpg",
+      "file": "tools-problem-breakdown.en.jpg",
+      "bytes": 318944
+    },
+    {
       "src": "/images/page-illustrations/tools-problem-breakdown.jpg",
       "file": "tools-problem-breakdown.jpg",
       "bytes": 301469
+    },
+    {
+      "src": "/images/page-illustrations/tools-problem-breakdown.zh-hant.jpg",
+      "file": "tools-problem-breakdown.zh-hant.jpg",
+      "bytes": 321483
     },
     {
       "src": "/images/page-illustrations/updates-message-types.jpg",
@@ -264,9 +404,19 @@
       "bytes": 289647
     },
     {
+      "src": "/images/page-illustrations/world-yi-global-path.en.jpg",
+      "file": "world-yi-global-path.en.jpg",
+      "bytes": 398063
+    },
+    {
       "src": "/images/page-illustrations/world-yi-global-path.jpg",
       "file": "world-yi-global-path.jpg",
       "bytes": 387876
+    },
+    {
+      "src": "/images/page-illustrations/world-yi-global-path.zh-hant.jpg",
+      "file": "world-yi-global-path.zh-hant.jpg",
+      "bytes": 419684
     }
   ]
 }

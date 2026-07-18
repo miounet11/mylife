@@ -48,12 +48,34 @@ const force = flag('force');
 const only = arg('only', '');
 const forceModel = arg('model', ''); // gpt-image-2 | z-image-turbo | auto
 
-const STYLE = [
+const STYLE_ZH_CN = [
   'Editorial product diagram for Life K-Line (人生K线), Chinese decision-support app.',
   'Clean Linear UI aesthetic, soft paper background, muted ink blue accents, geometric diagrams,',
   'minimal icons, high readability, no crystal ball, no horror, no superstition marketing slogans,',
-  'no watermark. Clear Chinese labels where text appears.',
+  'no watermark. Clear Simplified Chinese labels where text appears.',
 ].join(' ');
+
+const STYLE_ZH_HANT = [
+  'Editorial product diagram for Life K-Line (人生K線) for Traditional Chinese readers (Taiwan/HK).',
+  'Clean Linear UI aesthetic, soft paper background, muted ink blue accents, geometric diagrams,',
+  'minimal icons, high readability, no crystal ball, no horror, no superstition marketing slogans,',
+  'no watermark. All UI labels MUST be Traditional Chinese (繁體中文) only.',
+].join(' ');
+
+const STYLE_EN = [
+  'Editorial product diagram for Life K-Line for English and overseas Chinese users.',
+  'Clean Linear UI aesthetic, soft paper background, muted ink blue accents, geometric diagrams,',
+  'minimal icons, high readability, no crystal ball, no horror, no superstition marketing slogans,',
+  'no watermark. All UI labels MUST be clear English (Birth form, Report, Advisor, Day master, Favorable window).',
+  'SEO educational diagram: Bazi, Four Pillars of Destiny, life rhythm, decision support.',
+].join(' ');
+
+function styleFor(entry) {
+  const loc = entry.locale || 'zh-CN';
+  if (loc === 'en') return STYLE_EN;
+  if (loc === 'zh-Hant') return STYLE_ZH_HANT;
+  return STYLE_ZH_CN;
+}
 
 const CATALOG = JSON.parse(
   fs.readFileSync(path.join(root, 'lib/page-illustrations/catalog.export.json'), 'utf8'),
@@ -91,7 +113,8 @@ function publicExists(entry) {
 
 async function generateOne(entry) {
   const model = pickModel(entry);
-  const prompt = `${entry.prompt || entry.title}\n\n${STYLE}\nAspect ${entry.aspectRatio || '16:9'}.`;
+  const style = styleFor(entry);
+  const prompt = `${entry.prompt || entry.title}\n\n${style}\nAspect ${entry.aspectRatio || '16:9'}. Locale=${entry.locale || 'zh-CN'}.`;
   const size = sizeFor(entry, model);
   const started = Date.now();
 

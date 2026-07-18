@@ -10,6 +10,7 @@ import { LEARNING_TRACKS } from '@/lib/learning-tracks';
 import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
 import { absoluteUrl, buildProductLanguageAlternates } from '@/lib/seo';
+import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 
 const siteUrl = 'https://www.life-kline.com';
 
@@ -170,6 +171,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: route.changeFrequency,
       priority: route.priority,
     };
+
+    // Google Image discovery: attach page-illustration URLs (multi-locale when ready)
+    const seoImages = imagesForSeoPath(route.path);
+    if (seoImages.length) {
+      entry.images = seoImages;
+    }
 
     if (route.multiLanguage) {
       const langs = buildProductLanguageAlternates(route.path);

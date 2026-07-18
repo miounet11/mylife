@@ -131,7 +131,14 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
           }
         />
         <JourneyStrip active="content" />
-        <PageIllustrationStrip surface="knowledge/hub" title="怎么用知识库" compact limit={1} />
+        <PageIllustrationStrip
+          surface="knowledge/hub"
+          title={uiLocale === 'en' ? 'How to use the library' : uiLocale === 'zh-Hant' ? '怎麼用知識庫' : '怎么用知识库'}
+          compact
+          limit={1}
+          locale={uiLocale === 'en' ? 'en' : uiLocale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'}
+          priority
+        />
         <DimensionsShowcase
           title={copy.showcaseTitle}
           description={copy.showcaseDesc}

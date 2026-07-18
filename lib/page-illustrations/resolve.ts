@@ -3,6 +3,7 @@ import {
   listBySurface,
   publicSrc,
   type PageIllustrationEntry,
+  type PageIllustLocale,
   PAGE_ILLUSTRATION_CATALOG,
 } from '@/lib/page-illustrations/catalog';
 
@@ -29,12 +30,46 @@ export function entryToContentFigure(
 /** Figures for a product surface (docs, teachers, tools, …). Only ready assets. */
 export function resolvePageIllustrations(
   surface: string,
-  opts?: { includePendingDiagrams?: boolean; limit?: number },
+  opts?: {
+    includePendingDiagrams?: boolean;
+    limit?: number;
+    locale?: PageIllustLocale;
+  },
 ): ContentFigure[] {
   const limit = opts?.limit ?? 4;
-  const rows = listBySurface(surface);
-  const picked = rows.filter((e) => e.ready || opts?.includePendingDiagrams).slice(0, limit);
+  const rows = listBySurface(surface, opts?.locale);
+  // Prefer one locale per base (avoid showing EN+CN of same diagram)
+  const seenBase = new Set<string>();
+  const picked: PageIllustrationEntry[] = [];
+  for (const e of rows) {
+    if (!(e.ready || opts?.includePendingDiagrams)) continue;
+    const base = e.variantOf || e.id;
+    if (seenBase.has(base)) continue;
+    seenBase.add(base);
+    picked.push(e);
+    if (picked.length >= limit) break;
+  }
   return picked.map((e, i) => entryToContentFigure(e, i === 0 ? -1 : i - 1));
+}
+
+/** Full entry list for SEO JSON-LD (same pick as resolve). */
+export function resolvePageIllustrationEntries(
+  surface: string,
+  opts?: { limit?: number; locale?: PageIllustLocale },
+): PageIllustrationEntry[] {
+  const limit = opts?.limit ?? 4;
+  const rows = listBySurface(surface, opts?.locale);
+  const seenBase = new Set<string>();
+  const picked: PageIllustrationEntry[] = [];
+  for (const e of rows) {
+    if (!e.ready) continue;
+    const base = e.variantOf || e.id;
+    if (seenBase.has(base)) continue;
+    seenBase.add(base);
+    picked.push(e);
+    if (picked.length >= limit) break;
+  }
+  return picked;
 }
 
 /** Report chapter injection by cite keys (first key preferred, de-duped). */

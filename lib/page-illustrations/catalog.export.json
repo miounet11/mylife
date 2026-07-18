@@ -6,7 +6,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "从生辰到可执行判断"
+    "title": "从生辰到可执行判断",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-REPORT-READ-01",
@@ -15,7 +16,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "第一份报告怎么读"
+    "title": "第一份报告怎么读",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-REPORT-TIMING-01",
@@ -24,7 +26,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "大运与流年窗口"
+    "title": "大运与流年窗口",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-REPORT-DECISION-01",
@@ -33,7 +36,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "决策闭环：依据→结论→动作→验证"
+    "title": "决策闭环：依据→结论→动作→验证",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-YONGSHEN-01",
@@ -42,7 +46,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "日主与用神喜忌（示意）"
+    "title": "日主与用神喜忌（示意）",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-CHAT-OPENING-01",
@@ -69,7 +74,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "判断边界：参考不是定论"
+    "title": "判断边界：参考不是定论",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-TOOLS-01",
@@ -78,7 +84,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "工具：把大问题拆成可测小问题"
+    "title": "工具：把大问题拆成可测小问题",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-TEACHERS-01",
@@ -150,7 +157,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "五行生克（教学示意）"
+    "title": "五行生克（教学示意）",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-CHAT-STRUCTURE-01",
@@ -204,7 +212,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "知识库：概念可回查"
+    "title": "知识库：概念可回查",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-MOVEMENT-01",
@@ -222,7 +231,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "真太阳时为什么重要"
+    "title": "真太阳时为什么重要",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-BAZI-PILLARS-01",
@@ -231,7 +241,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "四柱：年月日时"
+    "title": "四柱：年月日时",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-DAYUN-GRID-01",
@@ -348,7 +359,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "案例：结构如何落到现实"
+    "title": "案例：结构如何落到现实",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-DIMENSIONS-MAP-01",
@@ -357,7 +369,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "十维度：一题一研判"
+    "title": "十维度：一题一研判",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-WORLDYI-01",
@@ -366,7 +379,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "世界易：全球场景应用"
+    "title": "世界易：全球场景应用",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-CHAT-NO-REPORT-01",
@@ -429,7 +443,8 @@
     "aspectRatio": "16:9",
     "complexity": "complex",
     "ready": true,
-    "title": "免费路径：先测再深"
+    "title": "免费路径：先测再深",
+    "locale": "zh-CN"
   },
   {
     "id": "PI-ICON-CAT-CAREER",
@@ -475,5 +490,425 @@
     "complexity": "simple",
     "ready": true,
     "title": "迁移工具"
+  },
+  {
+    "id": "PI-HOME-01-EN",
+    "filename": "home-path-from-birth-to-action.en.jpg",
+    "prompt": "Horizontal product journey diagram: four calm cards connected by arrows labeled Birth form, Read report, Advisor opening, Event validation. Soft paper background, blue ink accents, minimal icons of calendar, document, chat bubble, checklist. English labels only. SEO educational diagram for Bazi / Life K-Line decision support.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "From birth data to actionable judgment",
+    "caption": "Birth form → report structure → advisor opening → event validation",
+    "alt": "Life K-Line product path diagram: birth chart to report advisor and validation",
+    "locale": "en",
+    "variantOf": "PI-HOME-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-HOME-01-HANT",
+    "filename": "home-path-from-birth-to-action.zh-hant.jpg",
+    "prompt": "橫向產品旅程圖：四張平靜卡片以箭頭連接，標籤為 填生辰、讀報告、顧問開場、事件驗證。柔和紙質背景、墨藍色點綴。僅使用繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "從生辰到可執行判斷",
+    "caption": "排盤 → 報告結構 → 顧問開場 → 事件驗證",
+    "alt": "人生K線從排盤到報告顧問驗證的路徑示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-HOME-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-READ-01-EN",
+    "filename": "report-first-reading-path.en.jpg",
+    "prompt": "Infographic map of reading a destiny report: numbered steps 1 Conclusion 2 Time windows 3 Structure basis 4 Risks 5 Verification points. Clean layered document illustration, blue accent numbers, paper texture. English labels only.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "How to read your first report",
+    "caption": "Conclusion and windows first, then structure and risks",
+    "alt": "Infographic of reading a Bazi report: conclusion, timing windows, structure, risk, verification",
+    "locale": "en",
+    "variantOf": "PI-REPORT-READ-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-READ-01-HANT",
+    "filename": "report-first-reading-path.zh-hant.jpg",
+    "prompt": "報告閱讀資訊圖：編號步驟 1 結論 2 時間窗口 3 結構依據 4 風險 5 驗證點。乾淨文件分層插畫。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "第一份報告怎麼讀",
+    "caption": "先結論與窗口，再看結構與風險",
+    "alt": "第一份命理報告閱讀順序圖：結論窗口結構風險",
+    "locale": "zh-Hant",
+    "variantOf": "PI-REPORT-READ-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-TIMING-01-EN",
+    "filename": "report-dayun-liunian-windows.en.jpg",
+    "prompt": "Timeline diagram of life phases labeled Dayun with smaller yearly marks Liunian. Soft green zones Favorable window and amber zones Caution window. Minimal K-line rhythm below. Educational English labels only.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Dayun and yearly windows",
+    "caption": "Phase rhythm: favorable vs caution windows — not absolute fate",
+    "alt": "Timeline of life phases Dayun with yearly Liunian marks and favorable caution zones",
+    "locale": "en",
+    "variantOf": "PI-REPORT-TIMING-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-TIMING-01-HANT",
+    "filename": "report-dayun-liunian-windows.zh-hant.jpg",
+    "prompt": "人生階段時間軸圖（大運）與較小流年刻度。淺綠區標 有利窗、琥珀區標 謹慎窗。下方極簡K線節奏。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "大運與流年窗口",
+    "caption": "階段節奏：有利窗 / 謹慎窗，而不是絕對吉凶",
+    "alt": "大運流年時間軸示意：有利窗口與謹慎窗口",
+    "locale": "zh-Hant",
+    "variantOf": "PI-REPORT-TIMING-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-DECISION-01-EN",
+    "filename": "decision-loop-basis-action-verify.en.jpg",
+    "prompt": "Five connected modules: Judgment basis, Current conclusion, Stage actions (Today 7d 30d), Risk notes, Verification points. Product UI cards, blue accent, English labels only.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Decision loop: basis → action → verify",
+    "caption": "Today / 7 days / 30 days executable steps",
+    "alt": "Decision loop modules: judgment basis, conclusion, stage actions, risk, verification",
+    "locale": "en",
+    "variantOf": "PI-REPORT-DECISION-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-REPORT-DECISION-01-HANT",
+    "filename": "decision-loop-basis-action-verify.zh-hant.jpg",
+    "prompt": "五個相連模組：判斷依據、當前結論、階段動作（今天 7天 30天）、風險提醒、驗證點。產品卡片風。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "決策閉環：依據→結論→動作→驗證",
+    "caption": "今天 / 7 天 / 30 天 三步可執行",
+    "alt": "命理決策閉環圖：判斷依據當前結論階段動作風險驗證點",
+    "locale": "zh-Hant",
+    "variantOf": "PI-REPORT-DECISION-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-YONGSHEN-01-EN",
+    "filename": "structure-daymaster-yongshen.en.jpg",
+    "prompt": "Abstract educational diagram: center node Day master, supporting nodes Useful god, caution nodes Avoided god, light five-element cycle. Soft colors, schematic, English labels only. Textbook clarity for Bazi structure.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Day master and useful gods (schematic)",
+    "caption": "Structure anchors locked by the report — educational only",
+    "alt": "Abstract educational diagram of day master useful god and avoided god nodes",
+    "locale": "en",
+    "variantOf": "PI-YONGSHEN-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-YONGSHEN-01-HANT",
+    "filename": "structure-daymaster-yongshen.zh-hant.jpg",
+    "prompt": "抽象教學圖：中心節點 日主，支撐節點 用神，警示節點 忌神，輕描五行循環。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "日主與用神喜忌（示意）",
+    "caption": "結構錨點以報告鎖定為準",
+    "alt": "日主用神忌神結構示意教學圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-YONGSHEN-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-FIVE-ELEMENTS-01-EN",
+    "filename": "five-elements-cycle-edu.en.jpg",
+    "prompt": "Clean educational five-elements cycle: Wood Fire Earth Metal Water with generation arrows and control dashed arrows. Soft pastel geometric nodes. English labels only. Not mystical altar art.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Five elements generation and control (education)",
+    "caption": "Schematic relations; your chart follows the locked report",
+    "alt": "Five elements Wood Fire Earth Metal Water cycle educational diagram",
+    "locale": "en",
+    "variantOf": "PI-FIVE-ELEMENTS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-FIVE-ELEMENTS-01-HANT",
+    "filename": "five-elements-cycle-edu.zh-hant.jpg",
+    "prompt": "五行循環教學圖：木 火 土 金 水，相生箭頭與相剋虛線。柔和幾何節點。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "五行生克（教學示意）",
+    "caption": "結構關係示意，具體以本盤報告鎖定為準",
+    "alt": "五行生克循環教學示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-FIVE-ELEMENTS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-TOOLS-01-EN",
+    "filename": "tools-problem-breakdown.en.jpg",
+    "prompt": "Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. English labels Tools Report Revisit. Minimal product diagram.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Tools: break big questions into testable ones",
+    "caption": "Single tools → deep report → revisit",
+    "alt": "Tool hub diagram: fuzzy question to tool cards into report",
+    "locale": "en",
+    "variantOf": "PI-TOOLS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-TOOLS-01-HANT",
+    "filename": "tools-problem-breakdown.zh-hant.jpg",
+    "prompt": "小工具卡片矩陣圍繞中央報告文件。從模糊問題雲到清晰工具再到報告。標籤 工具 報告 回訪。僅繁體中文。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "工具：把大問題拆成可測小問題",
+    "caption": "單項工具 → 報告深問 → 回訪",
+    "alt": "工具中心問題拆解與報告銜接示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-TOOLS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-DIMENSIONS-MAP-01-EN",
+    "filename": "dimensions-ten-scene-map.en.jpg",
+    "prompt": "Grid of ten calm scene tiles with English labels: Fortune rhythm, Career industry, Investing, Marriage timing, Health rhythm, Naming, Timing selection, Migration, Relations, Family. Soft paper, ink blue, Linear product map.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Ten dimensions: one question one analysis",
+    "caption": "Fortune rhythm, career, wealth, marriage, health, migration…",
+    "alt": "Ten-scene map for Life K-Line dimensions hub",
+    "locale": "en",
+    "variantOf": "PI-DIMENSIONS-MAP-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-DIMENSIONS-MAP-01-HANT",
+    "filename": "dimensions-ten-scene-map.zh-hant.jpg",
+    "prompt": "十個平靜場景方塊：運勢節奏 事業行業 投資理財 談婚論嫁 健康節律 起名 擇時 遷移 人際 家庭。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "十維度：一題一研判",
+    "caption": "運勢節奏 · 事業 · 財務 · 婚戀 · 健康 · 遷移…",
+    "alt": "十維度場景地圖示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-DIMENSIONS-MAP-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-CASES-01-EN",
+    "filename": "cases-structure-to-reality.en.jpg",
+    "prompt": "Educational case-study reading map: four cards Scene, Structure judgment, Time window, Reality check connected by arrows. Soft paper, ink blue, English labels only.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Cases: structure meets reality",
+    "caption": "Scene → structure judgment → window → comparable outcome",
+    "alt": "Case study reading path diagram for Bazi decision support",
+    "locale": "en",
+    "variantOf": "PI-CASES-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-CASES-01-HANT",
+    "filename": "cases-structure-to-reality.zh-hant.jpg",
+    "prompt": "案例閱讀地圖：四卡片 問題場景 結構判斷 時間窗口 現實對照。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "案例：結構如何落到現實",
+    "caption": "問題場景 → 結構判斷 → 時間窗 → 可對照結果",
+    "alt": "案例閱讀路徑：場景結構窗口結果",
+    "locale": "zh-Hant",
+    "variantOf": "PI-CASES-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-KNOWLEDGE-01-EN",
+    "filename": "knowledge-lookup-loop.en.jpg",
+    "prompt": "Three-step knowledge loop: Look up term, See example, Compare with report. Book and document icons minimal. English labels. Calm library aesthetic for product.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Knowledge base: look up and return to your chart",
+    "caption": "Term → example → compare with your report",
+    "alt": "Knowledge lookup loop diagram term example report",
+    "locale": "en",
+    "variantOf": "PI-KNOWLEDGE-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-KNOWLEDGE-01-HANT",
+    "filename": "knowledge-lookup-loop.zh-hant.jpg",
+    "prompt": "三步知識閉環：查術語、看例子、回報告對照。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "知識庫：概念可回查",
+    "caption": "術語 → 例子 → 回到本盤報告",
+    "alt": "知識庫概念回查路徑圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-KNOWLEDGE-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-WORLDYI-01-EN",
+    "filename": "world-yi-global-path.en.jpg",
+    "prompt": "Minimal world arc with three hubs: Structure method, Overseas scenes, Verifiable actions. Soft paper, ink blue geometric. English labels. Educational product diagram about World Yi.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "World Yi: global scene application",
+    "caption": "Structure method transferable to overseas life decisions",
+    "alt": "World Yi global application path structure method overseas scenes actions",
+    "locale": "en",
+    "variantOf": "PI-WORLDYI-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-WORLDYI-01-HANT",
+    "filename": "world-yi-global-path.zh-hant.jpg",
+    "prompt": "極簡世界弧線三樞紐：結構方法 海外場景 可驗證動作。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "世界易：全球場景應用",
+    "caption": "結構方法可遷移到海外生活與決策",
+    "alt": "世界易全球應用路徑示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-WORLDYI-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-FREE-PATH-01-EN",
+    "filename": "free-path-tool-to-report.en.jpg",
+    "prompt": "Ascending three-step path cards: Free tool check, Full structure report, Advisor deep chat. Soft paper stairs, ink blue, English labels. Linear conversion diagram without hard sell.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Free path: test first then go deeper",
+    "caption": "Quick tool → full report → advisor deep dive",
+    "alt": "Free to deep product funnel tool report advisor",
+    "locale": "en",
+    "variantOf": "PI-FREE-PATH-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-FREE-PATH-01-HANT",
+    "filename": "free-path-tool-to-report.zh-hant.jpg",
+    "prompt": "三階上升路徑：免費工具快測、完整結構報告、顧問深聊。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "免費路徑：先測再深",
+    "caption": "工具快測 → 完整報告 → 顧問深聊",
+    "alt": "免費到深度的產品路徑圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-FREE-PATH-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-BAZI-PILLARS-01-EN",
+    "filename": "bazi-four-pillars.en.jpg",
+    "prompt": "Four vertical pillar cards labeled Year Month Day Hour with Day master highlighted on day pillar. Clean educational Chinese metaphysics chart with English labels, soft paper, ink blue accents.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Four pillars: year month day hour",
+    "caption": "Each pillar has a role; day master sits in the day pillar",
+    "alt": "Bazi four pillars educational chart Year Month Day Hour",
+    "locale": "en",
+    "variantOf": "PI-BAZI-PILLARS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-BAZI-PILLARS-01-HANT",
+    "filename": "bazi-four-pillars.zh-hant.jpg",
+    "prompt": "四根豎柱卡片：年柱 月柱 日柱 時柱，日主在日柱高亮。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "四柱：年月日時",
+    "caption": "四柱各有分工，日主居中",
+    "alt": "八字四柱結構教學圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-BAZI-PILLARS-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-BOUNDARY-01-EN",
+    "filename": "boundary-not-fatalism.en.jpg",
+    "prompt": "Two-column comparison: left Can do (structure reference, window rhythm, verifiable actions), right Do not (scare, absolute fate, replace medical legal investment). Soft amber on right, calm blue on left. English labels. Ethical product illustration.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Judgment boundary: reference not verdict",
+    "caption": "No scare tactics; medical legal investment need professionals",
+    "alt": "Do and do-not boundary diagram for ethical destiny decision support",
+    "locale": "en",
+    "variantOf": "PI-BOUNDARY-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-BOUNDARY-01-HANT",
+    "filename": "boundary-not-fatalism.zh-hant.jpg",
+    "prompt": "雙欄對比：左 可做（結構參考 窗口節奏 可驗證動作），右 不做（恐嚇 絕對命運 替代醫療法律投資）。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "判斷邊界：參考不是定論",
+    "caption": "不恐嚇、不絕對化；醫療法律投資需專業意見",
+    "alt": "命理判斷邊界說明：參考框架非宿命定論",
+    "locale": "zh-Hant",
+    "variantOf": "PI-BOUNDARY-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-SOLAR-TIME-01-EN",
+    "filename": "solar-time-longitude.en.jpg",
+    "prompt": "Educational diagram: clock, map longitude line, birth form fields Birth place Clock time True solar time. Arrows showing correction. English labels. Calm science-education style, Linear product.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "Why true solar time matters",
+    "caption": "Longitude and time difference affect hour pillar accuracy",
+    "alt": "True solar time longitude correction educational diagram",
+    "locale": "en",
+    "variantOf": "PI-SOLAR-TIME-01",
+    "surfaces": []
+  },
+  {
+    "id": "PI-SOLAR-TIME-01-HANT",
+    "filename": "solar-time-longitude.zh-hant.jpg",
+    "prompt": "教學圖：時鐘、經度線、出生地表單 出生地 鐘表時間 真太陽時。箭頭示意修正。僅繁體中文標籤。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "真太陽時為什麼重要",
+    "caption": "經度與時差影響時柱精度",
+    "alt": "真太陽時與出生地經度關係示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-SOLAR-TIME-01",
+    "surfaces": []
   }
 ]
