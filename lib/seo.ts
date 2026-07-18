@@ -548,4 +548,28 @@ export const GEO_CITY_SEEDS: Array<{
     summary: '分散城市结构下的通勤、家庭与创业窗口。',
     focus: ['迁移', '家庭', '创业'],
   },
+  {
+    slug: 'world-yi-city-hong-kong',
+    title: '城市观察：香港',
+    city: '香港',
+    region: '大湾区/港澳',
+    summary: '跨境职业与居住成本结构下的节奏与角色匹配。',
+    focus: ['迁移', '职业', '居住'],
+  },
+  {
+    slug: 'world-yi-city-vancouver',
+    title: '城市观察：温哥华',
+    city: '温哥华',
+    region: '加拿大西岸',
+    summary: '移民家庭排序、就业节奏与居住选择的环境层观察。',
+    focus: ['迁移', '家庭', '就业'],
+  },
+  {
+    slug: 'world-yi-city-toronto',
+    title: '城市观察：多伦多',
+    city: '多伦多',
+    region: '加拿大东岸',
+    summary: '多元社区中的职业路径与家庭成本结构。',
+    focus: ['迁移', '职业', '社区'],
+  },
 ];

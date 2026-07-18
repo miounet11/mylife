@@ -1243,5 +1243,344 @@
       "insights/hub",
       "movement/hub"
     ]
+  },
+  {
+    "id": "PI-GEO-SHANGHAI-HANT",
+    "filename": "geo-city-shanghai.zh-hant.jpg",
+    "prompt": "城市決策支援圖：上海（中国华东）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：上海",
+    "caption": "中国华东 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線上海城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SHANGHAI",
+    "surfaces": [
+      "geo/shanghai",
+      "insights/city/world-yi-city-shanghai",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SHENZHEN-HANT",
+    "filename": "geo-city-shenzhen.zh-hant.jpg",
+    "prompt": "城市決策支援圖：深圳（中国华南）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：深圳",
+    "caption": "中国华南 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線深圳城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SHENZHEN",
+    "surfaces": [
+      "geo/shenzhen",
+      "insights/city/world-yi-city-shenzhen",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-BEIJING-HANT",
+    "filename": "geo-city-beijing.zh-hant.jpg",
+    "prompt": "城市決策支援圖：北京（中国华北）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：北京",
+    "caption": "中国华北 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線北京城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-BEIJING",
+    "surfaces": [
+      "geo/beijing",
+      "insights/city/world-yi-city-beijing",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-NEW_YORK-HANT",
+    "filename": "geo-city-new-york.zh-hant.jpg",
+    "prompt": "城市決策支援圖：纽约（北美）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：纽约",
+    "caption": "北美 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線纽约城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-NEW_YORK",
+    "surfaces": [
+      "geo/new-york",
+      "insights/city/world-yi-city-new-york",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SYDNEY-HANT",
+    "filename": "geo-city-sydney.zh-hant.jpg",
+    "prompt": "城市決策支援圖：悉尼（澳洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：悉尼",
+    "caption": "澳洲 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線悉尼城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SYDNEY",
+    "surfaces": [
+      "geo/sydney",
+      "insights/city/world-yi-city-sydney",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LONDON-HANT",
+    "filename": "geo-city-london.zh-hant.jpg",
+    "prompt": "城市決策支援圖：伦敦（欧洲）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：伦敦",
+    "caption": "欧洲 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線伦敦城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-LONDON",
+    "surfaces": [
+      "geo/london",
+      "insights/city/world-yi-city-london",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TOKYO-HANT",
+    "filename": "geo-city-tokyo.zh-hant.jpg",
+    "prompt": "城市決策支援圖：东京（东亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：东京",
+    "caption": "东亚 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線东京城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-TOKYO",
+    "surfaces": [
+      "geo/tokyo",
+      "insights/city/world-yi-city-tokyo",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LOS_ANGELES-HANT",
+    "filename": "geo-city-los-angeles.zh-hant.jpg",
+    "prompt": "城市決策支援圖：洛杉矶（北美西岸）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：洛杉矶",
+    "caption": "北美西岸 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線洛杉矶城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-LOS_ANGELES",
+    "surfaces": [
+      "geo/los-angeles",
+      "insights/city/world-yi-city-los-angeles",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SINGAPORE-HANT",
+    "filename": "geo-city-singapore.zh-hant.jpg",
+    "prompt": "城市決策支援圖：新加坡（东南亚）。三個面板標籤 成本結構、角色密度、生活節奏，柔和天際線。Linear UI、紙質背景、墨藍。僅繁體中文標籤。教育型 GEO 產品圖，非旅遊海報。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：新加坡",
+    "caption": "东南亚 · 成本結構 · 角色密度 · 生活節奏",
+    "alt": "人生K線新加坡城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-SINGAPORE",
+    "surfaces": [
+      "geo/singapore",
+      "insights/city/world-yi-city-singapore",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-HONG_KONG",
+    "filename": "geo-city-hong-kong.jpg",
+    "prompt": "Editorial city decision-support diagram for 香港 (大湾区/港澳). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：香港",
+    "caption": "大湾区/港澳 · 跨境 · 职业 · 居住成本",
+    "alt": "人生K线香港城市环境层观察示意图",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/hong-kong",
+      "insights/city/world-yi-city-hong-kong",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-HONG_KONG-EN",
+    "filename": "geo-city-hong-kong.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Hong Kong (Greater Bay Area). Three panels Cost structure, Role density, Life rhythm, soft skyline of Hong Kong. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Hong Kong",
+    "caption": "Greater Bay Area · Cross-border · Career · Housing cost",
+    "alt": "Life K-Line city environment diagram for Hong Kong",
+    "locale": "en",
+    "variantOf": "PI-GEO-HONG_KONG",
+    "surfaces": [
+      "geo/hong-kong",
+      "insights/city/world-yi-city-hong-kong",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-HONG_KONG-HANT",
+    "filename": "geo-city-hong-kong.zh-hant.jpg",
+    "prompt": "城市決策支援圖：香港（大湾区/港澳）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：香港",
+    "caption": "大湾区/港澳 · 跨境 · 职业 · 居住成本",
+    "alt": "人生K線香港城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-HONG_KONG",
+    "surfaces": [
+      "geo/hong-kong",
+      "insights/city/world-yi-city-hong-kong",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-VANCOUVER",
+    "filename": "geo-city-vancouver.jpg",
+    "prompt": "Editorial city decision-support diagram for 温哥华 (加拿大西岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：温哥华",
+    "caption": "加拿大西岸 · 移民 · 家庭 · 就业节奏",
+    "alt": "人生K线温哥华城市环境层观察示意图",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/vancouver",
+      "insights/city/world-yi-city-vancouver",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-VANCOUVER-EN",
+    "filename": "geo-city-vancouver.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Vancouver (Canada West). Three panels Cost structure, Role density, Life rhythm, soft skyline of Vancouver. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Vancouver",
+    "caption": "Canada West · Immigration · Family · Work rhythm",
+    "alt": "Life K-Line city environment diagram for Vancouver",
+    "locale": "en",
+    "variantOf": "PI-GEO-VANCOUVER",
+    "surfaces": [
+      "geo/vancouver",
+      "insights/city/world-yi-city-vancouver",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-VANCOUVER-HANT",
+    "filename": "geo-city-vancouver.zh-hant.jpg",
+    "prompt": "城市決策支援圖：温哥华（加拿大西岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：温哥华",
+    "caption": "加拿大西岸 · 移民 · 家庭 · 就业节奏",
+    "alt": "人生K線温哥华城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-VANCOUVER",
+    "surfaces": [
+      "geo/vancouver",
+      "insights/city/world-yi-city-vancouver",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TORONTO",
+    "filename": "geo-city-toronto.jpg",
+    "prompt": "Editorial city decision-support diagram for 多伦多 (加拿大东岸). Three panels 成本结构 角色密度 生活节奏, soft skyline. Linear UI, paper, ink blue. Simplified Chinese only. Educational GEO, not tourism.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：多伦多",
+    "caption": "加拿大东岸 · 移民 · 职业 · 多元社区",
+    "alt": "人生K线多伦多城市环境层观察示意图",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/toronto",
+      "insights/city/world-yi-city-toronto",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TORONTO-EN",
+    "filename": "geo-city-toronto.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Toronto (Canada East). Three panels Cost structure, Role density, Life rhythm, soft skyline of Toronto. Linear UI, paper, ink blue. English labels only. Educational GEO for diaspora Chinese.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Toronto",
+    "caption": "Canada East · Immigration · Career · Multicultural hub",
+    "alt": "Life K-Line city environment diagram for Toronto",
+    "locale": "en",
+    "variantOf": "PI-GEO-TORONTO",
+    "surfaces": [
+      "geo/toronto",
+      "insights/city/world-yi-city-toronto",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TORONTO-HANT",
+    "filename": "geo-city-toronto.zh-hant.jpg",
+    "prompt": "城市決策支援圖：多伦多（加拿大东岸）。三面板 成本結構 角色密度 生活節奏。僅繁體中文。Linear 教育圖。",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市觀察：多伦多",
+    "caption": "加拿大东岸 · 移民 · 职业 · 多元社区",
+    "alt": "人生K線多伦多城市環境層觀察示意圖",
+    "locale": "zh-Hant",
+    "variantOf": "PI-GEO-TORONTO",
+    "surfaces": [
+      "geo/toronto",
+      "insights/city/world-yi-city-toronto",
+      "insights/hub",
+      "movement/hub"
+    ]
   }
 ]

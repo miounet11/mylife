@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-18T15:03:07Z",
-  "backend": "ttqq geo+multi-locale",
-  "count": 101,
+  "generatedAt": "2026-07-18T15:22:59Z",
+  "backend": "ttqq geo wave2",
+  "count": 119,
   "items": [
     {
       "src": "/images/page-illustrations/annual-review-loop.jpg",
@@ -164,6 +164,26 @@
       "bytes": 381434
     },
     {
+      "src": "/images/page-illustrations/geo-city-beijing.zh-hant.jpg",
+      "file": "geo-city-beijing.zh-hant.jpg",
+      "bytes": 395078
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-hong-kong.en.jpg",
+      "file": "geo-city-hong-kong.en.jpg",
+      "bytes": 431334
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-hong-kong.jpg",
+      "file": "geo-city-hong-kong.jpg",
+      "bytes": 392983
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-hong-kong.zh-hant.jpg",
+      "file": "geo-city-hong-kong.zh-hant.jpg",
+      "bytes": 376486
+    },
+    {
       "src": "/images/page-illustrations/geo-city-london.en.jpg",
       "file": "geo-city-london.en.jpg",
       "bytes": 409446
@@ -172,6 +192,11 @@
       "src": "/images/page-illustrations/geo-city-london.jpg",
       "file": "geo-city-london.jpg",
       "bytes": 389534
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-london.zh-hant.jpg",
+      "file": "geo-city-london.zh-hant.jpg",
+      "bytes": 413703
     },
     {
       "src": "/images/page-illustrations/geo-city-los-angeles.en.jpg",
@@ -184,6 +209,11 @@
       "bytes": 387332
     },
     {
+      "src": "/images/page-illustrations/geo-city-los-angeles.zh-hant.jpg",
+      "file": "geo-city-los-angeles.zh-hant.jpg",
+      "bytes": 377321
+    },
+    {
       "src": "/images/page-illustrations/geo-city-new-york.en.jpg",
       "file": "geo-city-new-york.en.jpg",
       "bytes": 411022
@@ -192,6 +222,11 @@
       "src": "/images/page-illustrations/geo-city-new-york.jpg",
       "file": "geo-city-new-york.jpg",
       "bytes": 396686
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-new-york.zh-hant.jpg",
+      "file": "geo-city-new-york.zh-hant.jpg",
+      "bytes": 422379
     },
     {
       "src": "/images/page-illustrations/geo-city-shanghai.en.jpg",
@@ -204,6 +239,11 @@
       "bytes": 377456
     },
     {
+      "src": "/images/page-illustrations/geo-city-shanghai.zh-hant.jpg",
+      "file": "geo-city-shanghai.zh-hant.jpg",
+      "bytes": 367997
+    },
+    {
       "src": "/images/page-illustrations/geo-city-shenzhen.en.jpg",
       "file": "geo-city-shenzhen.en.jpg",
       "bytes": 396871
@@ -212,6 +252,11 @@
       "src": "/images/page-illustrations/geo-city-shenzhen.jpg",
       "file": "geo-city-shenzhen.jpg",
       "bytes": 373190
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-shenzhen.zh-hant.jpg",
+      "file": "geo-city-shenzhen.zh-hant.jpg",
+      "bytes": 370487
     },
     {
       "src": "/images/page-illustrations/geo-city-singapore.en.jpg",
@@ -224,6 +269,11 @@
       "bytes": 424176
     },
     {
+      "src": "/images/page-illustrations/geo-city-singapore.zh-hant.jpg",
+      "file": "geo-city-singapore.zh-hant.jpg",
+      "bytes": 380987
+    },
+    {
       "src": "/images/page-illustrations/geo-city-sydney.en.jpg",
       "file": "geo-city-sydney.en.jpg",
       "bytes": 357134
@@ -234,6 +284,11 @@
       "bytes": 405582
     },
     {
+      "src": "/images/page-illustrations/geo-city-sydney.zh-hant.jpg",
+      "file": "geo-city-sydney.zh-hant.jpg",
+      "bytes": 385971
+    },
+    {
       "src": "/images/page-illustrations/geo-city-tokyo.en.jpg",
       "file": "geo-city-tokyo.en.jpg",
       "bytes": 421344
@@ -242,6 +297,41 @@
       "src": "/images/page-illustrations/geo-city-tokyo.jpg",
       "file": "geo-city-tokyo.jpg",
       "bytes": 344084
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-tokyo.zh-hant.jpg",
+      "file": "geo-city-tokyo.zh-hant.jpg",
+      "bytes": 421366
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-toronto.en.jpg",
+      "file": "geo-city-toronto.en.jpg",
+      "bytes": 442897
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-toronto.jpg",
+      "file": "geo-city-toronto.jpg",
+      "bytes": 377004
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-toronto.zh-hant.jpg",
+      "file": "geo-city-toronto.zh-hant.jpg",
+      "bytes": 323803
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-vancouver.en.jpg",
+      "file": "geo-city-vancouver.en.jpg",
+      "bytes": 466601
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-vancouver.jpg",
+      "file": "geo-city-vancouver.jpg",
+      "bytes": 384909
+    },
+    {
+      "src": "/images/page-illustrations/geo-city-vancouver.zh-hant.jpg",
+      "file": "geo-city-vancouver.zh-hant.jpg",
+      "bytes": 312847
     },
     {
       "src": "/images/page-illustrations/hehun-dual-chart-compare.jpg",
