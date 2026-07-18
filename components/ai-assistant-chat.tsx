@@ -94,11 +94,14 @@ export default function AIAssistantChat() {
   const source = searchParams?.get('source') || '';
   const ctaStrategyKey = searchParams?.get('ctaStrategyKey') || '';
   const sourceFamily = searchParams?.get('sourceFamily') || '';
-  const prefilledQuestion = searchParams?.get('question') || '';
+  const prefilledQuestion =
+    searchParams?.get('question') || searchParams?.get('q') || '';
   const urlTeacher = searchParams?.get('teacher') || searchParams?.get('teacherId') || '';
   const urlTopic = searchParams?.get('topic') || '';
   const urlWindow = searchParams?.get('window') || '';
-  const urlMode = searchParams?.get('mode') || '';
+  /** Default opening product mode; only explicit prefill fills the input. */
+  const urlMode = searchParams?.get('mode') || 'opening';
+  const isPrefillMode = urlMode === 'prefill';
   const [rememberedReportId, setRememberedReportId] = useState('');
   const reportId = urlReportId || rememberedReportId;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -352,8 +355,8 @@ export default function AIAssistantChat() {
   }, [input]);
 
   useEffect(() => {
-    // mode=opening：不预填，把舞台留给顾问卡 first_mes
-    if (urlMode === 'opening') return;
+    // Default / mode=opening：不预填，把舞台留给顾问卡 first_mes
+    if (!isPrefillMode) return;
 
     if (prefilledQuestion && !input.trim() && messages.length === 0) {
       setInput(prefilledQuestion);
@@ -368,7 +371,14 @@ export default function AIAssistantChat() {
     if (openingView.firstMes) return;
 
     setInput(intentPreset.prefillQuestion);
-  }, [intentPreset, input, messages.length, prefilledQuestion, urlMode, openingView.firstMes]);
+  }, [
+    intentPreset,
+    input,
+    messages.length,
+    prefilledQuestion,
+    isPrefillMode,
+    openingView.firstMes,
+  ]);
 
   useEffect(() => {
     if (!copiedMessageId) return undefined;
@@ -830,10 +840,11 @@ export default function AIAssistantChat() {
     context?.report?.id,
   ]);
 
-  // Fire once when empty + report ready (synthetic opening counts as empty timeline).
+  // Fire once on empty timeline with consultant first_mes (report optional).
   useEffect(() => {
-    if (loadingHistory || hasRealChatMessages(messages) || !context?.report) return;
-    const key = `${context.report.id || reportId}:${openingView.teacherId}`;
+    if (loadingHistory || hasRealChatMessages(messages) || !openingView.firstMes) return;
+    const bound = context?.report?.id || reportId || 'none';
+    const key = `${bound}:${openingView.teacherId}`;
     if (openingShownKeyRef.current === key) return;
     openingShownKeyRef.current = key;
     void trackClientEvent({
@@ -841,19 +852,24 @@ export default function AIAssistantChat() {
       page: '/chat',
       meta: {
         teacherId: openingView.teacherId,
-        reportId: context.report.id || reportId || null,
+        reportId: context?.report?.id || reportId || null,
+        hasReport: Boolean(context?.report?.id || reportId),
         hasFirstMes: Boolean(openingView.firstMes),
         starterCount: openingView.starters.length,
+        mode: urlMode || 'opening',
+        source: source || null,
       },
     });
   }, [
     loadingHistory,
     messages,
-    context?.report,
+    context?.report?.id,
     openingView.teacherId,
     openingView.firstMes,
     openingView.starters.length,
     reportId,
+    urlMode,
+    source,
   ]);
 
 
@@ -926,6 +942,24 @@ export default function AIAssistantChat() {
           {loadingHistory && (
             <div className="py-10 text-center text-[13px] text-[#606770]">正在载入聊天记录...</div>
           )}
+
+          {showOpeningChrome && prefilledQuestion && !isPrefillMode ? (
+            <div className="rounded-[3px] border border-[#dddfe2] bg-white px-3 py-2.5">
+              <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#3b5998]">
+                你带来的问题（点一下发送）
+              </div>
+              <button
+                type="button"
+                disabled={isTyping || loadingHistory}
+                onClick={() => handleOpeningStarter(prefilledQuestion, { source: 'legacy_prefill_chip' })}
+                className="mt-2 w-full min-h-[44px] touch-manipulation rounded-[6px] border border-[#dddfe2] bg-[#f6f7f9] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#3b5998] active:opacity-70 disabled:opacity-50"
+              >
+                {prefilledQuestion.length > 120
+                  ? `${prefilledQuestion.slice(0, 118)}…`
+                  : prefilledQuestion}
+              </button>
+            </div>
+          ) : null}
 
           {showOpeningChrome && context?.report ? (
             <div className="space-y-2">

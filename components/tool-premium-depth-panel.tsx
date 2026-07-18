@@ -62,14 +62,15 @@ export default function ToolPremiumDepthPanel({
               href={buildChatHref({
                 reportId: reportId || undefined,
                 intent: tool.chatIntent || undefined,
-                question: `请围绕「${tool.shortTitle}」继续深问，告诉我如果要进入深测，现在最该先确认的结构、阶段和风险点是什么？`,
+                mode: 'opening',
+                window: `深测：${tool.shortTitle}`,
                 source: 'tool_premium_depth_panel',
                 ctaStrategyKey,
                 sourceFamily,
               })}
               className="action-secondary inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--signal)] px-4 text-sm font-semibold text-[color:var(--ink-1)] transition hover:bg-[color:var(--signal-strong)] hover:text-white"
             >
-              {reportId ? '继续追问' : '无报告先聊（依据弱）'}
+              {reportId ? '顾问开场' : '先开场（建议先排盘）'}
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link

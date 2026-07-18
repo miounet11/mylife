@@ -129,11 +129,11 @@ export default async function ToolDetailPage({
   const analyzeSource = entrySource ? `tool_detail:${entrySource}` : 'tool_detail';
   const analyzeEntryHref = `/analyze?intent=${encodeURIComponent(tool.chatIntent || tool.slug)}&toolSlug=${encodeURIComponent(tool.slug)}&source=${encodeURIComponent(analyzeSource)}`;
   const returningFromAnalyze = resolvedSearchParams.ready === '1' && !!report;
-  const toolChatQuestion = `请围绕“${tool.shortTitle}”继续拆解：如果把这个问题落到我自己身上，现在更该推进、观察还是收手，先看哪一层，下一步最值得先做什么？`;
   const toolRunnerChatHref = buildChatHref({
     reportId: report?.id,
     intent: tool.chatIntent || tool.slug,
-    question: toolChatQuestion,
+    mode: 'opening',
+    window: `工具：${tool.shortTitle}`,
     source: 'tool_detail_runner_tip_chat',
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,
