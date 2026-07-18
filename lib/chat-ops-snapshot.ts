@@ -57,14 +57,32 @@ export type ChatOpsSnapshot = {
   topStarterSources: Array<{ source: string; count: number }>;
 };
 
+/**
+ * created_at is stored as `YYYY-MM-DD HH:MM:SS` text (SQLite CURRENT_TIMESTAMP style).
+ * Prefer lexical compare against the same format for reliability; fall back to datetime().
+ * Also accept ISO-8601 and millisecond unix strings if present in older rows.
+ */
+function sinceClause(): string {
+  return `(
+    created_at >= ?
+    OR datetime(created_at) >= datetime(?)
+    OR (
+      typeof(created_at) = 'text'
+      AND length(created_at) >= 12
+      AND created_at GLOB '[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]*'
+      AND CAST(substr(created_at, 1, 13) AS INTEGER) >= CAST(strftime('%s', ?) AS INTEGER) * 1000
+    )
+  )`;
+}
+
 function countEvent(name: string, sinceSql: string): number {
   try {
     const row = db
       .prepare(
         `SELECT COUNT(*) AS c FROM analytics_events
-         WHERE event_name = ? AND datetime(created_at) >= datetime(?)`,
+         WHERE event_name = ? AND ${sinceClause()}`,
       )
-      .get(name, sinceSql) as { c?: number } | undefined;
+      .get(name, sinceSql, sinceSql, sinceSql) as { c?: number } | undefined;
     return Number(row?.c || 0);
   } catch {
     return 0;
@@ -78,13 +96,19 @@ function countEngagedPageViews(sinceSql: string): number {
         `SELECT COUNT(*) AS c
          FROM analytics_events e
          WHERE e.event_name = 'chat_page_viewed'
-           AND datetime(e.created_at) >= datetime(?)
+           AND (
+             e.created_at >= ?
+             OR datetime(e.created_at) >= datetime(?)
+           )
            AND e.session_id IS NOT NULL
            AND TRIM(e.session_id) != ''
            AND EXISTS (
              SELECT 1 FROM analytics_events x
              WHERE x.session_id = e.session_id
-               AND datetime(x.created_at) >= datetime(?)
+               AND (
+                 x.created_at >= ?
+                 OR datetime(x.created_at) >= datetime(?)
+               )
                AND x.event_name IN (
                  'chat_opening_shown',
                  'chat_starter_clicked',
@@ -94,7 +118,7 @@ function countEngagedPageViews(sinceSql: string): number {
                )
            )`,
       )
-      .get(sinceSql, sinceSql) as { c?: number } | undefined;
+      .get(sinceSql, sinceSql, sinceSql, sinceSql) as { c?: number } | undefined;
     return Number(row?.c || 0);
   } catch {
     return 0;
@@ -114,12 +138,12 @@ function topMetaSource(eventName: string, sinceSql: string, limit = 8): Array<{ 
            COUNT(*) AS c
          FROM analytics_events
          WHERE event_name = ?
-           AND datetime(created_at) >= datetime(?)
+           AND (created_at >= ? OR datetime(created_at) >= datetime(?))
          GROUP BY 1
          ORDER BY c DESC
          LIMIT ?`,
       )
-      .all(eventName, sinceSql, limit) as Array<{ source: string; c: number }>;
+      .all(eventName, sinceSql, sinceSql, limit) as Array<{ source: string; c: number }>;
     return rows.map((r) => ({ source: `${r.source || 'unknown'}`.slice(0, 80), count: Number(r.c || 0) }));
   } catch {
     return [];
@@ -133,10 +157,10 @@ function feedbackBreakdown(sinceSql: string): Record<string, number> {
         `SELECT COALESCE(json_extract(meta, '$.rating'), 'unknown') AS r, COUNT(*) AS c
          FROM analytics_events
          WHERE event_name = 'chat_feedback'
-           AND datetime(created_at) >= datetime(?)
+           AND (created_at >= ? OR datetime(created_at) >= datetime(?))
          GROUP BY 1`,
       )
-      .all(sinceSql) as Array<{ r: string; c: number }>;
+      .all(sinceSql, sinceSql) as Array<{ r: string; c: number }>;
     const out: Record<string, number> = {};
     for (const row of rows) out[`${row.r}`] = Number(row.c || 0);
     return out;
@@ -157,9 +181,9 @@ function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
            AVG(CAST(json_extract(meta, '$.filled') AS REAL)) AS avgFilled
          FROM analytics_events
          WHERE event_name = 'chat_structure_scored'
-           AND datetime(created_at) >= datetime(?)`,
+           AND (created_at >= ? OR datetime(created_at) >= datetime(?))`,
       )
-      .get(sinceSql) as {
+      .get(sinceSql, sinceSql) as {
         scored?: number;
         rich?: number;
         thin?: number;

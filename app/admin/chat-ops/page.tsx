@@ -222,6 +222,7 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
       <p className="mt-6 text-[11px] leading-5 text-[#94a3b8]">
         目标：开场→starter 转化与「有用」占比上升；结构丰富率上升、thin 与 EFC 告警趋近 0。
         raw page_viewed 常含爬虫/外链预抓；看 engaged PV 与 opening_shown 更可靠。
+        注意：2026-07-15 后曾漏打 chat_page_viewed（messenger 改版），已恢复；此前 PV 勿与开场对比。
         数据来自 analytics_events。时段：24h / 72h / 7d。
       </p>
     </AppPage>
