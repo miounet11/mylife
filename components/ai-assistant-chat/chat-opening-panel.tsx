@@ -1,8 +1,12 @@
 'use client';
 
-import { RefreshCw, Sparkles } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { ArrowRight, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import type { TeacherOpeningView } from '@/lib/teacher-opening';
 import type { TeacherTopicChip } from '@/lib/teachers';
+
+/** How long to pulse-highlight the first starter after open (ms). */
+const FIRST_STARTER_PULSE_MS = 3000;
 
 /**
  * Empty-state consultant opening: first_mes bubble + topic chips + user starters.
@@ -25,7 +29,16 @@ export function ChatOpeningPanel({
   /** Hide the first_mes bubble when it already lives in MessageBubble timeline. */
   hideFirstMes?: boolean;
 }) {
-  const { teacher, firstMes, starters, chips, greetingIndex, greetingCount } = opening;
+  const { teacher, firstMes, starters, chips, greetingIndex, greetingCount, hasReportSlots } =
+    opening;
+
+  /** Pulse first starter for the first few seconds after mount / teacher change. */
+  const [pulseFirst, setPulseFirst] = useState(true);
+  useEffect(() => {
+    setPulseFirst(true);
+    const t = window.setTimeout(() => setPulseFirst(false), FIRST_STARTER_PULSE_MS);
+    return () => window.clearTimeout(t);
+  }, [teacher.id, firstMes, starters[0]]);
 
   const greetingSwap =
     greetingCount > 1 ? (
@@ -74,8 +87,8 @@ export function ChatOpeningPanel({
         </div>
       ) : null}
 
-      {/* Topic chips */}
-      {chips.length > 0 ? (
+      {/* Topic chips — secondary when no report (排盘 is primary) */}
+      {chips.length > 0 && hasReportSlots ? (
         <div className="rounded-[3px] border border-[#dddfe2] bg-white px-3 py-2.5">
           <div className="inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.1em] text-[#3b5998]">
             <Sparkles className="h-3 w-3" />
@@ -105,24 +118,52 @@ export function ChatOpeningPanel({
         </div>
       ) : null}
 
-      {/* User starters — one tap send */}
+      {/* User starters — one tap send; first button pulsed for 3s */}
       {starters.length > 0 ? (
         <div className="rounded-[3px] border border-[#dddfe2] bg-white px-3 py-2.5">
-          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#3b5998]">
-            一键开口（点了就发送）
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#3b5998]">
+              一键开口（点了就发送）
+            </div>
+            {pulseFirst ? (
+              <span className="inline-flex items-center gap-0.5 rounded-full bg-[#e7f3ff] px-2 py-0.5 text-[10px] font-semibold text-[#3b5998]">
+                <Zap className="h-3 w-3" />
+                推荐先点这条
+              </span>
+            ) : null}
           </div>
           <div className="mt-2 grid w-full grid-cols-1 gap-1.5">
-            {starters.map((text) => (
-              <button
-                key={text}
-                type="button"
-                disabled={disabled}
-                onClick={() => onStarter(text, { source: 'opening_starter' })}
-                className="min-h-[44px] w-full touch-manipulation rounded-[8px] border border-[#dddfe2] bg-[#f7f8fa] px-3 py-2.5 text-left text-[13px] leading-5 text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50"
-              >
-                {text}
-              </button>
-            ))}
+            {starters.map((text, index) => {
+              const isFirst = index === 0;
+              const emphasize = isFirst && pulseFirst;
+              return (
+                <button
+                  key={text}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() =>
+                    onStarter(text, {
+                      source: isFirst ? 'opening_starter_primary' : 'opening_starter',
+                    })
+                  }
+                  className={
+                    emphasize
+                      ? 'relative min-h-[48px] w-full touch-manipulation rounded-[10px] border-2 border-[#3b5998] bg-[#3b5998] px-3.5 py-3 text-left text-[14px] font-semibold leading-5 text-white shadow-[0_0_0_3px_rgba(59,89,152,0.22)] transition animate-pulse active:opacity-90 disabled:opacity-50'
+                      : isFirst
+                        ? 'min-h-[48px] w-full touch-manipulation rounded-[10px] border border-[#3b5998] bg-[#e7f3ff] px-3.5 py-3 text-left text-[14px] font-semibold leading-5 text-[#1d2129] transition hover:bg-[#dce9fb] active:opacity-70 disabled:opacity-50'
+                        : 'min-h-[44px] w-full touch-manipulation rounded-[8px] border border-[#dddfe2] bg-[#f7f8fa] px-3 py-2.5 text-left text-[13px] leading-5 text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50'
+                  }
+                >
+                  {isFirst ? (
+                    <span className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] opacity-90">
+                      {emphasize ? '现在点 · 发送' : '首选'}
+                      <ArrowRight className="h-3 w-3" />
+                    </span>
+                  ) : null}
+                  {text}
+                </button>
+              );
+            })}
           </div>
         </div>
       ) : null}

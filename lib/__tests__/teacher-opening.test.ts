@@ -60,11 +60,18 @@ describe('teacher-opening', () => {
     assert.notEqual(a.firstMes, b.firstMes);
   });
 
-  it('unbound opening avoids fake day master and points to analyze', () => {
+  it('unbound opening is short and avoids fake day master', () => {
     const view = buildTeacherOpening({ teacherId: 'wealth' });
     assert.equal(view.hasReportSlots, false);
-    assert.ok(view.firstMes.includes('不会编造') || view.firstMes.includes('未绑定') || view.firstMes.includes('没有绑定'));
+    assert.ok(
+      view.firstMes.includes('不会编造') ||
+        view.firstMes.includes('未绑定') ||
+        view.firstMes.includes('没有绑定') ||
+        view.firstMes.includes('还没绑定'),
+    );
     assert.ok(!view.firstMes.includes('日主—'));
-    assert.ok(view.starters.some((s) => /报告|排盘|通用/.test(s)));
+    assert.ok(view.firstMes.length < 200);
+    assert.ok(view.starters.length >= 1);
+    assert.ok(/排盘/.test(view.firstMes));
   });
 });

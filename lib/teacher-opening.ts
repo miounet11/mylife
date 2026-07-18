@@ -147,21 +147,15 @@ export function buildTeacherOpening(params: {
   const starters = hasReportSlots
     ? (teacher.starters || []).filter(Boolean).slice(0, 3)
     : [
-        '我还没有报告，先帮我用通用框架判断：现在最该先推进还是先稳住？',
-        '没有命盘时，我怎样自己设一个 7 天可验证的检查点？',
-        '排盘前我该先想清楚哪三个现实条件？',
+        // Primary path after 去排盘 is analyze; starters are soft fallback only
+        '我先用通用框架：现在更该推进还是先稳住？',
+        '没有命盘时，怎么设一个 7 天可验证点？',
       ];
 
-  // Unbound: do not flash empty 日主— / 大运— ; push analyze + decision frame
+  // Unbound: short, no fake 日主— ; banner owns 去排盘 CTA
   const firstMes = hasReportSlots
     ? fillTeacherTemplate(template, slots)
-    : [
-        `我是${teacher.name}。`,
-        '当前还没有绑定你的报告，我不会编造日主、用神或大运。',
-        '可以先用「目标 → 时间 → 风险 → 验证点」通用框架聊一轮；要个性化节奏，请先去排盘，再从报告点「顾问开场」。',
-        '',
-        '你更想先：A 理清下一步，还是 B 先去生成报告？点下面一句也可以。',
-      ].join('\n');
+    : `我是${teacher.name}。还没绑定报告，不会编造日主/用神。\n个性化节奏请先去排盘；若只想先理清思路，可点下面一句用通用框架开聊。`;
 
   return {
     teacher,

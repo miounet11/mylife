@@ -1002,17 +1002,22 @@ export default function AIAssistantChat() {
 
           {showOpeningChrome && !context?.report ? (
             <div className="space-y-2">
-              <div className="rounded-[3px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2 text-[12px] leading-[1.5] text-[#7a5b00]">
-                尚未绑定报告，回答只给通用决策框架，不会编造日主/用神。
-                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
-                  <a href="/analyze" className="font-semibold text-[#3b5998] hover:underline">
-                    去排盘 →
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2.5">
+                <p className="min-w-0 text-[12px] leading-[1.4] text-[#7a5b00]">
+                  未绑定报告 · 不编造命理 · 要个性化请先排盘
+                </p>
+                <div className="flex shrink-0 items-center gap-2">
+                  <a
+                    href="/analyze"
+                    className="inline-flex min-h-[40px] touch-manipulation items-center rounded-[6px] bg-[#3b5998] px-3.5 text-[13px] font-semibold text-white hover:bg-[#2d4373]"
+                  >
+                    去排盘
                   </a>
-                  <a href="/teachers" className="font-semibold text-[#3b5998] hover:underline">
-                    选老师开场
-                  </a>
-                  <a href="/history" className="text-[#8a8d91] hover:underline">
-                    历史报告
+                  <a
+                    href="/history"
+                    className="text-[12px] text-[#8a8d91] underline-offset-2 hover:underline"
+                  >
+                    历史
                   </a>
                 </div>
               </div>
