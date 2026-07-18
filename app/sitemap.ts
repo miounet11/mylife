@@ -9,7 +9,7 @@ import { DIMENSIONS } from '@/lib/dimensions/config';
 import { LEARNING_TRACKS } from '@/lib/learning-tracks';
 import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
-import { absoluteUrl, buildProductLanguageAlternates } from '@/lib/seo';
+import { absoluteUrl, buildProductLanguageAlternates, GEO_CITY_SEEDS } from '@/lib/seo';
 import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 
 const siteUrl = 'https://www.life-kline.com';
@@ -98,6 +98,25 @@ function contentRoutesFromStore(): RouteDef[] {
   });
 }
 
+/** Always index GEO seed cities (zh + EN sisters) even when prod DB omits EN entities. */
+function geoCitySeedRoutes(): RouteDef[] {
+  const out: RouteDef[] = [];
+  for (const city of GEO_CITY_SEEDS) {
+    out.push({
+      path: `/insights/city/${city.slug}`,
+      priority: 0.82,
+      changeFrequency: 'monthly',
+    });
+    const enSlug = `world-yi-en-${city.slug.replace(/^world-yi-/, '')}`;
+    out.push({
+      path: `/insights/city/${enSlug}`,
+      priority: 0.8,
+      changeFrequency: 'monthly',
+    });
+  }
+  return out;
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date();
 
@@ -162,9 +181,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...toolDetailRoutes,
     ...learnRoutes,
     ...contentRoutesFromStore(),
+    ...geoCitySeedRoutes(),
   ]);
 
-  return all.map((route) => {
+  const entries: MetadataRoute.Sitemap = [];
+
+  for (const route of all) {
     const entry: MetadataRoute.Sitemap[number] = {
       url: absoluteUrl(route.path),
       lastModified: route.lastModified ? new Date(route.lastModified) : now,
@@ -200,6 +222,36 @@ export default function sitemap(): MetadataRoute.Sitemap {
       };
     }
 
-    return entry;
-  });
+    entries.push(entry);
+
+    // Explicit /en/* and /zh-hant/* locs for multi-language hubs (Google discovery of prefix routes)
+    if (route.multiLanguage) {
+      for (const prefix of ['/en', '/zh-hant'] as const) {
+        const locPath = route.path === '/' ? prefix : `${prefix}${route.path}`;
+        const locEntry: MetadataRoute.Sitemap[number] = {
+          url: absoluteUrl(locPath),
+          lastModified: route.lastModified ? new Date(route.lastModified) : now,
+          changeFrequency: route.changeFrequency,
+          // Slightly lower priority than zh-CN canonical
+          priority: Math.max(0.4, (route.priority || 0.7) - 0.08),
+        };
+        const locImages = imagesForSeoPath(route.path);
+        if (locImages.length) {
+          locEntry.images = locImages;
+        }
+        const langs = buildProductLanguageAlternates(route.path);
+        locEntry.alternates = {
+          languages: {
+            'zh-CN': langs['zh-CN'],
+            'zh-Hant': langs['zh-Hant'],
+            en: langs.en,
+            'x-default': langs['x-default'],
+          },
+        };
+        entries.push(locEntry);
+      }
+    }
+  }
+
+  return entries;
 }

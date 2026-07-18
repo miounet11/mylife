@@ -66,6 +66,8 @@ export type ContentIllustrationSignal = {
   tags?: string[] | null;
   meta?: Record<string, unknown> | null;
   sectionCount?: number;
+  /** Content / UI locale → pick EN / zh-Hant diagram variants when ready */
+  locale?: string | null;
 };
 
 export const MIN_CONTENT_ILLUSTRATIONS = 3;
@@ -428,32 +430,52 @@ function figureFromCatalog(
   };
 }
 
-/** Map ready page-illustration catalog into content figure scoring pool. */
-function pageIllustrationsAsCatalog(): CatalogEntry[] {
-  return PAGE_ILLUSTRATION_CATALOG.filter((e) => e.ready && e.filename).map(
-    (e: PageIllustrationEntry) => ({
-      id: e.id,
-      slug: e.id.toLowerCase().replace(/_/g, '-'),
-      title: e.title,
-      src: pageIllustPublicSrc(e),
-      alt: e.alt,
-      roles: [e.role as ContentFigureRole],
-      keywords: [
-        ...e.tags,
-        e.title,
-        e.caption,
-        ...(e.surfaces || []),
-        ...(e.reportCiteKeys || []),
-      ],
-      moduleLabel: e.tags[0] || '页面图解',
-      preferBoost: 12,
-      kindHint: 'generated' as ContentFigureKind,
-    }),
-  );
+/** Normalize product/content locale → illustration language bucket. */
+function illustLocaleBucket(locale?: string | null): 'zh-CN' | 'zh-Hant' | 'en' {
+  const v = `${locale || 'zh-CN'}`.toLowerCase();
+  if (v.startsWith('en')) return 'en';
+  if (v.includes('hant') || v === 'zh-tw' || v === 'zh-hk' || v === 'zh-mo') return 'zh-Hant';
+  return 'zh-CN';
 }
 
-function allScoredCatalogs(): CatalogEntry[] {
-  return [...pageIllustrationsAsCatalog(), ...CONTENT_ILLUSTRATION_CATALOG];
+/** Map ready page-illustration catalog into content figure scoring pool. */
+function pageIllustrationsAsCatalog(preferLocale?: string | null): CatalogEntry[] {
+  const want = illustLocaleBucket(preferLocale);
+  return PAGE_ILLUSTRATION_CATALOG.filter((e) => e.ready && e.filename)
+    .filter((e: PageIllustrationEntry) => {
+      const loc = e.locale || 'zh-CN';
+      // Keep zh-CN bases + matching locale variants; drop other-language sisters
+      // so English pages do not surface simplified-Chinese-only GEO/hub diagrams by accident.
+      if (loc === 'zh-CN' || loc === want) return true;
+      return false;
+    })
+    .map((e: PageIllustrationEntry) => {
+      const loc = e.locale || 'zh-CN';
+      const localeBoost = loc === want ? 8 : 0;
+      return {
+        id: e.id,
+        slug: e.id.toLowerCase().replace(/_/g, '-'),
+        title: e.title,
+        src: pageIllustPublicSrc(e),
+        // SEO alt: keep catalog alt (already multi-keyword); minor city/GEO boost below
+        alt: e.alt,
+        roles: [e.role as ContentFigureRole],
+        keywords: [
+          ...e.tags,
+          e.title,
+          e.caption,
+          ...(e.surfaces || []),
+          ...(e.reportCiteKeys || []),
+        ],
+        moduleLabel: e.tags[0] || '页面图解',
+        preferBoost: 12 + localeBoost,
+        kindHint: 'generated' as ContentFigureKind,
+      };
+    });
+}
+
+function allScoredCatalogs(preferLocale?: string | null): CatalogEntry[] {
+  return [...pageIllustrationsAsCatalog(preferLocale), ...CONTENT_ILLUSTRATION_CATALOG];
 }
 
 /** Map city names / slugs → page-illustration GEO ids (zh-CN base). */
@@ -472,6 +494,44 @@ const GEO_CITY_MATCHERS: Array<{ id: string; needles: string[] }> = [
   { id: 'PI-GEO-TORONTO', needles: ['toronto', '多伦多', '多倫多'] },
 ];
 
+/** Prefer locale variant id (…-EN / …-HANT) then fall back to zh-CN base. */
+function geoCatalogIdForLocale(baseId: string, locale?: string | null): string[] {
+  const bucket = illustLocaleBucket(locale);
+  if (bucket === 'en') return [`${baseId}-EN`, baseId];
+  if (bucket === 'zh-Hant') return [`${baseId}-HANT`, baseId];
+  return [baseId];
+}
+
+/** SEO-oriented alt templates for GEO city figures (Google Image seed keywords). */
+function geoSeoAlt(catalog: CatalogEntry, locale?: string | null): string {
+  const bucket = illustLocaleBucket(locale);
+  if (catalog.alt && catalog.alt.length > 24) return catalog.alt;
+  if (bucket === 'en') {
+    return `${catalog.title} — Life K-Line city environment diagram for overseas Chinese: cost, role density, life rhythm`;
+  }
+  if (bucket === 'zh-Hant') {
+    return `${catalog.title}｜人生K線城市環境層示意：成本結構、角色密度、生活節奏`;
+  }
+  return `${catalog.title}｜人生K线城市环境层观察：成本结构、角色密度、生活节奏、迁移择城`;
+}
+
+function catalogEntryById(id: string): CatalogEntry | undefined {
+  const e = PAGE_ILLUSTRATION_CATALOG.find((row) => row.ready && row.id === id && row.filename);
+  if (!e) return undefined;
+  return {
+    id: e.id,
+    slug: e.id.toLowerCase().replace(/_/g, '-'),
+    title: e.title,
+    src: pageIllustPublicSrc(e),
+    alt: e.alt,
+    roles: [e.role as ContentFigureRole],
+    keywords: e.tags,
+    moduleLabel: e.tags[0] || 'GEO',
+    preferBoost: 20,
+    kindHint: 'generated' as ContentFigureKind,
+  };
+}
+
 function pickGeoCityFigure(
   entry: ContentIllustrationSignal,
   afterSectionIndex: number,
@@ -482,9 +542,15 @@ function pickGeoCityFigure(
   if (!hay) return null;
   for (const m of GEO_CITY_MATCHERS) {
     if (!m.needles.some((n) => hay.includes(normalizeText(n)))) continue;
-    const catalog = pageIllustrationsAsCatalog().find((item) => item.id === m.id);
+    let catalog: CatalogEntry | undefined;
+    for (const id of geoCatalogIdForLocale(m.id, entry.locale)) {
+      catalog = catalogEntryById(id);
+      if (catalog?.src) break;
+    }
     if (!catalog || !catalog.src) continue;
-    return figureFromCatalog(catalog, 'cover', afterSectionIndex, catalog.title);
+    const fig = figureFromCatalog(catalog, 'cover', afterSectionIndex, catalog.title);
+    fig.alt = geoSeoAlt(catalog, entry.locale);
+    return fig;
   }
   return null;
 }
@@ -532,7 +598,7 @@ export function resolveContentIllustrations(
   const anchors = sectionAnchors(sectionCount, target);
   const rolePlan: ContentFigureRole[] = ['cover', 'structure', 'timing', 'action', 'risk', 'summary'].slice(0, target) as ContentFigureRole[];
 
-  const pooled = allScoredCatalogs();
+  const pooled = allScoredCatalogs(entry.locale);
 
   // Prefer bound library / page-illust ids
   const bound = bindingIds(entry.meta);
@@ -547,7 +613,7 @@ export function resolveContentIllustrations(
     usedSrc.add(fig.src);
   }
 
-  // GEO city: inject matching city diagram first (seed diaspora/domestic hubs)
+  // GEO city: inject matching city diagram first (locale-aware EN/Hant/zh-CN)
   const cityFig = pickGeoCityFigure(entry, anchors[0] ?? -1);
   if (cityFig && !usedIds.has(cityFig.id) && !usedSrc.has(cityFig.src || '')) {
     selected.unshift(cityFig);
@@ -559,7 +625,7 @@ export function resolveContentIllustrations(
     }
   }
 
-  // Keyword scored catalog (page-illustrations boosted via preferBoost)
+  // Keyword scored catalog (page-illustrations boosted via preferBoost + locale)
   const scored = pooled
     .map((item) => ({
       item,

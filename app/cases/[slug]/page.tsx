@@ -60,6 +60,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       category: (article as { category?: string }).category,
       tags: (article as { tags?: string[] }).tags,
       meta: (article as { meta?: Record<string, unknown> }).meta,
+      locale: geo.locale,
     }),
   );
   return articleSeo({

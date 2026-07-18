@@ -3,21 +3,19 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { buildPageMetadata } from '@/lib/seo';
 import MembershipClient from './membership-client';
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildPageMetadata({
   title: '限时免费会员｜0 元开通季度/年度 · 邮箱注册即可',
   description:
     '2026-12-31 前限时免费：注册登录后 0 元开通季度或年度会员，享受完整报告与回看权益；季度可免费升级年度。',
-  keywords: ['免费会员', '八字会员', '限时免费', '邮箱保存八字报告', '人生K线会员'],
-  alternates: { canonical: '/membership' },
-  openGraph: {
-    title: '限时免费会员｜0 元开通',
-    description: '登录邮箱即可 0 元领取会员权益，无需支付。活动截至 2026-12-31。',
-    url: '/membership',
-    type: 'website',
-  },
-};
+  path: '/membership',
+  keywords: ['免费会员', '八字会员', '限时免费', '邮箱保存八字报告', '人生K线会员', 'free membership'],
+  multiLanguage: true,
+});
 
 const membershipJsonLd = {
   '@context': 'https://schema.org',
@@ -49,7 +47,15 @@ const membershipJsonLd = {
   ],
 };
 
-export default function MembershipPage() {
+export default async function MembershipPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
+
   return (
     <AppPage header={{ ctaHref: '/login?next=%2Fmembership', ctaLabel: '登录领会员', compact: true }}>
       <script
@@ -63,7 +69,18 @@ export default function MembershipPage() {
           title="¥0 开通会员"
           description="登录邮箱后可 0 元开通季度或年度会员；季度可免费升级年度。开通后立即生效。"
         />
-        <PageIllustrationStrip surface="membership/hub" title="会员能做什么" compact limit={1} />
+        <PageIllustrationStrip
+          surface="membership/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '会员能做什么',
+            'zh-Hant': '會員能做什麼',
+            en: 'What membership unlocks',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
         <MembershipClient />
       </div>
     </AppPage>

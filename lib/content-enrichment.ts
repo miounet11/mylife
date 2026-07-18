@@ -231,8 +231,62 @@ export function buildDimensionKnowledgeArticles(): ContentArticle[] {
   });
 }
 
+/** English GEO sections for diaspora seed markets (Google EN image/page SEO). */
+function buildRichSectionsEn(input: {
+  title: string;
+  city: string;
+  region: string;
+  focus: string[];
+}): Array<[string, string]> {
+  const focusLine = input.focus.join(' · ');
+  return [
+    [
+      'One-line takeaway',
+      `${input.title} is not a luck label. Life K-Line frames city decisions as structure → timing → environment → action → risk. Focus angles: ${focusLine}.`,
+    ],
+    [
+      'Core questions',
+      `When you consider ${input.city} (${input.region}), ask: 1) What is the main structural tension now? 2) Is the next 90 days for expansion or consolidation? 3) Which single action can reality validate in 30 days?`,
+    ],
+    [
+      'Structure layer',
+      'Start from Day Master strength, useful god (用神) leanings, and Ten Gods roles. Prefer “build / express / coordinate / conserve” fit over vague good/bad labels.',
+    ],
+    [
+      'Timing layer',
+      'Decade luck sets the baseline; yearly luck sets the window. The same structure needs different moves in lift vs contract phases — write the time box so you can review later.',
+    ],
+    [
+      'Environment layer',
+      `Living in or moving to ${input.city} means folding housing cost, industry density, family duty, and cash flow into the environment layer. Chart structure is a tendency, not a geography guarantee.`,
+    ],
+    [
+      'Actions this week',
+      [
+        `List living + career costs in ${input.city} you can actually afford`,
+        'Run Living Environment and Fortune Rhythm dimensions for a structural check',
+        'If migrating, log decision nodes on the event calendar for later validation',
+      ]
+        .map((item, index) => `${index + 1}. ${item}`)
+        .join('\n'),
+    ],
+    [
+      'How Life K-Line validates',
+      'Pair the city lens with ten-dimension outputs and time-boxed predictions. Score hit / partial / miss on revisit — calibration beats marketing claims.',
+    ],
+    [
+      `FAQ: Can Bazi decide whether to go to ${input.city}?`,
+      'No single chart decides. Structure and rhythm are inputs alongside visa, family, industry, and cash flow.',
+    ],
+    [
+      'FAQ: What to prioritize in a move?',
+      'First whether the phase allows a re-layout, then whether the city environment matches how your useful-god style works, then small reversible tests.',
+    ],
+  ];
+}
+
 export function buildGeoInsightArticles(): ContentArticle[] {
-  return GEO_CITY_SEEDS.map((city) => ({
+  const zh = GEO_CITY_SEEDS.map((city) => ({
     slug: city.slug,
     type: 'insight' as const,
     title: city.title,
@@ -240,6 +294,7 @@ export function buildGeoInsightArticles(): ContentArticle[] {
     trackKey: 'migration',
     readMinutes: 7,
     insightType: 'city',
+    keywords: [city.city, city.cityEn, city.region, 'GEO', '城市观察', '海外华人', '迁移择城', ...city.focus],
     sections: buildRichSections({
       title: city.title,
       trackTitle: '迁移轨',
@@ -263,6 +318,39 @@ export function buildGeoInsightArticles(): ContentArticle[] {
       ],
     }),
   }));
+
+  // Sister EN entities: world-yi-city-X → world-yi-en-city-X (hreflang pairs)
+  const en = GEO_CITY_SEEDS.map((city) => {
+    const key = city.slug.replace(/^world-yi-/, '');
+    return {
+      slug: `world-yi-en-${key}`,
+      type: 'insight' as const,
+      title: city.titleEn,
+      summary: `${city.regionEn} · ${city.summaryEn}`,
+      trackKey: 'migration',
+      readMinutes: 7,
+      insightType: 'city',
+      keywords: [
+        city.cityEn,
+        city.city,
+        city.regionEn,
+        'GEO',
+        'city lens',
+        'overseas Chinese',
+        'Life K-Line',
+        'World Yi',
+        ...city.focusEn,
+      ],
+      sections: buildRichSectionsEn({
+        title: city.titleEn,
+        city: city.cityEn,
+        region: city.regionEn,
+        focus: city.focusEn,
+      }),
+    };
+  });
+
+  return [...zh, ...en];
 }
 
 export function buildSeoPillarArticles(): ContentArticle[] {

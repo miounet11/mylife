@@ -475,101 +475,177 @@ export function buildServiceJsonLd(input: {
   };
 }
 
-/** GEO city content seeds for diaspora + domestic hubs */
+/** GEO city content seeds for diaspora + domestic hubs (zh-CN + EN fields). */
 export const GEO_CITY_SEEDS: Array<{
   slug: string;
   title: string;
+  titleEn: string;
   city: string;
+  cityEn: string;
   region: string;
+  regionEn: string;
   summary: string;
+  summaryEn: string;
   focus: string[];
+  focusEn: string[];
 }> = [
   {
     slug: 'world-yi-city-shanghai',
     title: '城市观察：上海',
+    titleEn: 'City lens: Shanghai',
     city: '上海',
+    cityEn: 'Shanghai',
     region: '中国华东',
+    regionEn: 'East China',
     summary: '高节奏商业城市下的角色压缩、居住成本与事业窗口判断。',
+    summaryEn:
+      'Role compression, housing cost, and career windows in a high-tempo commercial city.',
     focus: ['事业', '居住', '现金流'],
+    focusEn: ['Career', 'Housing', 'Cash flow'],
   },
   {
     slug: 'world-yi-city-shenzhen',
     title: '城市观察：深圳',
+    titleEn: 'City lens: Shenzhen',
     city: '深圳',
+    cityEn: 'Shenzhen',
     region: '中国华南',
+    regionEn: 'South China',
     summary: '科技与创业密度高，适合评估扩张窗口与风险敞口。',
+    summaryEn: 'High tech and startup density — map expansion windows against risk exposure.',
     focus: ['创业', '行业', '节奏'],
+    focusEn: ['Startups', 'Industry', 'Rhythm'],
   },
   {
     slug: 'world-yi-city-beijing',
     title: '城市观察：北京',
+    titleEn: 'City lens: Beijing',
     city: '北京',
+    cityEn: 'Beijing',
     region: '中国华北',
+    regionEn: 'North China',
     summary: '政策与资源节点密集，结构判断需结合行业周期。',
+    summaryEn: 'Dense policy and resource nodes — pair structure reads with industry cycles.',
     focus: ['事业', '政策环境', '关系网络'],
+    focusEn: ['Career', 'Policy context', 'Networks'],
   },
   {
     slug: 'world-yi-city-new-york',
     title: '城市观察：纽约',
+    titleEn: 'City lens: New York',
     city: '纽约',
+    cityEn: 'New York',
     region: '北美',
+    regionEn: 'North America',
     summary: '海外华人在金融与创意产业中的角色匹配与成本结构。',
+    summaryEn:
+      'Role fit and cost structure for overseas Chinese in finance and creative industries.',
     focus: ['迁移', '职业', '现金流'],
+    focusEn: ['Migration', 'Career', 'Cash flow'],
   },
   {
     slug: 'world-yi-city-sydney',
     title: '城市观察：悉尼',
+    titleEn: 'City lens: Sydney',
     city: '悉尼',
+    cityEn: 'Sydney',
     region: '澳洲',
+    regionEn: 'Australia',
     summary: '移民节奏、家庭排序与本地就业窗口的结构观察。',
+    summaryEn: 'Immigration pace, family priority, and local employment windows.',
     focus: ['迁移', '家庭', '就业'],
+    focusEn: ['Migration', 'Family', 'Employment'],
   },
   {
     slug: 'world-yi-city-london',
     title: '城市观察：伦敦',
+    titleEn: 'City lens: London',
     city: '伦敦',
+    cityEn: 'London',
     region: '欧洲',
+    regionEn: 'Europe',
     summary: '跨文化职业路径与居住选择对命理结构的压力测试。',
+    summaryEn: 'Cross-cultural career paths and housing choices as a pressure test on structure.',
     focus: ['迁移', '事业', '居住'],
+    focusEn: ['Migration', 'Career', 'Housing'],
   },
   {
     slug: 'world-yi-city-tokyo',
     title: '城市观察：东京',
+    titleEn: 'City lens: Tokyo',
     city: '东京',
+    cityEn: 'Tokyo',
     region: '东亚',
+    regionEn: 'East Asia',
     summary: '高密度城市环境下的节奏管理与职业纵深。',
+    summaryEn: 'Rhythm management and career depth in a high-density city environment.',
     focus: ['节奏', '事业', '生活秩序'],
+    focusEn: ['Rhythm', 'Career', 'Daily order'],
   },
   {
     slug: 'world-yi-city-los-angeles',
     title: '城市观察：洛杉矶',
+    titleEn: 'City lens: Los Angeles',
     city: '洛杉矶',
+    cityEn: 'Los Angeles',
     region: '北美西岸',
+    regionEn: 'US West Coast',
     summary: '分散城市结构下的通勤、家庭与创业窗口。',
+    summaryEn: 'Commute, family, and startup windows in a spread-out city structure.',
     focus: ['迁移', '家庭', '创业'],
+    focusEn: ['Migration', 'Family', 'Startups'],
   },
   {
     slug: 'world-yi-city-hong-kong',
     title: '城市观察：香港',
+    titleEn: 'City lens: Hong Kong',
     city: '香港',
+    cityEn: 'Hong Kong',
     region: '大湾区/港澳',
+    regionEn: 'GBA / Hong Kong',
     summary: '跨境职业与居住成本结构下的节奏与角色匹配。',
+    summaryEn: 'Cross-border careers and housing costs — rhythm and role fit under pressure.',
     focus: ['迁移', '职业', '居住'],
+    focusEn: ['Migration', 'Career', 'Housing'],
+  },
+  {
+    slug: 'world-yi-city-singapore',
+    title: '城市观察：新加坡',
+    titleEn: 'City lens: Singapore',
+    city: '新加坡',
+    cityEn: 'Singapore',
+    region: '东南亚',
+    regionEn: 'Southeast Asia',
+    summary: '高密度金融与区域枢纽下的角色压缩、合规成本与节奏管理。',
+    summaryEn:
+      'Role compression, compliance cost, and rhythm management in a dense finance hub.',
+    focus: ['迁移', '职业', '节奏'],
+    focusEn: ['Migration', 'Career', 'Rhythm'],
   },
   {
     slug: 'world-yi-city-vancouver',
     title: '城市观察：温哥华',
+    titleEn: 'City lens: Vancouver',
     city: '温哥华',
+    cityEn: 'Vancouver',
     region: '加拿大西岸',
+    regionEn: 'Canada West Coast',
     summary: '移民家庭排序、就业节奏与居住选择的环境层观察。',
+    summaryEn: 'Immigrant family priority, employment pace, and housing as environment layer.',
     focus: ['迁移', '家庭', '就业'],
+    focusEn: ['Migration', 'Family', 'Employment'],
   },
   {
     slug: 'world-yi-city-toronto',
     title: '城市观察：多伦多',
+    titleEn: 'City lens: Toronto',
     city: '多伦多',
+    cityEn: 'Toronto',
     region: '加拿大东岸',
+    regionEn: 'Canada East',
     summary: '多元社区中的职业路径与家庭成本结构。',
+    summaryEn: 'Career paths and family cost structure in a multicultural metro.',
     focus: ['迁移', '职业', '社区'],
+    focusEn: ['Migration', 'Career', 'Community'],
   },
 ];

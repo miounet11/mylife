@@ -10,13 +10,22 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import RelatedContent from '@/components/related-content';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
-import { toIllustLocale } from '@/lib/page-illustrations/locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import {
+  articleGeoFields,
   articleSummary,
   articleTrackKey,
   normalizeSections,
 } from '@/lib/content-article-view';
 import { resolveContentCrosslinks } from '@/lib/content-crosslinks';
+import {
+  illustrationSeoImages,
+  resolveContentIllustrations,
+} from '@/lib/content-illustrations';
+import {
+  buildContentEntityLanguageAlternates,
+  resolveContentSisterLink,
+} from '@/lib/content-locale-pairs';
 import { getEntityInsightByTypeAndSlug } from '@/lib/content-store';
 import { CONTENT_BY_SLUG } from '@/lib/content-seeds';
 import {
@@ -29,6 +38,15 @@ import {
 
 interface PageProps {
   params: Promise<{ type: string; slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
+}
+
+function insightSisterExists(slug: string): boolean {
+  return Boolean(
+    getEntityInsightByTypeAndSlug('city', slug)
+    || getEntityInsightByTypeAndSlug('topic', slug)
+    || CONTENT_BY_SLUG.get(slug),
+  );
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
@@ -37,22 +55,60 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!article) return { title: '系统洞察' };
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
   const dates = articleDatesFrom(article);
+  const geo = articleGeoFields(article);
+  const isEnEntity =
+    `${geo.locale || ''}`.toLowerCase().startsWith('en')
+    || /-en$/i.test(slug)
+    || slug.startsWith('world-yi-en-');
+  const languages = buildContentEntityLanguageAlternates({
+    kind: 'insight',
+    slug,
+    insightType: type,
+    contentLocale: isEnEntity ? 'en' : geo.locale || 'zh-Hans',
+    sisterExists: insightSisterExists,
+  });
+  const seoImages = illustrationSeoImages(
+    resolveContentIllustrations({
+      contentType: 'insight',
+      slug,
+      title: article.title,
+      excerpt: summary,
+      category: type,
+      tags: (article as { keywords?: string[] }).keywords,
+      meta: (article as { meta?: Record<string, unknown> }).meta,
+      locale: isEnEntity ? 'en' : geo.locale || 'zh-CN',
+    }),
+  );
   return articleSeo({
     title: article.title,
     summary,
     path: `/insights/${type}/${slug}`,
     trackKey: articleTrackKey(article as never),
     type: 'insight',
-    keywords: ['GEO', '城市观察', '海外华人', type, ...(article as { keywords?: string[] }).keywords || []],
+    keywords: [
+      'GEO',
+      '城市观察',
+      'city lens',
+      '海外华人',
+      'overseas Chinese',
+      type,
+      ...((article as { keywords?: string[] }).keywords || []),
+    ],
     publishedTime: dates.publishedTime,
     modifiedTime: dates.modifiedTime,
+    locale: isEnEntity ? 'en' : geo.locale,
+    canonicalPath: `/insights/${type}/${slug}`,
+    languages,
+    images: seoImages.map((item) => item.url),
+    entityKeywords: geo.geo?.entityKeywords,
+    answerSummary: geo.answerSummary,
   });
 }
 
 export default async function InsightArticlePage({
   params,
   searchParams,
-}: PageProps & { searchParams?: Promise<{ lang?: string }> }) {
+}: PageProps) {
   const { type, slug } = await params;
   const sp = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(sp.lang);
@@ -60,12 +116,18 @@ export default async function InsightArticlePage({
   const article = getEntityInsightByTypeAndSlug(type, slug) || CONTENT_BY_SLUG.get(slug);
   if (!article) notFound();
 
+  const isEnEntity =
+    /-en$/i.test(slug)
+    || slug.startsWith('world-yi-en-')
+    || `${(article as { locale?: string }).locale || ''}`.toLowerCase().startsWith('en');
+
   // Support seed fallback shape
   const sections = normalizeSections(
     (article as { sections?: unknown }).sections as never,
   );
-  // Match GEO city strip: world-yi-city-shanghai | shanghai → geo/shanghai
+  // Match GEO city strip: world-yi-city-shanghai | world-yi-en-city-shanghai | shanghai
   const cityKey = slug
+    .replace(/^world-yi-en-city-/, '')
     .replace(/^world-yi-city-/, '')
     .replace(/^city-/, '');
   const geoSurface =
@@ -76,6 +138,14 @@ export default async function InsightArticlePage({
       : `insights/city/${slug}`;
   const trackKey = articleTrackKey(article as never);
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
+  const geo = articleGeoFields(article);
+  const sister = resolveContentSisterLink({
+    kind: 'insight',
+    slug,
+    insightType: type,
+    contentLocale: isEnEntity ? 'en' : geo.locale,
+    sisterExists: insightSisterExists,
+  });
   const crosslinks = resolveContentCrosslinks({
     slug,
     title: article.title,
@@ -84,18 +154,35 @@ export default async function InsightArticlePage({
     source: `insight_${type}`,
   });
   const faqPairs = sections
-    .filter((section) => section.heading.startsWith('常见问题'))
+    .filter((section) => /常见问题|FAQ/i.test(section.heading))
     .map((section) => ({
-      question: section.heading.replace(/^常见问题：?/, ''),
+      question: section.heading.replace(/^(常见问题|FAQ)：?/i, ''),
       answer: section.body,
     }));
 
+  const stripTitle = illustStripTitle(
+    isEnEntity ? 'en' : uiLocale,
+    {
+      'zh-CN': type === 'city' ? '城市环境层' : '环境观察',
+      'zh-Hant': type === 'city' ? '城市環境層' : '環境觀察',
+      en: type === 'city' ? 'City environment layer' : 'Environment lens',
+    },
+  );
+
+  const eyebrow = isEnEntity
+    ? type === 'city'
+      ? 'City lens · GEO'
+      : 'Insight'
+    : type === 'city'
+      ? '城市观察 · GEO'
+      : '系统洞察';
+
   return (
-    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度研判' }}>
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: isEnEntity ? 'Ten dimensions' : '十维度研判' }}>
       <JsonLd
         data={buildBreadcrumbJsonLd([
-          { name: '首页', path: '/' },
-          { name: '洞察', path: '/insights' },
+          { name: isEnEntity ? 'Home' : '首页', path: '/' },
+          { name: isEnEntity ? 'Insights' : '洞察', path: '/insights' },
           { name: article.title, path: `/insights/${type}/${slug}` },
         ])}
       />
@@ -104,9 +191,10 @@ export default async function InsightArticlePage({
           title: article.title,
           description: summary || article.title,
           path: `/insights/${type}/${slug}`,
-          keywords: ['GEO', type, trackKey, '海外华人', '人生K线'],
+          keywords: ['GEO', type, trackKey, isEnEntity ? 'overseas Chinese' : '海外华人', 'Life K-Line'],
           datePublished: articleDatesFrom(article).publishedTime,
           dateModified: articleDatesFrom(article).modifiedTime,
+          inLanguage: isEnEntity ? 'en' : 'zh-CN',
         })}
       />
       {faqPairs.length ? <JsonLd data={buildFaqJsonLd(faqPairs)} /> : null}
@@ -120,20 +208,26 @@ export default async function InsightArticlePage({
           type,
           title: article.title,
           trackKey,
+          locale: isEnEntity ? 'en' : 'zh-CN',
         }}
       />
       <FocusHero
-        eyebrow={type === 'city' ? '城市观察 · GEO' : '系统洞察'}
+        eyebrow={eyebrow}
         title={article.title}
         description={summary}
         actions={
           <>
             <Link href="/dimensions/living-environment" className="fb-btn fb-btn-primary h-8 px-3 text-[12px] hover:no-underline">
-              居家环境研判
+              {isEnEntity ? 'Living environment' : '居家环境研判'}
             </Link>
             <Link href="/dimensions/fortune-rhythm" className="fb-btn h-8 px-3 text-[12px] hover:no-underline">
-              运势节奏
+              {isEnEntity ? 'Fortune rhythm' : '运势节奏'}
             </Link>
+            {sister ? (
+              <Link href={sister.href} className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                {sister.label}
+              </Link>
+            ) : null}
           </>
         }
       />
@@ -141,10 +235,10 @@ export default async function InsightArticlePage({
       <div className="mx-auto max-w-3xl px-4">
         <PageIllustrationStrip
           surface={geoSurface}
-          title={type === 'city' ? '城市环境层' : '环境观察'}
+          title={stripTitle}
           compact
           limit={1}
-          locale={illustLocale}
+          locale={isEnEntity ? 'en' : illustLocale}
           priority
         />
       </div>
@@ -162,15 +256,19 @@ export default async function InsightArticlePage({
             {crosslinks.primaryLabel}
           </Link>
           <Link href="/dimensions" className="fb-btn h-9 px-4 text-sm hover:no-underline">
-            十维度中心
+            {isEnEntity ? 'Ten dimensions' : '十维度中心'}
           </Link>
         </div>
       </article>
       <div className="mt-4">
         <ContentActionRail
           crosslinks={crosslinks}
-          title="城市观察之后"
-          description="把 GEO 环境层判断接到居家环境、运势节奏与完整报告。"
+          title={isEnEntity ? 'After the city lens' : '城市观察之后'}
+          description={
+            isEnEntity
+              ? 'Connect GEO environment reads to living environment, fortune rhythm, and a full report.'
+              : '把 GEO 环境层判断接到居家环境、运势节奏与完整报告。'
+          }
         />
       </div>
       <RelatedContent slug={slug} trackKey={trackKey} type="insight" />
