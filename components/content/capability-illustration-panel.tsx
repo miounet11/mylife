@@ -83,8 +83,13 @@ export function CapabilityIllustrationPanel({
         })
       : null;
 
-  // --- Chat layout: large full-width 16:9 figure, then compact chips ---
+  // --- Chat layout: diagram centered; caption floats on the right (no chips block under chat) ---
   if (isChat) {
+    const floatText =
+      fig?.caption
+      || (copy ? [...copy.solves].slice(0, 3).join(' · ') : '')
+      || heading;
+
     return (
       <section className={`bg-[color:var(--paper)] ${className}`}>
         {jsonLd ? (
@@ -96,57 +101,45 @@ export function CapabilityIllustrationPanel({
 
         {fig?.src ? (
           <figure
-            className="relative w-full bg-[color:var(--bg-sunken)]"
+            className="relative mx-auto w-full max-w-xl px-2 py-2 sm:max-w-2xl sm:px-3 sm:py-2.5"
             itemScope
             itemType="https://schema.org/ImageObject"
           >
-            {/* Full-width 16:9 — show the whole diagram (object-contain, not a cropped strip) */}
-            <div className="relative aspect-[16/9] w-full">
+            <div className="relative mx-auto aspect-[16/9] w-full overflow-hidden rounded-[8px] bg-[color:var(--bg-sunken)]">
               <Image
                 src={fig.src}
                 alt={fig.alt || fig.title}
                 fill
-                sizes="(min-width: 768px) 720px, 100vw"
+                sizes="(min-width: 768px) 640px, 100vw"
                 className="object-contain object-center"
                 loading={priority ? 'eager' : 'lazy'}
                 priority={priority}
                 itemProp="contentUrl"
               />
+              {/* Right floating caption — does not add vertical stack under dialogue */}
+              {floatText ? (
+                <div
+                  className="pointer-events-none absolute right-2 top-1/2 z-[1] max-w-[min(42%,11.5rem)] -translate-y-1/2 sm:right-3 sm:max-w-[12.5rem]"
+                  aria-hidden={false}
+                >
+                  <div className="rounded-[8px] border border-white/70 bg-white/92 px-2.5 py-2 text-[11px] font-medium leading-[1.45] text-[color:var(--ink-2)] shadow-[0_4px_16px_rgba(15,23,42,0.12)] backdrop-blur-md sm:text-[12px]">
+                    {floatText}
+                  </div>
+                </div>
+              ) : null}
             </div>
             <meta itemProp="name" content={fig.title} />
+            {/* Screen-reader caption only — visual is the float chip */}
             {fig.caption ? (
-              <figcaption className="border-t border-[color:var(--hairline)] px-3 py-1 text-[11px] leading-[1.4] text-[color:var(--ink-5)]">
-                {fig.caption}
-              </figcaption>
+              <figcaption className="sr-only">{fig.caption}</figcaption>
             ) : null}
           </figure>
-        ) : null}
-
-        {showCopy && copy ? (
-          <div className="grid grid-cols-1 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)] sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-            {(
-              [
-                ['能解决', copy.solves],
-                ['典型问题', copy.problems],
-                ['你会得到', copy.outputs],
-              ] as const
-            ).map(([label, items]) => (
-              <div key={label} className="px-3 py-2">
-                <div className="text-[10px] font-semibold tracking-[0.04em] text-[color:var(--ink-5)]">
-                  {label}
-                </div>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {items.map((item) => (
-                    <span
-                      key={item}
-                      className="inline-flex max-w-full rounded-[4px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-1.5 py-0.5 text-[11px] leading-[1.35] text-[color:var(--ink-3)]"
-                    >
-                      {item}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
+        ) : showCopy && copy ? (
+          /* No image: keep a minimal right-aligned float of key lines */
+          <div className="flex justify-end px-3 py-2">
+            <div className="max-w-[14rem] rounded-[8px] border border-[color:var(--hairline)] bg-white/95 px-2.5 py-2 text-[11px] leading-[1.45] text-[color:var(--ink-3)] shadow-sm">
+              {copy.solves.join(' · ')}
+            </div>
           </div>
         ) : null}
       </section>

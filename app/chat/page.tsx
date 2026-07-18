@@ -84,8 +84,8 @@ export default async function ChatPage({
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-[10px] border border-[color:var(--hairline)] bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04)]">
           {showCapability ? (
             <ChatCapabilityShell
-              title={`${teacher.name}能做什么`}
-              subtitle={teacher.boundary}
+              title={`${teacher.name} · 能力图解`}
+              subtitle={teacher.tagline}
               defaultOpen
             >
               <CapabilityIllustrationPanel
@@ -93,7 +93,8 @@ export default async function ChatPage({
                 teacherId={teacher.id}
                 variant="chat"
                 priority
-                showCopy
+                // chips stack removed — caption floats on the right of the diagram
+                showCopy={false}
                 hideHeader
                 className="!rounded-none !border-0"
               />
