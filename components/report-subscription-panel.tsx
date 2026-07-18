@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import { ArrowRight, BellRing, Mail, RefreshCcw, Sparkles, Stars } from 'lucide-react';
 import EmailTrustPanel from '@/components/email-trust-panel';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 import {
   MAX_EMAIL_FOCUS_ITEMS,
   REPORT_SUBSCRIPTION_TAGS,
@@ -301,9 +301,10 @@ export default function ReportSubscriptionPanel({
           <div className="mt-3 grid gap-2">
             <Link
               href={canManage
-                ? buildChatHref({
+                ? buildReportContinueChatHref({
                     reportId,
-                    question: '请围绕这份报告继续追问，优先告诉我接下来一个月最该推进的动作，以及最需要提前防的风险点。',
+                    teacher: 'overview',
+                    window: '订阅回访 · 本月动作',
                     source: 'report_subscription_panel',
                     ctaStrategyKey,
                     sourceFamily,
@@ -315,16 +316,17 @@ export default function ReportSubscriptionPanel({
                   page: `/result/${reportId}`,
                   meta: {
                     reportId,
-                    target: canManage ? 'chat' : 'analyze',
+                    target: canManage ? 'chat_opening' : 'analyze',
                     source: 'report_subscription_panel',
                     ctaStrategyKey: ctaStrategyKey || null,
                     sourceFamily: sourceFamily || null,
+                    mode: 'opening',
                   },
                 });
               }}
               className="inline-flex h-9 items-center justify-between rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-xs font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]"
             >
-              {canManage ? '继续深问这份报告' : '生成我的专属报告'}
+              {canManage ? '带报告顾问开场' : '生成我的专属报告'}
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
 

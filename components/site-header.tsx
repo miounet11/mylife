@@ -21,7 +21,7 @@ const primaryNavItems: NavItem[] = [
   { href: '/teachers', labelKey: 'navTeachers' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
   { href: '/predictions', labelKey: 'navPredictions' },
-  { href: '/chat', labelKey: 'navChat' },
+  { href: '/chat?mode=opening&teacher=overview&source=site_header', labelKey: 'navChat' },
   { href: '/profile', labelKey: 'navProfile' },
 ];
 
@@ -60,7 +60,12 @@ export default function SiteHeader({
   const resolvedCta = ctaLabel ? L(ctaLabel) : t('ctaStart');
 
   const isActive = (href: string) =>
-    href === '/' ? pathname === href : pathname === href || (pathname || '').startsWith(`${href}/`);
+    (() => {
+      const pathOnly = (href || '').split('?')[0] || href;
+      return pathOnly === '/'
+        ? pathname === pathOnly
+        : pathname === pathOnly || (pathname || '').startsWith(`${pathOnly}/`);
+    })();
 
   const ctaClass =
     'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';

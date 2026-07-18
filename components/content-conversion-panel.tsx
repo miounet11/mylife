@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { ArrowRight, LockKeyhole, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildTeachersIntentHref, teacherIdFromFollowupIntent } from '@/lib/chat-entry';
+import { buildTeacherChatHref } from '@/lib/teachers';
 import { appendSourceToHref } from '@/lib/source-url';
 import { trackFunnel } from '@/components/funnel-tracker';
 
@@ -73,23 +74,22 @@ export default function ContentConversionPanel({
   const analyzeIntent = resolveAnalyzeIntent(tool);
   const freeChat = isFreeChatIntent(tool.chatIntent);
 
-  const contentFollowupQuestion = `我刚看完这篇${contentLabel}《${contentTitle}》，请围绕「${tool.shortTitle}」帮我判断：如果把这个问题落到我自己身上，最该先看哪一层，下一步最值得先做什么？`;
   const toolHref = appendSourceToHref(`/tools/${tool.slug}`, source);
   const analyzeHref = `/analyze?intent=${encodeURIComponent(analyzeIntent)}&source=${encodeURIComponent(
     'content_conversion_panel',
   )}&from=${encodeURIComponent(source || page || 'content')}`;
 
-  // Structure intents must NOT expose a crawlable no-report /chat deep link.
-  // That path was producing hundreds of empty chat_context_loaded events.
+  // Prefer teachers gallery / opening (no crawlable empty /chat prefill).
   const contentChatHref = freeChat
-    ? buildChatHref({
-        intent: tool.chatIntent || tool.slug,
-        question: contentFollowupQuestion,
-        source: 'content_conversion_panel',
-        ctaStrategyKey,
-        sourceFamily,
+    ? buildTeacherChatHref({
+        teacherId: teacherIdFromFollowupIntent(tool.chatIntent || tool.slug),
+        source: 'content_conversion_panel_opening',
       })
     : null;
+  const teachersHubHref = buildTeachersIntentHref({
+    intent: tool.chatIntent || tool.slug || analyzeIntent,
+    source: 'content_conversion_panel',
+  });
 
   const steps = freeChat
     ? ['生成完整结构报告', tool.shortTitle, premiumLabel]
@@ -196,15 +196,22 @@ export default function ContentConversionPanel({
               }}
               className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-transparent px-3 text-sm font-semibold text-[color:var(--ink-4)] hover:border-[color:var(--brand)] hover:text-[color:var(--ink-2)]"
             >
-              专项 AI 追问
+              顾问开场
             </Link>
-          ) : null}
+          ) : (
+            <Link
+              href={teachersHubHref}
+              className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-transparent px-3 text-sm font-semibold text-[color:var(--ink-4)] hover:border-[color:var(--brand)] hover:text-[color:var(--ink-2)]"
+            >
+              选老师
+            </Link>
+          )}
         </div>
 
         <p className="intro-copy mt-3 text-[11px] leading-5 text-[color:var(--ink-4)]">
           {freeChat
-            ? '手相/户型等专项可不依赖完整八字；结构类判断仍建议先生成报告。'
-            : '结构类内容默认先生成命盘报告，不再提供无报告聊天深链，避免空会话与爬虫噪声。'}
+            ? '手相/户型等专项可不依赖完整八字；先进顾问开场，再一键开口。'
+            : '结构类内容默认先生成命盘报告；可先选老师，避免无报告空会话。'}
         </p>
         <div className="intro-panel sr-only">content-conversion-panel</div>
       </div>

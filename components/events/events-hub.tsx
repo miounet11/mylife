@@ -10,7 +10,8 @@ import {
   type EventViewImpact,
 } from '@/lib/event-view';
 import { trackProductEvent } from '@/lib/product-analytics';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildChatHref, buildReportContinueChatHref } from '@/lib/chat-entry';
+import { buildTeacherChatHref } from '@/lib/teachers';
 
 const TYPES: Array<{ key: EventViewType | 'all'; label: string }> = [
   { key: 'all', label: '全部' },
@@ -150,8 +151,49 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
     }
   }
 
+  const hubOpeningHref = reportId
+    ? buildReportContinueChatHref({
+        reportId,
+        teacher: 'practice',
+        source: 'events_hub_opening',
+        window: '事件日历复盘',
+      })
+    : buildTeacherChatHref({
+        teacherId: 'practice',
+        source: 'events_hub_opening_no_report',
+      });
+
   return (
     <div className="space-y-4">
+      {/* Linear-clean：事件 → 顾问开场 */}
+      <section className="border-y border-[color:var(--hairline)] py-3.5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
+            <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
+              {reportId ? '对照事件回聊' : '先问实践老师'}
+            </h2>
+            <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+              标记应验或偏差后，可带上下文开场复盘；不预填长问题
+            </p>
+          </div>
+          <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+            <Link
+              href={hubOpeningHref}
+              className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+            >
+              {reportId ? '带报告开场 →' : '实践老师 →'}
+            </Link>
+            <Link
+              href="/teachers?intent=practice"
+              className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+            >
+              全部老师
+            </Link>
+          </div>
+        </div>
+      </section>
+
       <div className="flex flex-wrap gap-2">
         {TYPES.map((t) => (
           <button

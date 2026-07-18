@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ArrowRight, CalendarClock, Compass, ScrollText, Sparkles } from 'lucide-react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { getRememberedClientAttribution } from '@/lib/client-attribution';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildReportContinueChatHref, teacherIdFromFollowupIntent } from '@/lib/chat-entry';
 import {
   getPremiumServiceLabel,
   type PremiumServiceKey,
@@ -408,10 +408,10 @@ function mapSecondaryHref(
     case 'meihua-enhancement':
       return '#subscription';
     default:
-      return buildChatHref({
+      return buildReportContinueChatHref({
         reportId,
-        question:
-          '请围绕这份报告继续做结构追问，重点帮我判断：当前这件事更该推进、观察还是收手，前置条件是什么？',
+        teacher: 'overview',
+        window: '专项服务评估',
         source: 'report_premium_services_secondary',
         ctaStrategyKey,
         sourceFamily,
@@ -428,10 +428,11 @@ function mapPrimaryHref(
 ) {
   if (!canManage) return '#premium';
 
-  return buildChatHref({
+  return buildReportContinueChatHref({
     reportId,
+    teacher: teacherIdFromFollowupIntent(offer.key),
     intent: offer.key,
-    question: `请围绕我这份报告继续评估「${offer.title}」这个专项方向：现在是否适合启动，最该先补什么条件，推进过程中最需要防什么风险？`,
+    window: `专项：${offer.title}`,
     source: 'report_premium_services_primary',
     ctaStrategyKey,
     sourceFamily,

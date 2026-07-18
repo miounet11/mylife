@@ -23,7 +23,10 @@ import ResultLocaleSummary from '@/components/report/result-locale-summary';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { fortuneOperations } from '@/lib/database';
 import { resolveTimingProfileForFortune } from '@/lib/life-timing/resolve-timing-profile';
-import { buildChatHref, buildReportChatSource } from '@/lib/chat-entry';
+import {
+  buildReportChatSource,
+  buildReportContinueChatHref,
+} from '@/lib/chat-entry';
 import { buildSourceCtaStrategy } from '@/lib/source-cta';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { resultChrome } from '@/lib/i18n/result-chrome';
@@ -97,13 +100,11 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
   const pattern = extractPatternFromAnalysis(displayFortune.analysis);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
   const reportChatSource = buildReportChatSource(entrySource);
-  const reportChatHref = buildChatHref({
+  const reportChatHref = buildReportContinueChatHref({
     reportId: id,
+    teacher: 'career',
     intent: 'next-action',
-    question:
-      locale === 'en'
-        ? 'Turn this report into three actions: today, within 7 days, and within 30 days.'
-        : '请把这份报告接下来最该做的一步，拆成今天、7 天内、30 天内三个动作。',
+    window: locale === 'en' ? 'Next actions: today / 7d / 30d' : '下一步：今天 / 7天 / 30天',
     source: reportChatSource,
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,

@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { ArrowRight, CalendarPlus, CheckCircle2 } from 'lucide-react';
 import type { ReportActionSuggestion } from '@/lib/report-v2';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildReportContinueChatHref } from '@/lib/chat-entry';
 import {
   buildEstimatedPastEventDescription,
   getEstimatedPastEventDateKey,
@@ -359,10 +359,10 @@ export default function ReportEventCapture({
 
       <div className="flex flex-wrap gap-2 border-t border-[color:var(--hairline)] pt-4">
         <Link
-          href={buildChatHref({
+          href={buildReportContinueChatHref({
             reportId,
-            question:
-              '请结合我刚刚记录或确认过的这些事件，帮我继续复盘这份报告：哪些判断已经被验证，哪些地方还需要继续观察？',
+            teacher: 'practice',
+            window: '事件验证复盘',
             source: 'report_event_capture',
             ctaStrategyKey,
             sourceFamily,
@@ -373,16 +373,17 @@ export default function ReportEventCapture({
               page: `/result/${reportId}`,
               meta: {
                 reportId,
-                target: 'chat',
+                target: 'chat_opening',
                 source: 'report_event_capture',
                 ctaStrategyKey: ctaStrategyKey || null,
                 sourceFamily: sourceFamily || null,
+                mode: 'opening',
               },
             });
           }}
           className="inline-flex h-9 items-center gap-1.5 rounded-[3px] bg-[#3b5998] px-4 text-[13px] font-semibold text-white transition hover:bg-[#2d4373]"
         >
-          去 AI 深问这份报告
+          带事件开场复盘
           <ArrowRight className="h-4 w-4" />
         </Link>
         <Link

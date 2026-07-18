@@ -27,8 +27,10 @@ export type ChatOpsSnapshot = {
     scored: number;
     rich: number;
     thin: number;
+    repaired: number;
     richRate: number | null;
     thinRate: number | null;
+    repairRate: number | null;
     avgFilled: number | null;
   };
   feedbackQuality: {
@@ -81,6 +83,7 @@ function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
            COUNT(*) AS scored,
            SUM(CASE WHEN json_extract(meta, '$.isRich') IN (1, '1', 'true', true) THEN 1 ELSE 0 END) AS rich,
            SUM(CASE WHEN json_extract(meta, '$.isThin') IN (1, '1', 'true', true) THEN 1 ELSE 0 END) AS thin,
+           SUM(CASE WHEN json_extract(meta, '$.repaired') IN (1, '1', 'true', true) THEN 1 ELSE 0 END) AS repaired,
            AVG(CAST(json_extract(meta, '$.filled') AS REAL)) AS avgFilled
          FROM analytics_events
          WHERE event_name = 'chat_structure_scored'
@@ -90,12 +93,14 @@ function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
         scored?: number;
         rich?: number;
         thin?: number;
+        repaired?: number;
         avgFilled?: number | null;
       };
 
     const scored = Number(row?.scored || 0);
     const rich = Number(row?.rich || 0);
     const thin = Number(row?.thin || 0);
+    const repaired = Number(row?.repaired || 0);
     const avgFilled =
       row?.avgFilled != null && Number.isFinite(Number(row.avgFilled))
         ? Math.round(Number(row.avgFilled) * 10) / 10
@@ -105,8 +110,10 @@ function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
       scored,
       rich,
       thin,
+      repaired,
       richRate: scored > 0 ? Math.round((rich / scored) * 1000) / 10 : null,
       thinRate: scored > 0 ? Math.round((thin / scored) * 1000) / 10 : null,
+      repairRate: scored > 0 ? Math.round((repaired / scored) * 1000) / 10 : null,
       avgFilled,
     };
   } catch {
@@ -114,8 +121,10 @@ function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
       scored: 0,
       rich: 0,
       thin: 0,
+      repaired: 0,
       richRate: null,
       thinRate: null,
+      repairRate: null,
       avgFilled: null,
     };
   }

@@ -98,10 +98,42 @@ export function teacherIdFromFollowupIntent(intent?: string | null): string {
   const key = `${intent || ''}`.trim().toLowerCase();
   if (key === 'next-action' || key === 'job' || key === 'career') return 'career';
   if (key === 'window' || key === 'month' || key === 'risk' || key === 'timing') return 'timing';
-  if (key === 'wealth') return 'wealth';
-  if (key === 'marriage' || key === 'relationship') return 'relationship';
-  if (key === 'health') return 'health';
+  if (key === 'wealth' || key === 'finance' || key.includes('wealth') || key.includes('money')) {
+    return 'wealth';
+  }
+  if (key === 'marriage' || key === 'relationship' || key.includes('relation') || key.includes('婚')) {
+    return 'relationship';
+  }
+  if (key === 'health' || key.includes('health') || key.includes('健')) return 'health';
+  if (key.includes('geo') || key.includes('move') || key.includes('地理')) return 'geo';
+  if (key.includes('practice') || key.includes('验证') || key.includes('event')) return 'practice';
+  if (key.includes('hehun') || key.includes('合婚')) return 'hehun';
+  if (key.includes('study') || key.includes('学')) return 'study';
+  if (key.includes('partner') || key.includes('合伙')) return 'partnership';
+  if (key.includes('name') || key.includes('名')) return 'naming';
+  if (key.includes('palm') || key.includes('手相')) return 'practice';
+  if (key.includes('career') || key.includes('job') || key.includes('事业')) return 'career';
+  if (key.includes('timing') || key.includes('window') || key.includes('择时')) return 'timing';
   return 'overview';
+}
+
+/**
+ * Intent → teachers gallery deep link (opening mode, no prefill spam).
+ * Used by /teachers?intent=career style hubs.
+ */
+export function buildTeachersIntentHref(params: {
+  intent?: string | null;
+  reportId?: string | null;
+  source?: string | null;
+}): string {
+  const teacher = teacherIdFromFollowupIntent(params.intent);
+  const q = new URLSearchParams();
+  if (params.intent) q.set('intent', `${params.intent}`.trim());
+  if (params.reportId) q.set('reportId', `${params.reportId}`.trim());
+  if (params.source) q.set('source', normalizeAttributionSource(params.source));
+  if (teacher && teacher !== 'overview') q.set('highlight', teacher);
+  const s = q.toString();
+  return s ? `/teachers?${s}` : '/teachers';
 }
 
 /** Primary “继续对话” — opening mode, no long prefilled question */
@@ -110,15 +142,41 @@ export function buildReportContinueChatHref(params: {
   source?: string | null;
   teacher?: string | null;
   window?: string | null;
+  intent?: string | null;
+  eventId?: string | null;
   ctaStrategyKey?: string | null;
   sourceFamily?: string | null;
 }) {
   return buildChatHref({
     reportId: params.reportId,
-    teacher: params.teacher || 'overview',
+    teacher: params.teacher || teacherIdFromFollowupIntent(params.intent) || 'overview',
     window: params.window || null,
+    intent: params.intent || null,
+    eventId: params.eventId || null,
     mode: 'opening',
     source: params.source || buildReportChatSource(null),
+    ctaStrategyKey: params.ctaStrategyKey,
+    sourceFamily: params.sourceFamily,
+  });
+}
+
+/** Tool / content result → opening chat (prefer report-bound teacher) */
+export function buildToolOpeningChatHref(params: {
+  reportId?: string | null;
+  intent?: string | null;
+  window?: string | null;
+  source?: string | null;
+  ctaStrategyKey?: string | null;
+  sourceFamily?: string | null;
+}) {
+  const teacher = teacherIdFromFollowupIntent(params.intent);
+  return buildChatHref({
+    reportId: params.reportId || null,
+    teacher,
+    intent: params.intent || null,
+    window: params.window || null,
+    mode: 'opening',
+    source: params.source || 'tool_result_opening',
     ctaStrategyKey: params.ctaStrategyKey,
     sourceFamily: params.sourceFamily,
   });

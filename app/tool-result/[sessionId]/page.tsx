@@ -26,7 +26,7 @@ import { fortuneOperations, toolSessionOperations } from '@/lib/database';
 import { buildJourneyForTool } from '@/lib/surface-journeys';
 import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition, getToolGrowthProfile } from '@/lib/tools';
 import { getCurrentUserId } from '@/lib/user-utils';
-import { buildChatHref } from '@/lib/chat-entry';
+import { buildToolOpeningChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
 
 export default async function ToolResultPage({
@@ -79,17 +79,16 @@ export default async function ToolResultPage({
     title: '这次结果已经和主测算、工具、内容全部串起来',
     description: '回到综合报告、继续下钻工具，或直接读相关文章与案例。',
   });
-  const toolFollowupQuestion = `请围绕“${tool.shortTitle}”这次结果继续深问，按结构、阶段、环境、动作四层拆解：这条建议为什么成立，我现在该先推进什么，最需要防什么误判？`;
   const toolChatSource = entrySource.startsWith('lifecycle_tool_interest')
     ? entrySource
     : entrySource
-      ? `tool_result_followup:${entrySource}`
-      : 'tool_result_followup';
+      ? `tool_result_opening:${entrySource}`
+      : 'tool_result_opening';
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource || `tool_detail:${tool.slug}`);
-  const toolChatHref = buildChatHref({
+  const toolChatHref = buildToolOpeningChatHref({
     reportId: report?.id || null,
-    intent: tool.chatIntent || null,
-    question: toolFollowupQuestion,
+    intent: tool.chatIntent || tool.slug || null,
+    window: `工具结果：${tool.shortTitle}`,
     source: toolChatSource,
     ctaStrategyKey: sourceCtaStrategy.strategyKey,
     sourceFamily: sourceCtaStrategy.sourceFamily,

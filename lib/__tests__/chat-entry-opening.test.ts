@@ -3,6 +3,8 @@ import { describe, it } from 'node:test';
 import {
   buildChatHref,
   buildReportContinueChatHref,
+  buildTeachersIntentHref,
+  buildToolOpeningChatHref,
   buildTopicChatHref,
   teacherIdFromFollowupIntent,
 } from '@/lib/chat-entry';
@@ -44,5 +46,26 @@ describe('chat entry opening mode', () => {
   it('maps intents to teachers', () => {
     assert.equal(teacherIdFromFollowupIntent('window'), 'timing');
     assert.equal(teacherIdFromFollowupIntent('next-action'), 'career');
+    assert.equal(teacherIdFromFollowupIntent('palmistry-reading'), 'practice');
+  });
+
+  it('builds tool opening without question', () => {
+    const href = buildToolOpeningChatHref({
+      reportId: 'r9',
+      intent: 'wealth',
+      window: '工具结果：年度窗口',
+      source: 'tool_result_opening',
+    });
+    assert.ok(href.includes('mode=opening'));
+    assert.ok(href.includes('teacher=wealth'));
+    assert.ok(href.includes('reportId=r9'));
+    assert.ok(!href.includes('question='));
+  });
+
+  it('builds teachers intent hub', () => {
+    const href = buildTeachersIntentHref({ intent: 'career', reportId: 'r1' });
+    assert.ok(href.startsWith('/teachers?'));
+    assert.ok(href.includes('intent=career'));
+    assert.ok(href.includes('reportId=r1'));
   });
 });

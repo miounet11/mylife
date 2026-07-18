@@ -89,6 +89,7 @@ export default async function AdminChatOpsPage() {
           <Row k="scored" v={snap.structure.scored} />
           <Row k="rich" v={snap.structure.rich} />
           <Row k="thin" v={snap.structure.thin} />
+          <Row k="repaired" v={snap.structure.repaired} />
           <Row
             k="rich_rate"
             v={snap.structure.richRate != null ? snap.structure.richRate : 0}
@@ -98,6 +99,11 @@ export default async function AdminChatOpsPage() {
             k="thin_rate"
             v={snap.structure.thinRate != null ? snap.structure.thinRate : 0}
             suffix={snap.structure.thinRate != null ? '%' : ''}
+          />
+          <Row
+            k="repair_rate"
+            v={snap.structure.repairRate != null ? snap.structure.repairRate : 0}
+            suffix={snap.structure.repairRate != null ? '%' : ''}
           />
           <Row
             k="avg_filled"
