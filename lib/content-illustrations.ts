@@ -7,9 +7,16 @@
  * Resolution order:
  * 1. meta.illustrations (explicit)
  * 2. meta.visualAssets binding → library / static catalog
- * 3. keyword-scored static catalog (prod public/images/visual-assets)
- * 4. deterministic SVG diagram templates (always available)
+ * 3. keyword-scored **page-illustrations** catalog (gpt-image-2 batch, preferred)
+ * 4. keyword-scored static visual-assets pack
+ * 5. deterministic SVG diagram templates (always available)
  */
+
+import {
+  PAGE_ILLUSTRATION_CATALOG,
+  publicSrc as pageIllustPublicSrc,
+  type PageIllustrationEntry,
+} from '@/lib/page-illustrations/catalog';
 
 export type ContentFigureRole =
   | 'cover'
@@ -73,6 +80,9 @@ type CatalogEntry = {
   roles: ContentFigureRole[];
   keywords: string[];
   moduleLabel: string;
+  /** Prefer page-illustrations (newer educational batch) over older visual-assets. */
+  preferBoost?: number;
+  kindHint?: ContentFigureKind;
 };
 
 const BASE = '/images/visual-assets';
@@ -320,7 +330,7 @@ function signalText(entry: ContentIllustrationSignal) {
 }
 
 function scoreCatalog(entry: CatalogEntry, text: string, preferredRole?: ContentFigureRole) {
-  let score = 0;
+  let score = entry.preferBoost || 0;
   for (const keyword of entry.keywords) {
     if (text.includes(normalizeText(keyword))) score += 8;
   }
@@ -409,13 +419,41 @@ function figureFromCatalog(
     caption: captionOverride || `${entry.title}：把抽象判断拆成可看见的结构关系。`,
     alt: entry.alt,
     src: entry.src,
-    kind: 'library',
+    kind: entry.kindHint || (entry.src.includes('/page-illustrations/') ? 'generated' : 'library'),
     afterSectionIndex,
     slug: entry.slug,
     moduleLabel: entry.moduleLabel,
-    width: 1280,
-    height: 720,
+    width: entry.src.includes('/page-illustrations/') ? 1600 : 1280,
+    height: entry.src.includes('/page-illustrations/') ? 900 : 720,
   };
+}
+
+/** Map ready page-illustration catalog into content figure scoring pool. */
+function pageIllustrationsAsCatalog(): CatalogEntry[] {
+  return PAGE_ILLUSTRATION_CATALOG.filter((e) => e.ready && e.filename).map(
+    (e: PageIllustrationEntry) => ({
+      id: e.id,
+      slug: e.id.toLowerCase().replace(/_/g, '-'),
+      title: e.title,
+      src: pageIllustPublicSrc(e),
+      alt: e.alt,
+      roles: [e.role as ContentFigureRole],
+      keywords: [
+        ...e.tags,
+        e.title,
+        e.caption,
+        ...(e.surfaces || []),
+        ...(e.reportCiteKeys || []),
+      ],
+      moduleLabel: e.tags[0] || '页面图解',
+      preferBoost: 12,
+      kindHint: 'generated' as ContentFigureKind,
+    }),
+  );
+}
+
+function allScoredCatalogs(): CatalogEntry[] {
+  return [...pageIllustrationsAsCatalog(), ...CONTENT_ILLUSTRATION_CATALOG];
 }
 
 function figureFromDiagram(
@@ -461,11 +499,13 @@ export function resolveContentIllustrations(
   const anchors = sectionAnchors(sectionCount, target);
   const rolePlan: ContentFigureRole[] = ['cover', 'structure', 'timing', 'action', 'risk', 'summary'].slice(0, target) as ContentFigureRole[];
 
-  // Prefer bound library ids
+  const pooled = allScoredCatalogs();
+
+  // Prefer bound library / page-illust ids
   const bound = bindingIds(entry.meta);
   for (const id of bound) {
     if (selected.length >= target) break;
-    const catalog = CONTENT_ILLUSTRATION_CATALOG.find((item) => item.id === id || item.slug === id);
+    const catalog = pooled.find((item) => item.id === id || item.slug === id);
     if (!catalog || usedIds.has(catalog.id) || usedSrc.has(catalog.src)) continue;
     const role = rolePlan[selected.length] || 'structure';
     const fig = figureFromCatalog(catalog, role, anchors[selected.length] ?? 0);
@@ -474,8 +514,8 @@ export function resolveContentIllustrations(
     usedSrc.add(fig.src);
   }
 
-  // Keyword scored catalog
-  const scored = CONTENT_ILLUSTRATION_CATALOG
+  // Keyword scored catalog (page-illustrations boosted via preferBoost)
+  const scored = pooled
     .map((item) => ({
       item,
       score: scoreCatalog(item, text, rolePlan[selected.length]),
@@ -493,17 +533,21 @@ export function resolveContentIllustrations(
     usedSrc.add(fig.src);
   }
 
-  // Soft fallbacks from catalog by content type
-  const typeFallback = entry.contentType === 'case'
-    ? ['PWY01-002', 'PWY01-006', 'PWY01-003', 'PWY01-001']
-    : ['PWY01-002', 'MYF-four-pillars', 'MYF-dayun', 'PWY01-005'];
+  // Soft fallbacks by content type — page-illust ids first, then legacy visual-assets
+  const typeFallback =
+    entry.contentType === 'case'
+      ? ['PI-CASES-01', 'PI-REPORT-DECISION-01', 'PI-BOUNDARY-01', 'PWY01-002', 'PWY01-003']
+      : entry.contentType === 'insight'
+        ? ['PI-KLINE-01', 'PI-LEARN-01', 'PI-REPORT-TIMING-01', 'PWY01-001']
+        : ['PI-KNOWLEDGE-01', 'PI-YONGSHEN-01', 'PI-FIVE-ELEMENTS-01', 'PI-BAZI-PILLARS-01', 'PWY01-002'];
   for (const id of typeFallback) {
     if (selected.length >= target) break;
-    const catalog = CONTENT_ILLUSTRATION_CATALOG.find((item) => item.id === id);
-    if (!catalog || usedIds.has(catalog.id)) continue;
+    const catalog = pooled.find((item) => item.id === id);
+    if (!catalog || usedIds.has(catalog.id) || usedSrc.has(catalog.src)) continue;
     const role = rolePlan[selected.length] || 'structure';
     selected.push(figureFromCatalog(catalog, role, anchors[selected.length] ?? 0));
     usedIds.add(catalog.id);
+    usedSrc.add(catalog.src);
   }
 
   // Diagram templates fill remaining slots (always available)

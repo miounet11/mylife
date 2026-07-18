@@ -6,7 +6,7 @@ import type { TeacherOpeningView } from '@/lib/teacher-opening';
 import type { TeacherTopicChip } from '@/lib/teachers';
 
 /** How long to emphasize the first starter after open (ms). */
-const FIRST_STARTER_PULSE_MS = 3000;
+const FIRST_STARTER_PULSE_MS = 5000;
 
 /**
  * Empty-state consultant opening: first_mes bubble + topic chips + user starters.
@@ -120,49 +120,35 @@ export function ChatOpeningPanel({
               </span>
             ) : null}
           </div>
+          {/* Persistent primary CTA — always one clear tap target */}
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() =>
+              onStarter(starters[0], {
+                source: pulseFirst ? 'opening_starter_primary' : 'opening_starter_cta_bar',
+              })
+            }
+            className="flex min-h-[48px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] border border-[#3b5998] bg-[#3b5998] px-3.5 py-2.5 text-left text-[13.5px] font-semibold leading-[1.4] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition active:opacity-90 disabled:opacity-50"
+          >
+            <span className="min-w-0 flex-1 line-clamp-2">{starters[0]}</span>
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-bold">
+              发送
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </button>
           <div className="grid grid-cols-1 gap-1.5">
-            {starters.map((text, index) => {
-              const isFirst = index === 0;
-              const emphasize = isFirst && pulseFirst;
-              return (
-                <button
-                  key={text}
-                  type="button"
-                  disabled={disabled}
-                  onClick={() =>
-                    onStarter(text, {
-                      source: isFirst ? 'opening_starter_primary' : 'opening_starter',
-                    })
-                  }
-                  className={
-                    emphasize
-                      ? 'flex min-h-[44px] w-full touch-manipulation items-start gap-2 rounded-[10px] border border-[#3b5998] bg-[#3b5998] px-3 py-2.5 text-left text-[13px] font-semibold leading-[1.45] text-white shadow-[0_0_0_3px_rgba(59,89,152,0.18)] transition active:opacity-90 disabled:opacity-50'
-                      : isFirst
-                        ? 'flex min-h-[44px] w-full touch-manipulation items-start gap-2 rounded-[10px] border border-[#3b5998] bg-[#e7f3ff] px-3 py-2.5 text-left text-[13px] font-semibold leading-[1.45] text-[#1d2129] transition hover:bg-[#dce9fb] active:opacity-70 disabled:opacity-50'
-                        : 'min-h-[40px] w-full touch-manipulation rounded-[8px] border border-[#e4e6eb] bg-[#f7f8fa] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50'
-                  }
-                >
-                  {isFirst ? (
-                    <span
-                      className={`mt-0.5 shrink-0 rounded px-1 py-px text-[10px] font-bold uppercase tracking-wide ${
-                        emphasize ? 'bg-white/20 text-white' : 'bg-[#3b5998]/10 text-[#3b5998]'
-                      }`}
-                    >
-                      首选
-                    </span>
-                  ) : null}
-                  <span className="min-w-0 flex-1">
-                    {text}
-                    {isFirst && emphasize ? (
-                      <span className="ml-1 inline-flex items-center gap-0.5 text-[11px] font-medium opacity-90">
-                        <ArrowRight className="h-3 w-3" />
-                        发送
-                      </span>
-                    ) : null}
-                  </span>
-                </button>
-              );
-            })}
+            {starters.slice(1).map((text) => (
+              <button
+                key={text}
+                type="button"
+                disabled={disabled}
+                onClick={() => onStarter(text, { source: 'opening_starter' })}
+                className="min-h-[40px] w-full touch-manipulation rounded-[8px] border border-[#e4e6eb] bg-[#f7f8fa] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50"
+              >
+                {text}
+              </button>
+            ))}
           </div>
         </div>
       ) : null}

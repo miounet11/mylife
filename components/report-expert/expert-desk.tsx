@@ -12,6 +12,7 @@ import ExpertHandoffBar from '@/components/report-expert/expert-handoff-bar';
 import ExpertRuleGlossary from '@/components/report-expert/expert-rule-glossary';
 import ExpertDayunYearGrid from '@/components/report-expert/expert-dayun-year-grid';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
+import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 import { buildExpertClientPack } from '@/lib/report-expert-client-pack';
 import { buildExpertPrintSheet } from '@/lib/expert-print-sheet';
@@ -102,6 +103,10 @@ export default function ExpertDesk({
           </a>
         </div>
       </nav>
+
+      <div className="no-print space-y-3">
+        <ReportIllustrationCite keys={['structure', 'cover']} title="四柱结构（教学）" limit={1} />
+      </div>
 
       {/* 输入 + 真太阳时 */}
       <div className="grid gap-4 lg:grid-cols-2">
@@ -350,7 +355,10 @@ export default function ExpertDesk({
           <p className="mt-3 text-[13px] leading-[1.7] text-[#334155]">{desk.pattern.description || '—'}</p>
         </section>
 
-        <section id="ex-yongJi" className="scroll-mt-header rounded-[10px] border border-[#cbd5e1] bg-white p-4">
+        <section id="ex-yongJi" className="scroll-mt-header space-y-3 rounded-[10px] border border-[#cbd5e1] bg-white p-4">
+          <div className="no-print">
+            <ReportIllustrationCite keys={['yongshen']} title="用神示意（教学）" limit={1} />
+          </div>
           <SectionTitle>⑨ 用神喜忌</SectionTitle>
           <div className="mt-3 flex flex-wrap gap-2">
             {desk.yongJi.yongShen.map((e) => (
@@ -376,7 +384,10 @@ export default function ExpertDesk({
       </div>
 
       {/* 大运 */}
-      <section id="ex-dayun" className="scroll-mt-header rounded-[10px] border border-[#0f172a] bg-white p-4 md:p-5">
+      <section id="ex-dayun" className="scroll-mt-header space-y-3 rounded-[10px] border border-[#0f172a] bg-white p-4 md:p-5">
+        <div className="no-print">
+          <ReportIllustrationCite keys={['dayun', 'timing']} title="大运窗口（教学）" limit={1} />
+        </div>
         <div className="flex flex-wrap items-end justify-between gap-2">
           <SectionTitle>⑩ 大运表 · 运局</SectionTitle>
           <div className="text-[12px] text-[#64748b]">
