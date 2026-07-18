@@ -22,6 +22,12 @@ export type PageIllustrationEntry = {
   aspectRatio: '16:9' | '3:2' | '1:1';
   /** Prompt body without style suffix */
   prompt: string;
+  /**
+   * Generation routing for inping API:
+   * - complex → gpt-image-2 (multi-panel, Chinese labels)
+   * - simple  → z-image-turbo (icons / tiny assets, ~20× faster)
+   */
+  complexity?: 'complex' | 'simple';
   reportCiteKeys?: string[];
   tags: string[];
   /** Set true after asset exists in public/ */
@@ -47,6 +53,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '人生K线从排盘到报告顾问验证的路径示意图',
     filename: 'home-path-from-birth-to-action.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Horizontal product journey diagram: four calm cards connected by arrows — 填生辰, 读报告, 顾问开场, 事件验证. Soft paper background, blue ink accents, minimal icons of calendar birth form, document report, chat bubble, checklist. Chinese labels only.',
     reportCiteKeys: ['cover'],
@@ -64,6 +71,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '第一份命理报告阅读顺序图：结论窗口结构风险',
     filename: 'report-first-reading-path.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Infographic map of reading a fortune report: numbered steps 1 结论 2 时间窗口 3 结构依据 4 风险 5 验证点. Clean layered document illustration, blue accent numbers, paper texture, Chinese UI style.',
     reportCiteKeys: ['cover', 'reading-path'],
@@ -81,6 +89,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '大运流年时间轴示意：有利窗口与谨慎窗口',
     filename: 'report-dayun-liunian-windows.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Timeline diagram of life phases (大运) with smaller yearly marks (流年). Soft green zones labeled 有利窗 and amber zones 谨慎窗. Minimal K-line rhythm below. Educational, not fatalistic. Chinese labels.',
     reportCiteKeys: ['dayun', 'timing'],
@@ -98,6 +107,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '命理决策闭环图：判断依据当前结论阶段动作风险验证点',
     filename: 'decision-loop-basis-action-verify.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Five connected modules in a clean flow: 判断依据, 当前结论, 阶段动作 (今天 7天 30天), 风险提醒, 验证点. Messenger/product UI inspired cards, blue accent, Chinese labels, decision product diagram.',
     reportCiteKeys: ['decision-loop'],
@@ -115,6 +125,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '日主用神忌神结构示意教学图',
     filename: 'structure-daymaster-yongshen.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Abstract educational diagram of Chinese metaphysics structure: center node 日主, supporting nodes 用神, caution nodes 忌神, surrounding five-element cycle lightly drawn. Soft colors, schematic not portrait, Chinese labels, textbook clarity.',
     reportCiteKeys: ['yongshen', 'structure'],
@@ -132,6 +143,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '顾问开场对话界面示意图：开场气泡与一键开口',
     filename: 'chat-consultant-opening.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Clean mobile chat UI mock: left gray bubble 顾问开场, topic chips, one large blue primary button 一键开口. Linear minimal interface, Chinese UI text, no clutter, product screenshot illustration style.',
     reportCiteKeys: [],
@@ -149,6 +161,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '事件验证闭环：记录应验偏差回聊示意图',
     filename: 'events-validation-loop.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Circular loop diagram with four stations: 记录事件, 到期回访, 应验或偏差, 顾问回聊纠偏. Calm checklist aesthetic, blue and soft green, Chinese labels, product education.',
     reportCiteKeys: ['validation'],
@@ -166,6 +179,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '命理判断边界说明：参考框架非宿命定论',
     filename: 'boundary-not-fatalism.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Two-column comparison diagram: left 可做 (结构参考 窗口节奏 可验证动作), right 不做 (恐吓 绝对命运 替代医疗法律投资). Soft warning amber on right, calm blue on left, Chinese labels, ethical product illustration.',
     reportCiteKeys: ['boundary'],
@@ -183,6 +197,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '工具中心问题拆解与报告衔接示意图',
     filename: 'tools-problem-breakdown.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Matrix of small tool cards around a central report document. Arrows from fuzzy question cloud into clear tool cards then into report. Minimal product diagram, Chinese labels 工具 报告 回访.',
     reportCiteKeys: [],
@@ -200,6 +215,7 @@ export const PAGE_ILLUSTRATION_CATALOG: PageIllustrationEntry[] = [
     alt: '多位顾问老师按议题分工示意图',
     filename: 'teachers-roles-map.jpg',
     aspectRatio: '16:9',
+    complexity: 'complex',
     prompt:
       'Horizontal set of six minimal advisor cards with Chinese titles 总览老师 事业老师 财务老师 关系老师 时机老师 实践老师, each with one-line duty. Clean Linear list aesthetic, no realistic faces, abstract avatars as simple geometric shapes.',
     reportCiteKeys: [],

@@ -39,24 +39,55 @@ catalog (TS)  →  generate (5-way)  →  optimize (webp)  →  public/ or R2
 
 ## Generation backends
 
-### A · Grok Imagine (default in this agent)
+### A · inping Images API (**preferred**, production batch)
 
-Use tool `image_gen` with prompts from the catalog:
+Gateway: `https://ttqq.inping.com` (OpenAI-compatible `/v1/images/generations`).
 
-- Aspect: `16:9` explainer, `3:2` report inline, `1:1` icon only if needed.
-- Save paths returned by the tool → copy into `public/images/page-illustrations/`.
-- **5 concurrent** `image_gen` calls max per wave.
+| Model | Use when | Speed |
+|-------|----------|--------|
+| **`gpt-image-2`** | Complex explainers, multi-panel diagrams, report figures, Chinese labels | slower, higher quality |
+| **`z-image-turbo`** | Icons, simple chips, small 1:1 assets, draft thumbs | ~**20×** faster |
 
-### B · OpenAI `gpt-image-2` (optional script)
-
-If `OPENAI_API_KEY` is set (terminal only, never commit):
+**Auth (never commit):**
 
 ```bash
-node scripts/page-illustrations/generate-openai.mjs --limit 10 --concurrency 5
+export PAGE_ILLUST_API_BASE='https://ttqq.inping.com'
+export PAGE_ILLUST_API_KEY='sk-…'   # terminal / prod .secrets only
+# optional:
+export PAGE_ILLUST_MODEL_COMPLEX=gpt-image-2
+export PAGE_ILLUST_MODEL_TURBO=z-image-turbo
 ```
 
-Uses model `gpt-image-2` (or env `PAGE_ILLUST_OPENAI_MODEL`).  
-Output: `public/images/page-illustrations/raw/`.
+Prod secret file (not in git): `/home/life-kline-next/.secrets/page-illustrations.env`  
+Template: `scripts/page-illustrations/env.example`
+
+**Batch (5 concurrent):**
+
+```bash
+# auto-route: complex → gpt-image-2, simple/1:1 → z-image-turbo
+node scripts/page-illustrations/generate.mjs --concurrency 5 --limit 20
+
+# force model
+node scripts/page-illustrations/generate.mjs --model gpt-image-2 --only PI-REPORT-READ-01
+node scripts/page-illustrations/generate.mjs --model z-image-turbo --limit 5
+
+# regenerate even if ready
+node scripts/page-illustrations/generate.mjs --force --concurrency 5
+```
+
+- Always request `response_format: "b64_json"` (URL may be cluster-internal and unusable from laptop).
+- Output: `public/images/page-illustrations/raw/*.png`
+- Then: `node scripts/page-illustrations/optimize.mjs` → jpg/webp in parent folder
+- Catalog field `complexity: 'complex' | 'simple'` (optional) steers routing; default heuristic: full explainers → complex.
+
+Legacy alias: `generate-openai.mjs` → prefer `generate.mjs`.
+
+### B · Grok Imagine (agent session)
+
+Use tool `image_gen` when iterating interactively (no inping key in session).
+
+- Aspect: `16:9` explainer, `3:2` report inline, `1:1` icon.
+- **5 concurrent** max per wave; copy into `public/images/page-illustrations/`.
 
 ### Style prompt suffix (append to every prompt)
 
