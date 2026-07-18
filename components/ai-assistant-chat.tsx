@@ -895,13 +895,17 @@ export default function AIAssistantChat() {
   const hideOpeningFirstMes = hasSyntheticOpening;
 
   return (
-    <div className="flex h-full flex-col bg-white" style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}>
-      {/* 消息流区 */}
-      <div className="relative flex-1 min-h-0 bg-white">
+    <div
+      className="flex h-full min-h-0 w-full flex-col bg-white"
+      style={{ fontFamily: 'Helvetica, Arial, sans-serif' }}
+    >
+      {/* 消息流区：唯一滚动层 */}
+      <div className="relative min-h-0 flex-1 bg-white">
         <div
           ref={messagesScrollerRef}
-          className="flex h-full flex-col gap-1.5 overflow-y-auto px-3 py-3 md:px-4"
+          className="h-full overflow-y-auto overscroll-contain px-3 py-2.5 md:px-4 md:py-3"
         >
+          <div className="mx-auto flex max-w-2xl flex-col gap-2">
           {context && (
             <ContextCard
               context={context}
@@ -963,26 +967,16 @@ export default function AIAssistantChat() {
 
           {showOpeningChrome && context?.report ? (
             <div className="space-y-2">
-              <div className="rounded-[3px] border border-[#e7f3ff] bg-[#f0f6ff] px-3 py-2 text-[12px] leading-5 text-[#365899]">
-                已载入 <span className="font-semibold">{context.report.name || '你'}</span>
-                的报告 · 日主{' '}
-                <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
-                · 格局{' '}
-                <span className="font-mono font-semibold">{context.report.pattern || '—'}</span>
-                · 大运{' '}
-                <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
+              <div className="rounded-[8px] border border-[#e7f3ff] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
+                <span className="font-semibold">{context.report.name || '你'}</span>
+                {' · '}
+                日主 <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
+                {' · '}
+                大运 <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
                 {(context.report.yongShen || []).length > 0 ? (
                   <>
-                    {' '}
-                    · 用神{' '}
-                    <span className="font-semibold">{context.report.yongShen.join('、')}</span>
-                  </>
-                ) : null}
-                {context.report.bestWindow ? (
-                  <>
-                    {' '}
-                    · 窗口{' '}
-                    <span className="font-semibold">{context.report.bestWindow}</span>
+                    {' · '}
+                    用神 <span className="font-semibold">{context.report.yongShen.join('、')}</span>
                   </>
                 ) : null}
               </div>
@@ -1002,24 +996,16 @@ export default function AIAssistantChat() {
 
           {showOpeningChrome && !context?.report ? (
             <div className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2 rounded-[8px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2.5">
-                <p className="min-w-0 text-[12px] leading-[1.4] text-[#7a5b00]">
-                  未绑定报告 · 不编造命理 · 要个性化请先排盘
+              <div className="flex items-center justify-between gap-2 rounded-[8px] border border-[#f0c36d]/80 bg-[#fff8e6] px-2.5 py-2">
+                <p className="min-w-0 truncate text-[12px] text-[#7a5b00]">
+                  未绑报告 · 不编造命理
                 </p>
-                <div className="flex shrink-0 items-center gap-2">
-                  <a
-                    href="/analyze"
-                    className="inline-flex min-h-[40px] touch-manipulation items-center rounded-[6px] bg-[#3b5998] px-3.5 text-[13px] font-semibold text-white hover:bg-[#2d4373]"
-                  >
-                    去排盘
-                  </a>
-                  <a
-                    href="/history"
-                    className="text-[12px] text-[#8a8d91] underline-offset-2 hover:underline"
-                  >
-                    历史
-                  </a>
-                </div>
+                <a
+                  href="/analyze"
+                  className="inline-flex shrink-0 items-center rounded-[6px] bg-[#3b5998] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#2d4373]"
+                >
+                  去排盘
+                </a>
               </div>
               {!hideOpeningFirstMes ? (
                 <ChatOpeningPanel
@@ -1115,6 +1101,7 @@ export default function AIAssistantChat() {
               </div>
             </div>
           )}
+          </div>
         </div>
 
         {!isNearBottom && hasRealMessages ? (
@@ -1129,14 +1116,14 @@ export default function AIAssistantChat() {
         ) : null}
       </div>
 
-      {/* 底部输入区：sticky 白条 + 1px 灰边上分隔 */}
-      <div className="border-t border-[#dddfe2] bg-white px-3 py-2.5 md:px-4">
+      {/* 底部输入：固定在壳内，不挤开消息区 */}
+      <div className="shrink-0 border-t border-[#e4e6eb] bg-white px-3 py-2 md:px-4 md:py-2.5">
         <form
           onSubmit={(event) => {
             event.preventDefault();
             void sendQuestion(input);
           }}
-          className="space-y-2"
+          className="mx-auto max-w-2xl space-y-1.5"
         >
           <MaterialEvidenceComposer
             materials={materials}

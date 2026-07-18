@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full min-h-[420px] items-center justify-center p-8 text-[13px] text-[color:var(--ink-5)]">
+    <div className="flex h-full w-full flex-1 items-center justify-center p-6 text-[13px] text-[color:var(--ink-5)]">
       正在打开顾问对话…
     </div>
   ),
@@ -13,5 +13,9 @@ const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), 
 
 /** Client boundary for /chat — mounts full AI assistant with consultant opening. */
 export default function ChatPageClient() {
-  return <AIAssistantChat />;
+  return (
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col">
+      <AIAssistantChat />
+    </div>
+  );
 }
