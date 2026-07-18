@@ -6,6 +6,7 @@ import JourneyStrip from '@/components/content/journey-strip';
 import ContentLocaleFilter, {
   ContentLocaleBadge,
 } from '@/components/content/content-locale-filter';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import ContentListPagination from '@/components/content/content-list-pagination';
@@ -130,6 +131,7 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
           }
         />
         <JourneyStrip active="content" />
+        <PageIllustrationStrip surface="knowledge/hub" title="怎么用知识库" compact limit={1} />
         <DimensionsShowcase
           title={copy.showcaseTitle}
           description={copy.showcaseDesc}

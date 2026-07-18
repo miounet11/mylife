@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import HistoryClient from '@/components/history/history-client';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
-import HistoryClient from '@/components/history/history-client';
 
 export const metadata: Metadata = {
   title: '历史记录｜报告与工具结果',
@@ -32,6 +33,7 @@ export default function HistoryPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="history/hub" title="历史回看" compact limit={1} />
         <HistoryClient />
       </div>
     </AppPage>

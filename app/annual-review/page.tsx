@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import AnnualReviewPageBody from '@/components/annual-review/annual-review-page-body';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
-import AnnualReviewPageBody from '@/components/annual-review/annual-review-page-body';
 
 export const metadata: Metadata = {
   title: '年度复盘｜命中率与校准',
@@ -33,6 +34,7 @@ export default function AnnualReviewPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="annual-review/hub" title="复盘闭环" compact limit={1} />
 
         <AnnualReviewPageBody />
 

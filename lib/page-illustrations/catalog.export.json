@@ -340,5 +340,140 @@
     "complexity": "simple",
     "ready": true,
     "title": "边界"
+  },
+  {
+    "id": "PI-CASES-01",
+    "filename": "cases-structure-to-reality.jpg",
+    "prompt": "Educational case-study reading map: four cards 问题场景 结构判断 时间窗口 现实对照 connected by arrows. Soft paper, ink blue, Chinese labels, Linear product diagram, no sensational fate imagery.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "案例：结构如何落到现实"
+  },
+  {
+    "id": "PI-DIMENSIONS-MAP-01",
+    "filename": "dimensions-ten-scene-map.jpg",
+    "prompt": "Grid of ten calm scene tiles labeled in Chinese: 运势节奏 事业行业 投资理财 谈婚论嫁 健康节律 起名 择时 迁移 人际 家庭. Soft paper background, muted ink blue, Linear product map, not mystical.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "十维度：一题一研判"
+  },
+  {
+    "id": "PI-WORLDYI-01",
+    "filename": "world-yi-global-path.jpg",
+    "prompt": "Minimal world arc with three hubs labeled 结构方法 海外场景 可验证动作. Soft paper, ink blue geometric, Chinese labels, educational product diagram about World Yi, no occult symbols.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "世界易：全球场景应用"
+  },
+  {
+    "id": "PI-CHAT-NO-REPORT-01",
+    "filename": "chat-unbound-then-report.jpg",
+    "prompt": "Two-step product flow: left chat bubble 先开场, right document 再排盘报告, middle dashed arrow 补生辰. Linear minimal UI illustration, Chinese labels, soft paper, calm decision-support tone.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "暂无报告也能开场"
+  },
+  {
+    "id": "PI-HISTORY-01",
+    "filename": "report-history-timeline.jpg",
+    "prompt": "Timeline of stacked report cards labeled 第一份 进阶 年度复盘 with soft year marks. Linear archive aesthetic, Chinese labels, paper background, product education.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "报告历史：版本可回看"
+  },
+  {
+    "id": "PI-EXPERT-01",
+    "filename": "expert-desk-handoff.jpg",
+    "prompt": "Clean expert desk dashboard mock with four panels: 结论摘要 时间窗口 待验证点 沟通纪要. Linear professional UI, Chinese labels, soft paper, no faces, decision-support product.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "专家工作台：交接清单"
+  },
+  {
+    "id": "PI-COMMUNITY-01",
+    "filename": "community-structured-qa.jpg",
+    "prompt": "Forum-style structured Q&A diagram: question card, evidence chips, calm reply threads, verification tag. Soft paper, ink blue, Chinese labels 问题 依据 讨论 回访, Linear product, not chaotic social feed.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "社区提问：结构化讨论"
+  },
+  {
+    "id": "PI-LIUNIAN-FOCUS-01",
+    "filename": "liunian-main-window.jpg",
+    "prompt": "Single-year calendar ribbon with two highlighted windows labeled 推进窗 and 防守窗, small monthly ticks. Soft green and amber zones, Chinese labels, educational timing diagram, Linear style.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "流年主窗口怎么用"
+  },
+  {
+    "id": "PI-UPDATES-01",
+    "filename": "updates-message-types.jpg",
+    "prompt": "Three calm notification cards: 预测到期 报告升级 重要提醒. Linear inbox aesthetic, Chinese labels, soft paper, product education, not spammy marketing.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "消息与更新：该回看什么"
+  },
+  {
+    "id": "PI-FREE-PATH-01",
+    "filename": "free-path-tool-to-report.jpg",
+    "prompt": "Ascending three-step path: 免费工具快测, 完整结构报告, 顾问深聊. Soft paper stairs or cards, ink blue, Chinese labels, Linear conversion diagram without hard sell.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "免费路径：先测再深"
+  },
+  {
+    "id": "PI-ICON-CAT-CAREER",
+    "filename": "icon-tool-career.jpg",
+    "prompt": "Simple square product icon geometric briefcase, muted ink blue on soft paper, optional small Chinese 事业, Linear icon, no face.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "事业工具"
+  },
+  {
+    "id": "PI-ICON-CAT-WEALTH",
+    "filename": "icon-tool-wealth.jpg",
+    "prompt": "Simple square icon geometric ledger or coin outline, soft blue-green, paper, optional 财富, Linear, not luxury bling.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "财富工具"
+  },
+  {
+    "id": "PI-ICON-CAT-RELATION",
+    "filename": "icon-tool-relationship.jpg",
+    "prompt": "Simple square icon two linked geometric nodes, ink blue, paper, optional 关系, Linear, no faces.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "关系工具"
+  },
+  {
+    "id": "PI-ICON-CAT-HEALTH",
+    "filename": "icon-tool-health.jpg",
+    "prompt": "Simple square icon gentle waveform, soft green-blue, paper, optional 节律, Linear, not medical red cross spam.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "节律工具"
+  },
+  {
+    "id": "PI-ICON-CAT-MIGRATE",
+    "filename": "icon-tool-migration.jpg",
+    "prompt": "Simple square icon map pin with small arc, ink blue, paper, optional 迁移, Linear product icon.",
+    "aspectRatio": "1:1",
+    "complexity": "simple",
+    "ready": true,
+    "title": "迁移工具"
   }
 ]

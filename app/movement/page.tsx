@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import MarketingMovementPanel from '@/components/marketing-movement-panel';
 import SiteLiveAtmosphere from '@/components/site-live-atmosphere';
@@ -38,6 +39,7 @@ export default function MovementPage() {
         </div>
 
         <SiteLiveAtmosphere initialStats={stats} compact />
+        <PageIllustrationStrip surface="movement/hub" title="立场示意" compact limit={1} />
         <MarketingMovementPanel />
       </div>
     </AppPage>

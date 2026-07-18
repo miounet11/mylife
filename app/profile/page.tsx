@@ -20,6 +20,7 @@ import ResultCtaLink from '@/components/result-cta-link';
 import RetentionResumePanel from '@/components/retention-resume-panel';
 import ProfileSettingsSummaryBanner from '@/components/profile-settings-summary-banner';
 import ProgressiveProfileHub from '@/components/profile/progressive-profile-hub';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import ResumeBar from '@/components/resume-bar';
 import DimensionRecommendations from '@/components/dimensions/dimension-recommendations';
 import ToolHistoryPanel from '@/components/tool-history-panel';
@@ -309,6 +310,10 @@ export default function ProfilePage() {
       />
 
       {resumeTarget ? <ResumeBar target={resumeTarget} surface="profile" /> : null}
+
+      <div className="mb-4">
+        <PageIllustrationStrip surface="profile/hub" title="资料怎么补" compact limit={1} />
+      </div>
 
       <PortalLayout
         main={

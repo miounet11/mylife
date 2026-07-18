@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import DimensionsShowcase from '@/components/dimensions/dimensions-showcase';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -64,6 +65,13 @@ export default async function ToolCategoryPage({ params }: PageProps) {
               </Link>
             </>
           }
+        />
+
+        <PageIllustrationStrip
+          surface={`tools/category/${key}`}
+          title="本类图解"
+          compact
+          limit={1}
         />
 
         <DimensionsShowcase
