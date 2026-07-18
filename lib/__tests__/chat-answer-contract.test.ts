@@ -37,6 +37,25 @@ describe('chat-answer-contract', () => {
     assert.match(p.verify, /面试反馈/);
   });
 
+  it('parses numbered headings used by some models', () => {
+    const answer = `
+**1. 判断依据**
+未绑定报告，按通用框架。
+**2. 当前结论**
+宜先稳住。
+**阶段动作**
+- 今天：列清单
+- 7 天内：验证一项
+- 30 天内：复盘
+**风险提醒** 勿冲动下注。
+**验证点** 两周内现金流是否稳住。
+`;
+    const p = parseChatAnswerStructure(answer);
+    assert.match(p.basis, /未绑定|通用/);
+    assert.match(p.conclusion, /稳住/);
+    assert.ok(scoreChatAnswerStructure(p).isRich);
+  });
+
   it('builds verify event fields', () => {
     const fields = buildVerifyEventFields({
       question: '我该不该跳槽',

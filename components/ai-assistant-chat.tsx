@@ -968,6 +968,20 @@ export default function AIAssistantChat() {
 
           {showOpeningChrome && !context?.report ? (
             <div className="space-y-2">
+              <div className="rounded-[3px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2 text-[12px] leading-[1.5] text-[#7a5b00]">
+                尚未绑定报告，回答只给通用决策框架，不会编造日主/用神。
+                <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+                  <a href="/analyze" className="font-semibold text-[#3b5998] hover:underline">
+                    去排盘 →
+                  </a>
+                  <a href="/teachers" className="font-semibold text-[#3b5998] hover:underline">
+                    选老师开场
+                  </a>
+                  <a href="/history" className="text-[#8a8d91] hover:underline">
+                    历史报告
+                  </a>
+                </div>
+              </div>
               {!hideOpeningFirstMes ? (
                 <ChatOpeningPanel
                   opening={buildTeacherOpening({

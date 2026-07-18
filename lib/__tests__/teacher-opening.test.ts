@@ -48,10 +48,23 @@ describe('teacher-opening', () => {
     }
   });
 
-  it('swaps alternate greetings', () => {
-    const a = buildTeacherOpening({ teacherId: 'overview', greetingIndex: 0 });
-    const b = buildTeacherOpening({ teacherId: 'overview', greetingIndex: 1 });
+  it('swaps alternate greetings when report bound', () => {
+    const slots = slotsFromChatReport({
+      dayMaster: '甲',
+      pattern: '正格',
+      currentDaYun: '壬寅',
+    });
+    const a = buildTeacherOpening({ teacherId: 'overview', greetingIndex: 0, slots });
+    const b = buildTeacherOpening({ teacherId: 'overview', greetingIndex: 1, slots });
     assert.ok(a.greetingCount >= 2);
     assert.notEqual(a.firstMes, b.firstMes);
+  });
+
+  it('unbound opening avoids fake day master and points to analyze', () => {
+    const view = buildTeacherOpening({ teacherId: 'wealth' });
+    assert.equal(view.hasReportSlots, false);
+    assert.ok(view.firstMes.includes('不会编造') || view.firstMes.includes('未绑定') || view.firstMes.includes('没有绑定'));
+    assert.ok(!view.firstMes.includes('日主—'));
+    assert.ok(view.starters.some((s) => /报告|排盘|通用/.test(s)));
   });
 });
