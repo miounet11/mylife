@@ -115,15 +115,46 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
         />
       </div>
 
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Stat
+          label="PV 噪声率"
+          value={snap.chatVolume.pageNoiseRate != null ? snap.chatVolume.pageNoiseRate : 0}
+          helper={`engaged ${snap.chatVolume.pageViewedEngaged} / raw ${snap.chatVolume.pageViewed}`}
+          suffix={snap.chatVolume.pageNoiseRate != null ? '%' : undefined}
+        />
+        <Stat
+          label="开场→发消息（粗）"
+          value={
+            snap.openingFunnel.messageFromOpeningRate != null
+              ? snap.openingFunnel.messageFromOpeningRate
+              : 0
+          }
+          helper="同窗内 message_sent 相对 opening_shown（非 session join）"
+          suffix={snap.openingFunnel.messageFromOpeningRate != null ? '%' : undefined}
+        />
+        <Stat
+          label="Engaged PV"
+          value={snap.chatVolume.pageViewedEngaged}
+          helper="session 同时有 opening/starter/message 等客户端事件"
+        />
+      </div>
+
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
         <Card title="开场漏斗">
           <Row k="chat_opening_shown" v={snap.openingFunnel.shown} />
           <Row k="chat_starter_clicked" v={snap.openingFunnel.starterClicked} />
           <Row k="chat_topic_chip" v={snap.openingFunnel.topicChip} />
           <Row k="chat_greeting_swiped" v={snap.openingFunnel.greetingSwiped} />
+          {snap.openingFunnel.starterRate != null ? (
+            <Row k="starter_rate" v={snap.openingFunnel.starterRate} suffix="%" />
+          ) : null}
         </Card>
-        <Card title="对话量">
-          <Row k="chat_page_viewed" v={snap.chatVolume.pageViewed} />
+        <Card title="对话量（含噪声过滤）">
+          <Row k="chat_page_viewed_raw" v={snap.chatVolume.pageViewed} />
+          <Row k="chat_page_viewed_engaged" v={snap.chatVolume.pageViewedEngaged} />
+          {snap.chatVolume.pageNoiseRate != null ? (
+            <Row k="page_noise_rate" v={snap.chatVolume.pageNoiseRate} suffix="%" />
+          ) : null}
           <Row k="chat_message_sent" v={snap.chatVolume.messageSent} />
           <Row k="chat_completed" v={snap.chatVolume.completed} />
         </Card>
@@ -167,10 +198,31 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
         </Card>
       </div>
 
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <Card title="开场来源 Top">
+          {snap.topOpeningSources.length === 0 ? (
+            <p className="text-[12px] text-[#94a3b8]">暂无 opening source</p>
+          ) : (
+            snap.topOpeningSources.map((row) => (
+              <Row key={`o-${row.source}`} k={row.source} v={row.count} />
+            ))
+          )}
+        </Card>
+        <Card title="Starter 来源 Top">
+          {snap.topStarterSources.length === 0 ? (
+            <p className="text-[12px] text-[#94a3b8]">暂无 starter source</p>
+          ) : (
+            snap.topStarterSources.map((row) => (
+              <Row key={`s-${row.source}`} k={row.source} v={row.count} />
+            ))
+          )}
+        </Card>
+      </div>
+
       <p className="mt-6 text-[11px] leading-5 text-[#94a3b8]">
         目标：开场→starter 转化与「有用」占比上升；结构丰富率上升、thin 与 EFC 告警趋近 0。
-        数据来自 analytics_events（含 chat_structure_scored.repaired）。时段切换：
-        24h / 72h / 7d。
+        raw page_viewed 常含爬虫/外链预抓；看 engaged PV 与 opening_shown 更可靠。
+        数据来自 analytics_events。时段：24h / 72h / 7d。
       </p>
     </AppPage>
   );
