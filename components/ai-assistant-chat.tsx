@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowDown, Send, Sparkles } from 'lucide-react';
+import { ArrowDown, Send } from 'lucide-react';
 import {
   type ChatContextEvent,
   type ChatCorrectionPrompt,
@@ -25,7 +25,6 @@ import {
   buildPreviousUserQuestionMap,
   buildSyntheticOpeningMessage,
   buildSyntheticOpeningMessageId,
-  defaultWorldYiQuestions,
   findLatestScopedTacitContext,
   getIntentPreset,
   hasRealChatMessages,
@@ -33,9 +32,6 @@ import {
   isSyntheticOpeningMessageId,
   toMaterialPayload,
 } from '@/components/ai-assistant-chat/chat-helpers';
-import {
-  QuickQuestionButton,
-} from '@/components/ai-assistant-chat/chat-buttons';
 import { ChatOpeningPanel } from '@/components/ai-assistant-chat/chat-opening-panel';
 import { ChatMidRail } from '@/components/ai-assistant-chat/chat-mid-rail';
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
@@ -113,6 +109,8 @@ export default function AIAssistantChat() {
   const [error, setError] = useState('');
   const [openingTeacherId, setOpeningTeacherId] = useState('');
   const [greetingIndex, setGreetingIndex] = useState(0);
+  /** Opening empty: keep composer minimal until user expands tools. */
+  const [showOpeningTools, setShowOpeningTools] = useState(false);
   const openingShownKeyRef = useRef('');
   /** Prevents double-inject of client-only first_mes for the same teacher/report key. */
   const openingInjectedKeyRef = useRef('');
@@ -882,12 +880,6 @@ export default function AIAssistantChat() {
     }
   };
 
-  const quickQuestions = context?.suggestedPrompts?.length
-    ? context.suggestedPrompts
-    : defaultWorldYiQuestions;
-  const visibleQuickQuestions = intentPreset
-    ? Array.from(new Set([...intentPreset.questions, ...quickQuestions])).slice(0, 4)
-    : quickQuestions;
   const hasRealMessages = hasRealChatMessages(messages);
   const hasSyntheticOpening = messages.some((m) => isSyntheticOpeningMessage(m));
   /** Chips + starters while timeline has no real turns (empty or opening-only). */
@@ -905,8 +897,9 @@ export default function AIAssistantChat() {
           ref={messagesScrollerRef}
           className="h-full overflow-y-auto overscroll-contain px-3 py-2.5 md:px-4 md:py-3"
         >
-          <div className="mx-auto flex max-w-2xl flex-col gap-2">
-          {context && (
+          <div className="mx-auto flex w-full max-w-2xl flex-col gap-2 pb-2">
+          {/* Opening stage: skip heavy context card (duplicates first_mes / starters) */}
+          {context && !showOpeningChrome ? (
             <ContextCard
               context={context}
               intentPreset={intentPreset}
@@ -916,7 +909,7 @@ export default function AIAssistantChat() {
               savingEventKey={savingEventKey}
               savedEventKeys={savedEventKeys}
             />
-          )}
+          ) : null}
 
           {error && (
             <div className="rounded-[3px] border border-[#bd4c42] bg-[#fdecea] px-3 py-2 text-[13px] text-[#bd4c42]">
@@ -1020,24 +1013,6 @@ export default function AIAssistantChat() {
                   hideFirstMes={false}
                 />
               ) : null}
-              {visibleQuickQuestions.length > 0 && !hasSyntheticOpening ? (
-                <div className="space-y-2 rounded-[3px] border border-[#dddfe2] bg-white p-3">
-                  <div className="inline-flex items-center gap-1 text-xs font-bold uppercase tracking-[0.12em] text-[#3b5998]">
-                    <Sparkles className="h-3 w-3" />
-                    更多追问
-                  </div>
-                  <div className="grid gap-1.5 md:grid-cols-2">
-                    {visibleQuickQuestions.slice(0, 4).map((question) => (
-                      <QuickQuestionButton
-                        key={question}
-                        question={question}
-                        onClick={() => handlePromptClick(question)}
-                        disabled={isTyping || loadingHistory}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           ) : null}
 
@@ -1116,8 +1091,11 @@ export default function AIAssistantChat() {
         ) : null}
       </div>
 
-      {/* 底部输入：固定在壳内，不挤开消息区 */}
-      <div className="shrink-0 border-t border-[#e4e6eb] bg-white px-3 py-2 md:px-4 md:py-2.5">
+      {/* 底部输入：开场态极简，对话中再展开资料/默会 */}
+      <div
+        className="shrink-0 border-t border-[#e4e6eb] bg-white px-3 pt-2 md:px-4"
+        style={{ paddingBottom: 'max(0.5rem, env(safe-area-inset-bottom))' }}
+      >
         <form
           onSubmit={(event) => {
             event.preventDefault();
@@ -1125,47 +1103,61 @@ export default function AIAssistantChat() {
           }}
           className="mx-auto max-w-2xl space-y-1.5"
         >
-          <MaterialEvidenceComposer
-            materials={materials}
-            selectedKind={selectedMaterialKind}
-            note={materialNote}
-            isAdding={isAddingMaterial}
-            error={materialError}
-            disabled={isTyping || loadingHistory}
-            fileInputRef={materialFileInputRef}
-            onKindChange={(kind) => {
-              setSelectedMaterialKind(kind);
-              setMaterialError('');
-            }}
-            onNoteChange={setMaterialNote}
-            onFileChange={handleMaterialFileChange}
-            onUploadClick={() => materialFileInputRef.current?.click()}
-            onAddText={handleAddTextMaterial}
-            onRemove={handleRemoveMaterial}
-          />
+          {showOpeningChrome && !showOpeningTools ? (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowOpeningTools(true)}
+                className="text-[11px] font-medium text-[#8a8d91] underline-offset-2 hover:text-[#3b5998] hover:underline"
+              >
+                添加资料 / 状态
+              </button>
+            </div>
+          ) : (
+            <>
+              <MaterialEvidenceComposer
+                materials={materials}
+                selectedKind={selectedMaterialKind}
+                note={materialNote}
+                isAdding={isAddingMaterial}
+                error={materialError}
+                disabled={isTyping || loadingHistory}
+                fileInputRef={materialFileInputRef}
+                onKindChange={(kind) => {
+                  setSelectedMaterialKind(kind);
+                  setMaterialError('');
+                }}
+                onNoteChange={setMaterialNote}
+                onFileChange={handleMaterialFileChange}
+                onUploadClick={() => materialFileInputRef.current?.click()}
+                onAddText={handleAddTextMaterial}
+                onRemove={handleRemoveMaterial}
+              />
 
-          <TacitKnowledgeComposer
-            value={tacitContext}
-            onChange={setTacitContext}
-            title="说不清也可以先点出来"
-            description=""
-            collapsedLabel="补充这一轮状态"
-            emptyHint=""
-            summaryLabel="本轮默会信息："
-            expanded={showTacitComposer}
-            onExpandedChange={setShowTacitComposer}
-            onReset={() => setTacitContext(createEmptyTacitKnowledgeInput())}
-            variant="chat"
-            restoreLabel="沿用上一轮状态"
-            onRestore={() => {
-              setTacitContext(cloneTacitKnowledgeInput(restoredTacitContext));
-              setShowTacitComposer(hasTacitKnowledgeInput(restoredTacitContext));
-            }}
-            canRestore={canRestoreTacit}
-          />
+              <TacitKnowledgeComposer
+                value={tacitContext}
+                onChange={setTacitContext}
+                title="说不清也可以先点出来"
+                description=""
+                collapsedLabel="补充这一轮状态"
+                emptyHint=""
+                summaryLabel="本轮默会信息："
+                expanded={showTacitComposer}
+                onExpandedChange={setShowTacitComposer}
+                onReset={() => setTacitContext(createEmptyTacitKnowledgeInput())}
+                variant="chat"
+                restoreLabel="沿用上一轮状态"
+                onRestore={() => {
+                  setTacitContext(cloneTacitKnowledgeInput(restoredTacitContext));
+                  setShowTacitComposer(hasTacitKnowledgeInput(restoredTacitContext));
+                }}
+                canRestore={canRestoreTacit}
+              />
+            </>
+          )}
 
           <div className="flex items-end gap-2">
-            <div className="flex-1">
+            <div className="min-w-0 flex-1">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -1178,8 +1170,13 @@ export default function AIAssistantChat() {
                     }
                   }
                 }}
-                placeholder={intentPreset?.placeholder || '输入你最关心的一个问题，例如"结合 2026.08 这个窗口，我该不该推进跳槽？"'}
-                rows={2}
+                placeholder={
+                  showOpeningChrome
+                    ? '或直接输入问题…'
+                    : intentPreset?.placeholder ||
+                      '输入你最关心的一个问题，例如"结合 2026.08 这个窗口，我该不该推进跳槽？"'
+                }
+                rows={showOpeningChrome ? 1 : 2}
                 className="fb-input min-h-[40px] w-full resize-none px-3 py-2 text-[14px]"
                 disabled={isTyping}
               />
@@ -1195,7 +1192,7 @@ export default function AIAssistantChat() {
               type="submit"
               disabled={!input.trim() || isTyping || isAddingMaterial}
               aria-label="发送"
-              className="fb-btn fb-btn-primary inline-flex h-10 items-center gap-1.5 px-4 text-[14px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
+              className="fb-btn fb-btn-primary inline-flex h-10 shrink-0 items-center gap-1.5 px-4 text-[14px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-3.5 w-3.5" />
               发送
