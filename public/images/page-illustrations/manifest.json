@@ -1,17 +1,57 @@
 {
-  "generatedAt": "2026-07-18",
-  "backend": "imagine",
+  "generatedAt": "2026-07-18T12:21:20Z",
+  "backend": "ttqq.inping.com/gpt-image-2",
   "count": 10,
   "items": [
-    { "id": "PI-HOME-01", "src": "/images/page-illustrations/home-path-from-birth-to-action.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-REPORT-READ-01", "src": "/images/page-illustrations/report-first-reading-path.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-REPORT-TIMING-01", "src": "/images/page-illustrations/report-dayun-liunian-windows.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-REPORT-DECISION-01", "src": "/images/page-illustrations/decision-loop-basis-action-verify.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-YONGSHEN-01", "src": "/images/page-illustrations/structure-daymaster-yongshen.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-CHAT-OPENING-01", "src": "/images/page-illustrations/chat-consultant-opening.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-EVENTS-01", "src": "/images/page-illustrations/events-validation-loop.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-BOUNDARY-01", "src": "/images/page-illustrations/boundary-not-fatalism.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-TOOLS-01", "src": "/images/page-illustrations/tools-problem-breakdown.jpg", "w": 1600, "h": 900 },
-    { "id": "PI-TEACHERS-01", "src": "/images/page-illustrations/teachers-roles-map.jpg", "w": 1600, "h": 900 }
+    {
+      "src": "/images/page-illustrations/boundary-not-fatalism.jpg",
+      "file": "boundary-not-fatalism.jpg",
+      "bytes": 374905
+    },
+    {
+      "src": "/images/page-illustrations/chat-consultant-opening.jpg",
+      "file": "chat-consultant-opening.jpg",
+      "bytes": 264285
+    },
+    {
+      "src": "/images/page-illustrations/decision-loop-basis-action-verify.jpg",
+      "file": "decision-loop-basis-action-verify.jpg",
+      "bytes": 301670
+    },
+    {
+      "src": "/images/page-illustrations/events-validation-loop.jpg",
+      "file": "events-validation-loop.jpg",
+      "bytes": 268320
+    },
+    {
+      "src": "/images/page-illustrations/home-path-from-birth-to-action.jpg",
+      "file": "home-path-from-birth-to-action.jpg",
+      "bytes": 264335
+    },
+    {
+      "src": "/images/page-illustrations/report-dayun-liunian-windows.jpg",
+      "file": "report-dayun-liunian-windows.jpg",
+      "bytes": 358284
+    },
+    {
+      "src": "/images/page-illustrations/report-first-reading-path.jpg",
+      "file": "report-first-reading-path.jpg",
+      "bytes": 412352
+    },
+    {
+      "src": "/images/page-illustrations/structure-daymaster-yongshen.jpg",
+      "file": "structure-daymaster-yongshen.jpg",
+      "bytes": 308597
+    },
+    {
+      "src": "/images/page-illustrations/teachers-roles-map.jpg",
+      "file": "teachers-roles-map.jpg",
+      "bytes": 250127
+    },
+    {
+      "src": "/images/page-illustrations/tools-problem-breakdown.jpg",
+      "file": "tools-problem-breakdown.jpg",
+      "bytes": 301469
+    }
   ]
 }
