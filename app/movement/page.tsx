@@ -4,6 +4,8 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import MarketingMovementPanel from '@/components/marketing-movement-panel';
 import SiteLiveAtmosphere from '@/components/site-live-atmosphere';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { getSystemCapabilityStats } from '@/lib/system-capability-stats';
 import { buildPageMetadata } from '@/lib/seo';
 import { MOVEMENT_TAGLINE } from '@/lib/marketing-movement';
@@ -16,7 +18,14 @@ export const metadata: Metadata = buildPageMetadata({
   keywords: ['人生K线', '开源', '反恐吓算命', '结构判断', MOVEMENT_TAGLINE],
 });
 
-export default function MovementPage() {
+export default async function MovementPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const stats = getSystemCapabilityStats();
 
   return (
@@ -39,7 +48,17 @@ export default function MovementPage() {
         </div>
 
         <SiteLiveAtmosphere initialStats={stats} compact />
-        <PageIllustrationStrip surface="movement/hub" title="立场示意" compact limit={1} />
+        <PageIllustrationStrip
+          surface="movement/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '立场示意',
+            'zh-Hant': '立場示意',
+            en: 'Our stance',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+        />
         <MarketingMovementPanel />
       </div>
     </AppPage>

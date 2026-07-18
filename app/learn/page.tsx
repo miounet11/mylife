@@ -10,6 +10,8 @@ import {
 } from '@/components/learning-track-map';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { getLearningTracksOverview } from '@/lib/learning-track-stats';
 
 export const metadata = {
@@ -18,7 +20,14 @@ export const metadata = {
   alternates: { canonical: '/learn' },
 };
 
-export default function LearnPage() {
+export default async function LearnPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const overview = getLearningTracksOverview();
 
   return (
@@ -39,7 +48,18 @@ export default function LearnPage() {
           </div>
         </header>
 
-        <PageIllustrationStrip surface="learn/hub" title="专题路径" compact limit={1} />
+        <PageIllustrationStrip
+          surface="learn/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '专题路径',
+            'zh-Hant': '專題路徑',
+            en: 'Learning tracks',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
 
         <LearningTrackMapGrid overview={overview} />
 

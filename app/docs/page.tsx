@@ -5,6 +5,8 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { DOC_ENTRIES } from '@/lib/portal-nav';
 
 export const metadata: Metadata = {
@@ -13,7 +15,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/docs' },
 };
 
-export default function DocsPage() {
+export default async function DocsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始判断', compact: true }}>
       <AnalyticsPageView
@@ -37,7 +46,18 @@ export default function DocsPage() {
             </>
           }
         />
-        <PageIllustrationStrip surface="docs/hub" title="方法路径" compact limit={1} />
+        <PageIllustrationStrip
+          surface="docs/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '方法路径',
+            'zh-Hant': '方法路徑',
+            en: 'Method path',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">推荐阅读</h2>
           <EntryLinkGrid items={DOC_ENTRIES} />

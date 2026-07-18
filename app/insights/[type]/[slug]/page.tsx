@@ -64,10 +64,16 @@ export default async function InsightArticlePage({
   const sections = normalizeSections(
     (article as { sections?: unknown }).sections as never,
   );
-  // Match GEO city strip: world-yi-city-shanghai → geo/shanghai
-  const cityKey = slug.replace(/^world-yi-city-/, '');
+  // Match GEO city strip: world-yi-city-shanghai | shanghai → geo/shanghai
+  const cityKey = slug
+    .replace(/^world-yi-city-/, '')
+    .replace(/^city-/, '');
   const geoSurface =
-    type === 'city' ? `geo/${cityKey}` : `insights/city/${slug}`;
+    type === 'city' || /city|shanghai|shenzhen|beijing|london|sydney|tokyo|york|angeles|singapore|hong-kong|vancouver|toronto/i.test(
+      slug,
+    )
+      ? `geo/${cityKey}`
+      : `insights/city/${slug}`;
   const trackKey = articleTrackKey(article as never);
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
   const crosslinks = resolveContentCrosslinks({

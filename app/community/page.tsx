@@ -4,6 +4,8 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { COMMUNITY_CATEGORIES } from '@/lib/portal-nav';
 
 export const metadata: Metadata = {
@@ -12,7 +14,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/community' },
 };
 
-export default function CommunityPage() {
+export default async function CommunityPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始判断', compact: true }}>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
@@ -34,7 +43,17 @@ export default function CommunityPage() {
             </>
           }
         />
-        <PageIllustrationStrip surface="community/hub" title="讨论结构" compact limit={1} />
+        <PageIllustrationStrip
+          surface="community/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '讨论结构',
+            'zh-Hant': '討論結構',
+            en: 'Structured discussion',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+        />
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">板块</h2>
           <EntryLinkGrid items={COMMUNITY_CATEGORIES} />

@@ -456,6 +456,39 @@ function allScoredCatalogs(): CatalogEntry[] {
   return [...pageIllustrationsAsCatalog(), ...CONTENT_ILLUSTRATION_CATALOG];
 }
 
+/** Map city names / slugs → page-illustration GEO ids (zh-CN base). */
+const GEO_CITY_MATCHERS: Array<{ id: string; needles: string[] }> = [
+  { id: 'PI-GEO-SHANGHAI', needles: ['shanghai', '上海'] },
+  { id: 'PI-GEO-SHENZHEN', needles: ['shenzhen', '深圳'] },
+  { id: 'PI-GEO-BEIJING', needles: ['beijing', '北京'] },
+  { id: 'PI-GEO-NEW_YORK', needles: ['new-york', 'new york', '纽约', '紐約'] },
+  { id: 'PI-GEO-SYDNEY', needles: ['sydney', '悉尼', '雪梨'] },
+  { id: 'PI-GEO-LONDON', needles: ['london', '伦敦', '倫敦'] },
+  { id: 'PI-GEO-TOKYO', needles: ['tokyo', '东京', '東京'] },
+  { id: 'PI-GEO-LOS_ANGELES', needles: ['los-angeles', 'los angeles', '洛杉矶', '洛杉磯'] },
+  { id: 'PI-GEO-SINGAPORE', needles: ['singapore', '新加坡'] },
+  { id: 'PI-GEO-HONG_KONG', needles: ['hong-kong', 'hong kong', '香港'] },
+  { id: 'PI-GEO-VANCOUVER', needles: ['vancouver', '温哥华', '溫哥華'] },
+  { id: 'PI-GEO-TORONTO', needles: ['toronto', '多伦多', '多倫多'] },
+];
+
+function pickGeoCityFigure(
+  entry: ContentIllustrationSignal,
+  afterSectionIndex: number,
+): ContentFigure | null {
+  const hay = normalizeText(
+    [entry.slug || '', entry.title || '', entry.excerpt || '', entry.category || ''].join(' '),
+  );
+  if (!hay) return null;
+  for (const m of GEO_CITY_MATCHERS) {
+    if (!m.needles.some((n) => hay.includes(normalizeText(n)))) continue;
+    const catalog = pageIllustrationsAsCatalog().find((item) => item.id === m.id);
+    if (!catalog || !catalog.src) continue;
+    return figureFromCatalog(catalog, 'cover', afterSectionIndex, catalog.title);
+  }
+  return null;
+}
+
 function figureFromDiagram(
   def: (typeof DIAGRAM_DEFS)[number],
   afterSectionIndex: number,
@@ -512,6 +545,18 @@ export function resolveContentIllustrations(
     selected.push(fig);
     usedIds.add(fig.id);
     usedSrc.add(fig.src);
+  }
+
+  // GEO city: inject matching city diagram first (seed diaspora/domestic hubs)
+  const cityFig = pickGeoCityFigure(entry, anchors[0] ?? -1);
+  if (cityFig && !usedIds.has(cityFig.id) && !usedSrc.has(cityFig.src || '')) {
+    selected.unshift(cityFig);
+    usedIds.add(cityFig.id);
+    if (cityFig.src) usedSrc.add(cityFig.src);
+    while (selected.length > target) {
+      const dropped = selected.pop();
+      if (dropped) usedIds.delete(dropped.id);
+    }
   }
 
   // Keyword scored catalog (page-illustrations boosted via preferBoost)

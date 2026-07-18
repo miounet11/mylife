@@ -11,6 +11,8 @@ import {
 } from '@/lib/teachers';
 import { teacherIdFromFollowupIntent } from '@/lib/chat-entry';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 
 export const metadata: Metadata = {
   title: '请老师 | 人生K线',
@@ -33,6 +35,7 @@ interface TeachersPageProps {
     reportId?: string;
     source?: string;
     highlight?: string;
+    lang?: string;
   }>;
 }
 
@@ -41,6 +44,8 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
   const intent = `${sp.intent || ''}`.trim();
   const reportId = `${sp.reportId || ''}`.trim() || undefined;
   const source = `${sp.source || 'teachers_gallery'}`.trim();
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const highlightId = (`${sp.highlight || ''}`.trim() ||
     teacherIdFromFollowupIntent(intent)) as TeacherId | string;
   const recommended = getTeacher(highlightId);
@@ -99,7 +104,18 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
           </div>
         </header>
 
-        <PageIllustrationStrip surface="teachers/hub" title="顾问分工" compact limit={1} />
+        <PageIllustrationStrip
+          surface="teachers/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '顾问分工',
+            'zh-Hant': '顧問分工',
+            en: 'Advisor roles',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
 
         {/* Intent → recommended consultant opening */}
         <section className="border-y border-[color:var(--hairline)] py-3.5">
