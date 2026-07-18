@@ -3,6 +3,7 @@ import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import DimensionGrid from '@/components/dimensions/dimension-grid';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import DailyWindowStrip from '@/components/daily/daily-window-strip';
 import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -144,6 +145,10 @@ export default async function DimensionsPage({
             。
           </p>
         ) : null}
+
+        <DailyWindowStrip compact source="dimensions_daily_strip" />
+
+
 
         <PageIllustrationStrip
           surface="dimensions/hub"

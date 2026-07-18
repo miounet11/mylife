@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import { Check, Copy, Share2 } from 'lucide-react';
+import { DownloadShareImageButton } from '@/components/share/download-share-image';
 
 export type ConclusionShareCardProps = {
   /** Short brand line */
@@ -15,6 +16,8 @@ export type ConclusionShareCardProps = {
   /** Compact = single row actions under card */
   compact?: boolean;
   className?: string;
+  /** Show「生成分享图」action (default true) */
+  showImageShare?: boolean;
 };
 
 async function copyText(text: string): Promise<boolean> {
@@ -50,6 +53,7 @@ export function ConclusionShareCard({
   url,
   compact = false,
   className = '',
+  showImageShare = true,
 }: ConclusionShareCardProps) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
@@ -70,6 +74,11 @@ export function ConclusionShareCard({
     const parts = [eyebrow, title, ...lines.filter(Boolean), pageUrl].filter(Boolean);
     return parts.join('\n');
   }, [eyebrow, title, lines, pageUrl]);
+
+  const imageLines = useMemo(
+    () => lines.filter(Boolean).slice(0, 3),
+    [lines],
+  );
 
   const onCopy = async () => {
     const ok = await copyText(shareBody);
@@ -157,6 +166,16 @@ export function ConclusionShareCard({
             </>
           )}
         </button>
+        {showImageShare ? (
+          <DownloadShareImageButton
+            brand="人生K线"
+            title={title}
+            lines={imageLines}
+            footerLeft="结构参考"
+            footerRight="life-kline.com"
+            pageUrl={pageUrl}
+          />
+        ) : null}
       </div>
     </div>
   );

@@ -42,6 +42,7 @@ import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
 import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
+import { memoryInputFromChatContext } from '@/lib/chat/memory-narrative';
 import {
   buildTeacherOpening,
   slotsFromChatReport,
@@ -203,6 +204,8 @@ export default function AIAssistantChat() {
       : openingWindowHint
         ? { windowHint: openingWindowHint }
         : undefined,
+    // Revisit memory: event validation today; prediction stats when chat API provides them.
+    memory: memoryInputFromChatContext(context),
   });
   const scopePayload = {
     reportId: reportId || context?.report?.id || undefined,

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import DailyWindowStrip from '@/components/daily/daily-window-strip';
 import { AppPage } from '@/components/layout/app-page';
 import MarketingMovementPanel from '@/components/marketing-movement-panel';
 import SiteLiveAtmosphere from '@/components/site-live-atmosphere';
@@ -47,6 +48,7 @@ export default async function MovementPage({
           </Link>
         </div>
 
+        <DailyWindowStrip compact source="movement_daily_strip" />
         <SiteLiveAtmosphere initialStats={stats} compact />
         <PageIllustrationStrip
           surface="movement/hub"

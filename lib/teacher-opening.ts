@@ -4,6 +4,10 @@
  */
 
 import {
+  buildMemoryNarrative,
+  type MemoryNarrativeInput,
+} from '@/lib/chat/memory-narrative';
+import {
   getTeacher,
   listReportTeachers,
   type TeacherDefinition,
@@ -35,6 +39,11 @@ export type TeacherOpeningView = {
   greetingIndex: number;
   greetingCount: number;
   hasReportSlots: boolean;
+  /**
+   * Archive/revisit memory line when real validation stats exist.
+   * Surfaced as a blue chip in opening chrome — never invents numbers.
+   */
+  memoryLine?: string | null;
 };
 
 function asList(value: string[] | string | null | undefined): string[] {
@@ -125,6 +134,11 @@ export function buildTeacherOpening(params: {
   slots?: TeacherOpeningSlots | null;
   greetingIndex?: number;
   chipTeacherId?: string | null;
+  /**
+   * Optional revisit / archive stats. Safe defaults → no line when empty.
+   * Prefer memoryInputFromChatContext(context) from lib/chat/memory-narrative.
+   */
+  memory?: MemoryNarrativeInput | null;
 }): TeacherOpeningView {
   const resolvedId = `${params.chipTeacherId || params.teacherId || 'overview'}`.trim();
   const teacher = getTeacher(resolvedId);
@@ -152,7 +166,10 @@ export function buildTeacherOpening(params: {
         '没有命盘时，怎么设一个 7 天可验证点？',
       ];
 
+  const memoryLine = buildMemoryNarrative(params.memory || {}) || null;
+
   // Unbound: short, no fake 日主— ; banner owns 去排盘 CTA
+  // memoryLine stays separate (blue chip) so we don't double-print stats in firstMes.
   const firstMes = hasReportSlots
     ? fillTeacherTemplate(template, slots)
     : `我是${teacher.name}。还没绑定报告，不会编造日主/用神。\n个性化节奏请先去排盘；若只想先理清思路，可点下面一句用通用框架开聊。`;
@@ -167,6 +184,7 @@ export function buildTeacherOpening(params: {
     greetingIndex,
     greetingCount: hasReportSlots ? greetings.length : 1,
     hasReportSlots,
+    memoryLine,
   };
 }
 

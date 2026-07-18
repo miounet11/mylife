@@ -67,7 +67,7 @@ export const EMAIL_SUBSCRIPTION_PREFERENCE_GROUPS: EmailSubscriptionPreferenceGr
       {
         tag: 'timing:daily',
         label: '日常运势细节',
-        description: '每天一条：今天适合做什么、需要避开什么。',
+        description: '每天一条轻提醒：节奏提示与可验证动作，不恐吓、不替代完整报告。',
         defaultEnabled: true,
       },
       {

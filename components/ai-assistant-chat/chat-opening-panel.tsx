@@ -27,8 +27,16 @@ export function ChatOpeningPanel({
   onSwapGreeting: () => void;
   hideFirstMes?: boolean;
 }) {
-  const { teacher, firstMes, starters, chips, greetingIndex, greetingCount, hasReportSlots } =
-    opening;
+  const {
+    teacher,
+    firstMes,
+    starters,
+    chips,
+    greetingIndex,
+    greetingCount,
+    hasReportSlots,
+    memoryLine,
+  } = opening;
 
   const [pulseFirst, setPulseFirst] = useState(true);
   useEffect(() => {
@@ -76,6 +84,19 @@ export function ChatOpeningPanel({
             {teacher.name} · {teacher.tagline}
           </span>
           {greetingSwap}
+        </div>
+      ) : null}
+
+      {/* Archive/revisit memory — only when real stats produced a line */}
+      {memoryLine ? (
+        <div className="flex justify-start px-0.5">
+          <div
+            className="inline-flex max-w-[min(100%,28rem)] items-start gap-1.5 rounded-full border border-[#c5d9f7] bg-[#e7f3ff] px-2.5 py-1 text-[11px] leading-[1.4] text-[#3b5998]"
+            title="根据你的回访与事件记录校准，不编造命中率"
+          >
+            <span className="shrink-0 font-semibold">越聊越懂我</span>
+            <span className="min-w-0 break-words opacity-90">{memoryLine}</span>
+          </div>
         </div>
       ) : null}
 

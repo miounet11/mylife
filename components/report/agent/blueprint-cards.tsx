@@ -2,6 +2,7 @@
 
 import type { EngineGroundTruth } from '@/lib/agentic-report/types';
 import { SectionHeader } from '@/components/layout/section-header';
+import { ProBaziChartMount } from '@/components/report/pro-bazi-chart-mount';
 
 const QUALITY_LABEL: Record<string, string> = {
   excellent: '优',
@@ -10,51 +11,47 @@ const QUALITY_LABEL: Record<string, string> = {
   poor: '弱',
 };
 
+const STRENGTH_LABEL: Record<string, string> = {
+  strong: '身旺',
+  weak: '身弱',
+  balanced: '中和',
+  follow: '从格',
+};
+
 export default function ReportBlueprintCards({ engine }: { engine: EngineGroundTruth }) {
-  const { constitution, pillars, dayun } = engine;
+  const { constitution, dayun } = engine;
+  const strengthNote = STRENGTH_LABEL[constitution.strength] || constitution.strength;
 
   return (
     <section id="blueprint" className="fb-card scroll-mt-header p-4 md:p-6">
       <SectionHeader eyebrow="命盘" title="结构蓝图" description="四柱、用神与大运窗口的结构摘要。" />
 
-      <div className="mt-4 grid gap-2 sm:grid-cols-4">
-        {pillars.map((pillar) => (
-          <div
-            key={pillar.label}
-            className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5 text-center"
-          >
-            <div className="text-[11px] font-bold text-[color:var(--ink-4)]">{pillar.label}</div>
-            <div className="mt-1 font-serif text-[16px] font-black text-[color:var(--ink-1)]">{pillar.ganZhi}</div>
-            <div className="text-[10px] text-[color:var(--ink-4)]">{pillar.nayin}</div>
-          </div>
-        ))}
+      {/* PR A4: dense 四柱一屏 — stems/branches/十神/用神/大运 */}
+      <div className="mt-4">
+        <ProBaziChartMount
+          engine={engine}
+          className="border-0 bg-transparent p-0 md:p-0"
+        />
       </div>
 
-      <div className="mt-4 grid gap-2 text-[12px] sm:grid-cols-2">
-        <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-3 py-2.5">
-          <span className="text-[color:var(--ink-4)]">日主 · </span>
-          <span className="font-semibold text-[color:var(--ink-2)]">
-            {constitution.dayMaster}（{constitution.strength}）
-          </span>
+      {strengthNote || dayun.direction ? (
+        <div className="mt-3 flex flex-wrap gap-2 text-[12px]">
+          {strengthNote ? (
+            <span className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-2.5 py-1 text-[color:var(--ink-3)]">
+              强弱 · <span className="font-semibold text-[color:var(--ink-2)]">{strengthNote}</span>
+            </span>
+          ) : null}
+          {dayun.direction ? (
+            <span className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-2.5 py-1 text-[color:var(--ink-3)]">
+              大运方向 · <span className="font-semibold text-[color:var(--ink-2)]">{dayun.direction}</span>
+            </span>
+          ) : null}
         </div>
-        <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-3 py-2.5">
-          <span className="text-[color:var(--ink-4)]">格局 · </span>
-          <span className="font-semibold text-[color:var(--ink-2)]">{constitution.patternType}</span>
-        </div>
-        <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-3 py-2.5">
-          <span className="text-[color:var(--ink-4)]">用神 · </span>
-          <span className="font-semibold text-[color:var(--ink-2)]">
-            {constitution.yongShen.join('、') || '待定'}
-          </span>
-        </div>
-        <div className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] px-3 py-2.5">
-          <span className="text-[color:var(--ink-4)]">大运方向 · </span>
-          <span className="font-semibold text-[color:var(--ink-2)]">{dayun.direction}</span>
-        </div>
-      </div>
+      ) : null}
 
       {dayun.windows.length ? (
         <div className="mt-4 space-y-2">
+          <div className="text-[11px] font-medium text-[color:var(--ink-4)]">大运序列</div>
           {dayun.windows.slice(0, 5).map((window) => (
             <div
               key={`${window.ganZhi}-${window.startAge}`}
