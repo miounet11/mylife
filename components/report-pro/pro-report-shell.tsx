@@ -23,6 +23,7 @@ import ProRevisitStrip from '@/components/report-pro/pro-revisit-strip';
 import ProLearningPath from '@/components/report-pro/pro-learning-path';
 import TeacherPicker from '@/components/teachers/teacher-picker';
 import ReportConsultantCards from '@/components/report/report-consultant-cards';
+import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 
@@ -197,6 +198,12 @@ export default function ProReportShell({
         </ol>
       </section>
 
+      <ReportIllustrationCite
+        keys={['cover', 'reading-path']}
+        title="怎么读本报告"
+        limit={1}
+      />
+
       <ProDecisionSheet
         sheet={decisionSheet}
         reportId={reportId}
@@ -214,6 +221,12 @@ export default function ProReportShell({
 
       <ProNeedMap reportId={reportId} hehunHref={hehunHref} />
 
+      <ReportIllustrationCite
+        keys={['decision-loop']}
+        title="动作闭环"
+        limit={1}
+      />
+
       <ProActionBar action={view.nowAction} />
 
       <div id="pro-guide" className="scroll-mt-header">
@@ -229,7 +242,8 @@ export default function ProReportShell({
       </div>
 
       {/* 人生 K 线：引擎 klineData，放在命理总评之前 */}
-      <div id="pro-kline" className="scroll-mt-header">
+      <div id="pro-kline" className="scroll-mt-header space-y-3">
+        <ReportIllustrationCite keys={['dayun', 'timing']} title="节奏窗口" limit={1} />
         <ProKlineSection
           klineData={klineData}
           peak={view.klinePeak}
@@ -256,7 +270,8 @@ export default function ProReportShell({
         <ProOverviewCard overview={view.overview} />
       </div>
 
-      <div id="pro-elements" className="scroll-mt-header">
+      <div id="pro-elements" className="scroll-mt-header space-y-3">
+        <ReportIllustrationCite keys={['yongshen', 'structure']} title="结构示意" limit={1} />
         <ProElementsCard elements={view.elements} />
       </div>
 
@@ -266,7 +281,8 @@ export default function ProReportShell({
 
       <ProMonthStrip items={view.monthStrip} />
 
-      <div id="pro-risks" className="scroll-mt-header">
+      <div id="pro-risks" className="scroll-mt-header space-y-3">
+        <ReportIllustrationCite keys={['boundary']} title="判断边界" limit={1} />
         <ProRiskAlerts alerts={view.riskAlerts} reportId={reportId} canManage={canManage} />
       </div>
 
@@ -292,6 +308,7 @@ export default function ProReportShell({
 
       <ProLearningPath view={view} reportId={reportId} />
 
+      <ReportIllustrationCite keys={['validation']} title="验证闭环" limit={1} />
       <ProPredictionsStrip reportId={reportId} view={view} />
 
       <ProDecisionPacks packs={decisionPacks} />

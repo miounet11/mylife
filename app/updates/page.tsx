@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import SubscriptionSettingsPanel from '@/components/subscription-settings-panel';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -23,6 +24,9 @@ export default function UpdatesPage() {
           </Link>
         }
       />
+      <div className="mx-auto max-w-3xl px-4">
+        <PageIllustrationStrip surface="updates/hub" title="消息类型" compact limit={1} />
+      </div>
       <div id="my-updates-center">
         <SubscriptionSettingsPanel />
       </div>

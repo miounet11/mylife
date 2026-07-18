@@ -1,6 +1,5 @@
 import type { ContentFigure } from '@/lib/content-illustrations';
 import {
-  listByReportKeys,
   listBySurface,
   publicSrc,
   type PageIllustrationEntry,
@@ -38,7 +37,7 @@ export function resolvePageIllustrations(
   return picked.map((e, i) => entryToContentFigure(e, i === 0 ? -1 : i - 1));
 }
 
-/** Report chapter injection by cite keys. */
+/** Report chapter injection by cite keys (first key preferred, de-duped). */
 export function resolveReportIllustrations(params: {
   keys?: string[];
   section?: string;
@@ -50,10 +49,21 @@ export function resolveReportIllustrations(params: {
       ? sectionToKeys(params.section)
       : ['cover', 'reading-path', 'decision-loop']);
   const limit = params.limit ?? 3;
-  return listByReportKeys(keys)
-    .filter((e) => e.ready)
-    .slice(0, limit)
-    .map((e, i) => entryToContentFigure(e, i === 0 ? -1 : 0));
+  const seen = new Set<string>();
+  const picked: PageIllustrationEntry[] = [];
+  for (const key of keys) {
+    for (const entry of PAGE_ILLUSTRATION_CATALOG) {
+      if (!entry.ready) continue;
+      if (!(entry.reportCiteKeys || []).includes(key)) continue;
+      if (seen.has(entry.id)) continue;
+      seen.add(entry.id);
+      picked.push(entry);
+      if (picked.length >= limit) {
+        return picked.map((e, i) => entryToContentFigure(e, i === 0 ? -1 : 0));
+      }
+    }
+  }
+  return picked.map((e, i) => entryToContentFigure(e, i === 0 ? -1 : 0));
 }
 
 function sectionToKeys(section: string): string[] {
