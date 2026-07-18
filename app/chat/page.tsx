@@ -4,6 +4,7 @@ import { Suspense } from 'react';
 import { AppPage } from '@/components/layout/app-page';
 import ChatPageClient from '@/components/chat/chat-page-client';
 import { ChatCapabilityShell } from '@/components/chat/chat-capability-shell';
+import { ChatShareButton } from '@/components/chat/chat-share-button';
 import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import {
   chatOpeningSurface,
@@ -59,6 +60,11 @@ export default async function ChatPage({
             </p>
           </div>
           <nav className="flex shrink-0 items-center gap-x-2.5 text-[11px] text-[color:var(--ink-3)] sm:gap-x-3 sm:text-[12px]">
+            <ChatShareButton
+              title={`${teacher.name} · 人生K线`}
+              text={`${teacher.name}：${teacher.tagline}\n先框架开聊，排盘后可个性化节奏与窗口。`}
+              path={`/chat?teacher=${encodeURIComponent(teacher.id)}&mode=opening&source=share_nav`}
+            />
             <Link
               href="/teachers"
               className="underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
@@ -86,7 +92,7 @@ export default async function ChatPage({
             <ChatCapabilityShell
               title={`${teacher.name} · 能力图解`}
               subtitle={teacher.tagline}
-              defaultOpen
+              defaultOpen={false}
             >
               <CapabilityIllustrationPanel
                 surface={surface}

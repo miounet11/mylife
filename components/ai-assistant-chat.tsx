@@ -917,8 +917,9 @@ export default function AIAssistantChat() {
             </div>
           )}
 
-          {bindError && !context?.report ? (
-            <div className="rounded-[3px] border border-[#f0c36d] bg-[#fff8e6] px-3 py-2 text-[13px] leading-[1.5] text-[#7a5b00]">
+          {/* Only when NOT in opening chrome — opening already has a single unbound CTA */}
+          {bindError && !context?.report && !showOpeningChrome ? (
+            <div className="rounded-[8px] border border-[#f0c36d]/80 bg-[#fff8e6] px-3 py-2 text-[13px] leading-[1.5] text-[#7a5b00]">
               {bindError}
               <div className="mt-1.5 flex flex-wrap gap-3">
                 <a href="/analyze" className="font-semibold text-[#3b5998] hover:underline">
@@ -989,10 +990,16 @@ export default function AIAssistantChat() {
 
           {showOpeningChrome && !context?.report ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2 rounded-[8px] border border-[#f0c36d]/80 bg-[#fff8e6] px-2.5 py-2">
-                <p className="min-w-0 truncate text-[12px] text-[#7a5b00]">
-                  未绑报告 · 不编造命理
-                </p>
+              {/* Single unbound strip — merges former bindError + yellow bar */}
+              <div className="flex items-start justify-between gap-3 rounded-[8px] border border-[#f0c36d]/70 bg-[#fff8e6] px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="text-[12px] font-semibold text-[#7a5b00]">
+                    未绑定报告 · 先用通用框架开聊
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-[1.45] text-[#9a7b20]">
+                    不编造日主/用神。要个性化节奏与窗口，请先排盘生成结构报告。
+                  </p>
+                </div>
                 <a
                   href="/analyze"
                   className="inline-flex shrink-0 items-center rounded-[6px] bg-[#3b5998] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#2d4373]"

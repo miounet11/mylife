@@ -7,6 +7,7 @@ import * as React from 'react';
 import { BrandMark } from '@/components/ui/brand-mark';
 import { Tag } from '@/components/ui/tag';
 import { Eyebrow } from '@/components/ui/eyebrow';
+import { ConclusionShareCard } from '@/components/share/conclusion-share-card';
 
 interface ReportCoverProps {
   userName?: string;
@@ -20,6 +21,10 @@ interface ReportCoverProps {
   qualityTier?: string;
   qualityScore?: number;
   className?: string;
+  /** One-line stage / rhythm conclusion for share card */
+  stageLine?: string;
+  /** Show shareable conclusion strip under cover */
+  showShareCard?: boolean;
 }
 
 export function ReportCover({
@@ -27,14 +32,29 @@ export function ReportCover({
   birthIso,
   birthLocation,
   pillarSummary,
+  reportId,
   generatedAt,
   qualityTier,
   qualityScore,
   className,
+  stageLine,
+  showShareCard = true,
 }: ReportCoverProps) {
+  const shareTitle =
+    [userName || '你的命盘', pillarSummary, stageLine]
+      .filter(Boolean)
+      .slice(0, 2)
+      .join(' · ') || '人生K线结构结论';
+  const shareLines = [
+    pillarSummary ? `四柱要点：${pillarSummary}` : '',
+    stageLine || '阶段与窗口以报告正文为准',
+    '结构参考 · 可回访验证，不是宿命定论',
+  ].filter(Boolean);
+
   return (
+    <div className={`space-y-3 ${className || ''}`}>
     <section
-      className={`relative overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-5 md:p-7 ${className || ''}`}
+      className="relative overflow-hidden rounded-[var(--radius-lg)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] p-5 md:p-7"
     >
       {/* 抽象 K 线背景图层 */}
       <svg
@@ -147,5 +167,16 @@ export function ReportCover({
         </div>
       </div>
     </section>
+
+    {showShareCard ? (
+      <ConclusionShareCard
+        compact
+        eyebrow="人生K线 · 结构结论"
+        title={shareTitle}
+        lines={shareLines}
+        url={reportId ? `/result/${reportId}` : undefined}
+      />
+    ) : null}
+    </div>
   );
 }
