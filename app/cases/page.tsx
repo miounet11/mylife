@@ -127,7 +127,20 @@ export default async function CasesPage({ searchParams }: PageProps) {
           }
         />
         <JourneyStrip active="content" />
-        <PageIllustrationStrip surface="cases/hub" title="案例怎么读" compact limit={1} />
+        <PageIllustrationStrip
+          surface="cases/hub"
+          title={
+            uiLocale === 'en'
+              ? 'How to read cases'
+              : uiLocale === 'zh-Hant'
+                ? '案例怎麼讀'
+                : '案例怎么读'
+          }
+          compact
+          limit={1}
+          locale={uiLocale === 'en' ? 'en' : uiLocale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'}
+          priority
+        />
         <DimensionsShowcase
           title={copy.showcaseTitle}
           description={copy.showcaseDesc}

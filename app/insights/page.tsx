@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { getEntityInsights } from '@/lib/content-store';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 
 export const metadata: Metadata = {
   title: '系统洞察｜城市与环境观察',
@@ -11,7 +14,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/insights' },
 };
 
-export default function InsightsPage() {
+export default async function InsightsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const insights = getEntityInsights();
 
   return (
@@ -36,6 +46,18 @@ export default function InsightsPage() {
               </Link>
             </>
           }
+        />
+        <PageIllustrationStrip
+          surface="insights/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '城市环境层',
+            'zh-Hant': '城市環境層',
+            en: 'City environment lens',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
         />
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">

@@ -910,5 +910,338 @@
     "locale": "zh-Hant",
     "variantOf": "PI-SOLAR-TIME-01",
     "surfaces": []
+  },
+  {
+    "id": "PI-GEO-SHANGHAI",
+    "filename": "geo-city-shanghai.jpg",
+    "prompt": "Editorial city decision-support diagram for 上海 (中国华东). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 上海. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：上海",
+    "caption": "中国华东 · 事业 · 居住 · 现金流",
+    "alt": "人生K线上海城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/shanghai",
+      "insights/city/world-yi-city-shanghai",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SHANGHAI-EN",
+    "filename": "geo-city-shanghai.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Shanghai (East China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shanghai. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Shanghai",
+    "caption": "East China · Career · Housing · Cash flow",
+    "alt": "Life K-Line city environment diagram for Shanghai: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-SHANGHAI",
+    "surfaces": [
+      "geo/shanghai",
+      "insights/city/world-yi-city-shanghai",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SHENZHEN",
+    "filename": "geo-city-shenzhen.jpg",
+    "prompt": "Editorial city decision-support diagram for 深圳 (中国华南). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 深圳. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：深圳",
+    "caption": "中国华南 · 创业 · 行业 · 节奏",
+    "alt": "人生K线深圳城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/shenzhen",
+      "insights/city/world-yi-city-shenzhen",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SHENZHEN-EN",
+    "filename": "geo-city-shenzhen.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Shenzhen (South China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Shenzhen. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Shenzhen",
+    "caption": "South China · Startup · Industry · Rhythm",
+    "alt": "Life K-Line city environment diagram for Shenzhen: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-SHENZHEN",
+    "surfaces": [
+      "geo/shenzhen",
+      "insights/city/world-yi-city-shenzhen",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-BEIJING",
+    "filename": "geo-city-beijing.jpg",
+    "prompt": "Editorial city decision-support diagram for 北京 (中国华北). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 北京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：北京",
+    "caption": "中国华北 · 事业 · 政策环境 · 关系网络",
+    "alt": "人生K线北京城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/beijing",
+      "insights/city/world-yi-city-beijing",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-BEIJING-EN",
+    "filename": "geo-city-beijing.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Beijing (North China). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Beijing. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Beijing",
+    "caption": "North China · Career · Policy · Networks",
+    "alt": "Life K-Line city environment diagram for Beijing: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-BEIJING",
+    "surfaces": [
+      "geo/beijing",
+      "insights/city/world-yi-city-beijing",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-NEW_YORK",
+    "filename": "geo-city-new-york.jpg",
+    "prompt": "Editorial city decision-support diagram for 纽约 (北美). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 纽约. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：纽约",
+    "caption": "北美 · 迁移 · 职业 · 现金流",
+    "alt": "人生K线纽约城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/new-york",
+      "insights/city/world-yi-city-new-york",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-NEW_YORK-EN",
+    "filename": "geo-city-new-york.en.jpg",
+    "prompt": "Editorial city decision-support diagram for New York (North America). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of New York. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: New York",
+    "caption": "North America · Migration · Career · Cash flow",
+    "alt": "Life K-Line city environment diagram for New York: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-NEW_YORK",
+    "surfaces": [
+      "geo/new-york",
+      "insights/city/world-yi-city-new-york",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SYDNEY",
+    "filename": "geo-city-sydney.jpg",
+    "prompt": "Editorial city decision-support diagram for 悉尼 (澳洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 悉尼. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：悉尼",
+    "caption": "澳洲 · 迁移 · 家庭 · 就业",
+    "alt": "人生K线悉尼城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/sydney",
+      "insights/city/world-yi-city-sydney",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SYDNEY-EN",
+    "filename": "geo-city-sydney.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Sydney (Australia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Sydney. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Sydney",
+    "caption": "Australia · Migration · Family · Jobs",
+    "alt": "Life K-Line city environment diagram for Sydney: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-SYDNEY",
+    "surfaces": [
+      "geo/sydney",
+      "insights/city/world-yi-city-sydney",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LONDON",
+    "filename": "geo-city-london.jpg",
+    "prompt": "Editorial city decision-support diagram for 伦敦 (欧洲). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 伦敦. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：伦敦",
+    "caption": "欧洲 · 迁移 · 事业 · 居住",
+    "alt": "人生K线伦敦城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/london",
+      "insights/city/world-yi-city-london",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LONDON-EN",
+    "filename": "geo-city-london.en.jpg",
+    "prompt": "Editorial city decision-support diagram for London (Europe). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of London. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: London",
+    "caption": "Europe · Migration · Career · Housing",
+    "alt": "Life K-Line city environment diagram for London: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-LONDON",
+    "surfaces": [
+      "geo/london",
+      "insights/city/world-yi-city-london",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TOKYO",
+    "filename": "geo-city-tokyo.jpg",
+    "prompt": "Editorial city decision-support diagram for 东京 (东亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 东京. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：东京",
+    "caption": "东亚 · 节奏 · 事业 · 生活秩序",
+    "alt": "人生K线东京城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/tokyo",
+      "insights/city/world-yi-city-tokyo",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-TOKYO-EN",
+    "filename": "geo-city-tokyo.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Tokyo (East Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Tokyo. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Tokyo",
+    "caption": "East Asia · Rhythm · Career · Daily order",
+    "alt": "Life K-Line city environment diagram for Tokyo: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-TOKYO",
+    "surfaces": [
+      "geo/tokyo",
+      "insights/city/world-yi-city-tokyo",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LOS_ANGELES",
+    "filename": "geo-city-los-angeles.jpg",
+    "prompt": "Editorial city decision-support diagram for 洛杉矶 (北美西岸). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 洛杉矶. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：洛杉矶",
+    "caption": "北美西岸 · 迁移 · 家庭 · 创业",
+    "alt": "人生K线洛杉矶城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/los-angeles",
+      "insights/city/world-yi-city-los-angeles",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-LOS_ANGELES-EN",
+    "filename": "geo-city-los-angeles.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Los Angeles (US West Coast). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Los Angeles. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Los Angeles",
+    "caption": "US West Coast · Migration · Family · Ventures",
+    "alt": "Life K-Line city environment diagram for Los Angeles: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-LOS_ANGELES",
+    "surfaces": [
+      "geo/los-angeles",
+      "insights/city/world-yi-city-los-angeles",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SINGAPORE",
+    "filename": "geo-city-singapore.jpg",
+    "prompt": "Editorial city decision-support diagram for 新加坡 (东南亚). Three calm panels labeled 成本结构, 角色密度, 生活节奏, with soft skyline silhouette of 新加坡. Linear UI, paper background, ink blue. Simplified Chinese labels only. Not tourism poster, educational GEO product diagram for overseas Chinese and domestic users.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "城市观察：新加坡",
+    "caption": "东南亚 · 迁移 · 职业 · 跨境家庭",
+    "alt": "人生K线新加坡城市环境层观察示意图：成本结构角色密度节奏",
+    "locale": "zh-CN",
+    "surfaces": [
+      "geo/singapore",
+      "insights/city/world-yi-city-singapore",
+      "insights/hub",
+      "movement/hub"
+    ]
+  },
+  {
+    "id": "PI-GEO-SINGAPORE-EN",
+    "filename": "geo-city-singapore.en.jpg",
+    "prompt": "Editorial city decision-support diagram for Singapore (Southeast Asia). Three calm panels labeled Cost structure, Role density, Life rhythm, soft abstract skyline of Singapore. Linear UI, paper background, ink blue. English labels only. Educational GEO diagram for diaspora Chinese, not tourism poster.",
+    "aspectRatio": "16:9",
+    "complexity": "complex",
+    "ready": true,
+    "title": "City lens: Singapore",
+    "caption": "Southeast Asia · Migration · Career · Cross-border family",
+    "alt": "Life K-Line city environment diagram for Singapore: cost structure, role density, life rhythm",
+    "locale": "en",
+    "variantOf": "PI-GEO-SINGAPORE",
+    "surfaces": [
+      "geo/singapore",
+      "insights/city/world-yi-city-singapore",
+      "insights/hub",
+      "movement/hub"
+    ]
   }
 ]

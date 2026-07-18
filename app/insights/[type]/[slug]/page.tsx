@@ -4,10 +4,13 @@ import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import ContentActionRail from '@/components/content/content-action-rail';
 import JourneyStrip from '@/components/content/journey-strip';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import RelatedContent from '@/components/related-content';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { toIllustLocale } from '@/lib/page-illustrations/locale';
 import {
   articleSummary,
   articleTrackKey,
@@ -46,8 +49,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
 }
 
-export default async function InsightArticlePage({ params }: PageProps) {
+export default async function InsightArticlePage({
+  params,
+  searchParams,
+}: PageProps & { searchParams?: Promise<{ lang?: string }> }) {
   const { type, slug } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const article = getEntityInsightByTypeAndSlug(type, slug) || CONTENT_BY_SLUG.get(slug);
   if (!article) notFound();
 
@@ -55,6 +64,10 @@ export default async function InsightArticlePage({ params }: PageProps) {
   const sections = normalizeSections(
     (article as { sections?: unknown }).sections as never,
   );
+  // Match GEO city strip: world-yi-city-shanghai → geo/shanghai
+  const cityKey = slug.replace(/^world-yi-city-/, '');
+  const geoSurface =
+    type === 'city' ? `geo/${cityKey}` : `insights/city/${slug}`;
   const trackKey = articleTrackKey(article as never);
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
   const crosslinks = resolveContentCrosslinks({
@@ -119,6 +132,16 @@ export default async function InsightArticlePage({ params }: PageProps) {
         }
       />
       <JourneyStrip active="content" />
+      <div className="mx-auto max-w-3xl px-4">
+        <PageIllustrationStrip
+          surface={geoSurface}
+          title={type === 'city' ? '城市环境层' : '环境观察'}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
+      </div>
       <article className="fb-card space-y-4 p-4 md:p-6">
         {sections.map((section) => (
           <section key={section.heading}>

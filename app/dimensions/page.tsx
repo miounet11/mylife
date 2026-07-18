@@ -13,6 +13,8 @@ import {
   intentPrimaryCta,
   parseSourceIntent,
 } from '@/lib/dimensions/intent-source';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import {
   buildFaqJsonLd,
   buildItemListJsonLd,
@@ -48,11 +50,13 @@ export const metadata: Metadata = buildPageMetadata({
 export default async function DimensionsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ source?: string; intent?: string }>;
+  searchParams?: Promise<{ source?: string; intent?: string; lang?: string }>;
 }) {
   const sp = searchParams ? await searchParams : {};
   const source = `${sp.source || sp.intent || ''}`.trim();
   const intent = parseSourceIntent(source);
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const p0 = listDimensionsByPriority('p0');
   const p1Count = listDimensionsByPriority('p1').length;
   const p2Count = listDimensionsByPriority('p2').length;
@@ -143,9 +147,15 @@ export default async function DimensionsPage({
 
         <PageIllustrationStrip
           surface="dimensions/hub"
-          title="场景拆解"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '场景拆解',
+            'zh-Hant': '場景拆解',
+            en: 'Scene map',
+          })}
           compact
           limit={1}
+          locale={illustLocale}
+          priority
         />
 
         <DimensionGrid intent={intent} source={source} />

@@ -9,6 +9,8 @@ import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
 import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata } from '@/lib/seo';
@@ -54,7 +56,14 @@ const BIRTH_QUICK = [
   },
 ] as const;
 
-export default function ToolsPage() {
+export default async function ToolsPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   return (
     <AppPage header={{ ctaHref: '/tools/timing-yearly-window', ctaLabel: '填生日测', compact: true }}>
       <AnalyticsPageView
@@ -94,9 +103,15 @@ export default function ToolsPage() {
 
         <PageIllustrationStrip
           surface="tools/hub"
-          title="工具怎么用"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '工具怎么用',
+            'zh-Hant': '工具怎麼用',
+            en: 'How tools work',
+          })}
           compact
           limit={1}
+          locale={illustLocale}
+          priority
         />
 
         <ToolsHubBirthForm />

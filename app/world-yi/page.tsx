@@ -7,6 +7,8 @@ import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
 import EncyclopediaWorldYiSidebar from '@/components/encyclopedia-world-yi-sidebar';
 import { getEncyclopediaWorldYiLens } from '@/lib/encyclopedia-world-yi-lens';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { WORLD_YI_DOMAINS } from '@/lib/portal-nav';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
 
@@ -16,7 +18,14 @@ export const metadata: Metadata = {
   alternates: { canonical: '/world-yi' },
 };
 
-export default function WorldYiPage() {
+export default async function WorldYiPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const illustLocale = toIllustLocale(uiLocale);
   const lens = getEncyclopediaWorldYiLens({ slug: 'gua-qian', category: '64 卦百科', source: 'world-yi-hub' });
   const stats = getWorldYiPublicStats();
 
@@ -54,7 +63,18 @@ export default function WorldYiPage() {
             </span>
           }
         />
-        <PageIllustrationStrip surface="world-yi/hub" title="方法路径" compact limit={1} />
+        <PageIllustrationStrip
+          surface="world-yi/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '方法路径',
+            'zh-Hant': '方法路徑',
+            en: 'Method path',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+          priority
+        />
 
         {lens ? <EncyclopediaWorldYiSidebar lens={lens} /> : null}
 
