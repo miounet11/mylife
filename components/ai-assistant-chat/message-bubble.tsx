@@ -20,6 +20,7 @@ import {
   parseChatAnswerStructure,
   scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
+import { splitEfcNoticeFromAnswer } from '@/lib/chat-efc-verify';
 
 // v5-D60: FB Messenger 2017 风气泡
 // 用户：靠右 #3b5998 白字圆角 18px
@@ -70,13 +71,27 @@ export function MessageBubble({
   const time = formatChatTime(message.timestamp);
   const feedback = message.feedbackRating || null;
   const isOpening = isSyntheticOpeningMessage(message);
+  const efcSplit =
+    message.role === 'assistant' && !isOpening
+      ? splitEfcNoticeFromAnswer(message.content)
+      : { body: message.content, efcFlagged: false, issuesLine: '' };
+  const displayContent = efcSplit.body || message.content;
+  const efcFlagged =
+    message.efcOk === false || efcSplit.efcFlagged || (message.efcIssues?.length || 0) > 0;
+  const efcIssuesLine =
+    (message.efcIssues && message.efcIssues.length > 0
+      ? message.efcIssues.join('；')
+      : efcSplit.issuesLine) || '';
+
   const structured =
     message.role === 'assistant' && !isOpening
-      ? parseChatAnswerStructure(message.content)
+      ? parseChatAnswerStructure(displayContent)
       : null;
   const structureScore = structured ? scoreChatAnswerStructure(structured) : null;
   const verifyHint = structured?.verify || '';
-  const showDecisionCard = Boolean(structured && structureScore?.isRich);
+  const showDecisionCard = Boolean(
+    structured && (structureScore?.isRich || message.structureRich),
+  );
 
   if (message.role === 'user') {
     return (
@@ -205,9 +220,19 @@ export function MessageBubble({
               {message.content}
             </p>
           ) : (
-            <ChatMarkdown content={message.content} />
+            <ChatMarkdown content={displayContent} />
           )}
         </div>
+        {efcFlagged ? (
+          <div className="mt-2 rounded-[6px] border border-[#f0c36d] bg-[#fff8e6] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#7a5b00]">
+            <span className="font-semibold">真值校验</span>
+            <span className="ml-1">
+              本回答部分字段可能与报告锁定的日主/用忌不完全一致
+              {efcIssuesLine ? `：${efcIssuesLine}` : '。'}
+              请以报告为准，或点「重生成」。
+            </span>
+          </div>
+        ) : null}
         {showDecisionCard && structured ? (
           <div className="mt-2 space-y-1.5 rounded-[8px] border border-[#e4e6eb] bg-white px-2.5 py-2">
             <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-[#8a8d91]">
@@ -258,10 +283,12 @@ export function MessageBubble({
             <span className="ml-1">{verifyHint}</span>
           </div>
         ) : null}
-        {!isOpening && structureScore?.isThin && message.llmUsed !== false ? (
+        {!isOpening &&
+        (structureScore?.isThin || message.structureThin) &&
+        message.llmUsed !== false ? (
           <div className="mt-1.5 text-[11px] leading-[1.4] text-[#8a8d91]">
             本条未完全按「依据 → 结论 → 动作 → 验证」展开
-            {structureScore.missing.length > 0
+            {structureScore?.missing?.length
               ? `（缺 ${structureScore.missing.slice(0, 3).join('、')}）`
               : ''}
             ，可点重生成。

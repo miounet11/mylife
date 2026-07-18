@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { applyEfcVerifyToAnswer, verifyChatAnswerAgainstEfc } from '@/lib/chat-efc-verify';
+import {
+  applyEfcVerifyToAnswer,
+  splitEfcNoticeFromAnswer,
+  verifyChatAnswerAgainstEfc,
+} from '@/lib/chat-efc-verify';
 
 describe('chat-efc-verify', () => {
   it('passes when day master matches', () => {
@@ -39,5 +43,16 @@ describe('chat-efc-verify', () => {
     assert.ok(answer.includes('结构校验提示'));
     const again = applyEfcVerifyToAnswer(answer, { dayMaster: '甲', yongShen: ['木'] });
     assert.equal((again.answer.match(/结构校验提示/g) || []).length, 1);
+  });
+
+  it('splits efc notice for UI banner', () => {
+    const { answer } = applyEfcVerifyToAnswer('结论先稳住。日主庚金。', {
+      dayMaster: '甲',
+      yongShen: ['木'],
+    });
+    const split = splitEfcNoticeFromAnswer(answer);
+    assert.equal(split.efcFlagged, true);
+    assert.ok(!split.body.includes('结构校验提示'));
+    assert.ok(split.body.includes('结论') || split.body.includes('稳住') || split.body.includes('日主'));
   });
 });

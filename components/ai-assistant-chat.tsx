@@ -282,6 +282,17 @@ export default function AIAssistantChat() {
         materialSummary: item.materialSummary || null,
         feedbackRating: item.feedbackRating || null,
         fallbackReason: item.fallbackReason || null,
+        efcOk: item.efcOk === undefined || item.efcOk === null ? null : !!item.efcOk,
+        efcIssues: Array.isArray(item.efcIssues) ? item.efcIssues : [],
+        structureFilled: item.structureFilled != null ? Number(item.structureFilled) : null,
+        structureRich:
+          item.structureRich === undefined || item.structureRich === null
+            ? null
+            : !!item.structureRich,
+        structureThin:
+          item.structureThin === undefined || item.structureThin === null
+            ? null
+            : !!item.structureThin,
       }));
       const latestTacitContext = findLatestScopedTacitContext(mapped);
 

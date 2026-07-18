@@ -17,7 +17,10 @@ import { buildPrompt, getPrompt } from '@/lib/prompts';
 import '@/lib/prompts/chat/main';
 import '@/lib/prompts/chat/intents';
 import { normalizeAttributionSource } from '@/lib/chat-entry';
-import { appendAnswerStructureContract } from '@/lib/chat-answer-contract';
+import {
+  appendAnswerStructureContract,
+  scoreChatAnswerStructure,
+} from '@/lib/chat-answer-contract';
 import { applyEfcVerifyToAnswer } from '@/lib/chat-efc-verify';
 import {
   appendTeacherToSystemPrompt,
@@ -312,7 +315,16 @@ async function generateAIResponse(
     city?: string | null;
     profileLines?: string[] | null;
   }
-): Promise<{ answer: string; llmUsed: boolean; fallbackReason?: string }> {
+): Promise<{
+  answer: string;
+  llmUsed: boolean;
+  fallbackReason?: string;
+  efcOk?: boolean;
+  efcIssues?: string[];
+  structureFilled?: number;
+  structureRich?: boolean;
+  structureThin?: boolean;
+}> {
   const apiKey = getApiKey();
   const fallbackAnswer = buildFallbackChatAnswer(question, options?.context, options?.intent);
   if (!apiKey) {
@@ -321,6 +333,8 @@ async function generateAIResponse(
       answer: fallbackAnswer,
       llmUsed: false,
       fallbackReason: 'missing_api_key',
+      efcOk: true,
+      efcIssues: [],
     };
   }
 
@@ -442,6 +456,8 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
         answer: fallbackAnswer,
         llmUsed: false,
         fallbackReason: classifyChatFallbackReason(),
+        efcOk: true,
+        efcIssues: [],
       };
     }
 
@@ -482,10 +498,36 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       }
     }
 
+    const structure = scoreChatAnswerStructure(verified.answer);
+    try {
+      trackServerEvent({
+        eventName: 'chat_structure_scored' as any,
+        page: '/chat',
+        meta: {
+          filled: structure.filled,
+          max: structure.max,
+          isRich: structure.isRich ? 1 : 0,
+          isThin: structure.isThin ? 1 : 0,
+          missing: structure.missing.slice(0, 5),
+          efcOk: verified.efcOk ? 1 : 0,
+          reportId: report?.id || null,
+          intent: options?.intent || null,
+          teacherId: options?.teacherId || null,
+        },
+      });
+    } catch {
+      // never block answer
+    }
+
     return {
       answer: verified.answer,
       llmUsed: true,
       fallbackReason: undefined,
+      efcOk: verified.efcOk,
+      efcIssues: verified.efcIssues,
+      structureFilled: structure.filled,
+      structureRich: structure.isRich,
+      structureThin: structure.isThin,
     };
   } catch (error) {
     recordModelAttempt({
@@ -502,6 +544,8 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       answer: fallbackAnswer,
       llmUsed: false,
       fallbackReason: classifyChatFallbackReason(error),
+      efcOk: true,
+      efcIssues: [],
     };
   } finally {
     clearTimeout(timeoutId);
@@ -787,6 +831,28 @@ function toHistoryPayload(rows: TimelineMessage[]) {
         : null,
     fallbackReason:
       row.role === 'assistant' ? (row.analysis?.fallbackReason as string | undefined) || null : null,
+    efcOk:
+      row.role === 'assistant'
+        ? row.analysis?.efcOk === undefined
+          ? null
+          : !!row.analysis?.efcOk
+        : null,
+    efcIssues:
+      row.role === 'assistant' && Array.isArray(row.analysis?.efcIssues)
+        ? row.analysis.efcIssues
+        : [],
+    structureFilled:
+      row.role === 'assistant' && row.analysis?.structureFilled != null
+        ? Number(row.analysis.structureFilled)
+        : null,
+    structureRich:
+      row.role === 'assistant' && row.analysis?.structureRich != null
+        ? !!row.analysis.structureRich
+        : null,
+    structureThin:
+      row.role === 'assistant' && row.analysis?.structureThin != null
+        ? !!row.analysis.structureThin
+        : null,
     timestamp: row.createdAt || row.created_at,
   }));
 }
@@ -965,7 +1031,16 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.warn('[chat] profile lines load failed', e);
     }
-    const { answer, llmUsed, fallbackReason } = await generateAIResponse(question, userHistory, contextSummary, {
+    const {
+      answer,
+      llmUsed,
+      fallbackReason,
+      efcOk,
+      efcIssues,
+      structureFilled,
+      structureRich,
+      structureThin,
+    } = await generateAIResponse(question, userHistory, contextSummary, {
       intent: requestedIntent,
       context,
       materials,
@@ -1007,6 +1082,11 @@ export async function POST(request: NextRequest) {
         answer,
         llmUsed,
         fallbackReason: fallbackReason || null,
+        efcOk: efcOk !== false,
+        efcIssues: efcIssues || [],
+        structureFilled: structureFilled ?? null,
+        structureRich: structureRich ?? null,
+        structureThin: structureThin ?? null,
         reportId: context.report?.id || requestedReportId || null,
         eventId: context.focusedEvent?.id || null,
         turnId,
@@ -1088,6 +1168,13 @@ export async function POST(request: NextRequest) {
       success: true,
       answer,
       llmUsed,
+      efcOk: efcOk !== false,
+      efcIssues: efcIssues || [],
+      structure: {
+        filled: structureFilled ?? null,
+        isRich: structureRich ?? null,
+        isThin: structureThin ?? null,
+      },
       userId,
       context,
       intent: requestedIntent || null,
@@ -1242,7 +1329,16 @@ export async function PATCH(request: NextRequest) {
         context.summary,
         userTacitSummary ? `用户本轮补充了一层默会信息：${userTacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
       ].filter(Boolean).join('\n');
-      const { answer, llmUsed, fallbackReason } = await generateAIResponse(userQuestion, historyBefore, regenerationContextSummary, {
+      const {
+        answer,
+        llmUsed,
+        fallbackReason,
+        efcOk,
+        efcIssues,
+        structureFilled,
+        structureRich,
+        structureThin,
+      } = await generateAIResponse(userQuestion, historyBefore, regenerationContextSummary, {
         intent: requestedIntent,
         context,
         materials: existingMaterials,
@@ -1263,6 +1359,11 @@ export async function PATCH(request: NextRequest) {
             answer,
             llmUsed,
             fallbackReason: fallbackReason || null,
+            efcOk: efcOk !== false,
+            efcIssues: efcIssues || [],
+            structureFilled: structureFilled ?? null,
+            structureRich: structureRich ?? null,
+            structureThin: structureThin ?? null,
             reportId: context.report?.id || requestedReportId || null,
             eventId: context.focusedEvent?.id || null,
             responseToQuestionId: rows[userIndex].id,
@@ -1313,6 +1414,13 @@ export async function PATCH(request: NextRequest) {
         success: true,
         answer,
         llmUsed,
+        efcOk: efcOk !== false,
+        efcIssues: efcIssues || [],
+        structure: {
+          filled: structureFilled ?? null,
+          isRich: structureRich ?? null,
+          isThin: structureThin ?? null,
+        },
         context,
         intent: requestedIntent || null,
         truncatedCount: trailingIds.length,
@@ -1340,7 +1448,16 @@ export async function PATCH(request: NextRequest) {
         context.summary,
         userTacitSummary ? `用户本轮补充了一层默会信息：${userTacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
       ].filter(Boolean).join('\n');
-      const { answer, llmUsed, fallbackReason } = await generateAIResponse(content, historyBefore, editContextSummary, {
+      const {
+        answer,
+        llmUsed,
+        fallbackReason,
+        efcOk,
+        efcIssues,
+        structureFilled,
+        structureRich,
+        structureThin,
+      } = await generateAIResponse(content, historyBefore, editContextSummary, {
         intent: requestedIntent,
         context,
         materials: existingMaterials,
@@ -1349,6 +1466,13 @@ export async function PATCH(request: NextRequest) {
       const trailingStart = assistantIndex >= 0 ? assistantIndex + 1 : targetIndex + 1;
       const trailingIds = rows.slice(trailingStart).map((row) => row.id);
       const assistantId = assistantIndex >= 0 ? rows[assistantIndex].id : generateId();
+      const assistantAnalysisExtras = {
+        efcOk: efcOk !== false,
+        efcIssues: efcIssues || [],
+        structureFilled: structureFilled ?? null,
+        structureRich: structureRich ?? null,
+        structureThin: structureThin ?? null,
+      };
 
       runInTransaction(() => {
         questionOperations.update(target.id, {
@@ -1373,6 +1497,7 @@ export async function PATCH(request: NextRequest) {
               answer,
               llmUsed,
               fallbackReason: fallbackReason || null,
+              ...assistantAnalysisExtras,
               reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,
@@ -1392,6 +1517,7 @@ export async function PATCH(request: NextRequest) {
               answer,
               llmUsed,
               fallbackReason: fallbackReason || null,
+              ...assistantAnalysisExtras,
               reportId: context.report?.id || requestedReportId || null,
               eventId: context.focusedEvent?.id || null,
               responseToQuestionId: target.id,
@@ -1450,6 +1576,13 @@ export async function PATCH(request: NextRequest) {
         success: true,
         answer,
         llmUsed,
+        efcOk: efcOk !== false,
+        efcIssues: efcIssues || [],
+        structure: {
+          filled: structureFilled ?? null,
+          isRich: structureRich ?? null,
+          isThin: structureThin ?? null,
+        },
         context,
         intent: requestedIntent || null,
         truncatedCount: trailingIds.length,

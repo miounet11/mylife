@@ -1,5 +1,5 @@
 /**
- * Lightweight chat ops snapshot for admin (opening funnel + feedback + efc issues).
+ * Lightweight chat ops snapshot for admin (opening funnel + feedback + efc + structure).
  */
 
 import { db } from '@/lib/database';
@@ -23,6 +23,21 @@ export type ChatOpsSnapshot = {
     pageViewed: number;
   };
   efcFlags: number;
+  structure: {
+    scored: number;
+    rich: number;
+    thin: number;
+    richRate: number | null;
+    thinRate: number | null;
+    avgFilled: number | null;
+  };
+  feedbackQuality: {
+    helpful: number;
+    notHelpful: number;
+    empty: number;
+    total: number;
+    helpfulRate: number | null;
+  };
 };
 
 function countEvent(name: string, sinceSql: string): number {
@@ -58,6 +73,54 @@ function feedbackBreakdown(sinceSql: string): Record<string, number> {
   }
 }
 
+function structureBreakdown(sinceSql: string): ChatOpsSnapshot['structure'] {
+  try {
+    const row = db
+      .prepare(
+        `SELECT
+           COUNT(*) AS scored,
+           SUM(CASE WHEN json_extract(meta, '$.isRich') IN (1, '1', 'true', true) THEN 1 ELSE 0 END) AS rich,
+           SUM(CASE WHEN json_extract(meta, '$.isThin') IN (1, '1', 'true', true) THEN 1 ELSE 0 END) AS thin,
+           AVG(CAST(json_extract(meta, '$.filled') AS REAL)) AS avgFilled
+         FROM analytics_events
+         WHERE event_name = 'chat_structure_scored'
+           AND datetime(created_at) >= datetime(?)`,
+      )
+      .get(sinceSql) as {
+        scored?: number;
+        rich?: number;
+        thin?: number;
+        avgFilled?: number | null;
+      };
+
+    const scored = Number(row?.scored || 0);
+    const rich = Number(row?.rich || 0);
+    const thin = Number(row?.thin || 0);
+    const avgFilled =
+      row?.avgFilled != null && Number.isFinite(Number(row.avgFilled))
+        ? Math.round(Number(row.avgFilled) * 10) / 10
+        : null;
+
+    return {
+      scored,
+      rich,
+      thin,
+      richRate: scored > 0 ? Math.round((rich / scored) * 1000) / 10 : null,
+      thinRate: scored > 0 ? Math.round((thin / scored) * 1000) / 10 : null,
+      avgFilled,
+    };
+  } catch {
+    return {
+      scored: 0,
+      rich: 0,
+      thin: 0,
+      richRate: null,
+      thinRate: null,
+      avgFilled: null,
+    };
+  }
+}
+
 export function getChatOpsSnapshot(windowHours = 24): ChatOpsSnapshot {
   const hours = Math.max(1, Math.min(168, Math.round(windowHours)));
   const sinceRow = db
@@ -75,6 +138,7 @@ export function getChatOpsSnapshot(windowHours = 24): ChatOpsSnapshot {
     'chat_page_viewed',
     'chat_feedback',
     'chat_efc_flagged',
+    'chat_structure_scored',
   ] as const;
 
   const events: Record<string, number> = {};
@@ -84,13 +148,18 @@ export function getChatOpsSnapshot(windowHours = 24): ChatOpsSnapshot {
 
   const shown = events.chat_opening_shown || 0;
   const starter = events.chat_starter_clicked || 0;
+  const feedback = feedbackBreakdown(since);
+  const helpful = Number(feedback.helpful || 0);
+  const notHelpful = Number(feedback.not_helpful || 0);
+  const empty = Number(feedback.empty || 0);
+  const feedbackTotal = helpful + notHelpful + empty;
 
   return {
     windowHours: hours,
     since,
     generatedAt: new Date().toISOString(),
     events,
-    feedback: feedbackBreakdown(since),
+    feedback,
     openingFunnel: {
       shown,
       starterClicked: starter,
@@ -104,5 +173,14 @@ export function getChatOpsSnapshot(windowHours = 24): ChatOpsSnapshot {
       pageViewed: events.chat_page_viewed || 0,
     },
     efcFlags: events.chat_efc_flagged || 0,
+    structure: structureBreakdown(since),
+    feedbackQuality: {
+      helpful,
+      notHelpful,
+      empty,
+      total: feedbackTotal,
+      helpfulRate:
+        feedbackTotal > 0 ? Math.round((helpful / feedbackTotal) * 1000) / 10 : null,
+    },
   };
 }

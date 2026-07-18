@@ -48,6 +48,12 @@ export interface ChatMessage {
   feedbackRating?: ChatFeedbackRating | null;
   /** Assistant only: why LLM path fell back */
   fallbackReason?: string | null;
+  /** Assistant only: EFC integrity vs report truth */
+  efcOk?: boolean | null;
+  efcIssues?: string[];
+  structureFilled?: number | null;
+  structureRich?: boolean | null;
+  structureThin?: boolean | null;
 }
 
 /** Client-only consultant opening bubble (not persisted to chat history). */

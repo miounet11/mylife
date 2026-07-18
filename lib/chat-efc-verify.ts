@@ -118,12 +118,35 @@ export function applyEfcVerifyToAnswer(
     return { answer, efcOk: true, efcIssues: [] };
   }
   // Avoid double-append
-  if (answer.includes('**结构校验提示**')) {
+  if (answer.includes('**结构校验提示**') || answer.includes('结构校验提示')) {
     return { answer, efcOk: false, efcIssues: result.issues };
   }
   return {
     answer: `${answer.trim()}${result.notice}`,
     efcOk: false,
     efcIssues: result.issues,
+  };
+}
+
+/** Split auto-appended EFC notice so UI can render a clean banner instead of raw markdown. */
+export function splitEfcNoticeFromAnswer(content: string): {
+  body: string;
+  efcFlagged: boolean;
+  issuesLine: string;
+} {
+  const raw = `${content || ''}`;
+  const markerIdx = raw.search(/结构校验提示/);
+  if (markerIdx < 0) {
+    return { body: raw, efcFlagged: false, issuesLine: '' };
+  }
+  const sepIdx = raw.lastIndexOf('---', markerIdx);
+  const cut =
+    sepIdx >= 0 && markerIdx - sepIdx < 40 ? sepIdx : markerIdx;
+  const notice = raw.slice(cut).trim();
+  const issuesMatch = notice.match(/不完全一致[：:]([^。\n]+)/);
+  return {
+    body: raw.slice(0, cut).trim(),
+    efcFlagged: true,
+    issuesLine: (issuesMatch?.[1] || notice.replace(/[*#\-\n]+/g, ' ').trim()).slice(0, 160),
   };
 }
