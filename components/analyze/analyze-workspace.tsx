@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/components/i18n/locale-provider';
 import { funnelCopy } from '@/lib/i18n/funnel-copy';
 import { buildTeacherChatHref } from '@/lib/teachers';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 
 const INTENT_KEYS = ['career', 'wealth', 'relationship', 'yearly'] as const;
 type IntentKey = (typeof INTENT_KEYS)[number];
@@ -272,6 +273,14 @@ export default function AnalyzeWorkspace({
           ) : null}
 
           <FreeMembershipClaimBanner source="analyze_workspace" compact />
+
+          <PageIllustrationStrip
+            surface="home/workspace"
+            title="使用路径"
+            compact
+            limit={1}
+            className="mb-1"
+          />
 
           {/* Linear-clean：有报告用户直接进顾问开场，不打断排盘主路径 */}
           <section className="border-y border-[color:var(--hairline)] py-3.5">

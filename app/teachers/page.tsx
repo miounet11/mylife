@@ -10,6 +10,7 @@ import {
   type TeacherId,
 } from '@/lib/teachers';
 import { teacherIdFromFollowupIntent } from '@/lib/chat-entry';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 
 export const metadata: Metadata = {
   title: '请老师 | 人生K线',
@@ -97,6 +98,8 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
             </Link>
           </div>
         </header>
+
+        <PageIllustrationStrip surface="teachers/hub" title="顾问分工" compact limit={1} />
 
         {/* Intent → recommended consultant opening */}
         <section className="border-y border-[color:var(--hairline)] py-3.5">

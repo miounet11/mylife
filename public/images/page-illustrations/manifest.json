@@ -1,0 +1,17 @@
+{
+  "generatedAt": "2026-07-18",
+  "backend": "imagine",
+  "count": 10,
+  "items": [
+    { "id": "PI-HOME-01", "src": "/images/page-illustrations/home-path-from-birth-to-action.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-REPORT-READ-01", "src": "/images/page-illustrations/report-first-reading-path.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-REPORT-TIMING-01", "src": "/images/page-illustrations/report-dayun-liunian-windows.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-REPORT-DECISION-01", "src": "/images/page-illustrations/decision-loop-basis-action-verify.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-YONGSHEN-01", "src": "/images/page-illustrations/structure-daymaster-yongshen.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-CHAT-OPENING-01", "src": "/images/page-illustrations/chat-consultant-opening.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-EVENTS-01", "src": "/images/page-illustrations/events-validation-loop.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-BOUNDARY-01", "src": "/images/page-illustrations/boundary-not-fatalism.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-TOOLS-01", "src": "/images/page-illustrations/tools-problem-breakdown.jpg", "w": 1600, "h": 900 },
+    { "id": "PI-TEACHERS-01", "src": "/images/page-illustrations/teachers-roles-map.jpg", "w": 1600, "h": 900 }
+  ]
+}

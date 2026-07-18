@@ -12,6 +12,7 @@ import {
 import { trackProductEvent } from '@/lib/product-analytics';
 import { buildChatHref, buildReportContinueChatHref } from '@/lib/chat-entry';
 import { buildTeacherChatHref } from '@/lib/teachers';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 
 const TYPES: Array<{ key: EventViewType | 'all'; label: string }> = [
   { key: 'all', label: '全部' },
@@ -165,6 +166,13 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
 
   return (
     <div className="space-y-4">
+      <PageIllustrationStrip
+        surface="events/validation"
+        title="验证闭环"
+        compact
+        limit={1}
+      />
+
       {/* Linear-clean：事件 → 顾问开场 */}
       <section className="border-y border-[color:var(--hairline)] py-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">

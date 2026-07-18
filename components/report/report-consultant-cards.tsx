@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { buildTeacherChatHref, getTeacher, type TeacherId } from '@/lib/teachers';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 
 const CONSULTANT_IDS: TeacherId[] = ['career', 'timing', 'wealth'];
 
@@ -40,6 +41,15 @@ export default function ReportConsultantCards({
         >
           全部老师
         </Link>
+      </div>
+
+      <div className="mt-3">
+        <PageIllustrationStrip
+          surface="report/decision"
+          title="决策结构"
+          compact
+          limit={1}
+        />
       </div>
 
       <ul className="mt-3 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
