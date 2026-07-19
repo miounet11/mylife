@@ -14,6 +14,10 @@ import {
   type DailyWindowLastRun,
 } from '@/lib/email/daily-window-last-run';
 import {
+  readPredictionDueLastRun,
+  type PredictionDueLastRun,
+} from '@/lib/email/prediction-due-last-run';
+import {
   readTimingEmailLastRun,
   type TimingEmailLastRun,
 } from '@/lib/email/timing-email-last-run';
@@ -97,6 +101,11 @@ export type EmailOpsSnapshot = {
   timingEmailLastRun: {
     found: boolean;
     data: TimingEmailLastRun | null;
+    path: string | null;
+  };
+  predictionDueLastRun: {
+    found: boolean;
+    data: PredictionDueLastRun | null;
     path: string | null;
   };
   timestamp: string;
@@ -504,12 +513,13 @@ export function queryTimingEmailStats(opts?: { days?: number }): TimingEmailStat
 }
 
 /**
- * Combined ops snapshot: delivery aggregates + daily-window / timing last-run files.
+ * Combined ops snapshot: delivery aggregates + daily-window / timing / prediction-due last-run files.
  */
 export function getEmailOpsSnapshot(opts?: { days?: number }): EmailOpsSnapshot {
   const stats = queryTimingEmailStats(opts);
   const lastRun = readDailyWindowLastRun();
   const timingLast = readTimingEmailLastRun();
+  const predictionDueLast = readPredictionDueLastRun();
   return {
     success: true,
     days: stats.days,
@@ -531,6 +541,11 @@ export function getEmailOpsSnapshot(opts?: { days?: number }): EmailOpsSnapshot 
       found: timingLast.found,
       data: timingLast.data,
       path: timingLast.path,
+    },
+    predictionDueLastRun: {
+      found: predictionDueLast.found,
+      data: predictionDueLast.data,
+      path: predictionDueLast.path,
     },
     timestamp: new Date().toISOString(),
   };

@@ -969,7 +969,125 @@ export function reportResultPageCopy(locale: SiteLocale) {
       'zh-Hant': '再次分析',
       en: 'Analyze again',
     }),
+
+    /** Upgrade / delivery status chrome */
+    upgradeRunning: pick(locale, {
+      'zh-CN': '内容补全进行中',
+      'zh-Hant': '內容補全進行中',
+      en: 'Enhancement in progress',
+    }),
+    upgradeWaiting: pick(locale, {
+      'zh-CN': '等待内容补全',
+      'zh-Hant': '等待內容補全',
+      en: 'Waiting for enhancement',
+    }),
+    upgradeDone: pick(locale, {
+      'zh-CN': '内容已补全',
+      'zh-Hant': '內容已補全',
+      en: 'Content enhanced',
+    }),
+    upgradePaused: pick(locale, {
+      'zh-CN': '内容补全已暂停',
+      'zh-Hant': '內容補全已暫停',
+      en: 'Enhancement paused',
+    }),
+    badgeEnhancing: pick(locale, {
+      'zh-CN': '内容补全中',
+      'zh-Hant': '內容補全中',
+      en: 'Enhancing…',
+    }),
+    contentEnhanced: pick(locale, {
+      'zh-CN': '内容已完善',
+      'zh-Hant': '內容已完善',
+      en: 'Content enhanced',
+    }),
+    contentReadable: pick(locale, {
+      'zh-CN': '基础可读版',
+      'zh-Hant': '基礎可讀版',
+      en: 'Readable base',
+    }),
+    coreVerdictTitle: pick(locale, {
+      'zh-CN': '专业① 核心结论（排盘研判）',
+      'zh-Hant': '專業① 核心結論（排盤研判）',
+      en: 'Pro ① Core verdict (chart analysis)',
+    }),
+    /** Match USER_FACING_REPORT_STAGES labels (标准版 / 深度版 / 完整版) */
+    deliveryTierBasic: pick(locale, {
+      'zh-CN': '标准版',
+      'zh-Hant': '標準版',
+      en: 'Standard',
+    }),
+    deliveryTierDeep: pick(locale, {
+      'zh-CN': '深度版',
+      'zh-Hant': '深度版',
+      en: 'Deep',
+    }),
+    deliveryTierFull: pick(locale, {
+      'zh-CN': '完整版',
+      'zh-Hant': '完整版',
+      en: 'Full',
+    }),
+    /** Enhancement banner lines under action / stage progress */
+    enhancePendingBanner: pick(locale, {
+      'zh-CN': '当前先显示可读版，内容补全仍在继续，不需要反复刷新页面。',
+      'zh-Hant': '目前先顯示可讀版，內容補全仍在繼續，不需要反覆重新整理頁面。',
+      en: 'Showing a readable version first; enrichment continues—no need to refresh repeatedly.',
+    }),
+    enhanceLiteBanner: pick(locale, {
+      'zh-CN': '当前这份结果适合先看结论、阶段和行动建议；如需更完整内容，可稍后重新生成。',
+      'zh-Hant': '目前這份結果適合先看結論、階段和行動建議；如需更完整內容，可稍後重新生成。',
+      en: 'Start with verdict, stage, and actions; regenerate later if you need fuller depth.',
+    }),
+    enhanceReadyBanner: pick(locale, {
+      'zh-CN': '当前内容已补全，可直接按完整路径阅读。',
+      'zh-Hant': '目前內容已補全，可直接按完整路徑閱讀。',
+      en: 'Content is complete—follow the full reading path.',
+    }),
   };
+}
+
+/**
+ * User-facing upgrade job status label for classic result chrome.
+ * status values: running | pending | retry | completed | failed | other → ''
+ */
+export function reportUpgradeStatusLabel(
+  locale: SiteLocale,
+  status?: string | null,
+): string {
+  const copy = reportResultPageCopy(locale);
+  switch (status) {
+    case 'running':
+      return copy.upgradeRunning;
+    case 'retry':
+    case 'pending':
+      return copy.upgradeWaiting;
+    case 'completed':
+      return copy.upgradeDone;
+    case 'failed':
+      return copy.upgradePaused;
+    default:
+      return '';
+  }
+}
+
+/**
+ * User-facing delivery tier label matching USER_FACING_REPORT_STAGES
+ * (basic → 标准版, enhanced → 深度版, expert → 完整版).
+ */
+export function reportDeliveryTierLabel(
+  locale: SiteLocale,
+  tier?: string | null,
+): string {
+  const copy = reportResultPageCopy(locale);
+  switch (tier) {
+    case 'enhanced':
+      return copy.deliveryTierDeep;
+    case 'expert':
+      return copy.deliveryTierFull;
+    case 'basic':
+    default:
+      return copy.deliveryTierBasic;
+  }
 }
 
 export type ReportCockpitCopy = ReturnType<typeof reportCockpitCopy>;

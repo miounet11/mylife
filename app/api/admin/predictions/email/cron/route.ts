@@ -12,6 +12,7 @@ import {
   toDueReminderCampaign,
 } from '@/lib/predictions/due-reminder';
 import { generateId } from '@/lib/utils';
+import { writePredictionDueLastRun } from '@/lib/email/prediction-due-last-run';
 
 export const maxDuration = 60;
 
@@ -223,14 +224,28 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
-    success: true,
+  const timestamp = new Date().toISOString();
+  const resultPayload = {
+    success: true as const,
     campaign,
     candidateRows: rows.length,
     recipientCount: grouped.size,
     sentCount,
     skippedCount,
     errors,
-    timestamp: new Date().toISOString(),
+    timestamp,
+  };
+
+  const written = writePredictionDueLastRun({
+    success: true,
+    campaign,
+    candidateRows: rows.length,
+    recipientCount: grouped.size,
+    sentCount,
+    skippedCount,
+    errors: errors.slice(0, 20),
+    timestamp,
   });
+
+  return NextResponse.json({ ...resultPayload, lastRunPath: written.path });
 }

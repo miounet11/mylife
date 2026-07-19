@@ -60,6 +60,7 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
   const reserved = statusCount(snap.byStatus, 'reserved');
   const lastRun = snap.dailyWindowLastRun;
   const timingLast = snap.timingEmailLastRun;
+  const predictionDueLast = snap.predictionDueLastRun;
 
   return (
     <AppPage header={{ ctaHref: '/admin/dashboard', ctaLabel: '运营看板' }}>
@@ -248,6 +249,61 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
                 <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">error samples</dt>
                 <dd className="mt-1 space-y-0.5 font-mono text-[11px] text-[#b91c1c]">
                   {(timingLast.data.errors || []).slice(0, 5).map((e) => (
+                    <div key={e}>{e}</div>
+                  ))}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+        )}
+      </section>
+
+      <section className="mt-4 rounded-[12px] border border-[#e2e8f0] bg-white p-4">
+        <h2 className="text-[14px] font-bold text-[#0f172a]">Prediction-due 上次运行</h2>
+        <p className="mt-1 text-[11px] text-[#94a3b8]">
+          到期预测提醒 cron（data/ops/prediction-due-email-last-run.json）
+        </p>
+        {!predictionDueLast?.found || !predictionDueLast.data ? (
+          <p className="mt-2 text-[12px] text-[#94a3b8]">尚无 prediction-due last-run 快照。</p>
+        ) : (
+          <dl className="mt-3 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-4">
+            <div>
+              <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">campaign</dt>
+              <dd className="font-mono text-[#334155]">
+                {predictionDueLast.data.campaign || '—'}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">sent / skipped</dt>
+              <dd className="tabular-nums text-[#0f172a]">
+                {predictionDueLast.data.sentCount ?? 0} /{' '}
+                {predictionDueLast.data.skippedCount ?? 0}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">candidates · recipients</dt>
+              <dd className="tabular-nums text-[#0f172a]">
+                {predictionDueLast.data.candidateRows ?? 0} ·{' '}
+                {predictionDueLast.data.recipientCount ?? 0}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">errors</dt>
+              <dd className="tabular-nums text-[#b91c1c]">
+                {(predictionDueLast.data.errors || []).length}
+              </dd>
+            </div>
+            <div className="col-span-2 sm:col-span-4">
+              <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">timestamp</dt>
+              <dd className="font-mono text-[11px] text-[#64748b]">
+                {predictionDueLast.data.timestamp}
+              </dd>
+            </div>
+            {(predictionDueLast.data.errors || []).length > 0 ? (
+              <div className="col-span-2 sm:col-span-4">
+                <dt className="text-[10px] font-bold uppercase text-[#94a3b8]">error samples</dt>
+                <dd className="mt-1 space-y-0.5 font-mono text-[11px] text-[#b91c1c]">
+                  {(predictionDueLast.data.errors || []).slice(0, 5).map((e) => (
                     <div key={e}>{e}</div>
                   ))}
                 </dd>

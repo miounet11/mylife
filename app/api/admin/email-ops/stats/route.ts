@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
     note: snapshot.note,
     dailyWindowLastRun: snapshot.dailyWindowLastRun,
     timingEmailLastRun: snapshot.timingEmailLastRun,
+    predictionDueLastRun: snapshot.predictionDueLastRun,
     timestamp: snapshot.timestamp,
   });
 }

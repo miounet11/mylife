@@ -4,9 +4,9 @@ import { verifyLoginCodeAndCreateSession } from '@/lib/auth';
 import { emailSubscriptionOperations } from '@/lib/database';
 import {
   isEmailDeliveryConfigured,
-  sendSubscriptionConfirmationEmail,
   sendWelcomeEmail,
 } from '@/lib/email';
+import { sendSubscriptionConfirmationEmail } from '@/lib/email/subscription-confirmation';
 import { LOGIN_AUTO_SUBSCRIPTION_TAGS } from '@/lib/email-subscription-focus';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { validateEmail } from '@/lib/validators';

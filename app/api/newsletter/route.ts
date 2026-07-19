@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import { emailSubscriptionOperations, fortuneOperations } from '@/lib/database';
-import { isEmailDeliveryConfigured, sendSubscriptionConfirmationEmail } from '@/lib/email';
+import { isEmailDeliveryConfigured } from '@/lib/email';
+import { sendSubscriptionConfirmationEmail } from '@/lib/email/subscription-confirmation';
 import {
   MAX_EMAIL_FOCUS_ITEMS,
   buildFocusOptionsFromReport,

@@ -5,11 +5,13 @@ import {
   reportChapterDockCopy,
   reportCockpitCopy,
   reportCockpitShellCopy,
+  reportDeliveryTierLabel,
   reportNextActionsCopy,
   reportReadingPathCopy,
   reportResultPageCopy,
   reportRhythmCopy,
   reportTimingCopy,
+  reportUpgradeStatusLabel,
   reportValidationCopy,
   resolveReportChromeLocale,
   shareImageCopy,
@@ -128,10 +130,49 @@ describe('report-chrome-copy', () => {
     assertNonEmptyEn(p.sidebarSampleBackfill, 'result.sidebarSampleBackfill');
     assertNonEmptyEn(p.sidebarCalibration, 'result.sidebarCalibration');
     assertNonEmptyEn(p.againAnalyze, 'result.againAnalyze');
+    assertNonEmptyEn(p.upgradeRunning, 'result.upgradeRunning');
+    assertNonEmptyEn(p.upgradeWaiting, 'result.upgradeWaiting');
+    assertNonEmptyEn(p.upgradeDone, 'result.upgradeDone');
+    assertNonEmptyEn(p.upgradePaused, 'result.upgradePaused');
+    assertNonEmptyEn(p.badgeEnhancing, 'result.badgeEnhancing');
+    assertNonEmptyEn(p.contentEnhanced, 'result.contentEnhanced');
+    assertNonEmptyEn(p.contentReadable, 'result.contentReadable');
+    assertNonEmptyEn(p.coreVerdictTitle, 'result.coreVerdictTitle');
+    assertNonEmptyEn(p.deliveryTierBasic, 'result.deliveryTierBasic');
+    assertNonEmptyEn(p.deliveryTierDeep, 'result.deliveryTierDeep');
+    assertNonEmptyEn(p.deliveryTierFull, 'result.deliveryTierFull');
+    assertNonEmptyEn(p.enhancePendingBanner, 'result.enhancePendingBanner');
+    assertNonEmptyEn(p.enhanceLiteBanner, 'result.enhanceLiteBanner');
+    assertNonEmptyEn(p.enhanceReadyBanner, 'result.enhanceReadyBanner');
     assert.equal(p.timingTitle, '② Timing map');
     assert.equal(p.jumpTimingMap, 'Next → Timing map');
     assert.equal(p.sampleTitle, '⑤ Sample backfill');
     assert.equal(p.evidenceTitle, '⑥ Evidence appendix');
     assert.equal(p.subscriptionTitle, 'Subscribe & updates');
+    assert.equal(p.coreVerdictTitle, 'Pro ① Core verdict (chart analysis)');
+    assert.equal(p.badgeEnhancing, 'Enhancing…');
+  });
+
+  it('reportUpgradeStatusLabel / reportDeliveryTierLabel EN has no CJK', () => {
+    assertNonEmptyEn(reportUpgradeStatusLabel('en', 'running'), 'upgrade.running');
+    assertNonEmptyEn(reportUpgradeStatusLabel('en', 'pending'), 'upgrade.pending');
+    assertNonEmptyEn(reportUpgradeStatusLabel('en', 'retry'), 'upgrade.retry');
+    assertNonEmptyEn(reportUpgradeStatusLabel('en', 'completed'), 'upgrade.completed');
+    assertNonEmptyEn(reportUpgradeStatusLabel('en', 'failed'), 'upgrade.failed');
+    assert.equal(reportUpgradeStatusLabel('en', null), '');
+    assert.equal(reportUpgradeStatusLabel('en', 'unknown'), '');
+
+    assert.equal(reportUpgradeStatusLabel('zh-CN', 'running'), '内容补全进行中');
+    assert.equal(reportUpgradeStatusLabel('zh-CN', 'pending'), '等待内容补全');
+    assert.equal(reportUpgradeStatusLabel('zh-CN', 'completed'), '内容已补全');
+    assert.equal(reportUpgradeStatusLabel('zh-CN', 'failed'), '内容补全已暂停');
+
+    assertNonEmptyEn(reportDeliveryTierLabel('en', 'basic'), 'tier.basic');
+    assertNonEmptyEn(reportDeliveryTierLabel('en', 'enhanced'), 'tier.enhanced');
+    assertNonEmptyEn(reportDeliveryTierLabel('en', 'expert'), 'tier.expert');
+    assertNonEmptyEn(reportDeliveryTierLabel('en', null), 'tier.default');
+    assert.equal(reportDeliveryTierLabel('zh-CN', 'basic'), '标准版');
+    assert.equal(reportDeliveryTierLabel('zh-CN', 'enhanced'), '深度版');
+    assert.equal(reportDeliveryTierLabel('zh-CN', 'expert'), '完整版');
   });
 });

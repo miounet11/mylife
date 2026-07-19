@@ -51,7 +51,11 @@ import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
-import { reportResultPageCopy } from '@/lib/i18n/report-chrome-copy';
+import {
+  reportDeliveryTierLabel,
+  reportResultPageCopy,
+  reportUpgradeStatusLabel,
+} from '@/lib/i18n/report-chrome-copy';
 import DegradeNotice from '@/components/degrade-notice';
 import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import ReportStageProgress from '@/components/report/report-stage-progress';
@@ -108,7 +112,7 @@ import { buildUpdatesSummary } from '@/lib/updates-summary';
 import { createLineageEntry } from '@/lib/report-version-lineage';
 import { buildPremiumServiceOffers, pickPrimaryPremiumOffer } from '@/lib/report-premium-services';
 import { buildJourneyForReport } from '@/lib/surface-journeys';
-import { buildReportStageLadder, describeReportDeliveryStage } from '@/lib/report-quality';
+import { buildReportStageLadder } from '@/lib/report-quality';
 import { getCurrentLocalMonthKey, parseLocalDate } from '@/lib/utils';
 import {
   buildReportChatSource,
@@ -521,20 +525,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   ];
   const qualityAudit = result.qualityAudit;
   const upgradeJob = result.upgradeJob;
-  const reportDeliveryStage = describeReportDeliveryStage(qualityAudit?.deliveryTier);
   const reportStageLadder = buildReportStageLadder(qualityAudit?.deliveryTier);
   const currentStageLadderItem = reportStageLadder.find((item) => item.status === 'current') || reportStageLadder[0];
   const nextStageLadderItem = reportStageLadder.find((item) => item.status === 'locked') || null;
-  const deliveryTierLabel = reportDeliveryStage.label;
-  const upgradeStatusLabel = upgradeJob?.status === 'running'
-    ? '内容补全进行中'
-    : upgradeJob?.status === 'retry' || upgradeJob?.status === 'pending'
-    ? '等待内容补全'
-    : upgradeJob?.status === 'completed'
-    ? '内容已补全'
-    : upgradeJob?.status === 'failed'
-    ? '内容补全已暂停'
-    : '';
+  const deliveryTierLabel = reportDeliveryTierLabel(uiLocale, qualityAudit?.deliveryTier);
+  const upgradeStatusLabel = reportUpgradeStatusLabel(uiLocale, upgradeJob?.status);
   const topMonthlyWindows = (result.monthlyWindows || []).slice(0, 3).map((item) => ({
     label: item.label,
     theme: item.theme,
@@ -740,10 +735,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   });
   const isEnhancementPending = !result.llmUsed && !!upgradeJob?.status && ['pending', 'running', 'retry'].includes(upgradeJob.status);
   const enhancementStatusMessage = isEnhancementPending
-    ? '当前先显示可读版，内容补全仍在继续，不需要反复刷新页面。'
+    ? pageCopy.enhancePendingBanner
     : !result.llmUsed
-    ? '当前这份结果适合先看结论、阶段和行动建议；如需更完整内容，可稍后重新生成。'
-    : '当前内容已补全，可直接按完整路径阅读。';
+    ? pageCopy.enhanceLiteBanner
+    : pageCopy.enhanceReadyBanner;
   const feedbackLevel = correctionInsight.level || 'healthy';
   const feedbackHeroTone = feedbackLevel === 'action'
     ? 'bg-[color:var(--alert-soft)] text-[color:var(--alert)] border-[color:var(--alert)]'
@@ -940,16 +935,16 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
-                    专业① 核心结论（排盘研判）
+                    {pageCopy.coreVerdictTitle}
                   </div>
                   <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-semibold text-[color:var(--ink-4)]">
                     {isEnhancementPending ? (
                       <span className="rounded-[3px] bg-[color:var(--signal-soft)] px-2 py-0.5 text-[color:var(--signal-strong)]">
-                        内容补全中
+                        {pageCopy.badgeEnhancing}
                       </span>
                     ) : null}
                     <span className="rounded-[3px] bg-[#f6f7f9] px-2 py-0.5">
-                      {`${result.llmUsed ? '内容已完善' : '基础可读版'} · ${deliveryTierLabel}`}
+                      {`${result.llmUsed ? pageCopy.contentEnhanced : pageCopy.contentReadable} · ${deliveryTierLabel}`}
                     </span>
                   </div>
                 </div>
