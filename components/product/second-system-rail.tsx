@@ -37,8 +37,8 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunTitle: '合婚双盘',
     hehunDesc: '双方生日即时对盘：日主、夫妻宫、用忌与大运同步。',
     hehunCta: '对盘',
-    liuyaoTitle: '六爻讨论',
-    liuyaoDesc: '世应、动变与用神取舍——社区问答，非起卦引擎。',
+    liuyaoTitle: '六爻教育起卦',
+    liuyaoDesc: '三枚铜钱排本卦/变卦结构；不自动断事。',
     ziweiTitle: '紫微讨论',
     ziweiDesc: '命宫、四化与宫位角色——社区问答，非排盘引擎。',
     moreLabel: '更多术数规划中',
@@ -49,8 +49,8 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunTitle: '合婚雙盤',
     hehunDesc: '雙方生日即時對盤：日主、夫妻宮、用忌與大運同步。',
     hehunCta: '對盤',
-    liuyaoTitle: '六爻討論',
-    liuyaoDesc: '世應、動變與用神取捨——社區問答，非起卦引擎。',
+    liuyaoTitle: '六爻教育起卦',
+    liuyaoDesc: '三枚銅錢排本卦/變卦結構；不自動斷事。',
     ziweiTitle: '紫微討論',
     ziweiDesc: '命宮、四化與宮位角色——社區問答，非排盤引擎。',
     moreLabel: '更多術數規劃中',
@@ -58,22 +58,22 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
   en: {
     title: 'Beyond Bazi',
     description:
-      'Core product stays Bazi + Life K-Line. Dual-chart matching is live; other systems stay discussion/knowledge — no fake engines.',
+      'Core product stays Bazi + Life K-Line. Dual-chart matching is live; educational six-line cast is structure-only — no fake judgment engines.',
     hehunTitle: 'Dual-chart match',
     hehunDesc: 'Both birth dates: day master, spouse palace, yongji, and dayun sync.',
     hehunCta: 'Compare',
-    liuyaoTitle: 'Liuyao forum',
-    liuyaoDesc: 'Shi/ying, moving lines, yongshen — community Q&A, not a cast engine.',
+    liuyaoTitle: 'Six-line educational cast',
+    liuyaoDesc: 'Three-coin method → primary/changed hexagram structure only.',
     ziweiTitle: 'Ziwei forum',
     ziweiDesc: 'Ming gong, sihua, palace roles — community Q&A, not a chart engine.',
     moreLabel: 'More systems planned',
   },
 };
 
-/** Real secondary surfaces only (community knowledge, not engines). */
+/** Secondary surfaces: educational cast + community knowledge (honest scope). */
 const SECONDARY_ENTRIES = [
   {
-    href: '/community/category/liuyao',
+    href: '/tools/liuyao-cast',
     titleKey: 'liuyaoTitle' as const,
     descKey: 'liuyaoDesc' as const,
   },
