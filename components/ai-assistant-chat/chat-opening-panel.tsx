@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ArrowRight, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import type { TeacherOpeningView } from '@/lib/teacher-opening';
 import type { TeacherTopicChip } from '@/lib/teachers';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 /** How long to emphasize the first starter after open (ms). */
 const FIRST_STARTER_PULSE_MS = 5000;
@@ -19,6 +20,7 @@ export function ChatOpeningPanel({
   onChip,
   onSwapGreeting,
   hideFirstMes = false,
+  locale,
 }: {
   opening: TeacherOpeningView;
   disabled?: boolean;
@@ -26,7 +28,10 @@ export function ChatOpeningPanel({
   onChip: (chip: TeacherTopicChip) => void;
   onSwapGreeting: () => void;
   hideFirstMes?: boolean;
+  locale?: string | null;
 }) {
+  const en = isEnglishUiLocale(locale);
+  const t = (zh: string, enText: string) => (en ? enText : zh);
   const {
     teacher,
     firstMes,
@@ -41,8 +46,8 @@ export function ChatOpeningPanel({
   const [pulseFirst, setPulseFirst] = useState(true);
   useEffect(() => {
     setPulseFirst(true);
-    const t = window.setTimeout(() => setPulseFirst(false), FIRST_STARTER_PULSE_MS);
-    return () => window.clearTimeout(t);
+    const timer = window.setTimeout(() => setPulseFirst(false), FIRST_STARTER_PULSE_MS);
+    return () => window.clearTimeout(timer);
   }, [teacher.id, firstMes, starters[0]]);
 
   const greetingSwap =
@@ -54,7 +59,7 @@ export function ChatOpeningPanel({
         className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium text-[#3b5998] hover:bg-white/80 active:opacity-70 disabled:opacity-50"
       >
         <RefreshCw className="h-3 w-3" />
-        换开场 {greetingIndex + 1}/{greetingCount}
+        {t('换开场', 'Swap opening')} {greetingIndex + 1}/{greetingCount}
       </button>
     ) : null;
 
@@ -66,7 +71,7 @@ export function ChatOpeningPanel({
             <div className="flex flex-wrap items-center gap-1.5 text-[12px]">
               <span className="font-semibold text-[#1d2129]">{teacher.name}</span>
               <span className="rounded-[3px] bg-white/90 px-1.5 py-px text-[10px] font-semibold text-[#606770]">
-                开场
+                {t('开场', 'Opening')}
               </span>
             </div>
             <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] leading-[1.5] text-[#1d2129]">
@@ -92,9 +97,12 @@ export function ChatOpeningPanel({
         <div className="flex justify-start px-0.5">
           <div
             className="inline-flex max-w-[min(100%,28rem)] items-start gap-1.5 rounded-full border border-[#c5d9f7] bg-[#e7f3ff] px-2.5 py-1 text-[11px] leading-[1.4] text-[#3b5998]"
-            title="根据你的回访与事件记录校准，不编造命中率"
+            title={t(
+              '根据你的回访与事件记录校准，不编造命中率',
+              'Calibrated from your revisits and event records — no invented hit rates',
+            )}
           >
-            <span className="shrink-0 font-semibold">越聊越懂我</span>
+            <span className="shrink-0 font-semibold">{t('越聊越懂我', 'Learns with you')}</span>
             <span className="min-w-0 break-words opacity-90">{memoryLine}</span>
           </div>
         </div>
@@ -104,7 +112,7 @@ export function ChatOpeningPanel({
         <div className="px-0.5">
           <div className="mb-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#606770]">
             <Sparkles className="h-3 w-3 text-[#3b5998]" />
-            议题
+            {t('议题', 'Topics')}
           </div>
           <div className="flex flex-wrap gap-1.5">
             {chips.map((chip) => {
@@ -133,11 +141,13 @@ export function ChatOpeningPanel({
       {starters.length > 0 ? (
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
-            <div className="text-[11px] font-semibold text-[#606770]">一键开口</div>
+            <div className="text-[11px] font-semibold text-[#606770]">
+              {t('一键开口', 'One-tap starters')}
+            </div>
             {pulseFirst ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#3b5998]">
                 <Zap className="h-3 w-3" />
-                推荐先点第一条
+                {t('推荐先点第一条', 'Try the first one')}
               </span>
             ) : null}
           </div>
@@ -154,7 +164,7 @@ export function ChatOpeningPanel({
           >
             <span className="min-w-0 flex-1 line-clamp-2">{starters[0]}</span>
             <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-bold">
-              发送
+              {t('发送', 'Send')}
               <ArrowRight className="h-3.5 w-3.5" />
             </span>
           </button>

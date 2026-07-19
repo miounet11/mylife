@@ -107,6 +107,8 @@ export default function AIAssistantChat({
   const resolvedLocale =
     uiLocale || searchParams?.get('lang') || searchParams?.get('locale') || '';
   const enUi = isEnglishUiLocale(resolvedLocale);
+  /** Client chrome copy — not LLM answers. */
+  const t = (zh: string, en: string) => (enUi ? en : zh);
   const isPrefillMode = urlMode === 'prefill';
   const [rememberedReportId, setRememberedReportId] = useState('');
   const reportId = urlReportId || rememberedReportId;
@@ -279,7 +281,7 @@ export default function AIAssistantChat({
         supersedeReason: 'chat-history-superseded',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '加载聊天历史失败');
+        setError(data.error || t('加载聊天历史失败', 'Failed to load chat history'));
         return false;
       }
 
@@ -332,11 +334,22 @@ export default function AIAssistantChat({
       } else if (data.contextBindError || (reportId && !data.contextBound)) {
         setBindError(
           data.contextBindError === 'report_not_owned_by_session'
-            ? '报告未能绑定到当前会话（可能换了浏览器或登录态）。请从报告页「顾问开场」重新进入。'
-            : '尚未绑定结构报告，命盘级追问会缺少日主/用神真值。请从报告页进入或先完成排盘。',
+            ? t(
+                '报告未能绑定到当前会话（可能换了浏览器或登录态）。请从报告页「顾问开场」重新进入。',
+                'Could not bind this report to the current session (browser or login may have changed). Re-enter from the report page consultant opening.',
+              )
+            : t(
+                '尚未绑定结构报告，命盘级追问会缺少日主/用神真值。请从报告页进入或先完成排盘。',
+                'No structure report linked. Chart-level questions need day master / favorable-element truth. Open from a report or create a chart first.',
+              ),
         );
       } else if (!reportId) {
-        setBindError('尚未绑定结构报告。请从报告页进入追问，避免空谈用神。');
+        setBindError(
+          t(
+            '尚未绑定结构报告。请从报告页进入追问，避免空谈用神。',
+            'No structure report linked. Open follow-ups from a report so we do not invent favorable elements.',
+          ),
+        );
       }
       setRestoredTacitContext(latestTacitContext);
       setTacitContext(cloneTacitKnowledgeInput(latestTacitContext));
@@ -346,7 +359,11 @@ export default function AIAssistantChat({
       if (!mountedRef.current || isSilentChatAbort(historyError)) {
         return false;
       }
-      setError(isAbortLikeError(historyError) ? '加载聊天历史等待时间过长，请稍后重试' : '网络异常，加载聊天历史失败');
+      setError(
+        isAbortLikeError(historyError)
+          ? t('加载聊天历史等待时间过长，请稍后重试', 'Loading chat history timed out — try again')
+          : t('网络异常，加载聊天历史失败', 'Network error — failed to load chat history'),
+      );
       return false;
     } finally {
       if (showLoader) {
@@ -483,7 +500,7 @@ export default function AIAssistantChat({
       if (!response.ok || !data.success) {
         setMessages((current) => current.filter((item) => item.id !== userMessage.id));
         setMaterials(materialSnapshot);
-        setError(data.error || 'AI 回复失败，请稍后重试');
+        setError(data.error || t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'));
         return;
       }
 
@@ -517,7 +534,12 @@ export default function AIAssistantChat({
       }
 
       if (!data.llmUsed) {
-        setError('当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。');
+        setError(
+          t(
+            '当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。',
+            'This is a simplified answer. Retry later, or ask a more specific question.',
+          ),
+        );
       }
     } catch (replyError) {
       setMessages((current) => current.filter((item) => item.id !== userMessage.id));
@@ -525,7 +547,11 @@ export default function AIAssistantChat({
       if (!mountedRef.current || isSilentChatAbort(replyError)) {
         return;
       }
-      setError(isAbortLikeError(replyError) ? 'AI 回复等待时间过长，请稍后重试' : '网络异常，AI 回复失败');
+      setError(
+        isAbortLikeError(replyError)
+          ? t('AI 回复等待时间过长，请稍后重试', 'Reply timed out — try again')
+          : t('网络异常，AI 回复失败', 'Network error — reply failed'),
+      );
     } finally {
       setIsTyping(false);
     }
@@ -536,7 +562,7 @@ export default function AIAssistantChat({
 
     // Client-only consultant opening — remove locally, never hit the API.
     if (isSyntheticOpeningMessageId(messageId)) {
-      if (!window.confirm('删除这条开场白？')) {
+      if (!window.confirm(t('删除这条开场白？', 'Delete this opening?'))) {
         return;
       }
       openingDeletedKeyRef.current = messageId;
@@ -546,7 +572,14 @@ export default function AIAssistantChat({
       return;
     }
 
-    if (!window.confirm('删除这条消息后，这条消息之后的对话也会一并移除，确认继续吗？')) {
+    if (
+      !window.confirm(
+        t(
+          '删除这条消息后，这条消息之后的对话也会一并移除，确认继续吗？',
+          'Delete this message? Everything after it will also be removed.',
+        ),
+      )
+    ) {
       return;
     }
     setMessageActionKey(`delete:${messageId}`);
@@ -567,7 +600,7 @@ export default function AIAssistantChat({
         supersedeReason: 'chat-message-action-superseded',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '删除消息失败');
+        setError(data.error || t('删除消息失败', 'Failed to delete message'));
         return;
       }
       await fetchHistory(false);
@@ -575,7 +608,11 @@ export default function AIAssistantChat({
       if (!mountedRef.current || isSilentChatAbort(deleteError)) {
         return;
       }
-      setError(isAbortLikeError(deleteError) ? '删除消息等待时间过长，请稍后重试' : '网络异常，删除消息失败');
+      setError(
+        isAbortLikeError(deleteError)
+          ? t('删除消息等待时间过长，请稍后重试', 'Delete timed out — try again')
+          : t('网络异常，删除消息失败', 'Network error — failed to delete'),
+      );
     } finally {
       setMessageActionKey(null);
     }
@@ -587,7 +624,14 @@ export default function AIAssistantChat({
       // Opening is template text, not an LLM reply.
       return;
     }
-    if (!window.confirm('重新生成会覆盖这条回答之后的对话分支，确认继续吗？')) {
+    if (
+      !window.confirm(
+        t(
+          '重新生成会覆盖这条回答之后的对话分支，确认继续吗？',
+          'Regenerating will replace the conversation after this reply. Continue?',
+        ),
+      )
+    ) {
       return;
     }
     setMessageActionKey(`regenerate:${messageId}`);
@@ -610,18 +654,22 @@ export default function AIAssistantChat({
         supersedeReason: 'chat-message-action-superseded',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '重新生成失败');
+        setError(data.error || t('重新生成失败', 'Regenerate failed'));
         return;
       }
       await fetchHistory(false);
       if (!data.llmUsed) {
-        setError('当前为简化回答版本，你可以稍后再试。');
+        setError(t('当前为简化回答版本，你可以稍后再试。', 'This is a simplified answer. Try again later.'));
       }
     } catch (regenerateError) {
       if (!mountedRef.current || isSilentChatAbort(regenerateError)) {
         return;
       }
-      setError(isAbortLikeError(regenerateError) ? '重新生成等待时间过长，请稍后重试' : '网络异常，重新生成失败');
+      setError(
+        isAbortLikeError(regenerateError)
+          ? t('重新生成等待时间过长，请稍后重试', 'Regenerate timed out — try again')
+          : t('网络异常，重新生成失败', 'Network error — regenerate failed'),
+      );
     } finally {
       setIsTyping(false);
       setMessageActionKey(null);
@@ -654,14 +702,18 @@ export default function AIAssistantChat({
         supersedeReason: 'chat-message-action-superseded',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '反馈提交失败');
+        setError(data.error || t('反馈提交失败', 'Failed to submit feedback'));
         return;
       }
     } catch (feedbackError) {
       if (!mountedRef.current || isSilentChatAbort(feedbackError)) {
         return;
       }
-      setError(isAbortLikeError(feedbackError) ? '反馈提交超时，请重试' : '网络异常，反馈提交失败');
+      setError(
+        isAbortLikeError(feedbackError)
+          ? t('反馈提交超时，请重试', 'Feedback timed out — try again')
+          : t('网络异常，反馈提交失败', 'Network error — feedback failed'),
+      );
     } finally {
       setMessageActionKey(null);
     }
@@ -682,11 +734,18 @@ export default function AIAssistantChat({
     if (isTyping || loadingHistory) return;
     const content = editingContent.trim();
     if (!content) {
-      setError('问题内容不能为空');
+      setError(t('问题内容不能为空', 'Question cannot be empty'));
       return;
     }
 
-    if (!window.confirm('重新提交后，这条问题之后的回答会按新问题重算，后续对话分支也会被替换，确认继续吗？')) {
+    if (
+      !window.confirm(
+        t(
+          '重新提交后，这条问题之后的回答会按新问题重算，后续对话分支也会被替换，确认继续吗？',
+          'Resubmitting will recompute answers after this question and replace later turns. Continue?',
+        ),
+      )
+    ) {
       return;
     }
 
@@ -710,20 +769,24 @@ export default function AIAssistantChat({
         supersedeReason: 'chat-message-action-superseded',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '修改消息失败');
+        setError(data.error || t('修改消息失败', 'Failed to update message'));
         return;
       }
       setEditingMessageId(null);
       setEditingContent('');
       await fetchHistory(false);
       if (!data.llmUsed) {
-        setError('当前为简化回答版本，你可以稍后再试。');
+        setError(t('当前为简化回答版本，你可以稍后再试。', 'This is a simplified answer. Try again later.'));
       }
     } catch (editError) {
       if (!mountedRef.current || isSilentChatAbort(editError)) {
         return;
       }
-      setError(isAbortLikeError(editError) ? '修改消息等待时间过长，请稍后重试' : '网络异常，修改消息失败');
+      setError(
+        isAbortLikeError(editError)
+          ? t('修改消息等待时间过长，请稍后重试', 'Update timed out — try again')
+          : t('网络异常，修改消息失败', 'Network error — update failed'),
+      );
     } finally {
       setIsTyping(false);
       setMessageActionKey(null);
@@ -893,7 +956,7 @@ export default function AIAssistantChat({
       await navigator.clipboard.writeText(content);
       setCopiedMessageId(messageId);
     } catch {
-      setError('复制失败，请稍后再试');
+      setError(t('复制失败，请稍后再试', 'Copy failed — try again'));
     }
   };
 
@@ -940,14 +1003,14 @@ export default function AIAssistantChat({
               {bindError}
               <div className="mt-1.5 flex flex-wrap gap-3">
                 <a href="/analyze" className="font-semibold text-[#3b5998] hover:underline">
-                  去排盘
+                  {t('去排盘', 'Create chart')}
                 </a>
                 {reportId ? (
                   <a
                     href={`/result/${encodeURIComponent(reportId)}`}
                     className="font-semibold text-[#3b5998] hover:underline"
                   >
-                    打开报告再追问
+                    {t('打开报告再追问', 'Open report to follow up')}
                   </a>
                 ) : null}
               </div>
@@ -955,13 +1018,15 @@ export default function AIAssistantChat({
           ) : null}
 
           {loadingHistory && (
-            <div className="py-10 text-center text-[13px] text-[#606770]">正在载入聊天记录...</div>
+            <div className="py-10 text-center text-[13px] text-[#606770]">
+              {t('正在载入聊天记录...', 'Loading chat history…')}
+            </div>
           )}
 
           {showOpeningChrome && prefilledQuestion && !isPrefillMode ? (
             <div className="rounded-[3px] border border-[#dddfe2] bg-white px-3 py-2.5">
               <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#3b5998]">
-                你带来的问题（点一下发送）
+                {t('你带来的问题（点一下发送）', 'Your question (tap to send)')}
               </div>
               <button
                 type="button"
@@ -979,15 +1044,18 @@ export default function AIAssistantChat({
           {showOpeningChrome && context?.report ? (
             <div className="space-y-2">
               <div className="rounded-[8px] border border-[#e7f3ff] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
-                <span className="font-semibold">{context.report.name || '你'}</span>
+                <span className="font-semibold">{context.report.name || t('你', 'You')}</span>
                 {' · '}
-                日主 <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
+                {t('日主', 'Day master')}{' '}
+                <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
                 {' · '}
-                大运 <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
+                {t('大运', 'Luck cycle')}{' '}
+                <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
                 {(context.report.yongShen || []).length > 0 ? (
                   <>
                     {' · '}
-                    用神 <span className="font-semibold">{context.report.yongShen.join('、')}</span>
+                    {t('用神', 'Favorable')}{' '}
+                    <span className="font-semibold">{context.report.yongShen.join(enUi ? ', ' : '、')}</span>
                   </>
                 ) : null}
               </div>
@@ -995,6 +1063,7 @@ export default function AIAssistantChat({
               {!hideOpeningFirstMes ? (
                 <ChatOpeningPanel
                   opening={openingView}
+                  locale={resolvedLocale}
                   disabled={isTyping || loadingHistory}
                   onStarter={handleOpeningStarter}
                   onChip={handleOpeningChip}
@@ -1035,6 +1104,7 @@ export default function AIAssistantChat({
                     greetingIndex,
                     locale: resolvedLocale,
                   })}
+                  locale={resolvedLocale}
                   disabled={isTyping || loadingHistory}
                   onStarter={handleOpeningStarter}
                   onChip={handleOpeningChip}
@@ -1049,6 +1119,7 @@ export default function AIAssistantChat({
             <MessageBubble
               key={message.id}
               message={message}
+              locale={resolvedLocale}
               previousUserQuestion={previousUserQuestions[message.id] || ''}
               onSaveEvent={handleSaveMessageEvent}
               onDelete={handleDeleteMessage}
@@ -1077,6 +1148,7 @@ export default function AIAssistantChat({
           {showOpeningChrome && hideOpeningFirstMes ? (
             <ChatOpeningPanel
               opening={openingView}
+              locale={resolvedLocale}
               disabled={isTyping || loadingHistory}
               onStarter={handleOpeningStarter}
               onChip={handleOpeningChip}
@@ -1089,6 +1161,7 @@ export default function AIAssistantChat({
           {!loadingHistory && hasRealMessages && !isTyping ? (
             <ChatMidRail
               opening={openingView}
+              locale={resolvedLocale}
               disabled={isTyping || loadingHistory}
               onStarter={handleOpeningStarter}
               onChip={handleOpeningChip}
@@ -1101,7 +1174,7 @@ export default function AIAssistantChat({
                 className="rounded-[18px] px-4 py-2 text-[13px] text-[#606770]"
                 style={{ background: '#f1f0f0' }}
               >
-                正在整理回答...
+                {t('正在整理回答...', 'Composing reply…')}
               </div>
             </div>
           )}
@@ -1115,7 +1188,7 @@ export default function AIAssistantChat({
             className="fb-btn absolute bottom-3 right-3 inline-flex h-8 items-center gap-1 px-2.5 text-[12px] font-semibold text-[#1d2129] shadow-[0_2px_6px_rgba(0,0,0,0.12)]"
           >
             <ArrowDown className="h-3.5 w-3.5" />
-            回到最新消息
+            {t('回到最新消息', 'Latest')}
           </button>
         ) : null}
       </div>
@@ -1139,7 +1212,7 @@ export default function AIAssistantChat({
                 onClick={() => setShowOpeningTools(true)}
                 className="text-[11px] font-medium text-[#8a8d91] underline-offset-2 hover:text-[#3b5998] hover:underline"
               >
-                添加资料 / 状态
+                {t('添加资料 / 状态', 'Add materials / status')}
               </button>
             </div>
           ) : (
@@ -1166,16 +1239,16 @@ export default function AIAssistantChat({
               <TacitKnowledgeComposer
                 value={tacitContext}
                 onChange={setTacitContext}
-                title="说不清也可以先点出来"
+                title={t('说不清也可以先点出来', 'Tap options if it’s hard to put into words')}
                 description=""
-                collapsedLabel="补充这一轮状态"
+                collapsedLabel={t('补充这一轮状态', 'Add this turn’s status')}
                 emptyHint=""
-                summaryLabel="本轮默会信息："
+                summaryLabel={t('本轮默会信息：', 'This turn’s tacit context:')}
                 expanded={showTacitComposer}
                 onExpandedChange={setShowTacitComposer}
                 onReset={() => setTacitContext(createEmptyTacitKnowledgeInput())}
                 variant="chat"
-                restoreLabel="沿用上一轮状态"
+                restoreLabel={t('沿用上一轮状态', 'Reuse previous status')}
                 onRestore={() => {
                   setTacitContext(cloneTacitKnowledgeInput(restoredTacitContext));
                   setShowTacitComposer(hasTacitKnowledgeInput(restoredTacitContext));
@@ -1201,9 +1274,12 @@ export default function AIAssistantChat({
                 }}
                 placeholder={
                   showOpeningChrome
-                    ? '或直接输入问题…'
-                    : intentPreset?.placeholder ||
-                      '输入你最关心的一个问题，例如"结合 2026.08 这个窗口，我该不该推进跳槽？"'
+                    ? t('或直接输入问题…', 'Or type a question…')
+                    : (!enUi && intentPreset?.placeholder) ||
+                      t(
+                        '输入你最关心的一个问题，例如"结合 2026.08 这个窗口，我该不该推进跳槽？"',
+                        'Ask one focused question, e.g. “Given the 2026.08 window, should I push a job move?”',
+                      )
                 }
                 rows={showOpeningChrome ? 1 : 2}
                 className="fb-input min-h-[40px] w-full resize-none px-3 py-2 text-[14px]"
@@ -1212,7 +1288,7 @@ export default function AIAssistantChat({
               {hasTacitContext ? (
                 <div className="mt-1 px-1">
                   <span className="rounded-[3px] border border-[#dddfe2] bg-[#f5f6f7] px-2 py-0.5 text-xs font-semibold text-[#3b5998]">
-                    已带入默会信息
+                    {t('已带入默会信息', 'Tacit context included')}
                   </span>
                 </div>
               ) : null}
@@ -1220,11 +1296,11 @@ export default function AIAssistantChat({
             <button
               type="submit"
               disabled={!input.trim() || isTyping || isAddingMaterial}
-              aria-label="发送"
+              aria-label={t('发送', 'Send')}
               className="fb-btn fb-btn-primary inline-flex h-10 shrink-0 items-center gap-1.5 px-4 text-[14px] font-bold disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-3.5 w-3.5" />
-              发送
+              {t('发送', 'Send')}
             </button>
           </div>
         </form>

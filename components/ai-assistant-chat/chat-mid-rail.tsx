@@ -2,6 +2,7 @@
 
 import type { TeacherOpeningView } from '@/lib/teacher-opening';
 import type { TeacherTopicChip } from '@/lib/teachers';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 /**
  * Mid-conversation rail: switch teacher + one-tap continuations (raise multi-turn).
@@ -11,18 +12,25 @@ export function ChatMidRail({
   disabled,
   onStarter,
   onChip,
+  locale,
 }: {
   opening: TeacherOpeningView;
   disabled?: boolean;
   onStarter: (text: string, meta?: { source: string }) => void;
   onChip: (chip: TeacherTopicChip) => void;
+  locale?: string | null;
 }) {
+  const en = isEnglishUiLocale(locale);
+
   return (
     <div className="rounded-[3px] border border-[#e9ebee] bg-[#f7f8fa] px-2.5 py-2">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
         <div className="text-[11px] font-semibold text-[#606770]">
-          当前 · {opening.teacher.name}
-          <span className="ml-1 font-normal text-[#8a8d91]">卡住了？换议题或点一句</span>
+          {en ? 'Now · ' : '当前 · '}
+          {opening.teacher.name}
+          <span className="ml-1 font-normal text-[#8a8d91]">
+            {en ? 'Stuck? Switch topic or tap one' : '卡住了？换议题或点一句'}
+          </span>
         </div>
       </div>
       <div className="mt-1.5 flex flex-wrap gap-1">

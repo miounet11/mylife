@@ -156,6 +156,10 @@ const PHRASE_EN: Array<[string, string]> = [
   ['互动中性，重在规则清晰', 'interaction neutral—clarity of rules matters most'],
   ['相处中性', 'interaction neutral'],
 
+  // Element relation connectors (engine: `（木）生 / 克 …`) — before bare 与/岁
+  ['）生 ', ') generates '],
+  ['）克 ', ') controls '],
+
   // Yong/ji
   ['共用神', 'Shared favorable'],
   ['目标感容易一致', 'goals tend to align'],
@@ -183,6 +187,19 @@ const PHRASE_EN: Array<[string, string]> = [
   ['按中性处理', 'treated as neutral'],
   ['中性', 'neutral'],
   ['大运', 'Dayun'],
+
+  // Residual glue (after longer templates; keep short keys last)
+  ['与 ', 'and '],
+  ['岁', ' yrs'],
+];
+
+/** Five-element labels (applied after PHRASE_EN; stems/branches left as-is). */
+const WUXING_EN: Array<[string, string]> = [
+  ['木', 'Wood'],
+  ['火', 'Fire'],
+  ['土', 'Earth'],
+  ['金', 'Metal'],
+  ['水', 'Water'],
 ];
 
 /** Light label swaps for proNotes lines (order matters for multi-char keys). */
@@ -227,6 +244,10 @@ function mapPhraseText(text: string): string {
   if (!text || !CJK_RE.test(text)) return text;
   let out = text;
   for (const [zh, en] of PHRASE_EN) {
+    if (out.includes(zh)) out = out.split(zh).join(en);
+  }
+  // Element names after structural phrases (木/火/土/金/水 in details)
+  for (const [zh, en] of WUXING_EN) {
     if (out.includes(zh)) out = out.split(zh).join(en);
   }
   return normalizeCjkPunct(out);

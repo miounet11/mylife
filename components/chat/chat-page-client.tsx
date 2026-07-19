@@ -1,18 +1,40 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackClientEvent } from '@/lib/analytics-client';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
+
+function ChatShellLoading() {
+  const [en, setEn] = useState(false);
+  useEffect(() => {
+    try {
+      const fromDom = document.querySelector('[data-ui-locale]')?.getAttribute('data-ui-locale');
+      const sp = new URLSearchParams(window.location.search);
+      const path = window.location.pathname;
+      setEn(
+        isEnglishUiLocale(fromDom) ||
+          isEnglishUiLocale(sp.get('lang')) ||
+          isEnglishUiLocale(sp.get('locale')) ||
+          path === '/en/chat' ||
+          path.startsWith('/en/chat'),
+      );
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  return (
+    <div className="flex h-full w-full flex-1 items-center justify-center p-6 text-[13px] text-[color:var(--ink-5)]">
+      {en ? 'Opening consultant chat…' : '正在打开顾问对话…'}
+    </div>
+  );
+}
 
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   ssr: false,
-  loading: () => (
-    <div className="flex h-full w-full flex-1 items-center justify-center p-6 text-[13px] text-[color:var(--ink-5)]">
-      正在打开顾问对话…
-    </div>
-  ),
+  loading: () => <ChatShellLoading />,
 });
 
 /** Client boundary for /chat — mounts full AI assistant with consultant opening. */

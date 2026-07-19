@@ -20,9 +20,18 @@ export type DimensionUiFields = {
   title: string;
   question: string;
   description: string;
+  /** Optional disclaimer; empty when the dimension has none. */
+  disclaimer: string;
 };
 
-const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; description: Tri }> = {
+type DimensionCopyEntry = {
+  title: Tri;
+  question: Tri;
+  description: Tri;
+  disclaimer?: Tri;
+};
+
+const DIMENSION_COPY: Record<DimensionSlug, DimensionCopyEntry> = {
   'fortune-rhythm': {
     title: { 'zh-CN': '运势节奏', 'zh-Hant': '運勢節奏', en: 'Fortune rhythm' },
     question: {
@@ -56,6 +65,10 @@ const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; descrip
       'zh-CN': '财星、比劫与运势窗口映射资产类型，输出节奏建议（非投资建议）。',
       en: 'Wealth stars and cycle windows mapped to asset rhythm (not investment advice).',
     },
+    disclaimer: {
+      'zh-CN': '仅供节奏参考，不构成投资建议或收益承诺。',
+      en: 'Rhythm reference only—not investment advice or a return promise.',
+    },
   },
   naming: {
     title: { 'zh-CN': '起名 / 改名', en: 'Naming / rename' },
@@ -67,6 +80,10 @@ const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; descrip
       'zh-CN': '用神匹配 + 字音字义结构，评估姓名对命盘的补充度。',
       en: 'Favorable-element match plus sound/meaning structure to score name support for the chart.',
     },
+    disclaimer: {
+      'zh-CN': '姓名五行评估仅供参考，不承诺任何具体结果。',
+      en: 'Name five-element assessment is reference only; no specific outcome is promised.',
+    },
   },
   health: {
     title: { 'zh-CN': '身体健康', en: 'Health' },
@@ -77,6 +94,10 @@ const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; descrip
     description: {
       'zh-CN': '五行生理衰减与日主对应，给出体质倾向与养生节奏（非医学诊断）。',
       en: 'Five-element constitution tendencies and recovery rhythm (not a medical diagnosis).',
+    },
+    disclaimer: {
+      'zh-CN': '生活方式参考，不能替代医疗诊断与治疗。',
+      en: 'Lifestyle reference only—not a substitute for medical diagnosis or treatment.',
     },
   },
   'study-career': {
@@ -122,6 +143,10 @@ const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; descrip
       'zh-CN': '方位五行与用神方向，给出环境调整与搬迁择时参考。',
       en: 'Directional elements and favorable bearings for environment tweaks and move timing.',
     },
+    disclaimer: {
+      'zh-CN': '环境建议不构成建筑或装修专业意见。',
+      en: 'Environment tips are not professional architecture or renovation advice.',
+    },
   },
   'timing-selection': {
     title: { 'zh-CN': '择时办事', 'zh-Hant': '擇時辦事', en: 'Timing selection' },
@@ -133,16 +158,21 @@ const DIMENSION_COPY: Record<DimensionSlug, { title: Tri; question: Tri; descrip
       'zh-CN': '流日干支与用神匹配评分，输出择日清单与忌讳提醒。',
       en: 'Daily stem-branch scoring vs favorable elements for pick-day lists and caution notes.',
     },
+    disclaimer: {
+      'zh-CN': '医疗事项请以医生建议为第一优先。',
+      en: 'For medical matters, follow your doctor first.',
+    },
   },
 };
 
-/** Localized title / question / description for a dimension slug. */
+/** Localized title / question / description / disclaimer for a dimension slug. */
 export function dimensionUiCopy(locale: SiteLocale, slug: DimensionSlug): DimensionUiFields {
   const entry = DIMENSION_COPY[slug];
   return {
     title: pick(locale, entry.title),
     question: pick(locale, entry.question),
     description: pick(locale, entry.description),
+    disclaimer: entry.disclaimer ? pick(locale, entry.disclaimer) : '',
   };
 }
 
@@ -279,6 +309,166 @@ export function dimensionsHubSeo(locale: SiteLocale): { title: string; descripti
       '谈婚论嫁择时',
       '起名改名五行',
       '人生K线',
+    ],
+  };
+}
+
+/** Detail page chrome: hero CTAs, eyebrows, body states, errors. */
+export function dimensionDetailCopy(locale: SiteLocale) {
+  return {
+    allDimensions: pick(locale, {
+      'zh-CN': '全部维度',
+      'zh-Hant': '全部維度',
+      en: 'All dimensions',
+    }),
+    predictions: pick(locale, {
+      'zh-CN': '预测回访',
+      'zh-Hant': '預測回訪',
+      en: 'Prediction check-in',
+    }),
+    fullReport: pick(locale, {
+      'zh-CN': '完整报告',
+      'zh-Hant': '完整報告',
+      en: 'Full report',
+    }),
+    tools: pick(locale, {
+      'zh-CN': '工具',
+      en: 'Tools',
+    }),
+    consultants: pick(locale, {
+      'zh-CN': '请老师',
+      'zh-Hant': '請老師',
+      en: 'Consultants',
+    }),
+    eyebrowP0: pick(locale, {
+      'zh-CN': '推荐 · 维度',
+      'zh-Hant': '推薦 · 維度',
+      en: 'Recommended · Dimension',
+    }),
+    eyebrowDefault: pick(locale, {
+      'zh-CN': '维度',
+      'zh-Hant': '維度',
+      en: 'Dimension',
+    }),
+    capabilityTitle: (title: string) =>
+      pick(locale, {
+        'zh-CN': `${title}：能解决什么`,
+        'zh-Hant': `${title}：能解決什麼`,
+        en: `${title}: what it solves`,
+      }),
+    askTeacher: pick(locale, {
+      'zh-CN': '问老师继续拆',
+      'zh-Hant': '問老師繼續拆',
+      en: 'Ask a consultant to dig deeper',
+    }),
+    askTeacherHint: (title: string) =>
+      pick(locale, {
+        'zh-CN': `进入顾问开场，围绕「${title}」继续对齐节奏与动作。`,
+        'zh-Hant': `進入顧問開場，圍繞「${title}」繼續對齊節奏與動作。`,
+        en: `Open a consultant session to align rhythm and next steps for “${title}”.`,
+      }),
+    teacherWindow: (title: string) =>
+      pick(locale, {
+        'zh-CN': title ? `当前维度「${title}」` : '',
+        en: title ? `Current dimension: “${title}”` : '',
+      }),
+    loading: (title: string) =>
+      pick(locale, {
+        'zh-CN': `正在基于你的命盘生成「${title}」研判…`,
+        'zh-Hant': `正在基於你的命盤生成「${title}」研判…`,
+        en: `Generating “${title}” analysis from your chart…`,
+      }),
+    notReady: (title: string) =>
+      pick(locale, {
+        'zh-CN': `「${title}」深度研判正在开发中。当前可先通过工作台生成完整报告，或关注后续版本更新。`,
+        'zh-Hant': `「${title}」深度研判正在開發中。當前可先通過工作台生成完整報告，或關注後續版本更新。`,
+        en: `“${title}” deep analysis is in development. Generate a full report from the workbench for now, or check back later.`,
+      }),
+    generateReport: pick(locale, {
+      'zh-CN': '用工作台生成报告',
+      'zh-Hant': '用工作台生成報告',
+      en: 'Generate report in workbench',
+    }),
+    backToHub: pick(locale, {
+      'zh-CN': '返回十维度',
+      'zh-Hant': '返回十維度',
+      en: 'Back to ten dimensions',
+    }),
+    completeProfile: pick(locale, {
+      'zh-CN': '完善档案',
+      'zh-Hant': '完善檔案',
+      en: 'Complete profile',
+    }),
+    retry: pick(locale, {
+      'zh-CN': '重试',
+      'zh-Hant': '重試',
+      en: 'Retry',
+    }),
+    errorProfileRead: pick(locale, {
+      'zh-CN': '无法读取档案资料，请先到「我的档案」完善出生信息。',
+      'zh-Hant': '無法讀取檔案資料，請先到「我的檔案」完善出生信息。',
+      en: 'Could not read profile data. Complete birth info in My profile first.',
+    }),
+    errorNoBirth: pick(locale, {
+      'zh-CN': '还没有出生资料，请先创建档案或前往工作台填写。',
+      'zh-Hant': '還沒有出生資料，請先建立檔案或前往工作台填寫。',
+      en: 'No birth data yet. Create a profile or fill it in on the workbench.',
+    }),
+    errorAnalyzeFail: pick(locale, {
+      'zh-CN': '研判生成失败，请稍后重试。',
+      'zh-Hant': '研判生成失敗，請稍後重試。',
+      en: 'Analysis failed. Please try again later.',
+    }),
+    errorNetwork: pick(locale, {
+      'zh-CN': '加载失败，请检查网络后重试。',
+      'zh-Hant': '載入失敗，請檢查網路後重試。',
+      en: 'Load failed. Check your network and try again.',
+    }),
+    afterRailTitle: pick(locale, {
+      'zh-CN': '研判之后：继续联动',
+      'zh-Hant': '研判之後：繼續聯動',
+      en: 'After analysis: keep going',
+    }),
+    afterRailDescription: pick(locale, {
+      'zh-CN': '相邻维度、免费工具与完整报告，帮助你把单一场景结论扩展成完整行动链路。',
+      'zh-Hant': '相鄰維度、免費工具與完整報告，幫助你把單一場景結論擴展成完整行動鏈路。',
+      en: 'Related dimensions, free tools, and the full report turn one scene into a full action path.',
+    }),
+  };
+}
+
+/** Detail page SEO; EN when locale is en (zh stays identical to dimensionSeo). */
+export function dimensionDetailSeo(
+  locale: SiteLocale,
+  slug: DimensionSlug,
+): { title: string; description: string; keywords: string[] } {
+  const ui = dimensionUiCopy(locale, slug);
+  if (locale === 'en') {
+    return {
+      title: `${ui.title} deep dive | ${ui.question.replace(/\?/g, '')}`,
+      description: `${ui.description} Based on Bazi favorable elements, luck cycles, and Life K-Line—core conclusions, actions, and verifiable predictions for “${ui.title}”.`,
+      keywords: [
+        ui.title,
+        ui.question.replace(/[？?]/g, ''),
+        `${ui.title} analysis`,
+        `${ui.title} timing`,
+        'ten dimensions',
+        'Life K-Line',
+        'Bazi analysis',
+      ],
+    };
+  }
+  return {
+    title: `${ui.title}深度研判｜${ui.question.replace(/？/g, '')}`,
+    description: `${ui.description} 基于八字用神、大运流年与人生K线引擎，输出核心结论、行动建议与可验证预测。适合需要「${ui.title}」具体判断的用户。`,
+    keywords: [
+      ui.title,
+      ui.question.replace(/[？?]/g, ''),
+      `${ui.title}分析`,
+      `${ui.title}运势`,
+      '十维度研判',
+      '人生K线',
+      '八字分析',
     ],
   };
 }

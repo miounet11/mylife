@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, ImageIcon } from 'lucide-react';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 /**
  * Slim collapsible chrome for teacher capability diagram.
@@ -12,13 +13,16 @@ export function ChatCapabilityShell({
   subtitle,
   children,
   defaultOpen = true,
+  locale,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  locale?: string | null;
 }) {
   const [open, setOpen] = useState(defaultOpen);
+  const en = isEnglishUiLocale(locale);
 
   return (
     <div className="shrink-0 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]">
@@ -40,7 +44,13 @@ export function ChatCapabilityShell({
           ) : null}
         </div>
         <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] font-medium text-[color:var(--ink-3)]">
-          {open ? '收起图解' : '展开图解'}
+          {open
+            ? en
+              ? 'Hide diagram'
+              : '收起图解'
+            : en
+              ? 'Show diagram'
+              : '展开图解'}
           {open ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </span>
       </button>

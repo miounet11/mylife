@@ -4,6 +4,7 @@ import {
   getMaterialOption,
   type ChatMaterialDisplay,
 } from '@/components/ai-assistant-chat/chat-helpers';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 // v5-D60: FB Messenger 2017 风浅灰按钮 + tag 风 chip
 
@@ -11,9 +12,16 @@ interface QuickQuestionButtonProps {
   question: string;
   onClick: () => void;
   disabled?: boolean;
+  locale?: string | null;
 }
 
-export function QuickQuestionButton({ question, onClick, disabled = false }: QuickQuestionButtonProps) {
+export function QuickQuestionButton({
+  question,
+  onClick,
+  disabled = false,
+  locale,
+}: QuickQuestionButtonProps) {
+  const en = isEnglishUiLocale(locale);
   return (
     <button
       type="button"
@@ -21,7 +29,9 @@ export function QuickQuestionButton({ question, onClick, disabled = false }: Qui
       disabled={disabled}
       className="fb-btn block w-full px-3 py-2 text-left text-[13px] leading-5 text-[#1d2129] disabled:cursor-not-allowed disabled:opacity-60"
     >
-      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#606770]">结构化追问</div>
+      <div className="text-xs font-semibold uppercase tracking-[0.12em] text-[#606770]">
+        {en ? 'Structured follow-up' : '结构化追问'}
+      </div>
       <div className="mt-1 text-[13px] text-[#1d2129]">{question}</div>
     </button>
   );
@@ -57,15 +67,30 @@ interface MaterialChipProps {
   material: ChatMaterialDisplay;
   onRemove?: (materialId: string) => void;
   readOnly?: boolean;
+  locale?: string | null;
 }
 
-export function MaterialChip({ material, onRemove, readOnly = false }: MaterialChipProps) {
+export function MaterialChip({
+  material,
+  onRemove,
+  readOnly = false,
+  locale,
+}: MaterialChipProps) {
+  const en = isEnglishUiLocale(locale);
   const option = getMaterialOption(material.kind);
   const Icon = option.icon;
   const detail = [
     material.fileName || material.note || '',
     formatFileSize(material.size),
-    material.imageIncluded ? '已带图' : material.hasImage ? '图片摘要' : '',
+    material.imageIncluded
+      ? en
+        ? 'Image attached'
+        : '已带图'
+      : material.hasImage
+        ? en
+          ? 'Image summary'
+          : '图片摘要'
+        : '',
   ]
     .filter(Boolean)
     .join(' · ');
@@ -89,7 +114,7 @@ export function MaterialChip({ material, onRemove, readOnly = false }: MaterialC
           type="button"
           onClick={() => onRemove(material.id)}
           className="rounded-[3px] p-0.5 text-[#606770] transition hover:bg-[#dddfe2] hover:text-[#1d2129]"
-          aria-label={`移除${material.label}`}
+          aria-label={en ? `Remove ${material.label}` : `移除${material.label}`}
         >
           <X className="h-3.5 w-3.5" />
         </button>

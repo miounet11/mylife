@@ -123,4 +123,72 @@ describe('presentHehunResult', () => {
     const en = presentHehunResult(minimalMockResult(), 'en-US');
     assert.equal(en.band, 'Workable');
   });
+
+  it('maps 天干合 + 木生火-style details without major CJK (stems allowed)', () => {
+    // Heavenly stems / earthly branches may remain; other CJK should be mapped.
+    const GANZHI_RE = /[甲乙丙丁戊己庚辛壬癸子丑寅卯辰巳午未申酉戌亥]/g;
+    const raw = minimalMockResult({
+      layers: [
+        {
+          key: 'day-stem',
+          title: '日主互动',
+          score: 82,
+          status: 'good',
+          summary: '天干合：甲己，亲和力与粘合力偏强',
+          details: [
+            '天干合：甲己，亲和力与粘合力偏强',
+            'Alice（木）生 Bob（火），付出/推动感偏 Alice',
+            'Bob（火）克 Alice（木），主导权需协商，避免压制',
+            '同气相求（木），理解快，也易争主导',
+            'Alice甲 与 Bob己 互动中性，重在规则清晰。',
+            '日干 甲 vs 己',
+          ],
+        },
+        {
+          key: 'palace',
+          title: '夫妻宫（日支）',
+          score: 65,
+          status: 'ok',
+          summary: '日支六合 子丑，生活节奏与安全感较易咬合',
+          details: ['日支六合 子丑，生活节奏与安全感较易咬合'],
+        },
+        {
+          key: 'dayun',
+          title: '大运同步',
+          score: 60,
+          status: 'ok',
+          summary: 'Alice 现行大运 甲子（25-34岁）',
+          details: [
+            'Alice 现行大运 甲子（25-34岁）',
+            '大运五行相生（木–火），可互相借力',
+          ],
+        },
+      ],
+    });
+    const en = presentHehunResult(raw, 'en');
+    const day = en.layers[0]!;
+    const dayun = en.layers[2]!;
+
+    assert.match(day.summary, /Stem combination/i);
+    assert.match(day.details[1]!, /generates/i);
+    assert.match(day.details[1]!, /Wood/);
+    assert.match(day.details[1]!, /Fire/);
+    assert.match(day.details[1]!, /giving\/push energy leans toward/i);
+    assert.match(day.details[2]!, /controls/i);
+    assert.match(day.details[2]!, /negotiate leadership/i);
+    assert.match(day.details[3]!, /same-element affinity/i);
+    assert.match(day.details[4]!, /and /);
+    assert.match(day.details[4]!, /interaction neutral/i);
+    assert.match(dayun.summary, /current Dayun/i);
+    assert.match(dayun.summary, /25-34 yrs/);
+    assert.match(dayun.details[1]!, /five-element generation/i);
+    assert.match(dayun.details[1]!, /Wood/);
+    assert.match(dayun.details[1]!, /Fire/);
+
+    const samples = [day.summary, ...day.details, dayun.summary, ...dayun.details];
+    for (const s of samples) {
+      const residual = s.replace(GANZHI_RE, '');
+      assert.ok(!CJK_RE.test(residual), `unexpected major CJK in: ${s}`);
+    }
+  });
 });

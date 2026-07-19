@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { ProfileFieldSlot } from '@/lib/progressive-profile';
 import { trackProductEvent } from '@/lib/product-analytics';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 /**
  * 对话中轻量补全条：不打断主对话，可跳过
@@ -12,13 +13,17 @@ export default function ProgressiveProfilePrompt({
   teacherId,
   onApplyAnswer,
   onSaved,
+  locale,
 }: {
   reportId?: string;
   teacherId?: string;
   /** 把用户选择写进输入框并发出 */
   onApplyAnswer?: (text: string) => void;
   onSaved?: (summary: string) => void;
+  locale?: string | null;
 }) {
+  const en = isEnglishUiLocale(locale);
+  const t = (zh: string, enText: string) => (en ? enText : zh);
   const [slot, setSlot] = useState<ProfileFieldSlot | null>(null);
   const [asked, setAsked] = useState<string[]>([]);
   const [dismissed, setDismissed] = useState(false);
@@ -70,13 +75,13 @@ export default function ProgressiveProfilePrompt({
       });
       const data = await res.json();
       if (!res.ok || !data?.success) {
-        setNotice(data?.error || '保存失败');
+        setNotice(data?.error || t('保存失败', 'Save failed'));
         return;
       }
       const key = `${slot.domain}.${slot.fieldKey}`;
       const nextAsked = [...asked, key];
       setAsked(nextAsked);
-      setNotice(`已记下：${slot.label}`);
+      setNotice(t(`已记下：${slot.label}`, `Saved: ${slot.label}`));
       onSaved?.(`${slot.label}：${value.trim()}`);
       trackProductEvent('mass_profile_field_saved', {
         domain: slot.domain,
@@ -88,7 +93,7 @@ export default function ProgressiveProfilePrompt({
       // 稍后再拉下一项，避免连珠炮
       setTimeout(() => void loadNext(nextAsked), 1200);
     } catch {
-      setNotice('网络异常');
+      setNotice(t('网络异常', 'Network error'));
     } finally {
       setSaving(false);
     }
@@ -124,7 +129,7 @@ export default function ProgressiveProfilePrompt({
         <>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <p className="text-[12px] leading-[1.55] text-[color:var(--ink-3)]">
-              <span className="font-medium text-[color:var(--ink-2)]">补充</span>
+              <span className="font-medium text-[color:var(--ink-2)]">{t('补充', 'Add')}</span>
               <span className="mx-1 text-[color:var(--ink-5)]">·</span>
               {slot.ask}
             </p>
@@ -133,7 +138,7 @@ export default function ProgressiveProfilePrompt({
               onClick={skip}
               className="shrink-0 text-[11px] text-[color:var(--ink-5)] hover:underline"
             >
-              稍后
+              {t('稍后', 'Later')}
             </button>
           </div>
           {slot.chips && slot.chips.length > 0 ? (
@@ -154,7 +159,9 @@ export default function ProgressiveProfilePrompt({
               ))}
             </div>
           ) : (
-            <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">可在下方输入；或点「稍后」</p>
+            <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
+              {t('可在下方输入；或点「稍后」', 'Type below, or tap Later')}
+            </p>
           )}
         </>
       ) : null}

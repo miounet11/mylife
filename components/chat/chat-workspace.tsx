@@ -22,6 +22,7 @@ import {
   type TeacherId,
 } from '@/lib/teachers';
 import ProgressiveProfilePrompt from '@/components/chat/progressive-profile-prompt';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 function msgId() {
   return `m_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
@@ -35,6 +36,9 @@ export default function ChatWorkspace() {
   const teacherIdParam = searchParams.get('teacher') || '';
   const city = searchParams.get('city') || '';
   const initialQuestion = searchParams.get('q') || searchParams.get('question') || '';
+  const locale = searchParams.get('lang') || searchParams.get('locale') || '';
+  const en = isEnglishUiLocale(locale);
+  const t = (zh: string, enText: string) => (en ? enText : zh);
   const teacher = getTeacher(teacherIdParam || intent || 'overview');
 
   const [question, setQuestion] = useState(initialQuestion);
@@ -66,7 +70,10 @@ export default function ChatWorkspace() {
       ? teacher.starters
       : [
           ...buildSceneFollowupSuggestions(sceneIntent).slice(0, 3),
-          '基于我的最新报告，现在最该优先推进的一件事是什么？',
+          t(
+            '基于我的最新报告，现在最该优先推进的一件事是什么？',
+            'From my latest report, what should I prioritize first right now?',
+          ),
         ];
 
   const analyzeHref = `/analyze?source=chat_workspace&intent=${encodeURIComponent(intent || 'career')}`;
@@ -199,24 +206,36 @@ export default function ChatWorkspace() {
           });
           setCtxNote(
             next.dayMaster
-              ? `已锚定报告真值：日主 ${next.dayMaster}${next.yongShen?.length ? ` · 用神 ${next.yongShen.join('、')}` : ''}`
-              : `已关联报告 ${reportId.slice(0, 10)}…（部分字段未落库，将用保守结构回答）`
+              ? en
+                ? `Anchored report truth: day master ${next.dayMaster}${next.yongShen?.length ? ` · favorable ${next.yongShen.join(', ')}` : ''}`
+                : `已锚定报告真值：日主 ${next.dayMaster}${next.yongShen?.length ? ` · 用神 ${next.yongShen.join('、')}` : ''}`
+              : en
+                ? `Linked report ${reportId.slice(0, 10)}… (partial fields missing; answering with a conservative structure)`
+                : `已关联报告 ${reportId.slice(0, 10)}…（部分字段未落库，将用保守结构回答）`,
           );
         } else {
           setCtx({ reportId });
-          setCtxNote(`已关联报告 ${reportId.slice(0, 10)}…，将按报告 ID 做结构追问。`);
+          setCtxNote(
+            en
+              ? `Linked report ${reportId.slice(0, 10)}… — structure follow-ups by report ID.`
+              : `已关联报告 ${reportId.slice(0, 10)}…，将按报告 ID 做结构追问。`,
+          );
         }
       } catch {
         if (!cancelled) {
           setCtx({ reportId });
-          setCtxNote('报告上下文拉取受限，仍将按 reportId 做锚定回答。');
+          setCtxNote(
+            en
+              ? 'Report context fetch limited; still anchoring answers by reportId.'
+              : '报告上下文拉取受限，仍将按 reportId 做锚定回答。',
+          );
         }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [reportId]);
+  }, [reportId, en]);
 
   useEffect(() => {
     if (!initialQuestion.trim() || !reportId || autoAsked || loadingRef.current) return;
@@ -236,7 +255,9 @@ export default function ChatWorkspace() {
       <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">当前老师</div>
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">
+              {t('当前老师', 'Current guide')}
+            </div>
             <div className="mt-0.5 text-[15px] font-semibold text-[color:var(--ink-1)]">{teacher.name}</div>
             <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">{teacher.tagline}</p>
             <p className="mt-0.5 text-[11px] text-[color:var(--ink-5)]">{teacher.boundary}</p>
@@ -245,7 +266,7 @@ export default function ChatWorkspace() {
             href={reportId ? `/teachers?reportId=${encodeURIComponent(reportId)}` : '/teachers'}
             className="shrink-0 text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
           >
-            换老师
+            {t('换老师', 'Switch guide')}
           </Link>
         </div>
         <div className="mt-2.5 flex flex-wrap gap-x-3 gap-y-1 border-t border-[color:var(--hairline)] pt-2.5">
@@ -275,21 +296,34 @@ export default function ChatWorkspace() {
         </div>
       </div>
 
-      <ChatReportGate reportId={reportId} intent={intent || teacher.scene || 'career'} source={source} variant="card" />
+      <ChatReportGate
+        reportId={reportId}
+        intent={intent || teacher.scene || 'career'}
+        source={source}
+        variant="card"
+        locale={locale}
+      />
 
       <ProgressiveProfilePrompt
         reportId={reportId || undefined}
         teacherId={teacher.id}
+        locale={locale}
         onApplyAnswer={(text) => setQuestion(text)}
       />
 
       {reportId ? (
         <AlertBanner tone="info" className="text-xs">
-          已关联报告 <span className="font-mono">{reportId.slice(0, 8)}…</span>。
+          {t('已关联报告', 'Linked report')}{' '}
+          <span className="font-mono">{reportId.slice(0, 8)}…</span>
+          {en ? '.' : '。'}
           <Link href={`/result/${reportId}`} className="ml-1 font-semibold hover:no-underline">
-            打开报告
+            {t('打开报告', 'Open report')}
           </Link>
-          {city ? <span className="ml-1">· 城市 {city}</span> : null}
+          {city ? (
+            <span className="ml-1">
+              · {t('城市', 'City')} {city}
+            </span>
+          ) : null}
           {ctxNote ? <span className="mt-1 block text-[11px] opacity-90">{ctxNote}</span> : null}
         </AlertBanner>
       ) : null}
@@ -297,13 +331,13 @@ export default function ChatWorkspace() {
       {messages.length > 0 ? (
         <section className="space-y-3 border-t border-[color:var(--hairline)] pt-4">
           <div className="text-[12px] font-medium text-[color:var(--ink-5)]">
-            对话 · {teacher.name}
+            {t('对话', 'Chat')} · {teacher.name}
           </div>
           <div className="max-h-[420px] space-y-4 overflow-y-auto">
             {messages.map((m) => (
               <div key={m.id} className="text-[13px] leading-[1.65]">
                 <div className="mb-0.5 text-[11px] text-[color:var(--ink-5)]">
-                  {m.role === 'user' ? '你' : teacher.name}
+                  {m.role === 'user' ? t('你', 'You') : teacher.name}
                 </div>
                 <div
                   className={`whitespace-pre-wrap ${
@@ -317,7 +351,7 @@ export default function ChatWorkspace() {
             {loading ? (
               <div className="flex items-center gap-2 text-[12px] text-[color:var(--ink-5)]">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                正在组织回答…
+                {t('正在组织回答…', 'Composing reply…')}
               </div>
             ) : null}
             <div ref={bottomRef} />
@@ -326,12 +360,17 @@ export default function ChatWorkspace() {
       ) : null}
 
       <section className="border-t border-[color:var(--hairline)] pt-4">
-        <div className="text-[13px] font-medium text-[color:var(--ink-1)]">输入追问</div>
+        <div className="text-[13px] font-medium text-[color:var(--ink-1)]">
+          {t('输入追问', 'Ask a follow-up')}
+        </div>
         <textarea
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
           rows={4}
-          placeholder="例如：这份报告说今年适合转型，但我现在在职稳定——应如何理解这个判断？"
+          placeholder={t(
+            '例如：这份报告说今年适合转型，但我现在在职稳定——应如何理解这个判断？',
+            'e.g. The report says this year favors a transition, but my job is stable — how should I read that?',
+          )}
           className="fb-input mt-2 w-full resize-y px-3 py-2 text-sm"
           onKeyDown={(e) => {
             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && question.trim()) {
@@ -364,7 +403,7 @@ export default function ChatWorkspace() {
               }
               className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
             >
-              先生成报告
+              {t('先生成报告', 'Create report first')}
             </Link>
           ) : null}
           <button
@@ -380,7 +419,7 @@ export default function ChatWorkspace() {
             }}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-            {reportId ? '发送' : '去排盘'}
+            {reportId ? t('发送', 'Send') : t('去排盘', 'Create chart')}
           </button>
           {reportId && messages.length > 0 ? (
             <button
@@ -391,14 +430,20 @@ export default function ChatWorkspace() {
                 messagesRef.current = [];
               }}
             >
-              清空
+              {t('清空', 'Clear')}
             </button>
           ) : null}
         </div>
         <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
           {reportId
-            ? '多轮追问锚定已绑定报告；⌘/Ctrl+Enter 发送。'
-            : '没有报告时，优先生成报告后再回来追问。'}
+            ? t(
+                '多轮追问锚定已绑定报告；⌘/Ctrl+Enter 发送。',
+                'Multi-turn follow-ups are anchored to the bound report; ⌘/Ctrl+Enter to send.',
+              )
+            : t(
+                '没有报告时，优先生成报告后再回来追问。',
+                'Without a report, create one first, then come back to follow up.',
+              )}
         </p>
       </section>
     </div>

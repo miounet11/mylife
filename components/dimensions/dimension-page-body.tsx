@@ -1,41 +1,46 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import DimensionReportShell from '@/components/dimensions/dimension-report-shell';
 import type { DimensionDefinition } from '@/lib/dimensions/types';
 import type { DimensionReport } from '@/lib/dimensions/types';
+import type { DimensionSlug } from '@/lib/dimensions/types';
+import { dimensionDetailCopy, dimensionUiCopy } from '@/lib/i18n/dimensions-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { hydrateLifeProfilesFromServer, recordDimensionVisit } from '@/lib/life-profile/store';
 import { savePredictions } from '@/lib/predictions/store';
 import type { ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { buildTeacherChatHref, teacherFromDimensionSlug } from '@/lib/teachers';
 import { fetchJsonWithTimeout } from '@/lib/utils';
 
-function buildDimensionTeacherChatHref(slug: string, title: string) {
+function buildDimensionTeacherChatHref(slug: string, windowLabel: string | null) {
   const teacher = teacherFromDimensionSlug(slug);
   return buildTeacherChatHref({
     teacherId: teacher.id,
-    window: title ? `当前维度「${title}」` : null,
+    window: windowLabel || null,
     source: `dimension_${slug}_consultant`,
   });
 }
 
 function DimensionAskTeacherCta({
   slug,
-  title,
+  windowLabel,
+  label,
   variant = 'link',
 }: {
   slug: string;
-  title: string;
+  windowLabel: string;
+  label: string;
   variant?: 'link' | 'primary';
 }) {
-  const href = buildDimensionTeacherChatHref(slug, title);
+  const href = buildDimensionTeacherChatHref(slug, windowLabel);
 
   if (variant === 'primary') {
     return (
       <Link href={href} className="fb-btn fb-btn-primary h-9 px-4 text-sm hover:no-underline">
-        问老师继续拆
+        {label}
       </Link>
     );
   }
@@ -45,7 +50,7 @@ function DimensionAskTeacherCta({
       href={href}
       className="inline-flex h-9 items-center text-[13px] font-medium text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
     >
-      问老师继续拆
+      {label}
     </Link>
   );
 }
@@ -53,10 +58,19 @@ function DimensionAskTeacherCta({
 export default function DimensionPageBody({
   dimension,
   runnable,
+  locale = 'zh-CN',
 }: {
   dimension: DimensionDefinition;
   runnable: boolean;
+  locale?: SiteLocale;
 }) {
+  const copy = useMemo(() => dimensionDetailCopy(locale), [locale]);
+  const ui = useMemo(
+    () => dimensionUiCopy(locale, dimension.slug as DimensionSlug),
+    [locale, dimension.slug],
+  );
+  const teacherWindow = copy.teacherWindow(ui.title);
+
   const [loading, setLoading] = useState(runnable);
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<'idle' | 'synced' | 'error'>('idle');
@@ -90,13 +104,13 @@ export default function DimensionPageBody({
         { timeoutMs: 8000, timeoutReason: 'dimension-profile-settings' },
       );
       if (!response.ok || !data.success) {
-        setError('无法读取档案资料，请先到「我的档案」完善出生信息。');
+        setError(copy.errorProfileRead);
         return;
       }
 
       const primary = data.fortunes.find((item) => item.isPrimary) || data.fortunes[0];
       if (!primary?.birthDate) {
-        setError('还没有出生资料，请先创建档案或前往工作台填写。');
+        setError(copy.errorNoBirth);
         return;
       }
 
@@ -116,7 +130,7 @@ export default function DimensionPageBody({
       });
       const analyzeData = await analyzeRes.json();
       if (!analyzeRes.ok || !analyzeData.success || !analyzeData.report) {
-        setError(analyzeData.error || '研判生成失败，请稍后重试。');
+        setError(analyzeData.error || copy.errorAnalyzeFail);
         return;
       }
 
@@ -133,11 +147,11 @@ export default function DimensionPageBody({
         await syncPredictions(nextReport.predictions);
       }
     } catch {
-      setError('加载失败，请检查网络后重试。');
+      setError(copy.errorNetwork);
     } finally {
       setLoading(false);
     }
-  }, [dimension.slug, runnable, syncPredictions]);
+  }, [copy, dimension.slug, runnable, syncPredictions]);
 
   useEffect(() => {
     void runAnalysis();
@@ -156,18 +170,22 @@ export default function DimensionPageBody({
     return (
       <section className="fb-card space-y-4 p-5">
         <p className="text-[14px] leading-[1.6] text-[color:var(--ink-2)]">
-          「{dimension.title}」深度研判正在开发中。当前可先通过工作台生成完整报告，或关注后续版本更新。
+          {copy.notReady(ui.title)}
         </p>
-        {dimension.disclaimer ? (
-          <p className="text-[12px] text-[color:var(--ink-3)]">{dimension.disclaimer}</p>
+        {ui.disclaimer ? (
+          <p className="text-[12px] text-[color:var(--ink-3)]">{ui.disclaimer}</p>
         ) : null}
         <div className="flex flex-wrap gap-2">
           <Link href={analyzeHref} className="fb-btn fb-btn-primary h-9 px-4 text-sm hover:no-underline">
-            用工作台生成报告
+            {copy.generateReport}
           </Link>
-          <DimensionAskTeacherCta slug={dimension.slug} title={dimension.title} />
+          <DimensionAskTeacherCta
+            slug={dimension.slug}
+            windowLabel={teacherWindow}
+            label={copy.askTeacher}
+          />
           <Link href="/dimensions" className="fb-btn h-9 px-4 text-sm hover:no-underline">
-            返回十维度
+            {copy.backToHub}
           </Link>
         </div>
       </section>
@@ -178,7 +196,7 @@ export default function DimensionPageBody({
     return (
       <div className="fb-card flex items-center justify-center gap-2 p-10 text-[13px] text-[color:var(--ink-3)]">
         <Loader2 className="h-4 w-4 animate-spin" />
-        正在基于你的命盘生成「{dimension.title}」研判…
+        {copy.loading(ui.title)}
       </div>
     );
   }
@@ -189,12 +207,16 @@ export default function DimensionPageBody({
         <p className="text-sm text-[color:var(--ink-3)]">{error}</p>
         <div className="flex flex-wrap gap-2">
           <Link href="/profile/settings" className="fb-btn fb-btn-primary h-9 px-4 text-sm hover:no-underline">
-            完善档案
+            {copy.completeProfile}
           </Link>
           <button type="button" onClick={() => void runAnalysis()} className="fb-btn h-9 px-4 text-sm">
-            重试
+            {copy.retry}
           </button>
-          <DimensionAskTeacherCta slug={dimension.slug} title={dimension.title} />
+          <DimensionAskTeacherCta
+            slug={dimension.slug}
+            windowLabel={teacherWindow}
+            label={copy.askTeacher}
+          />
         </div>
       </section>
     );
@@ -212,12 +234,17 @@ export default function DimensionPageBody({
       />
       <section className="fb-card flex flex-wrap items-center justify-between gap-3 border border-[color:var(--hairline)] p-4">
         <div className="min-w-0">
-          <p className="text-[13px] font-medium text-[color:var(--ink-1)]">问老师继续拆</p>
+          <p className="text-[13px] font-medium text-[color:var(--ink-1)]">{copy.askTeacher}</p>
           <p className="mt-0.5 text-[12px] leading-[1.5] text-[color:var(--ink-5)]">
-            进入顾问开场，围绕「{dimension.title}」继续对齐节奏与动作。
+            {copy.askTeacherHint(ui.title)}
           </p>
         </div>
-        <DimensionAskTeacherCta slug={dimension.slug} title={dimension.title} variant="primary" />
+        <DimensionAskTeacherCta
+          slug={dimension.slug}
+          windowLabel={teacherWindow}
+          label={copy.askTeacher}
+          variant="primary"
+        />
       </section>
     </div>
   );
