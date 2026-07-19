@@ -7,13 +7,14 @@ import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { listDimensionsByPriority, MVP_DIMENSION_SLUGS, DIMENSIONS } from '@/lib/dimensions/config';
-import {
-  INTENT_HINT,
-  INTENT_LABEL,
-  intentPrimaryCta,
-  parseSourceIntent,
-} from '@/lib/dimensions/intent-source';
+import type { DimensionSlug } from '@/lib/dimensions/types';
+import { parseSourceIntent } from '@/lib/dimensions/intent-source';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import {
+  dimensionUiCopy,
+  dimensionsHubSeo,
+  intentUiCopy,
+} from '@/lib/i18n/dimensions-copy';
 import { dimensionsHubCopy } from '@/lib/i18n/hub-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import {
@@ -21,6 +22,7 @@ import {
   buildItemListJsonLd,
   buildPageMetadata,
   buildServiceJsonLd,
+  withLocalePrefix,
 } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
 
@@ -32,40 +34,39 @@ const DIMENSIONS_CONSULTANT_IDS = [
   'wealth',
 ] as const satisfies ReadonlyArray<keyof ReturnType<typeof dimensionsHubCopy>['consultants']>;
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '十维度深度研判｜运势节奏、事业行业、投资婚恋等场景入口',
-  description:
-    '人生K线十维度把用户最关心的问题拆成可执行场景：运势节奏、工作行业、投资理财、谈婚论嫁、健康、起名、择时等。基于八字引擎输出结论、行动建议与可验证预测，并与知识库、工具中心内链互通。',
-  path: '/dimensions',
-  keywords: [
-    '十维度研判',
-    '运势节奏分析',
-    '八字事业行业',
-    '八字投资理财',
-    '谈婚论嫁择时',
-    '起名改名五行',
-    '人生K线',
-  ],
-});
-
-export default async function DimensionsPage({
-  searchParams,
-}: {
+interface DimensionsPageProps {
   searchParams?: Promise<{ source?: string; intent?: string; lang?: string }>;
-}) {
+}
+
+export async function generateMetadata({ searchParams }: DimensionsPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const seo = dimensionsHubSeo(locale);
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: withLocalePrefix('/dimensions', locale),
+    locale,
+    keywords: seo.keywords,
+  });
+}
+
+export default async function DimensionsPage({ searchParams }: DimensionsPageProps) {
   const sp = searchParams ? await searchParams : {};
   const source = `${sp.source || sp.intent || ''}`.trim();
   const intent = parseSourceIntent(source);
   const uiLocale = await getRequestLocale(sp.lang);
   const copy = dimensionsHubCopy(uiLocale);
+  const intentCopy = intentUiCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const p0 = listDimensionsByPriority('p0');
   const p1Count = listDimensionsByPriority('p1').length;
   const p2Count = listDimensionsByPriority('p2').length;
-  const primary = intentPrimaryCta(intent);
+  const primary = intentCopy.primaryCta[intent];
   const primaryHref = source
     ? `${primary.href}${primary.href.includes('?') ? '&' : '?'}source=${encodeURIComponent(source)}`
     : primary.href;
+  const intentLabel = intentCopy.labels[intent];
 
   const itemList = buildItemListJsonLd(
     '人生K线十维度深度研判',
@@ -114,8 +115,8 @@ export default async function DimensionsPage({
       <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 pb-16 md:space-y-6 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
-          title={intent === 'general' ? copy.titleGeneral : INTENT_LABEL[intent]}
-          description={INTENT_HINT[intent]}
+          title={intent === 'general' ? copy.titleGeneral : intentLabel}
+          description={intentCopy.hints[intent]}
           actions={
             <>
               <Link
@@ -139,7 +140,7 @@ export default async function DimensionsPage({
 
         {intent !== 'general' ? (
           <p className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
-            {copy.sourceWorkbench(INTENT_LABEL[intent])}
+            {copy.sourceWorkbench(intentLabel)}
             <Link href={primaryHref} className="mx-1 text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               {primary.label}
             </Link>
@@ -160,7 +161,7 @@ export default async function DimensionsPage({
           priority
         />
 
-        <DimensionGrid intent={intent} source={source} />
+        <DimensionGrid intent={intent} source={source} locale={uiLocale} />
 
         <section className="space-y-2 border-t border-[color:var(--hairline)] pt-4">
           <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.askTeachers}</h2>
@@ -207,7 +208,9 @@ export default async function DimensionsPage({
         <p className="text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
           {copy.openScenes(MVP_DIMENSION_SLUGS.length)}
           {p0.length
-            ? ` · ${copy.commonPrefix}：${p0.map((item) => item.title).join(uiLocale === 'en' ? ', ' : '、')}`
+            ? ` · ${copy.commonPrefix}：${p0
+                .map((item) => dimensionUiCopy(uiLocale, item.slug as DimensionSlug).title)
+                .join(uiLocale === 'en' ? ', ' : '、')}`
             : ''}
           {p1Count || p2Count ? ` · ${copy.expandingCount(p1Count + p2Count)}` : ''}
           {uiLocale === 'en' ? '.' : '。'}

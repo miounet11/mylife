@@ -1,5 +1,5 @@
 /**
- * English-native teacher chrome for P0 advisors.
+ * English-native teacher chrome for P0 + P1 (+ expert_chart) advisors.
  * Used by buildTeacherOpening when UI locale is English.
  * No invented 用神 / day-master claims — templates only use real slots.
  */
@@ -33,6 +33,14 @@ const CHIP_LABELS_EN: Partial<Record<TeacherId, string>> = {
   health: 'Rhythm',
   practice: 'Practice',
   geo: 'Place',
+  hehun: 'Compatibility',
+  study: 'Study',
+  partnership: 'Partnership',
+  naming: 'Naming',
+  timing_selection: 'Date pick',
+  guide: 'Report path',
+  terms: 'Terms',
+  expert_chart: 'Chart',
 };
 
 function chips(
@@ -46,7 +54,7 @@ function chips(
 }
 
 /**
- * P0 English overlays: name, tagline, boundary, starters, firstMes.
+ * P0 + P1 (+ expert_chart) English overlays: name, tagline, boundary, starters, firstMes.
  * Placeholders match fillTeacherTemplate ({{name}}, {{dayMaster}}, …).
  */
 export const TEACHER_COPY_EN: Partial<Record<TeacherId, TeacherCopyOverlay>> = {
@@ -228,6 +236,143 @@ export const TEACHER_COPY_EN: Partial<Record<TeacherId, TeacherCopyOverlay>> = {
       { id: 'overview', teacherId: 'overview' },
     ]),
   },
+  // ── P1 ──
+  hehun: {
+    name: 'Compatibility Guide',
+    tagline: 'Two-person rhythm differences and how to align',
+    boundary: 'Pace and difference reference only — cannot replace either person’s real choice',
+    firstMes:
+      "I'm the Compatibility Guide. Looking at {{name}}'s chart: day master {{dayMaster}}, luck cycle {{currentDaYun}}. {{yongShenLine}}{{windowHint}}\nDifferences and pace only — not a substitute for either person’s choice.\n\nMore stuck on where the two of you diverge, or whether to push commitment vs clarify boundaries first?\nReply with one focus, or tap a starter.",
+    starters: [
+      'Where do our rhythms differ most, and how can we align?',
+      'At this stage, should we advance commitment or clarify boundaries first?',
+    ],
+    topicChips: chips([
+      { id: 'hehun', teacherId: 'hehun' },
+      { id: 'relationship', teacherId: 'relationship' },
+      { id: 'timing', teacherId: 'timing' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  study: {
+    name: 'Study Guide',
+    tagline: 'Learning, exams, and direction rhythm',
+    boundary: 'Direction and pace reference only — no exam-result promises',
+    firstMes:
+      "I'm the Study Guide. Day master {{dayMaster}}, luck cycle {{currentDaYun}}. {{yongShenLine}}{{windowHint}}\nPace and direction only — I don’t promise scores or admissions.\n\nMore about exam prep rhythm, or a longer study/career direction choice?\nReply with one focus, or tap a starter.",
+    starters: [
+      'In this exam or admissions phase, how should I pace my study?',
+      'Given my structure, should I deepen a track or keep options open for now?',
+    ],
+    topicChips: chips([
+      { id: 'study', teacherId: 'study' },
+      { id: 'career', teacherId: 'career' },
+      { id: 'timing', teacherId: 'timing' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  partnership: {
+    name: 'Partnership Guide',
+    tagline: 'Collaborator fit and division-of-labor boundaries',
+    boundary: 'Collaboration profile only — not due diligence or legal advice',
+    firstMes:
+      "I'm the Partnership Guide. Day master {{dayMaster}}, luck cycle {{currentDaYun}}. {{yongShenLine}}{{windowHint}}\nCollaboration fit and boundaries only — not legal or diligence advice.\n\nStuck on who to partner with, or how to split roles and risk?\nReply with one focus, or tap a starter.",
+    starters: [
+      'What type of person am I better suited to partner with long term?',
+      'How should I set role and risk boundaries before deepening a collaboration?',
+    ],
+    topicChips: chips([
+      { id: 'partnership', teacherId: 'partnership' },
+      { id: 'career', teacherId: 'career' },
+      { id: 'wealth', teacherId: 'wealth' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  naming: {
+    name: 'Naming Guide',
+    tagline: 'How a name relates to favorable-element direction',
+    boundary: 'Cultural and structural reference only — no fortune-result promises',
+    firstMes:
+      "I'm the Naming Guide. Day master {{dayMaster}}, pattern {{pattern}}. {{yongShenLine}}{{windowHint}}\nStructure and cultural fit only — I don’t promise destiny outcomes.\n\nReviewing an existing name, or choosing among shortlisted options?\nReply with one focus, or tap a starter.",
+    starters: [
+      'Does this name align with the favorable direction of my chart?',
+      'What structural checks should I use when comparing name options?',
+    ],
+    topicChips: chips([
+      { id: 'naming', teacherId: 'naming' },
+      { id: 'terms', teacherId: 'terms' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  timing_selection: {
+    name: 'Date Selection Guide',
+    tagline: 'Event windows ranked with do/avoid notes',
+    boundary: 'Time-window reference only — medical and legal matters follow professionals first',
+    firstMes:
+      "I'm the Date Selection Guide. Day master {{dayMaster}}, luck cycle {{currentDaYun}}. {{bestWindowLine}}{{riskWindowLine}}{{windowHint}}\nWindows and costs only — medical/legal calls stay with professionals.\n\nDo you have a dated event (sign, move, ceremony), or need a 90-day ranking first?\nReply with the event type or a date, or tap a starter.",
+    starters: [
+      'In the next 90 days, which windows better fit signing or moving?',
+      'If I must pick a date, what should I prioritize and what should I avoid?',
+    ],
+    topicChips: chips([
+      { id: 'timing_selection', teacherId: 'timing_selection' },
+      { id: 'timing', teacherId: 'timing' },
+      { id: 'career', teacherId: 'career' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  guide: {
+    name: 'Report Guide',
+    tagline: 'Which parts of this report to read first',
+    boundary: 'Reading path only — does not re-cast the chart',
+    firstMes:
+      "I'm the Report Guide. Chart loaded for {{name}}: day master {{dayMaster}}, pattern {{pattern}}, luck cycle {{currentDaYun}}. {{windowHint}}\nI only map a reading path — I won’t re-cast or invent structure.\n\nShort on time, or want a full tour in order?\nReply \"short\" or \"full\", or tap a starter.",
+    starters: [
+      'In what order should I read this report?',
+      'If I only have 10 minutes, which sections matter most right now?',
+    ],
+    topicChips: chips([
+      { id: 'guide', teacherId: 'guide' },
+      { id: 'overview', teacherId: 'overview' },
+      { id: 'terms', teacherId: 'terms' },
+      { id: 'expert_chart', teacherId: 'expert_chart' },
+    ]),
+  },
+  terms: {
+    name: 'Terms Guide',
+    tagline: 'Day master, favorable elements, luck cycles — plain language',
+    boundary: 'Concept explainers only, illustrated with fields from this chart',
+    firstMes:
+      "I'm the Terms Guide. On this chart: day master {{dayMaster}}, pattern {{pattern}}, luck cycle {{currentDaYun}}. {{yongShenLine}}\nConcepts plus your fields only — not a full life verdict.\n\nWhich term is unclear: day master, favorable focus, or luck cycle?\nName one, or tap a starter.",
+    starters: [
+      'What does “favorable focus” mean on my chart specifically?',
+      'In plain language, what do day master and luck cycle tell me?',
+    ],
+    topicChips: chips([
+      { id: 'terms', teacherId: 'terms' },
+      { id: 'guide', teacherId: 'guide' },
+      { id: 'expert_chart', teacherId: 'expert_chart' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
+  // ── P2 ──
+  expert_chart: {
+    name: 'Chart Guide',
+    tagline: 'Pillars, ten gods, and year/luck deep read',
+    boundary: 'Professional structure reference for users who want deeper chart detail',
+    firstMes:
+      "I'm the Chart Guide. Day master {{dayMaster}}, pattern {{pattern}}, luck cycle {{currentDaYun}}. {{yongShenLine}}{{windowHint}}\nStructure deep-read only — still not a substitute for real-world choices.\n\nWant pillar-by-pillar structure, or current year/luck interaction first?\nReply \"pillars\" or \"stage\", or tap a starter.",
+    starters: [
+      'Walk me through the structural points of my current stage via pillars and year/luck.',
+      'How should I read ten gods against my day master without drowning in jargon?',
+    ],
+    topicChips: chips([
+      { id: 'expert_chart', teacherId: 'expert_chart' },
+      { id: 'terms', teacherId: 'terms' },
+      { id: 'timing', teacherId: 'timing' },
+      { id: 'overview', teacherId: 'overview' },
+    ]),
+  },
 };
 
 /** UI-facing name / tagline / boundary (list cards, hub, picker). */
@@ -235,7 +380,7 @@ export type TeacherPresentation = Pick<TeacherDefinition, 'name' | 'tagline' | '
 
 /**
  * Resolve display name/tagline/boundary for a teacher at the given UI locale.
- * EN uses TEACHER_COPY_EN overlays; non-P0 soft-renames "老师" → " Guide".
+ * EN uses TEACHER_COPY_EN overlays; teachers without overlay soft-rename "老师" → " Guide".
  */
 export function resolveTeacherPresentation(
   teacher: TeacherDefinition,

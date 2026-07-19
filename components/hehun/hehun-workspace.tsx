@@ -5,10 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   analyzeHehun,
-  type HehunLayer,
   type HehunPersonInput,
   type HehunResult,
 } from '@/lib/hehun-engine';
+import { presentHehunResult } from '@/lib/hehun/present-result';
 import {
   buildHehunHref,
   hehunBirthPairFromQuery,
@@ -197,41 +197,6 @@ function hehunChromeCopy(locale: SiteLocale) {
     sideAName: en ? 'Person A' : '甲方',
     sideBName: en ? 'Person B' : '乙方',
   };
-}
-
-/** EN result chrome: band labels (engine stays Chinese). */
-const HEHUN_BAND_EN: Record<HehunResult['band'], string> = {
-  宜深化: 'Deepen carefully',
-  可经营: 'Workable',
-  宜谨慎: 'Proceed carefully',
-  高摩擦: 'High friction',
-};
-
-/** Layer titles by engine `layer.key` (fallback by Chinese title). */
-const HEHUN_LAYER_TITLE_EN: Record<string, string> = {
-  'day-stem': 'Day Master interaction',
-  palace: 'Spouse palace (day branch)',
-  yong: 'Favorable / unfavorable complement',
-  dayun: 'Dayun sync',
-  日主互动: 'Day Master interaction',
-  '夫妻宫（日支）': 'Spouse palace (day branch)',
-  用忌互补: 'Favorable / unfavorable complement',
-  大运同步: 'Dayun sync',
-};
-
-function hehunBandLabel(band: HehunResult['band'], locale: SiteLocale): string {
-  return locale === 'en' ? HEHUN_BAND_EN[band] ?? band : band;
-}
-
-function hehunLayerTitle(layer: HehunLayer, locale: SiteLocale): string {
-  if (locale !== 'en') return layer.title;
-  return HEHUN_LAYER_TITLE_EN[layer.key] ?? HEHUN_LAYER_TITLE_EN[layer.title] ?? layer.title;
-}
-
-function hehunHeadlineDisplay(result: HehunResult, locale: SiteLocale): string {
-  if (locale !== 'en') return result.headline;
-  const bandEn = hehunBandLabel(result.band, 'en');
-  return `${result.personA.name} & ${result.personB.name}: ${result.score}/100 · ${bandEn}`;
 }
 
 const EMPTY_BIRTH_A: BirthSideValue = {
@@ -424,6 +389,12 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
 
   const canRun = useMemo(() => a.dayMaster && a.dayBranch && b.dayMaster && b.dayBranch, [a, b]);
 
+  /** Engine result stays Chinese-native; present body chrome for current locale. */
+  const displayResult = useMemo(
+    () => (result ? presentHehunResult(result, locale) : null),
+    [result, locale],
+  );
+
   function applyFortune(side: 'a' | 'b', fortuneId: string) {
     const f = fortunes.find((x) => x.id === fortuneId);
     if (!f) return;
@@ -446,6 +417,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
   }
 
   function run() {
+    // Engine remains Chinese-native; presentHehunResult maps chrome via displayResult.
     const r = analyzeHehun(a, b);
     setResult(r);
     trackProductEvent('hehun_run', {
@@ -490,6 +462,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
       );
       setA(personA);
       setB(personB);
+      // Engine remains Chinese-native; presentHehunResult maps chrome via displayResult.
       const r = analyzeHehun(personA, personB);
       setResult(r);
       saveRememberedHehunBirthPair({
@@ -541,9 +514,10 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
   }
 
   async function copyPlain() {
-    if (!result) return;
+    const plain = displayResult?.plainForCouple ?? result?.plainForCouple;
+    if (!plain) return;
     try {
-      await navigator.clipboard.writeText(result.plainForCouple);
+      await navigator.clipboard.writeText(plain);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -704,48 +678,58 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
         {copy.runCompare}
       </button>
 
-      {result ? (
+      {displayResult ? (
         <div className="space-y-4 border-y border-[color:var(--hairline)] py-4">
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{result.knowledgeStamp}</div>
+              <div className="text-[11px] font-medium text-[color:var(--ink-5)]">
+                {displayResult.knowledgeStamp}
+              </div>
               <h2 className="mt-1 text-[16px] font-semibold text-[color:var(--ink-1)]">
-                {hehunHeadlineDisplay(result, locale)}
+                {displayResult.headline}
               </h2>
               <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">
-                {result.personA.name} {result.personA.dayPillar}
-                {result.personA.dayun ? ` · ${copy.dayunShort}${result.personA.dayun}` : ''} ×{' '}
-                {result.personB.name} {result.personB.dayPillar}
-                {result.personB.dayun ? ` · ${copy.dayunShort}${result.personB.dayun}` : ''}
+                {displayResult.personA.name} {displayResult.personA.dayPillar}
+                {displayResult.personA.dayun
+                  ? ` · ${copy.dayunShort}${displayResult.personA.dayun}`
+                  : ''}{' '}
+                × {displayResult.personB.name} {displayResult.personB.dayPillar}
+                {displayResult.personB.dayun
+                  ? ` · ${copy.dayunShort}${displayResult.personB.dayun}`
+                  : ''}
               </p>
             </div>
             <div className="text-right">
-              <div className="font-mono text-[24px] tabular-nums text-[color:var(--ink-1)]">{result.score}</div>
-              <div className="text-[11px] text-[color:var(--ink-5)]">
-                {hehunBandLabel(result.band, locale)}
+              <div className="font-mono text-[24px] tabular-nums text-[color:var(--ink-1)]">
+                {displayResult.score}
               </div>
+              <div className="text-[11px] text-[color:var(--ink-5)]">{displayResult.band}</div>
             </div>
           </div>
 
           <div
             className={`grid gap-0 border-t border-[color:var(--hairline)] ${
-              result.layers.length >= 4 ? 'md:grid-cols-2 xl:grid-cols-4' : 'md:grid-cols-3'
+              displayResult.layers.length >= 4
+                ? 'md:grid-cols-2 xl:grid-cols-4'
+                : 'md:grid-cols-3'
             }`}
           >
-            {result.layers.map((layer) => (
+            {displayResult.layers.map((layer) => (
               <div
                 key={layer.key}
                 className="border-b border-[color:var(--hairline)] py-3 md:border-r md:px-3 md:first:pl-0 md:last:border-r-0"
               >
                 <div className="flex items-baseline justify-between gap-2">
                   <div className="text-[12px] font-medium text-[color:var(--ink-1)]">
-                    {hehunLayerTitle(layer, locale)}
+                    {layer.title}
                   </div>
                   <span className="font-mono text-[12px] tabular-nums text-[color:var(--ink-5)]">
                     {layer.score}
                   </span>
                 </div>
-                <p className="mt-1.5 text-[12px] leading-[1.55] text-[color:var(--ink-3)]">{layer.summary}</p>
+                <p className="mt-1.5 text-[12px] leading-[1.55] text-[color:var(--ink-3)]">
+                  {layer.summary}
+                </p>
                 <ul className="mt-2 space-y-0.5">
                   {layer.details.map((d) => (
                     <li key={d} className="text-[11px] text-[color:var(--ink-5)]">
@@ -761,7 +745,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
             <div className="border-b border-[color:var(--hairline)] py-3 md:border-b-0 md:border-r md:pr-4">
               <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{copy.doList}</div>
               <ul className="mt-1.5 space-y-1">
-                {result.doList.map((x) => (
+                {displayResult.doList.map((x) => (
                   <li key={x} className="text-[12px] text-[color:var(--ink-2)]">
                     · {x}
                   </li>
@@ -771,7 +755,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
             <div className="py-3 md:pl-4">
               <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{copy.avoidList}</div>
               <ul className="mt-1.5 space-y-1">
-                {result.avoidList.map((x) => (
+                {displayResult.avoidList.map((x) => (
                   <li key={x} className="text-[12px] text-[color:var(--ink-2)]">
                     · {x}
                   </li>
@@ -804,14 +788,14 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
               <p className="mt-1 text-[11px] text-[color:var(--brand-strong)]">{shareNote}</p>
             ) : null}
             <pre className="mt-2 whitespace-pre-wrap font-sans text-[12px] leading-[1.65] text-[color:var(--ink-3)]">
-              {result.plainForCouple}
+              {displayResult.plainForCouple}
             </pre>
           </div>
 
           <div className="border-t border-[color:var(--hairline)] pt-3">
             <div className="text-[12px] font-medium text-[color:var(--ink-1)]">{copy.proNotes}</div>
             <ul className="mt-1.5 space-y-1">
-              {result.proNotes.map((n) => (
+              {displayResult.proNotes.map((n) => (
                 <li key={n} className="text-[12px] text-[color:var(--ink-5)]">
                   · {n}
                 </li>
