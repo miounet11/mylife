@@ -830,7 +830,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           source: entrySource || null,
         }}
       />
-      <SiteHeader ctaHref="/analyze" ctaLabel="再次分析" />
+      <SiteHeader ctaHref="/analyze" ctaLabel={pageCopy.againAnalyze} />
 
       {/* v5-B5: 追问建议补全（fire-and-forget，不阻塞渲染） */}
       <ReportFollowupAugmenterTrigger reportId={id} shouldTrigger={shouldTriggerAugmenter} />
@@ -1223,7 +1223,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </div>
 
                 <div id="subscription" className="fb-card scroll-mt-header p-4 md:p-5">
-                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">订阅与更新</div>
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{pageCopy.subscriptionTitle}</div>
                   <div className="mt-3">
                     <ReportSubscriptionPanel
                       reportId={id}
@@ -1236,15 +1236,16 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       monthlyHighlights={topMonthlyWindows}
                       ctaStrategyKey={sourceCtaStrategy.strategyKey}
                       sourceFamily={sourceCtaStrategy.sourceFamily}
+                      locale={uiLocale}
                     />
                   </div>
                 </div>
 
                 <div id="next-step" className="fb-card scroll-mt-header space-y-4 p-4 md:p-5">
                   <div>
-                    <div className="text-[13px] font-bold text-[color:var(--ink-1)]">延伸与下一步</div>
+                    <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{pageCopy.nextStepTitle}</div>
                     <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-                      可执行清单、路径与延伸阅读，按需展开。
+                      {pageCopy.nextStepSubtitle}
                     </p>
                   </div>
                   <Suspense fallback={<GuideSkeleton />}>
@@ -1370,7 +1371,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     href={isClassicOnly ? '#event-samples' : '#pro-calibration'}
                     className="mt-3 flex h-9 items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]"
                   >
-                    {isClassicOnly ? '去样本回填' : '去校准互动'}
+                    {isClassicOnly ? pageCopy.sidebarSampleBackfill : pageCopy.sidebarCalibration}
                   </a>
                 </div>
               )}

@@ -40,6 +40,7 @@ export default function ReportSubscriptionPanel({
   focusOptions = [],
   ctaStrategyKey,
   sourceFamily,
+  locale: localeProp,
 }: {
   reportId: string;
   canManage: boolean;
@@ -52,6 +53,7 @@ export default function ReportSubscriptionPanel({
   focusOptions?: EmailFocusItem[];
   ctaStrategyKey?: string;
   sourceFamily?: string;
+  locale?: string | null;
 }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -59,19 +61,72 @@ export default function ReportSubscriptionPanel({
   const [error, setError] = useState('');
   const [selectedFocusKeys, setSelectedFocusKeys] = useState<string[]>([]);
 
+  const en = `${localeProp || ''}`.toLowerCase().startsWith('en');
+
   const selectableFocusOptions = useMemo(() => focusOptions.slice(0, 12), [focusOptions]);
   const selectedFocusItems = useMemo(
     () => selectableFocusOptions.filter((item) => selectedFocusKeys.includes(item.key)),
     [selectableFocusOptions, selectedFocusKeys],
   );
 
-  const benefits = [
-    { title: '月度窗口更新', icon: Sparkles },
-    { title: '报告补全提醒', icon: RefreshCcw },
-    { title: '日常运势细节', icon: BellRing },
-    { title: '关键节点通知', icon: Stars },
-    { title: '长期复盘闭环', icon: Sparkles },
-  ];
+  const copy = useMemo(
+    () =>
+      en
+        ? {
+            intro:
+              'Email is for recovering this report across devices and optional light timing notes — structure windows, not fear-based “daily fortune.” Free, cancel anytime.',
+            eduNote:
+              'Reminders stay educational: stage windows and check-in prompts. No personal day-master claims invented in email.',
+            benefits: [
+              { title: 'Monthly window notes', icon: Sparkles },
+              { title: 'Report ready alerts', icon: RefreshCcw },
+              { title: 'Light daily check-in', icon: BellRing },
+              { title: 'Key node notices', icon: Stars },
+              { title: 'Long-term review loop', icon: Sparkles },
+            ],
+            eyebrow: 'Stay in the loop',
+            titleManage: 'Subscribe to windows & updates',
+            titleGuest: 'Subscribe to site updates',
+            focusLabel: `Focus items (max ${MAX_EMAIL_FOCUS_ITEMS})`,
+            focusHint: 'Optional. Unchecked still gets general notes; checked items get priority.',
+            placeholder: 'Email for light timing notes',
+            submit: 'Enable reminders',
+            submitting: 'Submitting…',
+            delivery: 'Delivery',
+            confidence: 'Confidence',
+            complete: 'Content standard met',
+            filling: 'Still completing',
+            watchNext: 'Worth watching next',
+          }
+        : {
+            intro:
+              '邮箱用于跨设备找回本报告，并可勾选最多 3 项重点，只收你关心的窗口与轻提醒。内容为结构节奏参考，非恐吓式每日运势。免费、可退订。',
+            eduNote: '提醒保持教育向：阶段窗口与可验证小动作，不会用邮件编造日主/用神结论。',
+            benefits: [
+              { title: '月度窗口更新', icon: Sparkles },
+              { title: '报告补全提醒', icon: RefreshCcw },
+              { title: '日常轻提醒', icon: BellRing },
+              { title: '关键节点通知', icon: Stars },
+              { title: '长期复盘闭环', icon: Sparkles },
+            ],
+            eyebrow: '建立长期关系',
+            titleManage: '订阅窗口提醒与月度更新',
+            titleGuest: '订阅站点更新与节律内容',
+            focusLabel: `选择提醒重点（最多 ${MAX_EMAIL_FOCUS_ITEMS} 项）`,
+            focusHint: '不勾选也会收到通用提醒；勾选后优先围绕这些内容展开。',
+            placeholder: '输入邮箱接收轻提醒',
+            submit: '开启提醒',
+            submitting: '提交中…',
+            delivery: '交付',
+            confidence: '可信度',
+            complete: '内容已达到完整标准',
+            filling: '继续补全中',
+            watchNext: '接下来值得关注',
+          },
+    [en],
+  );
+
+  const benefits = copy.benefits;
 
   const toggleFocusItem = (key: string) => {
     setSelectedFocusKeys((current) => {
@@ -157,16 +212,19 @@ export default function ReportSubscriptionPanel({
             先把报告挂到邮箱，<br />
             <span className="text-[color:var(--brand-strong)]">再让关键窗口主动来找你</span>
           </h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)]">
-            参考 Notion / Linear 的「先交付价值再保存」：邮箱用于跨设备找回本报告，并可勾选最多 3 项重点，只收你关心的窗口与日常细节提醒。免费、可退订。
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--ink-3)] intro-copy">
+            {copy.intro}
+          </p>
+          <p className="mt-1.5 max-w-2xl text-[12px] leading-5 text-[color:var(--ink-5)]">
+            {copy.eduNote}
           </p>
 
           <div className="mt-4 flex flex-wrap gap-1.5">
             <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-2 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-4)]">
-              交付 {deliveryTierLabel}
+              {copy.delivery} {deliveryTierLabel}
             </span>
             <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 font-mono text-xs font-bold tabular-nums text-[color:var(--brand-strong)]">
-              可信度 {qualityScore || '--'}
+              {copy.confidence} {qualityScore || '--'}
             </span>
             <span
               className={`inline-flex h-6 items-center rounded-[var(--radius-sm)] border px-2 text-xs font-bold uppercase tracking-wider ${
@@ -175,14 +233,14 @@ export default function ReportSubscriptionPanel({
                   : 'border-[color:var(--signal)] bg-[color:var(--signal-soft)] text-[color:var(--signal-strong)]'
               }`}
             >
-              {targetAchieved ? '内容已达到完整标准' : (upgradeStatusLabel || '继续补全中')}
+              {targetAchieved ? copy.complete : (upgradeStatusLabel || copy.filling)}
             </span>
           </div>
 
           {monthlyHighlights.length > 0 ? (
             <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
               <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                接下来值得关注
+                {copy.watchNext}
               </div>
               <div className="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
                 {monthlyHighlights.map((item) => (
@@ -222,17 +280,17 @@ export default function ReportSubscriptionPanel({
 
         <div className="rounded-[var(--radius-md)] border border-[color:var(--signal-soft)] bg-[color:var(--paper)] p-4">
           <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--signal-strong)]">
-            立即建立长期关系
+            {copy.eyebrow}
           </div>
           <div className="mt-2 text-lg font-black leading-tight text-[color:var(--ink-1)] md:text-xl">
-            {canManage ? '订阅运势提醒与月度更新' : '订阅站点更新与节律内容'}
+            {canManage ? copy.titleManage : copy.titleGuest}
           </div>
 
           {selectableFocusOptions.length > 0 ? (
             <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
               <div className="flex items-center justify-between gap-2">
                 <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  选择提醒重点（最多 {MAX_EMAIL_FOCUS_ITEMS} 项）
+                  {copy.focusLabel}
                 </div>
                 <div className="font-mono text-xs text-[color:var(--ink-4)]">
                   {selectedFocusKeys.length}/{MAX_EMAIL_FOCUS_ITEMS}
@@ -262,7 +320,7 @@ export default function ReportSubscriptionPanel({
                 })}
               </div>
               <p className="mt-2 text-xs leading-5 text-[color:var(--ink-4)]">
-                不勾选也会收到通用提醒；勾选后，日常邮件会优先围绕这些内容展开。
+                {copy.focusHint}
               </p>
             </div>
           ) : null}
@@ -274,16 +332,16 @@ export default function ReportSubscriptionPanel({
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="输入邮箱接收运势提醒"
+                placeholder={copy.placeholder}
                 className="fb-input h-10 w-full pl-9 pr-3 text-sm"
               />
             </div>
             <button
               type="submit"
               disabled={loading || !email.trim()}
-              className="fb-btn fb-btn-primary mt-2 h-10 w-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+              className="fb-btn fb-btn-primary action-primary mt-2 h-10 w-full px-5 text-sm disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {loading ? '提交中…' : '开启运势提醒'}
+              {loading ? copy.submitting : copy.submit}
             </button>
           </form>
 

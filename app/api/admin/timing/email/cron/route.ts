@@ -7,6 +7,7 @@ import {
 } from '@/lib/email';
 // Daily sender lives outside protected lib/email.ts (was missing → cron TypeError)
 import { sendTimingDailyReminderEmail } from '@/lib/email/timing-daily-reminder';
+import { writeTimingEmailLastRun } from '@/lib/email/timing-email-last-run';
 import {
   parseEmailSubscriptionMeta,
   type EmailFocusItem,
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
     batchSize,
     campaignKey,
   })) {
-    return NextResponse.json({
+    const lockedPayload = {
       success: true,
       monthlySent: 0,
       solarTermSent: 0,
@@ -92,7 +93,21 @@ export async function POST(request: NextRequest) {
       mode,
       reason: 'already_running',
       timestamp: new Date().toISOString(),
+    };
+    writeTimingEmailLastRun({
+      mode,
+      success: true,
+      reason: 'already_running',
+      campaignKey,
+      monthlySent: 0,
+      solarTermSent: 0,
+      dailySent: 0,
+      majorEventSent: 0,
+      skippedCount: 0,
+      errors: [],
+      timestamp: lockedPayload.timestamp,
     });
+    return NextResponse.json(lockedPayload);
   }
 
   try {
@@ -313,7 +328,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    const resultPayload = {
       success: true,
       monthlySent,
       solarTermSent,
@@ -323,7 +338,20 @@ export async function POST(request: NextRequest) {
       errors,
       mode,
       timestamp: new Date().toISOString(),
+    };
+    const written = writeTimingEmailLastRun({
+      mode,
+      success: true,
+      campaignKey,
+      monthlySent,
+      solarTermSent,
+      dailySent,
+      majorEventSent,
+      skippedCount,
+      errors: errors.slice(0, 20),
+      timestamp: resultPayload.timestamp,
     });
+    return NextResponse.json({ ...resultPayload, lastRunPath: written.path });
   } finally {
     releaseTimingEmailLock(lockKey, lockOwner);
   }

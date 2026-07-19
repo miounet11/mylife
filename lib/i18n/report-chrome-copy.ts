@@ -937,6 +937,38 @@ export function reportResultPageCopy(locale: SiteLocale) {
       'zh-Hant': '深度專項服務',
       en: 'Specialty depth services',
     }),
+
+    /** Subscription + next steps chrome */
+    subscriptionTitle: pick(locale, {
+      'zh-CN': '订阅与更新',
+      'zh-Hant': '訂閱與更新',
+      en: 'Subscribe & updates',
+    }),
+    nextStepTitle: pick(locale, {
+      'zh-CN': '延伸与下一步',
+      'zh-Hant': '延伸與下一步',
+      en: 'Extend & next steps',
+    }),
+    nextStepSubtitle: pick(locale, {
+      'zh-CN': '可执行清单、路径与延伸阅读，按需展开。',
+      'zh-Hant': '可執行清單、路徑與延伸閱讀，按需展開。',
+      en: 'Action lists, paths, and further reading — expand as needed.',
+    }),
+    sidebarSampleBackfill: pick(locale, {
+      'zh-CN': '去样本回填',
+      'zh-Hant': '去樣本回填',
+      en: 'Sample backfill',
+    }),
+    sidebarCalibration: pick(locale, {
+      'zh-CN': '去校准互动',
+      'zh-Hant': '去校準互動',
+      en: 'Calibration',
+    }),
+    againAnalyze: pick(locale, {
+      'zh-CN': '再次分析',
+      'zh-Hant': '再次分析',
+      en: 'Analyze again',
+    }),
   };
 }
 

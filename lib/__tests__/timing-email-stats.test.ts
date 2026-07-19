@@ -299,13 +299,15 @@ describe('queryTimingEmailStats / getEmailOpsSnapshot', () => {
     assert.ok(Array.isArray(stats.errorReasons));
   });
 
-  it('ops snapshot includes dailyWindowLastRun, errorReasons, and success', () => {
+  it('ops snapshot includes dailyWindowLastRun, timingEmailLastRun, errorReasons, and success', () => {
     const snap = getEmailOpsSnapshot({ days: 3 });
     assert.equal(snap.success, true);
     assert.equal(snap.label, 'delivery_stats');
     assert.equal(snap.days, 3);
     assert.ok(snap.dailyWindowLastRun);
     assert.ok(typeof snap.dailyWindowLastRun.found === 'boolean');
+    assert.ok(snap.timingEmailLastRun);
+    assert.ok(typeof snap.timingEmailLastRun.found === 'boolean');
     assert.ok(typeof snap.timestamp === 'string');
     assert.ok(Array.isArray(snap.errorReasons));
   });

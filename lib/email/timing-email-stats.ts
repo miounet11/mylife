@@ -13,6 +13,10 @@ import {
   readDailyWindowLastRun,
   type DailyWindowLastRun,
 } from '@/lib/email/daily-window-last-run';
+import {
+  readTimingEmailLastRun,
+  type TimingEmailLastRun,
+} from '@/lib/email/timing-email-last-run';
 
 export const DELIVERY_STATS_LABEL = 'delivery_stats' as const;
 
@@ -88,6 +92,11 @@ export type EmailOpsSnapshot = {
   dailyWindowLastRun: {
     found: boolean;
     data: DailyWindowLastRun | null;
+    path: string | null;
+  };
+  timingEmailLastRun: {
+    found: boolean;
+    data: TimingEmailLastRun | null;
     path: string | null;
   };
   timestamp: string;
@@ -495,11 +504,12 @@ export function queryTimingEmailStats(opts?: { days?: number }): TimingEmailStat
 }
 
 /**
- * Combined ops snapshot: delivery aggregates + daily-window last-run file.
+ * Combined ops snapshot: delivery aggregates + daily-window / timing last-run files.
  */
 export function getEmailOpsSnapshot(opts?: { days?: number }): EmailOpsSnapshot {
   const stats = queryTimingEmailStats(opts);
   const lastRun = readDailyWindowLastRun();
+  const timingLast = readTimingEmailLastRun();
   return {
     success: true,
     days: stats.days,
@@ -516,6 +526,11 @@ export function getEmailOpsSnapshot(opts?: { days?: number }): EmailOpsSnapshot 
       found: lastRun.found,
       data: lastRun.data,
       path: lastRun.path,
+    },
+    timingEmailLastRun: {
+      found: timingLast.found,
+      data: timingLast.data,
+      path: timingLast.path,
     },
     timestamp: new Date().toISOString(),
   };
