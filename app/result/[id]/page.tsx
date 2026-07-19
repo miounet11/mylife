@@ -51,6 +51,7 @@ import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { reportResultPageCopy } from '@/lib/i18n/report-chrome-copy';
 import DegradeNotice from '@/components/degrade-notice';
 import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import ReportStageProgress from '@/components/report/report-stage-progress';
@@ -345,6 +346,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(resolvedSearchParams.lang);
+  const pageCopy = reportResultPageCopy(uiLocale);
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
@@ -772,23 +774,23 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   // 只传可序列化字段（iconKey），禁止传 Lucide 组件函数给 Client Component
   const chapterDockItems: ReportChapterDockItem[] = isClassicOnly
     ? [
-        { id: 'report-consultants', label: '问顾问', iconKey: 'footprints' },
-        { id: 'expert-desk', label: '排盘', iconKey: 'layers' },
-        { id: 'ex-dayun', label: '大运', iconKey: 'calendar' },
-        { id: 'ex-cosmos', label: '时空', iconKey: 'compass' },
-        { id: 'ex-domains', label: '专项', iconKey: 'target' },
-        { id: 'ex-probe', label: '点盘', iconKey: 'check' },
-        { id: 'ex-print', label: '打印', iconKey: 'bell' },
+        { id: 'report-consultants', label: pageCopy.dockAskConsultant, iconKey: 'footprints' },
+        { id: 'expert-desk', label: pageCopy.dockPaipan, iconKey: 'layers' },
+        { id: 'ex-dayun', label: pageCopy.dockDayun, iconKey: 'calendar' },
+        { id: 'ex-cosmos', label: pageCopy.dockCosmos, iconKey: 'compass' },
+        { id: 'ex-domains', label: pageCopy.dockDomains, iconKey: 'target' },
+        { id: 'ex-probe', label: pageCopy.dockProbe, iconKey: 'check' },
+        { id: 'ex-print', label: pageCopy.dockPrint, iconKey: 'bell' },
       ]
     : [
-        { id: 'report-consultants', label: '问顾问', iconKey: 'footprints' },
-        { id: 'pro-action', label: '行动', iconKey: 'target' },
-        { id: 'pro-guide', label: '结论', iconKey: 'compass' },
-        { id: 'pro-kline', label: 'K线', iconKey: 'layers' },
-        { id: 'pro-overview', label: '总评', iconKey: 'check' },
-        { id: 'pro-elements', label: '喜用', iconKey: 'layers' },
-        { id: 'pro-time', label: '时间', iconKey: 'calendar' },
-        { id: 'pro-calibration', label: '校准', iconKey: 'bell' },
+        { id: 'report-consultants', label: pageCopy.dockAskConsultant, iconKey: 'footprints' },
+        { id: 'pro-action', label: pageCopy.dockAction, iconKey: 'target' },
+        { id: 'pro-guide', label: pageCopy.dockGuide, iconKey: 'compass' },
+        { id: 'pro-kline', label: pageCopy.dockKline, iconKey: 'layers' },
+        { id: 'pro-overview', label: pageCopy.dockOverview, iconKey: 'check' },
+        { id: 'pro-elements', label: pageCopy.dockElements, iconKey: 'layers' },
+        { id: 'pro-time', label: pageCopy.dockTime, iconKey: 'calendar' },
+        { id: 'pro-calibration', label: pageCopy.dockCalibration, iconKey: 'bell' },
       ];
 
   // v5-D60 右栏元数据
@@ -838,7 +840,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           {/* 章节导航悬浮，不占左栏；正文 + 右侧 meta */}
           <ReportChapterDock
             items={chapterDockItems}
-            title={uiLocale === 'en' ? 'Report chapters' : uiLocale === 'zh-Hant' ? '報告章節' : '报告章节'}
+            title={pageCopy.chapterDockTitle}
             locale={uiLocale}
           />
 
@@ -987,16 +989,16 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 {/* 紧凑跳转，不再堆叠完整 ReadingPath / NextActions 双模块 */}
                 <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2 lg:grid-cols-4">
                   <a href="#report-consultants" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
-                    先问一位顾问
+                    {pageCopy.jumpAskConsultant}
                   </a>
                   <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
-                    下一步 → 看时间地图
+                    {pageCopy.jumpTimingMap}
                   </a>
                   <a href="#deep-structure" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
-                    或 → 看结构节奏
+                    {pageCopy.jumpStructure}
                   </a>
                   <a href={reportChatHref} className="rounded-[3px] border border-[#3b5998]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
-                    {sourceCtaStrategy.reportPrimaryLabel || '去 AI 深问'}
+                    {sourceCtaStrategy.reportPrimaryLabel || pageCopy.jumpAiDeepAsk}
                   </a>
                 </div>
 
@@ -1014,10 +1016,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {timingRecord ? (
                 <section id="timing-map" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
-                    ② 时间地图
+                    {pageCopy.timingTitle}
                   </div>
                   <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                    未来 30 天 / 12 个月 / 5 年关键时点。先定位窗口，再读结构细节。
+                    {pageCopy.timingSubtitle}
                   </p>
                   <div className="mt-3">
                     <ReportTimingTabs record={timingRecord} locale={uiLocale} />
@@ -1028,10 +1030,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {/* ③ 结构节奏：单列清晰阅读（宽屏再双列） */}
               <section id="deep-structure" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
                 <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
-                  ③ 结构与节奏
+                  {pageCopy.structureTitle}
                 </div>
                 <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                  命盘底层、阶段节奏、当前状态与四场景判断。同一结论只在这里展开一次。
+                  {pageCopy.structureSubtitle}
                 </p>
                 <div className="mt-3 space-y-3">
                   <div id="trend" className="scroll-mt-header space-y-3">
@@ -1059,10 +1061,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {/* ④ 行动方案：只放行动/验证/阶段，不塞专项推销 */}
               <section id="deep-action" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
                 <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
-                  ④ 行动与验证
+                  {pageCopy.actionTitle}
                 </div>
                 <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                  对应「治疗方案 / 干预建议」：先做什么、不做什么，以及可信度与阶段进度。
+                  {pageCopy.actionSubtitle}
                 </p>
                 <div id="action-validation" className="mt-3 space-y-3 scroll-mt-header">
                   <ReportActionBoard
@@ -1106,10 +1108,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 ) : null}
                 <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2">
                   <a href="#event-samples" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
-                    下一步 → 样本回填校准
+                    {pageCopy.jumpSampleCalibration}
                   </a>
                   <a href="#services" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
-                    或 → 回访与专项服务
+                    {pageCopy.jumpServices}
                   </a>
                 </div>
               </section>

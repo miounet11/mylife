@@ -9,6 +9,7 @@ import {
   calculateTrueSolarTime,
   type TrueSolarTimeResult,
 } from '@/lib/solar-time';
+import { toEduCityLongitudes } from '@/lib/geo/city-longitudes';
 
 export const PALACE_NAMES = [
   '命宫',
@@ -173,10 +174,7 @@ export type EduTrueSolarConvResult = EduSolarConvResult & {
 
 /** Quick city longitudes for educational true-solar UI (approx. city centers). */
 export const EDU_CITY_LONGITUDES: Array<{ id: string; zh: string; en: string; longitude: number }> = [
-  { id: 'beijing', zh: '北京', en: 'Beijing', longitude: 116.4 },
-  { id: 'shanghai', zh: '上海', en: 'Shanghai', longitude: 121.5 },
-  { id: 'guangzhou', zh: '广州', en: 'Guangzhou', longitude: 113.3 },
-  { id: 'chengdu', zh: '成都', en: 'Chengdu', longitude: 104.1 },
+  ...toEduCityLongitudes(),
   { id: 'overseas', zh: '海外手填', en: 'Overseas (manual)', longitude: NaN },
 ];
 

@@ -7,6 +7,7 @@ import {
   reportCockpitShellCopy,
   reportNextActionsCopy,
   reportReadingPathCopy,
+  reportResultPageCopy,
   reportRhythmCopy,
   reportTimingCopy,
   reportValidationCopy,
@@ -97,5 +98,23 @@ describe('report-chrome-copy', () => {
     const shell = reportCockpitShellCopy('zh-CN');
     assert.equal(shell.chatFallback, '进入结构追问');
     assert.equal(shell.eventsFallback, '记录关键事件');
+  });
+
+  it('EN classic result page chrome has no CJK', () => {
+    const p = reportResultPageCopy('en');
+    assertNonEmptyEn(p.jumpAskConsultant, 'result.jumpAskConsultant');
+    assertNonEmptyEn(p.jumpTimingMap, 'result.jumpTimingMap');
+    assertNonEmptyEn(p.jumpStructure, 'result.jumpStructure');
+    assertNonEmptyEn(p.jumpAiDeepAsk, 'result.jumpAiDeepAsk');
+    assertNonEmptyEn(p.timingTitle, 'result.timingTitle');
+    assertNonEmptyEn(p.structureTitle, 'result.structureTitle');
+    assertNonEmptyEn(p.actionTitle, 'result.actionTitle');
+    assertNonEmptyEn(p.timingSubtitle, 'result.timingSubtitle');
+    assertNonEmptyEn(p.structureSubtitle, 'result.structureSubtitle');
+    assertNonEmptyEn(p.actionSubtitle, 'result.actionSubtitle');
+    assertNonEmptyEn(p.dockAskConsultant, 'result.dockAskConsultant');
+    assertNonEmptyEn(p.chapterDockTitle, 'result.chapterDockTitle');
+    assert.equal(p.timingTitle, '② Timing map');
+    assert.equal(p.jumpTimingMap, 'Next → Timing map');
   });
 });

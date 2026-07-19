@@ -739,6 +739,161 @@ export function reportNextActionsCopy(locale: SiteLocale) {
   };
 }
 
+/**
+ * Classic result page shell (app/result/[id]/page.tsx):
+ * jump chips, numbered section titles/subtitles, chapter dock labels.
+ * Not engine narrative body.
+ */
+export function reportResultPageCopy(locale: SiteLocale) {
+  return {
+    chapterDockTitle: pick(locale, {
+      'zh-CN': '报告章节',
+      'zh-Hant': '報告章節',
+      en: 'Report chapters',
+    }),
+
+    /** Chapter dock — classic/expert view */
+    dockAskConsultant: pick(locale, {
+      'zh-CN': '问顾问',
+      'zh-Hant': '問顧問',
+      en: 'Consultants',
+    }),
+    dockPaipan: pick(locale, {
+      'zh-CN': '排盘',
+      'zh-Hant': '排盤',
+      en: 'Chart',
+    }),
+    dockDayun: pick(locale, {
+      'zh-CN': '大运',
+      'zh-Hant': '大運',
+      en: 'Dayun',
+    }),
+    dockCosmos: pick(locale, {
+      'zh-CN': '时空',
+      'zh-Hant': '時空',
+      en: 'Cosmos',
+    }),
+    dockDomains: pick(locale, {
+      'zh-CN': '专项',
+      'zh-Hant': '專項',
+      en: 'Domains',
+    }),
+    dockProbe: pick(locale, {
+      'zh-CN': '点盘',
+      'zh-Hant': '點盤',
+      en: 'Probe',
+    }),
+    dockPrint: pick(locale, {
+      'zh-CN': '打印',
+      'zh-Hant': '列印',
+      en: 'Print',
+    }),
+
+    /** Chapter dock — mass/pro view */
+    dockAction: pick(locale, {
+      'zh-CN': '行动',
+      'zh-Hant': '行動',
+      en: 'Actions',
+    }),
+    dockGuide: pick(locale, {
+      'zh-CN': '结论',
+      'zh-Hant': '結論',
+      en: 'Verdict',
+    }),
+    dockKline: pick(locale, {
+      'zh-CN': 'K线',
+      'zh-Hant': 'K線',
+      en: 'K-line',
+    }),
+    dockOverview: pick(locale, {
+      'zh-CN': '总评',
+      'zh-Hant': '總評',
+      en: 'Overview',
+    }),
+    dockElements: pick(locale, {
+      'zh-CN': '喜用',
+      'zh-Hant': '喜用',
+      en: 'Favorable',
+    }),
+    dockTime: pick(locale, {
+      'zh-CN': '时间',
+      'zh-Hant': '時間',
+      en: 'Timing',
+    }),
+    dockCalibration: pick(locale, {
+      'zh-CN': '校准',
+      'zh-Hant': '校準',
+      en: 'Calibrate',
+    }),
+
+    /** Post-cockpit jump chips */
+    jumpAskConsultant: pick(locale, {
+      'zh-CN': '先问一位顾问',
+      'zh-Hant': '先問一位顧問',
+      en: 'Ask a consultant first',
+    }),
+    jumpTimingMap: pick(locale, {
+      'zh-CN': '下一步 → 看时间地图',
+      'zh-Hant': '下一步 → 看時間地圖',
+      en: 'Next → Timing map',
+    }),
+    jumpStructure: pick(locale, {
+      'zh-CN': '或 → 看结构节奏',
+      'zh-Hant': '或 → 看結構節奏',
+      en: 'Or → Structure & rhythm',
+    }),
+    jumpAiDeepAsk: pick(locale, {
+      'zh-CN': '去 AI 深问',
+      'zh-Hant': '去 AI 深問',
+      en: 'Ask AI in depth',
+    }),
+
+    /** Numbered section chrome */
+    timingTitle: pick(locale, {
+      'zh-CN': '② 时间地图',
+      'zh-Hant': '② 時間地圖',
+      en: '② Timing map',
+    }),
+    timingSubtitle: pick(locale, {
+      'zh-CN': '未来 30 天 / 12 个月 / 5 年关键时点。先定位窗口，再读结构细节。',
+      'zh-Hant': '未來 30 天 / 12 個月 / 5 年關鍵時點。先定位窗口，再讀結構細節。',
+      en: 'Key points across the next 30 days / 12 months / 5 years. Locate the window first, then read structural detail.',
+    }),
+    structureTitle: pick(locale, {
+      'zh-CN': '③ 结构与节奏',
+      'zh-Hant': '③ 結構與節奏',
+      en: '③ Structure & rhythm',
+    }),
+    structureSubtitle: pick(locale, {
+      'zh-CN': '命盘底层、阶段节奏、当前状态与四场景判断。同一结论只在这里展开一次。',
+      'zh-Hant': '命盤底層、階段節奏、目前狀態與四場景判斷。同一結論只在這裡展開一次。',
+      en: 'Chart foundation, stage rhythm, current state, and four-scenario reads. Each conclusion expands here once.',
+    }),
+    actionTitle: pick(locale, {
+      'zh-CN': '④ 行动与验证',
+      'zh-Hant': '④ 行動與驗證',
+      en: '④ Action & validation',
+    }),
+    actionSubtitle: pick(locale, {
+      'zh-CN': '对应「治疗方案 / 干预建议」：先做什么、不做什么，以及可信度与阶段进度。',
+      'zh-Hant': '對應「治療方案 / 干預建議」：先做什麼、不做什麼，以及可信度與階段進度。',
+      en: 'Like a treatment / intervention plan: what to do first, what to avoid, plus confidence and stage progress.',
+    }),
+
+    /** Jump chips under action section */
+    jumpSampleCalibration: pick(locale, {
+      'zh-CN': '下一步 → 样本回填校准',
+      'zh-Hant': '下一步 → 樣本回填校準',
+      en: 'Next → Sample backfill & calibration',
+    }),
+    jumpServices: pick(locale, {
+      'zh-CN': '或 → 回访与专项服务',
+      'zh-Hant': '或 → 回訪與專項服務',
+      en: 'Or → Follow-up & specialty services',
+    }),
+  };
+}
+
 export type ReportCockpitCopy = ReturnType<typeof reportCockpitCopy>;
 export type ReportCockpitShellCopy = ReturnType<typeof reportCockpitShellCopy>;
 export type ReportConsultantCardsCopy = ReturnType<typeof reportConsultantCardsCopy>;
@@ -750,3 +905,4 @@ export type ReportActionBoardCopy = ReturnType<typeof reportActionBoardCopy>;
 export type ReportChapterDockCopy = ReturnType<typeof reportChapterDockCopy>;
 export type ReportReadingPathCopy = ReturnType<typeof reportReadingPathCopy>;
 export type ReportNextActionsCopy = ReturnType<typeof reportNextActionsCopy>;
+export type ReportResultPageCopy = ReturnType<typeof reportResultPageCopy>;

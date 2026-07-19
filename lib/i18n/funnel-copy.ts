@@ -356,6 +356,26 @@ export function funnelCopy(locale: SiteLocale) {
       'zh-Hant': '影響真太陽時與時區校正',
       en: 'Used for true solar time and timezone correction',
     }),
+    cityQuickPick: pick(locale, {
+      'zh-CN': '常用城市',
+      'zh-Hant': '常用城市',
+      en: 'Quick cities',
+    }),
+    trueSolarAppliedNote: pick(locale, {
+      'zh-CN': '已按出生地经度估算真太阳时（时辰已知时用于排盘）',
+      'zh-Hant': '已按出生地經度估算真太陽時（時辰已知時用於排盤）',
+      en: 'True solar time is estimated from birth-place longitude (applied when hour is known)',
+    }),
+    trueSolarNeedPlace: pick(locale, {
+      'zh-CN': '选择或填写出生地后，可预览真太阳时修正',
+      'zh-Hant': '選擇或填寫出生地後，可預覽真太陽時修正',
+      en: 'Pick a city or enter place to preview true solar correction',
+    }),
+    trueSolarSkippedUnknownHour: pick(locale, {
+      'zh-CN': '时辰未知：不应用真太阳时，优先年/月/日结构',
+      'zh-Hant': '時辰未知：不應用真太陽時，優先年/月/日結構',
+      en: 'Hour unknown: true solar is not applied; year/month/day structure is prioritized',
+    }),
     gender: pick(locale, { 'zh-CN': '性别', 'zh-Hant': '性別', en: 'Gender' }),
     male: pick(locale, { 'zh-CN': '男', en: 'Male' }),
     female: pick(locale, { 'zh-CN': '女', en: 'Female' }),

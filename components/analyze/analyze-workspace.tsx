@@ -16,6 +16,14 @@ import { useLocale } from '@/components/i18n/locale-provider';
 import { funnelCopy } from '@/lib/i18n/funnel-copy';
 import { buildTeacherChatHref } from '@/lib/teachers';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import {
+  formatPlaceWithLongitude,
+  getQuickPickCities,
+  resolveCityLongitude,
+  type CityLongitude,
+} from '@/lib/geo/city-longitudes';
+import { calculateTrueSolarTime } from '@/lib/solar-time';
+import { loadRememberedBirthForm, saveRememberedBirthForm } from '@/lib/birth-form-storage';
 
 const INTENT_KEYS = ['career', 'wealth', 'relationship', 'yearly'] as const;
 type IntentKey = (typeof INTENT_KEYS)[number];
@@ -94,6 +102,39 @@ export default function AnalyzeWorkspace({
   const [entryBanner, setEntryBanner] = useState<string | null>(null);
   const [timeTouched, setTimeTouched] = useState(false);
 
+  const quickCities = useMemo(() => getQuickPickCities(), []);
+  const resolvedLon = useMemo(() => resolveCityLongitude(birthPlace), [birthPlace]);
+
+  /** Educational client preview only — engine applies true solar when hour known + place resolves. */
+  const trueSolarPreview = useMemo(() => {
+    if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || !resolvedLon) return null;
+    if (timeUnknown) return null;
+    const [y, m, d] = birthDate.split('-').map(Number);
+    const [hh, mm] = (birthTime || '12:00').split(':').map((n) => Number(n) || 0);
+    if (!y || !m || !d) return null;
+    try {
+      const st = calculateTrueSolarTime(y, m, d, hh, mm, 0, resolvedLon.longitude, 8);
+      const sign = st.correctionMinutes >= 0 ? '+' : '−';
+      const absMin = Math.abs(Math.round(st.correctionMinutes));
+      const hhmm = `${String(st.hour).padStart(2, '0')}:${String(st.minute).padStart(2, '0')}`;
+      return {
+        label: `真太阳时约 ${sign}${absMin} 分 · ${hhmm}`,
+        labelEn: `True solar ~ ${sign}${absMin} min · ${hhmm}`,
+        correctionMinutes: st.correctionMinutes,
+      };
+    } catch {
+      return null;
+    }
+  }, [birthDate, birthTime, resolvedLon, timeUnknown]);
+
+  const activeCityId = useMemo(() => {
+    if (!birthPlace) return null;
+    const hit = quickCities.find(
+      (c) => birthPlace.includes(c.zh) || birthPlace.toLowerCase().includes(c.en.toLowerCase()),
+    );
+    return hit?.id ?? null;
+  }, [birthPlace, quickCities]);
+
   const step = birthDate && (timeUnknown || birthTime) && birthPlace ? 2 : birthDate ? 1 : 0;
   const canSubmit = !!birthDate && !!birthPlace;
 
@@ -121,6 +162,16 @@ export default function AnalyzeWorkspace({
       setTimeUnknown(true);
     }
 
+    // Local remembered defaults fill only fields the URL did not provide
+    const remembered = loadRememberedBirthForm();
+    if (remembered) {
+      if (!date && remembered.birthDate) setBirthDate(remembered.birthDate);
+      if (!time && remembered.birthTime) setBirthTime(remembered.birthTime);
+      if (g !== 'male' && g !== 'female' && remembered.gender) setGender(remembered.gender);
+      if (!place && remembered.birthPlace) setBirthPlace(remembered.birthPlace);
+      if (!n && remembered.name) setName(remembered.name.slice(0, 32));
+    }
+
     const from = searchParams.get('from') || searchParams.get('source') || initialSource || '';
     if (from.includes('chat')) {
       setEntryBanner(copy.banner.chat);
@@ -132,6 +183,10 @@ export default function AnalyzeWorkspace({
       setEntryBanner(null);
     }
   }, [searchParams, initialIntent, initialSource, copy]);
+
+  function pickCity(city: CityLongitude) {
+    setBirthPlace(formatPlaceWithLongitude(city.zh, city.longitude));
+  }
 
   useEffect(() => {
     trackFunnel('report_page_view', {
@@ -180,10 +235,11 @@ export default function AnalyzeWorkspace({
       relation,
     });
 
+    const resolvedPlace = birthPlace.trim() || copy.defaultPlace;
     const payload = {
       birthDate,
       birthTime: timeUnknown ? '12:00' : birthTime,
-      birthPlace: birthPlace.trim() || copy.defaultPlace,
+      birthPlace: resolvedPlace,
       gender,
       intent,
       name: name.trim() || copy.guestName,
@@ -195,6 +251,14 @@ export default function AnalyzeWorkspace({
       relationLabel,
       locale,
     };
+
+    saveRememberedBirthForm({
+      birthDate,
+      birthTime: timeUnknown ? '12:00' : birthTime,
+      gender,
+      name: name.trim(),
+      birthPlace: resolvedPlace,
+    });
 
     /** Deploy/restart may return 502/503/504 once — retry once after short wait. */
     async function postAnalyze(attempt: number): Promise<Response> {
@@ -372,16 +436,54 @@ export default function AnalyzeWorkspace({
                   </label>
                 </label>
 
-                <label className="space-y-2">
+                <div className="space-y-2">
                   <span className={fieldLabel}>{copy.birthPlace}</span>
                   <input
                     value={birthPlace}
                     onChange={(e) => setBirthPlace(e.target.value)}
                     placeholder={copy.placePlaceholder}
                     className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
+                    aria-label={copy.birthPlace}
                   />
-                  <p className={fieldHint}>{copy.placeHint}</p>
-                </label>
+                  <div>
+                    <div className={cn('mb-1.5', fieldHint)}>{copy.cityQuickPick}</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {quickCities.map((city) => (
+                        <button
+                          key={city.id}
+                          type="button"
+                          onClick={() => pickCity(city)}
+                          className={cn(
+                            chipBase,
+                            activeCityId === city.id ? chipActive : chipIdle,
+                          )}
+                        >
+                          {locale === 'en' ? city.en : city.zh}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {timeUnknown ? (
+                    <p className={fieldHint}>{copy.trueSolarSkippedUnknownHour}</p>
+                  ) : trueSolarPreview ? (
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span
+                        className={cn(
+                          chipBase,
+                          'border-[color:var(--hairline-strong)] bg-[color:var(--bg-sunken)]/60 text-[color:var(--ink-2)]',
+                        )}
+                        title={copy.trueSolarAppliedNote}
+                      >
+                        {locale === 'en' ? trueSolarPreview.labelEn : trueSolarPreview.label}
+                      </span>
+                      <span className={fieldHint}>{copy.trueSolarAppliedNote}</span>
+                    </div>
+                  ) : birthPlace.trim() && !resolvedLon ? (
+                    <p className={fieldHint}>{copy.trueSolarNeedPlace}</p>
+                  ) : (
+                    <p className={fieldHint}>{copy.placeHint}</p>
+                  )}
+                </div>
 
                 <div className="space-y-2">
                   <span className={fieldLabel}>{copy.gender}</span>

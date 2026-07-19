@@ -4,17 +4,26 @@
  */
 const CACHE_NAME = 'lk-shell-v2';
 
-/** Static shell assets only — never put HTML app routes here. */
+/** Static shell assets only — never put HTML app routes or /api here. */
 const PRECACHE_URLS = [
   '/offline.html',
   '/icon.svg',
   '/manifest.webmanifest',
 ];
 
-/** Paths that must never be cached (API, admin, auth). */
+/**
+ * Paths that must never be cached (API, auth, admin, membership checkout).
+ * SW leaves these to the network (no respondWith).
+ * Note: /api/* already covers all API routes; explicit prefixes keep intent clear.
+ */
 function isNeverCache(pathname) {
+  // All API routes — auth, admin, membership, checkout, etc.
   if (pathname.startsWith('/api/')) return true;
-  if (pathname.startsWith('/admin/')) return true;
+
+  // Admin UI
+  if (pathname.startsWith('/admin')) return true;
+
+  // Auth / session pages
   if (
     pathname === '/login' ||
     pathname.startsWith('/login/') ||
@@ -31,6 +40,21 @@ function isNeverCache(pathname) {
   ) {
     return true;
   }
+
+  // Membership & payment / checkout flows (page shell + deep links)
+  if (
+    pathname === '/membership' ||
+    pathname.startsWith('/membership/') ||
+    pathname === '/checkout' ||
+    pathname.startsWith('/checkout/') ||
+    pathname === '/pay' ||
+    pathname.startsWith('/pay/') ||
+    pathname === '/payment' ||
+    pathname.startsWith('/payment/')
+  ) {
+    return true;
+  }
+
   return false;
 }
 
@@ -91,9 +115,11 @@ self.addEventListener('fetch', (event) => {
   // Cross-origin: leave to browser (no caching).
   if (url.origin !== self.location.origin) return;
 
+  // Sensitive / dynamic: never intercept (no cache, no offline HTML).
   if (isNeverCache(url.pathname)) return;
 
-  // Navigations: network-first, offline fallback page.
+  // Navigations: network-first; only offline.html on navigate failure.
+  // App HTML routes are never written into CACHE_NAME.
   if (request.mode === 'navigate') {
     event.respondWith(networkFirstNavigation(request));
     return;
@@ -105,21 +131,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else: network only (no cache).
+  // Everything else (HTML fragments, data, etc.): network only — no cache.
 });
 
 async function networkFirstNavigation(request) {
   try {
     const response = await fetch(request);
+    // Do not put HTML app responses into cache.
     return response;
   } catch {
     const cached = await caches.match('/offline.html');
     if (cached) return cached;
-    return new Response('网络暂时不可用 · 人生K线', {
-      status: 503,
-      statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-    });
+    return new Response(
+      '网络暂时不可用 · You are offline\n人生K线 · Life K-Line',
+      {
+        status: 503,
+        statusText: 'Service Unavailable',
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+      }
+    );
   }
 }
 

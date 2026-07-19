@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#f7f8f9" />
-    <title>网络暂时不可用 · 人生K线</title>
+    <meta name="robots" content="noindex" />
+    <title>网络暂时不可用 · You're offline · 人生K线</title>
     <style>
       :root {
         color-scheme: light;
@@ -62,39 +63,80 @@
         letter-spacing: -0.01em;
         line-height: 1.4;
       }
+      .sub {
+        margin: 0.2rem 0 0;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--ink-3);
+        letter-spacing: -0.01em;
+      }
       p {
         margin: 0.5rem 0 0;
         font-size: 0.8125rem;
         line-height: 1.55;
         color: var(--ink-3);
       }
-      a {
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+        margin-top: 1.5rem;
+      }
+      a,
+      button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-top: 1.5rem;
         min-height: 2.25rem;
         padding: 0 1rem;
         border-radius: 0.5rem;
         border: 1px solid var(--hairline);
         background: #fff;
         color: var(--ink-1);
+        font: inherit;
         font-size: 0.8125rem;
         font-weight: 500;
         text-decoration: none;
+        cursor: pointer;
         transition: background 0.15s ease;
       }
-      a:hover {
+      a:hover,
+      button:hover {
         background: var(--brand-soft);
       }
-      a:focus-visible {
+      a:focus-visible,
+      button:focus-visible {
         outline: 2px solid var(--brand);
         outline-offset: 2px;
+      }
+      button.primary {
+        background: var(--brand);
+        border-color: transparent;
+        color: #f5f7f2;
+      }
+      button.primary:hover {
+        filter: brightness(1.05);
+        background: var(--brand);
       }
       .hint {
         margin-top: 1rem;
         font-size: 0.75rem;
         color: var(--ink-4);
+      }
+      /* Prefer browser language: show preferred block first via order */
+      [data-locale] {
+        display: contents;
+      }
+      body.prefer-en .locale-zh {
+        order: 2;
+      }
+      body.prefer-en .locale-en {
+        order: 1;
+      }
+      .copy {
+        display: flex;
+        flex-direction: column;
       }
     </style>
   </head>
@@ -108,10 +150,43 @@
           <rect x="70" y="36" width="9" height="36" rx="1.2" stroke="#f5f7f2" stroke-width="2.4" />
         </svg>
       </div>
-      <h1>网络暂时不可用 · 人生K线</h1>
-      <p>当前无法连接服务器。请检查网络后重试。</p>
-      <a href="/">返回首页</a>
-      <p class="hint">恢复连接后刷新页面即可继续使用</p>
+
+      <div class="copy">
+        <div class="locale-zh" data-locale="zh">
+          <h1>网络暂时不可用</h1>
+          <p>当前无法连接服务器。请检查网络后重试。</p>
+        </div>
+        <div class="locale-en" data-locale="en">
+          <p class="sub">You're offline</p>
+          <p>Can't reach Life K-Line. Check your connection and try again.</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="primary" id="retry" aria-label="Retry · 重试">
+          重试 · Retry
+        </button>
+        <a href="/" id="home">返回首页 · Home</a>
+      </div>
+
+      <p class="hint" id="hint">
+        恢复连接后刷新即可继续 · Refresh once you're back online
+      </p>
     </main>
+    <script>
+      (function () {
+        var lang = (navigator.language || navigator.userLanguage || 'zh').toLowerCase();
+        var preferEn = lang.indexOf('en') === 0;
+        document.documentElement.lang = preferEn ? 'en' : 'zh-CN';
+        if (preferEn) document.body.classList.add('prefer-en');
+
+        var retry = document.getElementById('retry');
+        if (retry) {
+          retry.addEventListener('click', function () {
+            location.reload();
+          });
+        }
+      })();
+    </script>
   </body>
 </html>

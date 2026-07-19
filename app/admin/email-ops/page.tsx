@@ -207,6 +207,52 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
       </div>
 
       <section className="mt-4 rounded-[12px] border border-[#e2e8f0] bg-white p-4">
+        <h2 className="text-[14px] font-bold text-[#0f172a]">错误分类</h2>
+        <p className="mt-1 text-[11px] text-[#94a3b8]">
+          来自 status=error 行的 meta.error 归类（非打开率）。样例已脱敏，不含收件人邮箱。
+        </p>
+        {snap.errorReasons.length === 0 ? (
+          <p className="mt-2 text-[12px] text-[#94a3b8]">
+            {error > 0
+              ? '有 error 计数但未解析到 meta（旧行或 meta 为空）。'
+              : '当前窗口无投递失败记录。'}
+          </p>
+        ) : (
+          <div className="mt-3 overflow-x-auto">
+            <table className="w-full min-w-[420px] text-left text-[12px]">
+              <thead className="text-[10px] uppercase tracking-wide text-[#94a3b8]">
+                <tr className="border-b border-[#e2e8f0]">
+                  <th className="py-2 pr-2">code</th>
+                  <th className="py-2 pr-2">label</th>
+                  <th className="py-2 pr-2">count</th>
+                  <th className="py-2">sample</th>
+                </tr>
+              </thead>
+              <tbody>
+                {snap.errorReasons.map((r) => (
+                  <tr key={r.code} className="border-b border-[#f1f5f9]">
+                    <td className="py-2 pr-2 font-mono text-[11px] font-semibold text-[#b91c1c]">
+                      {r.code}
+                    </td>
+                    <td className="py-2 pr-2 text-[#334155]">{r.label}</td>
+                    <td className="py-2 pr-2 tabular-nums font-bold text-[#0f172a]">
+                      {r.count}
+                    </td>
+                    <td
+                      className="max-w-[360px] truncate py-2 font-mono text-[11px] text-[#94a3b8]"
+                      title={r.sample || undefined}
+                    >
+                      {r.sample || '—'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="mt-4 rounded-[12px] border border-[#e2e8f0] bg-white p-4">
         <h2 className="text-[14px] font-bold text-[#0f172a]">最近 campaigns</h2>
         {snap.campaigns.length === 0 ? (
           <p className="mt-2 text-[12px] text-[#94a3b8]">暂无 campaign 聚合。</p>
@@ -256,7 +302,7 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
             数据源：SQLite <code>timing_email_log</code>（categories 如 daily_window、prediction_due、timing）
           </li>
           <li>
-            指标为<strong>投递状态计数</strong>，非打开率 / 点击率（站点无 open-pixel）
+            指标为<strong>投递状态计数</strong> + meta.error 错误分类，非打开率 / 点击率（站点无 open-pixel）
           </li>
           <li>
             API：<code>GET /api/admin/email-ops/stats?days=7</code> + header{' '}

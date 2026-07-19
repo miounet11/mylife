@@ -1,11 +1,137 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  aggregateErrorReasons,
   aggregateTimingEmailRows,
+  classifyEmailError,
   DELIVERY_STATS_LABEL,
+  extractErrorMessageFromMeta,
   getEmailOpsSnapshot,
   queryTimingEmailStats,
+  stripEmailsFromMessage,
 } from '@/lib/email/timing-email-stats';
+
+describe('classifyEmailError', () => {
+  it('maps mail_not_configured / email_sender_missing', () => {
+    assert.equal(classifyEmailError('mail_not_configured').code, 'mail_not_configured');
+    assert.equal(classifyEmailError('email_sender_missing').code, 'mail_not_configured');
+    assert.equal(classifyEmailError('reason: email_not_configured').label, '邮件未配置');
+  });
+
+  it('maps smtp / connection / timeout / ECONNREFUSED', () => {
+    assert.equal(classifyEmailError('connect ECONNREFUSED 127.0.0.1:25').code, 'smtp_connection');
+    assert.equal(classifyEmailError('SMTP connection timed out').code, 'smtp_connection');
+    assert.equal(classifyEmailError('ETIMEDOUT').code, 'smtp_connection');
+    assert.equal(classifyEmailError('Connection reset by peer').code, 'smtp_connection');
+  });
+
+  it('maps rate / 429 / throttle', () => {
+    assert.equal(classifyEmailError('HTTP 429 Too Many Requests').code, 'rate_limited');
+    assert.equal(classifyEmailError('rate limit exceeded').code, 'rate_limited');
+    assert.equal(classifyEmailError('throttled by provider').code, 'rate_limited');
+  });
+
+  it('maps invalid_address / bounce / 550', () => {
+    assert.equal(classifyEmailError('550 User unknown').code, 'invalid_address');
+    assert.equal(classifyEmailError('soft bounce: mailbox unavailable').code, 'invalid_address');
+    assert.equal(classifyEmailError('invalid_address').code, 'invalid_address');
+  });
+
+  it('maps auth / 535 / unauthorized', () => {
+    assert.equal(classifyEmailError('535 Authentication failed').code, 'auth');
+    assert.equal(classifyEmailError('SMTP unauthorized').code, 'auth');
+    assert.equal(classifyEmailError('Invalid login credentials').code, 'auth');
+  });
+
+  it('unknown truncates via sample path and strips emails', () => {
+    const msg = 'weird failure for user@example.com please retry later';
+    const cls = classifyEmailError(msg);
+    assert.equal(cls.code, 'unknown');
+    assert.equal(cls.label, '其他/未知');
+    assert.equal(stripEmailsFromMessage(msg).includes('user@example.com'), false);
+    assert.ok(stripEmailsFromMessage(msg).includes('[email]'));
+  });
+
+  it('empty message is unknown', () => {
+    assert.equal(classifyEmailError('').code, 'unknown');
+    assert.equal(classifyEmailError('   ').code, 'unknown');
+  });
+});
+
+describe('extractErrorMessageFromMeta', () => {
+  it('reads error from JSON string or object', () => {
+    assert.equal(
+      extractErrorMessageFromMeta(
+        JSON.stringify({ error: 'mail_not_configured', failedAt: '2026-07-18T00:00:00Z' }),
+      ),
+      'mail_not_configured',
+    );
+    assert.equal(
+      extractErrorMessageFromMeta({ error: 'ECONNREFUSED', failedAt: 'x' }),
+      'ECONNREFUSED',
+    );
+  });
+
+  it('falls back for plain string meta', () => {
+    assert.equal(extractErrorMessageFromMeta('plain boom'), 'plain boom');
+    assert.equal(extractErrorMessageFromMeta(null), '');
+  });
+});
+
+describe('aggregateErrorReasons', () => {
+  it('aggregates top reasons from error rows and redacts samples', () => {
+    const reasons = aggregateErrorReasons([
+      {
+        category: 'daily_window',
+        status: 'error',
+        campaign: 'c1',
+        meta: JSON.stringify({
+          error: 'mail_not_configured',
+          failedAt: '2026-07-18T08:00:00.000Z',
+        }),
+      },
+      {
+        category: 'daily_window',
+        status: 'error',
+        campaign: 'c1',
+        meta: { error: 'email_sender_missing' },
+      },
+      {
+        category: 'prediction_due',
+        status: 'error',
+        campaign: 'c2',
+        meta: JSON.stringify({
+          error: '550 User unknown for alice@secret.com',
+        }),
+      },
+      {
+        category: 'timing',
+        status: 'sent',
+        campaign: 'c3',
+        meta: JSON.stringify({ error: 'should_not_count' }),
+      },
+    ]);
+
+    assert.equal(reasons.length, 2);
+    assert.equal(reasons[0]!.code, 'mail_not_configured');
+    assert.equal(reasons[0]!.count, 2);
+    assert.equal(reasons[1]!.code, 'invalid_address');
+    assert.equal(reasons[1]!.count, 1);
+    assert.ok(reasons[1]!.sample);
+    assert.equal(reasons[1]!.sample!.includes('alice@secret.com'), false);
+    assert.ok(reasons[1]!.sample!.includes('[email]'));
+  });
+
+  it('returns empty for no errors', () => {
+    assert.deepEqual(aggregateErrorReasons([]), []);
+    assert.deepEqual(
+      aggregateErrorReasons([
+        { category: 'x', status: 'sent', campaign: 'c', meta: null },
+      ]),
+      [],
+    );
+  });
+});
 
 describe('aggregateTimingEmailRows', () => {
   it('returns zeros for empty / missing rows (never invents open rates)', () => {
@@ -15,6 +141,7 @@ describe('aggregateTimingEmailRows', () => {
     assert.deepEqual(empty.byCategory, []);
     assert.deepEqual(empty.byStatus, []);
     assert.deepEqual(empty.campaigns, []);
+    assert.deepEqual(empty.errorReasons, []);
     assert.equal(empty.days, 7);
 
     assert.equal(aggregateTimingEmailRows(null).total, 0);
@@ -112,9 +239,12 @@ describe('aggregateTimingEmailRows', () => {
     const stats = aggregateTimingEmailRows([
       {
         category: 'daily_window',
-        status: 'sent',
+        status: 'error',
         campaign: 'c1',
         sent_at: '2026-07-18T00:00:00.000Z',
+        meta: JSON.stringify({
+          error: 'failed for secret@example.com: ECONNREFUSED',
+        }),
         // @ts-expect-error intentional — callers must not rely on email
         email: 'secret@example.com',
       } as any,
@@ -123,6 +253,8 @@ describe('aggregateTimingEmailRows', () => {
     assert.equal(json.includes('secret@example.com'), false);
     assert.equal(json.includes('open_rate'), false);
     assert.equal(json.includes('openRate'), false);
+    assert.ok(stats.errorReasons.length >= 1);
+    assert.equal(stats.errorReasons[0]!.code, 'smtp_connection');
   });
 });
 
@@ -136,9 +268,10 @@ describe('queryTimingEmailStats / getEmailOpsSnapshot', () => {
     assert.ok(Array.isArray(stats.byCategory));
     assert.ok(Array.isArray(stats.byStatus));
     assert.ok(Array.isArray(stats.campaigns));
+    assert.ok(Array.isArray(stats.errorReasons));
   });
 
-  it('ops snapshot includes dailyWindowLastRun and success', () => {
+  it('ops snapshot includes dailyWindowLastRun, errorReasons, and success', () => {
     const snap = getEmailOpsSnapshot({ days: 3 });
     assert.equal(snap.success, true);
     assert.equal(snap.label, 'delivery_stats');
@@ -146,5 +279,6 @@ describe('queryTimingEmailStats / getEmailOpsSnapshot', () => {
     assert.ok(snap.dailyWindowLastRun);
     assert.ok(typeof snap.dailyWindowLastRun.found === 'boolean');
     assert.ok(typeof snap.timestamp === 'string');
+    assert.ok(Array.isArray(snap.errorReasons));
   });
 });

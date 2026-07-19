@@ -57,6 +57,7 @@ export async function GET(request: NextRequest) {
     byCategory: snapshot.byCategory,
     byStatus: snapshot.byStatus,
     campaigns: snapshot.campaigns,
+    errorReasons: snapshot.errorReasons,
     total: snapshot.total,
     dbAvailable: snapshot.dbAvailable,
     tablePresent: snapshot.tablePresent,
