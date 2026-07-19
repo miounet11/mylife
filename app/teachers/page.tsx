@@ -15,15 +15,14 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { teachersHubCopy } from '@/lib/i18n/hub-copy';
 import {
+  localizeTeacher,
+  resolveTeacherPresentation,
+} from '@/lib/i18n/teacher-copy';
+import {
   teacherCapabilitySurface,
 } from '@/lib/page-illustrations/capability-map';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
-
-export const metadata: Metadata = {
-  title: '请老师 | 人生K线',
-  description: '按问题选择老师：事业、财务、关系、节律、时机、地理与实践等。',
-  alternates: { canonical: '/teachers' },
-};
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
 const INTENT_SHORTCUT_KEYS: Array<{
   intent: keyof ReturnType<typeof teachersHubCopy>['intents'];
@@ -47,6 +46,28 @@ interface TeachersPageProps {
   }>;
 }
 
+export async function generateMetadata({ searchParams }: TeachersPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = teachersHubCopy(locale);
+  return buildPageMetadata({
+    title: `${copy.title} | 人生K线`,
+    description: copy.description,
+    path: withLocalePrefix('/teachers', locale),
+    locale,
+    keywords: [
+      '请老师',
+      '八字顾问',
+      '事业老师',
+      '财务老师',
+      '关系老师',
+      'consultants',
+      'bazi advisor',
+      'career guide',
+    ],
+  });
+}
+
 export default async function TeachersPage({ searchParams }: TeachersPageProps) {
   const sp = searchParams ? await searchParams : {};
   const intent = `${sp.intent || ''}`.trim();
@@ -57,8 +78,12 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
   const illustLocale = toIllustLocale(uiLocale);
   const highlightId = (`${sp.highlight || ''}`.trim() ||
     teacherIdFromFollowupIntent(intent)) as TeacherId | string;
-  const recommended = getTeacher(highlightId);
-  const more = listTeachers({ tier: ['p1', 'p2'], galleryOnly: true });
+  const recommendedBase = getTeacher(highlightId);
+  const recommendedPresentation = resolveTeacherPresentation(recommendedBase, uiLocale);
+  const recommended = { ...recommendedBase, ...recommendedPresentation };
+  const more = listTeachers({ tier: ['p1', 'p2'], galleryOnly: true }).map((t) =>
+    localizeTeacher(t, uiLocale),
+  );
 
   const recommendedHref = buildTeacherChatHref({
     teacherId: recommended.id,
@@ -184,6 +209,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
           reportId={reportId}
           source={source}
           subtitle={copy.gallerySubtitle}
+          locale={uiLocale}
         />
 
         {more.length ? (

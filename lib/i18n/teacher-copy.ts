@@ -230,26 +230,60 @@ export const TEACHER_COPY_EN: Partial<Record<TeacherId, TeacherCopyOverlay>> = {
   },
 };
 
+/** UI-facing name / tagline / boundary (list cards, hub, picker). */
+export type TeacherPresentation = Pick<TeacherDefinition, 'name' | 'tagline' | 'boundary'>;
+
+/**
+ * Resolve display name/tagline/boundary for a teacher at the given UI locale.
+ * EN uses TEACHER_COPY_EN overlays; non-P0 soft-renames "老师" → " Guide".
+ */
+export function resolveTeacherPresentation(
+  teacher: TeacherDefinition,
+  locale?: string | null,
+): TeacherPresentation {
+  if (!isEnglishUiLocale(locale)) {
+    return {
+      name: teacher.name,
+      tagline: teacher.tagline,
+      boundary: teacher.boundary,
+    };
+  }
+  const en = TEACHER_COPY_EN[teacher.id];
+  if (!en) {
+    return {
+      name: teacher.name.replace(/老师$/, ' Guide'),
+      tagline: teacher.tagline,
+      boundary: teacher.boundary,
+    };
+  }
+  return {
+    name: en.name,
+    tagline: en.tagline,
+    boundary: en.boundary,
+  };
+}
+
 /** Merge EN overlay onto a teacher definition (zh fields remain default). */
 export function localizeTeacher(
   teacher: TeacherDefinition,
   locale?: string | null,
 ): TeacherDefinition {
   if (!isEnglishUiLocale(locale)) return teacher;
+  const presentation = resolveTeacherPresentation(teacher, locale);
   const en = TEACHER_COPY_EN[teacher.id];
   if (!en) {
-    // Soft fallback for non-P0: translate display name/tagline lightly via generic frame
+    // Soft fallback for non-P0: translate display name lightly via generic frame
     return {
       ...teacher,
-      name: teacher.name.replace(/老师$/, ' Guide'),
+      ...presentation,
       // keep Chinese tagline/starters if no overlay — better than inventing claims
     };
   }
   return {
     ...teacher,
-    name: en.name,
-    tagline: en.tagline,
-    boundary: en.boundary,
+    name: presentation.name,
+    tagline: presentation.tagline,
+    boundary: presentation.boundary,
     starters: en.starters?.length ? en.starters : teacher.starters,
     firstMes: en.firstMes ?? teacher.firstMes,
     alternateGreetings: en.alternateGreetings ?? teacher.alternateGreetings,

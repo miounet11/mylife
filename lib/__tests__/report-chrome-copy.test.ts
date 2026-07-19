@@ -6,6 +6,7 @@ import {
   reportCockpitCopy,
   reportCockpitShellCopy,
   reportDeliveryTierLabel,
+  reportEnginePanelCopy,
   reportMetaSidebarCopy,
   reportNextActionsCopy,
   reportReadingPathCopy,
@@ -170,6 +171,35 @@ describe('report-chrome-copy', () => {
     assert.equal(p.subscriptionTitle, 'Subscribe & updates');
     assert.equal(p.coreVerdictTitle, 'Pro ① Core verdict (chart analysis)');
     assert.equal(p.badgeEnhancing, 'Enhancing…');
+  });
+
+  it('EN engine panel chrome has no CJK', () => {
+    const e = reportEnginePanelCopy('en');
+    assertNonEmptyEn(e.title, 'engine.title');
+    assertNonEmptyEn(e.intro, 'engine.intro');
+    assertNonEmptyEn(e.trustHeading, 'engine.trustHeading');
+    assertNonEmptyEn(e.cautionHeading, 'engine.cautionHeading');
+    assertNonEmptyEn(e.confidence(88), 'engine.confidence');
+    assertNonEmptyEn(e.progressRunning, 'engine.progressRunning');
+    assertNonEmptyEn(e.progressQueued, 'engine.progressQueued');
+    assertNonEmptyEn(e.progressDone, 'engine.progressDone');
+    assertNonEmptyEn(e.progressPaused, 'engine.progressPaused');
+    assertNonEmptyEn(e.processing, 'engine.processing');
+    assertNonEmptyEn(e.queueEnhancement, 'engine.queueEnhancement');
+    assertNonEmptyEn(e.queueing, 'engine.queueing');
+    assertNonEmptyEn(e.readReport, 'engine.readReport');
+    assertNonEmptyEn(e.viewScoreDetails, 'engine.viewScoreDetails');
+    assertNonEmptyEn(e.errorUpgradeFailed, 'engine.errorUpgradeFailed');
+    assertNonEmptyEn(e.errorNetwork, 'engine.errorNetwork');
+    assertNonEmptyEn(e.successImmediateQueued, 'engine.successImmediateQueued');
+    assertNonEmptyEn(e.successImmediateStarted, 'engine.successImmediateStarted');
+    assertNonEmptyEn(e.successQueueAlready, 'engine.successQueueAlready');
+    assertNonEmptyEn(e.successQueueAdded, 'engine.successQueueAdded');
+    assertNonEmptyEn(e.linkedEvents(3), 'engine.linkedEvents');
+    assertNonEmptyEn(e.accurateCount(2), 'engine.accurateCount');
+    assertNonEmptyEn(e.driftCount(1), 'engine.driftCount');
+    assert.equal(e.title, 'Report status');
+    assert.equal(reportEnginePanelCopy('zh-CN').title, '报告状态');
   });
 
   it('reportUpgradeStatusLabel / reportDeliveryTierLabel EN has no CJK', () => {

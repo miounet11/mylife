@@ -1106,6 +1106,134 @@ export function reportMetaSidebarCopy(locale: SiteLocale) {
 }
 
 /**
+ * Report engine / status panel chrome (user-facing readiness card on result page).
+ * Status body (badge, title, summary) comes from buildUserFacingReportStatus.
+ */
+export function reportEnginePanelCopy(locale: SiteLocale) {
+  return {
+    title: pick(locale, {
+      'zh-CN': '报告状态',
+      'zh-Hant': '報告狀態',
+      en: 'Report status',
+    }),
+    intro: pick(locale, {
+      'zh-CN': '一句话说明能不能用；细节默认收起。',
+      'zh-Hant': '一句話說明能不能用；細節預設收起。',
+      en: 'One-line readiness; details stay collapsed by default.',
+    }),
+    confidence: (score: number) =>
+      pick(locale, {
+        'zh-CN': `可信 ${score}`,
+        'zh-Hant': `可信 ${score}`,
+        en: `Confidence ${score}`,
+      }),
+    trustHeading: pick(locale, {
+      'zh-CN': '可以相信',
+      'zh-Hant': '可以相信',
+      en: 'Trust',
+    }),
+    cautionHeading: pick(locale, {
+      'zh-CN': '需要留意',
+      'zh-Hant': '需要留意',
+      en: 'Watch outs',
+    }),
+    progressRunning: pick(locale, {
+      'zh-CN': '进行中',
+      'zh-Hant': '進行中',
+      en: 'In progress',
+    }),
+    progressQueued: pick(locale, {
+      'zh-CN': '排队中',
+      'zh-Hant': '排隊中',
+      en: 'Queued',
+    }),
+    progressDone: pick(locale, {
+      'zh-CN': '已结束',
+      'zh-Hant': '已結束',
+      en: 'Done',
+    }),
+    progressPaused: pick(locale, {
+      'zh-CN': '已暂停',
+      'zh-Hant': '已暫停',
+      en: 'Paused',
+    }),
+    linkedEvents: (total: number) =>
+      pick(locale, {
+        'zh-CN': `已关联事件 ${total}`,
+        'zh-Hant': `已關聯事件 ${total}`,
+        en: `Linked events ${total}`,
+      }),
+    accurateCount: (n: number) =>
+      pick(locale, {
+        'zh-CN': `吻合 ${n}`,
+        'zh-Hant': `吻合 ${n}`,
+        en: `Matched ${n}`,
+      }),
+    driftCount: (n: number) =>
+      pick(locale, {
+        'zh-CN': `偏差 ${n}`,
+        'zh-Hant': `偏差 ${n}`,
+        en: `Drift ${n}`,
+      }),
+    processing: pick(locale, {
+      'zh-CN': '处理中…',
+      'zh-Hant': '處理中…',
+      en: 'Processing…',
+    }),
+    queueEnhancement: pick(locale, {
+      'zh-CN': '加入后台队列完善',
+      'zh-Hant': '加入後台隊列完善',
+      en: 'Queue for background enhancement',
+    }),
+    queueing: pick(locale, {
+      'zh-CN': '加入中…',
+      'zh-Hant': '加入中…',
+      en: 'Queuing…',
+    }),
+    readReport: pick(locale, {
+      'zh-CN': '阅读报告正文',
+      'zh-Hant': '閱讀報告正文',
+      en: 'Read the report',
+    }),
+    viewScoreDetails: pick(locale, {
+      'zh-CN': '查看评分明细',
+      'zh-Hant': '查看評分明細',
+      en: 'View score details',
+    }),
+    errorUpgradeFailed: pick(locale, {
+      'zh-CN': '暂时无法完善报告',
+      'zh-Hant': '暫時無法完善報告',
+      en: 'Unable to enhance the report right now',
+    }),
+    errorNetwork: pick(locale, {
+      'zh-CN': '网络异常，暂时无法完善报告',
+      'zh-Hant': '網路異常，暫時無法完善報告',
+      en: 'Network error; unable to enhance the report',
+    }),
+    successImmediateQueued: pick(locale, {
+      'zh-CN': '已在完善队列中，完成后会更新当前页。',
+      'zh-Hant': '已在完善隊列中，完成後會更新目前頁面。',
+      en: 'Already in the enhancement queue; this page will update when done.',
+    }),
+    successImmediateStarted: pick(locale, {
+      'zh-CN': '已开始完善，请稍候刷新查看。',
+      'zh-Hant': '已開始完善，請稍候重新整理查看。',
+      en: 'Enhancement started; refresh shortly to check.',
+    }),
+    successQueueAlready: pick(locale, {
+      'zh-CN': '已在队列中，无需重复提交。',
+      'zh-Hant': '已在隊列中，無需重複提交。',
+      en: 'Already queued; no need to resubmit.',
+    }),
+    successQueueAdded: pick(locale, {
+      'zh-CN': '已加入完善队列。',
+      'zh-Hant': '已加入完善隊列。',
+      en: 'Added to the enhancement queue.',
+    }),
+  };
+}
+
+/**
  * User-facing upgrade job status label for classic result chrome.
  * status values: running | pending | retry | completed | failed | other → ''
  */

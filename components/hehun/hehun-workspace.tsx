@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { analyzeHehun, type HehunPersonInput, type HehunResult } from '@/lib/hehun-engine';
+import {
+  analyzeHehun,
+  type HehunLayer,
+  type HehunPersonInput,
+  type HehunResult,
+} from '@/lib/hehun-engine';
 import {
   buildHehunHref,
   hehunBirthPairFromQuery,
@@ -192,6 +197,41 @@ function hehunChromeCopy(locale: SiteLocale) {
     sideAName: en ? 'Person A' : '甲方',
     sideBName: en ? 'Person B' : '乙方',
   };
+}
+
+/** EN result chrome: band labels (engine stays Chinese). */
+const HEHUN_BAND_EN: Record<HehunResult['band'], string> = {
+  宜深化: 'Deepen carefully',
+  可经营: 'Workable',
+  宜谨慎: 'Proceed carefully',
+  高摩擦: 'High friction',
+};
+
+/** Layer titles by engine `layer.key` (fallback by Chinese title). */
+const HEHUN_LAYER_TITLE_EN: Record<string, string> = {
+  'day-stem': 'Day Master interaction',
+  palace: 'Spouse palace (day branch)',
+  yong: 'Favorable / unfavorable complement',
+  dayun: 'Dayun sync',
+  日主互动: 'Day Master interaction',
+  '夫妻宫（日支）': 'Spouse palace (day branch)',
+  用忌互补: 'Favorable / unfavorable complement',
+  大运同步: 'Dayun sync',
+};
+
+function hehunBandLabel(band: HehunResult['band'], locale: SiteLocale): string {
+  return locale === 'en' ? HEHUN_BAND_EN[band] ?? band : band;
+}
+
+function hehunLayerTitle(layer: HehunLayer, locale: SiteLocale): string {
+  if (locale !== 'en') return layer.title;
+  return HEHUN_LAYER_TITLE_EN[layer.key] ?? HEHUN_LAYER_TITLE_EN[layer.title] ?? layer.title;
+}
+
+function hehunHeadlineDisplay(result: HehunResult, locale: SiteLocale): string {
+  if (locale !== 'en') return result.headline;
+  const bandEn = hehunBandLabel(result.band, 'en');
+  return `${result.personA.name} & ${result.personB.name}: ${result.score}/100 · ${bandEn}`;
 }
 
 const EMPTY_BIRTH_A: BirthSideValue = {
@@ -669,7 +709,9 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{result.knowledgeStamp}</div>
-              <h2 className="mt-1 text-[16px] font-semibold text-[color:var(--ink-1)]">{result.headline}</h2>
+              <h2 className="mt-1 text-[16px] font-semibold text-[color:var(--ink-1)]">
+                {hehunHeadlineDisplay(result, locale)}
+              </h2>
               <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">
                 {result.personA.name} {result.personA.dayPillar}
                 {result.personA.dayun ? ` · ${copy.dayunShort}${result.personA.dayun}` : ''} ×{' '}
@@ -679,7 +721,9 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
             </div>
             <div className="text-right">
               <div className="font-mono text-[24px] tabular-nums text-[color:var(--ink-1)]">{result.score}</div>
-              <div className="text-[11px] text-[color:var(--ink-5)]">{result.band}</div>
+              <div className="text-[11px] text-[color:var(--ink-5)]">
+                {hehunBandLabel(result.band, locale)}
+              </div>
             </div>
           </div>
 
@@ -694,7 +738,9 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
                 className="border-b border-[color:var(--hairline)] py-3 md:border-r md:px-3 md:first:pl-0 md:last:border-r-0"
               >
                 <div className="flex items-baseline justify-between gap-2">
-                  <div className="text-[12px] font-medium text-[color:var(--ink-1)]">{layer.title}</div>
+                  <div className="text-[12px] font-medium text-[color:var(--ink-1)]">
+                    {hehunLayerTitle(layer, locale)}
+                  </div>
                   <span className="font-mono text-[12px] tabular-nums text-[color:var(--ink-5)]">
                     {layer.score}
                   </span>

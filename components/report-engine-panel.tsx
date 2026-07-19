@@ -15,6 +15,10 @@ import {
   buildUserFacingReportStatus,
   type UserReportReadiness,
 } from '@/lib/report-status-presentation';
+import {
+  reportEnginePanelCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy' literals.
 const _qaContract = ['intro-copy'] as const;
@@ -140,6 +144,9 @@ export default function ReportEnginePanel({
   const [success, setSuccess] = useState('');
   const [detailsOpen, setDetailsOpen] = useState(false);
 
+  const chromeLocale = resolveReportChromeLocale(locale);
+  const copy = useMemo(() => reportEnginePanelCopy(chromeLocale), [chromeLocale]);
+
   const status = useMemo(
     () =>
       buildUserFacingReportStatus({
@@ -184,7 +191,7 @@ export default function ReportEnginePanel({
       });
       const data = await response.json();
       if (!response.ok || !data.success) {
-        setError(data.error || '暂时无法完善报告');
+        setError(data.error || copy.errorUpgradeFailed);
         setSubmittingStrategy(null);
         return;
       }
@@ -198,9 +205,9 @@ export default function ReportEnginePanel({
         (!upgradeQueued && ['pending', 'running', 'retry'].includes(upgradeStatus));
 
       if (strategy === 'immediate') {
-        setSuccess(alreadyQueued ? '已在完善队列中，完成后会更新当前页。' : '已开始完善，请稍候刷新查看。');
+        setSuccess(alreadyQueued ? copy.successImmediateQueued : copy.successImmediateStarted);
       } else {
-        setSuccess(alreadyQueued ? '已在队列中，无需重复提交。' : '已加入完善队列。');
+        setSuccess(alreadyQueued ? copy.successQueueAlready : copy.successQueueAdded);
       }
 
       window.setTimeout(() => {
@@ -209,16 +216,16 @@ export default function ReportEnginePanel({
         });
       }, 1200);
     } catch {
-      setError('网络异常，暂时无法完善报告');
+      setError(copy.errorNetwork);
       setSubmittingStrategy(null);
     }
   };
 
   return (
     <div className="fb-card border-t-2 border-t-[#3b5998] p-4">
-      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#3b5998]">报告状态</div>
+      <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#3b5998]">{copy.title}</div>
       <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-4)] intro-copy">
-        一句话说明能不能用；细节默认收起。
+        {copy.intro}
       </p>
 
       {/* 主结论：唯一权威 */}
@@ -239,7 +246,7 @@ export default function ReportEnginePanel({
               <span className="text-[11px] font-semibold text-[color:var(--ink-4)]">{status.editionLabel}</span>
               {status.confidenceScore != null ? (
                 <span className="font-mono text-[11px] tabular-nums text-[color:var(--ink-5)]">
-                  可信 {status.confidenceScore}
+                  {copy.confidence(status.confidenceScore)}
                 </span>
               ) : null}
             </div>
@@ -254,7 +261,7 @@ export default function ReportEnginePanel({
         <div className="mt-3 grid gap-2">
           {status.trustPoints.length > 0 ? (
             <div className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2.5">
-              <div className="text-[11px] font-bold text-[color:var(--data-up)]">可以相信</div>
+              <div className="text-[11px] font-bold text-[color:var(--data-up)]">{copy.trustHeading}</div>
               <ul className="mt-1.5 space-y-1">
                 {status.trustPoints.map((item) => (
                   <li key={item} className="text-[12px] leading-[1.5] text-[color:var(--ink-2)]">
@@ -266,7 +273,7 @@ export default function ReportEnginePanel({
           ) : null}
           {status.cautionPoints.length > 0 ? (
             <div className="rounded-[3px] border border-[color:var(--signal)] bg-[color:var(--signal-soft)] px-3 py-2.5">
-              <div className="text-[11px] font-bold text-[color:var(--signal-strong)]">需要留意</div>
+              <div className="text-[11px] font-bold text-[color:var(--signal-strong)]">{copy.cautionHeading}</div>
               <ul className="mt-1.5 space-y-1">
                 {status.cautionPoints.map((item) => (
                   <li key={item} className="text-[12px] leading-[1.5] text-[color:var(--signal-strong)]">
@@ -293,7 +300,7 @@ export default function ReportEnginePanel({
           <div className="flex items-center justify-between gap-2">
             <div className="text-[12px] font-bold text-[color:var(--ink-1)]">{status.progress.label}</div>
             <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-[color:var(--ink-4)]">
-              {progressStateLabel(status.progress.state)}
+              {progressStateLabel(status.progress.state, copy)}
             </span>
           </div>
           {status.progress.detail ? (
@@ -305,13 +312,13 @@ export default function ReportEnginePanel({
       {/* 事件反馈：极简一行 */}
       {feedbackLoop?.validationInsights && (feedbackLoop.validationInsights.totalLinkedEvents || 0) > 0 ? (
         <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[11px] leading-5 text-[color:var(--ink-3)]">
-          已关联事件 {feedbackLoop.validationInsights.totalLinkedEvents || 0}
+          {copy.linkedEvents(feedbackLoop.validationInsights.totalLinkedEvents || 0)}
           {typeof feedbackLoop.validationInsights.accurateCount === 'number'
-            ? ` · 吻合 ${feedbackLoop.validationInsights.accurateCount}`
+            ? ` · ${copy.accurateCount(feedbackLoop.validationInsights.accurateCount)}`
             : ''}
           {typeof feedbackLoop.validationInsights.driftCount === 'number' &&
           feedbackLoop.validationInsights.driftCount > 0
-            ? ` · 偏差 ${feedbackLoop.validationInsights.driftCount}`
+            ? ` · ${copy.driftCount(feedbackLoop.validationInsights.driftCount)}`
             : ''}
         </div>
       ) : null}
@@ -327,7 +334,7 @@ export default function ReportEnginePanel({
               className="inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-[3px] bg-[#3b5998] px-3 text-[12px] font-semibold text-white transition hover:bg-[#2d4373] disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RefreshCcw className={`h-3.5 w-3.5 ${submittingStrategy === 'immediate' ? 'animate-spin' : ''}`} />
-              {submittingStrategy === 'immediate' || isPending ? '处理中…' : status.primaryAction.label}
+              {submittingStrategy === 'immediate' || isPending ? copy.processing : status.primaryAction.label}
             </button>
             <button
               type="button"
@@ -335,7 +342,7 @@ export default function ReportEnginePanel({
               disabled={!!submittingStrategy || isPending || progressBusy}
               className="inline-flex h-8 w-full items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 text-[11px] font-semibold text-[color:var(--ink-3)] hover:border-[#3b5998] hover:text-[#3b5998] disabled:opacity-60"
             >
-              {submittingStrategy === 'queue' ? '加入中…' : '加入后台队列完善'}
+              {submittingStrategy === 'queue' ? copy.queueing : copy.queueEnhancement}
             </button>
           </>
         ) : null}
@@ -354,7 +361,7 @@ export default function ReportEnginePanel({
             href="#cockpit"
             className="inline-flex h-9 w-full items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]"
           >
-            阅读报告正文
+            {copy.readReport}
           </a>
         ) : null}
 
@@ -370,7 +377,7 @@ export default function ReportEnginePanel({
             onClick={() => setDetailsOpen((v) => !v)}
             className="flex w-full items-center justify-between py-1 text-left text-[11px] font-semibold text-[color:var(--ink-4)] hover:text-[color:var(--ink-2)]"
           >
-            <span>查看评分明细</span>
+            <span>{copy.viewScoreDetails}</span>
             {detailsOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
           </button>
           {detailsOpen ? (
@@ -417,16 +424,19 @@ function readinessTone(readiness: UserReportReadiness) {
   };
 }
 
-function progressStateLabel(state: string) {
+function progressStateLabel(
+  state: string,
+  copy: ReturnType<typeof reportEnginePanelCopy>,
+) {
   switch (state) {
     case 'running':
-      return '进行中';
+      return copy.progressRunning;
     case 'queued':
-      return '排队中';
+      return copy.progressQueued;
     case 'done':
-      return '已结束';
+      return copy.progressDone;
     case 'paused':
-      return '已暂停';
+      return copy.progressPaused;
     default:
       return '';
   }

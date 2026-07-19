@@ -8,6 +8,11 @@ import {
   type TeacherDefinition,
 } from '@/lib/teachers';
 import { trackProductEvent } from '@/lib/product-analytics';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  isEnglishUiLocale,
+  resolveTeacherPresentation,
+} from '@/lib/i18n/teacher-copy';
 
 type Variant = 'report' | 'gallery' | 'compact';
 
@@ -19,6 +24,7 @@ export default function TeacherPicker({
   source,
   title,
   subtitle,
+  locale: localeProp,
 }: {
   reportId?: string;
   city?: string;
@@ -26,11 +32,26 @@ export default function TeacherPicker({
   source?: string;
   title?: string;
   subtitle?: string;
+  /** UI locale — EN default titles + TEACHER_COPY_EN names when en */
+  locale?: string | null;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const effectiveLocale = localeProp ?? ctxLocale;
+  const en = isEnglishUiLocale(effectiveLocale);
+
   const teachers: TeacherDefinition[] =
     variant === 'gallery' ? listTeachers({ galleryOnly: true }) : listReportTeachers();
 
-  const heading = title || (variant === 'gallery' ? '请老师' : '问老师');
+  const heading =
+    title ||
+    (variant === 'gallery'
+      ? en
+        ? 'Consultants'
+        : '请老师'
+      : en
+        ? 'Ask a consultant'
+        : '问老师');
+  const allLabel = en ? 'All' : '全部';
 
   return (
     <section
@@ -49,7 +70,7 @@ export default function TeacherPicker({
             href="/teachers"
             className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
           >
-            全部
+            {allLabel}
           </Link>
         ) : null}
       </div>
@@ -62,6 +83,7 @@ export default function TeacherPicker({
         }
       >
         {teachers.map((t) => {
+          const presentation = resolveTeacherPresentation(t, effectiveLocale);
           const href = buildTeacherChatHref({
             teacherId: t.id,
             reportId,
@@ -83,7 +105,7 @@ export default function TeacherPicker({
                   }
                   className="text-[13px] text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
                 >
-                  {t.name}
+                  {presentation.name}
                 </Link>
               </li>
             );
@@ -102,10 +124,10 @@ export default function TeacherPicker({
                 className="group flex items-baseline justify-between gap-3 py-2.5 no-underline hover:no-underline"
               >
                 <span className="text-[13px] font-medium text-[color:var(--ink-1)] group-hover:underline">
-                  {t.name}
+                  {presentation.name}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right text-[12px] text-[color:var(--ink-5)]">
-                  {t.tagline}
+                  {presentation.tagline}
                 </span>
               </Link>
             </li>
