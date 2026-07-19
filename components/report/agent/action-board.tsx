@@ -2,34 +2,49 @@
 
 import type { MergedAgentResults } from '@/lib/agentic-report/types';
 import { SectionHeader } from '@/components/layout/section-header';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportActionBoardCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
-const DOMAIN_LABELS: Record<string, string> = {
-  core_constitution: '核心体质',
-  career_wealth: '事业财富',
-  relationship_family: '关系家庭',
-  health_lifestyle: '健康生活',
-  strategy_advisor: '策略建议',
-  temporal_spatial_advisor: '时空环境',
-};
-
-function collectDomainActions(merged: MergedAgentResults) {
+function collectDomainActions(
+  merged: MergedAgentResults,
+  labels: Record<string, string>,
+) {
   return Object.entries(merged.merged)
     .map(([key, value]) => {
       const actions = value && typeof value === 'object' && Array.isArray((value as { actions?: string[] }).actions)
         ? (value as { actions: string[] }).actions
         : [];
-      return { key, label: DOMAIN_LABELS[key] || key, actions };
+      return { key, label: labels[key] || key, actions };
     })
     .filter((item) => item.actions.length > 0);
 }
 
-export default function ReportActionBoard({ merged }: { merged: MergedAgentResults }) {
-  const domains = collectDomainActions(merged);
+export default function ReportActionBoard({
+  merged,
+  locale: localeProp,
+}: {
+  merged: MergedAgentResults;
+  locale?: string | null;
+}) {
+  const { locale: ctxLocale } = useLocale();
+  const copy = reportActionBoardCopy(resolveReportChromeLocale(localeProp ?? ctxLocale));
+  const domainLabels: Record<string, string> = {
+    core_constitution: copy.domainCore,
+    career_wealth: copy.domainCareerWealth,
+    relationship_family: copy.domainRelationship,
+    health_lifestyle: copy.domainHealth,
+    strategy_advisor: copy.domainStrategy,
+    temporal_spatial_advisor: copy.domainTemporal,
+  };
+  const domains = collectDomainActions(merged, domainLabels);
   if (!domains.length) return null;
 
   return (
     <section id="action-board" className="fb-card scroll-mt-header p-4 md:p-6">
-      <SectionHeader title="分域动作板" description="各 Agent 模块提炼的可执行建议。" />
+      <SectionHeader title={copy.agentTitle} description={copy.agentDescription} />
       <div className="mt-4 grid gap-3 md:grid-cols-2">
         {domains.map((domain) => (
           <div

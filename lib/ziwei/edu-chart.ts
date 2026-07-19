@@ -5,6 +5,10 @@
  */
 
 import { Solar } from 'lunar-javascript';
+import {
+  calculateTrueSolarTime,
+  type TrueSolarTimeResult,
+} from '@/lib/solar-time';
 
 export const PALACE_NAMES = [
   '命宫',
@@ -135,14 +139,49 @@ export function sihuaForYearStem(yearStem: number): Array<{ kind: SiHuaKind; sta
   }));
 }
 
-/** Convert solar civil date/time → educational ziwei input (lunar month/day/hour/year). */
-export function eduInputFromSolar(input: {
+export type EduSolarInput = {
   year: number;
   month: number;
   day: number;
   hour?: number;
   minute?: number;
-}): EduZiweiInput & { lunarLabel: string; yearStem: number; yearBranch: number } {
+};
+
+export type EduSolarConvResult = EduZiweiInput & {
+  lunarLabel: string;
+  yearStem: number;
+  yearBranch: number;
+};
+
+export type EduTrueSolarInput = EduSolarInput & {
+  /** Degrees east positive; required when useTrueSolar is true */
+  longitude?: number;
+  /** Civil timezone offset hours; default 8 (CST / UTC+8) */
+  timezone?: number;
+  /** When true and longitude is finite, apply 真太阳时 before lunar conversion */
+  useTrueSolar?: boolean;
+};
+
+export type EduTrueSolarConvResult = EduSolarConvResult & {
+  /** Civil clock label used before correction */
+  civilLabel: string;
+  /** Present when true solar correction was applied */
+  trueSolar?: TrueSolarTimeResult;
+  /** Why correction was skipped, if requested but not applied */
+  trueSolarSkipped?: string;
+};
+
+/** Quick city longitudes for educational true-solar UI (approx. city centers). */
+export const EDU_CITY_LONGITUDES: Array<{ id: string; zh: string; en: string; longitude: number }> = [
+  { id: 'beijing', zh: '北京', en: 'Beijing', longitude: 116.4 },
+  { id: 'shanghai', zh: '上海', en: 'Shanghai', longitude: 121.5 },
+  { id: 'guangzhou', zh: '广州', en: 'Guangzhou', longitude: 113.3 },
+  { id: 'chengdu', zh: '成都', en: 'Chengdu', longitude: 104.1 },
+  { id: 'overseas', zh: '海外手填', en: 'Overseas (manual)', longitude: NaN },
+];
+
+/** Convert solar civil date/time → educational ziwei input (lunar month/day/hour/year). */
+export function eduInputFromSolar(input: EduSolarInput): EduSolarConvResult {
   const hour = Math.min(23, Math.max(0, Math.floor(input.hour ?? 12)));
   const minute = Math.min(59, Math.max(0, Math.floor(input.minute ?? 0)));
   const solar = Solar.fromYmdHms(input.year, input.month, input.day, hour, minute, 0);
@@ -162,6 +201,66 @@ export function eduInputFromSolar(input: {
     yearStem: yearGanIndex >= 0 ? yearGanIndex : 0,
     yearBranch: yearZhiIndex >= 0 ? yearZhiIndex : 0,
     lunarLabel: `${lunar.getYearInGanZhi()}年 ${lunarMonth}月${lunarDay}日 ${EARTHLY_BRANCHES[hourBranch]}时`,
+  };
+}
+
+/**
+ * Optional 真太阳时 correction before lunar conversion (educational).
+ * When useTrueSolar && longitude is finite: correct civil time, then eduInputFromSolar.
+ * Default timezone 8; without longitude, skips correction and notes why.
+ */
+export function eduInputFromSolarWithTrueSolar(input: EduTrueSolarInput): EduTrueSolarConvResult {
+  const hour = Math.min(23, Math.max(0, Math.floor(input.hour ?? 12)));
+  const minute = Math.min(59, Math.max(0, Math.floor(input.minute ?? 0)));
+  const timezone = Number.isFinite(input.timezone) ? Number(input.timezone) : 8;
+  const civilLabel = `${input.year}-${String(input.month).padStart(2, '0')}-${String(input.day).padStart(2, '0')} ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+
+  const wantTrueSolar = Boolean(input.useTrueSolar);
+  const lon = input.longitude;
+  const hasLon = typeof lon === 'number' && Number.isFinite(lon);
+
+  if (wantTrueSolar && hasLon) {
+    const trueSolar = calculateTrueSolarTime(
+      input.year,
+      input.month,
+      input.day,
+      hour,
+      minute,
+      0,
+      lon as number,
+      timezone,
+    );
+    const conv = eduInputFromSolar({
+      year: trueSolar.year,
+      month: trueSolar.month,
+      day: trueSolar.day,
+      hour: trueSolar.hour,
+      minute: trueSolar.minute,
+    });
+    return {
+      ...conv,
+      civilLabel,
+      trueSolar,
+    };
+  }
+
+  const conv = eduInputFromSolar({
+    year: input.year,
+    month: input.month,
+    day: input.day,
+    hour,
+    minute,
+  });
+
+  let trueSolarSkipped: string | undefined;
+  if (wantTrueSolar && !hasLon) {
+    trueSolarSkipped = '未提供有效经度，已跳过真太阳时修正，按钟表时间换算。';
+  }
+
+  return {
+    ...conv,
+    civilLabel,
+    ...(trueSolarSkipped ? { trueSolarSkipped } : {}),
   };
 }
 

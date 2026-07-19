@@ -34,6 +34,7 @@ import {
 import { isCalibratedUser } from '@/lib/life-profile/calibration-status';
 import { getOrCreateProfile } from '@/lib/life-profile/store';
 import { buildBirthSignature } from '@/lib/profile-birth-signature';
+import { useLocale } from '@/components/i18n/locale-provider';
 
 type ReportPayload = {
   id: string;
@@ -50,6 +51,7 @@ type ReportPayload = {
 };
 
 export default function ReportViewer({ reportId, source }: { reportId: string; source: string }) {
+  const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [report, setReport] = useState<ReportPayload | null>(null);
@@ -170,21 +172,25 @@ export default function ReportViewer({ reportId, source }: { reportId: string; s
         createdAt={report?.createdAt || report?.snapshot?.generatedAt}
         calibrated={calibratedBadge}
       />
-      <ReportReadingPath />
+      <ReportReadingPath locale={locale} />
       <ReportHighlightsGrid merged={merged} />
-      <ReportCockpit context={context} merged={merged} />
+      <ReportCockpit context={context} merged={merged} locale={locale} />
       <ReportCurrentState context={context} merged={merged} />
       <PastPresentFutureRow kline={engine.kline} />
-      <ReportRhythmTimeline kline={engine.kline} />
+      <ReportRhythmTimeline kline={engine.kline} locale={locale} />
       <LifeKLineSummaryCard kline={engine.kline} />
-      <ReportTimingTabs timeWindows={engine.timeWindows} calibrated={Boolean(calibratedBadge)} />
+      <ReportTimingTabs
+        timeWindows={engine.timeWindows}
+        calibrated={Boolean(calibratedBadge)}
+        locale={locale}
+      />
       <ReportScenarioPanels merged={merged} />
       <ReportBlueprintCards engine={engine} />
-      <ReportNextActions reportId={reportId} merged={merged} />
-      <ReportActionBoard merged={merged} />
+      <ReportNextActions reportId={reportId} merged={merged} locale={locale} />
+      <ReportActionBoard merged={merged} locale={locale} />
       <ReportPredictionsCard predictions={reportPredictions} reportId={reportId} />
       <ReportStageProgress run={run} />
-      <ReportValidationPanel verify={verify} />
+      <ReportValidationPanel verify={verify} locale={locale} />
       <ValidationFeedbackHero reportId={reportId} />
       <ReportContinueLearning reportId={reportId} source={source} merged={merged} />
       <ReportContinueExplorationNav reportId={reportId} />

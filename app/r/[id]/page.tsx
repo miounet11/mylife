@@ -158,7 +158,11 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
       />
       <SiteHeader ctaHref="/analyze" ctaLabel={chrome.ctaReanalyze} />
 
-      <ReportChapterDock items={chapterDockItems} title={t('时间地图', 'Timing map')} />
+      <ReportChapterDock
+        items={chapterDockItems}
+        title={t('时间地图', 'Timing map')}
+        locale={locale}
+      />
 
       <main className="page-frame py-6 pb-28 md:py-8 md:pb-16">
         <ResultLocaleSummary

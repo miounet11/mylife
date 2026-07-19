@@ -13,6 +13,11 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportChapterDockCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
 /** 仅允许可序列化字段：禁止把 Lucide 组件函数从 Server Component 传入 */
 export type ReportChapterDockItem = {
@@ -46,11 +51,17 @@ const ICON_MAP: Record<NonNullable<ReportChapterDockItem['iconKey']>, LucideIcon
  */
 export default function ReportChapterDock({
   items,
-  title = '章节',
+  title,
+  locale: localeProp,
 }: {
   items: ReportChapterDockItem[];
   title?: string;
+  /** UI locale — English chrome when en; falls back to LocaleProvider / zh-CN */
+  locale?: string | null;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const copy = reportChapterDockCopy(resolveReportChromeLocale(localeProp ?? ctxLocale));
+  const resolvedTitle = title || copy.titleDefault;
   const [open, setOpen] = useState(false);
   const [activeId, setActiveId] = useState(items[0]?.id || '');
 
@@ -90,11 +101,13 @@ export default function ReportChapterDock({
     }
   };
 
+  const activeLabel = items.find((i) => i.id === activeId)?.label || resolvedTitle;
+
   return (
     <>
       {/* 桌面：右侧悬浮竖轨 */}
       <nav
-        aria-label={title}
+        aria-label={resolvedTitle}
         className="pointer-events-none fixed right-3 top-1/2 z-40 hidden -translate-y-1/2 lg:block xl:right-5"
       >
         <div className="pointer-events-auto flex flex-col gap-1 rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--paper)]/95 p-1.5 shadow-[0_8px_28px_rgba(15,23,42,0.12)] backdrop-blur">
@@ -137,7 +150,7 @@ export default function ReportChapterDock({
           {open ? (
             <div className="mb-2 max-h-[50vh] overflow-auto rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-2 shadow-[0_12px_40px_rgba(15,23,42,0.18)]">
               <div className="px-2 py-1 text-[11px] font-bold text-[color:var(--ink-4)]">
-                {title} · 点选跳转
+                {resolvedTitle} · {copy.jumpHint}
               </div>
               <ul className="mt-1 grid grid-cols-2 gap-1">
                 {items.map((item) => {
@@ -168,7 +181,7 @@ export default function ReportChapterDock({
             className="mx-auto flex h-11 items-center gap-2 rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)]/95 px-4 text-[13px] font-bold text-[color:var(--ink-1)] shadow-[0_8px_24px_rgba(15,23,42,0.14)] backdrop-blur"
           >
             <List className="h-4 w-4 text-[#3b5998]" />
-            {open ? '收起章节' : `章节 · ${items.find((i) => i.id === activeId)?.label || title}`}
+            {open ? copy.collapse : copy.chapterWith(activeLabel)}
           </button>
         </div>
       </div>

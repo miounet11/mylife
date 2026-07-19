@@ -37,8 +37,8 @@ export default async function ZiweiEduPage({
           title={en ? 'Ziwei · structure layout' : '紫微 · 结构示意盘'}
           description={
             en
-              ? 'Solar or lunar birth input; life/body palace, simplified bureau, 14 main stars, year sihua labels. No decade luck / flying stars; no auto judgment.'
-              : '公历或农历输入；命宫/身宫、示意五行局、十四主星与生年四化标注。不含大限/飞星，不自动断事。'
+              ? 'Solar or lunar birth input; optional true solar time via longitude; life/body palace, simplified bureau, 14 main stars, year sihua labels. No decade luck / flying stars; no auto judgment.'
+              : '公历或农历输入；可选经度真太阳时修正；命宫/身宫、示意五行局、十四主星与生年四化标注。不含大限/飞星，不自动断事。'
           }
           actions={
             <>
@@ -65,8 +65,8 @@ export default async function ZiweiEduPage({
 
         <section className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-4 py-3 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
           {en
-            ? 'Boundary: educational structure only. Serious decisions use full Bazi report, ten dimensions, and real-world judgment.'
-            : '产品边界：本页用于结构识读。重要决策请以八字完整报告、十维度与现实条件为准；深入讨论见紫微社区。'}
+            ? 'Boundary: educational structure only. True solar is an optional longitude-based clock correction before lunar conversion — not a full professional engine. Serious decisions use full Bazi report, ten dimensions, and real-world judgment.'
+            : '产品边界：本页用于结构识读。真太阳时为可选经度钟表修正（换算农历前），非完整专业排盘引擎。重要决策请以八字完整报告、十维度与现实条件为准；深入讨论见紫微社区。'}
         </section>
       </div>
     </AppPage>

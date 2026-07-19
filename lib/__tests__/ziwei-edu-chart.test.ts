@@ -5,6 +5,7 @@ import {
   computeMingBranchIndex,
   computeShenBranchIndex,
   eduInputFromSolar,
+  eduInputFromSolarWithTrueSolar,
   sihuaForYearStem,
 } from '@/lib/ziwei/edu-chart';
 
@@ -63,5 +64,83 @@ describe('ziwei edu chart', () => {
       rows.map((r) => r.kind),
       ['禄', '权', '科', '忌'],
     );
+  });
+
+  it('true solar without longitude is a no-op with skip note', () => {
+    const base = eduInputFromSolar({ year: 1990, month: 5, day: 15, hour: 10 });
+    const conv = eduInputFromSolarWithTrueSolar({
+      year: 1990,
+      month: 5,
+      day: 15,
+      hour: 10,
+      useTrueSolar: true,
+      // no longitude
+    });
+    assert.equal(conv.hourBranch, base.hourBranch);
+    assert.equal(conv.lunarMonth, base.lunarMonth);
+    assert.equal(conv.lunarDay, base.lunarDay);
+    assert.equal(conv.trueSolar, undefined);
+    assert.ok(conv.trueSolarSkipped);
+    assert.match(conv.trueSolarSkipped, /经度|longitude/i);
+    assert.ok(conv.civilLabel.includes('1990'));
+  });
+
+  it('true solar with longitude applies correction description', () => {
+    const conv = eduInputFromSolarWithTrueSolar({
+      year: 1990,
+      month: 5,
+      day: 15,
+      hour: 12,
+      longitude: 104.1, // Chengdu — west of 120° → negative longitude offset
+      timezone: 8,
+      useTrueSolar: true,
+    });
+    assert.ok(conv.trueSolar);
+    assert.ok(typeof conv.trueSolar.description === 'string');
+    assert.match(conv.trueSolar.description, /经度修正|均时差/);
+    assert.ok(Number.isFinite(conv.trueSolar.correctionMinutes));
+    // Chengdu ~104°E vs 120° → ~-64 min longitude offset + EoT, total well negative
+    assert.ok(conv.trueSolar.correctionMinutes < -30);
+    assert.ok(conv.civilLabel.includes('12:00'));
+    assert.equal(conv.trueSolarSkipped, undefined);
+  });
+
+  it('true solar can change hour branch near branch boundary', () => {
+    // Civil 13:00 is 未时 (hourBranch 7). Large west correction can push into 午时 (6).
+    const plain = eduInputFromSolarWithTrueSolar({
+      year: 1990,
+      month: 5,
+      day: 15,
+      hour: 13,
+      useTrueSolar: false,
+    });
+    const corrected = eduInputFromSolarWithTrueSolar({
+      year: 1990,
+      month: 5,
+      day: 15,
+      hour: 13,
+      longitude: 100, // far west of standard meridian
+      timezone: 8,
+      useTrueSolar: true,
+    });
+    assert.equal(plain.hourBranch, 7); // 13:00 → 未
+    assert.ok(corrected.trueSolar);
+    // correction ~ (100-120)*4 + EoT ≈ -80 min → clock ~11:40 → 午时
+    assert.notEqual(corrected.hourBranch, plain.hourBranch);
+    assert.equal(corrected.hourBranch, 6);
+  });
+
+  it('true solar disabled keeps civil time even with longitude', () => {
+    const plain = eduInputFromSolar({ year: 2000, month: 1, day: 1, hour: 8 });
+    const conv = eduInputFromSolarWithTrueSolar({
+      year: 2000,
+      month: 1,
+      day: 1,
+      hour: 8,
+      longitude: 100,
+      useTrueSolar: false,
+    });
+    assert.equal(conv.hourBranch, plain.hourBranch);
+    assert.equal(conv.trueSolar, undefined);
   });
 });

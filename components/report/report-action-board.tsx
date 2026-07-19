@@ -1,8 +1,14 @@
 import type { ReportActionBoardSection } from '@/lib/report-types';
 import { presentReportLines, presentReportText } from '@/lib/report-presentation';
+import {
+  reportActionBoardCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
 interface ReportActionBoardProps {
   section: ReportActionBoardSection;
+  /** UI locale — English chrome when en; default zh-CN */
+  locale?: string | null;
 }
 
 type Lane = {
@@ -39,32 +45,33 @@ const TONE_STYLES: Record<
   },
 };
 
-export default function ReportActionBoard({ section }: ReportActionBoardProps) {
+export default function ReportActionBoard({ section, locale }: ReportActionBoardProps) {
+  const copy = reportActionBoardCopy(resolveReportChromeLocale(locale));
   const lanes: Lane[] = [
     {
       key: 'now',
-      label: '现在',
+      label: copy.laneNow,
       sub: 'NOW',
       items: presentReportLines(section.now, { limit: 3, maxLen: 96 }),
       tone: 'now',
     },
     {
       key: 'd30',
-      label: '30 天',
+      label: copy.lane30,
       sub: '30D',
       items: presentReportLines(section.next30Days, { limit: 3, maxLen: 96 }),
       tone: 'd30',
     },
     {
       key: 'd90',
-      label: '90 天',
+      label: copy.lane90,
       sub: '90D',
       items: presentReportLines(section.next90Days, { limit: 3, maxLen: 96 }),
       tone: 'd90',
     },
     {
       key: 'avoid',
-      label: '先别做',
+      label: copy.laneAvoid,
       sub: 'AVOID',
       items: presentReportLines(section.avoidList, { limit: 3, maxLen: 96 }),
       tone: 'avoid',
@@ -74,11 +81,7 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
     items:
       lane.items.length > 0
         ? lane.items
-        : [
-            lane.key === 'avoid'
-              ? '避免在时机未确认前并行高成本动作。'
-              : '先做一个最小可验证动作，再根据反馈放大。',
-          ],
+        : [lane.key === 'avoid' ? copy.emptyAvoid : copy.emptyDefault],
   }));
 
   const focusSummary = presentReportText(section.focusSummary, 140);
@@ -86,15 +89,15 @@ export default function ReportActionBoard({ section }: ReportActionBoardProps) {
   return (
     <section
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
-      aria-label="行动执行板"
+      aria-label={copy.ariaLabel}
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--brand-strong)]">
-            行动执行板
+            {copy.eyebrow}
           </div>
           <h3 className="mt-1 text-[16px] font-bold leading-snug text-[color:var(--ink-1)] md:text-[18px]">
-            按时间顺序推进，不要四列硬塞
+            {copy.title}
           </h3>
         </div>
       </div>

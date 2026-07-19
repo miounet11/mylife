@@ -8,6 +8,10 @@ import {
   type ReportFollowupSuggestion,
 } from '@/lib/chat-entry';
 import ResultCtaLink from '@/components/result-cta-link';
+import {
+  reportCockpitShellCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
 type GuidedPath = {
   href: string;
@@ -28,6 +32,8 @@ interface ReportCockpitProps {
   eventsLabel?: string;
   ctaStrategyKey?: string;
   sourceFamily?: string;
+  /** UI locale — English chrome when en; default zh-CN */
+  locale?: string | null;
 }
 
 function toneClasses(tone?: 'push' | 'steady' | 'caution') {
@@ -49,7 +55,9 @@ export default function ReportCockpit({
   eventsLabel,
   ctaStrategyKey,
   sourceFamily,
+  locale,
 }: ReportCockpitProps) {
+  const copy = reportCockpitShellCopy(resolveReportChromeLocale(locale));
   const topActions = section.topActions.slice(0, 3);
   const avoidances = section.avoidances.slice(0, 3);
   const suggestions = (followupSuggestions || []).slice(0, 3);
@@ -60,7 +68,7 @@ export default function ReportCockpit({
       <div className="rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-4 py-4 md:px-5 md:py-5">
         <div className="flex flex-wrap items-center gap-1.5">
           <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-            驾驶舱判断
+            {copy.judgmentEyebrow}
           </div>
           {section.stageLabel ? (
             <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] px-2 text-xs font-bold text-[color:var(--brand-strong)]">
@@ -119,12 +127,12 @@ export default function ReportCockpit({
       <div className="space-y-3">
         <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 md:px-5 md:py-5">
           <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-            现在先做什么
+            {copy.doNowEyebrow}
           </div>
           <div className="mt-3 grid gap-2">
             <div className="rounded-[var(--radius)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-3 py-2.5">
               <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">
-                先做
+                {copy.doFirst}
               </div>
               <div className="mt-1.5 space-y-1.5 text-xs leading-5 text-[color:var(--ink-2)]">
                 {topActions.map((item) => (
@@ -134,7 +142,7 @@ export default function ReportCockpit({
             </div>
             <div className="rounded-[var(--radius)] border border-[color:var(--alert)] bg-[color:var(--alert-soft)] px-3 py-2.5">
               <div className="font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--alert)]">
-                先别做
+                {copy.avoidFirst}
               </div>
               <div className="mt-1.5 space-y-1.5 text-xs leading-5 text-[color:var(--alert)]">
                 {avoidances.map((item) => (
@@ -155,7 +163,7 @@ export default function ReportCockpit({
               <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
                 <div className="flex items-center gap-1.5 font-mono text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
                   <MessageCircleQuestion className="h-3 w-3" />
-                  顾问开场
+                  {copy.consultantOpening}
                 </div>
                 <div className="mt-2 grid gap-1.5">
                   {suggestions.map((sg, idx) => (
@@ -209,7 +217,7 @@ export default function ReportCockpit({
                 sourceFamily: sourceFamily || null,
               }}
             >
-              {chatLabel || '进入结构追问'}
+              {chatLabel || copy.chatFallback}
               <ArrowRight className="h-4 w-4" />
             </ResultCtaLink>
             <ResultCtaLink
@@ -224,7 +232,7 @@ export default function ReportCockpit({
                 sourceFamily: sourceFamily || null,
               }}
             >
-              {eventsLabel || '记录关键事件'}
+              {eventsLabel || copy.eventsFallback}
               <ArrowRight className="h-4 w-4" />
             </ResultCtaLink>
           </div>
@@ -234,7 +242,7 @@ export default function ReportCockpit({
           <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
             <div className="flex items-center gap-2">
               <Compass className="h-4 w-4 text-[color:var(--brand-strong)]" />
-              <div className="text-sm font-bold text-[color:var(--ink-1)]">阶段辅助线</div>
+              <div className="text-sm font-bold text-[color:var(--ink-1)]">{copy.guidedPathsTitle}</div>
             </div>
             <div className="mt-3 space-y-1.5">
               {guidedPaths.map((item) => (

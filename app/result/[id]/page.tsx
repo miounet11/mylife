@@ -836,7 +836,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       <main className="page-frame py-6 pb-24 md:py-8 md:pb-20">
         <ReportSurface>
           {/* 章节导航悬浮，不占左栏；正文 + 右侧 meta */}
-          <ReportChapterDock items={chapterDockItems} title="报告章节" />
+          <ReportChapterDock
+            items={chapterDockItems}
+            title={uiLocale === 'en' ? 'Report chapters' : uiLocale === 'zh-Hant' ? '報告章節' : '报告章节'}
+            locale={uiLocale}
+          />
 
           <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:max-w-[1100px] 2xl:mx-auto">
             <div className="min-w-0 space-y-4 md:space-y-5">
@@ -851,6 +855,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     reportId={id}
                     canManage={canManage}
                     consultantWindows={consultantWindows}
+                    locale={uiLocale}
                     birthYear={(() => {
                       const raw =
                         (rawFortuneData as any).birthDate ||
@@ -965,6 +970,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     eventsLabel={sourceCtaStrategy.reportEventLabel}
                     ctaStrategyKey={sourceCtaStrategy.strategyKey}
                     sourceFamily={sourceCtaStrategy.sourceFamily}
+                    locale={uiLocale}
                   />
                 </div>
 
@@ -999,6 +1005,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     reportId={id}
                     windows={consultantWindows}
                     source={`report:${id}:classic_cockpit`}
+                    locale={uiLocale}
                   />
                 </div>
               </section>
@@ -1013,7 +1020,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     未来 30 天 / 12 个月 / 5 年关键时点。先定位窗口，再读结构细节。
                   </p>
                   <div className="mt-3">
-                    <ReportTimingTabs record={timingRecord} />
+                    <ReportTimingTabs record={timingRecord} locale={uiLocale} />
                   </div>
                 </section>
               ) : null}
@@ -1032,7 +1039,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       section={reportV4Sections.lifeKLine}
                       klineData={result.klineData}
                     />
-                    <ReportRhythmTimeline section={reportV4Sections.timeline12Months} />
+                    <ReportRhythmTimeline
+                      section={reportV4Sections.timeline12Months}
+                      locale={uiLocale}
+                    />
                   </div>
                   <div id="overview" className="scroll-mt-header">
                     <ReportBlueprintCards section={reportV4Sections.coreBlueprint} />
@@ -1055,8 +1065,14 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   对应「治疗方案 / 干预建议」：先做什么、不做什么，以及可信度与阶段进度。
                 </p>
                 <div id="action-validation" className="mt-3 space-y-3 scroll-mt-header">
-                  <ReportActionBoard section={reportV4Sections.actionBoard} />
-                  <ReportValidationPanel section={reportV4Sections.validationLayer} />
+                  <ReportActionBoard
+                    section={reportV4Sections.actionBoard}
+                    locale={uiLocale}
+                  />
+                  <ReportValidationPanel
+                    section={reportV4Sections.validationLayer}
+                    locale={uiLocale}
+                  />
                 </div>
                 <div id="past-present-future" className="mt-3 scroll-mt-header">
                   <PastPresentFutureRow

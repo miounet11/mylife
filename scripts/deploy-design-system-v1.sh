@@ -8,7 +8,9 @@
 # Usage:
 #   export SSHPASS='your-root-password'
 #   bash scripts/deploy-design-system-v1.sh
-# After UI ship with SW changes: bash scripts/bump-sw-cache.sh (manual; not auto).
+# Optional SW cache bump (default OFF): BUMP_SW=1 bash scripts/deploy-design-system-v1.sh
+#   (or true/yes) — runs scripts/bump-sw-cache.sh and deploys public/sw.js + offline.html.
+#   Prefer: bash scripts/deploy-with-sw.sh
 set -euo pipefail
 
 # macOS exports HOST=<hostname>; never use it for SSH target.
@@ -17,9 +19,31 @@ REMOTE_DIR="${REMOTE_DIR:-/home/life-kline-next}"
 LOCAL_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DRY_RUN="${DRY_RUN:-0}"
+# Optional: BUMP_SW=1|true|yes bumps public/sw.js CACHE_NAME before deploy (default OFF).
+BUMP_SW="${BUMP_SW:-0}"
 
 # shellcheck source=production-protected-paths.sh
 source "$SCRIPT_DIR/production-protected-paths.sh"
+
+should_bump_sw() {
+  case "${BUMP_SW}" in
+    1|true|TRUE|yes|YES|on|ON) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+SW_BUMPED=0
+SW_CACHE_NAME=""
+if should_bump_sw; then
+  echo "==> BUMP_SW=${BUMP_SW}: bumping service worker CACHE_NAME"
+  bump_out="$(bash "$SCRIPT_DIR/bump-sw-cache.sh")"
+  printf '%s\n' "$bump_out"
+  SW_CACHE_NAME="$(printf '%s\n' "$bump_out" | tail -n1)"
+  SW_BUMPED=1
+  echo "SW bumped: CACHE_NAME=${SW_CACHE_NAME} (will deploy public/sw.js + offline.html)"
+else
+  echo "==> SW cache: not bumped (BUMP_SW unset/off; set BUMP_SW=1 to force re-cache for visitors)"
+fi
 
 if [[ -z "${SSHPASS:-}" ]]; then
   echo "ERROR: Set SSHPASS before running." >&2
@@ -390,6 +414,20 @@ rm -f postcss.config.mjs
 REMOTE
 fi
 
+if [[ "$SW_BUMPED" == "1" ]]; then
+  echo "==> Sync service worker shell (CACHE_NAME=${SW_CACHE_NAME})"
+  for sw_rel in public/sw.js public/offline.html; do
+    if [[ -f "$LOCAL_DIR/$sw_rel" ]]; then
+      rsync_to_retry "$LOCAL_DIR/$sw_rel" "$PROD_HOST:$REMOTE_DIR/$sw_rel" || {
+        echo "ERROR: failed to sync $sw_rel after SW bump." >&2
+        exit 1
+      }
+    else
+      echo "WARN: missing $sw_rel — skip"
+    fi
+  done
+fi
+
 echo "==> Sync post-deploy smoke scripts"
 for smoke_script in post-deploy-smoke.js smoke-predictions-auth-e2e.js smoke-dimensions-e2e.js smoke-prediction-due-email-cron.js patch-from-source.py; do
   if [[ -f "$LOCAL_DIR/scripts/$smoke_script" ]]; then
@@ -442,3 +480,8 @@ echo ""
 echo "Deploy complete. Verify on https://www.life-kline.com:"
 echo "  /dimensions  /dimensions/fortune-rhythm  /predictions  /annual-review"
 echo "  /analyze  /result/<id>  /knowledge  /history"
+if [[ "$SW_BUMPED" == "1" ]]; then
+  echo "  SW cache bumped → CACHE_NAME=${SW_CACHE_NAME} (public/sw.js deployed)"
+else
+  echo "  SW cache not bumped (default; use BUMP_SW=1 or scripts/deploy-with-sw.sh)"
+fi

@@ -1,42 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { EngineGroundTruth } from '@/lib/agentic-report/types';
 import { SectionHeader } from '@/components/layout/section-header';
 import { cn } from '@/lib/utils';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportTimingCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
-const TABS = [
-  { key: 'career', label: '事业' },
-  { key: 'wealth', label: '财富' },
-  { key: 'relationship', label: '关系' },
-  { key: 'health', label: '健康' },
-] as const;
-
-type TabKey = (typeof TABS)[number]['key'];
+type TabKey = 'career' | 'wealth' | 'relationship' | 'health';
 
 export default function ReportTimingTabs({
   timeWindows,
   calibrated = false,
+  locale: localeProp,
 }: {
   timeWindows: EngineGroundTruth['timeWindows'];
   calibrated?: boolean;
+  locale?: string | null;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const copy = reportTimingCopy(resolveReportChromeLocale(localeProp ?? ctxLocale));
+  const tabs = useMemo(
+    () =>
+      [
+        { key: 'career' as const, label: copy.domainCareer },
+        { key: 'wealth' as const, label: copy.domainWealth },
+        { key: 'relationship' as const, label: copy.domainRelationship },
+        { key: 'health' as const, label: copy.domainHealth },
+      ] as const,
+    [copy.domainCareer, copy.domainWealth, copy.domainRelationship, copy.domainHealth],
+  );
+
   const [active, setActive] = useState<TabKey>('career');
   const windows = timeWindows[active] || [];
-  if (!TABS.some((tab) => (timeWindows[tab.key] || []).length)) return null;
+  if (!tabs.some((tab) => (timeWindows[tab.key] || []).length)) return null;
 
   return (
     <section id="timing" className="fb-card scroll-mt-header p-5 md:p-6">
       <SectionHeader
-        title="时间窗口"
+        title={copy.agentTitle}
         description={
-          calibrated
-            ? '已校准用户可优先按月细读窗口；此处按主题汇总关键年份与得分。'
-            : '按主题查看关键年份窗口与得分。'
+          calibrated ? copy.agentDescriptionCalibrated : copy.agentDescription
         }
       />
       <div className="mt-3 flex flex-wrap gap-1 border-b border-[color:var(--hairline)] pb-2">
-        {TABS.map((tab) => (
+        {tabs.map((tab) => (
           <button
             key={tab.key}
             type="button"
@@ -69,7 +80,7 @@ export default function ReportTimingTabs({
             </div>
           ))
         ) : (
-          <p className="text-[12px] text-[color:var(--ink-4)]">该主题暂无窗口数据。</p>
+          <p className="text-[12px] text-[color:var(--ink-4)]">{copy.agentEmpty}</p>
         )}
       </div>
     </section>

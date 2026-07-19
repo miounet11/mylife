@@ -8,6 +8,7 @@ import {
   Bot,
   FileText,
   LayoutDashboard,
+  Mail,
   MessageSquareWarning,
   Package,
   Repeat2,
@@ -32,6 +33,7 @@ const adminNavItems: AdminNavItem[] = [
   { href: '/admin/usage', label: '频率留存', icon: Repeat2 },
   { href: '/admin/analytics', label: '经营分析', icon: BarChart3 },
   { href: '/admin/product-funnel', label: '双轨漏斗', icon: BarChart3 },
+  { href: '/admin/email-ops', label: '邮件投递', icon: Mail },
   { href: '/admin/content', label: '内容后台', icon: FileText },
   { href: '/admin/premium-services', label: '增值服务', icon: Package },
 ];

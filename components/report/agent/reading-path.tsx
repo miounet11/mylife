@@ -1,25 +1,29 @@
 'use client';
 
 import { SectionHeader } from '@/components/layout/section-header';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportReadingPathCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
-const STEPS = [
-  { anchor: '#cockpit', label: '核心结论', detail: '确认报告是否回答了你的核心问题。' },
-  { anchor: '#current-state', label: '当前状态', detail: '对照时位信号与现实处境。' },
-  { anchor: '#rhythm', label: '阶段节奏', detail: '理解当前处于哪个阶段窗口。' },
-  { anchor: '#actions', label: '下一步动作', detail: '把判断落成 1–3 个可验证动作。' },
-  { anchor: '#validation', label: '验证反馈', detail: '用事件日历记录节点，回测判断。' },
-];
+export default function ReportReadingPath({
+  locale: localeProp,
+}: {
+  locale?: string | null;
+} = {}) {
+  const { locale: ctxLocale } = useLocale();
+  const copy = reportReadingPathCopy(resolveReportChromeLocale(localeProp ?? ctxLocale));
 
-export default function ReportReadingPath() {
   return (
     <section className="fb-card p-5 md:p-6">
       <SectionHeader
-        eyebrow="读法"
-        title="5 分钟阅读路径"
-        description="按顺序展开，避免一次消化全部术语。"
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
       />
       <ol className="mt-4 space-y-2">
-        {STEPS.map((step, index) => (
+        {copy.steps.map((step, index) => (
           <li key={step.anchor}>
             <a
               href={step.anchor}

@@ -200,6 +200,553 @@ export function shareImageCopy(locale: SiteLocale) {
   };
 }
 
+/** Classic result cockpit shell (report-cockpit.tsx) — labels / CTAs only */
+export function reportCockpitShellCopy(locale: SiteLocale) {
+  return {
+    judgmentEyebrow: pick(locale, {
+      'zh-CN': '驾驶舱判断',
+      'zh-Hant': '駕駛艙判斷',
+      en: 'Cockpit judgment',
+    }),
+    doNowEyebrow: pick(locale, {
+      'zh-CN': '现在先做什么',
+      'zh-Hant': '現在先做什麼',
+      en: 'What to do first',
+    }),
+    doFirst: pick(locale, {
+      'zh-CN': '先做',
+      'zh-Hant': '先做',
+      en: 'Do first',
+    }),
+    avoidFirst: pick(locale, {
+      'zh-CN': '先别做',
+      'zh-Hant': '先別做',
+      en: 'Avoid for now',
+    }),
+    consultantOpening: pick(locale, {
+      'zh-CN': '顾问开场',
+      'zh-Hant': '顧問開場',
+      en: 'Consultant opening',
+    }),
+    chatFallback: pick(locale, {
+      'zh-CN': '进入结构追问',
+      'zh-Hant': '進入結構追問',
+      en: 'Ask structural follow-ups',
+    }),
+    eventsFallback: pick(locale, {
+      'zh-CN': '记录关键事件',
+      'zh-Hant': '記錄關鍵事件',
+      en: 'Log key events',
+    }),
+    guidedPathsTitle: pick(locale, {
+      'zh-CN': '阶段辅助线',
+      'zh-Hant': '階段輔助線',
+      en: 'Stage guides',
+    }),
+  };
+}
+
+/** Validation / confidence layer shell */
+export function reportValidationCopy(locale: SiteLocale) {
+  return {
+    ariaLabel: pick(locale, {
+      'zh-CN': '验证与可信层',
+      'zh-Hant': '驗證與可信層',
+      en: 'Validation & confidence',
+    }),
+    eyebrow: pick(locale, {
+      'zh-CN': '验证与可信层',
+      'zh-Hant': '驗證與可信層',
+      en: 'Validation & confidence',
+    }),
+    title: pick(locale, {
+      'zh-CN': '先信主轴，再用事件持续校正',
+      'zh-Hant': '先信主軸，再用事件持續校正',
+      en: 'Trust the main line; refine with events',
+    }),
+    confidenceFallback: pick(locale, {
+      'zh-CN': '可信度待补充',
+      'zh-Hant': '可信度待補充',
+      en: 'Confidence TBD',
+    }),
+    summaryFallback: pick(locale, {
+      'zh-CN': '当前先按主线推进，并持续记录验证事件。',
+      'zh-Hant': '目前先按主線推進，並持續記錄驗證事件。',
+      en: 'Follow the main line for now, and keep logging validation events.',
+    }),
+    highLabel: pick(locale, {
+      'zh-CN': '高可信点',
+      'zh-Hant': '高可信點',
+      en: 'High-confidence points',
+    }),
+    sensitiveLabel: pick(locale, {
+      'zh-CN': '敏感点',
+      'zh-Hant': '敏感點',
+      en: 'Sensitive points',
+    }),
+    correctionLabel: pick(locale, {
+      'zh-CN': '纠偏提示',
+      'zh-Hant': '糾偏提示',
+      en: 'Correction notes',
+    }),
+    eventPromptsLabel: pick(locale, {
+      'zh-CN': '事件提示',
+      'zh-Hant': '事件提示',
+      en: 'Event prompts',
+    }),
+    highFallback: pick(locale, {
+      'zh-CN': '核心结构判断可先作为行动基线。',
+      'zh-Hant': '核心結構判斷可先作為行動基線。',
+      en: 'Use the core structural read as your action baseline.',
+    }),
+    sensitiveFallback: pick(locale, {
+      'zh-CN': '短期时机和执行节奏需要持续复核。',
+      'zh-Hant': '短期時機和執行節奏需要持續複核。',
+      en: 'Near-term timing and execution rhythm need ongoing review.',
+    }),
+    promptsFallback: pick(locale, {
+      'zh-CN': '遇到关键变化时及时记录：转岗、合作、关系推进或健康波动。',
+      'zh-Hant': '遇到關鍵變化時及時記錄：轉崗、合作、關係推進或健康波動。',
+      en: 'Log key shifts promptly: role change, partnership, relationship progress, or health swings.',
+    }),
+    /** Agent verify panel chrome */
+    agentEyebrow: pick(locale, {
+      'zh-CN': '验证层',
+      'zh-Hant': '驗證層',
+      en: 'Validation layer',
+    }),
+    agentTitle: pick(locale, {
+      'zh-CN': '规则校验结果',
+      'zh-Hant': '規則校驗結果',
+      en: 'Rule verification result',
+    }),
+    agentRulesSummary: (passed: number, total: number) =>
+      pick(locale, {
+        'zh-CN': `通过 ${passed}/${total} 条规则 · 结论：`,
+        'zh-Hant': `通過 ${passed}/${total} 條規則 · 結論：`,
+        en: `Passed ${passed}/${total} rules · Verdict:`,
+      }),
+  };
+}
+
+/** 12-month rhythm timeline shell */
+export function reportRhythmCopy(locale: SiteLocale) {
+  return {
+    ariaLabel: pick(locale, {
+      'zh-CN': '未来十二个月节奏板',
+      'zh-Hant': '未來十二個月節奏板',
+      en: 'Next 12 months rhythm board',
+    }),
+    eyebrow: pick(locale, {
+      'zh-CN': '节奏时间板',
+      'zh-Hant': '節奏時間板',
+      en: 'Rhythm board',
+    }),
+    headlineFallback: pick(locale, {
+      'zh-CN': '未来 12 个月节奏板',
+      'zh-Hant': '未來 12 個月節奏板',
+      en: 'Next 12 months rhythm',
+    }),
+    listAria: pick(locale, {
+      'zh-CN': '每月节奏项',
+      'zh-Hant': '每月節奏項',
+      en: 'Monthly rhythm items',
+    }),
+    monthFallback: pick(locale, {
+      'zh-CN': '本月',
+      'zh-Hant': '本月',
+      en: 'This month',
+    }),
+    statusFallback: pick(locale, {
+      'zh-CN': '稳住',
+      'zh-Hant': '穩住',
+      en: 'Steady',
+    }),
+    themeFallback: pick(locale, {
+      'zh-CN': '先聚焦一个关键主题。',
+      'zh-Hant': '先聚焦一個關鍵主題。',
+      en: 'Focus on one key theme first.',
+    }),
+    empty: pick(locale, {
+      'zh-CN': '暂无月度节奏项，先按当前阶段主线执行最小可验证动作。',
+      'zh-Hant': '暫無月度節奏項，先按目前階段主線執行最小可驗證動作。',
+      en: 'No monthly rhythm items yet — run the smallest verifiable action along the current stage line.',
+    }),
+    /** Agent rhythm shell */
+    agentEyebrow: pick(locale, {
+      'zh-CN': '节奏',
+      'zh-Hant': '節奏',
+      en: 'Rhythm',
+    }),
+    agentTitle: pick(locale, {
+      'zh-CN': '阶段与窗口',
+      'zh-Hant': '階段與窗口',
+      en: 'Phases & windows',
+    }),
+    agentDescription: pick(locale, {
+      'zh-CN': '人生 K 线的阶段划分与关键时间窗口。',
+      'zh-Hant': '人生 K 線的階段劃分與關鍵時間窗口。',
+      en: 'Life K-Line phase splits and key time windows.',
+    }),
+    avgScore: pick(locale, {
+      'zh-CN': '均分',
+      'zh-Hant': '均分',
+      en: 'avg',
+    }),
+    score: pick(locale, {
+      'zh-CN': '得分',
+      'zh-Hant': '得分',
+      en: 'score',
+    }),
+    trendUp: pick(locale, { 'zh-CN': '上升', en: 'Rising' }),
+    trendDown: pick(locale, { 'zh-CN': '下行', en: 'Declining' }),
+    trendFlat: pick(locale, { 'zh-CN': '平稳', 'zh-Hant': '平穩', en: 'Steady' }),
+    windowPeak: pick(locale, {
+      'zh-CN': '高点窗口',
+      'zh-Hant': '高點窗口',
+      en: 'Peak window',
+    }),
+    windowTrough: pick(locale, {
+      'zh-CN': '低点窗口',
+      'zh-Hant': '低點窗口',
+      en: 'Trough window',
+    }),
+    windowTurning: pick(locale, {
+      'zh-CN': '转折窗口',
+      'zh-Hant': '轉折窗口',
+      en: 'Turning window',
+    }),
+    windowStable: pick(locale, {
+      'zh-CN': '稳定窗口',
+      'zh-Hant': '穩定窗口',
+      en: 'Stable window',
+    }),
+  };
+}
+
+/** Timing map tabs shell (classic result + agent domain tabs) */
+export function reportTimingCopy(locale: SiteLocale) {
+  return {
+    ariaLabel: pick(locale, {
+      'zh-CN': '时间地图',
+      'zh-Hant': '時間地圖',
+      en: 'Timing map',
+    }),
+    eyebrow: pick(locale, {
+      'zh-CN': '时间地图',
+      'zh-Hant': '時間地圖',
+      en: 'Timing map',
+    }),
+    title: pick(locale, {
+      'zh-CN': '从今天，到未来 5 年',
+      'zh-Hant': '從今天，到未來 5 年',
+      en: 'From today to the next 5 years',
+    }),
+    tablistAria: pick(locale, {
+      'zh-CN': '时间地图视角切换',
+      'zh-Hant': '時間地圖視角切換',
+      en: 'Timing map view switch',
+    }),
+    tab30d: pick(locale, {
+      'zh-CN': '近 30 天',
+      'zh-Hant': '近 30 天',
+      en: 'Next 30 days',
+    }),
+    tab30dHint: pick(locale, {
+      'zh-CN': '本月可执行的关键节点',
+      'zh-Hant': '本月可執行的關鍵節點',
+      en: 'Actionable nodes this month',
+    }),
+    tab12m: pick(locale, {
+      'zh-CN': '近 12 月',
+      'zh-Hant': '近 12 月',
+      en: 'Next 12 months',
+    }),
+    tab12mHint: pick(locale, {
+      'zh-CN': '半年到一年的窗口',
+      'zh-Hant': '半年到一年的窗口',
+      en: '6–12 month windows',
+    }),
+    tab5y: pick(locale, {
+      'zh-CN': '近 5 年',
+      'zh-Hant': '近 5 年',
+      en: 'Next 5 years',
+    }),
+    tab5yHint: pick(locale, {
+      'zh-CN': '人生阶段切换',
+      'zh-Hant': '人生階段切換',
+      en: 'Life-stage shifts',
+    }),
+    /** Agent domain timing tabs */
+    agentTitle: pick(locale, {
+      'zh-CN': '时间窗口',
+      'zh-Hant': '時間窗口',
+      en: 'Time windows',
+    }),
+    agentDescription: pick(locale, {
+      'zh-CN': '按主题查看关键年份窗口与得分。',
+      'zh-Hant': '按主題查看關鍵年份窗口與得分。',
+      en: 'Browse key year windows and scores by theme.',
+    }),
+    agentDescriptionCalibrated: pick(locale, {
+      'zh-CN': '已校准用户可优先按月细读窗口；此处按主题汇总关键年份与得分。',
+      'zh-Hant': '已校準用戶可優先按月細讀窗口；此處按主題匯總關鍵年份與得分。',
+      en: 'Calibrated users can drill monthly windows first; here themes summarize key years and scores.',
+    }),
+    agentEmpty: pick(locale, {
+      'zh-CN': '该主题暂无窗口数据。',
+      'zh-Hant': '該主題暫無窗口數據。',
+      en: 'No window data for this theme yet.',
+    }),
+    domainCareer: pick(locale, { 'zh-CN': '事业', 'zh-Hant': '事業', en: 'Career' }),
+    domainWealth: pick(locale, { 'zh-CN': '财富', 'zh-Hant': '財富', en: 'Wealth' }),
+    domainRelationship: pick(locale, { 'zh-CN': '关系', 'zh-Hant': '關係', en: 'Relationships' }),
+    domainHealth: pick(locale, { 'zh-CN': '健康', en: 'Health' }),
+  };
+}
+
+/** Action execution board shell */
+export function reportActionBoardCopy(locale: SiteLocale) {
+  return {
+    ariaLabel: pick(locale, {
+      'zh-CN': '行动执行板',
+      'zh-Hant': '行動執行板',
+      en: 'Action board',
+    }),
+    eyebrow: pick(locale, {
+      'zh-CN': '行动执行板',
+      'zh-Hant': '行動執行板',
+      en: 'Action board',
+    }),
+    title: pick(locale, {
+      'zh-CN': '按时间顺序推进，不要四列硬塞',
+      'zh-Hant': '按時間順序推進，不要四列硬塞',
+      en: 'Move in time order — don’t force all four lanes at once',
+    }),
+    laneNow: pick(locale, { 'zh-CN': '现在', 'zh-Hant': '現在', en: 'Now' }),
+    lane30: pick(locale, { 'zh-CN': '30 天', en: '30 days' }),
+    lane90: pick(locale, { 'zh-CN': '90 天', en: '90 days' }),
+    laneAvoid: pick(locale, {
+      'zh-CN': '先别做',
+      'zh-Hant': '先別做',
+      en: 'Avoid',
+    }),
+    emptyDefault: pick(locale, {
+      'zh-CN': '先做一个最小可验证动作，再根据反馈放大。',
+      'zh-Hant': '先做一個最小可驗證動作，再根據反饋放大。',
+      en: 'Start with one smallest verifiable action, then scale from feedback.',
+    }),
+    emptyAvoid: pick(locale, {
+      'zh-CN': '避免在时机未确认前并行高成本动作。',
+      'zh-Hant': '避免在時機未確認前並行高成本動作。',
+      en: 'Avoid stacking high-cost moves before timing is confirmed.',
+    }),
+    /** Agent multi-domain board */
+    agentTitle: pick(locale, {
+      'zh-CN': '分域动作板',
+      'zh-Hant': '分域動作板',
+      en: 'Domain action board',
+    }),
+    agentDescription: pick(locale, {
+      'zh-CN': '各 Agent 模块提炼的可执行建议。',
+      'zh-Hant': '各 Agent 模組提煉的可執行建議。',
+      en: 'Executable suggestions distilled from each agent module.',
+    }),
+    domainCore: pick(locale, {
+      'zh-CN': '核心体质',
+      'zh-Hant': '核心體質',
+      en: 'Core constitution',
+    }),
+    domainCareerWealth: pick(locale, {
+      'zh-CN': '事业财富',
+      'zh-Hant': '事業財富',
+      en: 'Career & wealth',
+    }),
+    domainRelationship: pick(locale, {
+      'zh-CN': '关系家庭',
+      'zh-Hant': '關係家庭',
+      en: 'Relationships & family',
+    }),
+    domainHealth: pick(locale, {
+      'zh-CN': '健康生活',
+      'zh-Hant': '健康生活',
+      en: 'Health & lifestyle',
+    }),
+    domainStrategy: pick(locale, {
+      'zh-CN': '策略建议',
+      'zh-Hant': '策略建議',
+      en: 'Strategy',
+    }),
+    domainTemporal: pick(locale, {
+      'zh-CN': '时空环境',
+      'zh-Hant': '時空環境',
+      en: 'Time & space',
+    }),
+  };
+}
+
+/** Floating chapter dock chrome */
+export function reportChapterDockCopy(locale: SiteLocale) {
+  return {
+    titleDefault: pick(locale, {
+      'zh-CN': '章节',
+      'zh-Hant': '章節',
+      en: 'Chapters',
+    }),
+    jumpHint: pick(locale, {
+      'zh-CN': '点选跳转',
+      'zh-Hant': '點選跳轉',
+      en: 'Tap to jump',
+    }),
+    collapse: pick(locale, {
+      'zh-CN': '收起章节',
+      'zh-Hant': '收起章節',
+      en: 'Close chapters',
+    }),
+    chapterWith: (label: string) =>
+      pick(locale, {
+        'zh-CN': `章节 · ${label}`,
+        'zh-Hant': `章節 · ${label}`,
+        en: `Chapters · ${label}`,
+      }),
+  };
+}
+
+/** Agent reading path shell */
+export function reportReadingPathCopy(locale: SiteLocale) {
+  return {
+    eyebrow: pick(locale, { 'zh-CN': '读法', 'zh-Hant': '讀法', en: 'How to read' }),
+    title: pick(locale, {
+      'zh-CN': '5 分钟阅读路径',
+      'zh-Hant': '5 分鐘閱讀路徑',
+      en: '5-minute reading path',
+    }),
+    description: pick(locale, {
+      'zh-CN': '按顺序展开，避免一次消化全部术语。',
+      'zh-Hant': '按順序展開，避免一次消化全部術語。',
+      en: 'Follow in order — don’t try to absorb every term at once.',
+    }),
+    steps: [
+      {
+        anchor: '#cockpit',
+        label: pick(locale, {
+          'zh-CN': '核心结论',
+          'zh-Hant': '核心結論',
+          en: 'Core verdict',
+        }),
+        detail: pick(locale, {
+          'zh-CN': '确认报告是否回答了你的核心问题。',
+          'zh-Hant': '確認報告是否回答了你的核心問題。',
+          en: 'Check whether the report answers your core question.',
+        }),
+      },
+      {
+        anchor: '#current-state',
+        label: pick(locale, {
+          'zh-CN': '当前状态',
+          'zh-Hant': '目前狀態',
+          en: 'Current state',
+        }),
+        detail: pick(locale, {
+          'zh-CN': '对照时位信号与现实处境。',
+          'zh-Hant': '對照時位信號與現實處境。',
+          en: 'Match timing signals with your real situation.',
+        }),
+      },
+      {
+        anchor: '#rhythm',
+        label: pick(locale, {
+          'zh-CN': '阶段节奏',
+          'zh-Hant': '階段節奏',
+          en: 'Stage rhythm',
+        }),
+        detail: pick(locale, {
+          'zh-CN': '理解当前处于哪个阶段窗口。',
+          'zh-Hant': '理解目前處於哪個階段窗口。',
+          en: 'See which stage window you are in now.',
+        }),
+      },
+      {
+        anchor: '#actions',
+        label: pick(locale, {
+          'zh-CN': '下一步动作',
+          'zh-Hant': '下一步動作',
+          en: 'Next actions',
+        }),
+        detail: pick(locale, {
+          'zh-CN': '把判断落成 1–3 个可验证动作。',
+          'zh-Hant': '把判斷落成 1–3 個可驗證動作。',
+          en: 'Turn the judgment into 1–3 verifiable actions.',
+        }),
+      },
+      {
+        anchor: '#validation',
+        label: pick(locale, {
+          'zh-CN': '验证反馈',
+          'zh-Hant': '驗證回饋',
+          en: 'Validation feedback',
+        }),
+        detail: pick(locale, {
+          'zh-CN': '用事件日历记录节点，回测判断。',
+          'zh-Hant': '用事件日曆記錄節點，回測判斷。',
+          en: 'Log milestones on the event calendar and back-test the read.',
+        }),
+      },
+    ],
+  };
+}
+
+/** Agent next-actions shell */
+export function reportNextActionsCopy(locale: SiteLocale) {
+  return {
+    title: pick(locale, {
+      'zh-CN': '下一步动作',
+      'zh-Hant': '下一步動作',
+      en: 'Next actions',
+    }),
+    description: pick(locale, {
+      'zh-CN': '把判断落成可执行的三步顺序。',
+      'zh-Hant': '把判斷落成可執行的三步順序。',
+      en: 'Turn the judgment into a three-step executable sequence.',
+    }),
+    consultantOpening: pick(locale, {
+      'zh-CN': '顾问开场',
+      'zh-Hant': '顧問開場',
+      en: 'Consultant opening',
+    }),
+    logEvents: pick(locale, {
+      'zh-CN': '记录事件',
+      'zh-Hant': '記錄事件',
+      en: 'Log events',
+    }),
+    fallbacks: [
+      pick(locale, {
+        'zh-CN': '先确认本次报告最想解决的问题是否匹配你的现实处境。',
+        'zh-Hant': '先確認本次報告最想解決的問題是否匹配你的現實處境。',
+        en: 'Confirm the report’s core question still matches your real situation.',
+      }),
+      pick(locale, {
+        'zh-CN': '把一项可验证的事件记入事件日历，用于后续回测。',
+        'zh-Hant': '把一項可驗證的事件記入事件日曆，用於後續回測。',
+        en: 'Log one verifiable event on the calendar for later back-testing.',
+      }),
+      pick(locale, {
+        'zh-CN': '用结构追问把结论拆成更具体的行动顺序。',
+        'zh-Hant': '用結構追問把結論拆成更具體的行動順序。',
+        en: 'Use structural follow-ups to break the conclusion into a clearer action order.',
+      }),
+    ],
+  };
+}
+
 export type ReportCockpitCopy = ReturnType<typeof reportCockpitCopy>;
+export type ReportCockpitShellCopy = ReturnType<typeof reportCockpitShellCopy>;
 export type ReportConsultantCardsCopy = ReturnType<typeof reportConsultantCardsCopy>;
 export type ShareImageCopy = ReturnType<typeof shareImageCopy>;
+export type ReportValidationCopy = ReturnType<typeof reportValidationCopy>;
+export type ReportRhythmCopy = ReturnType<typeof reportRhythmCopy>;
+export type ReportTimingCopy = ReturnType<typeof reportTimingCopy>;
+export type ReportActionBoardCopy = ReturnType<typeof reportActionBoardCopy>;
+export type ReportChapterDockCopy = ReturnType<typeof reportChapterDockCopy>;
+export type ReportReadingPathCopy = ReturnType<typeof reportReadingPathCopy>;
+export type ReportNextActionsCopy = ReturnType<typeof reportNextActionsCopy>;

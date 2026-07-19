@@ -8,35 +8,43 @@
 // 默认 30d——意图最高、最贴近"今天"。
 // 移动端：Tab 横滑；桌面端：Tab 三栏。
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Calendar, CalendarDays, CalendarRange } from 'lucide-react';
 import Next30DaysBlock from '@/components/result-v2/next-30-days-block';
 import Next12MonthsBlock from '@/components/result-v2/next-12-months-block';
 import Next5YearsBlock from '@/components/result-v2/next-5-years-block';
 import type { TimingProfile } from '@/lib/life-timing/types';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportTimingCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 
 interface Props {
   record: Pick<
     TimingProfile,
     'next_30_days' | 'next_12_months' | 'next_5_years' | 'baziPillars'
   >;
+  /** UI locale — English chrome when en; falls back to LocaleProvider / zh-CN */
+  locale?: string | null;
 }
 
 type TabKey = '30d' | '12m' | '5y';
 
-const TAB_DEFS: Array<{
-  key: TabKey;
-  label: string;
-  hint: string;
-  Icon: typeof Calendar;
-}> = [
-  { key: '30d', label: '近 30 天', hint: '本月可执行的关键节点', Icon: Calendar },
-  { key: '12m', label: '近 12 月', hint: '半年到一年的窗口', Icon: CalendarDays },
-  { key: '5y', label: '近 5 年', hint: '人生阶段切换', Icon: CalendarRange },
-];
-
-export default function ReportTimingTabs({ record }: Props) {
+export default function ReportTimingTabs({ record, locale: localeProp }: Props) {
+  const { locale: ctxLocale } = useLocale();
+  const copy = reportTimingCopy(resolveReportChromeLocale(localeProp ?? ctxLocale));
   const [active, setActive] = useState<TabKey>('30d');
+
+  const tabDefs = useMemo(
+    () =>
+      [
+        { key: '30d' as const, label: copy.tab30d, hint: copy.tab30dHint, Icon: Calendar },
+        { key: '12m' as const, label: copy.tab12m, hint: copy.tab12mHint, Icon: CalendarDays },
+        { key: '5y' as const, label: copy.tab5y, hint: copy.tab5yHint, Icon: CalendarRange },
+      ] as const,
+    [copy.tab30d, copy.tab30dHint, copy.tab12m, copy.tab12mHint, copy.tab5y, copy.tab5yHint],
+  );
 
   const counts: Record<TabKey, number> = {
     '30d': record.next_30_days?.length || 0,
@@ -46,16 +54,16 @@ export default function ReportTimingTabs({ record }: Props) {
 
   return (
     <section
-      aria-label="时间地图"
+      aria-label={copy.ariaLabel}
       className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-tint)] p-4 shadow-sm md:p-5"
     >
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
           <div className="text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            时间地图
+            {copy.eyebrow}
           </div>
           <h2 className="mt-1 text-lg font-black text-[color:var(--ink-1)] md:text-xl">
-            从今天，到未来 5 年
+            {copy.title}
           </h2>
         </div>
       </div>
@@ -63,10 +71,10 @@ export default function ReportTimingTabs({ record }: Props) {
       {/* Tab 头 */}
       <div
         role="tablist"
-        aria-label="时间地图视角切换"
+        aria-label={copy.tablistAria}
         className="mb-4 flex gap-1 overflow-x-auto rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)] p-1"
       >
-        {TAB_DEFS.map(({ key, label, hint, Icon }) => {
+        {tabDefs.map(({ key, label, hint, Icon }) => {
           const selected = active === key;
           const count = counts[key];
           return (
