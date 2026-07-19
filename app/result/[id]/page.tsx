@@ -1301,6 +1301,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               reportVersion={result.reportVersion || 'v1'}
               reasoningMode={reasoningModeLabel}
               modelChainLabel={modelChainLabel}
+              locale={uiLocale}
             >
               <ReportEnginePanel
                 reportId={id}
@@ -1317,6 +1318,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 enhancementNotes={canManage ? (result.enhancementNotes || []) : []}
                 orchestration={result.orchestration || result.analysis?.orchestration}
                 feedbackLoop={result.analysis?.feedbackLoop}
+                locale={uiLocale}
               />
 
               {canManage ? (

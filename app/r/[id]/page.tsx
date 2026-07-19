@@ -415,6 +415,7 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
             reportVersion="timing-v2"
             modelChainLabel={null}
             qualityLabel={t('摘要版', 'Summary')}
+            locale={locale}
           />
         </div>
       </main>

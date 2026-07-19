@@ -6,6 +6,7 @@ import {
   reportCockpitCopy,
   reportCockpitShellCopy,
   reportDeliveryTierLabel,
+  reportMetaSidebarCopy,
   reportNextActionsCopy,
   reportReadingPathCopy,
   reportResultPageCopy,
@@ -100,6 +101,24 @@ describe('report-chrome-copy', () => {
     const shell = reportCockpitShellCopy('zh-CN');
     assert.equal(shell.chatFallback, '进入结构追问');
     assert.equal(shell.eventsFallback, '记录关键事件');
+  });
+
+  it('EN meta sidebar chrome has no CJK', () => {
+    const m = reportMetaSidebarCopy('en');
+    assertNonEmptyEn(m.title, 'meta.title');
+    assertNonEmptyEn(m.ariaLabel, 'meta.ariaLabel');
+    assertNonEmptyEn(m.generatedAt, 'meta.generatedAt');
+    assertNonEmptyEn(m.quality, 'meta.quality');
+    assertNonEmptyEn(m.version, 'meta.version');
+    assertNonEmptyEn(m.reasoningMode, 'meta.reasoningMode');
+    assertNonEmptyEn(m.modelChain, 'meta.modelChain');
+    assertNonEmptyEn(m.visibility, 'meta.visibility');
+    assertNonEmptyEn(m.public, 'meta.public');
+    assertNonEmptyEn(m.private, 'meta.private');
+    assert.equal(m.title, 'Report info');
+    assert.equal(m.visibility, 'Visibility');
+    assert.equal(m.public, 'Public');
+    assert.equal(reportMetaSidebarCopy('zh-CN').title, '报告信息');
   });
 
   it('EN classic result page chrome has no CJK', () => {

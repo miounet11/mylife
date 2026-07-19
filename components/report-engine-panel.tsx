@@ -111,6 +111,7 @@ export default function ReportEnginePanel({
   generatedFrom,
   orchestration,
   feedbackLoop,
+  locale = 'zh-CN',
 }: {
   reportId: string;
   canManage: boolean;
@@ -129,6 +130,8 @@ export default function ReportEnginePanel({
   orchestration?: OrchestrationMeta;
   feedbackLoop?: FeedbackLoop;
   versionLineage?: unknown[];
+  /** UI locale; `en*` → English status strings from buildUserFacingReportStatus */
+  locale?: string | null;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -149,6 +152,7 @@ export default function ReportEnginePanel({
         generatedFrom,
         orchestration,
         canManage,
+        locale,
       }),
     [
       llmUsed,
@@ -160,6 +164,7 @@ export default function ReportEnginePanel({
       generatedFrom,
       orchestration,
       canManage,
+      locale,
     ]
   );
 

@@ -7,6 +7,7 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import HehunWorkspace from '@/components/hehun/hehun-workspace';
 import { buildPageMetadata } from '@/lib/seo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 export const metadata: Metadata = buildPageMetadata({
   title: '合婚双盘｜双方生日即时对盘',
@@ -25,9 +26,23 @@ export const metadata: Metadata = buildPageMetadata({
   ],
 });
 
-export default function HehunPage() {
+export default async function HehunPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const en = locale === 'en';
+
   return (
-    <AppPage header={{ ctaHref: '/dimensions/marriage', ctaLabel: '单盘婚恋', compact: true }}>
+    <AppPage
+      header={{
+        ctaHref: '/dimensions/marriage',
+        ctaLabel: en ? 'Single-chart marriage' : '单盘婚恋',
+        compact: true,
+      }}
+    >
       <AnalyticsPageView
         eventName="hehun_page_viewed"
         page="/hehun"
@@ -40,32 +55,47 @@ export default function HehunPage() {
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="合婚"
-          title="双盘对照"
-          description="日主互动、夫妻宫、用忌互补。可双方填生日即时对盘，或从报告/档案一键预填。"
+          eyebrow={en ? 'Compatibility' : '合婚'}
+          title={en ? 'Dual-chart compare' : '双盘对照'}
+          description={
+            en
+              ? 'Day Master interaction, spouse palace, and favorable/unfavorable balance. Fill both birthdays for an instant compare, or prefill from a report/profile.'
+              : '日主互动、夫妻宫、用忌互补。可双方填生日即时对盘，或从报告/档案一键预填。'
+          }
           actions={
             <>
               <Link
                 href="/dimensions/marriage"
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                单盘谈婚论嫁
+                {en ? 'Single-chart marriage' : '单盘谈婚论嫁'}
               </Link>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                工具中心
+                {en ? 'Tools' : '工具中心'}
               </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                完整报告
+                {en ? 'Full report' : '完整报告'}
               </Link>
               <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                请老师
+                {en ? 'Teachers' : '请老师'}
               </Link>
             </>
           }
         />
-        <PageIllustrationStrip surface="hehun/hub" title="双盘对照" compact limit={1} />
-        <Suspense fallback={<div className="py-6 text-[13px] text-[color:var(--ink-5)]">加载中…</div>}>
-          <HehunWorkspace />
+        <PageIllustrationStrip
+          surface="hehun/hub"
+          title={en ? 'Dual-chart compare' : '双盘对照'}
+          compact
+          limit={1}
+        />
+        <Suspense
+          fallback={
+            <div className="py-6 text-[13px] text-[color:var(--ink-5)]">
+              {en ? 'Loading…' : '加载中…'}
+            </div>
+          }
+        >
+          <HehunWorkspace locale={locale} />
         </Suspense>
       </div>
     </AppPage>

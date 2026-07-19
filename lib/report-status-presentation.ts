@@ -4,6 +4,9 @@
  * 内部 qualityAudit / verify / upgradeJob 是工程信号；这里收敛成：
  * 1 条主结论 + 可信点 + 留意点 + 1 个主动作 + 可选进度。
  * 禁止再向用户并列输出互相打架的多套状态文案。
+ *
+ * Optional `locale`: if it starts with `en`, user-facing strings are English;
+ * otherwise Simplified Chinese (zh-Hant stays zh-CN for this wave).
  */
 
 export type UserReportReadiness = 'ready' | 'usable' | 'draft';
@@ -91,6 +94,189 @@ type OrchestrationLike = {
   failed?: string[];
 };
 
+type StatusLang = 'zh' | 'en';
+
+type StatusCopy = ReturnType<typeof statusCopy>;
+
+/** True when UI locale should use English status strings. */
+export function isEnglishStatusLocale(locale?: string | null): boolean {
+  const v = `${locale || ''}`.trim().toLowerCase().replace(/_/g, '-');
+  return v === 'en' || v.startsWith('en-');
+}
+
+function statusLang(locale?: string | null): StatusLang {
+  return isEnglishStatusLocale(locale) ? 'en' : 'zh';
+}
+
+function statusCopy(lang: StatusLang) {
+  if (lang === 'en') {
+    return {
+      badgeReady: 'Ready to use',
+      titleReady: 'This report is ready as your current-stage reading baseline',
+      summaryReady:
+        'Chart structure, narrative, and internal checks are aligned. Treat core conclusions and the timing map as a decision baseline, then log real events for calibration as needed.',
+
+      badgeDraft: 'Draft reference',
+      titleDraft: 'This version is best treated as a draft reference',
+      summaryDraft:
+        'The base chart may exist, but key enrichment or checks are incomplete. Use structural direction first; do not treat short windows or fine-grained advice as final.',
+
+      badgeStructureUsable: 'Structure ready',
+      titleStructureUsable: 'Main structure is readable; multi-dimension depth and alignment checks are incomplete',
+      summaryStructureUsable:
+        'Four Pillars / Dayun / body text are formed—start with core conclusions. Multi-expert supplements are fallbacks; short-term timing and industry/geo alignment did not pass internal checks—treat those conservatively without discarding the whole chart.',
+
+      badgeNeedsReview: 'Needs review',
+      titleNeedsReview: 'Report is usable, but internal alignment did not pass',
+      summaryNeedsReview:
+        'Body and base content remain readable. Some judgments are misaligned; treat short windows and strategy tips as observations and prefer stable structural conclusions.',
+
+      badgeReviewSuggested: 'Review suggested',
+      titleReviewSuggested: 'Generally usable; some window tips need real-world checks',
+      summaryReviewSuggested:
+        'Core judgment is stable, with observation-level consistency notes. Separating long-term structure from short-term timing is safer when reading.',
+
+      badgeUsable: 'Usable',
+      titleUsable: 'This report is ready for normal reading',
+      summaryUsableLlm: (edition: string) =>
+        `Currently ${edition}. Core conclusions and advice are readable. Continue refining multi-dimension depth when convenient.`,
+      summaryUsableBase: (edition: string) =>
+        `Currently ${edition}. Main structure is in place; narrative depth can still be improved.`,
+
+      trustEngine: 'Chart base is complete (pillars, elements, luck structure)',
+      trustLlm: 'Narrative enhancement is done and readable',
+      trustCoverage: 'Advice, windows, and trends are well covered',
+      trustAgentic: 'Multi-dimension supplements and internal checks are aligned',
+      trustConsistency: 'Internal consistency check passed',
+
+      cautionMultiAgent: 'Multi-expert supplements did not fully run; related details may be template-like',
+      cautionFail: 'Short-term timing, industry, and geo alignment did not pass—do not treat as hard conclusions',
+      cautionWarn: 'Consistency is observation-level; validate window tips in small steps',
+      cautionEvidenceThin: 'Some calculation steps still lack firm evidence or action items',
+      cautionTemplate: 'Narrative still has template-like traces—prefer structural conclusions while reading',
+
+      progressRunning: 'The system is improving this report',
+      progressRunningDetail: 'You can read the current version first; it will update when complete.',
+      progressQueued: 'Queued for improvement',
+      progressQueuedDetail: 'It will continue automatically when its turn comes—no need to resubmit.',
+      progressDone: 'Automatic improvement finished',
+      progressDoneDetail: 'This is the version after the improvement flow ended.',
+      progressPaused: 'Automatic improvement paused',
+      pauseLlmUnavailable:
+        'Enhancement service is temporarily unavailable; the current readable content is kept. Try “Continue improving” later.',
+      pauseTargetNotReached:
+        'Multiple deepen attempts still fell short of a higher delivery bar; the readable version is kept. Main structure remains readable.',
+      pauseDefault:
+        'Current readable content is kept. If the main conclusions are enough, read them; otherwise tap “Continue improving” later.',
+
+      actionReadMain: 'Back to report body',
+      actionInProgress: 'Improvement in progress',
+      actionReanalyze: 'Recheck birth info and reanalyze',
+      actionNone: 'No action needed',
+      actionUpgrade: 'Continue improving this report',
+
+      editionExpert: 'Full',
+      editionEnhanced: 'Deep',
+      editionStandard: 'Standard',
+      editionBasic: 'Basic',
+
+      verdictPass: 'Pass',
+      verdictWarn: 'Watch',
+      verdictFail: 'Fail',
+      verdictNone: 'Not checked',
+
+      detailOverall: 'Overall score',
+      detailEngine: 'Chart base',
+      detailLlm: 'Narrative completeness',
+      detailAgentic: 'Multi-dimension supplements',
+      detailAgenticFallback: 'Incomplete (rule fallback)',
+      detailConsistency: 'Internal alignment check',
+      detailCoverage: 'Content coverage',
+    } as const;
+  }
+
+  return {
+    badgeReady: '可直接用',
+    titleReady: '这份报告可以直接作为当前阶段的阅读参考',
+    summaryReady:
+      '命盘结构、正文与内部检查整体对齐。你可以把主结论和时间地图当作决策基线，再按需记录真实事件做校准。',
+
+    badgeDraft: '参考草稿',
+    titleDraft: '当前版本更适合当作参考草稿',
+    summaryDraft:
+      '基础命盘可能已生成，但关键深化或检查未完成。请先看结构大方向，不要把短期窗口或细项建议当成最终结论。',
+
+    badgeStructureUsable: '结构可用',
+    titleStructureUsable: '主结构可读，多维深化与对齐检查尚未完成',
+    summaryStructureUsable:
+      '四柱/大运/正文已经成型，可以先读核心结论。多维专家补充目前是回退结果，短期时机与行业/地理对齐未通过内部检查——这些部分请保守参考，不必因此否定整份命盘。',
+
+    badgeNeedsReview: '需复核',
+    titleNeedsReview: '报告可用，但内部对齐检查未通过',
+    summaryNeedsReview:
+      '正文与底座内容仍可阅读。系统检测到部分判断之间未对齐，短期窗口与策略建议请当作观察项，优先相信稳定结构结论。',
+
+    badgeReviewSuggested: '建议复核',
+    titleReviewSuggested: '整体可用，部分窗口建议需结合现实复核',
+    summaryReviewSuggested:
+      '主判断稳定，但有观察级的一致性提示。阅读时把「长期结构」和「短期时机」分开看会更稳妥。',
+
+    badgeUsable: '可用',
+    titleUsable: '这份报告可以正常阅读使用',
+    summaryUsableLlm: (edition: string) =>
+      `当前为${edition}，主结论与建议已可阅读。若你需要更细的多维补充，可在方便时继续完善。`,
+    summaryUsableBase: (edition: string) =>
+      `当前为${edition}。主结构已给出；正文深度仍可继续完善。`,
+
+    trustEngine: '命盘底座完整（四柱、五行、运势结构）',
+    trustLlm: '正文已完成增强，解释可读',
+    trustCoverage: '建议、窗口与趋势覆盖较全',
+    trustAgentic: '多维补充与内部检查已对齐',
+    trustConsistency: '内部一致性检查通过',
+
+    cautionMultiAgent: '多维专家补充未真正完成，相关细项可能偏模板化',
+    cautionFail: '短期时机、行业与地理等对齐检查未通过，勿当作硬结论',
+    cautionWarn: '一致性处于观察级，窗口建议宜小步验证',
+    cautionEvidenceThin: '部分测算环节的依据或行动项仍偏薄',
+    cautionTemplate: '正文仍有模板化痕迹，阅读时以结构结论为准',
+
+    progressRunning: '系统正在完善这份报告',
+    progressRunningDetail: '你可以先阅读当前版本，完成后会自动更新。',
+    progressQueued: '已排队等待完善',
+    progressQueuedDetail: '轮到时会自动继续，无需反复提交。',
+    progressDone: '自动完善已结束',
+    progressDoneDetail: '当前为完善流程结束后的版本。',
+    progressPaused: '自动完善已暂停',
+    pauseLlmUnavailable: '增强服务暂时不可用，已保留当前可读内容。可稍后再试「继续完善」。',
+    pauseTargetNotReached: '已多次尝试深化，仍未达到更高交付标准；当前可读版本已保留。主结构仍可阅读。',
+    pauseDefault: '已保留当前可读内容。若主结论已够用，可直接阅读；需要时再点「继续完善」。',
+
+    actionReadMain: '回到报告正文',
+    actionInProgress: '完善进行中',
+    actionReanalyze: '核对出生信息后重新测算',
+    actionNone: '无需操作',
+    actionUpgrade: '继续完善这份报告',
+
+    editionExpert: '完整版',
+    editionEnhanced: '深度版',
+    editionStandard: '标准版',
+    editionBasic: '基础版',
+
+    verdictPass: '通过',
+    verdictWarn: '观察',
+    verdictFail: '未通过',
+    verdictNone: '未检查',
+
+    detailOverall: '综合评分',
+    detailEngine: '命盘底座',
+    detailLlm: '正文完整度',
+    detailAgentic: '多维补充',
+    detailAgenticFallback: '未完成（规则回退）',
+    detailConsistency: '内部对齐检查',
+    detailCoverage: '内容覆盖',
+  } as const;
+}
+
 export function buildUserFacingReportStatus(input: {
   llmUsed?: boolean;
   agenticUsed?: boolean;
@@ -101,7 +287,12 @@ export function buildUserFacingReportStatus(input: {
   generatedFrom?: string;
   orchestration?: OrchestrationLike | null;
   canManage?: boolean;
+  /** UI locale; `en*` → English labels, else Chinese */
+  locale?: string | null;
 }): UserFacingReportStatus {
+  const lang = statusLang(input.locale);
+  const c = statusCopy(lang);
+
   const audit = input.qualityAudit || {};
   const dimensions = Array.isArray(audit.dimensions) ? audit.dimensions : [];
   const dim = (key: string) => dimensions.find((d) => d.key === key);
@@ -137,10 +328,10 @@ export function buildUserFacingReportStatus(input: {
     targetAchieved: !!audit.targetAchieved,
   });
 
-  const editionLabel = mapEditionLabel(audit.deliveryTier, readiness, llmUsed);
+  const editionLabel = mapEditionLabel(c, audit.deliveryTier, readiness, llmUsed);
   const confidenceScore = overallScore;
 
-  const { title, summary, badge } = buildHeadline({
+  const { title, summary, badge } = buildHeadline(c, {
     readiness,
     llmUsed,
     multiAgentEmpty,
@@ -150,7 +341,7 @@ export function buildUserFacingReportStatus(input: {
     editionLabel,
   });
 
-  const trustPoints = buildTrustPoints({
+  const trustPoints = buildTrustPoints(c, {
     engineScore,
     llmScore,
     completenessScore,
@@ -159,7 +350,7 @@ export function buildUserFacingReportStatus(input: {
     verdict,
   });
 
-  const cautionPoints = buildCautionPoints({
+  const cautionPoints = buildCautionPoints(c, {
     readiness,
     verdict,
     consistencyScore,
@@ -168,8 +359,8 @@ export function buildUserFacingReportStatus(input: {
     concerns: audit.concerns,
   });
 
-  const progress = buildProgress(input.upgradeJob);
-  const primaryAction = buildPrimaryAction({
+  const progress = buildProgress(c, input.upgradeJob);
+  const primaryAction = buildPrimaryAction(c, {
     readiness,
     canManage: !!input.canManage,
     multiAgentEmpty,
@@ -179,24 +370,24 @@ export function buildUserFacingReportStatus(input: {
 
   const details: Array<{ label: string; value: string }> = [];
   if (confidenceScore != null) {
-    details.push({ label: '综合评分', value: `${confidenceScore}` });
+    details.push({ label: c.detailOverall, value: `${confidenceScore}` });
   }
-  if (engineScore != null) details.push({ label: '命盘底座', value: `${engineScore}` });
-  if (llmScore != null) details.push({ label: '正文完整度', value: `${llmScore}` });
+  if (engineScore != null) details.push({ label: c.detailEngine, value: `${engineScore}` });
+  if (llmScore != null) details.push({ label: c.detailLlm, value: `${llmScore}` });
   if (agenticScore != null) {
     details.push({
-      label: '多维补充',
-      value: multiAgentEmpty ? '未完成（规则回退）' : `${agenticScore}`,
+      label: c.detailAgentic,
+      value: multiAgentEmpty ? c.detailAgenticFallback : `${agenticScore}`,
     });
   }
   if (consistencyScore != null) {
     details.push({
-      label: '内部对齐检查',
-      value: `${formatVerdictShort(verdict)} · ${consistencyScore}`,
+      label: c.detailConsistency,
+      value: `${formatVerdictShort(c, verdict)} · ${consistencyScore}`,
     });
   }
   if (completenessScore != null) {
-    details.push({ label: '内容覆盖', value: `${completenessScore}` });
+    details.push({ label: c.detailCoverage, value: `${completenessScore}` });
   }
 
   return {
@@ -261,150 +452,157 @@ function deriveReadiness(params: {
   return 'usable';
 }
 
-function buildHeadline(params: {
-  readiness: UserReportReadiness;
-  llmUsed: boolean;
-  multiAgentEmpty: boolean;
-  verdict?: VerifyVerdict;
-  consistencyScore: number | null;
-  generatedFrom?: string;
-  editionLabel: string;
-}): Pick<UserFacingReportStatus, 'title' | 'summary' | 'badge'> {
+function buildHeadline(
+  c: StatusCopy,
+  params: {
+    readiness: UserReportReadiness;
+    llmUsed: boolean;
+    multiAgentEmpty: boolean;
+    verdict?: VerifyVerdict;
+    consistencyScore: number | null;
+    generatedFrom?: string;
+    editionLabel: string;
+  }
+): Pick<UserFacingReportStatus, 'title' | 'summary' | 'badge'> {
   if (params.readiness === 'ready') {
     return {
-      badge: '可直接用',
-      title: '这份报告可以直接作为当前阶段的阅读参考',
-      summary:
-        '命盘结构、正文与内部检查整体对齐。你可以把主结论和时间地图当作决策基线，再按需记录真实事件做校准。',
+      badge: c.badgeReady,
+      title: c.titleReady,
+      summary: c.summaryReady,
     };
   }
 
   if (params.readiness === 'draft') {
     return {
-      badge: '参考草稿',
-      title: '当前版本更适合当作参考草稿',
-      summary:
-        '基础命盘可能已生成，但关键深化或检查未完成。请先看结构大方向，不要把短期窗口或细项建议当成最终结论。',
+      badge: c.badgeDraft,
+      title: c.titleDraft,
+      summary: c.summaryDraft,
     };
   }
 
   // usable
   if (params.multiAgentEmpty && params.verdict === 'FAIL') {
     return {
-      badge: '结构可用',
-      title: '主结构可读，多维深化与对齐检查尚未完成',
-      summary:
-        '四柱/大运/正文已经成型，可以先读核心结论。多维专家补充目前是回退结果，短期时机与行业/地理对齐未通过内部检查——这些部分请保守参考，不必因此否定整份命盘。',
+      badge: c.badgeStructureUsable,
+      title: c.titleStructureUsable,
+      summary: c.summaryStructureUsable,
     };
   }
 
   if (params.verdict === 'FAIL') {
     return {
-      badge: '需复核',
-      title: '报告可用，但内部对齐检查未通过',
-      summary:
-        '正文与底座内容仍可阅读。系统检测到部分判断之间未对齐，短期窗口与策略建议请当作观察项，优先相信稳定结构结论。',
+      badge: c.badgeNeedsReview,
+      title: c.titleNeedsReview,
+      summary: c.summaryNeedsReview,
     };
   }
 
   if (params.verdict === 'WARN') {
     return {
-      badge: '建议复核',
-      title: '整体可用，部分窗口建议需结合现实复核',
-      summary:
-        '主判断稳定，但有观察级的一致性提示。阅读时把「长期结构」和「短期时机」分开看会更稳妥。',
+      badge: c.badgeReviewSuggested,
+      title: c.titleReviewSuggested,
+      summary: c.summaryReviewSuggested,
     };
   }
 
   return {
-    badge: '可用',
-    title: '这份报告可以正常阅读使用',
+    badge: c.badgeUsable,
+    title: c.titleUsable,
     summary: params.llmUsed
-      ? `当前为${params.editionLabel}，主结论与建议已可阅读。若你需要更细的多维补充，可在方便时继续完善。`
-      : `当前为${params.editionLabel}。主结构已给出；正文深度仍可继续完善。`,
+      ? c.summaryUsableLlm(params.editionLabel)
+      : c.summaryUsableBase(params.editionLabel),
   };
 }
 
-function buildTrustPoints(params: {
-  engineScore: number | null;
-  llmScore: number | null;
-  completenessScore: number | null;
-  llmUsed: boolean;
-  agenticUsed: boolean;
-  verdict?: VerifyVerdict;
-}): string[] {
+function buildTrustPoints(
+  c: StatusCopy,
+  params: {
+    engineScore: number | null;
+    llmScore: number | null;
+    completenessScore: number | null;
+    llmUsed: boolean;
+    agenticUsed: boolean;
+    verdict?: VerifyVerdict;
+  }
+): string[] {
   const points: string[] = [];
   if (params.engineScore != null && params.engineScore >= 85) {
-    points.push('命盘底座完整（四柱、五行、运势结构）');
+    points.push(c.trustEngine);
   }
   if (params.llmUsed && (params.llmScore == null || params.llmScore >= 80)) {
-    points.push('正文已完成增强，解释可读');
+    points.push(c.trustLlm);
   }
   if (params.completenessScore != null && params.completenessScore >= 85) {
-    points.push('建议、窗口与趋势覆盖较全');
+    points.push(c.trustCoverage);
   }
   if (params.agenticUsed && params.verdict === 'PASS') {
-    points.push('多维补充与内部检查已对齐');
+    points.push(c.trustAgentic);
   }
   if (params.verdict === 'PASS' && points.length < 3) {
-    points.push('内部一致性检查通过');
+    points.push(c.trustConsistency);
   }
   return unique(points).slice(0, 3);
 }
 
-function buildCautionPoints(params: {
-  readiness: UserReportReadiness;
-  verdict?: VerifyVerdict;
-  consistencyScore: number | null;
-  multiAgentEmpty: boolean;
-  agenticScore: number | null;
-  concerns?: string[];
-}): string[] {
+function buildCautionPoints(
+  c: StatusCopy,
+  params: {
+    readiness: UserReportReadiness;
+    verdict?: VerifyVerdict;
+    consistencyScore: number | null;
+    multiAgentEmpty: boolean;
+    agenticScore: number | null;
+    concerns?: string[];
+  }
+): string[] {
   const points: string[] = [];
 
   if (params.multiAgentEmpty) {
-    points.push('多维专家补充未真正完成，相关细项可能偏模板化');
+    points.push(c.cautionMultiAgent);
   }
 
   if (params.verdict === 'FAIL') {
-    points.push('短期时机、行业与地理等对齐检查未通过，勿当作硬结论');
+    points.push(c.cautionFail);
   } else if (params.verdict === 'WARN') {
-    points.push('一致性处于观察级，窗口建议宜小步验证');
+    points.push(c.cautionWarn);
   }
 
   // 从工程 concerns 里挑用户能懂、且未重复的
   for (const raw of params.concerns || []) {
     if (points.length >= 2) break;
-    const rewritten = rewriteConcern(raw);
+    const rewritten = rewriteConcern(c, raw);
     if (!rewritten) continue;
     if (points.some((p) => similar(p, rewritten))) continue;
     // 跳过会吓人又不准的「必须重测出生」类（除非结构也崩了）
-    if (params.readiness !== 'draft' && /出生|重新测算|重算/.test(rewritten)) continue;
+    if (params.readiness !== 'draft' && /出生|重新测算|重算|birth|reanalyze/i.test(rewritten)) continue;
     points.push(rewritten);
   }
 
   return unique(points).slice(0, 2);
 }
 
-function rewriteConcern(raw: string): string | null {
+function rewriteConcern(c: StatusCopy, raw: string): string | null {
   const text = sanitizeInternalJargon(raw).trim();
   if (!text) return null;
-  if (/证据链不完整/.test(text)) {
-    return '部分测算环节的依据或行动项仍偏薄';
+  if (/证据链不完整|evidence\s*chain/i.test(text)) {
+    return c.cautionEvidenceThin;
   }
-  if (/未形成有效的多维|多维补充判断/.test(text)) {
+  if (/未形成有效的多维|多维补充判断|multi[- ]?dimension|multi[- ]?expert/i.test(text)) {
     return null; // 已由 multiAgentEmpty 覆盖
   }
-  if (/一致性校验未通过/.test(text)) {
+  if (/一致性校验未通过|consistency\s*(check|verification)?\s*(failed|did not pass)/i.test(text)) {
     return null; // 已由 verdict FAIL 覆盖
   }
-  if (/模板化|提示词残留/.test(text)) {
-    return '正文仍有模板化痕迹，阅读时以结构结论为准';
+  if (/模板化|提示词残留|template[- ]?like|prompt\s*residue/i.test(text)) {
+    return c.cautionTemplate;
   }
   return text.length > 48 ? `${text.slice(0, 46)}…` : text;
 }
 
-function buildProgress(job?: UpgradeJobLike | null): UserFacingReportStatus['progress'] {
+function buildProgress(
+  c: StatusCopy,
+  job?: UpgradeJobLike | null
+): UserFacingReportStatus['progress'] {
   if (!job?.status) {
     return { state: 'none', label: '' };
   }
@@ -413,93 +611,97 @@ function buildProgress(job?: UpgradeJobLike | null): UserFacingReportStatus['pro
     case 'running':
       return {
         state: 'running',
-        label: '系统正在完善这份报告',
-        detail: '你可以先阅读当前版本，完成后会自动更新。',
+        label: c.progressRunning,
+        detail: c.progressRunningDetail,
       };
     case 'pending':
     case 'retry':
       return {
         state: 'queued',
-        label: '已排队等待完善',
-        detail: '轮到时会自动继续，无需反复提交。',
+        label: c.progressQueued,
+        detail: c.progressQueuedDetail,
       };
     case 'completed':
       return {
         state: 'done',
-        label: '自动完善已结束',
-        detail: '当前为完善流程结束后的版本。',
+        label: c.progressDone,
+        detail: c.progressDoneDetail,
       };
     case 'failed':
     case 'cancelled':
       return {
         state: 'paused',
-        label: '自动完善已暂停',
-        detail: formatUpgradePauseReason(job.lastError),
+        label: c.progressPaused,
+        detail: formatUpgradePauseReason(c, job.lastError),
       };
     default:
       return { state: 'none', label: '' };
   }
 }
 
-function formatUpgradePauseReason(lastError?: string): string {
+function formatUpgradePauseReason(c: StatusCopy, lastError?: string): string {
   if (lastError === 'LLM_UNAVAILABLE' || lastError === 'PROVIDER_UNHEALTHY') {
-    return '增强服务暂时不可用，已保留当前可读内容。可稍后再试「继续完善」。';
+    return c.pauseLlmUnavailable;
   }
   if (lastError === 'TARGET_NOT_REACHED') {
-    return '已多次尝试深化，仍未达到更高交付标准；当前可读版本已保留。主结构仍可阅读。';
+    return c.pauseTargetNotReached;
   }
-  return '已保留当前可读内容。若主结论已够用，可直接阅读；需要时再点「继续完善」。';
+  return c.pauseDefault;
 }
 
-function buildPrimaryAction(params: {
-  readiness: UserReportReadiness;
-  canManage: boolean;
-  multiAgentEmpty: boolean;
-  verdict?: VerifyVerdict;
-  upgradeStatus?: UpgradeJobLike['status'];
-}): UserFacingReportStatus['primaryAction'] {
+function buildPrimaryAction(
+  c: StatusCopy,
+  params: {
+    readiness: UserReportReadiness;
+    canManage: boolean;
+    multiAgentEmpty: boolean;
+    verdict?: VerifyVerdict;
+    upgradeStatus?: UpgradeJobLike['status'];
+  }
+): UserFacingReportStatus['primaryAction'] {
   if (!params.canManage) {
-    return { kind: 'read_main', label: '回到报告正文' };
+    return { kind: 'read_main', label: c.actionReadMain };
   }
 
   if (params.upgradeStatus === 'running' || params.upgradeStatus === 'pending' || params.upgradeStatus === 'retry') {
-    return { kind: 'none', label: '完善进行中' };
+    return { kind: 'none', label: c.actionInProgress };
   }
 
   // 结构都站不住时才引导重测
   if (params.readiness === 'draft' && params.verdict === 'FAIL' && !params.multiAgentEmpty) {
-    return { kind: 'reanalyze', label: '核对出生信息后重新测算' };
+    return { kind: 'reanalyze', label: c.actionReanalyze };
   }
 
   if (params.readiness === 'ready') {
-    return { kind: 'none', label: '无需操作' };
+    return { kind: 'none', label: c.actionNone };
   }
 
   // 最常见：可用但未深化完 → 继续完善（而不是吓人「重算」）
   if (params.multiAgentEmpty || params.verdict === 'FAIL' || params.verdict === 'WARN') {
-    return { kind: 'upgrade_now', label: '继续完善这份报告' };
+    return { kind: 'upgrade_now', label: c.actionUpgrade };
   }
 
-  return { kind: 'upgrade_now', label: '继续完善这份报告' };
+  return { kind: 'upgrade_now', label: c.actionUpgrade };
 }
 
 function mapEditionLabel(
+  c: StatusCopy,
   tier?: 'basic' | 'enhanced' | 'expert',
   readiness?: UserReportReadiness,
   llmUsed?: boolean
 ): string {
-  if (tier === 'expert') return '完整版';
-  if (tier === 'enhanced') return '深度版';
+  if (tier === 'expert') return c.editionExpert;
+  if (tier === 'enhanced') return c.editionEnhanced;
   // basic 不要再说「简单报告」——用户会以为内容很少
-  if (llmUsed || readiness === 'usable' || readiness === 'ready') return '标准版';
-  return '基础版';
+  if (llmUsed || readiness === 'usable' || readiness === 'ready') return c.editionStandard;
+  return c.editionBasic;
 }
 
-function formatVerdictShort(verdict?: VerifyVerdict): string {
-  if (verdict === 'PASS') return '通过';
-  if (verdict === 'WARN') return '观察';
-  if (verdict === 'FAIL') return '未通过';
-  return '未检查';
+function formatVerdictShort(c: StatusCopy, verdict?: VerifyVerdict): string {
+  if (verdict === 'PASS') return c.verdictPass;
+  if (verdict === 'WARN') return c.verdictWarn;
+  if (verdict === 'FAIL') return c.verdictFail;
+  return c.verdictNone;
 }
 
 function isAgentFallback(orchestration?: OrchestrationLike | null): boolean {

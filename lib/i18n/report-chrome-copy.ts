@@ -1046,6 +1046,65 @@ export function reportResultPageCopy(locale: SiteLocale) {
   };
 }
 
+/** Right-rail report meta sidebar chrome (result / r / tool-result) */
+export function reportMetaSidebarCopy(locale: SiteLocale) {
+  return {
+    title: pick(locale, {
+      'zh-CN': '报告信息',
+      'zh-Hant': '報告資訊',
+      en: 'Report info',
+    }),
+    ariaLabel: pick(locale, {
+      'zh-CN': '报告元数据',
+      'zh-Hant': '報告元數據',
+      en: 'Report metadata',
+    }),
+    generatedAt: pick(locale, {
+      'zh-CN': '生成时间',
+      'zh-Hant': '生成時間',
+      en: 'Generated',
+    }),
+    quality: pick(locale, {
+      'zh-CN': '质量',
+      'zh-Hant': '質量',
+      en: 'Quality',
+    }),
+    version: pick(locale, {
+      'zh-CN': '版本',
+      en: 'Version',
+    }),
+    reasoningMode: pick(locale, {
+      'zh-CN': '判断模式',
+      'zh-Hant': '判斷模式',
+      en: 'Reasoning mode',
+    }),
+    modelChain: pick(locale, {
+      'zh-CN': '模型链路',
+      'zh-Hant': '模型鏈路',
+      en: 'Model chain',
+    }),
+    visibility: pick(locale, {
+      'zh-CN': '可见性',
+      'zh-Hant': '可見性',
+      en: 'Visibility',
+    }),
+    public: pick(locale, {
+      'zh-CN': '公开',
+      'zh-Hant': '公開',
+      en: 'Public',
+    }),
+    private: pick(locale, {
+      'zh-CN': '私有',
+      en: 'Private',
+    }),
+    timingMapLink: pick(locale, {
+      'zh-CN': '查看时间地图视图 →',
+      'zh-Hant': '查看時間地圖視圖 →',
+      en: 'View timing map →',
+    }),
+  };
+}
+
 /**
  * User-facing upgrade job status label for classic result chrome.
  * status values: running | pending | retry | completed | failed | other → ''
@@ -1102,3 +1161,4 @@ export type ReportChapterDockCopy = ReturnType<typeof reportChapterDockCopy>;
 export type ReportReadingPathCopy = ReturnType<typeof reportReadingPathCopy>;
 export type ReportNextActionsCopy = ReturnType<typeof reportNextActionsCopy>;
 export type ReportResultPageCopy = ReturnType<typeof reportResultPageCopy>;
+export type ReportMetaSidebarCopy = ReturnType<typeof reportMetaSidebarCopy>;
