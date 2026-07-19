@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import {
-  sendTimingDailyReminderEmail,
   sendTimingMajorEventEmail,
   sendTimingMonthlyDigestEmail,
   sendTimingSolarTermEmail,
 } from '@/lib/email';
+// Daily sender lives outside protected lib/email.ts (was missing → cron TypeError)
+import { sendTimingDailyReminderEmail } from '@/lib/email/timing-daily-reminder';
 import {
   parseEmailSubscriptionMeta,
   type EmailFocusItem,

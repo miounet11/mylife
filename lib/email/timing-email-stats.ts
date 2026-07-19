@@ -136,6 +136,14 @@ export function stripEmailsFromMessage(message: string): string {
  * Classify a delivery error message into a stable taxonomy code + label.
  * Pure; safe for unit tests.
  */
+/** Prod sample: "(0 , v.sendTimingDailyReminderEmail) is not a function" */
+const MISSING_SENDER_FN_RE =
+  /is not a function|undefined is not a function|email_sender_missing/i;
+
+/** Other TypeError-style failures (after missing_sender_fn). */
+const TYPE_ERROR_RE =
+  /typeerror|type error|cannot read propert|cannot set propert|is not defined/i;
+
 export function classifyEmailError(message: string): EmailErrorClass {
   const raw = String(message || '').trim();
   const lower = raw.toLowerCase();
@@ -144,14 +152,25 @@ export function classifyEmailError(message: string): EmailErrorClass {
     return { code: 'unknown', label: '其他/未知' };
   }
 
+  // Bundled export missing / not callable (before config — "is not a function")
+  if (MISSING_SENDER_FN_RE.test(raw) || lower.includes('missing_sender_fn')) {
+    return { code: 'missing_sender_fn', label: '发送函数缺失' };
+  }
+
   // Config / missing sender (local stub & cron short-circuit)
+  // Keep mail_not_configured for config codes; plain "sender_missing" stays here
+  // (email_sender_missing already handled above as missing_sender_fn).
   if (
     lower.includes('mail_not_configured') ||
-    lower.includes('email_sender_missing') ||
     lower.includes('email_not_configured') ||
     lower.includes('sender_missing')
   ) {
     return { code: 'mail_not_configured', label: '邮件未配置' };
+  }
+
+  // TypeError / runtime type failures (not "is not a function")
+  if (TYPE_ERROR_RE.test(raw) || lower.includes('type_error')) {
+    return { code: 'type_error', label: '类型错误' };
   }
 
   // Auth before generic "invalid" / smtp so "Invalid login" / "SMTP unauthorized" land here

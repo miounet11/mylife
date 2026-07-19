@@ -12,10 +12,28 @@ import {
 } from '@/lib/email/timing-email-stats';
 
 describe('classifyEmailError', () => {
-  it('maps mail_not_configured / email_sender_missing', () => {
+  it('maps mail_not_configured / sender_missing (config)', () => {
     assert.equal(classifyEmailError('mail_not_configured').code, 'mail_not_configured');
-    assert.equal(classifyEmailError('email_sender_missing').code, 'mail_not_configured');
+    assert.equal(classifyEmailError('sender_missing').code, 'mail_not_configured');
     assert.equal(classifyEmailError('reason: email_not_configured').label, '邮件未配置');
+  });
+
+  it('maps missing_sender_fn for is-not-a-function and email_sender_missing', () => {
+    const prodSample = '(0 , v.sendTimingDailyReminderEmail) is not a function';
+    assert.equal(classifyEmailError(prodSample).code, 'missing_sender_fn');
+    assert.equal(classifyEmailError(prodSample).label, '发送函数缺失');
+    assert.equal(classifyEmailError('undefined is not a function').code, 'missing_sender_fn');
+    assert.equal(classifyEmailError('email_sender_missing').code, 'missing_sender_fn');
+    assert.equal(classifyEmailError('foo is not a function').code, 'missing_sender_fn');
+  });
+
+  it('maps type_error for TypeError patterns (not is-not-a-function)', () => {
+    assert.equal(
+      classifyEmailError("TypeError: Cannot read properties of undefined (reading 'x')").code,
+      'type_error',
+    );
+    assert.equal(classifyEmailError('TypeError: cannot set property of null').code, 'type_error');
+    assert.equal(classifyEmailError('type_error').label, '类型错误');
   });
 
   it('maps smtp / connection / timeout / ECONNREFUSED', () => {
@@ -94,7 +112,15 @@ describe('aggregateErrorReasons', () => {
         category: 'daily_window',
         status: 'error',
         campaign: 'c1',
-        meta: { error: 'email_sender_missing' },
+        meta: { error: 'mail_not_configured' },
+      },
+      {
+        category: 'timing',
+        status: 'error',
+        campaign: 'c0',
+        meta: {
+          error: '(0 , v.sendTimingDailyReminderEmail) is not a function',
+        },
       },
       {
         category: 'prediction_due',
@@ -112,14 +138,16 @@ describe('aggregateErrorReasons', () => {
       },
     ]);
 
-    assert.equal(reasons.length, 2);
+    assert.equal(reasons.length, 3);
     assert.equal(reasons[0]!.code, 'mail_not_configured');
     assert.equal(reasons[0]!.count, 2);
-    assert.equal(reasons[1]!.code, 'invalid_address');
-    assert.equal(reasons[1]!.count, 1);
-    assert.ok(reasons[1]!.sample);
-    assert.equal(reasons[1]!.sample!.includes('alice@secret.com'), false);
-    assert.ok(reasons[1]!.sample!.includes('[email]'));
+    const byCode = Object.fromEntries(reasons.map((r) => [r.code, r]));
+    assert.equal(byCode.missing_sender_fn?.count, 1);
+    assert.equal(byCode.missing_sender_fn?.label, '发送函数缺失');
+    assert.equal(byCode.invalid_address?.count, 1);
+    assert.ok(byCode.invalid_address?.sample);
+    assert.equal(byCode.invalid_address!.sample!.includes('alice@secret.com'), false);
+    assert.ok(byCode.invalid_address!.sample!.includes('[email]'));
   });
 
   it('returns empty for no errors', () => {

@@ -23,9 +23,41 @@ import {
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import type { ProfileFortuneView, ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { trackProductEvent } from '@/lib/product-analytics';
+import {
+  formatPlaceWithLongitude,
+  getQuickPickCities,
+  resolveCityLongitude,
+  type CityLongitude,
+} from '@/lib/geo/city-longitudes';
+import { calculateTrueSolarTime } from '@/lib/solar-time';
 
 const GAN = '甲乙丙丁戊己庚辛壬癸'.split('');
 const ZHI = '子丑寅卯辰巳午未申酉戌亥'.split('');
+
+/** Dual-side birth form value (engine BirthInput shape on submit). */
+type BirthSideValue = {
+  date: string;
+  time: string;
+  gender: 'male' | 'female';
+  name: string;
+  /** Optional place; may encode lon as "城市 · 104.1°E" for true solar */
+  birthPlace: string;
+};
+
+const EMPTY_BIRTH_A: BirthSideValue = {
+  date: '',
+  time: '12:00',
+  gender: 'male',
+  name: '本人',
+  birthPlace: '',
+};
+const EMPTY_BIRTH_B: BirthSideValue = {
+  date: '',
+  time: '12:00',
+  gender: 'female',
+  name: '对方',
+  birthPlace: '',
+};
 
 const EMPTY_A: HehunPersonInput = {
   name: '本人',
@@ -51,8 +83,8 @@ export default function HehunWorkspace() {
   const [result, setResult] = useState<HehunResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [booted, setBooted] = useState(false);
-  const [birthA, setBirthA] = useState({ date: '', time: '12:00', gender: 'male' as 'male' | 'female', name: '本人' });
-  const [birthB, setBirthB] = useState({ date: '', time: '12:00', gender: 'female' as 'male' | 'female', name: '对方' });
+  const [birthA, setBirthA] = useState<BirthSideValue>(EMPTY_BIRTH_A);
+  const [birthB, setBirthB] = useState<BirthSideValue>(EMPTY_BIRTH_B);
   const [birthBusy, setBirthBusy] = useState(false);
   const [birthNote, setBirthNote] = useState('');
   const [shareNote, setShareNote] = useState('');
@@ -78,6 +110,7 @@ export default function HehunWorkspace() {
           time: birthPair.a.birthTime,
           gender: birthPair.a.gender,
           name: birthPair.a.name,
+          birthPlace: '',
         });
       }
       if (birthPair.b) {
@@ -86,6 +119,7 @@ export default function HehunWorkspace() {
           time: birthPair.b.birthTime,
           gender: birthPair.b.gender,
           name: birthPair.b.name,
+          birthPlace: '',
         });
       }
 
@@ -128,12 +162,14 @@ export default function HehunWorkspace() {
             time: remembered.a.birthTime,
             gender: remembered.a.gender,
             name: remembered.a.name,
+            birthPlace: remembered.a.birthPlace || '',
           });
           setBirthB({
             date: remembered.b.birthDate,
             time: remembered.b.birthTime,
             gender: remembered.b.gender,
             name: remembered.b.name,
+            birthPlace: remembered.b.birthPlace || '',
           });
           setBirthNote('已填入本机记住的双方生日，可直接对盘。');
         }
@@ -227,18 +263,22 @@ export default function HehunWorkspace() {
     setBirthBusy(true);
     setBirthNote('');
     try {
+      const placeA = birthA.birthPlace.trim();
+      const placeB = birthB.birthPlace.trim();
       const { personA, personB } = hehunFromBirthPair(
         {
           birthDate: checkA.dateKey || birthA.date,
           birthTime: birthA.time || '12:00',
           gender: birthA.gender,
           name: birthA.name || '甲方',
+          ...(placeA ? { birthPlace: placeA } : {}),
         },
         {
           birthDate: checkB.dateKey || birthB.date,
           birthTime: birthB.time || '12:00',
           gender: birthB.gender,
           name: birthB.name || '乙方',
+          ...(placeB ? { birthPlace: placeB } : {}),
         },
       );
       setA(personA);
@@ -251,19 +291,26 @@ export default function HehunWorkspace() {
           birthTime: birthA.time || '12:00',
           gender: birthA.gender,
           name: birthA.name || '本人',
+          ...(placeA ? { birthPlace: placeA } : { birthPlace: '' }),
         },
         b: {
           birthDate: birthB.date,
           birthTime: birthB.time || '12:00',
           gender: birthB.gender,
           name: birthB.name || '对方',
+          ...(placeB ? { birthPlace: placeB } : { birthPlace: '' }),
         },
       });
+      const placeHint =
+        placeA || placeB
+          ? ` · 出生地已传入引擎${placeA && placeB ? '（双方）' : placeA ? '（甲方）' : '（乙方）'}估算真太阳时`
+          : '';
       setBirthNote(
         `已用双方出生信息重算引擎：${personA.name} ${personA.dayMaster}${personA.dayBranch}` +
           (personA.currentDayunGanZhi ? ` · 运${personA.currentDayunGanZhi}` : '') +
           ` × ${personB.name} ${personB.dayMaster}${personB.dayBranch}` +
-          (personB.currentDayunGanZhi ? ` · 运${personB.currentDayunGanZhi}` : ''),
+          (personB.currentDayunGanZhi ? ` · 运${personB.currentDayunGanZhi}` : '') +
+          placeHint,
       );
       trackProductEvent('hehun_run', {
         score: r.score,
@@ -350,7 +397,7 @@ export default function HehunWorkspace() {
       <div className="rounded-[12px] border border-[#e2e8f0] bg-white p-4">
         <div className="text-[13px] font-semibold text-[#0f172a]">双方生日对盘（无需完整报告）</div>
         <p className="mt-1 text-[11px] text-[#64748b]">
-          填双方出生信息，引擎即时排出日主、用忌与现行大运后再合婚对照。
+          填双方出生信息，引擎即时排出日主、用忌与现行大运后再合婚对照。出生地可选：可解析经度时按真太阳时排盘。
         </p>
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
           <BirthSideForm title="甲方出生" value={birthA} onChange={setBirthA} />
@@ -554,9 +601,45 @@ function BirthSideForm({
   onChange,
 }: {
   title: string;
-  value: { date: string; time: string; gender: 'male' | 'female'; name: string };
-  onChange: (v: { date: string; time: string; gender: 'male' | 'female'; name: string }) => void;
+  value: BirthSideValue;
+  onChange: (v: BirthSideValue) => void;
 }) {
+  const quickCities = useMemo(() => getQuickPickCities().slice(0, 8), []);
+  const resolvedLon = useMemo(
+    () => resolveCityLongitude(value.birthPlace),
+    [value.birthPlace],
+  );
+  const activeCityId = useMemo(() => {
+    if (!value.birthPlace) return null;
+    const hit = quickCities.find(
+      (c) =>
+        value.birthPlace.includes(c.zh) ||
+        value.birthPlace.toLowerCase().includes(c.en.toLowerCase()),
+    );
+    return hit?.id ?? null;
+  }, [value.birthPlace, quickCities]);
+
+  /** Educational client preview — engine also applies true solar when place resolves. */
+  const trueSolarPreview = useMemo(() => {
+    if (!value.date || !/^\d{4}-\d{2}-\d{2}$/.test(value.date) || !resolvedLon) return null;
+    const [y, m, d] = value.date.split('-').map(Number);
+    const [hh, mm] = (value.time || '12:00').split(':').map((n) => Number(n) || 0);
+    if (!y || !m || !d) return null;
+    try {
+      const st = calculateTrueSolarTime(y, m, d, hh, mm, 0, resolvedLon.longitude, 8);
+      const sign = st.correctionMinutes >= 0 ? '+' : '−';
+      const absMin = Math.abs(Math.round(st.correctionMinutes));
+      const hhmm = `${String(st.hour).padStart(2, '0')}:${String(st.minute).padStart(2, '0')}`;
+      return `真太阳时约 ${sign}${absMin} 分 · ${hhmm}`;
+    } catch {
+      return null;
+    }
+  }, [value.date, value.time, resolvedLon]);
+
+  function pickCity(city: CityLongitude) {
+    onChange({ ...value, birthPlace: formatPlaceWithLongitude(city.zh, city.longitude) });
+  }
+
   return (
     <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-3">
       <div className="birth-form-title">{title}</div>
@@ -602,6 +685,56 @@ function BirthSideForm({
             onChange={(e) => onChange({ ...value, name: e.target.value })}
           />
         </label>
+      </div>
+
+      <div className="mt-2">
+        <label className="birth-form-label">
+          出生地（可选，真太阳时）
+          <input
+            type="text"
+            className="birth-form-control"
+            value={value.birthPlace}
+            onChange={(e) => onChange({ ...value, birthPlace: e.target.value })}
+            placeholder="例如：上海 或 成都 · 104.1°E"
+          />
+        </label>
+        <div className="mt-1.5 flex flex-wrap gap-1.5">
+          {quickCities.map((city) => {
+            const active = activeCityId === city.id;
+            return (
+              <button
+                key={city.id}
+                type="button"
+                onClick={() => pickCity(city)}
+                className={
+                  active
+                    ? 'rounded-full border border-[color:var(--ink-1)] bg-[color:var(--ink-1)] px-2.5 py-0.5 text-[11px] text-white'
+                    : 'rounded-full border border-[color:var(--hairline)] px-2.5 py-0.5 text-[11px] text-[color:var(--ink-3)] transition hover:border-[color:var(--ink-1)] hover:text-[color:var(--ink-1)]'
+                }
+              >
+                {city.zh}
+              </button>
+            );
+          })}
+        </div>
+        {trueSolarPreview ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <span className="rounded-full border border-[color:var(--hairline-strong)] bg-[color:var(--bg-sunken)]/60 px-2.5 py-0.5 text-[11px] text-[color:var(--ink-2)]">
+              {trueSolarPreview}
+            </span>
+            <span className="text-[11px] text-[color:var(--ink-5)]">
+              预览 · 对盘时引擎按经度估算真太阳时
+            </span>
+          </div>
+        ) : value.birthPlace.trim() && !resolvedLon ? (
+          <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
+            未识别经度：可点城市芯片，或手填「城市 · 104.1°E」
+          </p>
+        ) : (
+          <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
+            选城市可写入经度；未填时引擎默认按北京经度估算
+          </p>
+        )}
       </div>
     </div>
   );

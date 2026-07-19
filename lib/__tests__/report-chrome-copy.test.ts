@@ -114,7 +114,17 @@ describe('report-chrome-copy', () => {
     assertNonEmptyEn(p.actionSubtitle, 'result.actionSubtitle');
     assertNonEmptyEn(p.dockAskConsultant, 'result.dockAskConsultant');
     assertNonEmptyEn(p.chapterDockTitle, 'result.chapterDockTitle');
+    assertNonEmptyEn(p.sampleTitle, 'result.sampleTitle');
+    assertNonEmptyEn(p.sampleSubtitle, 'result.sampleSubtitle');
+    assertNonEmptyEn(p.evidenceTitle, 'result.evidenceTitle');
+    assertNonEmptyEn(p.evidenceDescription, 'result.evidenceDescription');
+    assertNonEmptyEn(p.servicesTitle, 'result.servicesTitle');
+    assertNonEmptyEn(p.servicesSubtitle, 'result.servicesSubtitle');
+    assertNonEmptyEn(p.membershipTitle, 'result.membershipTitle');
+    assertNonEmptyEn(p.premiumServicesTitle, 'result.premiumServicesTitle');
     assert.equal(p.timingTitle, '② Timing map');
     assert.equal(p.jumpTimingMap, 'Next → Timing map');
+    assert.equal(p.sampleTitle, '⑤ Sample backfill');
+    assert.equal(p.evidenceTitle, '⑥ Evidence appendix');
   });
 });

@@ -891,6 +891,52 @@ export function reportResultPageCopy(locale: SiteLocale) {
       'zh-Hant': '或 → 回訪與專項服務',
       en: 'Or → Follow-up & specialty services',
     }),
+
+    /** ⑤ sample backfill */
+    sampleTitle: pick(locale, {
+      'zh-CN': '⑤ 样本回填',
+      'zh-Hant': '⑤ 樣本回填',
+      en: '⑤ Sample backfill',
+    }),
+    sampleSubtitle: pick(locale, {
+      'zh-CN': '对应「病史核对 / 基线样本」：把报告判断与真实经历对齐，供后续纠偏。',
+      'zh-Hant': '對應「病史核對 / 基線樣本」：把報告判斷與真實經歷對齊，供後續糾偏。',
+      en: 'Like “history check / baseline samples”: align report judgments with real experience for later correction.',
+    }),
+
+    /** ⑥ evidence appendix */
+    evidenceTitle: pick(locale, {
+      'zh-CN': '⑥ 证据附录',
+      'zh-Hant': '⑥ 證據附錄',
+      en: '⑥ Evidence appendix',
+    }),
+    evidenceDescription: pick(locale, {
+      'zh-CN': '四柱、五行、大运、窗口与可信度——技术细节放在结论之后，默认按需展开。',
+      'zh-Hant': '四柱、五行、大運、窗口與可信度——技術細節放在結論之後，預設按需展開。',
+      en: 'Four pillars, five elements, dayun, windows, and confidence — technical detail after the verdict; expand on demand.',
+    }),
+
+    /** Follow-up & services block */
+    servicesTitle: pick(locale, {
+      'zh-CN': '回访与服务',
+      'zh-Hant': '回訪與服務',
+      en: 'Follow-up & services',
+    }),
+    servicesSubtitle: pick(locale, {
+      'zh-CN': '读完主判断后再处理：会员权限、深度专项、订阅提醒与延伸工具。',
+      'zh-Hant': '讀完主判斷後再處理：會員權限、深度專項、訂閱提醒與延伸工具。',
+      en: 'After the main verdict: membership access, specialty depth, subscription alerts, and related tools.',
+    }),
+    membershipTitle: pick(locale, {
+      'zh-CN': '会员与权限',
+      'zh-Hant': '會員與權限',
+      en: 'Membership & access',
+    }),
+    premiumServicesTitle: pick(locale, {
+      'zh-CN': '深度专项服务',
+      'zh-Hant': '深度專項服務',
+      en: 'Specialty depth services',
+    }),
   };
 }
 

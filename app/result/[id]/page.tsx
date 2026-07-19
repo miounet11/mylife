@@ -1120,10 +1120,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {(result.actionSuggestions?.length || result.analysis?.pastEventTemplates?.length) ? (
                 <section id="event-samples" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
-                    ⑤ 样本回填
+                    {pageCopy.sampleTitle}
                   </div>
                   <p className="mt-1 max-w-2xl text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-                    对应「病史核对 / 基线样本」：把报告判断与真实经历对齐，供后续纠偏。
+                    {pageCopy.sampleSubtitle}
                   </p>
                   <div className="mt-4">
                     <ReportEventCapture
@@ -1163,8 +1163,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {/* ⑥ 证据附录 */}
               <ResultDeferredSection
                 id="validation"
-                title="⑥ 证据附录"
-                description="四柱、五行、大运、窗口与可信度——技术细节放在结论之后，默认按需展开。"
+                title={pageCopy.evidenceTitle}
+                description={pageCopy.evidenceDescription}
                 delayMs={0}
               >
                 <Suspense fallback={<ReportSkeleton />}>
@@ -1183,21 +1183,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {/* 回访与服务：正常页与专业版均可 */}
               <div id="services" className="scroll-mt-header space-y-4">
                 <div className="fb-card border-t-2 border-t-[#3b5998] px-4 py-3 md:px-5">
-                  <div className="text-[15px] font-bold text-[color:var(--ink-1)]">回访与服务</div>
+                  <div className="text-[15px] font-bold text-[color:var(--ink-1)]">{pageCopy.servicesTitle}</div>
                   <p className="mt-0.5 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
-                    读完主判断后再处理：会员权限、深度专项、订阅提醒与延伸工具。
+                    {pageCopy.servicesSubtitle}
                   </p>
                 </div>
 
                 <div className="fb-card p-4 md:p-5">
-                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">会员与权限</div>
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{pageCopy.membershipTitle}</div>
                   <div className="mt-3">
                     <ReportMembershipPanel reportId={id} source="result_full_report" />
                   </div>
                 </div>
 
                 <div id="premium" className="fb-card scroll-mt-header p-4 md:p-5">
-                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">深度专项服务</div>
+                  <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{pageCopy.premiumServicesTitle}</div>
                   <div className="mt-3">
                     <ReportPremiumServices
                       reportId={id}
