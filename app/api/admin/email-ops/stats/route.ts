@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
     tablePresent: snapshot.tablePresent,
     note: snapshot.note,
     dailyWindowLastRun: snapshot.dailyWindowLastRun,
+    timingEmailLastRun: snapshot.timingEmailLastRun,
     timestamp: snapshot.timestamp,
   });
 }
