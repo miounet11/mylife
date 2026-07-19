@@ -1,13 +1,17 @@
 export const fetchCache = 'force-no-store';
 export const revalidate = 0;
 
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { LearningTrackStepList } from '@/components/learning-track-map';
 import { AppPage } from '@/components/layout/app-page';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { learnTrackPageCopy, presentTrack } from '@/lib/i18n/learn-copy';
 import { getLearningTracksOverview } from '@/lib/learning-track-stats';
 import { getLearningTrack, type LearningTrackKey } from '@/lib/learning-tracks';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
 const TRACK_KEYS = new Set<LearningTrackKey>([
   'intro',
@@ -21,32 +25,43 @@ const TRACK_KEYS = new Set<LearningTrackKey>([
   'classics',
 ]);
 
-export async function generateMetadata({
-  params,
-}: {
+interface LearnTrackPageProps {
   params: Promise<{ track: string }>;
-}) {
-  const { track: trackParam } = await params;
-  if (!TRACK_KEYS.has(trackParam as LearningTrackKey)) {
-    return { title: '专题未找到 | 人生K线' };
-  }
-  const track = getLearningTrack(trackParam as LearningTrackKey);
-  return {
-    title: `${track.title} | 人生K线`,
-    description: track.description,
-    alternates: { canonical: `/learn/${track.key}` },
-  };
+  searchParams?: Promise<{ lang?: string }>;
 }
 
-export default async function LearnTrackPage({
+export async function generateMetadata({
   params,
-}: {
-  params: Promise<{ track: string }>;
-}) {
+  searchParams,
+}: LearnTrackPageProps): Promise<Metadata> {
+  const { track: trackParam } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = learnTrackPageCopy(locale);
+
+  if (!TRACK_KEYS.has(trackParam as LearningTrackKey)) {
+    return { title: copy.notFoundTitle };
+  }
+
+  const track = getLearningTrack(trackParam as LearningTrackKey);
+  const presented = presentTrack(track, locale);
+  return buildPageMetadata({
+    title: `${presented.title} | ${copy.metaTitleSuffix}`,
+    description: presented.description,
+    path: withLocalePrefix(`/learn/${track.key}`, locale),
+    locale,
+  });
+}
+
+export default async function LearnTrackPage({ params, searchParams }: LearnTrackPageProps) {
   const { track: trackParam } = await params;
   if (!TRACK_KEYS.has(trackParam as LearningTrackKey)) {
     notFound();
   }
+
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = learnTrackPageCopy(uiLocale);
 
   const overview = getLearningTracksOverview();
   const track =
@@ -64,8 +79,10 @@ export default async function LearnTrackPage({
       },
     };
 
+  const presented = presentTrack(track, uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始判断', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       <AnalyticsPageView
         eventName="learn_track_viewed"
         page={`/learn/${track.key}`}
@@ -75,20 +92,24 @@ export default async function LearnTrackPage({
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <div className="text-[13px]">
           <Link href="/learn" className="text-[color:var(--ink-4)] underline-offset-2 hover:underline">
-            专题
+            {copy.backToTopics}
           </Link>
           <span className="mx-1.5 text-[color:var(--ink-5)]">/</span>
-          <span className="text-[color:var(--ink-2)]">{track.title}</span>
+          <span className="text-[color:var(--ink-2)]">{presented.title}</span>
         </div>
 
         <header className="border-b border-[color:var(--hairline)] pb-4">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)]">
-            {track.title}
+            {presented.title}
           </h1>
           <p className="mt-2 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
-            {track.description}
+            {presented.description}
             {track.progress
-              ? ` · ${track.progress.publishedStepCount}/${track.progress.totalStepCount} 步 · 约 ${track.progress.totalReadMinutes} 分钟`
+              ? copy.progressSuffix(
+                  track.progress.publishedStepCount,
+                  track.progress.totalStepCount,
+                  track.progress.totalReadMinutes,
+                )
               : ''}
           </p>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
@@ -97,7 +118,7 @@ export default async function LearnTrackPage({
                 href={track.steps[0].href}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                从第一步开始
+                {copy.startFirstStep}
               </Link>
             ) : null}
             {track.hubHref ? (
@@ -105,26 +126,26 @@ export default async function LearnTrackPage({
                 href={track.hubHref}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                专题入口
+                {copy.trackHub}
               </Link>
             ) : null}
             <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-              生成报告
+              {copy.generateReport}
             </Link>
           </div>
         </header>
 
-        <LearningTrackStepList track={track} />
+        <LearningTrackStepList track={track} locale={uiLocale} />
 
         <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
           <Link href="/events" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            事件本
+            {copy.linkEvents}
           </Link>
           <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            请老师
+            {copy.linkTeachers}
           </Link>
           <Link href="/chat" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            对话
+            {copy.linkChat}
           </Link>
         </nav>
       </div>

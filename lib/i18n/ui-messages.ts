@@ -11,6 +11,7 @@ const MESSAGES: Record<string, { 'zh-CN': string; 'zh-Hant'?: string; en: string
   navWorkbench: { 'zh-CN': '工作台', en: 'Workbench' },
   navDimensions: { 'zh-CN': '十维度', 'zh-Hant': '十維度', en: '10 Dimensions' },
   navTools: { 'zh-CN': '工具中心', en: 'Tools' },
+  navTeachers: { 'zh-CN': '请老师', 'zh-Hant': '請老師', en: 'Consultants' },
   navKnowledge: { 'zh-CN': '知识库', 'zh-Hant': '知識庫', en: 'Knowledge' },
   navPredictions: { 'zh-CN': '预测回访', 'zh-Hant': '預測回訪', en: 'Predictions' },
   navChat: { 'zh-CN': '结构追问', 'zh-Hant': '結構追問', en: 'Ask AI' },
@@ -23,7 +24,9 @@ const MESSAGES: Record<string, { 'zh-CN': string; 'zh-Hant'?: string; en: string
   navWorldYi: { 'zh-CN': '世界易学说', 'zh-Hant': '世界易學說', en: 'World Yi' },
   navLearn: { 'zh-CN': '学习地图', 'zh-Hant': '學習地圖', en: 'Learn' },
   navMembership: { 'zh-CN': '会员', 'zh-Hant': '會員', en: 'Membership' },
+  navMovement: { 'zh-CN': '运动与传播', 'zh-Hant': '運動與傳播', en: 'Movement' },
   navSearch: { 'zh-CN': '站内搜索', 'zh-Hant': '站內搜尋', en: 'Search' },
+  birthQuick: { 'zh-CN': '填生日测', 'zh-Hant': '填生日測', en: 'Try with birth date' },
   searchPlaceholder: {
     'zh-CN': '搜索：八字 / 紫微 / 六爻 / 风水 / 塔罗 …',
     'zh-Hant': '搜尋：八字 / 紫微 / 六爻 / 風水 / 塔羅 …',

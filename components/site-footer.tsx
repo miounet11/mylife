@@ -12,14 +12,14 @@ import {
   OFFICIAL_TELEGRAM_URL,
 } from '@/lib/site-social';
 
-const footerLinks: Array<{ href: string; labelKey?: string; label?: string }> = [
+const footerLinks: Array<{ href: string; labelKey: string }> = [
   { href: '/world-yi', labelKey: 'navWorldYi' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/learn', labelKey: 'navLearn' },
   { href: '/docs', labelKey: 'navDocs' },
   { href: '/membership', labelKey: 'navMembership' },
-  { href: '/movement', label: '运动与传播' },
+  { href: '/movement', labelKey: 'navMovement' },
 ];
 
 export default function SiteFooter() {
@@ -61,7 +61,7 @@ export default function SiteFooter() {
                   href={item.href}
                   className="text-[14px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
                 >
-                  {item.labelKey ? t(item.labelKey) : item.label}
+                  {t(item.labelKey)}
                 </Link>
               ))}
             </nav>

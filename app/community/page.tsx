@@ -4,70 +4,80 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
+import {
+  communityPageCopy,
+  presentCommunityCategories,
+} from '@/lib/i18n/community-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
-import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { toIllustLocale } from '@/lib/page-illustrations/locale';
 import { COMMUNITY_CATEGORIES } from '@/lib/portal-nav';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '社区｜结构追问与术数讨论',
-  description: '八字、紫微、六爻、世界易等术数结构讨论区，按板块浏览高意图问题。',
-  alternates: { canonical: '/community' },
-};
-
-export default async function CommunityPage({
-  searchParams,
-}: {
+interface CommunityPageProps {
   searchParams?: Promise<{ lang?: string }>;
-}) {
+}
+
+export async function generateMetadata({ searchParams }: CommunityPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = communityPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/community', locale),
+    locale,
+  });
+}
+
+export default async function CommunityPage({ searchParams }: CommunityPageProps) {
   const sp = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = communityPageCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
+  const categories = presentCommunityCategories(COMMUNITY_CATEGORIES, uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始判断', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="社区"
-          title="用结构语言讨论"
-          description="按术数板块浏览。可用工作台生成报告后，再回来对照。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/community/search" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                站内搜索
+                {copy.linkSearch}
               </Link>
               <Link href="/chat" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                结构追问
+                {copy.linkChat}
               </Link>
               <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                请老师
+                {copy.linkTeachers}
               </Link>
             </>
           }
         />
         <PageIllustrationStrip
           surface="community/hub"
-          title={illustStripTitle(uiLocale, {
-            'zh-CN': '讨论结构',
-            'zh-Hant': '討論結構',
-            en: 'Structured discussion',
-          })}
+          title={copy.stripTitle}
           compact
           limit={1}
           locale={illustLocale}
         />
         <section>
-          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">板块</h2>
-          <EntryLinkGrid items={COMMUNITY_CATEGORIES} />
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.sectionsTitle}</h2>
+          <EntryLinkGrid items={categories} />
         </section>
         <p className="border-t border-[color:var(--hairline)] pt-4 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
-          也可先从{' '}
+          {copy.footerBefore}{' '}
           <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            学习专题
+            {copy.linkLearn}
           </Link>{' '}
-          或{' '}
+          {copy.footerOr}{' '}
           <Link href="/knowledge" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            知识库
+            {copy.linkKnowledge}
           </Link>{' '}
-          继续。
+          {copy.footerAfter}
         </p>
       </div>
     </AppPage>

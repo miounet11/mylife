@@ -1,13 +1,19 @@
 import Link from 'next/link';
 import type { LearningTracksOverview } from '@/lib/learning-track-stats';
 import type { LearningTrack } from '@/lib/learning-tracks';
+import { learnPageCopy, presentTrack } from '@/lib/i18n/learn-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 function LearningTrackRow({
   track,
+  locale,
 }: {
   track: LearningTrack & { progress: LearningTracksOverview['tracks'][number]['progress'] };
+  locale: SiteLocale;
 }) {
   const href = `/learn/${track.key}`;
+  const presented = presentTrack(track, locale);
+  const copy = learnPageCopy(locale);
   return (
     <Link
       href={href}
@@ -15,12 +21,16 @@ function LearningTrackRow({
     >
       <div className="min-w-0">
         <span className="text-[14px] font-medium text-[color:var(--ink-1)] group-hover:underline">
-          {track.title}
+          {presented.title}
         </span>
-        <span className="ml-2 text-[12px] text-[color:var(--ink-5)]">{track.subtitle}</span>
+        <span className="ml-2 text-[12px] text-[color:var(--ink-5)]">{presented.subtitle}</span>
       </div>
       <span className="shrink-0 text-[12px] text-[color:var(--ink-5)]">
-        {track.progress.publishedStepCount}/{track.progress.totalStepCount} · 约 {track.progress.totalReadMinutes} 分
+        {copy.stepsMinutes(
+          track.progress.publishedStepCount,
+          track.progress.totalStepCount,
+          track.progress.totalReadMinutes,
+        )}
       </span>
     </Link>
   );
@@ -28,39 +38,49 @@ function LearningTrackRow({
 
 export function LearningTrackMapGrid({
   overview,
+  locale = 'zh-CN',
 }: {
   overview: LearningTracksOverview;
   compact?: boolean;
+  locale?: SiteLocale;
 }) {
   return (
     <div className="border-t border-[color:var(--hairline)]">
       {overview.tracks.map((track) => (
-        <LearningTrackRow key={track.key} track={track} />
+        <LearningTrackRow key={track.key} track={track} locale={locale} />
       ))}
     </div>
   );
 }
 
-export function LearningTrackMapSummary({ overview }: { overview: LearningTracksOverview }) {
+export function LearningTrackMapSummary({
+  overview,
+  locale = 'zh-CN',
+}: {
+  overview: LearningTracksOverview;
+  locale?: SiteLocale;
+}) {
   const learnableCount = overview.tracks.filter((track) => track.progress.isLearnable).length;
+  const copy = learnPageCopy(locale);
   return (
     <p className="text-[13px] text-[color:var(--ink-5)]">
-      {learnableCount} 条可用专题 · 共 {overview.tracks.length} 条
+      {copy.summaryAvailable(learnableCount, overview.tracks.length)}
     </p>
   );
 }
 
-export function LearningTrackQuickLinks() {
+export function LearningTrackQuickLinks({ locale = 'zh-CN' }: { locale?: SiteLocale }) {
+  const copy = learnPageCopy(locale);
   return (
     <div className="flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
       <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-        生成报告
+        {copy.quickGenerate}
       </Link>
       <Link href="/knowledge" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-        知识库
+        {copy.linkKnowledge}
       </Link>
       <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-        请老师
+        {copy.linkTeachers}
       </Link>
     </div>
   );
@@ -68,9 +88,12 @@ export function LearningTrackQuickLinks() {
 
 export function LearningTrackStepList({
   track,
+  locale = 'zh-CN',
 }: {
   track: LearningTrack & { progress?: LearningTracksOverview['tracks'][number]['progress'] };
+  locale?: SiteLocale;
 }) {
+  const copy = learnPageCopy(locale);
   return (
     <ol className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
       {track.steps.map((step, index) => (
@@ -86,7 +109,7 @@ export function LearningTrackStepList({
               {step.label}
             </span>
             <span className="shrink-0 text-[12px] text-[color:var(--ink-5)]">
-              {step.readMinutes ? `${step.readMinutes} 分` : ''}
+              {step.readMinutes ? copy.minutesShort(step.readMinutes) : ''}
             </span>
           </Link>
         </li>

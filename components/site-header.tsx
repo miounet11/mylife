@@ -32,9 +32,8 @@ const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
   { href: '/docs', labelKey: 'navDocs' },
 ];
 
-/** Always-visible quick entry (compact header 也显示) */
+/** Always-visible quick entry (also shown in compact header on sm+) */
 const BIRTH_QUICK_HREF = '/tools/timing-yearly-window';
-const BIRTH_QUICK_LABEL = '填生日测';
 
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
 
@@ -71,6 +70,7 @@ export default function SiteHeader({
     'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
 
   const brandName = t('brandName');
+  const birthQuickLabel = t('birthQuick');
   // 避免中文品牌名被错误切片成多行「人 / K / 线」
   const brandMain =
     locale === 'en' ? (
@@ -159,8 +159,6 @@ export default function SiteHeader({
           <nav className="flex min-w-0 items-center gap-0.5" aria-label="core">
             {primaryNavItems.map((item) => {
               const active = isActive(item.href);
-              const label =
-                item.labelKey === 'navTeachers' ? '请老师' : t(item.labelKey);
               return (
                 <Link
                   key={item.href}
@@ -172,14 +170,14 @@ export default function SiteHeader({
                       : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
                   )}
                 >
-                  {label}
+                  {t(item.labelKey)}
                 </Link>
               );
             })}
             <ToolEntryLink
               href={BIRTH_QUICK_HREF}
               source="header_birth_quick"
-              title={BIRTH_QUICK_LABEL}
+              title={birthQuickLabel}
               className={cn(
                 'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline sm:inline-flex',
                 isActive(BIRTH_QUICK_HREF)
@@ -187,7 +185,7 @@ export default function SiteHeader({
                   : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
               )}
             >
-              {BIRTH_QUICK_LABEL}
+              {birthQuickLabel}
             </ToolEntryLink>
             {!compact ? (
               <>
