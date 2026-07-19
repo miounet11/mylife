@@ -1,5 +1,10 @@
 import Link from 'next/link';
 import { buildTeacherChatHref, getTeacher, type TeacherId } from '@/lib/teachers';
+import { localizeTeacher } from '@/lib/i18n/teacher-copy';
+import {
+  reportConsultantCardsCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 
 const CONSULTANT_IDS: TeacherId[] = ['career', 'timing', 'wealth'];
@@ -13,11 +18,16 @@ export default function ReportConsultantCards({
   reportId,
   windows,
   source,
+  locale,
 }: {
   reportId: string;
   windows?: { best?: string; risk?: string } | null;
   source?: string;
+  /** UI locale — English chrome when en; default zh-CN */
+  locale?: string | null;
 }) {
+  const siteLocale = resolveReportChromeLocale(locale);
+  const copy = reportConsultantCardsCopy(siteLocale);
   const baseSource = source || `report:${reportId}:consultant_cards`;
   const best = `${windows?.best || ''}`.trim();
   const risk = `${windows?.risk || ''}`.trim();
@@ -26,27 +36,27 @@ export default function ReportConsultantCards({
     <section
       id="report-consultants"
       className="scroll-mt-header rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
-      aria-label="问顾问"
+      aria-label={copy.ariaLabel}
     >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
-          <h2 className="text-[15px] font-semibold text-[color:var(--ink-1)]">先问一位顾问</h2>
+          <h2 className="text-[15px] font-semibold text-[color:var(--ink-1)]">{copy.title}</h2>
           <p className="mt-0.5 max-w-xl text-[12px] leading-[1.5] text-[color:var(--ink-5)]">
-            事业 · 时机 · 财务 — 结合本盘开场，不预填长问
+            {copy.subtitle}
           </p>
         </div>
         <Link
           href="/teachers"
           className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
         >
-          全部老师
+          {copy.allTeachers}
         </Link>
       </div>
 
       <div className="mt-3">
         <PageIllustrationStrip
           surface="report/decision"
-          title="决策结构"
+          title={copy.illustTitle}
           compact
           limit={1}
         />
@@ -54,10 +64,15 @@ export default function ReportConsultantCards({
 
       <ul className="mt-3 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
         {CONSULTANT_IDS.map((teacherId) => {
-          const teacher = getTeacher(teacherId);
+          const teacher = localizeTeacher(getTeacher(teacherId), siteLocale);
           const windowHint =
             teacherId === 'timing'
-              ? [best && `较有利：${best}`, risk && `需谨慎：${risk}`].filter(Boolean).join(' · ') ||
+              ? [
+                  best && copy.bestWindow(best),
+                  risk && copy.riskWindow(risk),
+                ]
+                  .filter(Boolean)
+                  .join(' · ') ||
                 best ||
                 risk ||
                 undefined
@@ -72,10 +87,10 @@ export default function ReportConsultantCards({
 
           const cta =
             teacherId === 'career'
-              ? '问事业'
+              ? copy.askCareer
               : teacherId === 'timing'
-                ? '问时机'
-                : '问财务';
+                ? copy.askTiming
+                : copy.askWealth;
 
           return (
             <li key={teacherId}>

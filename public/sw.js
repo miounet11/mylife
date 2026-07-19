@@ -1,7 +1,8 @@
 /* Life K-Line — minimal safe service worker (no Workbox).
  * Bump CACHE_NAME when changing precache list or fetch rules.
+ * Manual bump: bash scripts/bump-sw-cache.sh  (lk-shell-vN → vN+1)
  */
-const CACHE_NAME = 'lk-shell-v1';
+const CACHE_NAME = 'lk-shell-v2';
 
 /** Static shell assets only — never put HTML app routes here. */
 const PRECACHE_URLS = [

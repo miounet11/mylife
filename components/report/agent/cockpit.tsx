@@ -2,14 +2,27 @@
 
 import type { MergedAgentResults, StructuredAgenticContext } from '@/lib/agentic-report/types';
 import { StatGrid } from '@/components/layout/stat-grid';
+import { useLocale } from '@/components/i18n/locale-provider';
+import {
+  reportCockpitCopy,
+  resolveReportChromeLocale,
+} from '@/lib/i18n/report-chrome-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 export default function ReportCockpit({
   context,
   merged,
+  locale: localeProp,
 }: {
   context: StructuredAgenticContext;
   merged: MergedAgentResults;
+  /** Optional UI locale; falls back to LocaleProvider / zh-CN */
+  locale?: string | null;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const siteLocale: SiteLocale = resolveReportChromeLocale(localeProp ?? ctxLocale);
+  const copy = reportCockpitCopy(siteLocale);
+
   const { engine } = context;
   const constitution = merged.merged.core_constitution as {
     constitutionSummary?: string;
@@ -21,17 +34,39 @@ export default function ReportCockpit({
     troughYears?: number[];
   } | undefined;
 
+  const yearHelper = siteLocale === 'en'
+    ? String(engine.derivedFacts.currentYear)
+    : `${engine.derivedFacts.currentYear} ${copy.yearSuffix}`.trim();
+
   return (
     <section id="cockpit" className="fb-card scroll-mt-header p-5 md:p-6">
-      <div className="lk-section-eyebrow">先看核心结论</div>
-      <h2 className="lk-report-section-title mt-1.5">核心结论与当前状态</h2>
+      <div className="lk-section-eyebrow">{copy.eyebrow}</div>
+      <h2 className="lk-report-section-title mt-1.5">{copy.title}</h2>
 
       {constitution?.constitutionSummary ? (
         <p className="lk-report-prose mt-4">{constitution.constitutionSummary}</p>
       ) : (
         <p className="lk-report-prose-muted mt-4">
-          {engine.constitution.dayMaster}日主 · {engine.constitution.patternType} · 用神
-          {engine.constitution.yongShen.join('、') || '待定'}
+          {siteLocale === 'en' ? (
+            <>
+              {copy.dayMasterSuffix} {engine.constitution.dayMaster}
+              {' · '}
+              {engine.constitution.patternType}
+              {' · '}
+              {copy.yongShen}{' '}
+              {engine.constitution.yongShen.join(', ') || copy.pending}
+            </>
+          ) : (
+            <>
+              {engine.constitution.dayMaster}
+              {copy.dayMasterSuffix}
+              {' · '}
+              {engine.constitution.patternType}
+              {' · '}
+              {copy.yongShen}
+              {engine.constitution.yongShen.join('、') || copy.pending}
+            </>
+          )}
         </p>
       )}
 
@@ -39,13 +74,13 @@ export default function ReportCockpit({
         <StatGrid
           columns={4}
           items={[
-            { label: '当前得分', value: engine.derivedFacts.currentScore, mono: true },
-            { label: '高点', value: engine.derivedFacts.peakScore, mono: true },
-            { label: '低点', value: engine.derivedFacts.troughScore, mono: true },
+            { label: copy.currentScore, value: engine.derivedFacts.currentScore, mono: true },
+            { label: copy.peak, value: engine.derivedFacts.peakScore, mono: true },
+            { label: copy.trough, value: engine.derivedFacts.troughScore, mono: true },
             {
-              label: '当前阶段',
+              label: copy.currentPhase,
               value: kline?.currentPhase || '—',
-              helper: `${engine.derivedFacts.currentYear} 年`,
+              helper: yearHelper,
             },
           ]}
         />
@@ -53,9 +88,16 @@ export default function ReportCockpit({
 
       <div className="mt-5 grid gap-2 md:grid-cols-3">
         {[
-          ['事业节奏', engine.timeWindows.career[0]?.label || '待展开'],
-          ['关系模式', (merged.merged.relationship_family as { relationshipFocus?: string } | undefined)?.relationshipFocus || '待展开'],
-          ['年度窗口', kline?.peakYears?.[0] ? `${kline.peakYears[0]} 高点` : '待展开'],
+          [copy.careerRhythm, engine.timeWindows.career[0]?.label || copy.pendingExpand],
+          [
+            copy.relationshipMode,
+            (merged.merged.relationship_family as { relationshipFocus?: string } | undefined)
+              ?.relationshipFocus || copy.pendingExpand,
+          ],
+          [
+            copy.yearWindow,
+            kline?.peakYears?.[0] ? copy.peakYear(kline.peakYears[0]) : copy.pendingExpand,
+          ],
         ].map(([title, value]) => (
           <div
             key={title}
