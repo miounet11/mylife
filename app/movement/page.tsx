@@ -48,7 +48,7 @@ export default async function MovementPage({
           </Link>
         </div>
 
-        <DailyWindowStrip compact source="movement_daily_strip" />
+        <DailyWindowStrip compact source="movement_daily_strip" locale={uiLocale} />
         <SiteLiveAtmosphere initialStats={stats} compact />
         <PageIllustrationStrip
           surface="movement/hub"

@@ -8,12 +8,16 @@ export function ChatShareButton({
   title,
   text,
   path,
+  locale,
 }: {
   title: string;
   text: string;
   path: string;
+  /** When en, button labels switch to English */
+  locale?: string | null;
 }) {
   const [done, setDone] = useState(false);
+  const en = `${locale || ''}`.toLowerCase().startsWith('en');
 
   const run = async () => {
     const url =
@@ -45,10 +49,10 @@ export function ChatShareButton({
       type="button"
       onClick={() => void run()}
       className="inline-flex items-center gap-0.5 underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
-      title="分享开场链接"
+      title={en ? 'Share opening link' : '分享开场链接'}
     >
       {done ? <Check className="h-3 w-3" /> : <Share2 className="h-3 w-3" />}
-      {done ? '已复制' : '分享'}
+      {done ? (en ? 'Copied' : '已复制') : en ? 'Share' : '分享'}
     </button>
   );
 }

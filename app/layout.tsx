@@ -46,6 +46,20 @@ export const metadata: Metadata = {
   },
   description: siteDescription,
   keywords: seoKeywords,
+  // Lightweight PWA: Next also auto-links app/manifest.ts → /manifest.webmanifest
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [{ url: '/icon.svg', type: 'image/svg+xml' }],
+    apple: [{ url: '/apple-icon', sizes: '180x180', type: 'image/png' }],
+  },
+  appleWebApp: {
+    capable: true,
+    title: '人生K线',
+    statusBarStyle: 'default',
+  },
+  formatDetection: {
+    telephone: false,
+  },
   alternates: {
     canonical: '/',
     languages: {

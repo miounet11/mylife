@@ -48,6 +48,7 @@ import {
   slotsFromChatReport,
 } from '@/lib/teacher-opening';
 import { resolveChatTeacher } from '@/lib/chat-teacher-runtime';
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 import { teacherFromTopicKey, type TeacherTopicChip } from '@/lib/teachers';
 import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
@@ -83,7 +84,12 @@ function rememberReportId(id: string) {
 }
 
 // v5-D60: FB Messenger 2017 风消息流 + 底部 sticky 输入区
-export default function AIAssistantChat() {
+export default function AIAssistantChat({
+  uiLocale,
+}: {
+  /** From server getRequestLocale / ?lang= / /en/chat */
+  uiLocale?: string | null;
+} = {}) {
   const searchParams = useSearchParams();
   const urlReportId = searchParams?.get('reportId') || '';
   const eventId = searchParams?.get('eventId') || '';
@@ -98,6 +104,9 @@ export default function AIAssistantChat() {
   const urlWindow = searchParams?.get('window') || '';
   /** Default opening product mode; only explicit prefill fills the input. */
   const urlMode = searchParams?.get('mode') || 'opening';
+  const resolvedLocale =
+    uiLocale || searchParams?.get('lang') || searchParams?.get('locale') || '';
+  const enUi = isEnglishUiLocale(resolvedLocale);
   const isPrefillMode = urlMode === 'prefill';
   const [rememberedReportId, setRememberedReportId] = useState('');
   const reportId = urlReportId || rememberedReportId;
@@ -179,13 +188,18 @@ export default function AIAssistantChat() {
     topicTeacherId ||
     resolveChatTeacher({ teacher: urlTeacher || undefined, intent: intent || undefined }).id;
   const openingWindowHint = urlWindow
-    ? `当前关注：${urlWindow}`
+    ? enUi
+      ? `Current focus: ${urlWindow}`
+      : `当前关注：${urlWindow}`
     : urlTopic
-      ? `当前议题：${urlTopic}`
+      ? enUi
+        ? `Current topic: ${urlTopic}`
+        : `当前议题：${urlTopic}`
       : undefined;
   const openingView = buildTeacherOpening({
     teacherId: resolvedOpeningTeacherId,
     greetingIndex,
+    locale: resolvedLocale,
     slots: context?.report
       ? slotsFromChatReport(
           {
@@ -199,7 +213,7 @@ export default function AIAssistantChat() {
             riskWindow: context.report.riskWindow,
             topScenario: context.report.topScenario,
           },
-          { windowHint: openingWindowHint },
+          { windowHint: openingWindowHint, locale: resolvedLocale },
         )
       : openingWindowHint
         ? { windowHint: openingWindowHint }
@@ -997,17 +1011,21 @@ export default function AIAssistantChat() {
               <div className="flex items-start justify-between gap-3 rounded-[8px] border border-[#f0c36d]/70 bg-[#fff8e6] px-3 py-2.5">
                 <div className="min-w-0">
                   <p className="text-[12px] font-semibold text-[#7a5b00]">
-                    未绑定报告 · 先用通用框架开聊
+                    {enUi
+                      ? 'No report linked · general framework only'
+                      : '未绑定报告 · 先用通用框架开聊'}
                   </p>
                   <p className="mt-0.5 text-[11px] leading-[1.45] text-[#9a7b20]">
-                    不编造日主/用神。要个性化节奏与窗口，请先排盘生成结构报告。
+                    {enUi
+                      ? 'No invented day master or favorable elements. Create a chart for personalized rhythm and windows.'
+                      : '不编造日主/用神。要个性化节奏与窗口，请先排盘生成结构报告。'}
                   </p>
                 </div>
                 <a
                   href="/analyze"
                   className="inline-flex shrink-0 items-center rounded-[6px] bg-[#3b5998] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#2d4373]"
                 >
-                  去排盘
+                  {enUi ? 'Create chart' : '去排盘'}
                 </a>
               </div>
               {!hideOpeningFirstMes ? (
@@ -1015,6 +1033,7 @@ export default function AIAssistantChat() {
                   opening={buildTeacherOpening({
                     teacherId: resolvedOpeningTeacherId,
                     greetingIndex,
+                    locale: resolvedLocale,
                   })}
                   disabled={isTyping || loadingHistory}
                   onStarter={handleOpeningStarter}

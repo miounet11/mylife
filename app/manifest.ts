@@ -1,20 +1,24 @@
 import type { MetadataRoute } from 'next';
 
-// PWA install metadata — 决策台风
-// 安卓 / iOS 添加到主屏幕时显示的应用元信息
+/**
+ * Web app manifest for lightweight PWA install (Add to Home Screen).
+ * Served at /manifest.webmanifest by Next.js App Router.
+ * No offline shell / service worker required.
+ */
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: '人生K线 · LIFE KLINE',
+    name: 'Life K-Line / 人生K线',
     short_name: '人生K线',
-    description: '看清你的结构、阶段、环境与下一步动作。基于世界易与真太阳时校正的现代判断系统。',
+    description:
+      '输入出生信息生成八字命盘、人生K线与流年大运；结构、阶段与下一步动作可回访验证。',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#f5f7f2',
-    theme_color: '#0b5f55',
+    background_color: '#f7f8f9',
+    theme_color: '#f7f8f9',
     lang: 'zh-CN',
-    scope: '/',
-    categories: ['productivity', 'lifestyle', 'education'],
+    categories: ['lifestyle', 'productivity', 'education'],
     icons: [
       {
         src: '/icon.svg',
@@ -31,22 +35,22 @@ export default function manifest(): MetadataRoute.Manifest {
     ],
     shortcuts: [
       {
-        name: '生成新报告',
-        short_name: '新报告',
+        name: '生成报告',
+        short_name: '报告',
         description: '填写出生信息生成判断报告',
         url: '/analyze',
       },
       {
-        name: '我的中心',
+        name: '个人中心',
         short_name: '中心',
-        description: '查看历史报告与事件',
-        url: '/dashboard',
+        description: '查看档案与历史报告',
+        url: '/profile',
       },
       {
-        name: 'AI 助手',
-        short_name: '助手',
-        description: '对话式深度解读',
-        url: '/chat',
+        name: '订阅更新',
+        short_name: '更新',
+        description: '管理提醒与邮件偏好',
+        url: '/updates',
       },
     ],
   };

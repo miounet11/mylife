@@ -18,6 +18,8 @@ export type ConclusionShareCardProps = {
   className?: string;
   /** Show「生成分享图」action (default true) */
   showImageShare?: boolean;
+  /** UI locale — English chrome when starts with en (titles stay caller-driven) */
+  locale?: string | null;
 };
 
 async function copyText(text: string): Promise<boolean> {
@@ -47,16 +49,20 @@ async function copyText(text: string): Promise<boolean> {
  * No fake stats, no destiny threats — structure + rhythm language only.
  */
 export function ConclusionShareCard({
-  eyebrow = '人生K线 · 结构参考',
+  eyebrow,
   title,
   lines = [],
   url,
   compact = false,
   className = '',
   showImageShare = true,
+  locale,
 }: ConclusionShareCardProps) {
   const [copied, setCopied] = useState(false);
   const [shared, setShared] = useState(false);
+  const en = `${locale || ''}`.toLowerCase().startsWith('en');
+  const resolvedEyebrow =
+    eyebrow ?? (en ? 'Life K-Line · structure reference' : '人生K线 · 结构参考');
 
   const pageUrl = useMemo(() => {
     if (url) {
@@ -71,9 +77,9 @@ export function ConclusionShareCard({
   }, [url]);
 
   const shareBody = useMemo(() => {
-    const parts = [eyebrow, title, ...lines.filter(Boolean), pageUrl].filter(Boolean);
+    const parts = [resolvedEyebrow, title, ...lines.filter(Boolean), pageUrl].filter(Boolean);
     return parts.join('\n');
-  }, [eyebrow, title, lines, pageUrl]);
+  }, [resolvedEyebrow, title, lines, pageUrl]);
 
   const imageLines = useMemo(
     () => lines.filter(Boolean).slice(0, 3),
@@ -92,7 +98,7 @@ export function ConclusionShareCard({
     if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
       try {
         await navigator.share({
-          title: `${eyebrow} · ${title}`.slice(0, 80),
+          title: `${resolvedEyebrow} · ${title}`.slice(0, 80),
           text: [title, ...lines].filter(Boolean).join('\n'),
           url: pageUrl,
         });
@@ -118,7 +124,7 @@ export function ConclusionShareCard({
         }}
       >
         <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--ink-5)]">
-          {eyebrow}
+          {resolvedEyebrow}
         </div>
         <h3 className="mt-1.5 text-[16px] font-semibold leading-snug tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[17px]">
           {title}
@@ -136,7 +142,9 @@ export function ConclusionShareCard({
           </ul>
         ) : null}
         <p className="mt-2.5 text-[10px] leading-[1.4] text-[color:var(--ink-5)]">
-          结构与节奏参考，不替代专业医疗 / 法律 / 投资意见。
+          {en
+            ? 'Structure and rhythm reference — not medical, legal, or investment advice.'
+            : '结构与节奏参考，不替代专业医疗 / 法律 / 投资意见。'}
         </p>
       </div>
 
@@ -147,7 +155,13 @@ export function ConclusionShareCard({
           className="inline-flex h-8 items-center gap-1.5 rounded-[6px] bg-[color:var(--brand-strong)] px-3 text-[12px] font-semibold text-white hover:opacity-90"
         >
           <Share2 className="h-3.5 w-3.5" />
-          {shared ? '已唤起分享' : '分享结论'}
+          {shared
+            ? en
+              ? 'Share sheet opened'
+              : '已唤起分享'
+            : en
+              ? 'Share conclusion'
+              : '分享结论'}
         </button>
         <button
           type="button"
@@ -157,21 +171,21 @@ export function ConclusionShareCard({
           {copied ? (
             <>
               <Check className="h-3.5 w-3.5 text-[color:var(--data-up)]" />
-              已复制
+              {en ? 'Copied' : '已复制'}
             </>
           ) : (
             <>
               <Copy className="h-3.5 w-3.5" />
-              复制文案
+              {en ? 'Copy text' : '复制文案'}
             </>
           )}
         </button>
         {showImageShare ? (
           <DownloadShareImageButton
-            brand="人生K线"
+            brand={en ? 'Life K-Line' : '人生K线'}
             title={title}
             lines={imageLines}
-            footerLeft="结构参考"
+            footerLeft={en ? 'Structure reference' : '结构参考'}
             footerRight="life-kline.com"
             pageUrl={pageUrl}
           />

@@ -3,6 +3,8 @@
  * Date-seeded only — never personal 日主/用神 without a real report context.
  */
 
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
+
 export const DAILY_WINDOW_COPY_LINES = [
   '节奏先于吉凶：今天先问自己「推进、观望还是收敛」，再决定要不要用力。',
   '验证比预感可靠：把一个判断写成可回看的小动作，比空喊运势更有用。',
@@ -20,6 +22,23 @@ export const DAILY_WINDOW_COPY_LINES = [
   '先测年度窗口，再谈日更：没有主轴的日签，容易变成随机鸡汤。',
 ] as const;
 
+export const DAILY_WINDOW_COPY_LINES_EN = [
+  'Rhythm before luck labels: ask push, watch, or pull back — then decide how hard to move.',
+  'Verification beats hunch: write one judgment as a small, reviewable action.',
+  'Windows are not threats: structure names stage and limits — not fear sales.',
+  'Daily value is a light touch: one tip is enough; no need to recompute a full chart every day.',
+  'Split the problem before metaphysics: stuck on rhythm, resources, or relationships? Structure is clearer than a fortune slip.',
+  'Only verifiable claims count: if you can say what you did and what happened, it is a judgment.',
+  'Don’t turn probability into destiny: a window is tendency and conditions, not a fixed script.',
+  'Yearly spine beats daily fortune: know this year’s push / hold / protect first, then plan today.',
+  'Good reminders reduce anxiety: they narrow choices instead of amplifying panic.',
+  'Watching is still an action: when push costs too much, pausing can match the structure.',
+  'Review beats mysticism: re-checking the same node three times beats one “hit” superstition.',
+  'Boundaries stay explicit: not investment, medical, or legal advice — judgment is limited; action is yours.',
+  'Prefer the light path: one rhythm reminder beats doom-scrolling scare content.',
+  'Map the year window first: daily tips without a spine turn into random comfort text.',
+] as const;
+
 /** Day-of-year in local calendar (1–366). */
 export function getLocalDayOfYear(date: Date = new Date()): number {
   const start = new Date(date.getFullYear(), 0, 0);
@@ -35,16 +54,46 @@ export function pickDailyWindowIndex(dayOfYear: number, length = DAILY_WINDOW_CO
   return mixed < 0 ? mixed + length : mixed;
 }
 
-export function getDailyWindowCopy(date: Date = new Date()): {
+export function getDailyWindowCopy(
+  date: Date = new Date(),
+  locale?: string | null,
+): {
   dayOfYear: number;
   index: number;
   text: string;
 } {
+  const en = isEnglishUiLocale(locale);
+  const lines = en ? DAILY_WINDOW_COPY_LINES_EN : DAILY_WINDOW_COPY_LINES;
   const dayOfYear = getLocalDayOfYear(date);
-  const index = pickDailyWindowIndex(dayOfYear);
+  const index = pickDailyWindowIndex(dayOfYear, lines.length);
   return {
     dayOfYear,
     index,
-    text: DAILY_WINDOW_COPY_LINES[index] ?? DAILY_WINDOW_COPY_LINES[0],
+    text: lines[index] ?? lines[0],
+  };
+}
+
+export function dailyWindowChrome(locale?: string | null): {
+  ariaLabel: string;
+  eyebrow: string;
+  disclaimer: string;
+  ctaYear: string;
+  ctaSubscribe: string;
+} {
+  if (isEnglishUiLocale(locale)) {
+    return {
+      ariaLabel: 'Today’s window',
+      eyebrow: 'Today’s window',
+      disclaimer: 'Generic rhythm tip · not a personal chart · verifiable, non-threatening',
+      ctaYear: 'Map your yearly window',
+      ctaSubscribe: 'Subscribe to reminders',
+    };
+  }
+  return {
+    ariaLabel: '今日窗口',
+    eyebrow: '今日窗口',
+    disclaimer: '通用节奏提示 · 非个人命盘 · 可验证、不恐吓',
+    ctaYear: '填生日测年度窗口',
+    ctaSubscribe: '订阅提醒',
   };
 }

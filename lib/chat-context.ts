@@ -25,6 +25,7 @@ import { buildTeacherEfcBlock, packToReportHint } from '@/lib/ground-truth/proje
 import { CHAT_NO_REPORT_CONTRACT, ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
 import { buildVerifyEventFields } from '@/lib/chat-answer-contract';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
+import type { PredictionRevisitStats } from '@/lib/predictions/revisit-stats';
 
 export interface ChatContextEvent {
   id: string;
@@ -87,6 +88,11 @@ export interface ChatExperienceContext {
   confirmedPastEventCount?: number;
   focusedEvent?: ChatContextEvent;
   report?: ChatReportContext;
+  /**
+   * Real prediction revisit stats from predictions store (server).
+   * Prefer over event validation when present for memory narrative.
+   */
+  predictionStats?: PredictionRevisitStats | null;
 }
 
 export interface ChatEventDraft {

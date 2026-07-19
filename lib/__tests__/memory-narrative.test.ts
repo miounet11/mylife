@@ -50,6 +50,14 @@ describe('buildMemoryNarrative', () => {
     assert.ok(line);
     assert.ok(!/命中/.test(line!));
   });
+
+  it('formats English revisit line without inventing rates', () => {
+    const line = buildMemoryNarrative({ predictionCount: 5, hitCount: 4 }, 'en');
+    assert.ok(line);
+    assert.match(line!, /revisited 5 prediction/i);
+    assert.match(line!, /4 hit/i);
+    assert.ok(!/回访|命中/.test(line!));
+  });
 });
 
 describe('memoryInputFromChatContext', () => {

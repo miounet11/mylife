@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { trackClientEvent } from '@/lib/analytics-client';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), {
   ssr: false,
@@ -15,7 +16,11 @@ const AIAssistantChat = dynamic(() => import('@/components/ai-assistant-chat'), 
 });
 
 /** Client boundary for /chat — mounts full AI assistant with consultant opening. */
-export default function ChatPageClient() {
+export default function ChatPageClient({
+  uiLocale = 'zh-CN',
+}: {
+  uiLocale?: SiteLocale | string;
+}) {
   const searchParams = useSearchParams();
   const trackedKeyRef = useRef('');
 
@@ -26,7 +31,7 @@ export default function ChatPageClient() {
     const source = (searchParams.get('source') || '').trim();
     const reportId = (searchParams.get('reportId') || searchParams.get('id') || '').trim();
     const intent = (searchParams.get('intent') || '').trim();
-    const key = `${teacher}|${mode}|${source}|${reportId}|${intent}`;
+    const key = `${teacher}|${mode}|${source}|${reportId}|${intent}|${uiLocale}`;
     if (trackedKeyRef.current === key) return;
     trackedKeyRef.current = key;
     void trackClientEvent({
@@ -40,13 +45,14 @@ export default function ChatPageClient() {
         reportId: reportId || null,
         intent: intent || null,
         hasReport: Boolean(reportId),
+        locale: uiLocale || null,
       },
     });
-  }, [searchParams]);
+  }, [searchParams, uiLocale]);
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-1 flex-col">
-      <AIAssistantChat />
+    <div className="flex h-full min-h-0 w-full flex-1 flex-col" data-ui-locale={uiLocale}>
+      <AIAssistantChat uiLocale={uiLocale} />
     </div>
   );
 }

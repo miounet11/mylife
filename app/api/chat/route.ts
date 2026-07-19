@@ -9,6 +9,7 @@ import { validateQuestion } from '@/lib/validators';
 import { checkRateLimit, RATE_LIMITS, getClientKey } from '@/lib/rate-limit';
 import { trackServerEvent } from '@/lib/analytics';
 import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/chat-context';
+import { summarizePredictionRevisits } from '@/lib/predictions/revisit-stats';
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
@@ -994,6 +995,38 @@ function getChatReport(userId: string, requestedReportId?: string) {
   return fortuneOperations.getByUserId(userId)?.[0] || null;
 }
 
+/**
+ * Soft-load prediction revisit stats for memory narrative.
+ * server-store is prod DB-backed; require is optional so local stubs never crash chat.
+ * Only attaches when the session has a bound report (report session).
+ */
+function loadPredictionRevisitStatsForChat(
+  userId: string,
+  reportId?: string | null,
+): ChatExperienceContext['predictionStats'] {
+  if (!userId || !reportId) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const store = require('@/lib/predictions/server-store') as {
+      listPredictionsForUser?: (id: string) => Array<{
+        reportId?: string;
+        outcome?: string;
+        status?: string;
+        result?: string;
+        score?: number;
+      }>;
+    };
+    const listFn = store?.listPredictionsForUser;
+    if (typeof listFn !== 'function') return null;
+    const all = listFn(userId);
+    if (!Array.isArray(all)) return null;
+    const scoped = all.filter((row) => row && row.reportId === reportId);
+    return summarizePredictionRevisits(scoped);
+  } catch {
+    return null;
+  }
+}
+
 function buildChatPayload(
   userId: string,
   requestedReportId?: string,
@@ -1004,13 +1037,22 @@ function buildChatPayload(
   const events = eventOperations.getByUserId(userId).slice(0, 8);
   const toolSessions = toolSessionOperations.listByUser(userId, 8);
 
-  return buildChatExperienceContext({
+  const context = buildChatExperienceContext({
     report,
     events,
     toolSessions,
     focusEventId: requestedEventId,
     intent: requestedIntent,
   });
+
+  const predictionStats = loadPredictionRevisitStatsForChat(
+    userId,
+    context.report?.id || report?.id || requestedReportId || null,
+  );
+  if (predictionStats) {
+    return { ...context, predictionStats };
+  }
+  return context;
 }
 
 function rowMatchesScope(

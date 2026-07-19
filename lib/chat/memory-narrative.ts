@@ -5,6 +5,8 @@
  * Never invent hit rates or counts — only format numbers the caller provides.
  */
 
+import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
+
 export type MemoryNarrativeInput = {
   /** 已回访预测条数（含命中/未命中等已标记结果） */
   predictionCount?: number;
@@ -24,10 +26,14 @@ function asNonNegInt(value: unknown): number | undefined {
 }
 
 /**
- * Build a short Chinese memory line for opening chrome.
+ * Build a short memory line for opening chrome.
  * @returns null when there are no usable signals
  */
-export function buildMemoryNarrative(input: MemoryNarrativeInput = {}): string | null {
+export function buildMemoryNarrative(
+  input: MemoryNarrativeInput = {},
+  locale?: string | null,
+): string | null {
+  const en = isEnglishUiLocale(locale);
   const predictionCount = asNonNegInt(input.predictionCount);
   const hitCount = asNonNegInt(input.hitCount);
   const eventCount = asNonNegInt(input.eventCount);
@@ -52,38 +58,64 @@ export function buildMemoryNarrative(input: MemoryNarrativeInput = {}): string |
 
   if (hasPredictions) {
     if (hitsUsable) {
-      clauses.push(`你已回访 ${predictionCount} 条预测（命中 ${hitCount}）`);
+      clauses.push(
+        en
+          ? `You've revisited ${predictionCount} prediction${predictionCount === 1 ? '' : 's'} (${hitCount} hit${hitCount === 1 ? '' : 's'})`
+          : `你已回访 ${predictionCount} 条预测（命中 ${hitCount}）`,
+      );
     } else {
-      clauses.push(`你已回访 ${predictionCount} 条预测`);
+      clauses.push(
+        en
+          ? `You've revisited ${predictionCount} prediction${predictionCount === 1 ? '' : 's'}`
+          : `你已回访 ${predictionCount} 条预测`,
+      );
     }
   }
 
   if (hasEvents) {
-    clauses.push(
-      hasPredictions
-        ? `另有 ${eventCount} 条事件记录`
-        : `你已记录 ${eventCount} 条事件`,
-    );
+    if (en) {
+      clauses.push(
+        hasPredictions
+          ? `plus ${eventCount} event record${eventCount === 1 ? '' : 's'}`
+          : `You've logged ${eventCount} event${eventCount === 1 ? '' : 's'}`,
+      );
+    } else {
+      clauses.push(
+        hasPredictions
+          ? `另有 ${eventCount} 条事件记录`
+          : `你已记录 ${eventCount} 条事件`,
+      );
+    }
   }
 
   if (hasLabel) {
-    clauses.push(`最近对照「${lastEventLabel}」`);
+    clauses.push(
+      en ? `latest check-in “${lastEventLabel}”` : `最近对照「${lastEventLabel}」`,
+    );
   }
 
   if (!clauses.length) return null;
 
-  const head = `${clauses.join('；')}。`;
+  const head = en ? `${clauses.join('; ')}.` : `${clauses.join('；')}。`;
 
   // Stance only from real hit ratio — never invent rates.
-  let stance = '下面会根据你的回访更懂你的节奏。';
+  let stance = en
+    ? ' Next replies will lean on your revisit history for a closer fit.'
+    : '下面会根据你的回访更懂你的节奏。';
   if (hitsUsable && predictionCount! > 0) {
     const ratio = hitCount! / predictionCount!;
     if (ratio >= 0.6) {
-      stance = '下面会更偏推进，继续用可验证点校准。';
+      stance = en
+        ? ' Next replies will lean push-forward, still calibrated with verifiable checks.'
+        : '下面会更偏推进，继续用可验证点校准。';
     } else if (ratio <= 0.35) {
-      stance = '下面会更偏保守，先稳住再验证。';
+      stance = en
+        ? ' Next replies will lean conservative — stabilize first, then verify.'
+        : '下面会更偏保守，先稳住再验证。';
     } else {
-      stance = '下面会按你的回访校准，稳中求进。';
+      stance = en
+        ? ' Next replies will calibrate from your revisits — steady, then advance.'
+        : '下面会按你的回访校准，稳中求进。';
     }
   }
 
