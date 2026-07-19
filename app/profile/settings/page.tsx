@@ -4,50 +4,65 @@ import ProfileSettingsPanel from '@/components/profile-settings-panel';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { getAuthSession } from '@/lib/auth';
+import { profileSettingsPageCopy } from '@/lib/i18n/profile-settings-copy';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '测算资料设置｜人生K线',
-  description: '修改出生基础信息、补充职业与目标资料，让报告和运势提醒更贴近你的真实处境。',
-  alternates: { canonical: '/profile/settings' },
-};
+interface ProfileSettingsPageProps {
+  searchParams: Promise<{ fortuneId?: string; tab?: string; highlight?: string; lang?: string }>;
+}
+
+export async function generateMetadata({ searchParams }: ProfileSettingsPageProps): Promise<Metadata> {
+  const sp = await searchParams;
+  const locale = await getRequestLocale(sp.lang);
+  const copy = profileSettingsPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/profile/settings', locale),
+    locale,
+    noIndex: true,
+  });
+}
 
 export default async function ProfileSettingsPage({
   searchParams,
-}: {
-  searchParams: Promise<{ fortuneId?: string; tab?: string; highlight?: string }>;
-}) {
+}: ProfileSettingsPageProps) {
   // Guest cookie identity is created by API routes / client session, not RSC page render.
   // Next.js 15 forbids cookie writes during Server Component render.
   const session = await getAuthSession();
   const params = await searchParams;
+  const uiLocale = await getRequestLocale(params.lang);
+  const copy = profileSettingsPageCopy(uiLocale);
 
   return (
     <AppPage
-      header={{ ctaHref: '/analyze', ctaLabel: '开始分析', compact: true }}
+      header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}
       showFooter={false}
       mainClassName="page-frame max-w-3xl py-6 pb-20 md:py-8 md:pb-24"
     >
       <div className="space-y-5 px-4 md:px-0">
         <FocusHero
-          eyebrow="测算资料"
-          title="出生信息与补充资料"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
           description={
             session.authenticated
-              ? '修改出生信息会触发排盘重算；补充资料只影响建议表达，不改变四柱结构。'
-              : '未登录也可管理本浏览器会话内的档案。登录后可跨设备同步。'
+              ? copy.descriptionAuthed
+              : copy.descriptionGuest
           }
           actions={
             <>
               <Link href="/profile" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                返回档案
+                {copy.backToProfile}
               </Link>
               <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                请老师补充
+                {copy.askTeachers}
               </Link>
             </>
           }
         />
         <ProfileSettingsPanel
+          locale={uiLocale}
           initialFortuneId={params.fortuneId || ''}
           initialTab={params.tab || ''}
           initialHighlight={params.highlight || ''}

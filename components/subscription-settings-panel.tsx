@@ -13,6 +13,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import EmailTrustPanel from '@/components/email-trust-panel';
+import { useLocale } from '@/components/i18n/locale-provider';
 import SubscriptionFocusBanner from '@/components/subscription-focus-banner';
 import type { SubscriptionFocusCopy } from '@/lib/profile-focus-copy';
 import {
@@ -22,6 +23,11 @@ import {
   type EmailFocusItem,
   type ResolvedEmailSubscriptionPreferenceGroup,
 } from '@/lib/email-subscription-focus';
+import {
+  localizePreferenceGroups,
+  subscriptionSettingsCopy,
+} from '@/lib/i18n/updates-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'action-secondary' literals.
@@ -94,10 +100,16 @@ function buildDraftPreferences(
 export default function SubscriptionSettingsPanel({
   initialEmail = '',
   autoLoad = false,
+  locale: localeProp,
 }: {
   initialEmail?: string;
   autoLoad?: boolean;
+  locale?: SiteLocale;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
+  const copy = useMemo(() => subscriptionSettingsCopy(locale), [locale]);
+
   const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -118,6 +130,11 @@ export default function SubscriptionSettingsPanel({
   const enabledCount = draftPreferences
     .flatMap((group) => group.options)
     .filter((option) => option.enabled).length;
+
+  const displayPreferences = useMemo(
+    () => localizePreferenceGroups(draftPreferences, locale),
+    [draftPreferences, locale],
+  );
 
   const resetNotice = () => {
     setError('');
@@ -156,13 +173,13 @@ export default function SubscriptionSettingsPanel({
 
       if (!response.ok || !data.success) {
         applySubscription(null);
-        setError(data.error || '查询失败，请稍后重试');
+        setError(data.error || copy.lookupFailed);
         return;
       }
 
       if (!data.exists || !data.subscription) {
         applySubscription(null);
-        setMessage('这个邮箱还没有订阅记录，可以先开启默认订阅。');
+        setMessage(copy.noRecordYet);
         setDraftPreferences(buildDraftPreferences(undefined, new Set(listDefaultEnabledTags())));
         return;
       }
@@ -171,10 +188,10 @@ export default function SubscriptionSettingsPanel({
     } catch (requestError) {
       applySubscription(null);
       if (isAbortLikeError(requestError)) {
-        setError('查询订阅等待时间过长，请稍后重试');
+        setError(copy.lookupTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setLoading(false);
     }
@@ -241,18 +258,18 @@ export default function SubscriptionSettingsPanel({
       });
 
       if (!response.ok || !data.success) {
-        setError(data.error || '保存失败，请稍后重试');
+        setError(data.error || copy.saveFailed);
         return;
       }
 
       applySubscription(data.subscription || null);
-      setMessage(data.message || '订阅设置已保存。');
+      setMessage(data.message || copy.saveSuccess);
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('保存等待时间过长，请稍后重试');
+        setError(copy.saveTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setSaving(false);
     }
@@ -283,18 +300,18 @@ export default function SubscriptionSettingsPanel({
       });
 
       if (!response.ok || !data.success) {
-        setError(data.error || '开启订阅失败，请稍后重试');
+        setError(data.error || copy.subscribeFailed);
         return;
       }
 
       applySubscription(data.subscription || null);
-      setMessage('订阅已开启，你可以继续细调下面的提醒选项。');
+      setMessage(copy.subscribeSuccess);
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('开启订阅等待时间过长，请稍后重试');
+        setError(copy.subscribeTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setActionLoading(null);
     }
@@ -315,18 +332,18 @@ export default function SubscriptionSettingsPanel({
       });
 
       if (!response.ok || !data.success) {
-        setError(data.error || '退订失败，请稍后重试');
+        setError(data.error || copy.unsubscribeFailed);
         return;
       }
 
       applySubscription(null);
-      setMessage('已退订所有邮件。你随时可以再开启。');
+      setMessage(copy.unsubscribeSuccess);
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('退订等待时间过长，请稍后重试');
+        setError(copy.unsubscribeTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setActionLoading(null);
     }
@@ -344,13 +361,13 @@ export default function SubscriptionSettingsPanel({
         <div className="border-b border-[color:var(--fb-border)] bg-white px-4 py-3">
           <div className="fb-section-title inline-flex items-center gap-1.5">
             <Settings2 className="h-3 w-3 text-[color:var(--fb-blue)]" />
-            订阅设置
+            {copy.sectionEyebrow}
           </div>
           <h2 className="mt-1.5 text-[18px] font-bold leading-tight text-[color:var(--fb-ink-1)]">
-            管理你想收到的邮件类型
+            {copy.sectionTitle}
           </h2>
-          <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.5] text-[color:var(--fb-ink-2)]">
-            按类别开关运势提醒、报告更新和内容动态；还可以为日常提醒指定最多 3 个重点关注。
+          <p className="intro-copy mt-1.5 max-w-2xl text-[13px] leading-[1.5] text-[color:var(--fb-ink-2)]">
+            {copy.sectionIntro}
           </p>
         </div>
 
@@ -361,7 +378,7 @@ export default function SubscriptionSettingsPanel({
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="输入订阅邮箱"
+              placeholder={copy.emailPlaceholder}
               className="fb-input h-10 w-full pl-9 pr-3 text-[13px] text-[color:var(--fb-ink-1)] placeholder:text-[color:var(--fb-ink-3)]"
             />
           </div>
@@ -371,7 +388,7 @@ export default function SubscriptionSettingsPanel({
             disabled={loading || !normalizedEmail}
             className="fb-btn fb-btn-primary inline-flex h-10 items-center justify-center gap-1.5 px-5 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '加载设置'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : copy.loadSettings}
           </button>
         </div>
 
@@ -393,7 +410,7 @@ export default function SubscriptionSettingsPanel({
             <SubscriptionFocusBanner focus={subscription.subscriptionFocus} />
           ) : null}
 
-          {draftPreferences.map((group) => (
+          {displayPreferences.map((group) => (
             <div key={group.key} className="fb-card p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -442,10 +459,10 @@ export default function SubscriptionSettingsPanel({
           {focusOptions.length > 0 ? (
             <div className="fb-card p-4">
               <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                日常提醒重点（最多 {MAX_EMAIL_FOCUS_ITEMS} 项）
+                {copy.focusTitle}
               </div>
               <p className="mt-1 text-sm leading-6 text-[color:var(--ink-3)]">
-                从你关联的报告结果里选择日常邮件优先围绕的内容。
+                {copy.focusHint}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 {focusOptions.map((item) => {
@@ -476,7 +493,7 @@ export default function SubscriptionSettingsPanel({
                     href={`/result/${subscription.meta.focusReportId}#subscription`}
                     className="text-xs font-semibold text-[color:var(--brand-strong)] hover:underline"
                   >
-                    去报告页查看更多可选项
+                    {copy.focusReportLink}
                   </Link>
                 </div>
               ) : null}
@@ -488,7 +505,7 @@ export default function SubscriptionSettingsPanel({
           <div className="fb-card p-4">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
               <ShieldCheck className="h-3.5 w-3.5" />
-              当前状态
+              {copy.statusEyebrow}
             </div>
 
             {subscription ? (
@@ -510,7 +527,7 @@ export default function SubscriptionSettingsPanel({
                     {isActive ? 'ACTIVE' : 'INACTIVE'}
                   </span>
                   <span className="inline-flex h-6 items-center rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-2 text-xs font-mono text-[color:var(--ink-4)]">
-                    已开启 {enabledCount} 项
+                    {copy.enabledCount(enabledCount)}
                   </span>
                 </div>
                 {(subscription.meta?.focusItems || []).length > 0 ? (
@@ -526,14 +543,14 @@ export default function SubscriptionSettingsPanel({
               </div>
             ) : (
               <p className="mt-3 text-sm text-[color:var(--ink-4)]">
-                输入邮箱并加载设置后，可在这里查看当前订阅状态。
+                {copy.statusEmpty}
               </p>
             )}
           </div>
 
           <div className="fb-card p-4">
             <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-              保存与操作
+              {copy.actionsEyebrow}
             </div>
             <div className="mt-3 flex flex-col gap-2">
               <button
@@ -543,7 +560,7 @@ export default function SubscriptionSettingsPanel({
                 className="fb-btn fb-btn-primary inline-flex h-10 items-center justify-center gap-1.5 px-5 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                {subscription?.status === 'active' ? '保存订阅设置' : '按当前选项开启订阅'}
+                {subscription?.status === 'active' ? copy.saveActive : copy.saveEnable}
               </button>
 
               {!isActive ? (
@@ -551,9 +568,9 @@ export default function SubscriptionSettingsPanel({
                   type="button"
                   onClick={() => void handleQuickSubscribe()}
                   disabled={!normalizedEmail || saving || actionLoading !== null}
-                  className="fb-btn inline-flex h-10 items-center justify-center gap-1.5 px-3 text-[color:var(--fb-ink-1)] disabled:cursor-not-allowed disabled:opacity-50"
+                  className="action-secondary fb-btn inline-flex h-10 items-center justify-center gap-1.5 px-3 text-[color:var(--fb-ink-1)] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {actionLoading === 'subscribe' ? '处理中…' : '一键开启默认订阅'}
+                  {actionLoading === 'subscribe' ? copy.processing : copy.quickSubscribe}
                 </button>
               ) : null}
 
@@ -563,14 +580,14 @@ export default function SubscriptionSettingsPanel({
                 disabled={!normalizedEmail || saving || actionLoading !== null}
                 className="fb-btn inline-flex h-10 items-center justify-center gap-1.5 px-3 text-[color:var(--fb-ink-1)] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {actionLoading === 'unsubscribe' ? '处理中…' : '退订所有邮件'}
+                {actionLoading === 'unsubscribe' ? copy.processing : copy.unsubscribeAll}
               </button>
 
               <Link
                 href={messagesHref}
                 className="fb-btn inline-flex h-10 items-center justify-center gap-1.5 px-3 text-[color:var(--fb-ink-1)]"
               >
-                查看邮件记录与追问
+                {copy.viewMessages}
               </Link>
             </div>
           </div>

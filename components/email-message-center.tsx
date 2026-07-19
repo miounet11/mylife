@@ -11,10 +11,13 @@ import {
   RefreshCcw,
   Send,
 } from 'lucide-react';
+import { useLocale } from '@/components/i18n/locale-provider';
 import { AlertBanner } from '@/components/layout/alert-banner';
 import EmailTrustPanel from '@/components/email-trust-panel';
 import ProfileSupplementPrompt from '@/components/profile-supplement-prompt';
 import SubscriptionFocusBanner from '@/components/subscription-focus-banner';
+import { emailMessageCenterCopy } from '@/lib/i18n/updates-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import type { ProfileSettingsResponse } from '@/lib/profile-settings-types';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 
@@ -64,11 +67,17 @@ export default function EmailMessageCenter({
   initialEmail = '',
   autoLoad = false,
   initialMessageId = '',
+  locale: localeProp,
 }: {
   initialEmail?: string;
   autoLoad?: boolean;
   initialMessageId?: string;
+  locale?: SiteLocale;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
+  const copy = useMemo(() => emailMessageCenterCopy(locale), [locale]);
+
   const [email, setEmail] = useState(initialEmail);
   const [loading, setLoading] = useState(false);
   const [replyLoading, setReplyLoading] = useState(false);
@@ -117,7 +126,7 @@ export default function EmailMessageCenter({
       );
       if (!response.ok || !data.success) {
         setMessages([]);
-        setError(data.error || '加载邮件记录失败');
+        setError(data.error || copy.loadFailed);
         return;
       }
       setMessages(data.messages || []);
@@ -126,9 +135,9 @@ export default function EmailMessageCenter({
       }
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('加载等待时间过长，请稍后重试');
+        setError(copy.loadTimeout);
       } else {
-        setError('网络异常，请稍后重试');
+        setError(copy.networkError);
       }
     } finally {
       setLoading(false);
@@ -194,16 +203,16 @@ export default function EmailMessageCenter({
         timeoutReason: 'email-save-to-profile-library',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '保存到资料库失败');
+        setError(data.error || copy.saveLibraryFailed);
         return;
       }
-      setMessage(data.message || '已保存到测算资料库。');
+      setMessage(data.message || copy.saveLibrarySuccess);
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('保存等待时间过长，请稍后重试');
+        setError(copy.saveLibraryTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setExtractLoading(false);
     }
@@ -226,18 +235,18 @@ export default function EmailMessageCenter({
         },
       );
       if (!response.ok || !data.success) {
-        setError(data.error || '追问失败，请稍后重试');
+        setError(data.error || copy.replyFailed);
         return;
       }
       setQuestion('');
-      setMessage('专业回复已生成，并同步发送到你的邮箱。');
+      setMessage(copy.replySuccess);
       await loadMessageDetail(selectedId);
       await loadMessages();
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('回复生成等待时间过长，请稍后重试');
+        setError(copy.replyTimeout);
       } else {
-        setError('网络异常，请稍后重试');
+        setError(copy.networkError);
       }
     } finally {
       setReplyLoading(false);
@@ -260,7 +269,7 @@ export default function EmailMessageCenter({
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="输入邮箱查看发送记录"
+              placeholder={copy.emailPlaceholder}
               className="fb-input h-10 w-full pl-9 pr-3 text-[13px]"
             />
           </div>
@@ -271,7 +280,7 @@ export default function EmailMessageCenter({
             className="fb-btn fb-btn-primary inline-flex h-10 items-center gap-1.5 px-4 disabled:opacity-50"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
-            刷新记录
+            {copy.refresh}
           </button>
         </div>
 
@@ -285,7 +294,7 @@ export default function EmailMessageCenter({
         <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
           <div className="border-b border-[color:var(--fb-border)] lg:border-b-0 lg:border-r">
             <div className="px-4 py-2 text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-              发送记录 ({messages.length})
+              {copy.sendLogTitle(messages.length)}
             </div>
             <div className="max-h-[520px] overflow-y-auto">
               {messages.length > 0 ? messages.map((item) => (
@@ -302,20 +311,20 @@ export default function EmailMessageCenter({
                       {item.categoryLabel}
                     </span>
                     <span className="font-mono text-[11px] text-[color:var(--ink-5)]">
-                      {formatDate(item.sentAt)}
+                      {formatDate(item.sentAt, copy.dateLocale)}
                     </span>
                   </div>
                   <div className="mt-1 text-sm font-semibold text-[color:var(--ink-1)]">{item.subject}</div>
                   <div className="mt-1 line-clamp-2 text-xs leading-5 text-[color:var(--ink-3)]">{item.preview}</div>
                   {(item.replyCount || 0) > 0 ? (
                     <div className="mt-1 text-[11px] font-semibold text-[color:var(--brand-strong)]">
-                      {item.replyCount} 条追问往来
+                      {copy.replyCount(item.replyCount || 0)}
                     </div>
                   ) : null}
                 </button>
               )) : (
                 <div className="px-4 py-8 text-sm text-[color:var(--ink-4)]">
-                  {loading ? '加载中…' : '暂无邮件记录。开启订阅后会在这里归档。'}
+                  {loading ? copy.emptyLoading : copy.emptyList}
                 </div>
               )}
             </div>
@@ -326,7 +335,7 @@ export default function EmailMessageCenter({
               <div className="space-y-4">
                 <div>
                   <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                    {selected.categoryLabel} · {formatDate(selected.sentAt)}
+                    {selected.categoryLabel} · {formatDate(selected.sentAt, copy.dateLocale)}
                   </div>
                   <h3 className="mt-1 text-lg font-black text-[color:var(--ink-1)]">{selected.subject}</h3>
                   <p className="mt-2 text-sm leading-6 text-[color:var(--ink-3)]">
@@ -338,7 +347,7 @@ export default function EmailMessageCenter({
                         href={`/result/${selected.reportId}`}
                         className="fb-btn h-8 px-3 text-xs hover:no-underline"
                       >
-                        查看关联报告 →
+                        {copy.viewReport}
                       </Link>
                     ) : null}
                     <button
@@ -348,10 +357,10 @@ export default function EmailMessageCenter({
                       className="fb-btn h-8 px-3 text-xs disabled:opacity-60"
                     >
                       {extractLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <BookMarked className="h-3.5 w-3.5" />}
-                      保存到资料库
+                      {copy.saveToLibrary}
                     </button>
                     <Link href="/profile/settings" className="fb-btn h-8 px-3 text-xs hover:no-underline">
-                      打开资料设置
+                      {copy.openProfileSettings}
                     </Link>
                   </div>
                 </div>
@@ -359,15 +368,15 @@ export default function EmailMessageCenter({
                 {replies.length > 0 ? (
                   <div className="space-y-2">
                     <div className="text-xs font-bold uppercase tracking-wider text-[color:var(--ink-5)]">
-                      追问往来
+                      {copy.threadTitle}
                     </div>
                     {replies.map((reply) => (
                       <div key={reply.id} className="rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
-                        <div className="text-xs font-semibold text-[color:var(--ink-2)]">你的追问</div>
+                        <div className="text-xs font-semibold text-[color:var(--ink-2)]">{copy.yourQuestion}</div>
                         <p className="mt-1 text-sm text-[color:var(--ink-3)]">{reply.body}</p>
                         {reply.answer ? (
                           <>
-                            <div className="mt-3 text-xs font-semibold text-[color:var(--brand-strong)]">专业回复</div>
+                            <div className="mt-3 text-xs font-semibold text-[color:var(--brand-strong)]">{copy.professionalReply}</div>
                             <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-[color:var(--ink-2)]">{reply.answer}</p>
                           </>
                         ) : null}
@@ -387,16 +396,16 @@ export default function EmailMessageCenter({
                 <div className="rounded-[var(--radius-sm)] border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-3">
                   <div className="inline-flex items-center gap-2 text-sm font-semibold text-[color:var(--ink-1)]">
                     <MessageSquareReply className="h-4 w-4 text-[color:var(--brand-strong)]" />
-                    继续追问这封邮件
+                    {copy.followUpTitle}
                   </div>
                   <p className="mt-1 text-xs leading-5 text-[color:var(--ink-3)]">
-                    我们会结合这封提醒的内容和你的报告上下文，生成专业回复并同步发到你的邮箱。你也可以直接回复收到的邮件。
+                    {copy.followUpHint}
                   </p>
                   <textarea
                     value={question}
                     onChange={(event) => setQuestion(event.target.value)}
                     rows={4}
-                    placeholder="例如：这封日常提醒里提到的“今天适合推进”，具体适合推进哪类事情？"
+                    placeholder={copy.followUpPlaceholder}
                     className="fb-input mt-3 w-full resize-y px-3 py-2 text-sm"
                   />
                   <button
@@ -406,13 +415,13 @@ export default function EmailMessageCenter({
                     className="fb-btn fb-btn-primary mt-2 h-10 px-4 text-sm disabled:opacity-50"
                   >
                     {replyLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    发送追问并获取专业回复
+                    {copy.sendFollowUp}
                   </button>
                 </div>
               </div>
             ) : (
               <div className="py-10 text-center text-sm text-[color:var(--ink-4)]">
-                选择左侧一封邮件，查看详情并追问
+                {copy.selectPrompt}
               </div>
             )}
           </div>
@@ -422,17 +431,17 @@ export default function EmailMessageCenter({
       <div className="text-center">
         <Link href="/updates" className="inline-flex items-center gap-1 text-xs font-semibold text-[color:var(--brand-strong)] hover:underline">
           <ArrowLeft className="h-3.5 w-3.5" />
-          返回订阅设置
+          {copy.backToSettings}
         </Link>
       </div>
     </div>
   );
 }
 
-function formatDate(value: string) {
+function formatDate(value: string, dateLocale: string) {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) return value;
-  return parsed.toLocaleString('zh-CN', {
+  return parsed.toLocaleString(dateLocale, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',

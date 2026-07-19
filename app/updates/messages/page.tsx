@@ -1,31 +1,45 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import EmailMessageCenter from '@/components/email-message-center';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { getAuthSession } from '@/lib/auth';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { messagesPageCopy } from '@/lib/i18n/updates-copy';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata = {
-  title: '邮件中心 | 人生K线',
-  description: '查看运势提醒与报告邮件发送记录，继续追问并获得专业回复。',
-  robots: { index: false, follow: false },
-};
-
-export default async function EmailMessagesPage({
-  searchParams,
-}: {
+interface EmailMessagesPageProps {
   searchParams?: Promise<{
     email?: string;
     message?: string;
+    lang?: string;
   }>;
-}) {
+}
+
+export async function generateMetadata({ searchParams }: EmailMessagesPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = messagesPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/updates/messages', locale),
+    locale,
+    noIndex: true,
+  });
+}
+
+export default async function EmailMessagesPage({ searchParams }: EmailMessagesPageProps) {
   const resolved = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(resolved.lang);
+  const copy = messagesPageCopy(uiLocale);
   const session = await getAuthSession();
   const currentEmail = session.user?.email || resolved.email?.trim().toLowerCase() || '';
   const initialMessageId = resolved.message?.trim() || '';
 
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始分析' }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta }}>
       <AnalyticsPageView
         eventName="email_messages_page_viewed"
         page="/updates/messages"
@@ -35,17 +49,17 @@ export default async function EmailMessagesPage({
         }}
       />
       <FocusHero
-        eyebrow="邮件中心"
-        title="我的邮件与专业回复"
-        description="这里归档你收到的运势提醒、报告更新和系统通知。任何一封邮件都可以继续追问，我们会用专业引擎结合 LLM 表达层给出回复。"
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
         actions={
           <>
             <Link href="/updates" className="fb-btn fb-btn-primary h-8 px-3 text-[12px] hover:no-underline">
-              订阅设置
+              {copy.linkSubscription}
             </Link>
             {!session.authenticated ? (
               <Link href="/login?next=%2Fupdates%2Fmessages" className="fb-btn h-8 px-3 text-[12px] hover:no-underline">
-                登录后自动加载
+                {copy.linkLogin}
               </Link>
             ) : null}
           </>
@@ -55,6 +69,7 @@ export default async function EmailMessagesPage({
         initialEmail={currentEmail}
         autoLoad={!!currentEmail}
         initialMessageId={initialMessageId}
+        locale={uiLocale}
       />
     </AppPage>
   );

@@ -12,16 +12,18 @@ import {
   Lightbulb,
   Pin,
   Plus,
-  RefreshCcw,
   Save,
   Sparkles,
   Trash2,
   Users,
 } from 'lucide-react';
+import { useLocale } from '@/components/i18n/locale-provider';
 import type { ProfileSupplementRecommendation } from '@/lib/profile-supplement-recommendations';
 import EmailTrustPanel from '@/components/email-trust-panel';
 import SubscriptionFocusBanner from '@/components/subscription-focus-banner';
 import ProgressiveProfileHub from '@/components/profile/progressive-profile-hub';
+import { profileSettingsPanelCopy } from '@/lib/i18n/profile-settings-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import {
   MAX_PROFILE_DOCUMENT_CHARS,
   PROFILE_ACCURACY_OPTIONS,
@@ -137,14 +139,20 @@ function resolveInitialTab(value: string): SettingsTab {
 }
 
 export default function ProfileSettingsPanel({
+  locale: localeProp,
   initialFortuneId = '',
   initialTab = '',
   initialHighlight = '',
 }: {
+  locale?: SiteLocale;
   initialFortuneId?: string;
   initialTab?: string;
   initialHighlight?: string;
 }) {
+  const { locale: ctxLocale } = useLocale();
+  const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
+  const copy = useMemo(() => profileSettingsPanelCopy(locale), [locale]);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [docSaving, setDocSaving] = useState(false);
@@ -208,7 +216,7 @@ export default function ProfileSettingsPanel({
       );
 
       if (!response.ok || !data.success) {
-        setError(data.error || '读取资料失败，请稍后重试');
+        setError(data.error || copy.loadFailed);
         applySettings(null);
         return;
       }
@@ -219,10 +227,10 @@ export default function ProfileSettingsPanel({
     } catch (requestError) {
       applySettings(null);
       if (isAbortLikeError(requestError)) {
-        setError('读取资料等待时间过长，请稍后重试');
+        setError(copy.loadTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setLoading(false);
     }
@@ -272,9 +280,7 @@ export default function ProfileSettingsPanel({
     resetNotice();
 
     if (engineChanged) {
-      const confirmed = window.confirm(
-        '你修改了出生日期、时间、地点、准确度或性别。这会触发命盘重算，旧报告仍保留，新结果将在后台更新。确定保存吗？',
-      );
+      const confirmed = window.confirm(copy.confirmRecalc);
       if (!confirmed) return;
     }
 
@@ -299,10 +305,10 @@ export default function ProfileSettingsPanel({
 
       if (!response.ok || !data.success) {
         if (data.error === 'CONFIRM_RECALC_REQUIRED') {
-          setError('修改排盘信息后需要确认重算，请再次点击保存并确认。');
+          setError(copy.confirmRecalcRequired);
           return;
         }
-        setError(data.error || '保存基础资料失败');
+        setError(data.error || copy.saveBasicFailed);
         return;
       }
 
@@ -318,13 +324,13 @@ export default function ProfileSettingsPanel({
       }
 
       await loadSettings(activeFortuneId, true);
-      setMessage(data.message || '测算资料已保存。');
+      setMessage(data.message || copy.saveSuccess);
     } catch (requestError) {
       if (isAbortLikeError(requestError)) {
-        setError('保存等待时间过长，请稍后重试');
+        setError(copy.saveTimeout);
         return;
       }
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setSaving(false);
     }
@@ -332,7 +338,7 @@ export default function ProfileSettingsPanel({
 
   const handleSaveDocument = async () => {
     if (!activeFortuneId || !draftDocument.title.trim() || !draftDocument.content.trim()) {
-      setError('请填写文档标题和正文');
+      setError(copy.documentTitleRequired);
       return;
     }
     resetNotice();
@@ -364,22 +370,22 @@ export default function ProfileSettingsPanel({
       });
 
       if (!response.ok || !data.success) {
-        setError(data.error || '保存文档失败');
+        setError(data.error || copy.saveDocumentFailed);
         return;
       }
 
       applySettings(data.settings);
       setDraftDocument(emptyDocument());
-      setMessage(data.message || '附加文档已保存。');
+      setMessage(data.message || copy.documentSaved);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setDocSaving(false);
     }
   };
 
   const handleDeleteDocument = async (documentId: string) => {
-    if (!window.confirm('确定删除这篇附加文档吗？')) return;
+    if (!window.confirm(copy.confirmDeleteDocument)) return;
     resetNotice();
     setDocSaving(true);
     try {
@@ -393,13 +399,13 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-delete-document-timeout',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '删除文档失败');
+        setError(data.error || copy.deleteDocumentFailed);
         return;
       }
       applySettings(data.settings);
-      setMessage('附加文档已删除。');
+      setMessage(copy.documentDeleted);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setDocSaving(false);
     }
@@ -407,7 +413,7 @@ export default function ProfileSettingsPanel({
 
   const handleCreateArchive = async () => {
     if (!newArchive.name.trim() || !newArchive.birthDate) {
-      setError('请填写档案姓名和出生日期');
+      setError(copy.archiveNameRequired);
       return;
     }
     resetNotice();
@@ -427,15 +433,15 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-create-archive-timeout',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '创建档案失败');
+        setError(data.error || copy.createArchiveFailed);
         return;
       }
       setNewArchive(emptyArchive());
       if (data.settings) applySettings(data.settings);
       if (data.fortuneId) setActiveFortuneId(data.fortuneId);
-      setMessage(data.message || '新档案已创建。');
+      setMessage(data.message || copy.archiveCreated);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setArchiveSaving(false);
     }
@@ -455,13 +461,13 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-set-primary-timeout',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '设置默认档案失败');
+        setError(data.error || copy.setPrimaryFailed);
         return;
       }
       applySettings(data.settings);
-      setMessage('已设为默认档案。');
+      setMessage(copy.primarySet);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setArchiveSaving(false);
     }
@@ -491,7 +497,7 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-extract-report',
       });
       if (!response.ok || !data.success || !data.draft) {
-        setError(data.error || '提取报告要点失败');
+        setError(data.error || copy.extractFailed);
         return;
       }
       setDraftDocument({
@@ -503,9 +509,9 @@ export default function ProfileSettingsPanel({
         pinned: false,
       });
       setActiveTab('documents');
-      setMessage('已从当前报告提取要点，请确认后保存。');
+      setMessage(copy.extractSuccess);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setDocSaving(false);
     }
@@ -528,23 +534,23 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-link-subscription',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '关联邮件提醒失败');
+        setError(data.error || copy.linkSubscriptionFailed);
         return;
       }
       setSubscriptionFocusReportId(data.focusReportId || fortuneId);
       if (data.settings) {
         applySettings(data.settings);
       }
-      setMessage(data.message || '已关联邮件提醒档案。');
+      setMessage(data.message || copy.linkSubscriptionSuccess);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setArchiveSaving(false);
     }
   };
 
   const handleDeleteArchive = async (fortuneId: string) => {
-    if (!window.confirm('确定删除这份档案吗？关联报告仍保留只读。')) return;
+    if (!window.confirm(copy.confirmDeleteArchive)) return;
     resetNotice();
     setArchiveSaving(true);
     try {
@@ -558,13 +564,13 @@ export default function ProfileSettingsPanel({
         timeoutReason: 'profile-settings-delete-archive-timeout',
       });
       if (!response.ok || !data.success) {
-        setError(data.error || '删除档案失败');
+        setError(data.error || copy.deleteArchiveFailed);
         return;
       }
       applySettings(data.settings);
-      setMessage('档案已删除。');
+      setMessage(copy.archiveDeleted);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkError);
     } finally {
       setArchiveSaving(false);
     }
@@ -574,7 +580,7 @@ export default function ProfileSettingsPanel({
     return (
       <div className="flex items-center justify-center gap-2 py-12 text-[13px] text-[color:var(--ink-5)]">
         <Loader2 className="h-4 w-4 animate-spin" />
-        正在读取测算资料…
+        {copy.loading}
       </div>
     );
   }
@@ -582,26 +588,26 @@ export default function ProfileSettingsPanel({
   if (!settings?.fortunes.length) {
     return (
       <div className="border-y border-[color:var(--hairline)] py-6">
-        <h2 className="text-[16px] font-semibold text-[color:var(--ink-1)]">还没有测算档案</h2>
+        <h2 className="text-[16px] font-semibold text-[color:var(--ink-1)]">{copy.emptyTitle}</h2>
         <p className="mt-1.5 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
-          先完成一次测算，之后可在此修改与补充资料。
+          {copy.emptyDescription}
         </p>
         <Link
           href="/analyze"
           className="mt-3 inline-block text-[13px] text-[color:var(--ink-1)] underline-offset-2 hover:underline"
         >
-          去测算
+          {copy.emptyCta}
         </Link>
       </div>
     );
   }
 
   const tabs: Array<{ key: SettingsTab; label: string }> = [
-    { key: 'basic', label: '基础信息' },
-    { key: 'supplements', label: '补充资料' },
-    { key: 'documents', label: '附加文档' },
-    { key: 'archives', label: '档案管理' },
-    { key: 'history', label: '变更记录' },
+    { key: 'basic', label: copy.tabBasic },
+    { key: 'supplements', label: copy.tabSupplements },
+    { key: 'documents', label: copy.tabDocuments },
+    { key: 'archives', label: copy.tabArchives },
+    { key: 'history', label: copy.tabHistory },
   ];
 
   return (
@@ -612,12 +618,12 @@ export default function ProfileSettingsPanel({
 
       <div className="overflow-hidden border-y border-[color:var(--hairline)]">
         <div className="border-b border-[color:var(--hairline)] py-3">
-          <div className="text-[12px] font-medium text-[color:var(--ink-5)]">测算资料</div>
+          <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.panelEyebrow}</div>
           <h2 className="mt-0.5 text-[15px] font-semibold text-[color:var(--ink-1)]">
-            基础信息、补充与文档
+            {copy.panelTitle}
           </h2>
           <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">
-            也可在和老师对话时逐步补充。
+            {copy.panelHint}
           </p>
         </div>
 
@@ -627,14 +633,14 @@ export default function ProfileSettingsPanel({
               {settings.account.email || settings.account.name}
             </span>
             <span className="text-[12px] text-[color:var(--ink-5)]">
-              完整度 {settings.completeness}%
+              {copy.completeness(settings.completeness)}
               {settings.completenessBreakdown?.intentHint
                 ? ` · ${settings.completenessBreakdown.intentHint}`
                 : ''}
             </span>
             {settings.pendingRecalc ? (
               <span className="text-[12px] text-[color:var(--ink-5)]">
-                命盘重算中（{settings.pendingRecalc.status}）
+                {copy.recalcPending(settings.pendingRecalc.status)}
               </span>
             ) : null}
             <select
@@ -645,7 +651,7 @@ export default function ProfileSettingsPanel({
               {settings.fortunes.map((fortune) => (
                 <option key={fortune.id} value={fortune.id}>
                   {fortune.name}
-                  {fortune.relationLabel ? `（${fortune.relationLabel}）` : fortune.isPrimary ? '（本人）' : ''}
+                  {fortune.relationLabel ? `（${fortune.relationLabel}）` : fortune.isPrimary ? `（${copy.selfLabel}）` : ''}
                 </option>
               ))}
             </select>
@@ -687,18 +693,18 @@ export default function ProfileSettingsPanel({
               {engineChanged ? (
                 <div className="flex items-start gap-2.5 rounded-[var(--radius)] border border-amber-200 bg-amber-50 px-3.5 py-2.5 text-[13px] text-amber-900">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} />
-                  <span>你修改了影响排盘的信息。保存后将触发命盘重算。</span>
+                  <span>{copy.engineChangedWarning}</span>
                 </div>
               ) : null}
               {activeFortune?.pillarSummary ? (
                 <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-3.5 py-2.5 text-[13px] text-[color:var(--ink-2)]">
-                  当前四柱摘要：{activeFortune.pillarSummary}
+                  {copy.pillarSummary(activeFortune.pillarSummary)}
                 </div>
               ) : null}
               <div className="grid gap-4 md:grid-cols-2">
                 {[
-                  ['姓名', 'name', 'text'],
-                  ['关系备注', 'relationLabel', 'text'],
+                  [copy.labelName, 'name', 'text'],
+                  [copy.labelRelationNote, 'relationLabel', 'text'],
                 ].map(([label, key]) => (
                   <label key={key} className="space-y-1.5 text-[13px]">
                     <span className="font-medium text-[color:var(--ink-2)]">{label}</span>
@@ -710,27 +716,27 @@ export default function ProfileSettingsPanel({
                   </label>
                 ))}
                 <label className="space-y-1.5 text-[13px]">
-                  <span className="font-medium text-[color:var(--ink-2)]">性别</span>
+                  <span className="font-medium text-[color:var(--ink-2)]">{copy.labelGender}</span>
                   <select value={draftFortune.gender} onChange={(e) => setDraftFortune((c) => ({ ...c, gender: e.target.value as 'male' | 'female' }))} className="fb-input h-9 w-full px-3 text-[13px]">
-                    <option value="male">男</option>
-                    <option value="female">女</option>
+                    <option value="male">{copy.genderMale}</option>
+                    <option value="female">{copy.genderFemale}</option>
                   </select>
                 </label>
                 <label className="space-y-1.5 text-[13px]">
-                  <span className="font-medium text-[color:var(--ink-2)]">出生日期</span>
+                  <span className="font-medium text-[color:var(--ink-2)]">{copy.labelBirthDate}</span>
                   <input type="date" value={draftFortune.birthDate} onChange={(e) => setDraftFortune((c) => ({ ...c, birthDate: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]" />
                 </label>
                 <label className="space-y-1.5 text-[13px]">
-                  <span className="font-medium text-[color:var(--ink-2)]">出生时间</span>
+                  <span className="font-medium text-[color:var(--ink-2)]">{copy.labelBirthTime}</span>
                   <input type="time" value={draftFortune.birthTime} disabled={draftFortune.birthAccuracy === 'unknown'} onChange={(e) => setDraftFortune((c) => ({ ...c, birthTime: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px] disabled:opacity-50" />
                 </label>
                 <label className="space-y-1.5 text-[13px]">
-                  <span className="font-medium text-[color:var(--ink-2)]">出生地点</span>
+                  <span className="font-medium text-[color:var(--ink-2)]">{copy.labelBirthPlace}</span>
                   <input value={draftFortune.birthPlace} onChange={(e) => setDraftFortune((c) => ({ ...c, birthPlace: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]" />
                 </label>
               </div>
               <div className="space-y-2.5">
-                <div className="text-[13px] font-medium text-[color:var(--ink-2)]">出生时间可信度</div>
+                <div className="text-[13px] font-medium text-[color:var(--ink-2)]">{copy.labelBirthAccuracy}</div>
                 <div className="grid gap-2 md:grid-cols-3">
                   {PROFILE_ACCURACY_OPTIONS.map((option) => (
                     <button key={option.key} type="button" onClick={() => setDraftFortune((c) => ({ ...c, birthAccuracy: option.key, birthTime: option.key === 'unknown' ? '12:00' : c.birthTime }))} className={`rounded-[var(--radius)] border px-3.5 py-3 text-left text-[13px] transition ${draftFortune.birthAccuracy === option.key ? 'border-[color:var(--brand)] bg-[color:var(--brand-soft)]' : 'border-[color:var(--hairline)] bg-[color:var(--paper)] hover:border-[color:var(--hairline-strong)]'}`}>
@@ -741,7 +747,7 @@ export default function ProfileSettingsPanel({
                 </div>
               </div>
               <div className="space-y-2.5">
-                <div className="text-[13px] font-medium text-[color:var(--ink-2)]">当前测算关注</div>
+                <div className="text-[13px] font-medium text-[color:var(--ink-2)]">{copy.labelIntent}</div>
                 <div className="grid gap-2 md:grid-cols-2">
                   {PROFILE_INTENT_OPTIONS.map((option) => (
                     <button key={option.key} type="button" onClick={() => setDraftFortune((c) => ({ ...c, intent: option.key }))} className={`rounded-[var(--radius)] border px-3.5 py-3 text-left text-[13px] transition ${draftFortune.intent === option.key ? 'border-[color:var(--brand)] bg-[color:var(--brand-soft)]' : 'border-[color:var(--hairline)] bg-[color:var(--paper)] hover:border-[color:var(--hairline-strong)]'}`}>
@@ -758,13 +764,13 @@ export default function ProfileSettingsPanel({
             <div className="space-y-5">
               <div className="flex items-start gap-2 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-sm text-[color:var(--ink-2)]">
                 <BookOpen className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>六类补充资料不会改动排盘，但会让报告、运势邮件和追问回复更贴近你的真实处境。</span>
+                <span>{copy.supplementsIntro}</span>
               </div>
               {missingRecommendations.length > 0 ? (
                 <div className="rounded-[var(--radius)] border border-amber-200 bg-amber-50 p-3">
                   <div className="inline-flex items-center gap-1.5 text-sm font-semibold text-amber-900">
                     <Lightbulb className="h-4 w-4" />
-                    根据你的测算关注，建议优先补充
+                    {copy.recommendPriority}
                   </div>
                   <div className="mt-2 space-y-2">
                     {missingRecommendations.slice(0, 4).map((item) => (
@@ -824,7 +830,7 @@ export default function ProfileSettingsPanel({
               <div className="flex flex-wrap items-start justify-between gap-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-sm text-[color:var(--ink-2)]">
                 <div className="flex items-start gap-2">
                   <FileText className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>附加文档像你的个人说明书。纳入测算的文档会进入报告与邮件上下文（最多 20 篇，置顶 3 篇）。</span>
+                  <span>{copy.documentsIntro}</span>
                 </div>
                 <button
                   type="button"
@@ -833,7 +839,7 @@ export default function ProfileSettingsPanel({
                   className="inline-flex h-8 items-center gap-1 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-white px-3 text-xs font-semibold"
                 >
                   {docSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
-                  从当前报告提取
+                  {copy.extractFromReport}
                 </button>
               </div>
 
@@ -848,14 +854,14 @@ export default function ProfileSettingsPanel({
                       <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">
                         {PROFILE_DOCUMENT_CATEGORY_OPTIONS.find((item) => item.key === doc.category)?.label || doc.category}
                         {' · '}
-                        {doc.visibility === 'engine' ? '参与测算' : '仅自己可见'}
+                        {doc.visibility === 'engine' ? copy.visibilityEngine : copy.visibilityPrivate}
                         {' · '}
-                        {doc.wordCount} 字
+                        {copy.wordCount(doc.wordCount)}
                       </div>
                       <p className="mt-2 line-clamp-2 text-sm text-[color:var(--ink-2)]">{doc.content}</p>
                     </div>
                     <div className="flex shrink-0 gap-1">
-                      <button type="button" onClick={() => setDraftDocument({ id: doc.id, title: doc.title, category: doc.category, content: doc.content, visibility: doc.visibility, pinned: doc.pinned })} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">编辑</button>
+                      <button type="button" onClick={() => setDraftDocument({ id: doc.id, title: doc.title, category: doc.category, content: doc.content, visibility: doc.visibility, pinned: doc.pinned })} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">{copy.edit}</button>
                       <button type="button" onClick={() => void handleDeleteDocument(doc.id)} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600"><Trash2 className="h-3.5 w-3.5" /></button>
                     </div>
                   </div>
@@ -863,41 +869,41 @@ export default function ProfileSettingsPanel({
               ))}
 
               <section className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--hairline)] p-4 md:p-5">
-                <h3 className="text-[14px] font-semibold text-[color:var(--ink-1)]">{draftDocument.id ? '编辑文档' : '新建文档'}</h3>
+                <h3 className="text-[14px] font-semibold text-[color:var(--ink-1)]">{draftDocument.id ? copy.editDocument : copy.newDocument}</h3>
                 <div className="grid gap-3 md:grid-cols-2">
                   <label className="space-y-1 text-sm md:col-span-2">
-                    <span className="font-semibold">标题</span>
+                    <span className="font-semibold">{copy.labelTitle}</span>
                     <input value={draftDocument.title} onChange={(e) => setDraftDocument((c) => ({ ...c, title: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]" />
                   </label>
                   <label className="space-y-1.5 text-[13px]">
-                    <span className="font-semibold">分类</span>
+                    <span className="font-semibold">{copy.labelCategory}</span>
                     <select value={draftDocument.category} onChange={(e) => setDraftDocument((c) => ({ ...c, category: e.target.value as ProfileDocumentCategory }))} className="fb-input h-9 w-full px-3 text-[13px]">
                       {PROFILE_DOCUMENT_CATEGORY_OPTIONS.map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
                     </select>
                   </label>
                   <label className="space-y-1.5 text-[13px]">
-                    <span className="font-semibold">可见性</span>
+                    <span className="font-semibold">{copy.labelVisibility}</span>
                     <select value={draftDocument.visibility} onChange={(e) => setDraftDocument((c) => ({ ...c, visibility: e.target.value as ProfileDocumentVisibility }))} className="fb-input h-9 w-full px-3 text-[13px]">
-                      <option value="engine">纳入后续测算与邮件</option>
-                      <option value="private">仅自己可见</option>
+                      <option value="engine">{copy.visibilityEngineOption}</option>
+                      <option value="private">{copy.visibilityPrivateOption}</option>
                     </select>
                   </label>
                 </div>
                 <label className="space-y-1.5 text-[13px]">
-                  <span className="font-semibold">正文（{draftDocument.content.length}/{MAX_PROFILE_DOCUMENT_CHARS}）</span>
+                  <span className="font-semibold">{copy.labelBody(draftDocument.content.length, MAX_PROFILE_DOCUMENT_CHARS)}</span>
                   <textarea value={draftDocument.content} onChange={(e) => setDraftDocument((c) => ({ ...c, content: e.target.value.slice(0, MAX_PROFILE_DOCUMENT_CHARS) }))} rows={6} className="w-full rounded-[var(--radius)] border border-[color:var(--hairline)] px-3 py-2" />
                 </label>
                 <label className="inline-flex items-center gap-2 text-sm">
                   <input type="checkbox" checked={draftDocument.pinned} onChange={(e) => setDraftDocument((c) => ({ ...c, pinned: e.target.checked }))} />
-                  置顶（优先注入测算上下文）
+                  {copy.pinHint}
                 </label>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => void handleSaveDocument()} disabled={docSaving} className="fb-btn fb-btn-primary h-9 gap-1.5 px-4 text-[13px] disabled:opacity-60">
                     {docSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                    保存文档
+                    {copy.saveDocument}
                   </button>
                   {draftDocument.id ? (
-                    <button type="button" onClick={() => setDraftDocument(emptyDocument())} className="inline-flex h-9 items-center rounded-[var(--radius)] border border-[color:var(--hairline)] px-3 text-sm">取消编辑</button>
+                    <button type="button" onClick={() => setDraftDocument(emptyDocument())} className="inline-flex h-9 items-center rounded-[var(--radius)] border border-[color:var(--hairline)] px-3 text-sm">{copy.cancelEdit}</button>
                   ) : null}
                 </div>
               </section>
@@ -908,7 +914,7 @@ export default function ProfileSettingsPanel({
             <div className="space-y-4">
               <div className="flex items-start gap-2 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-sm text-[color:var(--ink-2)]">
                 <Users className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>可为家人建立独立档案。默认档案用于日常邮件与默认报告，删除前需先切换默认档案。</span>
+                <span>{copy.archivesIntro}</span>
               </div>
               {settings.subscriptionFocus ? (
                 <SubscriptionFocusBanner focus={settings.subscriptionFocus} />
@@ -918,23 +924,23 @@ export default function ProfileSettingsPanel({
                   <div>
                     <div className="text-[13px] font-semibold text-[color:var(--ink-1)]">
                       {fortune.name}
-                      {fortune.isPrimary ? <span className="ml-2 rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-xs text-[color:var(--brand)]">默认</span> : null}
+                      {fortune.isPrimary ? <span className="ml-2 rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-xs text-[color:var(--brand)]">{copy.primaryBadge}</span> : null}
                     </div>
                     <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">
-                      {fortune.relationLabel || fortune.relation} · {fortune.birthDate} · 完整度 {fortune.completeness}%
+                      {copy.archiveMeta(fortune.relationLabel || fortune.relation, fortune.birthDate, fortune.completeness)}
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-2">
                     {subscriptionFocusReportId !== fortune.id ? (
-                      <button type="button" onClick={() => void handleLinkSubscriptionFocus(fortune.id)} disabled={archiveSaving} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">关联邮件提醒</button>
+                      <button type="button" onClick={() => void handleLinkSubscriptionFocus(fortune.id)} disabled={archiveSaving} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">{copy.linkEmailReminders}</button>
                     ) : (
-                      <span className="rounded border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 py-1 text-xs text-[color:var(--brand)]">邮件提醒中</span>
+                      <span className="rounded border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 py-1 text-xs text-[color:var(--brand)]">{copy.emailRemindersActive}</span>
                     )}
                     {!fortune.isPrimary ? (
-                      <button type="button" onClick={() => void handleSetPrimary(fortune.id)} disabled={archiveSaving} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">设为默认</button>
+                      <button type="button" onClick={() => void handleSetPrimary(fortune.id)} disabled={archiveSaving} className="rounded border border-[color:var(--hairline)] px-2 py-1 text-xs">{copy.setAsDefault}</button>
                     ) : null}
                     {!fortune.isPrimary && settings.fortunes.length > 1 ? (
-                      <button type="button" onClick={() => void handleDeleteArchive(fortune.id)} disabled={archiveSaving} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600">删除</button>
+                      <button type="button" onClick={() => void handleDeleteArchive(fortune.id)} disabled={archiveSaving} className="rounded border border-red-200 px-2 py-1 text-xs text-red-600">{copy.delete}</button>
                     ) : null}
                   </div>
                 </div>
@@ -943,25 +949,25 @@ export default function ProfileSettingsPanel({
               <section className="space-y-3 rounded-[var(--radius-md)] border border-[color:var(--hairline)] p-4 md:p-5">
                 <h3 className="inline-flex items-center gap-1.5 text-sm font-bold text-[color:var(--ink-1)]">
                   <Plus className="h-4 w-4" />
-                  新建家人档案
+                  {copy.newFamilyArchive}
                 </h3>
                 <div className="grid gap-3 md:grid-cols-2">
-                  <input value={newArchive.name} onChange={(e) => setNewArchive((c) => ({ ...c, name: e.target.value }))} placeholder="姓名" className="fb-input h-9 w-full px-3 text-[13px]" />
+                  <input value={newArchive.name} onChange={(e) => setNewArchive((c) => ({ ...c, name: e.target.value }))} placeholder={copy.placeholderName} className="fb-input h-9 w-full px-3 text-[13px]" />
                   <select value={newArchive.relation} onChange={(e) => setNewArchive((c) => ({ ...c, relation: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]">
                     {PROFILE_RELATION_OPTIONS.filter((item) => item.key !== 'self').map((item) => <option key={item.key} value={item.key}>{item.label}</option>)}
                   </select>
-                  <input value={newArchive.relationLabel} onChange={(e) => setNewArchive((c) => ({ ...c, relationLabel: e.target.value }))} placeholder="关系备注（如：大宝）" className="fb-input h-9 w-full px-3 text-[13px]" />
+                  <input value={newArchive.relationLabel} onChange={(e) => setNewArchive((c) => ({ ...c, relationLabel: e.target.value }))} placeholder={copy.placeholderRelationNote} className="fb-input h-9 w-full px-3 text-[13px]" />
                   <select value={newArchive.gender} onChange={(e) => setNewArchive((c) => ({ ...c, gender: e.target.value as 'male' | 'female' }))} className="fb-input h-9 w-full px-3 text-[13px]">
-                    <option value="male">男</option>
-                    <option value="female">女</option>
+                    <option value="male">{copy.genderMale}</option>
+                    <option value="female">{copy.genderFemale}</option>
                   </select>
                   <input type="date" value={newArchive.birthDate} onChange={(e) => setNewArchive((c) => ({ ...c, birthDate: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]" />
                   <input type="time" value={newArchive.birthTime} onChange={(e) => setNewArchive((c) => ({ ...c, birthTime: e.target.value }))} className="fb-input h-9 w-full px-3 text-[13px]" />
-                  <input value={newArchive.birthPlace} onChange={(e) => setNewArchive((c) => ({ ...c, birthPlace: e.target.value }))} placeholder="出生地点" className="fb-input h-10 w-full px-3 text-sm md:col-span-2" />
+                  <input value={newArchive.birthPlace} onChange={(e) => setNewArchive((c) => ({ ...c, birthPlace: e.target.value }))} placeholder={copy.placeholderBirthPlace} className="fb-input h-10 w-full px-3 text-sm md:col-span-2" />
                 </div>
                 <button type="button" onClick={() => void handleCreateArchive()} disabled={archiveSaving} className="fb-btn fb-btn-primary h-9 gap-1.5 px-4 text-[13px] disabled:opacity-60">
                   {archiveSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                  创建档案
+                  {copy.createArchive}
                 </button>
               </section>
             </div>
@@ -971,15 +977,15 @@ export default function ProfileSettingsPanel({
             <div className="space-y-3">
               <div className="flex items-start gap-2 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-sm text-[color:var(--ink-2)]">
                 <History className="mt-0.5 h-4 w-4 shrink-0" />
-                <span>这里记录你最近对资料的修改，包括是否触发了命盘重算。</span>
+                <span>{copy.historyIntro}</span>
               </div>
               {(settings.changeLog || []).length === 0 ? (
-                <p className="text-sm text-[color:var(--ink-3)]">暂无变更记录。</p>
+                <p className="text-sm text-[color:var(--ink-3)]">{copy.historyEmpty}</p>
               ) : (
                 settings.changeLog.map((item) => (
                   <div key={item.id} className="rounded-[var(--radius)] border border-[color:var(--hairline)] px-3 py-2 text-sm">
                     <div className="font-medium text-[color:var(--ink-2)]">{item.summary}</div>
-                    <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">{item.createdAt || '刚刚'}</div>
+                    <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">{item.createdAt || copy.justNow}</div>
                   </div>
                 ))
               )}
@@ -990,14 +996,14 @@ export default function ProfileSettingsPanel({
         {(activeTab === 'basic' || activeTab === 'supplements') ? (
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--hairline)] py-3.5">
             <div className="text-[12px] leading-[1.45] text-[color:var(--ink-5)]">
-              修改出生信息会重算；补充资料只影响建议表达。
+              {copy.footerNote}
             </div>
             <div className="flex items-center gap-x-4">
               <Link
                 href="/profile"
                 className="text-[13px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                返回档案
+                {copy.backToProfile}
               </Link>
               <button
                 type="button"
@@ -1006,7 +1012,7 @@ export default function ProfileSettingsPanel({
                 className="inline-flex h-9 items-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] px-4 text-[13px] font-medium text-white disabled:opacity-60"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                保存资料
+                {copy.saveProfile}
               </button>
             </div>
           </div>
