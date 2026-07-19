@@ -29,9 +29,11 @@ import {
   resolveContentIllustrations,
 } from '@/lib/content-illustrations';
 import { articleDatesFrom, articleSeo, buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 }
 
 function caseSisterExists(slug: string): boolean {
@@ -81,8 +83,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
 }
 
-export default async function CaseStudyPage({ params }: PageProps) {
+export default async function CaseStudyPage({ params, searchParams }: PageProps) {
   const { slug } = await params;
+  const sp = (await searchParams) || {};
+  const uiLocale = await getRequestLocale(sp.lang);
   const article = getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
   if (!article || (article.type && article.type !== 'case')) notFound();
 
@@ -150,6 +154,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
               groupLabel={geo.groupLabel}
               localeLabel={geo.localeLabel}
               geoReady={geo.geoReady}
+              locale={uiLocale}
             />
             {sister ? (
               <Link
@@ -174,7 +179,7 @@ export default async function CaseStudyPage({ params }: PageProps) {
           </>
         }
       />
-      <JourneyStrip active="content" />
+      <JourneyStrip active="content" locale={uiLocale} />
       <article className="space-y-4 border-t border-[color:var(--hairline)] pt-5">
         <ContentArticleBody
           sections={sections}

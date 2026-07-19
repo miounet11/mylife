@@ -119,10 +119,10 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
                 {copy.ctaDimensions}
               </Link>
               <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                专题
+                {copy.ctaLearn}
               </Link>
               <Link href="/cases" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                案例
+                {copy.ctaCases}
               </Link>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {copy.ctaTools}
@@ -130,10 +130,10 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
             </>
           }
         />
-        <JourneyStrip active="content" />
+        <JourneyStrip active="content" locale={uiLocale} />
         <PageIllustrationStrip
           surface="knowledge/hub"
-          title={uiLocale === 'en' ? 'How to use the library' : uiLocale === 'zh-Hant' ? '怎麼用知識庫' : '怎么用知识库'}
+          title={copy.stripTitle}
           compact
           limit={1}
           locale={uiLocale === 'en' ? 'en' : uiLocale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'}
@@ -193,6 +193,7 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
                       localeLabel={geo.localeLabel}
                       geoReady={geo.geoReady}
                       geoReadyLabel={copy.geoReadyBadge}
+                      locale={uiLocale}
                     />
                   </Link>
                 </li>
@@ -203,6 +204,7 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
             basePath={basePath.includes('?') ? basePath : basePath}
             page={currentPage}
             totalPages={totalPages}
+            locale={uiLocale}
           />
         </section>
       </div>

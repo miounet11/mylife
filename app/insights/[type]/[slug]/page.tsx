@@ -231,7 +231,7 @@ export default async function InsightArticlePage({
           </>
         }
       />
-      <JourneyStrip active="content" />
+      <JourneyStrip active="content" locale={isEnEntity ? 'en' : uiLocale} />
       <div className="mx-auto max-w-3xl px-4">
         <PageIllustrationStrip
           surface={geoSurface}

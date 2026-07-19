@@ -93,7 +93,7 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
           }
         />
 
-        <JourneyStrip active="tools" />
+        <JourneyStrip active="tools" locale={uiLocale} />
 
         <PageIllustrationStrip
           surface="tools/hub"

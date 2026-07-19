@@ -38,10 +38,11 @@ import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
 } from '@/lib/seo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
-  searchParams?: Promise<{ source?: string }>;
+  searchParams?: Promise<{ source?: string; lang?: string }>;
 }
 
 function knowledgeSisterExists(slug: string): boolean {
@@ -94,7 +95,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function KnowledgeArticlePage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const source = (await searchParams)?.source;
+  const sp = (await searchParams) || {};
+  const source = sp.source;
+  const uiLocale = await getRequestLocale(sp.lang);
   // Prefer DB/content-store; fall back to local enriched seeds (SEO pillars / dimension guides)
   const article = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
   if (!article || (article.type && article.type !== 'knowledge')) notFound();
@@ -178,6 +181,7 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
               groupLabel={geo.groupLabel}
               localeLabel={geo.localeLabel}
               geoReady={geo.geoReady}
+              locale={uiLocale}
             />
             {sister ? (
               <Link
@@ -212,7 +216,7 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
           </>
         }
       />
-      <JourneyStrip active="content" />
+      <JourneyStrip active="content" locale={uiLocale} />
       {lens ? <EncyclopediaWorldYiSidebar lens={lens} /> : null}
       <article className="space-y-4 border-t border-[color:var(--hairline)] pt-5">
         <ContentArticleBody

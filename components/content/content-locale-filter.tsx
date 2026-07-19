@@ -1,11 +1,22 @@
 import Link from 'next/link';
 import type { ContentLocaleGroupKey } from '@/lib/content-locale';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import { toSiteLocaleText } from '@/lib/i18n/site-locale';
 
 export type LocaleFilterOption = {
   key: ContentLocaleGroupKey | 'all';
   label: string;
   count: number;
 };
+
+function defaultGeoReadyLabel(locale?: SiteLocale | string | null): string {
+  if (locale === 'en' || `${locale || ''}`.toLowerCase().startsWith('en')) {
+    return 'AI-citable';
+  }
+  const zh = 'AI 可引用';
+  if (locale === 'zh-Hant') return toSiteLocaleText(zh, 'zh-Hant');
+  return zh;
+}
 
 export default function ContentLocaleFilter({
   basePath,
@@ -61,14 +72,18 @@ export function ContentLocaleBadge({
   groupLabel,
   localeLabel,
   geoReady,
-  geoReadyLabel = '可引用',
+  geoReadyLabel,
+  locale,
 }: {
   groupLabel: string;
   localeLabel?: string;
   geoReady?: boolean;
   geoReadyLabel?: string;
+  /** UI / content locale for default geoReadyLabel when not passed */
+  locale?: SiteLocale | string | null;
 }) {
-  const parts = [groupLabel, localeLabel, geoReady ? geoReadyLabel : null].filter(Boolean);
+  const readyLabel = geoReadyLabel ?? defaultGeoReadyLabel(locale);
+  const parts = [groupLabel, localeLabel, geoReady ? readyLabel : null].filter(Boolean);
   if (!parts.length) return null;
   return (
     <div className="mt-1 text-[11px] text-[color:var(--ink-5)]">{parts.join(' · ')}</div>

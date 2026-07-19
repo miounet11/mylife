@@ -212,11 +212,37 @@ export function contentHubCopy(kind: 'knowledge' | 'cases', locale: SiteLocale) 
       'zh-Hant': '生成我的報告',
       en: 'Generate my report',
     }),
+    ctaLearn: pick(locale, {
+      'zh-CN': '专题',
+      'zh-Hant': '專題',
+      en: 'Topics',
+    }),
+    ctaCases: pick(locale, {
+      'zh-CN': '案例',
+      'zh-Hant': '案例',
+      en: 'Cases',
+    }),
+    ctaKnowledge: pick(locale, {
+      'zh-CN': '知识库',
+      'zh-Hant': '知識庫',
+      en: 'Knowledge',
+    }),
     ctaHeader: pick(locale, {
       'zh-CN': '十维度研判',
       'zh-Hant': '十維度研判',
       en: '10 dimensions',
     }),
+    stripTitle: pick(locale, isKnowledge
+      ? {
+          'zh-CN': '怎么用知识库',
+          'zh-Hant': '怎麼用知識庫',
+          en: 'How to use the library',
+        }
+      : {
+          'zh-CN': '案例怎么读',
+          'zh-Hant': '案例怎麼讀',
+          en: 'How to read cases',
+        }),
     sectionEyebrow: pick(locale, isKnowledge
       ? { 'zh-CN': '专题', 'zh-Hant': '專題', en: 'Topics' }
       : { 'zh-CN': '公开案例', 'zh-Hant': '公開案例', en: 'Public cases' }),

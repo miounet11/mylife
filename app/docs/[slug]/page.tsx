@@ -4,32 +4,43 @@ import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { docsArticleCopy, presentDocContent } from '@/lib/i18n/docs-copy';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { DOC_CONTENT } from '@/lib/portal-nav';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
+  searchParams?: Promise<{ lang?: string }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const doc = DOC_CONTENT[slug];
-  if (!doc) return { title: '文档' };
-  return { title: `${doc.title}｜文档` };
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const chrome = docsArticleCopy(locale);
+  const doc = presentDocContent(slug, locale);
+  if (!doc) return { title: chrome.metaFallback };
+  return { title: `${doc.title}｜${chrome.metaTitleSuffix}` };
 }
 
-export default async function DocArticlePage({ params }: PageProps) {
+export default async function DocArticlePage({ params, searchParams }: PageProps) {
   const { slug } = await params;
-  const doc = DOC_CONTENT[slug];
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const chrome = docsArticleCopy(locale);
+  // Keep DOC_CONTENT as existence gate (Chinese source of truth for slugs).
+  if (!DOC_CONTENT[slug]) notFound();
+  const doc = presentDocContent(slug, locale);
   if (!doc) notFound();
 
   return (
-    <AppPage header={{ ctaHref: '/docs', ctaLabel: '全部文档' }}>
+    <AppPage header={{ ctaHref: '/docs', ctaLabel: chrome.headerCta }}>
       <AnalyticsPageView
         eventName="docs_article_viewed"
         page={`/docs/${slug}`}
         meta={{ surfaceKey: 'docs', slug, title: doc.title }}
       />
-      <FocusHero eyebrow="文档" title={doc.title} />
+      <FocusHero eyebrow={chrome.eyebrow} title={doc.title} />
       <article className="fb-card space-y-4 p-4 md:p-6">
         {doc.sections.map(([heading, body]) => (
           <section key={heading}>
@@ -38,7 +49,7 @@ export default async function DocArticlePage({ params }: PageProps) {
           </section>
         ))}
         <Link href="/analyze" className="fb-btn fb-btn-primary inline-flex h-9 px-4 text-sm hover:no-underline">
-          去工作台实践
+          {chrome.practiceCta}
         </Link>
       </article>
     </AppPage>

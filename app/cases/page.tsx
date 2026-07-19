@@ -121,21 +121,15 @@ export default async function CasesPage({ searchParams }: PageProps) {
                 {copy.ctaAnalyze}
               </Link>
               <Link href="/knowledge" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                知识库
+                {copy.ctaKnowledge}
               </Link>
             </>
           }
         />
-        <JourneyStrip active="content" />
+        <JourneyStrip active="content" locale={uiLocale} />
         <PageIllustrationStrip
           surface="cases/hub"
-          title={
-            uiLocale === 'en'
-              ? 'How to read cases'
-              : uiLocale === 'zh-Hant'
-                ? '案例怎麼讀'
-                : '案例怎么读'
-          }
+          title={copy.stripTitle}
           compact
           limit={1}
           locale={uiLocale === 'en' ? 'en' : uiLocale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'}
@@ -196,6 +190,7 @@ export default async function CasesPage({ searchParams }: PageProps) {
                       localeLabel={geo.localeLabel}
                       geoReady={geo.geoReady}
                       geoReadyLabel={copy.geoReadyBadge}
+                      locale={uiLocale}
                     />
                   </Link>
                 </li>
@@ -206,6 +201,7 @@ export default async function CasesPage({ searchParams }: PageProps) {
             basePath={basePath}
             page={currentPage}
             totalPages={totalPages}
+            locale={uiLocale}
           />
         </section>
       </div>

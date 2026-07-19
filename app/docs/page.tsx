@@ -5,26 +5,37 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { docsPageCopy, presentDocEntries } from '@/lib/i18n/docs-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
-import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { toIllustLocale } from '@/lib/page-illustrations/locale';
 import { DOC_ENTRIES } from '@/lib/portal-nav';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '文档与读法指南',
-  description: '出生信息填写、真太阳时说明、第一份报告阅读顺序。',
-  alternates: { canonical: '/docs' },
-};
-
-export default async function DocsPage({
-  searchParams,
-}: {
+interface DocsPageProps {
   searchParams?: Promise<{ lang?: string }>;
-}) {
+}
+
+export async function generateMetadata({ searchParams }: DocsPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = docsPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/docs', locale),
+    locale,
+  });
+}
+
+export default async function DocsPage({ searchParams }: DocsPageProps) {
   const sp = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = docsPageCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
+  const entries = presentDocEntries(DOC_ENTRIES, uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始判断', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       <AnalyticsPageView
         eventName="docs_page_viewed"
         page="/docs"
@@ -32,35 +43,31 @@ export default async function DocsPage({
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="文档"
-          title="先理解方法，再读报告"
-          description="出生信息、真太阳时与第一份报告的阅读顺序。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                开始判断
+                {copy.linkAnalyze}
               </Link>
               <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                学习专题
+                {copy.linkLearn}
               </Link>
             </>
           }
         />
         <PageIllustrationStrip
           surface="docs/hub"
-          title={illustStripTitle(uiLocale, {
-            'zh-CN': '方法路径',
-            'zh-Hant': '方法路徑',
-            en: 'Method path',
-          })}
+          title={copy.stripTitle}
           compact
           limit={1}
           locale={illustLocale}
           priority
         />
         <section>
-          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">推荐阅读</h2>
-          <EntryLinkGrid items={DOC_ENTRIES} />
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.sectionsTitle}</h2>
+          <EntryLinkGrid items={entries} />
         </section>
       </div>
     </AppPage>
