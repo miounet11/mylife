@@ -13,22 +13,42 @@ import { trackProductEvent } from '@/lib/product-analytics';
 import { buildChatHref, buildReportContinueChatHref } from '@/lib/chat-entry';
 import { buildTeacherChatHref } from '@/lib/teachers';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import {
+  eventsHubCopy,
+  isPartialFeedbackNotes,
+  type EventFilterKey,
+} from '@/lib/i18n/events-copy';
+import { toIllustLocale } from '@/lib/page-illustrations/locale';
 
-const TYPES: Array<{ key: EventViewType | 'all'; label: string }> = [
-  { key: 'all', label: '全部' },
-  { key: 'career', label: '事业' },
-  { key: 'wealth', label: '财富' },
-  { key: 'marriage', label: '关系' },
-  { key: 'health', label: '健康' },
-  { key: 'family', label: '家庭' },
-  { key: 'other', label: '其他' },
+const FILTER_KEYS: EventFilterKey[] = [
+  'all',
+  'career',
+  'wealth',
+  'marriage',
+  'health',
+  'family',
+  'other',
 ];
 
 const LOCAL_KEY = 'lk_events_cache_v1';
 
 type Transport = Record<string, unknown>;
 
-export default function EventsHub({ reportId }: { reportId?: string }) {
+export default function EventsHub({
+  reportId,
+  locale = 'zh-CN',
+}: {
+  reportId?: string;
+  locale?: SiteLocale;
+}) {
+  const copy = useMemo(() => eventsHubCopy(locale), [locale]);
+  const illustLocale = toIllustLocale(locale);
+  const typeOptions = useMemo(
+    () => FILTER_KEYS.map((key) => ({ key, label: copy.types[key] })),
+    [copy.types],
+  );
+
   const [events, setEvents] = useState<EventViewModel[]>([]);
   const [filter, setFilter] = useState<EventViewType | 'all'>('all');
   const [loading, setLoading] = useState(true);
@@ -63,16 +83,16 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
         // fallback local
         const local = readLocal();
         setEvents(local.map((e) => toEventViewModel(e)));
-        if (!local.length) setError(data.error || '暂无法从服务器拉取事件（可先本地记录）');
+        if (!local.length) setError(data.error || copy.loadServerFailed);
       }
     } catch {
       const local = readLocal();
       setEvents(local.map((e) => toEventViewModel(e)));
-      if (!local.length) setError('网络异常，请稍后重试');
+      if (!local.length) setError(copy.networkRetry);
     } finally {
       setLoading(false);
     }
-  }, [reportId]);
+  }, [reportId, copy.loadServerFailed, copy.networkRetry]);
 
   useEffect(() => {
     void load();
@@ -123,7 +143,7 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
           type: form.type,
           transport: 'local',
         });
-        setError(data.error || '已保存到本地缓存（服务器写入失败时）');
+        setError(data.error || copy.savedLocalOnServerFail);
       } else {
         setForm((f) => ({ ...f, title: '', description: '' }));
         trackProductEvent('events_created', {
@@ -146,7 +166,7 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
         type: form.type,
         transport: 'local',
       });
-      setError('网络异常，已写入本地缓存');
+      setError(copy.networkSavedLocal);
     } finally {
       setSaving(false);
     }
@@ -157,7 +177,7 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
         reportId,
         teacher: 'practice',
         source: 'events_hub_opening',
-        window: '事件日历复盘',
+        window: copy.hubWindowLabel,
       })
     : buildTeacherChatHref({
         teacherId: 'practice',
@@ -168,21 +188,24 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
     <div className="space-y-4">
       <PageIllustrationStrip
         surface="events/validation"
-        title="验证闭环"
+        title={copy.stripTitle}
         compact
         limit={1}
+        locale={illustLocale}
       />
 
       {/* Linear-clean：事件 → 顾问开场 */}
       <section className="border-y border-[color:var(--hairline)] py-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">
+              {copy.consultantEyebrow}
+            </div>
             <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
-              {reportId ? '对照事件回聊' : '先问实践老师'}
+              {reportId ? copy.consultantTitleWithReport : copy.consultantTitleWithoutReport}
             </h2>
             <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-              标记应验或偏差后，可带上下文开场复盘；不预填长问题
+              {copy.consultantDesc}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
@@ -190,20 +213,20 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
               href={hubOpeningHref}
               className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
             >
-              {reportId ? '带报告开场 →' : '实践老师 →'}
+              {reportId ? copy.openWithReport : copy.practiceTeacher}
             </Link>
             <Link
               href="/teachers?intent=practice"
               className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
             >
-              全部老师
+              {copy.allTeachers}
             </Link>
           </div>
         </div>
       </section>
 
       <div className="flex flex-wrap gap-2">
-        {TYPES.map((t) => (
+        {typeOptions.map((t) => (
           <button
             key={t.key}
             type="button"
@@ -218,10 +241,10 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
           </button>
         ))}
         <Link href="/profile/events" className="ml-auto text-[12px] font-semibold text-[#6d28d9] hover:underline">
-          人生事件档案 →
+          {copy.linkProfileEvents}
         </Link>
         <Link href="/predictions" className="text-[12px] font-semibold text-[#6d28d9] hover:underline">
-          预测回访 →
+          {copy.linkPredictions}
         </Link>
       </div>
 
@@ -233,21 +256,21 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
 
       <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
         <form onSubmit={createEvent} className="rounded-[12px] border border-[#e2e8f0] bg-white p-4 shadow-sm">
-          <h2 className="text-[14px] font-bold text-[#0f172a]">记录新事件</h2>
-          <p className="mt-0.5 text-[11px] text-[#64748b]">写入后用于校准报告与回访（与报告避险「记入事件」同源 API）</p>
+          <h2 className="text-[14px] font-bold text-[#0f172a]">{copy.formTitle}</h2>
+          <p className="mt-0.5 text-[11px] text-[#64748b]">{copy.formHint}</p>
           <label className="mt-3 block text-[11px] font-semibold text-[#64748b]">
-            标题
+            {copy.labelTitle}
             <input
               required
               className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] px-3 py-2 text-[13px]"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="如：跳槽入职 / 搬家签约"
+              placeholder={copy.titlePlaceholder}
             />
           </label>
           <div className="mt-2 grid grid-cols-2 gap-2">
             <label className="block text-[11px] font-semibold text-[#64748b]">
-              日期
+              {copy.labelDate}
               <input
                 type="date"
                 className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] px-2 py-2 text-[13px]"
@@ -256,40 +279,42 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
               />
             </label>
             <label className="block text-[11px] font-semibold text-[#64748b]">
-              类型
+              {copy.labelType}
               <select
                 className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] px-2 py-2 text-[13px]"
                 value={form.type}
                 onChange={(e) => setForm({ ...form, type: e.target.value as EventViewType })}
               >
-                {TYPES.filter((t) => t.key !== 'all').map((t) => (
-                  <option key={t.key} value={t.key}>
-                    {t.label}
-                  </option>
-                ))}
+                {typeOptions
+                  .filter((t) => t.key !== 'all')
+                  .map((t) => (
+                    <option key={t.key} value={t.key}>
+                      {t.label}
+                    </option>
+                  ))}
               </select>
             </label>
           </div>
           <label className="mt-2 block text-[11px] font-semibold text-[#64748b]">
-            影响
+            {copy.labelImpact}
             <select
               className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] px-2 py-2 text-[13px]"
               value={form.impact}
               onChange={(e) => setForm({ ...form, impact: e.target.value as EventViewImpact })}
             >
-              <option value="positive">偏正面</option>
-              <option value="neutral">中性</option>
-              <option value="negative">偏压力</option>
+              <option value="positive">{copy.impacts.positive}</option>
+              <option value="neutral">{copy.impacts.neutral}</option>
+              <option value="negative">{copy.impacts.negative}</option>
             </select>
           </label>
           <label className="mt-2 block text-[11px] font-semibold text-[#64748b]">
-            说明
+            {copy.labelDescription}
             <textarea
               className="mt-1 w-full rounded-[8px] border border-[#e2e8f0] px-3 py-2 text-[13px]"
               rows={3}
               value={form.description}
               onChange={(e) => setForm({ ...form, description: e.target.value })}
-              placeholder="可选：经过、结果、是否与报告预测对照"
+              placeholder={copy.descriptionPlaceholder}
             />
           </label>
           <button
@@ -297,14 +322,14 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
             disabled={saving}
             className="mt-3 inline-flex h-10 items-center rounded-[8px] bg-[#6d28d9] px-4 text-[13px] font-semibold text-white hover:bg-[#5b21b6] disabled:opacity-60"
           >
-            {saving ? '保存中…' : '保存事件'}
+            {saving ? copy.saving : copy.saveEvent}
           </button>
         </form>
 
         <div className="min-h-[320px]">
           {loading ? (
             <div className="rounded-[12px] border border-[#e2e8f0] bg-white p-8 text-center text-[13px] text-[#94a3b8]">
-              加载事件…
+              {copy.loading}
             </div>
           ) : (
             <EventCalendar events={filtered} />
@@ -313,9 +338,9 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
       </div>
 
       <section className="rounded-[12px] border border-[#e2e8f0] bg-white p-4">
-        <h2 className="text-[14px] font-bold text-[#0f172a]">事件列表（{filtered.length}）</h2>
+        <h2 className="text-[14px] font-bold text-[#0f172a]">{copy.listTitle(filtered.length)}</h2>
         {filtered.length === 0 ? (
-          <p className="mt-2 text-[12px] text-[#94a3b8]">还没有事件。从报告避险一键记入，或在上方新建。</p>
+          <p className="mt-2 text-[12px] text-[#94a3b8]">{copy.emptyList}</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {filtered
@@ -329,7 +354,8 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
                   <div>
                     <div className="text-[13px] font-semibold text-[#0f172a]">{ev.title}</div>
                     <div className="mt-0.5 text-[11px] text-[#64748b]">
-                      {ev.dateKey} · {ev.type} · {ev.impact}
+                      {ev.dateKey} · {copy.types[ev.type] || ev.type} ·{' '}
+                      {copy.impacts[ev.impact] || ev.impact}
                     </div>
                     {ev.description ? (
                       <p className="mt-1 text-[11px] text-[#475569]">{ev.description}</p>
@@ -341,52 +367,60 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
                         href={`/result/${ev.fortuneAnalysis.reportId}`}
                         className="text-[11px] font-semibold text-[#6d28d9] hover:underline"
                       >
-                        关联报告
+                        {copy.linkedReport}
                       </Link>
                     ) : null}
                     <div className="flex flex-wrap gap-1">
                       <FeedbackBtn
-                        label="应验"
+                        label={copy.feedback.confirmed}
                         active={ev.userFeedback?.wasAccurate === true}
-                        onClick={() => void setFeedback(ev.id, true, '应验')}
+                        onClick={() =>
+                          void setFeedback(ev.id, true, copy.feedback.confirmed)
+                        }
                         tone="good"
                       />
                       <FeedbackBtn
-                        label="部分"
+                        label={copy.feedback.partial}
                         active={
                           ev.userFeedback?.wasAccurate == null &&
-                          /部分/.test(ev.userFeedback?.userNotes || '')
+                          isPartialFeedbackNotes(ev.userFeedback?.userNotes)
                         }
-                        onClick={() => void setFeedback(ev.id, null, '部分应验')}
+                        onClick={() =>
+                          void setFeedback(ev.id, null, copy.feedback.partialNotes)
+                        }
                         tone="mid"
                       />
                       <FeedbackBtn
-                        label="未应验"
+                        label={copy.feedback.missed}
                         active={ev.userFeedback?.wasAccurate === false}
-                        onClick={() => void setFeedback(ev.id, false, '未应验')}
+                        onClick={() =>
+                          void setFeedback(ev.id, false, copy.feedback.missed)
+                        }
                         tone="bad"
                       />
                     </div>
                     {ev.userFeedback?.userNotes || ev.userFeedback?.wasAccurate != null ? (
                       <span className="text-[10px] text-[#94a3b8]">
-                        已记
+                        {copy.feedback.recorded}
                         {ev.userFeedback?.wasAccurate === true
-                          ? '应验'
+                          ? copy.feedback.confirmed
                           : ev.userFeedback?.wasAccurate === false
-                            ? '未应验'
-                            : ev.userFeedback?.userNotes || '反馈'}
+                            ? copy.feedback.missed
+                            : isPartialFeedbackNotes(ev.userFeedback?.userNotes)
+                              ? copy.feedback.partial
+                              : ev.userFeedback?.userNotes || copy.feedback.fallbackNote}
                       </span>
                     ) : null}
                     {ev.fortuneAnalysis?.reportId ? (
                       <Link
-                        href={buildEventReviewChatHref(ev)}
+                        href={buildEventReviewChatHref(ev, copy)}
                         className="mt-1 text-[11px] font-semibold text-[#3b5998] hover:underline"
                       >
                         {ev.userFeedback?.wasAccurate === false
-                          ? '带偏差回聊纠偏'
+                          ? copy.reviewDrift
                           : ev.userFeedback?.wasAccurate === true
-                            ? '带应验回聊复盘'
-                            : '回聊对照'}
+                            ? copy.reviewConfirmed
+                            : copy.reviewOpen}
                       </Link>
                     ) : null}
                   </div>
@@ -419,7 +453,7 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
           {
             id,
             type: 'other',
-            title: events.find((e) => e.id === id)?.title || '事件',
+            title: events.find((e) => e.id === id)?.title || copy.defaultEventTitle,
             date: events.find((e) => e.id === id)?.dateKey || new Date().toISOString().slice(0, 10),
             impact: events.find((e) => e.id === id)?.impact || 'neutral',
             description: events.find((e) => e.id === id)?.description || '',
@@ -469,25 +503,27 @@ export default function EventsHub({ reportId }: { reportId?: string }) {
 
     if (!serverOk) {
       setError((prev) =>
-        prev && !prev.includes('本地')
+        prev && !prev.includes(copy.localCacheMarker)
           ? prev
-          : '应验反馈已写入本机缓存；登录且服务器可用时会优先同步服务端。'
+          : copy.feedbackLocalOnly
       );
     }
   }
 }
 
+type HubCopy = ReturnType<typeof eventsHubCopy>;
+
 /** After accurate/drift feedback → consultant-card chat opening for review */
-function buildEventReviewChatHref(ev: EventViewModel): string {
+function buildEventReviewChatHref(ev: EventViewModel, copy: HubCopy): string {
   const reportId = ev.fortuneAnalysis?.reportId || undefined;
   const accurate = ev.userFeedback?.wasAccurate;
-  const title = ev.title || '该事件';
+  const title = ev.title || copy.defaultEventTitle;
   const windowLabel =
     accurate === false
-      ? `偏差复盘：${title}`
+      ? copy.windowDrift(title)
       : accurate === true
-        ? `应验复盘：${title}`
-        : `事件对照：${title}`;
+        ? copy.windowConfirmed(title)
+        : copy.windowOpen(title);
 
   // Soft opening: land on practice/overview teacher with window context
   return buildChatHref({

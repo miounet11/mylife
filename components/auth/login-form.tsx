@@ -1,11 +1,18 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { useLocale } from '@/components/i18n/locale-provider';
 import { AlertBanner } from '@/components/layout/alert-banner';
+import { loginFormCopy } from '@/lib/i18n/login-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
-export default function LoginForm() {
+export default function LoginForm({ locale: localeProp }: { locale?: SiteLocale }) {
+  const { locale: ctxLocale } = useLocale();
+  const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
+  const copy = useMemo(() => loginFormCopy(locale), [locale]);
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/profile';
@@ -30,13 +37,13 @@ export default function LoginForm() {
         body: JSON.stringify({ email }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || '发送失败');
+      if (!res.ok || !data.success) throw new Error(data.error || copy.sendFailed);
       setAdminRequired(!!data.adminPasswordRequired);
       setStep('code');
-      const devHint = data.devCode ? ` 开发验证码：${data.devCode}` : '';
-      setMessage(`${data.message || '验证码已发送'}${devHint}`);
+      const devHint = data.devCode ? `${copy.devCodePrefix}${data.devCode}` : '';
+      setMessage(`${data.message || copy.codeSentDefault}${devHint}`);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '发送失败');
+      setError(err instanceof Error ? err.message : copy.sendFailed);
     } finally {
       setLoading(false);
     }
@@ -52,11 +59,11 @@ export default function LoginForm() {
         body: JSON.stringify({ email, code, adminPassword: adminRequired ? adminPassword : undefined }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || '验证失败');
+      if (!res.ok || !data.success) throw new Error(data.error || copy.verifyFailed);
       router.push(nextPath);
       router.refresh();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : '验证失败');
+      setError(err instanceof Error ? err.message : copy.verifyFailed);
     } finally {
       setLoading(false);
     }
@@ -69,7 +76,7 @@ export default function LoginForm() {
     <div className="border-y border-[color:var(--hairline)] py-5">
       {isMembershipNext ? (
         <p className="mb-4 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-          限时免费会员：登录成功后将回到会员页，可 0 元领取季度/年度（无需支付）。
+          {copy.membershipNextHint}
         </p>
       ) : null}
       {message ? <AlertBanner tone="success" className="mb-3 text-xs">{message}</AlertBanner> : null}
@@ -84,13 +91,13 @@ export default function LoginForm() {
           className="space-y-3"
         >
           <label className="block space-y-1.5">
-            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">邮箱</span>
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">{copy.emailLabel}</span>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
+              placeholder={copy.emailPlaceholder}
               className="fb-input h-10 w-full px-3 text-sm"
             />
           </label>
@@ -99,7 +106,7 @@ export default function LoginForm() {
             disabled={loading}
             className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '发送验证码'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : copy.sendCode}
           </button>
         </form>
       ) : (
@@ -111,10 +118,11 @@ export default function LoginForm() {
           className="space-y-3"
         >
           <p className="text-[13px] text-[color:var(--ink-5)]">
-            验证码已发送至 <span className="font-medium text-[color:var(--ink-1)]">{email}</span>
+            {copy.codeSentPrefix}{' '}
+            <span className="font-medium text-[color:var(--ink-1)]">{email}</span>
           </p>
           <label className="block space-y-1.5">
-            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">6 位验证码</span>
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">{copy.codeLabel}</span>
             <input
               inputMode="numeric"
               pattern="\d{6}"
@@ -127,7 +135,7 @@ export default function LoginForm() {
           </label>
           {adminRequired ? (
             <label className="block space-y-1.5">
-              <span className="text-[12px] font-medium text-[color:var(--ink-2)]">管理员二次密码</span>
+              <span className="text-[12px] font-medium text-[color:var(--ink-2)]">{copy.adminPasswordLabel}</span>
               <input
                 type="password"
                 value={adminPassword}
@@ -141,14 +149,14 @@ export default function LoginForm() {
             disabled={loading}
             className="inline-flex h-10 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : '登录并继续'}
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : copy.loginContinue}
           </button>
           <button
             type="button"
             onClick={() => setStep('email')}
             className="w-full text-center text-[13px] text-[color:var(--ink-3)] underline-offset-2 hover:underline"
           >
-            更换邮箱
+            {copy.changeEmail}
           </button>
         </form>
       )}

@@ -4,34 +4,52 @@ import { Suspense } from 'react';
 import LoginForm from '@/components/auth/login-form';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { loginPageCopy } from '@/lib/i18n/login-copy';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '登录｜绑定邮箱保存报告',
-  description: '使用邮箱验证码登录，保存报告、管理订阅与档案资料。',
-  robots: { index: false, follow: false },
-};
+interface LoginPageProps {
+  searchParams?: Promise<{ lang?: string }>;
+}
 
-export default function LoginPage() {
+export async function generateMetadata({ searchParams }: LoginPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = loginPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/login', locale),
+    locale,
+    noIndex: true,
+  });
+}
+
+export default async function LoginPage({ searchParams }: LoginPageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = loginPageCopy(uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/membership', ctaLabel: '0 元领会员', compact: true }} showFooter={false}>
+    <AppPage header={{ ctaHref: '/membership', ctaLabel: copy.headerCta, compact: true }} showFooter={false}>
       <div className="mx-auto max-w-md space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="账户"
-          title="邮箱验证码登录"
-          description="登录后可保存报告、管理订阅，并在活动期内 0 元开通会员。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/membership" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                会员说明
+                {copy.linkMembership}
               </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                先排盘
+                {copy.linkAnalyze}
               </Link>
             </>
           }
         />
-        <Suspense fallback={<div className="py-4 text-sm text-[color:var(--ink-5)]">加载中…</div>}>
-          <LoginForm />
+        <Suspense fallback={<div className="py-4 text-sm text-[color:var(--ink-5)]">{copy.loading}</div>}>
+          <LoginForm locale={uiLocale} />
         </Suspense>
       </div>
     </AppPage>

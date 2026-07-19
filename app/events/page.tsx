@@ -3,42 +3,54 @@ import Link from 'next/link';
 import { AppPage } from '@/components/layout/app-page';
 import EventsHub from '@/components/events/events-hub';
 import { FocusHero } from '@/components/layout/focus-hero';
-import { buildPageMetadata } from '@/lib/seo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { eventsPageCopy } from '@/lib/i18n/events-copy';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '事件日历',
-  description: '记录人生关键节点，校准报告与预测回访。',
-  path: '/events',
-});
+interface EventsPageProps {
+  searchParams?: Promise<{ reportId?: string; lang?: string }>;
+}
 
-export default async function EventsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ reportId?: string }>;
-}) {
-  const sp = await searchParams;
+export async function generateMetadata({ searchParams }: EventsPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = eventsPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/events', locale),
+    locale,
+    noIndex: true,
+  });
+}
+
+export default async function EventsPage({ searchParams }: EventsPageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = eventsPageCopy(uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/predictions', ctaLabel: '预测回访', compact: true }}>
+    <AppPage header={{ ctaHref: '/predictions', ctaLabel: copy.headerCta, compact: true }}>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="验证"
-          title="事件日历"
-          description="记录跳槽、搬家、关系等节点，与报告和预测回访对照。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/predictions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                预测回访
+                {copy.linkPredictions}
               </Link>
               <Link href="/profile/events" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                人生事件档案
+                {copy.linkProfileEvents}
               </Link>
               <Link href="/history" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                报告历史
+                {copy.linkHistory}
               </Link>
             </>
           }
         />
-        <EventsHub reportId={sp.reportId} />
+        <EventsHub reportId={sp.reportId} locale={uiLocale} />
       </div>
     </AppPage>
   );
