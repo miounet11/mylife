@@ -4,6 +4,8 @@ import {
   buildEduZiweiChart,
   computeMingBranchIndex,
   computeShenBranchIndex,
+  eduInputFromSolar,
+  sihuaForYearStem,
 } from '@/lib/ziwei/edu-chart';
 
 describe('ziwei edu chart', () => {
@@ -33,5 +35,33 @@ describe('ziwei edu chart', () => {
     // not always different but functions are defined
     assert.ok(ming >= 0 && ming <= 11);
     assert.ok(shen >= 0 && shen <= 11);
+  });
+
+  it('attaches year sihua to chart', () => {
+    const chart = buildEduZiweiChart({
+      lunarMonth: 3,
+      lunarDay: 10,
+      hourBranch: 2,
+      yearStem: 0, // 甲
+      yearBranch: 0,
+    });
+    assert.equal(chart.sihua.length, 4);
+    assert.equal(chart.sihua[0].kind, '禄');
+    assert.ok(chart.palaces.some((p) => p.stars.some((s) => s.sihua)));
+  });
+
+  it('converts solar to lunar fields', () => {
+    const conv = eduInputFromSolar({ year: 1990, month: 5, day: 15, hour: 10 });
+    assert.ok(conv.lunarMonth >= 1 && conv.lunarMonth <= 12);
+    assert.ok(conv.lunarDay >= 1 && conv.lunarDay <= 30);
+    assert.ok(conv.lunarLabel.includes('年'));
+  });
+
+  it('sihua table for jia', () => {
+    const rows = sihuaForYearStem(0);
+    assert.deepEqual(
+      rows.map((r) => r.kind),
+      ['禄', '权', '科', '忌'],
+    );
   });
 });

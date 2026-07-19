@@ -1,8 +1,10 @@
 /**
  * Educational 紫微斗数 structure chart (lite).
- * Computes 命宫/十二宫 + simplified 14 主星 placement for learning.
- * Not a full professional engine (no 四化/辅星/大限) — honest product boundary.
+ * Computes 命宫/十二宫 + simplified 14 主星 + 生年四化 for learning.
+ * Not a full professional engine (no 辅星/大限/飞星) — honest product boundary.
  */
+
+import { Solar } from 'lunar-javascript';
 
 export const PALACE_NAMES = [
   '命宫',
@@ -52,6 +54,8 @@ const ZIWEI_SERIES_OFFSET = [0, 1, 3, 4, 5, 8] as const;
 const TIANFU_SERIES = ['天府', '太阴', '贪狼', '巨门', '天相', '天梁', '七杀', '破军'] as const;
 const TIANFU_SERIES_OFFSET = [0, 1, 2, 3, 4, 5, 6, 10] as const;
 
+export type SiHuaKind = '禄' | '权' | '科' | '忌';
+
 export type EduZiweiInput = {
   /** 农历月 1–12 */
   lunarMonth: number;
@@ -61,6 +65,13 @@ export type EduZiweiInput = {
   hourBranch: number;
   /** 年支 0=子 … 11=亥（用于示意五行局） */
   yearBranch?: number;
+  /** 年干 0=甲 … 9=癸（生年四化） */
+  yearStem?: number;
+};
+
+export type EduStar = {
+  name: string;
+  sihua?: SiHuaKind;
 };
 
 export type EduPalace = {
@@ -69,7 +80,7 @@ export type EduPalace = {
   branch: string;
   isMing: boolean;
   isShen: boolean;
-  stars: string[];
+  stars: EduStar[];
 };
 
 export type EduZiweiChart = {
@@ -78,9 +89,81 @@ export type EduZiweiChart = {
   shenBranchIndex: number;
   ziweiBranchIndex: number;
   tianfuBranchIndex: number;
+  yearStemLabel?: string;
+  sihua: Array<{ kind: SiHuaKind; star: string }>;
   palaces: EduPalace[];
   disclaimer: string;
+  source?: {
+    solar?: string;
+    lunarLabel?: string;
+  };
 };
+
+export const HEAVENLY_STEMS = [
+  '甲',
+  '乙',
+  '丙',
+  '丁',
+  '戊',
+  '己',
+  '庚',
+  '辛',
+  '壬',
+  '癸',
+] as const;
+
+/** Classic 生年四化 table */
+const YEAR_SIHUA: Record<number, Record<SiHuaKind, string>> = {
+  0: { 禄: '廉贞', 权: '破军', 科: '武曲', 忌: '太阳' },
+  1: { 禄: '天机', 权: '天梁', 科: '紫微', 忌: '太阴' },
+  2: { 禄: '天同', 权: '天机', 科: '文昌', 忌: '廉贞' },
+  3: { 禄: '太阴', 权: '天同', 科: '天机', 忌: '巨门' },
+  4: { 禄: '贪狼', 权: '太阴', 科: '右弼', 忌: '天机' },
+  5: { 禄: '武曲', 权: '贪狼', 科: '天梁', 忌: '文曲' },
+  6: { 禄: '太阳', 权: '武曲', 科: '太阴', 忌: '天同' },
+  7: { 禄: '巨门', 权: '太阳', 科: '文曲', 忌: '文昌' },
+  8: { 禄: '天梁', 权: '紫微', 科: '左辅', 忌: '武曲' },
+  9: { 禄: '破军', 权: '巨门', 科: '太阴', 忌: '贪狼' },
+};
+
+export function sihuaForYearStem(yearStem: number): Array<{ kind: SiHuaKind; star: string }> {
+  const table = YEAR_SIHUA[((yearStem % 10) + 10) % 10];
+  if (!table) return [];
+  return (['禄', '权', '科', '忌'] as SiHuaKind[]).map((kind) => ({
+    kind,
+    star: table[kind],
+  }));
+}
+
+/** Convert solar civil date/time → educational ziwei input (lunar month/day/hour/year). */
+export function eduInputFromSolar(input: {
+  year: number;
+  month: number;
+  day: number;
+  hour?: number;
+  minute?: number;
+}): EduZiweiInput & { lunarLabel: string; yearStem: number; yearBranch: number } {
+  const hour = Math.min(23, Math.max(0, Math.floor(input.hour ?? 12)));
+  const minute = Math.min(59, Math.max(0, Math.floor(input.minute ?? 0)));
+  const solar = Solar.fromYmdHms(input.year, input.month, input.day, hour, minute, 0);
+  const lunar = solar.getLunar();
+  const lunarMonth = Math.abs(Number(lunar.getMonth()) || 1);
+  const lunarDay = Number(lunar.getDay()) || 1;
+  // 时辰：23:00–00:59 子, 每 2 小时一辰
+  const hourBranch = Math.floor(((hour + 1) % 24) / 2);
+  const yearGanIndex = HEAVENLY_STEMS.indexOf(lunar.getYearGan() as (typeof HEAVENLY_STEMS)[number]);
+  const yearZhiIndex = EARTHLY_BRANCHES.indexOf(
+    lunar.getYearZhi() as (typeof EARTHLY_BRANCHES)[number],
+  );
+  return {
+    lunarMonth,
+    lunarDay,
+    hourBranch,
+    yearStem: yearGanIndex >= 0 ? yearGanIndex : 0,
+    yearBranch: yearZhiIndex >= 0 ? yearZhiIndex : 0,
+    lunarLabel: `${lunar.getYearInGanZhi()}年 ${lunarMonth}月${lunarDay}日 ${EARTHLY_BRANCHES[hourBranch]}时`,
+  };
+}
 
 function mod12(n: number): number {
   return ((n % 12) + 12) % 12;
@@ -169,25 +252,31 @@ export function buildEduZiweiChart(input: EduZiweiInput): EduZiweiChart {
   const lunarDay = Math.min(30, Math.max(1, Math.floor(input.lunarDay || 1)));
   const hourBranch = mod12(Math.floor(input.hourBranch || 0));
   const yearBranch = mod12(Math.floor(input.yearBranch ?? 0));
+  const yearStem = ((Math.floor(input.yearStem ?? 0) % 10) + 10) % 10;
 
   const ju = estimateJu(yearBranch);
   const mingBranchIndex = computeMingBranchIndex(lunarMonth, hourBranch);
   const shenBranchIndex = computeShenBranchIndex(lunarMonth, hourBranch);
   const ziweiBranchIndex = computeZiweiBranchIndex(lunarDay, ju.ju);
   const tianfuBranchIndex = computeTianfuBranchIndex(ziweiBranchIndex);
+  const sihua = sihuaForYearStem(yearStem);
+  const sihuaByStar = new Map(sihua.map((s) => [s.star, s.kind]));
 
   // stars per branch index
-  const starsByBranch: string[][] = Array.from({ length: 12 }, () => []);
+  const starsByBranch: EduStar[][] = Array.from({ length: 12 }, () => []);
 
   ZIWEI_SERIES.forEach((name, i) => {
     const idx = mod12(ziweiBranchIndex + ZIWEI_SERIES_OFFSET[i]);
-    starsByBranch[idx].push(name);
+    starsByBranch[idx].push({ name, sihua: sihuaByStar.get(name) });
   });
   TIANFU_SERIES.forEach((name, i) => {
     // 天府系从天府起顺行（教学简化）
     const idx = mod12(tianfuBranchIndex + TIANFU_SERIES_OFFSET[i]);
-    if (!starsByBranch[idx].includes(name)) starsByBranch[idx].push(name);
+    if (!starsByBranch[idx].some((s) => s.name === name)) {
+      starsByBranch[idx].push({ name, sihua: sihuaByStar.get(name) });
+    }
   });
+  // 四化中的文昌/文曲/左辅/右弼若未在十四主星列表，仅在图例展示，不强行安星
 
   // Palace arrangement: 命宫 at mingBranchIndex, reverse (counterclockwise) for next palaces
   const palaces: EduPalace[] = [];
@@ -209,8 +298,10 @@ export function buildEduZiweiChart(input: EduZiweiInput): EduZiweiChart {
     shenBranchIndex,
     ziweiBranchIndex,
     tianfuBranchIndex,
+    yearStemLabel: HEAVENLY_STEMS[yearStem],
+    sihua,
     palaces,
     disclaimer:
-      '教育排盘：命宫/身宫按农历月时推算；五行局为年支示意；十四主星为教学相对落点。不含四化、辅星、大限，不自动断事。',
+      '教育排盘：命宫/身宫按农历月时推算；五行局为年支示意；十四主星为教学相对落点；生年四化按年干表。不含辅星、大限、飞星，不自动断事。',
   };
 }

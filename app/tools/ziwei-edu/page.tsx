@@ -8,11 +8,11 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { buildPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
-  title: '紫微教育排盘｜命宫身宫与十四主星结构示意',
+  title: '紫微教育排盘｜命宫身宫、十四主星与生年四化',
   description:
-    '人生K线紫微教育排盘：按农历月日时推命宫/身宫，示意五行局与十四主星落点。不含四化大限，不自动断事。',
+    '人生K线紫微教育排盘：支持公历换算农历，推命宫/身宫、示意五行局与十四主星，标注生年四化。不含大限/飞星，不自动断事。',
   path: '/tools/ziwei-edu',
-  keywords: ['紫微斗数', '教育排盘', '命宫', '十四主星', '人生K线'],
+  keywords: ['紫微斗数', '教育排盘', '命宫', '十四主星', '生年四化', '人生K线'],
 });
 
 export default async function ZiweiEduPage({
@@ -37,8 +37,8 @@ export default async function ZiweiEduPage({
           title={en ? 'Ziwei · structure layout' : '紫微 · 结构示意盘'}
           description={
             en
-              ? 'Life / body palace from lunar month & hour; simplified bureau + 14 main stars. No sihua, no decade luck, no auto judgment.'
-              : '农历月时定命宫/身宫；示意五行局与十四主星。不含四化、大限，不自动断事。'
+              ? 'Solar or lunar birth input; life/body palace, simplified bureau, 14 main stars, year sihua labels. No decade luck / flying stars; no auto judgment.'
+              : '公历或农历输入；命宫/身宫、示意五行局、十四主星与生年四化标注。不含大限/飞星，不自动断事。'
           }
           actions={
             <>

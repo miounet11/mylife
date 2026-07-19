@@ -23,3 +23,18 @@ if ! grep -q '"success":true' /tmp/daily-window-smoke.json; then
   exit 1
 fi
 echo "OK daily-window dryRun"
+
+# last-run status visibility
+status_code=$(curl -sS -o /tmp/daily-window-status.json -w "%{http_code}" \
+  "${BASE}/api/admin/daily-window/email/cron?status=1" \
+  -H "x-timing-email-cron-token: ${TOKEN}")
+echo "STATUS HTTP $status_code"
+head -c 400 /tmp/daily-window-status.json; echo
+if [[ "$status_code" != "200" ]]; then
+  exit 1
+fi
+if ! grep -q '"status":true' /tmp/daily-window-status.json; then
+  echo "ERROR: status snapshot missing" >&2
+  exit 1
+fi
+echo "OK daily-window last-run status"

@@ -26,6 +26,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import path from 'node:path';
 import Database from 'better-sqlite3';
 import { buildDailyWindowEmail } from '@/lib/email/daily-window-email';
+import {
+  readDailyWindowLastRun,
+  writeDailyWindowLastRun,
+} from '@/lib/email/daily-window-last-run';
 import { generateId } from '@/lib/utils';
 
 export const maxDuration = 60;
@@ -288,7 +292,7 @@ export async function POST(request: NextRequest) {
   });
 
   if (dryRun) {
-    return NextResponse.json({
+    const payload = {
       success: true,
       dryRun: true,
       campaign,
@@ -304,12 +308,26 @@ export async function POST(request: NextRequest) {
       },
       note: 'No email sent. Remove dryRun=1 to dispatch to timing:daily subscribers.',
       timestamp: new Date().toISOString(),
+    };
+    const written = writeDailyWindowLastRun({
+      mode: 'dryRun',
+      success: true,
+      campaign,
+      timestamp: payload.timestamp,
+      sample: {
+        subject: sample.subject,
+        tipIndex: sample.tipIndex,
+        dateLabel: sample.dateLabel,
+        locale: sample.locale,
+      },
+      note: payload.note,
     });
+    return NextResponse.json({ ...payload, lastRunPath: written.path });
   }
 
   const listed = listDailyWindowSubscribers(batchSize);
   if (!listed.dbAvailable) {
-    return NextResponse.json({
+    const softPayload = {
       success: true,
       campaign,
       sentCount: 0,
@@ -324,7 +342,24 @@ export async function POST(request: NextRequest) {
         dateLabel: sample.dateLabel,
       },
       timestamp: new Date().toISOString(),
+    };
+    writeDailyWindowLastRun({
+      mode: 'live',
+      success: true,
+      softFail: true,
+      reason: 'db_unavailable',
+      campaign,
+      sentCount: 0,
+      skippedCount: 0,
+      candidateCount: 0,
+      errors: softPayload.errors,
+      timestamp: softPayload.timestamp,
+      sample: {
+        subject: sample.subject,
+        dateLabel: sample.dateLabel,
+      },
     });
+    return NextResponse.json(softPayload);
   }
 
   let sentCount = 0;
@@ -380,7 +415,7 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  const livePayload = {
     success: true,
     campaign,
     candidateCount: listed.rows.length,
@@ -388,21 +423,50 @@ export async function POST(request: NextRequest) {
     skippedCount,
     errors,
     timestamp: new Date().toISOString(),
+  };
+  const written = writeDailyWindowLastRun({
+    mode: 'live',
+    success: true,
+    campaign,
+    candidateCount: listed.rows.length,
+    sentCount,
+    skippedCount,
+    errors: errors.slice(0, 20),
+    timestamp: livePayload.timestamp,
+    sample: {
+      subject: sample.subject,
+      tipIndex: sample.tipIndex,
+      dateLabel: sample.dateLabel,
+      locale: sample.locale,
+    },
   });
+  return NextResponse.json({ ...livePayload, lastRunPath: written.path });
 }
 
-/** GET also allowed for dryRun previews (same auth). */
+/**
+ * GET:
+ * - ?dryRun=1 → sample preview (same as POST dryRun)
+ * - ?status=1 (or bare GET with auth) → last-run ops snapshot
+ */
 export async function GET(request: NextRequest) {
-  const url = new URL(request.url);
-  if (!isDryRun(url)) {
-    return NextResponse.json(
-      {
-        success: false,
-        error: 'Use POST for live send, or GET/POST with ?dryRun=1 for sample JSON.',
-      },
-      { status: 405 },
-    );
+  if (!isAuthorized(request)) {
+    return NextResponse.json({ success: false, error: '无权限' }, { status: 403 });
   }
-  // Reuse POST dry-run path
-  return POST(request);
+
+  const url = new URL(request.url);
+  if (isDryRun(url)) {
+    return POST(request);
+  }
+
+  // Default authenticated GET → last-run ops snapshot
+  const last = readDailyWindowLastRun();
+  return NextResponse.json({
+    success: true,
+    status: true,
+    found: last.found,
+    lastRun: last.data,
+    path: last.path,
+    timestamp: new Date().toISOString(),
+    hint: 'POST ?dryRun=1 for sample; POST without dryRun for live send.',
+  });
 }

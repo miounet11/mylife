@@ -40,7 +40,7 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚铜钱排本卦/变卦结构；不自动断事。',
     ziweiTitle: '紫微教育排盘',
-    ziweiDesc: '命宫/身宫与十四主星结构示意；不含四化大限。',
+    ziweiDesc: '公历/农历输入；命宫/主星与生年四化示意，不含大限。',
     moreLabel: '更多术数规划中',
   },
   'zh-Hant': {
@@ -52,7 +52,7 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚銅錢排本卦/變卦結構；不自動斷事。',
     ziweiTitle: '紫微教育排盤',
-    ziweiDesc: '命宮/身宮與十四主星結構示意；不含四化大限。',
+    ziweiDesc: '公曆/農曆輸入；命宮/主星與生年四化示意，不含大限。',
     moreLabel: '更多術數規劃中',
   },
   en: {
@@ -65,7 +65,7 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     liuyaoTitle: 'Six-line educational cast',
     liuyaoDesc: 'Three-coin method → primary/changed hexagram structure only.',
     ziweiTitle: 'Ziwei educational chart',
-    ziweiDesc: 'Life/body palace + 14 main stars (no sihua / decade luck).',
+    ziweiDesc: 'Solar/lunar input; palaces, main stars, year sihua (no decade luck).',
     moreLabel: 'More systems planned',
   },
 };
