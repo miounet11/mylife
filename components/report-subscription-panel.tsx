@@ -200,7 +200,7 @@ export default function ReportSubscriptionPanel({
 
   return (
     <div className="space-y-4">
-      <EmailTrustPanel compact />
+      <EmailTrustPanel compact locale={localeProp} />
 
       <div className="fb-card p-5 md:p-6">
       <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">

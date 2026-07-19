@@ -38,6 +38,7 @@ import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
 } from '@/lib/seo';
+import { knowledgeArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 interface PageProps {
@@ -49,10 +50,13 @@ function knowledgeSisterExists(slug: string): boolean {
   return Boolean(getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const sp = (await searchParams) || {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = knowledgeArticleCopy(uiLocale);
   const article = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug);
-  if (!article) return { title: '知识库' };
+  if (!article) return { title: copy.metaFallback };
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
   const dates = articleDatesFrom(article);
   const geo = articleGeoFields(article);
@@ -123,19 +127,20 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
     contentLocale: geo.locale,
     sisterExists: knowledgeSisterExists,
   });
+  const copy = knowledgeArticleCopy(uiLocale);
   const faqPairs = sections
-    .filter((section) => section.heading.startsWith('常见问题'))
+    .filter((section) => section.heading.startsWith('常见问题') || section.heading.startsWith('FAQ') || section.heading.startsWith('Common questions'))
     .map((section) => ({
-      question: section.heading.replace(/^常见问题：?/, ''),
+      question: section.heading.replace(/^(常见问题|FAQ|Common questions)：?\s*/i, ''),
       answer: section.body,
     }));
 
   return (
-    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度研判' }}>
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.dimensionsCta }}>
       <JsonLd
         data={buildBreadcrumbJsonLd([
-          { name: '首页', path: '/' },
-          { name: '知识库', path: '/knowledge' },
+          { name: copy.homeCrumb, path: '/' },
+          { name: copy.hubCrumb, path: '/knowledge' },
           { name: article.title, path: `/knowledge/${slug}` },
         ])}
       />
@@ -145,7 +150,7 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
           description: geo.answerSummary || summary || article.title,
           path: `/knowledge/${slug}`,
           keywords: [
-            ...(seed?.keywords || [trackKey, '世界易', '人生K线']),
+            ...(seed?.keywords || copy.defaultKeywords(trackKey)),
             ...(geo.geo?.entityKeywords || []),
           ],
           datePublished: articleDatesFrom(article).publishedTime,
@@ -168,11 +173,12 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
           source: source || null,
           contentLocale: geo.locale,
           geoReady: geo.geoReady,
+          uiLocale,
         }}
       />
       <ContentVisitTracker href={`/knowledge/${slug}`} title={article.title} kind="article" />
       <FocusHero
-        eyebrow="知识库"
+        eyebrow={copy.eyebrow}
         title={article.title}
         description={summary}
         footer={
@@ -181,6 +187,7 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
               groupLabel={geo.groupLabel}
               localeLabel={geo.localeLabel}
               geoReady={geo.geoReady}
+              geoReadyLabel={copy.geoReadyBadge}
               locale={uiLocale}
             />
             {sister ? (
@@ -193,10 +200,10 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
             ) : null}
             {readLabel ? <span className="text-[12px] text-[color:var(--ink-5)]">{readLabel}</span> : null}
             <Link href="/dimensions" className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:underline">
-              场景研判
+              {copy.sceneJudgment}
             </Link>
             <Link href="/tools" className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:underline">
-              工具
+              {copy.toolsLink}
             </Link>
           </div>
         }
@@ -236,10 +243,10 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
             {crosslinks.primaryLabel}
           </Link>
           <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            十维度
+            {copy.dimensionsShort}
           </Link>
           <Link href={`/learn/${trackKey}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            回到专题
+            {copy.backToTopic}
           </Link>
         </div>
       </article>
@@ -247,8 +254,8 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
       <div className="mt-4">
         <ContentActionRail
           crosslinks={crosslinks}
-          title="把这篇文章接到功能"
-          description="相关十维度研判、免费工具与完整报告入口，帮助你从「读懂」走到「验证」。"
+          title={copy.railTitle}
+          description={copy.railDescription}
         />
       </div>
 

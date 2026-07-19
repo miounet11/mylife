@@ -24,6 +24,7 @@ export async function generateMetadata({ searchParams }: DocsPageProps): Promise
     description: copy.metaDescription,
     path: withLocalePrefix('/docs', locale),
     locale,
+    keywords: copy.metaKeywords,
   });
 }
 

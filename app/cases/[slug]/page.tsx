@@ -29,6 +29,7 @@ import {
   resolveContentIllustrations,
 } from '@/lib/content-illustrations';
 import { articleDatesFrom, articleSeo, buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo';
+import { caseArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 interface PageProps {
@@ -40,10 +41,13 @@ function caseSisterExists(slug: string): boolean {
   return Boolean(getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  const sp = (await searchParams) || {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = caseArticleCopy(uiLocale);
   const article = getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug);
-  if (!article) return { title: '案例库' };
+  if (!article) return { title: copy.metaFallback };
   const summary = articleSummary(article as never) || (article as { summary?: string }).summary || '';
   const dates = articleDatesFrom(article);
   const geo = articleGeoFields(article);
@@ -87,6 +91,7 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
   const { slug } = await params;
   const sp = (await searchParams) || {};
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = caseArticleCopy(uiLocale);
   const article = getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
   if (!article || (article.type && article.type !== 'case')) notFound();
 
@@ -109,11 +114,11 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
   });
 
   return (
-    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度研判' }}>
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.dimensionsCta }}>
       <JsonLd
         data={buildBreadcrumbJsonLd([
-          { name: '首页', path: '/' },
-          { name: '案例库', path: '/cases' },
+          { name: copy.homeCrumb, path: '/' },
+          { name: copy.hubCrumb, path: '/cases' },
           { name: article.title, path: `/cases/${slug}` },
         ])}
       />
@@ -122,7 +127,10 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
           title: article.title,
           description: geo.answerSummary || summary || article.title,
           path: `/cases/${slug}`,
-          keywords: [trackKey, '案例', '世界易', '人生K线', ...(geo.geo?.entityKeywords || [])],
+          keywords: [
+            ...copy.defaultKeywords(trackKey),
+            ...(geo.geo?.entityKeywords || []),
+          ],
           datePublished: articleDatesFrom(article).publishedTime,
           dateModified: articleDatesFrom(article).modifiedTime,
           inLanguage: geo.locale,
@@ -141,11 +149,12 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
           trackKey,
           contentLocale: geo.locale,
           geoReady: geo.geoReady,
+          uiLocale,
         }}
       />
       <ContentVisitTracker href={`/cases/${slug}`} title={article.title} kind="article" />
       <FocusHero
-        eyebrow="案例库"
+        eyebrow={copy.eyebrow}
         title={article.title}
         description={summary}
         footer={
@@ -154,6 +163,7 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
               groupLabel={geo.groupLabel}
               localeLabel={geo.localeLabel}
               geoReady={geo.geoReady}
+              geoReadyLabel={copy.geoReadyBadge}
               locale={uiLocale}
             />
             {sister ? (
@@ -169,7 +179,7 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
         actions={
           <>
             <Link href={crosslinks.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-              生成类似报告
+              {copy.generateSimilar}
             </Link>
             {crosslinks.dimensions[0] ? (
               <Link href={crosslinks.dimensions[0].href} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
@@ -195,13 +205,13 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
         />
         <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
           <Link href={crosslinks.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            生成类似处境的报告
+            {copy.generateSimilarLong}
           </Link>
           <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            十维度
+            {copy.dimensionsShort}
           </Link>
           <Link href={`/learn/${trackKey}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            相关专题
+            {copy.relatedTopic}
           </Link>
         </div>
       </article>
@@ -209,8 +219,8 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
       <div className="mt-4">
         <ContentActionRail
           crosslinks={crosslinks}
-          title="案例之后：落到你的处境"
-          description="用十维度场景与工具，把案例中的结构判断迁移到你自己的命盘与时间窗。"
+          title={copy.railTitle}
+          description={copy.railDescription}
         />
       </div>
 

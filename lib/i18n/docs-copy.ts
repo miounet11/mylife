@@ -73,6 +73,26 @@ export function docsPageCopy(locale: SiteLocale) {
       'zh-Hant': '推薦閱讀',
       en: 'Recommended reading',
     }),
+    metaKeywords:
+      locale === 'en'
+        ? [
+            'true solar time',
+            'birth data for bazi',
+            'how to read bazi report',
+            'Life K-Line docs',
+            'World Yi method',
+            'bazi hour unknown',
+          ]
+        : [
+            '真太阳时',
+            '出生信息填写',
+            '报告读法',
+            '八字时辰未知',
+            '人生K线文档',
+            '世界易方法',
+            'true solar time',
+            'bazi report reading',
+          ],
   };
 }
 

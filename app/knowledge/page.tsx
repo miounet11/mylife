@@ -17,6 +17,7 @@ import {
 } from '@/lib/content-article-view';
 import { getKnowledgeArticles } from '@/lib/content-store';
 import type { ContentLocaleGroupKey } from '@/lib/content-locale';
+import { knowledgeArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
@@ -48,17 +49,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     description: copy.meta.description,
     path: withLocalePrefix('/knowledge', locale),
     locale,
-    keywords: [
-      '八字知识',
-      '世界易',
-      '真太阳时',
-      '报告读法',
-      '海外华人运势',
-      '十维度',
-      'GEO',
-      'bazi knowledge',
-      'World Yi',
-    ],
+    keywords: knowledgeArticleCopy(locale).hubMetaKeywords,
   });
 }
 

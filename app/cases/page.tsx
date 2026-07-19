@@ -17,6 +17,7 @@ import {
 } from '@/lib/content-article-view';
 import { getCaseStudies } from '@/lib/content-store';
 import type { ContentLocaleGroupKey } from '@/lib/content-locale';
+import { caseArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
@@ -48,16 +49,7 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
     description: copy.meta.description,
     path: withLocalePrefix('/cases', locale),
     locale,
-    keywords: [
-      '八字案例',
-      '事业案例',
-      '关系案例',
-      '迁移案例',
-      '世界易',
-      '十维度',
-      'bazi case study',
-      'World Yi',
-    ],
+    keywords: caseArticleCopy(locale).hubMetaKeywords,
   });
 }
 
