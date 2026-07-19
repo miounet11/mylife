@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { useLocale } from '@/components/i18n/locale-provider';
 import {
   birthDateInputMax,
   birthDateInputMin,
@@ -10,6 +11,8 @@ import {
 } from '@/lib/birth-date-validate';
 import { loadRememberedBirthForm, saveRememberedBirthForm } from '@/lib/birth-form-storage';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { toolsHubCopy } from '@/lib/i18n/hub-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 import {
   formatPlaceWithLongitude,
@@ -27,11 +30,18 @@ const TOOL_RUN_TIMEOUT_MS = 45_000;
 export default function ToolsHubBirthForm({
   toolSlug = DEFAULT_TOOL,
   source = 'tools_hub_inline_birth',
+  locale: localeProp,
 }: {
   toolSlug?: string;
   source?: string;
+  /** Optional override; defaults to locale from LocaleProvider. */
+  locale?: SiteLocale;
 }) {
   const router = useRouter();
+  const { locale: ctxLocale } = useLocale();
+  const locale = localeProp || ctxLocale;
+  const copy = useMemo(() => toolsHubCopy(locale).form, [locale]);
+
   const [birthDate, setBirthDate] = useState('');
   const [birthTime, setBirthTime] = useState('12:00');
   const [birthPlace, setBirthPlace] = useState('');
@@ -51,11 +61,11 @@ export default function ToolsHubBirthForm({
       const sign = st.correctionMinutes >= 0 ? '+' : '−';
       const absMin = Math.abs(Math.round(st.correctionMinutes));
       const hhmm = `${String(st.hour).padStart(2, '0')}:${String(st.minute).padStart(2, '0')}`;
-      return `真太阳时约 ${sign}${absMin} 分 · ${hhmm}`;
+      return copy.trueSolarApprox(sign, absMin, hhmm);
     } catch {
       return null;
     }
-  }, [birthDate, birthTime, resolvedLon]);
+  }, [birthDate, birthTime, resolvedLon, copy]);
 
   useEffect(() => {
     const remembered = loadRememberedBirthForm();
@@ -64,8 +74,8 @@ export default function ToolsHubBirthForm({
     setBirthTime(remembered.birthTime || '12:00');
     setGender(remembered.gender);
     if (remembered.birthPlace) setBirthPlace(remembered.birthPlace);
-    setHint('已填入本机记住的出生信息，可直接运行。');
-  }, []);
+    setHint(copy.rememberedHint);
+  }, [copy.rememberedHint]);
 
   const validation = birthDate ? validateBirthDateString(birthDate) : null;
   const canSubmit = Boolean(validation?.ok) && !submitting;
@@ -74,7 +84,7 @@ export default function ToolsHubBirthForm({
     event.preventDefault();
     const check = validateBirthDateString(birthDate);
     if (!check.ok) {
-      setError(check.message || '请填写有效出生日期');
+      setError(check.message || copy.invalidBirthDate);
       return;
     }
 
@@ -123,18 +133,18 @@ export default function ToolsHubBirthForm({
       });
 
       if (!response.ok || !payload?.success) {
-        setError(payload?.error || '运行失败，请稍后再试');
+        setError(payload?.error || copy.runFailed);
         return;
       }
 
       const sessionId = payload.data?.sessionId;
       if (!sessionId) {
-        setError('结果已生成但缺少会话 ID，请重试');
+        setError(copy.missingSession);
         return;
       }
       router.push(`/tool-result/${sessionId}?source=${encodeURIComponent(source)}`);
     } catch (err) {
-      setError(isAbortLikeError(err) ? '运行等待时间过长，请稍后重试' : '网络异常，暂时无法运行');
+      setError(isAbortLikeError(err) ? copy.timeout : copy.networkError);
     } finally {
       setSubmitting(false);
     }
@@ -145,15 +155,15 @@ export default function ToolsHubBirthForm({
       onSubmit={onSubmit}
       className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
     >
-      <div className="text-[14px] font-semibold text-[color:var(--ink-1)]">本页直接测</div>
+      <div className="text-[14px] font-semibold text-[color:var(--ink-1)]">{copy.title}</div>
       <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-        填出生信息，即时跑「年度主窗口」；无需先出完整报告。
+        {copy.description}
       </p>
       {hint ? <p className="birth-form-hint mt-2">{hint}</p> : null}
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">
         <label className="birth-form-label sm:col-span-1">
-          出生日期 <span className="text-[color:var(--alert)]">*</span>
+          {copy.birthDate} <span className="text-[color:var(--alert)]">*</span>
           <input
             type="date"
             required
@@ -165,7 +175,7 @@ export default function ToolsHubBirthForm({
           />
         </label>
         <label className="birth-form-label">
-          时辰
+          {copy.birthTime}
           <input
             type="time"
             value={birthTime}
@@ -174,26 +184,26 @@ export default function ToolsHubBirthForm({
           />
         </label>
         <label className="birth-form-label">
-          性别
+          {copy.gender}
           <select
             value={gender}
             onChange={(e) => setGender(e.target.value === 'female' ? 'female' : 'male')}
             className="birth-form-control"
           >
-            <option value="male">男</option>
-            <option value="female">女</option>
+            <option value="male">{copy.male}</option>
+            <option value="female">{copy.female}</option>
           </select>
         </label>
       </div>
 
       <div className="mt-2">
         <label className="birth-form-label">
-          出生地（可选，用于真太阳时）
+          {copy.birthPlace}
           <input
             type="text"
             value={birthPlace}
             onChange={(e) => setBirthPlace(e.target.value)}
-            placeholder="例如：上海 或 成都 · 104.1°E"
+            placeholder={copy.birthPlacePlaceholder}
             className="birth-form-control"
           />
         </label>
@@ -202,17 +212,24 @@ export default function ToolsHubBirthForm({
             <button
               key={city.id}
               type="button"
-              onClick={() => setBirthPlace(formatPlaceWithLongitude(city.zh, city.longitude))}
+              onClick={() =>
+                setBirthPlace(
+                  formatPlaceWithLongitude(
+                    locale === 'en' ? city.en || city.zh : city.zh,
+                    city.longitude,
+                  ),
+                )
+              }
               className="rounded-full border border-[color:var(--hairline)] px-2.5 py-0.5 text-[11px] text-[color:var(--ink-3)] transition hover:border-[color:var(--ink-1)] hover:text-[color:var(--ink-1)]"
             >
-              {city.zh}
+              {locale === 'en' ? city.en || city.zh : city.zh}
             </button>
           ))}
         </div>
         {trueSolarHint ? (
           <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
             {trueSolarHint}
-            <span className="ml-1">· 引擎在地点可解析时按经度估算真太阳时</span>
+            <span className="ml-1">{copy.trueSolarEngineNote}</span>
           </p>
         ) : null}
       </div>
@@ -234,10 +251,10 @@ export default function ToolsHubBirthForm({
         {submitting ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            重算中…
+            {copy.submitting}
           </>
         ) : (
-          '用出生信息测年度主窗口'
+          copy.submit
         )}
       </button>
     </form>

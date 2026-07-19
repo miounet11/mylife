@@ -15,7 +15,7 @@ import { toolsHubCopy } from '@/lib/i18n/hub-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
-import { buildPageMetadata } from '@/lib/seo';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
 
 const CONSULTANT_IDS = [
@@ -24,45 +24,26 @@ const CONSULTANT_IDS = [
   'wealth',
 ] as const satisfies ReadonlyArray<keyof ReturnType<typeof toolsHubCopy>['consultants']>;
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '工具中心｜流年窗口、今日一签与十维度入口',
-  description:
-    '高意图免费命理工具：2026 流年主窗口、今日一签、手相观察；并与十维度深度研判、完整八字报告、预测回访互通，适合快速验证与深度判断衔接。',
-  path: '/tools',
-  keywords: ['八字工具', '流年窗口', '今日一签', '手相观察', '十维度', '免费命理测试'],
-});
-
 const CATEGORY_KEYS = Object.keys(TOOL_CATEGORY_META) as ToolCategoryKey[];
 
-const BIRTH_QUICK = [
-  {
-    href: '/tools/timing-yearly-window',
-    title: '年度主窗口',
-    desc: '看今年推进与防守节奏 · 填生日即可',
-    primary: true,
-  },
-  {
-    href: '/tools/daily-sign',
-    title: '今日一签',
-    desc: '短周期节奏参考',
-  },
-  {
-    href: '/tools/career-role-fit',
-    title: '岗位匹配',
-    desc: '事业方向与阶段动作',
-  },
-  {
-    href: '/hehun',
-    title: '合婚双盘',
-    desc: '双方生日对盘，无需完整报告',
-  },
-] as const;
-
-export default async function ToolsPage({
-  searchParams,
-}: {
+interface ToolsPageProps {
   searchParams?: Promise<{ lang?: string }>;
-}) {
+}
+
+export async function generateMetadata({ searchParams }: ToolsPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const seo = toolsHubCopy(locale).seo;
+  return buildPageMetadata({
+    title: seo.title,
+    description: seo.description,
+    path: withLocalePrefix('/tools', locale),
+    locale,
+    keywords: seo.keywords,
+  });
+}
+
+export default async function ToolsPage({ searchParams }: ToolsPageProps) {
   const sp = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(sp.lang);
   const copy = toolsHubCopy(uiLocale);
@@ -129,23 +110,23 @@ export default async function ToolsPage({
         <section className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-[14px] font-semibold text-[color:var(--ink-1)]">三步走通</h2>
+              <h2 className="text-[14px] font-semibold text-[color:var(--ink-1)]">{copy.threeStepsTitle}</h2>
               <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-                1）填生日跑单项 → 2）看日主/用神与窗口 → 3）需要时生成完整报告并追问
+                {copy.threeStepsDesc}
               </p>
             </div>
             <ToolEntryLink
               href="/tools/timing-yearly-window"
               source="tools_hub_primary_cta"
-              title="年度主窗口"
+              title={copy.yearlyWindowTitle}
               className="inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center justify-center rounded-[var(--radius)] bg-[color:var(--ink-1)] px-4 text-[13px] font-medium text-white no-underline hover:bg-black hover:no-underline"
             >
-              开始：年度主窗口
+              {copy.startYearlyCta}
             </ToolEntryLink>
           </div>
 
           <ul className="mt-4 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
-            {BIRTH_QUICK.map((item) => (
+            {copy.birthQuick.map((item) => (
               <li key={item.href}>
                 <ToolEntryLink
                   href={item.href}
@@ -164,8 +145,8 @@ export default async function ToolsPage({
         </section>
 
         <DimensionsShowcase
-          title="场景研判"
-          description="运势、工作、投资等高频问题。"
+          title={copy.scenesTitle}
+          description={copy.scenesDesc}
           limit={6}
           source="tools_hub"
           compact
@@ -175,7 +156,7 @@ export default async function ToolsPage({
 
         <section className="space-y-2">
           <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">
-            {uiLocale === 'en' ? 'Ask a consultant' : '问老师'}
+            {copy.askTeachers}
           </h2>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
             {CONSULTANT_IDS.map((teacherId) => (
@@ -194,18 +175,18 @@ export default async function ToolsPage({
               href="/teachers"
               className="text-[12px] text-[color:var(--ink-5)] underline-offset-2 hover:text-[color:var(--ink-3)] hover:underline"
             >
-              {uiLocale === 'en' ? 'All' : '全部'}
+              {copy.allConsultants}
             </Link>
           </nav>
         </section>
 
         <section>
-          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">推荐工具</h2>
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.recommendedTools}</h2>
           <EntryLinkGrid items={TOOL_ENTRIES} />
         </section>
 
         <section>
-          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">按主题</h2>
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.byTheme}</h2>
           <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
             {CATEGORY_KEYS.map((key) => {
               const meta = TOOL_CATEGORY_META[key];
@@ -229,7 +210,7 @@ export default async function ToolsPage({
         </section>
 
         <p className="text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-          工具结论锚定引擎真值（日主/用神/大运）。需要细拆时，再到完整报告或请老师。
+          {copy.footerNote}
         </p>
       </div>
     </AppPage>

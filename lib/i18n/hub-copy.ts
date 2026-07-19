@@ -199,6 +199,198 @@ export function toolsHubCopy(locale: SiteLocale) {
       'zh-CN': '合婚',
       en: 'Compatibility',
     }),
+    threeStepsTitle: pick(locale, {
+      'zh-CN': '三步走通',
+      en: 'Three steps',
+    }),
+    threeStepsDesc: pick(locale, {
+      'zh-CN': '1）填生日跑单项 → 2）看日主/用神与窗口 → 3）需要时生成完整报告并追问',
+      en: '1) Enter birth date for one tool → 2) Review day master / useful god & windows → 3) Upgrade to full report & ask when needed',
+    }),
+    startYearlyCta: pick(locale, {
+      'zh-CN': '开始：年度主窗口',
+      en: 'Start: Yearly window',
+    }),
+    yearlyWindowTitle: pick(locale, {
+      'zh-CN': '年度主窗口',
+      en: 'Yearly main window',
+    }),
+    birthQuick: [
+      {
+        href: '/tools/timing-yearly-window',
+        title: pick(locale, {
+          'zh-CN': '年度主窗口',
+          en: 'Yearly main window',
+        }),
+        desc: pick(locale, {
+          'zh-CN': '看今年推进与防守节奏 · 填生日即可',
+          en: 'This year’s push vs hold rhythm · birth date only',
+        }),
+        primary: true as const,
+      },
+      {
+        href: '/tools/daily-sign',
+        title: pick(locale, {
+          'zh-CN': '今日一签',
+          en: 'Daily sign',
+        }),
+        desc: pick(locale, {
+          'zh-CN': '短周期节奏参考',
+          en: 'Short-cycle rhythm reference',
+        }),
+      },
+      {
+        href: '/tools/career-role-fit',
+        title: pick(locale, {
+          'zh-CN': '岗位匹配',
+          en: 'Role fit',
+        }),
+        desc: pick(locale, {
+          'zh-CN': '事业方向与阶段动作',
+          en: 'Career direction & stage actions',
+        }),
+      },
+      {
+        href: '/hehun',
+        title: pick(locale, {
+          'zh-CN': '合婚双盘',
+          en: 'Compatibility dual chart',
+        }),
+        desc: pick(locale, {
+          'zh-CN': '双方生日对盘，无需完整报告',
+          en: 'Both birth dates; no full report needed',
+        }),
+      },
+    ],
+    scenesTitle: pick(locale, {
+      'zh-CN': '场景研判',
+      en: 'Scene judgment',
+    }),
+    scenesDesc: pick(locale, {
+      'zh-CN': '运势、工作、投资等高频问题。',
+      en: 'Fortune, work, investing, and other frequent questions.',
+    }),
+    askTeachers: pick(locale, {
+      'zh-CN': '问老师',
+      en: 'Ask a consultant',
+    }),
+    allConsultants: pick(locale, {
+      'zh-CN': '全部',
+      en: 'All',
+    }),
+    recommendedTools: pick(locale, {
+      'zh-CN': '推荐工具',
+      en: 'Recommended tools',
+    }),
+    byTheme: pick(locale, {
+      'zh-CN': '按主题',
+      en: 'By theme',
+    }),
+    footerNote: pick(locale, {
+      'zh-CN': '工具结论锚定引擎真值（日主/用神/大运）。需要细拆时，再到完整报告或请老师。',
+      en: 'Tool results are anchored to engine truth (day master / useful god / dayun). Go to the full report or a consultant when you need a finer breakdown.',
+    }),
+    seo: {
+      title: pick(locale, {
+        'zh-CN': '工具中心｜流年窗口、今日一签与十维度入口',
+        en: 'Tools hub · Yearly window, daily sign & ten dimensions',
+      }),
+      description: pick(locale, {
+        'zh-CN':
+          '高意图免费命理工具：2026 流年主窗口、今日一签、手相观察；并与十维度深度研判、完整八字报告、预测回访互通，适合快速验证与深度判断衔接。',
+        en: 'Free high-intent tools: yearly window, daily sign, palm reading; linked to ten dimensions, full Bazi reports, and prediction check-ins—from quick checks to deeper judgment.',
+      }),
+      keywords:
+        locale === 'en'
+          ? [
+              'bazi tools',
+              'yearly window',
+              'daily sign',
+              'palm reading',
+              'ten dimensions',
+              'free destiny tools',
+            ]
+          : ['八字工具', '流年窗口', '今日一签', '手相观察', '十维度', '免费命理测试'],
+    },
+    form: {
+      title: pick(locale, {
+        'zh-CN': '本页直接测',
+        en: 'Try on this page',
+      }),
+      description: pick(locale, {
+        'zh-CN': '填出生信息，即时跑「年度主窗口」；无需先出完整报告。',
+        en: 'Enter birth details to run Yearly window now—no full report required.',
+      }),
+      rememberedHint: pick(locale, {
+        'zh-CN': '已填入本机记住的出生信息，可直接运行。',
+        en: 'Filled remembered birth details from this device—you can run now.',
+      }),
+      birthDate: pick(locale, {
+        'zh-CN': '出生日期',
+        en: 'Birth date',
+      }),
+      birthTime: pick(locale, {
+        'zh-CN': '时辰',
+        en: 'Time',
+      }),
+      gender: pick(locale, {
+        'zh-CN': '性别',
+        en: 'Gender',
+      }),
+      male: pick(locale, {
+        'zh-CN': '男',
+        en: 'Male',
+      }),
+      female: pick(locale, {
+        'zh-CN': '女',
+        en: 'Female',
+      }),
+      birthPlace: pick(locale, {
+        'zh-CN': '出生地（可选，用于真太阳时）',
+        en: 'Birth place (optional, for true solar time)',
+      }),
+      birthPlacePlaceholder: pick(locale, {
+        'zh-CN': '例如：上海 或 成都 · 104.1°E',
+        en: 'e.g. Shanghai or Chengdu · 104.1°E',
+      }),
+      trueSolarApprox: (sign: string, absMin: number, hhmm: string) =>
+        pick(locale, {
+          'zh-CN': `真太阳时约 ${sign}${absMin} 分 · ${hhmm}`,
+          en: `True solar ≈ ${sign}${absMin} min · ${hhmm}`,
+        }),
+      trueSolarEngineNote: pick(locale, {
+        'zh-CN': '· 引擎在地点可解析时按经度估算真太阳时',
+        en: '· Engine estimates true solar time from longitude when place resolves',
+      }),
+      invalidBirthDate: pick(locale, {
+        'zh-CN': '请填写有效出生日期',
+        en: 'Enter a valid birth date',
+      }),
+      runFailed: pick(locale, {
+        'zh-CN': '运行失败，请稍后再试',
+        en: 'Run failed—try again later',
+      }),
+      missingSession: pick(locale, {
+        'zh-CN': '结果已生成但缺少会话 ID，请重试',
+        en: 'Result ready but session ID missing—retry',
+      }),
+      timeout: pick(locale, {
+        'zh-CN': '运行等待时间过长，请稍后重试',
+        en: 'Run timed out—try again later',
+      }),
+      networkError: pick(locale, {
+        'zh-CN': '网络异常，暂时无法运行',
+        en: 'Network error—cannot run right now',
+      }),
+      submitting: pick(locale, {
+        'zh-CN': '重算中…',
+        en: 'Running…',
+      }),
+      submit: pick(locale, {
+        'zh-CN': '用出生信息测年度主窗口',
+        en: 'Run yearly window with birth details',
+      }),
+    },
     consultants: {
       career: pick(locale, { 'zh-CN': '事业', en: 'Career' }),
       timing: pick(locale, { 'zh-CN': '时机', en: 'Timing' }),

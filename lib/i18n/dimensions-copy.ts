@@ -437,6 +437,63 @@ export function dimensionDetailCopy(locale: SiteLocale) {
   };
 }
 
+/** Report shell chrome only — not engine sections/items/prediction statements. */
+export function dimensionReportShellCopy(locale: SiteLocale) {
+  return {
+    syncing: pick(locale, {
+      'zh-CN': '同步中…',
+      'zh-Hant': '同步中…',
+      en: 'Syncing…',
+    }),
+    syncedRetry: pick(locale, {
+      'zh-CN': '已同步 · 重试',
+      'zh-Hant': '已同步 · 重試',
+      en: 'Synced · Retry',
+    }),
+    syncFailedRetry: pick(locale, {
+      'zh-CN': '同步失败 · 重试',
+      'zh-Hant': '同步失敗 · 重試',
+      en: 'Sync failed · Retry',
+    }),
+    syncToPredictions: pick(locale, {
+      'zh-CN': '同步到预测回访',
+      'zh-Hant': '同步到預測回訪',
+      en: 'Sync to prediction check-in',
+    }),
+    aiPolished: pick(locale, {
+      'zh-CN': 'AI 润色',
+      'zh-Hant': 'AI 潤色',
+      en: 'AI polished',
+    }),
+    verifiablePredictions: (count: number) =>
+      pick(locale, {
+        'zh-CN': `可验证预测（${count} 条）`,
+        'zh-Hant': `可驗證預測（${count} 條）`,
+        en: `Verifiable predictions (${count})`,
+      }),
+    autoSynced: pick(locale, {
+      'zh-CN': '已自动同步到预测回访',
+      'zh-Hant': '已自動同步到預測回訪',
+      en: 'Auto-synced to prediction check-in',
+    }),
+    autoSyncFailed: pick(locale, {
+      'zh-CN': '自动同步失败，可手动重试',
+      'zh-Hant': '自動同步失敗，可手動重試',
+      en: 'Auto-sync failed; you can retry manually',
+    }),
+    verifyBy: pick(locale, {
+      'zh-CN': '验证截止',
+      'zh-Hant': '驗證截止',
+      en: 'Due by',
+    }),
+    goToPredictions: pick(locale, {
+      'zh-CN': '前往预测回访 →',
+      'zh-Hant': '前往預測回訪 →',
+      en: 'Go to prediction check-in →',
+    }),
+  };
+}
+
 /** Detail page SEO; EN when locale is en (zh stays identical to dimensionSeo). */
 export function dimensionDetailSeo(
   locale: SiteLocale,

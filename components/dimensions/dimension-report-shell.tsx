@@ -1,6 +1,8 @@
 import type { DimensionReport } from '@/lib/dimensions/types';
 import Link from 'next/link';
 import TimingWindowPanel from '@/components/timing/timing-window-panel';
+import { dimensionReportShellCopy } from '@/lib/i18n/dimensions-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 const TONE_CLASS: Record<string, string> = {
   default: 'border-[color:var(--fb-border)]',
@@ -14,22 +16,25 @@ export default function DimensionReportShell({
   onSyncPredictions,
   syncing,
   syncStatus = 'idle',
+  locale = 'zh-CN',
 }: {
   report: DimensionReport;
   onSyncPredictions?: () => void;
   syncing?: boolean;
   syncStatus?: 'idle' | 'synced' | 'error';
+  locale?: SiteLocale;
 }) {
+  const copy = dimensionReportShellCopy(locale);
   const narrativeSummary = report.meta?.narrativeSummary;
   const llmEnhanced = report.meta?.llmEnhanced === 1 || report.meta?.llmEnhanced === '1';
 
   const syncLabel = syncing
-    ? '同步中…'
+    ? copy.syncing
     : syncStatus === 'synced'
-      ? '已同步 · 重试'
+      ? copy.syncedRetry
       : syncStatus === 'error'
-        ? '同步失败 · 重试'
-        : '同步到预测回访';
+        ? copy.syncFailedRetry
+        : copy.syncToPredictions;
 
   const yongShen = asStringArray(report.meta?.yongShen);
   const xiShen = asStringArray(report.meta?.xiShen);
@@ -46,7 +51,7 @@ export default function DimensionReportShell({
         <div className="flex flex-wrap items-center gap-2">
           {llmEnhanced ? (
             <span className="inline-flex items-center rounded-full border border-[color:var(--brand)]/25 bg-[color:var(--brand)]/5 px-2.5 py-0.5 text-[11px] font-semibold text-[color:var(--brand)]">
-              AI 润色
+              {copy.aiPolished}
             </span>
           ) : null}
           {narrativeSummary ? (
@@ -76,13 +81,13 @@ export default function DimensionReportShell({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 className="text-[14px] font-bold text-[color:var(--ink-1)]">
-                可验证预测（{report.predictions.length} 条）
+                {copy.verifiablePredictions(report.predictions.length)}
               </h3>
               {syncStatus === 'synced' ? (
-                <p className="mt-0.5 text-[11px] text-emerald-700">已自动同步到预测回访</p>
+                <p className="mt-0.5 text-[11px] text-emerald-700">{copy.autoSynced}</p>
               ) : null}
               {syncStatus === 'error' ? (
-                <p className="mt-0.5 text-[11px] text-amber-700">自动同步失败，可手动重试</p>
+                <p className="mt-0.5 text-[11px] text-amber-700">{copy.autoSyncFailed}</p>
               ) : null}
             </div>
             {onSyncPredictions ? (
@@ -101,14 +106,14 @@ export default function DimensionReportShell({
               <li key={item.id} className="rounded-[var(--radius)] border border-[color:var(--fb-border)] bg-white p-3">
                 <p className="text-[13px] font-semibold text-[color:var(--ink-1)]">{item.statement}</p>
                 <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">
-                  验证截止 {item.dueDate}
+                  {copy.verifyBy} {item.dueDate}
                   {item.window ? ` · ${item.window}` : ''}
                 </p>
               </li>
             ))}
           </ul>
           <Link href="/predictions" className="mt-3 inline-block text-[12px] font-bold text-[color:var(--brand)] hover:underline">
-            前往预测回访 →
+            {copy.goToPredictions}
           </Link>
         </section>
       ) : null}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import type { Prediction, PredictionOutcome } from '@/lib/predictions/types';
 import { updatePredictionOutcome } from '@/lib/predictions/store';
@@ -10,20 +10,14 @@ import {
 } from '@/lib/predictions/dimension-source';
 import { buildEventFromPrediction, eventsHrefForReport } from '@/lib/prediction-to-event';
 import { trackProductEvent } from '@/lib/product-analytics';
-
-const CATEGORY_LABELS: Record<Prediction['category'], string> = {
-  career: '事业',
-  wealth: '财富',
-  marriage: '关系',
-  health: '健康',
-  timing: '时序',
-};
-
-const OUTCOME_LABELS: Record<Exclude<PredictionOutcome, 'pending'>, string> = {
-  fulfilled: '命中',
-  partial: '部分',
-  missed: '未命中',
-};
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import type { DimensionSlug } from '@/lib/dimensions/types';
+import {
+  predictionCategoryLabels,
+  predictionOutcomeLabels,
+  predictionsPanelCopy,
+} from '@/lib/i18n/predictions-copy';
+import { dimensionUiCopy } from '@/lib/i18n/dimensions-copy';
 
 const LOCAL_EVENTS_KEY = 'lk_events_cache_v1';
 
@@ -70,24 +64,38 @@ function progressPercent(dueDate: string): number {
   return Math.max(8, Math.min(96, Math.round(((30 - days) / 30) * 100)));
 }
 
+function localizeDimLabel(slug: string | null, locale: SiteLocale): string {
+  if (!slug) return dimensionLabel(slug);
+  try {
+    return dimensionUiCopy(locale, slug as DimensionSlug).title;
+  } catch {
+    return dimensionLabel(slug);
+  }
+}
+
 export function PredictionsPanel({
   predictions,
   showProgress = false,
   compact = false,
   onUpdated,
+  locale = 'zh-CN',
 }: {
   predictions: Prediction[];
   showProgress?: boolean;
   compact?: boolean;
   onUpdated?: () => void;
+  locale?: SiteLocale;
 }) {
+  const copy = useMemo(() => predictionsPanelCopy(locale), [locale]);
+  const categoryLabels = useMemo(() => predictionCategoryLabels(locale), [locale]);
+  const outcomeLabels = useMemo(() => predictionOutcomeLabels(locale), [locale]);
   const [feedbackMap, setFeedbackMap] = useState<Record<string, string>>({});
   const [savingId, setSavingId] = useState<string | null>(null);
   const [loggedMap, setLoggedMap] = useState<Record<string, 'server' | 'local' | 'fail'>>({});
 
   if (!predictions.length) {
     return (
-      <p className="text-[13px] text-[color:var(--ink-3)]">暂无可验证预测项。生成报告后会自动抽取带时间窗的判断。</p>
+      <p className="text-[13px] text-[color:var(--ink-3)]">{copy.empty}</p>
     );
   }
 
@@ -133,22 +141,22 @@ export function PredictionsPanel({
           >
             <div className="flex flex-wrap items-center gap-2">
               <span className="rounded-full bg-[color:var(--brand-soft)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--brand)]">
-                {CATEGORY_LABELS[prediction.category]}
+                {categoryLabels[prediction.category]}
               </span>
               {dimensionSlug ? (
                 <Link
                   href={`/dimensions/${dimensionSlug}`}
                   className="rounded-full border border-[color:var(--hairline)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-3)] hover:border-[color:var(--brand)] hover:text-[color:var(--brand)] hover:no-underline"
                 >
-                  {dimensionLabel(dimensionSlug)}
+                  {localizeDimLabel(dimensionSlug, locale)}
                 </Link>
               ) : null}
               {prediction.window ? (
                 <span className="text-[11px] text-[color:var(--ink-4)]">{prediction.window}</span>
               ) : null}
               <span className="text-[11px] text-[color:var(--ink-4)]">
-                到期 {prediction.dueDate}
-                {pending && days >= 0 ? ` · 剩余 ${days} 天` : null}
+                {copy.duePrefix} {prediction.dueDate}
+                {pending && days >= 0 ? ` · ${copy.daysLeft(days)}` : null}
               </span>
             </div>
 
@@ -157,7 +165,10 @@ export function PredictionsPanel({
             </p>
 
             {!compact ? (
-              <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">依据：{prediction.evidence}</p>
+              <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
+                {copy.evidencePrefix}
+                {prediction.evidence}
+              </p>
             ) : null}
 
             {showProgress && pending ? (
@@ -194,7 +205,7 @@ export function PredictionsPanel({
                           : 'fb-btn h-8 px-3 text-[12px]'
                       }
                     >
-                      {OUTCOME_LABELS[outcome]}
+                      {outcomeLabels[outcome]}
                     </button>
                   ))}
                 </div>
@@ -204,26 +215,27 @@ export function PredictionsPanel({
                   onChange={(event) =>
                     setFeedbackMap((prev) => ({ ...prev, [prediction.id]: event.target.value }))
                   }
-                  placeholder="补充说明（可选）"
+                  placeholder={copy.feedbackPlaceholder}
                   className="h-8 w-full rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-2 text-[12px] text-[color:var(--ink-2)]"
                 />
               </div>
             ) : (
               <div className="mt-2 space-y-1">
                 <div className="text-[12px] font-semibold text-[color:var(--ink-2)]">
-                  已反馈：{OUTCOME_LABELS[prediction.outcome as Exclude<PredictionOutcome, 'pending'>]}
+                  {copy.feedbackDone}
+                  {outcomeLabels[prediction.outcome as Exclude<PredictionOutcome, 'pending'>]}
                   {prediction.userFeedback ? ` · ${prediction.userFeedback}` : ''}
                 </div>
                 {loggedMap[prediction.id] === 'server' || loggedMap[prediction.id] === 'local' ? (
                   <p className="text-[11px] text-[color:var(--ink-4)]">
-                    已写入事件本
-                    {loggedMap[prediction.id] === 'local' ? '（本机）' : ''}
+                    {copy.loggedToEvents}
+                    {loggedMap[prediction.id] === 'local' ? copy.localSuffix : ''}
                     {' · '}
                     <Link
                       href={eventsHrefForReport(prediction.reportId)}
                       className="font-semibold text-[color:var(--brand)] hover:underline"
                     >
-                      查看事件
+                      {copy.viewEvents}
                     </Link>
                   </p>
                 ) : null}
@@ -243,7 +255,7 @@ export function PredictionsPanel({
                       }));
                     }}
                   >
-                    记入事件本 →
+                    {copy.logToEvents}
                   </button>
                 ) : null}
               </div>

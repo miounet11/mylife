@@ -21,16 +21,15 @@ import {
 import { PredictionsPanel } from '@/components/predictions/predictions-panel';
 import RelatedDimensionsPanel from '@/components/dimensions/related-dimensions-panel';
 import { listDimensionsSorted } from '@/lib/dimensions/config';
+import type { DimensionSlug } from '@/lib/dimensions/types';
 import { buildReportContinueChatHref } from '@/lib/chat-entry';
 import { buildTeacherChatHref } from '@/lib/teachers';
-
-const CATEGORY_LABELS: Record<Prediction['category'], string> = {
-  career: '事业',
-  wealth: '财富',
-  marriage: '关系',
-  health: '健康',
-  timing: '时序',
-};
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import {
+  predictionCategoryLabels,
+  predictionsListCopy,
+} from '@/lib/i18n/predictions-copy';
+import { dimensionUiCopy } from '@/lib/i18n/dimensions-copy';
 
 /** Prefer query reportId; else most frequent report among local predictions. */
 function resolveContextReportId(
@@ -56,7 +55,21 @@ function resolveContextReportId(
   return best;
 }
 
-export default function PredictionsListPage() {
+function localizeDimensionTitle(slug: string, locale: SiteLocale, fallback: string): string {
+  try {
+    return dimensionUiCopy(locale, slug as DimensionSlug).title;
+  } catch {
+    return fallback;
+  }
+}
+
+export default function PredictionsListPage({
+  locale = 'zh-CN',
+}: {
+  locale?: SiteLocale;
+}) {
+  const copy = useMemo(() => predictionsListCopy(locale), [locale]);
+  const categoryLabels = useMemo(() => predictionCategoryLabels(locale), [locale]);
   const searchParams = useSearchParams();
   const dimensionFromQuery = searchParams.get('dimension') || 'all';
   const reportIdFromQuery = searchParams.get('reportId');
@@ -102,12 +115,20 @@ export default function PredictionsListPage() {
   const dimensionOptions = useMemo(() => {
     const fromData = dimensionStats
       .filter((item) => item.slug !== 'report')
-      .map((item) => ({ slug: item.slug, title: item.title, total: item.total }));
+      .map((item) => ({
+        slug: item.slug,
+        title: localizeDimensionTitle(item.slug, locale, item.title),
+        total: item.total,
+      }));
     if (fromData.length) return fromData;
     return listDimensionsSorted()
       .filter((item) => item.priority === 'p0')
-      .map((item) => ({ slug: item.slug, title: item.title, total: 0 }));
-  }, [dimensionStats]);
+      .map((item) => ({
+        slug: item.slug,
+        title: localizeDimensionTitle(item.slug, locale, item.title),
+        total: 0,
+      }));
+  }, [dimensionStats, locale]);
 
   const contextReportId = useMemo(
     () => resolveContextReportId(reportIdFromQuery, all),
@@ -133,14 +154,18 @@ export default function PredictionsListPage() {
     return (
       <div className="fb-card flex items-center justify-center gap-2 p-10 text-[13px] text-[color:var(--ink-3)]">
         <Loader2 className="h-4 w-4 animate-spin" />
-        正在加载预测清单…
+        {copy.loading}
       </div>
     );
   }
 
   const hasAny = upcoming.length + due.length + history.length > 0 || all.length > 0;
   const filterLabel =
-    dimensionFilter === 'all' ? '全部来源' : dimensionLabel(dimensionFilter);
+    dimensionFilter === 'all'
+      ? copy.allSources
+      : dimensionFilter === 'report'
+        ? copy.fullReport
+        : localizeDimensionTitle(dimensionFilter, locale, dimensionLabel(dimensionFilter));
 
   return (
     <div className="space-y-4">
@@ -148,14 +173,12 @@ export default function PredictionsListPage() {
       <section className="border-y border-[color:var(--hairline)] py-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{copy.consultantEyebrow}</div>
             <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
-              带报告回聊
+              {copy.consultantTitle}
             </h2>
             <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-              {contextReportId
-                ? '对照预测命中结果，结合本盘开场再问总览或实践老师'
-                : '验证后可带报告继续聊；暂无报告时先选一位顾问开场'}
+              {contextReportId ? copy.consultantDescWithReport : copy.consultantDescWithoutReport}
             </p>
           </div>
           <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
@@ -163,14 +186,14 @@ export default function PredictionsListPage() {
               href={continueChatHref}
               className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
             >
-              {contextReportId ? '继续聊 →' : '问顾问 →'}
+              {contextReportId ? copy.continueChat : copy.askConsultant}
             </Link>
             {!contextReportId ? (
               <Link
                 href="/teachers"
                 className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
               >
-                全部老师
+                {copy.allTeachers}
               </Link>
             ) : (
               <Link
@@ -181,7 +204,7 @@ export default function PredictionsListPage() {
                 })}
                 className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
               >
-                实践老师
+                {copy.practiceTeacher}
               </Link>
             )}
           </div>
@@ -192,12 +215,12 @@ export default function PredictionsListPage() {
         <section className="fb-card p-4 md:p-5">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <div className="lk-section-eyebrow">命中率</div>
+              <div className="lk-section-eyebrow">{copy.hitRateEyebrow}</div>
               <div className="mt-1 text-[22px] font-bold text-[color:var(--ink-1)]">
                 {Math.round(stats.hitRate * 100)}%
               </div>
               <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">
-                已反馈 {stats.total} 条 · 当前筛选：{filterLabel}
+                {copy.feedbackSummary(stats.total, filterLabel)}
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -206,7 +229,7 @@ export default function PredictionsListPage() {
                   key={category}
                   className="rounded-full border border-[color:var(--hairline)] px-2 py-1 text-[11px] text-[color:var(--ink-3)]"
                 >
-                  {CATEGORY_LABELS[category as Prediction['category']] || category}{' '}
+                  {categoryLabels[category as Prediction['category']] || category}{' '}
                   {Math.round(rate * 100)}%
                 </span>
               ))}
@@ -226,7 +249,10 @@ export default function PredictionsListPage() {
                       : 'border-[color:var(--hairline)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)]'
                   }`}
                 >
-                  {item.title} {item.total}
+                  {item.slug === 'report'
+                    ? copy.fullReport
+                    : localizeDimensionTitle(item.slug, locale, item.title)}{' '}
+                  {item.total}
                   {item.hitRate > 0 ? ` · ${Math.round(item.hitRate * 100)}%` : ''}
                 </button>
               ))}
@@ -239,7 +265,7 @@ export default function PredictionsListPage() {
                     : 'border-[color:var(--hairline)] text-[color:var(--ink-3)]'
                 }`}
               >
-                全部
+                {copy.allFilter}
               </button>
             </div>
           ) : null}
@@ -248,14 +274,14 @@ export default function PredictionsListPage() {
 
       <section className="fb-card p-3 md:p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[12px] font-semibold text-[color:var(--ink-3)]">按维度筛选</span>
+          <span className="text-[12px] font-semibold text-[color:var(--ink-3)]">{copy.filterByDimension}</span>
           <select
             value={dimensionFilter}
             onChange={(event) => setDimensionFilter(event.target.value)}
             className="h-8 rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-white px-2 text-[12px]"
           >
-            <option value="all">全部来源</option>
-            <option value="report">完整报告</option>
+            <option value="all">{copy.allSources}</option>
+            <option value="report">{copy.fullReport}</option>
             {dimensionOptions.map((item) => (
               <option key={item.slug} value={item.slug}>
                 {item.title}
@@ -264,55 +290,53 @@ export default function PredictionsListPage() {
             ))}
           </select>
           <Link href="/dimensions" className="text-[12px] font-bold text-[color:var(--brand)] hover:underline">
-            去十维度生成更多预测 →
+            {copy.generateMorePredictions}
           </Link>
         </div>
       </section>
 
       {!hasAny ? (
         <section className="fb-card p-4 md:p-6">
-          <p className="text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
-            还没有可回访的预测项。可先生成完整报告，或进入十维度场景研判（会自动同步预测）。
-          </p>
+          <p className="text-[13px] leading-[1.6] text-[color:var(--ink-3)]">{copy.emptyBody}</p>
           <div className="mt-3 flex flex-wrap gap-2">
             <Link href="/dimensions" className="fb-btn fb-btn-primary h-9 px-4 text-sm hover:no-underline">
-              十维度研判
+              {copy.ctaDimensions}
             </Link>
             <Link href="/analyze" className="fb-btn h-9 px-4 text-sm hover:no-underline">
-              生成完整报告
+              {copy.ctaFullReport}
             </Link>
           </div>
         </section>
       ) : upcoming.length + due.length + history.length === 0 ? (
         <section className="fb-card p-4">
           <p className="text-[13px] text-[color:var(--ink-3)]">
-            当前筛选「{filterLabel}」下没有预测项。
+            {copy.emptyFilterPrefix(filterLabel)}
             <button
               type="button"
               className="ml-1 font-semibold text-[color:var(--brand)]"
               onClick={() => setDimensionFilter('all')}
             >
-              查看全部
+              {copy.viewAll}
             </button>
           </p>
         </section>
       ) : (
         <div className="grid gap-4 lg:grid-cols-3">
           <section className="fb-card p-4 md:p-5">
-            <div className="lk-section-eyebrow">即将到期</div>
-            <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">7 天内</h2>
-            <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">提前对照清单，记录现实变化。</p>
+            <div className="lk-section-eyebrow">{copy.upcomingEyebrow}</div>
+            <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">{copy.upcomingTitle}</h2>
+            <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">{copy.upcomingDesc}</p>
             <div className="mt-4">
-              <PredictionsPanel predictions={upcoming} showProgress onUpdated={refresh} />
+              <PredictionsPanel predictions={upcoming} showProgress onUpdated={refresh} locale={locale} />
             </div>
           </section>
 
           <section className="fb-card border-t-2 border-[color:var(--brand)] p-4 md:p-5">
-            <div className="lk-section-eyebrow">已到期未反馈</div>
-            <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">待你验证</h2>
-            <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">点击命中 / 部分 / 未命中，帮助系统校准。</p>
+            <div className="lk-section-eyebrow">{copy.dueEyebrow}</div>
+            <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">{copy.dueTitle}</h2>
+            <p className="mt-1 text-[12px] text-[color:var(--ink-3)]">{copy.dueDesc}</p>
             <div className="mt-4">
-              <PredictionsPanel predictions={due} onUpdated={refresh} />
+              <PredictionsPanel predictions={due} onUpdated={refresh} locale={locale} />
             </div>
           </section>
 
@@ -323,26 +347,30 @@ export default function PredictionsListPage() {
               className="flex w-full items-center justify-between text-left"
             >
               <div>
-                <div className="lk-section-eyebrow">历史已反馈</div>
-                <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">{history.length} 条</h2>
+                <div className="lk-section-eyebrow">{copy.historyEyebrow}</div>
+                <h2 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">
+                  {copy.historyCount(history.length)}
+                </h2>
               </div>
-              <span className="text-[12px] text-[color:var(--ink-4)]">{historyOpen ? '收起' : '展开'}</span>
+              <span className="text-[12px] text-[color:var(--ink-4)]">
+                {historyOpen ? copy.collapse : copy.expand}
+              </span>
             </button>
 
             {historyOpen ? (
               <div className="mt-4 opacity-80">
-                <PredictionsPanel predictions={history} compact onUpdated={refresh} />
+                <PredictionsPanel predictions={history} compact onUpdated={refresh} locale={locale} />
               </div>
             ) : (
-              <p className="mt-3 text-[12px] text-[color:var(--ink-4)]">已反馈记录默认折叠，点击展开查看。</p>
+              <p className="mt-3 text-[12px] text-[color:var(--ink-4)]">{copy.historyCollapsedHint}</p>
             )}
           </section>
         </div>
       )}
 
       <RelatedDimensionsPanel
-        title="继续场景研判"
-        description="维度预测会自动进入本页；优先打磨运势节奏、工作行业、投资理财。"
+        title={copy.relatedTitle}
+        description={copy.relatedDesc}
         limit={3}
         compact
       />

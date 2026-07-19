@@ -5,44 +5,72 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import PredictionsListPage from '@/components/predictions/predictions-list-page';
-import { buildPageMetadata } from '@/lib/seo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { predictionsPageCopy } from '@/lib/i18n/predictions-copy';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '预测回访',
-  description: '对照报告中的时间窗判断，记录命中、部分命中或未命中，帮助系统持续校准。',
-  path: '/predictions',
-  noIndex: true,
-});
+interface PredictionsPageProps {
+  searchParams?: Promise<{ lang?: string }>;
+}
 
-export default function PredictionsPage() {
+export async function generateMetadata({ searchParams }: PredictionsPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = predictionsPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/predictions', locale),
+    locale,
+    noIndex: true,
+  });
+}
+
+export default async function PredictionsPage({ searchParams }: PredictionsPageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = predictionsPageCopy(uiLocale);
+  const illustLocale = toIllustLocale(uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: '十维度', compact: true }}>
+    <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.headerCta, compact: true }}>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="验证"
-          title="预测回访"
-          description="报告与十维度中的时间窗判断会归档到这里。到期前后对照现实节点反馈。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                十维度
+                {copy.linkDimensions}
               </Link>
               <Link href="/annual-review" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                年度复盘
+                {copy.linkAnnualReview}
               </Link>
               <Link href="/history" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                报告历史
+                {copy.linkHistory}
               </Link>
             </>
           }
         />
-        <PageIllustrationStrip surface="predictions/revisit" title="回访闭环" compact limit={1} />
+        <PageIllustrationStrip
+          surface="predictions/revisit"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '回访闭环',
+            'zh-Hant': '回訪閉環',
+            en: 'Check-in loop',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+        />
         <Suspense
           fallback={
-            <div className="py-8 text-center text-[13px] text-[color:var(--ink-5)]">加载预测清单…</div>
+            <div className="py-8 text-center text-[13px] text-[color:var(--ink-5)]">{copy.loadingList}</div>
           }
         >
-          <PredictionsListPage />
+          <PredictionsListPage locale={uiLocale} />
         </Suspense>
       </div>
     </AppPage>

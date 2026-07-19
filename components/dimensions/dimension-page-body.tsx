@@ -231,6 +231,7 @@ export default function DimensionPageBody({
         onSyncPredictions={handleSyncPredictions}
         syncing={syncing}
         syncStatus={syncStatus}
+        locale={locale}
       />
       <section className="fb-card flex flex-wrap items-center justify-between gap-3 border border-[color:var(--hairline)] p-4">
         <div className="min-w-0">
