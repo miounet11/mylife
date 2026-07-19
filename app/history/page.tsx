@@ -4,37 +4,67 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import HistoryClient from '@/components/history/history-client';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { historyPageCopy } from '@/lib/i18n/history-copy';
+import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '历史记录｜报告与工具结果',
-  description: '查看本机会话的综合报告与单项工具运行结果，方便快速回看结论与建议。',
-  robots: { index: false, follow: false },
-};
+interface HistoryPageProps {
+  searchParams?: Promise<{ lang?: string }>;
+}
 
-export default function HistoryPage() {
+export async function generateMetadata({ searchParams }: HistoryPageProps): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const copy = historyPageCopy(locale);
+  return buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription,
+    path: withLocalePrefix('/history', locale),
+    locale,
+    noIndex: true,
+  });
+}
+
+export default async function HistoryPage({ searchParams }: HistoryPageProps) {
+  const sp = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(sp.lang);
+  const copy = historyPageCopy(uiLocale);
+  const illustLocale = toIllustLocale(uiLocale);
+
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '生成新报告', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="历史"
-          title="报告与工具结果"
-          description="未登录也可在本浏览器查看会话结果；登录后可跨设备归档。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                工具
+                {copy.linkTools}
               </Link>
               <Link href="/profile" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                我的档案
+                {copy.linkProfile}
               </Link>
               <Link href="/predictions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                预测回访
+                {copy.linkPredictions}
               </Link>
             </>
           }
         />
-        <PageIllustrationStrip surface="history/hub" title="历史回看" compact limit={1} />
-        <HistoryClient />
+        <PageIllustrationStrip
+          surface="history/hub"
+          title={illustStripTitle(uiLocale, {
+            'zh-CN': '历史回看',
+            'zh-Hant': '歷史回看',
+            en: 'History review',
+          })}
+          compact
+          limit={1}
+          locale={illustLocale}
+        />
+        <HistoryClient locale={uiLocale} />
       </div>
     </AppPage>
   );

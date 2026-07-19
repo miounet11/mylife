@@ -13,6 +13,10 @@ import SecondSystemRail from '@/components/product/second-system-rail';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { toolsHubCopy } from '@/lib/i18n/hub-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import {
+  presentToolEntries,
+  toolCategoryMetaCopy,
+} from '@/lib/i18n/tools-catalog-copy';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
@@ -182,14 +186,14 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
 
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.recommendedTools}</h2>
-          <EntryLinkGrid items={TOOL_ENTRIES} />
+          <EntryLinkGrid items={presentToolEntries(TOOL_ENTRIES, uiLocale)} />
         </section>
 
         <section>
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.byTheme}</h2>
           <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
             {CATEGORY_KEYS.map((key) => {
-              const meta = TOOL_CATEGORY_META[key];
+              const meta = toolCategoryMetaCopy(uiLocale, key);
               return (
                 <li key={key}>
                   <Link

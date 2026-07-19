@@ -2,10 +2,16 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useLocale } from '@/components/i18n/locale-provider';
 import { AlertBanner } from '@/components/layout/alert-banner';
 import { FunnelPageView, trackFunnel } from '@/components/funnel-tracker';
 import AccuracyDashboard from '@/components/predictions/accuracy-dashboard';
-import { FREE_TIER_FEATURES, MEMBERSHIP_PLANS, type MembershipPlanId } from '@/lib/membership-plans';
+import {
+  membershipClientCopy,
+  membershipPlanChrome,
+} from '@/lib/i18n/membership-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import { MEMBERSHIP_PLANS, type MembershipPlanId } from '@/lib/membership-plans';
 import {
   getMembershipPromoCopy,
   isMembershipFreePromoActive,
@@ -31,9 +37,12 @@ type AuthSession = {
   user?: { email?: string; id?: string } | null;
 };
 
-export default function MembershipClient() {
+export default function MembershipClient({ locale: localeProp }: { locale?: SiteLocale }) {
+  const { locale: ctxLocale } = useLocale();
+  const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
+  const copy = useMemo(() => membershipClientCopy(locale), [locale]);
   const promoActive = isMembershipFreePromoActive();
-  const promo = getMembershipPromoCopy('zh-CN');
+  const promo = useMemo(() => getMembershipPromoCopy(locale), [locale]);
 
   const [email, setEmail] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
@@ -101,6 +110,10 @@ export default function MembershipClient() {
     () => MEMBERSHIP_PLANS.find((plan) => plan.id === selectedPlan) || MEMBERSHIP_PLANS[0],
     [selectedPlan],
   );
+  const selectedPlanChrome = useMemo(
+    () => membershipPlanChrome(locale, selectedPlanInfo.id),
+    [locale, selectedPlanInfo.id],
+  );
 
   const isQuarterlyActive =
     Boolean(membershipStatus?.isActive) && membershipStatus?.plan === 'quarterly';
@@ -115,7 +128,7 @@ export default function MembershipClient() {
     try {
       const res = await fetch(`/api/membership/status?email=${encodeURIComponent(normalized)}`);
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Status lookup failed');
+      if (!res.ok) throw new Error(data.error || copy.errorStatus);
       setMembershipStatus({
         status: data.status,
         plan: data.plan || null,
@@ -177,7 +190,7 @@ export default function MembershipClient() {
         window.location.href = data.loginUrl || `/login?next=${encodeURIComponent('/membership')}`;
         return;
       }
-      if (!res.ok) throw new Error(data.error || 'Checkout failed');
+      if (!res.ok) throw new Error(data.error || copy.errorCheckout);
 
       if (data.mode === 'redirect' && data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
@@ -187,9 +200,7 @@ export default function MembershipClient() {
       if (data.mode === 'activated' || data.mode === 'already_active') {
         setSuccess(
           data.message ||
-            (promoActive
-              ? '会员已开通（限时免费 ¥0）。你现在可以使用会员功能。'
-              : '会员已开通。你现在可以回看完整报告与年度提醒。'),
+            (promoActive ? copy.successActivatedPromo : copy.successActivated),
         );
         await refreshStatus(normalizedEmail);
         trackFunnel('membership_activated', {
@@ -201,24 +212,34 @@ export default function MembershipClient() {
         return;
       }
 
-      setSuccess(data.message || '已记录开通意向，我们会通过邮箱发送下一步指引。');
+      setSuccess(data.message || copy.successRecorded);
       await refreshStatus(normalizedEmail);
     } catch (err: any) {
-      setError(err.message || '开通失败，请稍后重试。');
+      setError(err.message || copy.errorCheckout);
     } finally {
       setLoading(false);
     }
   }
 
   const ctaLabel = (() => {
-    if (loading) return '处理中...';
+    if (loading) return copy.processing;
     if (promoActive) {
       if (isQuarterlyActive && selectedPlan === 'annual') return promo.ctaUpgrade;
       if (selectedPlan === 'annual') return promo.ctaAnnual;
       return promo.ctaQuarterly;
     }
-    return `开通${selectedPlanInfo.name}`;
+    return copy.activatePlan(selectedPlanChrome.name);
   })();
+
+  const stepCards = promoActive ? copy.steps.promo : copy.steps.paid;
+
+  const activePlanLabel = membershipStatus?.plan
+    ? membershipPlanChrome(locale, membershipStatus.plan).name
+    : membershipStatus?.planName || copy.statusMemberFallback;
+
+  const expiresLabel = membershipStatus?.expiresAt
+    ? new Date(membershipStatus.expiresAt).toLocaleDateString(copy.dateLocale)
+    : copy.statusLongTerm;
 
   return (
     <div className="space-y-4">
@@ -232,9 +253,9 @@ export default function MembershipClient() {
           </h2>
           <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.55] text-[color:var(--ink-5)]">{promo.body}</p>
           <ol className="mt-3 list-decimal space-y-1 pl-4 text-[12px] text-[color:var(--ink-3)]">
-            <li>邮箱登录（注册会员）</li>
-            <li>选择季度 / 年度</li>
-            <li>¥0 开通，立即生效</li>
+            {copy.promoSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
           </ol>
           {!authenticated ? (
             <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
@@ -242,13 +263,13 @@ export default function MembershipClient() {
                 href={`/login?next=${encodeURIComponent(`/membership?source=${source}`)}`}
                 className="text-[color:var(--ink-1)] underline-offset-2 hover:underline"
               >
-                先登录 / 注册邮箱
+                {copy.loginFirst}
               </Link>
-              <span className="text-[12px] text-[color:var(--ink-5)]">未登录无法领取</span>
+              <span className="text-[12px] text-[color:var(--ink-5)]">{copy.needLoginHint}</span>
             </div>
           ) : (
             <p className="mt-3 text-[12px] text-[color:var(--ink-3)]">
-              已登录：{normalizedEmail} · 可直接 0 元开通
+              {copy.loggedInReady(normalizedEmail)}
             </p>
           )}
         </section>
@@ -260,33 +281,31 @@ export default function MembershipClient() {
       />
 
       <div className="lk-grid-3">
-        {[
-          ['1', promoActive ? '登录邮箱' : '绑定邮箱', promoActive ? '注册会员后才能领取' : '把当前报告与你的邮箱关联'],
-          ['2', '选择会员方案', promoActive ? '季度 / 年度 · 活动期 ¥0' : '按年或按季解锁完整版'],
-          ['3', promoActive ? '0 元开通' : '随时回看', promoActive ? '立即享受会员功能' : '后续年度更新优先查看'],
-        ].map(([step, title, text]) => (
-          <div key={step} className="fb-card p-3">
-            <div className="text-[11px] font-bold text-[color:var(--brand)]">Step {step}</div>
-            <div className="mt-1 text-[14px] font-bold text-[color:var(--ink-1)]">{title}</div>
-            <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">{text}</div>
+        {stepCards.map((card, index) => (
+          <div key={card.title} className="fb-card p-3">
+            <div className="text-[11px] font-bold text-[color:var(--brand)]">Step {index + 1}</div>
+            <div className="mt-1 text-[14px] font-bold text-[color:var(--ink-1)]">{card.title}</div>
+            <div className="mt-1 text-[12px] text-[color:var(--ink-3)]">{card.text}</div>
           </div>
         ))}
       </div>
 
       {membershipStatus?.isActive && (
         <section className="fb-card border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">当前会员状态</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">
+            {copy.statusEyebrow}
+          </p>
           <h2 className="mt-1 text-lg font-bold text-[color:var(--ink-1)]">
-            你已开通 {membershipStatus.planName || '会员'}
+            {copy.statusActiveTitle(activePlanLabel)}
           </h2>
           <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
-            到期时间：{membershipStatus.expiresAt ? new Date(membershipStatus.expiresAt).toLocaleDateString('zh-CN') : '长期有效'}
+            {copy.statusExpires(expiresLabel)}
             {' · '}
-            已保存报告 {membershipStatus.savedReportsCount} 份
+            {copy.statusSavedReports(membershipStatus.savedReportsCount)}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             <a href="/analyze?source=membership_active_return" className="fb-btn fb-btn-primary h-9 px-4 text-[13px] hover:no-underline">
-              继续生成或查看报告
+              {copy.continueReports}
             </a>
             {isQuarterlyActive && promoActive ? (
               <button
@@ -295,7 +314,7 @@ export default function MembershipClient() {
                 onClick={() => void handleCheckout('annual')}
                 className="fb-btn h-9 px-4 text-[13px] font-bold disabled:opacity-50"
               >
-                {loading ? '处理中...' : promo.ctaUpgrade}
+                {loading ? copy.processing : promo.ctaUpgrade}
               </button>
             ) : null}
           </div>
@@ -304,10 +323,10 @@ export default function MembershipClient() {
 
       <section className="lk-grid-2">
         <article className="fb-card space-y-3 p-4">
-          <h2 className="text-lg font-bold text-[color:var(--ink-1)]">免费版</h2>
-          <p className="text-[13px] text-[color:var(--ink-3)]">适合第一次了解命盘结构与阶段节奏。</p>
+          <h2 className="text-lg font-bold text-[color:var(--ink-1)]">{copy.freeTierTitle}</h2>
+          <p className="text-[13px] text-[color:var(--ink-3)]">{copy.freeTierDesc}</p>
           <ul className="space-y-2 text-[13px] text-[color:var(--ink-3)]">
-            {FREE_TIER_FEATURES.map((feature) => (
+            {copy.freeTierFeatures.map((feature) => (
               <li key={feature} className="flex gap-2">
                 <span className="text-[color:var(--brand)]">•</span>
                 <span>{feature}</span>
@@ -317,10 +336,10 @@ export default function MembershipClient() {
         </article>
 
         <article className="fb-card space-y-3 border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
-          <h2 className="text-lg font-bold text-[color:var(--brand-strong)]">会员版</h2>
-          <p className="text-[13px] text-[color:var(--ink-3)]">适合需要长期回看、做年度规划的用户。</p>
+          <h2 className="text-lg font-bold text-[color:var(--brand-strong)]">{copy.memberTierTitle}</h2>
+          <p className="text-[13px] text-[color:var(--ink-3)]">{copy.memberTierDesc}</p>
           <ul className="space-y-2 text-[13px] text-[color:var(--ink-3)]">
-            {MEMBERSHIP_PLANS[0].features.map((feature) => (
+            {copy.memberTierFeatures.map((feature) => (
               <li key={feature} className="flex gap-2">
                 <span className="text-[color:var(--brand)]">✓</span>
                 <span>{feature}</span>
@@ -332,17 +351,19 @@ export default function MembershipClient() {
 
       <section className="fb-card space-y-5 p-4 md:p-5">
         <div>
-          <h2 className="text-xl font-bold text-[color:var(--ink-1)]">选择会员方案</h2>
+          <h2 className="text-xl font-bold text-[color:var(--ink-1)]">{copy.selectPlanTitle}</h2>
           <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
             {promoActive
-              ? `活动截止 ${MEMBERSHIP_FREE_PROMO_END} · ${promo.priceNote}`
-              : '邮箱会自动从登录态带入，减少重复填写。'}
+              ? copy.selectPlanDescPromo(MEMBERSHIP_FREE_PROMO_END, promo.priceNote)
+              : copy.selectPlanDescPaid}
           </p>
         </div>
 
         <div className="lk-grid-2">
           {MEMBERSHIP_PLANS.map((plan) => {
             const displayPrice = promoActive ? 0 : plan.priceCny;
+            const planChrome = membershipPlanChrome(locale, plan.id);
+            const features = copy.planFeatures[plan.id] || plan.features;
             return (
               <button
                 key={plan.id}
@@ -355,16 +376,16 @@ export default function MembershipClient() {
                 }`}
               >
                 <div className="flex items-center justify-between gap-3">
-                  <div className="font-bold text-[color:var(--brand-strong)]">{plan.name}</div>
+                  <div className="font-bold text-[color:var(--brand-strong)]">{planChrome.name}</div>
                   {plan.highlight && (
                     <span className="rounded-full border border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--brand)]">
-                      {promoActive ? '限时免费' : '推荐'}
+                      {promoActive ? copy.badgeFree : copy.badgeRecommended}
                     </span>
                   )}
                 </div>
                 <div className="mt-2 text-2xl font-black text-[color:var(--ink-1)]">
                   ¥{displayPrice}
-                  <span className="text-sm font-normal text-[color:var(--ink-3)]">{plan.periodLabel}</span>
+                  <span className="text-sm font-normal text-[color:var(--ink-3)]">{planChrome.periodLabel}</span>
                   {promoActive && plan.priceCny > 0 ? (
                     <span className="ml-2 text-sm font-normal text-[color:var(--ink-4)] line-through">
                       ¥{plan.priceCny}
@@ -372,7 +393,7 @@ export default function MembershipClient() {
                   ) : null}
                 </div>
                 <ul className="mt-3 space-y-1.5 text-[13px] text-[color:var(--ink-3)]">
-                  {plan.features.slice(0, 3).map((feature) => (
+                  {features.slice(0, 3).map((feature) => (
                     <li key={feature}>{feature}</li>
                   ))}
                 </ul>
@@ -387,7 +408,7 @@ export default function MembershipClient() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             onBlur={() => refreshStatus(normalizedEmail)}
-            placeholder={authenticated ? '已绑定登录邮箱' : '请先登录后自动填入邮箱'}
+            placeholder={authenticated ? copy.emailPlaceholderAuth : copy.emailPlaceholderGuest}
             autoComplete="email"
             disabled={authenticated}
             className="fb-input h-10 w-full px-3 text-[13px] disabled:bg-[color:var(--bg-sunken)]"
@@ -398,51 +419,45 @@ export default function MembershipClient() {
             onClick={() => void handleCheckout()}
             className="fb-btn fb-btn-primary h-10 px-5 text-[13px] font-bold disabled:opacity-50"
           >
-            {isAnnualActive ? '已是年度会员' : ctaLabel}
+            {isAnnualActive ? copy.alreadyAnnual : ctaLabel}
           </button>
         </div>
 
         {!authenticated ? (
           <p className="text-[12px] text-[color:var(--ink-3)]">
-            未登录？
+            {copy.notLoggedIn}
             <Link
               href={`/login?next=${encodeURIComponent('/membership')}`}
               className="ml-1 font-semibold text-[color:var(--brand)] hover:underline"
             >
-              邮箱登录 / 注册
+              {copy.loginRegister}
             </Link>
-            后再领取会员。
+            {copy.claimAfterLogin}
           </p>
         ) : null}
 
-        {statusLoading ? <p className="text-xs text-[color:var(--ink-4)]">正在查询会员状态…</p> : null}
+        {statusLoading ? <p className="text-xs text-[color:var(--ink-4)]">{copy.statusLoading}</p> : null}
         {error ? <AlertBanner className="text-[13px]">{error}</AlertBanner> : null}
         {success ? <AlertBanner tone="success" className="text-[13px]">{success}</AlertBanner> : null}
       </section>
 
       <section className="fb-card space-y-3 p-4">
-        <h2 className="text-lg font-bold text-[color:var(--ink-1)]">常见问题</h2>
+        <h2 className="text-lg font-bold text-[color:var(--ink-1)]">{copy.faqTitle}</h2>
         <div className="lk-grid-2 text-[13px] text-[color:var(--ink-3)]">
+          {copy.faqItems.map((item) => (
+            <div key={item.q}>
+              <h3 className="font-bold text-[color:var(--ink-1)]">{item.q}</h3>
+              <p className="mt-1.5">{item.a}</p>
+            </div>
+          ))}
           <div>
-            <h3 className="font-bold text-[color:var(--ink-1)]">开通后能看到什么？</h3>
-            <p className="mt-1.5">完整事业、财运、婚恋、健康分析，以及流年大运与关键窗口的详细解读。</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-[color:var(--ink-1)]">为什么必须登录？</h3>
-            <p className="mt-1.5">会员权益绑定注册邮箱，便于跨设备回看与后续提醒，也避免匿名滥用。</p>
-          </div>
-          <div>
-            <h3 className="font-bold text-[color:var(--ink-1)]">限时免费到什么时候？</h3>
+            <h3 className="font-bold text-[color:var(--ink-1)]">{copy.faqAnalyze.q}</h3>
             <p className="mt-1.5">
-              活动截至 <strong>{MEMBERSHIP_FREE_PROMO_END}</strong>。期内开通季度 / 年度均为 ¥0；季度可免费升级年度。
-            </p>
-          </div>
-          <div>
-            <h3 className="font-bold text-[color:var(--ink-1)]">还没生成报告可以开通吗？</h3>
-            <p className="mt-1.5">
-              可以。开通后可先
-              <a href="/analyze" className="text-[color:var(--brand)] hover:underline"> 免费测算 </a>
-              ，报告会按会员权益保存。
+              {copy.faqAnalyze.aPrefix}
+              <a href="/analyze" className="text-[color:var(--brand)] hover:underline">
+                {copy.faqAnalyze.aLink}
+              </a>
+              {copy.faqAnalyze.aSuffix}
             </p>
           </div>
         </div>
