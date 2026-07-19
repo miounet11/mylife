@@ -69,9 +69,9 @@ export default function PwaInstallHint() {
       className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-40 flex w-[min(100%-2rem,22rem)] -translate-x-1/2 items-start gap-2 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 shadow-[var(--shadow-card)]"
     >
       <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-medium text-[color:var(--ink-1)]">可添加到主屏幕</p>
+        <p className="text-[13px] font-medium text-[color:var(--ink-1)]">可安装到主屏幕</p>
         <p className="mt-0.5 text-[11px] leading-snug text-[color:var(--ink-4)]">
-          浏览器菜单选择「添加到主屏幕」或「安装应用」，打开更快捷。
+          浏览器菜单选择「添加到主屏幕」或「安装应用」，像 App 一样一键打开。
         </p>
       </div>
       <button

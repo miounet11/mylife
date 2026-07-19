@@ -13,6 +13,7 @@ import { teacherIdFromFollowupIntent } from '@/lib/chat-entry';
 import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { teachersHubCopy } from '@/lib/i18n/hub-copy';
 import {
   teacherCapabilitySurface,
 } from '@/lib/page-illustrations/capability-map';
@@ -24,13 +25,16 @@ export const metadata: Metadata = {
   alternates: { canonical: '/teachers' },
 };
 
-const INTENT_SHORTCUTS: Array<{ intent: string; label: string; teacherId: TeacherId }> = [
-  { intent: 'career', label: '事业方向', teacherId: 'career' },
-  { intent: 'wealth', label: '财务取舍', teacherId: 'wealth' },
-  { intent: 'relationship', label: '关系决策', teacherId: 'relationship' },
-  { intent: 'timing', label: '时机窗口', teacherId: 'timing' },
-  { intent: 'health', label: '节律健康', teacherId: 'health' },
-  { intent: 'practice', label: '验证复盘', teacherId: 'practice' },
+const INTENT_SHORTCUT_KEYS: Array<{
+  intent: keyof ReturnType<typeof teachersHubCopy>['intents'];
+  teacherId: TeacherId;
+}> = [
+  { intent: 'career', teacherId: 'career' },
+  { intent: 'wealth', teacherId: 'wealth' },
+  { intent: 'relationship', teacherId: 'relationship' },
+  { intent: 'timing', teacherId: 'timing' },
+  { intent: 'health', teacherId: 'health' },
+  { intent: 'practice', teacherId: 'practice' },
 ];
 
 interface TeachersPageProps {
@@ -49,6 +53,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
   const reportId = `${sp.reportId || ''}`.trim() || undefined;
   const source = `${sp.source || 'teachers_gallery'}`.trim();
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = teachersHubCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const highlightId = (`${sp.highlight || ''}`.trim() ||
     teacherIdFromFollowupIntent(intent)) as TeacherId | string;
@@ -62,7 +67,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
   });
 
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '生成报告', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.ctaGenerate, compact: true }}>
       <AnalyticsPageView
         eventName="teachers_page_viewed"
         page="/teachers"
@@ -77,17 +82,17 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <header className="border-b border-[color:var(--hairline)] pb-4">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)]">
-            请老师
+            {copy.title}
           </h1>
           <p className="mt-2 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
-            一位老师专一事。有报告时会带上你的盘与记录；不预填长问题，老师先开场。
+            {copy.description}
           </p>
           <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
             <Link
               href="/analyze"
               className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
             >
-              生成报告
+              {copy.ctaGenerate}
             </Link>
             <Link
               href={buildTeacherChatHref({
@@ -97,13 +102,13 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
               })}
               className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
             >
-              总览开场
+              {copy.linkOverviewOpen}
             </Link>
             <Link
               href="/profile"
               className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
             >
-              我的资料
+              {copy.linkProfile}
             </Link>
           </div>
         </header>
@@ -125,22 +130,22 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
         <section className="space-y-3 border-y border-[color:var(--hairline)] py-3.5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <div className="text-[11px] font-medium text-[color:var(--ink-5)]">按意图开场</div>
+              <div className="text-[11px] font-medium text-[color:var(--ink-5)]">{copy.intentEyebrow}</div>
               <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
                 {intent
-                  ? `当前意图 · ${recommended.name}`
-                  : `推荐 · ${recommended.name}`}
+                  ? `${copy.currentIntentPrefix} · ${recommended.name}`
+                  : `${copy.recommendedPrefix} · ${recommended.name}`}
               </h2>
               <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
                 {recommended.tagline}
-                {reportId ? ' · 已带报告上下文' : ' · 暂无报告时也可先开场'}
+                {reportId ? ` · ${copy.withReportCtx}` : ` · ${copy.withoutReportCtx}`}
               </p>
             </div>
             <Link
               href={recommendedHref}
               className="shrink-0 text-[13px] font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
             >
-              开始开场 →
+              {copy.startOpening}
             </Link>
           </div>
           <CapabilityIllustrationPanel
@@ -151,7 +156,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
             showCopy
           />
           <div className="mt-3 flex flex-wrap gap-2">
-            {INTENT_SHORTCUTS.map((item) => {
+            {INTENT_SHORTCUT_KEYS.map((item) => {
               const active = highlightId === item.teacherId || intent === item.intent;
               const href = `/teachers?intent=${encodeURIComponent(item.intent)}${
                 reportId ? `&reportId=${encodeURIComponent(reportId)}` : ''
@@ -166,7 +171,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
                       : 'border-[color:var(--hairline)] bg-white text-[color:var(--ink-3)] hover:border-[color:var(--hairline-strong)] hover:text-[color:var(--ink-1)]'
                   }`}
                 >
-                  {item.label}
+                  {copy.intents[item.intent]}
                 </Link>
               );
             })}
@@ -175,15 +180,15 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
 
         <TeacherPicker
           variant="gallery"
-          title="常用"
+          title={copy.galleryTitle}
           reportId={reportId}
           source={source}
-          subtitle="点老师进入顾问卡开场（一键议题 / 一键开口）"
+          subtitle={copy.gallerySubtitle}
         />
 
         {more.length ? (
           <section>
-            <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">更多</h2>
+            <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.moreTitle}</h2>
             <ul className="mt-2 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
               {more.map((t) => (
                 <li key={t.id}>

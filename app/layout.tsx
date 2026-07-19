@@ -5,6 +5,7 @@ import { cookies, headers } from 'next/headers';
 import { LocaleProvider } from '@/components/i18n/locale-provider';
 import AutoLocalize from '@/components/i18n/auto-localize';
 import SiteFeedbackWidget from '@/components/site-feedback-widget';
+import RegisterServiceWorker from '@/components/pwa/register-sw';
 import {
   LOCALE_COOKIE,
   LOCALE_HEADER,
@@ -245,6 +246,7 @@ gtag('config', '${googleAnalyticsId}');`}
           {children}
           <AutoLocalize />
           <SiteFeedbackWidget />
+          <RegisterServiceWorker />
         </LocaleProvider>
       </body>
     </html>

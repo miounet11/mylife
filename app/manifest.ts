@@ -3,7 +3,7 @@ import type { MetadataRoute } from 'next';
 /**
  * Web app manifest for lightweight PWA install (Add to Home Screen).
  * Served at /manifest.webmanifest by Next.js App Router.
- * No offline shell / service worker required.
+ * Shell SW lives at public/sw.js (registered via components/pwa/register-sw.tsx).
  */
 export default function manifest(): MetadataRoute.Manifest {
   return {

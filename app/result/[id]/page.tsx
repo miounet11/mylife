@@ -23,6 +23,7 @@ interface PageProps {
   searchParams?: Promise<{
     source?: string;
     view?: string;
+    lang?: string;
   }>;
 }
 
@@ -49,7 +50,7 @@ import RelatedContent from '@/components/related-content';
 import ResultDeferredSection from '@/components/result-deferred-section';
 import ReportCockpit from '@/components/report/report-cockpit';
 import { ReportCover } from '@/components/report/report-cover';
-import { ProBaziChartMount } from '@/components/report/pro-bazi-chart-mount';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 import DegradeNotice from '@/components/degrade-notice';
 import LifeKLineSummaryCard from '@/components/report/life-kline-summary-card';
 import ReportStageProgress from '@/components/report/report-stage-progress';
@@ -343,6 +344,7 @@ async function getResult(reportId: string, options?: { publicView?: boolean }) {
 export default async function ResultPage({ params, searchParams }: PageProps) {
   const { id } = await params;
   const resolvedSearchParams = searchParams ? await searchParams : {};
+  const uiLocale = await getRequestLocale(resolvedSearchParams.lang);
   const entrySource = resolvedSearchParams.source?.trim() || '';
   const sourceContext = getSourceContext(entrySource);
   const sourceCtaStrategy = buildSourceCtaStrategy(entrySource);
@@ -923,13 +925,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       : undefined)
                   }
                   qualityTier={deliveryTierLabel}
-                  reportId={id}
-                  showShareCard
+                  locale={uiLocale}
                 />
-              </div>
-
-              <div className="mt-3">
-                <ProBaziChartMount analysis={result} />
               </div>
 
               {/* ① 核心结论：只保留驾驶舱 + 一条紧凑行动条 */}

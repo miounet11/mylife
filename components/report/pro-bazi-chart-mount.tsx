@@ -16,6 +16,8 @@ export type ProBaziChartMountProps = {
   /** FortuneAnalysisResult or loose analysis blob */
   analysis?: unknown;
   className?: string;
+  /** UI locale for panel chrome (optional) */
+  locale?: string | null;
 };
 
 /**
@@ -27,6 +29,7 @@ export function ProBaziChartMount({
   engine,
   analysis,
   className,
+  locale,
 }: ProBaziChartMountProps) {
   const fromEngine = engine ? proChartFromEngine(engine) : {};
   const fromAnalysis = analysis != null ? proChartFromAnalysis(analysis) : {};
@@ -35,6 +38,7 @@ export function ProBaziChartMount({
     ...fromEngine,
     ...chart,
     className: className || chart?.className,
+    locale: locale ?? chart?.locale,
   };
 
   return <ProBaziChartPanel {...props} />;

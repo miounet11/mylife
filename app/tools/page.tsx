@@ -9,18 +9,20 @@ import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
 import { FocusHero } from '@/components/layout/focus-hero';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
 import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
+import SecondSystemRail from '@/components/product/second-system-rail';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { toolsHubCopy } from '@/lib/i18n/hub-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
 
-const CONSULTANT_LINKS = [
-  { teacherId: 'career' as const, label: '事业' },
-  { teacherId: 'timing' as const, label: '时机' },
-  { teacherId: 'wealth' as const, label: '财务' },
-] as const;
+const CONSULTANT_IDS = [
+  'career',
+  'timing',
+  'wealth',
+] as const satisfies ReadonlyArray<keyof ReturnType<typeof toolsHubCopy>['consultants']>;
 
 export const metadata: Metadata = buildPageMetadata({
   title: '工具中心｜流年窗口、今日一签与十维度入口',
@@ -63,9 +65,16 @@ export default async function ToolsPage({
 }) {
   const sp = searchParams ? await searchParams : {};
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = toolsHubCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   return (
-    <AppPage header={{ ctaHref: '/tools/timing-yearly-window', ctaLabel: '填生日测', compact: true }}>
+    <AppPage
+      header={{
+        ctaHref: '/tools/timing-yearly-window',
+        ctaLabel: copy.ctaBirth,
+        compact: true,
+      }}
+    >
       <AnalyticsPageView
         eventName="tools_page_viewed"
         page="/tools"
@@ -73,27 +82,27 @@ export default async function ToolsPage({
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="工具"
-          title="填生日即可测"
-          description="不用先出完整报告。选一个问题，填出生信息，引擎即时给主题判断；需要时再升级完整报告与老师追问。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <ToolEntryLink
                 href="/tools/timing-yearly-window"
                 source="tools_hub_hero"
-                title="年度主窗口"
+                title={copy.heroYearly}
                 className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
               >
-                先测年度主窗口
+                {copy.heroYearly}
               </ToolEntryLink>
               <Link href="/dimensions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                十维度
+                {copy.linkDimensions}
               </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                完整报告
+                {copy.linkFullReport}
               </Link>
               <Link href="/hehun" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                合婚
+                {copy.linkHehun}
               </Link>
             </>
           }
@@ -162,26 +171,30 @@ export default async function ToolsPage({
           compact
         />
 
+        <SecondSystemRail locale={uiLocale} source="tools_hub" />
+
         <section className="space-y-2">
-          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">问老师</h2>
+          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">
+            {uiLocale === 'en' ? 'Ask a consultant' : '问老师'}
+          </h2>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
-            {CONSULTANT_LINKS.map((item) => (
+            {CONSULTANT_IDS.map((teacherId) => (
               <Link
-                key={item.teacherId}
+                key={teacherId}
                 href={buildTeacherChatHref({
-                  teacherId: item.teacherId,
+                  teacherId,
                   source: 'tools_hub_consultant',
                 })}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
               >
-                {item.label}
+                {copy.consultants[teacherId]}
               </Link>
             ))}
             <Link
               href="/teachers"
               className="text-[12px] text-[color:var(--ink-5)] underline-offset-2 hover:text-[color:var(--ink-3)] hover:underline"
             >
-              全部
+              {uiLocale === 'en' ? 'All' : '全部'}
             </Link>
           </nav>
         </section>

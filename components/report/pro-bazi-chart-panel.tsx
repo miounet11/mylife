@@ -1,6 +1,8 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import { proBaziChartCopy } from '@/lib/i18n/hub-copy';
+import { normalizeSiteLocale, type SiteLocale } from '@/lib/i18n/site-locale';
 
 export type ProBaziPillar = {
   label: string;
@@ -18,6 +20,8 @@ export type ProBaziChartPanelProps = {
   currentDaYun?: string;
   nextWindow?: string;
   className?: string;
+  /** UI locale — English chrome when en; pillar ganZhi / gods stay as provided */
+  locale?: string | null;
 };
 
 /**
@@ -32,12 +36,15 @@ export function ProBaziChartPanel({
   currentDaYun,
   nextWindow,
   className,
+  locale,
 }: ProBaziChartPanelProps) {
-  const cols = normalizePillars(pillars);
+  const siteLocale: SiteLocale = normalizeSiteLocale(locale) || 'zh-CN';
+  const copy = proBaziChartCopy(siteLocale);
+  const cols = normalizePillars(pillars, copy.pillarLabels);
   const hasChart = cols.some((p) => p.ganZhi && p.ganZhi !== '—');
   const yong = (yongShen || []).map((s) => String(s).trim()).filter(Boolean);
   const metaBits = [
-    dayMaster ? `日主 ${dayMaster}` : null,
+    dayMaster ? copy.dayMaster(dayMaster) : null,
     patternType || null,
   ].filter(Boolean) as string[];
 
@@ -48,15 +55,15 @@ export function ProBaziChartPanel({
         className,
       )}
       data-pro-bazi-chart
-      aria-label="四柱一屏"
+      aria-label={copy.ariaLabel}
     >
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <div className="text-[11px] font-medium tracking-wide text-[color:var(--ink-4)]">
-            命盘结构
+            {copy.structureLabel}
           </div>
           <h3 className="mt-0.5 text-[15px] font-semibold leading-tight text-[color:var(--ink-1)]">
-            四柱一屏
+            {copy.title}
           </h3>
         </div>
         {metaBits.length ? (
@@ -68,9 +75,9 @@ export function ProBaziChartPanel({
 
       {!hasChart ? (
         <div className="mt-4 rounded-[var(--radius-sm)] border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/50 px-3 py-6 text-center">
-          <p className="text-[13px] font-medium text-[color:var(--ink-3)]">四柱数据待生成</p>
+          <p className="text-[13px] font-medium text-[color:var(--ink-3)]">{copy.emptyTitle}</p>
           <p className="mt-1 text-[12px] leading-[1.5] text-[color:var(--ink-4)]">
-            排盘完成后将在此展示年/月/日/时柱、十神与当前大运。
+            {copy.emptyDesc}
           </p>
         </div>
       ) : (
@@ -79,7 +86,11 @@ export function ProBaziChartPanel({
             const stem = pillar.ganZhi?.charAt(0) || '—';
             const branch = pillar.ganZhi?.charAt(1) || '—';
             const branchGods = (pillar.branchGods || []).filter(Boolean).slice(0, 3);
-            const isDay = pillar.label.includes('日');
+            // Day pillar: Chinese 日 / English "Day"
+            const isDay =
+              pillar.label.includes('日') ||
+              pillar.label === 'Day' ||
+              pillar.label.toLowerCase() === 'day';
 
             return (
               <div
@@ -131,7 +142,9 @@ export function ProBaziChartPanel({
       {/* 用神 chips + 大运 row */}
       <div className="mt-4 space-y-2.5 border-t border-[color:var(--hairline)] pt-3">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="shrink-0 text-[11px] font-medium text-[color:var(--ink-4)]">用神</span>
+          <span className="shrink-0 text-[11px] font-medium text-[color:var(--ink-4)]">
+            {copy.yongShen}
+          </span>
           {yong.length ? (
             yong.map((item) => (
               <span
@@ -142,13 +155,13 @@ export function ProBaziChartPanel({
               </span>
             ))
           ) : (
-            <span className="text-[12px] text-[color:var(--ink-4)]">待定</span>
+            <span className="text-[12px] text-[color:var(--ink-4)]">{copy.pending}</span>
           )}
         </div>
 
         <div className="grid gap-2 sm:grid-cols-2">
-          <MetaRow label="当前大运" value={currentDaYun || '—'} emphasize />
-          <MetaRow label="下一窗口" value={nextWindow || '—'} />
+          <MetaRow label={copy.currentDaYun} value={currentDaYun || '—'} emphasize />
+          <MetaRow label={copy.nextWindow} value={nextWindow || '—'} />
         </div>
       </div>
     </section>
@@ -186,15 +199,21 @@ function MetaRow({
   );
 }
 
-const DEFAULT_LABELS = ['年柱', '月柱', '日柱', '时柱'] as const;
+const DEFAULT_LABELS_ZH = ['年柱', '月柱', '日柱', '时柱'] as const;
 
-function normalizePillars(pillars?: ProBaziPillar[]): ProBaziPillar[] {
+function normalizePillars(
+  pillars: ProBaziPillar[] | undefined,
+  defaultLabels: readonly [string, string, string, string],
+): ProBaziPillar[] {
   const src = Array.isArray(pillars) ? pillars.slice(0, 4) : [];
-  return DEFAULT_LABELS.map((label, i) => {
+  return defaultLabels.map((label, i) => {
     const p = src[i];
     if (!p) return { label, ganZhi: '—' };
+    // Prefer locale-aware default labels when source still uses zh 年柱… labels
+    const rawLabel = (p.label || '').trim();
+    const isDefaultZh = (DEFAULT_LABELS_ZH as readonly string[]).includes(rawLabel);
     return {
-      label: p.label || label,
+      label: rawLabel && !isDefaultZh ? rawLabel : label,
       ganZhi: (p.ganZhi || '').trim() || '—',
       stemGod: p.stemGod,
       branchGods: p.branchGods,

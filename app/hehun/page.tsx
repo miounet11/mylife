@@ -9,9 +9,20 @@ import HehunWorkspace from '@/components/hehun/hehun-workspace';
 import { buildPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
-  title: '合婚合盘',
-  description: '双人日柱与用忌互补对照，支持从报告/档案一键预填，也可双方填生日即时对盘。',
+  title: '合婚双盘｜双方生日即时对盘',
+  description:
+    '合婚双盘：双方填生日即可对照日主互动、夫妻宫、用忌互补与大运同步；支持从完整报告或档案一键预填，无需先生成双份报告。结构对照，非迷信承诺。',
   path: '/hehun',
+  keywords: [
+    '合婚',
+    '合盘',
+    '八字合婚',
+    '双盘对照',
+    '夫妻宫',
+    '用忌互补',
+    '大运同步',
+    '人生K线',
+  ],
 });
 
 export default function HehunPage() {

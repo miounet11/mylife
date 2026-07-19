@@ -8,6 +8,8 @@ import { BrandMark } from '@/components/ui/brand-mark';
 import { Tag } from '@/components/ui/tag';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { ConclusionShareCard } from '@/components/share/conclusion-share-card';
+import { reportCoverCopy } from '@/lib/i18n/hub-copy';
+import { normalizeSiteLocale, type SiteLocale } from '@/lib/i18n/site-locale';
 
 interface ReportCoverProps {
   userName?: string;
@@ -25,6 +27,8 @@ interface ReportCoverProps {
   stageLine?: string;
   /** Show shareable conclusion strip under cover */
   showShareCard?: boolean;
+  /** UI locale — English chrome when en; default zh-CN */
+  locale?: string | null;
 }
 
 export function ReportCover({
@@ -39,16 +43,20 @@ export function ReportCover({
   className,
   stageLine,
   showShareCard = true,
+  locale,
 }: ReportCoverProps) {
+  const siteLocale: SiteLocale = normalizeSiteLocale(locale) || 'zh-CN';
+  const copy = reportCoverCopy(siteLocale);
+
   const shareTitle =
-    [userName || '你的命盘', pillarSummary, stageLine]
+    [userName || copy.defaultName, pillarSummary, stageLine]
       .filter(Boolean)
       .slice(0, 2)
-      .join(' · ') || '人生K线结构结论';
+      .join(' · ') || copy.shareDefaultTitle;
   const shareLines = [
-    pillarSummary ? `四柱要点：${pillarSummary}` : '',
-    stageLine || '阶段与窗口以报告正文为准',
-    '结构参考 · 可回访验证，不是宿命定论',
+    pillarSummary ? copy.pillarsLabel(pillarSummary) : '',
+    stageLine || copy.stageFallback,
+    copy.shareDisclaimer,
   ].filter(Boolean);
 
   return (
@@ -100,9 +108,9 @@ export function ReportCover({
           <div className="flex items-center gap-3">
             <BrandMark size={44} withSignal withBaseline={false} />
             <div>
-              <Eyebrow tone="brand">人生K线 · 判断报告</Eyebrow>
+              <Eyebrow tone="brand">{copy.eyebrow}</Eyebrow>
               <div className="mt-1 font-mono text-xs uppercase tracking-[0.16em] text-[color:var(--ink-5)]">
-                LIFE KLINE · DECISION REPORT
+                {copy.wordmarkEn}
               </div>
             </div>
           </div>
@@ -124,7 +132,7 @@ export function ReportCover({
             {userName && (
               <h1 className="text-2xl font-black leading-[1.15] tracking-tight text-[color:var(--ink-1)] md:text-3xl">
                 {userName}
-                <span className="ml-2 font-serif text-[color:var(--brand-strong)]">的判断报告</span>
+                <span className="ml-2 font-serif text-[color:var(--brand-strong)]">{copy.reportOf}</span>
               </h1>
             )}
             {pillarSummary && (
@@ -138,7 +146,7 @@ export function ReportCover({
             {birthIso && (
               <div>
                 <div className="font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  出生时间
+                  {copy.birthTime}
                 </div>
                 <div className="mt-1 font-mono tabular-nums text-[color:var(--ink-2)]">
                   {birthIso}
@@ -148,7 +156,7 @@ export function ReportCover({
             {birthLocation && (
               <div>
                 <div className="font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  出生地点
+                  {copy.birthPlace}
                 </div>
                 <div className="mt-1 text-[color:var(--ink-2)]">{birthLocation}</div>
               </div>
@@ -156,7 +164,7 @@ export function ReportCover({
             {generatedAt && (
               <div>
                 <div className="font-semibold uppercase tracking-wider text-[color:var(--ink-5)]">
-                  生成时间
+                  {copy.generatedAt}
                 </div>
                 <div className="mt-1 font-mono tabular-nums text-[color:var(--ink-3)]">
                   {generatedAt}
@@ -171,7 +179,8 @@ export function ReportCover({
     {showShareCard ? (
       <ConclusionShareCard
         compact
-        eyebrow="人生K线 · 结构结论"
+        locale={siteLocale}
+        eyebrow={copy.shareEyebrow}
         title={shareTitle}
         lines={shareLines}
         url={reportId ? `/result/${reportId}` : undefined}

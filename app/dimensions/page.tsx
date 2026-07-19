@@ -3,7 +3,6 @@ import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import DimensionGrid from '@/components/dimensions/dimension-grid';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
-import DailyWindowStrip from '@/components/daily/daily-window-strip';
 import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
@@ -15,6 +14,7 @@ import {
   parseSourceIntent,
 } from '@/lib/dimensions/intent-source';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { dimensionsHubCopy } from '@/lib/i18n/hub-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import {
   buildFaqJsonLd,
@@ -25,12 +25,12 @@ import {
 import { buildTeacherChatHref } from '@/lib/teachers';
 
 /** Compact hub CTAs — opening mode, no reportId */
-const DIMENSIONS_CONSULTANT_LINKS = [
-  { teacherId: 'overview' as const, label: '总览' },
-  { teacherId: 'career' as const, label: '事业' },
-  { teacherId: 'timing' as const, label: '时机' },
-  { teacherId: 'wealth' as const, label: '财务' },
-] as const;
+const DIMENSIONS_CONSULTANT_IDS = [
+  'overview',
+  'career',
+  'timing',
+  'wealth',
+] as const satisfies ReadonlyArray<keyof ReturnType<typeof dimensionsHubCopy>['consultants']>;
 
 export const metadata: Metadata = buildPageMetadata({
   title: '十维度深度研判｜运势节奏、事业行业、投资婚恋等场景入口',
@@ -57,6 +57,7 @@ export default async function DimensionsPage({
   const source = `${sp.source || sp.intent || ''}`.trim();
   const intent = parseSourceIntent(source);
   const uiLocale = await getRequestLocale(sp.lang);
+  const copy = dimensionsHubCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const p0 = listDimensionsByPriority('p0');
   const p1Count = listDimensionsByPriority('p1').length;
@@ -94,7 +95,7 @@ export default async function DimensionsPage({
   ]);
 
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '完整报告', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.ctaFullReport, compact: true }}>
       <AnalyticsPageView
         eventName="dimensions_page_viewed"
         page="/dimensions"
@@ -112,8 +113,8 @@ export default async function DimensionsPage({
       <JsonLd data={faq} />
       <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 pb-16 md:space-y-6 md:py-8">
         <FocusHero
-          eyebrow="十维度"
-          title={intent === 'general' ? '场景研判' : INTENT_LABEL[intent]}
+          eyebrow={copy.eyebrow}
+          title={intent === 'general' ? copy.titleGeneral : INTENT_LABEL[intent]}
           description={INTENT_HINT[intent]}
           actions={
             <>
@@ -124,13 +125,13 @@ export default async function DimensionsPage({
                 {primary.label}
               </Link>
               <Link href="/predictions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                预测回访
+                {copy.linkPredictions}
               </Link>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                工具
+                {copy.linkTools}
               </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                完整报告
+                {copy.ctaFullReport}
               </Link>
             </>
           }
@@ -138,17 +139,13 @@ export default async function DimensionsPage({
 
         {intent !== 'general' ? (
           <p className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
-            来源：工作台主题「{INTENT_LABEL[intent]}」。下面已把更相关的维度排在前面，也可直接
+            {copy.sourceWorkbench(INTENT_LABEL[intent])}
             <Link href={primaryHref} className="mx-1 text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               {primary.label}
             </Link>
-            。
+            {uiLocale === 'en' ? '.' : '。'}
           </p>
         ) : null}
-
-        <DailyWindowStrip compact source="dimensions_daily_strip" />
-
-
 
         <PageIllustrationStrip
           surface="dimensions/hub"
@@ -166,51 +163,54 @@ export default async function DimensionsPage({
         <DimensionGrid intent={intent} source={source} />
 
         <section className="space-y-2 border-t border-[color:var(--hairline)] pt-4">
-          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">问老师</h2>
+          <h2 className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.askTeachers}</h2>
           <p className="text-[12px] leading-[1.5] text-[color:var(--ink-5)]">
-            先选场景研判，或直接进入顾问开场继续拆。
+            {copy.askTeachersDesc}
           </p>
           <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
-            {DIMENSIONS_CONSULTANT_LINKS.map((item) => (
+            {DIMENSIONS_CONSULTANT_IDS.map((teacherId) => (
               <Link
-                key={item.teacherId}
+                key={teacherId}
                 href={buildTeacherChatHref({
-                  teacherId: item.teacherId,
+                  teacherId,
                   source: 'dimensions_hub_consultant',
                 })}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
               >
-                {item.label}
+                {copy.consultants[teacherId]}
               </Link>
             ))}
             <Link
               href="/teachers"
               className="text-[12px] text-[color:var(--ink-5)] underline-offset-2 hover:text-[color:var(--ink-3)] hover:underline"
             >
-              全部
+              {copy.allConsultants}
             </Link>
           </nav>
         </section>
 
         <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
           <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            完整报告
+            {copy.ctaFullReport}
           </Link>
           <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            请老师
+            {copy.linkTeachers}
           </Link>
           <Link href="/hehun" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            合婚
+            {copy.linkHehun}
           </Link>
           <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-            专题
+            {copy.linkLearn}
           </Link>
         </nav>
 
         <p className="text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-          已开放 {MVP_DIMENSION_SLUGS.length} 个可用场景
-          {p0.length ? ` · 常用：${p0.map((item) => item.title).join('、')}` : ''}
-          {p1Count || p2Count ? ` · 另有 ${p1Count + p2Count} 个在扩展` : ''}。
+          {copy.openScenes(MVP_DIMENSION_SLUGS.length)}
+          {p0.length
+            ? ` · ${copy.commonPrefix}：${p0.map((item) => item.title).join(uiLocale === 'en' ? ', ' : '、')}`
+            : ''}
+          {p1Count || p2Count ? ` · ${copy.expandingCount(p1Count + p2Count)}` : ''}
+          {uiLocale === 'en' ? '.' : '。'}
         </p>
       </div>
     </AppPage>
