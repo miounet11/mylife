@@ -39,8 +39,8 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunCta: '对盘',
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚铜钱排本卦/变卦结构；不自动断事。',
-    ziweiTitle: '紫微讨论',
-    ziweiDesc: '命宫、四化与宫位角色——社区问答，非排盘引擎。',
+    ziweiTitle: '紫微教育排盘',
+    ziweiDesc: '命宫/身宫与十四主星结构示意；不含四化大限。',
     moreLabel: '更多术数规划中',
   },
   'zh-Hant': {
@@ -51,26 +51,26 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunCta: '對盤',
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚銅錢排本卦/變卦結構；不自動斷事。',
-    ziweiTitle: '紫微討論',
-    ziweiDesc: '命宮、四化與宮位角色——社區問答，非排盤引擎。',
+    ziweiTitle: '紫微教育排盤',
+    ziweiDesc: '命宮/身宮與十四主星結構示意；不含四化大限。',
     moreLabel: '更多術數規劃中',
   },
   en: {
     title: 'Beyond Bazi',
     description:
-      'Core product stays Bazi + Life K-Line. Dual-chart matching is live; educational six-line cast is structure-only — no fake judgment engines.',
+      'Core product stays Bazi + Life K-Line. Dual-chart matching is live; educational casts are structure-only — no fake full judgment engines.',
     hehunTitle: 'Dual-chart match',
     hehunDesc: 'Both birth dates: day master, spouse palace, yongji, and dayun sync.',
     hehunCta: 'Compare',
     liuyaoTitle: 'Six-line educational cast',
     liuyaoDesc: 'Three-coin method → primary/changed hexagram structure only.',
-    ziweiTitle: 'Ziwei forum',
-    ziweiDesc: 'Ming gong, sihua, palace roles — community Q&A, not a chart engine.',
+    ziweiTitle: 'Ziwei educational chart',
+    ziweiDesc: 'Life/body palace + 14 main stars (no sihua / decade luck).',
     moreLabel: 'More systems planned',
   },
 };
 
-/** Secondary surfaces: educational cast + community knowledge (honest scope). */
+/** Secondary surfaces: educational tools (honest scope). */
 const SECONDARY_ENTRIES = [
   {
     href: '/tools/liuyao-cast',
@@ -78,7 +78,7 @@ const SECONDARY_ENTRIES = [
     descKey: 'liuyaoDesc' as const,
   },
   {
-    href: '/community/category/ziwei',
+    href: '/tools/ziwei-edu',
     titleKey: 'ziweiTitle' as const,
     descKey: 'ziweiDesc' as const,
   },
