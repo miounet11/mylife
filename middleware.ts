@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { resolveLegacyRedirect } from '@/lib/legacy-path-redirects';
 import { TOOL_SLUG_ALIASES } from '@/lib/tool-slug-aliases';
 import {
   LOCALE_COOKIE,
@@ -32,6 +33,13 @@ function isAggressiveBot(userAgent: string | null): boolean {
   return AGGRESSIVE_BOT_PATTERNS.some((p) => p.test(userAgent));
 }
 
+/** Permanent redirect preserving query string (utm / source). */
+function permanentRedirect(request: NextRequest, pathname: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = pathname;
+  return NextResponse.redirect(url, 308);
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -59,10 +67,19 @@ export function middleware(request: NextRequest) {
   if (localePrefixMatch) {
     const prefix = localePrefixMatch[1].toLowerCase();
     const rest = localePrefixMatch[2] || '/';
+    const restPath = rest === '' ? '/' : rest;
+
+    // Legacy product paths under locale prefix → 308 to canonical hub
+    // (keep locale via rewrite path after redirect lands on bare target).
+    const legacyTarget = resolveLegacyRedirect(restPath);
+    if (legacyTarget) {
+      return permanentRedirect(request, legacyTarget);
+    }
+
     const mappedLocale =
       prefix === 'en' ? 'en' : 'zh-Hant';
     const url = request.nextUrl.clone();
-    url.pathname = rest === '' ? '/' : rest;
+    url.pathname = restPath;
     url.searchParams.set('lang', mappedLocale);
 
     const requestHeaders = new Headers(request.headers);
@@ -80,13 +97,17 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
+  // Bare legacy marketing paths (empty app/* dirs or retired SEO URLs)
+  const bareLegacy = resolveLegacyRedirect(pathname);
+  if (bareLegacy) {
+    return permanentRedirect(request, bareLegacy);
+  }
+
   const toolMatch = pathname.match(/^\/tools\/([^/]+)\/?$/);
   if (toolMatch) {
     const canonical = TOOL_SLUG_ALIASES[toolMatch[1]];
     if (canonical) {
-      const url = request.nextUrl.clone();
-      url.pathname = `/tools/${canonical}`;
-      return NextResponse.redirect(url, 308);
+      return permanentRedirect(request, `/tools/${canonical}`);
     }
   }
 
