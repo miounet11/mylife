@@ -7,3 +7,4 @@ export { resolveDirectionElement, matchDirection, DOOR_DIRECTION_MAP } from './d
 export { generateColorScheme, ELEMENT_COLOR_MAP } from './color-scheme';
 export { analyzeShopName, CHAR_ELEMENT_MAP, FALLBACK_ELEMENT } from './name-analysis';
 export { analyzeOpeningDate } from './timing-window';
+export * from './space';

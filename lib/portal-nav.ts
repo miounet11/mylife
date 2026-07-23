@@ -78,6 +78,12 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     description: '行业五行、大门方位、店名、色彩与开业择时的结构化分析（不说吉凶标签）。',
     cta: '开始模拟',
   },
+  {
+    href: '/tools/fengshui-space',
+    title: '空间场模拟工作台',
+    description: '热力·立体示意·风口控制台·户型图底板·时辰九星叠加，结构场可视化。',
+    cta: '打开工作台',
+  },
 ];
 
 export const DOC_ENTRIES: PortalEntry[] = [

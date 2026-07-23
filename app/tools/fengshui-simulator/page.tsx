@@ -41,6 +41,9 @@ export default async function FengshuiSimulatorPage({
           }
           actions={
             <>
+              <Link href="/tools/fengshui-space" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                {en ? 'Space Field Lab' : '空间场工作台'}
+              </Link>
               <Link href="/knowledge/fengshui-industry-wuxing" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {en ? 'Industry wuxing guide' : '行业五行指南'}
               </Link>
