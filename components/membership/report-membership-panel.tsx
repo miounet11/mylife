@@ -61,7 +61,6 @@ export default function ReportMembershipPanel({
   const membershipHref = `/membership?source=${encodeURIComponent(source)}${
     reportId ? `&reportId=${encodeURIComponent(reportId)}` : ''
   }`;
-  const loginHref = `/login?next=${encodeURIComponent(membershipHref)}`;
 
   if (loading) {
     return (
@@ -122,34 +121,36 @@ export default function ReportMembershipPanel({
             {promoActive ? `限时免费至 ${MEMBERSHIP_FREE_PROMO_END}` : '会员权益'}
           </div>
           <h2 className="mt-2 text-[16px] font-black tracking-tight text-[color:var(--ink-1)]">
-            {promoActive ? '读完报告后，0 元开通会员保存权益' : '开通会员，完整回看与长期复访'}
+            {promoActive ? '读完报告后，两步 0 元开通会员' : '开通会员，完整回看与长期复访'}
           </h2>
           <p className="mt-1 max-w-xl text-[13px] leading-6 text-[color:var(--ink-3)]">
             {promoActive
-              ? '邮箱登录后即可 ¥0 领取季度/年度会员；季度可免费升级年度。无需支付，立即生效。'
-              : '会员可解锁更完整的回看、年度策略与优先更新。'}
+              ? '绑定邮箱（验证码，无需密码）→ 一点开通。绑定是为了后续方便召回你、保存报告并保持持续关系。活动期 ¥0，立即生效。'
+              : '绑定邮箱后开通会员，可解锁完整回看、年度策略与优先更新，并方便后续召回与持续关系。'}
           </p>
         </div>
         <div className="flex shrink-0 flex-col gap-2 sm:items-end">
           {status?.authenticated ? (
             <Link
-              href={membershipHref}
+              href={`${membershipHref}&claim=1`}
               className="fb-btn fb-btn-primary inline-flex h-10 items-center gap-1.5 px-4 text-[13px] font-semibold hover:no-underline"
             >
               <Gift className="h-4 w-4" />
-              {promoActive ? '0 元领取会员' : '开通会员'}
+              {promoActive ? '0 元一点开通' : '开通会员'}
             </Link>
           ) : (
             <Link
-              href={loginHref}
+              href={`${membershipHref}#membership-bind`}
               className="fb-btn fb-btn-primary inline-flex h-10 items-center gap-1.5 px-4 text-[13px] font-semibold hover:no-underline"
             >
               <Gift className="h-4 w-4" />
-              登录后领取
+              绑定邮箱领取
             </Link>
           )}
           <span className="text-[11px] text-[color:var(--ink-4)]">
-            {status?.authenticated ? '已登录 · 可直接开通' : '需注册邮箱 · 不展示支付流程'}
+            {status?.authenticated
+              ? '已绑定 · 可直接开通'
+              : '约 1 分钟 · 验证码即可 · 方便后续召回'}
           </span>
         </div>
       </div>

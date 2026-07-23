@@ -64,7 +64,7 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
   };
 
   return (
-    <AppPage header={{ ctaHref: '/login?next=%2Fmembership', ctaLabel: copy.headerCta, compact: true }}>
+    <AppPage header={{ ctaHref: '/membership#membership-bind', ctaLabel: copy.headerCta, compact: true }}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(membershipJsonLd) }}

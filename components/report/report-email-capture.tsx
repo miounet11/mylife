@@ -44,19 +44,19 @@ type ApiResponse = { success?: boolean; error?: string };
 function pick(locale: ReportEmailCaptureLocale | undefined) {
   if (locale === 'en') {
     return {
-      eyebrow: 'Save your report',
+      eyebrow: 'Bind email · stay reachable',
       title: 'Don’t lose this reading when you close the tab',
-      body: 'Link an email to keep this report, reopen it on any device, and get light timing reminders when windows approach.',
-      benefits: ['Cross-device archive', 'Free timing alerts', 'Cancel anytime'],
+      body: 'Bind an email so we can reach you later, restore this report on any device, and keep an ongoing relationship with light timing notes. Membership optional.',
+      benefits: ['Reach you later', 'Cross-device restore', 'Stay in touch'],
       placeholder: 'you@email.com',
-      cta: 'Save with email',
+      cta: 'Bind email',
       ctaBusy: 'Saving…',
-      expand: 'Save this report',
-      free: 'Free · no password required · unsubscribe anytime',
-      trust: 'We only use email for report recovery and the alerts you opt into.',
-      doneTitle: 'Report linked to your email',
-      doneBody: 'We saved the association and will send a confirmation if delivery is enabled. Sign in with the same email to reopen it later.',
-      doneLogin: 'Sign in / claim account',
+      expand: 'Bind email to save',
+      free: 'Free · no password · unsubscribe anytime',
+      trust: 'Email is for recall, report recovery, and alerts you opt into — not an ad list.',
+      doneTitle: 'Email bound to this report',
+      doneBody: 'We saved the link. Use the same email to sign in later so we can reach you and you can reopen the report anytime.',
+      doneLogin: 'Finish binding / claim membership',
       doneMessages: 'Email inbox',
       fail: 'Could not save. Please try again.',
       timeout: 'Request timed out. Please retry.',
@@ -66,19 +66,19 @@ function pick(locale: ReportEmailCaptureLocale | undefined) {
   }
   if (locale === 'zh-Hant') {
     return {
-      eyebrow: '保存這份報告',
-      title: '關掉標籤頁前，先把報告掛到郵箱',
-      body: '綁定郵箱後可跨裝置找回本報告，並在關鍵窗口到來前收到輕量提醒。不開會員也能用。',
-      benefits: ['跨裝置歸檔', '節點輕提醒', '隨時可退訂'],
+      eyebrow: '綁定郵箱 · 方便後續召回',
+      title: '關掉標籤頁前，先綁定郵箱',
+      body: '綁定郵箱是為了後續方便召回你、跨裝置找回本報告，並保持持續關係（節點輕提醒）。不開會員也能用。',
+      benefits: ['方便後續召回', '跨裝置找回', '保持持續關係'],
       placeholder: 'you@email.com',
-      cta: '用郵箱保存',
+      cta: '綁定郵箱',
       ctaBusy: '保存中…',
-      expand: '保存這份報告',
+      expand: '綁定郵箱保存',
       free: '免費 · 無需密碼 · 隨時可退訂',
-      trust: '僅用於報告找回與你勾選的提醒，不會當成廣告清單。',
-      doneTitle: '已掛到你的郵箱',
-      doneBody: '我們已記錄關聯；若郵件通道可用會發確認信。之後用同一郵箱登入即可回看。',
-      doneLogin: '登入 / 認領帳號',
+      trust: '僅用於召回、報告找回與你勾選的提醒，不會當成廣告清單。',
+      doneTitle: '已綁定到你的郵箱',
+      doneBody: '我們已記錄關聯。之後用同一郵箱完成驗證即可回看；也方便我們在關鍵節點召回你、保持持續關係。',
+      doneLogin: '完成綁定 / 領會員',
       doneMessages: '郵件中心',
       fail: '保存失敗，請重試',
       timeout: '等待超時，請稍後重試',
@@ -87,19 +87,19 @@ function pick(locale: ReportEmailCaptureLocale | undefined) {
     };
   }
   return {
-    eyebrow: '保存这份报告',
-    title: '关掉标签页前，先把报告挂到邮箱',
-    body: '绑定邮箱后可跨设备找回本报告，并在关键窗口到来前收到轻量提醒。不开会员也能用。',
-    benefits: ['跨设备归档', '节点轻提醒', '随时可退订'],
+    eyebrow: '绑定邮箱 · 方便后续召回',
+    title: '关掉标签页前，先绑定邮箱',
+    body: '绑定邮箱是为了后续方便召回你、跨设备找回本报告，并保持持续关系（节点轻提醒）。不开会员也能用。',
+    benefits: ['方便后续召回', '跨设备找回', '保持持续关系'],
     placeholder: 'you@email.com',
-    cta: '用邮箱保存',
+    cta: '绑定邮箱',
     ctaBusy: '保存中…',
-    expand: '保存这份报告',
+    expand: '绑定邮箱保存',
     free: '免费 · 无需密码 · 随时可退订',
-    trust: '仅用于报告找回与你勾选的提醒，不会当成广告清单。',
-    doneTitle: '已挂到你的邮箱',
-    doneBody: '我们已记录关联；若邮件通道可用会发确认信。之后用同一邮箱登录即可回看。',
-    doneLogin: '登录 / 认领账号',
+    trust: '仅用于召回、报告找回与你勾选的提醒，不会当成广告清单。',
+    doneTitle: '已绑定到你的邮箱',
+    doneBody: '我们已记录关联。之后用同一邮箱完成验证即可回看；也方便我们在关键节点召回你、保持持续关系。',
+    doneLogin: '完成绑定 / 领会员',
     doneMessages: '邮件中心',
     fail: '保存失败，请重试',
     timeout: '等待超时，请稍后重试',
@@ -290,7 +290,7 @@ export default function ReportEmailCapture({
             <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-3)]">{ui.doneBody}</p>
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
-                href={`/login?email=${encodeURIComponent(email.trim())}&source=report_email_capture&reportId=${encodeURIComponent(reportId)}`}
+                href={`/membership?source=report_email_capture&email=${encodeURIComponent(email.trim())}&reportId=${encodeURIComponent(reportId)}#membership-bind`}
                 className="fb-btn fb-btn-primary h-8 px-3 text-[12px] font-semibold hover:no-underline"
               >
                 {ui.doneLogin}

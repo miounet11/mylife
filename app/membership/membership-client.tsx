@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import LoginForm from '@/components/auth/login-form';
 import { useLocale } from '@/components/i18n/locale-provider';
 import { AlertBanner } from '@/components/layout/alert-banner';
 import { FunnelPageView, trackFunnel } from '@/components/funnel-tracker';
@@ -46,6 +46,7 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
 
   const [email, setEmail] = useState('');
   const [authenticated, setAuthenticated] = useState(false);
+  const [sessionReady, setSessionReady] = useState(false);
   const [source, setSource] = useState('direct');
   const [intent, setIntent] = useState('membership');
   const [selectedPlan, setSelectedPlan] = useState<MembershipPlanId>('annual');
@@ -59,6 +60,8 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
     hitRate: 0,
     byCategory: {},
   });
+  const autoClaimRef = useRef(false);
+  const shouldAutoClaimRef = useRef(false);
 
   useEffect(() => {
     const loadAccuracy = async () => {
@@ -68,16 +71,140 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
     void loadAccuracy();
   }, []);
 
+  const refreshStatus = useCallback(
+    async (targetEmail: string) => {
+      const normalized = targetEmail.trim().toLowerCase();
+      if (!normalized.includes('@')) return;
+
+      setStatusLoading(true);
+      try {
+        const res = await fetch(`/api/membership/status?email=${encodeURIComponent(normalized)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || copy.errorStatus);
+        setMembershipStatus({
+          status: data.status,
+          plan: data.plan || null,
+          planName: data.planName,
+          expiresAt: data.expiresAt,
+          savedReportsCount: data.savedReportsCount,
+          isActive: data.isActive,
+        });
+      } catch {
+        setMembershipStatus(null);
+      } finally {
+        setStatusLoading(false);
+      }
+    },
+    [copy.errorStatus],
+  );
+
+  const handleCheckout = useCallback(
+    async (planOverride?: MembershipPlanId) => {
+      const plan = planOverride || selectedPlan;
+      const normalizedEmail = email.trim().toLowerCase();
+
+      if (!authenticated || !normalizedEmail) {
+        setError(promo.needLogin);
+        document.getElementById('membership-bind')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      setLoading(true);
+      setError(null);
+      setSuccess(null);
+      if (planOverride) setSelectedPlan(planOverride);
+
+      try {
+        localStorage.setItem('life-kline:lead-email', normalizedEmail);
+        localStorage.setItem('life-kline:lead-source', source);
+      } catch {
+        // Non-blocking.
+      }
+
+      trackFunnel('membership_checkout_click', {
+        source,
+        intent,
+        plan,
+        has_email: 'true',
+        free_promo: promoActive ? 'true' : 'false',
+        authenticated: 'true',
+      });
+
+      try {
+        const res = await fetch('/api/membership/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: normalizedEmail,
+            plan,
+            source,
+          }),
+        });
+        const data = await res.json();
+        if (res.status === 401 || data.code === 'login_required') {
+          setAuthenticated(false);
+          setError(promo.needLogin);
+          document.getElementById('membership-bind')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return;
+        }
+        if (!res.ok) throw new Error(data.error || copy.errorCheckout);
+
+        if (data.mode === 'redirect' && data.checkoutUrl) {
+          window.location.href = data.checkoutUrl;
+          return;
+        }
+
+        if (data.mode === 'activated' || data.mode === 'already_active') {
+          setSuccess(
+            data.message ||
+              (promoActive ? copy.successActivatedPromo : copy.successActivated),
+          );
+          await refreshStatus(normalizedEmail);
+          trackFunnel('membership_activated', {
+            source,
+            plan: data.plan || plan,
+            mode: data.mode,
+            free_promo: promoActive ? 'true' : 'false',
+          });
+          return;
+        }
+
+        setSuccess(data.message || copy.successRecorded);
+        await refreshStatus(normalizedEmail);
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : copy.errorCheckout);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [
+      authenticated,
+      copy.errorCheckout,
+      copy.successActivated,
+      copy.successActivatedPromo,
+      copy.successRecorded,
+      email,
+      intent,
+      promo.needLogin,
+      promoActive,
+      refreshStatus,
+      selectedPlan,
+      source,
+    ],
+  );
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sourceFromUrl = params.get('source') || 'direct';
     const intentFromUrl = params.get('intent') || 'membership';
     const planFromUrl = params.get('plan');
+    const claimFromUrl = params.get('claim') === '1' || params.get('claim') === 'true';
     setSource(sourceFromUrl);
     setIntent(intentFromUrl);
     if (planFromUrl === 'annual' || planFromUrl === 'quarterly') {
       setSelectedPlan(planFromUrl);
     }
+    shouldAutoClaimRef.current = claimFromUrl;
 
     const loadSession = async () => {
       try {
@@ -88,6 +215,7 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
           setAuthenticated(true);
           setEmail(sessionEmail);
           void refreshStatus(sessionEmail);
+          setSessionReady(true);
           return;
         }
       } catch {
@@ -99,11 +227,45 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
       const initialEmail = emailFromUrl || emailFromStorage || '';
       if (initialEmail) {
         setEmail(initialEmail);
-        void refreshStatus(initialEmail);
       }
+      setSessionReady(true);
     };
     void loadSession();
-  }, []);
+  }, [refreshStatus]);
+
+  // After bind/login with ?claim=1, open membership in one shot.
+  useEffect(() => {
+    if (!sessionReady || !authenticated || !email) return;
+    if (!shouldAutoClaimRef.current || autoClaimRef.current) return;
+    if (membershipStatus?.isActive && membershipStatus.plan === 'annual') return;
+    autoClaimRef.current = true;
+    shouldAutoClaimRef.current = false;
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('claim');
+      window.history.replaceState({}, '', url.pathname + url.search);
+    } catch {
+      // ignore
+    }
+    void handleCheckout(selectedPlan);
+  }, [authenticated, email, handleCheckout, membershipStatus, selectedPlan, sessionReady]);
+
+  const onBindSuccess = useCallback(
+    (boundEmail: string) => {
+      const normalized = boundEmail.trim().toLowerCase();
+      setAuthenticated(true);
+      setEmail(normalized);
+      setError(null);
+      void refreshStatus(normalized);
+      autoClaimRef.current = false;
+      shouldAutoClaimRef.current = true;
+      // Trigger claim on next paint once status path is ready.
+      window.setTimeout(() => {
+        void handleCheckout(selectedPlan);
+      }, 50);
+    },
+    [handleCheckout, refreshStatus, selectedPlan],
+  );
 
   const normalizedEmail = email.trim().toLowerCase();
   const selectedPlanInfo = useMemo(
@@ -119,107 +281,6 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
     Boolean(membershipStatus?.isActive) && membershipStatus?.plan === 'quarterly';
   const isAnnualActive =
     Boolean(membershipStatus?.isActive) && membershipStatus?.plan === 'annual';
-
-  async function refreshStatus(targetEmail: string) {
-    const normalized = targetEmail.trim().toLowerCase();
-    if (!normalized.includes('@')) return;
-
-    setStatusLoading(true);
-    try {
-      const res = await fetch(`/api/membership/status?email=${encodeURIComponent(normalized)}`);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || copy.errorStatus);
-      setMembershipStatus({
-        status: data.status,
-        plan: data.plan || null,
-        planName: data.planName,
-        expiresAt: data.expiresAt,
-        savedReportsCount: data.savedReportsCount,
-        isActive: data.isActive,
-      });
-    } catch {
-      setMembershipStatus(null);
-    } finally {
-      setStatusLoading(false);
-    }
-  }
-
-  async function handleCheckout(planOverride?: MembershipPlanId) {
-    const plan = planOverride || selectedPlan;
-
-    if (!authenticated || !normalizedEmail) {
-      setError(promo.needLogin);
-      const next = encodeURIComponent(`/membership?source=${encodeURIComponent(source)}&plan=${plan}`);
-      window.location.href = `/login?next=${next}`;
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setSuccess(null);
-    if (planOverride) setSelectedPlan(planOverride);
-
-    try {
-      localStorage.setItem('life-kline:lead-email', normalizedEmail);
-      localStorage.setItem('life-kline:lead-source', source);
-    } catch {
-      // Non-blocking.
-    }
-
-    trackFunnel('membership_checkout_click', {
-      source,
-      intent,
-      plan,
-      has_email: 'true',
-      free_promo: promoActive ? 'true' : 'false',
-      authenticated: 'true',
-    });
-
-    try {
-      const res = await fetch('/api/membership/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: normalizedEmail,
-          plan,
-          source,
-        }),
-      });
-      const data = await res.json();
-      if (res.status === 401 || data.code === 'login_required') {
-        window.location.href = data.loginUrl || `/login?next=${encodeURIComponent('/membership')}`;
-        return;
-      }
-      if (!res.ok) throw new Error(data.error || copy.errorCheckout);
-
-      if (data.mode === 'redirect' && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-        return;
-      }
-
-      if (data.mode === 'activated' || data.mode === 'already_active') {
-        setSuccess(
-          data.message ||
-            (promoActive ? copy.successActivatedPromo : copy.successActivated),
-        );
-        await refreshStatus(normalizedEmail);
-        trackFunnel('membership_activated', {
-          source,
-          plan: data.plan || plan,
-          mode: data.mode,
-          free_promo: promoActive ? 'true' : 'false',
-        });
-        return;
-      }
-
-      setSuccess(data.message || copy.successRecorded);
-      await refreshStatus(normalizedEmail);
-    } catch (err: any) {
-      setError(err.message || copy.errorCheckout);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const ctaLabel = (() => {
     if (loading) return copy.processing;
@@ -241,6 +302,8 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
     ? new Date(membershipStatus.expiresAt).toLocaleDateString(copy.dateLocale)
     : copy.statusLongTerm;
 
+  const bindNext = `/membership?source=${encodeURIComponent(source)}&plan=${selectedPlan}&claim=1`;
+
   return (
     <div className="space-y-4">
       <FunnelPageView event="membership_page_view" sourceFallback="membership" />
@@ -257,30 +320,22 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
               <li key={step}>{step}</li>
             ))}
           </ol>
-          {!authenticated ? (
-            <div className="mt-3 flex flex-wrap items-baseline gap-x-3 gap-y-1 text-[13px]">
-              <Link
-                href={`/login?next=${encodeURIComponent(`/membership?source=${source}`)}`}
-                className="text-[color:var(--ink-1)] underline-offset-2 hover:underline"
-              >
-                {copy.loginFirst}
-              </Link>
-              <span className="text-[12px] text-[color:var(--ink-5)]">{copy.needLoginHint}</span>
-            </div>
-          ) : (
+          {authenticated ? (
             <p className="mt-3 text-[12px] text-[color:var(--ink-3)]">
               {copy.loggedInReady(normalizedEmail)}
+            </p>
+          ) : (
+            <p className="mt-3 text-[12px] text-[color:var(--ink-5)]">
+              <a href="#membership-bind" className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline">
+                {copy.loginFirst}
+              </a>
+              <span className="ml-2">{copy.needLoginHint}</span>
             </p>
           )}
         </section>
       ) : null}
 
-      <AccuracyDashboard
-        stats={accuracyStats}
-        isMember={Boolean(membershipStatus?.isActive)}
-      />
-
-      <div className="lk-grid-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {stepCards.map((card, index) => (
           <div key={card.title} className="fb-card p-3">
             <div className="text-[11px] font-bold text-[color:var(--brand)]">Step {index + 1}</div>
@@ -289,6 +344,11 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
           </div>
         ))}
       </div>
+
+      <AccuracyDashboard
+        stats={accuracyStats}
+        isMember={Boolean(membershipStatus?.isActive)}
+      />
 
       {membershipStatus?.isActive && (
         <section className="fb-card border-[color:var(--brand-soft-2)] bg-[color:var(--brand-soft)] p-4">
@@ -321,6 +381,28 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
         </section>
       )}
 
+      {!authenticated && sessionReady ? (
+        <section id="membership-bind" className="fb-card space-y-3 p-4 md:p-5">
+          <div>
+            <h2 className="text-lg font-bold text-[color:var(--ink-1)]">{copy.bindSectionTitle}</h2>
+            <p className="mt-1 text-[13px] leading-[1.55] text-[color:var(--ink-3)]">{copy.emailWhy}</p>
+          </div>
+          <Suspense fallback={<p className="text-sm text-[color:var(--ink-5)]">…</p>}>
+            <LoginForm
+              locale={locale}
+              compact
+              nextOverride={bindNext}
+              onSuccess={onBindSuccess}
+            />
+          </Suspense>
+          <p className="text-[12px] text-[color:var(--ink-4)]">
+            {copy.notLoggedIn}
+            <span className="ml-1 font-medium text-[color:var(--ink-2)]">{copy.loginRegister}</span>
+            {copy.claimAfterLogin}
+          </p>
+        </section>
+      ) : null}
+
       <section className="lk-grid-2">
         <article className="fb-card space-y-3 p-4">
           <h2 className="text-lg font-bold text-[color:var(--ink-1)]">{copy.freeTierTitle}</h2>
@@ -349,9 +431,11 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
         </article>
       </section>
 
-      <section className="fb-card space-y-5 p-4 md:p-5">
+      <section id="membership-claim" className="fb-card space-y-5 p-4 md:p-5">
         <div>
-          <h2 className="text-xl font-bold text-[color:var(--ink-1)]">{copy.selectPlanTitle}</h2>
+          <h2 className="text-xl font-bold text-[color:var(--ink-1)]">
+            {authenticated ? copy.claimSectionTitle : copy.selectPlanTitle}
+          </h2>
           <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
             {promoActive
               ? copy.selectPlanDescPromo(MEMBERSHIP_FREE_PROMO_END, promo.priceNote)
@@ -402,39 +486,40 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
           })}
         </div>
 
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_auto]">
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            onBlur={() => refreshStatus(normalizedEmail)}
-            placeholder={authenticated ? copy.emailPlaceholderAuth : copy.emailPlaceholderGuest}
-            autoComplete="email"
-            disabled={authenticated}
-            className="fb-input h-10 w-full px-3 text-[13px] disabled:bg-[color:var(--bg-sunken)]"
-          />
-          <button
-            type="button"
-            disabled={loading || isAnnualActive}
-            onClick={() => void handleCheckout()}
-            className="fb-btn fb-btn-primary h-10 px-5 text-[13px] font-bold disabled:opacity-50"
-          >
-            {isAnnualActive ? copy.alreadyAnnual : ctaLabel}
-          </button>
-        </div>
-
-        {!authenticated ? (
-          <p className="text-[12px] text-[color:var(--ink-3)]">
-            {copy.notLoggedIn}
-            <Link
-              href={`/login?next=${encodeURIComponent('/membership')}`}
-              className="ml-1 font-semibold text-[color:var(--brand)] hover:underline"
+        {authenticated ? (
+          <div className="space-y-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+              <div className="fb-input flex h-11 min-w-0 flex-1 items-center bg-[color:var(--bg-sunken)] px-3 text-[13px] text-[color:var(--ink-2)]">
+                {normalizedEmail || copy.emailPlaceholderAuth}
+              </div>
+              <button
+                type="button"
+                disabled={loading || isAnnualActive}
+                onClick={() => void handleCheckout()}
+                className="fb-btn fb-btn-primary h-11 shrink-0 px-6 text-[13px] font-bold disabled:opacity-50"
+              >
+                {isAnnualActive ? copy.alreadyAnnual : ctaLabel}
+              </button>
+            </div>
+            <p className="text-[12px] leading-[1.5] text-[color:var(--ink-4)]">{copy.emailWhy}</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <a
+              href="#membership-bind"
+              className="fb-btn fb-btn-primary inline-flex h-11 w-full items-center justify-center px-5 text-[13px] font-bold hover:no-underline sm:w-auto"
             >
-              {copy.loginRegister}
-            </Link>
-            {copy.claimAfterLogin}
-          </p>
-        ) : null}
+              {promoActive ? promo.ctaAnnual : copy.loginFirst}
+            </a>
+            <p className="text-[12px] text-[color:var(--ink-3)]">
+              {copy.notLoggedIn}
+              <a href="#membership-bind" className="ml-1 font-semibold text-[color:var(--brand)] hover:underline">
+                {copy.loginRegister}
+              </a>
+              {copy.claimAfterLogin}
+            </p>
+          </div>
+        )}
 
         {statusLoading ? <p className="text-xs text-[color:var(--ink-4)]">{copy.statusLoading}</p> : null}
         {error ? <AlertBanner className="text-[13px]">{error}</AlertBanner> : null}

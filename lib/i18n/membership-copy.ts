@@ -43,9 +43,9 @@ export function membershipPageCopy(locale: SiteLocale) {
       'email report save',
     ],
     headerCta: pick(locale, {
-      'zh-CN': '登录领会员',
-      'zh-Hant': '登入領會員',
-      en: 'Sign in to claim',
+      'zh-CN': '绑定邮箱领会员',
+      'zh-Hant': '綁定郵箱領會員',
+      en: 'Bind email & claim',
     }),
     eyebrow: pick(locale, {
       'zh-CN': `限时免费至 ${MEMBERSHIP_FREE_PROMO_END}`,
@@ -53,14 +53,16 @@ export function membershipPageCopy(locale: SiteLocale) {
       en: `Limited free until ${MEMBERSHIP_FREE_PROMO_END}`,
     }),
     title: pick(locale, {
-      'zh-CN': '¥0 开通会员',
-      'zh-Hant': '¥0 開通會員',
-      en: '¥0 membership',
+      'zh-CN': '两步开通 · ¥0 会员',
+      'zh-Hant': '兩步開通 · ¥0 會員',
+      en: 'Two steps · ¥0 membership',
     }),
     description: pick(locale, {
-      'zh-CN': '登录邮箱后可 0 元开通季度或年度会员；季度可免费升级年度。开通后立即生效。',
-      'zh-Hant': '登入郵箱後可 0 元開通季度或年度會員；季度可免費升級年度。開通後立即生效。',
-      en: 'Sign in with email to claim quarterly or annual membership at ¥0. Free upgrade from quarterly to annual. Activates immediately.',
+      'zh-CN':
+        '绑定邮箱（验证码，无需密码）→ 一点开通。绑定是为了后续方便召回你、保存报告并保持持续关系。活动期季度/年度 ¥0，立即生效。',
+      'zh-Hant':
+        '綁定郵箱（驗證碼，無需密碼）→ 一點開通。綁定是為了後續方便召回你、保存報告並保持持續關係。活動期季度/年度 ¥0，立即生效。',
+      en: 'Bind email (code only, no password) → claim in one tap. We bind email so we can reach you later, save reports, and stay in touch. Quarterly/annual are ¥0 during promo — active immediately.',
     }),
     stripTitle: pick(locale, {
       'zh-CN': '会员能做什么',
@@ -133,79 +135,81 @@ export function membershipClientCopy(locale: SiteLocale) {
   return {
     dateLocale,
 
-    // Promo steps (ordered list under promo banner)
+    // Promo steps (ordered list under promo banner) — keep two steps only
     promoSteps: [
       pick(locale, {
-        'zh-CN': '邮箱登录（注册会员）',
-        'zh-Hant': '郵箱登入（註冊會員）',
-        en: 'Sign in with email (register if needed)',
+        'zh-CN': '绑定常用邮箱（验证码，无需密码）',
+        'zh-Hant': '綁定常用郵箱（驗證碼，無需密碼）',
+        en: 'Bind your email (code only, no password)',
       }),
       pick(locale, {
-        'zh-CN': '选择季度 / 年度',
-        'zh-Hant': '選擇季度 / 年度',
-        en: 'Choose quarterly or annual',
-      }),
-      pick(locale, {
-        'zh-CN': '¥0 开通，立即生效',
-        'zh-Hant': '¥0 開通，立即生效',
-        en: 'Claim at ¥0 — active immediately',
+        'zh-CN': '选方案 → ¥0 一点开通，立即生效',
+        'zh-Hant': '選方案 → ¥0 一點開通，立即生效',
+        en: 'Pick a plan → claim at ¥0, active immediately',
       }),
     ] as const,
 
+    emailWhy: pick(locale, {
+      'zh-CN':
+        '绑定邮箱是为了后续方便召回你、跨设备找回报告，并与你保持持续关系（节点提醒、回访建议）。我们不会把邮箱当成广告清单。',
+      'zh-Hant':
+        '綁定郵箱是為了後續方便召回你、跨裝置找回報告，並與你保持持續關係（節點提醒、回訪建議）。我們不會把郵箱當成廣告清單。',
+      en: 'We bind email so we can reach you later, restore reports across devices, and keep an ongoing relationship (timing notes, follow-ups). Not an ad list.',
+    }),
+
     loginFirst: pick(locale, {
-      'zh-CN': '先登录 / 注册邮箱',
-      'zh-Hant': '先登入 / 註冊郵箱',
-      en: 'Sign in / register with email first',
+      'zh-CN': '本页直接绑定邮箱',
+      'zh-Hant': '本頁直接綁定郵箱',
+      en: 'Bind email on this page',
     }),
     needLoginHint: pick(locale, {
-      'zh-CN': '未登录无法领取',
-      'zh-Hant': '未登入無法領取',
-      en: 'Sign-in required to claim',
+      'zh-CN': '约 1 分钟 · 验证码即可',
+      'zh-Hant': '約 1 分鐘 · 驗證碼即可',
+      en: 'About 1 minute · code only',
     }),
     loggedInReady: (email: string) =>
       pick(locale, {
-        'zh-CN': `已登录：${email} · 可直接 0 元开通`,
-        'zh-Hant': `已登入：${email} · 可直接 0 元開通`,
-        en: `Signed in as ${email} · ready to claim at ¥0`,
+        'zh-CN': `已绑定：${email} · 选方案后一点开通`,
+        'zh-Hant': `已綁定：${email} · 選方案後一點開通`,
+        en: `Bound as ${email} · pick a plan and claim`,
       }),
 
-    // Three-step cards
+    bindSectionTitle: pick(locale, {
+      'zh-CN': '第 1 步 · 绑定邮箱',
+      'zh-Hant': '第 1 步 · 綁定郵箱',
+      en: 'Step 1 · Bind email',
+    }),
+    claimSectionTitle: pick(locale, {
+      'zh-CN': '第 2 步 · 一点开通',
+      'zh-Hant': '第 2 步 · 一點開通',
+      en: 'Step 2 · Claim in one tap',
+    }),
+
+    // Two-step cards (simpler path)
     steps: {
       promo: [
         {
           title: pick(locale, {
-            'zh-CN': '登录邮箱',
-            'zh-Hant': '登入郵箱',
-            en: 'Sign in with email',
+            'zh-CN': '绑定邮箱',
+            'zh-Hant': '綁定郵箱',
+            en: 'Bind email',
           }),
           text: pick(locale, {
-            'zh-CN': '注册会员后才能领取',
-            'zh-Hant': '註冊會員後才能領取',
-            en: 'A registered account is required to claim',
+            'zh-CN': '验证码即可 · 方便后续召回与持续关系',
+            'zh-Hant': '驗證碼即可 · 方便後續召回與持續關係',
+            en: 'Code only · so we can reach you and stay in touch',
           }),
         },
         {
           title: pick(locale, {
-            'zh-CN': '选择会员方案',
-            'zh-Hant': '選擇會員方案',
-            en: 'Pick a plan',
-          }),
-          text: pick(locale, {
-            'zh-CN': '季度 / 年度 · 活动期 ¥0',
-            'zh-Hant': '季度 / 年度 · 活動期 ¥0',
-            en: 'Quarterly or annual · ¥0 during promo',
-          }),
-        },
-        {
-          title: pick(locale, {
-            'zh-CN': '0 元开通',
-            'zh-Hant': '0 元開通',
+            'zh-CN': '一点开通',
+            'zh-Hant': '一點開通',
             en: 'Claim free',
           }),
           text: pick(locale, {
-            'zh-CN': '立即享受会员功能',
-            'zh-Hant': '立即享受會員功能',
-            en: 'Member features unlock right away',
+            'zh-CN': '季度 / 年度 · 活动期 ¥0 · 立即生效',
+            'zh-Hant': '季度 / 年度 · 活動期 ¥0 · 立即生效',
+            en: 'Quarterly or annual · ¥0 during promo · instant',
           }),
         },
       ],
@@ -214,36 +218,24 @@ export function membershipClientCopy(locale: SiteLocale) {
           title: pick(locale, {
             'zh-CN': '绑定邮箱',
             'zh-Hant': '綁定郵箱',
-            en: 'Link email',
+            en: 'Bind email',
           }),
           text: pick(locale, {
-            'zh-CN': '把当前报告与你的邮箱关联',
-            'zh-Hant': '把當前報告與你的郵箱關聯',
-            en: 'Associate reports with your email',
+            'zh-CN': '方便后续召回你，并跨设备回看报告',
+            'zh-Hant': '方便後續召回你，並跨裝置回看報告',
+            en: 'So we can reach you and restore reports anywhere',
           }),
         },
         {
           title: pick(locale, {
-            'zh-CN': '选择会员方案',
-            'zh-Hant': '選擇會員方案',
-            en: 'Pick a plan',
+            'zh-CN': '开通会员',
+            'zh-Hant': '開通會員',
+            en: 'Activate',
           }),
           text: pick(locale, {
-            'zh-CN': '按年或按季解锁完整版',
-            'zh-Hant': '按年或按季解鎖完整版',
-            en: 'Unlock the full edition yearly or quarterly',
-          }),
-        },
-        {
-          title: pick(locale, {
-            'zh-CN': '随时回看',
-            'zh-Hant': '隨時回看',
-            en: 'Replay anytime',
-          }),
-          text: pick(locale, {
-            'zh-CN': '后续年度更新优先查看',
-            'zh-Hant': '後續年度更新優先查看',
-            en: 'Priority access to later yearly updates',
+            'zh-CN': '完整回看与年度策略，保持持续关系',
+            'zh-Hant': '完整回看與年度策略，保持持續關係',
+            en: 'Full replay and yearly strategy — stay in touch',
           }),
         },
       ],
@@ -406,20 +398,20 @@ export function membershipClientCopy(locale: SiteLocale) {
 
     // Plan picker section
     selectPlanTitle: pick(locale, {
-      'zh-CN': '选择会员方案',
-      'zh-Hant': '選擇會員方案',
-      en: 'Choose a plan',
+      'zh-CN': '选择方案并开通',
+      'zh-Hant': '選擇方案並開通',
+      en: 'Pick a plan & claim',
     }),
     selectPlanDescPromo: (end: string, priceNote: string) =>
       pick(locale, {
-        'zh-CN': `活动截止 ${end} · ${priceNote}`,
-        'zh-Hant': `活動截止 ${end} · ${priceNote}`,
-        en: `Promo ends ${end} · ${priceNote}`,
+        'zh-CN': `活动截止 ${end} · ${priceNote} · 邮箱已自动带入，无需再填`,
+        'zh-Hant': `活動截止 ${end} · ${priceNote} · 郵箱已自動帶入，無需再填`,
+        en: `Promo ends ${end} · ${priceNote} · email is auto-filled`,
       }),
     selectPlanDescPaid: pick(locale, {
-      'zh-CN': '邮箱会自动从登录态带入，减少重复填写。',
-      'zh-Hant': '郵箱會自動從登入態帶入，減少重複填寫。',
-      en: 'Email is filled from your sign-in session when available.',
+      'zh-CN': '邮箱已从绑定态自动带入，点一次即可开通。',
+      'zh-Hant': '郵箱已從綁定態自動帶入，點一次即可開通。',
+      en: 'Email is auto-filled from your bound account — one tap to activate.',
     }),
     badgeFree: pick(locale, {
       'zh-CN': '限时免费',
@@ -458,19 +450,19 @@ export function membershipClientCopy(locale: SiteLocale) {
         en: `Activate ${planName}`,
       }),
     notLoggedIn: pick(locale, {
-      'zh-CN': '未登录？',
-      'zh-Hant': '未登入？',
-      en: 'Not signed in?',
+      'zh-CN': '还没绑定邮箱？',
+      'zh-Hant': '還沒綁定郵箱？',
+      en: 'Email not bound yet?',
     }),
     loginRegister: pick(locale, {
-      'zh-CN': '邮箱登录 / 注册',
-      'zh-Hant': '郵箱登入 / 註冊',
-      en: 'Email sign-in / register',
+      'zh-CN': '本页直接绑定',
+      'zh-Hant': '本頁直接綁定',
+      en: 'Bind here',
     }),
     claimAfterLogin: pick(locale, {
-      'zh-CN': '后再领取会员。',
-      'zh-Hant': '後再領取會員。',
-      en: ' then claim membership.',
+      'zh-CN': '（验证码即可），完成后一点开通。',
+      'zh-Hant': '（驗證碼即可），完成後一點開通。',
+      en: ' (code only), then claim in one tap.',
     }),
     statusLoading: pick(locale, {
       'zh-CN': '正在查询会员状态…',
@@ -528,16 +520,16 @@ export function membershipClientCopy(locale: SiteLocale) {
       },
       {
         q: pick(locale, {
-          'zh-CN': '为什么必须登录？',
-          'zh-Hant': '為什麼必須登入？',
-          en: 'Why is sign-in required?',
+          'zh-CN': '为什么要绑定邮箱？',
+          'zh-Hant': '為什麼要綁定郵箱？',
+          en: 'Why bind email?',
         }),
         a: pick(locale, {
           'zh-CN':
-            '会员权益绑定注册邮箱，便于跨设备回看与后续提醒，也避免匿名滥用。',
+            '绑定邮箱是为了后续方便召回你、跨设备找回报告，并与你保持持续关系（节点提醒、回访建议）。验证码即可，无需设密码；也可随时在站内管理订阅。',
           'zh-Hant':
-            '會員權益綁定註冊郵箱，便於跨裝置回看與後續提醒，也避免匿名濫用。',
-          en: 'Benefits attach to your registered email for cross-device replay and reminders, and to limit anonymous abuse.',
+            '綁定郵箱是為了後續方便召回你、跨裝置找回報告，並與你保持持續關係（節點提醒、回訪建議）。驗證碼即可，無需設密碼；也可隨時在站內管理訂閱。',
+          en: 'So we can reach you later, restore reports across devices, and keep an ongoing relationship (timing notes, follow-ups). Code only — no password. You can manage subscriptions anytime.',
         }),
       },
       {

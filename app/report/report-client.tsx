@@ -401,9 +401,9 @@ export default function ReportClient() {
 
           <section className="premium-card space-y-3">
             <div>
-              <h2 className="text-lg font-semibold text-gold">保存你的完整报告</h2>
+              <h2 className="text-lg font-semibold text-gold">绑定邮箱，方便后续召回</h2>
               <p className="text-sm text-muted mt-1">
-                输入邮箱即可绑定这份报告；开通会员时会自动带上邮箱，减少重复填写。
+                绑定邮箱是为了后续方便召回你、跨设备找回报告，并保持持续关系。开通会员时会自动带上邮箱，无需重复填写。
               </p>
             </div>
             <form onSubmit={handleSaveEmail} className="flex flex-col sm:flex-row gap-3">
@@ -412,24 +412,24 @@ export default function ReportClient() {
                 value={email}
                 onFocus={handleEmailStart}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="输入邮箱保存报告"
+                placeholder="常用邮箱"
                 className="flex-1 rounded-lg bg-black/20 border border-white/10 px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none focus:border-[var(--color-ming-gold)]/50"
                 required
               />
               <button className="rounded-lg bg-[var(--color-ming-gold)]/20 px-4 py-3 text-sm font-semibold text-gold border border-[var(--color-ming-gold)]/30 hover:bg-[var(--color-ming-gold)]/30 transition-colors">
-                绑定邮箱保存
+                绑定邮箱
               </button>
               <a
                 href={membershipHref}
                 onClick={handleMembershipClick}
                 className="inline-flex justify-center rounded-lg px-4 py-3 text-sm font-semibold text-muted border border-white/10 hover:text-gold hover:border-[var(--color-ming-gold)]/30 transition-colors"
               >
-                开通会员看完整版
+                两步 0 元领会员
               </a>
             </form>
             {emailSaved && (
               <p className="text-sm text-green-400">
-                报告已绑定到 {email}。开通会员后可在会员页回看完整版。
+                已绑定到 {email}。之后可用同一邮箱回看；也可继续领取会员保持持续关系。
               </p>
             )}
           </section>
