@@ -72,6 +72,12 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     description: '快速获得今日节律提示，适合作为日常复访入口。',
     cta: '抽今日一签',
   },
+  {
+    href: '/tools/fengshui-simulator',
+    title: '商铺风水模拟器',
+    description: '行业五行、大门方位、店名、色彩与开业择时的结构化分析（不说吉凶标签）。',
+    cta: '开始模拟',
+  },
 ];
 
 export const DOC_ENTRIES: PortalEntry[] = [

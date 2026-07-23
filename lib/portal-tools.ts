@@ -65,6 +65,7 @@ const CATEGORY_TOOLS: Record<ToolCategoryKey, PortalEntry[]> = {
     { href: '/chat', title: '结构追问', description: '绑定报告持续追问，锚定真值。', cta: '去追问' },
     { href: '/expert-crm', title: '专业 CRM', description: '本机客户脚本与待回访（开业用）。', cta: '打开 CRM' },
     { href: '/tools/timing-yearly-window', title: '2026 择时窗口', description: '年度主窗口与节奏提示。', cta: '免费测试' },
+    { href: '/tools/fengshui-simulator', title: '商铺风水模拟器', description: '行业五行、方位匹配、色彩与开业择时结构化分析。', cta: '开始模拟' },
     { href: '/knowledge/world-yi-timing-selection', title: '世界易择时观', description: '择时服务于动作顺序。', cta: '阅读' },
     { href: '/knowledge/world-yi-naming-system', title: '世界易起名观', description: '姓名作为环境层补充。', cta: '阅读' },
   ],

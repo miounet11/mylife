@@ -7,7 +7,8 @@ export type LearningTrackKey =
   | 'health'
   | 'migration'
   | 'application'
-  | 'classics';
+  | 'classics'
+  | 'fengshui';
 
 export type LearningStepKind = 'knowledge' | 'case' | 'tool' | 'insight' | 'action' | 'hub';
 
@@ -261,6 +262,24 @@ export const LEARNING_TRACKS: LearningTrack[] = [
       { key: 'classics-tool', kind: 'tool', label: '工具中心：按术数深入', href: '/tools', readMinutes: 10 },
     ],
   },
+  {
+    key: 'fengshui',
+    title: '商铺风水轨',
+    subtitle: '行业 · 方位 · 色彩 · 择时',
+    description: '从五行生克理解商铺行业匹配、方位结构、店名五行、色彩搭配与开业择时，结构化判断不说吉凶标签。',
+    icon: 'sparkles',
+    targetCount: 6,
+    hubHref: '/tools/fengshui-simulator',
+    relatedReportCategories: ['fengshui', 'application'],
+    steps: [
+      { key: 'fengshui-industry', kind: 'knowledge', label: '行业五行匹配入门', href: '/knowledge/fengshui-industry-wuxing', readMinutes: 7, required: true, slug: 'fengshui-industry-wuxing' },
+      { key: 'fengshui-direction', kind: 'knowledge', label: '大门朝向与方位五行', href: '/knowledge/fengshui-door-direction', readMinutes: 6, slug: 'fengshui-door-direction' },
+      { key: 'fengshui-name', kind: 'knowledge', label: '店名五行分析原理', href: '/knowledge/fengshui-name-analysis', readMinutes: 7, slug: 'fengshui-name-analysis' },
+      { key: 'fengshui-color', kind: 'knowledge', label: '色彩搭配与五行生克', href: '/knowledge/fengshui-color-scheme', readMinutes: 6, slug: 'fengshui-color-scheme' },
+      { key: 'fengshui-timing', kind: 'knowledge', label: '开业择时的命理逻辑', href: '/knowledge/fengshui-timing-window', readMinutes: 7, slug: 'fengshui-timing-window' },
+      { key: 'fengshui-tool', kind: 'tool', label: '商铺风水模拟器', href: '/tools/fengshui-simulator', readMinutes: 10 },
+    ],
+  },
 ];
 
 const TRACK_BY_KEY = new Map(LEARNING_TRACKS.map((track) => [track.key, track]));
@@ -282,6 +301,7 @@ const CATEGORY_TO_TRACK: Record<string, LearningTrackKey> = {
   migration: 'migration',
   timing: 'application',
   application: 'application',
+  fengshui: 'fengshui',
 };
 
 export function resolveLearningTrackFromCategory(category?: string | null): LearningTrackKey {
@@ -291,7 +311,7 @@ export function resolveLearningTrackFromCategory(category?: string | null): Lear
 
 export function resolveLearningTrackFromThemes(themes?: string[]): LearningTrackKey {
   if (!themes?.length) return 'intro';
-  const priority: LearningTrackKey[] = ['career', 'wealth', 'relationship', 'family', 'health', 'migration', 'application'];
+  const priority: LearningTrackKey[] = ['career', 'wealth', 'relationship', 'family', 'health', 'migration', 'application', 'fengshui'];
   for (const key of priority) {
     if (themes.includes(key)) return key;
   }
