@@ -46,7 +46,7 @@ type WorkbenchTab = 'preset' | 'site' | 'controls';
 export function SpaceLabApp() {
   const [state, setState] = useState<SpaceLabState>(() => createDefaultLabState());
   const [selectedVentId, setSelectedVentId] = useState<string | null>('vent-in-1');
-  const [viewMode, setViewMode] = useState<ViewMode>('three');
+  const [viewMode, setViewMode] = useState<ViewMode>('plan');
   const [workbenchTab, setWorkbenchTab] = useState<WorkbenchTab>('preset');
   const [tick, setTick] = useState(0);
   const [suggesting, setSuggesting] = useState(false);

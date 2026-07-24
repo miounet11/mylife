@@ -2,7 +2,8 @@
 
 import type React from 'react';
 import type { FieldLayer, SpaceLabState, SpaceVent } from '@/lib/fengshui/space';
-import { azimuthToFacingLabel } from '@/lib/fengshui/space';
+import { azimuthToFacingLabel, PLAN_OVERLAY_LABELS } from '@/lib/fengshui/space';
+import type { PlanOverlayMode } from '@/lib/fengshui/space/plan-overlay';
 
 const LAYERS: { key: FieldLayer; label: string }[] = [
   { key: 'energy', label: '能量分布' },
@@ -10,6 +11,15 @@ const LAYERS: { key: FieldLayer; label: string }[] = [
   { key: 'light', label: '光波采光' },
   { key: 'nineStar', label: '九星旺衰' },
   { key: 'qimen', label: '奇门遁甲' },
+];
+
+const OVERLAYS: PlanOverlayMode[] = [
+  'bagua8',
+  'radial24',
+  'bagua9',
+  'sector',
+  'flyingStar',
+  'none',
 ];
 
 const FACINGS = ['东', '东南', '南', '西南', '西', '西北', '北', '东北'];
@@ -108,6 +118,48 @@ export function SpaceControlPanel({
             {l.label}
           </button>
         ))}
+      </div>
+
+      <div className="space-y-1 rounded-lg border border-white/10 bg-black/20 p-2">
+        <div className="text-[10px] font-semibold text-emerald-300/90">平面叠图（专业展示）</div>
+        <div className="flex flex-wrap gap-1">
+          {OVERLAYS.map((m) => (
+            <button
+              key={m}
+              type="button"
+              onClick={() => onPatch((s) => ({ ...s, planOverlayMode: m }))}
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                (state.planOverlayMode || 'bagua8') === m
+                  ? 'bg-sky-400 text-black'
+                  : 'bg-white/10 text-white/70 hover:bg-white/15'
+              }`}
+            >
+              {PLAN_OVERLAY_LABELS[m]}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2 pt-0.5">
+          <Toggle
+            on={state.planPaperStyle !== false}
+            label={`纸质底图：${state.planPaperStyle !== false ? '开' : '关'}`}
+            onClick={() =>
+              onPatch((s) => ({
+                ...s,
+                planPaperStyle: s.planPaperStyle === false,
+              }))
+            }
+          />
+          <Toggle
+            on={state.showNinePalace}
+            label={`九宫线：${state.showNinePalace ? '开' : '关'}`}
+            onClick={() => onPatch((s) => ({ ...s, showNinePalace: !s.showNinePalace }))}
+          />
+          <Toggle
+            on={state.showCompass}
+            label={`指北：${state.showCompass ? '开' : '关'}`}
+            onClick={() => onPatch((s) => ({ ...s, showCompass: !s.showCompass }))}
+          />
+        </div>
       </div>
 
       {extraViewModes || (

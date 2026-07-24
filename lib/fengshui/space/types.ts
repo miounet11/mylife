@@ -95,6 +95,19 @@ export interface SpaceLabState {
   activeLayer: FieldLayer;
   showCompass: boolean;
   showNinePalace: boolean;
+  /**
+   * 专业平面叠图：八方位 / 二十四山 / 九宫 / 扇区 / 九星
+   * 参考日式户型方位分析展示
+   */
+  planOverlayMode:
+    | 'none'
+    | 'bagua8'
+    | 'radial24'
+    | 'bagua9'
+    | 'sector'
+    | 'flyingStar';
+  /** 纸质户型底（浅色） */
+  planPaperStyle: boolean;
   /** data URL of uploaded floor plan */
   underlayDataUrl: string | null;
   underlayOpacity: number;

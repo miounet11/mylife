@@ -320,6 +320,8 @@ export function createDefaultLabState(): SpaceLabState {
     activeLayer: 'energy',
     showCompass: true,
     showNinePalace: true,
+    planOverlayMode: 'bagua8',
+    planPaperStyle: true,
     underlayDataUrl: null,
     underlayOpacity: 0.35,
     gridSize: 64,

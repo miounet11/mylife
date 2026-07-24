@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import type { FieldGrids, SpaceLabState, SpaceSimResult } from '@/lib/fengshui/space';
-import { heatmapColor, pickLayerGrid } from '@/lib/fengshui/space';
+import {
+  drawPlanOverlay,
+  drawPlanPaperBackground,
+  heatmapColor,
+  pickLayerGrid,
+} from '@/lib/fengshui/space';
 
 type Props = {
   state: SpaceLabState;
@@ -155,13 +160,20 @@ export function SpaceViewport({
     const paintPlan = (underlay?: HTMLImageElement | null) => {
       if (cancelled) return;
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = '#0f1218';
-      ctx.fillRect(0, 0, W, H);
 
-      const pad = 24;
+      const pad = 36;
       const size = Math.min(W, H) - pad * 2;
       const ox = (W - size) / 2;
-      const oy = (H - size) / 2;
+      const oy = (H - size) / 2 - 4;
+      const paper = state.planPaperStyle !== false;
+      const overlayMode = state.planOverlayMode || 'none';
+
+      if (paper) {
+        drawPlanPaperBackground(ctx, W, H, ox, oy, size);
+      } else {
+        ctx.fillStyle = '#0f1218';
+        ctx.fillRect(0, 0, W, H);
+      }
 
       if (underlay) {
         ctx.globalAlpha = state.underlayOpacity;
@@ -169,20 +181,37 @@ export function SpaceViewport({
         ctx.globalAlpha = 1;
       }
 
+      // heat layer — softer when paper + professional overlay
+      const heatAlpha = paper ? (overlayMode === 'none' ? 180 : 90) : underlay ? 160 : 230;
       const gw = result.grids.width;
       const gh = result.grids.height;
       const cell = size / gw;
       for (let y = 0; y < gh; y++) {
         for (let x = 0; x < gw; x++) {
           const v = layer[y * gw + x];
-          const [r, g, b, a] = heatmapColor(v, underlay ? 160 : 230);
-          ctx.fillStyle = `rgba(${r},${g},${b},${a / 255})`;
+          const [r, g, b, a] = heatmapColor(v, heatAlpha);
+          ctx.fillStyle = `rgba(${r},${g},${b},${(a / 255) * (paper ? 0.55 : 1)})`;
           ctx.fillRect(ox + x * cell, oy + y * cell, cell + 0.5, cell + 0.5);
         }
       }
 
-      if (state.showNinePalace) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      // room outline
+      ctx.strokeStyle = paper ? 'rgba(15,23,42,0.55)' : 'rgba(255,255,255,0.45)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(ox, oy, size, size);
+
+      // inner walls / structures
+      for (const s of state.structures) {
+        ctx.fillStyle = paper ? 'rgba(100,116,139,0.18)' : 'rgba(255,255,255,0.12)';
+        ctx.strokeStyle = paper ? 'rgba(51,65,85,0.45)' : 'rgba(255,255,255,0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(ox + s.x * size, oy + s.y * size, s.w * size, s.h * size);
+        ctx.strokeRect(ox + s.x * size, oy + s.y * size, s.w * size, s.h * size);
+      }
+
+      // classic 九宫 grid (when not bagua9 mode which draws own cells)
+      if (state.showNinePalace && overlayMode !== 'bagua9') {
+        ctx.strokeStyle = paper ? 'rgba(15,23,42,0.12)' : 'rgba(255,255,255,0.18)';
         ctx.lineWidth = 1;
         for (let i = 1; i < 3; i++) {
           ctx.beginPath();
@@ -196,16 +225,16 @@ export function SpaceViewport({
         }
       }
 
-      ctx.strokeStyle = 'rgba(255,255,255,0.45)';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(ox, oy, size, size);
-
-      for (const s of state.structures) {
-        ctx.fillStyle = 'rgba(255,255,255,0.12)';
-        ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillRect(ox + s.x * size, oy + s.y * size, s.w * size, s.h * size);
-        ctx.strokeRect(ox + s.x * size, oy + s.y * size, s.w * size, s.h * size);
-      }
+      // professional overlays (bagua / 24 mountains / sector / flying star)
+      drawPlanOverlay({
+        ctx,
+        ox,
+        oy,
+        size,
+        mode: overlayMode,
+        entranceFacing: state.room.entranceFacing,
+        paperStyle: paper,
+      });
 
       for (const v of state.vents) {
         const px = ox + v.x * size;
@@ -214,17 +243,17 @@ export function SpaceViewport({
         ctx.arc(px, py, selectedVentId === v.id ? 10 : 7, 0, Math.PI * 2);
         ctx.fillStyle = v.enabled
           ? v.kind === 'inlet'
-            ? '#4ade80'
-            : '#38bdf8'
+            ? '#16a34a'
+            : '#0284c7'
           : 'rgba(150,150,150,0.5)';
         ctx.fill();
         if (selectedVentId === v.id) {
-          ctx.strokeStyle = '#fff';
+          ctx.strokeStyle = paper ? '#0f172a' : '#fff';
           ctx.lineWidth = 2;
           ctx.stroke();
         }
         const rad = deg2rad(v.azimuthDeg);
-        ctx.strokeStyle = 'rgba(255,255,255,0.7)';
+        ctx.strokeStyle = paper ? 'rgba(15,23,42,0.65)' : 'rgba(255,255,255,0.7)';
         ctx.beginPath();
         ctx.moveTo(px, py);
         ctx.lineTo(px + Math.cos(rad) * 28, py - Math.sin(rad) * 28);
@@ -235,19 +264,47 @@ export function SpaceViewport({
         if (!L.enabled) continue;
         const px = ox + L.x * size;
         const py = oy + L.y * size;
-        ctx.fillStyle = 'rgba(250,204,21,0.85)';
+        ctx.fillStyle = 'rgba(234,179,8,0.9)';
         ctx.beginPath();
         ctx.arc(px, py, 5, 0, Math.PI * 2);
         ctx.fill();
       }
 
-      ctx.fillStyle = 'rgba(255,255,255,0.7)';
-      ctx.font = '12px ui-sans-serif, system-ui';
-      ctx.fillText(`主入口朝向 · ${state.room.entranceFacing}`, ox, oy + size + 18);
+      // compass rose top-left
+      if (state.showCompass) {
+        const cr = 18;
+        const cx0 = ox + 22;
+        const cy0 = oy + 22;
+        ctx.strokeStyle = paper ? 'rgba(15,23,42,0.4)' : 'rgba(255,255,255,0.4)';
+        ctx.beginPath();
+        ctx.arc(cx0, cy0, cr, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.fillStyle = '#dc2626';
+        ctx.font = 'bold 10px ui-sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('N', cx0, cy0 - cr - 4);
+        ctx.beginPath();
+        ctx.moveTo(cx0, cy0 + 6);
+        ctx.lineTo(cx0, cy0 - 10);
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = paper ? 'rgba(15,23,42,0.72)' : 'rgba(255,255,255,0.7)';
+      ctx.font = '11px ui-sans-serif, system-ui';
+      ctx.textAlign = 'left';
       ctx.fillText(
-        `层：${layerLabel(state.activeLayer)} · ${result.meta.dizhiHour}时 · ${result.meta.nineStarLabel}`,
+        `入口 ${state.room.entranceFacing} · ${layerLabel(state.activeLayer)} · ${result.meta.dizhiHour}时`,
         ox,
-        oy + size + 34,
+        oy + size + 16,
+      );
+      ctx.font = '10px ui-sans-serif, system-ui';
+      ctx.fillStyle = paper ? 'rgba(15,23,42,0.5)' : 'rgba(255,255,255,0.5)';
+      ctx.fillText(
+        `叠图示意 · 结构教学用 · 非吉凶断事`,
+        ox,
+        oy + size + 30,
       );
     };
 

@@ -59,3 +59,9 @@ export {
   type TextureKey,
   type DomainTextureKit,
 } from './texture-catalog';
+export {
+  drawPlanOverlay,
+  drawPlanPaperBackground,
+  PLAN_OVERLAY_LABELS,
+  type PlanOverlayMode,
+} from './plan-overlay';
