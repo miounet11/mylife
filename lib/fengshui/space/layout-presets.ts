@@ -1,7 +1,7 @@
 /**
- * 空间场 · 预设方案库
- * 覆盖住宅主流户型、商铺常见面宽/进深、墓穴常见穴位形态（约 95% 常见场景）。
- * 输出可直接 patch 进 SpaceLabState 的几何与风口。
+ * 空间场 · 大规模预设目录
+ * 住宅 / 商铺 / 墓穴 各约 100 套，由参数模板 × 面积档 × 朝向 展开，
+ * 覆盖国内常见刚需改善户型、临街商铺、墓园穴位形态（目标 ≥95% 检索命中）。
  */
 
 import type { SpaceLabState, SpaceLight, SpaceRoom, SpaceStructure, SpaceVent } from './types';
@@ -12,9 +12,7 @@ export type LayoutPreset = {
   id: string;
   domain: LayoutDomain;
   title: string;
-  /** e.g. 两室一厅 / 临街窄铺 / 双穴并排 */
   layout: string;
-  /** 典型建筑面积 m² */
   areaSqm: number;
   areaMin: number;
   areaMax: number;
@@ -27,587 +25,858 @@ export type LayoutPreset = {
   structures: Omit<SpaceStructure, 'id'>[];
 };
 
-function vent(
-  partial: Omit<SpaceVent, 'id' | 'enabled'> & { enabled?: boolean },
-): Omit<SpaceVent, 'id'> {
-  return { enabled: true, ...partial };
+const FACINGS = ['东', '东南', '南', '西南', '西', '西北', '北', '东北'] as const;
+
+/** 入口朝向 → 进风方位角（屏幕：0东 90北 180西 270南；y 向下时 门在底边 y≈0.92 朝室内约 90） */
+const FACE_AZ: Record<string, number> = {
+  东: 0,
+  东南: 45,
+  南: 90,
+  西南: 135,
+  西: 180,
+  西北: 225,
+  北: 270,
+  东北: 315,
+};
+
+function round1(n: number) {
+  return Math.round(n * 10) / 10;
+}
+
+function clamp(n: number, a: number, b: number) {
+  return Math.max(a, Math.min(b, n));
+}
+
+export function dimensionsFromArea(areaSqm: number, aspect = 1.15): { widthM: number; depthM: number } {
+  const a = Math.max(0.4, Math.min(400, areaSqm));
+  const widthM = Math.sqrt(a / aspect);
+  const depthM = a / widthM;
+  return { widthM: round1(widthM), depthM: round1(depthM) };
+}
+
+function vent(p: Omit<SpaceVent, 'id' | 'enabled'> & { enabled?: boolean }): Omit<SpaceVent, 'id'> {
+  return { enabled: true, ...p };
 }
 
 function light(
-  partial: Omit<SpaceLight, 'id' | 'enabled' | 'followSun'> & {
-    enabled?: boolean;
-    followSun?: boolean;
-  },
+  p: Omit<SpaceLight, 'id' | 'enabled' | 'followSun'> & { enabled?: boolean; followSun?: boolean },
 ): Omit<SpaceLight, 'id'> {
-  const { enabled = true, followSun = true, ...rest } = partial;
+  const { enabled = true, followSun = true, ...rest } = p;
   return { ...rest, enabled, followSun };
 }
 
-function structure(
-  partial: Omit<SpaceStructure, 'id'>,
-): Omit<SpaceStructure, 'id'> {
-  return partial;
+function structure(p: Omit<SpaceStructure, 'id'>): Omit<SpaceStructure, 'id'> {
+  return p;
 }
 
-function room(
-  widthM: number,
-  depthM: number,
-  entranceFacing: string,
-  heightM = 2.8,
-): SpaceRoom {
+function room(widthM: number, depthM: number, entranceFacing: string, heightM = 2.8): SpaceRoom {
   return { widthM, depthM, heightM, entranceFacing, planRotationDeg: 0 };
 }
 
-/** 由面积与面宽比估算进深 */
-export function dimensionsFromArea(areaSqm: number, aspect = 1.15): { widthM: number; depthM: number } {
-  const a = Math.max(12, Math.min(400, areaSqm));
-  const widthM = Math.sqrt(a / aspect);
-  const depthM = a / widthM;
-  return {
-    widthM: Math.round(widthM * 10) / 10,
-    depthM: Math.round(depthM * 10) / 10,
-  };
+/** 门在朝向侧边缘，气流吹向室内 */
+function inletForFacing(facing: string) {
+  const az = FACE_AZ[facing] ?? 90;
+  // place door on the edge of facing, blow inward (az + 180 for outdoor? )
+  // Plan: y=0 top north-ish when facing 南 door at bottom y=0.93, blow up (screen up = -y) azimuth 90
+  switch (facing) {
+    case '南':
+      return { x: 0.5, y: 0.93, azimuthDeg: 90 };
+    case '北':
+      return { x: 0.5, y: 0.07, azimuthDeg: 270 };
+    case '东':
+      return { x: 0.07, y: 0.5, azimuthDeg: 0 };
+    case '西':
+      return { x: 0.93, y: 0.5, azimuthDeg: 180 };
+    case '东南':
+      return { x: 0.22, y: 0.88, azimuthDeg: 45 };
+    case '西南':
+      return { x: 0.78, y: 0.88, azimuthDeg: 135 };
+    case '东北':
+      return { x: 0.22, y: 0.12, azimuthDeg: 315 };
+    case '西北':
+      return { x: 0.78, y: 0.12, azimuthDeg: 225 };
+    default:
+      return { x: 0.5, y: 0.93, azimuthDeg: az };
+  }
 }
 
-const RESIDENTIAL: LayoutPreset[] = [
+function oppositeFacing(facing: string): string {
+  const i = FACINGS.indexOf(facing as (typeof FACINGS)[number]);
+  if (i < 0) return '北';
+  return FACINGS[(i + 4) % 8];
+}
+
+function outletForFacing(facing: string) {
+  return inletForFacing(oppositeFacing(facing));
+}
+
+type RoomTemplate = {
+  key: string;
+  layout: string;
+  title: string;
+  tags: string[];
+  blurb: string;
+  /** typical areas to expand */
+  areas: number[];
+  aspect: number;
+  heightM?: number;
+  popularity: number;
+  /** structure pattern id */
+  pattern: 'open' | 'one_bed' | 'two_bed' | 'three_bed' | 'four_bed' | 'duplex' | 'shop_narrow' | 'shop_square' | 'shop_corner' | 'shop_kitchen' | 'shop_kiosk' | 'shop_double' | 'tomb_single' | 'tomb_double' | 'tomb_family' | 'tomb_wall' | 'tomb_pagoda' | 'tomb_lawn';
+};
+
+function buildStructures(pattern: RoomTemplate['pattern'], seed: number): Omit<SpaceStructure, 'id'>[] {
+  const j = (n: number) => clamp(0.04 + ((seed * 17 + n * 13) % 20) / 100, 0.03, 0.85);
+  switch (pattern) {
+    case 'open':
+      return [
+        structure({ kind: 'box', x: 0.7, y: 0.12, w: 0.22, h: 0.18, block: 0.4 }),
+        structure({ kind: 'box', x: j(1), y: 0.55, w: 0.18, h: 0.2, block: 0.35 }),
+      ];
+    case 'one_bed':
+      return [
+        structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.3, h: 0.32, block: 0.5 }),
+        structure({ kind: 'box', x: 0.68, y: 0.1, w: 0.24, h: 0.22, block: 0.45 }),
+        structure({ kind: 'column', x: 0.45, y: 0.42, w: 0.06, h: 0.06, block: 0.3 }),
+      ];
+    case 'two_bed':
+      return [
+        structure({ kind: 'box', x: 0.05, y: 0.55, w: 0.3, h: 0.35, block: 0.52 }),
+        structure({ kind: 'box', x: 0.62, y: 0.08, w: 0.3, h: 0.28, block: 0.5 }),
+        structure({ kind: 'box', x: 0.08, y: 0.08, w: 0.26, h: 0.26, block: 0.48 }),
+        structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.2, h: 0.22, block: 0.4 }),
+      ];
+    case 'three_bed':
+      return [
+        structure({ kind: 'box', x: 0.05, y: 0.5, w: 0.28, h: 0.32, block: 0.5 }),
+        structure({ kind: 'box', x: 0.65, y: 0.06, w: 0.28, h: 0.28, block: 0.5 }),
+        structure({ kind: 'box', x: 0.35, y: 0.06, w: 0.24, h: 0.24, block: 0.46 }),
+        structure({ kind: 'box', x: 0.06, y: 0.06, w: 0.24, h: 0.26, block: 0.48 }),
+        structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.2, h: 0.2, block: 0.4 }),
+      ];
+    case 'four_bed':
+      return [
+        structure({ kind: 'box', x: 0.04, y: 0.45, w: 0.28, h: 0.3, block: 0.48 }),
+        structure({ kind: 'box', x: 0.7, y: 0.04, w: 0.26, h: 0.28, block: 0.5 }),
+        structure({ kind: 'box', x: 0.4, y: 0.04, w: 0.24, h: 0.26, block: 0.46 }),
+        structure({ kind: 'box', x: 0.1, y: 0.04, w: 0.24, h: 0.26, block: 0.46 }),
+        structure({ kind: 'box', x: 0.72, y: 0.5, w: 0.22, h: 0.24, block: 0.42 }),
+        structure({ kind: 'box', x: 0.38, y: 0.52, w: 0.2, h: 0.2, block: 0.38 }),
+      ];
+    case 'duplex':
+      return [
+        structure({ kind: 'column', x: 0.46, y: 0.4, w: 0.12, h: 0.18, block: 0.7 }),
+        structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.28, h: 0.28, block: 0.48 }),
+        structure({ kind: 'box', x: 0.65, y: 0.1, w: 0.28, h: 0.28, block: 0.5 }),
+      ];
+    case 'shop_narrow':
+      return [
+        structure({ kind: 'box', x: 0.15, y: 0.35, w: 0.2, h: 0.45, block: 0.4 }),
+        structure({ kind: 'box', x: 0.65, y: 0.35, w: 0.2, h: 0.45, block: 0.4 }),
+        structure({ kind: 'box', x: 0.25, y: 0.08, w: 0.5, h: 0.18, block: 0.55 }),
+      ];
+    case 'shop_square':
+      return [
+        structure({ kind: 'box', x: 0.35, y: 0.35, w: 0.3, h: 0.3, block: 0.35 }),
+        structure({ kind: 'box', x: 0.1, y: 0.55, w: 0.18, h: 0.3, block: 0.4 }),
+        structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.18, h: 0.3, block: 0.4 }),
+      ];
+    case 'shop_corner':
+      return [
+        structure({ kind: 'box', x: 0.3, y: 0.3, w: 0.35, h: 0.35, block: 0.35 }),
+        structure({ kind: 'box', x: 0.1, y: 0.1, w: 0.2, h: 0.2, block: 0.5 }),
+      ];
+    case 'shop_kitchen':
+      return [
+        structure({ kind: 'box', x: 0.15, y: 0.45, w: 0.7, h: 0.25, block: 0.3 }),
+        structure({ kind: 'box', x: 0.15, y: 0.05, w: 0.7, h: 0.28, block: 0.6 }),
+      ];
+    case 'shop_kiosk':
+      return [structure({ kind: 'box', x: 0.3, y: 0.3, w: 0.4, h: 0.4, block: 0.45 })];
+    case 'shop_double':
+      return [
+        structure({ kind: 'box', x: 0.15, y: 0.35, w: 0.25, h: 0.4, block: 0.35 }),
+        structure({ kind: 'box', x: 0.6, y: 0.35, w: 0.25, h: 0.4, block: 0.35 }),
+        structure({ kind: 'box', x: 0.35, y: 0.08, w: 0.3, h: 0.18, block: 0.5 }),
+      ];
+    case 'tomb_single':
+      return [
+        structure({ kind: 'box', x: 0.3, y: 0.35, w: 0.4, h: 0.35, block: 0.65 }),
+        structure({ kind: 'box', x: 0.35, y: 0.72, w: 0.3, h: 0.12, block: 0.35 }),
+      ];
+    case 'tomb_double':
+      return [
+        structure({ kind: 'box', x: 0.12, y: 0.32, w: 0.32, h: 0.36, block: 0.65 }),
+        structure({ kind: 'box', x: 0.56, y: 0.32, w: 0.32, h: 0.36, block: 0.65 }),
+        structure({ kind: 'box', x: 0.3, y: 0.75, w: 0.4, h: 0.12, block: 0.35 }),
+      ];
+    case 'tomb_family':
+      return [
+        structure({ kind: 'box', x: 0.08, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
+        structure({ kind: 'box', x: 0.38, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
+        structure({ kind: 'box', x: 0.68, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
+        structure({ kind: 'box', x: 0.25, y: 0.72, w: 0.5, h: 0.14, block: 0.35 }),
+      ];
+    case 'tomb_wall':
+      return [structure({ kind: 'box', x: 0.15, y: 0.2, w: 0.7, h: 0.55, block: 0.75 })];
+    case 'tomb_pagoda':
+      return [
+        structure({ kind: 'column', x: 0.4, y: 0.35, w: 0.2, h: 0.2, block: 0.7 }),
+        structure({ kind: 'box', x: 0.2, y: 0.55, w: 0.6, h: 0.25, block: 0.5 }),
+      ];
+    case 'tomb_lawn':
+      return [structure({ kind: 'box', x: 0.35, y: 0.4, w: 0.3, h: 0.2, block: 0.25 })];
+    default:
+      return [structure({ kind: 'box', x: j(2), y: j(3), w: 0.2, h: 0.2, block: 0.4 })];
+  }
+}
+
+function buildVents(facing: string, pattern: RoomTemplate['pattern']): Omit<SpaceVent, 'id'>[] {
+  const inn = inletForFacing(facing);
+  const out = outletForFacing(facing);
+  const base: Omit<SpaceVent, 'id'>[] = [
+    vent({
+      kind: 'inlet',
+      x: inn.x,
+      y: inn.y,
+      azimuthDeg: inn.azimuthDeg,
+      spreadDeg: pattern.startsWith('shop') ? 105 : pattern.startsWith('tomb') ? 85 : 100,
+      speed: pattern.startsWith('shop') ? 46 : 40,
+      intensity: pattern.startsWith('shop') ? 2.5 : 2.2,
+      halfLifeSec: pattern.startsWith('tomb') ? 16 : 13,
+    }),
+    vent({
+      kind: 'outlet',
+      x: out.x,
+      y: out.y,
+      azimuthDeg: out.azimuthDeg,
+      spreadDeg: 75,
+      speed: 34,
+      intensity: 1.7,
+      halfLifeSec: 11,
+    }),
+  ];
+
+  if (pattern === 'shop_corner') {
+    base.push(
+      vent({
+        kind: 'inlet',
+        x: 0.93,
+        y: 0.5,
+        azimuthDeg: 180,
+        spreadDeg: 95,
+        speed: 42,
+        intensity: 2.3,
+        halfLifeSec: 12,
+      }),
+    );
+  }
+  if (pattern === 'shop_kitchen') {
+    base[1] = vent({
+      kind: 'outlet',
+      x: 0.5,
+      y: 0.08,
+      azimuthDeg: 270,
+      spreadDeg: 90,
+      speed: 52,
+      intensity: 2.8,
+      halfLifeSec: 8,
+    });
+  }
+  if (pattern === 'two_bed' || pattern === 'three_bed' || pattern === 'four_bed') {
+    base.push(
+      vent({
+        kind: 'outlet',
+        x: 0.12,
+        y: 0.45,
+        azimuthDeg: 0,
+        spreadDeg: 60,
+        speed: 26,
+        intensity: 1.3,
+        halfLifeSec: 10,
+      }),
+    );
+  }
+  if (pattern === 'tomb_double' || pattern === 'tomb_family') {
+    base.push(
+      vent({
+        kind: 'outlet',
+        x: 0.2,
+        y: 0.15,
+        azimuthDeg: 270,
+        spreadDeg: 55,
+        speed: 22,
+        intensity: 1.2,
+        halfLifeSec: 14,
+      }),
+      vent({
+        kind: 'outlet',
+        x: 0.8,
+        y: 0.15,
+        azimuthDeg: 270,
+        spreadDeg: 55,
+        speed: 22,
+        intensity: 1.2,
+        halfLifeSec: 14,
+      }),
+    );
+  }
+  return base;
+}
+
+function buildLights(facing: string, pattern: RoomTemplate['pattern']): Omit<SpaceLight, 'id'>[] {
+  const inn = inletForFacing(facing);
+  const list: Omit<SpaceLight, 'id'>[] = [
+    light({
+      x: clamp(inn.x, 0.1, 0.9),
+      y: clamp(inn.y > 0.5 ? 0.88 : 0.12, 0.08, 0.92),
+      azimuthDeg: FACE_AZ[facing] ?? 90,
+      intensity: pattern.startsWith('shop') ? 1.4 : 1.2,
+      label: '主采光',
+      followSun: !pattern.startsWith('tomb') || pattern === 'tomb_lawn',
+    }),
+  ];
+  if (pattern === 'two_bed' || pattern === 'three_bed' || pattern === 'four_bed') {
+    list.push(
+      light({
+        x: 0.78,
+        y: 0.18,
+        azimuthDeg: FACE_AZ[facing] ?? 90,
+        intensity: 0.95,
+        label: '卧室窗',
+        followSun: true,
+      }),
+    );
+  }
+  return list;
+}
+
+function expandTemplate(
+  domain: LayoutDomain,
+  tpl: RoomTemplate,
+  facings: readonly string[],
+): LayoutPreset[] {
+  const out: LayoutPreset[] = [];
+  let idx = 0;
+  for (const area of tpl.areas) {
+    for (const facing of facings) {
+      idx += 1;
+      const { widthM, depthM } = dimensionsFromArea(area, tpl.aspect);
+      const margin = Math.max(area * 0.18, domain === 'tomb' ? 0.3 : 8);
+      const id = `${domain.slice(0, 3)}-${tpl.key}-a${area}-f${facing}-${idx}`;
+      out.push({
+        id,
+        domain,
+        title: `${tpl.title} · ${facing}向 · ${area}㎡`,
+        layout: tpl.layout,
+        areaSqm: area,
+        areaMin: round1(area - margin),
+        areaMax: round1(area + margin),
+        tags: [...tpl.tags, facing, `${area}㎡`],
+        blurb: `${tpl.blurb} 入口${facing}；面宽约 ${widthM}m × 进深约 ${depthM}m。`,
+        popularity: clamp(tpl.popularity - (idx % 7), 55, 99),
+        room: room(widthM, depthM, facing, tpl.heightM ?? (domain === 'tomb' ? 1.2 : domain === 'shop' ? 3.3 : 2.8)),
+        vents: buildVents(facing, tpl.pattern),
+        lights: buildLights(facing, tpl.pattern),
+        structures: buildStructures(tpl.pattern, area + facing.charCodeAt(0)),
+      });
+    }
+  }
+  return out;
+}
+
+// ---------- 住宅模板：面积档 × 朝向 ≈ 100+ ----------
+const RES_TEMPLATES: RoomTemplate[] = [
   {
-    id: 'res-studio-35',
-    domain: 'residential',
-    title: '开间 / 一室',
+    key: 'studio',
     layout: '一室',
-    areaSqm: 35,
-    areaMin: 25,
-    areaMax: 45,
+    title: '开间/一室',
     tags: ['小户型', '刚需', '开间'],
-    blurb: '单间功能区 + 厨卫靠内，适合租住与过渡。',
-    popularity: 92,
-    room: room(5.2, 6.8, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.92, azimuthDeg: 90, spreadDeg: 100, speed: 40, intensity: 2.2, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.55, y: 0.1, azimuthDeg: 270, spreadDeg: 80, speed: 32, intensity: 1.6, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.88, azimuthDeg: 90, intensity: 1.15, label: '南窗采光', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.22, h: 0.28, block: 0.55 }),
-      structure({ kind: 'box', x: 0.72, y: 0.12, w: 0.2, h: 0.18, block: 0.45 }),
-    ],
-  },
-  {
-    id: 'res-1b1l-55',
-    domain: 'residential',
-    title: '一室一厅',
-    layout: '一室一厅',
-    areaSqm: 55,
-    areaMin: 45,
-    areaMax: 70,
-    tags: ['刚需', '南北'],
-    blurb: '客卧分离，厅南卧北或厅南厨卫侧置。',
-    popularity: 96,
-    room: room(6.5, 8.5, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.48, y: 0.93, azimuthDeg: 90, spreadDeg: 96, speed: 42, intensity: 2.4, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 75, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.12, y: 0.4, azimuthDeg: 0, spreadDeg: 65, speed: 26, intensity: 1.3, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.2, label: '客厅南窗', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.28, h: 0.32, block: 0.5 }),
-      structure({ kind: 'box', x: 0.68, y: 0.12, w: 0.24, h: 0.22, block: 0.48 }),
-      structure({ kind: 'column', x: 0.45, y: 0.42, w: 0.06, h: 0.06, block: 0.35 }),
-    ],
-  },
-  {
-    id: 'res-2b1l-75',
-    domain: 'residential',
-    title: '两室一厅',
-    layout: '两室一厅',
-    areaSqm: 75,
-    areaMin: 65,
-    areaMax: 90,
-    tags: ['刚需', '改善', '主流'],
-    blurb: '主流刚需：南厅 + 主卧南/次卧北，厨卫集中。',
-    popularity: 99,
-    room: room(7.8, 9.6, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 100, speed: 44, intensity: 2.5, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.72, y: 0.1, azimuthDeg: 270, spreadDeg: 70, speed: 33, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.18, y: 0.12, azimuthDeg: 270, spreadDeg: 70, speed: 30, intensity: 1.5, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.08, y: 0.5, azimuthDeg: 0, spreadDeg: 60, speed: 24, intensity: 1.2, halfLifeSec: 9 }),
-    ],
-    lights: [
-      light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.25, label: '客厅采光', followSun: true }),
-      light({ x: 0.78, y: 0.18, azimuthDeg: 90, intensity: 0.9, label: '主卧窗', followSun: true }),
-    ],
-    structures: [
-      structure({ kind: 'box', x: 0.05, y: 0.55, w: 0.3, h: 0.35, block: 0.52 }),
-      structure({ kind: 'box', x: 0.62, y: 0.08, w: 0.3, h: 0.28, block: 0.5 }),
-      structure({ kind: 'box', x: 0.08, y: 0.08, w: 0.26, h: 0.26, block: 0.48 }),
-      structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.2, h: 0.22, block: 0.42 }),
-    ],
-  },
-  {
-    id: 'res-2b2l-90',
-    domain: 'residential',
-    title: '两室两厅',
-    layout: '两室两厅',
-    areaSqm: 90,
-    areaMin: 80,
-    areaMax: 105,
-    tags: ['改善', '客餐分离'],
-    blurb: '客厅餐厅分离，动线更清晰，适合小家庭。',
-    popularity: 94,
-    room: room(8.5, 10.6, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.52, y: 0.94, azimuthDeg: 90, spreadDeg: 100, speed: 45, intensity: 2.5, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.75, y: 0.08, azimuthDeg: 270, spreadDeg: 72, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.2, y: 0.1, azimuthDeg: 270, spreadDeg: 70, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.1, y: 0.55, azimuthDeg: 0, spreadDeg: 60, speed: 25, intensity: 1.2, halfLifeSec: 9 }),
-    ],
-    lights: [light({ x: 0.52, y: 0.9, azimuthDeg: 90, intensity: 1.3, label: '客厅南窗', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.06, y: 0.5, w: 0.28, h: 0.28, block: 0.5 }),
-      structure({ kind: 'box', x: 0.38, y: 0.55, w: 0.22, h: 0.22, block: 0.4 }),
-      structure({ kind: 'box', x: 0.65, y: 0.08, w: 0.28, h: 0.3, block: 0.5 }),
-      structure({ kind: 'box', x: 0.08, y: 0.08, w: 0.26, h: 0.28, block: 0.48 }),
-    ],
-  },
-  {
-    id: 'res-3b1l-100',
-    domain: 'residential',
-    title: '三室一厅',
-    layout: '三室一厅',
-    areaSqm: 100,
-    areaMin: 90,
-    areaMax: 115,
-    tags: ['改善', '刚需'],
-    blurb: '三房集中卫生间，厅大房适中。',
-    popularity: 97,
-    room: room(9.0, 11.2, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 105, speed: 46, intensity: 2.6, halfLifeSec: 15 }),
-      vent({ kind: 'outlet', x: 0.8, y: 0.08, azimuthDeg: 270, spreadDeg: 70, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 65, speed: 30, intensity: 1.4, halfLifeSec: 10 }),
-      vent({ kind: 'outlet', x: 0.18, y: 0.1, azimuthDeg: 270, spreadDeg: 70, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.3, label: '客厅', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.05, y: 0.52, w: 0.28, h: 0.32, block: 0.5 }),
-      structure({ kind: 'box', x: 0.65, y: 0.06, w: 0.28, h: 0.28, block: 0.5 }),
-      structure({ kind: 'box', x: 0.35, y: 0.06, w: 0.24, h: 0.24, block: 0.45 }),
-      structure({ kind: 'box', x: 0.06, y: 0.06, w: 0.24, h: 0.26, block: 0.48 }),
-      structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.2, h: 0.2, block: 0.4 }),
-    ],
-  },
-  {
-    id: 'res-3b2l-120',
-    domain: 'residential',
-    title: '三室两厅',
-    layout: '三室两厅',
-    areaSqm: 120,
-    areaMin: 105,
-    areaMax: 140,
-    tags: ['改善', '主流', '南北通透'],
-    blurb: '客餐分离 + 三卧，覆盖大量改善盘。',
-    popularity: 98,
-    room: room(9.6, 12.5, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 105, speed: 48, intensity: 2.6, halfLifeSec: 15 }),
-      vent({ kind: 'outlet', x: 0.82, y: 0.08, azimuthDeg: 270, spreadDeg: 72, speed: 35, intensity: 1.8, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 68, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.18, y: 0.1, azimuthDeg: 270, spreadDeg: 70, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.08, y: 0.48, azimuthDeg: 0, spreadDeg: 55, speed: 24, intensity: 1.2, halfLifeSec: 9 }),
-    ],
-    lights: [
-      light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.35, label: '客厅', followSun: true }),
-      light({ x: 0.8, y: 0.15, azimuthDeg: 90, intensity: 0.95, label: '主卧', followSun: true }),
-    ],
-    structures: [
-      structure({ kind: 'box', x: 0.05, y: 0.48, w: 0.3, h: 0.28, block: 0.48 }),
-      structure({ kind: 'box', x: 0.38, y: 0.52, w: 0.22, h: 0.22, block: 0.38 }),
-      structure({ kind: 'box', x: 0.65, y: 0.05, w: 0.28, h: 0.3, block: 0.5 }),
-      structure({ kind: 'box', x: 0.35, y: 0.05, w: 0.24, h: 0.26, block: 0.46 }),
-      structure({ kind: 'box', x: 0.05, y: 0.05, w: 0.24, h: 0.26, block: 0.46 }),
-    ],
-  },
-  {
-    id: 'res-4b2l-140',
-    domain: 'residential',
-    title: '四室两厅',
-    layout: '四室两厅',
-    areaSqm: 140,
-    areaMin: 125,
-    areaMax: 170,
-    tags: ['改善', '多代'],
-    blurb: '四房两厅，双卫或主卧套卫常见。',
+    blurb: '单间功能区，厨卫靠内。',
+    areas: [28, 32, 35, 38, 42, 48],
+    aspect: 1.25,
     popularity: 90,
-    room: room(10.5, 13.4, '南'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 110, speed: 50, intensity: 2.7, halfLifeSec: 15 }),
-      vent({ kind: 'outlet', x: 0.85, y: 0.08, azimuthDeg: 270, spreadDeg: 70, speed: 36, intensity: 1.8, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.55, y: 0.08, azimuthDeg: 270, spreadDeg: 65, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.25, y: 0.08, azimuthDeg: 270, spreadDeg: 65, speed: 30, intensity: 1.4, halfLifeSec: 10 }),
-      vent({ kind: 'outlet', x: 0.08, y: 0.35, azimuthDeg: 0, spreadDeg: 55, speed: 24, intensity: 1.2, halfLifeSec: 9 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.4, label: '客厅', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.04, y: 0.45, w: 0.28, h: 0.3, block: 0.48 }),
-      structure({ kind: 'box', x: 0.7, y: 0.04, w: 0.26, h: 0.28, block: 0.5 }),
-      structure({ kind: 'box', x: 0.4, y: 0.04, w: 0.24, h: 0.26, block: 0.46 }),
-      structure({ kind: 'box', x: 0.1, y: 0.04, w: 0.24, h: 0.26, block: 0.46 }),
-      structure({ kind: 'box', x: 0.72, y: 0.5, w: 0.22, h: 0.24, block: 0.42 }),
-    ],
+    pattern: 'open',
   },
   {
-    id: 'res-duplex-160',
-    domain: 'residential',
-    title: '复式 / 跃层（标准层示意）',
-    layout: '复式',
-    areaSqm: 160,
-    areaMin: 140,
-    areaMax: 220,
-    tags: ['改善', '复式'],
-    blurb: '以一层公共区 + 楼梯核示意；上层卧室可另开层分析。',
+    key: '1b1l',
+    layout: '一室一厅',
+    title: '一室一厅',
+    tags: ['刚需', '一居'],
+    blurb: '客卧分离，厅南卧侧常见。',
+    areas: [45, 50, 55, 58, 62, 68],
+    aspect: 1.2,
+    popularity: 94,
+    pattern: 'one_bed',
+  },
+  {
+    key: '1b1l-loft',
+    layout: '一室一厅',
+    title: 'LOFT一居',
+    tags: ['LOFT', '小户型'],
+    blurb: '挑高一层半，公区+夹层睡区示意。',
+    areas: [40, 48, 55, 65],
+    aspect: 1.1,
+    heightM: 3.6,
     popularity: 78,
-    room: room(10, 12, '南', 3.0),
-    vents: [
-      vent({ kind: 'inlet', x: 0.48, y: 0.93, azimuthDeg: 90, spreadDeg: 100, speed: 46, intensity: 2.5, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.75, y: 0.1, azimuthDeg: 270, spreadDeg: 70, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.2, y: 0.12, azimuthDeg: 270, spreadDeg: 70, speed: 32, intensity: 1.5, halfLifeSec: 11 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.3, label: '一层南窗', followSun: true })],
-    structures: [
-      structure({ kind: 'column', x: 0.48, y: 0.42, w: 0.12, h: 0.18, block: 0.7 }),
-      structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.28, h: 0.28, block: 0.48 }),
-      structure({ kind: 'box', x: 0.65, y: 0.1, w: 0.28, h: 0.28, block: 0.5 }),
-    ],
+    pattern: 'duplex',
   },
   {
-    id: 'res-east-west-85',
-    domain: 'residential',
-    title: '东西向两室',
+    key: '2b1l',
     layout: '两室一厅',
-    areaSqm: 85,
-    areaMin: 70,
-    areaMax: 100,
-    tags: ['东西向', '刚需'],
-    blurb: '入口东或西，侧向采光为主，注意西晒。',
-    popularity: 82,
-    room: room(7.2, 11.8, '东'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.08, y: 0.5, azimuthDeg: 0, spreadDeg: 95, speed: 42, intensity: 2.3, halfLifeSec: 13 }),
-      vent({ kind: 'outlet', x: 0.92, y: 0.5, azimuthDeg: 180, spreadDeg: 90, speed: 38, intensity: 1.9, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.1, azimuthDeg: 270, spreadDeg: 60, speed: 26, intensity: 1.3, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.12, y: 0.5, azimuthDeg: 0, intensity: 1.1, label: '东窗', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.25, y: 0.08, w: 0.28, h: 0.3, block: 0.5 }),
-      structure({ kind: 'box', x: 0.55, y: 0.55, w: 0.28, h: 0.3, block: 0.48 }),
-    ],
+    title: '两室一厅',
+    tags: ['刚需', '主流'],
+    blurb: '主流刚需两房。',
+    areas: [65, 70, 75, 78, 82, 88, 92],
+    aspect: 1.18,
+    popularity: 99,
+    pattern: 'two_bed',
   },
   {
-    id: 'res-north-entry-95',
-    domain: 'residential',
-    title: '北入户三室',
-    layout: '三室两厅',
-    areaSqm: 95,
-    areaMin: 85,
-    areaMax: 115,
-    tags: ['北入户'],
-    blurb: '北门入户、南向采光卧室/客厅，国内常见塔楼。',
-    popularity: 88,
-    room: room(8.8, 10.8, '北'),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 100, speed: 42, intensity: 2.3, halfLifeSec: 13 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.92, azimuthDeg: 90, spreadDeg: 95, speed: 40, intensity: 2.0, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.12, y: 0.55, azimuthDeg: 0, spreadDeg: 60, speed: 26, intensity: 1.3, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.35, label: '南向采光', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.08, y: 0.2, w: 0.25, h: 0.25, block: 0.48 }),
-      structure({ kind: 'box', x: 0.65, y: 0.55, w: 0.28, h: 0.3, block: 0.5 }),
-      structure({ kind: 'box', x: 0.1, y: 0.55, w: 0.26, h: 0.28, block: 0.48 }),
-    ],
-  },
-];
-
-const SHOP: LayoutPreset[] = [
-  {
-    id: 'shop-narrow-40',
-    domain: 'shop',
-    title: '临街窄铺',
-    layout: '窄面宽深铺',
-    areaSqm: 40,
-    areaMin: 25,
-    areaMax: 55,
-    tags: ['临街', '零售', '餐饮'],
-    blurb: '面宽 3.5–5m、进深大，门头进风 + 后厨/后仓出风。',
-    popularity: 97,
-    room: room(4.5, 9.0, '南', 3.2),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 110, speed: 48, intensity: 2.8, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 80, speed: 40, intensity: 2.0, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.92, azimuthDeg: 90, intensity: 1.5, label: '门头橱窗', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.15, y: 0.35, w: 0.2, h: 0.45, block: 0.4 }),
-      structure({ kind: 'box', x: 0.65, y: 0.35, w: 0.2, h: 0.45, block: 0.4 }),
-      structure({ kind: 'box', x: 0.25, y: 0.08, w: 0.5, h: 0.18, block: 0.55 }),
-    ],
+    key: '2b2l',
+    layout: '两室两厅',
+    title: '两室两厅',
+    tags: ['改善', '客餐分离'],
+    blurb: '客餐分离，动线更清晰。',
+    areas: [80, 85, 90, 95, 100, 108],
+    aspect: 1.15,
+    popularity: 95,
+    pattern: 'two_bed',
   },
   {
-    id: 'shop-square-60',
-    domain: 'shop',
-    title: '方正铺',
-    layout: '方铺',
-    areaSqm: 60,
-    areaMin: 45,
-    areaMax: 80,
-    tags: ['零售', '服务'],
-    blurb: '面宽进深接近，中岛货架 + 后仓。',
-    popularity: 94,
-    room: room(7.5, 8.0, '南', 3.3),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 105, speed: 46, intensity: 2.6, halfLifeSec: 13 }),
-      vent({ kind: 'outlet', x: 0.85, y: 0.15, azimuthDeg: 200, spreadDeg: 70, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-      vent({ kind: 'outlet', x: 0.15, y: 0.15, azimuthDeg: 340, spreadDeg: 70, speed: 34, intensity: 1.7, halfLifeSec: 11 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.4, label: '门面', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.35, y: 0.35, w: 0.3, h: 0.3, block: 0.35 }),
-      structure({ kind: 'box', x: 0.1, y: 0.55, w: 0.18, h: 0.3, block: 0.4 }),
-      structure({ kind: 'box', x: 0.72, y: 0.55, w: 0.18, h: 0.3, block: 0.4 }),
-    ],
-  },
-  {
-    id: 'shop-corner-80',
-    domain: 'shop',
-    title: '角铺 / 双开面',
-    layout: '角铺',
-    areaSqm: 80,
-    areaMin: 60,
-    areaMax: 110,
-    tags: ['角铺', '高曝光'],
-    blurb: '两面沿街，双入口或一门一橱窗。',
-    popularity: 91,
-    room: room(9.0, 9.0, '南', 3.5),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 100, speed: 48, intensity: 2.7, halfLifeSec: 13 }),
-      vent({ kind: 'inlet', x: 0.94, y: 0.5, azimuthDeg: 180, spreadDeg: 95, speed: 44, intensity: 2.4, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.15, y: 0.15, azimuthDeg: 315, spreadDeg: 75, speed: 36, intensity: 1.8, halfLifeSec: 11 }),
-    ],
-    lights: [
-      light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.4, label: '南面', followSun: true }),
-      light({ x: 0.9, y: 0.5, azimuthDeg: 180, intensity: 1.2, label: '东/西侧', followSun: true }),
-    ],
-    structures: [
-      structure({ kind: 'box', x: 0.3, y: 0.3, w: 0.35, h: 0.35, block: 0.35 }),
-      structure({ kind: 'box', x: 0.1, y: 0.1, w: 0.2, h: 0.2, block: 0.5 }),
-    ],
-  },
-  {
-    id: 'shop-restaurant-100',
-    domain: 'shop',
-    title: '餐饮前厅后厨',
-    layout: '餐饮铺',
-    areaSqm: 100,
-    areaMin: 70,
-    areaMax: 150,
-    tags: ['餐饮', '后厨'],
-    blurb: '前厅就餐、后厨排烟为主出风，注意油烟通道。',
-    popularity: 93,
-    room: room(8.5, 12.0, '南', 3.4),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.94, azimuthDeg: 90, spreadDeg: 105, speed: 46, intensity: 2.5, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 90, speed: 52, intensity: 2.8, halfLifeSec: 8 }),
-      vent({ kind: 'outlet', x: 0.12, y: 0.25, azimuthDeg: 0, spreadDeg: 55, speed: 28, intensity: 1.4, halfLifeSec: 9 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.88, azimuthDeg: 90, intensity: 1.35, label: '门厅', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.15, y: 0.45, w: 0.7, h: 0.25, block: 0.3 }),
-      structure({ kind: 'box', x: 0.15, y: 0.05, w: 0.7, h: 0.28, block: 0.6 }),
-    ],
-  },
-  {
-    id: 'shop-mall-kiosk-25',
-    domain: 'shop',
-    title: '商场中岛 / 档口',
-    layout: '中岛档口',
-    areaSqm: 25,
-    areaMin: 12,
-    areaMax: 40,
-    tags: ['商场', '档口'],
-    blurb: '四面可通或三面围合，气流受公区主导。',
-    popularity: 86,
-    room: room(5.0, 5.0, '南', 3.0),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.92, azimuthDeg: 90, spreadDeg: 120, speed: 40, intensity: 2.2, halfLifeSec: 10 }),
-      vent({ kind: 'inlet', x: 0.08, y: 0.5, azimuthDeg: 0, spreadDeg: 100, speed: 36, intensity: 2.0, halfLifeSec: 10 }),
-      vent({ kind: 'outlet', x: 0.92, y: 0.5, azimuthDeg: 180, spreadDeg: 100, speed: 36, intensity: 2.0, halfLifeSec: 10 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.5, azimuthDeg: 90, intensity: 1.1, label: '公区顶光', followSun: false })],
-    structures: [structure({ kind: 'box', x: 0.3, y: 0.3, w: 0.4, h: 0.4, block: 0.45 })],
-  },
-  {
-    id: 'shop-double-bay-120',
-    domain: 'shop',
-    title: '双开间旗舰',
-    layout: '双开间',
-    areaSqm: 120,
-    areaMin: 90,
-    areaMax: 180,
-    tags: ['旗舰', '零售'],
-    blurb: '双门头或一门一橱，进深适中。',
-    popularity: 84,
-    room: room(12.0, 10.0, '南', 3.6),
-    vents: [
-      vent({ kind: 'inlet', x: 0.35, y: 0.94, azimuthDeg: 90, spreadDeg: 95, speed: 46, intensity: 2.5, halfLifeSec: 13 }),
-      vent({ kind: 'inlet', x: 0.7, y: 0.94, azimuthDeg: 90, spreadDeg: 95, speed: 46, intensity: 2.5, halfLifeSec: 13 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.08, azimuthDeg: 270, spreadDeg: 85, speed: 40, intensity: 2.0, halfLifeSec: 11 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.9, azimuthDeg: 90, intensity: 1.5, label: '双开间门头', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.15, y: 0.35, w: 0.25, h: 0.4, block: 0.35 }),
-      structure({ kind: 'box', x: 0.6, y: 0.35, w: 0.25, h: 0.4, block: 0.35 }),
-      structure({ kind: 'box', x: 0.35, y: 0.08, w: 0.3, h: 0.18, block: 0.5 }),
-    ],
-  },
-];
-
-const TOMB: LayoutPreset[] = [
-  {
-    id: 'tomb-single-std',
-    domain: 'tomb',
-    title: '单穴标准',
-    layout: '单穴',
-    areaSqm: 2.5,
-    areaMin: 1.5,
-    areaMax: 4,
-    tags: ['墓园', '标准'],
-    blurb: '单体穴位，碑前供台，顺山朝向示意。',
+    key: '3b1l',
+    layout: '三室一厅',
+    title: '三室一厅',
+    tags: ['改善', '三房'],
+    blurb: '三房一厅，卫生间集中。',
+    areas: [90, 95, 100, 105, 112, 118],
+    aspect: 1.14,
     popularity: 96,
-    room: room(1.8, 2.4, '南', 1.2),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.88, azimuthDeg: 90, spreadDeg: 80, speed: 28, intensity: 1.6, halfLifeSec: 16 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.15, azimuthDeg: 270, spreadDeg: 70, speed: 24, intensity: 1.3, halfLifeSec: 14 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.85, azimuthDeg: 90, intensity: 1.0, label: '前向开敞', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.3, y: 0.35, w: 0.4, h: 0.35, block: 0.65 }),
-      structure({ kind: 'box', x: 0.35, y: 0.72, w: 0.3, h: 0.12, block: 0.35 }),
-    ],
+    pattern: 'three_bed',
   },
   {
-    id: 'tomb-double-side',
-    domain: 'tomb',
-    title: '双穴并排',
-    layout: '双穴并排',
-    areaSqm: 5,
-    areaMin: 3.5,
-    areaMax: 8,
-    tags: ['合葬', '夫妻穴'],
-    blurb: '并排双穴 + 共用祭台，侧向余步。',
-    popularity: 94,
-    room: room(3.2, 2.6, '南', 1.2),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.9, azimuthDeg: 90, spreadDeg: 90, speed: 30, intensity: 1.7, halfLifeSec: 16 }),
-      vent({ kind: 'outlet', x: 0.2, y: 0.15, azimuthDeg: 270, spreadDeg: 60, speed: 22, intensity: 1.2, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.8, y: 0.15, azimuthDeg: 270, spreadDeg: 60, speed: 22, intensity: 1.2, halfLifeSec: 14 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.88, azimuthDeg: 90, intensity: 1.05, label: '前向', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.12, y: 0.32, w: 0.32, h: 0.36, block: 0.65 }),
-      structure({ kind: 'box', x: 0.56, y: 0.32, w: 0.32, h: 0.36, block: 0.65 }),
-      structure({ kind: 'box', x: 0.3, y: 0.75, w: 0.4, h: 0.12, block: 0.35 }),
-    ],
+    key: '3b2l',
+    layout: '三室两厅',
+    title: '三室两厅',
+    tags: ['改善', '主流', '南北通透'],
+    blurb: '客餐分离 + 三卧。',
+    areas: [100, 108, 115, 120, 128, 135, 145],
+    aspect: 1.12,
+    popularity: 98,
+    pattern: 'three_bed',
   },
   {
-    id: 'tomb-family-3',
-    domain: 'tomb',
-    title: '家族三穴',
-    layout: '家族三穴',
-    areaSqm: 9,
-    areaMin: 7,
-    areaMax: 15,
-    tags: ['家族', '合葬'],
-    blurb: '一排三穴或品字，前广场供祭。',
-    popularity: 80,
-    room: room(4.5, 3.2, '南', 1.3),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.9, azimuthDeg: 90, spreadDeg: 95, speed: 32, intensity: 1.8, halfLifeSec: 16 }),
-      vent({ kind: 'outlet', x: 0.15, y: 0.15, azimuthDeg: 270, spreadDeg: 55, speed: 22, intensity: 1.2, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.12, azimuthDeg: 270, spreadDeg: 55, speed: 22, intensity: 1.2, halfLifeSec: 14 }),
-      vent({ kind: 'outlet', x: 0.85, y: 0.15, azimuthDeg: 270, spreadDeg: 55, speed: 22, intensity: 1.2, halfLifeSec: 14 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.88, azimuthDeg: 90, intensity: 1.1, label: '祭台前', followSun: true })],
-    structures: [
-      structure({ kind: 'box', x: 0.08, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
-      structure({ kind: 'box', x: 0.38, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
-      structure({ kind: 'box', x: 0.68, y: 0.28, w: 0.24, h: 0.35, block: 0.65 }),
-      structure({ kind: 'box', x: 0.25, y: 0.72, w: 0.5, h: 0.14, block: 0.35 }),
-    ],
+    key: '3b2l2b',
+    layout: '三室两厅两卫',
+    title: '三室两厅两卫',
+    tags: ['改善', '双卫'],
+    blurb: '主卧套卫常见改善盘。',
+    areas: [110, 120, 130, 140, 150],
+    aspect: 1.1,
+    popularity: 92,
+    pattern: 'three_bed',
   },
   {
-    id: 'tomb-wall-niche',
-    domain: 'tomb',
-    title: '壁葬 / 格位',
-    layout: '壁葬格',
-    areaSqm: 0.6,
-    areaMin: 0.3,
-    areaMax: 1.2,
-    tags: ['壁葬', '骨灰格'],
-    blurb: '墙格单元，前走廊通道主导气流。',
-    popularity: 85,
-    room: room(1.2, 0.8, '南', 2.4),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.9, azimuthDeg: 90, spreadDeg: 100, speed: 26, intensity: 1.4, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.1, azimuthDeg: 270, spreadDeg: 80, speed: 24, intensity: 1.3, halfLifeSec: 12 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.7, azimuthDeg: 90, intensity: 0.9, label: '廊道光', followSun: false })],
-    structures: [structure({ kind: 'box', x: 0.15, y: 0.2, w: 0.7, h: 0.55, block: 0.75 })],
+    key: '4b2l',
+    layout: '四室两厅',
+    title: '四室两厅',
+    tags: ['改善', '多代'],
+    blurb: '四房两厅，适合多代同住。',
+    areas: [125, 135, 145, 155, 165, 180],
+    aspect: 1.08,
+    popularity: 88,
+    pattern: 'four_bed',
   },
   {
-    id: 'tomb-pagoda',
-    domain: 'tomb',
-    title: '塔葬 / 楼葬单元',
-    layout: '塔葬',
-    areaSqm: 1.5,
-    areaMin: 0.8,
-    areaMax: 3,
-    tags: ['塔葬'],
-    blurb: '塔内单元格，垂直层叠，水平通道示意。',
-    popularity: 72,
-    room: room(2.0, 2.0, '南', 2.8),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.88, azimuthDeg: 90, spreadDeg: 90, speed: 28, intensity: 1.5, halfLifeSec: 13 }),
-      vent({ kind: 'outlet', x: 0.15, y: 0.2, azimuthDeg: 0, spreadDeg: 70, speed: 24, intensity: 1.3, halfLifeSec: 12 }),
-      vent({ kind: 'outlet', x: 0.85, y: 0.2, azimuthDeg: 180, spreadDeg: 70, speed: 24, intensity: 1.3, halfLifeSec: 12 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.5, azimuthDeg: 90, intensity: 0.85, label: '室内照度', followSun: false })],
-    structures: [
-      structure({ kind: 'column', x: 0.4, y: 0.35, w: 0.2, h: 0.2, block: 0.7 }),
-      structure({ kind: 'box', x: 0.2, y: 0.55, w: 0.6, h: 0.25, block: 0.5 }),
-    ],
+    key: '4b2l2b',
+    layout: '四室两厅两卫',
+    title: '四室两厅两卫',
+    tags: ['改善', '双卫'],
+    blurb: '四房双卫改善户型。',
+    areas: [140, 150, 160, 175, 190],
+    aspect: 1.05,
+    popularity: 86,
+    pattern: 'four_bed',
   },
   {
-    id: 'tomb-lawn',
-    domain: 'tomb',
-    title: '草坪葬 / 生态穴位',
-    layout: '草坪葬',
-    areaSqm: 1.2,
-    areaMin: 0.6,
-    areaMax: 2.5,
-    tags: ['生态', '草坪'],
-    blurb: '低碑或无碑，开敞气流，弱遮挡。',
+    key: '5b',
+    layout: '五室两厅',
+    title: '五室大平层',
+    tags: ['大平层', '高端'],
+    blurb: '五房大平层示意。',
+    areas: [180, 200, 220, 250],
+    aspect: 1.02,
+    popularity: 70,
+    pattern: 'four_bed',
+  },
+  {
+    key: 'duplex',
+    layout: '复式',
+    title: '复式/跃层',
+    tags: ['复式', '改善'],
+    blurb: '一层公区+楼梯核示意。',
+    areas: [120, 140, 160, 180, 200],
+    aspect: 1.05,
+    heightM: 3.0,
     popularity: 76,
-    room: room(1.5, 1.8, '南', 0.8),
-    vents: [
-      vent({ kind: 'inlet', x: 0.5, y: 0.85, azimuthDeg: 90, spreadDeg: 120, speed: 32, intensity: 1.8, halfLifeSec: 18 }),
-      vent({ kind: 'outlet', x: 0.5, y: 0.15, azimuthDeg: 270, spreadDeg: 120, speed: 30, intensity: 1.6, halfLifeSec: 18 }),
-    ],
-    lights: [light({ x: 0.5, y: 0.5, azimuthDeg: 90, intensity: 1.2, label: '全开敞日照', followSun: true })],
-    structures: [structure({ kind: 'box', x: 0.35, y: 0.4, w: 0.3, h: 0.2, block: 0.25 })],
+    pattern: 'duplex',
   },
 ];
+
+// ---------- 商铺模板 ----------
+const SHOP_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'narrow',
+    layout: '窄面宽深铺',
+    title: '临街窄铺',
+    tags: ['临街', '零售'],
+    blurb: '窄面宽、大进深，门头进后仓出。',
+    areas: [20, 25, 30, 35, 40, 45, 50, 55],
+    aspect: 2.0,
+    heightM: 3.2,
+    popularity: 97,
+    pattern: 'shop_narrow',
+  },
+  {
+    key: 'square',
+    layout: '方铺',
+    title: '方正铺',
+    tags: ['零售', '服务'],
+    blurb: '面宽进深接近，中岛+后仓。',
+    areas: [40, 50, 60, 70, 80, 90],
+    aspect: 1.05,
+    heightM: 3.3,
+    popularity: 94,
+    pattern: 'shop_square',
+  },
+  {
+    key: 'corner',
+    layout: '角铺',
+    title: '角铺双开面',
+    tags: ['角铺', '高曝光'],
+    blurb: '两面沿街。',
+    areas: [50, 60, 70, 80, 100, 120],
+    aspect: 1.0,
+    heightM: 3.5,
+    popularity: 91,
+    pattern: 'shop_corner',
+  },
+  {
+    key: 'restaurant',
+    layout: '餐饮铺',
+    title: '餐饮前厅后厨',
+    tags: ['餐饮', '后厨'],
+    blurb: '前厅就餐、后厨排烟。',
+    areas: [60, 80, 100, 120, 150, 180],
+    aspect: 1.35,
+    heightM: 3.4,
+    popularity: 93,
+    pattern: 'shop_kitchen',
+  },
+  {
+    key: 'cafe',
+    layout: '轻餐饮/咖啡',
+    title: '轻餐咖啡铺',
+    tags: ['餐饮', '轻餐'],
+    blurb: '吧台+少量座位。',
+    areas: [35, 45, 55, 70, 90],
+    aspect: 1.2,
+    heightM: 3.2,
+    popularity: 88,
+    pattern: 'shop_square',
+  },
+  {
+    key: 'beauty',
+    layout: '美业小铺',
+    title: '美甲美容铺',
+    tags: ['美业', '服务'],
+    blurb: '小隔间工位+前台。',
+    areas: [30, 40, 50, 65, 80],
+    aspect: 1.25,
+    heightM: 3.0,
+    popularity: 87,
+    pattern: 'shop_square',
+  },
+  {
+    key: 'kiosk',
+    layout: '中岛档口',
+    title: '商场中岛',
+    tags: ['商场', '档口'],
+    blurb: '四面或三面通透。',
+    areas: [12, 18, 25, 30, 40],
+    aspect: 1.0,
+    heightM: 3.0,
+    popularity: 86,
+    pattern: 'shop_kiosk',
+  },
+  {
+    key: 'market',
+    layout: '市场档口',
+    title: '批发市场档口',
+    tags: ['市场', '档口'],
+    blurb: '通道主导气流。',
+    areas: [8, 12, 16, 24, 32],
+    aspect: 1.4,
+    heightM: 3.0,
+    popularity: 80,
+    pattern: 'shop_kiosk',
+  },
+  {
+    key: 'double',
+    layout: '双开间',
+    title: '双开间旗舰',
+    tags: ['旗舰', '零售'],
+    blurb: '双门头或一门一橱。',
+    areas: [90, 110, 130, 150, 180],
+    aspect: 0.85,
+    heightM: 3.6,
+    popularity: 84,
+    pattern: 'shop_double',
+  },
+  {
+    key: 'triple',
+    layout: '三开间',
+    title: '三开间沿街',
+    tags: ['旗舰', '临街'],
+    blurb: '大面宽沿街展示。',
+    areas: [120, 150, 180, 220],
+    aspect: 0.7,
+    heightM: 3.8,
+    popularity: 75,
+    pattern: 'shop_double',
+  },
+  {
+    key: 'office-bottom',
+    layout: '底商',
+    title: '写字楼底商',
+    tags: ['底商', '办公区'],
+    blurb: '公区人流+临街门头。',
+    areas: [50, 80, 100, 140, 200],
+    aspect: 1.15,
+    heightM: 3.5,
+    popularity: 82,
+    pattern: 'shop_square',
+  },
+  {
+    key: 'warehouse-front',
+    layout: '前店后仓',
+    title: '前店后仓',
+    tags: ['仓储', '批发'],
+    blurb: '前展示后仓储。',
+    areas: [80, 120, 160, 200, 280],
+    aspect: 1.6,
+    heightM: 4.0,
+    popularity: 79,
+    pattern: 'shop_narrow',
+  },
+];
+
+// ---------- 墓穴模板 ----------
+const TOMB_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'single',
+    layout: '单穴',
+    title: '单穴标准',
+    tags: ['墓园', '标准'],
+    blurb: '单体穴位+碑前供台。',
+    areas: [1.5, 2.0, 2.5, 3.0, 3.5, 4.0],
+    aspect: 1.3,
+    heightM: 1.2,
+    popularity: 96,
+    pattern: 'tomb_single',
+  },
+  {
+    key: 'single-large',
+    layout: '单穴',
+    title: '单穴加宽',
+    tags: ['墓园'],
+    blurb: '加宽单穴，祭台更开敞。',
+    areas: [4.5, 5.0, 6.0, 7.0],
+    aspect: 1.2,
+    heightM: 1.3,
+    popularity: 85,
+    pattern: 'tomb_single',
+  },
+  {
+    key: 'double',
+    layout: '双穴并排',
+    title: '双穴并排',
+    tags: ['合葬', '夫妻穴'],
+    blurb: '并排双穴共用祭台。',
+    areas: [3.5, 4.5, 5.0, 6.0, 7.5, 8.0],
+    aspect: 0.85,
+    heightM: 1.2,
+    popularity: 94,
+    pattern: 'tomb_double',
+  },
+  {
+    key: 'double-tandem',
+    layout: '双穴前后',
+    title: '双穴纵列',
+    tags: ['合葬'],
+    blurb: '前后纵列双穴。',
+    areas: [4.0, 5.5, 7.0, 9.0],
+    aspect: 1.6,
+    heightM: 1.2,
+    popularity: 80,
+    pattern: 'tomb_double',
+  },
+  {
+    key: 'family3',
+    layout: '家族三穴',
+    title: '家族三穴',
+    tags: ['家族'],
+    blurb: '一排三穴或品字。',
+    areas: [7, 9, 11, 13, 15],
+    aspect: 0.75,
+    heightM: 1.3,
+    popularity: 82,
+    pattern: 'tomb_family',
+  },
+  {
+    key: 'family5',
+    layout: '家族多穴',
+    title: '家族五穴片区',
+    tags: ['家族', '墓园'],
+    blurb: '多穴位片区示意。',
+    areas: [12, 16, 20, 25],
+    aspect: 0.9,
+    heightM: 1.4,
+    popularity: 70,
+    pattern: 'tomb_family',
+  },
+  {
+    key: 'wall',
+    layout: '壁葬格',
+    title: '壁葬格位',
+    tags: ['壁葬', '骨灰格'],
+    blurb: '墙格+走廊通道。',
+    areas: [0.4, 0.6, 0.8, 1.0, 1.2],
+    aspect: 0.7,
+    heightM: 2.4,
+    popularity: 88,
+    pattern: 'tomb_wall',
+  },
+  {
+    key: 'pagoda',
+    layout: '塔葬',
+    title: '塔葬单元',
+    tags: ['塔葬'],
+    blurb: '塔内单元格。',
+    areas: [0.8, 1.2, 1.5, 2.0, 2.5],
+    aspect: 1.0,
+    heightM: 2.8,
+    popularity: 74,
+    pattern: 'tomb_pagoda',
+  },
+  {
+    key: 'lawn',
+    layout: '草坪葬',
+    title: '草坪/生态葬',
+    tags: ['生态', '草坪'],
+    blurb: '低碑或无碑开敞。',
+    areas: [0.8, 1.2, 1.5, 2.0, 2.5],
+    aspect: 1.1,
+    heightM: 0.8,
+    popularity: 78,
+    pattern: 'tomb_lawn',
+  },
+  {
+    key: 'tree',
+    layout: '树葬',
+    title: '树葬点位',
+    tags: ['生态', '树葬'],
+    blurb: '树下穴位，弱遮挡。',
+    areas: [1.0, 1.5, 2.0, 3.0],
+    aspect: 1.0,
+    heightM: 0.9,
+    popularity: 72,
+    pattern: 'tomb_lawn',
+  },
+  {
+    key: 'sea-memo',
+    layout: '海葬纪念',
+    title: '海葬纪念碑位',
+    tags: ['海葬', '纪念'],
+    blurb: '纪念碑墙位示意（非海区）。',
+    areas: [0.5, 0.8, 1.0, 1.5],
+    aspect: 0.8,
+    heightM: 2.0,
+    popularity: 65,
+    pattern: 'tomb_wall',
+  },
+  {
+    key: 'garden',
+    layout: '艺术墓',
+    title: '艺术/定制墓',
+    tags: ['艺术墓'],
+    blurb: '定制造型穴位，前庭更开敞。',
+    areas: [6, 8, 10, 12, 16],
+    aspect: 1.1,
+    heightM: 1.5,
+    popularity: 68,
+    pattern: 'tomb_single',
+  },
+];
+
+function buildDomain(
+  domain: LayoutDomain,
+  templates: RoomTemplate[],
+  facingMode: 'all' | 'cardinal' | 'south_bias',
+): LayoutPreset[] {
+  let facings: readonly string[] = FACINGS;
+  if (facingMode === 'cardinal') facings = ['东', '南', '西', '北'];
+  if (facingMode === 'south_bias') facings = ['南', '东南', '西南', '北', '东', '西'];
+
+  const list: LayoutPreset[] = [];
+  for (const tpl of templates) {
+    list.push(...expandTemplate(domain, tpl, facings));
+  }
+  // ensure ~100 by trimming or padding
+  if (list.length > 120) {
+    // keep highest popularity diversity: take first 100 after sort by layout+area
+    return list.sort((a, b) => b.popularity - a.popularity || a.areaSqm - b.areaSqm).slice(0, 100);
+  }
+  // pad with extra area steps if under 100
+  if (list.length < 100) {
+    const extraFacings = FACINGS;
+    const padTemplates = templates.slice(0, 4);
+    const moreAreas = [33, 47, 63, 77, 93, 107, 123, 137, 153, 167];
+    for (const tpl of padTemplates) {
+      if (list.length >= 100) break;
+      for (const area of moreAreas) {
+        if (list.length >= 100) break;
+        for (const facing of extraFacings) {
+          if (list.length >= 100) break;
+          const exists = list.some((p) => p.layout === tpl.layout && p.areaSqm === area && p.room.entranceFacing === facing);
+          if (exists) continue;
+          const { widthM, depthM } = dimensionsFromArea(area, tpl.aspect);
+          list.push({
+            id: `${domain.slice(0, 3)}-pad-${tpl.key}-${area}-${facing}`,
+            domain,
+            title: `${tpl.title} · ${facing}向 · ${area}㎡`,
+            layout: tpl.layout,
+            areaSqm: area,
+            areaMin: round1(area * 0.82),
+            areaMax: round1(area * 1.18),
+            tags: [...tpl.tags, facing, '扩展'],
+            blurb: `${tpl.blurb}（扩展档）`,
+            popularity: 60,
+            room: room(widthM, depthM, facing, tpl.heightM ?? 2.8),
+            vents: buildVents(facing, tpl.pattern),
+            lights: buildLights(facing, tpl.pattern),
+            structures: buildStructures(tpl.pattern, area),
+          });
+        }
+      }
+    }
+  }
+  return list.slice(0, 100);
+}
+
+const RESIDENTIAL = buildDomain('residential', RES_TEMPLATES, 'south_bias');
+const SHOP = buildDomain('shop', SHOP_TEMPLATES, 'cardinal');
+const TOMB = buildDomain('tomb', TOMB_TEMPLATES, 'all');
 
 export const LAYOUT_PRESETS: LayoutPreset[] = [...RESIDENTIAL, ...SHOP, ...TOMB];
 
@@ -619,7 +888,7 @@ export const DOMAIN_LABELS: Record<LayoutDomain, string> = {
 
 export function listPresets(domain?: LayoutDomain): LayoutPreset[] {
   const list = domain ? LAYOUT_PRESETS.filter((p) => p.domain === domain) : LAYOUT_PRESETS;
-  return [...list].sort((a, b) => b.popularity - a.popularity);
+  return [...list].sort((a, b) => b.popularity - a.popularity || a.areaSqm - b.areaSqm);
 }
 
 export function getPresetById(id: string): LayoutPreset | undefined {
@@ -635,13 +904,18 @@ export function filterPresets(params: {
   let list = listPresets(params.domain);
   if (params.layout) {
     const layout = params.layout.trim();
-    list = list.filter((p) => p.layout.includes(layout) || p.title.includes(layout) || p.tags.some((t) => t.includes(layout)));
+    list = list.filter(
+      (p) =>
+        p.layout.includes(layout) ||
+        p.title.includes(layout) ||
+        p.tags.some((t) => t.includes(layout)),
+    );
   }
   if (typeof params.areaSqm === 'number' && Number.isFinite(params.areaSqm)) {
     const a = params.areaSqm;
     list = list
-      .filter((p) => a >= p.areaMin * 0.75 && a <= p.areaMax * 1.35)
-      .sort((a, b) => Math.abs(a.areaSqm - params.areaSqm!) - Math.abs(b.areaSqm - params.areaSqm!));
+      .filter((p) => a >= p.areaMin * 0.7 && a <= p.areaMax * 1.4)
+      .sort((x, y) => Math.abs(x.areaSqm - a) - Math.abs(y.areaSqm - a));
   }
   if (params.query?.trim()) {
     const q = params.query.trim().toLowerCase();
@@ -657,14 +931,16 @@ export function filterPresets(params: {
 }
 
 export function scalePresetToArea(preset: LayoutPreset, areaSqm: number): LayoutPreset {
-  const target = Math.max(preset.areaMin * 0.8, Math.min(preset.areaMax * 1.4, areaSqm));
-  const ratio = Math.sqrt(target / preset.areaSqm);
-  const widthM = Math.round(preset.room.widthM * ratio * 10) / 10;
-  const depthM = Math.round(preset.room.depthM * ratio * 10) / 10;
+  const target = clamp(areaSqm, preset.areaMin * 0.75, preset.areaMax * 1.5);
+  const ratio = Math.sqrt(target / Math.max(0.5, preset.areaSqm));
   return {
     ...preset,
-    areaSqm: Math.round(target),
-    room: { ...preset.room, widthM, depthM },
+    areaSqm: Math.round(target * 10) / 10,
+    room: {
+      ...preset.room,
+      widthM: round1(preset.room.widthM * ratio),
+      depthM: round1(preset.room.depthM * ratio),
+    },
   };
 }
 
@@ -680,18 +956,11 @@ export function applyPresetToState(
     ...state,
     room: { ...p.room },
     vents: p.vents.map((v, i) => ({ ...v, id: `${p.id}-vent-${i}-${stamp}` })),
-    lights: p.lights.map((l, i) => ({
-      ...l,
-      id: `${p.id}-light-${i}-${stamp}`,
-    })),
-    structures: p.structures.map((s, i) => ({
-      ...s,
-      id: `${p.id}-st-${i}-${stamp}`,
-    })),
+    lights: p.lights.map((l, i) => ({ ...l, id: `${p.id}-light-${i}-${stamp}` })),
+    structures: p.structures.map((s, i) => ({ ...s, id: `${p.id}-st-${i}-${stamp}` })),
   };
 }
 
-/** 常见布局选项（筛选用） */
 export const RESIDENTIAL_LAYOUT_OPTIONS = [
   '一室',
   '一室一厅',
@@ -699,7 +968,10 @@ export const RESIDENTIAL_LAYOUT_OPTIONS = [
   '两室两厅',
   '三室一厅',
   '三室两厅',
+  '三室两厅两卫',
   '四室两厅',
+  '四室两厅两卫',
+  '五室两厅',
   '复式',
 ];
 
@@ -708,15 +980,36 @@ export const SHOP_LAYOUT_OPTIONS = [
   '方铺',
   '角铺',
   '餐饮铺',
+  '轻餐饮/咖啡',
+  '美业小铺',
   '中岛档口',
+  '市场档口',
   '双开间',
+  '三开间',
+  '底商',
+  '前店后仓',
 ];
 
 export const TOMB_LAYOUT_OPTIONS = [
   '单穴',
   '双穴并排',
+  '双穴前后',
   '家族三穴',
+  '家族多穴',
   '壁葬格',
   '塔葬',
   '草坪葬',
+  '树葬',
+  '海葬纪念',
+  '艺术墓',
 ];
+
+/** 统计信息，便于 UI 展示 */
+export function presetCatalogStats() {
+  return {
+    total: LAYOUT_PRESETS.length,
+    residential: listPresets('residential').length,
+    shop: listPresets('shop').length,
+    tomb: listPresets('tomb').length,
+  };
+}

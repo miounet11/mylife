@@ -3,11 +3,12 @@
 import { useMemo, useState } from 'react';
 import {
   DOMAIN_LABELS,
-  LAYOUT_PRESETS,
   RESIDENTIAL_LAYOUT_OPTIONS,
   SHOP_LAYOUT_OPTIONS,
   TOMB_LAYOUT_OPTIONS,
   filterPresets,
+  listPresets,
+  presetCatalogStats,
   type LayoutDomain,
   type LayoutPreset,
 } from '@/lib/fengshui/space/layout-presets';
@@ -44,16 +45,20 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
         ? TOMB_LAYOUT_OPTIONS
         : RESIDENTIAL_LAYOUT_OPTIONS;
 
-  const presets = useMemo(
-    () =>
-      filterPresets({
-        domain,
-        layout: layout || undefined,
-        areaSqm,
-        query: query || undefined,
-      }),
-    [domain, layout, areaSqm, query],
-  );
+  const stats = useMemo(() => presetCatalogStats(), []);
+
+  const presets = useMemo(() => {
+    const list = filterPresets({
+      domain,
+      layout: layout || undefined,
+      areaSqm,
+      query: query || undefined,
+    });
+    // UI: show top matches first; cap render for performance
+    return list.slice(0, 48);
+  }, [domain, layout, areaSqm, query]);
+
+  const domainTotal = listPresets(domain).length;
 
   const areaHint =
     domain === 'tomb'
@@ -70,11 +75,11 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
             快速选方案
           </div>
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-            覆盖主流住宅 / 商铺 / 墓穴预设；也可让模型按面积与布局定制（grok-4.3）。
+            住宅 / 商铺 / 墓穴各约 100 套预设；填面积与几室几厅即可快选，也可用 grok-4.3 定制。
           </p>
         </div>
         <div className="text-[11px] text-[color:var(--ink-5)]">
-          目录 {LAYOUT_PRESETS.length} 套 · 当前筛选 {presets.length}
+          总目录 {stats.total} · 本类 {domainTotal} · 展示前 {presets.length} 条
         </div>
       </div>
 
@@ -152,7 +157,7 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
         </label>
       </div>
 
-      <div className="grid max-h-[280px] gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid max-h-[360px] gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
         {presets.map((p) => (
           <button
             key={p.id}
