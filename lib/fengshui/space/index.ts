@@ -52,3 +52,10 @@ export {
   downloadJson,
   type ProSessionExport,
 } from './pro-export';
+export {
+  TEXTURE_URLS,
+  DOMAIN_TEXTURE_KITS,
+  allTextureUrls,
+  type TextureKey,
+  type DomainTextureKit,
+} from './texture-catalog';

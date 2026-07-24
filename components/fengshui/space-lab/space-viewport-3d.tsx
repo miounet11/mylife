@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef } from 'react';
+import { Suspense, useMemo, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import * as THREE from 'three';
@@ -246,17 +246,21 @@ export function SpaceViewport3D({ state, result }: Props) {
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: false }}
       >
-        <Scene state={state} result={result} />
+        <Suspense fallback={null}>
+          <Scene state={state} result={result} />
+        </Suspense>
       </Canvas>
-      <div className="pointer-events-none absolute left-2 top-2 max-w-[70%] rounded-md bg-black/55 px-2 py-1 text-[10px] leading-snug text-white/90">
+      <div className="pointer-events-none absolute left-2 top-2 max-w-[72%] rounded-md bg-black/55 px-2 py-1 text-[10px] leading-snug text-white/90">
         <div className="font-semibold text-amber-200/95">
           {meta.label} · {meta.modelName}
         </div>
-        <div className="text-white/55">{meta.blurb} · 拖拽旋转 / 滚轮缩放</div>
+        <div className="text-white/55">
+          {meta.blurb} · AI 贴图材质 · 拖拽旋转 / 滚轮缩放
+        </div>
       </div>
       <div className="pointer-events-none absolute bottom-2 left-2 text-[10px] text-white/45">
         层：{state.activeLayer} · {result.meta.dizhiHour}时 · {result.meta.nineStarLabel}
-        {state.proMode ? ' · PRO' : ''}
+        {state.proMode ? ' · PRO' : ''} · textures/v1
       </div>
     </div>
   );

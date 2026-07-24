@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "source": "grok-imagine-image (session batch)",
+  "model_hint": "grok-imagine-image-lite",
+  "textures": {
+    "floor_wood": "floor_wood.jpg",
+    "floor_granite": "floor_granite.jpg",
+    "floor_tile": "floor_tile.jpg",
+    "wall_plaster": "wall_plaster.jpg",
+    "glass_facade": "glass_facade.jpg",
+    "roof_terracotta": "roof_terracotta.jpg",
+    "roof_shingle": "roof_shingle.jpg",
+    "ground_earth": "ground_earth.jpg",
+    "ground_grass": "ground_grass.jpg",
+    "sidewalk_asphalt": "sidewalk_asphalt.jpg",
+    "stone_limestone": "stone_limestone.jpg",
+    "metal_panel": "metal_panel.jpg"
+  }
+}
