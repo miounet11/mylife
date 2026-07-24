@@ -153,7 +153,7 @@ function RuralModel({ widthM, depthM, heightM }: Omit<Props, 'domain'>) {
   );
 }
 
-/** 公寓楼：叠层板式 */}
+/** 公寓楼：叠层板式 */
 function ApartmentModel({ widthM, depthM, heightM }: Omit<Props, 'domain'>) {
   const floors = 6;
   const fh = heightM * 0.95;
