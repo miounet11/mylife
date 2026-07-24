@@ -76,6 +76,16 @@ export interface SpaceTimeState {
   tideBoost: number;
 }
 
+/** 与布局目录一致的业态域 — 驱动 Three.js 体块模型 */
+export type SpaceActiveDomain =
+  | 'residential'
+  | 'shop'
+  | 'tomb'
+  | 'villa'
+  | 'rural'
+  | 'office'
+  | 'apartment';
+
 export interface SpaceLabState {
   room: SpaceRoom;
   vents: SpaceVent[];
@@ -93,6 +103,13 @@ export interface SpaceLabState {
   geo: SpaceGeoPlace | null;
   /** 奇门遁甲示意层开关 */
   qimenEnabled: boolean;
+  /** 当前业态域 → 3D 模型套件 */
+  activeDomain: SpaceActiveDomain;
+  /** 专业模式：读数更全、可导出 */
+  proMode: boolean;
+  /** 最近加载的预设标题（导出用） */
+  presetTitle?: string | null;
+  presetId?: string | null;
 }
 
 export interface FieldGrids {

@@ -1298,6 +1298,9 @@ export function applyPresetToState(
     structures: p.structures.map((s, i) => ({ ...s, id: `${p.id}-st-${i}-${stamp}` })),
     geo: state.geo,
     qimenEnabled: state.qimenEnabled !== false,
+    activeDomain: p.domain,
+    presetTitle: p.title,
+    presetId: p.id,
   };
 }
 

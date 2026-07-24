@@ -325,6 +325,10 @@ export function createDefaultLabState(): SpaceLabState {
     gridSize: 64,
     geo: null,
     qimenEnabled: true,
+    activeDomain: 'residential',
+    proMode: true,
+    presetTitle: null,
+    presetId: null,
   };
 }
 

@@ -27,9 +27,13 @@ type Props = {
     model: 'grok-4.3-fast' | 'grok-4.3-high';
     presetId?: string;
   }) => Promise<void>;
+  /** 切换领域时立即切换右侧 Three.js 模型（无需等点方案） */
+  onDomainChange?: (domain: LayoutDomain) => void;
   busy?: boolean;
   /** fit = dense list like 选房站, paginated, no sparse cards */
   variant?: 'default' | 'sidebar' | 'fit';
+  /** 当前已激活领域（与 3D 同步高亮） */
+  activeDomain?: LayoutDomain;
 };
 
 const DOMAIN_ORDER: LayoutDomain[] = [
@@ -50,11 +54,18 @@ const PAGE_SIZE_FIT = 10;
 export function LayoutPresetPicker({
   onApplyPreset,
   onGenerateLlm,
+  onDomainChange,
   busy,
   variant = 'default',
+  activeDomain,
 }: Props) {
   const fit = variant === 'fit' || variant === 'sidebar';
-  const [domain, setDomain] = useState<LayoutDomain>('residential');
+  const [domain, setDomain] = useState<LayoutDomain>(activeDomain || 'residential');
+
+  useEffect(() => {
+    if (activeDomain && activeDomain !== domain) setDomain(activeDomain);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDomain]);
   const [layout, setLayout] = useState('');
   const [areaSqm, setAreaSqm] = useState(90);
   const [facing, setFacing] = useState('南');
@@ -117,6 +128,7 @@ export function LayoutPresetPicker({
                   ? 80
                   : 90,
     );
+    onDomainChange?.(d);
   };
 
   return (

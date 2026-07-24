@@ -4,7 +4,11 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  buildProBriefText,
+  buildProSessionExport,
   createDefaultLabState,
+  DOMAIN_MODEL_META,
+  downloadJson,
   simulateSpaceField,
   type SpaceLabState,
   type SpaceVent,
@@ -18,7 +22,7 @@ import {
   type LayoutDomain,
   type LayoutPreset,
 } from '@/lib/fengshui/space/layout-presets';
-import type { SpaceGeoPlace } from '@/lib/fengshui/space/types';
+import type { SpaceActiveDomain, SpaceGeoPlace } from '@/lib/fengshui/space/types';
 import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
@@ -123,15 +127,52 @@ export function SpaceLabApp() {
   const applyLayoutPreset = (preset: LayoutPreset, areaSqm: number) => {
     setError(null);
     const next = applyPresetToState(state, preset, { areaSqm });
-    // honor current facing if user already set something in room - use preset facing
     setState(next);
     setTick((t) => t + 1);
     setSelectedVentId(next.vents[0]?.id || null);
     setOpenings([]);
+    const model = DOMAIN_MODEL_META[preset.domain as SpaceActiveDomain]?.modelName || '';
     setBanner(
-      `已加载预设「${preset.title}」· ${preset.layout} · 约 ${Math.round(areaSqm || preset.areaSqm)}㎡（已按面积缩放）`,
+      `已加载「${preset.title}」· ${DOMAIN_MODEL_META[preset.domain as SpaceActiveDomain]?.label || ''} · 3D ${model}`,
     );
-    // keep preview in view: on small screens switch focus isn't needed — right pane is sticky
+  };
+
+  const onDomainChange = (domain: LayoutDomain) => {
+    const meta = DOMAIN_MODEL_META[domain as SpaceActiveDomain];
+    if (!meta) return;
+    patch((s) => ({
+      ...s,
+      activeDomain: domain as SpaceActiveDomain,
+      room: {
+        ...s.room,
+        widthM: meta.defaultRoom.widthM,
+        depthM: meta.defaultRoom.depthM,
+        heightM: meta.defaultRoom.heightM,
+      },
+      presetTitle: null,
+      presetId: null,
+    }));
+    setBanner(`3D 模型切换：${meta.label} · ${meta.modelName}`);
+  };
+
+  const exportProSession = () => {
+    const exp = buildProSessionExport(state, result);
+    downloadJson(
+      `space-lab-${exp.domain}-${Date.now()}.json`,
+      exp,
+    );
+    setBanner('已下载专业会话 JSON（可归档 / 对接 CRM）');
+  };
+
+  const copyProBrief = async () => {
+    const exp = buildProSessionExport(state, result);
+    const text = buildProBriefText(exp);
+    try {
+      await navigator.clipboard.writeText(text);
+      setBanner('专业简报已复制，可粘贴到客户沟通 / 微信');
+    } catch {
+      setBanner('复制失败，请检查浏览器权限');
+    }
   };
 
   const generateLayoutLlm = async (input: {
@@ -210,11 +251,10 @@ export function SpaceLabApp() {
           model: 'grok-4.3-fast',
           summary: result.summary,
           qimen: result.qimen,
-          layoutTitle: state.room.entranceFacing
-            ? `${state.room.widthM}×${state.room.depthM}m · ${state.room.entranceFacing}向`
-            : '空间场',
+          layoutTitle: `${DOMAIN_MODEL_META[state.activeDomain]?.label || '空间场'} · ${state.room.widthM.toFixed(0)}×${state.room.depthM.toFixed(0)}m · ${state.room.entranceFacing}向`,
           areaSqm: state.room.widthM * state.room.depthM,
           geoAddress: state.geo?.address,
+          domain: state.activeDomain,
         }),
       });
       const data = await res.json();
@@ -243,9 +283,11 @@ export function SpaceLabApp() {
           lights: state.lights,
           structures: state.structures,
           openings,
+          domain: state.activeDomain,
+          pro: buildProSessionExport(state, result),
           note: openings.length
-            ? `含门窗建议 ${openings.length} 处 · 层 ${state.activeLayer}`
-            : `空间场快照 · 层 ${state.activeLayer}`,
+            ? `含门窗建议 ${openings.length} 处 · ${state.activeDomain} · 层 ${state.activeLayer}`
+            : `空间场快照 · ${DOMAIN_MODEL_META[state.activeDomain]?.label || ''} · 层 ${state.activeLayer}`,
         }),
       });
       const data = await res.json();
@@ -326,8 +368,34 @@ export function SpaceLabApp() {
         </div>
         <div className="flex shrink-0 items-center gap-1 text-[10px]">
           <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 font-semibold text-[color:var(--ink-2)]">
-            {memberInfo?.isMember ? '会员' : `${memberInfo?.used ?? 0}/${memberInfo?.freeLimit ?? 3}`}
+            {DOMAIN_MODEL_META[state.activeDomain]?.label || '阳宅'}
           </span>
+          <button
+            type="button"
+            onClick={() => patch((s) => ({ ...s, proMode: !s.proMode }))}
+            className={`rounded-md px-2 py-1 font-semibold ${
+              state.proMode
+                ? 'bg-[color:var(--ink-1)] text-white'
+                : 'border border-[color:var(--hairline)] text-[color:var(--ink-2)]'
+            }`}
+            title="专业模式：比例尺、完整读数、导出"
+          >
+            {state.proMode ? 'PRO' : 'PRO'}
+          </button>
+          <button
+            type="button"
+            onClick={() => void copyProBrief()}
+            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
+          >
+            复制简报
+          </button>
+          <button
+            type="button"
+            onClick={exportProSession}
+            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
+          >
+            导出JSON
+          </button>
           <button
             type="button"
             disabled={saving}
@@ -344,12 +412,6 @@ export function SpaceLabApp() {
           >
             发文
           </button>
-          <Link
-            href="/tools/fengshui-simulator"
-            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 text-[color:var(--ink-2)]"
-          >
-            商铺
-          </Link>
         </div>
       </header>
 
@@ -384,9 +446,11 @@ export function SpaceLabApp() {
             {workbenchTab === 'preset' ? (
               <LayoutPresetPicker
                 variant="fit"
+                activeDomain={state.activeDomain}
                 busy={generatingLayout || suggesting}
                 onApplyPreset={applyLayoutPreset}
                 onGenerateLlm={generateLayoutLlm}
+                onDomainChange={onDomainChange}
               />
             ) : null}
 

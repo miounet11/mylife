@@ -45,3 +45,10 @@ export {
   type SiteAdviseResult,
   type FootTrafficEstimate,
 } from './site-advisor';
+export { DOMAIN_MODEL_META, isSpaceActiveDomain } from './domain-models';
+export {
+  buildProSessionExport,
+  buildProBriefText,
+  downloadJson,
+  type ProSessionExport,
+} from './pro-export';
