@@ -67,13 +67,16 @@ const nextApp = {
     DEFAULT_MODEL: PRIMARY_LLM_MODEL,
     OPEN_AGENT_RUNTIME_MODEL: PRIMARY_LLM_MODEL,
     CONTENT_GENERATION_MODEL: PRIMARY_LLM_MODEL,
-    // Image gen: turbo first, then gpt-image-2
-    VISUAL_ASSET_DEFAULT_MODEL: process.env.VISUAL_ASSET_DEFAULT_MODEL || 'z-image-turbo',
+    // Image gen via inping aggregate only (https://ttqq.inping.com)
+    VISUAL_ASSET_DEFAULT_MODEL: process.env.VISUAL_ASSET_DEFAULT_MODEL || 'grok-imagine-image-lite',
     VISUAL_ASSET_FALLBACK_MODEL: process.env.VISUAL_ASSET_FALLBACK_MODEL || 'gpt-image-2',
-    VISUAL_ASSET_MODEL_FALLBACK_CHAIN: process.env.VISUAL_ASSET_MODEL_FALLBACK_CHAIN || 'z-image-turbo,gpt-image-2',
+    VISUAL_ASSET_MODEL_FALLBACK_CHAIN: process.env.VISUAL_ASSET_MODEL_FALLBACK_CHAIN || 'grok-imagine-image-lite,z-image-turbo,gpt-image-2',
     VISUAL_ASSET_CORE_MODEL: process.env.VISUAL_ASSET_CORE_MODEL || 'gpt-image-2',
-    LLM_IMAGE_PRIMARY_MODEL: process.env.LLM_IMAGE_PRIMARY_MODEL || 'z-image-turbo',
+    LLM_IMAGE_PRIMARY_MODEL: process.env.LLM_IMAGE_PRIMARY_MODEL || 'grok-imagine-image-lite',
     LLM_IMAGE_FALLBACK_MODEL: process.env.LLM_IMAGE_FALLBACK_MODEL || 'gpt-image-2',
+    LLM_IMAGE_PRIMARY_BASE_URL: process.env.LLM_IMAGE_PRIMARY_BASE_URL || 'https://ttqq.inping.com/v1',
+    PAGE_ILLUST_API_BASE: process.env.PAGE_ILLUST_API_BASE || 'https://ttqq.inping.com',
+    FENGSHUI_TEXTURE_MODEL: process.env.FENGSHUI_TEXTURE_MODEL || 'grok-imagine-image-lite',
     // v5-C1 (2026-05-11): 统一文本生成主链路、备用链路与兜底链路。
     MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
     REPORT_MODEL_FALLBACK_CHAIN: LLM_FALLBACK_CHAIN,
@@ -415,7 +418,6 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     watch: false,
     restart_delay: 5000,
   },
-
   {
     name: 'life-kline-daily-window-email',
     script: 'scripts/daily-window-email-daemon.js',
@@ -425,9 +427,11 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       DAILY_WINDOW_EMAIL_ENABLED: '1',
+      // Reuse timing cron token (same header accepted by daily-window route)
       TIMING_EMAIL_CRON_TOKEN: cronEnv.TIMING_EMAIL_CRON_TOKEN,
       DAILY_WINDOW_EMAIL_CRON_TOKEN: cronEnv.TIMING_EMAIL_CRON_TOKEN,
       DAILY_WINDOW_EMAIL_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/daily-window/email/cron?limit=50`,
+      // 24h educational tip — not high-frequency spam
       DAILY_WINDOW_EMAIL_INTERVAL_MS: '86400000',
       DAILY_WINDOW_EMAIL_REQUEST_TIMEOUT_MS: '90000',
       DAILY_WINDOW_EMAIL_STARTUP_DELAY_MS: '60000',
@@ -445,7 +449,6 @@ const backgroundWorkers = enableBackgroundWorkers ? [
   },
   {
     name: 'life-kline-prediction-due-email',
-
     script: 'scripts/prediction-due-email-daemon.js',
     cwd: '/home/life-kline-next',
     instances: 1,

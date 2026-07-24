@@ -31,7 +31,8 @@ const apiKey =
   '';
 
 const MODEL_COMPLEX = process.env.PAGE_ILLUST_MODEL_COMPLEX || 'gpt-image-2';
-const MODEL_TURBO = process.env.PAGE_ILLUST_MODEL_TURBO || 'z-image-turbo';
+// Aggregate gateway default: grok-imagine-image-lite (inping)
+const MODEL_TURBO = process.env.PAGE_ILLUST_MODEL_TURBO || 'grok-imagine-image-lite';
 
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
