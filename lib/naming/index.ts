@@ -22,3 +22,12 @@ export {
   type NamingSessionInput,
   type NamingSessionResult,
 } from './session-report';
+export {
+  buildCompanyNamePatterns,
+  extractTradeName,
+  industryFeatureTags,
+  COMPANY_JURISDICTIONS,
+  COMPANY_ENTITY_FORMS,
+  type CompanyJurisdiction,
+  type CompanyEntityForm,
+} from './company-entity';

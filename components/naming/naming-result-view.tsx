@@ -142,18 +142,28 @@ export function NamingResultView({ sessionId, result }: Props) {
                 className="group rounded-xl border border-slate-200 bg-white p-3 transition hover:border-indigo-400 hover:shadow-md"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="text-[11px] font-bold text-slate-400">#{i + 1}</span>
-                      <span className="text-[17px] font-black text-slate-900 group-hover:text-indigo-700">
+                      <span className="text-[15px] font-black leading-snug text-slate-900 group-hover:text-indigo-700">
                         {display}
                       </span>
                     </div>
+                    {c.name && c.fullName && c.name !== c.fullName ? (
+                      <div className="mt-0.5 text-[11px] text-slate-500">
+                        字号 <span className="font-semibold text-slate-700">{c.name}</span>
+                      </div>
+                    ) : null}
                     {c.english ? (
                       <div className="text-[11px] text-slate-400">{c.english}</div>
                     ) : null}
+                    {c.patternLabel || c.jurisdiction ? (
+                      <div className="mt-1 text-[10px] font-semibold text-violet-600">
+                        {[c.patternLabel, c.jurisdiction].filter(Boolean).join(' · ')}
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="text-right">
+                  <div className="shrink-0 text-right">
                     <div className="text-[20px] font-black text-indigo-600">{c.score}</div>
                     <div className="text-[10px] text-slate-400">综合</div>
                   </div>
@@ -171,7 +181,7 @@ export function NamingResultView({ sessionId, result }: Props) {
                 <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-slate-500">
                   {c.reason}
                 </p>
-                <div className="mt-2 text-[11px] font-semibold text-indigo-600 opacity-0 transition group-hover:opacity-100">
+                <div className="mt-2 text-[11px] font-semibold text-indigo-600">
                   查看下一级详解 →
                 </div>
               </Link>

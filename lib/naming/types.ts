@@ -22,6 +22,10 @@ export type NameCandidate = {
   reason: string;
   styleTags?: string[];
   english?: string;
+  /** 公司名：法域 / 主体形式 / 模式标签 */
+  jurisdiction?: string;
+  entityForm?: string;
+  patternLabel?: string;
 };
 
 export type PersonGenerateInput = {
@@ -39,6 +43,14 @@ export type PersonGenerateInput = {
 export type CompanyGenerateInput = {
   industry?: string;
   keywords?: string[];
+  /** 核心字号，如「伙计」；优先于 keywords 第一项 */
+  tradeName?: string;
+  /** 省/市 行政区，如 广东、深圳 */
+  region?: string;
+  /** CN | HK | US | ... */
+  jurisdiction?: string;
+  /** co_ltd | joint_stock | group | brand_only */
+  entityForm?: string;
   preferredLength?: 2 | 3 | 4;
   yongShen?: string[];
   count?: number;

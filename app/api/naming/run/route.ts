@@ -56,6 +56,10 @@ export async function POST(request: NextRequest) {
               .split(/[,，、\s]+/)
               .filter(Boolean)
           : undefined,
+      tradeName: body?.tradeName ? String(body.tradeName).slice(0, 12) : undefined,
+      region: body?.region ? String(body.region).slice(0, 20) : undefined,
+      jurisdiction: body?.jurisdiction ? String(body.jurisdiction).slice(0, 12) : undefined,
+      entityForm: body?.entityForm ? String(body.entityForm).slice(0, 20) : undefined,
       preferredLength: Number(body?.preferredLength) || undefined,
       category: body?.category ? String(body.category).slice(0, 40) : undefined,
       style: body?.style ? String(body.style) : undefined,
@@ -73,13 +77,70 @@ export async function POST(request: NextRequest) {
       })),
     };
 
-    let llm = await enhanceNamingWithLlm({
-      mode,
-      context,
-      candidates: engine.candidates,
-    });
-    if (!useLlm) {
-      llm = { ...llm, usedLlm: false };
+    // LLM 限时，避免前端一直停在「测算中」
+    let llm = {
+      narrativeSummary: '',
+      schemeAdvice: [] as string[],
+      riskNotes: [] as string[],
+      candidateBlurbs: {} as Record<string, string>,
+      usedLlm: false,
+    };
+    if (useLlm) {
+      try {
+        llm = await Promise.race([
+          enhanceNamingWithLlm({
+            mode,
+            context,
+            candidates: engine.candidates,
+          }),
+          new Promise<typeof llm>((resolve) =>
+            setTimeout(
+              () =>
+                resolve({
+                  narrativeSummary: '',
+                  schemeAdvice: [],
+                  riskNotes: [],
+                  candidateBlurbs: {},
+                  usedLlm: false,
+                }),
+              14_000,
+            ),
+          ),
+        ]);
+      } catch {
+        llm = {
+          narrativeSummary: '',
+          schemeAdvice: [],
+          riskNotes: [],
+          candidateBlurbs: {},
+          usedLlm: false,
+        };
+      }
+    }
+    // 空 LLM 结果时补本地总评
+    if (!llm.narrativeSummary) {
+      const top = engine.candidates[0];
+      llm = {
+        ...llm,
+        narrativeSummary: top
+          ? `已生成 ${engine.candidates.length} 个候选，领先「${top.fullName || top.name}」（${top.score} 分）。可点进下一级查看详解。`
+          : '暂无候选',
+        schemeAdvice:
+          mode === 'company'
+            ? [
+                '优先选用「字号+行业特征+有限公司」完整主体名，便于核名与对外签约。',
+                '可准备省/市前缀与纯品牌短名两套，分别用于执照与传播。',
+                '跨法域后缀不同（Ltd / LLC / 株式会社），请按注册地选择。',
+              ]
+            : ['结合音韵与用神微调末字。', '正式使用前请与家人/法务复核。'],
+        riskNotes: [
+          '命名为结构参考，不构成命运或法律承诺。',
+          mode === 'company' ? '请核验工商/商标/当地公司法要求。' : '改名请考虑户籍与家庭共识。',
+        ],
+        candidateBlurbs: Object.fromEntries(
+          engine.candidates.slice(0, 18).map((c) => [c.fullName || c.name, c.reason]),
+        ),
+      };
     }
 
     const ordered = applyLlmOrder(engine.candidates, llm).slice(0, 18);

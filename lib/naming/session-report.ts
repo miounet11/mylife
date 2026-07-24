@@ -10,6 +10,10 @@ export type NamingSessionInput = {
   generationChar?: string;
   industry?: string;
   keywords?: string[];
+  tradeName?: string;
+  region?: string;
+  jurisdiction?: string;
+  entityForm?: string;
   preferredLength?: number;
   category?: string;
   style?: string;

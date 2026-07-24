@@ -1,4 +1,10 @@
 import { brandCharPool, listGivenNamePool, type CharEntry } from './char-db';
+import {
+  buildCompanyNamePatterns,
+  extractTradeName,
+  type CompanyEntityForm,
+  type CompanyJurisdiction,
+} from './company-entity';
 import { scoreName } from './score';
 import type {
   CompanyGenerateInput,
@@ -70,30 +76,82 @@ export function generatePersonNames(input: PersonGenerateInput): NamingGenerateR
 }
 
 export function generateCompanyNames(input: CompanyGenerateInput): NamingGenerateResult {
-  const count = Math.min(36, Math.max(8, input.count || 16));
-  const len = input.preferredLength || 2;
+  const count = Math.min(36, Math.max(8, input.count || 18));
   const yong = (input.yongShen || []).map(toWx).filter(Boolean) as Wuxing[];
   const pool = brandCharPool(yong);
-  const kws = (input.keywords || []).map((k) => k.trim()).filter(Boolean).slice(0, 5);
+  const kws = (input.keywords || []).map((k) => k.trim()).filter(Boolean).slice(0, 6);
+  const tradeSeed = [
+    ...(input.tradeName ? [input.tradeName.trim()] : []),
+    ...kws,
+  ].filter(Boolean);
 
-  const combos = buildBrandCombos(pool, len, kws);
-  const scored = combos
-    .map((name) =>
-      scoreName({
+  // 字号：用户核心词 + 引擎组合短名
+  const syntheticCores = buildBrandCombos(pool, input.preferredLength || 2, kws).slice(0, 16);
+  const tradeNames = extractTradeName(tradeSeed, syntheticCores);
+
+  const patterns = buildCompanyNamePatterns({
+    tradeNames,
+    industry: input.industry,
+    region: input.region,
+    jurisdiction: (input.jurisdiction as CompanyJurisdiction) || 'CN',
+    entityForm: (input.entityForm as CompanyEntityForm) || 'co_ltd',
+    count: Math.max(count * 2, 28),
+  });
+
+  const userCores = new Set(
+    [input.tradeName, ...kws]
+      .map((s) => (s || '').trim())
+      .filter(Boolean),
+  );
+
+  const scored: NameCandidate[] = patterns
+    .map((p) => {
+      // 打分用字号核心，展示用全称
+      const base = scoreName({
         mode: 'company',
-        name,
+        name: p.brandCore,
         yongShen: input.yongShen,
         industry: input.industry,
         enableWuge: input.enableWuge,
-      }),
-    )
-    .map((c) => ({
-      ...c,
-      reason: [c.reason, input.industry ? `行业：${input.industry}` : '']
-        .filter(Boolean)
-        .join(' · '),
-      styleTags: ['brand', input.industry || 'business'].filter(Boolean),
-    }))
+      });
+      // 完整法定名略加传播分（更像可注册主体）
+      let score = base.score;
+      if (/有限公司|Limited|LLC|Inc\.|Pte|株式会社|股份/.test(p.fullName)) score = Math.min(98, score + 6);
+      if (p.patternLabel.includes('行政区')) score = Math.min(98, score + 3);
+      if (input.industry && p.fullName.includes(input.industry.slice(0, 2))) {
+        score = Math.min(98, score + 2);
+      }
+      // 用户输入的字号/关键词优先（对标「伙计→伙计科技有限公司」）
+      if (userCores.has(p.brandCore) || [...userCores].some((u) => p.fullName.includes(u))) {
+        score = Math.min(98, score + 18);
+      }
+      return {
+        ...base,
+        name: p.brandCore,
+        fullName: p.fullName,
+        english: p.english,
+        score,
+        breakdown: {
+          ...base.breakdown,
+          total: score,
+          brandability: Math.min(98, (base.breakdown.brandability || 70) + 8),
+        },
+        reason: [
+          p.patternLabel,
+          input.industry ? `行业 ${input.industry}` : null,
+          p.jurisdiction !== 'CN' ? `法域 ${p.jurisdiction}` : '大陆主体格式',
+          base.reason,
+        ]
+          .filter(Boolean)
+          .join(' · '),
+        styleTags: [p.patternLabel, p.jurisdiction, input.industry || 'business'].filter(
+          Boolean,
+        ) as string[],
+        jurisdiction: p.jurisdiction,
+        entityForm: p.entityForm,
+        patternLabel: p.patternLabel,
+      } satisfies NameCandidate;
+    })
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
 
@@ -101,8 +159,17 @@ export function generateCompanyNames(input: CompanyGenerateInput): NamingGenerat
     mode: 'company',
     generatedAt: new Date().toISOString(),
     candidates: scored,
-    disclaimer: DISCLAIMER,
-    meta: { industry: input.industry, keywords: kws },
+    disclaimer:
+      DISCLAIMER +
+      ' 公司全称仅为命名结构示意，注册前请按当地公司法核验字号、行业表述与主体后缀是否可核名。',
+    meta: {
+      industry: input.industry,
+      keywords: kws,
+      tradeName: input.tradeName,
+      region: input.region,
+      jurisdiction: input.jurisdiction || 'CN',
+      entityForm: input.entityForm || 'co_ltd',
+    },
   };
 }
 
@@ -152,6 +219,10 @@ export function generateByMode(
     return generateCompanyNames({
       industry: str(body.industry),
       keywords: arr(body.keywords),
+      tradeName: str(body.tradeName) || arr(body.keywords)[0],
+      region: str(body.region),
+      jurisdiction: str(body.jurisdiction) || 'CN',
+      entityForm: str(body.entityForm) || 'co_ltd',
       preferredLength: (Number(body.preferredLength) as 2 | 3 | 4) || 2,
       yongShen: arr(body.yongShen),
       count: num(body.count),
