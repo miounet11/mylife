@@ -27,6 +27,9 @@ import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
 import { MapPlacePicker } from './map-place-picker';
+import { VirtualCompass } from './virtual-compass';
+import { spaceLabCopy } from '@/lib/i18n/space-lab-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -34,7 +37,7 @@ const SpaceViewport3D = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center bg-[#0b0e14] text-[13px] text-white/50">
-        加载 Three.js 三维场景…
+        Loading 3D…
       </div>
     ),
   },
@@ -43,7 +46,8 @@ const SpaceViewport3D = dynamic(
 type ViewMode = 'plan' | 'iso' | 'three';
 type WorkbenchTab = 'preset' | 'site' | 'controls';
 
-export function SpaceLabApp() {
+export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string }) {
+  const copy = useMemo(() => spaceLabCopy(locale), [locale]);
   const [state, setState] = useState<SpaceLabState>(() => createDefaultLabState());
   const [selectedVentId, setSelectedVentId] = useState<string | null>('vent-in-1');
   const [viewMode, setViewMode] = useState<ViewMode>('plan');
@@ -151,8 +155,9 @@ export function SpaceLabApp() {
       },
       presetTitle: null,
       presetId: null,
+      layoutLabel: domain === 'residential' || domain === 'apartment' ? '三室两厅' : meta.label,
     }));
-    setBanner(`3D 模型切换：${meta.label} · ${meta.modelName}`);
+    setBanner(`${meta.label} · ${meta.modelName}`);
   };
 
   const exportProSession = () => {
@@ -324,9 +329,9 @@ export function SpaceLabApp() {
     <div className="flex gap-1">
       {(
         [
-          { id: 'plan' as const, label: '平面' },
-          { id: 'iso' as const, label: '等距' },
-          { id: 'three' as const, label: '3D' },
+          { id: 'plan' as const, label: copy.views.plan },
+          { id: 'iso' as const, label: copy.views.iso },
+          { id: 'three' as const, label: copy.views.three },
         ] as const
       ).map((m) => (
         <button
@@ -354,10 +359,10 @@ export function SpaceLabApp() {
       <header className="flex shrink-0 items-center justify-between gap-2 border-b border-[color:var(--hairline)] pb-2">
         <div className="flex min-w-0 items-baseline gap-2">
           <h1 className="truncate text-[15px] font-black tracking-tight text-[color:var(--ink-1)]">
-            空间场
+            {copy.productName}
           </h1>
           <span className="hidden truncate text-[11px] text-[color:var(--ink-5)] sm:inline">
-            左选 · 右看 · 地图拖标即注入
+            {copy.tagline}
           </span>
           {banner ? (
             <span className="max-w-[40vw] truncate text-[11px] text-emerald-700">{banner}</span>
@@ -387,14 +392,14 @@ export function SpaceLabApp() {
             onClick={() => void copyProBrief()}
             className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
           >
-            复制简报
+            {copy.pro.copy}
           </button>
           <button
             type="button"
             onClick={exportProSession}
             className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
           >
-            导出JSON
+            {copy.pro.exportJson}
           </button>
           <button
             type="button"
@@ -402,7 +407,7 @@ export function SpaceLabApp() {
             onClick={() => void saveSession()}
             className="rounded-md bg-[color:var(--brand-soft)] px-2 py-1 font-semibold text-[color:var(--brand-strong)] disabled:opacity-40"
           >
-            保存
+            {copy.pro.save}
           </button>
           <button
             type="button"
@@ -410,7 +415,7 @@ export function SpaceLabApp() {
             onClick={() => void publishInsight()}
             className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
           >
-            发文
+            {copy.pro.publish}
           </button>
         </div>
       </header>
@@ -422,9 +427,9 @@ export function SpaceLabApp() {
           <div className="flex shrink-0 border-b border-[color:var(--hairline)]">
             {(
               [
-                { id: 'preset' as const, label: '方案' },
-                { id: 'site' as const, label: '地图选址' },
-                { id: 'controls' as const, label: '控制' },
+                { id: 'preset' as const, label: copy.tabs.preset },
+                { id: 'site' as const, label: copy.tabs.site },
+                { id: 'controls' as const, label: copy.tabs.controls },
               ] as const
             ).map((t) => (
               <button
@@ -519,7 +524,57 @@ export function SpaceLabApp() {
             ) : null}
 
             {workbenchTab === 'controls' ? (
-              <div className="flex h-full min-h-0 flex-col overflow-hidden">
+              <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden">
+                <VirtualCompass
+                  compact
+                  copy={copy}
+                  locale={locale}
+                  planRotationDeg={state.room.planRotationDeg || 0}
+                  entranceFacing={state.room.entranceFacing}
+                  onRotate={(deg) =>
+                    patch((s) => ({
+                      ...s,
+                      room: { ...s.room, planRotationDeg: deg },
+                    }))
+                  }
+                  onEntrance={(facing) =>
+                    patch((s) => ({
+                      ...s,
+                      room: { ...s.room, entranceFacing: facing },
+                    }))
+                  }
+                />
+                <div className="flex shrink-0 flex-wrap gap-1">
+                  {(
+                    [
+                      { key: 'showFurniture' as const, label: copy.show.furniture },
+                      { key: 'showRoomLabels' as const, label: copy.show.labels },
+                      { key: 'showRoomAreas' as const, label: copy.show.areas },
+                      { key: 'planPaperStyle' as const, label: copy.plan.paperOn },
+                    ] as const
+                  ).map((t) => {
+                    const on = state[t.key] !== false;
+                    return (
+                      <button
+                        key={t.key}
+                        type="button"
+                        onClick={() =>
+                          patch((s) => ({
+                            ...s,
+                            [t.key]: s[t.key] === false,
+                          }))
+                        }
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${
+                          on
+                            ? 'bg-[color:var(--ink-1)] text-white'
+                            : 'border border-[color:var(--hairline)] text-[color:var(--ink-4)]'
+                        }`}
+                      >
+                        {t.label}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="min-h-0 flex-1 overflow-hidden">
                   <SpaceControlPanel
                     state={state}
@@ -545,11 +600,21 @@ export function SpaceLabApp() {
 
         {/* 右栏 — 预览铺满 */}
         <section className="flex min-h-0 min-w-0 flex-col overflow-hidden rounded-lg border border-[color:var(--hairline)] bg-[#0b0e14]">
-          <div className="flex shrink-0 items-center justify-between gap-2 border-b border-white/10 px-2 py-1.5 text-[10px] text-white/60">
-            <span className="truncate font-medium text-white/85">
-              {viewMode === 'plan' ? '平面' : viewMode === 'iso' ? '等距' : '3D'} ·{' '}
-              {state.room.widthM.toFixed(1)}×{state.room.depthM.toFixed(1)}m ·{' '}
-              {state.room.entranceFacing}向
+          <div
+            className={`flex shrink-0 items-center justify-between gap-2 border-b px-2 py-1.5 text-[10px] ${
+              viewMode === 'plan' && state.planPaperStyle !== false
+                ? 'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-4)]'
+                : 'border-white/10 text-white/60'
+            }`}
+          >
+            <span className="truncate font-medium">
+              {viewMode === 'plan'
+                ? copy.views.plan
+                : viewMode === 'iso'
+                  ? copy.views.iso
+                  : copy.views.three}{' '}
+              · {state.room.widthM.toFixed(1)}×{state.room.depthM.toFixed(1)}m ·{' '}
+              {state.room.entranceFacing}
               {state.geo ? ` · ${state.geo.name || state.geo.address.slice(0, 16)}` : ''}
             </span>
             <div className="flex items-center gap-1.5">
@@ -569,9 +634,19 @@ export function SpaceLabApp() {
             </div>
           </div>
 
-          <div className="relative min-h-0 flex-1">
+          <div
+            className={`relative min-h-0 flex-1 ${
+              viewMode === 'plan' && state.planPaperStyle !== false ? 'bg-[#eef2e8]' : 'bg-[#0b0e14]'
+            }`}
+          >
             {viewMode === 'three' ? (
-              <SpaceViewport3D state={state} result={result} />
+              <SpaceViewport3D
+                state={state}
+                result={result}
+                locale={locale}
+                northLabel={copy.compass.north}
+                entranceLabel={`${copy.compass.entrance} ${state.room.entranceFacing}`}
+              />
             ) : (
               <SpaceViewport
                 state={state}
@@ -585,6 +660,8 @@ export function SpaceLabApp() {
                   }))
                 }
                 viewMode={viewMode}
+                copy={copy}
+                locale={locale}
               />
             )}
           </div>

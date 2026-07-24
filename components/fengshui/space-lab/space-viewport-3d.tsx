@@ -12,6 +12,9 @@ import { DomainBuilding3D, domainCameraHint } from './domain-building-3d';
 type Props = {
   state: SpaceLabState;
   result: SpaceSimResult;
+  locale?: string;
+  northLabel?: string;
+  entranceLabel?: string;
 };
 
 function HeatFloor({
@@ -188,12 +191,29 @@ function ScaleBar({ widthM }: { widthM: number }) {
   );
 }
 
+function NorthArrow({ rotDeg }: { rotDeg: number }) {
+  // Floating north arrow in scene space (above model)
+  return (
+    <group position={[0, 0.05, 0]} rotation={[0, (-rotDeg * Math.PI) / 180, 0]}>
+      <mesh position={[0, 0.02, -2.2]}>
+        <coneGeometry args={[0.12, 0.35, 8]} />
+        <meshStandardMaterial color="#dc2626" />
+      </mesh>
+      <mesh position={[0, 0.02, -1.85]} rotation={[Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[0.03, 0.03, 0.5, 8]} />
+        <meshStandardMaterial color="#dc2626" />
+      </mesh>
+    </group>
+  );
+}
+
 function Scene({ state, result }: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
   const layer = pickLayerGrid(result.grids, state.activeLayer);
   const { widthM, depthM, heightM } = state.room;
   const cam = domainCameraHint(domain, widthM, depthM, heightM);
+  const rotY = (-(state.room.planRotationDeg || 0) * Math.PI) / 180;
 
   return (
     <>
@@ -210,17 +230,19 @@ function Scene({ state, result }: Props) {
       />
       <pointLight position={[-4, 3, 3]} intensity={0.35} color={meta.accentColor} />
 
-      <DomainBuilding3D domain={domain} widthM={widthM} depthM={depthM} heightM={heightM} />
-      {/* 室内热力叠层：住宅/商铺等展示；阴宅略抬高示意 */}
-      <HeatFloor grids={result.grids} layer={layer} widthM={widthM} depthM={depthM} />
-      <Structures structures={state.structures} widthM={widthM} depthM={depthM} heightM={heightM} />
-      <Vents vents={state.vents} widthM={widthM} depthM={depthM} />
-      <DriftFogParticles
-        count={meta.particleCount}
-        accent={meta.accentColor}
-        spread={Math.max(widthM, depthM) * 1.1}
-      />
-      {state.proMode ? <ScaleBar widthM={widthM} /> : null}
+      <group rotation={[0, rotY, 0]}>
+        <DomainBuilding3D domain={domain} widthM={widthM} depthM={depthM} heightM={heightM} />
+        <HeatFloor grids={result.grids} layer={layer} widthM={widthM} depthM={depthM} />
+        <Structures structures={state.structures} widthM={widthM} depthM={depthM} heightM={heightM} />
+        <Vents vents={state.vents} widthM={widthM} depthM={depthM} />
+        <DriftFogParticles
+          count={meta.particleCount}
+          accent={meta.accentColor}
+          spread={Math.max(widthM, depthM) * 1.1}
+        />
+        {state.proMode ? <ScaleBar widthM={widthM} /> : null}
+        {state.showCompass !== false ? <NorthArrow rotDeg={0} /> : null}
+      </group>
 
       <OrbitControls
         makeDefault
@@ -234,14 +256,15 @@ function Scene({ state, result }: Props) {
   );
 }
 
-export function SpaceViewport3D({ state, result }: Props) {
+export function SpaceViewport3D({ state, result, northLabel = 'N', entranceLabel }: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
+  const rot = Math.round(state.room.planRotationDeg || 0);
 
   return (
     <div className="relative h-full w-full">
       <Canvas
-        key={domain}
+        key={`${domain}-${rot}`}
         shadows
         dpr={[1, 1.75]}
         gl={{ antialias: true, alpha: false }}
@@ -250,17 +273,27 @@ export function SpaceViewport3D({ state, result }: Props) {
           <Scene state={state} result={result} />
         </Suspense>
       </Canvas>
+      {/* HUD compass */}
+      <div className="pointer-events-none absolute right-2 top-2 flex h-12 w-12 items-center justify-center rounded-full border border-white/20 bg-black/50 text-[10px] font-bold text-red-400">
+        <span
+          className="absolute"
+          style={{ transform: `rotate(${rot}deg)`, transformOrigin: 'center 18px' }}
+        >
+          ▲
+        </span>
+        <span className="mt-5 text-white/80">{northLabel}</span>
+      </div>
       <div className="pointer-events-none absolute left-2 top-2 max-w-[72%] rounded-md bg-black/55 px-2 py-1 text-[10px] leading-snug text-white/90">
         <div className="font-semibold text-amber-200/95">
           {meta.label} · {meta.modelName}
         </div>
         <div className="text-white/55">
-          {meta.blurb} · AI 贴图材质 · 拖拽旋转 / 滚轮缩放
+          {entranceLabel || state.room.entranceFacing} · rot {rot}° · 3D
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-2 left-2 text-[10px] text-white/45">
-        层：{state.activeLayer} · {result.meta.dizhiHour}时 · {result.meta.nineStarLabel}
-        {state.proMode ? ' · PRO' : ''} · textures/v1
+        {state.activeLayer} · {result.meta.dizhiHour} · {result.meta.nineStarLabel}
+        {state.proMode ? ' · PRO' : ''}
       </div>
     </div>
   );

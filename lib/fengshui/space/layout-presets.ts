@@ -1301,6 +1301,7 @@ export function applyPresetToState(
     activeDomain: p.domain,
     presetTitle: p.title,
     presetId: p.id,
+    layoutLabel: p.layout,
   };
 }
 

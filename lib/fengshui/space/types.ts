@@ -108,6 +108,14 @@ export interface SpaceLabState {
     | 'flyingStar';
   /** 纸质户型底（浅色） */
   planPaperStyle: boolean;
+  /** 显示家具示意 */
+  showFurniture: boolean;
+  /** 显示房间名 */
+  showRoomLabels: boolean;
+  /** 显示面积㎡ */
+  showRoomAreas: boolean;
+  /** 当前方案布局名（用于户型分区） */
+  layoutLabel?: string | null;
   /** data URL of uploaded floor plan */
   underlayDataUrl: string | null;
   underlayOpacity: number;

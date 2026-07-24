@@ -7,15 +7,28 @@ import {
   buildToolPageMetadata,
   getToolSeoGeoPack,
 } from '@/lib/tools/tool-seo-geo';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
 
 const pack = getToolSeoGeoPack('fengshui-space')!;
 
 export const metadata: Metadata = buildToolPageMetadata('fengshui-space');
 
-export default function FengshuiSpacePage() {
+export default async function FengshuiSpacePage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}) {
+  const sp = searchParams ? await searchParams : {};
+  const locale = await getRequestLocale(sp.lang);
+  const en = `${locale}`.toLowerCase().startsWith('en');
+
   return (
     <AppPage
-      header={{ ctaHref: '/tools', ctaLabel: '工具中心', compact: true }}
+      header={{
+        ctaHref: '/tools',
+        ctaLabel: en ? 'Tools' : '工具中心',
+        compact: true,
+      }}
       showFooter={false}
       mainClassName="page-frame !py-2 !pb-2 md:!py-2"
     >
@@ -23,12 +36,11 @@ export default function FengshuiSpacePage() {
       <AnalyticsPageView
         eventName="fengshui_space_lab_viewed"
         page="/tools/fengshui-space"
-        meta={{ surfaceKey: 'tools', tool: 'fengshui-space', geoReady: true }}
+        meta={{ surfaceKey: 'tools', tool: 'fengshui-space', geoReady: true, locale }}
       />
       <div className="mx-auto max-w-[1680px] px-2 md:px-3">
-        <SpaceLabApp />
+        <SpaceLabApp locale={locale} />
       </div>
-      {/* SEO 在视口工作台之外，不挤占工具操作区 */}
       <div className="mx-auto mt-8 max-w-3xl px-3 pb-12">
         <ToolSeoGeoSection pack={pack} compact />
       </div>

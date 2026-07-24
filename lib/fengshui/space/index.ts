@@ -65,3 +65,12 @@ export {
   PLAN_OVERLAY_LABELS,
   type PlanOverlayMode,
 } from './plan-overlay';
+export {
+  buildFloorPlanStyle,
+  drawFurnitureIcon,
+  zoneFill,
+  zoneStroke,
+  type FloorZone,
+  type FloorPlanStyle,
+  type FloorZoneKind,
+} from './floor-plan-style';
