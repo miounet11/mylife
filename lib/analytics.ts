@@ -114,7 +114,8 @@ export type AnalyticsEventName =
   | 'expert_crm_page_viewed'
   | 'fengshui_space_lab_viewed'
   | 'fengshui_opening_suggest'
-  | 'fengshui_space_saved';
+  | 'fengshui_space_saved'
+  | 'fengshui_layout_generate';
 
 interface TrackEventInput {
   userId?: string | null;

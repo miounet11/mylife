@@ -13,9 +13,14 @@ import {
   openingsToVents,
   type SuggestedOpening,
 } from '@/lib/fengshui/space/opening-suggest';
+import {
+  applyPresetToState,
+  type LayoutPreset,
+} from '@/lib/fengshui/space/layout-presets';
 import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { SpaceCompassPanel } from './space-compass-panel';
+import { LayoutPresetPicker } from './layout-preset-picker';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -37,6 +42,7 @@ export function SpaceLabApp() {
   const [viewMode, setViewMode] = useState<ViewMode>('three');
   const [tick, setTick] = useState(0);
   const [suggesting, setSuggesting] = useState(false);
+  const [generatingLayout, setGeneratingLayout] = useState(false);
   const [saving, setSaving] = useState(false);
   const [banner, setBanner] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -105,6 +111,62 @@ export function SpaceLabApp() {
       setBanner(null);
     } finally {
       setSuggesting(false);
+    }
+  };
+
+  const applyLayoutPreset = (preset: LayoutPreset, areaSqm: number) => {
+    setError(null);
+    const next = applyPresetToState(state, preset, { areaSqm });
+    // honor current facing if user already set something in room - use preset facing
+    setState(next);
+    setTick((t) => t + 1);
+    setSelectedVentId(next.vents[0]?.id || null);
+    setOpenings([]);
+    setBanner(
+      `已加载预设「${preset.title}」· ${preset.layout} · 约 ${Math.round(areaSqm || preset.areaSqm)}㎡（已按面积缩放）`,
+    );
+  };
+
+  const generateLayoutLlm = async (input: {
+    domain: 'residential' | 'shop' | 'tomb';
+    layout: string;
+    areaSqm: number;
+    entranceFacing: string;
+    notes: string;
+    model: 'grok-4.3-fast' | 'grok-4.3-high';
+    presetId?: string;
+  }) => {
+    setGeneratingLayout(true);
+    setError(null);
+    setBanner(`正在用 ${input.model} 生成布局…`);
+    try {
+      const res = await fetch('/api/fengshui/space/generate-layout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success || !data.preset) {
+        throw new Error(data.error || '布局生成失败');
+      }
+      const preset = data.preset as LayoutPreset;
+      const next = applyPresetToState(state, preset, {
+        areaSqm: Number(preset.areaSqm) || input.areaSqm,
+      });
+      // apply entrance facing preference from form when model didn't override strongly
+      if (input.entranceFacing) {
+        next.room.entranceFacing = input.entranceFacing;
+      }
+      setState(next);
+      setTick((t) => t + 1);
+      setSelectedVentId(next.vents[0]?.id || null);
+      setOpenings([]);
+      setBanner(data.message || `已加载：${preset.title}（${data.mode}）`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '布局生成失败');
+      setBanner(null);
+    } finally {
+      setGeneratingLayout(false);
     }
   };
 
@@ -184,7 +246,7 @@ export function SpaceLabApp() {
             空间场模拟工作台
           </h1>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[color:var(--ink-4)]">
-            多模态门窗建议 · Three.js 真 3D 墙体与体积雾 · 热力四层 · 结果存档与会员权益。
+            快速选户型/商铺/墓穴预设 · 面积缩放 · grok-4.3 定制 · 多模态门窗 · 真 3D 与热力 · 会员存档。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-[12px]">
@@ -248,6 +310,12 @@ export function SpaceLabApp() {
           ) : null}
         </div>
       </div>
+
+      <LayoutPresetPicker
+        busy={generatingLayout || suggesting}
+        onApplyPreset={applyLayoutPreset}
+        onGenerateLlm={generateLayoutLlm}
+      />
 
       {banner ? (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-800">

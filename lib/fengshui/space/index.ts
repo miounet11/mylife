@@ -12,3 +12,18 @@ export {
   parseOpeningsFromModelText,
   type SuggestedOpening,
 } from './opening-suggest';
+export {
+  LAYOUT_PRESETS,
+  DOMAIN_LABELS,
+  listPresets,
+  getPresetById,
+  filterPresets,
+  scalePresetToArea,
+  applyPresetToState,
+  dimensionsFromArea,
+  RESIDENTIAL_LAYOUT_OPTIONS,
+  SHOP_LAYOUT_OPTIONS,
+  TOMB_LAYOUT_OPTIONS,
+  type LayoutDomain,
+  type LayoutPreset,
+} from './layout-presets';
