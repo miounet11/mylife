@@ -43,33 +43,36 @@ export function defaultImageModel(): string {
   );
 }
 
-/**
- * OpenAI-compatible POST /v1/images/generations through inping aggregate.
- */
-export async function generateImageB64(input: {
+function modelFallbackChain(preferred?: string): string[] {
+  const chain = (
+    process.env.VISUAL_ASSET_MODEL_FALLBACK_CHAIN ||
+    process.env.LLM_IMAGE_MODEL_FALLBACK_CHAIN ||
+    'grok-imagine-image-lite,z-image-turbo,gpt-image-2'
+  )
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const first = preferred || defaultImageModel();
+  return Array.from(new Set([first, ...chain]));
+}
+
+async function generateOnce(input: {
+  base: string;
+  apiKey: string;
+  model: string;
   prompt: string;
-  model?: string;
   size?: string;
   n?: number;
 }): Promise<ImageGenResult> {
-  const base = gatewayBase();
-  const apiKey = gatewayKey();
-  const model = input.model || defaultImageModel();
-  if (!apiKey) {
-    throw new Error(
-      'Missing image API key: set PAGE_ILLUST_API_KEY or LLM_IMAGE_PRIMARY_API_KEY (inping aggregate)',
-    );
-  }
-
-  const url = `${base}/v1/images/generations`;
+  const url = `${input.base}/v1/images/generations`;
   const res = await fetch(url, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${apiKey}`,
+      Authorization: `Bearer ${input.apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      model,
+      model: input.model,
       prompt: input.prompt,
       n: input.n ?? 1,
       size: input.size || '1024x1024',
@@ -85,13 +88,12 @@ export async function generateImageB64(input: {
 
   if (!res.ok) {
     const msg = data?.error?.message || data?.message || `HTTP ${res.status}`;
-    throw new Error(`Image gen failed (${model}): ${msg}`);
+    throw new Error(`Image gen failed (${input.model}): ${msg}`);
   }
 
   const item = data?.data?.[0];
   let b64 = item?.b64_json || item?.b64 || '';
 
-  // Some gateways return URL only — download
   if (!b64 && item?.url) {
     const imgRes = await fetch(item.url);
     if (!imgRes.ok) throw new Error(`Image URL download failed ${imgRes.status}`);
@@ -100,15 +102,59 @@ export async function generateImageB64(input: {
   }
 
   if (!b64) {
-    throw new Error(`Image gen empty payload (${model})`);
+    throw new Error(`Image gen empty payload (${input.model})`);
   }
 
   return {
     b64,
     provider: 'inping-aggregate',
-    model,
-    raw: { base, status: res.status },
+    model: input.model,
+    raw: { base: input.base, status: res.status },
   };
+}
+
+/**
+ * OpenAI-compatible POST /v1/images/generations through inping aggregate.
+ * Retries + model fallback chain for gateway flakiness.
+ */
+export async function generateImageB64(input: {
+  prompt: string;
+  model?: string;
+  size?: string;
+  n?: number;
+}): Promise<ImageGenResult> {
+  const base = gatewayBase();
+  const apiKey = gatewayKey();
+  if (!apiKey) {
+    throw new Error(
+      'Missing image API key: set PAGE_ILLUST_API_KEY or LLM_IMAGE_PRIMARY_API_KEY (inping aggregate)',
+    );
+  }
+
+  const models = modelFallbackChain(input.model);
+  const errors: string[] = [];
+
+  for (const model of models) {
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      try {
+        return await generateOnce({
+          base,
+          apiKey,
+          model,
+          prompt: input.prompt,
+          size: input.size,
+          n: input.n,
+        });
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : String(e);
+        errors.push(`${model}#${attempt}: ${msg}`);
+        // brief backoff on gateway internal errors
+        await new Promise((r) => setTimeout(r, 400 * attempt));
+      }
+    }
+  }
+
+  throw new Error(`All image models failed via ${base}: ${errors.join(' | ')}`);
 }
 
 export function imageGatewayInfo() {
