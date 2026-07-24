@@ -21,15 +21,15 @@ const FEATURES = [
   {
     href: '/tools/physiognomy',
     badge: 'NEW',
-    title: '面相观察',
-    desc: '上传面部照片 · 可选生辰 · 私有存图',
+    title: '面相系统报告',
+    desc: '先物理三庭五眼 · 再命理用神交叉',
     cta: '上传面相',
   },
   {
     href: '/tools/palmistry',
     badge: 'NEW',
-    title: '手相观察',
-    desc: '上传掌纹照片 · 结构分 · 可授权线图',
+    title: '手相系统报告',
+    desc: '先物理三线 · 再命理节奏交叉',
     cta: '上传手相',
   },
 ] as const;

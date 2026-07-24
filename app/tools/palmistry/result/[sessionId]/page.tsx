@@ -11,8 +11,8 @@ type Props = { params: Promise<{ sessionId: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { sessionId } = await params;
   return buildPageMetadata({
-    title: '手相观察结果',
-    description: '手相结构观察结果',
+    title: '手相系统报告',
+    description: '手相系统报告：物理掌纹 → 命理节奏 → 综合复看',
     path: `/tools/palmistry/result/${sessionId}`,
     noIndex: true,
   });

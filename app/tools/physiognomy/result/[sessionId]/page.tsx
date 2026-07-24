@@ -11,8 +11,8 @@ type Props = { params: Promise<{ sessionId: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { sessionId } = await params;
   return buildPageMetadata({
-    title: '面相观察结果',
-    description: '面相结构观察结果',
+    title: '面相系统报告',
+    description: '面相系统报告：物理结构 → 命理交叉 → 综合行动',
     path: `/tools/physiognomy/result/${sessionId}`,
     noIndex: true,
   });

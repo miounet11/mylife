@@ -4,4 +4,5 @@ export {
   mergeLlmXiangxue,
   FACE_VISION_SYSTEM,
   PALM_VISION_SYSTEM,
+  type LlmXiangxuePayload,
 } from './engines';
