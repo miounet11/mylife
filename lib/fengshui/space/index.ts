@@ -33,3 +33,15 @@ export {
   type LayoutPreset,
 } from './layout-presets';
 export { analyzeQimenSpace, qimenGridFromReading } from './qimen-analysis';
+export {
+  adviseSites,
+  adviseSiteCandidate,
+  estimateFootTraffic,
+  heuristicPoiFromAddress,
+  SITE_PURPOSE_LABELS,
+  type SitePurpose,
+  type SiteCandidateInput,
+  type SiteCandidateResult,
+  type SiteAdviseResult,
+  type FootTrafficEstimate,
+} from './site-advisor';

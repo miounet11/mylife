@@ -24,6 +24,8 @@ import { SpaceControlPanel } from './space-control-panel';
 import { SpaceCompassPanel } from './space-compass-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
 import { MapPlacePicker } from './map-place-picker';
+import { SiteAdvisorPanel } from './site-advisor-panel';
+import type { SiteCandidateResult } from '@/lib/fengshui/space/site-advisor';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -195,6 +197,20 @@ export function SpaceLabApp() {
     setBanner(`已注入区位：${place.address}`);
   };
 
+  const injectSiteWinner = (place: SpaceGeoPlace, meta: SiteCandidateResult) => {
+    patch((s) => ({
+      ...s,
+      geo: place,
+      room: {
+        ...s.room,
+        entranceFacing: s.room.entranceFacing,
+      },
+    }));
+    setBanner(
+      `已采用选址「${meta.label}」· 综合 ${meta.totalScore} 分 · 人流 ${meta.footTraffic.band}（${meta.footTraffic.index}）`,
+    );
+  };
+
   const publishInsight = async () => {
     setPublishing(true);
     setError(null);
@@ -287,7 +303,7 @@ export function SpaceLabApp() {
             空间场模拟工作台
           </h1>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[color:var(--ink-4)]">
-            快速选阳宅/商铺/阴宅预设 · 面积缩放 · grok-4.3 定制 · 多模态门窗 · 真 3D 与热力 · 会员存档。
+            选阳宅/铺面/阴宅 · 人流估算 · 地图注入 · 预设缩放 · grok-4.3 定制 · 多模态门窗 · 真 3D 与热力 · 会员存档。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-[12px]">
@@ -404,6 +420,16 @@ export function SpaceLabApp() {
           </div>
         ) : null}
       </div>
+
+      <SiteAdvisorPanel
+        currentGeo={state.geo}
+        onInjectWinner={injectSiteWinner}
+        onApplyDomain={(domain) => {
+          setBanner(
+            `请在上方「快速选方案」切换到对应领域（推荐 domain：${domain === 'tomb' ? '阴宅' : domain === 'shop' ? '商铺' : domain === 'villa' ? '别墅' : domain === 'apartment' ? '公寓楼' : '阳宅'}）并加载预设`,
+          );
+        }}
+      />
 
       {banner ? (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-800">
