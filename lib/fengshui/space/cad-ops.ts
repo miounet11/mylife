@@ -115,6 +115,15 @@ export function ensureFloorZones(state: SpaceLabState): FloorZone[] {
   }).zones;
 }
 
+export function furnitureForKind(kind: FloorZoneKind): FloorZone['furniture'] {
+  if (kind === 'bedroom') return ['bed'];
+  if (kind === 'living') return ['sofa', 'table'];
+  if (kind === 'bath') return ['toilet', 'sink'];
+  if (kind === 'kitchen') return ['stove', 'sink'];
+  if (kind === 'office') return ['desk'];
+  return [];
+}
+
 export function newRoomZone(
   kind: FloorZoneKind,
   at?: { x: number; y: number },
@@ -134,18 +143,6 @@ export function newRoomZone(
     other: { w: 0.2, h: 0.2 },
   };
   const d = defaults[kind] || defaults.other;
-  const furniture: FloorZone['furniture'] =
-    kind === 'bedroom'
-      ? ['bed']
-      : kind === 'living'
-        ? ['sofa', 'table']
-        : kind === 'bath'
-          ? ['toilet', 'sink']
-          : kind === 'kitchen'
-            ? ['stove', 'sink']
-            : kind === 'office'
-              ? ['desk']
-              : [];
   const raw = {
     x: at?.x ?? 0.35,
     y: at?.y ?? 0.35,
@@ -158,7 +155,38 @@ export function newRoomZone(
     kind,
     ...s,
     labelKey: kind,
-    furniture,
+    furniture: furnitureForKind(kind),
+  };
+}
+
+/** CAD 矩形拖画：两点定房间 */
+export function zoneFromDragRect(
+  kind: FloorZoneKind,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  snap = 0.02,
+): FloorZone {
+  const x = Math.min(x0, x1);
+  const y = Math.min(y0, y1);
+  const w = Math.abs(x1 - x0);
+  const h = Math.abs(y1 - y0);
+  const s = snapZone(
+    {
+      x,
+      y,
+      w: Math.max(snap * 3, w),
+      h: Math.max(snap * 3, h),
+    },
+    snap,
+  );
+  return {
+    id: `zone-${kind}-${Date.now().toString(36)}`,
+    kind,
+    ...s,
+    labelKey: kind,
+    furniture: furnitureForKind(kind),
   };
 }
 
@@ -181,7 +209,7 @@ export function hitTestHandle(
   z: FloorZone,
   nx: number,
   ny: number,
-  tol = 0.025,
+  tol = 0.04,
 ): ResizeHandle | null {
   const x0 = z.x;
   const y0 = z.y;
@@ -230,6 +258,134 @@ export function applyResize(
   }
   const s = snapZone({ x, y, w, h }, snap);
   return { ...z, ...s };
+}
+
+/** CAD 对齐：移动时吸附到其他房间边线 */
+export function snapMoveToPeers(
+  z: Pick<FloorZone, 'x' | 'y' | 'w' | 'h'>,
+  peers: FloorZone[],
+  selfId: string,
+  gridSnap: number,
+  edgeTol = 0.025,
+): Pick<FloorZone, 'x' | 'y' | 'w' | 'h'> {
+  let { x, y, w, h } = snapZone(z, gridSnap);
+  let bestDx = edgeTol + 1;
+  let bestDy = edgeTol + 1;
+  let nx = x;
+  let ny = y;
+  const edgesX = (p: FloorZone) => [p.x, p.x + p.w];
+  const edgesY = (p: FloorZone) => [p.y, p.y + p.h];
+  for (const p of peers) {
+    if (p.id === selfId) continue;
+    for (const ex of edgesX(p)) {
+      for (const mx of [x, x + w]) {
+        const d = Math.abs(mx - ex);
+        if (d < bestDx) {
+          bestDx = d;
+          nx = mx === x ? ex : ex - w;
+        }
+      }
+    }
+    for (const ey of edgesY(p)) {
+      for (const my of [y, y + h]) {
+        const d = Math.abs(my - ey);
+        if (d < bestDy) {
+          bestDy = d;
+          ny = my === y ? ey : ey - h;
+        }
+      }
+    }
+  }
+  if (bestDx <= edgeTol) x = nx;
+  if (bestDy <= edgeTol) y = ny;
+  return snapZone({ x, y, w, h }, gridSnap);
+}
+
+/** 缩放时边对齐到相邻房间 */
+export function snapResizeToPeers(
+  z: FloorZone,
+  handle: ResizeHandle,
+  peers: FloorZone[],
+  edgeTol = 0.025,
+): FloorZone {
+  let { x, y, w, h } = z;
+  const x1 = x + w;
+  const y1 = y + h;
+  for (const p of peers) {
+    if (p.id === z.id) continue;
+    const pe = [p.x, p.x + p.w];
+    const pf = [p.y, p.y + p.h];
+    if (handle.includes('w')) {
+      for (const ex of pe) {
+        if (Math.abs(x - ex) <= edgeTol) {
+          w = x1 - ex;
+          x = ex;
+        }
+      }
+    }
+    if (handle.includes('e')) {
+      for (const ex of pe) {
+        if (Math.abs(x1 - ex) <= edgeTol) w = ex - x;
+      }
+    }
+    if (handle.includes('n')) {
+      for (const ey of pf) {
+        if (Math.abs(y - ey) <= edgeTol) {
+          h = y1 - ey;
+          y = ey;
+        }
+      }
+    }
+    if (handle.includes('s')) {
+      for (const ey of pf) {
+        if (Math.abs(y1 - ey) <= edgeTol) h = ey - y;
+      }
+    }
+  }
+  return {
+    ...z,
+    x: clamp01(x),
+    y: clamp01(y),
+    w: Math.max(0.04, Math.min(w, 1 - clamp01(x))),
+    h: Math.max(0.04, Math.min(h, 1 - clamp01(y))),
+  };
+}
+
+export function cursorForHandle(h: ResizeHandle | null): string {
+  if (!h) return 'default';
+  if (h === 'n' || h === 's') return 'ns-resize';
+  if (h === 'e' || h === 'w') return 'ew-resize';
+  if (h === 'nw' || h === 'se') return 'nwse-resize';
+  return 'nesw-resize';
+}
+
+/** 选中后提到最上层，方便点选与拖拽 */
+export function bringZoneToFront(zones: FloorZone[], id: string): FloorZone[] {
+  const i = zones.findIndex((z) => z.id === id);
+  if (i < 0 || i === zones.length - 1) return zones;
+  const next = zones.slice();
+  const [z] = next.splice(i, 1);
+  next.push(z);
+  return next;
+}
+
+export function nudgeZone(
+  z: FloorZone,
+  dx: number,
+  dy: number,
+  snap: number,
+): FloorZone {
+  return { ...z, ...snapZone({ x: z.x + dx, y: z.y + dy, w: z.w, h: z.h }, snap) };
+}
+
+export function duplicateZone(z: FloorZone, snap = 0.02): FloorZone {
+  const offset = Math.max(snap * 2, 0.04);
+  return {
+    ...z,
+    id: `zone-${z.kind}-${Date.now().toString(36)}`,
+    ...snapZone({ x: z.x + offset, y: z.y + offset, w: z.w, h: z.h }, snap),
+    furniture: z.furniture ? [...z.furniture] : undefined,
+  };
 }
 
 export type CadHistoryEntry = {

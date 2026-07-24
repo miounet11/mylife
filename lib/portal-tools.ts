@@ -59,7 +59,8 @@ const CATEGORY_TOOLS: Record<ToolCategoryKey, PortalEntry[]> = {
   ],
   application: [
     { href: '/dimensions/timing-selection', title: '择时办事研判', description: '流日评分 + 宜忌日期清单。', cta: '开始研判' },
-    { href: '/dimensions/naming', title: '起名 / 改名研判', description: '姓名五行与用神补益评估。', cta: '开始研判' },
+    { href: '/tools/naming', title: '起名中心', description: '个人 / 公司 / 产品一键起名，用神·音义·传播感透明打分。', cta: '开始起名' },
+    { href: '/dimensions/naming', title: '起名 / 改名研判', description: '姓名五行与用神补益深度研判（绑定命盘）。', cta: '深度测名' },
     { href: '/dimensions/fortune-rhythm', title: '运势节奏研判', description: '当前阶段、转折点与行动窗口。', cta: '开始研判' },
     { href: '/events', title: '事件日历', description: '记录节点、应验反馈，校准下一轮判断。', cta: '记事件' },
     { href: '/chat', title: '结构追问', description: '绑定报告持续追问，锚定真值。', cta: '去追问' },

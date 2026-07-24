@@ -4,12 +4,16 @@ import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
+  buildFengshuiSpaceReport,
   buildProBriefText,
   buildProSessionExport,
   createDefaultLabState,
   DOMAIN_MODEL_META,
   downloadJson,
+  reportToPlainText,
   simulateSpaceField,
+  structuresFromZones,
+  type FengshuiSpaceReport,
   type SpaceLabState,
   type SpaceVent,
 } from '@/lib/fengshui/space';
@@ -63,6 +67,11 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
   const [publicUrl, setPublicUrl] = useState<string | null>(null);
   const [publishing, setPublishing] = useState(false);
+  const [beautifying, setBeautifying] = useState(false);
+  const [linkingBazi, setLinkingBazi] = useState(false);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [fullReport, setFullReport] = useState<FengshuiSpaceReport | null>(null);
+  const [showReport, setShowReport] = useState(false);
   const [memberInfo, setMemberInfo] = useState<{
     isMember: boolean;
     authenticated: boolean;
@@ -244,7 +253,148 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
     setBanner(`已注入区位：${place.address}`);
   };
 
+  const linkPrimaryBazi = async () => {
+    setLinkingBazi(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/fengshui/space/link-bazi');
+      const data = await res.json();
+      if (data.code === 'no_fortune') {
+        setError(data.error);
+        setBanner(null);
+        return;
+      }
+      if (!res.ok || !data.success || !data.profileLink) {
+        throw new Error(data.error || '关联失败');
+      }
+      patch((s) => ({ ...s, profileLink: data.profileLink }));
+      setBanner(data.message || '已关联主盘八字');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '关联八字失败');
+    } finally {
+      setLinkingBazi(false);
+    }
+  };
+
+  const runBeautify = async () => {
+    setBeautifying(true);
+    setError(null);
+    setBanner('AI 美化中…');
+    try {
+      const res = await fetch('/api/fengshui/space/beautify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state,
+          generateImage: true,
+          useLlm: true,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || '美化失败');
+      patch((s) => ({
+        ...s,
+        floorZones: data.zones,
+        structures:
+          data.structures ||
+          structuresFromZones(data.zones).map((st, i) => ({
+            ...st,
+            id: `bf-${i}`,
+          })),
+        beautifyImageDataUrl: data.beautifyImageDataUrl || s.beautifyImageDataUrl,
+        underlayDataUrl: data.beautifyImageDataUrl || s.underlayDataUrl,
+        underlayOpacity: data.beautifyImageDataUrl ? 0.55 : s.underlayOpacity,
+        cadEditMode: true,
+      }));
+      setBanner(data.message || '已美化');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '美化失败');
+      setBanner(null);
+    } finally {
+      setBeautifying(false);
+    }
+  };
+
+  const generateFullReport = async (andPublish = false) => {
+    setReportBusy(true);
+    setError(null);
+    try {
+      // client-side first for instant UI
+      const local = buildFengshuiSpaceReport(state, result, {
+        planSnapshotDataUrl: state.beautifyImageDataUrl || null,
+      });
+      setFullReport(local);
+      setShowReport(true);
+
+      const res = await fetch('/api/fengshui/space/full-report', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          state,
+          planSnapshotDataUrl: state.beautifyImageDataUrl || null,
+          persist: true,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.report) {
+        setFullReport(data.report as FengshuiSpaceReport);
+        setBanner(data.sessionId ? '完整报表已生成并保存' : '完整报表已生成');
+      }
+
+      if (andPublish) {
+        await publishFullReport(data.report || local);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '报表生成失败');
+    } finally {
+      setReportBusy(false);
+    }
+  };
+
+  const publishFullReport = async (report?: FengshuiSpaceReport) => {
+    const r = report || fullReport || buildFengshuiSpaceReport(state, result, {
+      planSnapshotDataUrl: state.beautifyImageDataUrl || null,
+      publicMode: true,
+    });
+    setPublishing(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/publish/insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceType: 'space_report',
+          useLlm: true,
+          model: 'grok-4.3-fast',
+          report: {
+            ...r,
+            // strip huge fields if any
+            planSnapshotDataUrl: undefined,
+          },
+          planSnapshotDataUrl: r.planSnapshotDataUrl || state.beautifyImageDataUrl || null,
+          layoutTitle: r.layout.title,
+          areaSqm: r.metrics.areaSqm,
+          geoAddress: state.geo?.address,
+          domain: state.activeDomain,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || '发布失败');
+      setPublicUrl(data.url);
+      setBanner(data.message || '已发布公开报表');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '发布失败');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const publishInsight = async () => {
+    // prefer full report public page when available
+    if (fullReport) {
+      await publishFullReport(fullReport);
+      return;
+    }
     setPublishing(true);
     setError(null);
     try {
@@ -372,10 +522,45 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
             <span className="max-w-[30vw] truncate text-[11px] text-red-600">{error}</span>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-1 text-[10px]">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 text-[10px]">
           <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 font-semibold text-[color:var(--ink-2)]">
             {DOMAIN_MODEL_META[state.activeDomain]?.label || '阳宅'}
           </span>
+          {state.profileLink ? (
+            <span
+              className="max-w-[8rem] truncate rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800"
+              title={`用神 ${state.profileLink.yongShen.join('、')}`}
+            >
+              八字·{state.profileLink.displayName || state.profileLink.dayMaster || '已关联'}
+            </span>
+          ) : (
+            <button
+              type="button"
+              disabled={linkingBazi}
+              onClick={() => void linkPrimaryBazi()}
+              className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 font-semibold text-emerald-800 disabled:opacity-40"
+              title="关联主盘做人宅合参"
+            >
+              {linkingBazi ? '关联中…' : '关联八字'}
+            </button>
+          )}
+          <button
+            type="button"
+            disabled={beautifying}
+            onClick={() => void runBeautify()}
+            className="rounded-md bg-indigo-600 px-2 py-1 font-semibold text-white disabled:opacity-40"
+            title="一键 AI 美化户型与彩平图"
+          >
+            {beautifying ? '美化中…' : '一键AI美化'}
+          </button>
+          <button
+            type="button"
+            disabled={reportBusy}
+            onClick={() => void generateFullReport(false)}
+            className="rounded-md bg-[color:var(--ink-1)] px-2 py-1 font-semibold text-white disabled:opacity-40"
+          >
+            {reportBusy ? '生成中…' : '完整报表'}
+          </button>
           <button
             type="button"
             onClick={() => patch((s) => ({ ...s, proMode: !s.proMode }))}
@@ -386,7 +571,7 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
             }`}
             title="专业模式：比例尺、完整读数、导出"
           >
-            {state.proMode ? 'PRO' : 'PRO'}
+            PRO
           </button>
           <button
             type="button"
@@ -398,7 +583,7 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
           <button
             type="button"
             onClick={exportProSession}
-            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
+            className="hidden rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)] sm:inline"
           >
             {copy.pro.exportJson}
           </button>
@@ -413,11 +598,28 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
           <button
             type="button"
             disabled={publishing}
-            onClick={() => void publishInsight()}
+            onClick={() => void (fullReport ? publishFullReport(fullReport) : generateFullReport(true))}
+            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)] disabled:opacity-40"
+            title="生成并公开发布完整报表，他人可查看"
+          >
+            {publishing ? '发布中…' : '公开发布'}
+          </button>
+          {publicUrl ? (
+            <a
+              href={publicUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="max-w-[7rem] truncate rounded-md bg-sky-50 px-2 py-1 font-semibold text-sky-800 underline"
+            >
+              公开链接
+            </a>
+          ) : null}
+          <Link
+            href="/tools/naming"
             className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
           >
-            {copy.pro.publish}
-          </button>
+            起名
+          </Link>
         </div>
       </header>
 
@@ -711,11 +913,115 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
               value={`${(result.summary.draftCorridor * 100).toFixed(0)}%`}
             />
             <div className="min-w-0 flex-[2] truncate px-2 py-1.5 text-white/55">
+              {state.profileLink
+                ? `人宅·用神 ${(state.profileLink.yongShen || []).join('、') || '—'} · `
+                : ''}
               {result.summary.structuralNotes[0] || result.summary.priorityActions[0] || '—'}
             </div>
           </div>
         </section>
       </div>
+
+      {/* 完整报表抽屉 */}
+      {showReport && fullReport ? (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
+          <div className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
+              <div>
+                <div className="text-[11px] font-semibold text-indigo-600">完整风水报表</div>
+                <h2 className="text-[15px] font-black text-slate-900">{fullReport.title}</h2>
+              </div>
+              <button
+                type="button"
+                className="rounded-md px-2 py-1 text-[12px] font-semibold text-slate-500 hover:bg-slate-100"
+                onClick={() => setShowReport(false)}
+              >
+                关闭
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
+              <p className="text-[13px] text-slate-600">{fullReport.summary}</p>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-[10px] text-slate-500">峰值</div>
+                  <div className="text-[16px] font-black">
+                    {(fullReport.metrics.peakEnergy * 100).toFixed(0)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-[10px] text-slate-500">均值</div>
+                  <div className="text-[16px] font-black">
+                    {(fullReport.metrics.avgEnergy * 100).toFixed(0)}
+                  </div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-[10px] text-slate-500">滞留</div>
+                  <div className="text-[16px] font-black">
+                    {(fullReport.metrics.stagnationRatio * 100).toFixed(0)}%
+                  </div>
+                </div>
+                <div className="rounded-lg bg-slate-50 p-2">
+                  <div className="text-[10px] text-slate-500">面积</div>
+                  <div className="text-[16px] font-black">
+                    {fullReport.metrics.areaSqm.toFixed(0)}㎡
+                  </div>
+                </div>
+              </div>
+              {fullReport.sections.map((sec) => (
+                <section key={sec.id}>
+                  <h3 className="text-[13px] font-bold text-slate-900">{sec.heading}</h3>
+                  <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-slate-600">
+                    {sec.body}
+                  </p>
+                </section>
+              ))}
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 px-4 py-3">
+              <button
+                type="button"
+                className="rounded-md bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white"
+                disabled={publishing}
+                onClick={() => void publishFullReport(fullReport)}
+              >
+                {publishing ? '发布中…' : '公开发布（他人可看）'}
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-[11px] font-semibold"
+                onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(reportToPlainText(fullReport));
+                    setBanner('报表全文已复制');
+                  } catch {
+                    setError('复制失败');
+                  }
+                }}
+              >
+                复制全文
+              </button>
+              <button
+                type="button"
+                className="rounded-md border border-slate-200 px-3 py-1.5 text-[11px] font-semibold"
+                onClick={() =>
+                  downloadJson(`fengshui-report-${Date.now()}.json`, fullReport)
+                }
+              >
+                下载 JSON
+              </button>
+              {publicUrl ? (
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-md bg-sky-50 px-3 py-1.5 text-[11px] font-semibold text-sky-800 underline"
+                >
+                  打开公开页
+                </a>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

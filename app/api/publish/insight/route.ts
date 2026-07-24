@@ -10,6 +10,8 @@ import { trackServerEvent } from '@/lib/analytics';
 import { redactRecord, redactText, redactAddress } from '@/lib/publish/privacy-redact';
 import {
   buildChatInsightDraft,
+  buildNamingInsightDraft,
+  buildSpaceFullReportDraft,
   buildSpaceInsightDraft,
   type PublicInsightDraft,
 } from '@/lib/publish/insight-from-session';
@@ -74,7 +76,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const sourceType = body?.sourceType === 'chat' ? 'chat' : body?.sourceType === 'tool' ? 'tool' : 'space_lab';
+    const rawSource = String(body?.sourceType || 'space_lab');
+    const sourceType =
+      rawSource === 'chat'
+        ? 'chat'
+        : rawSource === 'tool'
+          ? 'tool'
+          : rawSource === 'naming'
+            ? 'naming'
+            : rawSource === 'space_report'
+              ? 'space_report'
+              : 'space_lab';
     const useLlm = body?.useLlm !== false;
     const model = resolveModel(body?.model);
     const titleHint = typeof body?.title === 'string' ? body.title.trim().slice(0, 80) : '';
@@ -98,6 +110,58 @@ export async function POST(request: NextRequest) {
       draft = buildChatInsightDraft({
         topic: titleHint || String(body?.topic || '结构对话'),
         rawSummary: joined.slice(0, 4000),
+      });
+    } else if (sourceType === 'naming') {
+      const candidates = Array.isArray(body?.candidates) ? body.candidates : [];
+      draft = buildNamingInsightDraft({
+        mode:
+          body?.namingMode === 'company'
+            ? 'company'
+            : body?.namingMode === 'product'
+              ? 'product'
+              : 'person',
+        surnameOrBrand: body?.surnameOrBrand
+          ? redactText(String(body.surnameOrBrand)).slice(0, 20)
+          : undefined,
+        candidates: candidates.slice(0, 16).map((c: { name?: string; score?: number; reason?: string }) => ({
+          name: redactText(String(c.name || '')).slice(0, 24),
+          score: Number(c.score) || 0,
+          reason: c.reason ? redactText(String(c.reason)).slice(0, 80) : undefined,
+        })),
+        summary: body?.summary ? redactText(String(body.summary)) : undefined,
+      });
+    } else if (sourceType === 'space_report') {
+      const report = body?.report || {};
+      const sections = Array.isArray(report.sections)
+        ? report.sections.map((s: { heading?: string; body?: string }) => ({
+            heading: redactText(String(s.heading || '章节')).slice(0, 40),
+            body: redactText(String(s.body || '')).slice(0, 4000),
+          }))
+        : [];
+      const snap =
+        typeof body?.planSnapshotDataUrl === 'string' &&
+        body.planSnapshotDataUrl.startsWith('data:image')
+          ? String(body.planSnapshotDataUrl).slice(0, 450_000)
+          : typeof report.planSnapshotDataUrl === 'string'
+            ? String(report.planSnapshotDataUrl).slice(0, 450_000)
+            : null;
+      draft = buildSpaceFullReportDraft({
+        title: report.title ? redactText(String(report.title)) : undefined,
+        summary: report.summary ? redactText(String(report.summary)) : undefined,
+        sections,
+        metrics: report.metrics && typeof report.metrics === 'object' ? report.metrics : undefined,
+        layoutTitle: String(body?.layoutTitle || report.layout?.title || '空间观察'),
+        areaSqm: Number(body?.areaSqm || report.metrics?.areaSqm) || undefined,
+        geoAddressPublic: body?.geoAddress
+          ? redactAddress(String(body.geoAddress))
+          : report.geoPublic
+            ? redactAddress(String(report.geoPublic))
+            : null,
+        profileLinked: Boolean(report.profileLinked),
+        planSnapshotDataUrl: snap,
+        priorityActions: Array.isArray(report.priorityActions)
+          ? report.priorityActions.map((s: string) => redactText(s))
+          : [],
       });
     } else {
       const summary = body?.summary || {};
@@ -177,10 +241,22 @@ export async function POST(request: NextRequest) {
       publishedAt: new Date().toISOString(),
     };
 
+    const isSpaceReport = sourceType === 'space_report';
+    const isNaming = sourceType === 'naming';
+    const publicPath = isSpaceReport
+      ? `/share/space/${sessionId}`
+      : isNaming
+        ? `/share/naming/${sessionId}`
+        : `/share/insight/${sessionId}`;
+
     toolSessionOperations.create({
       id: sessionId,
       userId,
-      toolSlug: 'public-insight',
+      toolSlug: isSpaceReport
+        ? 'public-space-report'
+        : isNaming
+          ? 'public-naming'
+          : 'public-insight',
       status: 'completed',
       input: redactRecord({
         sourceType,
@@ -192,23 +268,31 @@ export async function POST(request: NextRequest) {
         public: true,
         sourceType,
         model: useLlm ? model : null,
-        toolTitle: '公开结构笔记',
+        toolTitle: isSpaceReport
+          ? '公开空间场报表'
+          : isNaming
+            ? '公开起名短名单'
+            : '公开结构笔记',
         category: 'insights',
       },
     });
 
     void trackServerEvent({
       eventName: 'public_insight_published',
-      page: '/share/insight',
+      page: publicPath,
       meta: { sessionId, sourceType, model },
     });
 
     return NextResponse.json({
       success: true,
       id: sessionId,
-      url: `/share/insight/${sessionId}`,
+      url: publicPath,
       article: draft,
-      message: '已生成脱敏公开笔记，可分享链接。',
+      message: isSpaceReport
+        ? '已发布完整空间场公开报表，他人可打开链接查看。'
+        : isNaming
+          ? '已发布起名短名单（已脱敏）。'
+          : '已生成脱敏公开笔记，可分享链接。',
     });
   } catch (error) {
     console.error('[publish/insight]', error);

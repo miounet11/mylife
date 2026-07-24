@@ -81,3 +81,23 @@ export {
   recomputeZoneAreas,
   type CadTool,
 } from './cad-ops';
+export {
+  buildBaziSpaceBridge,
+  mergeBridgeIntoActions,
+  profileLinkFromFortuneRow,
+  type BaziSpaceBridge,
+} from './bazi-space-bridge';
+export {
+  buildFengshuiSpaceReport,
+  reportToPlainText,
+  type FengshuiSpaceReport,
+  type FengshuiReportSection,
+} from './full-report';
+export {
+  heuristicBeautify,
+  validateLlmZones,
+  buildBeautifyImagePrompt,
+  buildBeautifyLlmSystemPrompt,
+  buildBeautifyLlmUserPrompt,
+  type BeautifyResult,
+} from './beautify';

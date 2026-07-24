@@ -74,7 +74,7 @@ const KEYWORD_RULES: Array<{ re: RegExp; dimensions: DimensionSlug[]; tools: str
   {
     re: /起名|改名|姓名|字义/,
     dimensions: ['naming'],
-    tools: [],
+    tools: ['/tools/naming'],
     intent: 'yearly',
   },
   {

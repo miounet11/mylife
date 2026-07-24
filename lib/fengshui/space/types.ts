@@ -151,6 +151,25 @@ export interface SpaceLabState {
   /** 最近加载的预设标题（导出用） */
   presetTitle?: string | null;
   presetId?: string | null;
+  /**
+   * 关联用户主盘八字（人宅合参）
+   * 不改变几何，只驱动建议与完整报表
+   */
+  profileLink?: SpaceProfileLink | null;
+  /** AI 美化后的彩平图 data URL（可叠加/替换 underlay） */
+  beautifyImageDataUrl?: string | null;
+}
+
+/** 空间场关联的用户八字摘要 */
+export interface SpaceProfileLink {
+  fortuneId: string;
+  birthSignature: string;
+  displayName?: string;
+  dayMaster?: string;
+  /** 用神 + 喜神 */
+  yongShen: string[];
+  jiShen: string[];
+  linkedAt: string;
 }
 
 export interface FieldGrids {

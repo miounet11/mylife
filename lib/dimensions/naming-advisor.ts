@@ -1,6 +1,7 @@
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { scoreNameAgainstYongShen } from './data/name-characters';
+import { scoreName } from '@/lib/naming';
 import { buildPrediction, formatDateOffset, section } from './shared';
 
 export function buildNamingReport(input: DimensionAdvisorInput): DimensionReport {
@@ -11,7 +12,28 @@ export function buildNamingReport(input: DimensionAdvisorInput): DimensionReport
   const favorable = [...(yongShen?.yongShen || []), ...(yongShen?.xiShen || [])];
   const unfavorable = yongShen?.jiShen || [];
   const displayName = `${input.name || ''}`.trim() || '（未填写）';
-  const scored = scoreNameAgainstYongShen(displayName, favorable, unfavorable);
+  // Prefer shared naming scorer; fallback to legacy table scorer
+  const rich =
+    displayName !== '（未填写）'
+      ? scoreName({
+          mode: 'person',
+          name: displayName,
+          yongShen: favorable,
+          jiShen: unfavorable,
+        })
+      : null;
+  const scored = rich
+    ? {
+        score: rich.score,
+        summary: rich.reason,
+        suggestions: [
+          `总分 ${rich.score}（五行 ${rich.breakdown.wuxing} · 音韵 ${rich.breakdown.phonology} · 字义 ${rich.breakdown.semantics}）`,
+          ...rich.elements.map((e) => `${e.char}→${e.element}`),
+          `宜补用神：${favorable.join('、') || '按引擎判定'}`,
+          '更多候选请打开 /tools/naming 起名中心一键生成',
+        ],
+      }
+    : scoreNameAgainstYongShen(displayName, favorable, unfavorable);
 
   const sections = [
     section('core', '核心结论', [scored.summary], scored.score >= 60 ? 'positive' : 'warning'),
