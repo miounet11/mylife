@@ -178,6 +178,26 @@ export function NamingResultView({ sessionId, result }: Props) {
                     </span>
                   ))}
                 </div>
+                {c.strokesSummary ? (
+                  <div className="mt-1 text-[10px] text-slate-400">康熙 {c.strokesSummary}</div>
+                ) : null}
+                {c.methods && c.methods.length > 0 ? (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {c.methods
+                      .slice()
+                      .sort((a, b) => b.score - a.score)
+                      .slice(0, 4)
+                      .map((m) => (
+                        <span
+                          key={m.id}
+                          className="rounded bg-indigo-50 px-1.5 py-0.5 text-[9px] font-semibold text-indigo-700"
+                          title={m.note}
+                        >
+                          {m.label} {m.score}
+                        </span>
+                      ))}
+                  </div>
+                ) : null}
                 <p className="mt-2 line-clamp-2 text-[12px] leading-relaxed text-slate-500">
                   {c.reason}
                 </p>

@@ -5,6 +5,7 @@ import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { generateId } from '@/lib/utils';
 import { trackServerEvent } from '@/lib/analytics';
 import { generateByMode, type NamingMode } from '@/lib/naming';
+import { resolveNamingBirthContext } from '@/lib/naming/birth-context';
 import {
   applyLlmOrder,
   enhanceNamingWithLlm,
@@ -19,8 +20,19 @@ export const runtime = 'nodejs';
 export const maxDuration = 90;
 
 function parseMode(raw: unknown): NamingMode {
-  if (raw === 'company' || raw === 'product' || raw === 'person') return raw;
+  if (raw === 'company' || raw === 'product' || raw === 'person' || raw === 'rename')
+    return raw;
   return 'person';
+}
+
+function splitWx(v: unknown): string[] {
+  if (Array.isArray(v)) return v.map(String).filter(Boolean);
+  if (typeof v === 'string')
+    return v
+      .split(/[,，、\s]+/)
+      .map((s) => s.trim())
+      .filter((x) => ['木', '火', '土', '金', '水'].includes(x));
+  return [];
 }
 
 export async function POST(request: NextRequest) {
@@ -29,22 +41,51 @@ export async function POST(request: NextRequest) {
     const mode = parseMode(body?.mode);
     const useLlm = body?.useLlm !== false;
 
+    const birthCtx = resolveNamingBirthContext({
+      birthDate: body?.birthDate ? String(body.birthDate) : undefined,
+      birthTime: body?.birthTime ? String(body.birthTime) : undefined,
+      birthPlace: body?.birthPlace ? String(body.birthPlace) : undefined,
+      gender: body?.gender ? String(body.gender) : undefined,
+      birthAccuracy: body?.birthAccuracy ? String(body.birthAccuracy) : 'approx',
+      yongShen: splitWx(body?.yongShen),
+      jiShen: splitWx(body?.jiShen),
+      dayMaster: body?.dayMaster ? String(body.dayMaster) : undefined,
+      fortuneId: body?.fortuneId ? String(body.fortuneId) : undefined,
+    });
+
+    // 个人/改名：必须有生辰或档案用神，才能正确匹配
+    if ((mode === 'person' || mode === 'rename') && birthCtx.source === 'none') {
+      return NextResponse.json(
+        {
+          success: false,
+          code: 'birth_required',
+          error:
+            '请填写出生年月日（时辰可选），或勾选已有生辰档案，以便按八字用神与天时匹配起名。',
+        },
+        { status: 400 },
+      );
+    }
+
     // Generate more engine candidates; LLM may reorder/trim
-    const engineBody = { ...body, count: Math.min(36, Number(body?.count) || 24) };
+    const engineBody = {
+      ...body,
+      count: Math.min(36, Number(body?.count) || 24),
+      yongShen: birthCtx.yongShen.length ? birthCtx.yongShen : splitWx(body?.yongShen),
+      jiShen: birthCtx.jiShen.length ? birthCtx.jiShen : splitWx(body?.jiShen),
+      dayMaster: birthCtx.dayMaster || body?.dayMaster,
+      birthDate: birthCtx.birthDate || body?.birthDate,
+      birthTime: birthCtx.birthTime || body?.birthTime,
+      birthPlace: birthCtx.birthPlace || body?.birthPlace,
+      enableWuge: body?.enableWuge !== false,
+    };
     const engine = generateByMode(mode, engineBody);
 
     const sessionInput: NamingSessionInput = {
       mode,
       surname: body?.surname ? String(body.surname).slice(0, 4) : undefined,
       gender: body?.gender ? String(body.gender) : undefined,
-      yongShen: Array.isArray(body?.yongShen)
-        ? body.yongShen.map(String)
-        : typeof body?.yongShen === 'string'
-          ? String(body.yongShen)
-              .split(/[,，、\s]+/)
-              .filter(Boolean)
-          : undefined,
-      jiShen: Array.isArray(body?.jiShen) ? body.jiShen.map(String) : undefined,
+      yongShen: engineBody.yongShen as string[],
+      jiShen: engineBody.jiShen as string[],
       generationChar: body?.generationChar
         ? String(body.generationChar).slice(0, 1)
         : undefined,
@@ -63,7 +104,7 @@ export async function POST(request: NextRequest) {
       preferredLength: Number(body?.preferredLength) || undefined,
       category: body?.category ? String(body.category).slice(0, 40) : undefined,
       style: body?.style ? String(body.style) : undefined,
-      enableWuge: body?.enableWuge === true,
+      enableWuge: body?.enableWuge !== false,
       productKeywords: Array.isArray(body?.productKeywords)
         ? body.productKeywords.map(String)
         : undefined,
@@ -71,6 +112,13 @@ export async function POST(request: NextRequest) {
 
     const context = {
       ...sessionInput,
+      birthDate: birthCtx.birthDate,
+      birthTime: birthCtx.birthTime,
+      birthPlace: birthCtx.birthPlace,
+      dayMaster: birthCtx.dayMaster,
+      birthNote: birthCtx.note,
+      wish: body?.wish ? String(body.wish).slice(0, 120) : undefined,
+      poetryHint: body?.poetryHint ? String(body.poetryHint).slice(0, 80) : undefined,
       topScores: engine.candidates.slice(0, 5).map((c) => ({
         name: c.fullName || c.name,
         score: c.score,

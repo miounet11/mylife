@@ -1,4 +1,4 @@
-export type NamingMode = 'person' | 'company' | 'product';
+export type NamingMode = 'person' | 'company' | 'product' | 'rename';
 
 export type Gender = 'male' | 'female' | 'neutral';
 
@@ -26,6 +26,10 @@ export type NameCandidate = {
   jurisdiction?: string;
   entityForm?: string;
   patternLabel?: string;
+  /** 康熙笔画 + 多维方法分 */
+  charBreakdown?: string[];
+  methods?: Array<{ id: string; label: string; score: number; note: string }>;
+  strokesSummary?: string;
 };
 
 export type PersonGenerateInput = {
@@ -34,10 +38,22 @@ export type PersonGenerateInput = {
   yongShen?: string[];
   jiShen?: string[];
   generationChar?: string;
+  /** 固定字位置 middle | end */
+  fixedCharPos?: 'middle' | 'end';
   tabooChars?: string[];
   style?: 'classic' | 'modern' | 'literary';
+  /** 两字名 | 三字名（含姓）偏好 */
+  nameLength?: 'any' | '2' | '3';
+  wish?: string;
+  poetryHint?: string;
+  birthDate?: string;
+  birthTime?: string;
+  birthPlace?: string;
+  dayMaster?: string;
   count?: number;
   enableWuge?: boolean;
+  /** 改名：原名 */
+  originalName?: string;
 };
 
 export type CompanyGenerateInput = {
@@ -53,6 +69,13 @@ export type CompanyGenerateInput = {
   entityForm?: string;
   preferredLength?: 2 | 3 | 4;
   yongShen?: string[];
+  jiShen?: string[];
+  /** 法人/主事人生辰 */
+  birthDate?: string;
+  birthTime?: string;
+  birthPlace?: string;
+  dayMaster?: string;
+  wish?: string;
   count?: number;
   enableWuge?: boolean;
 };
@@ -63,6 +86,15 @@ export type ProductGenerateInput = {
   style?: 'steady' | 'tech' | 'guofeng' | 'global';
   count?: number;
   bilingual?: boolean;
+  /** 创始人/主理人生辰与用神 */
+  yongShen?: string[];
+  jiShen?: string[];
+  birthDate?: string;
+  birthTime?: string;
+  birthPlace?: string;
+  dayMaster?: string;
+  region?: string;
+  wish?: string;
 };
 
 export type NamingGenerateResult = {

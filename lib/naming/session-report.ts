@@ -35,6 +35,7 @@ export type NamingSessionResult = {
 
 export function namingSessionTitle(mode: NamingMode, input: NamingSessionInput): string {
   if (mode === 'person') return `个人起名方案 · ${input.surname || '—'}姓`;
+  if (mode === 'rename') return `改名方案 · ${input.surname || '—'}`;
   if (mode === 'company')
     return `公司起名方案 · ${input.industry || '综合'}${(input.keywords || [])[0] ? ` · ${input.keywords![0]}` : ''}`;
   return `产品起名方案 · ${input.category || '产品'}`;

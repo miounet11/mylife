@@ -5,6 +5,8 @@ import {
   type CompanyEntityForm,
   type CompanyJurisdiction,
 } from './company-entity';
+import { analyzeNameChars, computeWuge } from './kangxi-engine';
+import { attachMethodsToCandidate, type MultiDimContext } from './methods';
 import { scoreName } from './score';
 import type {
   CompanyGenerateInput,
@@ -17,7 +19,7 @@ import type {
 } from './types';
 
 const DISCLAIMER =
-  '起名结果为文化、音韵与结构参考，不构成命运承诺或法律意见。公司/产品名请核验工商注册与商标。';
+  '起名结果为文化、音韵、康熙笔画与结构参考，不构成命运承诺或法律意见。公司/产品名请核验工商注册与商标。五格为传统数理参考。';
 
 export function generatePersonNames(input: PersonGenerateInput): NamingGenerateResult {
   const surname = (input.surname || '李').trim().slice(0, 2) || '李';
@@ -26,52 +28,89 @@ export function generatePersonNames(input: PersonGenerateInput): NamingGenerateR
   const pool = listGivenNamePool(input.gender, yong);
   const taboo = new Set([...(input.tabooChars || []), ...surname]);
   const gen = input.generationChar?.trim().slice(0, 1);
+  const fixedPos = input.fixedCharPos || 'middle';
+  const nameLen = input.nameLength || 'any';
 
   const combos: string[] = [];
-  // single char
-  for (const a of pool.slice(0, 40)) {
-    if (taboo.has(a.char)) continue;
-    if (gen) combos.push(gen + a.char);
-    else combos.push(a.char);
+  // single char given → 两字全名
+  if (nameLen === 'any' || nameLen === '2') {
+    for (const a of pool.slice(0, 40)) {
+      if (taboo.has(a.char)) continue;
+      if (gen && fixedPos === 'end') combos.push(a.char + gen);
+      else if (gen && fixedPos === 'middle') combos.push(gen + a.char);
+      else if (!gen) combos.push(a.char);
+    }
   }
-  // double char
-  const top = pool.slice(0, 28);
-  for (let i = 0; i < top.length; i++) {
-    for (let j = 0; j < top.length; j++) {
-      if (i === j) continue;
-      const a = top[i].char;
-      const b = top[j].char;
-      if (taboo.has(a) || taboo.has(b)) continue;
-      if (gen) combos.push(gen + b);
-      else combos.push(a + b);
+  // double char given → 三字全名
+  if (nameLen === 'any' || nameLen === '3') {
+    const top = pool.slice(0, 28);
+    for (let i = 0; i < top.length; i++) {
+      for (let j = 0; j < top.length; j++) {
+        if (i === j) continue;
+        const a = top[i].char;
+        const b = top[j].char;
+        if (taboo.has(a) || taboo.has(b)) continue;
+        if (gen && fixedPos === 'middle') combos.push(gen + b);
+        else if (gen && fixedPos === 'end') combos.push(a + gen);
+        else combos.push(a + b);
+      }
     }
   }
 
-  const uniq = [...new Set(combos)].slice(0, 200);
+  const uniq = [...new Set(combos)].slice(0, 220);
+  const dimCtx: MultiDimContext = {
+    mode: input.originalName ? 'rename' : 'person',
+    surname,
+    gender: input.gender,
+    yongShen: input.yongShen,
+    jiShen: input.jiShen,
+    birthDate: input.birthDate,
+    birthTime: input.birthTime,
+    birthPlace: input.birthPlace,
+    dayMaster: input.dayMaster,
+    wish: input.wish,
+    poetryHint: input.poetryHint,
+  };
+
   const scored = uniq
-    .map((given) =>
-      scoreName({
+    .map((given) => {
+      const base = scoreName({
         mode: 'person',
         name: given,
         surname,
         yongShen: input.yongShen,
         jiShen: input.jiShen,
-        enableWuge: input.enableWuge,
-      }),
-    )
-    .map((c) => ({
-      ...c,
-      styleTags: styleTagsFor(c, input.style),
-    }))
+        enableWuge: true,
+      });
+      const enriched = attachMethodsToCandidate(base, dimCtx);
+      const wuge = computeWuge(surname, given);
+      const chars = analyzeNameChars(given);
+      return {
+        ...enriched,
+        styleTags: styleTagsFor(enriched, input.style),
+        strokesSummary: chars.map((c) => `${c.char}${c.strokes}画`).join(' '),
+        breakdown: {
+          ...enriched.breakdown,
+          wuge: wuge.score,
+        },
+      };
+    })
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
 
   return {
-    mode: 'person',
+    mode: input.originalName ? 'rename' : 'person',
     generatedAt: new Date().toISOString(),
     candidates: scored,
     disclaimer: DISCLAIMER,
-    meta: { surname, gender: input.gender, yongShen: input.yongShen },
+    meta: {
+      surname,
+      gender: input.gender,
+      yongShen: input.yongShen,
+      birthDate: input.birthDate,
+      originalName: input.originalName,
+      methods: ['用神补益', '三才五格', '康熙笔画', '音韵', '诗词', '天时地利人和'],
+    },
   };
 }
 
@@ -104,6 +143,19 @@ export function generateCompanyNames(input: CompanyGenerateInput): NamingGenerat
       .filter(Boolean),
   );
 
+  const dimCtx: MultiDimContext = {
+    mode: 'company',
+    yongShen: input.yongShen,
+    jiShen: input.jiShen,
+    birthDate: input.birthDate,
+    birthTime: input.birthTime,
+    birthPlace: input.birthPlace || input.region,
+    dayMaster: input.dayMaster,
+    industry: input.industry,
+    region: input.region,
+    wish: input.wish,
+  };
+
   const scored: NameCandidate[] = patterns
     .map((p) => {
       // 打分用字号核心，展示用全称
@@ -125,7 +177,7 @@ export function generateCompanyNames(input: CompanyGenerateInput): NamingGenerat
       if (userCores.has(p.brandCore) || [...userCores].some((u) => p.fullName.includes(u))) {
         score = Math.min(98, score + 18);
       }
-      return {
+      const draft: NameCandidate = {
         ...base,
         name: p.brandCore,
         fullName: p.fullName,
@@ -150,7 +202,21 @@ export function generateCompanyNames(input: CompanyGenerateInput): NamingGenerat
         jurisdiction: p.jurisdiction,
         entityForm: p.entityForm,
         patternLabel: p.patternLabel,
-      } satisfies NameCandidate;
+      };
+      const enriched = attachMethodsToCandidate(draft, dimCtx);
+      const chars = analyzeNameChars(p.brandCore);
+      let finalScore = enriched.score;
+      if (userCores.has(p.brandCore) || [...userCores].some((u) => p.fullName.includes(u))) {
+        finalScore = Math.min(98, finalScore + 12);
+      }
+      if (/有限公司|Limited|LLC|Inc\./.test(p.fullName)) {
+        finalScore = Math.min(98, finalScore + 4);
+      }
+      return {
+        ...enriched,
+        score: finalScore,
+        strokesSummary: chars.map((c) => `${c.char}${c.strokes}画`).join(' '),
+      };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -188,16 +254,40 @@ export function generateProductNames(input: ProductGenerateInput): NamingGenerat
     }
   }
 
+  const dimCtx: MultiDimContext = {
+    mode: 'product',
+    yongShen: input.yongShen,
+    jiShen: input.jiShen,
+    birthDate: input.birthDate,
+    birthTime: input.birthTime,
+    birthPlace: input.birthPlace || input.region,
+    dayMaster: input.dayMaster,
+    category: input.category,
+    region: input.region,
+    wish: input.wish,
+  };
+
   const scored = [...new Set(combos)]
     .map((name) => {
-      const base = scoreName({ mode: 'product', name, industry: input.category });
+      const base = scoreName({
+        mode: 'product',
+        name,
+        industry: input.category,
+        yongShen: input.yongShen,
+      });
       const eng = input.bilingual ? toRoughPinyinBrand(name) : undefined;
-      return {
+      const draft: NameCandidate = {
         ...base,
         english: eng,
         styleTags: [style, input.category || 'product'].filter(Boolean) as string[],
         reason: `${base.reason} · 风格 ${styleLabel(style)}`,
-      } satisfies NameCandidate;
+      };
+      const enriched = attachMethodsToCandidate(draft, dimCtx);
+      const chars = analyzeNameChars(name);
+      return {
+        ...enriched,
+        strokesSummary: chars.map((c) => `${c.char}${c.strokes}画`).join(' '),
+      };
     })
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
@@ -207,7 +297,7 @@ export function generateProductNames(input: ProductGenerateInput): NamingGenerat
     generatedAt: new Date().toISOString(),
     candidates: scored,
     disclaimer: DISCLAIMER,
-    meta: { category: input.category, style, keywords: kws },
+    meta: { category: input.category, style, keywords: kws, birthDate: input.birthDate },
   };
 }
 
@@ -215,6 +305,29 @@ export function generateByMode(
   mode: NamingMode,
   body: Record<string, unknown>,
 ): NamingGenerateResult {
+  if (mode === 'rename') {
+    return generatePersonNames({
+      surname: str(body.surname) || '李',
+      gender: (body.gender as PersonGenerateInput['gender']) || 'neutral',
+      yongShen: arr(body.yongShen),
+      jiShen: arr(body.jiShen),
+      generationChar: str(body.generationChar),
+      fixedCharPos: body.fixedCharPos === 'end' ? 'end' : 'middle',
+      tabooChars: arr(body.tabooChars),
+      style: (body.style as PersonGenerateInput['style']) || 'modern',
+      nameLength:
+        body.nameLength === '2' || body.nameLength === '3' ? body.nameLength : 'any',
+      wish: str(body.wish),
+      poetryHint: str(body.poetryHint),
+      birthDate: str(body.birthDate),
+      birthTime: str(body.birthTime),
+      birthPlace: str(body.birthPlace),
+      dayMaster: str(body.dayMaster),
+      originalName: str(body.originalName) || '（原名）',
+      count: num(body.count),
+      enableWuge: body.enableWuge !== false,
+    });
+  }
   if (mode === 'company') {
     return generateCompanyNames({
       industry: str(body.industry),
@@ -225,6 +338,12 @@ export function generateByMode(
       entityForm: str(body.entityForm) || 'co_ltd',
       preferredLength: (Number(body.preferredLength) as 2 | 3 | 4) || 2,
       yongShen: arr(body.yongShen),
+      jiShen: arr(body.jiShen),
+      birthDate: str(body.birthDate),
+      birthTime: str(body.birthTime),
+      birthPlace: str(body.birthPlace),
+      dayMaster: str(body.dayMaster),
+      wish: str(body.wish),
       count: num(body.count),
       enableWuge: body.enableWuge === true,
     });
@@ -236,6 +355,14 @@ export function generateByMode(
       style: (body.style as ProductGenerateInput['style']) || 'steady',
       count: num(body.count),
       bilingual: body.bilingual !== false,
+      yongShen: arr(body.yongShen),
+      jiShen: arr(body.jiShen),
+      birthDate: str(body.birthDate),
+      birthTime: str(body.birthTime),
+      birthPlace: str(body.birthPlace),
+      dayMaster: str(body.dayMaster),
+      region: str(body.region),
+      wish: str(body.wish),
     });
   }
   return generatePersonNames({
@@ -244,10 +371,20 @@ export function generateByMode(
     yongShen: arr(body.yongShen),
     jiShen: arr(body.jiShen),
     generationChar: str(body.generationChar),
+    fixedCharPos: body.fixedCharPos === 'end' ? 'end' : 'middle',
     tabooChars: arr(body.tabooChars),
     style: (body.style as PersonGenerateInput['style']) || 'modern',
+    nameLength:
+      body.nameLength === '2' || body.nameLength === '3' ? body.nameLength : 'any',
+    wish: str(body.wish),
+    poetryHint: str(body.poetryHint),
+    birthDate: str(body.birthDate),
+    birthTime: str(body.birthTime),
+    birthPlace: str(body.birthPlace),
+    dayMaster: str(body.dayMaster),
+    originalName: str(body.originalName),
     count: num(body.count),
-    enableWuge: body.enableWuge === true,
+    enableWuge: body.enableWuge !== false,
   });
 }
 

@@ -31,3 +31,17 @@ export {
   type CompanyJurisdiction,
   type CompanyEntityForm,
 } from './company-entity';
+export {
+  analyzeCharFull,
+  analyzeNameChars,
+  computeWuge,
+  formatCharBreakdown,
+  kangxiStrokes,
+} from './kangxi-engine';
+export {
+  scoreMethods,
+  attachMethodsToCandidate,
+  POETRY_CHIPS,
+  METHOD_LABELS,
+} from './methods';
+export { resolveNamingBirthContext } from './birth-context';
