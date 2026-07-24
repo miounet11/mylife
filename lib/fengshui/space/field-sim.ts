@@ -124,25 +124,26 @@ function injectLight(
 }
 
 function diffuse(grid: Float32Array, w: number, h: number, steps: number, rate: number) {
-  let a = grid;
-  let b = new Float32Array(grid.length);
+  const a = new Float32Array(grid);
+  const b = new Float32Array(grid.length);
+  let useA = true;
   for (let s = 0; s < steps; s++) {
+    const src = useA ? a : b;
+    const dst = useA ? b : a;
     for (let y = 0; y < h; y++) {
       for (let x = 0; x < w; x++) {
         const i = idx(x, y, w);
-        const c = a[i];
-        const l = x > 0 ? a[i - 1] : c;
-        const r = x < w - 1 ? a[i + 1] : c;
-        const u = y > 0 ? a[i - w] : c;
-        const d = y < h - 1 ? a[i + w] : c;
-        b[i] = c * (1 - rate) + ((l + r + u + d) / 4) * rate;
+        const c = src[i];
+        const l = x > 0 ? src[i - 1] : c;
+        const r = x < w - 1 ? src[i + 1] : c;
+        const u = y > 0 ? src[i - w] : c;
+        const d = y < h - 1 ? src[i + w] : c;
+        dst[i] = c * (1 - rate) + ((l + r + u + d) / 4) * rate;
       }
     }
-    const t = a;
-    a = b;
-    b = t;
+    useA = !useA;
   }
-  if (a !== grid) grid.set(a);
+  grid.set(useA ? a : b);
 }
 
 function normalizePositive(grid: Float32Array) {

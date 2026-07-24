@@ -1,5 +1,6 @@
 'use client';
 
+import type React from 'react';
 import type { FieldLayer, SpaceLabState, SpaceVent } from '@/lib/fengshui/space';
 import { azimuthToFacingLabel } from '@/lib/fengshui/space';
 
@@ -23,6 +24,8 @@ type Props = {
   onClearUnderlay: () => void;
   viewMode: 'plan' | 'iso';
   onViewMode: (m: 'plan' | 'iso') => void;
+  /** optional override for view mode buttons (e.g. include Three.js) */
+  extraViewModes?: React.ReactNode;
 };
 
 export function SpaceControlPanel({
@@ -36,6 +39,7 @@ export function SpaceControlPanel({
   onClearUnderlay,
   viewMode,
   onViewMode,
+  extraViewModes,
 }: Props) {
   const vent = state.vents.find((v) => v.id === selectedVentId) || state.vents[0];
 
@@ -99,26 +103,28 @@ export function SpaceControlPanel({
         ))}
       </div>
 
-      <div className="flex gap-2">
-        <button
-          type="button"
-          onClick={() => onViewMode('plan')}
-          className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
-            viewMode === 'plan' ? 'bg-white text-black' : 'bg-white/10'
-          }`}
-        >
-          平面热力
-        </button>
-        <button
-          type="button"
-          onClick={() => onViewMode('iso')}
-          className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
-            viewMode === 'iso' ? 'bg-white text-black' : 'bg-white/10'
-          }`}
-        >
-          立体示意
-        </button>
-      </div>
+      {extraViewModes || (
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onViewMode('plan')}
+            className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
+              viewMode === 'plan' ? 'bg-white text-black' : 'bg-white/10'
+            }`}
+          >
+            平面热力
+          </button>
+          <button
+            type="button"
+            onClick={() => onViewMode('iso')}
+            className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
+              viewMode === 'iso' ? 'bg-white text-black' : 'bg-white/10'
+            }`}
+          >
+            立体示意
+          </button>
+        </div>
+      )}
 
       {/* Upload */}
       <section className="space-y-2 rounded-lg border border-white/10 bg-black/20 p-2.5">

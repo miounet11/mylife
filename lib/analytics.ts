@@ -111,7 +111,10 @@ export type AnalyticsEventName =
   | 'portal_rail_clicked'
   | 'predictions_page_viewed'
   | 'hehun_workspace_viewed'
-  | 'expert_crm_page_viewed';
+  | 'expert_crm_page_viewed'
+  | 'fengshui_space_lab_viewed'
+  | 'fengshui_opening_suggest'
+  | 'fengshui_space_saved';
 
 interface TrackEventInput {
   userId?: string | null;

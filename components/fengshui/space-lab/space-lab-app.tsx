@@ -1,21 +1,53 @@
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   createDefaultLabState,
   simulateSpaceField,
   type SpaceLabState,
+  type SpaceVent,
 } from '@/lib/fengshui/space';
+import {
+  openingsToVents,
+  type SuggestedOpening,
+} from '@/lib/fengshui/space/opening-suggest';
 import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { SpaceCompassPanel } from './space-compass-panel';
 
+const SpaceViewport3D = dynamic(
+  () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full items-center justify-center bg-[#0b0e14] text-[13px] text-white/50">
+        加载 Three.js 三维场景…
+      </div>
+    ),
+  },
+);
+
+type ViewMode = 'plan' | 'iso' | 'three';
+
 export function SpaceLabApp() {
   const [state, setState] = useState<SpaceLabState>(() => createDefaultLabState());
   const [selectedVentId, setSelectedVentId] = useState<string | null>('vent-in-1');
-  const [viewMode, setViewMode] = useState<'plan' | 'iso'>('plan');
+  const [viewMode, setViewMode] = useState<ViewMode>('three');
   const [tick, setTick] = useState(0);
+  const [suggesting, setSuggesting] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [banner, setBanner] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [openings, setOpenings] = useState<SuggestedOpening[]>([]);
+  const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [memberInfo, setMemberInfo] = useState<{
+    isMember: boolean;
+    authenticated: boolean;
+    used: number;
+    freeLimit: number;
+  } | null>(null);
 
   const patch = useCallback((fn: (s: SpaceLabState) => SpaceLabState) => {
     setState((s) => fn(s));
@@ -27,33 +59,132 @@ export function SpaceLabApp() {
   const windOn = state.vents.some((v) => v.enabled);
   const nineOn = state.time.nineStarEnabled;
 
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/fengshui/space/save');
+        const data = await res.json();
+        if (data?.success) {
+          setMemberInfo({
+            isMember: Boolean(data.isMember),
+            authenticated: Boolean(data.authenticated),
+            used: Number(data.used) || 0,
+            freeLimit: Number(data.freeLimit) || 3,
+          });
+        }
+      } catch {
+        // ignore
+      }
+    })();
+  }, [lastSessionId]);
+
+  const runOpeningSuggest = async (dataUrl: string, facing: string) => {
+    setSuggesting(true);
+    setError(null);
+    setBanner('正在用多模态识别门窗位…');
+    try {
+      const res = await fetch('/api/fengshui/space/suggest-openings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageDataUrl: dataUrl, entranceFacing: facing }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '门窗建议失败');
+      }
+      const list = (data.openings || []) as SuggestedOpening[];
+      setOpenings(list);
+      const vents: SpaceVent[] = openingsToVents(list);
+      patch((s) => ({ ...s, vents }));
+      if (vents[0]) setSelectedVentId(vents[0].id);
+      setBanner(
+        `${data.message || '已生成门窗建议'}（模式：${data.mode === 'vision' ? '多模态视觉' : '启发式'}）`,
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '门窗建议失败');
+      setBanner(null);
+    } finally {
+      setSuggesting(false);
+    }
+  };
+
   const onUpload = (file: File) => {
     if (!file.type.startsWith('image/')) return;
     if (file.size > 8 * 1024 * 1024) {
-      alert('图片请小于 8MB');
+      setError('图片请小于 8MB');
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       const url = String(reader.result || '');
       patch((s) => ({ ...s, underlayDataUrl: url }));
+      void runOpeningSuggest(url, state.room.entranceFacing);
     };
     reader.readAsDataURL(file);
   };
 
+  const saveSession = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/fengshui/space/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          summary: result.summary,
+          meta: result.meta,
+          room: state.room,
+          vents: state.vents,
+          lights: state.lights,
+          structures: state.structures,
+          openings,
+          note: openings.length
+            ? `含门窗建议 ${openings.length} 处 · 层 ${state.activeLayer}`
+            : `空间场快照 · 层 ${state.activeLayer}`,
+        }),
+      });
+      const data = await res.json();
+      if (res.status === 403 && data.code === 'member_required') {
+        setError(data.error);
+        setBanner(null);
+        return;
+      }
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || '保存失败');
+      }
+      setLastSessionId(data.sessionId);
+      setBanner(data.message || '已保存');
+      if (data.remaining != null) {
+        setMemberInfo((m) =>
+          m
+            ? { ...m, used: data.used, isMember: data.isMember }
+            : {
+                isMember: data.isMember,
+                authenticated: true,
+                used: data.used,
+                freeLimit: data.freeLimit || 3,
+              },
+        );
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '保存失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      {/* Hero strip */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--brand-strong)]">
-            Space Field Lab
+            Space Field Lab Pro
           </p>
           <h1 className="mt-1 text-[22px] font-black tracking-tight text-[color:var(--ink-1)] md:text-[26px]">
             空间场模拟工作台
           </h1>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[color:var(--ink-4)]">
-            热力 · 立体示意 · 风口/采光控制 · 时辰九星叠加 · 户型图底板。结构近似可视化，不说吉凶标签。
+            多模态门窗建议 · Three.js 真 3D 墙体与体积雾 · 热力四层 · 结果存档与会员权益。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-[12px]">
@@ -67,12 +198,97 @@ export function SpaceLabApp() {
             href="/chat?intent=home-layout-diagnosis"
             className="rounded-full border border-[color:var(--hairline)] px-3 py-1.5 text-[color:var(--ink-2)] hover:bg-[color:var(--bg-sunken)]"
           >
-            AI 户型诊断
+            AI 户型深聊
+          </Link>
+          <Link
+            href="/membership?source=fengshui_space"
+            className="rounded-full border border-[color:var(--brand)]/30 bg-[color:var(--brand-soft)] px-3 py-1.5 font-semibold text-[color:var(--brand-strong)]"
+          >
+            会员权益
           </Link>
         </div>
       </div>
 
-      {/* Main stage */}
+      {/* status / membership strip */}
+      <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2 text-[12px]">
+        <span className="font-semibold text-[color:var(--ink-2)]">
+          {memberInfo?.isMember ? '会员 · 无限存档' : `免费存档 ${memberInfo?.used ?? 0}/${memberInfo?.freeLimit ?? 3}`}
+        </span>
+        <span className="text-[color:var(--ink-5)]">·</span>
+        <span className="text-[color:var(--ink-4)]">
+          上传平面图后自动建议门窗；可拖动微调再保存 tool_session
+        </span>
+        <div className="ml-auto flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={suggesting || !state.underlayDataUrl}
+            onClick={() =>
+              state.underlayDataUrl &&
+              void runOpeningSuggest(state.underlayDataUrl, state.room.entranceFacing)
+            }
+            className="rounded-lg bg-[color:var(--ink-1)] px-3 py-1.5 font-semibold text-white disabled:opacity-40"
+          >
+            {suggesting ? '识别中…' : '重新识别门窗'}
+          </button>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void saveSession()}
+            className="rounded-lg border border-[color:var(--brand)] bg-[color:var(--brand-soft)] px-3 py-1.5 font-semibold text-[color:var(--brand-strong)] disabled:opacity-40"
+          >
+            {saving ? '保存中…' : '保存结果'}
+          </button>
+          {lastSessionId ? (
+            <Link
+              href={`/tool-result/${lastSessionId}`}
+              className="rounded-lg border border-[color:var(--hairline)] px-3 py-1.5 text-[color:var(--ink-2)]"
+            >
+              查看存档
+            </Link>
+          ) : null}
+        </div>
+      </div>
+
+      {banner ? (
+        <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-800">
+          {banner}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-lg border border-red-400/40 bg-red-50 px-3 py-2 text-[12px] text-red-700">
+          {error}{' '}
+          {error.includes('会员') ? (
+            <Link href="/membership?source=fengshui_space_save" className="font-semibold underline">
+              去开通
+            </Link>
+          ) : null}
+        </div>
+      ) : null}
+
+      {openings.length > 0 ? (
+        <div className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">
+            多模态门窗建议
+          </div>
+          <ul className="mt-2 grid gap-2 md:grid-cols-3">
+            {openings.map((o, i) => (
+              <li
+                key={`${o.label}-${i}`}
+                className="rounded-lg border border-[color:var(--hairline)] bg-[color:var(--paper)] p-2 text-[12px]"
+              >
+                <div className="font-semibold text-[color:var(--ink-1)]">
+                  {o.label}{' '}
+                  <span className="text-[10px] font-normal text-[color:var(--ink-5)]">
+                    {o.kind === 'inlet' ? '进风' : '出风'} · 置信 {(o.confidence * 100).toFixed(0)}%
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--ink-4)]">{o.reason}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="grid gap-3 lg:grid-cols-[300px_minmax(0,1fr)_240px]">
         <div className="order-2 max-h-[78vh] lg:order-1">
           <SpaceControlPanel
@@ -83,21 +299,63 @@ export function SpaceLabApp() {
             onPatch={patch}
             onSelectVent={setSelectedVentId}
             onUpload={onUpload}
-            onClearUnderlay={() => patch((s) => ({ ...s, underlayDataUrl: null }))}
-            viewMode={viewMode}
-            onViewMode={setViewMode}
+            onClearUnderlay={() => {
+              patch((s) => ({ ...s, underlayDataUrl: null }));
+              setOpenings([]);
+            }}
+            viewMode={viewMode === 'three' ? 'plan' : viewMode}
+            onViewMode={(m) => setViewMode(m)}
+            extraViewModes={
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setViewMode('plan')}
+                  className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
+                    viewMode === 'plan' ? 'bg-white text-black' : 'bg-white/10'
+                  }`}
+                >
+                  平面热力
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('iso')}
+                  className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
+                    viewMode === 'iso' ? 'bg-white text-black' : 'bg-white/10'
+                  }`}
+                >
+                  等距示意
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('three')}
+                  className={`flex-1 rounded-lg py-1.5 text-[11px] font-semibold ${
+                    viewMode === 'three' ? 'bg-amber-400 text-black' : 'bg-white/10'
+                  }`}
+                >
+                  真 3D
+                </button>
+              </div>
+            }
           />
         </div>
 
         <div className="order-1 min-h-[420px] overflow-hidden rounded-xl border border-[color:var(--hairline)] bg-[#0b0e14] shadow-lg lg:order-2 lg:min-h-[640px]">
           <div className="flex items-center justify-between border-b border-white/10 px-3 py-2 text-[11px] text-white/60">
-            <span>视口 · {viewMode === 'plan' ? '平面热力分布' : '立体示意'}</span>
+            <span>
+              视口 ·{' '}
+              {viewMode === 'plan'
+                ? '平面热力'
+                : viewMode === 'iso'
+                  ? '等距立体'
+                  : 'Three.js 真 3D'}
+            </span>
             <button
               type="button"
               className="rounded-md bg-white/10 px-2 py-0.5 text-white/80 hover:bg-white/15"
               onClick={() => {
                 setState(createDefaultLabState());
                 setSelectedVentId('vent-in-1');
+                setOpenings([]);
                 setTick((t) => t + 1);
               }}
             >
@@ -105,19 +363,23 @@ export function SpaceLabApp() {
             </button>
           </div>
           <div className="h-[520px] w-full lg:h-[600px]">
-            <SpaceViewport
-              state={state}
-              result={result}
-              selectedVentId={selectedVentId}
-              onSelectVent={setSelectedVentId}
-              onMoveVent={(id, x, y) =>
-                patch((s) => ({
-                  ...s,
-                  vents: s.vents.map((v) => (v.id === id ? { ...v, x, y } : v)),
-                }))
-              }
-              viewMode={viewMode}
-            />
+            {viewMode === 'three' ? (
+              <SpaceViewport3D state={state} result={result} />
+            ) : (
+              <SpaceViewport
+                state={state}
+                result={result}
+                selectedVentId={selectedVentId}
+                onSelectVent={setSelectedVentId}
+                onMoveVent={(id, x, y) =>
+                  patch((s) => ({
+                    ...s,
+                    vents: s.vents.map((v) => (v.id === id ? { ...v, x, y } : v)),
+                  }))
+                }
+                viewMode={viewMode}
+              />
+            )}
           </div>
         </div>
 
@@ -177,7 +439,7 @@ export function SpaceLabApp() {
       </div>
 
       <p className="text-center text-[11px] text-[color:var(--ink-5)]">
-        本工作台输出为结构近似与教学示意，不替代实测风环境/光照分析，也不提供吉凶断语。
+        热力与 3D 雾效为结构近似可视化；多模态门窗建议可被拖动覆盖。存档写入 tool_sessions，会员无限回看。
       </p>
     </div>
   );

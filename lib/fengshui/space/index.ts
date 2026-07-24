@@ -6,3 +6,9 @@ export {
   heatmapColor,
   pickLayerGrid,
 } from './field-sim';
+export {
+  heuristicOpenings,
+  openingsToVents,
+  parseOpeningsFromModelText,
+  type SuggestedOpening,
+} from './opening-suggest';
