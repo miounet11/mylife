@@ -61,15 +61,53 @@ function HeatFloor({
 
 function Structures({
   structures,
+  floorZones,
   widthM,
   depthM,
   heightM,
 }: {
   structures: SpaceLabState['structures'];
+  floorZones?: SpaceLabState['floorZones'];
   widthM: number;
   depthM: number;
   heightM: number;
 }) {
+  // Prefer CAD floor zones as extruded room masses in 3D
+  if (floorZones && floorZones.length > 0) {
+    return (
+      <group>
+        {floorZones.map((z) => {
+          if (z.kind === 'corridor' || z.kind === 'balcony') return null;
+          const x = (z.x + z.w / 2 - 0.5) * widthM;
+          const zz = (z.y + z.h / 2 - 0.5) * depthM;
+          const w = Math.max(0.3, z.w * widthM);
+          const d = Math.max(0.3, z.h * depthM);
+          const h =
+            z.kind === 'bath' || z.kind === 'storage'
+              ? heightM * 0.55
+              : z.kind === 'living'
+                ? heightM * 0.35
+                : heightM * 0.5;
+          const color =
+            z.kind === 'bedroom'
+              ? '#d4a574'
+              : z.kind === 'living'
+                ? '#e8d48b'
+                : z.kind === 'bath'
+                  ? '#c5d4e8'
+                  : z.kind === 'kitchen'
+                    ? '#ddd0c0'
+                    : '#b0b8c4';
+          return (
+            <mesh key={z.id} position={[x, h / 2 + 0.04, zz]} castShadow receiveShadow>
+              <boxGeometry args={[w * 0.96, h, d * 0.96]} />
+              <meshStandardMaterial color={color} transparent opacity={0.72} roughness={0.75} />
+            </mesh>
+          );
+        })}
+      </group>
+    );
+  }
   return (
     <group>
       {structures.map((s) => {
@@ -233,7 +271,13 @@ function Scene({ state, result }: Props) {
       <group rotation={[0, rotY, 0]}>
         <DomainBuilding3D domain={domain} widthM={widthM} depthM={depthM} heightM={heightM} />
         <HeatFloor grids={result.grids} layer={layer} widthM={widthM} depthM={depthM} />
-        <Structures structures={state.structures} widthM={widthM} depthM={depthM} heightM={heightM} />
+        <Structures
+          structures={state.structures}
+          floorZones={state.floorZones}
+          widthM={widthM}
+          depthM={depthM}
+          heightM={heightM}
+        />
         <Vents vents={state.vents} widthM={widthM} depthM={depthM} />
         <DriftFogParticles
           count={meta.particleCount}

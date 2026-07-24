@@ -74,3 +74,10 @@ export {
   type FloorPlanStyle,
   type FloorZoneKind,
 } from './floor-plan-style';
+export {
+  ensureFloorZones,
+  structuresFromZones,
+  newRoomZone,
+  recomputeZoneAreas,
+  type CadTool,
+} from './cad-ops';

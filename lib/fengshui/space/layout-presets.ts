@@ -5,6 +5,8 @@
  */
 
 import type { SpaceLabState, SpaceLight, SpaceRoom, SpaceStructure, SpaceVent } from './types';
+import { buildFloorPlanStyle } from './floor-plan-style';
+import { recomputeZoneAreas, structuresFromZones } from './cad-ops';
 
 export type LayoutDomain =
   | 'residential'
@@ -1290,18 +1292,30 @@ export function applyPresetToState(
   const p =
     typeof options?.areaSqm === 'number' ? scalePresetToArea(preset, options.areaSqm) : preset;
   const stamp = Date.now();
+  const area = Math.max(12, p.room.widthM * p.room.depthM);
+  const style = buildFloorPlanStyle({
+    domain: p.domain,
+    layout: p.layout,
+    areaSqm: area,
+  });
+  const floorZones = recomputeZoneAreas(style.zones, p.room.widthM, p.room.depthM);
   return {
     ...state,
     room: { ...p.room },
     vents: p.vents.map((v, i) => ({ ...v, id: `${p.id}-vent-${i}-${stamp}` })),
     lights: p.lights.map((l, i) => ({ ...l, id: `${p.id}-light-${i}-${stamp}` })),
-    structures: p.structures.map((s, i) => ({ ...s, id: `${p.id}-st-${i}-${stamp}` })),
     geo: state.geo,
     qimenEnabled: state.qimenEnabled !== false,
     activeDomain: p.domain,
     presetTitle: p.title,
     presetId: p.id,
     layoutLabel: p.layout,
+    floorZones,
+    structures: structuresFromZones(floorZones).map((s, i) => ({
+      ...s,
+      id: `${p.id}-cad-${i}-${stamp}`,
+    })),
+    cadEditMode: true,
   };
 }
 

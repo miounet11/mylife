@@ -224,12 +224,28 @@ export function SpaceViewport({
 
     const layer = pickLayerGrid(result.grids, state.activeLayer);
     const areaSqm = Math.max(12, state.room.widthM * state.room.depthM);
-    const floor = buildFloorPlanStyle({
-      domain: state.activeDomain || 'residential',
-      layout: state.layoutLabel || state.presetTitle || '',
-      areaSqm,
-      locale,
-    });
+    const floor = state.floorZones?.length
+      ? {
+          totalAreaSqm: areaSqm,
+          zones: state.floorZones.map((z) => ({
+            id: z.id,
+            kind: z.kind as import('@/lib/fengshui/space/floor-plan-style').FloorZoneKind,
+            x: z.x,
+            y: z.y,
+            w: z.w,
+            h: z.h,
+            labelKey: (z.labelKey || z.kind) as import('@/lib/fengshui/space/floor-plan-style').FloorZoneKind,
+            label: z.label,
+            areaSqm: z.areaSqm,
+            furniture: z.furniture as import('@/lib/fengshui/space/floor-plan-style').FloorZone['furniture'],
+          })),
+        }
+      : buildFloorPlanStyle({
+          domain: state.activeDomain || 'residential',
+          layout: state.layoutLabel || state.presetTitle || '',
+          areaSqm,
+          locale,
+        });
     const rot = state.room.planRotationDeg || 0;
 
     const paintPlan = (underlay?: HTMLImageElement | null) => {

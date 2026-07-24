@@ -116,6 +116,26 @@ export interface SpaceLabState {
   showRoomAreas: boolean;
   /** 当前方案布局名（用于户型分区） */
   layoutLabel?: string | null;
+  /**
+   * CAD 可编辑户型分区（0–1 归一化）
+   * 有值时平面/等距/3D 优先用此数据，而非临时生成
+   */
+  floorZones?: Array<{
+    id: string;
+    kind: string;
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+    labelKey?: string;
+    label?: string;
+    areaSqm?: number;
+    furniture?: string[];
+  }> | null;
+  /** CAD 编辑模式 */
+  cadEditMode?: boolean;
+  /** 吸附网格（归一化，默认 0.02 ≈ 2%） */
+  cadSnap?: number;
   /** data URL of uploaded floor plan */
   underlayDataUrl: string | null;
   underlayOpacity: number;

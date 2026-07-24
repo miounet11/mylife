@@ -28,6 +28,7 @@ import { SpaceControlPanel } from './space-control-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
 import { MapPlacePicker } from './map-place-picker';
 import { VirtualCompass } from './virtual-compass';
+import { CadPlanEditor } from './cad-plan-editor';
 import { spaceLabCopy } from '@/lib/i18n/space-lab-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
 
@@ -619,6 +620,25 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
             </span>
             <div className="flex items-center gap-1.5">
               {viewModeButtons}
+              {viewMode === 'plan' ? (
+                <button
+                  type="button"
+                  className={`rounded px-1.5 py-0.5 text-[10px] font-semibold ${
+                    state.cadEditMode !== false
+                      ? 'bg-sky-500 text-white'
+                      : 'bg-white/10 text-white/80'
+                  }`}
+                  onClick={() =>
+                    patch((s) => ({
+                      ...s,
+                      cadEditMode: s.cadEditMode === false,
+                    }))
+                  }
+                  title="CAD 编辑 / 只读预览"
+                >
+                  CAD
+                </button>
+              ) : null}
               <button
                 type="button"
                 className="rounded bg-white/10 px-1.5 py-0.5 text-white/80"
@@ -646,6 +666,18 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                 locale={locale}
                 northLabel={copy.compass.north}
                 entranceLabel={`${copy.compass.entrance} ${state.room.entranceFacing}`}
+              />
+            ) : viewMode === 'plan' && state.cadEditMode !== false ? (
+              <CadPlanEditor
+                state={state}
+                copy={copy}
+                locale={locale}
+                selectedVentId={selectedVentId}
+                onSelectVent={setSelectedVentId}
+                onChange={(next) => {
+                  setState(next);
+                  setTick((t) => t + 1);
+                }}
               />
             ) : (
               <SpaceViewport
