@@ -325,6 +325,26 @@ export function SpaceLabApp() {
           >
             会员权益
           </Link>
+          <button
+            type="button"
+            className="rounded-full border border-[color:var(--hairline)] px-3 py-1.5 text-[color:var(--ink-2)] hover:bg-[color:var(--bg-sunken)]"
+            onClick={() => {
+              const url = 'https://www.life-kline.com/tools/fengshui-space';
+              const text =
+                '人生K线空间场：选阳宅/铺面/阴宅，估人流，看热力3D。结构化选址。';
+              if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+                void navigator.share({ title: '空间场模拟', text, url }).catch(() => {
+                  void navigator.clipboard?.writeText(`${text}\n${url}`);
+                  setBanner('已复制分享文案与链接');
+                });
+              } else {
+                void navigator.clipboard?.writeText(`${text}\n${url}`);
+                setBanner('已复制分享文案与链接');
+              }
+            }}
+          >
+            分享工具
+          </button>
         </div>
       </div>
 

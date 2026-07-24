@@ -21,6 +21,8 @@ import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
+import { ToolJsonLd, ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
+import { getToolSeoGeoPack } from '@/lib/tools/tool-seo-geo';
 
 const CONSULTANT_IDS = [
   'career',
@@ -52,6 +54,7 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
   const uiLocale = await getRequestLocale(sp.lang);
   const copy = toolsHubCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
+  const seoPack = getToolSeoGeoPack('tools');
   return (
     <AppPage
       header={{
@@ -60,10 +63,11 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         compact: true,
       }}
     >
+      {seoPack ? <ToolJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="tools_page_viewed"
         page="/tools"
-        meta={{ surfaceKey: 'tools', funnel: 'tools_hub' }}
+        meta={{ surfaceKey: 'tools', funnel: 'tools_hub', geoReady: true }}
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
@@ -216,6 +220,8 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         <p className="text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
           {copy.footerNote}
         </p>
+
+        {seoPack ? <ToolSeoGeoSection pack={seoPack} compact /> : null}
       </div>
     </AppPage>
   );

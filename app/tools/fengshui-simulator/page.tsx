@@ -4,15 +4,16 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { FengshuiSimulatorForm } from '@/components/fengshui/fengshui-simulator-form';
-import { buildPageMetadata } from '@/lib/seo';
+import { ToolJsonLd, ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import {
+  buildToolPageMetadata,
+  getToolSeoGeoPack,
+} from '@/lib/tools/tool-seo-geo';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '商铺风水模拟器｜五行方位匹配与结构化分析',
-  description: '输入商铺信息，从行业五行、大门方位、店名、色彩、择时五维度给出结构化判断。只说五行生克结构，不说吉凶标签。',
-  path: '/tools/fengshui-simulator',
-  keywords: ['商铺风水', '行业五行', '大门朝向', '店名五行', '开业择时', '人生K线'],
-});
+const pack = getToolSeoGeoPack('fengshui-simulator')!;
+
+export const metadata: Metadata = buildToolPageMetadata('fengshui-simulator');
 
 export default async function FengshuiSimulatorPage({
   searchParams,
@@ -25,10 +26,11 @@ export default async function FengshuiSimulatorPage({
 
   return (
     <AppPage header={{ ctaHref: '/tools', ctaLabel: en ? 'Tools' : '工具中心', compact: true }}>
+      <ToolJsonLd pack={pack} />
       <AnalyticsPageView
         eventName="fengshui_simulator_page_viewed"
         page="/tools/fengshui-simulator"
-        meta={{ surfaceKey: 'tools', tool: 'fengshui-simulator', source: sp.source || null }}
+        meta={{ surfaceKey: 'tools', tool: 'fengshui-simulator', source: sp.source || null, geoReady: true }}
       />
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
@@ -37,15 +39,12 @@ export default async function FengshuiSimulatorPage({
           description={
             en
               ? 'Input your shop info and get structured wuxing analysis across five dimensions. Structural observations only — no "auspicious" labels.'
-              : '输入商铺信息，从行业五行、大门方位、店名五行、色彩搭配、开业择时五个维度给出结构化判断。只说五行生克结构，不说吉凶标签。'
+              : pack.answerSummary
           }
           actions={
             <>
               <Link href="/tools/fengshui-space" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {en ? 'Space Field Lab' : '空间场工作台'}
-              </Link>
-              <Link href="/knowledge/fengshui-industry-wuxing" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                {en ? 'Industry wuxing guide' : '行业五行指南'}
               </Link>
               <Link href="/dimensions/living-environment" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {en ? 'Living environment' : '居家环境研判'}
@@ -57,6 +56,7 @@ export default async function FengshuiSimulatorPage({
           }
         />
         <FengshuiSimulatorForm />
+        <ToolSeoGeoSection pack={pack} />
       </div>
     </AppPage>
   );

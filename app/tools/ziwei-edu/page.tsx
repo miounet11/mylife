@@ -4,16 +4,16 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { ZiweiEduClient } from '@/components/ziwei/ziwei-edu-client';
+import { ToolJsonLd, ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
-import { buildPageMetadata } from '@/lib/seo';
+import {
+  buildToolPageMetadata,
+  getToolSeoGeoPack,
+} from '@/lib/tools/tool-seo-geo';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '紫微教育排盘｜命宫身宫、十四主星与生年四化',
-  description:
-    '人生K线紫微教育排盘：支持公历换算农历，推命宫/身宫、示意五行局与十四主星，标注生年四化。不含大限/飞星，不自动断事。',
-  path: '/tools/ziwei-edu',
-  keywords: ['紫微斗数', '教育排盘', '命宫', '十四主星', '生年四化', '人生K线'],
-});
+const pack = getToolSeoGeoPack('ziwei-edu')!;
+
+export const metadata: Metadata = buildToolPageMetadata('ziwei-edu');
 
 export default async function ZiweiEduPage({
   searchParams,
@@ -26,10 +26,11 @@ export default async function ZiweiEduPage({
 
   return (
     <AppPage header={{ ctaHref: '/tools', ctaLabel: en ? 'Tools' : '工具中心', compact: true }}>
+      <ToolJsonLd pack={pack} />
       <AnalyticsPageView
         eventName="ziwei_edu_page_viewed"
         page="/tools/ziwei-edu"
-        meta={{ surfaceKey: 'tools', tool: 'ziwei-edu', source: sp.source || null }}
+        meta={{ surfaceKey: 'tools', tool: 'ziwei-edu', source: sp.source || null, geoReady: true }}
       />
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
         <FocusHero
@@ -38,7 +39,7 @@ export default async function ZiweiEduPage({
           description={
             en
               ? 'Solar or lunar birth input; optional true solar time via longitude; life/body palace, simplified bureau, 14 main stars, year sihua labels. No decade luck / flying stars; no auto judgment.'
-              : '公历或农历输入；可选经度真太阳时修正；命宫/身宫、示意五行局、十四主星与生年四化标注。不含大限/飞星，不自动断事。'
+              : pack.answerSummary
           }
           actions={
             <>
@@ -62,12 +63,7 @@ export default async function ZiweiEduPage({
         />
 
         <ZiweiEduClient locale={en ? 'en' : 'zh-CN'} />
-
-        <section className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-4 py-3 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-          {en
-            ? 'Boundary: educational structure only. True solar is an optional longitude-based clock correction before lunar conversion — not a full professional engine. Serious decisions use full Bazi report, ten dimensions, and real-world judgment.'
-            : '产品边界：本页用于结构识读。真太阳时为可选经度钟表修正（换算农历前），非完整专业排盘引擎。重要决策请以八字完整报告、十维度与现实条件为准；深入讨论见紫微社区。'}
-        </section>
+        <ToolSeoGeoSection pack={pack} />
       </div>
     </AppPage>
   );
