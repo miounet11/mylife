@@ -621,9 +621,10 @@ export default function AnalyzeWorkspace({
             <div className="text-[12px] font-medium text-[color:var(--ink-5)]">填生日即可测</div>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {[
-                { href: '/tools/timing-yearly-window?source=home_birth_quick', label: '年度主窗口' },
-                { href: '/tools/daily-sign?source=home_birth_quick', label: '今日一签' },
-                { href: '/tools/career-role-fit?source=home_birth_quick', label: '岗位匹配' },
+                { href: '/tools/naming?source=home_birth_quick', label: '起名工坊' },
+                { href: '/tools/fengshui-space?source=home_birth_quick', label: '空间场' },
+                { href: '/tools/physiognomy?source=home_birth_quick', label: '面相' },
+                { href: '/tools/palmistry?source=home_birth_quick', label: '手相' },
                 { href: '/hehun?source=home_birth_quick', label: '合婚双盘' },
                 { href: '/tools?source=home_birth_quick', label: '全部工具' },
               ].map((item) => (

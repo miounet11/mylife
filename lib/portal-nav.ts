@@ -61,16 +61,28 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '免费测年度窗口',
   },
   {
-    href: '/tools/application-palmistry-reading',
-    title: '手相结构观察',
-    description: '上传手掌照片，获得结构层面的辅助观察（非医学诊断）。',
-    cta: '上传手相照片',
+    href: '/tools/naming',
+    title: '起名工坊',
+    description: '生辰用神 · 康熙笔画 · 个人/改名/公司/产品，结果页可下钻。',
+    cta: '开始起名',
   },
   {
-    href: '/tools/daily-sign',
-    title: '今日一签',
-    description: '快速获得今日节律提示，适合作为日常复访入口。',
-    cta: '抽今日一签',
+    href: '/tools/physiognomy',
+    title: '面相结构观察',
+    description: '上传面部照片，可选生辰交叉；照片私有存储，可授权脱敏线图。',
+    cta: '上传面相',
+  },
+  {
+    href: '/tools/palmistry',
+    title: '手相结构观察',
+    description: '上传手掌照片，掌纹结构观察（非医学诊断）；关联用户媒体库。',
+    cta: '上传手相',
+  },
+  {
+    href: '/tools/fengshui-space',
+    title: '空间场模拟工作台',
+    description: 'CAD 户型 · AI 美化 · 完整报表 · 人宅合参 · 热力 3D。',
+    cta: '打开工作台',
   },
   {
     href: '/tools/fengshui-simulator',
@@ -79,10 +91,10 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '开始模拟',
   },
   {
-    href: '/tools/fengshui-space',
-    title: '空间场模拟工作台',
-    description: '热力·立体示意·风口控制台·户型图底板·时辰九星叠加，结构场可视化。',
-    cta: '打开工作台',
+    href: '/tools/daily-sign',
+    title: '今日一签',
+    description: '快速获得今日节律提示，适合作为日常复访入口。',
+    cta: '抽今日一签',
   },
 ];
 
@@ -139,8 +151,21 @@ export const TOOL_CONTENT: Record<string, { title: string; description: string; 
   },
   'application-palmistry-reading': {
     title: '手相结构观察',
-    description: '手相作为辅助观察维度，会与八字结构交叉校验。功能正在与生产环境同步。',
+    description: '上传掌纹照片做结构观察，可结合生辰；见 /tools/palmistry。',
   },
+  palmistry: {
+    title: '手相结构观察',
+    description: '上传手掌照片，掌纹结构 + 可选生辰，照片关联用户私有媒体。',
+  },
+  physiognomy: {
+    title: '面相结构观察',
+    description: '上传面部照片做相学文化观察，可结合生辰用神。',
+  },
+  naming: {
+    title: '起名工坊',
+    description: '个人/改名/公司/产品：生辰必填、康熙笔画与多维方案。',
+  },
+
   'daily-sign': {
     title: '今日一签',
     description: '每日节律提示，适合作为轻量复访入口。',

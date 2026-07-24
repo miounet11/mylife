@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze/analyze-workspace';
+import { FeaturedToolsStrip } from '@/components/home/featured-tools-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FunnelPageView } from '@/components/funnel-tracker';
 import { getSystemCapabilityStats } from '@/lib/system-capability-stats';
@@ -47,6 +48,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         meta={{ surface: 'workspace', intent: initialIntent, source: initialSource, locale }}
       />
       <FunnelPageView event="home_page_view" sourceFallback="home" />
+      <FeaturedToolsStrip />
       <Suspense fallback={<div className="fb-card p-4 text-sm text-[color:var(--ink-3)]">{copy.loadingWorkspace}</div>}>
         <AnalyzeWorkspace
           stats={stats}

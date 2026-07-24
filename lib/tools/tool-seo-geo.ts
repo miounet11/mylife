@@ -154,6 +154,84 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
       '选址与人流为启发式结构评估；置业、租赁、殡葬请结合现场、规划与持证专业意见。公开分享请脱敏门牌与隐私。',
   },
 
+  physiognomy: {
+    path: '/tools/physiognomy',
+    slug: 'physiognomy',
+    name: '面相结构观察',
+    title: '面相上传观察｜面部结构 + 可选生辰｜人生K线',
+    description:
+      '上传面部照片获得相学文化结构观察，可结合生辰用神。照片私有存储并关联用户，可授权脱敏线图用于教学内容。非医学诊断、非定命。',
+    keywords: ['面相', '面相分析', '上传照片面相', '相学', '五官结构', '人生K线'],
+    answerSummary:
+      '面相工具以用户上传照片做五官分区与神采结构观察，可选生辰开启天时交叉。输出多维结构分与可执行建议，禁止疾病寿命与定命断语。照片默认仅本人可见。',
+    searchIntents: ['上传照片看面相', '面相分析免费', '面相和八字一起看'],
+    entityKeywords: ['面相', '五官', '神采', '生辰', '用神', '相学边界'],
+    audienceQuestions: ['面相准吗？', '照片会不会公开？', '要不要填生日？'],
+    audience: '想做相学文化观察的用户',
+    howTo: [
+      { step: '上传照片', body: '正面、自然光、无浓妆滤镜。' },
+      { step: '可选生辰', body: '勾选档案或填写出生日期。' },
+      { step: '查看结果', body: '多维结构分 + 观察要点 + 动作建议。' },
+    ],
+    faqs: [
+      {
+        question: '面相会判断疾病或寿命吗？',
+        answer: '不会。本工具仅做文化结构观察，并明确边界。',
+      },
+      {
+        question: '照片存在哪里？',
+        answer: '关联用户媒体库（本机 uploads + 可选 R2），默认私有；授权后才可生成脱敏线图用于 SEO 文章。',
+      },
+    ],
+    related: [
+      { href: '/tools/palmistry', label: '手相观察' },
+      { href: '/tools/naming', label: '起名工坊' },
+      { href: '/analyze', label: '八字报告' },
+    ],
+    shareText: '人生K线面相观察：上传照片做结构观察，可结合生辰，照片私有存储。',
+    shareHashtags: ['面相', '相学', '人生K线'],
+    disclaimer: '文化观察，非医学诊断，非命运定数。',
+  },
+
+  palmistry: {
+    path: '/tools/palmistry',
+    slug: 'palmistry',
+    name: '手相结构观察',
+    title: '手相上传｜掌纹结构观察 + 可选生辰｜人生K线',
+    description:
+      '上传手掌照片观察生命线、智慧线、感情线等掌纹结构，可结合生辰。照片关联用户并支持授权脱敏线图。非医学诊断。',
+    keywords: ['手相', '掌纹', '手相分析', '生命线', '上传手相'],
+    answerSummary:
+      '手相工具根据上传掌纹照片做三大主线与掌丘结构观察，可选生辰做天时交叉。输出结构分与复盘建议，不编造吉凶定命。',
+    searchIntents: ['上传手相照片分析', '掌纹生命线', '手相和八字'],
+    entityKeywords: ['手相', '掌纹', '生命线', '智慧线', '感情线', '掌丘'],
+    audienceQuestions: ['手相准吗？', '左右手看哪只？', '照片会泄露吗？'],
+    audience: '想做掌纹文化观察的用户',
+    howTo: [
+      { step: '上传手掌图', body: '手心向上、光线均匀。' },
+      { step: '选左右手', body: '可分别测，便于对照。' },
+      { step: '可选生辰', body: '与八字用神交叉阅读。' },
+    ],
+    faqs: [
+      {
+        question: '会不会看寿命疾病？',
+        answer: '不会。系统禁止寿命与疾病断语，只做掌纹结构文化观察。',
+      },
+      {
+        question: '图能用来发文章吗？',
+        answer: '仅在你勾选授权后，系统才可生成脱敏线图用于 SEO/教学，原图不公开。',
+      },
+    ],
+    related: [
+      { href: '/tools/physiognomy', label: '面相观察' },
+      { href: '/tools/naming', label: '起名工坊' },
+      { href: '/analyze', label: '八字报告' },
+    ],
+    shareText: '人生K线手相观察：上传掌纹做结构分析，可结合生辰，照片私有。',
+    shareHashtags: ['手相', '掌纹', '人生K线'],
+    disclaimer: '文化观察，非医学诊断，非命运定数。',
+  },
+
   naming: {
     path: '/tools/naming',
     slug: 'naming',
