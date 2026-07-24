@@ -54,15 +54,11 @@ export function SpaceControlPanel({
   };
 
   return (
-    <div className="flex h-full flex-col gap-3 overflow-y-auto rounded-xl border border-white/10 bg-[#10141c]/95 p-3 text-[12px] text-white/90 shadow-2xl">
-      <div>
-        <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300/90">
-          演示控制台
-        </div>
-        <p className="mt-1 text-[11px] leading-relaxed text-white/45">
-          拖动标记可移动位置；点选标记编辑属性。上传户型图作底板，热力为结构近似场。
-        </p>
+    <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-hidden rounded-lg border border-white/10 bg-[#10141c]/95 p-2 text-[11px] text-white/90">
+      <div className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-300/90">
+        控制台
       </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
 
       <div className="flex flex-wrap gap-2">
         <Toggle
@@ -379,9 +375,10 @@ export function SpaceControlPanel({
         清空全部结构
       </button>
 
-      <p className="text-[10px] leading-relaxed text-white/35">
-        热力为结构近似可视化，非传感器实测；九星/潮汐为教学倍率。关闭风口后，已注入能量按扩散衰减。
+      <p className="shrink-0 text-[9px] leading-snug text-white/35">
+        结构近似场 · 可在视口拖动风口
       </p>
+      </div>
     </div>
   );
 }

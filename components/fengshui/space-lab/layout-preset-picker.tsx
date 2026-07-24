@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   DOMAIN_LABELS,
   RESIDENTIAL_LAYOUT_OPTIONS,
@@ -12,7 +12,6 @@ import {
   APARTMENT_LAYOUT_OPTIONS,
   filterPresets,
   listPresets,
-  presetCatalogStats,
   type LayoutDomain,
   type LayoutPreset,
 } from '@/lib/fengshui/space/layout-presets';
@@ -29,8 +28,8 @@ type Props = {
     presetId?: string;
   }) => Promise<void>;
   busy?: boolean;
-  /** denser single-column for left workbench pane */
-  variant?: 'default' | 'sidebar';
+  /** fit = dense list like 选房站, paginated, no sparse cards */
+  variant?: 'default' | 'sidebar' | 'fit';
 };
 
 const DOMAIN_ORDER: LayoutDomain[] = [
@@ -45,13 +44,16 @@ const DOMAIN_ORDER: LayoutDomain[] = [
 
 const FACINGS = ['东', '东南', '南', '西南', '西', '西北', '北', '东北'];
 
+/** 选房站风格：一屏约 10 行密列表 */
+const PAGE_SIZE_FIT = 10;
+
 export function LayoutPresetPicker({
   onApplyPreset,
   onGenerateLlm,
   busy,
   variant = 'default',
 }: Props) {
-  const sidebar = variant === 'sidebar';
+  const fit = variant === 'fit' || variant === 'sidebar';
   const [domain, setDomain] = useState<LayoutDomain>('residential');
   const [layout, setLayout] = useState('');
   const [areaSqm, setAreaSqm] = useState(90);
@@ -59,6 +61,8 @@ export function LayoutPresetPicker({
   const [notes, setNotes] = useState('');
   const [model, setModel] = useState<'grok-4.3-fast' | 'grok-4.3-high'>('grok-4.3-fast');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(0);
+  const [appliedId, setAppliedId] = useState<string | null>(null);
 
   const layoutOptions =
     domain === 'shop'
@@ -75,84 +79,68 @@ export function LayoutPresetPicker({
                 ? APARTMENT_LAYOUT_OPTIONS
                 : RESIDENTIAL_LAYOUT_OPTIONS;
 
-  const stats = useMemo(() => presetCatalogStats(), []);
-
   const presets = useMemo(() => {
-    const list = filterPresets({
+    return filterPresets({
       domain,
       layout: layout || undefined,
       areaSqm,
       query: query || undefined,
     });
-    // UI: show top matches first; cap render for performance
-    return list.slice(0, 48);
   }, [domain, layout, areaSqm, query]);
 
   const domainTotal = listPresets(domain).length;
+  const pageSize = fit ? PAGE_SIZE_FIT : 48;
+  const capped = presets.slice(0, fit ? 80 : presets.length);
+  const pageCount = Math.max(1, Math.ceil(capped.length / pageSize));
+  const safePage = Math.min(page, pageCount - 1);
+  const pageItems = capped.slice(safePage * pageSize, safePage * pageSize + pageSize);
 
-  const areaHint =
-    domain === 'tomb'
-      ? '阴宅常用 0.5–15㎡（单元投影）'
-      : domain === 'shop'
-        ? '商铺常见 20–180㎡'
-        : '住宅常见 35–160㎡';
+  useEffect(() => {
+    setPage(0);
+  }, [domain, layout, areaSqm, query]);
+
+  const pickDomain = (d: LayoutDomain) => {
+    setDomain(d);
+    setLayout('');
+    setAreaSqm(
+      d === 'tomb'
+        ? 3
+        : d === 'shop'
+          ? 60
+          : d === 'villa'
+            ? 220
+            : d === 'rural'
+              ? 160
+              : d === 'office'
+                ? 300
+                : d === 'apartment'
+                  ? 80
+                  : 90,
+    );
+  };
 
   return (
-    <div
-      className={
-        sidebar
-          ? 'space-y-2.5'
-          : 'space-y-3 rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 md:p-4'
-      }
-    >
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            快速选方案
-          </div>
-          {!sidebar ? (
-            <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-              阳宅 / 商铺 / 阴宅等各约 100 套预设；填面积与几室几厅即可快选，也可用 grok-4.3 定制。
-            </p>
-          ) : (
-            <p className="mt-0.5 text-[11px] text-[color:var(--ink-4)]">
-              点选即加载 · 右侧视口同步
-            </p>
-          )}
-        </div>
-        <div className="text-[11px] text-[color:var(--ink-5)]">
-          {sidebar ? `${domainTotal} 套` : `总目录 ${stats.total} · 本类 ${domainTotal} · 展示前 ${presets.length} 条`}
-        </div>
+    <div className={fit ? 'flex h-full min-h-0 flex-col gap-1.5 overflow-hidden' : 'space-y-3'}>
+      <div className="flex shrink-0 items-center justify-between gap-1">
+        <span className="text-[11px] font-bold tracking-wide text-[color:var(--brand-strong)]">
+          方案目录
+        </span>
+        <span className="tabular-nums text-[10px] text-[color:var(--ink-5)]">
+          {DOMAIN_LABELS[domain]} {domainTotal} · {safePage + 1}/{pageCount}
+        </span>
       </div>
 
-      <div className="flex flex-wrap gap-1">
+      {/* 领域 — 紧凑胶囊一行多枚 */}
+      <div className="flex shrink-0 flex-wrap gap-0.5">
         {DOMAIN_ORDER.map((d) => (
           <button
             key={d}
             type="button"
-            onClick={() => {
-              setDomain(d);
-              setLayout('');
-              setAreaSqm(
-                d === 'tomb'
-                  ? 3
-                  : d === 'shop'
-                    ? 60
-                    : d === 'villa'
-                      ? 220
-                      : d === 'rural'
-                        ? 160
-                        : d === 'office'
-                          ? 300
-                          : d === 'apartment'
-                            ? 80
-                            : 90,
-              );
-            }}
-            className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+            onClick={() => pickDomain(d)}
+            className={`rounded px-1.5 py-0.5 text-[10px] font-semibold leading-tight ${
               domain === d
                 ? 'bg-[color:var(--ink-1)] text-white'
-                : 'border border-[color:var(--hairline)] text-[color:var(--ink-3)]'
+                : 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] hover:bg-[color:var(--hairline)]'
             }`}
           >
             {DOMAIN_LABELS[d]}
@@ -160,154 +148,161 @@ export function LayoutPresetPicker({
         ))}
       </div>
 
-      <div className={sidebar ? 'grid gap-2' : 'grid gap-2 sm:grid-cols-2 lg:grid-cols-4'}>
-        <label className="block space-y-1 text-[12px]">
-          <span className="text-[color:var(--ink-5)]">面积 ㎡ · {areaHint}</span>
-          <input
-            type="number"
-            min={domain === 'tomb' ? 0.3 : 12}
-            max={domain === 'tomb' ? 30 : 300}
-            step={domain === 'tomb' ? 0.1 : 1}
-            value={areaSqm}
-            onChange={(e) => setAreaSqm(Number(e.target.value) || 0)}
-            className="fb-input h-9 w-full px-2 text-[13px]"
-          />
-        </label>
-        <label className="block space-y-1 text-[12px]">
-          <span className="text-[color:var(--ink-5)]">布局 / 业态</span>
-          <select
-            value={layout}
-            onChange={(e) => setLayout(e.target.value)}
-            className="fb-input h-9 w-full px-2 text-[13px]"
-          >
-            <option value="">全部</option>
-            {layoutOptions.map((opt) => (
-              <option key={opt} value={opt}>
-                {opt}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1 text-[12px]">
-          <span className="text-[color:var(--ink-5)]">主入口 / 朝向</span>
-          <select
-            value={facing}
-            onChange={(e) => setFacing(e.target.value)}
-            className="fb-input h-9 w-full px-2 text-[13px]"
-          >
-            {FACINGS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block space-y-1 text-[12px]">
-          <span className="text-[color:var(--ink-5)]">关键词</span>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="如：南北、角铺、壁葬"
-            className="fb-input h-9 w-full px-2 text-[13px]"
-          />
-        </label>
+      {/* 筛选条 — 买房站风格工具栏 */}
+      <div className="grid shrink-0 grid-cols-4 gap-1">
+        <input
+          type="number"
+          min={domain === 'tomb' ? 0.3 : 12}
+          max={domain === 'tomb' ? 30 : 300}
+          step={domain === 'tomb' ? 0.1 : 1}
+          value={areaSqm}
+          onChange={(e) => setAreaSqm(Number(e.target.value) || 0)}
+          className="fb-input h-7 px-1 text-[11px]"
+          title="面积㎡"
+          placeholder="面积"
+        />
+        <select
+          value={layout}
+          onChange={(e) => setLayout(e.target.value)}
+          className="fb-input h-7 px-0.5 text-[10px]"
+          title="布局"
+        >
+          <option value="">布局</option>
+          {layoutOptions.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+        <select
+          value={facing}
+          onChange={(e) => setFacing(e.target.value)}
+          className="fb-input h-7 px-0.5 text-[10px]"
+          title="朝向"
+        >
+          {FACINGS.map((f) => (
+            <option key={f} value={f}>
+              {f}
+            </option>
+          ))}
+        </select>
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="搜"
+          className="fb-input h-7 px-1 text-[11px]"
+        />
       </div>
 
-      <div
-        className={
-          sidebar
-            ? 'grid max-h-[min(42vh,360px)] gap-1.5 overflow-y-auto'
-            : 'grid max-h-[360px] gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3'
-        }
-      >
-        {presets.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            disabled={busy}
-            onClick={() => onApplyPreset(p, areaSqm || p.areaSqm)}
-            className={`text-left transition hover:border-[color:var(--brand)]/40 hover:bg-[color:var(--brand-soft)]/40 disabled:opacity-50 ${
-              sidebar
-                ? 'rounded-lg border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-2.5 py-2'
-                : 'rounded-xl border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-3'
-            }`}
-          >
-            <div className="flex items-start justify-between gap-2">
-              <div className={`font-bold text-[color:var(--ink-1)] ${sidebar ? 'text-[12px]' : 'text-[13px]'}`}>
-                {p.title}
-              </div>
-              <span className="shrink-0 rounded-full bg-white/80 px-1.5 py-0.5 text-[10px] font-semibold text-[color:var(--ink-3)]">
-                ~{p.areaSqm}㎡
-              </span>
-            </div>
-            <div className="mt-0.5 text-[11px] text-[color:var(--brand-strong)]">{p.layout}</div>
-            {!sidebar ? (
-              <p className="mt-1 line-clamp-2 text-[11px] leading-relaxed text-[color:var(--ink-4)]">
-                {p.blurb}
-              </p>
-            ) : null}
-            <div className="mt-1 flex flex-wrap gap-1">
-              {p.tags.slice(0, sidebar ? 2 : 3).map((t) => (
-                <span
-                  key={t}
-                  className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] text-[color:var(--ink-5)]"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          </button>
-        ))}
-        {presets.length === 0 ? (
-          <div className="col-span-full rounded-lg border border-dashed border-[color:var(--hairline)] p-3 text-center text-[12px] text-[color:var(--ink-5)]">
-            无匹配预设，可改面积或用下方模型定制。
-          </div>
-        ) : null}
-      </div>
-
-      <div className="rounded-xl border border-[color:var(--brand)]/25 bg-[color:var(--brand-soft)]/40 p-2.5">
-        <div className="text-[12px] font-semibold text-[color:var(--ink-1)]">模型定制</div>
-        {!sidebar ? (
-          <p className="mt-0.5 text-[11px] text-[color:var(--ink-4)]">
-            按面积 + 布局 + 备注生成；优先匹配目录，再用 grok-4.3 细化。
-          </p>
-        ) : null}
-        <div className={`mt-2 grid gap-2 ${sidebar ? '' : 'sm:grid-cols-[1fr_auto_auto]'}`}>
-          <input
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            placeholder="补充：北入户、后厨…"
-            className="fb-input h-9 px-2 text-[13px]"
-          />
-          <div className={sidebar ? 'grid grid-cols-[1fr_auto] gap-2' : 'contents'}>
-            <select
-              value={model}
-              onChange={(e) => setModel(e.target.value as 'grok-4.3-fast' | 'grok-4.3-high')}
-              className="fb-input h-9 px-2 text-[12px]"
-            >
-              <option value="grok-4.3-fast">grok-4.3-fast</option>
-              <option value="grok-4.3-high">grok-4.3-high</option>
-            </select>
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() =>
-                void onGenerateLlm({
-                  domain,
-                  layout,
-                  areaSqm,
-                  entranceFacing: facing,
-                  notes,
-                  model,
-                  presetId: presets[0]?.id,
-                })
-              }
-              className="h-9 rounded-lg bg-[color:var(--ink-1)] px-3 text-[12px] font-semibold text-white disabled:opacity-40"
-            >
-              {busy ? '…' : '生成并加载'}
-            </button>
-          </div>
+      {/* 密列表 — 像贝壳/链家房源行，非大卡片 */}
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-md border border-[color:var(--hairline)]">
+        <div className="grid shrink-0 grid-cols-[1fr_44px_40px] gap-1 border-b border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-2 py-1 text-[9px] font-medium text-[color:var(--ink-5)]">
+          <span>方案</span>
+          <span className="text-right">面积</span>
+          <span className="text-right">热度</span>
         </div>
+        <ul className="flex min-h-0 flex-1 flex-col">
+          {pageItems.map((p, idx) => {
+            const active = appliedId === p.id;
+            return (
+              <li key={p.id} className="min-h-0 flex-1">
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    setAppliedId(p.id);
+                    onApplyPreset(p, areaSqm || p.areaSqm);
+                  }}
+                  className={`grid h-full w-full grid-cols-[1fr_44px_40px] items-center gap-1 border-b border-[color:var(--hairline)]/70 px-2 text-left transition disabled:opacity-50 ${
+                    active
+                      ? 'bg-[color:var(--brand-soft)]'
+                      : idx % 2 === 0
+                        ? 'bg-[color:var(--paper)] hover:bg-[color:var(--bg-sunken)]'
+                        : 'bg-[color:var(--bg-sunken)]/40 hover:bg-[color:var(--bg-sunken)]'
+                  }`}
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-[11px] font-semibold leading-tight text-[color:var(--ink-1)]">
+                      {p.title}
+                    </span>
+                    <span className="block truncate text-[9px] leading-tight text-[color:var(--ink-5)]">
+                      {p.layout}
+                      {p.tags[0] ? ` · ${p.tags[0]}` : ''}
+                    </span>
+                  </span>
+                  <span className="text-right text-[11px] font-semibold tabular-nums text-[color:var(--ink-2)]">
+                    {p.areaSqm}
+                  </span>
+                  <span className="text-right text-[10px] tabular-nums text-[color:var(--ink-5)]">
+                    {p.popularity}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+          {pageItems.length === 0 ? (
+            <li className="flex flex-1 items-center justify-center text-[11px] text-[color:var(--ink-5)]">
+              无匹配方案
+            </li>
+          ) : null}
+        </ul>
+      </div>
+
+      <div className="flex shrink-0 items-center justify-between gap-1">
+        <button
+          type="button"
+          disabled={safePage <= 0}
+          onClick={() => setPage((p) => Math.max(0, p - 1))}
+          className="rounded px-2 py-0.5 text-[10px] font-semibold text-[color:var(--ink-2)] ring-1 ring-[color:var(--hairline)] disabled:opacity-30"
+        >
+          上页
+        </button>
+        <span className="text-[9px] text-[color:var(--ink-5)]">
+          {safePage * pageSize + 1}–{safePage * pageSize + pageItems.length} / {capped.length}
+        </span>
+        <button
+          type="button"
+          disabled={safePage >= pageCount - 1}
+          onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+          className="rounded px-2 py-0.5 text-[10px] font-semibold text-[color:var(--ink-2)] ring-1 ring-[color:var(--hairline)] disabled:opacity-30"
+        >
+          下页
+        </button>
+      </div>
+
+      <div className="grid shrink-0 grid-cols-[1fr_auto_auto] gap-1">
+        <input
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="AI 定制备注"
+          className="fb-input h-7 px-1.5 text-[11px]"
+        />
+        <select
+          value={model}
+          onChange={(e) => setModel(e.target.value as 'grok-4.3-fast' | 'grok-4.3-high')}
+          className="fb-input h-7 px-0.5 text-[10px]"
+        >
+          <option value="grok-4.3-fast">fast</option>
+          <option value="grok-4.3-high">high</option>
+        </select>
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() =>
+            void onGenerateLlm({
+              domain,
+              layout,
+              areaSqm,
+              entranceFacing: facing,
+              notes,
+              model,
+              presetId: pageItems[0]?.id,
+            })
+          }
+          className="h-7 rounded-md bg-[color:var(--ink-1)] px-2 text-[10px] font-semibold text-white disabled:opacity-40"
+        >
+          {busy ? '…' : '生成'}
+        </button>
       </div>
     </div>
   );
