@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
       seed
         ? `参考预设: ${seed.title} / ${seed.layout} / ${seed.areaSqm}㎡ / 面宽${seed.room.widthM}×进深${seed.room.depthM}`
         : '',
-      '请生成 1 套结构合理、可用于模拟的布局。住宅给室厅关系；商铺给门头/后仓；墓穴给穴位与祭台关系。',
+      '请生成 1 套结构合理、可用于模拟的布局。阳宅给室厅关系；商铺给门头/后仓；阴宅给穴位与祭台关系。',
     ]
       .filter(Boolean)
       .join('\n');

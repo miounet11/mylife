@@ -84,7 +84,7 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
 
   const areaHint =
     domain === 'tomb'
-      ? '穴位常用 0.5–15㎡（单元投影）'
+      ? '阴宅常用 0.5–15㎡（单元投影）'
       : domain === 'shop'
         ? '商铺常见 20–180㎡'
         : '住宅常见 35–160㎡';
@@ -97,7 +97,7 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
             快速选方案
           </div>
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-            住宅 / 商铺 / 墓穴各约 100 套预设；填面积与几室几厅即可快选，也可用 grok-4.3 定制。
+            阳宅 / 商铺 / 阴宅等各约 100 套预设；填面积与几室几厅即可快选，也可用 grok-4.3 定制。
           </p>
         </div>
         <div className="text-[11px] text-[color:var(--ink-5)]">

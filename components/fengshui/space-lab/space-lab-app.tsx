@@ -287,7 +287,7 @@ export function SpaceLabApp() {
             空间场模拟工作台
           </h1>
           <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[color:var(--ink-4)]">
-            快速选户型/商铺/墓穴预设 · 面积缩放 · grok-4.3 定制 · 多模态门窗 · 真 3D 与热力 · 会员存档。
+            快速选阳宅/商铺/阴宅预设 · 面积缩放 · grok-4.3 定制 · 多模态门窗 · 真 3D 与热力 · 会员存档。
           </p>
         </div>
         <div className="flex flex-wrap gap-2 text-[12px]">

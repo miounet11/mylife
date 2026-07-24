@@ -1,7 +1,7 @@
 /**
  * 空间场 · 大规模预设目录
- * 住宅 / 商铺 / 墓穴 各约 100 套，由参数模板 × 面积档 × 朝向 展开，
- * 覆盖国内常见刚需改善户型、临街商铺、墓园穴位形态（目标 ≥95% 检索命中）。
+ * 住宅 / 商铺 / 阴宅 各约 100 套，由参数模板 × 面积档 × 朝向 展开，
+ * 覆盖国内常见刚需改善户型、临街商铺、阴宅穴位形态（目标 ≥95% 检索命中）。
  */
 
 import type { SpaceLabState, SpaceLight, SpaceRoom, SpaceStructure, SpaceVent } from './types';
@@ -729,7 +729,7 @@ const SHOP_TEMPLATES: RoomTemplate[] = [
   },
 ];
 
-// ---------- 墓穴模板 ----------
+// ---------- 阴宅模板 ----------
 const TOMB_TEMPLATES: RoomTemplate[] = [
   {
     key: 'single',
@@ -1215,9 +1215,9 @@ export const LAYOUT_PRESETS: LayoutPreset[] = [
 ];
 
 export const DOMAIN_LABELS: Record<LayoutDomain, string> = {
-  residential: '住宅户型',
+  residential: '阳宅',
   shop: '商铺',
-  tomb: '墓穴 / 穴位',
+  tomb: '阴宅',
   villa: '别墅',
   rural: '农村宅基地',
   office: '办公楼',
