@@ -11,11 +11,15 @@ import {
 import { createDefaultLabState } from '@/lib/fengshui/space';
 
 describe('Layout presets catalog', () => {
-  test('covers three domains with ~100 each', () => {
-    assert.ok(LAYOUT_PRESETS.length >= 280);
+  test('covers seven domains with large catalogs', () => {
+    assert.ok(LAYOUT_PRESETS.length >= 500);
     assert.ok(listPresets('residential').length >= 95);
     assert.ok(listPresets('shop').length >= 95);
     assert.ok(listPresets('tomb').length >= 95);
+    assert.ok(listPresets('villa').length >= 80);
+    assert.ok(listPresets('rural').length >= 80);
+    assert.ok(listPresets('office').length >= 80);
+    assert.ok(listPresets('apartment').length >= 80);
   });
 
   test('filter by area and layout finds 三室 near 100㎡', () => {

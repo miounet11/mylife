@@ -25,7 +25,17 @@ function resolveModel(raw: unknown): { model: string; tier: 'fast' | 'high' } {
 }
 
 function parseDomain(raw: unknown): LayoutDomain {
-  if (raw === 'shop' || raw === 'tomb' || raw === 'residential') return raw;
+  if (
+    raw === 'shop' ||
+    raw === 'tomb' ||
+    raw === 'residential' ||
+    raw === 'villa' ||
+    raw === 'rural' ||
+    raw === 'office' ||
+    raw === 'apartment'
+  ) {
+    return raw;
+  }
   return 'residential';
 }
 
@@ -37,8 +47,10 @@ export async function GET(request: NextRequest) {
   const areaSqm = areaRaw ? Number(areaRaw) : undefined;
   const query = searchParams.get('q') || undefined;
 
+  const domainParam = searchParams.get('domain');
+  const domainFilter = parseDomain(domainParam || undefined);
   const presets = filterPresets({
-    domain: domain === 'shop' || domain === 'tomb' || domain === 'residential' ? domain : undefined,
+    domain: domainParam ? domainFilter : undefined,
     layout: layout || undefined,
     areaSqm: Number.isFinite(areaSqm) ? areaSqm : undefined,
     query,

@@ -15,12 +15,15 @@ import {
 } from '@/lib/fengshui/space/opening-suggest';
 import {
   applyPresetToState,
+  type LayoutDomain,
   type LayoutPreset,
 } from '@/lib/fengshui/space/layout-presets';
+import type { SpaceGeoPlace } from '@/lib/fengshui/space/types';
 import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { SpaceCompassPanel } from './space-compass-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
+import { MapPlacePicker } from './map-place-picker';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -48,6 +51,8 @@ export function SpaceLabApp() {
   const [error, setError] = useState<string | null>(null);
   const [openings, setOpenings] = useState<SuggestedOpening[]>([]);
   const [lastSessionId, setLastSessionId] = useState<string | null>(null);
+  const [publicUrl, setPublicUrl] = useState<string | null>(null);
+  const [publishing, setPublishing] = useState(false);
   const [memberInfo, setMemberInfo] = useState<{
     isMember: boolean;
     authenticated: boolean;
@@ -128,7 +133,7 @@ export function SpaceLabApp() {
   };
 
   const generateLayoutLlm = async (input: {
-    domain: 'residential' | 'shop' | 'tomb';
+    domain: LayoutDomain;
     layout: string;
     areaSqm: number;
     entranceFacing: string;
@@ -183,6 +188,42 @@ export function SpaceLabApp() {
       void runOpeningSuggest(url, state.room.entranceFacing);
     };
     reader.readAsDataURL(file);
+  };
+
+  const injectGeo = (place: SpaceGeoPlace) => {
+    patch((s) => ({ ...s, geo: place }));
+    setBanner(`已注入区位：${place.address}`);
+  };
+
+  const publishInsight = async () => {
+    setPublishing(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/publish/insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceType: 'space_lab',
+          useLlm: true,
+          model: 'grok-4.3-fast',
+          summary: result.summary,
+          qimen: result.qimen,
+          layoutTitle: state.room.entranceFacing
+            ? `${state.room.widthM}×${state.room.depthM}m · ${state.room.entranceFacing}向`
+            : '空间场',
+          areaSqm: state.room.widthM * state.room.depthM,
+          geoAddress: state.geo?.address,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.error || '发布失败');
+      setPublicUrl(data.url);
+      setBanner(data.message || '已发布脱敏公开笔记');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '发布失败');
+    } finally {
+      setPublishing(false);
+    }
   };
 
   const saveSession = async () => {
@@ -300,12 +341,28 @@ export function SpaceLabApp() {
           >
             {saving ? '保存中…' : '保存结果'}
           </button>
+          <button
+            type="button"
+            disabled={publishing}
+            onClick={() => void publishInsight()}
+            className="rounded-lg border border-[color:var(--hairline)] px-3 py-1.5 font-semibold text-[color:var(--ink-2)] disabled:opacity-40"
+          >
+            {publishing ? '生成公开文…' : '脱敏发文'}
+          </button>
           {lastSessionId ? (
             <Link
               href={`/tool-result/${lastSessionId}`}
               className="rounded-lg border border-[color:var(--hairline)] px-3 py-1.5 text-[color:var(--ink-2)]"
             >
               查看存档
+            </Link>
+          ) : null}
+          {publicUrl ? (
+            <Link
+              href={publicUrl}
+              className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-1.5 font-semibold text-emerald-800"
+            >
+              打开公开笔记
             </Link>
           ) : null}
         </div>
@@ -316,6 +373,37 @@ export function SpaceLabApp() {
         onApplyPreset={applyLayoutPreset}
         onGenerateLlm={generateLayoutLlm}
       />
+
+      <div className="grid gap-3 lg:grid-cols-2">
+        <MapPlacePicker value={state.geo} onSelect={injectGeo} />
+        {result.qimen ? (
+          <div className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 text-[12px]">
+            <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">
+              奇门遁甲示意 · {result.qimen.juLabel}
+            </div>
+            <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
+              值符 {result.qimen.valueFu} · 值使 {result.qimen.valueShi} · 时
+              {result.qimen.hourPillar} / 日{result.qimen.dayPillar}
+            </p>
+            <ul className="mt-2 grid grid-cols-3 gap-1.5">
+              {result.qimen.palaces.map((p) => (
+                <li
+                  key={p.index}
+                  className="rounded-lg bg-[color:var(--bg-sunken)] px-1.5 py-1 text-[10px] leading-snug"
+                >
+                  <span className="font-semibold text-[color:var(--ink-1)]">
+                    {p.index + 1} {p.door}
+                  </span>
+                  <div className="text-[color:var(--ink-5)]">{p.star}</div>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--ink-4)]">
+              {result.qimen.summaryNotes[2] || result.qimen.summaryNotes[0]}
+            </p>
+          </div>
+        ) : null}
+      </div>
 
       {banner ? (
         <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-[12px] text-emerald-800">

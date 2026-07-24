@@ -6,6 +6,10 @@ import {
   RESIDENTIAL_LAYOUT_OPTIONS,
   SHOP_LAYOUT_OPTIONS,
   TOMB_LAYOUT_OPTIONS,
+  VILLA_LAYOUT_OPTIONS,
+  RURAL_LAYOUT_OPTIONS,
+  OFFICE_LAYOUT_OPTIONS,
+  APARTMENT_LAYOUT_OPTIONS,
   filterPresets,
   listPresets,
   presetCatalogStats,
@@ -27,6 +31,16 @@ type Props = {
   busy?: boolean;
 };
 
+const DOMAIN_ORDER: LayoutDomain[] = [
+  'residential',
+  'villa',
+  'rural',
+  'apartment',
+  'office',
+  'shop',
+  'tomb',
+];
+
 const FACINGS = ['东', '东南', '南', '西南', '西', '西北', '北', '东北'];
 
 export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props) {
@@ -43,7 +57,15 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
       ? SHOP_LAYOUT_OPTIONS
       : domain === 'tomb'
         ? TOMB_LAYOUT_OPTIONS
-        : RESIDENTIAL_LAYOUT_OPTIONS;
+        : domain === 'villa'
+          ? VILLA_LAYOUT_OPTIONS
+          : domain === 'rural'
+            ? RURAL_LAYOUT_OPTIONS
+            : domain === 'office'
+              ? OFFICE_LAYOUT_OPTIONS
+              : domain === 'apartment'
+                ? APARTMENT_LAYOUT_OPTIONS
+                : RESIDENTIAL_LAYOUT_OPTIONS;
 
   const stats = useMemo(() => presetCatalogStats(), []);
 
@@ -84,14 +106,28 @@ export function LayoutPresetPicker({ onApplyPreset, onGenerateLlm, busy }: Props
       </div>
 
       <div className="flex flex-wrap gap-1.5">
-        {(Object.keys(DOMAIN_LABELS) as LayoutDomain[]).map((d) => (
+        {DOMAIN_ORDER.map((d) => (
           <button
             key={d}
             type="button"
             onClick={() => {
               setDomain(d);
               setLayout('');
-              setAreaSqm(d === 'tomb' ? 3 : d === 'shop' ? 60 : 90);
+              setAreaSqm(
+                d === 'tomb'
+                  ? 3
+                  : d === 'shop'
+                    ? 60
+                    : d === 'villa'
+                      ? 220
+                      : d === 'rural'
+                        ? 160
+                        : d === 'office'
+                          ? 300
+                          : d === 'apartment'
+                            ? 80
+                            : 90,
+              );
             }}
             className={`rounded-full px-3 py-1 text-[12px] font-semibold ${
               domain === d

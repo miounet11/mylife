@@ -6,7 +6,14 @@
 
 import type { SpaceLabState, SpaceLight, SpaceRoom, SpaceStructure, SpaceVent } from './types';
 
-export type LayoutDomain = 'residential' | 'shop' | 'tomb';
+export type LayoutDomain =
+  | 'residential'
+  | 'shop'
+  | 'tomb'
+  | 'villa'
+  | 'rural'
+  | 'office'
+  | 'apartment';
 
 export type LayoutPreset = {
   id: string;
@@ -122,7 +129,29 @@ type RoomTemplate = {
   heightM?: number;
   popularity: number;
   /** structure pattern id */
-  pattern: 'open' | 'one_bed' | 'two_bed' | 'three_bed' | 'four_bed' | 'duplex' | 'shop_narrow' | 'shop_square' | 'shop_corner' | 'shop_kitchen' | 'shop_kiosk' | 'shop_double' | 'tomb_single' | 'tomb_double' | 'tomb_family' | 'tomb_wall' | 'tomb_pagoda' | 'tomb_lawn';
+  pattern:
+    | 'open'
+    | 'one_bed'
+    | 'two_bed'
+    | 'three_bed'
+    | 'four_bed'
+    | 'duplex'
+    | 'shop_narrow'
+    | 'shop_square'
+    | 'shop_corner'
+    | 'shop_kitchen'
+    | 'shop_kiosk'
+    | 'shop_double'
+    | 'tomb_single'
+    | 'tomb_double'
+    | 'tomb_family'
+    | 'tomb_wall'
+    | 'tomb_pagoda'
+    | 'tomb_lawn'
+    | 'villa_courtyard'
+    | 'rural_yard'
+    | 'office_open'
+    | 'apartment_tower';
 };
 
 function buildStructures(pattern: RoomTemplate['pattern'], seed: number): Omit<SpaceStructure, 'id'>[] {
@@ -226,6 +255,35 @@ function buildStructures(pattern: RoomTemplate['pattern'], seed: number): Omit<S
       ];
     case 'tomb_lawn':
       return [structure({ kind: 'box', x: 0.35, y: 0.4, w: 0.3, h: 0.2, block: 0.25 })];
+    case 'villa_courtyard':
+      return [
+        structure({ kind: 'box', x: 0.08, y: 0.08, w: 0.35, h: 0.35, block: 0.55 }),
+        structure({ kind: 'box', x: 0.55, y: 0.08, w: 0.35, h: 0.28, block: 0.5 }),
+        structure({ kind: 'box', x: 0.08, y: 0.55, w: 0.28, h: 0.3, block: 0.48 }),
+        structure({ kind: 'box', x: 0.45, y: 0.5, w: 0.2, h: 0.15, block: 0.2 }),
+        structure({ kind: 'column', x: 0.72, y: 0.62, w: 0.1, h: 0.1, block: 0.4 }),
+      ];
+    case 'rural_yard':
+      return [
+        structure({ kind: 'box', x: 0.15, y: 0.15, w: 0.55, h: 0.35, block: 0.55 }),
+        structure({ kind: 'box', x: 0.15, y: 0.6, w: 0.25, h: 0.25, block: 0.45 }),
+        structure({ kind: 'box', x: 0.55, y: 0.6, w: 0.3, h: 0.25, block: 0.4 }),
+        structure({ kind: 'arc', x: 0.4, y: 0.85, w: 0.2, h: 0.08, block: 0.3 }),
+      ];
+    case 'office_open':
+      return [
+        structure({ kind: 'box', x: 0.08, y: 0.15, w: 0.2, h: 0.7, block: 0.35 }),
+        structure({ kind: 'box', x: 0.72, y: 0.15, w: 0.2, h: 0.7, block: 0.35 }),
+        structure({ kind: 'box', x: 0.35, y: 0.35, w: 0.3, h: 0.3, block: 0.25 }),
+        structure({ kind: 'column', x: 0.48, y: 0.12, w: 0.08, h: 0.08, block: 0.5 }),
+      ];
+    case 'apartment_tower':
+      return [
+        structure({ kind: 'box', x: 0.1, y: 0.1, w: 0.35, h: 0.35, block: 0.5 }),
+        structure({ kind: 'box', x: 0.55, y: 0.1, w: 0.35, h: 0.35, block: 0.5 }),
+        structure({ kind: 'box', x: 0.1, y: 0.55, w: 0.35, h: 0.35, block: 0.48 }),
+        structure({ kind: 'column', x: 0.46, y: 0.46, w: 0.1, h: 0.12, block: 0.65 }),
+      ];
     default:
       return [structure({ kind: 'box', x: j(2), y: j(3), w: 0.2, h: 0.2, block: 0.4 })];
   }
@@ -874,16 +932,296 @@ function buildDomain(
   return list.slice(0, 100);
 }
 
+const VILLA_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'villa-single',
+    layout: '独栋别墅',
+    title: '独栋别墅',
+    tags: ['别墅', '独栋'],
+    blurb: '独门独院，前庭后院。',
+    areas: [180, 220, 260, 300, 350, 400],
+    aspect: 1.05,
+    heightM: 3.2,
+    popularity: 92,
+    pattern: 'villa_courtyard',
+  },
+  {
+    key: 'villa-town',
+    layout: '联排别墅',
+    title: '联排别墅',
+    tags: ['别墅', '联排'],
+    blurb: '联排窄面宽，前后庭。',
+    areas: [140, 160, 180, 200, 240],
+    aspect: 1.4,
+    heightM: 3.0,
+    popularity: 88,
+    pattern: 'villa_courtyard',
+  },
+  {
+    key: 'villa-duplex',
+    layout: '叠拼别墅',
+    title: '叠拼别墅',
+    tags: ['别墅', '叠拼'],
+    blurb: '上下叠拼，入户与庭院示意。',
+    areas: [120, 150, 170, 190, 220],
+    aspect: 1.15,
+    heightM: 3.0,
+    popularity: 84,
+    pattern: 'duplex',
+  },
+  {
+    key: 'villa-courtyard',
+    layout: '合院别墅',
+    title: '中式合院',
+    tags: ['别墅', '合院'],
+    blurb: '围合庭院，多进示意。',
+    areas: [200, 250, 300, 360, 420],
+    aspect: 1.0,
+    heightM: 3.3,
+    popularity: 80,
+    pattern: 'villa_courtyard',
+  },
+  {
+    key: 'villa-mountain',
+    layout: '山景别墅',
+    title: '山景/坡地别墅',
+    tags: ['别墅', '山景'],
+    blurb: '坡地退台，景观朝向主导。',
+    areas: [220, 280, 320, 380],
+    aspect: 1.1,
+    heightM: 3.2,
+    popularity: 76,
+    pattern: 'villa_courtyard',
+  },
+];
+
+const RURAL_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'rural-siheyuan',
+    layout: '三合院',
+    title: '农村三合院',
+    tags: ['宅基地', '院落'],
+    blurb: '正房+厢房+院坝。',
+    areas: [120, 150, 180, 200, 240],
+    aspect: 1.0,
+    heightM: 3.0,
+    popularity: 94,
+    pattern: 'rural_yard',
+  },
+  {
+    key: 'rural-single',
+    layout: '单排正房',
+    title: '单排农房',
+    tags: ['宅基地'],
+    blurb: '一排正房+前院。',
+    areas: [80, 100, 120, 140, 160],
+    aspect: 1.6,
+    heightM: 3.0,
+    popularity: 90,
+    pattern: 'rural_yard',
+  },
+  {
+    key: 'rural-two-floor',
+    layout: '两层自建',
+    title: '两层自建房',
+    tags: ['宅基地', '自建'],
+    blurb: '两层砖混自建常见。',
+    areas: [140, 160, 180, 200, 220, 260],
+    aspect: 1.2,
+    heightM: 3.1,
+    popularity: 92,
+    pattern: 'rural_yard',
+  },
+  {
+    key: 'rural-courtyard',
+    layout: '四合院式',
+    title: '农家四合围',
+    tags: ['宅基地', '合院'],
+    blurb: '四面围合小院。',
+    areas: [160, 200, 240, 280],
+    aspect: 1.0,
+    heightM: 3.0,
+    popularity: 82,
+    pattern: 'villa_courtyard',
+  },
+  {
+    key: 'rural-new',
+    layout: '新式小二楼',
+    title: '新式小二楼',
+    tags: ['宅基地', '新式'],
+    blurb: '临路小二楼+后院。',
+    areas: [100, 130, 160, 190, 220],
+    aspect: 1.25,
+    heightM: 3.2,
+    popularity: 86,
+    pattern: 'rural_yard',
+  },
+];
+
+const OFFICE_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'office-open',
+    layout: '开放办公',
+    title: '开放式办公层',
+    tags: ['办公', '开放'],
+    blurb: '大开间工位+两侧会议室。',
+    areas: [200, 300, 400, 500, 600, 800],
+    aspect: 1.3,
+    heightM: 3.2,
+    popularity: 95,
+    pattern: 'office_open',
+  },
+  {
+    key: 'office-cell',
+    layout: '隔间办公',
+    title: '隔间写字间',
+    tags: ['办公', '隔间'],
+    blurb: '沿窗隔间+中廊。',
+    areas: [80, 120, 160, 200, 250],
+    aspect: 1.5,
+    heightM: 3.0,
+    popularity: 90,
+    pattern: 'office_open',
+  },
+  {
+    key: 'office-corner',
+    layout: '角间高管',
+    title: '角间/老板间',
+    tags: ['办公', '高管'],
+    blurb: '角窗视野，独立门。',
+    areas: [40, 55, 70, 90],
+    aspect: 1.1,
+    heightM: 3.0,
+    popularity: 84,
+    pattern: 'shop_corner',
+  },
+  {
+    key: 'office-meeting',
+    layout: '会议层',
+    title: '会议培训层',
+    tags: ['办公', '会议'],
+    blurb: '大会议室+茶歇。',
+    areas: [150, 220, 300, 400],
+    aspect: 1.2,
+    heightM: 3.3,
+    popularity: 80,
+    pattern: 'office_open',
+  },
+  {
+    key: 'office-soho',
+    layout: 'SOHO',
+    title: 'SOHO 小型办公',
+    tags: ['办公', 'SOHO'],
+    blurb: '公寓式办公。',
+    areas: [50, 70, 90, 110, 130],
+    aspect: 1.15,
+    heightM: 2.9,
+    popularity: 88,
+    pattern: 'one_bed',
+  },
+];
+
+const APARTMENT_TEMPLATES: RoomTemplate[] = [
+  {
+    key: 'apt-studio',
+    layout: '公寓开间',
+    title: '酒店式开间',
+    tags: ['公寓', '开间'],
+    blurb: '酒店式公寓单间。',
+    areas: [25, 30, 35, 40, 48],
+    aspect: 1.3,
+    heightM: 2.7,
+    popularity: 90,
+    pattern: 'open',
+  },
+  {
+    key: 'apt-1b',
+    layout: '公寓一居',
+    title: '公寓一居室',
+    tags: ['公寓'],
+    blurb: '一室一厅公寓。',
+    areas: [40, 50, 55, 60, 70],
+    aspect: 1.2,
+    heightM: 2.8,
+    popularity: 93,
+    pattern: 'one_bed',
+  },
+  {
+    key: 'apt-2b',
+    layout: '公寓两居',
+    title: '公寓两居室',
+    tags: ['公寓'],
+    blurb: '塔楼两居常见。',
+    areas: [70, 80, 90, 100, 110],
+    aspect: 1.15,
+    heightM: 2.8,
+    popularity: 95,
+    pattern: 'two_bed',
+  },
+  {
+    key: 'apt-3b',
+    layout: '公寓三居',
+    title: '公寓三居室',
+    tags: ['公寓', '塔楼'],
+    blurb: '塔楼三居。',
+    areas: [95, 105, 115, 125, 140],
+    aspect: 1.12,
+    heightM: 2.85,
+    popularity: 92,
+    pattern: 'three_bed',
+  },
+  {
+    key: 'apt-tower',
+    layout: '塔楼标准层',
+    title: '公寓塔楼一梯多户',
+    tags: ['公寓', '公区'],
+    blurb: '电梯核+多户示意（单户分析用单元）。',
+    areas: [60, 80, 100, 120],
+    aspect: 1.0,
+    heightM: 2.9,
+    popularity: 85,
+    pattern: 'apartment_tower',
+  },
+  {
+    key: 'apt-service',
+    layout: '服务式公寓',
+    title: '服务式公寓',
+    tags: ['公寓', '酒店式'],
+    blurb: '带公区服务的公寓单元。',
+    areas: [45, 55, 65, 80, 100],
+    aspect: 1.18,
+    heightM: 2.8,
+    popularity: 82,
+    pattern: 'one_bed',
+  },
+];
+
 const RESIDENTIAL = buildDomain('residential', RES_TEMPLATES, 'south_bias');
 const SHOP = buildDomain('shop', SHOP_TEMPLATES, 'cardinal');
 const TOMB = buildDomain('tomb', TOMB_TEMPLATES, 'all');
+const VILLA = buildDomain('villa', VILLA_TEMPLATES, 'south_bias');
+const RURAL = buildDomain('rural', RURAL_TEMPLATES, 'cardinal');
+const OFFICE = buildDomain('office', OFFICE_TEMPLATES, 'cardinal');
+const APARTMENT = buildDomain('apartment', APARTMENT_TEMPLATES, 'south_bias');
 
-export const LAYOUT_PRESETS: LayoutPreset[] = [...RESIDENTIAL, ...SHOP, ...TOMB];
+export const LAYOUT_PRESETS: LayoutPreset[] = [
+  ...RESIDENTIAL,
+  ...SHOP,
+  ...TOMB,
+  ...VILLA,
+  ...RURAL,
+  ...OFFICE,
+  ...APARTMENT,
+];
 
 export const DOMAIN_LABELS: Record<LayoutDomain, string> = {
   residential: '住宅户型',
   shop: '商铺',
   tomb: '墓穴 / 穴位',
+  villa: '别墅',
+  rural: '农村宅基地',
+  office: '办公楼',
+  apartment: '公寓楼',
 };
 
 export function listPresets(domain?: LayoutDomain): LayoutPreset[] {
@@ -958,6 +1296,8 @@ export function applyPresetToState(
     vents: p.vents.map((v, i) => ({ ...v, id: `${p.id}-vent-${i}-${stamp}` })),
     lights: p.lights.map((l, i) => ({ ...l, id: `${p.id}-light-${i}-${stamp}` })),
     structures: p.structures.map((s, i) => ({ ...s, id: `${p.id}-st-${i}-${stamp}` })),
+    geo: state.geo,
+    qimenEnabled: state.qimenEnabled !== false,
   };
 }
 
@@ -1011,5 +1351,21 @@ export function presetCatalogStats() {
     residential: listPresets('residential').length,
     shop: listPresets('shop').length,
     tomb: listPresets('tomb').length,
+    villa: listPresets('villa').length,
+    rural: listPresets('rural').length,
+    office: listPresets('office').length,
+    apartment: listPresets('apartment').length,
   };
 }
+
+export const VILLA_LAYOUT_OPTIONS = ['独栋别墅', '联排别墅', '叠拼别墅', '合院别墅', '山景别墅'];
+export const RURAL_LAYOUT_OPTIONS = ['三合院', '单排正房', '两层自建', '四合院式', '新式小二楼'];
+export const OFFICE_LAYOUT_OPTIONS = ['开放办公', '隔间办公', '角间高管', '会议层', 'SOHO'];
+export const APARTMENT_LAYOUT_OPTIONS = [
+  '公寓开间',
+  '公寓一居',
+  '公寓两居',
+  '公寓三居',
+  '塔楼标准层',
+  '服务式公寓',
+];

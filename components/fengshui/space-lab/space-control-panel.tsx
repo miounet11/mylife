@@ -9,6 +9,7 @@ const LAYERS: { key: FieldLayer; label: string }[] = [
   { key: 'wind', label: '风速强度' },
   { key: 'light', label: '光波采光' },
   { key: 'nineStar', label: '九星旺衰' },
+  { key: 'qimen', label: '奇门遁甲' },
 ];
 
 const FACINGS = ['东', '东南', '南', '西南', '西', '西北', '北', '东北'];
@@ -81,6 +82,16 @@ export function SpaceControlPanel({
             onPatch((s) => ({
               ...s,
               time: { ...s.time, nineStarEnabled: !nineOn },
+            }))
+          }
+        />
+        <Toggle
+          on={state.qimenEnabled !== false}
+          label={`奇门：${state.qimenEnabled !== false ? '开' : '关'}`}
+          onClick={() =>
+            onPatch((s) => ({
+              ...s,
+              qimenEnabled: s.qimenEnabled === false,
             }))
           }
         />

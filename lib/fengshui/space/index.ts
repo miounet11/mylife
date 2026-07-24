@@ -21,9 +21,15 @@ export {
   scalePresetToArea,
   applyPresetToState,
   dimensionsFromArea,
+  presetCatalogStats,
   RESIDENTIAL_LAYOUT_OPTIONS,
   SHOP_LAYOUT_OPTIONS,
   TOMB_LAYOUT_OPTIONS,
+  VILLA_LAYOUT_OPTIONS,
+  RURAL_LAYOUT_OPTIONS,
+  OFFICE_LAYOUT_OPTIONS,
+  APARTMENT_LAYOUT_OPTIONS,
   type LayoutDomain,
   type LayoutPreset,
 } from './layout-presets';
+export { analyzeQimenSpace, qimenGridFromReading } from './qimen-analysis';

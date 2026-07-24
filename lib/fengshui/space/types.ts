@@ -1,6 +1,16 @@
 /** 空间场模拟器类型 — 结构近似场，非物理 CFD */
 
-export type FieldLayer = 'energy' | 'wind' | 'light' | 'nineStar';
+export type FieldLayer = 'energy' | 'wind' | 'light' | 'nineStar' | 'qimen';
+
+/** 地图选址注入 */
+export interface SpaceGeoPlace {
+  address: string;
+  lat: number;
+  lng: number;
+  placeId?: string;
+  name?: string;
+  source: 'google' | 'nominatim' | 'manual';
+}
 
 export type VentKind = 'inlet' | 'outlet';
 
@@ -79,6 +89,10 @@ export interface SpaceLabState {
   underlayDataUrl: string | null;
   underlayOpacity: number;
   gridSize: number;
+  /** 地图选址 */
+  geo: SpaceGeoPlace | null;
+  /** 奇门遁甲示意层开关 */
+  qimenEnabled: boolean;
 }
 
 export interface FieldGrids {
@@ -86,8 +100,28 @@ export interface FieldGrids {
   wind: Float32Array;
   light: Float32Array;
   nineStar: Float32Array;
+  qimen: Float32Array;
   width: number;
   height: number;
+}
+
+export interface QimenPalaceNote {
+  index: number;
+  door: string;
+  star: string;
+  structuralHint: string;
+  intensity: number;
+}
+
+export interface QimenSpaceReading {
+  juLabel: string;
+  valueFu: string;
+  valueShi: string;
+  hourPillar: string;
+  dayPillar: string;
+  palaces: QimenPalaceNote[];
+  summaryNotes: string[];
+  actions: string[];
 }
 
 export interface SpaceFieldSummary {
@@ -104,11 +138,13 @@ export interface SpaceFieldSummary {
 export interface SpaceSimResult {
   grids: FieldGrids;
   summary: SpaceFieldSummary;
+  qimen: QimenSpaceReading | null;
   meta: {
     dizhiHour: string;
     sunAzimuthDeg: number;
     moonPhaseLabel: string;
     nineStarLabel: string;
     entranceElement: string;
+    geoAddress?: string | null;
   };
 }

@@ -350,6 +350,8 @@ function layerLabel(l: SpaceLabState['activeLayer']) {
       return '光波采光';
     case 'nineStar':
       return '九星旺衰';
+    case 'qimen':
+      return '奇门遁甲';
     default:
       return '能量分布';
   }

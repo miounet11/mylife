@@ -19,6 +19,7 @@ import {
   resolveNineStar,
   sunAzimuthDeg,
 } from './compass-time';
+import { analyzeQimenSpace, qimenGridFromReading } from './qimen-analysis';
 
 function degToRad(d: number) {
   return (d * Math.PI) / 180;
@@ -322,6 +323,8 @@ export function createDefaultLabState(): SpaceLabState {
     underlayDataUrl: null,
     underlayOpacity: 0.35,
     gridSize: 64,
+    geo: null,
+    qimenEnabled: true,
   };
 }
 
@@ -384,18 +387,51 @@ export function simulateSpaceField(state: SpaceLabState): SpaceSimResult {
     }
   }
 
-  const grids: FieldGrids = { energy, wind, light, nineStar: nine, width: w, height: h };
+  const qimenReading =
+    state.qimenEnabled !== false
+      ? analyzeQimenSpace(state.time, state.room.entranceFacing)
+      : null;
+  const qimen =
+    qimenReading != null ? qimenGridFromReading(qimenReading, w, h) : new Float32Array(w * h);
+
+  if (qimenReading && state.qimenEnabled !== false) {
+    for (let i = 0; i < energy.length; i++) {
+      energy[i] = clamp01(energy[i] * 0.88 + qimen[i] * 0.12);
+    }
+  }
+
+  const grids: FieldGrids = {
+    energy,
+    wind,
+    light,
+    nineStar: nine,
+    qimen,
+    width: w,
+    height: h,
+  };
   const summary = summarize(energy, wind, light, nine, state);
+  if (qimenReading) {
+    summary.structuralNotes = [
+      ...summary.structuralNotes.slice(0, 3),
+      ...qimenReading.summaryNotes.slice(0, 2),
+    ];
+    summary.priorityActions = [
+      ...qimenReading.actions.slice(0, 2),
+      ...summary.priorityActions,
+    ].slice(0, 5);
+  }
 
   return {
     grids,
     summary,
+    qimen: qimenReading,
     meta: {
       dizhiHour: hourToDizhi(hour),
       sunAzimuthDeg: sunAz,
       moonPhaseLabel: moonPhaseLabel(state.time.day),
       nineStarLabel: state.time.nineStarEnabled ? star.name : '关闭',
       entranceElement: entranceElementCn(state.room.entranceFacing),
+      geoAddress: state.geo?.address || null,
     },
   };
 }
@@ -439,6 +475,8 @@ export function pickLayerGrid(grids: FieldGrids, layer: SpaceLabState['activeLay
       return grids.light;
     case 'nineStar':
       return grids.nineStar;
+    case 'qimen':
+      return grids.qimen;
     default:
       return grids.energy;
   }

@@ -115,7 +115,9 @@ export type AnalyticsEventName =
   | 'fengshui_space_lab_viewed'
   | 'fengshui_opening_suggest'
   | 'fengshui_space_saved'
-  | 'fengshui_layout_generate';
+  | 'fengshui_layout_generate'
+  | 'public_insight_published'
+  | 'fengshui_geo_injected';
 
 interface TrackEventInput {
   userId?: string | null;
