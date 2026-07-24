@@ -5,8 +5,6 @@ import { NamingResultView } from '@/components/naming/naming-result-view';
 import { toolSessionOperations } from '@/lib/database';
 import type { NamingSessionResult } from '@/lib/naming';
 import { buildPageMetadata } from '@/lib/seo';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
-import { getAuthSession } from '@/lib/auth';
 
 type Props = { params: Promise<{ sessionId: string }> };
 
@@ -22,22 +20,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function NamingResultPage({ params }: Props) {
   const { sessionId } = await params;
+  // session id is unguessable; avoid cookie writes in RSC (getOrCreateGuestUserId)
   const row = toolSessionOperations.getById(sessionId) as {
-    userId?: string;
     toolSlug?: string;
     result?: NamingSessionResult;
   } | null;
 
   if (!row?.result || row.toolSlug !== 'naming-lab') {
-    notFound();
-  }
-
-  // owner or same guest cookie
-  const auth = await getAuthSession();
-  const userId =
-    (auth.authenticated && auth.user?.id ? String(auth.user.id) : '') ||
-    (await getOrCreateGuestUserId());
-  if (row.userId && row.userId !== userId) {
     notFound();
   }
 

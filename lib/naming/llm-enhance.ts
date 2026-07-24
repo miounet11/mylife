@@ -4,9 +4,23 @@
  */
 
 import OpenAI from 'openai';
-import { getApiBaseUrl, getApiKey } from '@/lib/env';
+import { getApiBaseUrl, getApiKey, getDefaultModel } from '@/lib/env';
 import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
 import type { NameCandidate, NamingMode } from './types';
+
+/** Prefer gateway auto, then known grok tiers */
+function namingModelChain(preferred?: string): string[] {
+  const def = getDefaultModel() || 'auto';
+  const list = [
+    preferred,
+    def,
+    'auto',
+    'grok-4.3-fast',
+    'grok-4.1-fast',
+    'gpt-4.1-mini',
+  ].filter(Boolean) as string[];
+  return [...new Set(list)];
+}
 
 export type NamingLlmEnhancement = {
   narrativeSummary: string;
@@ -73,7 +87,6 @@ export async function enhanceNamingWithLlm(input: {
   const apiKey = getApiKey();
   if (!apiKey) return fallback;
 
-  const model = input.model || 'grok-4.3-fast';
   const slim = input.candidates.slice(0, 24).map((c) => ({
     name: c.fullName || c.name,
     score: c.score,
@@ -81,71 +94,84 @@ export async function enhanceNamingWithLlm(input: {
     reason: c.reason,
   }));
 
-  try {
-    const client = new OpenAI({ apiKey, baseURL: getApiBaseUrl() || undefined });
-    const completion = await createOpenAiCompatibleChatCompletion(
-      client,
-      {
-        model,
-        temperature: 0.45,
-        messages: [
-          {
-            role: 'system',
-            content: `你是中文起名/品牌命名顾问。基于已有候选与分数做专业解读，禁止吉凶恐吓与命运承诺。
+  const client = new OpenAI({ apiKey, baseURL: getApiBaseUrl() || undefined });
+  const messages = [
+    {
+      role: 'system' as const,
+      content: `你是中文起名/品牌命名顾问。基于已有候选与分数做专业解读，禁止吉凶恐吓与命运承诺。
 输出严格 JSON：
 {"narrativeSummary":"80-160字总评","schemeAdvice":["建议1","建议2","建议3"],"riskNotes":["注意1"],"candidateBlurbs":{"名字":"一句话理由20-40字"},"preferredOrder":["名字1","名字2"]}
 candidateBlurbs 只覆盖输入中的名字；preferredOrder 可选，按推荐优先级排列子集。`,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              mode: input.mode,
-              context: input.context,
-              candidates: slim,
-            }),
-          },
-        ],
-      },
-      { timeout: 45_000 },
-    );
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify({
+        mode: input.mode,
+        context: input.context,
+        candidates: slim,
+      }),
+    },
+  ];
 
-    const text = completion.choices?.[0]?.message?.content || '';
-    const parsed = parseJsonObject(text);
-    if (!parsed) return fallback;
+  let lastErr: unknown;
+  for (const model of namingModelChain(input.model)) {
+    try {
+      const completion = await createOpenAiCompatibleChatCompletion(
+        client,
+        { model, temperature: 0.45, messages },
+        { timeout: 45_000 },
+      );
 
-    const blurbs: Record<string, string> = { ...fallback.candidateBlurbs };
-    if (parsed.candidateBlurbs && typeof parsed.candidateBlurbs === 'object') {
-      for (const [k, v] of Object.entries(parsed.candidateBlurbs as Record<string, unknown>)) {
-        if (typeof v === 'string' && v.trim()) blurbs[k] = v.trim().slice(0, 120);
+      const text = completion.choices?.[0]?.message?.content || '';
+      const parsed = parseJsonObject(text);
+      if (!parsed) continue;
+
+      const blurbs: Record<string, string> = { ...fallback.candidateBlurbs };
+      if (parsed.candidateBlurbs && typeof parsed.candidateBlurbs === 'object') {
+        for (const [k, v] of Object.entries(
+          parsed.candidateBlurbs as Record<string, unknown>,
+        )) {
+          if (typeof v === 'string' && v.trim()) blurbs[k] = v.trim().slice(0, 120);
+        }
       }
+
+      const schemeAdvice = Array.isArray(parsed.schemeAdvice)
+        ? (parsed.schemeAdvice as unknown[])
+            .map(String)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 6)
+        : fallback.schemeAdvice;
+      const riskNotes = Array.isArray(parsed.riskNotes)
+        ? (parsed.riskNotes as unknown[])
+            .map(String)
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 4)
+        : fallback.riskNotes;
+      const preferredOrder = Array.isArray(parsed.preferredOrder)
+        ? (parsed.preferredOrder as unknown[]).map(String).filter(Boolean).slice(0, 24)
+        : undefined;
+
+      return {
+        narrativeSummary:
+          typeof parsed.narrativeSummary === 'string' && parsed.narrativeSummary.trim()
+            ? parsed.narrativeSummary.trim().slice(0, 400)
+            : fallback.narrativeSummary,
+        schemeAdvice: schemeAdvice.length ? schemeAdvice : fallback.schemeAdvice,
+        riskNotes: riskNotes.length ? riskNotes : fallback.riskNotes,
+        candidateBlurbs: blurbs,
+        preferredOrder,
+        model,
+        usedLlm: true,
+      };
+    } catch (err) {
+      lastErr = err;
+      console.error('[naming/llm-enhance]', model, err);
     }
-
-    const schemeAdvice = Array.isArray(parsed.schemeAdvice)
-      ? (parsed.schemeAdvice as unknown[]).map(String).map((s) => s.trim()).filter(Boolean).slice(0, 6)
-      : fallback.schemeAdvice;
-    const riskNotes = Array.isArray(parsed.riskNotes)
-      ? (parsed.riskNotes as unknown[]).map(String).map((s) => s.trim()).filter(Boolean).slice(0, 4)
-      : fallback.riskNotes;
-    const preferredOrder = Array.isArray(parsed.preferredOrder)
-      ? (parsed.preferredOrder as unknown[]).map(String).filter(Boolean).slice(0, 24)
-      : undefined;
-
-    return {
-      narrativeSummary:
-        typeof parsed.narrativeSummary === 'string' && parsed.narrativeSummary.trim()
-          ? parsed.narrativeSummary.trim().slice(0, 400)
-          : fallback.narrativeSummary,
-      schemeAdvice: schemeAdvice.length ? schemeAdvice : fallback.schemeAdvice,
-      riskNotes: riskNotes.length ? riskNotes : fallback.riskNotes,
-      candidateBlurbs: blurbs,
-      preferredOrder,
-      model,
-      usedLlm: true,
-    };
-  } catch (err) {
-    console.error('[naming/llm-enhance]', err);
-    return fallback;
   }
+  if (lastErr) console.error('[naming/llm-enhance] all models failed', lastErr);
+  return fallback;
 }
 
 export async function enhanceNameDetailWithLlm(input: {
@@ -173,69 +199,71 @@ export async function enhanceNameDetailWithLlm(input: {
 
   const apiKey = getApiKey();
   if (!apiKey) return fallback;
-  const model = input.model || 'grok-4.3-fast';
 
-  try {
-    const client = new OpenAI({ apiKey, baseURL: getApiBaseUrl() || undefined });
-    const completion = await createOpenAiCompatibleChatCompletion(
-      client,
-      {
-        model,
-        temperature: 0.5,
-        messages: [
-          {
-            role: 'system',
-            content: `你是中文起名详解顾问。针对单个名字做下一级详解。禁止吉凶恐吓。
+  const client = new OpenAI({ apiKey, baseURL: getApiBaseUrl() || undefined });
+  const messages = [
+    {
+      role: 'system' as const,
+      content: `你是中文起名详解顾问。针对单个名字做下一级详解。禁止吉凶恐吓。
 输出 JSON：
 {"title":"","overview":"60-120字","charBreakdown":["字：释义+五行"],"soundNote":"","fitNote":"","variants":["可微调名1","名2"],"caution":["注意"]}`,
-          },
-          {
-            role: 'user',
-            content: JSON.stringify({
-              mode: input.mode,
-              name: input.name,
-              score: c?.score,
-              breakdown: c?.breakdown,
-              elements: c?.elements,
-              context: input.context,
-            }),
-          },
-        ],
-      },
-      { timeout: 40_000 },
-    );
-    const text = completion.choices?.[0]?.message?.content || '';
-    const parsed = parseJsonObject(text);
-    if (!parsed) return fallback;
+    },
+    {
+      role: 'user' as const,
+      content: JSON.stringify({
+        mode: input.mode,
+        name: input.name,
+        score: c?.score,
+        breakdown: c?.breakdown,
+        elements: c?.elements,
+        context: input.context,
+      }),
+    },
+  ];
 
-    return {
-      title:
-        typeof parsed.title === 'string' && parsed.title.trim()
-          ? parsed.title.trim().slice(0, 60)
-          : fallback.title,
-      overview:
-        typeof parsed.overview === 'string' && parsed.overview.trim()
-          ? parsed.overview.trim().slice(0, 400)
-          : fallback.overview,
-      charBreakdown: Array.isArray(parsed.charBreakdown)
-        ? (parsed.charBreakdown as unknown[]).map(String).slice(0, 8)
-        : fallback.charBreakdown,
-      soundNote:
-        typeof parsed.soundNote === 'string' ? parsed.soundNote.slice(0, 200) : fallback.soundNote,
-      fitNote: typeof parsed.fitNote === 'string' ? parsed.fitNote.slice(0, 200) : fallback.fitNote,
-      variants: Array.isArray(parsed.variants)
-        ? (parsed.variants as unknown[]).map(String).slice(0, 6)
-        : [],
-      caution: Array.isArray(parsed.caution)
-        ? (parsed.caution as unknown[]).map(String).slice(0, 4)
-        : fallback.caution,
-      model,
-      usedLlm: true,
-    };
-  } catch (err) {
-    console.error('[naming/detail-llm]', err);
-    return fallback;
+  for (const model of namingModelChain(input.model)) {
+    try {
+      const completion = await createOpenAiCompatibleChatCompletion(
+        client,
+        { model, temperature: 0.5, messages },
+        { timeout: 40_000 },
+      );
+      const text = completion.choices?.[0]?.message?.content || '';
+      const parsed = parseJsonObject(text);
+      if (!parsed) continue;
+
+      return {
+        title:
+          typeof parsed.title === 'string' && parsed.title.trim()
+            ? parsed.title.trim().slice(0, 60)
+            : fallback.title,
+        overview:
+          typeof parsed.overview === 'string' && parsed.overview.trim()
+            ? parsed.overview.trim().slice(0, 400)
+            : fallback.overview,
+        charBreakdown: Array.isArray(parsed.charBreakdown)
+          ? (parsed.charBreakdown as unknown[]).map(String).slice(0, 8)
+          : fallback.charBreakdown,
+        soundNote:
+          typeof parsed.soundNote === 'string'
+            ? parsed.soundNote.slice(0, 200)
+            : fallback.soundNote,
+        fitNote:
+          typeof parsed.fitNote === 'string' ? parsed.fitNote.slice(0, 200) : fallback.fitNote,
+        variants: Array.isArray(parsed.variants)
+          ? (parsed.variants as unknown[]).map(String).slice(0, 6)
+          : [],
+        caution: Array.isArray(parsed.caution)
+          ? (parsed.caution as unknown[]).map(String).slice(0, 4)
+          : fallback.caution,
+        model,
+        usedLlm: true,
+      };
+    } catch (err) {
+      console.error('[naming/detail-llm]', model, err);
+    }
   }
+  return fallback;
 }
 
 export function applyLlmOrder(

@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { AppPage } from '@/components/layout/app-page';
 import { NamingDetailView } from '@/components/naming/naming-detail-view';
-import { getAuthSession } from '@/lib/auth';
 import { toolSessionOperations } from '@/lib/database';
 import {
   decodeNameKey,
@@ -10,7 +9,6 @@ import {
   type NamingSessionResult,
 } from '@/lib/naming';
 import { buildPageMetadata } from '@/lib/seo';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
 
 type Props = {
   params: Promise<{ sessionId: string; name: string }>;
@@ -30,20 +28,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NamingNameDetailPage({ params }: Props) {
   const { sessionId, name: nameParam } = await params;
   const row = toolSessionOperations.getById(sessionId) as {
-    userId?: string;
     toolSlug?: string;
     result?: NamingSessionResult;
   } | null;
 
   if (!row?.result || row.toolSlug !== 'naming-lab') {
-    notFound();
-  }
-
-  const auth = await getAuthSession();
-  const userId =
-    (auth.authenticated && auth.user?.id ? String(auth.user.id) : '') ||
-    (await getOrCreateGuestUserId());
-  if (row.userId && row.userId !== userId) {
     notFound();
   }
 
@@ -53,7 +42,13 @@ export default async function NamingNameDetailPage({ params }: Props) {
     candidate?.fullName || candidate?.name || decodeNameKey(nameParam);
 
   return (
-    <AppPage header={{ ctaHref: `/tools/naming/result/${sessionId}`, ctaLabel: '返回方案', compact: true }}>
+    <AppPage
+      header={{
+        ctaHref: `/tools/naming/result/${sessionId}`,
+        ctaLabel: '返回方案',
+        compact: true,
+      }}
+    >
       <NamingDetailView
         sessionId={sessionId}
         name={displayName}
