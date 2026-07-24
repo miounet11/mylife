@@ -21,9 +21,9 @@ export default function FengshuiSpacePage() {
         page="/tools/fengshui-space"
         meta={{ surfaceKey: 'tools', tool: 'fengshui-space', geoReady: true }}
       />
-      <div className="mx-auto max-w-[1400px] px-3 py-5 pb-16 md:px-4 md:py-7">
+      <div className="mx-auto max-w-[1600px] px-2 py-3 pb-16 md:px-3 md:py-4">
         <SpaceLabApp />
-        <div className="mx-auto mt-8 max-w-3xl">
+        <div className="mx-auto mt-10 max-w-3xl px-2">
           <ToolSeoGeoSection pack={pack} />
         </div>
       </div>
