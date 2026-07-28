@@ -1,10 +1,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { ArrowRight, RefreshCw, Sparkles, Zap } from 'lucide-react';
 import type { TeacherOpeningView } from '@/lib/teacher-opening';
 import type { TeacherTopicChip } from '@/lib/teachers';
 import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
+import { trackClientEvent } from '@/lib/analytics-client';
 
 /** How long to emphasize the first starter after open (ms). */
 const FIRST_STARTER_PULSE_MS = 5000;
@@ -12,6 +14,7 @@ const FIRST_STARTER_PULSE_MS = 5000;
 /**
  * Empty-state consultant opening: first_mes bubble + topic chips + user starters.
  * Compact vertical stack for the messenger shell (no double cards / no layout thrash).
+ * 无报告时主 CTA = 生成结构报告（修复 chat 高曝光低转化）。
  */
 export function ChatOpeningPanel({
   opening,
@@ -21,6 +24,10 @@ export function ChatOpeningPanel({
   onSwapGreeting,
   hideFirstMes = false,
   locale,
+  /** 无报告时展示「生成报告」主按钮 */
+  showAnalyzeCta = true,
+  analyzeHref = '/analyze?source=chat_opening_primary&from=chat_opening',
+  hasReport = false,
 }: {
   opening: TeacherOpeningView;
   disabled?: boolean;
@@ -29,6 +36,9 @@ export function ChatOpeningPanel({
   onSwapGreeting: () => void;
   hideFirstMes?: boolean;
   locale?: string | null;
+  showAnalyzeCta?: boolean;
+  analyzeHref?: string;
+  hasReport?: boolean;
 }) {
   const en = isEnglishUiLocale(locale);
   const t = (zh: string, enText: string) => (en ? enText : zh);
@@ -138,29 +148,85 @@ export function ChatOpeningPanel({
         </div>
       ) : null}
 
+      {/* 无报告：主任务 = 生成结构报告（数据：chat 打开多、发消息少） */}
+      {showAnalyzeCta && !hasReport ? (
+        <div className="space-y-1.5 px-0.5">
+          <div className="text-[11px] font-semibold text-[#606770]">
+            {t('推荐路径', 'Recommended')}
+          </div>
+          <Link
+            href={analyzeHref}
+            onClick={() => {
+              void trackClientEvent({
+                eventName: 'result_cta_clicked',
+                page: '/chat',
+                meta: {
+                  target: 'chat_opening_analyze_primary',
+                  source: 'chat_opening_primary',
+                },
+              });
+              void trackClientEvent({
+                eventName: 'content_quick_analyze_started',
+                page: '/chat',
+                meta: {
+                  source: 'chat_opening_primary',
+                  surface: 'chat_opening',
+                  hasBirth: false,
+                },
+              });
+            }}
+            className="flex min-h-[48px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] border border-slate-900 bg-slate-900 px-3.5 py-2.5 text-left text-[13.5px] font-semibold leading-[1.4] text-white no-underline shadow-sm transition active:opacity-90"
+          >
+            <span className="min-w-0 flex-1">
+              {t('生成我的结构报告（推荐）', 'Generate my structure report (recommended)')}
+            </span>
+            <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-bold">
+              {t('去排盘', 'Open chart')}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </span>
+          </Link>
+          <p className="text-[11px] leading-[1.4] text-[#8a8d91]">
+            {t(
+              '无报告时闲聊只能给通用框架。排盘后可带日主/用神深问。',
+              'Without a chart, chat stays generic. Create one for personalized rhythm.',
+            )}
+          </p>
+        </div>
+      ) : null}
+
       {starters.length > 0 ? (
         <div className="space-y-1.5">
           <div className="flex flex-wrap items-center justify-between gap-2 px-0.5">
             <div className="text-[11px] font-semibold text-[#606770]">
-              {t('一键开口', 'One-tap starters')}
+              {hasReport
+                ? t('一键开口', 'One-tap starters')
+                : t('或先随便聊聊', 'Or chat first')}
             </div>
-            {pulseFirst ? (
+            {pulseFirst && hasReport ? (
               <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#3b5998]">
                 <Zap className="h-3 w-3" />
                 {t('推荐先点第一条', 'Try the first one')}
               </span>
             ) : null}
           </div>
-          {/* Persistent primary CTA — always one clear tap target */}
+          {/* 有报告时：starter 仍是主 CTA；无报告时降级为次按钮 */}
           <button
             type="button"
             disabled={disabled}
             onClick={() =>
               onStarter(starters[0], {
-                source: pulseFirst ? 'opening_starter_primary' : 'opening_starter_cta_bar',
+                source: hasReport
+                  ? pulseFirst
+                    ? 'opening_starter_primary'
+                    : 'opening_starter_cta_bar'
+                  : 'opening_starter_secondary_no_report',
               })
             }
-            className="flex min-h-[48px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] border border-[#3b5998] bg-[#3b5998] px-3.5 py-2.5 text-left text-[13.5px] font-semibold leading-[1.4] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)] transition active:opacity-90 disabled:opacity-50"
+            className={`flex min-h-[44px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] px-3.5 py-2.5 text-left text-[13px] font-semibold leading-[1.4] transition active:opacity-90 disabled:opacity-50 ${
+              hasReport
+                ? 'border border-[#3b5998] bg-[#3b5998] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+                : 'border border-[#e4e6eb] bg-[#f7f8fa] text-[#1d2129]'
+            }`}
           >
             <span className="min-w-0 flex-1 line-clamp-2">{starters[0]}</span>
             <span className="inline-flex shrink-0 items-center gap-0.5 text-[12px] font-bold">

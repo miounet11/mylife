@@ -221,6 +221,10 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
           crosslinks={crosslinks}
           title={copy.railTitle}
           description={copy.railDescription}
+          source={`case:${slug}`}
+          page={`/cases/${slug}`}
+          bridgeTitle="对照案例，生成你的结构报告"
+          bridgeDescription="案例是别人的路径。用你的生辰生成结构报告，再对照决策节奏。"
         />
       </div>
 

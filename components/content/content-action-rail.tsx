@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight, BookOpen, Layers3, Wrench } from 'lucide-react';
 import type { ContentCrosslinks, CrosslinkItem } from '@/lib/content-crosslinks';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 
 function LinkCard({ item, tone = 'default' }: { item: CrosslinkItem; tone?: 'default' | 'brand' }) {
   return (
@@ -39,11 +40,24 @@ export default function ContentActionRail({
   crosslinks,
   title = '读完之后可以怎么做',
   description = '把内容接到可执行的场景研判与工具，而不是只停留在阅读。',
+  source,
+  page,
+  intent = 'career',
+  bridgeTitle,
+  bridgeDescription,
 }: {
   crosslinks: ContentCrosslinks;
   title?: string;
   description?: string;
+  /** 归因 source，用于轻量生辰桥与埋点 */
+  source?: string;
+  page?: string;
+  intent?: string;
+  bridgeTitle?: string;
+  bridgeDescription?: string;
 }) {
+  const bridgeSource = source || 'content_action_rail';
+
   return (
     <section className="fb-card space-y-4 border-t-2 border-[color:var(--brand)] p-4 md:p-5">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
@@ -61,6 +75,19 @@ export default function ContentActionRail({
           </Link>
         </div>
       </div>
+
+      {/* 主转化：轻量生辰 → analyze（修复 content→report 断裂） */}
+      <LightBirthBridge
+        source={bridgeSource}
+        page={page}
+        intent={intent}
+        compact
+        title={bridgeTitle || '先填生辰，生成你的结构报告'}
+        description={
+          bridgeDescription ||
+          '阅读只是开始。用出生日期打开命盘结构，再决定是否深聊或用工具。'
+        }
+      />
 
       {crosslinks.dimensions.length ? (
         <div>

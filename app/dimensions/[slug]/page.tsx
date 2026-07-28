@@ -148,6 +148,11 @@ export default async function DimensionDetailPage({ params, searchParams }: Page
           crosslinks={outbound}
           title={copy.afterRailTitle}
           description={copy.afterRailDescription}
+          source={`dimension:${slug}`}
+          page={`/dimensions/${slug}`}
+          intent={slug.includes('wealth') || slug.includes('invest') ? 'wealth' : slug.includes('relation') || slug.includes('marriage') ? 'relationship' : slug.includes('year') || slug.includes('rhythm') ? 'yearly' : 'career'}
+          bridgeTitle="用这个维度，打开你的结构报告"
+          bridgeDescription="十维度研判需要命盘底座。填生辰后生成报告，再回本维度深拆。"
         />
       </div>
     </AppPage>

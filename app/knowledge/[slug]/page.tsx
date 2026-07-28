@@ -256,6 +256,11 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
           crosslinks={crosslinks}
           title={copy.railTitle}
           description={copy.railDescription}
+          source={`knowledge:${slug}`}
+          page={`/knowledge/${slug}`}
+          intent="career"
+          bridgeTitle="读完这篇，生成你的结构报告"
+          bridgeDescription="填出生日期即可排盘；把文章里的方法落到你自己的命盘上。"
         />
       </div>
 

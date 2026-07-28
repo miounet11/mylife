@@ -7,6 +7,7 @@ import { buildTeachersIntentHref, teacherIdFromFollowupIntent } from '@/lib/chat
 import { buildTeacherChatHref } from '@/lib/teachers';
 import { appendSourceToHref } from '@/lib/source-url';
 import { trackFunnel } from '@/components/funnel-tracker';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 
 // QA contract (qa:public-product-components): file must include 'intro-copy', 'intro-panel', 'action-primary', 'action-secondary' literals.
 const _qaContract = ['intro-copy', 'intro-panel', 'action-primary', 'action-secondary'] as const;
@@ -95,6 +96,8 @@ export default function ContentConversionPanel({
     ? ['生成完整结构报告', tool.shortTitle, premiumLabel]
     : ['生成完整结构报告', `单项工具：${tool.shortTitle}`];
 
+  const bridgeSource = source || `content_conversion:${tool.slug}`;
+
   return (
     <section className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--brand-soft-2)] bg-[color:var(--paper)] p-5 md:p-6">
       <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
@@ -106,6 +109,18 @@ export default function ContentConversionPanel({
         {tool.shortTitle}
         <span className="text-[color:var(--brand-strong)]"> / {premiumLabel}</span>
       </h3>
+
+      {/* 轻量生辰：直接跨过「只点链接不填表」 */}
+      <div className="mt-4">
+        <LightBirthBridge
+          source={bridgeSource}
+          page={page}
+          intent={analyzeIntent}
+          compact
+          title="一键生成我的结构报告"
+          description={`围绕「${contentTitle || tool.shortTitle}」：填出生日期即可排盘，再进入工具或顾问。`}
+        />
+      </div>
 
       <div className="mt-4 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] p-4">
         <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-[color:var(--brand-strong)]">

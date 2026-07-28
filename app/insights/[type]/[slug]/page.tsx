@@ -269,6 +269,14 @@ export default async function InsightArticlePage({
               ? 'Connect GEO environment reads to living environment, fortune rhythm, and a full report.'
               : '把 GEO 环境层判断接到居家环境、运势节奏与完整报告。'
           }
+          source={`insight:${type}:${slug}`}
+          page={`/insights/${type}/${slug}`}
+          bridgeTitle={isEnEntity ? 'Generate your structure report' : '生成你的结构报告'}
+          bridgeDescription={
+            isEnEntity
+              ? 'Enter birth date to open your chart, then connect environment reads to personal rhythm.'
+              : '填出生日期打开命盘，把环境观察接到你自己的节奏。'
+          }
         />
       </div>
       <RelatedContent slug={slug} trackKey={trackKey} type="insight" />

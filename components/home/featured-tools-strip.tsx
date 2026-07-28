@@ -5,32 +5,32 @@ import Link from 'next/link';
  */
 const FEATURES = [
   {
-    href: '/tools/naming',
+    href: '/analyze?source=home_featured_strip',
+    badge: 'CORE',
+    title: '结构报告',
+    desc: '生辰排盘 · 人生K线 · 可验证行动',
+    cta: '去排盘',
+  },
+  {
+    href: '/tools/naming?source=home_featured_strip',
     badge: 'NEW',
     title: '起名工坊',
     desc: '生辰用神 · 康熙笔画 · 个人/公司/产品',
     cta: '去起名',
   },
   {
-    href: '/tools/fengshui-space',
+    href: '/tools/fengshui-space?source=home_featured_strip',
     badge: 'PRO',
     title: '空间场',
     desc: 'CAD 户型 · AI 美化 · 完整报表 · 人宅合参',
     cta: '打开工作台',
   },
   {
-    href: '/tools/physiognomy',
+    href: '/tools/physiognomy?source=home_featured_strip',
     badge: 'NEW',
-    title: '面相系统报告',
-    desc: '先物理三庭五眼 · 再命理用神交叉',
-    cta: '上传面相',
-  },
-  {
-    href: '/tools/palmistry',
-    badge: 'NEW',
-    title: '手相系统报告',
-    desc: '先物理三线 · 再命理节奏交叉',
-    cta: '上传手相',
+    title: '面相 · 手相',
+    desc: '先物理结构 · 再命理交叉',
+    cta: '上传观察',
   },
 ] as const;
 

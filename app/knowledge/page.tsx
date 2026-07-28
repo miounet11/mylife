@@ -21,6 +21,7 @@ import { knowledgeArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 
 const PAGE_SIZE = 24;
 
@@ -122,6 +123,12 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
           }
         />
         <JourneyStrip active="content" locale={uiLocale} />
+        <LightBirthBridge
+          source="knowledge_hub"
+          page="/knowledge"
+          title="边读边排：生成你的结构报告"
+          description="知识库帮你建立方法；结构报告把方法落到你自己的生辰上。"
+        />
         <PageIllustrationStrip
           surface="knowledge/hub"
           title={copy.stripTitle}

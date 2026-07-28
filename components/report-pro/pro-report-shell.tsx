@@ -26,6 +26,8 @@ import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
+import { ReportToolsStrip } from '@/components/report/report-tools-strip';
+import ReportEmailCapture from '@/components/report/report-email-capture';
 
 /**
  * 正常用户主报告（默认阅读）：
@@ -45,6 +47,7 @@ export default function ProReportShell({
   currentDaYunText,
   birthYear,
   consultantWindows,
+  locale,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -69,6 +72,8 @@ export default function ProReportShell({
   birthYear?: number;
   /** 首屏顾问卡窗口（best / risk） */
   consultantWindows?: { best?: string; risk?: string } | null;
+  /** UI locale for consultant / reading chrome */
+  locale?: string | null;
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -89,6 +94,20 @@ export default function ProReportShell({
   return (
     <div id="pro-reading" className="scroll-mt-header space-y-4 md:space-y-5">
       <ProAnalyticsBeacon reportId={reportId} surface="mass" />
+      {/* 邮箱软捕获：首屏可见，降低 guest 丢失 */}
+      <ReportEmailCapture
+        reportId={reportId}
+        surfaceKey="pro_report_shell_top"
+        variant="inline"
+        visitThreshold={1}
+      />
+      {/* 工具分发：报告入口是金矿 session */}
+      <ReportToolsStrip
+        reportId={reportId}
+        dayMaster={view.dayMaster}
+        yongShen={view.elements?.yongShen}
+        source="pro_report_shell"
+      />
       <section className="border-b border-[color:var(--hairline)] pb-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
@@ -215,6 +234,7 @@ export default function ProReportShell({
         reportId={reportId}
         windows={consultantWindows}
         source={`report:${reportId}:first_screen`}
+        locale={locale}
       />
 
       <ProRevisitStrip reportId={reportId} revisitHint={decisionSheet.revisitWhen} />

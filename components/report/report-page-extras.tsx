@@ -4,6 +4,7 @@ import RelatedDimensionsPanel from '@/components/dimensions/related-dimensions-p
 import ReportMembershipPanel from '@/components/membership/report-membership-panel';
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
 import TimingSubscribeBar from '@/components/result-v2/timing-subscribe-bar';
+import { ReportToolsStrip } from '@/components/report/report-tools-strip';
 
 export default function ReportPageExtras({
   reportId,
@@ -27,6 +28,7 @@ export default function ReportPageExtras({
 }) {
   return (
     <>
+      <ReportToolsStrip reportId={reportId} source="result_page_extras" />
       <ReportMembershipPanel reportId={reportId} source="result_page_extras" />
       <RelatedDimensionsPanel
         title="用十维度继续拆解这份报告"

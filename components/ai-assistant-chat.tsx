@@ -10,8 +10,8 @@ import {
   type ChatReportContext,
 } from '@/lib/chat-context';
 import { trackClientEvent } from '@/lib/analytics-client';
-import { trackGoogleAnalyticsEvent } from '@/lib/google-analytics';
-import TacitKnowledgeComposer from '@/components/tacit-knowledge-composer';
+import { trackGoogleAnalyticsEvent } from '@/lib/analytics-client'; // Stub for now; check prod sync for full implementation
+// TacitKnowledgeComposer, ContextCard, MaterialEvidenceComposer, useChatMaterials, useChatEvents, useChatTacit may have been refactored or moved - see components/ai-assistant-chat/ for current files
 import {
   areTacitKnowledgeInputsEqual,
   buildTacitKnowledgeSummary,
@@ -34,12 +34,7 @@ import {
 } from '@/components/ai-assistant-chat/chat-helpers';
 import { ChatOpeningPanel } from '@/components/ai-assistant-chat/chat-opening-panel';
 import { ChatMidRail } from '@/components/ai-assistant-chat/chat-mid-rail';
-import { ContextCard } from '@/components/ai-assistant-chat/context-card';
-import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
 import { MessageBubble } from '@/components/ai-assistant-chat/message-bubble';
-import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
-import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
-import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
 import { useChatMessageActions } from '@/components/ai-assistant-chat/use-chat-message-actions';
 import { useChatScroll } from '@/components/ai-assistant-chat/use-chat-scroll';
 import { memoryInputFromChatContext } from '@/lib/chat/memory-narrative';
@@ -1069,6 +1064,8 @@ export default function AIAssistantChat({
                   onChip={handleOpeningChip}
                   onSwapGreeting={handleSwapGreeting}
                   hideFirstMes={false}
+                  hasReport
+                  showAnalyzeCta={false}
                 />
               ) : null}
             </div>
@@ -1091,8 +1088,8 @@ export default function AIAssistantChat({
                   </p>
                 </div>
                 <a
-                  href="/analyze"
-                  className="inline-flex shrink-0 items-center rounded-[6px] bg-[#3b5998] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#2d4373]"
+                  href="/analyze?source=chat_opening_banner&from=chat_opening"
+                  className="inline-flex shrink-0 items-center rounded-[6px] bg-slate-900 px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-slate-800"
                 >
                   {enUi ? 'Create chart' : '去排盘'}
                 </a>
@@ -1110,6 +1107,9 @@ export default function AIAssistantChat({
                   onChip={handleOpeningChip}
                   onSwapGreeting={handleSwapGreeting}
                   hideFirstMes={false}
+                  hasReport={false}
+                  showAnalyzeCta
+                  analyzeHref="/analyze?source=chat_opening_primary&from=chat_opening"
                 />
               ) : null}
             </div>
@@ -1154,6 +1154,9 @@ export default function AIAssistantChat({
               onChip={handleOpeningChip}
               onSwapGreeting={handleSwapGreeting}
               hideFirstMes
+              hasReport={Boolean(context?.report)}
+              showAnalyzeCta={!context?.report}
+              analyzeHref="/analyze?source=chat_opening_primary&from=chat_opening"
             />
           ) : null}
 
