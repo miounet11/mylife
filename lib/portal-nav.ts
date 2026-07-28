@@ -61,6 +61,18 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '免费测年度窗口',
   },
   {
+    href: '/profile/foundation',
+    title: '人生数据底座',
+    description: '生辰八字 · 星座生肖 · 面相手相 · 生活问答 · 互动与工具信号，统一完整度。',
+    cta: '完善参数',
+  },
+  {
+    href: '/tools/zodiac',
+    title: '星座 · 生肖',
+    description: '由生日推导太阳星座与生肖，可选填月亮/上升并写入数据底座。',
+    cta: '推算星座',
+  },
+  {
     href: '/tools/naming',
     title: '起名工坊',
     description: '生辰用神 · 康熙笔画 · 个人/改名/公司/产品，结果页可下钻。',

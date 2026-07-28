@@ -117,7 +117,11 @@ export type AnalyticsEventName =
   | 'fengshui_space_saved'
   | 'fengshui_layout_generate'
   | 'public_insight_published'
-  | 'fengshui_geo_injected';
+  | 'fengshui_geo_injected'
+  | 'foundation_page_viewed'
+  | 'foundation_astro_saved'
+  | 'foundation_qa_saved'
+  | 'foundation_step_clicked';
 
 interface TrackEventInput {
   userId?: string | null;

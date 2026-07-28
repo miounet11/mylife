@@ -87,16 +87,28 @@ export default function ProgressiveProfileHub({
             和老师对话时可逐步补充
           </p>
         </div>
-        <Link
-          href={
-            settings.activeFortuneId
-              ? `/profile/settings?fortuneId=${encodeURIComponent(settings.activeFortuneId)}&tab=supplements`
-              : '/profile/settings?tab=supplements'
-          }
-          className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
-        >
-          编辑全部
-        </Link>
+        <div className="flex gap-3">
+          <Link
+            href={
+              settings.activeFortuneId
+                ? `/profile/foundation?fortuneId=${encodeURIComponent(settings.activeFortuneId)}`
+                : '/profile/foundation'
+            }
+            className="text-[12px] font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+          >
+            数据底座
+          </Link>
+          <Link
+            href={
+              settings.activeFortuneId
+                ? `/profile/settings?fortuneId=${encodeURIComponent(settings.activeFortuneId)}&tab=supplements`
+                : '/profile/settings?tab=supplements'
+            }
+            className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+          >
+            编辑全部
+          </Link>
+        </div>
       </div>
 
       <div className="mt-3">

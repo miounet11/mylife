@@ -68,6 +68,16 @@ export default function ProfileSettingsSummaryBanner() {
           ) : null}
         </div>
         <div className="flex shrink-0 flex-wrap gap-x-4 gap-y-1 text-[13px]">
+          <Link
+            href={
+              settings.activeFortuneId
+                ? `/profile/foundation?fortuneId=${encodeURIComponent(settings.activeFortuneId)}`
+                : '/profile/foundation'
+            }
+            className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+          >
+            数据底座
+          </Link>
           <Link href="/teachers" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
             和老师补充
           </Link>

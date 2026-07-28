@@ -56,6 +56,7 @@ export const LK_PORTAL_ROUTES = [
   '/learn',
   '/profile',
   '/profile/settings',
+  '/profile/foundation',
   '/updates',
   '/updates/messages',
   '/result/[id]',

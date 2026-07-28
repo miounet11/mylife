@@ -1,6 +1,13 @@
 export type BirthAccuracy = 'exact' | 'range' | 'unknown';
 export type ProfileIntent = 'career' | 'wealth' | 'relationship' | 'yearly';
-export type SupplementDomain = 'career' | 'goals' | 'relationship' | 'wealth' | 'health' | 'residence';
+export type SupplementDomain =
+  | 'career'
+  | 'goals'
+  | 'relationship'
+  | 'wealth'
+  | 'health'
+  | 'residence'
+  | 'astro';
 export type ProfileImpactHint = 'engine' | 'expression' | 'display';
 export type ProfileDocumentCategory = 'life_event' | 'career_note' | 'relationship_note' | 'health_note' | 'other';
 export type ProfileDocumentVisibility = 'engine' | 'private';
@@ -98,6 +105,17 @@ export const PROFILE_SUPPLEMENT_DOMAINS: Record<SupplementDomain, {
       { key: 'currentCity', label: '现居城市', placeholder: '如：上海、深圳', impact: 'expression' },
       { key: 'plannedMove', label: '计划迁移', placeholder: '如：考虑去杭州、暂无', impact: 'expression' },
       { key: 'environmentPreference', label: '环境偏好', placeholder: '如：南方湿润、干燥北方', impact: 'expression' },
+    ],
+  },
+  astro: {
+    label: '星座星盘',
+    description: '太阳星座与生肖可由生日推导；月亮/上升可自填，作表达层补充。',
+    fields: [
+      { key: 'sunSign', label: '太阳星座', placeholder: '如：天秤座', impact: 'display' },
+      { key: 'chineseZodiac', label: '生肖', placeholder: '如：龙', impact: 'display' },
+      { key: 'moonSign', label: '月亮星座', placeholder: '如：巨蟹座', impact: 'expression' },
+      { key: 'risingSign', label: '上升星座', placeholder: '如：处女座', impact: 'expression' },
+      { key: 'astroNote', label: '星盘备注', placeholder: '如：已知精确上升时间', impact: 'expression' },
     ],
   },
 };

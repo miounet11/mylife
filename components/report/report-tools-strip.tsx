@@ -77,6 +77,23 @@ const TOOLS: Array<{
     href: ({ reportId, source }) =>
       `/hehun?source=${encodeURIComponent(source)}&reportId=${encodeURIComponent(reportId)}`,
   },
+  {
+    id: 'foundation',
+    label: '数据底座',
+    short: '底座',
+    desc: '参数齐全',
+    priority: true,
+    href: ({ reportId, source }) =>
+      `/profile/foundation?source=${encodeURIComponent(source)}&fortuneId=${encodeURIComponent(reportId)}`,
+  },
+  {
+    id: 'zodiac',
+    label: '星座生肖',
+    short: '星座',
+    desc: '太阳/生肖',
+    href: ({ reportId, source }) =>
+      `/tools/zodiac?source=${encodeURIComponent(source)}&fortuneId=${encodeURIComponent(reportId)}`,
+  },
 ];
 
 export function ReportToolsStrip({
