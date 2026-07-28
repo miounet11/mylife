@@ -164,3 +164,104 @@ export function writeSpaceToFoundation(params: {
     },
   });
 }
+
+/** 合婚双盘 */
+export function writeHehunToFoundation(params: {
+  userId: string;
+  fortuneId?: string | null;
+  sessionId?: string | null;
+  score: number;
+  band?: string | null;
+  headline: string;
+  summary?: string | null;
+  partnerLabel?: string | null;
+}): FoundationWritebackResult {
+  return writeFoundationSupplement({
+    userId: params.userId,
+    fortuneId: params.fortuneId,
+    domain: 'apps',
+    fields: {
+      hehunScore: Math.round(params.score),
+      hehunBand: params.band || '',
+      hehunHeadline: params.headline,
+      hehunSummary: (params.summary || params.headline).slice(0, 200),
+      hehunPartner: params.partnerLabel || '',
+      hehunSessionId: params.sessionId || '',
+      appsUpdatedAt: new Date().toISOString(),
+    },
+    changeType: 'hehun_writeback',
+    fieldPath: 'apps.hehun',
+    meta: {
+      sessionId: params.sessionId,
+      score: params.score,
+      band: params.band,
+    },
+  });
+}
+
+/** 十维度研判 */
+export function writeDimensionToFoundation(params: {
+  userId: string;
+  fortuneId?: string | null;
+  sessionId?: string | null;
+  slug: string;
+  title: string;
+  summary: string;
+  predictionCount?: number;
+}): FoundationWritebackResult {
+  const slugSafe = `${params.slug}`.slice(0, 40);
+  return writeFoundationSupplement({
+    userId: params.userId,
+    fortuneId: params.fortuneId,
+    domain: 'apps',
+    fields: {
+      dimLastSlug: slugSafe,
+      dimLastTitle: params.title.slice(0, 40),
+      dimLastSummary: params.summary.slice(0, 200),
+      dimLastAt: new Date().toISOString(),
+      dimLastSessionId: params.sessionId || '',
+      dimPredictionCount: params.predictionCount ?? '',
+      // rolling list of recent slugs (append unique)
+      dimSlugs: slugSafe,
+      appsUpdatedAt: new Date().toISOString(),
+    },
+    changeType: 'dimension_writeback',
+    fieldPath: `apps.dimension.${slugSafe}`,
+    meta: {
+      sessionId: params.sessionId,
+      slug: params.slug,
+      title: params.title,
+    },
+  });
+}
+
+/** 通用工具运行（tool-run-orchestrator） */
+export function writeGenericToolToFoundation(params: {
+  userId: string;
+  fortuneId?: string | null;
+  sessionId: string;
+  toolSlug: string;
+  toolTitle: string;
+  summary?: string | null;
+  qualityScore?: number | null;
+}): FoundationWritebackResult {
+  return writeFoundationSupplement({
+    userId: params.userId,
+    fortuneId: params.fortuneId,
+    domain: 'apps',
+    fields: {
+      lastToolSlug: params.toolSlug.slice(0, 48),
+      lastToolTitle: params.toolTitle.slice(0, 40),
+      lastToolSummary: (params.summary || params.toolTitle).slice(0, 200),
+      lastToolScore: params.qualityScore != null ? Math.round(params.qualityScore) : '',
+      lastToolSessionId: params.sessionId,
+      appsUpdatedAt: new Date().toISOString(),
+    },
+    changeType: 'tool_writeback',
+    fieldPath: `apps.tool.${params.toolSlug}`,
+    meta: {
+      sessionId: params.sessionId,
+      toolSlug: params.toolSlug,
+    },
+  });
+}

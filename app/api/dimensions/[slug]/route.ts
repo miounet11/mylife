@@ -53,11 +53,70 @@ export async function POST(
       enabled: llmEnhance,
     });
 
+    // 写回人生数据底座
+    let foundationWritten = false;
+    try {
+      const { getOrCreateGuestUserId } = await import('@/lib/user-utils');
+      const { writeDimensionToFoundation } = await import('@/lib/life-foundation/writeback');
+      const { toolSessionOperations } = await import('@/lib/database');
+      const { generateId } = await import('@/lib/utils');
+      const userId =
+        (session.authenticated && session.user?.id ? String(session.user.id) : '') ||
+        (await getOrCreateGuestUserId());
+      const firstSection = report?.sections?.[0];
+      const summary =
+        (firstSection?.items?.[0] as string) ||
+        report?.question ||
+        definition.title;
+      const sessionId = `tool_${generateId()}`;
+      try {
+        toolSessionOperations.create({
+          id: sessionId,
+          userId,
+          toolSlug: `dimension-${slug}`,
+          status: 'completed',
+          input: {
+            slug,
+            reportId: advisorInput.reportId || null,
+            birthDate,
+          },
+          result: {
+            slug,
+            title: definition.title,
+            summary: `${summary}`.slice(0, 240),
+            tool: `dimension-${slug}`,
+            savedAt: report?.generatedAt || new Date().toISOString(),
+          },
+          meta: {
+            toolTitle: definition.title,
+            category: 'dimensions',
+            slug,
+            reportId: advisorInput.reportId || null,
+          },
+        });
+      } catch {
+        // session optional
+      }
+      const wb = writeDimensionToFoundation({
+        userId,
+        fortuneId: advisorInput.reportId || null,
+        sessionId,
+        slug,
+        title: definition.title,
+        summary: `${summary}`.slice(0, 200),
+        predictionCount: Array.isArray(report?.predictions) ? report.predictions.length : 0,
+      });
+      foundationWritten = wb.ok;
+    } catch (e) {
+      console.warn('[dimensions] foundation writeback skipped', e);
+    }
+
     return NextResponse.json({
       success: true,
       report,
       authenticated: Boolean(session.authenticated),
       dimension: definition,
+      foundationWritten,
     });
   } catch (error) {
     console.error('[API] dimensions POST failed:', error);

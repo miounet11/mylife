@@ -248,6 +248,22 @@ export async function POST(request: NextRequest) {
             const personalizedHighlights = profileNote
               ? [profileNote, ...dailyContent.highlights]
               : dailyContent.highlights;
+            let foundationNote = '';
+            try {
+              const { buildLifeFoundation } = await import('@/lib/life-foundation/build');
+              const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.life-kline.com';
+              const snap = buildLifeFoundation(String(fortune.userId || ''), fortune.id);
+              if (snap && snap.overall < 85) {
+                const next = snap.nextSteps[0];
+                foundationNote = next
+                  ? `数据底座 ${snap.overall}%（${snap.gradeLabel}）。建议补：${next.title} → ${baseUrl}/profile/foundation?fortuneId=${encodeURIComponent(fortune.id)}&source=email_daily`
+                  : `数据底座 ${snap.overall}%（${snap.gradeLabel}）。完善参数可让提醒更贴你 → ${baseUrl}/profile/foundation?fortuneId=${encodeURIComponent(fortune.id)}&source=email_daily`;
+              } else if (snap) {
+                foundationNote = `数据底座 ${snap.overall}%（${snap.gradeLabel}）· 参数较全，今日提醒按你的固定背景对齐。`;
+              }
+            } catch {
+              // non-fatal
+            }
             await sendTimingDailyReminderEmail({
               email: sub.email,
               reportId: fortune.id,
@@ -258,6 +274,7 @@ export async function POST(request: NextRequest) {
               cautionTip: dailyContent.cautionTip,
               utmCampaign: dailyCampaign,
               profileArchiveFooterHtml,
+              foundationNote: foundationNote || undefined,
             });
             markSent(sub.email, 'daily', dailyCampaign, fortune.id);
             recordTimingEmailToInbox({

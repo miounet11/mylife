@@ -416,6 +416,31 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
     );
   }
 
+  function persistHehunFoundation(
+    r: ReturnType<typeof analyzeHehun>,
+    partnerLabel: string,
+  ) {
+    void fetch('/api/profile/foundation/signal', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        kind: 'hehun',
+        score: r.score,
+        band: r.band,
+        headline: r.headline,
+        summary: r.plainForCouple?.slice(0, 200) || r.layers?.[0]?.summary || r.headline,
+        partnerLabel,
+        fortuneId:
+          typeof window !== 'undefined'
+            ? new URLSearchParams(window.location.search).get('fortuneId') ||
+              new URLSearchParams(window.location.search).get('reportId') ||
+              null
+            : null,
+      }),
+      keepalive: true,
+    }).catch(() => {});
+  }
+
   function run() {
     // Engine remains Chinese-native; presentHehunResult maps chrome via displayResult.
     const r = analyzeHehun(a, b);
@@ -426,6 +451,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
       hasDayun: Boolean(a.currentDayunGanZhi || b.currentDayunGanZhi),
       source: 'manual_or_profile',
     });
+    persistHehunFoundation(r, b.name || '对方');
   }
 
   function runFromBirth() {
@@ -465,6 +491,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
       // Engine remains Chinese-native; presentHehunResult maps chrome via displayResult.
       const r = analyzeHehun(personA, personB);
       setResult(r);
+      persistHehunFoundation(r, personB.name || birthB.name || '对方');
       saveRememberedHehunBirthPair({
         a: {
           birthDate: birthA.date,

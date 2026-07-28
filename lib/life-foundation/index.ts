@@ -14,4 +14,7 @@ export {
   writeXiangxueToFoundation,
   writeNamingToFoundation,
   writeSpaceToFoundation,
+  writeHehunToFoundation,
+  writeDimensionToFoundation,
+  writeGenericToolToFoundation,
 } from '@/lib/life-foundation/writeback';

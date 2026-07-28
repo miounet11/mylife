@@ -627,6 +627,28 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
       dayMaster: birthPack?.lockedFacts.dayMaster || report.bazi?.dayMaster || null,
     },
   });
+
+  // 写回人生数据底座（通用工具）
+  try {
+    const { writeGenericToolToFoundation } = await import('@/lib/life-foundation/writeback');
+    const summary =
+      (result as { summary?: string; headline?: string; title?: string })?.summary ||
+      (result as { headline?: string })?.headline ||
+      (result as { title?: string })?.title ||
+      tool.shortTitle;
+    writeGenericToolToFoundation({
+      userId,
+      fortuneId: sessionReportIdFor(report) || null,
+      sessionId,
+      toolSlug: tool.slug,
+      toolTitle: tool.shortTitle || tool.slug,
+      summary: `${summary || ''}`.slice(0, 200),
+      qualityScore: quality?.score ?? null,
+    });
+  } catch (e) {
+    console.warn('[tool-run] foundation writeback skipped', e);
+  }
+
   recorder.push({
     stage: 'persist-session',
     status: 'completed',

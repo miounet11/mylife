@@ -604,6 +604,10 @@ function buildToolsLayer(
   const q = fortuneId ? `?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation` : '?source=foundation';
   const hasNaming = Boolean(byItem.naming?.count || appsFields?.namingSummary || appsFields?.namingTop);
   const hasSpace = Boolean(byItem.space?.count || appsFields?.spaceSummary);
+  const hasHehun = Boolean(byItem.hehun?.count || appsFields?.hehunHeadline || appsFields?.hehunScore);
+  const hasDims = Boolean(
+    byItem.dimensions?.count || appsFields?.dimLastSlug || appsFields?.dimLastSummary,
+  );
   const namingSummary = appsFields?.namingTop
     ? `领先「${appsFields.namingTop}」${appsFields.namingScore ? ` · ${appsFields.namingScore}分` : ''}`
     : appsFields?.namingSummary || (byItem.naming?.count ? `${byItem.naming.count} 次` : null);
@@ -614,6 +618,14 @@ function buildToolsLayer(
       : byItem.space?.count
         ? `${byItem.space.count} 次`
         : null);
+  const hehunSummary = appsFields?.hehunHeadline
+    ? `${appsFields.hehunHeadline}${appsFields.hehunBand ? ` · ${appsFields.hehunBand}` : ''}`
+    : appsFields?.hehunSummary || (byItem.hehun?.count ? `${byItem.hehun.count} 次` : null);
+  const dimSummary = appsFields?.dimLastTitle
+    ? `${appsFields.dimLastTitle}${appsFields.dimLastSummary ? `：${appsFields.dimLastSummary}` : ''}`.slice(0, 80)
+    : byItem.dimensions?.count
+      ? `${byItem.dimensions.count} 次`
+      : null;
 
   const defs: Array<{
     id: string;
@@ -631,7 +643,7 @@ function buildToolsLayer(
       desc: '用神与姓名五行对齐',
       href: `/tools/naming${q}`,
       key: 'naming',
-      weight: 0.3,
+      weight: 0.28,
       done: hasNaming,
       summary: namingSummary,
     },
@@ -641,7 +653,7 @@ function buildToolsLayer(
       desc: '人宅合参 · 户型与方位',
       href: `/tools/fengshui-space${q}`,
       key: 'space',
-      weight: 0.25,
+      weight: 0.22,
       done: hasSpace,
       summary: spaceSummary,
     },
@@ -653,9 +665,9 @@ function buildToolsLayer(
         ? `/hehun?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation`
         : '/hehun?source=foundation',
       key: 'hehun',
-      weight: 0.2,
-      done: Boolean(byItem.hehun?.count),
-      summary: byItem.hehun?.count ? `${byItem.hehun.count} 次` : null,
+      weight: 0.25,
+      done: hasHehun,
+      summary: hehunSummary,
     },
     {
       id: 'dimensions',
@@ -664,8 +676,8 @@ function buildToolsLayer(
       href: '/dimensions?source=foundation',
       key: 'dimensions',
       weight: 0.25,
-      done: Boolean(byItem.dimensions?.count),
-      summary: byItem.dimensions?.count ? `${byItem.dimensions.count} 次` : null,
+      done: hasDims,
+      summary: dimSummary,
     },
   ];
 

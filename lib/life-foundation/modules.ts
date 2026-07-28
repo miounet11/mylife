@@ -60,6 +60,16 @@ export const FOUNDATION_SIGNAL_TOOLS: FoundationToolDef[] = [
   { slug: 'fengshui-space-report', title: '空间场报表', layerId: 'tools', itemId: 'space', href: '/tools/fengshui-space' },
   { slug: 'hehun', title: '合婚双盘', layerId: 'tools', itemId: 'hehun', href: '/hehun' },
   { slug: 'zodiac', title: '星座星盘', layerId: 'astro', itemId: 'zodiac_tool', href: '/tools/zodiac' },
+  { slug: 'dimension-fortune-rhythm', title: '运势节奏', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-career-industry', title: '工作行业', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-marriage', title: '谈婚论嫁', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-investment', title: '投资理财', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-health', title: '健康节奏', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-partnership', title: '人际合作', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-living-environment', title: '居家环境', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-naming', title: '起名研判', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-study-career', title: '学业事业', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
+  { slug: 'dimension-timing-selection', title: '择时办事', layerId: 'tools', itemId: 'dimensions', href: '/dimensions' },
 ];
 
 export function gradeFromOverall(overall: number): {

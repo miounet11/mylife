@@ -30,6 +30,8 @@ export type TimingDailyReminderParams = {
   utmCampaign: string;
   /** Optional HTML footer already localized by caller */
   profileArchiveFooterHtml?: string;
+  /** 人生数据底座提示（完整度 / 建议补项） */
+  foundationNote?: string;
 } & EmailLocaleInput & {
   locale?: EmailLocale | string | null;
 };
@@ -124,8 +126,16 @@ export async function sendTimingDailyReminderEmail(params: TimingDailyReminderPa
     footerExtraParts.push(params.profileArchiveFooterHtml);
   }
 
+  const foundationNote = `${params.foundationNote || ''}`.trim();
+  const foundationHtml = foundationNote
+    ? `<p style="margin:0 0 14px;padding:10px 12px;background:#f7f7f8;border-radius:8px;color:#444950;font-size:13px;line-height:1.6">${escapeHtml(
+        localizeText(foundationNote, locale),
+      )}</p>`
+    : '';
+
   const bodyHtml = `
     <p style="margin:0 0 14px;color:#65676b;font-size:14px;line-height:1.65">${intro}</p>
+    ${foundationHtml}
     ${highlightHtml}
     ${tipsCard}
   `;
@@ -134,6 +144,7 @@ export async function sendTimingDailyReminderEmail(params: TimingDailyReminderPa
     subject,
     '',
     intro,
+    ...(foundationNote ? [foundationNote, ''] : []),
     ...highlights.map((h) => `· ${localizeText(h, locale)}`),
     '',
     `${pickLocaleString(locale, { 'zh-CN': '今天适合', 'zh-Hant': '今天適合', en: 'Favor today' })}：${localizeText(dailyTip, locale)}`,
