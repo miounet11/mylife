@@ -12,7 +12,9 @@ import {
 import { PROFILE_SUPPLEMENT_DOMAINS, type SupplementDomain } from '@/lib/profile-settings-types';
 import { buildAstroFromBirth } from '@/lib/life-foundation/zodiac';
 import { FOUNDATION_LAYER_META, FOUNDATION_SIGNAL_TOOLS, gradeFromOverall } from '@/lib/life-foundation/modules';
+import { buildFoundationMilestones, milestoneProgress } from '@/lib/life-foundation/milestones';
 import type {
+  FoundationAppsHighlights,
   FoundationAstroSnapshot,
   FoundationItem,
   FoundationItemStatus,
@@ -846,6 +848,64 @@ export function buildLifeFoundation(
   const coreItems = layers.flatMap((l) => l.items.filter((i) => i.status !== 'optional' && i.weight > 0));
   const filledItems = coreItems.filter((i) => i.status === 'done' || i.score >= 80).length;
 
+  const apps = supMap.get('apps') || {};
+  const appsHighlights: FoundationAppsHighlights = {
+    naming:
+      apps.namingTop || apps.namingSummary
+        ? {
+            top: apps.namingTop || null,
+            score: apps.namingScore || null,
+            mode: apps.namingMode || null,
+            summary: apps.namingSummary || null,
+          }
+        : null,
+    space:
+      apps.spaceSummary || apps.spaceTitle
+        ? {
+            summary: apps.spaceSummary || apps.spaceTitle || null,
+            score: apps.spaceScore || null,
+            domain: apps.spaceDomain || null,
+            linked: apps.spaceLinked === '1',
+          }
+        : null,
+    hehun:
+      apps.hehunHeadline || apps.hehunScore
+        ? {
+            score: apps.hehunScore ? Number(apps.hehunScore) : null,
+            band: apps.hehunBand || null,
+            headline: apps.hehunHeadline || null,
+            partner: apps.hehunPartner || null,
+          }
+        : null,
+    dimension:
+      apps.dimLastSlug || apps.dimLastSummary
+        ? {
+            slug: apps.dimLastSlug || null,
+            title: apps.dimLastTitle || null,
+            summary: apps.dimLastSummary || null,
+          }
+        : null,
+    lastTool:
+      apps.lastToolSlug || apps.lastToolTitle
+        ? {
+            slug: apps.lastToolSlug || null,
+            title: apps.lastToolTitle || null,
+            summary: apps.lastToolSummary || null,
+          }
+        : null,
+  };
+
+  const milestonesRaw = buildFoundationMilestones({
+    overall,
+    hasBirth: Boolean(fortune?.birthDate),
+    hasReport: Boolean(pillars || activeId),
+    lifeQaScore: lifeQaLayer.score,
+    bodyScore: bodyLayer.score,
+    toolsScore: toolsLayer.score,
+    fortuneId: activeId,
+  });
+  const mProg = milestoneProgress(milestonesRaw);
+
   return {
     version: 1,
     overall,
@@ -858,6 +918,21 @@ export function buildLifeFoundation(
     nextSteps: buildNextSteps(layers),
     astro,
     toolSignals: signals.slice(0, 12),
+    appsHighlights,
+    milestones: milestonesRaw.map((m) => ({
+      id: m.id,
+      label: m.label,
+      description: m.description,
+      done: m.done,
+      href: m.href,
+      ctaLabel: m.ctaLabel,
+      rewardHint: m.rewardHint,
+    })),
+    milestoneProgress: {
+      done: mProg.done,
+      total: mProg.total,
+      percent: mProg.percent,
+    },
     stats: {
       filledItems,
       totalCoreItems: coreItems.length,

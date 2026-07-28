@@ -81,6 +81,48 @@ export type FoundationToolSignal = {
   count: number;
 };
 
+/** 应用工具结果摘要（供底座卡 / Chat 引用） */
+export type FoundationAppsHighlights = {
+  naming?: {
+    top?: string | null;
+    score?: string | null;
+    mode?: string | null;
+    summary?: string | null;
+  } | null;
+  space?: {
+    summary?: string | null;
+    score?: string | null;
+    domain?: string | null;
+    linked?: boolean;
+  } | null;
+  hehun?: {
+    score?: number | null;
+    band?: string | null;
+    headline?: string | null;
+    partner?: string | null;
+  } | null;
+  dimension?: {
+    slug?: string | null;
+    title?: string | null;
+    summary?: string | null;
+  } | null;
+  lastTool?: {
+    slug?: string | null;
+    title?: string | null;
+    summary?: string | null;
+  } | null;
+};
+
+export type FoundationMilestoneView = {
+  id: string;
+  label: string;
+  description: string;
+  done: boolean;
+  href: string;
+  ctaLabel: string;
+  rewardHint: string;
+};
+
 export type LifeFoundationSnapshot = {
   version: 1;
   overall: number;
@@ -93,6 +135,9 @@ export type LifeFoundationSnapshot = {
   nextSteps: FoundationNextStep[];
   astro: FoundationAstroSnapshot;
   toolSignals: FoundationToolSignal[];
+  appsHighlights: FoundationAppsHighlights;
+  milestones: FoundationMilestoneView[];
+  milestoneProgress: { done: number; total: number; percent: number };
   stats: {
     filledItems: number;
     totalCoreItems: number;

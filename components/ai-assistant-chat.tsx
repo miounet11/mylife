@@ -46,6 +46,8 @@ import { resolveChatTeacher } from '@/lib/chat-teacher-runtime';
 import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 import { teacherFromTopicKey, type TeacherTopicChip } from '@/lib/teachers';
 import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
+import { buildFoundationChatStarters } from '@/lib/life-foundation/chat-starters';
+import type { LifeFoundationSnapshot } from '@/lib/life-foundation/types';
 
 type ChatContextReport = ChatReportContext;
 
@@ -118,6 +120,7 @@ export default function AIAssistantChat({
   const [greetingIndex, setGreetingIndex] = useState(0);
   /** Opening empty: keep composer minimal until user expands tools. */
   const [showOpeningTools, setShowOpeningTools] = useState(false);
+  const [foundationSnap, setFoundationSnap] = useState<LifeFoundationSnapshot | null>(null);
   const openingShownKeyRef = useRef('');
   /** Prevents double-inject of client-only first_mes for the same teacher/report key. */
   const openingInjectedKeyRef = useRef('');
@@ -193,6 +196,29 @@ export default function AIAssistantChat({
         ? `Current topic: ${urlTopic}`
         : `当前议题：${urlTopic}`
       : undefined;
+  // 人生数据底座 → 开场 starter（缺口优先）
+  useEffect(() => {
+    let cancelled = false;
+    const q = reportId ? `?fortuneId=${encodeURIComponent(reportId)}` : '';
+    void fetchJsonWithTimeout<{ success?: boolean; foundation?: LifeFoundationSnapshot }>(
+      `/api/profile/foundation${q}`,
+      { timeoutMs: 8_000, timeoutReason: 'chat-foundation-starters' },
+    )
+      .then(({ response, data }) => {
+        if (cancelled || !response.ok || !data?.foundation) return;
+        setFoundationSnap(data.foundation);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [reportId]);
+
+  const foundationStarters = buildFoundationChatStarters(foundationSnap, {
+    hasReport: Boolean(context?.report || reportId || foundationSnap?.hasReport),
+    en: enUi,
+  });
+
   const openingView = buildTeacherOpening({
     teacherId: resolvedOpeningTeacherId,
     greetingIndex,
@@ -1110,6 +1136,7 @@ export default function AIAssistantChat({
                   hasReport={false}
                   showAnalyzeCta
                   analyzeHref="/analyze?source=chat_opening_primary&from=chat_opening"
+                  foundationStarters={foundationStarters}
                 />
               ) : null}
             </div>
@@ -1157,6 +1184,7 @@ export default function AIAssistantChat({
               hasReport={Boolean(context?.report)}
               showAnalyzeCta={!context?.report}
               analyzeHref="/analyze?source=chat_opening_primary&from=chat_opening"
+              foundationStarters={foundationStarters}
             />
           ) : null}
 

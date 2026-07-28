@@ -28,6 +28,8 @@ export function ChatOpeningPanel({
   showAnalyzeCta = true,
   analyzeHref = '/analyze?source=chat_opening_primary&from=chat_opening',
   hasReport = false,
+  /** 底座缺口 starter（插到老师 starters 前） */
+  foundationStarters = [],
 }: {
   opening: TeacherOpeningView;
   disabled?: boolean;
@@ -39,19 +41,36 @@ export function ChatOpeningPanel({
   showAnalyzeCta?: boolean;
   analyzeHref?: string;
   hasReport?: boolean;
+  foundationStarters?: Array<{ id: string; text: string; href?: string; source: string }>;
 }) {
   const en = isEnglishUiLocale(locale);
   const t = (zh: string, enText: string) => (en ? enText : zh);
   const {
     teacher,
     firstMes,
-    starters,
+    starters: teacherStarters,
     chips,
     greetingIndex,
     greetingCount,
     hasReportSlots,
     memoryLine,
   } = opening;
+
+  // Merge: foundation gap starters first (max 2), then teacher starters
+  const starters = (() => {
+    const f = foundationStarters.map((s) => s.text).filter(Boolean);
+    const merged = [...f.slice(0, 2), ...teacherStarters];
+    const seen = new Set<string>();
+    return merged.filter((s) => {
+      if (!s || seen.has(s)) return false;
+      seen.add(s);
+      return true;
+    });
+  })();
+  const foundationHrefByText = new Map(
+    foundationStarters.filter((s) => s.href).map((s) => [s.text, s.href as string]),
+  );
+  const foundationSourceByText = new Map(foundationStarters.map((s) => [s.text, s.source]));
 
   const [pulseFirst, setPulseFirst] = useState(true);
   useEffect(() => {
@@ -209,19 +228,26 @@ export function ChatOpeningPanel({
               </span>
             ) : null}
           </div>
-          {/* 有报告时：starter 仍是主 CTA；无报告时降级为次按钮 */}
+          {/* 有报告时：starter 仍是主 CTA；无报告时降级为次按钮；底座缺口可带 href 跳转 */}
           <button
             type="button"
             disabled={disabled}
-            onClick={() =>
+            onClick={() => {
+              const href = foundationHrefByText.get(starters[0]);
+              if (href) {
+                window.location.assign(href);
+                return;
+              }
               onStarter(starters[0], {
-                source: hasReport
-                  ? pulseFirst
-                    ? 'opening_starter_primary'
-                    : 'opening_starter_cta_bar'
-                  : 'opening_starter_secondary_no_report',
-              })
-            }
+                source:
+                  foundationSourceByText.get(starters[0]) ||
+                  (hasReport
+                    ? pulseFirst
+                      ? 'opening_starter_primary'
+                      : 'opening_starter_cta_bar'
+                    : 'opening_starter_secondary_no_report'),
+              });
+            }}
             className={`flex min-h-[44px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] px-3.5 py-2.5 text-left text-[13px] font-semibold leading-[1.4] transition active:opacity-90 disabled:opacity-50 ${
               hasReport
                 ? 'border border-[#3b5998] bg-[#3b5998] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
@@ -240,7 +266,16 @@ export function ChatOpeningPanel({
                 key={text}
                 type="button"
                 disabled={disabled}
-                onClick={() => onStarter(text, { source: 'opening_starter' })}
+                onClick={() => {
+                  const href = foundationHrefByText.get(text);
+                  if (href) {
+                    window.location.assign(href);
+                    return;
+                  }
+                  onStarter(text, {
+                    source: foundationSourceByText.get(text) || 'opening_starter',
+                  });
+                }}
                 className="min-h-[40px] w-full touch-manipulation rounded-[8px] border border-[#e4e6eb] bg-[#f7f8fa] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50"
               >
                 {text}

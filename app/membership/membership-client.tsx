@@ -22,6 +22,7 @@ import {
   hydratePredictionsFromServer,
 } from '@/lib/predictions/store';
 import type { PredictionAccuracyStats } from '@/lib/predictions/types';
+import FoundationMilestoneCard from '@/components/membership/foundation-milestone-card';
 
 type MembershipStatus = {
   status: string;
@@ -344,6 +345,8 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
           </div>
         ))}
       </div>
+
+      <FoundationMilestoneCard source="membership_hub" />
 
       <AccuracyDashboard
         stats={accuracyStats}

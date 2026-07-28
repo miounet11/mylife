@@ -18,3 +18,8 @@ export {
   writeDimensionToFoundation,
   writeGenericToolToFoundation,
 } from '@/lib/life-foundation/writeback';
+export {
+  buildFoundationMilestones,
+  milestoneProgress,
+} from '@/lib/life-foundation/milestones';
+export { buildFoundationChatStarters } from '@/lib/life-foundation/chat-starters';

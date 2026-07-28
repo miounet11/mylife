@@ -267,6 +267,166 @@ export default function LifeFoundationHub({
         </section>
       )}
 
+      {/* Milestones */}
+      {foundation.milestones?.length > 0 && (
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div>
+              <h3 className="text-[14px] font-semibold text-[color:var(--ink-1)]">完整度里程碑</h3>
+              <p className="mt-0.5 text-[12px] text-[color:var(--ink-5)]">
+                已达成 {foundation.milestoneProgress?.done ?? 0}/
+                {foundation.milestoneProgress?.total ?? foundation.milestones.length}
+                {foundation.milestoneProgress ? ` · ${foundation.milestoneProgress.percent}%` : ''}
+              </p>
+            </div>
+            <Link
+              href="/membership?source=foundation_milestones"
+              className="text-[12px] font-medium text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+            >
+              会员与深度服务
+            </Link>
+          </div>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {foundation.milestones.map((m) => (
+              <li
+                key={m.id}
+                className={`rounded-lg border px-3 py-2.5 ${
+                  m.done
+                    ? 'border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]'
+                    : 'border-[color:var(--hairline)] bg-white'
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          m.done ? 'bg-[color:var(--ink-1)]' : 'bg-[color:var(--hairline-strong)]'
+                        }`}
+                      />
+                      <span className="text-[13px] font-medium text-[color:var(--ink-1)]">{m.label}</span>
+                    </div>
+                    <p className="mt-0.5 text-[11px] text-[color:var(--ink-5)]">{m.description}</p>
+                    <p className="mt-0.5 text-[11px] text-[color:var(--ink-4)]">{m.rewardHint}</p>
+                  </div>
+                  <Link
+                    href={m.href}
+                    onClick={() =>
+                      void trackClientEvent({
+                        eventName: 'foundation_step_clicked',
+                        page: '/profile/foundation',
+                        meta: { itemId: `milestone_${m.id}`, done: m.done },
+                      })
+                    }
+                    className={`shrink-0 rounded-md px-2.5 py-1 text-[11px] font-medium ${
+                      m.done
+                        ? 'border border-[color:var(--hairline)] text-[color:var(--ink-3)]'
+                        : 'bg-slate-900 text-white hover:bg-slate-800'
+                    }`}
+                  >
+                    {m.ctaLabel}
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      {/* Apps result cards */}
+      {(foundation.appsHighlights?.hehun ||
+        foundation.appsHighlights?.dimension ||
+        foundation.appsHighlights?.naming ||
+        foundation.appsHighlights?.space) && (
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-5">
+          <h3 className="text-[14px] font-semibold text-[color:var(--ink-1)]">已沉淀的工具结果</h3>
+          <p className="mt-0.5 text-[12px] text-[color:var(--ink-5)]">
+            对话与报告会引用这些摘要（不作恐吓定命）
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {foundation.appsHighlights.hehun?.headline && (
+              <div className="rounded-lg border border-[color:var(--hairline)] p-3">
+                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">合婚双盘</div>
+                <p className="mt-1 text-[13px] font-medium text-[color:var(--ink-1)]">
+                  {foundation.appsHighlights.hehun.headline}
+                </p>
+                <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
+                  {[
+                    foundation.appsHighlights.hehun.score != null
+                      ? `${foundation.appsHighlights.hehun.score} 分`
+                      : null,
+                    foundation.appsHighlights.hehun.band,
+                    foundation.appsHighlights.hehun.partner,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+                <Link
+                  href="/hehun?source=foundation_apps_card"
+                  className="mt-2 inline-block text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  复看合婚
+                </Link>
+              </div>
+            )}
+            {foundation.appsHighlights.dimension?.title && (
+              <div className="rounded-lg border border-[color:var(--hairline)] p-3">
+                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">十维度</div>
+                <p className="mt-1 text-[13px] font-medium text-[color:var(--ink-1)]">
+                  {foundation.appsHighlights.dimension.title}
+                </p>
+                {foundation.appsHighlights.dimension.summary && (
+                  <p className="mt-1 line-clamp-2 text-[12px] text-[color:var(--ink-4)]">
+                    {foundation.appsHighlights.dimension.summary}
+                  </p>
+                )}
+                <Link
+                  href={
+                    foundation.appsHighlights.dimension.slug
+                      ? `/dimensions/${foundation.appsHighlights.dimension.slug}?source=foundation_apps_card`
+                      : '/dimensions?source=foundation_apps_card'
+                  }
+                  className="mt-2 inline-block text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  打开维度
+                </Link>
+              </div>
+            )}
+            {foundation.appsHighlights.naming?.top && (
+              <div className="rounded-lg border border-[color:var(--hairline)] p-3">
+                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">起名</div>
+                <p className="mt-1 text-[13px] font-medium text-[color:var(--ink-1)]">
+                  领先「{foundation.appsHighlights.naming.top}」
+                  {foundation.appsHighlights.naming.score
+                    ? ` · ${foundation.appsHighlights.naming.score} 分`
+                    : ''}
+                </p>
+                <Link
+                  href="/tools/naming?source=foundation_apps_card"
+                  className="mt-2 inline-block text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  继续起名
+                </Link>
+              </div>
+            )}
+            {foundation.appsHighlights.space?.summary && (
+              <div className="rounded-lg border border-[color:var(--hairline)] p-3">
+                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">空间场</div>
+                <p className="mt-1 line-clamp-2 text-[13px] font-medium text-[color:var(--ink-1)]">
+                  {foundation.appsHighlights.space.summary}
+                </p>
+                <Link
+                  href="/tools/fengshui-space?source=foundation_apps_card"
+                  className="mt-2 inline-block text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+                >
+                  打开空间场
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
       {/* Astro strip */}
       {(foundation.astro.sunSign || foundation.astro.chineseZodiac) && (
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white px-5 py-4">
