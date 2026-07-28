@@ -11,6 +11,7 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { WORLD_YI_DOMAINS } from '@/lib/portal-nav';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 
 export const metadata: Metadata = {
   title: '世界易学说｜结构、时位与动作',
@@ -52,7 +53,10 @@ export default async function WorldYiPage({
               <Link href="/learn/intro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 入门专题
               </Link>
-              <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              <Link
+                href="/analyze?source=world_yi_hub"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
                 接到报告
               </Link>
             </>
@@ -62,6 +66,12 @@ export default async function WorldYiPage({
               公开知识 {stats.publicKnowledgeCount} · 公开案例 {stats.publicCaseCount}
             </span>
           }
+        />
+        <LightBirthBridge
+          source="world_yi_hub"
+          page="/world-yi"
+          title="先建你的结构底座"
+          description="世界易讲方法；结构报告把方法接到你的生辰、节奏与可验证动作。"
         />
         <PageIllustrationStrip
           surface="world-yi/hub"

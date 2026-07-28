@@ -38,7 +38,14 @@ export default function EncyclopediaWorldYiSidebar({
         >
           六步判断法
         </Link>
-        <Link href={lens.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+        <Link
+          href={
+            lens.analyzeHref.includes('?')
+              ? `${lens.analyzeHref}&source=world_yi_sidebar`
+              : `${lens.analyzeHref}?source=world_yi_sidebar`
+          }
+          className="font-semibold text-[color:var(--brand-strong)] underline-offset-2 hover:underline"
+        >
           接到报告
         </Link>
       </div>

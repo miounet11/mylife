@@ -21,6 +21,8 @@ import { caseArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
+import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
 
 const PAGE_SIZE = 24;
 
@@ -119,6 +121,12 @@ export default async function CasesPage({ searchParams }: PageProps) {
           }
         />
         <JourneyStrip active="content" locale={uiLocale} />
+        <LightBirthBridge
+          source="cases_hub"
+          page="/cases"
+          title="对照案例前，先有自己的结构"
+          description="案例是别人的路径。用你的生辰生成结构报告，再对照决策节奏。"
+        />
         <PageIllustrationStrip
           surface="cases/hub"
           title={copy.stripTitle}
@@ -197,6 +205,7 @@ export default async function CasesPage({ searchParams }: PageProps) {
           />
         </section>
       </div>
+      <StickyAnalyzeBar source="cases_hub_sticky" page="/cases" label="对照案例 · 先生成你的结构报告" />
     </AppPage>
   );
 }

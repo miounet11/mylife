@@ -107,6 +107,7 @@ export default function ProReportShell({
         dayMaster={view.dayMaster}
         yongShen={view.elements?.yongShen}
         source="pro_report_shell"
+        compact
       />
       <section className="border-b border-[color:var(--hairline)] pb-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

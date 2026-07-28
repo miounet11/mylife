@@ -4,6 +4,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
 export const metadata = createPublicContentMetadata({
@@ -114,7 +115,7 @@ export default function WorldYiBookPage() {
           actions={[
             { href: '/world-yi', label: '回到世界易总入口', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
             { href: '/world-yi/matrix', label: '看首批 120 篇' },
-            { href: '/analyze', label: '开始分析' },
+            { href: '/analyze?source=world_yi_book', label: '开始分析' },
           ]}
           highlights={[
             { body: '卷一到卷十' },
@@ -123,6 +124,15 @@ export default function WorldYiBookPage() {
             { body: '主书母本' },
           ]}
         />
+
+        <div className="mt-8">
+          <LightBirthBridge
+            source="world_yi_book"
+            page="/world-yi/book"
+            title="读主书之前，先有你自己的盘"
+            description="主书讲方法与体系；结构报告把方法接到你的生辰与可验证动作。"
+          />
+        </div>
 
         <section className="mt-10">
           <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">

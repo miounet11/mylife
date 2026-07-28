@@ -25,6 +25,8 @@ import {
   withLocalePrefix,
 } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
+import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
 
 /** Compact hub CTAs — opening mode, no reportId */
 const DIMENSIONS_CONSULTANT_IDS = [
@@ -148,6 +150,19 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
           </p>
         ) : null}
 
+        <LightBirthBridge
+          source={source ? `dimensions_hub:${source}` : 'dimensions_hub'}
+          page="/dimensions"
+          intent={
+            intent === 'wealth' || intent === 'relationship' || intent === 'yearly' || intent === 'career'
+              ? intent
+              : 'career'
+          }
+          title="十维度需要命盘底座"
+          description="先生成结构报告，再进场景深拆；报告会复用到预测与工具。"
+          compact
+        />
+
         <PageIllustrationStrip
           surface="dimensions/hub"
           title={illustStripTitle(uiLocale, {
@@ -216,6 +231,12 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
           {uiLocale === 'en' ? '.' : '。'}
         </p>
       </div>
+      <StickyAnalyzeBar
+        source="dimensions_hub_sticky"
+        page="/dimensions"
+        label="十维度 · 先生成结构报告"
+        sublabel="命盘底座 → 场景深拆 → 预测回访"
+      />
     </AppPage>
   );
 }

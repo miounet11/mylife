@@ -4,6 +4,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
 
@@ -73,7 +74,12 @@ export default function WorldYiGlobalCasesPage() {
           description="用真实全球案例去看留回、教育、跨境创业和家庭排序这些问题是怎么被拆解和判断的。"
           hint="适合先找与自己接近的处境建立判断感；如果准备直接看个人结果，就回到分析入口补齐出生信息。"
           actions={[
-            { href: '/analyze', label: '开始分析', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
+            {
+              href: '/analyze?source=world_yi_global_cases',
+              label: '开始分析',
+              primary: true,
+              icon: <ArrowRight className="ml-1 h-4 w-4" />,
+            },
             { href: '/world-yi/global', label: '回到全球入口' },
             { href: '/world-yi/en', label: 'English Gateway' },
           ]}
@@ -84,6 +90,15 @@ export default function WorldYiGlobalCasesPage() {
             { body: '教育' },
           ]}
         />
+
+        <div className="mt-8">
+          <LightBirthBridge
+            source="world_yi_global_cases"
+            page="/world-yi/global/cases"
+            title="对照全球案例 · 生成你的结构报告"
+            description="留回、跨境、教育都是「别人的路径」。填生辰打开自己的结构底座。"
+          />
+        </div>
 
         <section className="mt-10 grid gap-4 md:grid-cols-3">
           <ContentCardLink

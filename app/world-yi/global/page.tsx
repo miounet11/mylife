@@ -5,6 +5,7 @@ import ContentCardLink from '@/components/content-card-link';
 import SiteFooter from '@/components/site-footer';
 import SiteHeader from '@/components/site-header';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
+import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import {
   createCollectionPageSchema,
@@ -111,6 +112,15 @@ export default function WorldYiGlobalPage() {
           highlights={globalThemes.map((body) => ({ body }))}
           highlightsColumns="grid-cols-1"
         />
+
+        <div className="mt-8">
+          <LightBirthBridge
+            source="world_yi_global"
+            page="/world-yi/global"
+            title="迁移与身份之前，先看清结构"
+            description="全球路径讨论环境与阶段；结构报告把判断接到你的生辰与节奏。"
+          />
+        </div>
 
         <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
             <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">

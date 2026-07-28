@@ -22,6 +22,7 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
+import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
 
 const PAGE_SIZE = 24;
 
@@ -206,6 +207,12 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
           />
         </section>
       </div>
+      <StickyAnalyzeBar
+        source="knowledge_hub_sticky"
+        page="/knowledge"
+        label="边读边排 · 生成结构报告"
+        sublabel="免费 · 不必先注册"
+      />
     </AppPage>
   );
 }
