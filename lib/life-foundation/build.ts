@@ -399,11 +399,20 @@ function buildAstroLayer(
 function buildBodyLayer(
   byItem: Record<string, { count: number; lastAt: string | null; sessionId: string | null }>,
   fortuneId: string | null,
+  bodyFields?: Record<string, string>,
 ): FoundationLayer {
   const meta = FOUNDATION_LAYER_META.body;
   const face = byItem.face;
   const palm = byItem.palm;
   const q = fortuneId ? `?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation` : '?source=foundation';
+  const hasFace = Boolean(face?.count || bodyFields?.faceSummary);
+  const hasPalm = Boolean(palm?.count || bodyFields?.palmSummary);
+  const faceSummary =
+    bodyFields?.faceSummary ||
+    (face?.count ? `已观测 ${face.count} 次` : null);
+  const palmSummary =
+    bodyFields?.palmSummary ||
+    (palm?.count ? `已观测 ${palm.count} 次` : null);
 
   const items: FoundationItem[] = [
     {
@@ -411,11 +420,13 @@ function buildBodyLayer(
       layerId: 'body',
       label: '面相结构',
       description: '三庭五眼 · 五官 · 与用神交叉',
-      score: face?.count ? 100 : 0,
-      status: face?.count ? 'done' : 'missing',
+      score: hasFace ? 100 : 0,
+      status: hasFace ? 'done' : 'missing',
       href: `/tools/physiognomy${q}`,
-      ctaLabel: face?.count ? '复看面相' : '上传面相',
-      valueSummary: face?.count ? `已观测 ${face.count} 次` : null,
+      ctaLabel: hasFace ? '复看面相' : '上传面相',
+      valueSummary: faceSummary
+        ? `${faceSummary}${bodyFields?.faceScore ? ` · 分${bodyFields.faceScore}` : ''}`.slice(0, 80)
+        : null,
       weight: 0.55,
     },
     {
@@ -423,11 +434,13 @@ function buildBodyLayer(
       layerId: 'body',
       label: '手相结构',
       description: '手型掌丘 · 主线 · 行动节奏',
-      score: palm?.count ? 100 : 0,
-      status: palm?.count ? 'done' : 'missing',
+      score: hasPalm ? 100 : 0,
+      status: hasPalm ? 'done' : 'missing',
       href: `/tools/palmistry${q}`,
-      ctaLabel: palm?.count ? '复看手相' : '上传手相',
-      valueSummary: palm?.count ? `已观测 ${palm.count} 次` : null,
+      ctaLabel: hasPalm ? '复看手相' : '上传手相',
+      valueSummary: palmSummary
+        ? `${palmSummary}${bodyFields?.palmScore ? ` · 分${bodyFields.palmScore}` : ''}`.slice(0, 80)
+        : null,
       weight: 0.45,
     },
   ];
@@ -773,7 +786,7 @@ export function buildLifeFoundation(
 
   const birthLayer = buildBirthLayer(fortune, pillars);
   const { layer: astroLayer, astro } = buildAstroLayer(fortune?.birthDate, supMap.get('astro'));
-  const bodyLayer = buildBodyLayer(byItem, activeId);
+  const bodyLayer = buildBodyLayer(byItem, activeId, supMap.get('body'));
   const lifeQaLayer = buildLifeQaLayer(supMap, activeId);
   const interactLayer = buildInteractLayer({
     eventCount: Array.isArray(events) ? events.length : 0,

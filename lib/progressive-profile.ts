@@ -333,21 +333,31 @@ export function mergeDomainFields(
 /** 给老师 system / 上下文用的短摘要 */
 export function buildProfileContextLines(snapshot: ProgressiveProfileSnapshot): string[] {
   const lines: string[] = [];
-  const order: SupplementDomain[] = ['residence', 'career', 'goals', 'relationship', 'wealth', 'health'];
+  const order: SupplementDomain[] = [
+    'astro',
+    'body',
+    'residence',
+    'career',
+    'goals',
+    'relationship',
+    'wealth',
+    'health',
+  ];
+  const skipKeys = new Set(['lastSessionId', 'bodyUpdatedAt']);
   for (const domain of order) {
     const fields = snapshot.domains[domain];
     if (!fields) continue;
     const parts = Object.entries(fields)
-      .filter(([, v]) => `${v || ''}`.trim())
+      .filter(([k, v]) => !skipKeys.has(k) && `${v || ''}`.trim())
       .map(([k, v]) => {
         const label = fieldMeta(domain, k)?.label || k;
-        return `${label}=${v}`;
+        return `${label}=${`${v}`.slice(0, 100)}`;
       });
     if (parts.length) {
       lines.push(`${PROFILE_SUPPLEMENT_DOMAINS[domain].label}：${parts.join('；')}`);
     }
   }
-  return lines.slice(0, 8);
+  return lines.slice(0, 12);
 }
 
 export function snapshotFromSupplementList(

@@ -307,6 +307,7 @@ export async function POST(request: NextRequest) {
     };
 
     const sessionId = `tool_${generateId()}`;
+    const fortuneId = body?.fortuneId ? String(body.fortuneId) : null;
     toolSessionOperations.create({
       id: sessionId,
       userId,
@@ -317,6 +318,7 @@ export async function POST(request: NextRequest) {
         mediaId: media.id,
         side: body?.side || null,
         birthDate: birthCtx.birthDate || null,
+        fortuneId,
         allowSeoLineArt: allowSeo,
       },
       result: {
@@ -336,13 +338,68 @@ export async function POST(request: NextRequest) {
         llmUsed,
         schema: result.schema,
         sha256: media.sha256,
+        fortuneId,
       },
     });
+
+    // 写回人生数据底座 body 域，供对话/报告共享
+    let foundationWritten = false;
+    try {
+      const {
+        ensureProfileSettingsSchema,
+        profileChangeLogOperations,
+        profileSupplementOperations,
+      } = await import('@/lib/profile-settings-store');
+      ensureProfileSettingsSchema();
+      const physicalBit =
+        result.physicalHeadline ||
+        result.strengths?.slice(0, 2).join('；') ||
+        result.summary.slice(0, 80);
+      const fields: Record<string, string> = {
+        bodyUpdatedAt: result.generatedAt || new Date().toISOString(),
+        lastSessionId: sessionId,
+      };
+      if (kind === 'face') {
+        fields.faceSummary = (result.synthesisHeadline || result.summary || '').slice(0, 200);
+        fields.faceScore = String(Math.round(result.overallScore || 0));
+        fields.facePhysical = `${physicalBit}`.slice(0, 200);
+      } else {
+        fields.palmSummary = (result.synthesisHeadline || result.summary || '').slice(0, 200);
+        fields.palmScore = String(Math.round(result.overallScore || 0));
+        fields.palmPhysical = `${physicalBit}`.slice(0, 200);
+      }
+      profileSupplementOperations.upsert({
+        userId,
+        fortuneId,
+        domain: 'body',
+        fields,
+      });
+      profileChangeLogOperations.create({
+        userId,
+        fortuneId,
+        changeType: 'xiangxue_writeback',
+        fieldPath: `body.${kind}`,
+        newValue: fields.faceSummary || fields.palmSummary || '',
+        triggeredRecalc: false,
+        meta: { sessionId, kind, overallScore: result.overallScore },
+      });
+      foundationWritten = true;
+    } catch (wbErr) {
+      console.warn('[xiangxue] foundation writeback skipped', wbErr);
+    }
 
     trackServerEvent({
       eventName: 'tool_run_completed',
       page: kind === 'face' ? '/tools/physiognomy' : '/tools/palmistry',
-      meta: { action: 'xiangxue_run', kind, sessionId, llmUsed, r2: Boolean(media.r2Key), schema: result.schema },
+      meta: {
+        action: 'xiangxue_run',
+        kind,
+        sessionId,
+        llmUsed,
+        r2: Boolean(media.r2Key),
+        schema: result.schema,
+        foundationWritten,
+      },
     });
 
     return NextResponse.json({
@@ -355,9 +412,11 @@ export async function POST(request: NextRequest) {
         publicPath: media.publicPath,
         r2Key: media.r2Key,
       },
+      foundationWritten,
       message: llmUsed
-        ? '系统报告已生成（物理 → 命理 · 含视觉模型）'
-        : '系统报告已生成（物理 → 命理 · 结构引擎；视觉模型不可用时）',
+        ? '系统报告已生成（物理 → 命理 · 含视觉模型）' + (foundationWritten ? ' · 已写入数据底座' : '')
+        : '系统报告已生成（物理 → 命理 · 结构引擎；视觉模型不可用时）' +
+          (foundationWritten ? ' · 已写入数据底座' : ''),
     });
   } catch (error) {
     console.error('[xiangxue/run]', error);

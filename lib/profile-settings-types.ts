@@ -7,7 +7,8 @@ export type SupplementDomain =
   | 'wealth'
   | 'health'
   | 'residence'
-  | 'astro';
+  | 'astro'
+  | 'body';
 export type ProfileImpactHint = 'engine' | 'expression' | 'display';
 export type ProfileDocumentCategory = 'life_event' | 'career_note' | 'relationship_note' | 'health_note' | 'other';
 export type ProfileDocumentVisibility = 'engine' | 'private';
@@ -116,6 +117,20 @@ export const PROFILE_SUPPLEMENT_DOMAINS: Record<SupplementDomain, {
       { key: 'moonSign', label: '月亮星座', placeholder: '如：巨蟹座', impact: 'expression' },
       { key: 'risingSign', label: '上升星座', placeholder: '如：处女座', impact: 'expression' },
       { key: 'astroNote', label: '星盘备注', placeholder: '如：已知精确上升时间', impact: 'expression' },
+    ],
+  },
+  body: {
+    label: '面相手相',
+    description: '体貌观测摘要（非医学诊断），与命盘交叉作表达层。',
+    fields: [
+      { key: 'faceSummary', label: '面相摘要', placeholder: '最近一次面相结论', impact: 'expression' },
+      { key: 'faceScore', label: '面相综合分', placeholder: '如：72', impact: 'display' },
+      { key: 'facePhysical', label: '面相物理要点', placeholder: '三庭五眼等可见结构', impact: 'expression' },
+      { key: 'palmSummary', label: '手相摘要', placeholder: '最近一次手相结论', impact: 'expression' },
+      { key: 'palmScore', label: '手相综合分', placeholder: '如：68', impact: 'display' },
+      { key: 'palmPhysical', label: '手相物理要点', placeholder: '三主线等可见结构', impact: 'expression' },
+      { key: 'bodyUpdatedAt', label: '体貌更新时间', placeholder: 'ISO 时间', impact: 'display' },
+      { key: 'lastSessionId', label: '最近会话', placeholder: 'tool session id', impact: 'display' },
     ],
   },
 };

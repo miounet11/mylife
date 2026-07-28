@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   buildAstroFromBirth,
+  buildTaisuiLines,
   WESTERN_SIGN_OPTIONS,
   CHINESE_ZODIAC,
 } from '@/lib/life-foundation/zodiac';
@@ -29,6 +30,8 @@ export default function ZodiacLabApp() {
   const [error, setError] = useState('');
 
   const computed = useMemo(() => buildAstroFromBirth(birthDate || null), [birthDate]);
+  const taisuiLines = useMemo(() => buildTaisuiLines(birthDate || null), [birthDate]);
+  const year = new Date().getFullYear();
 
   async function saveToFoundation() {
     setSaving(true);
@@ -116,6 +119,24 @@ export default function ZodiacLabApp() {
           </div>
           {computed.note && (
             <p className="mt-3 text-[11px] leading-relaxed text-[color:var(--ink-5)]">{computed.note}</p>
+          )}
+
+          {taisuiLines.length > 0 && (
+            <div className="mt-4 rounded-lg border border-[color:var(--hairline)] bg-white p-3">
+              <div className="text-[11px] font-medium text-[color:var(--ink-5)]">
+                {year} 年 · 本命年 / 太岁（民用近似）
+              </div>
+              <ul className="mt-2 space-y-1.5">
+                {taisuiLines.map((line) => (
+                  <li key={line} className="text-[12px] leading-relaxed text-[color:var(--ink-2)]">
+                    {line}
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
+                作心理锚定与节奏提醒，不作恐吓定命；精确太岁以八字年柱与流年为准。
+              </p>
+            </div>
           )}
 
           <div className="mt-5 space-y-3 border-t border-[color:var(--hairline)] pt-4">

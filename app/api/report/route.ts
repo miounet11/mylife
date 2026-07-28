@@ -95,8 +95,12 @@ export async function POST(request: Request) {
     let resolvedIndustries = industries;
     try {
       const session = await getAuthSession();
-      if (session.authenticated && session.user?.id) {
-        const profileContext = buildProfileContextPack(session.user.id);
+      const { getOrCreateGuestUserId } = await import('@/lib/user-utils');
+      const profileUserId =
+        (session.authenticated && session.user?.id ? String(session.user.id) : '') ||
+        (await getOrCreateGuestUserId());
+      if (profileUserId) {
+        const profileContext = buildProfileContextPack(profileUserId);
         if (profileContext) {
           resolvedIndustries =
             profileContext.industries?.length > 0 ? profileContext.industries : industries;

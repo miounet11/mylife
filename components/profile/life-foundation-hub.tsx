@@ -283,6 +283,9 @@ export default function LifeFoundationHub({
                   .filter(Boolean)
                   .join(' · ')}
               </p>
+              <p className="mt-1 text-[11px] text-[color:var(--ink-5)]">
+                对话与结构报告会读取本层参数作表达对齐；四柱真值仍以排盘引擎为准。
+              </p>
             </div>
             <Link
               href={`/tools/zodiac?source=foundation_strip${

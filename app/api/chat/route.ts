@@ -1152,9 +1152,34 @@ export async function POST(request: NextRequest) {
     ].filter(Boolean).join('\n');
     let profileLinesForTeacher: string[] = [];
     try {
-      const rows = profileSupplementOperations.listByUser(userId, null);
-      const snap = snapshotFromSupplementList(rows.map((r: any) => ({ domain: r.domain, fields: r.fields || {} })));
+      const fortuneIdForProfile = scopeReportId || null;
+      const byFortune = fortuneIdForProfile
+        ? profileSupplementOperations.listByUser(userId, fortuneIdForProfile)
+        : [];
+      const byAccount = profileSupplementOperations.listByUser(userId, null);
+      const merged = new Map<string, Record<string, string>>();
+      for (const r of [...byAccount, ...byFortune] as Array<{ domain: string; fields?: Record<string, string> }>) {
+        merged.set(r.domain, { ...(merged.get(r.domain) || {}), ...(r.fields || {}) });
+      }
+      const snap = snapshotFromSupplementList(
+        Array.from(merged.entries()).map(([domain, fields]) => ({ domain, fields })),
+      );
       profileLinesForTeacher = buildProfileContextLines(snap);
+
+      // 注入人生数据底座摘要（含星座/太岁/体貌完整度）
+      try {
+        const { buildFoundationPromptBundle } = await import('@/lib/life-foundation/prompt-context');
+        const bundle = buildFoundationPromptBundle(userId, fortuneIdForProfile);
+        if (bundle?.lines?.length) {
+          const existing = new Set(profileLinesForTeacher);
+          for (const line of bundle.lines) {
+            if (!existing.has(line)) profileLinesForTeacher.push(line);
+          }
+          profileLinesForTeacher = profileLinesForTeacher.slice(0, 16);
+        }
+      } catch (fe) {
+        console.warn('[chat] foundation lines load failed', fe);
+      }
     } catch (e) {
       console.warn('[chat] profile lines load failed', e);
     }

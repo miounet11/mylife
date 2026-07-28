@@ -137,3 +137,45 @@ export const WESTERN_SIGN_OPTIONS = WESTERN_SIGNS.map((s) => ({
   label: s.zh,
   en: s.en,
 }));
+
+/**
+ * 本命年 / 太岁提示（民用近似：生肖与流年地支同）
+ * 纯计算，可在客户端安全使用。
+ */
+export function buildTaisuiLines(
+  birthDate: string | null | undefined,
+  year = new Date().getFullYear(),
+): string[] {
+  if (!birthDate) return [];
+  const cz = getChineseZodiac(birthDate);
+  if (!cz) return [];
+  const yearAnimal = getChineseZodiac(`${year}-06-15`)?.animal;
+  if (!yearAnimal) return [];
+  const lines: string[] = [`生肖：${cz.animal}（近立春公历近似）`];
+  if (cz.animal === yearAnimal) {
+    lines.push(
+      `${year} 年生肖本命年（值太岁近似）：宜稳健推进，忌冲动大变，作心理锚定而非宿命恐吓`,
+    );
+  } else {
+    const clash: Record<string, string> = {
+      鼠: '马',
+      牛: '羊',
+      虎: '猴',
+      兔: '鸡',
+      龙: '狗',
+      蛇: '猪',
+      马: '鼠',
+      羊: '牛',
+      猴: '虎',
+      鸡: '兔',
+      狗: '龙',
+      猪: '蛇',
+    };
+    if (clash[cz.animal] === yearAnimal) {
+      lines.push(
+        `${year} 年与本命生肖六冲（太岁对冲近似）：波动感偏强，重大决策宜留缓冲`,
+      );
+    }
+  }
+  return lines;
+}

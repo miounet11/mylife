@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import { buildAstroFromBirth, getChineseZodiac, getSunSign } from '@/lib/life-foundation/zodiac';
 import { gradeFromOverall } from '@/lib/life-foundation/modules';
+import { buildTaisuiLines } from '@/lib/life-foundation/zodiac';
 
 describe('life-foundation zodiac', () => {
   it('computes sun sign for known dates', () => {
@@ -27,5 +28,11 @@ describe('life-foundation zodiac', () => {
   it('grades overall completeness', () => {
     assert.equal(gradeFromOverall(90).grade, 'rich');
     assert.equal(gradeFromOverall(10).grade, 'empty');
+  });
+
+  it('flags benming year when animal matches year', () => {
+    // 2024 is 龙 year (after 立春)
+    const lines = buildTaisuiLines('1988-06-01', 2024); // 1988 龙
+    assert.ok(lines.some((l) => /本命年|太岁/.test(l)));
   });
 });

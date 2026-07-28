@@ -69,7 +69,7 @@ export function buildTeacherSystemAddon(bits: ChatTeacherRequestBits): {
   const city = `${bits.city || ''}`.trim();
   const practice = (bits.practiceLines || []).map((x) => `${x}`.trim()).filter(Boolean).slice(0, 6);
   const geo = (bits.geoLines || []).map((x) => `${x}`.trim()).filter(Boolean).slice(0, 6);
-  const profile = (bits.profileLines || []).map((x) => `${x}`.trim()).filter(Boolean).slice(0, 8);
+  const profile = (bits.profileLines || []).map((x) => `${x}`.trim()).filter(Boolean).slice(0, 14);
 
   // 资料库中的现居城市可补 city
   const cityFromProfile = profile.find((p) => /现居城市=/.test(p));
@@ -91,7 +91,7 @@ export function buildTeacherSystemAddon(bits: ChatTeacherRequestBits): {
       ? `用户关注/所在城市：${effectiveCity}。涉及节奏与选择时，把城市生活成本、行业环境与通勤现实纳入考虑；信息不足时说明边界。`
       : '',
     profile.length
-      ? `用户资料库（对话中逐步确认，请当作可信背景）：\n${profile.map((p, i) => `${i + 1}. ${p}`).join('\n')}`
+      ? `用户人生数据底座 / 资料库（固定参数与观测摘要，请当作可信背景；命盘四柱/用神以 EFC 引擎真值为准，不可改写；可结合星座·体貌·生活问答做表达与行动建议，禁止恐吓定命）：\n${profile.map((p, i) => `${i + 1}. ${p}`).join('\n')}`
       : '',
     geo.length ? `地理相关上下文：\n${geo.map((g, i) => `${i + 1}. ${g}`).join('\n')}` : '',
     practice.length

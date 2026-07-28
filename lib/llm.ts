@@ -509,6 +509,7 @@ ${JSON.stringify(compactDayun)}` : ''}
 5. analysis.summary 必须像一句世界易式决策结论，优先体现“结构 + 阶段 + 动作”，先给判断，不要空泛抒情。
 5.1 允许综合默会知识、经验判断和跨学科直觉，但必须回到现实取舍与行动，不要写成神秘表演。
 5.2 如果输入里有 worldStateSnapshot / tacitSummary / contextSnapshot，必须把它们当成正式判断输入，而不是边角补充。
+5.3 若 tacitSummary / contextSnapshot 含「数据底座」「星座」「生肖」「面相」「手相」「生活问答」等用户固定参数：可作表达层与行动建议对齐，但四柱/用神/大运以引擎字段为准，禁止改写真值；禁止恐吓定命。
 6. 禁止输出内部占位词或工程词，如 macro_cycle、solar_terms、geography。
 7. 禁止使用夸饰空话，如“格局清正”“乃富贵之命也”。
 8. 尽量避免传统宿命腔，优先使用“先看结构、再看阶段、最后定动作”的现代判断语言。
