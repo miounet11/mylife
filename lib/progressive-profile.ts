@@ -336,6 +336,7 @@ export function buildProfileContextLines(snapshot: ProgressiveProfileSnapshot): 
   const order: SupplementDomain[] = [
     'astro',
     'body',
+    'apps',
     'residence',
     'career',
     'goals',
@@ -343,7 +344,15 @@ export function buildProfileContextLines(snapshot: ProgressiveProfileSnapshot): 
     'wealth',
     'health',
   ];
-  const skipKeys = new Set(['lastSessionId', 'bodyUpdatedAt']);
+  const skipKeys = new Set([
+    'lastSessionId',
+    'bodyUpdatedAt',
+    'namingSessionId',
+    'spaceSessionId',
+    'appsUpdatedAt',
+    'namingCount',
+    'spaceLinked',
+  ]);
   for (const domain of order) {
     const fields = snapshot.domains[domain];
     if (!fields) continue;

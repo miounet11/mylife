@@ -37,12 +37,14 @@ export async function POST(request: NextRequest) {
     const plainText = reportToPlainText(report);
 
     let sessionId: string | null = null;
+    let foundationWritten = false;
     if (persist) {
       const auth = await getAuthSession();
       const userId =
         (auth.authenticated && auth.user?.id ? String(auth.user.id) : '') ||
         (await getOrCreateGuestUserId());
       sessionId = `tool_${generateId()}`;
+      const fortuneId = state.profileLink?.fortuneId || null;
       toolSessionOperations.create({
         id: sessionId,
         userId,
@@ -71,9 +73,32 @@ export async function POST(request: NextRequest) {
           category: 'application',
           domain: state.activeDomain,
           profileLinked: report.profileLinked,
-          fortuneId: state.profileLink?.fortuneId || null,
+          fortuneId,
         },
       });
+
+      try {
+        const { writeSpaceToFoundation } = await import('@/lib/life-foundation/writeback');
+        const s = result.summary;
+        const avg = typeof s?.avgEnergy === 'number' ? Math.round(s.avgEnergy * 100) : null;
+        const note =
+          (Array.isArray(s?.priorityActions) && s.priorityActions[0]) ||
+          (Array.isArray(s?.structuralNotes) && s.structuralNotes[0]) ||
+          report.title;
+        const wb = writeSpaceToFoundation({
+          userId,
+          fortuneId,
+          sessionId,
+          summary: `${note}`.slice(0, 200),
+          domain: state.activeDomain,
+          score: avg,
+          profileLinked: report.profileLinked,
+          title: report.title,
+        });
+        foundationWritten = wb.ok;
+      } catch (e) {
+        console.warn('[full-report] foundation writeback skipped', e);
+      }
     }
 
     trackServerEvent({
@@ -84,6 +109,7 @@ export async function POST(request: NextRequest) {
         domain: state.activeDomain,
         profileLinked: report.profileLinked,
         sessionId,
+        foundationWritten,
       },
     });
 
@@ -92,6 +118,7 @@ export async function POST(request: NextRequest) {
       report,
       plainText,
       sessionId,
+      foundationWritten,
       resultUrl: sessionId ? `/tool-result/${sessionId}` : null,
     });
   } catch (error) {

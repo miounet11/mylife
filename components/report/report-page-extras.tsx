@@ -5,6 +5,7 @@ import ReportMembershipPanel from '@/components/membership/report-membership-pan
 import ReportSubscriptionPanel from '@/components/report-subscription-panel';
 import TimingSubscribeBar from '@/components/result-v2/timing-subscribe-bar';
 import { ReportToolsStrip } from '@/components/report/report-tools-strip';
+import { ReportFoundationStrip } from '@/components/report/report-foundation-strip';
 
 export default function ReportPageExtras({
   reportId,
@@ -28,6 +29,7 @@ export default function ReportPageExtras({
 }) {
   return (
     <>
+      <ReportFoundationStrip reportId={reportId} source="result_page_extras" />
       <ReportToolsStrip reportId={reportId} source="result_page_extras" />
       <ReportMembershipPanel reportId={reportId} source="result_page_extras" />
       <RelatedDimensionsPanel

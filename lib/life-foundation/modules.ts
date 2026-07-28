@@ -57,6 +57,7 @@ export const FOUNDATION_SIGNAL_TOOLS: FoundationToolDef[] = [
   { slug: 'naming-lab', title: '起名工坊', layerId: 'tools', itemId: 'naming', href: '/tools/naming' },
   { slug: 'naming', title: '起名工坊', layerId: 'tools', itemId: 'naming', href: '/tools/naming' },
   { slug: 'fengshui-space', title: '空间场', layerId: 'tools', itemId: 'space', href: '/tools/fengshui-space' },
+  { slug: 'fengshui-space-report', title: '空间场报表', layerId: 'tools', itemId: 'space', href: '/tools/fengshui-space' },
   { slug: 'hehun', title: '合婚双盘', layerId: 'tools', itemId: 'hehun', href: '/hehun' },
   { slug: 'zodiac', title: '星座星盘', layerId: 'astro', itemId: 'zodiac_tool', href: '/tools/zodiac' },
 ];

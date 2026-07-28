@@ -66,6 +66,17 @@ export function formatFoundationSnapshotLines(foundation: LifeFoundationSnapshot
     }
   }
 
+  // Tools / apps
+  const tools = foundation.layers.find((l) => l.id === 'tools');
+  if (tools) {
+    const done = tools.items.filter((i) => i.status === 'done' && i.valueSummary);
+    if (done.length) {
+      lines.push(
+        `应用工具：${done.map((i) => `${i.label}${i.valueSummary ? `=${i.valueSummary}` : ''}`).join('；')}`,
+      );
+    }
+  }
+
   // Life QA highlights
   const qa = foundation.layers.find((l) => l.id === 'life_qa');
   if (qa) {

@@ -345,45 +345,22 @@ export async function POST(request: NextRequest) {
     // 写回人生数据底座 body 域，供对话/报告共享
     let foundationWritten = false;
     try {
-      const {
-        ensureProfileSettingsSchema,
-        profileChangeLogOperations,
-        profileSupplementOperations,
-      } = await import('@/lib/profile-settings-store');
-      ensureProfileSettingsSchema();
+      const { writeXiangxueToFoundation } = await import('@/lib/life-foundation/writeback');
       const physicalBit =
         result.physicalHeadline ||
         result.strengths?.slice(0, 2).join('；') ||
         result.summary.slice(0, 80);
-      const fields: Record<string, string> = {
-        bodyUpdatedAt: result.generatedAt || new Date().toISOString(),
-        lastSessionId: sessionId,
-      };
-      if (kind === 'face') {
-        fields.faceSummary = (result.synthesisHeadline || result.summary || '').slice(0, 200);
-        fields.faceScore = String(Math.round(result.overallScore || 0));
-        fields.facePhysical = `${physicalBit}`.slice(0, 200);
-      } else {
-        fields.palmSummary = (result.synthesisHeadline || result.summary || '').slice(0, 200);
-        fields.palmScore = String(Math.round(result.overallScore || 0));
-        fields.palmPhysical = `${physicalBit}`.slice(0, 200);
-      }
-      profileSupplementOperations.upsert({
+      const wb = writeXiangxueToFoundation({
         userId,
         fortuneId,
-        domain: 'body',
-        fields,
+        kind,
+        sessionId,
+        summary: (result.synthesisHeadline || result.summary || '').slice(0, 200),
+        overallScore: result.overallScore || 0,
+        physicalHeadline: `${physicalBit}`.slice(0, 200),
+        generatedAt: result.generatedAt,
       });
-      profileChangeLogOperations.create({
-        userId,
-        fortuneId,
-        changeType: 'xiangxue_writeback',
-        fieldPath: `body.${kind}`,
-        newValue: fields.faceSummary || fields.palmSummary || '',
-        triggeredRecalc: false,
-        meta: { sessionId, kind, overallScore: result.overallScore },
-      });
-      foundationWritten = true;
+      foundationWritten = wb.ok;
     } catch (wbErr) {
       console.warn('[xiangxue] foundation writeback skipped', wbErr);
     }

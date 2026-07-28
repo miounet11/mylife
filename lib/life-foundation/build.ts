@@ -598,10 +598,33 @@ function buildInteractLayer(params: {
 function buildToolsLayer(
   byItem: Record<string, { count: number; lastAt: string | null }>,
   fortuneId: string | null,
+  appsFields?: Record<string, string>,
 ): FoundationLayer {
   const meta = FOUNDATION_LAYER_META.tools;
   const q = fortuneId ? `?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation` : '?source=foundation';
-  const defs: Array<{ id: string; label: string; desc: string; href: string; key: string; weight: number }> = [
+  const hasNaming = Boolean(byItem.naming?.count || appsFields?.namingSummary || appsFields?.namingTop);
+  const hasSpace = Boolean(byItem.space?.count || appsFields?.spaceSummary);
+  const namingSummary = appsFields?.namingTop
+    ? `领先「${appsFields.namingTop}」${appsFields.namingScore ? ` · ${appsFields.namingScore}分` : ''}`
+    : appsFields?.namingSummary || (byItem.naming?.count ? `${byItem.naming.count} 次` : null);
+  const spaceSummary =
+    appsFields?.spaceSummary ||
+    (appsFields?.spaceTitle
+      ? appsFields.spaceTitle
+      : byItem.space?.count
+        ? `${byItem.space.count} 次`
+        : null);
+
+  const defs: Array<{
+    id: string;
+    label: string;
+    desc: string;
+    href: string;
+    key: string;
+    weight: number;
+    done: boolean;
+    summary: string | null;
+  }> = [
     {
       id: 'naming',
       label: '起名 / 改名',
@@ -609,6 +632,8 @@ function buildToolsLayer(
       href: `/tools/naming${q}`,
       key: 'naming',
       weight: 0.3,
+      done: hasNaming,
+      summary: namingSummary,
     },
     {
       id: 'space',
@@ -617,14 +642,20 @@ function buildToolsLayer(
       href: `/tools/fengshui-space${q}`,
       key: 'space',
       weight: 0.25,
+      done: hasSpace,
+      summary: spaceSummary,
     },
     {
       id: 'hehun',
       label: '合婚双盘',
       desc: '关系对照的第二盘',
-      href: fortuneId ? `/hehun?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation` : '/hehun?source=foundation',
+      href: fortuneId
+        ? `/hehun?fortuneId=${encodeURIComponent(fortuneId)}&source=foundation`
+        : '/hehun?source=foundation',
       key: 'hehun',
       weight: 0.2,
+      done: Boolean(byItem.hehun?.count),
+      summary: byItem.hehun?.count ? `${byItem.hehun.count} 次` : null,
     },
     {
       id: 'dimensions',
@@ -633,13 +664,13 @@ function buildToolsLayer(
       href: '/dimensions?source=foundation',
       key: 'dimensions',
       weight: 0.25,
+      done: Boolean(byItem.dimensions?.count),
+      summary: byItem.dimensions?.count ? `${byItem.dimensions.count} 次` : null,
     },
   ];
 
-  // dimensions: count any tool slug containing dimension or dimension sessions
   const items: FoundationItem[] = defs.map((d) => {
-    const hit = byItem[d.key];
-    const score = hit?.count ? 100 : 0;
+    const score = d.done ? 100 : 0;
     return {
       id: d.id,
       layerId: 'tools' as const,
@@ -649,7 +680,7 @@ function buildToolsLayer(
       status: score ? ('done' as const) : ('optional' as const),
       href: d.href,
       ctaLabel: score ? '复看' : '试用',
-      valueSummary: hit?.count ? `${hit.count} 次` : null,
+      valueSummary: d.summary ? `${d.summary}`.slice(0, 80) : null,
       weight: d.weight,
     };
   });
@@ -794,7 +825,7 @@ export function buildLifeFoundation(
     chatProgressiveCount,
     fortuneId: activeId,
   });
-  const toolsLayer = buildToolsLayer(byItem, activeId);
+  const toolsLayer = buildToolsLayer(byItem, activeId, supMap.get('apps'));
 
   const layers = [birthLayer, astroLayer, bodyLayer, lifeQaLayer, interactLayer, toolsLayer];
   const overall = Math.round(layers.reduce((s, l) => s + l.score * l.weight, 0));

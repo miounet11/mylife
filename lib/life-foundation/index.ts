@@ -9,3 +9,9 @@ export {
   quickAstroPromptLines,
   supplementMapToPromptLines,
 } from '@/lib/life-foundation/prompt-context';
+export {
+  writeFoundationSupplement,
+  writeXiangxueToFoundation,
+  writeNamingToFoundation,
+  writeSpaceToFoundation,
+} from '@/lib/life-foundation/writeback';

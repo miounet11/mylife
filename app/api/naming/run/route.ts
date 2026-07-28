@@ -211,6 +211,8 @@ export async function POST(request: NextRequest) {
       (await getOrCreateGuestUserId());
 
     const sessionId = `tool_${generateId()}`;
+    const fortuneId = body?.fortuneId ? String(body.fortuneId) : null;
+    const top = ordered[0];
     toolSessionOperations.create({
       id: sessionId,
       userId,
@@ -229,8 +231,27 @@ export async function POST(request: NextRequest) {
         mode,
         usedLlm: llm.usedLlm,
         candidateCount: ordered.length,
+        fortuneId,
       },
     });
+
+    let foundationWritten = false;
+    try {
+      const { writeNamingToFoundation } = await import('@/lib/life-foundation/writeback');
+      const wb = writeNamingToFoundation({
+        userId,
+        fortuneId,
+        sessionId,
+        mode,
+        summary: result.summary || title,
+        topName: top ? top.fullName || top.name : null,
+        topScore: top?.score ?? null,
+        candidateCount: ordered.length,
+      });
+      foundationWritten = wb.ok;
+    } catch (e) {
+      console.warn('[naming/run] foundation writeback skipped', e);
+    }
 
     trackServerEvent({
       eventName: 'tool_run_completed',
@@ -241,6 +262,7 @@ export async function POST(request: NextRequest) {
         usedLlm: llm.usedLlm,
         sessionId,
         count: ordered.length,
+        foundationWritten,
       },
     });
 
@@ -249,9 +271,11 @@ export async function POST(request: NextRequest) {
       sessionId,
       resultUrl: `/tools/naming/result/${sessionId}`,
       result,
+      foundationWritten,
       message: llm.usedLlm
-        ? '方案已生成（含 AI 测算）'
-        : '方案已生成（引擎排序；AI 暂不可用时已用结构分）',
+        ? '方案已生成（含 AI 测算）' + (foundationWritten ? ' · 已写入数据底座' : '')
+        : '方案已生成（引擎排序；AI 暂不可用时已用结构分）' +
+          (foundationWritten ? ' · 已写入数据底座' : ''),
     });
   } catch (error) {
     console.error('[naming/run]', error);

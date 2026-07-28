@@ -162,6 +162,7 @@ export function formatProfileContextForPrompt(pack: ProfileContextPack): string 
   const domainOrder: SupplementDomain[] = [
     'astro',
     'body',
+    'apps',
     'goals',
     'career',
     'relationship',
@@ -172,8 +173,16 @@ export function formatProfileContextForPrompt(pack: ProfileContextPack): string 
   for (const domain of domainOrder) {
     const fields = pack.supplements[domain];
     if (!fields || Object.keys(fields).length === 0) continue;
-    // skip heavy technical keys for body
-    const skipKeys = new Set(['lastSessionId', 'bodyUpdatedAt']);
+    // skip heavy technical keys
+    const skipKeys = new Set([
+      'lastSessionId',
+      'bodyUpdatedAt',
+      'namingSessionId',
+      'spaceSessionId',
+      'appsUpdatedAt',
+      'namingCount',
+      'spaceLinked',
+    ]);
     const label = PROFILE_SUPPLEMENT_DOMAINS[domain].label;
     const detail = Object.entries(fields)
       .filter(([key, value]) => !skipKeys.has(key) && `${value || ''}`.trim())

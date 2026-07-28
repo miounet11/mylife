@@ -27,6 +27,7 @@ import { ReportIllustrationCite } from '@/components/report/report-illustration-
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 import { ReportToolsStrip } from '@/components/report/report-tools-strip';
+import { ReportFoundationStrip } from '@/components/report/report-foundation-strip';
 import ReportEmailCapture from '@/components/report/report-email-capture';
 
 /**
@@ -101,6 +102,8 @@ export default function ProReportShell({
         variant="inline"
         visitThreshold={1}
       />
+      {/* 人生数据底座：完整度 + 一键补缺 */}
+      <ReportFoundationStrip reportId={reportId} source="pro_report_shell" />
       {/* 工具分发：报告入口是金矿 session */}
       <ReportToolsStrip
         reportId={reportId}

@@ -8,7 +8,8 @@ export type SupplementDomain =
   | 'health'
   | 'residence'
   | 'astro'
-  | 'body';
+  | 'body'
+  | 'apps';
 export type ProfileImpactHint = 'engine' | 'expression' | 'display';
 export type ProfileDocumentCategory = 'life_event' | 'career_note' | 'relationship_note' | 'health_note' | 'other';
 export type ProfileDocumentVisibility = 'engine' | 'private';
@@ -131,6 +132,25 @@ export const PROFILE_SUPPLEMENT_DOMAINS: Record<SupplementDomain, {
       { key: 'palmPhysical', label: '手相物理要点', placeholder: '三主线等可见结构', impact: 'expression' },
       { key: 'bodyUpdatedAt', label: '体貌更新时间', placeholder: 'ISO 时间', impact: 'display' },
       { key: 'lastSessionId', label: '最近会话', placeholder: 'tool session id', impact: 'display' },
+    ],
+  },
+  apps: {
+    label: '应用工具',
+    description: '起名、空间场等工具结果摘要，写入底座供对话与报告共享。',
+    fields: [
+      { key: 'namingSummary', label: '起名摘要', placeholder: '最近一次起名结论', impact: 'expression' },
+      { key: 'namingTop', label: '领先候选名', placeholder: '如：某某', impact: 'display' },
+      { key: 'namingScore', label: '起名领先分', placeholder: '如：86', impact: 'display' },
+      { key: 'namingMode', label: '起名模式', placeholder: 'person/company/product', impact: 'display' },
+      { key: 'namingSessionId', label: '起名会话', placeholder: 'session id', impact: 'display' },
+      { key: 'namingCount', label: '候选数量', placeholder: '如：12', impact: 'display' },
+      { key: 'spaceSummary', label: '空间场摘要', placeholder: '最近一次空间场结论', impact: 'expression' },
+      { key: 'spaceDomain', label: '空间用途', placeholder: '住宅/商铺', impact: 'display' },
+      { key: 'spaceScore', label: '空间综合分', placeholder: '如：70', impact: 'display' },
+      { key: 'spaceSessionId', label: '空间会话', placeholder: 'session id', impact: 'display' },
+      { key: 'spaceTitle', label: '空间报表标题', placeholder: '报表标题', impact: 'display' },
+      { key: 'spaceLinked', label: '人宅合参', placeholder: '1/0', impact: 'display' },
+      { key: 'appsUpdatedAt', label: '应用更新时间', placeholder: 'ISO 时间', impact: 'display' },
     ],
   },
 };
