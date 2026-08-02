@@ -164,15 +164,30 @@ export function loginFormCopy(locale: SiteLocale) {
       'zh-Hant': '重新發送',
       en: 'Resend code',
     }),
+    resendWait: pick(locale, {
+      'zh-CN': '秒后可重发',
+      'zh-Hant': '秒後可重發',
+      en: 's until resend',
+    }),
     sendFailed: pick(locale, {
       'zh-CN': '发送失败',
       'zh-Hant': '發送失敗',
       en: 'Failed to send code',
     }),
+    deliveryFailed: pick(locale, {
+      'zh-CN': '邮件未送达，请检查邮箱地址或稍后重试（也请查看垃圾箱）',
+      'zh-Hant': '郵件未送達，請檢查郵箱地址或稍後重試（也請查看垃圾箱）',
+      en: 'Email not delivered. Check the address or retry shortly (and spam folder).',
+    }),
     codeSentDefault: pick(locale, {
       'zh-CN': '验证码已发送',
       'zh-Hant': '驗證碼已發送',
       en: 'Verification code sent',
+    }),
+    spamHint: pick(locale, {
+      'zh-CN': '未收到？请查看垃圾邮件/推广箱，或点重新发送。',
+      'zh-Hant': '未收到？請查看垃圾郵件/推廣箱，或點重新發送。',
+      en: 'No code? Check spam/promotions, or resend.',
     }),
     devCodePrefix: pick(locale, {
       'zh-CN': ' 开发验证码：',

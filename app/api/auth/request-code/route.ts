@@ -1,18 +1,48 @@
 import { NextResponse } from 'next/server';
-import { adminPasswordRequiredFor, createLoginCode } from '@/lib/auth';
+import { adminPasswordRequiredFor, createLoginCode, deletePendingLoginCode } from '@/lib/auth';
+import { trackServerEvent } from '@/lib/analytics';
 import { isEmailDeliveryConfigured, sendLoginCodeEmail } from '@/lib/email';
 import { resolveEmailLocale } from '@/lib/email-locale';
-import { validateEmail } from '@/lib/validators';
+import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
+import { getCurrentUserId } from '@/lib/user-utils';
+import { normalizeEmail, validateEmail } from '@/lib/validators';
 
 export const runtime = 'nodejs';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const email = `${body.email || ''}`;
-    const validation = validateEmail(email);
+    const rawEmail = `${body.email || ''}`;
+    const source = typeof body.source === 'string' ? body.source.slice(0, 80) : 'login';
+    const reportId = typeof body.reportId === 'string' ? body.reportId.trim().slice(0, 120) : '';
+    const validation = validateEmail(rawEmail);
     if (validation) {
       return NextResponse.json({ success: false, error: validation.message }, { status: 400 });
+    }
+
+    const email = normalizeEmail(rawEmail);
+    const clientKey = getClientKey(request);
+    const emailLimit = checkRateLimit(`auth-code:email:${email}`, RATE_LIMITS.authCodeEmail);
+    if (!emailLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '验证码发送过于频繁，请稍后再试（约 15 分钟内最多 5 次）',
+          retryAfterSec: Math.max(1, Math.ceil((emailLimit.resetAt - Date.now()) / 1000)),
+        },
+        { status: 429 },
+      );
+    }
+    const ipLimit = checkRateLimit(`auth-code:ip:${clientKey}`, RATE_LIMITS.authCodeIp);
+    if (!ipLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '请求过于频繁，请稍后再试',
+          retryAfterSec: Math.max(1, Math.ceil((ipLimit.resetAt - Date.now()) / 1000)),
+        },
+        { status: 429 },
+      );
     }
 
     const acceptLanguage = request.headers.get('accept-language');
@@ -44,25 +74,72 @@ export async function POST(request: Request) {
       console.warn('[auth/request-code] mail delivery not configured; code stored only');
     }
 
-    // Always log server-side for ops recovery (do not expose in production response).
+    const currentUserId = await getCurrentUserId().catch(() => null);
+
+    // Always log server-side for ops recovery (do not expose code in production response).
     console.info('[auth/request-code] issued', {
       email: issued.email,
       expiresAt: issued.expiresAt,
       emailSent,
       emailError,
       locale,
+      source,
+      reportId: reportId || null,
     });
+
+    trackServerEvent({
+      userId: currentUserId || undefined,
+      sessionId: currentUserId || clientKey,
+      eventName: 'auth_code_requested',
+      page: typeof body.page === 'string' ? body.page : '/login',
+      userAgent: request.headers.get('user-agent'),
+      meta: {
+        emailDomain: email.split('@')[1] || '',
+        emailSent,
+        emailError: emailError || null,
+        source,
+        reportId: reportId || null,
+        locale,
+      },
+    });
+
+    // Dev: allow proceeding without SMTP so local QA works.
+    const allowWithoutMail = process.env.NODE_ENV === 'development';
+
+    if (!emailSent && !allowWithoutMail) {
+      // Remove unusable code so users don't burn a rate-limit slot on a dead code.
+      try {
+        deletePendingLoginCode(issued.email, issued.code);
+      } catch {
+        // ignore
+      }
+      const failMessage =
+        locale === 'en'
+          ? 'Could not send the verification email. Check the address or retry shortly.'
+          : locale === 'zh-Hant'
+            ? '驗證碼郵件未能送達，請檢查郵箱或稍後重試'
+            : '验证码邮件未能送达，请检查邮箱或稍后重试';
+      return NextResponse.json(
+        {
+          success: false,
+          error: failMessage,
+          emailSent: false,
+          warning: failMessage,
+        },
+        { status: 502 },
+      );
+    }
 
     const messageByLocale = {
       'zh-CN': emailSent
         ? '验证码已发送到你的邮箱，请查收（含垃圾箱）'
-        : '验证码已生成。若未收到邮件，请稍后重试或联系管理员查看服务器邮件配置',
+        : '验证码已生成（开发环境）。若未收到邮件，请查看服务器日志中的验证码',
       'zh-Hant': emailSent
         ? '驗證碼已發送到你的郵箱，請查收（含垃圾箱）'
-        : '驗證碼已生成。若未收到郵件，請稍後重試或聯繫管理員查看伺服器郵件配置',
+        : '驗證碼已生成（開發環境）。若未收到郵件，請查看伺服器日誌中的驗證碼',
       en: emailSent
         ? 'A verification code has been sent to your email (check spam too).'
-        : 'Code generated. If you did not receive the email, retry later or contact support.',
+        : 'Code generated (dev). If no email arrives, check server logs.',
     } as const;
 
     const payload: Record<string, unknown> = {
@@ -79,8 +156,6 @@ export async function POST(request: Request) {
       payload.devCode = issued.code;
     }
 
-    // If mail failed but code exists, still 200 so UI can proceed with admin recovery;
-    // surface soft warning via emailSent=false.
     if (!emailSent && emailError) {
       payload.warning =
         locale === 'en'

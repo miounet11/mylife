@@ -57,6 +57,12 @@ export const RATE_LIMITS = {
   chat: { windowMs: 60 * 1000, maxRequests: 10 },
   // 通用 API：每分钟30次
   general: { windowMs: 60 * 1000, maxRequests: 30 },
+  // 登录验证码：同一邮箱 15 分钟 5 次
+  authCodeEmail: { windowMs: 15 * 60 * 1000, maxRequests: 5 },
+  // 登录验证码：同一 IP 15 分钟 12 次
+  authCodeIp: { windowMs: 15 * 60 * 1000, maxRequests: 12 },
+  // 登录验证：同一邮箱 15 分钟 12 次
+  authVerifyEmail: { windowMs: 15 * 60 * 1000, maxRequests: 12 },
 } as const;
 
 /**

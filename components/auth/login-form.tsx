@@ -19,13 +19,21 @@ type LoginFormProps = {
    * Use for in-page bind → auto-claim flows.
    */
   onSuccess?: (email: string) => void;
+  /** Analytics / subscription source (e.g. membership_claim, report_bind). */
+  source?: string;
+  /** When binding from a report, claim this fortune onto the account. */
+  reportId?: string;
 };
+
+const RESEND_COOLDOWN_SEC = 60;
 
 export default function LoginForm({
   locale: localeProp,
   nextOverride,
   compact = false,
   onSuccess,
+  source: sourceProp,
+  reportId: reportIdProp,
 }: LoginFormProps) {
   const { locale: ctxLocale } = useLocale();
   const locale: SiteLocale = localeProp || ctxLocale || 'zh-CN';
@@ -34,6 +42,15 @@ export default function LoginForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = nextOverride || searchParams.get('next') || '/profile';
+  const reportId =
+    reportIdProp ||
+    searchParams.get('reportId')?.trim() ||
+    searchParams.get('report')?.trim() ||
+    '';
+  const source =
+    sourceProp ||
+    searchParams.get('source')?.trim() ||
+    (reportId ? 'report_bind' : 'login');
 
   const [step, setStep] = useState<'email' | 'code'>('email');
   const [email, setEmail] = useState('');
@@ -43,6 +60,7 @@ export default function LoginForm({
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [resendIn, setResendIn] = useState(0);
 
   useEffect(() => {
     const fromQuery = searchParams.get('email')?.trim().toLowerCase() || '';
@@ -58,6 +76,12 @@ export default function LoginForm({
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = window.setTimeout(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendIn]);
+
   const isMembershipNext =
     nextPath.includes('/membership') || nextPath.includes('membership');
 
@@ -70,13 +94,26 @@ export default function LoginForm({
       const res = await fetch('/api/auth/request-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normalized, locale }),
+        body: JSON.stringify({
+          email: normalized,
+          locale,
+          source,
+          reportId: reportId || undefined,
+          page: typeof window !== 'undefined' ? window.location.pathname : '/login',
+        }),
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || copy.sendFailed);
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || data.warning || copy.sendFailed);
+      }
+      // Only advance when mail was sent (or dev returned success with warning).
+      if (data.emailSent === false && !data.devCode) {
+        throw new Error(data.warning || copy.deliveryFailed);
+      }
       setEmail(normalized);
       setAdminRequired(!!data.adminPasswordRequired);
       setStep('code');
+      setResendIn(RESEND_COOLDOWN_SEC);
       const devHint = data.devCode ? `${copy.devCodePrefix}${data.devCode}` : '';
       setMessage(`${data.message || copy.codeSentDefault}${devHint}`);
       try {
@@ -103,12 +140,16 @@ export default function LoginForm({
           email: normalized,
           code,
           adminPassword: adminRequired ? adminPassword : undefined,
+          source,
+          reportId: reportId || undefined,
+          page: typeof window !== 'undefined' ? window.location.pathname : '/login',
         }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || copy.verifyFailed);
       try {
         localStorage.setItem('life-kline:lead-email', normalized);
+        localStorage.setItem('newsletter-subscribed', 'done');
       } catch {
         // ignore
       }
@@ -234,6 +275,7 @@ export default function LoginForm({
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
             {isMembershipNext ? copy.loginContinueMembership : copy.loginContinue}
           </button>
+          <p className="text-[11px] leading-[1.45] text-[color:var(--ink-4)]">{copy.spamHint}</p>
           <div className="flex flex-wrap items-center justify-between gap-2 text-[13px]">
             <button
               type="button"
@@ -243,6 +285,7 @@ export default function LoginForm({
                 setCode('');
                 setError(null);
                 setMessage(null);
+                setResendIn(0);
               }}
               className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
             >
@@ -250,11 +293,11 @@ export default function LoginForm({
             </button>
             <button
               type="button"
-              disabled={loading}
+              disabled={loading || resendIn > 0}
               onClick={() => void requestCode()}
-              className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+              className="text-[color:var(--ink-3)] underline-offset-2 hover:underline disabled:opacity-50"
             >
-              {copy.resendCode}
+              {resendIn > 0 ? `${resendIn}${copy.resendWait}` : copy.resendCode}
             </button>
           </div>
         </form>

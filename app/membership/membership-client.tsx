@@ -396,6 +396,7 @@ export default function MembershipClient({ locale: localeProp }: { locale?: Site
               compact
               nextOverride={bindNext}
               onSuccess={onBindSuccess}
+              source="membership_bind"
             />
           </Suspense>
           <p className="text-[12px] text-[color:var(--ink-4)]">

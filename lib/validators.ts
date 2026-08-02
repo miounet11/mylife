@@ -159,6 +159,16 @@ export function validateEmail(email: string): ValidationError | null {
   return null;
 }
 
+/** True when the string looks like an email address. */
+export function isValidEmail(value: string) {
+  return validateEmail(value) === null;
+}
+
+/** Trim + lowercase; does not validate. */
+export function normalizeEmail(value: string) {
+  return String(value || '').trim().toLowerCase();
+}
+
 // 验证事件类型
 const VALID_EVENT_TYPES = ['career', 'wealth', 'marriage', 'health', 'family', 'other'] as const;
 export type EventType = typeof VALID_EVENT_TYPES[number];

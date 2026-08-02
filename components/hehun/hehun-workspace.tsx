@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { GuestSaveStrip } from '@/components/conversion/guest-save-strip';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -416,29 +417,52 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
     );
   }
 
+  const hehunPersistTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastHehunFingerprint = useRef('');
+
   function persistHehunFoundation(
     r: ReturnType<typeof analyzeHehun>,
     partnerLabel: string,
+    opts?: { debounceMs?: number },
   ) {
-    void fetch('/api/profile/foundation/signal', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        kind: 'hehun',
-        score: r.score,
-        band: r.band,
-        headline: r.headline,
-        summary: r.plainForCouple?.slice(0, 200) || r.layers?.[0]?.summary || r.headline,
-        partnerLabel,
-        fortuneId:
-          typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search).get('fortuneId') ||
-              new URLSearchParams(window.location.search).get('reportId') ||
-              null
-            : null,
-      }),
-      keepalive: true,
-    }).catch(() => {});
+    const fortuneId =
+      typeof window !== 'undefined'
+        ? new URLSearchParams(window.location.search).get('fortuneId') ||
+          new URLSearchParams(window.location.search).get('reportId') ||
+          null
+        : null;
+    const payload = {
+      kind: 'hehun' as const,
+      score: r.score,
+      band: r.band,
+      headline: r.headline,
+      summary: r.plainForCouple?.slice(0, 200) || r.layers?.[0]?.summary || r.headline,
+      partnerLabel,
+      fortuneId,
+    };
+    const fingerprint = `${payload.score}|${payload.headline}|${partnerLabel}|${fortuneId || ''}`;
+    if (fingerprint === lastHehunFingerprint.current) return;
+
+    const flush = () => {
+      lastHehunFingerprint.current = fingerprint;
+      void fetch('/api/profile/foundation/signal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        keepalive: true,
+      }).catch(() => {
+        // allow retry on next run
+        lastHehunFingerprint.current = '';
+      });
+    };
+
+    const debounceMs = opts?.debounceMs ?? 0;
+    if (debounceMs > 0) {
+      if (hehunPersistTimer.current) clearTimeout(hehunPersistTimer.current);
+      hehunPersistTimer.current = setTimeout(flush, debounceMs);
+      return;
+    }
+    flush();
   }
 
   function run() {
@@ -605,6 +629,18 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
           {a.currentDayunGanZhi || b.currentDayunGanZhi ? copy.layersFour : copy.layersThree}
         </p>
       </div>
+
+      {result ? (
+        <GuestSaveStrip
+          page="/hehun"
+          nextPath="/hehun"
+          source="hehun_result_save"
+          emphasize
+          title="合婚结果可跨设备保留"
+          description="游客也可先看双盘。一封验证码绑定邮箱后，合婚与底座记录可跨设备回看，避免换机丢失。"
+          ctaLabel="验证码绑定保存"
+        />
+      ) : null}
 
       {loadNote ? (
         <p className="rounded-[8px] border border-[#e9e5ff] bg-[#f5f3ff] px-3 py-2 text-[12px] text-[#5b21b6]">

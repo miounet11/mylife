@@ -7,19 +7,26 @@ import {
   sendWelcomeEmail,
 } from '@/lib/email';
 import { sendSubscriptionConfirmationEmail } from '@/lib/email/subscription-confirmation';
-import { LOGIN_AUTO_SUBSCRIPTION_TAGS } from '@/lib/email-subscription-focus';
+import {
+  LOGIN_AUTO_SUBSCRIPTION_TAGS,
+  REPORT_SUBSCRIPTION_TAGS,
+} from '@/lib/email-subscription-focus';
 import { getCurrentUserId } from '@/lib/user-utils';
-import { validateEmail } from '@/lib/validators';
+import { normalizeEmail, validateEmail } from '@/lib/validators';
 import { trackServerEvent } from '@/lib/analytics';
+import { checkRateLimit, getClientKey, RATE_LIMITS } from '@/lib/rate-limit';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const email = `${body.email || ''}`;
+    const rawEmail = `${body.email || ''}`;
     const code = `${body.code || ''}`.trim();
     const adminPassword = typeof body.adminPassword === 'string' ? body.adminPassword : undefined;
+    const source = typeof body.source === 'string' ? body.source.slice(0, 80) : 'login';
+    const reportId = typeof body.reportId === 'string' ? body.reportId.trim().slice(0, 120) : '';
+    const page = typeof body.page === 'string' ? body.page : '/login';
 
-    const error = validateEmail(email);
+    const error = validateEmail(rawEmail);
     if (error) {
       return NextResponse.json(
         { success: false, error: error.message },
@@ -27,10 +34,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const email = normalizeEmail(rawEmail);
+
     if (!/^\d{6}$/.test(code)) {
       return NextResponse.json(
         { success: false, error: '请输入 6 位验证码' },
         { status: 400 }
+      );
+    }
+
+    const verifyLimit = checkRateLimit(`auth-verify:email:${email}`, RATE_LIMITS.authVerifyEmail);
+    if (!verifyLimit.allowed) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: '验证尝试过于频繁，请稍后再试',
+          retryAfterSec: Math.max(1, Math.ceil((verifyLimit.resetAt - Date.now()) / 1000)),
+        },
+        { status: 429 },
       );
     }
 
@@ -40,6 +61,7 @@ export async function POST(request: NextRequest) {
       code,
       adminPassword,
       currentUserId,
+      reportId: reportId || null,
     });
 
     if (!result.success) {
@@ -49,36 +71,54 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    emailSubscriptionOperations.upsert(
-      email,
-      'login_auto',
-      [...LOGIN_AUTO_SUBSCRIPTION_TAGS],
-    );
+    const subSource = reportId ? source || 'report_bind' : source || 'login_auto';
+    const tags = [
+      ...new Set([
+        ...LOGIN_AUTO_SUBSCRIPTION_TAGS,
+        ...(reportId ? REPORT_SUBSCRIPTION_TAGS : []),
+      ]),
+    ];
+    const metaPatch = reportId ? { focusReportId: reportId } : undefined;
+
+    try {
+      emailSubscriptionOperations.upsert(email, subSource, tags, metaPatch);
+    } catch (subError) {
+      console.error('[Auth] subscription upsert failed:', subError);
+    }
 
     if (isEmailDeliveryConfigured() && result.user?.email) {
-      sendWelcomeEmail(result.user.email, result.user.name || '用户').catch((error) => {
-        console.error('[Auth] 发送欢迎邮件失败:', error);
-      });
-      sendSubscriptionConfirmationEmail(result.user.email, { source: 'login_auto' }).catch((error) => {
-        console.error('[Auth] 发送订阅确认邮件失败:', error);
+      // Welcome only for brand-new accounts to reduce inbox noise on re-login.
+      if (result.isNewUser) {
+        sendWelcomeEmail(result.user.email, result.user.name || '用户').catch((err) => {
+          console.error('[Auth] 发送欢迎邮件失败:', err);
+        });
+      }
+      sendSubscriptionConfirmationEmail(result.user.email, { source: subSource }).catch((err) => {
+        console.error('[Auth] 发送订阅确认邮件失败:', err);
       });
     }
 
     trackServerEvent({
       userId: result.user?.id,
-      sessionId: currentUserId || result.user?.id,
+      sessionId: currentUserId || result.user?.id || getClientKey(request),
       eventName: 'auth_verified',
-      page: '/login',
+      page,
       userAgent: request.headers.get('user-agent'),
       meta: {
         emailDomain: email.split('@')[1] || '',
         autoSubscribed: true,
+        source: subSource,
+        reportId: reportId || null,
+        reportClaimed: !!result.reportClaimed,
+        isNewUser: !!result.isNewUser,
       },
     });
 
     return NextResponse.json({
       success: true,
       user: result.user,
+      isNewUser: !!result.isNewUser,
+      reportClaimed: !!result.reportClaimed,
     });
   } catch (error) {
     console.error('[API] 验证登录验证码失败:', error);
