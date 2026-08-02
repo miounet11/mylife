@@ -58,16 +58,18 @@ export default function SiteHeader({
   const { t, L, locale } = useLocale();
   const resolvedCta = ctaLabel ? L(ctaLabel) : t('ctaStart');
 
-  const isActive = (href: string) =>
-    (() => {
-      const pathOnly = (href || '').split('?')[0] || href;
-      return pathOnly === '/'
-        ? pathname === pathOnly
-        : pathname === pathOnly || (pathname || '').startsWith(`${pathOnly}/`);
-    })();
+  const isActive = (href: string) => {
+    const pathOnly = (href || '').split('?')[0] || href;
+    const path = pathname || '';
+    if (pathOnly === '/') return path === '/';
+    // Exact segment match for /chat vs /profile (avoid soft-nav stale highlight confusion)
+    if (pathOnly === '/chat') return path === '/chat' || path.startsWith('/chat/');
+    if (pathOnly === '/profile') return path === '/profile' || path.startsWith('/profile/');
+    return path === pathOnly || path.startsWith(`${pathOnly}/`);
+  };
 
   const ctaClass =
-    'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--ink-1)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-black hover:no-underline';
+    'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-[color:var(--brand-strong)] hover:no-underline';
 
   const brandName = t('brandName');
   const birthQuickLabel = t('birthQuick');
@@ -82,9 +84,9 @@ export default function SiteHeader({
     );
 
   return (
-    <header className="sticky top-0 z-50 border-b border-[color:var(--hairline)] bg-[color:var(--paper)]/95 backdrop-blur-md">
-      {/* Top bar — Linear-style light chrome */}
-      <div className="border-b border-[color:var(--hairline)]">
+    <header className="sticky top-0 z-50 border-b border-[color:var(--hairline-strong)] bg-[color:var(--paper)] shadow-sm">
+      {/* Top bar — Astro-style light utility chrome */}
+      <div className="border-b border-[color:var(--hairline)] bg-[color:var(--bg)]">
         <div className="page-frame flex h-14 items-center gap-3">
           <Link
             href="/"
@@ -97,7 +99,7 @@ export default function SiteHeader({
             <span className="flex flex-col leading-none">
               <span className="text-[14px] font-semibold tracking-[-0.02em]">{brandMain}</span>
               <span
-                className="mt-0.5 text-[10px] font-medium uppercase text-[color:var(--ink-4)]"
+                className="mt-0.5 text-[10px] font-medium uppercase text-[color:var(--brand)]"
                 style={{ letterSpacing: '0.14em' }}
               >
                 LIFE KLINE
@@ -116,7 +118,7 @@ export default function SiteHeader({
               type="text"
               name="q"
               placeholder={t('searchPlaceholder')}
-              className="fb-input h-8 w-full pl-8 pr-3 text-[13px] text-[color:var(--ink-1)] placeholder:text-[color:var(--ink-4)]"
+              className="fb-input h-8 w-full border-[color:var(--hairline)] bg-[color:var(--paper)] pl-8 pr-3 text-[13px] text-[color:var(--ink-1)] placeholder:text-[color:var(--ink-4)]"
               aria-label={t('navSearch')}
             />
           </form>
@@ -153,8 +155,8 @@ export default function SiteHeader({
         </div>
       </div>
 
-      {/* Primary nav strip */}
-      <div className="bg-[color:var(--paper)]">
+      {/* Primary nav strip — Astro navy bar */}
+      <div className="bg-[color:var(--nav-bar)] text-[color:var(--nav-bar-ink)]">
         <div className="page-frame scrollbar-none flex min-h-11 items-center gap-0.5 overflow-x-auto py-1">
           <nav className="flex min-w-0 items-center gap-0.5" aria-label="core">
             {primaryNavItems.map((item) => {
@@ -166,8 +168,8 @@ export default function SiteHeader({
                   className={cn(
                     'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-3 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline sm:text-[14px]',
                     active
-                      ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
-                      : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+                      ? 'bg-white/15 text-white'
+                      : 'text-[color:var(--nav-bar-muted)] hover:bg-white/10 hover:text-white',
                   )}
                 >
                   {t(item.labelKey)}
@@ -181,15 +183,15 @@ export default function SiteHeader({
               className={cn(
                 'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-medium no-underline transition hover:no-underline sm:inline-flex',
                 isActive(BIRTH_QUICK_HREF)
-                  ? 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-1)]'
-                  : 'text-[color:var(--ink-3)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]',
+                  ? 'bg-white/15 text-white'
+                  : 'text-[color:var(--nav-bar-muted)] hover:bg-white/10 hover:text-white',
               )}
             >
               {birthQuickLabel}
             </ToolEntryLink>
             {!compact ? (
               <>
-                <span className="mx-1.5 hidden h-4 w-px shrink-0 bg-[color:var(--hairline)] lg:block" />
+                <span className="mx-1.5 hidden h-4 w-px shrink-0 bg-white/20 lg:block" />
                 {secondaryNavItems.map((item) => (
                   <Link
                     key={item.href}
@@ -197,8 +199,8 @@ export default function SiteHeader({
                     className={cn(
                       'hidden h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[length:var(--text-caption)] font-medium no-underline transition hover:no-underline lg:inline-flex',
                       isActive(item.href)
-                        ? 'text-[color:var(--ink-1)]'
-                        : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-2)]',
+                        ? 'text-white'
+                        : 'text-[color:var(--nav-bar-muted)] hover:bg-white/10 hover:text-white',
                     )}
                   >
                     {t(item.labelKey)}

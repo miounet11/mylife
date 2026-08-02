@@ -58,11 +58,14 @@ export default async function ChatPage({
       mainClassName="page-frame !py-0 md:!py-0"
     >
       <div
-        className="mx-auto flex w-full max-w-3xl flex-col px-3 pt-1.5 sm:px-4 sm:pt-2"
+        className="page-content flex w-full min-h-0 flex-col overflow-hidden pt-1.5 sm:pt-2"
         data-ui-locale={uiLocale}
+        data-page="chat"
         style={{
+          /* Bounded shell: avoid leftover full-viewport blank when soft-nav away / load fails */
           height: 'calc(100dvh - var(--site-header-offset))',
           maxHeight: 'calc(100dvh - var(--site-header-offset))',
+          minHeight: 'min(28rem, calc(100dvh - var(--site-header-offset)))',
           paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))',
         }}
       >

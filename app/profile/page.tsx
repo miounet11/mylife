@@ -248,6 +248,8 @@ export default function ProfilePage() {
         },
       }}
     >
+      {/* Isolate profile surface: never share chat messenger shell */}
+      <div data-page="profile" className="w-full min-w-0">
       <AnalyticsPageView
         eventName="profile_page_viewed"
         page="/profile"
@@ -761,6 +763,7 @@ export default function ProfilePage() {
           />
         }
       />
+      </div>
     </AppPage>
   );
 }
