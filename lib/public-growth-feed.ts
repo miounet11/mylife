@@ -1,6 +1,11 @@
 import { db, fortuneOperations } from '@/lib/database';
 import type { FortuneRecord } from '@/lib/user-types';
 import { isPublicNoiseLine } from '@/lib/public-noise-filter';
+import {
+  buildIndexablePublicReportSeo,
+  isIndexablePublicReport,
+  scorePublicReportForIndex,
+} from '@/lib/public-report-index';
 
 const SITE_URL = 'https://www.life-kline.com';
 
@@ -173,18 +178,34 @@ function getReportSummary(report: FortuneRecord) {
 }
 
 export function buildPublicReportSeo(report: FortuneRecord) {
-  const patternType = getPatternType(report);
-  const dayMaster = getDayMaster(report);
-  const title = `${patternType} · ${dayMaster}匿名结构判断案例`;
-  const description = getReportSummary(report);
-
-  return {
-    title,
-    description,
-    patternType,
-    dayMaster,
-    canonical: `${SITE_URL}/result/${report.id}`,
-  };
+  // Prefer quality-aware SEO (intent + summary + /r canonical for share/index).
+  try {
+    const scored = buildIndexablePublicReportSeo(report);
+    return {
+      title: scored.title,
+      description: scored.description,
+      patternType: scored.patternType,
+      dayMaster: scored.dayMaster,
+      intentLabel: scored.intentLabel,
+      indexable: scored.indexable,
+      score: scored.score,
+      canonical: scored.canonical,
+    };
+  } catch {
+    const patternType = getPatternType(report);
+    const dayMaster = getDayMaster(report);
+    const title = `${patternType} · ${dayMaster}匿名结构判断案例`;
+    const description = getReportSummary(report);
+    return {
+      title,
+      description,
+      patternType,
+      dayMaster,
+      indexable: isIndexablePublicReport(report),
+      score: scorePublicReportForIndex(report).score,
+      canonical: `${SITE_URL}/r/${report.id}`,
+    };
+  }
 }
 
 function formatPublicReportOwnerLabel(userId: string) {
@@ -254,13 +275,39 @@ export function listPublicReportFeedItems(limit = 48): PublicReportFeedItem[] {
   const now = Date.now();
   const cached = publicReportFeedCache.get(limit);
   if (cached && cached.expiresAt > now) return cached.value;
-  const value = fortuneOperations
-    .listRecent(Math.max(limit * 3, limit))
+  // Prefer indexable-quality cases for public growth surfaces (SEO + human discovery).
+  const pool = fortuneOperations.listRecent(Math.max(limit * 6, limit * 2));
+  const ranked = pool
     .filter((report) => report.isPublic !== false)
-    .map(toPublicReportFeedItem)
-    .slice(0, limit);
+    .map((report) => ({ report, score: scorePublicReportForIndex(report) }))
+    .sort((a, b) => b.score.score - a.score.score || (b.report.createdAt || '').localeCompare(a.report.createdAt || ''));
+  const preferred = ranked.filter((row) => row.score.indexable).slice(0, limit);
+  const fallback = preferred.length >= Math.min(8, limit)
+    ? preferred
+    : ranked.slice(0, limit);
+  const value = fallback.map((row) => toPublicReportFeedItem(row.report));
   publicReportFeedCache.set(limit, { value, expiresAt: now + PUBLIC_REPORT_FEED_TTL_MS });
   return value;
+}
+
+/** Sitemap / SEO inventory: only high-quality indexable public cases. */
+export function listIndexablePublicReportIds(limit = 40): Array<{ id: string; updatedAt?: string; createdAt?: string; score: number }> {
+  try {
+    const pool = fortuneOperations.listRecent(Math.max(limit * 8, 120));
+    return pool
+      .map((report) => ({ report, scored: scorePublicReportForIndex(report) }))
+      .filter((row) => row.scored.indexable)
+      .sort((a, b) => b.scored.score - a.scored.score || `${b.report.updatedAt || b.report.createdAt || ''}`.localeCompare(`${a.report.updatedAt || a.report.createdAt || ''}`))
+      .slice(0, limit)
+      .map((row) => ({
+        id: row.report.id,
+        updatedAt: row.report.updatedAt,
+        createdAt: row.report.createdAt,
+        score: row.scored.score,
+      }));
+  } catch {
+    return [];
+  }
 }
 
 export interface PublicReportDailyBucket {

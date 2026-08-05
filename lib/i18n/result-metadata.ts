@@ -26,12 +26,21 @@ export function buildResultPageMetadata(input: {
   patternType?: string | null;
   dayMaster?: string | null;
   isPublic?: boolean;
+  /**
+   * Quality-gate for search indexing. Shareable public shells may still be noindex
+   * when thin (guest spam / incomplete analysis). Prefer /r canonical for indexable cases.
+   */
+  indexable?: boolean;
   /** Default `/result/:id`; summary entry uses `/r/:id` */
   pathBase?: '/result' | '/r';
 }): Metadata {
   const copy = resultCopy(input.locale);
   const shortId = input.id.slice(0, 8);
-  const basePath = `${input.pathBase || '/result'}/${input.id}`;
+  // Indexable public cases use /r as the share+search surface; full /result stays product.
+  const preferredBase =
+    input.pathBase
+    || (input.isPublic !== false && input.indexable ? '/r' : '/result');
+  const basePath = `${preferredBase}/${input.id}`;
 
   const localized = localizePublicReportSeo(
     {
@@ -49,8 +58,9 @@ export function buildResultPageMetadata(input: {
     : `${copy.metaTitle} ${shortId}…`;
   const description = localized.description.slice(0, 200);
 
-  // Public reports indexable; private noindex.
-  const noIndex = input.isPublic === false || input.isPublic === undefined;
+  // Private → always noindex. Public but thin → noindex. Only quality public cases index.
+  const isPublic = input.isPublic !== false && input.isPublic !== undefined;
+  const noIndex = !isPublic || input.indexable === false || input.indexable === undefined;
 
   return buildPageMetadata({
     title,
@@ -58,8 +68,8 @@ export function buildResultPageMetadata(input: {
     path: withLocalePrefix(basePath, input.locale),
     locale: input.locale,
     noIndex,
-    multiLanguage: true,
-    languages: buildProductLanguageAlternates(basePath),
+    multiLanguage: !noIndex,
+    languages: noIndex ? undefined : buildProductLanguageAlternates(basePath),
     keywords: [
       '结构判断报告',
       '人生K线',
@@ -68,6 +78,7 @@ export function buildResultPageMetadata(input: {
       'bazi report',
       'anonymous case',
       'timing map',
+      '八字匿名案例',
       localized.patternType,
       localized.dayMaster,
       copy.brandSuffix,

@@ -1,7 +1,7 @@
 // AI聊天API
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { getOrCreateGuestUserId } from '@/lib/user-utils';
+import { getCurrentUserId, getOrCreateGuestUserId } from '@/lib/user-utils';
 import { eventOperations, fortuneOperations, questionOperations, runInTransaction, toolSessionOperations } from '@/lib/database';
 import { getApiBaseUrl, getApiKey, getChatLlmTimeoutMs, getDefaultModel } from '@/lib/env';
 import { generateId } from '@/lib/utils';
@@ -148,11 +148,27 @@ function shouldRecordChatContextLoaded(sessionId: string): boolean {
 }
 
 function shouldSkipChatContextAnalytics(userAgent?: string | null): boolean {
+  try {
+    // Shared crawler detector (expanded signatures).
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const mod = require('@/lib/public-report-index') as {
+      isLikelyCrawlerUserAgent?: (ua?: string | null) => boolean;
+    };
+    if (typeof mod.isLikelyCrawlerUserAgent === 'function') {
+      return mod.isLikelyCrawlerUserAgent(userAgent);
+    }
+  } catch {
+    // fall through
+  }
   const ua = `${userAgent || ''}`.trim().toLowerCase();
   // Empty UA is almost never a real browser product session.
   if (!ua) return true;
-  return /bot|crawler|spider|slurp|facebookexternalhit|preview|headless|phantom|selenium|puppeteer|playwright|curl\/|wget|python-requests|go-http-client|scrapy|bytespider|baiduspider|yandex|semrush|ahrefs|petalbot|gptbot|claudebot|anthropic|bingpreview/.test(ua);
+  return /bot|crawler|spider|slurp|facebookexternalhit|preview|headless|phantom|selenium|puppeteer|playwright|curl\/|wget|python-requests|go-http-client|scrapy|bytespider|baiduspider|yandex|semrush|ahrefs|petalbot|gptbot|claudebot|anthropic|bingpreview|okhttp|axios\/|node-fetch|postman|monitor|uptime/.test(ua);
 }
+
+/** Human product CTAs that may open empty chat legitimately. */
+const HUMAN_CHAT_SOURCE_RE =
+  /^(pro_report_shell|teachers_gallery|home_consultant|membership|analyze|hehun|guest_save|report_email|naming)/i;
 
 function isLikelyEmptyChatNoise(params: {
   requestedReportId?: string;
@@ -160,15 +176,32 @@ function isLikelyEmptyChatNoise(params: {
   historyCount: number;
   source?: string | null;
   userAgent?: string | null;
+  /** True when bound report is owned by this session (not merely public-readable). */
+  reportOwnedBySession?: boolean;
+  /** True when bound/requested report is public (default DB is_public=1). */
+  isPublicReport?: boolean;
 }): boolean {
   if (shouldSkipChatContextAnalytics(params.userAgent)) return true;
-  // Bound report or prior history = real product session.
-  if (params.boundReportId || params.historyCount > 0) return false;
+
+  // Real conversation already started.
+  if (params.historyCount > 0) return false;
+
+  // Owner revisiting their own report chat — keep.
+  if (params.reportOwnedBySession && params.boundReportId) return false;
 
   const source = `${params.source || ''}`;
+
+  // Public report deep-link with empty history: dominant crawler/share noise.
+  // Only keep high-intent human product sources (still one load per session TTL).
+  if (params.boundReportId && params.isPublicReport && !params.reportOwnedBySession) {
+    if (HUMAN_CHAT_SOURCE_RE.test(source) || /^report:[^:]+:(shell|first_screen)/i.test(source)) {
+      return false;
+    }
+    // Cockpit / followup / event-capture / bare deep links without chat history → noise
+    return true;
+  }
+
   // Cold / unowned opens dominate chat_context_loaded volume.
-  // If the guest cannot bind the report and has no history, the load is not a real conversation start.
-  // chat_page_viewed still captures the click intent via client analytics.
   if (
     /content_conversion_panel|content_detail_followup|tool_detail_runner_tip_chat|tool_premium_depth_panel|visual_asset|result_report_followup|result_cockpit|next_step_guide|report_event_capture|events_page|profile_page/.test(
       source,
@@ -177,7 +210,7 @@ function isLikelyEmptyChatNoise(params: {
     return true;
   }
   // Unowned reportId deep-link without history is low-signal (scrapers / stale shares).
-  if (params.requestedReportId) return true;
+  if (params.requestedReportId && !params.boundReportId) return true;
   // Bare /chat cold open
   if (!source) return true;
   return false;
@@ -1894,27 +1927,42 @@ export async function GET(request: NextRequest) {
   let requestedSourceFamily: string | undefined;
   try {
     sessionId = getClientKey(request);
-    userId = await getOrCreateGuestUserId();
+    const isCrawler = shouldSkipChatContextAnalytics(userAgent);
+    // Crawlers must not mint guest_* users (was inflating DAU / users table).
+    if (isCrawler) {
+      const existing = await getCurrentUserId().catch(() => null);
+      userId = existing || `bot_${(sessionId || 'anon').replace(/[^a-zA-Z0-9._-]/g, '').slice(0, 48)}`;
+    } else {
+      userId = await getOrCreateGuestUserId();
+    }
     requestedReportId = resolveRequestedReportId(request);
     requestedEventId = resolveRequestedEventId(request);
     requestedIntent = resolveRequestedIntent(request);
     requestedSource = resolveRequestedSource(request);
     requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request);
     requestedSourceFamily = resolveRequestedSourceFamily(request);
-    const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
+    const rows = isCrawler
+      ? []
+      : getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
     const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
     const history = toHistoryPayload(rows);
 
-    // v5-D84 (2026-05-24): chat_context_loaded 抑制噪音 — 同 session 10 分钟内只写一次。
-    // 之前 90 天累计 695k 条 = 76% 全部 analytics 体量，DB 严重膨胀。
+    // v5-D84 (2026-05-24): chat_context_loaded 抑制噪音 — 同 session 10 分钟内只记一次。
     // 真实业务诉求是「这个 session 进入过 chat 页」，不是「轮询了多少次」。
     const boundReportId = context.report?.id || null;
-    const skipNoise = isLikelyEmptyChatNoise({
+    const boundReport = boundReportId ? fortuneOperations.getById(boundReportId) : null;
+    const reportOwnedBySession = Boolean(
+      boundReport && boundReport.userId && boundReport.userId === userId,
+    );
+    const isPublicReport = boundReport ? boundReport.isPublic !== false : Boolean(requestedReportId);
+    const skipNoise = isCrawler || isLikelyEmptyChatNoise({
       requestedReportId,
       boundReportId,
       historyCount: history.length,
       source: requestedSource || null,
       userAgent,
+      reportOwnedBySession,
+      isPublicReport,
     });
     // Keep product signal: only record non-noise loads (or always record with flags if bound/history).
     if (!skipNoise && shouldRecordChatContextLoaded(sessionId)) {
@@ -1930,6 +1978,8 @@ export async function GET(request: NextRequest) {
           requestedReportId: requestedReportId || null,
           boundReportId,
           reportBound: Boolean(boundReportId),
+          reportOwnedBySession,
+          isPublicReport,
           eventId: context.focusedEvent?.id || null,
           durationMs: Date.now() - requestStartedAt,
           historyCount: history.length,

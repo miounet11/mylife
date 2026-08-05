@@ -33,6 +33,10 @@ import { resultChrome } from '@/lib/i18n/result-chrome';
 import { buildResultPageMetadata } from '@/lib/i18n/result-metadata';
 import { localizePublicReportSeo } from '@/lib/i18n/public-report-seo';
 import { buildPublicReportSeo } from '@/lib/public-growth-feed';
+import {
+  buildPublicReportJsonLd,
+  isIndexablePublicReport,
+} from '@/lib/public-report-index';
 import { toSiteLocaleText } from '@/lib/i18n/site-locale';
 
 export const dynamic = 'force-dynamic';
@@ -52,6 +56,9 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
       const isPublic = fortune.isPublic !== false;
       const publicSeo = buildPublicReportSeo(fortune);
       const localized = localizePublicReportSeo(publicSeo, locale, id);
+      const indexable =
+        isPublic
+        && (publicSeo.indexable === true || isIndexablePublicReport(fortune));
       return buildResultPageMetadata({
         id,
         locale,
@@ -60,13 +67,14 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
         patternType: publicSeo.patternType || localized.patternType,
         dayMaster: publicSeo.dayMaster || localized.dayMaster,
         isPublic,
+        indexable,
         pathBase: '/r',
       });
     }
   } catch {
     // ignore
   }
-  return buildResultPageMetadata({ id, locale, isPublic: false, pathBase: '/r' });
+  return buildResultPageMetadata({ id, locale, isPublic: false, indexable: false, pathBase: '/r' });
 }
 
 export default async function ResultV2Page({ params, searchParams }: PageProps) {
@@ -142,15 +150,38 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
     publicSeo = null;
   }
   const localizedSeo = publicSeo ? localizePublicReportSeo(publicSeo, locale, id) : null;
+  const indexable =
+    displayFortune.isPublic !== false
+    && (publicSeo?.indexable === true || isIndexablePublicReport(displayFortune));
+  const jsonLd = indexable && localizedSeo
+    ? buildPublicReportJsonLd({
+      id,
+      title: localizedSeo.title,
+      description: localizedSeo.description,
+      patternType: publicSeo?.patternType || localizedSeo.patternType,
+      dayMaster: publicSeo?.dayMaster || localizedSeo.dayMaster,
+      intentLabel: (publicSeo as { intentLabel?: string } | null)?.intentLabel,
+      datePublished: generatedAtIso,
+      dateModified:
+        (displayFortune as { updatedAt?: string }).updatedAt || generatedAtIso,
+    })
+    : null;
 
   return (
     <div className="min-h-screen bg-[color:var(--bg)]">
+      {jsonLd ? (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      ) : null}
       <AnalyticsPageView
         eventName="report_viewed"
         page={`/r/${id}`}
         meta={{
           reportId: id,
           isPublic: displayFortune.isPublic,
+          indexable,
           reportVersion: 'timing-v2',
           source: entrySource || null,
           locale,
@@ -180,14 +211,31 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
                 {t('摘要版 · 时间地图', 'Summary · Timing map')}
               </div>
               <h1 className="mt-1.5 text-[20px] font-bold leading-snug text-[color:var(--ink-1)] md:text-[24px]">
-                {t('先看关键时点，再进入完整报告', 'Key timing first, then the full report')}
+                {localizedSeo?.title
+                  || t('先看关键时点，再进入完整报告', 'Key timing first, then the full report')}
               </h1>
               <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.6] text-[color:var(--ink-3)]">
-                {t(
-                  '本页只整理：画像 → 过去验证 → 30 天 / 12 月 / 5 年窗口。结构总览、行动板与证据层在完整报告。',
-                  'This page covers portrait, past checks, and 30-day / 12-month / 5-year windows. Structure and actions live in the full report.',
-                )}
+                {localizedSeo?.description
+                  || t(
+                    '本页只整理：画像 → 过去验证 → 30 天 / 12 月 / 5 年窗口。结构总览、行动板与证据层在完整报告。',
+                    'This page covers portrait, past checks, and 30-day / 12-month / 5-year windows. Structure and actions live in the full report.',
+                  )}
               </p>
+              {localizedSeo?.patternType || localizedSeo?.dayMaster ? (
+                <p className="mt-2 text-[12px] text-[color:var(--ink-4)]">
+                  {[
+                    localizedSeo?.patternType
+                      ? t(`格局：${localizedSeo.patternType}`, `Pattern: ${localizedSeo.patternType}`)
+                      : null,
+                    localizedSeo?.dayMaster
+                      ? t(`日主：${localizedSeo.dayMaster}`, `Daymaster: ${localizedSeo.dayMaster}`)
+                      : null,
+                    t('匿名案例 · 结构参考', 'Anonymous case · structural reference'),
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
+                </p>
+              ) : null}
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <Link

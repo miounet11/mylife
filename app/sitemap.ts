@@ -11,6 +11,7 @@ import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
 import { absoluteUrl, buildProductLanguageAlternates, GEO_CITY_SEEDS } from '@/lib/seo';
 import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
+import { listIndexablePublicReportIds } from '@/lib/public-growth-feed';
 
 const siteUrl = 'https://www.life-kline.com';
 
@@ -174,6 +175,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     changeFrequency: 'weekly' as const,
   }));
 
+  // High-quality anonymous public cases only (quality-gated; thin shells excluded).
+  let publicReportRoutes: RouteDef[] = [];
+  try {
+    publicReportRoutes = listIndexablePublicReportIds(48).map((item) => ({
+      path: `/r/${item.id}`,
+      priority: 0.62,
+      changeFrequency: 'weekly' as const,
+      lastModified: item.updatedAt || item.createdAt || now,
+    }));
+  } catch {
+    publicReportRoutes = [];
+  }
+
   const all = uniqueRoutes([
     ...routes,
     ...dimensionRoutes,
@@ -182,6 +196,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...learnRoutes,
     ...contentRoutesFromStore(),
     ...geoCitySeedRoutes(),
+    ...publicReportRoutes,
   ]);
 
   const entries: MetadataRoute.Sitemap = [];
