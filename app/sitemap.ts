@@ -142,6 +142,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/learn', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/teachers', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/world-yi/cities', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     // English World Yi gateway (x-default → EN for this cluster in page metadata; sitemap lists EN loc)
     { path: '/world-yi/en', priority: 0.86, changeFrequency: 'weekly', enGateway: true },
     { path: '/world-yi/en/cases', priority: 0.8, changeFrequency: 'weekly', enGateway: true },

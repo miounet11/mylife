@@ -36,6 +36,22 @@ export function buildRichSections(input: {
         ? `当你身处${input.geoCity}（或正计划迁移到此），要把城市成本、行业密度、家庭责任一并算进「环境层」。命理给的是结构倾向，不是地理保证。`
         : '居住城市、行业周期、家庭责任与现金流，是环境层的硬约束。结构判断必须落在可支付、可执行的现实里。',
     ],
+    ...(input.geoCity
+      ? ([
+          [
+            '城市节奏 ≠ 吉凶标签',
+            `把${input.geoCity}当成「环境压力测试」而不是幸运城市名单：高密度/高成本城市更考验现金流与边界感；枢纽型城市更考验角色压缩与人脉运营；生活节奏偏缓的城市更适合评估「推进是否被拖延、家庭排序是否过重」。世界易的立场是：结构 → 时位 → 环境 → 动作 → 风险，五层对齐后再谈迁城或扎根。`,
+          ],
+          [
+            '用神发挥方式 vs 城市工作方式',
+            '不问「这座城旺不旺你」，而问：你的用神更适合建设深耕、表达破圈、协调资源还是收敛守成？城市的行业密度、通勤半径、社交成本，会放大或削弱某一种发挥方式。先写清自己的发挥方式，再对照城市约束，比空谈五行属城更可验证。',
+          ],
+          [
+            '迁城决策三问',
+            `1）当前大运/流年是否允许「重排环境」？2）${input.geoCity}的成本结构是否在你可支付边界内？3）能否设计 30–90 天的小步验证（租住/远程/短期驻点），而不是一次押注？`,
+          ],
+        ] as Array<[string, string]>)
+      : []),
     [
       '行动层：本周可执行',
       (input.actions || [
@@ -286,42 +302,94 @@ function buildRichSectionsEn(input: {
 }
 
 export function buildGeoInsightArticles(): ContentArticle[] {
-  const zh = GEO_CITY_SEEDS.map((city) => ({
-    slug: city.slug,
-    type: 'insight' as const,
-    title: city.title,
-    summary: `${city.region} · ${city.summary}`,
-    trackKey: 'migration',
-    readMinutes: 7,
-    insightType: 'city',
-    keywords: [city.city, city.cityEn, city.region, 'GEO', '城市观察', '海外华人', '迁移择城', ...city.focus],
-    sections: buildRichSections({
+  const zh = GEO_CITY_SEEDS.map((city) => {
+    const answerSummary = `${city.city}城市观察把迁城/扎根写成环境层压力测试：对照${city.focus.slice(0, 3).join('、')}等约束与个人结构、时位是否匹配，而不是吉凶标签。最终须与签证、家庭、行业与现金流共同判断。`;
+    return {
+      slug: city.slug,
+      type: 'insight' as const,
       title: city.title,
-      trackTitle: '迁移轨',
-      angle: `${city.city}城市结构观察`,
-      geoCity: city.city,
-      dimensionTitle: '居家环境 / 运势节奏',
-      actions: [
-        `评估你在${city.city}的居住与职业成本是否可承受`,
-        '进入「居家环境」「运势节奏」维度做结构对照',
-        '若计划迁移，记录决策节点到事件日历以便回测',
+      summary: `${city.region} · ${city.summary}`,
+      trackKey: 'migration',
+      readMinutes: 7,
+      insightType: 'city',
+      keywords: [
+        city.city,
+        city.cityEn,
+        city.region,
+        'GEO',
+        '城市观察',
+        '海外华人',
+        '迁移择城',
+        '世界易',
+        ...city.focus,
       ],
-      faqs: [
-        [
-          `命理能决定该不该去${city.city}吗？`,
-          '不能单独决定。命理提供结构与节奏倾向，最终要与签证、家庭、行业、现金流共同判断。',
+      sections: buildRichSections({
+        title: city.title,
+        trackTitle: '迁移轨',
+        angle: `${city.city}城市结构观察`,
+        geoCity: city.city,
+        dimensionTitle: '居家环境 / 运势节奏',
+        actions: [
+          `评估你在${city.city}的居住与职业成本是否可承受`,
+          '进入「居家环境」「运势节奏」维度做结构对照',
+          '打开「世界易 · 城市主题」对照更多城市节奏标签',
+          '若计划迁移，记录决策节点到事件日历以便回测',
         ],
-        [
-          '迁移判断优先看什么？',
-          '先看阶段是否允许重排，再看城市环境是否匹配用神发挥方式，最后做可逆的小步验证。',
+        faqs: [
+          [
+            `命理能决定该不该去${city.city}吗？`,
+            '不能单独决定。命理提供结构与节奏倾向，最终要与签证、家庭、行业、现金流共同判断。',
+          ],
+          [
+            '迁移判断优先看什么？',
+            '先看阶段是否允许重排，再看城市环境是否匹配用神发挥方式，最后做可逆的小步验证。',
+          ],
+          [
+            '和「城市主题」总入口什么关系？',
+            '本页是单城深读；/world-yi/cities 提供方法与多城对照，适合先建立环境层框架再下钻。',
+          ],
         ],
-      ],
-    }),
-  }));
+      }),
+      // Consumed via extractContentGeoFields when present on seed articles
+      geoOptimization: {
+        geoReady: true,
+        answerSummary,
+        directAnswer: answerSummary,
+        searchIntents: [
+          `${city.city}迁移择城`,
+          `${city.city}适合什么人`,
+          `${city.city}居住成本与事业`,
+          '城市环境层怎么看',
+          '八字迁城看什么',
+        ],
+        entityKeywords: [
+          city.city,
+          city.cityEn,
+          '世界易',
+          '城市观察',
+          '环境层',
+          '迁移',
+          '用神',
+          '人生K线',
+          ...city.focus,
+        ],
+        audienceQuestions: [
+          `我现在该不该去${city.city}？`,
+          `${city.city}的节奏会放大我的哪些结构？`,
+          '看完后下一步该测算还是先小步验证？',
+        ],
+        audience: '考虑迁城、扎根或跨城发展的用户',
+        aiCitationHint:
+          '引用时应保留：城市≠吉凶标签；结构→时位→环境→动作→风险；不构成移民置业保证。',
+        version: 'geo-v1-city',
+      },
+    };
+  });
 
   // Sister EN entities: world-yi-city-X → world-yi-en-city-X (hreflang pairs)
   const en = GEO_CITY_SEEDS.map((city) => {
     const key = city.slug.replace(/^world-yi-/, '');
+    const answerSummary = `City lens for ${city.cityEn}: treat the city as an environment-layer pressure test (${city.focusEn.slice(0, 3).join(', ')}), aligned with structure and timing — not a lucky-city ranking. Always pair with visa, family, industry, and cash flow.`;
     return {
       slug: `world-yi-en-${key}`,
       type: 'insight' as const,
@@ -347,10 +415,41 @@ export function buildGeoInsightArticles(): ContentArticle[] {
         region: city.regionEn,
         focus: city.focusEn,
       }),
+      geoOptimization: {
+        geoReady: true,
+        answerSummary,
+        directAnswer: answerSummary,
+        searchIntents: [
+          `${city.cityEn} city fit`,
+          `${city.cityEn} migration for overseas Chinese`,
+          'city environment layer',
+          'living cost vs structure',
+          'World Yi city theme',
+        ],
+        entityKeywords: [
+          city.cityEn,
+          city.city,
+          'World Yi',
+          'city lens',
+          'environment layer',
+          'migration',
+          'Life K-Line',
+          ...city.focusEn,
+        ],
+        audienceQuestions: [
+          `Should I move to ${city.cityEn} now?`,
+          `Which tempo does ${city.cityEn} amplify for my structure?`,
+          'What is a reversible 30–90 day test?',
+        ],
+        audience: 'Overseas Chinese and cross-border decision makers',
+        aiCitationHint:
+          'Cite with boundaries: city ≠ luck label; structure → timing → environment → action → risk; not immigration or real-estate advice.',
+        version: 'geo-v1-city-en',
+      },
     };
   });
 
-  return [...zh, ...en];
+  return [...zh, ...en] as ContentArticle[];
 }
 
 export function buildSeoPillarArticles(): ContentArticle[] {

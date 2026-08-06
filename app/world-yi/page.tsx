@@ -50,6 +50,9 @@ export default async function WorldYiPage({
               >
                 阅读总论
               </Link>
+              <Link href="/world-yi/cities" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                城市主题
+              </Link>
               <Link href="/learn/intro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 入门专题
               </Link>
@@ -125,6 +128,48 @@ export default async function WorldYiPage({
               className="rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--brand)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
             >
               完善数据底座
+            </Link>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+                城市主题
+              </p>
+              <h2 className="mt-1 text-[15px] font-semibold text-[color:var(--ink-1)]">
+                城市是环境层，不是吉凶名单
+              </h2>
+              <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+                短视频里的「城市气场」可以当话题入口；世界易把它落成可验证的压力测试：成本、行业密度、社交半径与节奏，会放大或削弱你的用神发挥方式。结构 → 时位 → 环境 → 动作 → 风险。
+              </p>
+            </div>
+            <Link
+              href="/world-yi/cities"
+              className="text-[12px] font-medium text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              打开城市主题 →
+            </Link>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Link
+              href="/world-yi/cities"
+              className="rounded-lg border border-[color:var(--brand)] bg-[color:var(--brand)] px-3 py-2.5 text-center text-[12px] font-semibold text-white no-underline hover:bg-[color:var(--brand-strong)] hover:no-underline"
+            >
+              国内 + 海外城市卡
+            </Link>
+            <Link
+              href="/dimensions/living-environment"
+              className="rounded-lg border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--ink-1)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
+            >
+              居家环境维度
+            </Link>
+            <Link
+              href="/analyze?source=world_yi_cities&intent=yearly"
+              className="rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--brand)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
+            >
+              接到个人报告
             </Link>
           </div>
         </section>

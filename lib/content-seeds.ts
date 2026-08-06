@@ -18,6 +18,19 @@ export type ContentArticle = {
   insightType?: string;
   sections: Array<[string, string]>;
   keywords?: string[];
+  /** Optional GEO blob for seeds (city insights, pillars). */
+  geoOptimization?: {
+    geoReady?: boolean;
+    answerSummary?: string | null;
+    directAnswer?: string | null;
+    searchIntents?: string[];
+    entityKeywords?: string[];
+    audienceQuestions?: string[];
+    audience?: string | null;
+    aiCitationHint?: string | null;
+    version?: string | null;
+    canonicalTopic?: string | null;
+  };
 };
 
 function collectFromTracks(): ContentArticle[] {

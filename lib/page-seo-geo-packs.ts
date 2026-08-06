@@ -410,7 +410,7 @@ const WORLD_YI: PageSeoGeoPack = {
   entityKeywords: ['世界易', 'World Yi', '迁移', '城市', '全球', '华人', '时位'],
   howTo: [
     { step: '读方法', body: '从世界易总览理解时位框架。' },
-    { step: '看城市/领域', body: '进入城市洞察或应用轨道。' },
+    { step: '看城市/领域', body: '进入城市主题或应用轨道。' },
     { step: '回到个人盘', body: '用测算验证是否适配迁移与阶段。' },
   ],
   faqs: [
@@ -419,6 +419,7 @@ const WORLD_YI: PageSeoGeoPack = {
     { question: '能直接荐城吗？', answer: '提供结构观察与对照，不构成移民置业保证。' },
   ],
   related: [
+    { href: '/world-yi/cities', label: '城市主题' },
     { href: '/world-yi/en', label: 'English gateway' },
     { href: '/insights', label: '城市洞察' },
     { href: '/analyze', label: '个人测算' },
@@ -429,6 +430,81 @@ const WORLD_YI: PageSeoGeoPack = {
   ],
   geoRegion: '全球',
   geoPlaceName: '海外华人社区',
+};
+
+const WORLD_YI_CITIES: PageSeoGeoPack = {
+  path: '/world-yi/cities',
+  slug: 'world-yi-cities',
+  name: '世界易城市主题',
+  title: '世界易城市主题｜迁城择地·环境层压力测试｜人生K线',
+  description:
+    '把城市当成环境层而非吉凶标签：对照成本、行业密度与节奏，接到居家环境维度与个人结构报告。覆盖国内与海外华人城市。',
+  keywords: [
+    '世界易城市',
+    '迁移择城',
+    '城市运势观察',
+    '环境层',
+    '海外华人城市',
+    '迁城决策',
+  ],
+  answerSummary:
+    '世界易城市主题把迁城/择地写成可验证的环境层压力测试：先看个人结构与时位，再对照城市成本、行业密度与节奏，最后用 30–90 天可逆动作验证。城市不是吉凶名单，也不构成移民置业保证。',
+  searchIntents: [
+    '迁移择城怎么判断',
+    '城市运势观察',
+    '海外华人适合哪座城',
+    '八字迁城看什么',
+    '世界易城市主题',
+  ],
+  entityKeywords: [
+    '世界易',
+    '城市主题',
+    '环境层',
+    '迁移',
+    '择城',
+    '节奏',
+    '用神',
+    '海外华人',
+    '结构',
+    '时位',
+  ],
+  howTo: [
+    { step: '读方法', body: '先理解结构 → 时位 → 环境 → 动作 → 风险五层。' },
+    { step: '选城市', body: '按区域打开城市观察卡，对照成本与行业密度。' },
+    { step: '接到个人盘', body: '用结构报告与居家环境维度做压力测试，再设计可逆验证。' },
+  ],
+  faqs: [
+    {
+      question: '城市主题是幸运城市排行吗？',
+      answer: '不是。我们不做吉凶名单，只把城市当环境压力测试，对齐结构与时位后再谈动作。',
+    },
+    {
+      question: '能直接告诉我该去哪座城吗？',
+      answer: '不能保证。提供环境层对照与节奏参考，最终要与签证、家庭、行业、现金流共同判断。',
+    },
+    {
+      question: '和单独城市洞察页什么关系？',
+      answer: '本页是总入口与方法说明；每座城有独立洞察页，可被搜索与 AI 引用。',
+    },
+    {
+      question: '短视频里的「城市气场」怎么用？',
+      answer: '可作话题入口，但结论必须落到成本、密度、节奏与可验证动作，避免恐吓式断语。',
+    },
+  ],
+  related: [
+    { href: '/world-yi', label: '世界易总入口' },
+    { href: '/insights', label: '全部城市洞察' },
+    { href: '/dimensions/living-environment', label: '居家环境维度' },
+    { href: '/knowledge/world-yi-migration-stage-logic', label: '世界易迁移观' },
+    { href: '/analyze?source=world_yi_cities', label: '生成结构报告' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '世界易', path: '/world-yi' },
+    { name: '城市主题', path: '/world-yi/cities' },
+  ],
+  geoRegion: '全球',
+  geoPlaceName: '主要华人城市',
 };
 
 const LEARN: PageSeoGeoPack = {
@@ -488,6 +564,7 @@ const INSIGHTS: PageSeoGeoPack = {
     { question: '有英文吗？', answer: '部分城市有英文姊妹内容，见世界易英文入口。' },
   ],
   related: [
+    { href: '/world-yi/cities', label: '城市主题总入口' },
     { href: '/world-yi', label: '世界易' },
     { href: '/world-yi/en', label: 'English' },
     { href: '/analyze', label: '个人测算' },
@@ -556,6 +633,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/teachers': TEACHERS,
   'world-yi': WORLD_YI,
   '/world-yi': WORLD_YI,
+  'world-yi-cities': WORLD_YI_CITIES,
+  '/world-yi/cities': WORLD_YI_CITIES,
   hehun: HEHUN,
   '/hehun': HEHUN,
   learn: LEARN,

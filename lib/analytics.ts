@@ -128,7 +128,9 @@ export type AnalyticsEventName =
   | 'foundation_page_viewed'
   | 'foundation_astro_saved'
   | 'foundation_qa_saved'
-  | 'foundation_step_clicked';
+  | 'foundation_step_clicked'
+  | 'world_yi_page_viewed'
+  | 'world_yi_cities_viewed';
 
 interface TrackEventInput {
   userId?: string | null;

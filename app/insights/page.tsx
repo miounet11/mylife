@@ -38,6 +38,9 @@ export default async function InsightsPage({
           description="城市与环境下的成本结构、角色密度与节奏差异，用于迁移与选址参考。"
           actions={
             <>
+              <Link href="/world-yi/cities" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                城市主题总入口
+              </Link>
               <Link href="/world-yi" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 世界易
               </Link>

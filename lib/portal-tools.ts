@@ -52,6 +52,7 @@ const CATEGORY_TOOLS: Record<ToolCategoryKey, PortalEntry[]> = {
     { href: '/tools/daily-sign', title: '今日节律', description: '每日轻量状态提示。', cta: '抽一签' },
   ],
   migration: [
+    { href: '/world-yi/cities', title: '世界易城市主题', description: '城市是环境层压力测试，不是吉凶名单。', cta: '打开城市卡' },
     { href: '/dimensions/living-environment', title: '居家环境研判', description: '方位摆设与搬迁窗口参考。', cta: '开始研判' },
     { href: '/analyze?source=tool_category_migration', title: '迁移匹配报告', description: '留回决策与环境成本结构。', cta: '生成报告' },
     { href: '/insights/city/world-yi-vancouver', title: '温哥华城市观察', description: '海外华人环境层样例。', cta: '阅读洞察' },

@@ -6,6 +6,7 @@ import ContentActionRail from '@/components/content/content-action-rail';
 import JourneyStrip from '@/components/content/journey-strip';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import JsonLd from '@/components/seo/json-ld';
+import ArticleGeoLead from '@/components/seo/article-geo-lead';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import RelatedContent from '@/components/related-content';
@@ -131,7 +132,8 @@ export default async function InsightArticlePage({
     .replace(/^world-yi-city-/, '')
     .replace(/^city-/, '');
   const geoSurface =
-    type === 'city' || /city|shanghai|shenzhen|beijing|london|sydney|tokyo|york|angeles|singapore|hong-kong|vancouver|toronto/i.test(
+    type === 'city' ||
+    /city|shanghai|shenzhen|beijing|london|sydney|tokyo|york|angeles|singapore|hong-kong|vancouver|toronto|hangzhou|chengdu|guangzhou|wuhan|xian|dubai|taipei/i.test(
       slug,
     )
       ? `geo/${cityKey}`
@@ -223,6 +225,12 @@ export default async function InsightArticlePage({
             <Link href="/dimensions/fortune-rhythm" className="fb-btn h-8 px-3 text-[12px] hover:no-underline">
               {isEnEntity ? 'Fortune rhythm' : '运势节奏'}
             </Link>
+            <Link
+              href="/world-yi/cities"
+              className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+            >
+              {isEnEntity ? 'All cities' : '城市主题'}
+            </Link>
             {sister ? (
               <Link href={sister.href} className="text-[12px] text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {sister.label}
@@ -232,7 +240,31 @@ export default async function InsightArticlePage({
         }
       />
       <JourneyStrip active="content" locale={isEnEntity ? 'en' : uiLocale} />
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="page-content space-y-4">
+        <ArticleGeoLead
+          answerSummary={
+            geo.answerSummary ||
+            summary ||
+            (isEnEntity
+              ? 'City lens is an environment-layer pressure test: cost, density, and tempo against your structure and timing — not a lucky-city ranking.'
+              : '城市观察是环境层压力测试：用成本、密度与节奏对照你的结构与时位，不是幸运城市排行。')
+          }
+          searchIntents={
+            geo.geo?.searchIntents?.length
+              ? geo.geo.searchIntents
+              : isEnEntity
+                ? ['city fit for overseas Chinese', 'migration environment layer', 'living cost vs structure']
+                : ['迁移择城', '城市环境层', '迁城成本结构']
+          }
+          entityKeywords={
+            geo.geo?.entityKeywords?.length
+              ? geo.geo.entityKeywords
+              : isEnEntity
+                ? ['World Yi', 'city lens', 'environment layer', 'migration', 'Life K-Line']
+                : ['世界易', '城市观察', '环境层', '迁移', '人生K线']
+          }
+          title={isEnEntity ? 'What this city lens answers' : '这篇城市观察在回答什么'}
+        />
         <PageIllustrationStrip
           surface={geoSurface}
           title={stripTitle}
