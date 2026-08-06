@@ -20,13 +20,14 @@ import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/local
 import {
   buildFaqJsonLd,
   buildItemListJsonLd,
-  buildPageMetadata,
   buildServiceJsonLd,
   withLocalePrefix,
 } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 /** Compact hub CTAs — opening mode, no reportId */
 const DIMENSIONS_CONSULTANT_IDS = [
@@ -44,12 +45,12 @@ export async function generateMetadata({ searchParams }: DimensionsPageProps): P
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const seo = dimensionsHubSeo(locale);
-  return buildPageMetadata({
-    title: seo.title,
-    description: seo.description,
+  const pack = getPageSeoGeoPack('/dimensions');
+  return metadataFromPagePack('/dimensions', {
+    title: pack?.title || seo.title,
+    description: pack?.description || seo.description,
     path: withLocalePrefix('/dimensions', locale),
     locale,
-    keywords: seo.keywords,
   });
 }
 
@@ -97,8 +98,10 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
     },
   ]);
 
+  const seoPack = getPageSeoGeoPack('/dimensions');
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.ctaFullReport, compact: true }}>
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="dimensions_page_viewed"
         page="/dimensions"
@@ -109,12 +112,13 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
           p2Count,
           source: source || null,
           intent,
+          geoReady: true,
         }}
       />
       <JsonLd data={itemList} />
       <JsonLd data={service} />
       <JsonLd data={faq} />
-      <div className="mx-auto max-w-3xl space-y-5 px-4 py-6 pb-16 md:space-y-6 md:py-8">
+      <div className="page-content space-y-5 py-6 pb-16 md:space-y-6 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={intent === 'general' ? copy.titleGeneral : intentLabel}
@@ -230,6 +234,7 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
           {p1Count || p2Count ? ` · ${copy.expandingCount(p1Count + p2Count)}` : ''}
           {uiLocale === 'en' ? '.' : '。'}
         </p>
+        <PageSeoGeoSection pathOrSlug="/dimensions" />
       </div>
       <StickyAnalyzeBar
         source="dimensions_hub_sticky"

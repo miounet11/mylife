@@ -6,25 +6,11 @@ import { PageIllustrationStrip } from '@/components/content/page-illustration-st
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import HehunWorkspace from '@/components/hehun/hehun-workspace';
-import { buildPageMetadata } from '@/lib/seo';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '合婚双盘｜双方生日即时对盘',
-  description:
-    '合婚双盘：双方填生日即可对照日主互动、夫妻宫、用忌互补与大运同步；支持从完整报告或档案一键预填，无需先生成双份报告。结构对照，非迷信承诺。',
-  path: '/hehun',
-  keywords: [
-    '合婚',
-    '合盘',
-    '八字合婚',
-    '双盘对照',
-    '夫妻宫',
-    '用忌互补',
-    '大运同步',
-    '人生K线',
-  ],
-});
+export const metadata: Metadata = metadataFromPagePack('/hehun');
 
 export default async function HehunPage({
   searchParams,
@@ -33,6 +19,7 @@ export default async function HehunPage({
 }) {
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
+  const seoPack = getPageSeoGeoPack('/hehun');
   const en = locale === 'en';
 
   return (
@@ -53,7 +40,7 @@ export default async function HehunPage({
         page="/hehun"
         meta={{ surfaceKey: 'hehun', kind: 'workspace' }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={en ? 'Compatibility' : '合婚'}
           title={en ? 'Dual-chart compare' : '双盘对照'}
@@ -97,6 +84,8 @@ export default async function HehunPage({
         >
           <HehunWorkspace locale={locale} />
         </Suspense>
+        {seoPack ? <PageJsonLd pack={seoPack} /> : null}
+        <PageSeoGeoSection pathOrSlug="/hehun" />
       </div>
     </AppPage>
   );

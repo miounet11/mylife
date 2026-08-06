@@ -11,7 +11,9 @@ import {
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { toIllustLocale } from '@/lib/page-illustrations/locale';
 import { COMMUNITY_CATEGORIES } from '@/lib/portal-nav';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 interface CommunityPageProps {
   searchParams?: Promise<{ lang?: string }>;
@@ -21,9 +23,10 @@ export async function generateMetadata({ searchParams }: CommunityPageProps): Pr
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const copy = communityPageCopy(locale);
-  return buildPageMetadata({
-    title: copy.metaTitle,
-    description: copy.metaDescription,
+  const pack = getPageSeoGeoPack('/community');
+  return metadataFromPagePack('/community', {
+    title: pack?.title || copy.metaTitle,
+    description: pack?.description || copy.metaDescription,
     path: withLocalePrefix('/community', locale),
     locale,
   });
@@ -35,10 +38,12 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
   const copy = communityPageCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const categories = presentCommunityCategories(COMMUNITY_CATEGORIES, uiLocale);
+  const seoPack = getPageSeoGeoPack('/community');
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}
@@ -68,6 +73,7 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.sectionsTitle}</h2>
           <EntryLinkGrid items={categories} />
         </section>
+        <PageSeoGeoSection pathOrSlug="/community" />
         <p className="border-t border-[color:var(--hairline)] pt-4 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
           {copy.footerBefore}{' '}
           <Link href="/learn" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

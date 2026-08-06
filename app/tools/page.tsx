@@ -19,10 +19,12 @@ import {
 } from '@/lib/i18n/tools-catalog-copy';
 import { TOOL_ENTRIES } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META, type ToolCategoryKey } from '@/lib/portal-tools';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
 import { buildTeacherChatHref } from '@/lib/teachers';
 import { ToolJsonLd, ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
 import { getToolSeoGeoPack } from '@/lib/tools/tool-seo-geo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 const CONSULTANT_IDS = [
   'career',
@@ -40,12 +42,12 @@ export async function generateMetadata({ searchParams }: ToolsPageProps): Promis
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const seo = toolsHubCopy(locale).seo;
-  return buildPageMetadata({
-    title: seo.title,
-    description: seo.description,
+  const pack = getPageSeoGeoPack('/tools');
+  return metadataFromPagePack('/tools', {
+    title: pack?.title || seo.title,
+    description: pack?.description || seo.description,
     path: withLocalePrefix('/tools', locale),
     locale,
-    keywords: seo.keywords,
   });
 }
 
@@ -55,6 +57,7 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
   const copy = toolsHubCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const seoPack = getToolSeoGeoPack('tools');
+  const hubPack = getPageSeoGeoPack('/tools');
   return (
     <AppPage
       header={{
@@ -63,13 +66,14 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         compact: true,
       }}
     >
+      {hubPack ? <PageJsonLd pack={hubPack} /> : null}
       {seoPack ? <ToolJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="tools_page_viewed"
         page="/tools"
         meta={{ surfaceKey: 'tools', funnel: 'tools_hub', geoReady: true }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}
@@ -222,6 +226,7 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         </p>
 
         {seoPack ? <ToolSeoGeoSection pack={seoPack} compact /> : null}
+        <PageSeoGeoSection pathOrSlug="/tools" compact />
       </div>
     </AppPage>
   );

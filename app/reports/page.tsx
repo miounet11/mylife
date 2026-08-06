@@ -8,27 +8,23 @@ import {
   listPublicReportFeedItems,
 } from '@/lib/public-growth-feed';
 import { listPublicToolCaseItems } from '@/lib/public-tool-cases';
-import { buildPageMetadata } from '@/lib/seo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = buildPageMetadata({
-  title: '公开测算与工具案例流',
-  description:
-    '持续更新的匿名测算报告、工具结果与公开追问。结构读法示例，已脱敏；可据此生成你自己的判断。',
-  path: '/reports',
-  keywords: ['公开测算', '匿名案例', '工具结果', '八字案例', '人生K线', '合婚案例'],
-  noIndex: false,
-});
+export const metadata: Metadata = metadataFromPagePack('/reports');
 
 export default function ReportsPage() {
   const reports = listPublicReportFeedItems(24);
   const tools = listPublicToolCaseItems(24);
   const questions = listPublicQuestionFeedItems(16);
+  const seoPack = getPageSeoGeoPack('/reports');
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: '生成我的测算', compact: true }}>
-      <AnalyticsPageView eventName="public_content_hub_viewed" page="/reports" />
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
+      <AnalyticsPageView eventName="public_content_hub_viewed" page="/reports" meta={{ geoReady: true }} />
       <div className="page-content space-y-8 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="持续公开 · 内容飞轮"
@@ -132,6 +128,8 @@ export default function ReportsPage() {
           <strong className="text-[color:var(--ink-2)]">内容如何持续生成：</strong>
           用户完成主测算（默认公开摘要页）或工具运行后，系统对结果做质量门槛 + 隐私脱敏，合格内容自动进入本页、相关工具页的「公开内容流」与 sitemap，形成可被搜索引擎收录的案例库存。
         </section>
+
+        <PageSeoGeoSection pathOrSlug="/reports" />
       </div>
     </AppPage>
   );

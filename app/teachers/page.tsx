@@ -22,7 +22,9 @@ import {
   teacherCapabilitySurface,
 } from '@/lib/page-illustrations/capability-map';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 const INTENT_SHORTCUT_KEYS: Array<{
   intent: keyof ReturnType<typeof teachersHubCopy>['intents'];
@@ -50,21 +52,12 @@ export async function generateMetadata({ searchParams }: TeachersPageProps): Pro
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const copy = teachersHubCopy(locale);
-  return buildPageMetadata({
-    title: `${copy.title} | 人生K线`,
-    description: copy.description,
+  const pack = getPageSeoGeoPack('/teachers');
+  return metadataFromPagePack('/teachers', {
+    title: pack?.title || `${copy.title} | 人生K线`,
+    description: pack?.description || copy.description,
     path: withLocalePrefix('/teachers', locale),
     locale,
-    keywords: [
-      '请老师',
-      '八字顾问',
-      '事业老师',
-      '财务老师',
-      '关系老师',
-      'consultants',
-      'bazi advisor',
-      'career guide',
-    ],
   });
 }
 
@@ -91,8 +84,10 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
     source: intent ? `${source}:intent:${intent}` : source,
   });
 
+  const seoPack = getPageSeoGeoPack('/teachers');
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.ctaGenerate, compact: true }}>
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="teachers_page_viewed"
         page="/teachers"
@@ -101,10 +96,11 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
           intent: intent || null,
           reportId: reportId || null,
           highlight: recommended.id,
+          geoReady: true,
         }}
       />
 
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <header className="border-b border-[color:var(--hairline)] pb-4">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)]">
             {copy.title}
@@ -238,6 +234,7 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
             </ul>
           </section>
         ) : null}
+        <PageSeoGeoSection pathOrSlug="/teachers" />
       </div>
     </AppPage>
   );

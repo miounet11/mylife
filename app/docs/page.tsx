@@ -9,7 +9,9 @@ import { docsPageCopy, presentDocEntries } from '@/lib/i18n/docs-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { toIllustLocale } from '@/lib/page-illustrations/locale';
 import { DOC_ENTRIES } from '@/lib/portal-nav';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 interface DocsPageProps {
   searchParams?: Promise<{ lang?: string }>;
@@ -19,12 +21,12 @@ export async function generateMetadata({ searchParams }: DocsPageProps): Promise
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const copy = docsPageCopy(locale);
-  return buildPageMetadata({
-    title: copy.metaTitle,
-    description: copy.metaDescription,
+  const pack = getPageSeoGeoPack('/docs');
+  return metadataFromPagePack('/docs', {
+    title: pack?.title || copy.metaTitle,
+    description: pack?.description || copy.metaDescription,
     path: withLocalePrefix('/docs', locale),
     locale,
-    keywords: copy.metaKeywords,
   });
 }
 
@@ -34,15 +36,17 @@ export default async function DocsPage({ searchParams }: DocsPageProps) {
   const copy = docsPageCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
   const entries = presentDocEntries(DOC_ENTRIES, uiLocale);
+  const seoPack = getPageSeoGeoPack('/docs');
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="docs_page_viewed"
         page="/docs"
-        meta={{ surfaceKey: 'docs' }}
+        meta={{ surfaceKey: 'docs', geoReady: true }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}
@@ -70,6 +74,7 @@ export default async function DocsPage({ searchParams }: DocsPageProps) {
           <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">{copy.sectionsTitle}</h2>
           <EntryLinkGrid items={entries} />
         </section>
+        <PageSeoGeoSection pathOrSlug="/docs" />
       </div>
     </AppPage>
   );

@@ -20,9 +20,11 @@ import type { ContentLocaleGroupKey } from '@/lib/content-locale';
 import { knowledgeArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { contentHubCopy } from '@/lib/i18n/funnel-copy';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 const PAGE_SIZE = 24;
 
@@ -46,12 +48,12 @@ export async function generateMetadata({ searchParams }: PageProps): Promise<Met
   const sp = (await searchParams) || {};
   const locale = await getRequestLocale(sp.lang);
   const copy = contentHubCopy('knowledge', locale);
-  return buildPageMetadata({
-    title: copy.meta.title,
-    description: copy.meta.description,
+  const pack = getPageSeoGeoPack('/knowledge');
+  return metadataFromPagePack('/knowledge', {
+    title: pack?.title || copy.meta.title,
+    description: pack?.description || copy.meta.description,
     path: withLocalePrefix('/knowledge', locale),
     locale,
-    keywords: knowledgeArticleCopy(locale).hubMetaKeywords,
   });
 }
 
@@ -88,8 +90,10 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
   const basePath =
     localeFilter === 'all' ? '/knowledge' : `/knowledge?locale=${localeFilter}`;
 
+  const seoPack = getPageSeoGeoPack('/knowledge');
   return (
     <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.ctaHeader, compact: true }}>
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="knowledge_page_viewed"
         page="/knowledge"
@@ -99,9 +103,10 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
           total,
           localeFilter,
           uiLocale,
+          geoReady: true,
         }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}
@@ -206,6 +211,7 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
             locale={uiLocale}
           />
         </section>
+        <PageSeoGeoSection pathOrSlug="/knowledge" />
       </div>
       <StickyAnalyzeBar
         source="knowledge_hub_sticky"
