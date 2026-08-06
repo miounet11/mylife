@@ -2,52 +2,135 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
-import { getFeaturedCaseStudies } from '@/lib/content-store';
+import AnalyticsPageView from '@/components/analytics-page-view';
+import {
+  listPublicQuestionFeedItems,
+  listPublicReportFeedItems,
+} from '@/lib/public-growth-feed';
+import { listPublicToolCaseItems } from '@/lib/public-tool-cases';
+import { buildPageMetadata } from '@/lib/seo';
 
-export const metadata: Metadata = {
-  title: '公开报告样例',
-  description: '通过案例与知识专题理解世界易报告的结构读法，保护隐私的公开内容入口。',
-  alternates: { canonical: '/reports' },
-};
+export const dynamic = 'force-dynamic';
+
+export const metadata: Metadata = buildPageMetadata({
+  title: '公开测算与工具案例流',
+  description:
+    '持续更新的匿名测算报告、工具结果与公开追问。结构读法示例，已脱敏；可据此生成你自己的判断。',
+  path: '/reports',
+  keywords: ['公开测算', '匿名案例', '工具结果', '八字案例', '人生K线', '合婚案例'],
+  noIndex: false,
+});
 
 export default function ReportsPage() {
-  const samples = getFeaturedCaseStudies(4);
+  const reports = listPublicReportFeedItems(24);
+  const tools = listPublicToolCaseItems(24);
+  const questions = listPublicQuestionFeedItems(16);
 
   return (
-    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '生成我的报告', compact: true }}>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+    <AppPage header={{ ctaHref: '/analyze', ctaLabel: '生成我的测算', compact: true }}>
+      <AnalyticsPageView eventName="public_content_hub_viewed" page="/reports" />
+      <div className="page-content space-y-8 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="公开内容"
-          title="先理解结构读法"
-          description="可通过案例与文档理解报告结构；登录后可在历史记录查看已归档报告。"
+          eyebrow="持续公开 · 内容飞轮"
+          title="用户测算与工具结果，脱敏后不断更新"
+          description="高质量匿名报告与工具案例会进入本页与搜索索引。只展示结构读法，不暴露隐私。看懂别人的场景后，一键生成你自己的判断。"
           actions={
             <>
-              <Link href="/history" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                我的报告历史
-              </Link>
-              <Link href="/docs/read-first-report" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                报告读法
-              </Link>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-                生成报告
+                生成我的报告
+              </Link>
+              <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                工具中心
+              </Link>
+              <Link href="/community" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                社区问答
               </Link>
             </>
           }
         />
-        <section>
-          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">结构样例</h2>
-          <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
-            {samples.map((item) => (
-              <li key={item.slug}>
-                <Link
-                  href={`/cases/${item.slug}`}
-                  className="block py-2.5 text-[14px] font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
-                >
-                  {item.title}
-                </Link>
-              </li>
-            ))}
-          </ul>
+
+        <section className="grid gap-6 lg:grid-cols-2">
+          <div>
+            <div className="mb-2 flex items-end justify-between gap-2">
+              <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">匿名测算报告</h2>
+              <span className="text-[11px] text-[color:var(--ink-5)]">{reports.length} 条</span>
+            </div>
+            {reports.length === 0 ? (
+              <p className="text-[13px] text-[color:var(--ink-4)]">暂无公开报告，生成测算后高质量结果会自动进入内容流。</p>
+            ) : (
+              <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+                {reports.map((item) => (
+                  <li key={item.id}>
+                    <Link
+                      href={item.href.startsWith('/r/') || item.href.startsWith('/result/') ? item.href.replace(/^\/result\//, '/r/') : `/r/${item.id}`}
+                      className="block py-3 hover:bg-[color:var(--bg-sunken)]"
+                    >
+                      <div className="text-[14px] font-semibold text-[color:var(--ink-1)]">{item.title}</div>
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+                        {item.description}
+                      </p>
+                      <div className="mt-1 text-[11px] text-[color:var(--ink-5)]">
+                        {[item.patternType, item.dayMaster, item.publishedDate].filter(Boolean).join(' · ')}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div>
+            <div className="mb-2 flex items-end justify-between gap-2">
+              <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">公开工具结果</h2>
+              <span className="text-[11px] text-[color:var(--ink-5)]">{tools.length} 条</span>
+            </div>
+            {tools.length === 0 ? (
+              <p className="text-[13px] text-[color:var(--ink-4)]">
+                暂无公开工具案例。完成合婚、流年、维度等工具后，合格结果会自动脱敏公开。
+              </p>
+            ) : (
+              <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+                {tools.map((item) => (
+                  <li key={item.id}>
+                    <Link href={item.href} className="block py-3 hover:bg-[color:var(--bg-sunken)]">
+                      <div className="text-[14px] font-semibold text-[color:var(--ink-1)]">{item.title}</div>
+                      <p className="mt-1 line-clamp-2 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+                        {item.summary}
+                      </p>
+                      <div className="mt-1 text-[11px] text-[color:var(--ink-5)]">
+                        {[item.toolLabel, item.publishedAt?.slice(0, 10) || item.createdAt?.slice(0, 10)]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+
+        {questions.length > 0 ? (
+          <section>
+            <h2 className="mb-2 text-[15px] font-bold text-[color:var(--ink-1)]">公开追问</h2>
+            <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+              {questions.slice(0, 12).map((q) => (
+                <li key={q.id}>
+                  <Link href={q.href || `/questions/${q.id}`} className="block py-2.5 hover:bg-[color:var(--bg-sunken)]">
+                    <div className="text-[14px] font-medium text-[color:var(--ink-1)]">{q.title || q.question}</div>
+                    {q.answerSummary ? (
+                      <p className="mt-1 line-clamp-2 text-[12px] text-[color:var(--ink-4)]">{q.answerSummary}</p>
+                    ) : null}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+
+        <section className="rounded-[12px] border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+          <strong className="text-[color:var(--ink-2)]">内容如何持续生成：</strong>
+          用户完成主测算（默认公开摘要页）或工具运行后，系统对结果做质量门槛 + 隐私脱敏，合格内容自动进入本页、相关工具页的「公开内容流」与 sitemap，形成可被搜索引擎收录的案例库存。
         </section>
       </div>
     </AppPage>

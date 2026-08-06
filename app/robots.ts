@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/r/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/analyze', '/membership', '/learn/'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
         disallow: [
           '/api/',
           '/admin/',
@@ -31,29 +31,30 @@ export default function robots(): MetadataRoute.Robots {
           '/updates/',
           // Full interactive report shells — thin personal UIs; share via /r
           '/result/',
+          '/tool-result/',
         ],
       },
       // Be explicit for common SEO bots (same rules, clearer for operators)
       {
         userAgent: 'Googlebot',
-        allow: ['/', '/r/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/analyze', '/membership', '/learn/'],
-        disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
+        disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/tool-result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
       },
       {
         userAgent: 'Baiduspider',
-        allow: ['/', '/r/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/analyze', '/membership', '/learn/'],
-        disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
+        disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/tool-result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
       },
       // Aggressive SEO scrapers: still allow content, block product APIs/chat
       {
         userAgent: 'SemrushBot',
-        allow: ['/knowledge/', '/cases/', '/tools/', '/dimensions/', '/r/', '/world-yi/', '/insights/'],
-        disallow: ['/api/', '/chat', '/chat/', '/admin/', '/result/', '/profile'],
+        allow: ['/knowledge/', '/cases/', '/tools/', '/dimensions/', '/r/', '/reports', '/share/', '/world-yi/', '/insights/'],
+        disallow: ['/api/', '/chat', '/chat/', '/admin/', '/result/', '/tool-result/', '/profile'],
       },
       {
         userAgent: 'AhrefsBot',
-        allow: ['/knowledge/', '/cases/', '/tools/', '/dimensions/', '/r/', '/world-yi/', '/insights/'],
-        disallow: ['/api/', '/chat', '/chat/', '/admin/', '/result/', '/profile'],
+        allow: ['/knowledge/', '/cases/', '/tools/', '/dimensions/', '/r/', '/reports', '/share/', '/world-yi/', '/insights/'],
+        disallow: ['/api/', '/chat', '/chat/', '/admin/', '/result/', '/tool-result/', '/profile'],
       },
     ],
     sitemap: [`${siteUrl}/sitemap.xml`, `${siteUrl}/sitemap-images.xml`],

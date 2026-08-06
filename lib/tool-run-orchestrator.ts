@@ -628,6 +628,22 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     },
   });
 
+  // Continuous content: privacy-safe public tool case (quality-gated).
+  try {
+    const { autoPublishToolSession } = await import('@/lib/public-tool-cases');
+    const pub = autoPublishToolSession(sessionId);
+    if (pub.published) {
+      recorder.push({
+        stage: 'public-publish',
+        status: 'completed',
+        detail: '工具结果已脱敏并加入公开内容流。',
+        meta: { url: pub.url || null },
+      });
+    }
+  } catch (e) {
+    console.warn('[tool-run] auto public publish skipped', e);
+  }
+
   // 写回人生数据底座（通用工具）
   try {
     const { writeGenericToolToFoundation } = await import('@/lib/life-foundation/writeback');

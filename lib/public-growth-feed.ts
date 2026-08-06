@@ -239,7 +239,8 @@ export function toPublicReportFeedItem(report: FortuneRecord): PublicReportFeedI
   const publishedParts = splitIsoDateTime(publishedAt);
   return {
     id: report.id,
-    href: `/result/${report.id}`,
+    // Prefer /r summary share URL for SEO/public hub (full /result stays product shell)
+    href: `/r/${report.id}`,
     title: seo.title,
     description: seo.description,
     patternType: seo.patternType,

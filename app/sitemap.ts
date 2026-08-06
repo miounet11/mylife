@@ -12,6 +12,7 @@ import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
 import { absoluteUrl, buildProductLanguageAlternates, GEO_CITY_SEEDS } from '@/lib/seo';
 import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 import { listIndexablePublicReportIds } from '@/lib/public-growth-feed';
+import { listPublicToolCaseIdsForSitemap } from '@/lib/public-tool-cases';
 
 const siteUrl = 'https://www.life-kline.com';
 
@@ -130,6 +131,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/knowledge', priority: 0.88, changeFrequency: 'daily', multiLanguage: true },
     { path: '/knowledge/topics', priority: 0.82, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/cases', priority: 0.85, changeFrequency: 'weekly', multiLanguage: true },
+    // Continuous public content hub (reports + tool cases)
+    { path: '/reports', priority: 0.88, changeFrequency: 'daily', multiLanguage: true },
     { path: '/membership', priority: 0.85, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/movement', priority: 0.84, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/learn', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
@@ -188,6 +191,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     publicReportRoutes = [];
   }
 
+  // Privacy-safe public tool results (auto-published content flywheel).
+  let publicToolRoutes: RouteDef[] = [];
+  try {
+    publicToolRoutes = listPublicToolCaseIdsForSitemap(40).map((item) => ({
+      path: item.href.startsWith('/') ? item.href : `/share/tool/${item.id}`,
+      priority: 0.58,
+      changeFrequency: 'weekly' as const,
+      lastModified: item.updatedAt || now,
+    }));
+  } catch {
+    publicToolRoutes = [];
+  }
+
   const all = uniqueRoutes([
     ...routes,
     ...dimensionRoutes,
@@ -197,6 +213,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...contentRoutesFromStore(),
     ...geoCitySeedRoutes(),
     ...publicReportRoutes,
+    ...publicToolRoutes,
   ]);
 
   const entries: MetadataRoute.Sitemap = [];

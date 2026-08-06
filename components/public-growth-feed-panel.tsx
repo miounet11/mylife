@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { ArrowRight, FileQuestion, Layers3 } from 'lucide-react';
+import { ArrowRight, FileQuestion, Layers3, Wrench } from 'lucide-react';
 import {
   listPublicQuestionFeedItems,
   listPublicReportFeedItems,
   type PublicQuestionFeedItem,
   type PublicReportFeedItem,
 } from '@/lib/public-growth-feed';
+import { listPublicToolCaseItems, type PublicToolCaseItem } from '@/lib/public-tool-cases';
 
 interface PublicGrowthFeedPanelProps {
   title?: string;
@@ -13,6 +14,7 @@ interface PublicGrowthFeedPanelProps {
   signals?: string[];
   reportLimit?: number;
   questionLimit?: number;
+  toolLimit?: number;
 }
 
 function normalize(value: string) {
@@ -36,10 +38,11 @@ function selectRelated<T>(items: T[], signals: string[], limit: number, getText:
 
 export default function PublicGrowthFeedPanel({
   title = '相关公开查询',
-  description = '这里展示真实匿名问题和相关公开报告，你可以顺着别人的场景继续生成自己的判断。',
+  description = '这里展示真实匿名问题、公开报告与工具案例，你可以顺着别人的场景继续生成自己的判断。',
   signals = [],
   reportLimit = 3,
   questionLimit = 4,
+  toolLimit = 3,
 }: PublicGrowthFeedPanelProps) {
   const cleanSignals = Array.from(new Set(signals.map((item) => item.trim()).filter(Boolean))).slice(0, 24);
   const reports = selectRelated<PublicReportFeedItem>(
@@ -54,8 +57,14 @@ export default function PublicGrowthFeedPanel({
     questionLimit,
     (item) => [item.question, item.contextLabel, item.answerSummary, item.reportSummary].join(' '),
   );
+  const tools = selectRelated<PublicToolCaseItem>(
+    listPublicToolCaseItems(Math.max(toolLimit * 4, 12)),
+    cleanSignals,
+    toolLimit,
+    (item) => [item.title, item.summary, item.toolLabel, item.toolSlug, ...(item.tags || [])].join(' '),
+  );
 
-  if (reports.length === 0 && questions.length === 0) {
+  if (reports.length === 0 && questions.length === 0 && tools.length === 0) {
     return null;
   }
 
@@ -88,6 +97,27 @@ export default function PublicGrowthFeedPanel({
       </div>
 
       <div className="grid gap-0 lg:grid-cols-[0.95fr_1.05fr]">
+        {tools.length > 0 ? (
+          <div className="border-b border-[color:var(--fb-border)] p-3 lg:col-span-2">
+            <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
+              <Wrench className="h-4 w-4 text-[color:var(--fb-blue)]" />
+              相关公开工具结果
+            </div>
+            <div className="divide-y divide-[color:var(--fb-border)] border border-[color:var(--fb-border)] bg-white">
+              {tools.map((item) => (
+                <Link
+                  key={item.id}
+                  href={item.href}
+                  className="block px-3 py-2.5 transition hover:bg-[color:var(--fb-bg-muted)]"
+                >
+                  <div className="text-[13px] font-semibold text-[color:var(--fb-ink-1)]">{item.title}</div>
+                  <p className="mt-0.5 line-clamp-2 text-[12px] text-[color:var(--fb-ink-2)]">{item.summary}</p>
+                  <div className="mt-1 text-[11px] text-[color:var(--fb-ink-3)]">{item.toolLabel}</div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {reports.length > 0 ? (
           <div className="border-b border-[color:var(--fb-border)] p-3 lg:border-b-0 lg:border-r">
             <div className="mb-2 flex items-center gap-2 text-[13px] font-bold text-[color:var(--fb-ink-1)]">
