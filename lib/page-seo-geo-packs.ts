@@ -431,6 +431,75 @@ const WORLD_YI: PageSeoGeoPack = {
   geoPlaceName: '海外华人社区',
 };
 
+const LEARN: PageSeoGeoPack = {
+  path: '/learn',
+  slug: 'learn',
+  name: '学习轨道',
+  title: '命理学习轨道｜入门事业财富关系｜人生K线',
+  description:
+    '分轨道学习结构判断：入门、事业、财富、关系。边学边用报告与工具验证，避免碎片恐吓信息。',
+  keywords: ['命理学习', '八字入门', '学习轨道', '事业轨', '财富轨'],
+  answerSummary:
+    '学习轨道把方法论拆成可完成的路径：入门建立读盘底座，事业/财富/关系轨用案例与练习把结构落到动作，并与测算、工具互相链接。',
+  searchIntents: ['八字入门路径', '命理怎么系统学', '事业运势学习', '关系节奏学习'],
+  entityKeywords: ['学习轨道', '入门', '事业', '财富', '关系', '案例', '人生K线'],
+  howTo: [
+    { step: '选轨道', body: '零基础选入门；有具体问题选事业/财富/关系。' },
+    { step: '对照报告', body: '读完关键文后用自己的盘验证。' },
+    { step: '练习动作', body: '每个节点只保留可验证小动作。' },
+  ],
+  faqs: [
+    { question: '需要按顺序学吗？', answer: '入门建议按序；专题轨可按当前问题切入。' },
+    { question: '和知识库区别？', answer: '学习轨强调路径与练习；知识库是检索型文章。' },
+    { question: '学完要测算吗？', answer: '建议生成报告，把概念落到自己的结构上。' },
+  ],
+  related: [
+    { href: '/knowledge', label: '知识库' },
+    { href: '/cases', label: '案例' },
+    { href: '/analyze', label: '测算' },
+    { href: '/docs', label: '文档' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '学习', path: '/learn' },
+  ],
+};
+
+const INSIGHTS: PageSeoGeoPack = {
+  path: '/insights',
+  slug: 'insights',
+  name: '城市与环境洞察',
+  title: '城市洞察｜迁移择城·环境层节奏｜世界易·人生K线',
+  description:
+    '城市与环境下的成本结构、角色密度与节奏差异，用于迁移、择城与跨文化决策参考。',
+  keywords: ['城市洞察', '迁移择城', '环境层', '海外华人', '世界易'],
+  answerSummary:
+    '洞察层把个人结构放到城市与环境：观察成本、角色密度与节奏差异，帮助迁移与选址决策，不构成置业或移民保证。',
+  searchIntents: ['迁移择城', '城市运势观察', '海外华人环境', '上海城市洞察'],
+  entityKeywords: ['城市', '迁移', '环境层', '世界易', '华人', '择城'],
+  howTo: [
+    { step: '选城市/主题', body: '从洞察列表进入具体城市或环境文。' },
+    { step: '对照个人盘', body: '用测算看阶段是否匹配迁移窗口。' },
+    { step: '落到验证', body: '设定观察指标，避免只凭感觉迁城。' },
+  ],
+  faqs: [
+    { question: '洞察能直接告诉我去哪吗？', answer: '不能保证。只提供环境层对照与节奏参考。' },
+    { question: '和世界易关系？', answer: '洞察是世界易方法在城市/环境上的应用内容。' },
+    { question: '有英文吗？', answer: '部分城市有英文姊妹内容，见世界易英文入口。' },
+  ],
+  related: [
+    { href: '/world-yi', label: '世界易' },
+    { href: '/world-yi/en', label: 'English' },
+    { href: '/analyze', label: '个人测算' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '洞察', path: '/insights' },
+  ],
+  geoRegion: '全球',
+  geoPlaceName: '主要华人城市',
+};
+
 const HEHUN: PageSeoGeoPack = {
   path: '/hehun',
   slug: 'hehun',
@@ -489,6 +558,10 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/world-yi': WORLD_YI,
   hehun: HEHUN,
   '/hehun': HEHUN,
+  learn: LEARN,
+  '/learn': LEARN,
+  insights: INSIGHTS,
+  '/insights': INSIGHTS,
 };
 
 export function getPageSeoGeoPack(pathOrSlug: string): PageSeoGeoPack | null {

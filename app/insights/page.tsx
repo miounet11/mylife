@@ -7,12 +7,10 @@ import { FocusHero } from '@/components/layout/focus-hero';
 import { getEntityInsights } from '@/lib/content-store';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
-export const metadata: Metadata = {
-  title: '系统洞察｜城市与环境观察',
-  description: '世界易城市观察、环境层洞察与跨文化判断样例。',
-  alternates: { canonical: '/insights' },
-};
+export const metadata: Metadata = metadataFromPagePack('/insights');
 
 export default async function InsightsPage({
   searchParams,
@@ -23,15 +21,17 @@ export default async function InsightsPage({
   const uiLocale = await getRequestLocale(sp.lang);
   const illustLocale = toIllustLocale(uiLocale);
   const insights = getEntityInsights();
+  const seoPack = getPageSeoGeoPack('/insights');
 
   return (
     <AppPage header={{ ctaHref: '/world-yi', ctaLabel: '世界易', compact: true }}>
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="insights_page_viewed"
         page="/insights"
-        meta={{ surfaceKey: 'insights', total: insights.length }}
+        meta={{ surfaceKey: 'insights', total: insights.length, geoReady: true }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="洞察"
           title="环境层观察"
@@ -79,6 +79,7 @@ export default async function InsightsPage({
             ))}
           </ul>
         </section>
+        <PageSeoGeoSection pathOrSlug="/insights" />
       </div>
     </AppPage>
   );

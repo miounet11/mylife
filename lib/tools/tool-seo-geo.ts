@@ -449,6 +449,100 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
     shareHashtags: ['紫微斗数', '排盘', '人生K线'],
   },
 
+  'timing-yearly-window': {
+    path: '/tools/timing-yearly-window',
+    slug: 'timing-yearly-window',
+    name: '流年年度主窗口',
+    title: '流年年度主窗口｜2026 事业财运关系节奏｜人生K线',
+    description:
+      '免费流年窗口工具：对齐日主用神与大运，标出本年推进/防守主轴与可验证动作。可接完整报告。',
+    keywords: ['流年', '年度运势', '流年窗口', '2026运势', '大运流年', '人生K线'],
+    answerSummary:
+      '流年年度主窗口把综合盘压成「今年更该推进还是防守」：在用神与当前大运约束下给出主题参考分、主窗口与风险月，并落到可执行的小步动作，而不是每日运势恐吓。',
+    searchIntents: ['2026流年运势', '流年窗口怎么看', '今年事业运势工具', '大运流年在线'],
+    entityKeywords: ['流年', '大运', '用神', '年度窗口', '推进', '防守', '人生K线'],
+    audienceQuestions: [
+      '流年工具和完整报告有什么区别？',
+      '没有报告能直接看流年吗？',
+      '窗口分数怎么理解？',
+    ],
+    audience: '需要年度节奏与决策窗口的用户',
+    howTo: [
+      { step: '带上报告或生辰', body: '优先绑定主报告；也可仅用出生信息即时重算。' },
+      { step: '读主轴', body: '先看推进/稳健/防守倾向与主题分。' },
+      { step: '定动作', body: '只选 1–2 个可在本季验证的动作。' },
+    ],
+    faqs: [
+      {
+        question: '流年工具和完整报告有什么区别？',
+        answer: '流年聚焦年度窗口；完整报告覆盖日主用神、大运与多主题结构，可回访。',
+      },
+      {
+        question: '没有报告能直接看流年吗？',
+        answer: '可以出生信息重算，但绑定报告后一致性更好。',
+      },
+      {
+        question: '窗口分数怎么理解？',
+        answer: '是主题投影参考分，用于比较节奏强弱，不是吉凶定命。',
+      },
+    ],
+    related: [
+      { href: '/tools', label: '工具中心' },
+      { href: '/analyze', label: '完整报告' },
+      { href: '/dimensions', label: '十维度' },
+      { href: '/reports', label: '公开流年案例' },
+    ],
+    shareText: '流年年度主窗口：先看今年该推进还是防守，再接到完整报告。',
+    shareHashtags: ['流年', '人生K线', '年度窗口'],
+  },
+
+  'daily-sign': {
+    path: '/tools/daily-sign',
+    slug: 'daily-sign',
+    name: '今日一签',
+    title: '今日一签｜每日节律提示·推进观察还是收敛｜人生K线',
+    description:
+      '免费今日一签：用一条可执行的每日节律提示，先判断今天更适合推进、观察还是收敛。轻量复访入口，可接到完整报告与时间地图。',
+    keywords: ['今日一签', '每日运势', '日运', '每日节律', 'daily sign', '八字每日提示', '人生K线'],
+    answerSummary:
+      '今日一签是人生K线的每日轻量入口：不要求先生成完整报告，先给出今天主轴（推进/观察/收敛）与一条可立即执行的小动作。深度结构、大运流年与验证仍交给完整报告与预测回访。',
+    searchIntents: ['今日一签免费', '每日运势在线', '今天该推进还是收敛', '八字每日提示'],
+    entityKeywords: ['今日一签', '每日节律', '推进', '观察', '收敛', '人生K线'],
+    audienceQuestions: [
+      '今日一签和完整八字报告有什么区别？',
+      '每日节律提示能代替正式报告吗？',
+      '怎么把今日提示用到实际决策里？',
+    ],
+    audience: '想快速校准今日节奏、形成复访习惯的用户',
+    howTo: [
+      { step: '抽签', body: '进入今日一签，按出生信息或已有报告生成今日主轴。' },
+      { step: '落地', body: '只执行一条小动作，避免把日签当成终局定命。' },
+      { step: '加深', body: '需要结构解释时，进入完整报告或十维度。' },
+    ],
+    faqs: [
+      {
+        question: '今日一签和完整八字报告有什么区别？',
+        answer: '今日一签只回答「今天更偏推进、观察还是收敛」；完整报告覆盖日主用神、大运流年与可回访的结构判断。',
+      },
+      {
+        question: '每日节律提示能代替正式报告吗？',
+        answer: '不能。它是复访入口，不替代结构报告与证据链。',
+      },
+      {
+        question: '怎么把今日提示用到实际决策里？',
+        answer: '把提示收成一件今天能完成的动作，并在预测回访或事件记录里对照结果。',
+      },
+    ],
+    related: [
+      { href: '/tools', label: '工具中心' },
+      { href: '/analyze', label: '生成完整报告' },
+      { href: '/dimensions', label: '十维度' },
+      { href: '/predictions', label: '预测回访' },
+    ],
+    shareText: '今日一签：先校准今天该推进还是收敛，再按需进入完整报告。',
+    shareHashtags: ['今日一签', '人生K线', '每日节律'],
+  },
+
   tools: {
     path: '/tools',
     slug: 'tools',
@@ -484,10 +578,94 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
   },
 };
 
+/** Heuristic GEO pack when a tool slug has no hand-authored entry. */
+export function buildFallbackToolSeoGeoPack(slug: string): ToolSeoGeoPack {
+  const clean = slug.replace(/^\/tools\//, '').replace(/^\//, '') || 'tool';
+  const label = clean
+    .replace(/^dimension-/, '维度·')
+    .replace(/-/g, ' ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const name = label.length > 2 ? label : '结构工具';
+  const isDimension = clean.startsWith('dimension-');
+  const isTiming = /timing|yearly|window|liunian|流年/.test(clean);
+  const isHehun = /hehun|marriage|合婚/.test(clean);
+
+  const answerSummary = isHehun
+    ? `${name}用于双方八字双盘对照：看匹配结构、摩擦点与协作节奏，输出可沟通的边界，而非命中注定式断语。`
+    : isTiming
+      ? `${name}用于年度/阶段窗口判断：对齐用神与大运，标出推进与防守区间，并落到可验证动作。`
+      : isDimension
+        ? `${name}是人生K线十维度切片：在主报告日主用神约束下，针对单一场景给出结论、风险与下一步。`
+        : `${name}是人生K线结构判断工具：在引擎真值约束下输出可执行节奏与边界，可衔接完整报告与顾问追问。`;
+
+  return {
+    path: `/tools/${clean}`,
+    slug: clean,
+    name,
+    title: `${name}｜结构判断工具｜人生K线`,
+    description: `${name}：基于八字/人生K线引擎的专题工具。输出结构结论、窗口与动作，可保存并与完整报告联动。`,
+    keywords: [name, clean, '结构工具', '人生K线', '八字工具', isDimension ? '十维度' : '', isTiming ? '流年' : '', isHehun ? '合婚' : ''].filter(Boolean),
+    answerSummary,
+    searchIntents: [
+      `${name}怎么用`,
+      `${name}在线`,
+      isHehun ? '合婚双盘分析' : isTiming ? '流年窗口怎么看' : isDimension ? '八字维度分析' : '命理工具免费',
+      '人生K线工具',
+    ],
+    entityKeywords: [
+      name,
+      '人生K线',
+      '结构判断',
+      '用神',
+      '大运',
+      isDimension ? '十维度' : '工具',
+      isTiming ? '流年' : '报告',
+      isHehun ? '合婚' : '验证',
+    ],
+    audienceQuestions: [
+      `${name}和完整报告有什么区别？`,
+      '需要先排盘吗？',
+      '结果可以公开分享吗？',
+    ],
+    audience: '需要专题结构判断的用户',
+    howTo: [
+      { step: '准备生辰或报告', body: '优先绑定主报告；部分工具支持仅出生信息即时重算。' },
+      { step: '运行工具', body: `进入${name}，按提示填写并生成结果。` },
+      { step: '落到动作', body: '只保留 1–3 个可验证动作，并回访对照。' },
+    ],
+    faqs: [
+      {
+        question: `${name}和完整报告有什么区别？`,
+        answer: '工具解决窄场景；完整报告覆盖日主用神、大运流年与人生K线主轴，可回访验证。',
+      },
+      {
+        question: '需要先排盘吗？',
+        answer: '推荐先有主报告以对齐引擎真值；部分工具支持出生信息即时重算。',
+      },
+      {
+        question: '结果会公开吗？',
+        answer: '本人结果默认私密；合格结果可经脱敏进入公开案例流。',
+      },
+    ],
+    related: [
+      { href: '/tools', label: '工具中心' },
+      { href: '/analyze', label: '完整报告' },
+      { href: '/dimensions', label: '十维度' },
+      { href: '/reports', label: '公开案例' },
+    ],
+    shareText: `${name}｜人生K线结构工具：节奏与边界优先，可接完整报告。`,
+    shareHashtags: ['人生K线', '结构工具'],
+    disclaimer: '结构参考，不构成投资、医疗、法律或婚姻保证。',
+  };
+}
+
 export function getToolSeoGeoPack(slugOrPath: string): ToolSeoGeoPack | null {
   const key = slugOrPath.replace(/^\/tools\//, '').replace(/^\//, '') || 'tools';
   if (key === 'tools' || key === '') return PACKS.tools;
-  return PACKS[key] || null;
+  if (PACKS[key]) return PACKS[key];
+  // Always return a quality fallback so no public tool page is empty.
+  if (key && key !== 'tools') return buildFallbackToolSeoGeoPack(key);
+  return null;
 }
 
 export function listToolSeoGeoPacks(): ToolSeoGeoPack[] {

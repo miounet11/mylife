@@ -15,7 +15,9 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { learnPageCopy } from '@/lib/i18n/learn-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { getLearningTracksOverview } from '@/lib/learning-track-stats';
-import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
+import { withLocalePrefix } from '@/lib/seo';
+import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 
 interface LearnPageProps {
   searchParams?: Promise<{ lang?: string }>;
@@ -25,9 +27,10 @@ export async function generateMetadata({ searchParams }: LearnPageProps): Promis
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const copy = learnPageCopy(locale);
-  return buildPageMetadata({
-    title: copy.metaTitle,
-    description: copy.metaDescription,
+  const pack = getPageSeoGeoPack('/learn');
+  return metadataFromPagePack('/learn', {
+    title: pack?.title || copy.metaTitle,
+    description: pack?.description || copy.metaDescription,
     path: withLocalePrefix('/learn', locale),
     locale,
   });
@@ -38,13 +41,15 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
   const uiLocale = await getRequestLocale(sp.lang);
   const copy = learnPageCopy(uiLocale);
   const illustLocale = toIllustLocale(uiLocale);
+  const seoPack = getPageSeoGeoPack('/learn');
   const overview = getLearningTracksOverview();
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
-      <AnalyticsPageView eventName="learn_page_viewed" page="/learn" meta={{ surfaceKey: 'learning_map' }} />
+      {seoPack ? <PageJsonLd pack={seoPack} /> : null}
+      <AnalyticsPageView eventName="learn_page_viewed" page="/learn" meta={{ surfaceKey: 'learning_map', geoReady: true }} />
 
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <header className="border-b border-[color:var(--hairline)] pb-4">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)]">
             {copy.title}
@@ -89,6 +94,7 @@ export default async function LearnPage({ searchParams }: LearnPageProps) {
             {copy.linkTeachers}
           </Link>
         </nav>
+        <PageSeoGeoSection pathOrSlug="/learn" />
       </div>
     </AppPage>
   );

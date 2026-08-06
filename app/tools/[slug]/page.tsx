@@ -20,14 +20,8 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const pack = getToolSeoGeoPack(slug);
-  if (pack) return buildToolPageMetadata(slug);
-  return createPublicContentMetadata({
-    title: `${slug} | 人生K线工具`,
-    description: '单项工具页。结构判断入口，支持分享与完整报告衔接。',
-    path: `/tools/${slug}`,
-    type: 'website',
-  });
+  // Always returns a pack (hand-authored or quality fallback).
+  return buildToolPageMetadata(slug);
 }
 
 export default async function ToolDetailPage({
@@ -42,7 +36,7 @@ export default async function ToolDetailPage({
   return (
     <AppPage header={{ ctaHref: '/tools', ctaLabel: '工具中心', compact: true }}>
       {pack ? <ToolJsonLd pack={pack} /> : null}
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <header className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             工具
@@ -73,8 +67,7 @@ export default async function ToolDetailPage({
           <ToolSeoGeoSection pack={pack} />
         ) : (
           <p className="rounded-lg border border-[color:var(--hairline)] px-3 py-4 text-[12px] text-[color:var(--ink-5)]">
-            尚未注册 SEO/GEO 内容包。请在 <code className="text-[11px]">lib/tools/tool-seo-geo.ts</code>{' '}
-            为 slug「{slug}」补充 answerSummary、FAQ、意图词与分享文案。
+            工具内容加载中…
           </p>
         )}
       </div>

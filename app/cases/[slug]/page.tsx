@@ -28,9 +28,16 @@ import {
   illustrationSeoImages,
   resolveContentIllustrations,
 } from '@/lib/content-illustrations';
-import { articleDatesFrom, articleSeo, buildArticleJsonLd, buildBreadcrumbJsonLd } from '@/lib/seo';
+import {
+  articleDatesFrom,
+  articleSeo,
+  buildArticleJsonLd,
+  buildBreadcrumbJsonLd,
+  buildFaqJsonLd,
+} from '@/lib/seo';
 import { caseArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import ArticleGeoLead from '@/components/seo/article-geo-lead';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -112,6 +119,17 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
     trackKey,
     source: 'case_study',
   });
+  const faqPairs = sections
+    .filter(
+      (section) =>
+        section.heading.startsWith('常见问题')
+        || section.heading.startsWith('FAQ')
+        || section.heading.startsWith('Common questions'),
+    )
+    .map((section) => ({
+      question: section.heading.replace(/^(常见问题|FAQ|Common questions)：?\s*/i, ''),
+      answer: section.body,
+    }));
 
   return (
     <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.dimensionsCta }}>
@@ -138,6 +156,7 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
           about: geo.geo?.entityKeywords,
         })}
       />
+      {faqPairs.length ? <JsonLd data={buildFaqJsonLd(faqPairs)} /> : null}
       <AnalyticsPageView
         eventName="case_article_viewed"
         page={`/cases/${slug}`}
@@ -190,6 +209,14 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
         }
       />
       <JourneyStrip active="content" locale={uiLocale} />
+      <div className="page-content">
+        <ArticleGeoLead
+          answerSummary={geo.answerSummary || summary}
+          searchIntents={geo.geo?.searchIntents}
+          entityKeywords={geo.geo?.entityKeywords}
+          title={uiLocale === 'en' ? 'What this case answers' : '这个案例在回答什么'}
+        />
+      </div>
       <article className="space-y-4 border-t border-[color:var(--hairline)] pt-5">
         <ContentArticleBody
           sections={sections}

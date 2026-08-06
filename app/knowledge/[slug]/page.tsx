@@ -40,6 +40,7 @@ import {
 } from '@/lib/seo';
 import { knowledgeArticleCopy } from '@/lib/i18n/content-article-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
+import ArticleGeoLead from '@/components/seo/article-geo-lead';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -225,6 +226,14 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
       />
       <JourneyStrip active="content" locale={uiLocale} />
       {lens ? <EncyclopediaWorldYiSidebar lens={lens} /> : null}
+      <div className="page-content">
+        <ArticleGeoLead
+          answerSummary={geo.answerSummary || summary}
+          searchIntents={geo.geo?.searchIntents}
+          entityKeywords={geo.geo?.entityKeywords}
+          title={uiLocale === 'en' ? 'What this article answers' : '这篇在回答什么'}
+        />
+      </div>
       <article className="space-y-4 border-t border-[color:var(--hairline)] pt-5">
         <ContentArticleBody
           sections={sections}
