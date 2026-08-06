@@ -14,6 +14,10 @@ import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 import { listIndexablePublicReportIds } from '@/lib/public-growth-feed';
 import { listPublicToolCaseIdsForSitemap } from '@/lib/public-tool-cases';
 
+/** Always rebuild so continuous public report/tool cases enter the sitemap. */
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const siteUrl = 'https://www.life-kline.com';
 
 type RouteDef = {
