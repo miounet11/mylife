@@ -16,20 +16,20 @@ export type AlmanacSkinDef = {
 
 export const ALMANAC_SKINS: AlmanacSkinDef[] = [
   {
-    id: 'modern',
-    label: '现代卡片',
-    labelEn: 'Modern cards',
-    description: '人生K线默认：清晰分区、匹配分与时辰列表。',
-    descriptionEn: 'Default Life K-Line layout: clear sections, score, hours.',
-    preview: '分栏清晰',
-  },
-  {
     id: 'tear',
     label: '撕页通书',
     labelEn: 'Tear-off tong-shu',
-    description: '参考传统挂历撕页：大号日期、宜忌、十二时辰格、方位冲煞一屏 dens e。',
-    descriptionEn: 'Paper tear-off style: big date, yi/ji, 12-hour grid, directions.',
-    preview: '纸质挂历',
+    description: '传统万年历撕页：朱红大日、宜忌印、十二时辰格、冲煞方位一屏。',
+    descriptionEn: 'Classic tear-off: vermillion date, yi/ji seals, 12-hour grid.',
+    preview: '传统挂历',
+  },
+  {
+    id: 'modern',
+    label: '现代卡片',
+    labelEn: 'Modern cards',
+    description: '清晰分区：匹配分、宜忌标签与时辰列表。',
+    descriptionEn: 'Clear sections: score, tags, and hour list.',
+    preview: '分栏清晰',
   },
   {
     id: 'personal',

@@ -23,7 +23,7 @@ type MonthPayload = {
   chart?: { dayMaster?: string; yongShen?: string[]; source?: string } | null;
 };
 
-const SKIN_KEY = 'lk_almanac_skin_v1';
+const SKIN_KEY = 'lk_almanac_skin_v2';
 const REGION_KEY = 'lk_almanac_region_v1';
 
 function shiftMonth(year: number, month: number, delta: number) {
@@ -39,6 +39,10 @@ export default function AlmanacApp({
   initialSkin,
   initialRegion,
   locale = 'zh-CN',
+  /** When false, only month grid + controls (no day sheet). */
+  showDayDetail = true,
+  /** Day page already SSR-renders tear sheet; hide client tear to avoid double. */
+  suppressDefaultTear = false,
 }: {
   initialYear: number;
   initialMonth: number;
@@ -47,6 +51,8 @@ export default function AlmanacApp({
   initialSkin?: string;
   initialRegion?: string;
   locale?: SiteLocale;
+  showDayDetail?: boolean;
+  suppressDefaultTear?: boolean;
 }) {
   const router = useRouter();
   const copy = useMemo(() => almanacUiCopy(locale), [locale]);
@@ -61,7 +67,7 @@ export default function AlmanacApp({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [skinId, setSkinId] = useState<AlmanacSkinId>(
-    (getAlmanacSkin(initialSkin).id as AlmanacSkinId) || 'modern',
+    (getAlmanacSkin(initialSkin || 'tear').id as AlmanacSkinId) || 'tear',
   );
   const [regionId, setRegionId] = useState<AlmanacRegionId>(
     (getAlmanacRegion(initialRegion).id as AlmanacRegionId) || 'cn',
@@ -80,33 +86,37 @@ export default function AlmanacApp({
 
   const region = useMemo(() => getAlmanacRegion(regionId), [regionId]);
   const skin = useMemo(() => getAlmanacSkin(skinId), [skinId]);
+  const traditional = skinId === 'tear';
 
-  const load = useCallback(async (y: number, m: number, date: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(
-        `/api/almanac?year=${y}&month=${m}&date=${encodeURIComponent(date)}`,
-        { cache: 'no-store' },
-      );
-      const data = (await res.json()) as MonthPayload;
-      if (!res.ok || !data.success) {
-        setError(copy.loadFail);
-        return;
+  const load = useCallback(
+    async (y: number, m: number, date: string) => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(
+          `/api/almanac?year=${y}&month=${m}&date=${encodeURIComponent(date)}`,
+          { cache: 'no-store' },
+        );
+        const data = (await res.json()) as MonthPayload;
+        if (!res.ok || !data.success) {
+          setError(copy.loadFail);
+          return;
+        }
+        setCells(data.cells || []);
+        setPack(data.selected);
+        setPersonal(data.personal);
+        setChartSource(data.chart?.source || '');
+        setYear(data.year);
+        setMonth(data.month);
+        setSelectedDate(date);
+      } catch {
+        setError(copy.networkFail);
+      } finally {
+        setLoading(false);
       }
-      setCells(data.cells || []);
-      setPack(data.selected);
-      setPersonal(data.personal);
-      setChartSource(data.chart?.source || '');
-      setYear(data.year);
-      setMonth(data.month);
-      setSelectedDate(date);
-    } catch {
-      setError(copy.networkFail);
-    } finally {
-      setLoading(false);
-    }
-  }, [copy.loadFail, copy.networkFail]);
+    },
+    [copy.loadFail, copy.networkFail],
+  );
 
   useEffect(() => {
     void load(initialYear, initialMonth, initialDate);
@@ -172,176 +182,85 @@ export default function AlmanacApp({
   const monthLabel = useMemo(() => copy.monthLabel(year, month), [copy, year, month]);
   const hasChart = Boolean(personal);
 
+  const shell = traditional
+    ? 'border-[#8b4513]/30 bg-[#faf6eb] shadow-[0_4px_20px_rgba(80,40,20,0.08)]'
+    : 'border-[color:var(--hairline)] bg-white shadow-sm';
+  const ink = traditional ? 'text-[#1c1410]' : 'text-[color:var(--ink-1)]';
+  const muted = traditional ? 'text-[#5c4a3a]' : 'text-[color:var(--ink-5)]';
+  const accent = traditional ? 'text-[#9b1b1b]' : 'text-[color:var(--brand)]';
+  const accentBg = traditional ? 'bg-[#9b1b1b] text-[#faf6eb]' : 'bg-[color:var(--brand)] text-white';
+  const softBg = traditional ? 'bg-[#f3e2d8]' : 'bg-[color:var(--brand-soft)]';
+  const hair = traditional ? 'border-[#c4a574]/50' : 'border-[color:var(--hairline)]';
+  const serif = traditional
+    ? { fontFamily: '"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",serif' }
+    : undefined;
+
   return (
-    <div className="space-y-5">
-      {/* Region switcher — global landing */}
-      <section className="rounded-2xl border border-[color:var(--hairline)] bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand)]">
-              {copy.regionTitle}
-            </p>
-            <h2 className="mt-1 text-[15px] font-bold text-[color:var(--ink-1)]">{copy.regionSubtitle}</h2>
-            <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-              {locale === 'en' ? region.blurbEn : region.blurb}
-            </p>
-          </div>
-        </div>
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {ALMANAC_REGIONS.map((r) => {
-            const on = r.id === regionId;
-            return (
-              <button
-                key={r.id}
-                type="button"
-                onClick={() => changeRegion(r.id)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                  on
-                    ? 'border-[color:var(--brand)] bg-[color:var(--brand)] text-white'
-                    : 'border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)]'
-                }`}
-              >
-                <span className="opacity-80">{r.flag}</span>{' '}
-                {locale === 'en' ? r.labelEn : r.label}
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Skin switcher */}
-      <section className="rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-        <p className="text-[11px] font-bold text-[color:var(--ink-5)]">{copy.skinTitle}</p>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {ALMANAC_SKINS.map((s) => {
-            const on = s.id === skinId;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => changeSkin(s.id)}
-                className={`rounded-xl border p-3 text-left transition ${
-                  on
-                    ? 'border-[color:var(--brand)] bg-white shadow-sm ring-1 ring-[color:var(--brand)]/30'
-                    : 'border-[color:var(--hairline)] bg-white/70 hover:border-[color:var(--brand)]/40'
-                }`}
-              >
-                <div className="text-[13px] font-bold text-[color:var(--ink-1)]">
-                  {locale === 'en' ? s.labelEn : s.label}
-                </div>
-                <div className="mt-0.5 text-[10px] font-semibold text-[color:var(--brand)]">{s.preview}</div>
-                <div className="mt-1 text-[11px] leading-snug text-[color:var(--ink-5)]">
-                  {locale === 'en' ? s.descriptionEn : s.description}
-                </div>
-              </button>
-            );
-          })}
-        </div>
-        <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
-          {copy.current}：{locale === 'en' ? skin.labelEn : skin.label} ·{' '}
-          {locale === 'en' ? region.labelEn : region.label}
-        </p>
-      </section>
-
-      {/* Month grid */}
-      <section className="rounded-2xl border border-[color:var(--hairline)] bg-white p-3 md:p-4 shadow-sm">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <button
-            type="button"
-            onClick={() => onNav(-1)}
-            className="h-9 rounded-full border border-[color:var(--hairline)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)]"
-          >
-            {copy.prevMonth}
-          </button>
-          <h2 className="text-[16px] font-bold text-[color:var(--ink-1)]">{monthLabel}</h2>
-          <button
-            type="button"
-            onClick={() => onNav(1)}
-            className="h-9 rounded-full border border-[color:var(--hairline)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)]"
-          >
-            {copy.nextMonth}
-          </button>
-        </div>
-
-        <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[color:var(--ink-5)]">
-          {weekChars.map((w, i) => (
-            <div key={`${w}-${i}`} className="py-1">
-              {w}
-            </div>
-          ))}
-        </div>
-
-        {loading && !cells.length ? (
-          <p className="py-8 text-center text-[13px] text-[color:var(--ink-4)]">{copy.loading}</p>
-        ) : (
-          <div className="grid grid-cols-7 gap-1">
-            {cells.map((cell) => {
-              const selected = cell.date === selectedDate;
+    <div className="space-y-4" style={serif}>
+      {/* 紧凑工具条：展示 + 地区 */}
+      <section className={`rounded-sm border-2 ${shell} p-3 sm:p-3.5`}>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className={`text-[11px] font-bold tracking-[0.14em] ${accent}`}>{copy.skinTitle}</span>
+          <div className="flex flex-wrap gap-1">
+            {ALMANAC_SKINS.map((s) => {
+              const on = s.id === skinId;
               return (
                 <button
-                  key={cell.date + String(cell.inMonth)}
+                  key={s.id}
                   type="button"
-                  onClick={() => onSelect(cell.date, cell.inMonth)}
-                  className={`min-h-[68px] rounded-xl border p-1.5 text-left transition ${
-                    selected
-                      ? 'border-[color:var(--brand)] bg-[color:var(--brand-soft)] shadow-sm'
-                      : 'border-[color:var(--hairline)] bg-[color:var(--paper)] hover:border-[color:var(--brand)]/50'
-                  } ${cell.inMonth ? '' : 'opacity-40'}`}
+                  onClick={() => changeSkin(s.id)}
+                  className={`rounded-sm border px-2.5 py-1 text-[11px] font-semibold transition ${
+                    on
+                      ? accentBg + ' border-transparent'
+                      : traditional
+                        ? 'border-[#c4a574]/60 bg-[#fffdf7] text-[#5c4a3a] hover:border-[#9b1b1b]'
+                        : 'border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)]'
+                  }`}
                 >
-                  <div className="flex items-center justify-between">
-                    <span
-                      className={`text-[14px] font-bold ${
-                        cell.isToday ? 'text-[color:var(--brand)]' : 'text-[color:var(--ink-1)]'
-                      }`}
-                    >
-                      {cell.day}
-                    </span>
-                    {cell.hasJieQi ? (
-                      <span className="rounded bg-[color:var(--brand)]/10 px-1 text-[9px] font-bold text-[color:var(--brand-strong)]">
-                        {copy.jie}
-                      </span>
-                    ) : null}
-                  </div>
-                  <div className="mt-0.5 truncate text-[10px] text-[color:var(--ink-5)]">
-                    {cell.dayGanZhi}
-                  </div>
-                  <div className="truncate text-[9px] text-[color:var(--ink-4)]">
-                    {cell.yiPreview || '—'}
-                  </div>
+                  {locale === 'en' ? s.labelEn : s.label}
                 </button>
               );
             })}
           </div>
-        )}
-        {error ? <p className="mt-2 text-[12px] text-amber-800">{error}</p> : null}
-        <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">{copy.dayUrlHint}</p>
+        </div>
+        <div className={`mt-2.5 flex flex-wrap items-center gap-2 border-t pt-2.5 ${hair}`}>
+          <span className={`text-[11px] font-bold tracking-[0.14em] ${accent}`}>{copy.regionTitle}</span>
+          <div className="flex flex-wrap gap-1">
+            {ALMANAC_REGIONS.map((r) => {
+              const on = r.id === regionId;
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  onClick={() => changeRegion(r.id)}
+                  className={`rounded-sm border px-2 py-0.5 text-[11px] font-semibold transition ${
+                    on
+                      ? traditional
+                        ? 'border-[#9b1b1b] bg-[#f3e2d8] text-[#9b1b1b]'
+                        : 'border-[color:var(--brand)] bg-[color:var(--brand-soft)] text-[color:var(--brand-strong)]'
+                      : traditional
+                        ? 'border-transparent text-[#5c4a3a] hover:bg-[#fffdf7]'
+                        : 'border-transparent text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)]'
+                  }`}
+                >
+                  <span className="opacity-70">{r.flag}</span> {locale === 'en' ? r.labelEn : r.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+        <p className={`mt-2 text-[11px] leading-relaxed ${muted}`}>
+          {locale === 'en' ? region.blurbEn : region.blurb}
+          {' · '}
+          {copy.current}：{locale === 'en' ? skin.labelEn : skin.label}
+        </p>
       </section>
 
-      {!hasChart ? (
-        <LightBirthBridge
-          source="almanac"
-          page={`/almanac/${selectedDate}`}
-          title={copy.bindTitle}
-          description={copy.bindDesc}
-        />
-      ) : (
-        <p className="text-[12px] text-[color:var(--ink-4)]">
-          {copy.chartLinked(
-            chartSource || 'engine',
-            personal?.dayMaster || '',
-            personal?.yongShen?.join('') || '',
-          )}
-          <Link
-            href="/profile/foundation?source=almanac"
-            className="ml-1 text-[color:var(--brand)] underline-offset-2 hover:underline"
-          >
-            {copy.foundation}
-          </Link>
-        </p>
-      )}
-
-      {pack ? (
-        <>
+      {/* 主舞台：当日通书（先看日，再选月） */}
+      {showDayDetail && !(suppressDefaultTear && skinId === 'tear') ? (
+        loading && !pack ? (
+          <p className={`py-10 text-center text-[13px] ${muted}`}>{copy.loading}</p>
+        ) : pack ? (
           <AlmanacSkinViews
             skin={skinId}
             pack={pack}
@@ -349,28 +268,156 @@ export default function AlmanacApp({
             region={region}
             locale={locale}
           />
-          <AlmanacLensPanel date={pack.date} hasChart={hasChart} locale={locale} />
-        </>
+        ) : null
+      ) : null}
+      {error ? <p className="text-[12px] text-amber-900">{error}</p> : null}
+
+      {showDayDetail && !hasChart ? (
+        <LightBirthBridge
+          source="almanac"
+          page={`/almanac/${selectedDate}`}
+          title={copy.bindTitle}
+          description={copy.bindDesc}
+        />
+      ) : hasChart ? (
+        <p className={`text-[12px] ${muted}`}>
+          {copy.chartLinked(
+            chartSource || 'engine',
+            personal?.dayMaster || '',
+            personal?.yongShen?.join('') || '',
+          )}
+          <Link
+            href="/profile/foundation?source=almanac"
+            className={`ml-1 underline-offset-2 hover:underline ${accent}`}
+          >
+            {copy.foundation}
+          </Link>
+        </p>
       ) : null}
 
-      <section className="rounded-xl border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-        <strong className="text-[color:var(--ink-2)]">{copy.footerTitle}</strong>
+      {/* 月历选日 — 传统格 */}
+      <section className={`rounded-sm border-2 ${shell} p-3 md:p-4`}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => onNav(-1)}
+            className={`h-9 min-w-[4.5rem] rounded-sm border px-3 text-[12px] font-semibold ${
+              traditional
+                ? 'border-[#c4a574]/70 bg-[#fffdf7] text-[#5c4a3a]'
+                : 'border-[color:var(--hairline)] text-[color:var(--ink-2)]'
+            }`}
+          >
+            {copy.prevMonth}
+          </button>
+          <h2 className={`text-[17px] font-bold tracking-wide ${ink}`}>{monthLabel}</h2>
+          <button
+            type="button"
+            onClick={() => onNav(1)}
+            className={`h-9 min-w-[4.5rem] rounded-sm border px-3 text-[12px] font-semibold ${
+              traditional
+                ? 'border-[#c4a574]/70 bg-[#fffdf7] text-[#5c4a3a]'
+                : 'border-[color:var(--hairline)] text-[color:var(--ink-2)]'
+            }`}
+          >
+            {copy.nextMonth}
+          </button>
+        </div>
+
+        <div
+          className={`grid grid-cols-7 gap-px border ${hair} text-center text-[11px] font-bold ${
+            traditional ? 'bg-[#9b1b1b] text-[#faf6eb]' : 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-5)]'
+          }`}
+        >
+          {weekChars.map((w, i) => (
+            <div key={`${w}-${i}`} className={`py-1.5 ${traditional ? '' : ''}`}>
+              {w}
+            </div>
+          ))}
+        </div>
+
+        {loading && !cells.length ? (
+          <p className={`py-8 text-center text-[13px] ${muted}`}>{copy.loading}</p>
+        ) : (
+          <div className={`grid grid-cols-7 gap-px border border-t-0 ${hair} ${traditional ? 'bg-[#e8dcc8]' : 'bg-[color:var(--hairline)]'}`}>
+            {cells.map((cell) => {
+              const selected = cell.date === selectedDate;
+              return (
+                <button
+                  key={cell.date + String(cell.inMonth)}
+                  type="button"
+                  onClick={() => onSelect(cell.date, cell.inMonth)}
+                  className={`min-h-[72px] p-1.5 text-left transition ${
+                    selected
+                      ? traditional
+                        ? 'bg-[#f3e2d8] ring-2 ring-inset ring-[#9b1b1b]'
+                        : 'bg-[color:var(--brand-soft)] ring-2 ring-inset ring-[color:var(--brand)]'
+                      : traditional
+                        ? 'bg-[#faf6eb] hover:bg-[#fffdf7]'
+                        : 'bg-[color:var(--paper)] hover:bg-white'
+                  } ${cell.inMonth ? '' : 'opacity-35'}`}
+                >
+                  <div className="flex items-start justify-between gap-0.5">
+                    <span
+                      className={`text-[15px] font-bold leading-none ${
+                        cell.isToday
+                          ? traditional
+                            ? 'text-[#9b1b1b]'
+                            : 'text-[color:var(--brand)]'
+                          : traditional
+                            ? 'text-[#1c1410]'
+                            : 'text-[color:var(--ink-1)]'
+                      }`}
+                    >
+                      {cell.day}
+                    </span>
+                    {cell.hasJieQi ? (
+                      <span
+                        className={`rounded-sm px-1 text-[9px] font-bold ${
+                          traditional ? 'bg-[#9b1b1b] text-[#faf6eb]' : softBg + ' text-[color:var(--brand-strong)]'
+                        }`}
+                      >
+                        {copy.jie}
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className={`mt-1 truncate text-[10px] ${muted}`}>{cell.dayGanZhi}</div>
+                  <div
+                    className={`mt-0.5 line-clamp-2 text-[9px] leading-snug ${
+                      traditional ? 'text-[#9b1b1b]/80' : 'text-[color:var(--ink-4)]'
+                    }`}
+                  >
+                    {cell.yiPreview || '—'}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <p className={`mt-2 text-[11px] ${muted}`}>{copy.dayUrlHint}</p>
+      </section>
+
+      {pack ? <AlmanacLensPanel date={pack.date} hasChart={hasChart} locale={locale} /> : null}
+
+      <section
+        className={`rounded-sm border border-dashed px-4 py-3 text-[12px] leading-relaxed ${
+          traditional
+            ? 'border-[#c4a574]/60 bg-[#f3efe3] text-[#5c4a3a]'
+            : 'border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] text-[color:var(--ink-4)]'
+        }`}
+      >
+        <strong className={traditional ? 'text-[#1c1410]' : 'text-[color:var(--ink-2)]'}>
+          {copy.footerTitle}
+        </strong>
         {' — '}
         {copy.footerBody}
         <div className="mt-2 flex flex-wrap gap-3">
-          <Link href="/almanac" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
+          <Link href="/almanac" className={`underline-offset-2 hover:underline ${accent}`}>
             {copy.backToday}
           </Link>
-          <Link
-            href="/world-yi/era-timing"
-            className="text-[color:var(--brand)] underline-offset-2 hover:underline"
-          >
+          <Link href="/world-yi/era-timing" className={`underline-offset-2 hover:underline ${accent}`}>
             {copy.eraTiming}
           </Link>
-          <Link
-            href="/analyze?source=almanac"
-            className="text-[color:var(--brand)] underline-offset-2 hover:underline"
-          >
+          <Link href="/analyze?source=almanac" className={`underline-offset-2 hover:underline ${accent}`}>
             {copy.fullReport}
           </Link>
         </div>

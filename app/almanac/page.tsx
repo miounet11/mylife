@@ -124,7 +124,7 @@ export default async function AlmanacPage({
           initialMonth={month}
           initialDate={date}
           navigateOnSelect
-          initialSkin={sp.skin}
+          initialSkin={sp.skin || 'tear'}
           initialRegion={sp.region}
           locale={locale}
         />

@@ -202,21 +202,21 @@ export function almanacHubCopy(locale: SiteLocale) {
       en: 'Lunisolar almanac with yi/ji, clash, 12 double-hours, Rokuyō and sun-sign notes. Bind birth data for day-master personal rhythm. Multiple display skins and regional focuses.',
     }),
     eyebrow: pick(locale, {
-      'zh-CN': '全球黄历落地页',
-      'zh-Hant': '全球黃曆落地頁',
-      en: 'Global almanac landing',
+      'zh-CN': '传统通书 · 结构日运',
+      'zh-Hant': '傳統通書 · 結構日運',
+      en: 'Classic tong-shu · structure day',
     }),
     title: pick(locale, {
-      'zh-CN': '今天，对你意味着什么？',
-      'zh-Hant': '今天，對你意味著什麼？',
-      en: 'What does today mean for you?',
+      'zh-CN': '万年历',
+      'zh-Hant': '萬年曆',
+      en: 'Chinese Almanac',
     }),
     description: pick(locale, {
       'zh-CN':
-        '通书撕页 · 现代卡片 · 个人日运 · 时辰宫格 · 全球对照——多种展示一键切换。支持中国、台湾、香港、新加坡、日本六曜、韩国、越南、北美等侧重；绑定生辰后看专属匹配。',
+        '传统撕页通书：宜忌、十二时辰、冲煞胎神、建除星宿。可切换现代卡片与个人日运；多地区文化侧重。绑定生辰后叠日主结构匹配。',
       'zh-Hant':
-        '通書撕頁 · 現代卡片 · 個人日運 · 時辰宮格 · 全球對照——多種展示一鍵切換。支援多地區側重；綁定生辰後看專屬匹配。',
-      en: 'Tear-off tong-shu, modern cards, personal daily, hour grid, global compare — switch freely. Regional focuses from China to Japan Rokuyō to North America. Bind birth data for personal match.',
+        '傳統撕頁通書：宜忌、十二時辰、衝煞胎神、建除星宿。可切換現代卡片與個人日運；多地區文化側重。綁定生辰後疊日主結構匹配。',
+      en: 'Classic tear-off tong-shu: yi/ji, twelve hours, clash, fetal god, Jianchu and mansions. Switch modern/personal views; regional focuses. Bind birth data for day-master match.',
     }),
     linkTear: pick(locale, { 'zh-CN': '撕页通书', 'zh-Hant': '撕頁通書', en: 'Tear-off sheet' }),
     linkPersonal: pick(locale, { 'zh-CN': '个人日运', 'zh-Hant': '個人日運', en: 'Personal day' }),
@@ -245,9 +245,9 @@ export function almanacUiCopy(locale: SiteLocale) {
       en: 'Same day, different cultural lenses',
     }),
     skinTitle: pick(locale, {
-      'zh-CN': '日历展示形态（参考传统撕页 + 现代站）',
-      'zh-Hant': '日曆展示形態（參考傳統撕頁 + 現代站）',
-      en: 'Display skins (paper tear-off + modern web)',
+      'zh-CN': '展示形态',
+      'zh-Hant': '展示形態',
+      en: 'Display style',
     }),
     current: pick(locale, { 'zh-CN': '当前', 'zh-Hant': '目前', en: 'Current' }),
     prevMonth: pick(locale, { 'zh-CN': '上月', 'zh-Hant': '上月', en: 'Prev' }),

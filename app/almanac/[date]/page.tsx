@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AlmanacApp from '@/components/almanac/almanac-app';
-import AlmanacDayPanel from '@/components/almanac/almanac-day-panel';
+import AlmanacTearSheet from '@/components/almanac/almanac-tear-sheet';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { AppPage } from '@/components/layout/app-page';
@@ -206,8 +206,8 @@ export default async function AlmanacDatePage({ params, searchParams }: PageProp
           </Link>
         </div>
 
-        {/* Visible SSR content for SEO (not screen-reader only) */}
-        <AlmanacDayPanel pack={pack} personal={personal} showCanonical={false} locale={locale} />
+        {/* SSR traditional sheet for SEO + first paint */}
+        <AlmanacTearSheet pack={pack} personal={personal} />
 
         {!personal ? (
           <LightBirthBridge
@@ -223,9 +223,10 @@ export default async function AlmanacDatePage({ params, searchParams }: PageProp
           initialMonth={month}
           initialDate={date}
           navigateOnSelect
-          initialSkin={sp.skin}
+          initialSkin={sp.skin || 'tear'}
           initialRegion={sp.region}
           locale={locale}
+          suppressDefaultTear
         />
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">

@@ -1,14 +1,55 @@
 /**
- * Traditional tear-off 黄历 style — denser layout inspired by paper calendars.
+ * Traditional tear-off 万年历 / 通书 sheet.
+ * Visual language: cream paper, vermillion stamps, dense classic fields.
  */
+import type { ReactNode } from 'react';
 import type { AlmanacDayPack, PersonalDayOverlay } from '@/lib/almanac/types';
 
 const HOUR_BRANCH = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
 
+const paper = {
+  bg: 'bg-[#faf6eb]',
+  ink: 'text-[#1c1410]',
+  muted: 'text-[#5c4a3a]',
+  red: 'text-[#9b1b1b]',
+  redBg: 'bg-[#9b1b1b]',
+  redSoft: 'bg-[#f3e2d8]',
+  border: 'border-[#8b4513]/45',
+  line: 'border-[#c4a574]/55',
+  frame: 'border-[#7a1f1f]',
+  sealGood: 'bg-[#9b1b1b] text-[#faf6eb]',
+  sealBad: 'bg-[#3d2914] text-[#faf6eb]',
+  jiCell: 'bg-[#f3e2d8] text-[#9b1b1b]',
+  xiongCell: 'bg-[#ebe4d4] text-[#5c4a3a]',
+  midCell: 'bg-[#f5f0e4] text-[#6b5a48]',
+};
+
 function luckCell(luck: string) {
-  if (luck === 'auspicious') return { t: '吉', cls: 'bg-emerald-100 text-emerald-900' };
-  if (luck === 'inauspicious') return { t: '凶', cls: 'bg-amber-100 text-amber-950' };
-  return { t: '中', cls: 'bg-stone-100 text-stone-700' };
+  if (luck === 'auspicious') return { t: '吉', cls: paper.jiCell };
+  if (luck === 'inauspicious') return { t: '凶', cls: paper.xiongCell };
+  return { t: '中', cls: paper.midCell };
+}
+
+function Field({
+  label,
+  children,
+  className = '',
+}: {
+  label: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`min-w-0 ${className}`}>
+      <div
+        className={`mb-0.5 text-[11px] font-bold tracking-[0.12em] ${paper.red}`}
+        style={{ fontFamily: '"Songti SC","Noto Serif SC","Source Han Serif SC",serif' }}
+      >
+        {label}
+      </div>
+      <div className={`text-[12px] leading-relaxed ${paper.ink}`}>{children}</div>
+    </div>
+  );
 }
 
 export default function AlmanacTearSheet({
@@ -18,159 +59,258 @@ export default function AlmanacTearSheet({
   pack: AlmanacDayPack;
   personal?: PersonalDayOverlay | null;
 }) {
+  const serif = { fontFamily: '"Songti SC","Noto Serif SC","Source Han Serif SC","STSong",serif' };
+
   return (
     <article
-      className="overflow-hidden rounded-sm border-2 border-emerald-800/80 bg-[#f7faf4] text-emerald-950 shadow-md"
+      className={`relative overflow-hidden rounded-sm border-2 ${paper.frame} ${paper.bg} shadow-[0_8px_28px_rgba(80,40,20,0.12)]`}
       data-almanac-skin="tear"
+      style={serif}
     >
-      {/* Top bar like paper calendar header */}
-      <div className="flex items-center justify-between border-b border-emerald-800/30 bg-emerald-900 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-emerald-50">
-        <span>
-          {pack.year} · {pack.month}月
+      {/* Outer double-line frame feel */}
+      <div className={`pointer-events-none absolute inset-1 border border-[#c4a574]/50`} aria-hidden />
+
+      {/* ── 顶栏：年号 · 农历月 · 公历 ── */}
+      <header
+        className={`relative flex flex-wrap items-center justify-between gap-2 border-b-2 ${paper.frame} ${paper.redBg} px-3 py-2 text-[11px] font-semibold tracking-wide text-[#faf6eb] sm:px-4`}
+      >
+        <span className="tracking-[0.08em]">
+          {pack.lunar.yearGanZhi || ''}
+          {pack.lunar.yearShengXiao ? `（${pack.lunar.yearShengXiao}）` : ''}年
         </span>
-        <span className="uppercase tracking-[0.2em]">{pack.weekdayEn.slice(0, 3)}</span>
-        <span>
-          {pack.lunar.yearGanZhi}年 · 农历{pack.lunar.monthSizeLabel || ''}
+        <span className="text-[13px] font-bold tracking-[0.2em]">
+          农历{pack.lunar.monthChinese}
+          {pack.lunar.monthSizeLabel ? `·${pack.lunar.monthSizeLabel}` : ''}
         </span>
-      </div>
+        <span>
+          公元{pack.year}年{pack.month}月
+        </span>
+      </header>
 
-      <div className="grid gap-0 md:grid-cols-[1fr_1.1fr]">
-        {/* Left: giant date */}
-        <div className="relative border-b border-emerald-800/20 p-4 md:border-b-0 md:border-r">
-          <div className="text-center">
-            <div className="text-[11px] font-bold tracking-[0.2em] text-emerald-800/70">
-              {pack.tianShenType || '通书'} · {pack.tianShen || '—'}
-            </div>
-            <div className="mt-1 font-black leading-none text-emerald-800" style={{ fontSize: 'clamp(4.5rem, 18vw, 7.5rem)' }}>
-              {pack.day}
-            </div>
-            <div className="mt-2 text-[15px] font-bold">
-              {pack.lunar.dayChinese}
-              {pack.jieQi ? (
-                <span className="ml-2 rounded border border-emerald-700 px-1.5 py-0.5 text-[12px]">
-                  {pack.jieQi}
-                </span>
-              ) : null}
-            </div>
-            <div className="mt-1 text-[13px] text-emerald-900/80">
-              {pack.weekdayLabel} · 日柱 {pack.lunar.dayGanZhi}
-              {pack.nayin ? ` · ${pack.nayin}` : ''}
-            </div>
-            {pack.lunar.dayShengXiao ? (
-              <div className="mt-1 text-[12px] text-emerald-800/70">日肖 · {pack.lunar.dayShengXiao}</div>
-            ) : null}
-          </div>
-
-          {/* Side vertical slogans (decorative, like paper) */}
+      {/* ── 主区：大日 + 宜忌 ── */}
+      <div className="relative grid md:grid-cols-[minmax(0,0.95fr)_minmax(0,1.15fr)]">
+        {/* 左侧：撕页大日 */}
+        <div
+          className={`relative flex flex-col items-center justify-center border-b-2 md:border-b-0 md:border-r-2 ${paper.frame} px-3 py-5 sm:py-6`}
+        >
+          {/* 天神角标 */}
           <div
-            className="pointer-events-none absolute bottom-4 left-2 hidden text-[10px] tracking-[0.35em] text-emerald-800/35 md:block"
-            style={{ writingMode: 'vertical-rl' }}
+            className={`absolute left-3 top-3 rounded-sm border ${paper.border} ${paper.redSoft} px-1.5 py-0.5 text-[10px] font-bold ${paper.red}`}
           >
-            结构为舟
+            {pack.tianShenType || '通书'}
+            {pack.tianShen ? ` · ${pack.tianShen}` : ''}
           </div>
-          <div
-            className="pointer-events-none absolute bottom-4 right-2 hidden text-[10px] tracking-[0.35em] text-emerald-800/35 md:block"
-            style={{ writingMode: 'vertical-rl' }}
-          >
-            通书为天
-          </div>
-        </div>
-
-        {/* Right: dense tong-shu */}
-        <div className="space-y-3 p-3 text-[12px] md:p-4">
-          <div className="grid grid-cols-2 gap-2">
-            <div className="rounded border border-emerald-800/25 bg-white/70 p-2">
-              <div className="text-[11px] font-black text-emerald-900">宜</div>
-              <div className="mt-1 leading-relaxed text-emerald-950/90">
-                {pack.yi.join(' ') || '—'}
-              </div>
-            </div>
-            <div className="rounded border border-emerald-800/25 bg-white/70 p-2">
-              <div className="text-[11px] font-black text-emerald-900">忌</div>
-              <div className="mt-1 leading-relaxed text-emerald-950/90">
-                {pack.ji.join(' ') || '—'}
-              </div>
-            </div>
-          </div>
-
-          {/* 12 hour strip like paper */}
-          <div className="rounded border border-emerald-800/25 bg-white/80 p-2">
-            <div className="mb-1 text-[11px] font-black">十二时辰</div>
-            <div className="grid grid-cols-6 gap-1 sm:grid-cols-12">
-              {pack.hours.map((h, i) => {
-                const cell = luckCell(h.luck);
-                const branch = HOUR_BRANCH[i] || h.ganZhi.slice(-1);
-                return (
-                  <div key={h.ganZhi + i} className="text-center">
-                    <div className="text-[10px] font-bold text-emerald-900">{branch}</div>
-                    <div className={`mt-0.5 rounded px-0.5 py-1 text-[11px] font-black ${cell.cls}`}>
-                      {cell.t}
-                    </div>
-                    <div className="mt-0.5 text-[8px] leading-tight text-emerald-900/60">
-                      {h.minHm?.slice(0, 5) || ''}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
-            <div className="rounded border border-emerald-800/20 bg-white/60 p-2">
-              <div className="font-black">冲煞 · 胎神</div>
-              <div className="mt-1">
-                冲 {pack.chongShengXiao || pack.chong || '—'} · 煞{pack.sha || '—'}
-              </div>
-              <div className="mt-0.5">胎神 {pack.positions.tai || '—'}</div>
-            </div>
-            <div className="rounded border border-emerald-800/20 bg-white/60 p-2">
-              <div className="font-black">吉神方位</div>
-              <div className="mt-1">喜 {pack.positions.xi || '—'}</div>
-              <div>福 {pack.positions.fu || '—'} · 财 {pack.positions.cai || '—'}</div>
-            </div>
-            <div className="rounded border border-emerald-800/20 bg-white/60 p-2">
-              <div className="font-black">吉神 · 凶煞</div>
-              <div className="mt-1 line-clamp-3">{pack.jiShen.join(' ') || '—'}</div>
-              <div className="mt-0.5 line-clamp-2 text-emerald-900/70">{pack.xiongSha.join(' ') || '—'}</div>
-            </div>
-            <div className="rounded border border-emerald-800/20 bg-white/60 p-2">
-              <div className="font-black">建除 · 宿 · 六曜</div>
-              <div className="mt-1">
-                {pack.zhiXing || '—'} · {pack.xiu || '—'}
-                {pack.xiuLuck ? `（${pack.xiuLuck}）` : ''}
-              </div>
-              <div className="mt-0.5">
-                六曜 {pack.liuYao || '—'} · 九星 {pack.nineStar || '—'}
-              </div>
-            </div>
-          </div>
-
-          {pack.pengZu.length ? (
-            <div className="rounded border border-dashed border-emerald-800/30 p-2 text-[11px] leading-relaxed">
-              <span className="font-black">彭祖百忌</span> {pack.pengZu.join('；')}
+          {pack.jieQi ? (
+            <div
+              className={`absolute right-3 top-3 rounded-sm ${paper.redBg} px-2 py-0.5 text-[11px] font-bold text-[#faf6eb]`}
+            >
+              {pack.jieQi}
             </div>
           ) : null}
 
-          {personal ? (
-            <div className="rounded border-2 border-emerald-700 bg-emerald-50 p-2 text-[12px]">
-              <div className="font-black">
-                我的结构日运 · {personal.score}分 · {personal.stars}星
+          <div className={`mt-4 text-[12px] font-semibold tracking-[0.35em] ${paper.muted}`}>
+            {pack.weekdayLabel}
+          </div>
+
+          {/* 朱红大日 — 撕页核心 */}
+          <div
+            className={`mt-1 font-black leading-none ${paper.red}`}
+            style={{ fontSize: 'clamp(5.5rem, 22vw, 8.5rem)', letterSpacing: '-0.04em' }}
+          >
+            {String(pack.day).padStart(2, '0')}
+          </div>
+
+          <div className={`mt-2 text-[18px] font-bold tracking-wide ${paper.ink}`}>
+            {pack.lunar.dayChinese || pack.lunar.lunarText}
+          </div>
+          <div className={`mt-1 text-[13px] ${paper.muted}`}>
+            日柱 <span className={`font-bold ${paper.red}`}>{pack.lunar.dayGanZhi}</span>
+            {pack.nayin ? ` · ${pack.nayin}` : ''}
+          </div>
+          {pack.lunar.dayShengXiao ? (
+            <div className={`mt-0.5 text-[12px] ${paper.muted}`}>
+              日肖 · {pack.lunar.dayShengXiao}
+              {pack.chongShengXiao ? ` · 冲${pack.chongShengXiao}` : ''}
+            </div>
+          ) : null}
+
+          {(pack.festivals || []).length > 0 ? (
+            <div className={`mt-3 max-w-[90%] text-center text-[11px] leading-snug ${paper.red}`}>
+              {pack.festivals.slice(0, 3).join(' · ')}
+            </div>
+          ) : null}
+
+          {/* 竖排点缀 */}
+          <div
+            className={`pointer-events-none absolute bottom-6 left-2 hidden text-[10px] tracking-[0.45em] opacity-30 md:block ${paper.red}`}
+            style={{ writingMode: 'vertical-rl' }}
+            aria-hidden
+          >
+            人生K线
+          </div>
+        </div>
+
+        {/* 右侧：宜忌 + 冲煞方位 */}
+        <div className="flex flex-col">
+          <div className={`grid flex-1 grid-cols-2 divide-x-2 ${paper.frame}`}>
+            <div className="p-3 sm:p-4">
+              <div
+                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-sm px-2 text-[16px] font-black tracking-widest ${paper.sealGood}`}
+              >
+                宜
               </div>
-              <div className="mt-1">{personal.moodLine}</div>
-              {personal.topHours[0] ? (
-                <div className="mt-1 text-[11px]">
-                  较顺时：{personal.topHours.map((h) => h.timeLabel || h.ganZhi).join('、')}
+              <ul className={`mt-2 space-y-1 text-[13px] leading-relaxed ${paper.ink}`}>
+                {(pack.yi.length ? pack.yi : ['从简行事']).map((item) => (
+                  <li key={item} className="flex gap-1.5">
+                    <span className={`${paper.red} shrink-0`}>·</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="p-3 sm:p-4">
+              <div
+                className={`inline-flex h-8 min-w-[2rem] items-center justify-center rounded-sm px-2 text-[16px] font-black tracking-widest ${paper.sealBad}`}
+              >
+                忌
+              </div>
+              <ul className={`mt-2 space-y-1 text-[13px] leading-relaxed ${paper.ink}`}>
+                {(pack.ji.length ? pack.ji : ['—']).map((item) => (
+                  <li key={item} className="flex gap-1.5">
+                    <span className={`${paper.muted} shrink-0`}>·</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* 冲煞 · 方位 · 胎神 */}
+          <div
+            className={`grid grid-cols-2 gap-x-3 gap-y-2 border-t-2 ${paper.frame} px-3 py-2.5 text-[11px] sm:grid-cols-3 sm:px-4`}
+          >
+            <Field label="冲煞">
+              冲{pack.chongShengXiao || pack.chong || '—'} · 煞{pack.sha || '—'}
+            </Field>
+            <Field label="胎神">{pack.positions.tai || '—'}</Field>
+            <Field label="吉神方位" className="col-span-2 sm:col-span-1">
+              喜{pack.positions.xi || '—'} · 福{pack.positions.fu || '—'} · 财
+              {pack.positions.cai || '—'}
+            </Field>
+          </div>
+        </div>
+      </div>
+
+      {/* ── 十二时辰 ── */}
+      <section className={`border-t-2 ${paper.frame} px-2 py-3 sm:px-4`}>
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <h3 className={`text-[13px] font-bold tracking-[0.2em] ${paper.red}`}>十二时辰</h3>
+          <span className={`text-[10px] ${paper.muted}`}>黄道为吉 · 黑道宜慎</span>
+        </div>
+        <div className="grid grid-cols-6 gap-1 sm:grid-cols-12 sm:gap-1.5">
+          {pack.hours.map((h, i) => {
+            const cell = luckCell(h.luck);
+            const branch = HOUR_BRANCH[i] || h.ganZhi.slice(-1);
+            return (
+              <div
+                key={h.ganZhi + i}
+                className={`rounded-sm border ${paper.line} bg-[#fffdf7]/80 px-0.5 py-1.5 text-center`}
+              >
+                <div className={`text-[12px] font-bold ${paper.ink}`}>{branch}</div>
+                <div
+                  className={`mx-auto mt-1 flex h-6 w-6 items-center justify-center rounded-sm text-[12px] font-black ${cell.cls}`}
+                >
+                  {cell.t}
                 </div>
-              ) : null}
-            </div>
+                <div className={`mt-1 truncate text-[9px] ${paper.muted}`}>{h.ganZhi}</div>
+                <div className={`truncate text-[8px] leading-tight ${paper.muted}`}>
+                  {h.minHm?.slice(0, 5) || ''}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* ── 通书细目 ── */}
+      <section
+        className={`grid grid-cols-2 gap-3 border-t ${paper.line} px-3 py-3 text-[11px] sm:grid-cols-4 sm:px-4`}
+      >
+        <Field label="建除">
+          {pack.zhiXing || '—'}
+          {pack.dayLu ? ` · 禄${pack.dayLu}` : ''}
+        </Field>
+        <Field label="二十八宿">
+          {pack.xiu || '—'}
+          {pack.xiuLuck ? `（${pack.xiuLuck}）` : ''}
+        </Field>
+        <Field label="六曜 · 九星">
+          {pack.liuYao || '—'} · {pack.nineStar || '—'}
+        </Field>
+        <Field label="物候">
+          {[pack.season, pack.hou, pack.wuHou].filter(Boolean).join(' · ') || '—'}
+        </Field>
+        <Field label="吉神" className="col-span-2">
+          {pack.jiShen.join('、') || '—'}
+        </Field>
+        <Field label="凶煞" className="col-span-2">
+          {pack.xiongSha.join('、') || '—'}
+        </Field>
+      </section>
+
+      {pack.pengZu.length ? (
+        <div
+          className={`border-t ${paper.line} px-3 py-2.5 text-[11px] leading-relaxed sm:px-4 ${paper.muted}`}
+        >
+          <span className={`mr-2 font-bold ${paper.red}`}>彭祖百忌</span>
+          {pack.pengZu.join('；')}
+        </div>
+      ) : null}
+
+      {pack.xiuSong ? (
+        <div
+          className={`border-t ${paper.line} px-3 py-2 text-[11px] italic leading-relaxed sm:px-4 ${paper.muted}`}
+        >
+          {pack.xiuSong}
+        </div>
+      ) : null}
+
+      {/* ── 个人结构层（非恐吓） ── */}
+      {personal ? (
+        <div
+          className={`border-t-2 ${paper.frame} ${paper.redSoft} px-3 py-3 sm:px-4`}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <span
+              className={`inline-flex items-center rounded-sm ${paper.redBg} px-2 py-0.5 text-[11px] font-bold text-[#faf6eb]`}
+            >
+              我的结构日运
+            </span>
+            <span className={`text-[18px] font-black ${paper.red}`}>{personal.score}</span>
+            <span className={`text-[12px] tracking-widest ${paper.red}`}>
+              {'★'.repeat(personal.stars)}
+              <span className="opacity-30">{'★'.repeat(5 - personal.stars)}</span>
+            </span>
+            <span className={`text-[11px] ${paper.muted}`}>
+              日主{personal.dayMaster}
+              {personal.yongShen?.length ? ` · 用神${personal.yongShen.join('')}` : ''}
+            </span>
+          </div>
+          <p className={`mt-1.5 text-[13px] leading-relaxed ${paper.ink}`}>{personal.moodLine}</p>
+          {personal.topHours[0] ? (
+            <p className={`mt-1 text-[11px] ${paper.muted}`}>
+              较顺时辰：
+              {personal.topHours.map((h) => h.timeLabel || h.ganZhi).join('、')}
+            </p>
           ) : null}
         </div>
-      </div>
+      ) : null}
 
-      <div className="border-t border-emerald-800/25 bg-emerald-900/5 px-3 py-2 text-[10px] leading-relaxed text-emerald-900/70">
-        撕页样式致敬传统挂历信息密度；潮汐/彩票等地方字段未收录。个人层来自日主用神引擎，非恐吓断语。
-        {pack.xiuSong ? ` · ${pack.xiuSong.slice(0, 40)}…` : ''}
-      </div>
+      <footer
+        className={`border-t ${paper.line} bg-[#f3efe3] px-3 py-2 text-[10px] leading-relaxed sm:px-4 ${paper.muted}`}
+      >
+        通书宜忌与十二时辰为公共层；个人日运来自日主用神结构匹配，作节奏参考，非医疗投资建议。潮汐、地方彩票等未收录。
+      </footer>
     </article>
   );
 }
