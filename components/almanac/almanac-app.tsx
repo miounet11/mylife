@@ -9,6 +9,8 @@ import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import type { AlmanacDayPack, AlmanacMonthCell, PersonalDayOverlay } from '@/lib/almanac/types';
 import { ALMANAC_REGIONS, getAlmanacRegion, type AlmanacRegionId } from '@/lib/almanac/regions';
 import { ALMANAC_SKINS, getAlmanacSkin, type AlmanacSkinId } from '@/lib/almanac/skins';
+import { almanacUiCopy } from '@/lib/i18n/almanac-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { trackProductEvent } from '@/lib/product-analytics';
 
 type MonthPayload = {
@@ -21,7 +23,6 @@ type MonthPayload = {
   chart?: { dayMaster?: string; yongShen?: string[]; source?: string } | null;
 };
 
-const WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 const SKIN_KEY = 'lk_almanac_skin_v1';
 const REGION_KEY = 'lk_almanac_region_v1';
 
@@ -37,6 +38,7 @@ export default function AlmanacApp({
   navigateOnSelect = true,
   initialSkin,
   initialRegion,
+  locale = 'zh-CN',
 }: {
   initialYear: number;
   initialMonth: number;
@@ -44,8 +46,11 @@ export default function AlmanacApp({
   navigateOnSelect?: boolean;
   initialSkin?: string;
   initialRegion?: string;
+  locale?: SiteLocale;
 }) {
   const router = useRouter();
+  const copy = useMemo(() => almanacUiCopy(locale), [locale]);
+  const weekChars = copy.weekdays.split('');
   const [year, setYear] = useState(initialYear);
   const [month, setMonth] = useState(initialMonth);
   const [selectedDate, setSelectedDate] = useState(initialDate);
@@ -86,7 +91,7 @@ export default function AlmanacApp({
       );
       const data = (await res.json()) as MonthPayload;
       if (!res.ok || !data.success) {
-        setError('加载万年历失败，请稍后重试');
+        setError(copy.loadFail);
         return;
       }
       setCells(data.cells || []);
@@ -97,11 +102,11 @@ export default function AlmanacApp({
       setMonth(data.month);
       setSelectedDate(date);
     } catch {
-      setError('网络异常，请稍后重试');
+      setError(copy.networkFail);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [copy.loadFail, copy.networkFail]);
 
   useEffect(() => {
     void load(initialYear, initialMonth, initialDate);
@@ -164,7 +169,7 @@ export default function AlmanacApp({
     trackProductEvent('almanac_region_changed', { region: id, skin: skinId });
   };
 
-  const monthLabel = useMemo(() => `${year}年${month}月`, [year, month]);
+  const monthLabel = useMemo(() => copy.monthLabel(year, month), [copy, year, month]);
   const hasChart = Boolean(personal);
 
   return (
@@ -174,13 +179,11 @@ export default function AlmanacApp({
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand)]">
-              地区 / 传统侧重
+              {copy.regionTitle}
             </p>
-            <h2 className="mt-1 text-[15px] font-bold text-[color:var(--ink-1)]">
-              同一天，不同文化怎么读
-            </h2>
+            <h2 className="mt-1 text-[15px] font-bold text-[color:var(--ink-1)]">{copy.regionSubtitle}</h2>
             <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-              {region.blurb}
+              {locale === 'en' ? region.blurbEn : region.blurb}
             </p>
           </div>
         </div>
@@ -198,7 +201,8 @@ export default function AlmanacApp({
                     : 'border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)] hover:border-[color:var(--brand)]'
                 }`}
               >
-                <span className="opacity-80">{r.flag}</span> {r.label}
+                <span className="opacity-80">{r.flag}</span>{' '}
+                {locale === 'en' ? r.labelEn : r.label}
               </button>
             );
           })}
@@ -207,7 +211,7 @@ export default function AlmanacApp({
 
       {/* Skin switcher */}
       <section className="rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4">
-        <p className="text-[11px] font-bold text-[color:var(--ink-5)]">日历展示形态（参考传统撕页 + 现代站）</p>
+        <p className="text-[11px] font-bold text-[color:var(--ink-5)]">{copy.skinTitle}</p>
         <div className="mt-2 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
           {ALMANAC_SKINS.map((s) => {
             const on = s.id === skinId;
@@ -222,15 +226,20 @@ export default function AlmanacApp({
                     : 'border-[color:var(--hairline)] bg-white/70 hover:border-[color:var(--brand)]/40'
                 }`}
               >
-                <div className="text-[13px] font-bold text-[color:var(--ink-1)]">{s.label}</div>
+                <div className="text-[13px] font-bold text-[color:var(--ink-1)]">
+                  {locale === 'en' ? s.labelEn : s.label}
+                </div>
                 <div className="mt-0.5 text-[10px] font-semibold text-[color:var(--brand)]">{s.preview}</div>
-                <div className="mt-1 text-[11px] leading-snug text-[color:var(--ink-5)]">{s.description}</div>
+                <div className="mt-1 text-[11px] leading-snug text-[color:var(--ink-5)]">
+                  {locale === 'en' ? s.descriptionEn : s.description}
+                </div>
               </button>
             );
           })}
         </div>
         <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
-          当前：{skin.label} · {region.label}
+          {copy.current}：{locale === 'en' ? skin.labelEn : skin.label} ·{' '}
+          {locale === 'en' ? region.labelEn : region.label}
         </p>
       </section>
 
@@ -242,7 +251,7 @@ export default function AlmanacApp({
             onClick={() => onNav(-1)}
             className="h-9 rounded-full border border-[color:var(--hairline)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)]"
           >
-            上月
+            {copy.prevMonth}
           </button>
           <h2 className="text-[16px] font-bold text-[color:var(--ink-1)]">{monthLabel}</h2>
           <button
@@ -250,20 +259,20 @@ export default function AlmanacApp({
             onClick={() => onNav(1)}
             className="h-9 rounded-full border border-[color:var(--hairline)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)]"
           >
-            下月
+            {copy.nextMonth}
           </button>
         </div>
 
         <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[color:var(--ink-5)]">
-          {WEEK.map((w) => (
-            <div key={w} className="py-1">
+          {weekChars.map((w, i) => (
+            <div key={`${w}-${i}`} className="py-1">
               {w}
             </div>
           ))}
         </div>
 
         {loading && !cells.length ? (
-          <p className="py-8 text-center text-[13px] text-[color:var(--ink-4)]">加载日历…</p>
+          <p className="py-8 text-center text-[13px] text-[color:var(--ink-4)]">{copy.loading}</p>
         ) : (
           <div className="grid grid-cols-7 gap-1">
             {cells.map((cell) => {
@@ -289,7 +298,7 @@ export default function AlmanacApp({
                     </span>
                     {cell.hasJieQi ? (
                       <span className="rounded bg-[color:var(--brand)]/10 px-1 text-[9px] font-bold text-[color:var(--brand-strong)]">
-                        节
+                        {copy.jie}
                       </span>
                     ) : null}
                   </div>
@@ -305,58 +314,64 @@ export default function AlmanacApp({
           </div>
         )}
         {error ? <p className="mt-2 text-[12px] text-amber-800">{error}</p> : null}
-        <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
-          每日独立地址 /almanac/YYYY-MM-DD · 可分享收录
-        </p>
+        <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">{copy.dayUrlHint}</p>
       </section>
 
       {!hasChart ? (
         <LightBirthBridge
           source="almanac"
           page={`/almanac/${selectedDate}`}
-          title="绑定生辰，解锁「我的每日黄历」"
-          description="引擎取日主与用神，叠通书流日；撕页/个人日运/全球对照等视图均可显示你的匹配分。"
+          title={copy.bindTitle}
+          description={copy.bindDesc}
         />
       ) : (
         <p className="text-[12px] text-[color:var(--ink-4)]">
-          已接入命盘（{chartSource || 'engine'}）· 日主 {personal?.dayMaster}
-          {personal?.yongShen?.length ? ` · 用神 ${personal.yongShen.join('')}` : ''}。
+          {copy.chartLinked(
+            chartSource || 'engine',
+            personal?.dayMaster || '',
+            personal?.yongShen?.join('') || '',
+          )}
           <Link
             href="/profile/foundation?source=almanac"
             className="ml-1 text-[color:var(--brand)] underline-offset-2 hover:underline"
           >
-            完善底座
+            {copy.foundation}
           </Link>
         </p>
       )}
 
       {pack ? (
         <>
-          <AlmanacSkinViews skin={skinId} pack={pack} personal={personal} region={region} />
-          <AlmanacLensPanel date={pack.date} hasChart={hasChart} />
+          <AlmanacSkinViews
+            skin={skinId}
+            pack={pack}
+            personal={personal}
+            region={region}
+            locale={locale}
+          />
+          <AlmanacLensPanel date={pack.date} hasChart={hasChart} locale={locale} />
         </>
       ) : null}
 
       <section className="rounded-xl border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-        <strong className="text-[color:var(--ink-2)]">落地页说明</strong>
+        <strong className="text-[color:var(--ink-2)]">{copy.footerTitle}</strong>
         {' — '}
-        撕页样式致敬传统挂历信息密度（宜忌、十二时辰格、冲煞、胎神、吉神方位等）；
-        日本侧重六曜、北美侧重星座叙述、华人区保留完整通书。潮汐/地方彩票等未收录。
+        {copy.footerBody}
         <div className="mt-2 flex flex-wrap gap-3">
           <Link href="/almanac" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
-            回到今日
+            {copy.backToday}
           </Link>
           <Link
             href="/world-yi/era-timing"
             className="text-[color:var(--brand)] underline-offset-2 hover:underline"
           >
-            时代天时
+            {copy.eraTiming}
           </Link>
           <Link
             href="/analyze?source=almanac"
             className="text-[color:var(--brand)] underline-offset-2 hover:underline"
           >
-            完整报告
+            {copy.fullReport}
           </Link>
         </div>
       </section>

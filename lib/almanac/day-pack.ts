@@ -109,6 +109,7 @@ export function buildAlmanacDayPack(date: string | Date = new Date()): AlmanacDa
     const festivals = asStringArray(lunar.getFestivals?.()).concat(asStringArray(lunar.getOtherFestivals?.()));
     const dayGanZhi = `${lunar.getDayInGanZhi?.() || ''}`.trim();
     const hours = buildHours(lunar);
+    const nayin = `${lunar.getDayNaYin?.() || ''}`.trim();
 
     const monthCn = `${lunar.getMonthInChinese?.() || ''}`.trim();
     const dayCn = `${lunar.getDayInChinese?.() || ''}`.trim();
@@ -186,14 +187,32 @@ export function buildAlmanacDayPack(date: string | Date = new Date()): AlmanacDa
         `${lunar.getPengZuGan?.() || ''}`.trim(),
         `${lunar.getPengZuZhi?.() || ''}`.trim(),
       ].filter(Boolean),
-      nayin: `${lunar.getDayNaYin?.() || ''}`.trim(),
+      nayin,
       liuYao,
       nineStar,
       dayLu: `${lunar.getDayLu?.() || ''}`.trim(),
       hours,
       westernSign: west.zh,
       westernSignEn: west.en,
+      yearNaYin: `${lunar.getYearNaYin?.() || ''}`.trim(),
+      monthNaYin: `${lunar.getMonthNaYin?.() || ''}`.trim(),
+      season: `${lunar.getSeason?.() || ''}`.trim(),
+      hou: `${lunar.getHou?.() || ''}`.trim(),
+      wuHou: `${lunar.getWuHou?.() || ''}`.trim(),
       summary: summaryParts.join(' · '),
+      longSummary: [
+        `${dateStr}${WEEKDAYS_EN[weekday] ? ` ${WEEKDAYS_EN[weekday]}` : ''}`,
+        `农历${monthCn}${dayCn} · 日柱${dayGanZhi}${nayin ? `（${nayin}）` : ''}`,
+        jieQi ? `节气${jieQi}` : '',
+        liuYao ? `六曜${liuYao}` : '',
+        yi.length ? `宜${yi.slice(0, 6).join('、')}` : '',
+        ji.length ? `忌${ji.slice(0, 4).join('、')}` : '',
+        `冲${`${lunar.getDayChongShengXiao?.() || ''}`.trim() || '—'}煞${`${lunar.getDaySha?.() || ''}`.trim() || '—'}`,
+        `星座${west.zh}`,
+        '人生K线万年历：通书+个人结构日运',
+      ]
+        .filter(Boolean)
+        .join('。'),
     };
   } catch (error) {
     console.error('[almanac] buildAlmanacDayPack failed', date, error);

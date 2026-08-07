@@ -12,10 +12,21 @@ import { buildPersonalDayOverlay } from '@/lib/almanac/personal-day';
 import { resolveUserChartForAlmanac } from '@/lib/almanac/resolve-user-chart';
 import { getAuthSession } from '@/lib/auth';
 import {
-  articleSeo,
+  almanacDaySeoCopy,
+  almanacFaqCopy,
+  almanacHubCopy,
+  almanacUiCopy,
+} from '@/lib/i18n/almanac-copy';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
+import {
+  absoluteUrl,
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
+  buildPageMetadata,
+  buildProductLanguageAlternates,
+  withLocalePrefix,
 } from '@/lib/seo';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 
@@ -23,57 +34,60 @@ export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ date: string }>;
-  searchParams?: Promise<{ skin?: string; region?: string }>;
+  searchParams?: Promise<{ skin?: string; region?: string; lang?: string }>;
 }
 
 function isValidDate(date: string): boolean {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-  const pack = buildAlmanacDayPack(date);
-  return Boolean(pack);
+  return Boolean(buildAlmanacDayPack(date));
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({ params, searchParams }: PageProps): Promise<Metadata> {
   const { date } = await params;
+  const sp = searchParams ? await searchParams : {};
+  const locale = (await getRequestLocale(sp.lang)) as SiteLocale;
   if (!isValidDate(date)) {
-    return { title: '万年历' };
+    return { title: locale === 'en' ? 'Almanac' : '万年历' };
   }
   const pack = buildAlmanacDayPack(date)!;
-  const title = `${date}黄历｜${pack.lunar.dayGanZhi}日 · 宜忌时辰·个人日运｜人生K线万年历`;
-  const description = `${date}（农历${pack.lunar.lunarText}）日柱${pack.lunar.dayGanZhi}。宜${pack.yi.slice(0, 4).join('、') || '—'}；忌${pack.ji.slice(0, 3).join('、') || '—'}。查十二时辰黄道黑道；绑定生辰看个人结构日运。`;
-  return articleSeo({
-    title,
-    summary: description,
-    path: `/almanac/${date}`,
-    type: 'insight',
-    keywords: [
-      '万年历',
-      '黄历',
-      date,
-      pack.lunar.dayGanZhi,
-      '宜忌',
-      '吉时',
-      '个人日运',
-      ...pack.yi.slice(0, 3),
-    ],
-    canonicalPath: `/almanac/${date}`,
-    answerSummary: description,
-    entityKeywords: [
-      '万年历',
-      '黄历',
-      pack.lunar.dayGanZhi,
-      '通书',
-      '时辰',
-      '日主',
-      '人生K线',
-    ],
+  const seo = almanacDaySeoCopy(locale, {
+    date,
+    dayGanZhi: pack.lunar.dayGanZhi,
+    lunarText: pack.lunar.lunarText,
+    yi: pack.yi,
+    ji: pack.ji,
+    liuYao: pack.liuYao,
+    western: locale === 'en' ? pack.westernSignEn : pack.westernSign,
+  });
+  const path = `/almanac/${date}`;
+  const uiLocale = locale === 'en' ? 'en' : locale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN';
+
+  return buildPageMetadata({
+    title: seo.title,
+    description: (seo.description || pack.longSummary).slice(0, 160),
+    path: withLocalePrefix(path, uiLocale),
+    locale: uiLocale,
+    keywords: seo.keywords,
+    type: 'article',
+    multiLanguage: true,
+    languages: buildProductLanguageAlternates(path),
   });
 }
 
 export default async function AlmanacDatePage({ params, searchParams }: PageProps) {
   const { date } = await params;
   const sp = searchParams ? await searchParams : {};
+  const locale = (await getRequestLocale(sp.lang)) as SiteLocale;
+  const hub = almanacHubCopy(locale);
+  const ui = almanacUiCopy(locale);
+
   if (date === 'today') {
-    redirect(`/almanac/${todayDateString()}`);
+    const q = new URLSearchParams();
+    if (sp.skin) q.set('skin', sp.skin);
+    if (sp.region) q.set('region', sp.region);
+    if (sp.lang) q.set('lang', sp.lang);
+    const qs = q.toString();
+    redirect(`/almanac/${todayDateString()}${qs ? `?${qs}` : ''}`);
   }
   if (!isValidDate(date)) notFound();
 
@@ -85,82 +99,111 @@ export default async function AlmanacDatePage({ params, searchParams }: PageProp
   const userId = session.user?.id || (await getOrCreateGuestUserId().catch(() => null));
   const chart = await resolveUserChartForAlmanac(userId);
   const personal = chart ? buildPersonalDayOverlay(pack, chart) : null;
+  const faqs = almanacFaqCopy(locale, date, pack);
 
-  const faqs = [
-    {
-      question: `${date}适合做什么？`,
-      answer: `通书宜：${pack.yi.slice(0, 6).join('、') || '从简行事'}。是否推进仍须结合你的日主结构与现实约束。`,
-    },
-    {
-      question: `${date}有哪些吉时？`,
-      answer: `黄道时辰：${
-        pack.hours
-          .filter((h) => h.luck === 'auspicious')
-          .map((h) => `${h.timeLabel}${h.ganZhi}`)
-          .join('、') || '见当日时辰表'
-      }。绑定命盘后会按用神重排个人较顺时段。`,
-    },
-    {
-      question: '个人黄历和公共黄历有什么区别？',
-      answer: '公共层是通书宜忌与十二时辰；个人层用你的日主/用神叠流日，给出推进/守成倾向与时辰排序。',
-    },
-  ];
+  const path = `/almanac/${date}`;
+  const seo = almanacDaySeoCopy(locale, {
+    date,
+    dayGanZhi: pack.lunar.dayGanZhi,
+    lunarText: pack.lunar.lunarText,
+    yi: pack.yi,
+    ji: pack.ji,
+    liuYao: pack.liuYao,
+    western: locale === 'en' ? pack.westernSignEn : pack.westernSign,
+  });
 
   return (
-    <AppPage header={{ ctaHref: '/analyze?source=almanac_day', ctaLabel: '接到报告', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze?source=almanac_day', ctaLabel: hub.ctaReport, compact: true }}>
       <AnalyticsPageView
         eventName="almanac_day_viewed"
-        page={`/almanac/${date}`}
-        meta={{ surfaceKey: 'almanac_day', date, hasPersonal: Boolean(personal) }}
+        page={path}
+        meta={{
+          surfaceKey: 'almanac_day',
+          date,
+          locale,
+          hasPersonal: Boolean(personal),
+          geoReady: true,
+        }}
       />
       <JsonLd
         data={buildBreadcrumbJsonLd([
-          { name: '首页', path: '/' },
-          { name: '万年历', path: '/almanac' },
-          { name: date, path: `/almanac/${date}` },
+          {
+            name: locale === 'en' ? 'Home' : locale === 'zh-Hant' ? '首頁' : '首页',
+            path: '/',
+          },
+          {
+            name: locale === 'en' ? 'Almanac' : locale === 'zh-Hant' ? '萬年曆' : '万年历',
+            path: '/almanac',
+          },
+          { name: date, path },
         ])}
       />
       <JsonLd
         data={buildArticleJsonLd({
-          title: `${date}黄历 ${pack.lunar.dayGanZhi}`,
-          description: pack.summary,
-          path: `/almanac/${date}`,
-          keywords: ['万年历', '黄历', date, pack.lunar.dayGanZhi],
-          inLanguage: 'zh-CN',
+          title: seo.title,
+          description: seo.description,
+          path,
+          keywords: seo.keywords,
+          inLanguage: locale === 'en' ? 'en' : locale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN',
         })}
       />
       <JsonLd data={buildFaqJsonLd(faqs)} />
+      {/* AI / GEO hint meta via JSON-LD dataset */}
+      <JsonLd
+        data={{
+          '@context': 'https://schema.org',
+          '@type': 'Dataset',
+          name: seo.title,
+          description: pack.longSummary,
+          url: absoluteUrl(path),
+          keywords: seo.keywords.join(', '),
+          inLanguage: locale === 'en' ? 'en' : 'zh',
+          creator: { '@type': 'Organization', name: 'Life K-Line' },
+        }}
+      />
 
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <div className="flex flex-wrap items-center gap-3 text-[13px]">
-          <Link href="/almanac" className="font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline">
-            ← 万年历今日
+          <Link
+            href={sp.lang ? `/almanac?lang=${sp.lang}` : '/almanac'}
+            className="font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
+          >
+            ← {ui.backToday}
           </Link>
           <span className="text-[color:var(--ink-5)]">/</span>
           <span className="text-[color:var(--ink-3)]">{date}</span>
+          <span className="text-[color:var(--ink-5)]">·</span>
+          <Link
+            href={`${path}?lang=zh-CN`}
+            className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:underline"
+          >
+            简
+          </Link>
+          <Link
+            href={`${path}?lang=zh-Hant`}
+            className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:underline"
+          >
+            繁
+          </Link>
+          <Link
+            href={`${path}?lang=en`}
+            className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:underline"
+          >
+            EN
+          </Link>
         </div>
 
-        {/* Interactive hub: skins + regions + day (includes SSR-friendly content in client after load) */}
+        {/* Visible SSR content for SEO (not screen-reader only) */}
+        <AlmanacDayPanel pack={pack} personal={personal} showCanonical={false} locale={locale} />
+
         {!personal ? (
           <LightBirthBridge
             source="almanac_day"
-            page={`/almanac/${date}`}
-            title="绑定生辰，生成你的个人黄历"
-            description="引擎排盘取日主与用神，与当日流日通书匹配；撕页/个人日运/全球对照等视图均可显示匹配分。"
+            page={path}
+            title={ui.bindTitle}
+            description={ui.bindDesc}
           />
         ) : null}
-
-        {/* SSR dense summary for crawlers */}
-        <div className="sr-only" aria-hidden={false}>
-          <h1>
-            {date}黄历 {pack.lunar.dayGanZhi}
-          </h1>
-          <p>
-            宜{pack.yi.join('、')} 忌{pack.ji.join('、')} 冲{pack.chong} 六曜{pack.liuYao}{' '}
-            {pack.westernSign}
-          </p>
-          <AlmanacDayPanel pack={pack} personal={personal} showCanonical={false} />
-        </div>
 
         <AlmanacApp
           initialYear={year}
@@ -169,10 +212,13 @@ export default async function AlmanacDatePage({ params, searchParams }: PageProp
           navigateOnSelect
           initialSkin={sp.skin}
           initialRegion={sp.region}
+          locale={locale}
         />
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
-          <h2 className="text-[14px] font-bold text-[color:var(--ink-1)]">常见问题</h2>
+          <h2 className="text-[14px] font-bold text-[color:var(--ink-1)]">
+            {locale === 'en' ? 'FAQ' : locale === 'zh-Hant' ? '常見問題' : '常见问题'}
+          </h2>
           <ul className="mt-3 space-y-3">
             {faqs.map((f) => (
               <li key={f.question}>

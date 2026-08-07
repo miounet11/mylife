@@ -6,6 +6,7 @@ import { regionShows } from '@/lib/almanac/regions';
 import type { AlmanacSkinId } from '@/lib/almanac/skins';
 import AlmanacDayPanel from '@/components/almanac/almanac-day-panel';
 import AlmanacTearSheet from '@/components/almanac/almanac-tear-sheet';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 function luckLabel(luck: string) {
   if (luck === 'auspicious') return { t: '吉', c: 'bg-emerald-500 text-white' };
@@ -227,15 +228,17 @@ export default function AlmanacSkinViews({
   pack,
   personal,
   region,
+  locale = 'zh-CN',
 }: {
   skin: AlmanacSkinId;
   pack: AlmanacDayPack;
   personal?: PersonalDayOverlay | null;
   region: AlmanacRegionProfile;
+  locale?: SiteLocale;
 }) {
   if (skin === 'tear') return <AlmanacTearSheet pack={pack} personal={personal} />;
   if (skin === 'grid') return <HourGridView pack={pack} personal={personal} />;
   if (skin === 'global') return <GlobalCompareView pack={pack} personal={personal} region={region} />;
   if (skin === 'personal') return <PersonalFirstView pack={pack} personal={personal} />;
-  return <AlmanacDayPanel pack={pack} personal={personal} showCanonical />;
+  return <AlmanacDayPanel pack={pack} personal={personal} showCanonical locale={locale} />;
 }

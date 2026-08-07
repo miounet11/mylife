@@ -1,9 +1,14 @@
 import Link from 'next/link';
 import type { AlmanacDayPack, PersonalDayOverlay } from '@/lib/almanac/types';
+import {
+  almanacDayPanelCopy,
+  translateYiJiList,
+} from '@/lib/i18n/almanac-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 function Stars({ n }: { n: number }) {
   return (
-    <span className="tracking-tight text-[color:var(--brand)]" aria-label={`${n}星`}>
+    <span className="tracking-tight text-[color:var(--brand)]" aria-label={`${n}`}>
       {'★'.repeat(n)}
       <span className="text-[color:var(--ink-5)]">{'★'.repeat(Math.max(0, 5 - n))}</span>
     </span>
@@ -33,32 +38,41 @@ export default function AlmanacDayPanel({
   pack,
   personal,
   showCanonical = true,
+  locale = 'zh-CN',
 }: {
   pack: AlmanacDayPack;
   personal?: PersonalDayOverlay | null;
   showCanonical?: boolean;
+  locale?: SiteLocale;
 }) {
+  const copy = almanacDayPanelCopy(locale);
+  const yi = translateYiJiList(pack.yi, locale);
+  const ji = translateYiJiList(pack.ji, locale);
   const stanceLabel =
-    personal?.stance === 'push' ? '可推进' : personal?.stance === 'conserve' ? '宜守成' : '稳节奏';
+    personal?.stance === 'push'
+      ? copy.stancePush
+      : personal?.stance === 'conserve'
+        ? copy.stanceConserve
+        : copy.stanceSteady;
 
   return (
-    <div className="space-y-4" data-almanac-day={pack.date}>
-      {/* Hero — zodiac-site style */}
+    <div className="space-y-4" data-almanac-day={pack.date} data-locale={locale}>
       <header className="overflow-hidden rounded-2xl border border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-soft)]/50 via-white to-[color:var(--paper)] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">
             <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[color:var(--brand-strong)]">
-              {personal ? '我的个人黄历' : '通书黄历'}
+              {personal ? copy.personalTitle : copy.publicTongshu}
             </p>
-            <h2 className="mt-1 text-[22px] font-black tracking-tight text-[color:var(--ink-1)] md:text-[26px]">
+            <h1 className="mt-1 text-[22px] font-black tracking-tight text-[color:var(--ink-1)] md:text-[26px]">
               {pack.date}
               <span className="ml-2 text-[15px] font-semibold text-[color:var(--ink-4)]">
-                {pack.weekdayLabel}
+                {locale === 'en' ? pack.weekdayEn : pack.weekdayLabel}
               </span>
-            </h2>
+            </h1>
             <p className="mt-1 text-[14px] text-[color:var(--ink-3)]">
-              农历{pack.lunar.lunarText}
-              {pack.lunar.yearGanZhi ? ` · ${pack.lunar.yearGanZhi}年` : ''}
+              {copy.lunar}
+              {pack.lunar.lunarText}
+              {pack.lunar.yearGanZhi ? ` · ${pack.lunar.yearGanZhi}` : ''}
               {pack.lunar.yearShengXiao ? `（${pack.lunar.yearShengXiao}）` : ''}
               {pack.jieQi ? (
                 <span className="ml-2 rounded-full bg-[color:var(--brand)] px-2 py-0.5 text-[11px] font-semibold text-white">
@@ -72,15 +86,16 @@ export default function AlmanacDayPanel({
               </p>
             ) : (
               <p className="mt-3 max-w-xl text-[14px] leading-relaxed text-[color:var(--ink-4)]">
-                流日{pack.lunar.dayGanZhi}
-                {pack.nayin ? ` · ${pack.nayin}` : ''}。公共通书如下；绑定生辰后可看专属星级与时辰。
+                {locale === 'en'
+                  ? `Flow day ${pack.lunar.dayGanZhi}${pack.nayin ? ` · ${pack.nayin}` : ''}. ${copy.bindHint}`
+                  : `流日${pack.lunar.dayGanZhi}${pack.nayin ? ` · ${pack.nayin}` : ''}。${copy.bindHint}`}
               </p>
             )}
           </div>
 
           {personal ? (
             <div className="w-full max-w-[160px] rounded-2xl border border-[color:var(--hairline)] bg-white p-4 text-center shadow-sm">
-              <div className="text-[11px] text-[color:var(--ink-5)]">今日匹配</div>
+              <div className="text-[11px] text-[color:var(--ink-5)]">{copy.match}</div>
               <div className="mt-1 text-[36px] font-black leading-none text-[color:var(--brand)]">
                 {personal.score}
               </div>
@@ -91,7 +106,7 @@ export default function AlmanacDayPanel({
                 {stanceLabel}
               </div>
               <div className="mt-2 text-[11px] text-[color:var(--ink-5)]">
-                日主 {personal.dayMaster}
+                {copy.dayMaster} {personal.dayMaster}
                 {personal.dayMasterElement ? `·${personal.dayMasterElement}` : ''}
               </div>
             </div>
@@ -100,25 +115,53 @@ export default function AlmanacDayPanel({
 
         <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-4 text-[12px] text-[color:var(--ink-3)] sm:grid-cols-3">
           <div>
-            <span className="text-[color:var(--ink-5)]">日柱</span> {pack.lunar.dayGanZhi || '—'}
+            <span className="text-[color:var(--ink-5)]">{copy.dayPillar}</span> {pack.lunar.dayGanZhi || '—'}
           </div>
           <div>
-            <span className="text-[color:var(--ink-5)]">建除 · 宿</span> {pack.zhiXing || '—'}
+            <span className="text-[color:var(--ink-5)]">{copy.zhiXingXiu}</span> {pack.zhiXing || '—'}
             {pack.xiu ? ` · ${pack.xiu}` : ''}
           </div>
           <div>
-            <span className="text-[color:var(--ink-5)]">冲煞</span> {pack.chong || '—'}
-            {pack.sha ? ` · 煞${pack.sha}` : ''}
+            <span className="text-[color:var(--ink-5)]">{copy.chongSha}</span> {pack.chong || '—'}
+            {pack.sha ? ` · ${pack.sha}` : ''}
           </div>
+        </div>
+
+        <div className="mt-3 grid gap-2 text-[11px] text-[color:var(--ink-4)] sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <span className="text-[color:var(--ink-5)]">{copy.tai}</span> {pack.positions.tai || '—'}
+          </div>
+          <div>
+            <span className="text-[color:var(--ink-5)]">{copy.liuYao}</span> {pack.liuYao || '—'}
+          </div>
+          <div>
+            <span className="text-[color:var(--ink-5)]">{copy.nineStar}</span> {pack.nineStar || '—'}
+          </div>
+          <div>
+            <span className="text-[color:var(--ink-5)]">{copy.western}</span>{' '}
+            {locale === 'en' ? pack.westernSignEn : pack.westernSign}
+          </div>
+          {(pack.season || pack.hou || pack.wuHou) && (
+            <div className="sm:col-span-2">
+              <span className="text-[color:var(--ink-5)]">{copy.season}</span>{' '}
+              {[pack.season, pack.hou, pack.wuHou].filter(Boolean).join(' · ')}
+            </div>
+          )}
+          {(pack.yearNaYin || pack.monthNaYin) && (
+            <div className="sm:col-span-2">
+              <span className="text-[color:var(--ink-5)]">NaYin</span>{' '}
+              {[pack.yearNaYin, pack.monthNaYin, pack.nayin].filter(Boolean).join(' / ')}
+            </div>
+          )}
         </div>
 
         {showCanonical ? (
           <p className="mt-3 text-[11px] text-[color:var(--ink-5)]">
-            本页地址：
+            {copy.pageUrl}
             <Link href={`/almanac/${pack.date}`} className="text-[color:var(--brand)] underline-offset-2 hover:underline">
               /almanac/{pack.date}
             </Link>
-            （可分享、可收录）
+            {copy.shareSeo}
           </p>
         ) : null}
       </header>
@@ -126,17 +169,17 @@ export default function AlmanacDayPanel({
       {personal ? (
         <section className="grid gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
-            <h3 className="text-[13px] font-bold text-emerald-900">今日可借力</h3>
+            <h2 className="text-[13px] font-bold text-emerald-900">{copy.favors}</h2>
             <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed text-emerald-950/80">
-              {(personal.favors.length ? personal.favors : ['保持轻推进与验证']).map((f) => (
+              {(personal.favors.length ? personal.favors : ['—']).map((f) => (
                 <li key={f}>· {f}</li>
               ))}
             </ul>
           </div>
           <div className="rounded-xl border border-amber-100 bg-amber-50/70 p-4">
-            <h3 className="text-[13px] font-bold text-amber-950">今日宜注意</h3>
+            <h2 className="text-[13px] font-bold text-amber-950">{copy.watchouts}</h2>
             <ul className="mt-2 space-y-1.5 text-[13px] leading-relaxed text-amber-950/80">
-              {(personal.watchouts.length ? personal.watchouts : ['避免一次押注式决定']).map((f) => (
+              {(personal.watchouts.length ? personal.watchouts : ['—']).map((f) => (
                 <li key={f}>· {f}</li>
               ))}
             </ul>
@@ -146,56 +189,63 @@ export default function AlmanacDayPanel({
 
       <section className="grid gap-3 sm:grid-cols-2">
         <div className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
-          <h3 className="text-[13px] font-bold text-[color:var(--ink-1)]">通书 · 宜</h3>
+          <h2 className="text-[13px] font-bold text-[color:var(--ink-1)]">{copy.yi}</h2>
           <div className="mt-2">
-            <TagList items={pack.yi} tone="good" />
+            <TagList items={yi} tone="good" />
           </div>
         </div>
         <div className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
-          <h3 className="text-[13px] font-bold text-[color:var(--ink-1)]">通书 · 忌</h3>
+          <h2 className="text-[13px] font-bold text-[color:var(--ink-1)]">{copy.ji}</h2>
           <div className="mt-2">
-            <TagList items={pack.ji} tone="bad" />
+            <TagList items={ji} tone="bad" />
           </div>
         </div>
       </section>
 
       <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
-        <h3 className="text-[13px] font-bold text-[color:var(--ink-1)]">吉神 · 凶煞 · 方位</h3>
+        <h2 className="text-[13px] font-bold text-[color:var(--ink-1)]">{copy.deities}</h2>
         <div className="mt-2 grid gap-3 text-[12px] sm:grid-cols-3">
           <div>
-            <div className="text-[color:var(--ink-5)]">吉神</div>
-            <div className="mt-1 text-[color:var(--ink-3)]">{pack.jiShen.join('、') || '—'}</div>
+            <div className="text-[color:var(--ink-5)]">{copy.jiShen}</div>
+            <div className="mt-1 text-[color:var(--ink-3)]">{pack.jiShen.join(locale === 'en' ? ', ' : '、') || '—'}</div>
           </div>
           <div>
-            <div className="text-[color:var(--ink-5)]">凶煞</div>
-            <div className="mt-1 text-[color:var(--ink-3)]">{pack.xiongSha.join('、') || '—'}</div>
+            <div className="text-[color:var(--ink-5)]">{copy.xiongSha}</div>
+            <div className="mt-1 text-[color:var(--ink-3)]">{pack.xiongSha.join(locale === 'en' ? ', ' : '、') || '—'}</div>
           </div>
           <div>
-            <div className="text-[color:var(--ink-5)]">喜 / 福 / 财</div>
+            <div className="text-[color:var(--ink-5)]">{copy.directions}</div>
             <div className="mt-1 text-[color:var(--ink-3)]">
               {pack.positions.xi || '—'} / {pack.positions.fu || '—'} / {pack.positions.cai || '—'}
             </div>
           </div>
         </div>
         {pack.pengZu.length ? (
-          <p className="mt-3 text-[11px] text-[color:var(--ink-5)]">彭祖百忌：{pack.pengZu.join('；')}</p>
+          <p className="mt-3 text-[11px] text-[color:var(--ink-5)]">
+            {copy.pengZu}：{pack.pengZu.join(locale === 'en' ? '; ' : '；')}
+          </p>
+        ) : null}
+        {pack.xiuSong ? (
+          <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--ink-5)]">{pack.xiuSong}</p>
         ) : null}
       </section>
 
       <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h3 className="text-[13px] font-bold text-[color:var(--ink-1)]">十二时辰</h3>
-            <p className="mt-0.5 text-[11px] text-[color:var(--ink-5)]">
-              黄道 / 黑道为通书；右侧为你的结构排序（有命盘时）
-            </p>
+            <h2 className="text-[13px] font-bold text-[color:var(--ink-1)]">{copy.hours}</h2>
+            <p className="mt-0.5 text-[11px] text-[color:var(--ink-5)]">{copy.hoursHint}</p>
           </div>
         </div>
         <ul className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {pack.hours.map((h) => {
             const personalHour = personal?.hours.find((x) => x.ganZhi === h.ganZhi);
             const luckLabel =
-              h.luck === 'auspicious' ? '黄道' : h.luck === 'inauspicious' ? '黑道' : '平';
+              h.luck === 'auspicious'
+                ? copy.huangdao
+                : h.luck === 'inauspicious'
+                  ? copy.heidao
+                  : copy.mid;
             const border =
               personalHour && personalHour.personalScore >= 68
                 ? 'border-emerald-300 bg-emerald-50/50'
@@ -220,7 +270,9 @@ export default function AlmanacDayPanel({
                 {personalHour ? (
                   <div className="mt-1 flex items-center justify-between text-[10px] text-[color:var(--ink-5)]">
                     <span>{personalHour.reason}</span>
-                    <span className="font-bold text-[color:var(--ink-3)]">{personalHour.personalScore}</span>
+                    <span className="font-bold text-[color:var(--ink-3)]">
+                      {copy.personal} {personalHour.personalScore}
+                    </span>
                   </div>
                 ) : null}
               </li>

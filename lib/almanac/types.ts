@@ -75,8 +75,15 @@ export type AlmanacDayPack = {
   /** 太阳星座（公历）— 全球层 */
   westernSign: string;
   westernSignEn: string;
+  yearNaYin: string;
+  monthNaYin: string;
+  season: string;
+  hou: string;
+  wuHou: string;
   /** Short public summary for cards */
   summary: string;
+  /** SEO-friendly long description */
+  longSummary: string;
 };
 
 export type PersonalDayStance = 'push' | 'steady' | 'conserve';

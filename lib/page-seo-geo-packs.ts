@@ -664,9 +664,22 @@ const ALMANAC: PageSeoGeoPack = {
   title: '万年历黄历｜每日宜忌·十二时辰·个人日运｜人生K线',
   description:
     '查公历农历与通书宜忌、冲煞、十二时辰黄道黑道；绑定生辰后叠加日主结构，看今日宜推进还是守成、哪些时辰更顺。',
-  keywords: ['万年历', '黄历', '每日宜忌', '十二时辰', '吉时', '个人日运', '通书'],
+  keywords: [
+    '万年历',
+    '黄历',
+    '每日宜忌',
+    '十二时辰',
+    '吉时',
+    '个人日运',
+    '通书',
+    '六曜',
+    'Chinese almanac',
+    'tong shu',
+    'auspicious hours',
+    'bazi daily',
+  ],
   answerSummary:
-    '人生K线万年历：公共通书（宜忌、冲煞、黄道时辰、胎神、吉神方位、六曜等）+ 个人日主用神匹配。支持撕页通书/现代卡片/个人日运/时辰宫格/全球对照五种展示，以及中国、台湾、香港、新加坡、日本、韩国、越南、北美等地区侧重。每日 URL /almanac/YYYY-MM-DD 可收录。',
+    '人生K线万年历：公共通书（宜忌、冲煞、黄道时辰、胎神、吉神方位、六曜、九星、星座、物候）+ 个人日主用神匹配。五种展示（撕页/现代/个人日运/时辰宫格/全球对照）与多地区侧重。每日 canonical URL /almanac/YYYY-MM-DD 支持简繁英 hreflang 收录。节奏工具，非医疗投资建议。',
   searchIntents: [
     '万年历黄历查询',
     '今日宜忌吉时',
@@ -676,6 +689,8 @@ const ALMANAC: PageSeoGeoPack = {
     '个人黄历',
     '六曜大安',
     '通胜择日',
+    'Chinese almanac today',
+    'auspicious hours bazi',
   ],
   entityKeywords: [
     '万年历',
@@ -687,7 +702,12 @@ const ALMANAC: PageSeoGeoPack = {
     '时辰',
     '日主',
     '用神',
+    '六曜',
+    '九星',
+    '胎神',
     '人生K线',
+    'Life K-Line',
+    'tong shu',
   ],
   howTo: [
     { step: '选日期', body: '在月历点选要查看的公历日。' },

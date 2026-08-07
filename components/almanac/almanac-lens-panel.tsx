@@ -7,15 +7,20 @@ import {
   type AlmanacLensId,
   type AlmanacLensResult,
 } from '@/lib/almanac/llm-lenses';
+import { almanacLensCopy } from '@/lib/i18n/almanac-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { trackProductEvent } from '@/lib/product-analytics';
 
 export default function AlmanacLensPanel({
   date,
   hasChart,
+  locale = 'zh-CN',
 }: {
   date: string;
   hasChart: boolean;
+  locale?: SiteLocale;
 }) {
+  const copy = almanacLensCopy(locale);
   const [active, setActive] = useState<AlmanacLensId | null>(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<AlmanacLensResult | null>(null);
@@ -59,15 +64,11 @@ export default function AlmanacLensPanel({
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand)]">
-            AI 个人黄历镜头
+            {copy.eyebrow}
           </p>
-          <h3 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">
-            点选固定视角，读懂今天与你的匹配
-          </h3>
+          <h3 className="mt-1 text-[16px] font-bold text-[color:var(--ink-1)]">{copy.title}</h3>
           <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-            {hasChart
-              ? '已接入你的命盘结构；镜头只解读，不改写四柱。'
-              : '未绑定命盘时仍可看公共节奏；绑定后叙述会贴合日主与用神。'}
+            {hasChart ? copy.hasChart : copy.noChart}
           </p>
         </div>
       </div>
@@ -97,7 +98,7 @@ export default function AlmanacLensPanel({
       {loading ? (
         <div className="mt-4 flex items-center gap-2 text-[13px] text-[color:var(--ink-4)]">
           <Loader2 className="h-4 w-4 animate-spin" />
-          正在写你的个人黄历…
+          {copy.loading}
         </div>
       ) : null}
 
@@ -109,7 +110,7 @@ export default function AlmanacLensPanel({
             <h4 className="text-[15px] font-bold text-[color:var(--ink-1)]">{result.title}</h4>
             <span className="rounded-full bg-[color:var(--brand-soft)] px-2.5 py-0.5 text-[11px] font-semibold text-[color:var(--brand-strong)]">
               {result.mood}
-              {llmUsed ? '' : ' · 结构模板'}
+              {llmUsed ? '' : copy.template}
             </span>
           </div>
           <div className="mt-3 space-y-2 text-[13px] leading-relaxed text-[color:var(--ink-3)]">

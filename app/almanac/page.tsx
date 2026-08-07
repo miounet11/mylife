@@ -7,15 +7,41 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
 import { todayDateString } from '@/lib/almanac/day-pack';
+import { almanacHubCopy } from '@/lib/i18n/almanac-copy';
+import { getRequestLocale } from '@/lib/i18n/server-locale';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
+import { buildPageMetadata, buildProductLanguageAlternates, withLocalePrefix } from '@/lib/seo';
 
 export const dynamic = 'force-dynamic';
 
-export const metadata: Metadata = metadataFromPagePack('/almanac', {
-  title: '万年历黄历｜每日宜忌·十二时辰·个人日运｜人生K线',
-  description:
-    '查公历农历与通书宜忌、冲煞、十二时辰黄道黑道；绑定生辰后叠加日主结构，看今日宜推进还是守成、哪些时辰更顺。每日独立 URL 可分享可收录。',
-});
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams?: Promise<{ lang?: string }>;
+}): Promise<Metadata> {
+  const sp = searchParams ? await searchParams : {};
+  const locale = (await getRequestLocale(sp.lang)) as SiteLocale;
+  const copy = almanacHubCopy(locale);
+  const pack = getPageSeoGeoPack('/almanac');
+  const base = buildPageMetadata({
+    title: copy.metaTitle,
+    description: copy.metaDescription.slice(0, 160),
+    path: withLocalePrefix('/almanac', locale === 'en' ? 'en' : locale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN'),
+    locale: locale === 'en' ? 'en' : locale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN',
+    keywords: pack?.keywords,
+    multiLanguage: true,
+    languages: buildProductLanguageAlternates('/almanac'),
+  });
+  return {
+    ...base,
+    other: {
+      ...((base.other as Record<string, string>) || {}),
+      ...(pack?.answerSummary ? { 'ai-answer-summary': pack.answerSummary.slice(0, 400) } : {}),
+      'geo-ready': '1',
+    },
+  };
+}
 
 export default async function AlmanacPage({
   searchParams,
@@ -27,16 +53,19 @@ export default async function AlmanacPage({
     stay?: string;
     skin?: string;
     region?: string;
+    lang?: string;
   }>;
 }) {
   const sp = searchParams ? await searchParams : {};
+  const locale = (await getRequestLocale(sp.lang)) as SiteLocale;
+  const copy = almanacHubCopy(locale);
   const today = todayDateString();
 
-  // ?date=YYYY-MM-DD → canonical day URL
   if (sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) && sp.stay !== '1') {
     const q = new URLSearchParams();
     if (sp.skin) q.set('skin', sp.skin);
     if (sp.region) q.set('region', sp.region);
+    if (sp.lang) q.set('lang', sp.lang);
     const qs = q.toString();
     redirect(`/almanac/${sp.date}${qs ? `?${qs}` : ''}`);
   }
@@ -48,51 +77,47 @@ export default async function AlmanacPage({
   const seoPack = getPageSeoGeoPack('/almanac');
 
   return (
-    <AppPage header={{ ctaHref: '/analyze?source=almanac', ctaLabel: '接到报告', compact: true }}>
+    <AppPage header={{ ctaHref: '/analyze?source=almanac', ctaLabel: copy.ctaReport, compact: true }}>
       {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="almanac_page_viewed"
         page="/almanac"
-        meta={{ surfaceKey: 'almanac', date, geoReady: true }}
+        meta={{ surfaceKey: 'almanac', date, locale, geoReady: true }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="全球黄历落地页"
-          title="今天，对你意味着什么？"
-          description="通书撕页 · 现代卡片 · 个人日运 · 时辰宫格 · 全球对照——多种展示一键切换。支持中国/台湾/香港/新加坡/日本六曜/韩国/越南/北美等文化侧重；绑定生辰后看专属匹配。"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          description={copy.description}
           actions={
             <>
               <Link
-                href={`/almanac/${today}?skin=tear`}
+                href={`/almanac/${today}?skin=tear${sp.lang ? `&lang=${sp.lang}` : ''}`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                撕页通书
+                {copy.linkTear}
               </Link>
               <Link
-                href={`/almanac/${today}?skin=personal`}
+                href={`/almanac/${today}?skin=personal${sp.lang ? `&lang=${sp.lang}` : ''}`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                个人日运
+                {copy.linkPersonal}
               </Link>
               <Link
-                href={`/almanac/${today}?region=global&skin=global`}
+                href={`/almanac/${today}?region=global&skin=global${sp.lang ? `&lang=${sp.lang}` : ''}`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                全球对照
+                {copy.linkGlobal}
               </Link>
               <Link
                 href="/analyze?source=almanac"
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                完整报告
+                {copy.linkReport}
               </Link>
             </>
           }
-          footer={
-            <span className="text-[12px] text-[color:var(--ink-5)]">
-              今日 URL：/almanac/{today}
-            </span>
-          }
+          footer={<span className="text-[12px] text-[color:var(--ink-5)]">{copy.todayUrl(today)}</span>}
         />
         <AlmanacApp
           initialYear={year}
@@ -101,6 +126,7 @@ export default async function AlmanacPage({
           navigateOnSelect
           initialSkin={sp.skin}
           initialRegion={sp.region}
+          locale={locale}
         />
         <PageSeoGeoSection pathOrSlug="/almanac" />
       </div>
