@@ -7,6 +7,9 @@ import {
 } from '@/lib/content-store';
 import { DIMENSIONS } from '@/lib/dimensions/config';
 import { LEARNING_TRACKS } from '@/lib/learning-tracks';
+import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
+import { RISING_PROFILES } from '@/lib/astro/rising-data';
+import { ASTRO_ZONES_48 } from '@/lib/astro/zones-48';
 import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
 import { absoluteUrl, buildProductLanguageAlternates, GEO_CITY_SEEDS } from '@/lib/seo';
@@ -145,6 +148,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/world-yi/cities', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi/era-timing', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/almanac', priority: 0.92, changeFrequency: 'daily', multiLanguage: true },
+    { path: '/astro', priority: 0.91, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/astro/signs', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/astro/zones', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/astro/rising', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
+    // 12 signs + 12 rising + 48 zones expanded below
     // Rolling window of day URLs for personal almanac SEO (today ± 45 days)
     ...Array.from({ length: 91 }, (_, i) => {
       const d = new Date();
@@ -173,6 +181,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/annual-review', priority: 0.65, changeFrequency: 'monthly', multiLanguage: true },
     { path: '/visual-assets/world-yi-six-step-method', priority: 0.65, changeFrequency: 'monthly' },
   ];
+
+  const astroSignRoutes = ASTRO_SIGNS.map((s) => ({
+    path: `/astro/signs/${s.key}`,
+    priority: 0.84,
+    changeFrequency: 'monthly' as const,
+    multiLanguage: true,
+  }));
+  const astroZoneRoutes = ASTRO_ZONES_48.map((z) => ({
+    path: `/astro/zones/${z.id}`,
+    priority: 0.78,
+    changeFrequency: 'monthly' as const,
+    multiLanguage: true,
+  }));
+  const astroRisingRoutes = RISING_PROFILES.map((r) => ({
+    path: `/astro/rising/${r.key}`,
+    priority: 0.82,
+    changeFrequency: 'monthly' as const,
+    multiLanguage: true,
+  }));
 
   const dimensionRoutes = DIMENSIONS.map((item) => ({
     path: `/dimensions/${item.slug}`,
@@ -227,6 +254,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const all = uniqueRoutes([
     ...routes,
+    ...astroSignRoutes,
+    ...astroZoneRoutes,
+    ...astroRisingRoutes,
     ...dimensionRoutes,
     ...toolCategoryRoutes,
     ...toolDetailRoutes,

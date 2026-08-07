@@ -46,6 +46,13 @@ const FEATURES = [
     cta: '看今天',
   },
   {
+    href: '/astro?source=home_featured_strip',
+    badge: 'ZODIAC',
+    title: '星座百科',
+    desc: '十二星座 · 48星区 · 上升 · 世界易',
+    cta: '查星座',
+  },
+  {
     href: '/tools/daily-sign?source=home_featured_strip',
     badge: 'SIGN',
     title: '今日一签',

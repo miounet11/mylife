@@ -56,6 +56,12 @@ export default async function WorldYiPage({
               <Link href="/world-yi/era-timing" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 时代天时
               </Link>
+              <Link href="/astro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                星座百科
+              </Link>
+              <Link href="/almanac" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                万年历
+              </Link>
               <Link href="/learn/intro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 入门专题
               </Link>

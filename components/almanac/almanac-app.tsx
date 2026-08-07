@@ -414,6 +414,9 @@ export default function AlmanacApp({
           <Link href="/almanac" className={`underline-offset-2 hover:underline ${accent}`}>
             {copy.backToday}
           </Link>
+          <Link href="/astro" className={`underline-offset-2 hover:underline ${accent}`}>
+            星座百科
+          </Link>
           <Link href="/world-yi/era-timing" className={`underline-offset-2 hover:underline ${accent}`}>
             {copy.eraTiming}
           </Link>

@@ -40,6 +40,12 @@ export default function ZodiacToolPage() {
                 结构报告
               </Link>
               <Link
+                href="/astro?source=zodiac_tool"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                星座百科
+              </Link>
+              <Link
                 href="/tools/physiognomy?source=zodiac"
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >

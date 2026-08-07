@@ -34,6 +34,13 @@ const STEPS_BASE = [
     activeKey: 'tools' as const,
   },
   {
+    href: '/astro?source=journey_strip',
+    match: '/astro',
+    labelZh: '星座',
+    labelEn: 'Zodiac',
+    activeKey: 'tools' as const,
+  },
+  {
     href: '/tools?source=journey_strip',
     match: '/tools',
     labelZh: '工具',

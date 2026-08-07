@@ -109,6 +109,12 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '看今天',
   },
   {
+    href: '/astro',
+    title: '星座百科',
+    description: '十二星座 · 48星区 · 上升星座；生日查询，并桥接世界易与结构报告。',
+    cta: '打开星座',
+  },
+  {
     href: '/tools/daily-sign',
     title: '今日一签',
     description: '快速获得今日节律提示，适合作为日常复访入口。',

@@ -501,7 +501,8 @@ const WORLD_YI_ERA_TIMING: PageSeoGeoPack = {
     { href: '/world-yi/cities', label: '城市主题' },
     { href: '/knowledge/world-yi-era-three-layer-stars', label: '三层星象' },
     { href: '/knowledge/world-yi-era-four-phase', label: '四象阶段' },
-    { href: '/tools/zodiac', label: '个人星座' },
+    { href: '/astro', label: '星座百科' },
+    { href: '/tools/zodiac', label: '个人星座工具' },
     { href: '/analyze?source=world_yi_era_timing', label: '结构报告' },
   ],
   breadcrumbs: [
@@ -658,6 +659,74 @@ const INSIGHTS: PageSeoGeoPack = {
   geoPlaceName: '主要华人城市',
 };
 
+const ASTRO: PageSeoGeoPack = {
+  path: '/astro',
+  slug: 'astro',
+  name: '星座百科',
+  title: '星座百科｜十二星座·48星区·上升星座｜人生K线',
+  description:
+    '独立星座板块：十二太阳星座、48星区细分、上升星座第一印象；生日查询定位，并关联世界易、黄历与结构报告。',
+  keywords: [
+    '十二星座',
+    '48星区',
+    '上升星座',
+    '太阳星座',
+    '星座查询',
+    '星座性格',
+    'ASC',
+    'zodiac',
+    'rising sign',
+    '星座百科',
+  ],
+  answerSummary:
+    '人生K线星座板块覆盖十二太阳星座详解、每座四区共 48 星区、十二上升气质与地方时粗算。表达层与世界易结构语言、万年历日节奏、八字报告交叉，不作恐吓定命。',
+  searchIntents: [
+    '十二星座查询',
+    '48星区',
+    '上升星座查询',
+    '生日查星座',
+    '白羊座性格',
+    '星座配对',
+    'rising sign',
+  ],
+  entityKeywords: ['十二星座', '48星区', '上升星座', '太阳星座', '世界易'],
+  howTo: [
+    { step: '查太阳与星区', body: '在 /astro 输入公历生日，得到太阳星座与 48 星区定位。' },
+    { step: '看上升（可选）', body: '填写出生时刻看上升粗算；精确结果需地点与真太阳时。' },
+    { step: '交叉结构', body: '打开世界易方法、万年历日节奏，或写入数据底座后出结构报告。' },
+  ],
+  faqs: [
+    {
+      question: '48星区是什么？',
+      answer: '把每个太阳星座按公历日期切成约四段（共 48 区），比整座更细的出生段落定位，仍属民用表达层。',
+    },
+    {
+      question: '上升和太阳哪个更准？',
+      answer: '太阳写内核目标，上升写第一印象与呈现方式；精确上升需出生时刻与地点，粗算仅供参考。',
+    },
+    {
+      question: '和世界易、黄历什么关系？',
+      answer: '星座是表达层；世界易给结构方法；黄历给日节奏；八字报告给可验证动作。交叉使用，不互相替代。',
+    },
+  ],
+  related: [
+    { href: '/astro/signs', label: '十二星座' },
+    { href: '/astro/zones', label: '48星区' },
+    { href: '/astro/rising', label: '上升星座' },
+    { href: '/world-yi', label: '世界易' },
+    { href: '/almanac', label: '万年历' },
+    { href: '/tools/zodiac', label: '写入底座' },
+    { href: '/analyze', label: '结构报告' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '星座', path: '/astro' },
+  ],
+  disclaimer: '星座为表达与节奏参考，非医疗投资建议；精确上升需出生地与真太阳时。',
+  geoRegion: '全球',
+  geoPlaceName: '华人与全球用户',
+};
+
 const ALMANAC: PageSeoGeoPack = {
   path: '/almanac',
   slug: 'almanac',
@@ -737,7 +806,8 @@ const ALMANAC: PageSeoGeoPack = {
     { href: '/dimensions/timing-selection', label: '择时办事' },
     { href: '/world-yi/era-timing', label: '时代天时' },
     { href: '/analyze', label: '结构报告' },
-    { href: '/tools/zodiac', label: '星座生肖' },
+    { href: '/astro', label: '星座百科' },
+    { href: '/tools/zodiac', label: '星座生肖工具' },
   ],
   breadcrumbs: [
     { name: '首页', path: '/' },
@@ -807,6 +877,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/world-yi/era-timing': WORLD_YI_ERA_TIMING,
   almanac: ALMANAC,
   '/almanac': ALMANAC,
+  astro: ASTRO,
+  '/astro': ASTRO,
   hehun: HEHUN,
   '/hehun': HEHUN,
   learn: LEARN,

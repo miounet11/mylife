@@ -14,6 +14,7 @@ import {
 
 const footerLinks: Array<{ href: string; labelKey: string }> = [
   { href: '/almanac', labelKey: 'navAlmanac' },
+  { href: '/astro', labelKey: 'navAstro' },
   { href: '/world-yi', labelKey: 'navWorldYi' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
   { href: '/cases', labelKey: 'navCases' },
