@@ -24,6 +24,8 @@ export type PersonalDayInput = {
   yongShen?: string[];
   /** Optional full day pillar 甲子 */
   dayPillar?: string;
+  dayMasterElement?: string;
+  strengthDesc?: string;
 };
 
 function clamp(n: number, min: number, max: number) {
@@ -205,6 +207,15 @@ export function buildPersonalDayOverlay(
 
   const headline = `${stanceLine} · 日柱 ${dayGanZhi} · 日主 ${dayMaster}${yong.length ? ` · 用神 ${yong.join('')}` : ''}`;
 
+  const moodLine =
+    stance === 'push'
+      ? `今天偏「可试」：把已准备好的事推进半步，比开新战场更赚。`
+      : stance === 'conserve'
+        ? `今天偏「守界」：少做承诺，多做复核，把摩擦挡在门外。`
+        : `今天偏「安顿」：理清顺序与边界，比抢速度更重要。`;
+
+  const stars = clamp(Math.round(score / 20), 1, 5);
+
   if (topHours.length) {
     favors.push(
       `相对较顺时辰：${topHours.map((h) => `${h.timeLabel || h.ganZhi}（${h.reason}）`).join('；')}`,
@@ -225,11 +236,15 @@ export function buildPersonalDayOverlay(
     stance,
     score,
     headline,
+    moodLine,
+    stars,
     watchouts: watchouts.slice(0, 5),
     favors: favors.slice(0, 5),
     hours,
     topHours,
     avoidHours,
+    dayMasterElement: input.dayMasterElement,
+    strengthDesc: input.strengthDesc,
     disclaimer:
       '个人日运由日主/用神与流日通书叠加估算，服务节奏管理，不构成投资、医疗、法律建议；时辰以本地钟表为参考，交界前后请留余地。',
   };

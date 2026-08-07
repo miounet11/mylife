@@ -78,12 +78,18 @@ export type PersonalDayOverlay = {
   stance: PersonalDayStance;
   score: number;
   headline: string;
+  /** 星座站式一句话主基调 */
+  moodLine: string;
+  /** 星级 1-5 供 UI */
+  stars: number;
   watchouts: string[];
   favors: string[];
   hours: PersonalHourNote[];
   topHours: PersonalHourNote[];
   avoidHours: PersonalHourNote[];
   disclaimer: string;
+  dayMasterElement?: string;
+  strengthDesc?: string;
 };
 
 export type AlmanacMonthCell = {

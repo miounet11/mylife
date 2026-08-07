@@ -1,11 +1,12 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import { buildAlmanacDayPack, buildAlmanacMonthGrid, todayDateString } from '@/lib/almanac/day-pack';
+import { buildPersonalDayOverlay } from '@/lib/almanac/personal-day';
 import {
-  buildPersonalDayOverlay,
-  resolveDayMasterFromBirth,
-  type PersonalDayInput,
-} from '@/lib/almanac/personal-day';
+  buildChartFromBirth,
+  resolveUserChartForAlmanac,
+  type UserChartSnapshot,
+} from '@/lib/almanac/resolve-user-chart';
 import { getAuthSession } from '@/lib/auth';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 
@@ -15,51 +16,32 @@ function parseMonth(year: number, month: number) {
   return { year: y, month: m };
 }
 
-async function resolvePersonalInput(userId: string | null): Promise<PersonalDayInput | null> {
-  if (!userId) return null;
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { fortuneOperations } = require('@/lib/database') as {
-      fortuneOperations?: {
-        listByUser?: (uid: string) => Array<{
-          isPrimary?: boolean;
-          birthDate?: string;
-          birthTime?: string;
-          result?: { pillars?: Array<{ celestialStem?: string; earthlyBranch?: string }>; yongShen?: string[] };
-        }>;
-      };
+async function resolveChart(request: NextRequest, userId: string | null): Promise<UserChartSnapshot | null> {
+  const sp = request.nextUrl.searchParams;
+  const dm = `${sp.get('dayMaster') || ''}`.trim();
+  const birthDate = `${sp.get('birthDate') || ''}`.trim();
+
+  if (dm) {
+    return {
+      source: 'query',
+      dayMaster: dm,
+      dayBranch: `${sp.get('dayBranch') || ''}`.trim(),
+      yongShen: `${sp.get('yongShen') || ''}`
+        .split(/[,，\s]+/)
+        .map((x) => x.trim())
+        .filter(Boolean),
     };
-    const list = fortuneOperations?.listByUser?.(userId) || [];
-    const primary = list.find((f) => f.isPrimary) || list[0];
-    if (!primary) return null;
-
-    const pillars = primary.result?.pillars;
-    if (Array.isArray(pillars) && pillars[2]?.celestialStem) {
-      return {
-        dayMaster: pillars[2].celestialStem,
-        dayBranch: pillars[2].earthlyBranch || '',
-        yongShen: Array.isArray(primary.result?.yongShen) ? primary.result.yongShen : [],
-      };
-    }
-
-    if (primary.birthDate) {
-      let hour = 12;
-      const tm = `${primary.birthTime || ''}`.match(/(\d{1,2})/);
-      if (tm) hour = Math.min(23, Math.max(0, Number(tm[1])));
-      const resolved = resolveDayMasterFromBirth(primary.birthDate, hour);
-      if (resolved) {
-        return {
-          dayMaster: resolved.dayMaster,
-          dayBranch: resolved.dayBranch,
-          dayPillar: resolved.dayPillar,
-          yongShen: Array.isArray(primary.result?.yongShen) ? primary.result.yongShen : [],
-        };
-      }
-    }
-  } catch {
-    // local stub / missing ops
   }
-  return null;
+  if (birthDate) {
+    return (
+      buildChartFromBirth({
+        birthDate,
+        birthTime: sp.get('birthTime'),
+        birthPlace: sp.get('birthPlace'),
+      }) || null
+    );
+  }
+  return resolveUserChartForAlmanac(userId);
 }
 
 export async function GET(request: NextRequest) {
@@ -86,34 +68,10 @@ export async function GET(request: NextRequest) {
 
     const session = await getAuthSession();
     const userId = session.user?.id || (await getOrCreateGuestUserId().catch(() => null));
+    const chart = await resolveChart(request, userId);
     let personal = null;
-    if (selected) {
-      // Query overrides for light birth bridge
-      const dm = `${sp.get('dayMaster') || ''}`.trim();
-      const birthDate = `${sp.get('birthDate') || ''}`.trim();
-      let input: PersonalDayInput | null = null;
-      if (dm) {
-        input = {
-          dayMaster: dm,
-          dayBranch: `${sp.get('dayBranch') || ''}`.trim(),
-          yongShen: `${sp.get('yongShen') || ''}`
-            .split(/[,，\s]+/)
-            .map((x) => x.trim())
-            .filter(Boolean),
-        };
-      } else if (birthDate) {
-        const resolved = resolveDayMasterFromBirth(birthDate);
-        if (resolved) {
-          input = {
-            dayMaster: resolved.dayMaster,
-            dayBranch: resolved.dayBranch,
-            dayPillar: resolved.dayPillar,
-          };
-        }
-      } else {
-        input = await resolvePersonalInput(userId);
-      }
-      if (input) personal = buildPersonalDayOverlay(selected, input);
+    if (selected && chart) {
+      personal = buildPersonalDayOverlay(selected, chart);
     }
 
     return NextResponse.json({
@@ -124,6 +82,19 @@ export async function GET(request: NextRequest) {
       cells,
       selected,
       personal,
+      chart: chart
+        ? {
+            dayMaster: chart.dayMaster,
+            dayBranch: chart.dayBranch,
+            dayPillar: chart.dayPillar,
+            yongShen: chart.yongShen,
+            dayMasterElement: chart.dayMasterElement,
+            strengthDesc: chart.strengthDesc,
+            source: chart.source,
+            bazi: chart.bazi,
+          }
+        : null,
+      canonicalPath: `/almanac/${selectedDate}`,
       authenticated: Boolean(session.authenticated),
     });
   } catch (error) {

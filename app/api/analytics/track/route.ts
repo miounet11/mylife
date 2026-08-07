@@ -70,6 +70,8 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'era_hypothesis_score_cleared',
   'almanac_page_viewed',
   'almanac_day_selected',
+  'almanac_day_viewed',
+  'almanac_lens_run',
   'mass_need_map_click',
   'hehun_page_viewed',
   'hehun_run',

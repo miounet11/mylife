@@ -145,6 +145,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/world-yi/cities', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi/era-timing', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/almanac', priority: 0.9, changeFrequency: 'daily', multiLanguage: true },
+    // Rolling window of day URLs for personal almanac SEO (today ± 16 days)
+    ...Array.from({ length: 33 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - 16 + i);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return {
+        path: `/almanac/${y}-${m}-${day}`,
+        priority: i === 16 ? 0.92 : 0.75,
+        changeFrequency: 'daily' as const,
+      };
+    }),
     // English World Yi gateway (x-default → EN for this cluster in page metadata; sitemap lists EN loc)
     { path: '/world-yi/en', priority: 0.86, changeFrequency: 'weekly', enGateway: true },
     { path: '/world-yi/en/cases', priority: 0.8, changeFrequency: 'weekly', enGateway: true },

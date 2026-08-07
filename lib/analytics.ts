@@ -135,7 +135,9 @@ export type AnalyticsEventName =
   | 'era_hypothesis_scored'
   | 'era_hypothesis_score_cleared'
   | 'almanac_page_viewed'
-  | 'almanac_day_selected';
+  | 'almanac_day_selected'
+  | 'almanac_day_viewed'
+  | 'almanac_lens_run'
 
 interface TrackEventInput {
   userId?: string | null;
