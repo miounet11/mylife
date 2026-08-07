@@ -5,6 +5,7 @@ import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 import { buildAstroMonthPack } from '@/lib/astro/month-engine';
 import { buildAstroPairDayPack } from '@/lib/astro/pair-day-engine';
 import { buildAstroPairPack } from '@/lib/astro/pair-engine';
+import { buildWeekComparePack } from '@/lib/astro/week-compare-engine';
 import { buildAstroWeekPack, currentIsoWeekId } from '@/lib/astro/week-engine';
 import { buildAstroDailyEmail } from '@/lib/email/astro-daily-email';
 
@@ -113,5 +114,13 @@ describe('astro expand engines', () => {
     assert.equal(mail.ok, true);
     assert.ok(mail.html.length > 100);
     assert.ok(mail.subject.includes('2026') || mail.subject.includes('星座'));
+  });
+
+  it('week compare ranks 12 signs', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const pack = buildWeekComparePack(weekId);
+    assert.ok(pack);
+    assert.equal(pack!.signs.length, 12);
+    assert.ok(pack!.top.length === 3);
   });
 });

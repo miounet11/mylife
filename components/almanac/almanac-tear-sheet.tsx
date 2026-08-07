@@ -312,7 +312,15 @@ export default function AlmanacTearSheet({
         通书宜忌与十二时辰为公共层；个人日运来自日主用神结构匹配，作节奏参考，非医疗投资建议。潮汐、地方彩票等未收录。
         {' · '}
         <a href={`/astro/day/${pack.date}`} className={`font-semibold underline-offset-2 hover:underline ${paper.red}`}>
-          按星座/星区看今日
+          星座日入口
+        </a>
+        {' · '}
+        <a href={`/astro/day/${pack.date}/compare`} className={`font-semibold underline-offset-2 hover:underline ${paper.red}`}>
+          十二座对比
+        </a>
+        {' · '}
+        <a href="/astro" className={`font-semibold underline-offset-2 hover:underline ${paper.red}`}>
+          生日查日运
         </a>
       </footer>
     </article>

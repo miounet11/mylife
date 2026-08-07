@@ -124,6 +124,12 @@ export default function AstroHubPage() {
               n: '日榜',
             },
             {
+              href: `/astro/week/${currentIsoWeekId()}`,
+              title: '本周十二座对比',
+              desc: '周均分排名 · 点进各座周运',
+              n: '周榜',
+            },
+            {
               href: `/astro/signs/leo/week/${currentIsoWeekId()}`,
               title: '周运示例（狮子）',
               desc: '7 日引擎聚合 · 各座同理',

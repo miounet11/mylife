@@ -296,6 +296,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: 'daily' as const,
       })),
     );
+  const astroWeekHubRoutes = weekList.map((weekId) => ({
+    path: `/astro/week/${weekId}`,
+    priority: 0.8,
+    changeFrequency: 'weekly' as const,
+  }));
+  const astroZoneWeekRoutes = ASTRO_ZONES_48.filter((z) => z.phase === 4).flatMap((z) =>
+    weekList.map((weekId) => ({
+      path: `/astro/zones/${z.id}/week/${weekId}`,
+      priority: 0.66,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroShengxiaoWeekRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
+    weekList.map((weekId) => ({
+      path: `/astro/shengxiao/${s.slug}/week/${weekId}`,
+      priority: 0.68,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
   const astroExtraHubs = [
     { path: '/astro/elements', priority: 0.86, changeFrequency: 'weekly' as const },
     { path: '/astro/modality', priority: 0.84, changeFrequency: 'weekly' as const },
@@ -369,6 +388,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...astroShengxiaoDayRoutes,
     ...astroSignMonthRoutes,
     ...astroSignWeekRoutes,
+    ...astroWeekHubRoutes,
+    ...astroZoneWeekRoutes,
+    ...astroShengxiaoWeekRoutes,
     ...astroPairRoutes,
     ...astroPairDayRoutes,
     ...astroExtraHubs,

@@ -65,6 +65,20 @@ export default async function AstroDayHubPage({ params }: Props) {
             >
               十二星座对比排名
             </Link>
+            <Link
+              href={`/astro/week/${(() => {
+                const [y, m, d] = date.split('-').map(Number);
+                const dt = new Date(Date.UTC(y, m - 1, d));
+                const dayNum = dt.getUTCDay() || 7;
+                dt.setUTCDate(dt.getUTCDate() + 4 - dayNum);
+                const yearStart = new Date(Date.UTC(dt.getUTCFullYear(), 0, 1));
+                const weekNo = Math.ceil(((dt.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+                return `${dt.getUTCFullYear()}-W${String(weekNo).padStart(2, '0')}`;
+              })()}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              本周十二座周对比
+            </Link>
             <Link href="/astro/shengxiao" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
               生肖日运
             </Link>

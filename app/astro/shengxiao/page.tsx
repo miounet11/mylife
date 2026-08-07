@@ -4,6 +4,7 @@ import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { SHENGXIAO_CATALOG } from '@/lib/astro/shengxiao-catalog';
+import { currentIsoWeekId } from '@/lib/astro/week-engine';
 import { buildPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
@@ -14,6 +15,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ShengxiaoIndexPage() {
   const today = todayIsoLocal();
+  const weekId = currentIsoWeekId();
   return (
     <AppPage header={{ ctaHref: '/almanac', ctaLabel: '万年历', compact: true }}>
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
@@ -26,6 +28,9 @@ export default function ShengxiaoIndexPage() {
               <Link href="/almanac" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 今日黄历
               </Link>
+              <Link href={`/astro/week/${weekId}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                本周星座对比
+              </Link>
               <Link href="/astro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 星座查询
               </Link>
@@ -35,15 +40,25 @@ export default function ShengxiaoIndexPage() {
         <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           {SHENGXIAO_CATALOG.map((s) => (
             <li key={s.slug}>
-              <Link
-                href={`/astro/shengxiao/${s.slug}/day/${today}`}
-                className="block rounded-xl border border-[color:var(--hairline)] bg-white p-3 text-center no-underline hover:border-[color:var(--brand)]/40"
-              >
-                <div className="text-[18px] font-black text-[color:var(--ink-1)]">{s.zh}</div>
-                <div className="text-[10px] text-[color:var(--ink-5)]">
-                  {s.branch} · {s.en}
+              <div className="rounded-xl border border-[color:var(--hairline)] bg-white p-3 text-center">
+                <Link
+                  href={`/astro/shengxiao/${s.slug}/day/${today}`}
+                  className="block no-underline hover:opacity-90"
+                >
+                  <div className="text-[18px] font-black text-[color:var(--ink-1)]">{s.zh}</div>
+                  <div className="text-[10px] text-[color:var(--ink-5)]">
+                    {s.branch} · {s.en}
+                  </div>
+                </Link>
+                <div className="mt-2 flex justify-center gap-2 text-[10px]">
+                  <Link href={`/astro/shengxiao/${s.slug}/day/${today}`} className="text-[color:var(--brand)] underline-offset-2 hover:underline">
+                    今日
+                  </Link>
+                  <Link href={`/astro/shengxiao/${s.slug}/week/${weekId}`} className="text-[color:var(--ink-4)] underline-offset-2 hover:underline">
+                    本周
+                  </Link>
                 </div>
-              </Link>
+              </div>
             </li>
           ))}
         </ul>
