@@ -1,5 +1,6 @@
 import {
   buildDimensionKnowledgeArticles,
+  buildEraTimingKnowledgeArticles,
   buildFoundationKnowledgeArticles,
   buildGeoInsightArticles,
   buildRichSections,
@@ -212,6 +213,7 @@ function collectFromTracks(): ContentArticle[] {
     ...buildDimensionKnowledgeArticles(),
     ...buildGeoInsightArticles(),
     ...buildSeoPillarArticles(),
+    ...buildEraTimingKnowledgeArticles(),
   ];
 
   for (const item of extras) {

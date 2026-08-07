@@ -420,6 +420,7 @@ const WORLD_YI: PageSeoGeoPack = {
   ],
   related: [
     { href: '/world-yi/cities', label: '城市主题' },
+    { href: '/world-yi/era-timing', label: '时代天时' },
     { href: '/world-yi/en', label: 'English gateway' },
     { href: '/insights', label: '城市洞察' },
     { href: '/analyze', label: '个人测算' },
@@ -430,6 +431,85 @@ const WORLD_YI: PageSeoGeoPack = {
   ],
   geoRegion: '全球',
   geoPlaceName: '海外华人社区',
+};
+
+const WORLD_YI_ERA_TIMING: PageSeoGeoPack = {
+  path: '/world-yi/era-timing',
+  slug: 'world-yi-era-timing',
+  name: '世界易时代天时',
+  title: '世界易时代天时｜星象周期·社会压力·技术阶段｜人生K线',
+  description:
+    '把天文/占星周期写成时代环境层：外行星拐点、土木社会压力、火逆摩擦窗口与四象阶段。可回测假设，不替代个人结构与大运。',
+  keywords: [
+    '时代天时',
+    '三层星象',
+    '天王星周期',
+    '土木',
+    '火星逆行',
+    '四象阶段',
+    '世界易',
+    '天象',
+  ],
+  answerSummary:
+    '世界易时代天时把星象与天象写成宏观环境层：外行星标时代拐点，土木标社会压力，火逆标摩擦窗口，四象阶段对照行业从车库到定规则。优先个人结构与大运，周期叙事可证伪、可回访，不构成投资或宿命结论。',
+  searchIntents: [
+    '天王星周期 AI',
+    '三层星象分析法',
+    '火星逆行冲突',
+    '四象阶段论',
+    '世界易时代天时',
+    '占星与八字怎么结合',
+  ],
+  entityKeywords: [
+    '世界易',
+    '时代天时',
+    '天王星',
+    '土木',
+    '火星逆行',
+    '四象阶段',
+    '环境层',
+    '时位',
+    '证伪',
+    '人生K线',
+  ],
+  howTo: [
+    { step: '读三层', body: '外行星 / 土木 / 火逆各对应世界易哪一层。' },
+    { step: '对四象', body: '判断赛道阶段与用神发挥方式是否匹配。' },
+    { step: '接个人盘', body: '用结构报告对齐大运，假设写入日历回访。' },
+  ],
+  faqs: [
+    {
+      question: '时代天时会不会取代八字？',
+      answer: '不会。结构仍以日主用神为主；星象周期是时代天气，权重低于个人命盘。',
+    },
+    {
+      question: '2030/2032 预测能信吗？',
+      answer: '按开放假设处理：有证伪条件与回访日，不构成买卖点或宿命。',
+    },
+    {
+      question: '和城市主题什么关系？',
+      answer: '城市是空间环境，时代天时是时间环境；完整环境层需要两者对照。',
+    },
+    {
+      question: '和星座工具重复吗？',
+      answer: '星座工具偏个人表达；时代天时偏宏观周期与社会压力。',
+    },
+  ],
+  related: [
+    { href: '/world-yi', label: '世界易总入口' },
+    { href: '/world-yi/cities', label: '城市主题' },
+    { href: '/knowledge/world-yi-era-three-layer-stars', label: '三层星象' },
+    { href: '/knowledge/world-yi-era-four-phase', label: '四象阶段' },
+    { href: '/tools/zodiac', label: '个人星座' },
+    { href: '/analyze?source=world_yi_era_timing', label: '结构报告' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '世界易', path: '/world-yi' },
+    { name: '时代天时', path: '/world-yi/era-timing' },
+  ],
+  geoRegion: '全球',
+  geoPlaceName: '全球技术与华人社群',
 };
 
 const WORLD_YI_CITIES: PageSeoGeoPack = {
@@ -635,6 +715,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/world-yi': WORLD_YI,
   'world-yi-cities': WORLD_YI_CITIES,
   '/world-yi/cities': WORLD_YI_CITIES,
+  'world-yi-era-timing': WORLD_YI_ERA_TIMING,
+  '/world-yi/era-timing': WORLD_YI_ERA_TIMING,
   hehun: HEHUN,
   '/hehun': HEHUN,
   learn: LEARN,

@@ -53,6 +53,9 @@ export default async function WorldYiPage({
               <Link href="/world-yi/cities" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 城市主题
               </Link>
+              <Link href="/world-yi/era-timing" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                时代天时
+              </Link>
               <Link href="/learn/intro" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 入门专题
               </Link>
@@ -170,6 +173,48 @@ export default async function WorldYiPage({
               className="rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--brand)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
             >
               接到个人报告
+            </Link>
+          </div>
+        </section>
+
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+                时代天时
+              </p>
+              <h2 className="mt-1 text-[15px] font-semibold text-[color:var(--ink-1)]">
+                天时是环境层，不是命运开关
+              </h2>
+              <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+                外行星标时代拐点，土木标社会压力，火逆标摩擦窗口；四象阶段从车库到定规则。与城市主题一起，补全空间 + 时间双重环境——再对齐你的结构与大运。
+              </p>
+            </div>
+            <Link
+              href="/world-yi/era-timing"
+              className="text-[12px] font-medium text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              打开时代天时 →
+            </Link>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Link
+              href="/world-yi/era-timing"
+              className="rounded-lg border border-[color:var(--brand)] bg-[color:var(--brand)] px-3 py-2.5 text-center text-[12px] font-semibold text-white no-underline hover:bg-[color:var(--brand-strong)] hover:no-underline"
+            >
+              三层 + 四象
+            </Link>
+            <Link
+              href="/knowledge/world-yi-era-uranus-cycle"
+              className="rounded-lg border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--ink-1)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
+            >
+              天王星与技术阶段
+            </Link>
+            <Link
+              href="/tools/zodiac?source=world_yi_era"
+              className="rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-center text-[12px] font-semibold text-[color:var(--brand)] no-underline hover:border-[color:var(--brand)] hover:no-underline"
+            >
+              个人星座（表达层）
             </Link>
           </div>
         </section>

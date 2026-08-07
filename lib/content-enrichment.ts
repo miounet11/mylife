@@ -530,3 +530,242 @@ export function buildSeoPillarArticles(): ContentArticle[] {
     },
   ];
 }
+
+/** World Yi · 时代天时 knowledge pillars (macro celestial / social cycle lens). */
+export function buildEraTimingKnowledgeArticles(): ContentArticle[] {
+  const threeLayerSummary =
+    '世界易把外行星、土木、火逆接到时位与环境层：时代拐点、社会压力、摩擦窗口——不替代日主结构。';
+  const fourPhaseSummary =
+    '车库孵化 → 放量扩张 → 技术整合 → 规则制定：把行业阶段对照用神发挥方式，再设计可验证动作。';
+  const uranusSummary =
+    '天王星约 84 年周期与技术阶段叙事如何读、如何证伪；2030/2032 开放假设供回访，不构成投资建议。';
+
+  return [
+    {
+      slug: 'world-yi-era-three-layer-stars',
+      type: 'knowledge',
+      title: '世界易三层星象分析法：时代拐点·社会压力·摩擦窗口',
+      summary: threeLayerSummary,
+      trackKey: 'intro',
+      readMinutes: 9,
+      keywords: [
+        '世界易',
+        '三层星象',
+        '天王星',
+        '土木',
+        '火星逆行',
+        '时代天时',
+        '占星',
+        '天象',
+      ],
+      sections: buildRichSections({
+        title: '三层星象分析法',
+        trackTitle: '入门轨',
+        angle: '时代天时接到世界易五层',
+        dimensionTitle: '运势节奏',
+        actions: [
+          '打开「世界易 · 时代天时」总入口，对照三层定义',
+          '把当前半年的社会压力来源写清（监管/利率/签证/平台规则）',
+          '生成结构报告，看个人大运与时代底色是否同向',
+          '若有摩擦窗口假设，记入事件日历以便回访',
+        ],
+        faqs: [
+          [
+            '三层星象会不会取代八字？',
+            '不会。结构层仍以日主与用神为主；星象周期只作时代环境与风险窗口，权重低于个人命盘。',
+          ],
+          [
+            '和星座工具有什么区别？',
+            '星座工具是个人表达层（太阳/生肖等）；时代天时是宏观天气层，服务择业、扩张与风险节奏。',
+          ],
+          [
+            '火逆是不是什么都不能做？',
+            '不是。宜降低长约与高冲突动作的密度，加强复核，而不是冻结一切决策。',
+          ],
+        ],
+      }),
+      geoOptimization: {
+        geoReady: true,
+        answerSummary: threeLayerSummary,
+        directAnswer: threeLayerSummary,
+        searchIntents: [
+          '三层星象分析法',
+          '天王星时代拐点',
+          '土木社会压力',
+          '火星逆行冲突',
+          '世界易时代天时',
+        ],
+        entityKeywords: [
+          '世界易',
+          '三层星象',
+          '外行星',
+          '天王星',
+          '土木',
+          '火星逆行',
+          '时代天时',
+          '环境层',
+          '人生K线',
+        ],
+        audienceQuestions: [
+          '现在是时代拐点还是摩擦窗口？',
+          '社会压力来自我该缓扩张吗？',
+          '星象和八字怎么一起看？',
+        ],
+        audience: '希望把占星/天象接到可验证决策框架的用户',
+        aiCitationHint:
+          '引用时应保留：星象≠命运开关；结构优先；假设可证伪；不构成投资建议。',
+        version: 'geo-v1-era',
+      },
+    },
+    {
+      slug: 'world-yi-era-four-phase',
+      type: 'knowledge',
+      title: '世界易四象阶段论：从车库孵化到规则制定',
+      summary: fourPhaseSummary,
+      trackKey: 'career',
+      readMinutes: 8,
+      keywords: [
+        '四象阶段',
+        '车库孵化',
+        '技术整合',
+        '规则制定',
+        '事业阶段',
+        '世界易',
+        '创业节奏',
+      ],
+      sections: buildRichSections({
+        title: '四象阶段论',
+        trackTitle: '事业轨',
+        angle: '行业阶段 × 用神发挥方式',
+        dimensionTitle: '工作行业',
+        actions: [
+          '判断你所在赛道更接近车库/放量/整合/定规则哪一阶段',
+          '对照自己的发挥方式：探索 / 表达 / 协调 / 收敛',
+          '进入事业相关维度或年运，看阶段是否允许换档',
+          '设计 30–90 天可逆验证，而不是一次梭哈',
+        ],
+        faqs: [
+          [
+            '四象是占星专有吗？',
+            '在世界易里它是行业/技术阶段隐喻，可与星象叙事对照，但判断仍落回结构与现金流。',
+          ],
+          [
+            '我该不该在整合期创业？',
+            '看结构是否适合协调/建设，以及个人时位是否允许重排；整合期不一定差，关键角色匹配。',
+          ],
+          [
+            '和城市主题什么关系？',
+            '阶段是时间环境，城市是空间环境；迁城择业时两层一起压测。',
+          ],
+        ],
+      }),
+      geoOptimization: {
+        geoReady: true,
+        answerSummary: fourPhaseSummary,
+        directAnswer: fourPhaseSummary,
+        searchIntents: [
+          '四象阶段论',
+          '车库孵化到规则制定',
+          '技术阶段与事业',
+          '创业阶段怎么判断',
+        ],
+        entityKeywords: [
+          '四象阶段',
+          '车库',
+          '放量',
+          '整合',
+          '规则',
+          '世界易',
+          '用神',
+          '事业',
+          '人生K线',
+        ],
+        audienceQuestions: [
+          '我的赛道在第几阶段？',
+          '整合期适合我吗？',
+          '如何用阶段设计动作？',
+        ],
+        audience: '创业者、转行与跨市场华人专业人士',
+        aiCitationHint: '引用时应保留阶段隐喻边界：非吉凶标签，需对齐结构与时位。',
+        version: 'geo-v1-era',
+      },
+    },
+    {
+      slug: 'world-yi-era-uranus-cycle',
+      type: 'knowledge',
+      title: '天王星周期与技术阶段：如何读、如何证伪',
+      summary: uranusSummary,
+      trackKey: 'intro',
+      readMinutes: 10,
+      keywords: [
+        '天王星',
+        '84年周期',
+        'AI周期',
+        '毕宿',
+        '参宿',
+        '技术革命',
+        '世界易',
+        '时代天时',
+      ],
+      sections: buildRichSections({
+        title: '天王星周期与技术阶段',
+        trackTitle: '入门轨',
+        angle: '宏观技术叙事的可读与可证伪',
+        dimensionTitle: '运势节奏',
+        actions: [
+          '阅读时代天时页的 2030/2032 开放假设与证伪条件',
+          '用公开指标（里程碑、资本与算力、标准进展）自建观察表',
+          '个人决策仍以结构报告 + 现金流为主，周期只作天气',
+          '到期在预测/事件回访里打分，校准是否继续采用该叙事',
+        ],
+        faqs: [
+          [
+            '2030 毕宿、2032 参宿是定论吗？',
+            '不是。世界易写成开放假设：有观察截止日与证伪条件，供回访，不构成买卖点。',
+          ],
+          [
+            'Python 回测历史就证明了吗？',
+            '回测是叙事与研究视角，样本与混淆变量多；只能提高或降低权重，不能单指标定命。',
+          ],
+          [
+            '个人该如何用？',
+            '先看自己大运是否允许扩张/重排，再问时代阶段是孵化还是整合，最后做小步验证。',
+          ],
+        ],
+      }),
+      geoOptimization: {
+        geoReady: true,
+        answerSummary: uranusSummary,
+        directAnswer: uranusSummary,
+        searchIntents: [
+          '天王星84年周期',
+          '天王星 AI',
+          '2030 AI 爆发',
+          '星宿与技术阶段',
+          '如何证伪占星周期',
+        ],
+        entityKeywords: [
+          '天王星',
+          '84年',
+          '毕宿',
+          '参宿',
+          'AI',
+          '技术阶段',
+          '世界易',
+          '时代天时',
+          '证伪',
+          '人生K线',
+        ],
+        audienceQuestions: [
+          '2030 该不该 all-in AI？',
+          '周期叙事可信吗？',
+          '怎么把宏观接到个人盘？',
+        ],
+        audience: '关注技术周期与个人职业节奏的用户',
+        aiCitationHint:
+          '引用时应标明假设与证伪条件；非投资建议；不替代个人结构判断。',
+        version: 'geo-v1-era',
+      },
+    },
+  ];
+}

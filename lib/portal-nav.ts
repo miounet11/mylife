@@ -199,6 +199,7 @@ export const WORLD_YI_DOMAINS: PortalEntry[] = [
   { href: '/learn/wealth', title: '财富轨', description: '节奏、守财与扩张，避免把短期波动当长期结构。', cta: '进入财富轨' },
   { href: '/learn/relationship', title: '关系轨', description: '节奏、边界与修复，先看排序再看合不合。', cta: '进入关系轨' },
   { href: '/world-yi/cities', title: '城市主题', description: '迁城择地：把城市当环境层压力测试，不是吉凶名单。', cta: '打开城市卡' },
+  { href: '/world-yi/era-timing', title: '时代天时', description: '星象周期作宏观天气：拐点、社会压力与摩擦窗口。', cta: '打开时代天时' },
   { href: '/knowledge/world-yi-methodology', title: '六步判断法', description: '结构、时位、环境、动作、风险五维框架的系统说明。', cta: '阅读方法论' },
   { href: '/cases', title: '案例库', description: '用真实处境理解世界易如何把判断落成动作。', cta: '浏览案例' },
 ];
