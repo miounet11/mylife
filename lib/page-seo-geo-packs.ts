@@ -657,6 +657,70 @@ const INSIGHTS: PageSeoGeoPack = {
   geoPlaceName: '主要华人城市',
 };
 
+const ALMANAC: PageSeoGeoPack = {
+  path: '/almanac',
+  slug: 'almanac',
+  name: '万年历黄历',
+  title: '万年历黄历｜每日宜忌·十二时辰·个人日运｜人生K线',
+  description:
+    '查公历农历与通书宜忌、冲煞、十二时辰黄道黑道；绑定生辰后叠加日主结构，看今日宜推进还是守成、哪些时辰更顺。',
+  keywords: ['万年历', '黄历', '每日宜忌', '十二时辰', '吉时', '个人日运', '通书'],
+  answerSummary:
+    '人生K线万年历提供两层：公共通书（宜忌、冲煞、黄道黑道时辰）与个人结构日运（日主/用神叠流日）。用于节奏管理而非恐吓式吉凶；重要决策仍须结合大运、现金流与现实约束。',
+  searchIntents: [
+    '万年历黄历查询',
+    '今日宜忌吉时',
+    '十二时辰吉凶',
+    '个人每日运势八字',
+    '流日与日主',
+  ],
+  entityKeywords: [
+    '万年历',
+    '黄历',
+    '通书',
+    '宜忌',
+    '黄道',
+    '黑道',
+    '时辰',
+    '日主',
+    '用神',
+    '人生K线',
+  ],
+  howTo: [
+    { step: '选日期', body: '在月历点选要查看的公历日。' },
+    { step: '读通书', body: '先看宜忌、冲煞与十二时辰公共黄道。' },
+    { step: '叠个人', body: '绑定生辰后看结构匹配分、较顺/慎用时辰。' },
+  ],
+  faqs: [
+    {
+      question: '黄历宜忌等于我一定要做吗？',
+      answer: '不是。通书是公共民俗参照；个人是否推进要看结构、阶段与现实条件。',
+    },
+    {
+      question: '个人日运怎么算？',
+      answer: '用日主与用神对照流日干支与黄道时辰做确定性评分，不调用恐吓式断语。',
+    },
+    {
+      question: '和择时办事维度什么关系？',
+      answer: '万年历偏日常翻查；择时办事维度偏具体事项的窗口排序。',
+    },
+    {
+      question: '时辰交界准吗？',
+      answer: '以本地钟表为参考，交界前后请留余地；精密排盘仍建议完整报告。',
+    },
+  ],
+  related: [
+    { href: '/dimensions/timing-selection', label: '择时办事' },
+    { href: '/world-yi/era-timing', label: '时代天时' },
+    { href: '/analyze', label: '结构报告' },
+    { href: '/tools/zodiac', label: '星座生肖' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '万年历', path: '/almanac' },
+  ],
+};
+
 const HEHUN: PageSeoGeoPack = {
   path: '/hehun',
   slug: 'hehun',
@@ -717,6 +781,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/world-yi/cities': WORLD_YI_CITIES,
   'world-yi-era-timing': WORLD_YI_ERA_TIMING,
   '/world-yi/era-timing': WORLD_YI_ERA_TIMING,
+  almanac: ALMANAC,
+  '/almanac': ALMANAC,
   hehun: HEHUN,
   '/hehun': HEHUN,
   learn: LEARN,

@@ -194,6 +194,7 @@ export const COMMUNITY_CATEGORIES: PortalEntry[] = [
 ];
 
 export const WORLD_YI_DOMAINS: PortalEntry[] = [
+  { href: '/almanac', title: '万年历', description: '通书宜忌 + 十二时辰；绑定生辰看个人日运与吉时。', cta: '打开万年历' },
   { href: '/learn/intro', title: '入门轨', description: '30 分钟建立判断底座：真太阳时、报告读法与世界易总论。', cta: '开始学习' },
   { href: '/learn/career', title: '事业轨', description: '角色匹配与阶段重排，用案例验证职业推进节奏。', cta: '进入事业轨' },
   { href: '/learn/wealth', title: '财富轨', description: '节奏、守财与扩张，避免把短期波动当长期结构。', cta: '进入财富轨' },

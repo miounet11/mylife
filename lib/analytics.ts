@@ -133,7 +133,9 @@ export type AnalyticsEventName =
   | 'world_yi_cities_viewed'
   | 'world_yi_era_timing_viewed'
   | 'era_hypothesis_scored'
-  | 'era_hypothesis_score_cleared';
+  | 'era_hypothesis_score_cleared'
+  | 'almanac_page_viewed'
+  | 'almanac_day_selected';
 
 interface TrackEventInput {
   userId?: string | null;

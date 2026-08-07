@@ -59,6 +59,7 @@ const CATEGORY_TOOLS: Record<ToolCategoryKey, PortalEntry[]> = {
     { href: '/knowledge/world-yi-migration-stage-logic', title: '世界易迁移观', description: '迁移不是换地图，是重匹配。', cta: '阅读' },
   ],
   application: [
+    { href: '/almanac', title: '万年历黄历', description: '每日宜忌、时辰吉凶；绑定生辰看个人日运。', cta: '打开万年历' },
     { href: '/world-yi/era-timing', title: '时代天时', description: '宏观星象与技术阶段：拐点、压力、摩擦窗口。', cta: '打开' },
     { href: '/profile/foundation', title: '人生数据底座', description: '八字 · 星座 · 相学 · 问答 · 工具信号统一完整度。', cta: '完善参数' },
     { href: '/tools/zodiac', title: '星座 · 生肖', description: '太阳星座与生肖推导，月亮/上升写入底座。', cta: '推算' },

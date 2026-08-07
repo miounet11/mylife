@@ -25,6 +25,8 @@ export type ProductEventName =
   | 'mass_prediction_to_event'
   | 'era_hypothesis_scored'
   | 'era_hypothesis_score_cleared'
+  | 'almanac_page_viewed'
+  | 'almanac_day_selected'
   | 'mass_need_map_click'
   | 'mass_action_bar_viewed'
   | 'mass_learn_path_click'

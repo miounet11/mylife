@@ -14,7 +14,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/', '/almanac'],
         disallow: [
           '/api/',
           '/admin/',
@@ -37,12 +37,12 @@ export default function robots(): MetadataRoute.Robots {
       // Be explicit for common SEO bots (same rules, clearer for operators)
       {
         userAgent: 'Googlebot',
-        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/', '/almanac'],
         disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/tool-result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
       },
       {
         userAgent: 'Baiduspider',
-        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/'],
+        allow: ['/', '/r/', '/reports', '/share/', '/knowledge/', '/cases/', '/tools/', '/dimensions/', '/teachers/', '/world-yi/', '/insights/', '/docs/', '/community/', '/questions/', '/analyze', '/membership', '/learn/', '/almanac'],
         disallow: ['/api/', '/admin/', '/chat', '/chat/', '/result/', '/tool-result/', '/profile', '/profile/', '/login', '/history', '/updates', '/updates/', '/events', '/predictions', '/dashboard'],
       },
       // Aggressive SEO scrapers: still allow content, block product APIs/chat
