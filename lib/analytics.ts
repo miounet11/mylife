@@ -131,7 +131,9 @@ export type AnalyticsEventName =
   | 'foundation_step_clicked'
   | 'world_yi_page_viewed'
   | 'world_yi_cities_viewed'
-  | 'world_yi_era_timing_viewed';
+  | 'world_yi_era_timing_viewed'
+  | 'era_hypothesis_scored'
+  | 'era_hypothesis_score_cleared';
 
 interface TrackEventInput {
   userId?: string | null;

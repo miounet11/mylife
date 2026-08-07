@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import AnnualReviewCard from '@/components/annual-review/annual-review-card';
+import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
+import EraHypothesisRevisit from '@/components/world-yi/era-hypothesis-revisit';
 import { buildAnnualReview } from '@/lib/annual-review/build-review';
 import { annualReviewBodyCopy } from '@/lib/i18n/annual-review-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
@@ -153,6 +155,10 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
         </label>
       </section>
 
+      <ReportEraEnvironmentBlock year={year} locale={locale} />
+
+      <EraHypothesisRevisit locale={locale} source="annual_review" />
+
       {hasData ? (
         <AnnualReviewCard review={review} locale={locale} />
       ) : (
@@ -165,6 +171,9 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
             </Link>
             <Link href="/profile/events" className="fb-btn h-9 px-4 text-sm hover:no-underline">
               {copy.emptyCtaEvents}
+            </Link>
+            <Link href="/world-yi/era-timing" className="fb-btn h-9 px-4 text-sm hover:no-underline">
+              {locale === 'en' ? 'Era timing' : '时代天时'}
             </Link>
           </div>
         </section>

@@ -34,7 +34,7 @@ export default async function AnnualReviewPage({ searchParams }: AnnualReviewPag
 
   return (
     <AppPage header={{ ctaHref: '/profile', ctaLabel: copy.headerCta, compact: true }}>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}
@@ -49,6 +49,9 @@ export default async function AnnualReviewPage({ searchParams }: AnnualReviewPag
               </Link>
               <Link href="/profile/events" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {copy.linkEvents}
+              </Link>
+              <Link href="/world-yi/era-timing" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                {uiLocale === 'en' ? 'Era timing' : '时代天时'}
               </Link>
             </>
           }

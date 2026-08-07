@@ -73,6 +73,7 @@ import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
+import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
 import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
 import ReportChapterDock, {
   type ReportChapterDockItem,
@@ -1019,6 +1020,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <div className="mt-3">
                     <ReportTimingTabs record={timingRecord} locale={uiLocale} />
                   </div>
+                  <div className="mt-3">
+                    <ReportEraEnvironmentBlock
+                      year={new Date().getFullYear()}
+                      locale={uiLocale}
+                    />
+                  </div>
+                </section>
+              ) : null}
+
+              {!timingRecord ? (
+                <section id="era-environment" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                  <ReportEraEnvironmentBlock
+                    year={new Date().getFullYear()}
+                    locale={uiLocale}
+                  />
                 </section>
               ) : null}
 
@@ -1385,7 +1401,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 // 骨架组件
 function ReportSkeleton() {
   return (
-    <div className="max-w-5xl mx-auto space-y-8">
+    <div className="page-content-wide space-y-8">
       <div className="h-64 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
       <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>
       <div className="h-96 bg-[color:var(--bg-sunken)] rounded-[var(--radius)] animate-pulse"></div>

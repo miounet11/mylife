@@ -168,6 +168,23 @@ export const ERA_FOUR_PHASES: FourPhase[] = [
  */
 export const ERA_HYPOTHESES: EraHypothesis[] = [
   {
+    id: 'h-2026-27-ai-scale',
+    year: 2026,
+    label: '2026–2027 · AI 放量与摩擦并存（假设）',
+    labelEn: '2026–2027 · AI scale + friction (hypothesis)',
+    claim:
+      '本窗口技术叙事偏「放量扩张」：应用落地加速，同时监管、算力成本与舆论摩擦上升。个人宜做可逆试点，慎一次梭哈。',
+    claimEn:
+      'Tech narrative skews scale-out: application rollout accelerates while regulation, compute cost, and narrative friction rise. Prefer reversible pilots over all-in bets.',
+    observeBy: '2027-12-31',
+    observeByEn: '2027-12-31',
+    falsifyIf:
+      '若 2026–2027 应用落地明显停滞且社会压力显著回落（无持续监管/成本话题），则该假设降权。',
+    falsifyIfEn:
+      'If application rollout stalls and social pressure clearly eases through 2027, down-weight the claim.',
+    status: 'watching',
+  },
+  {
     id: 'h-2030-bi',
     year: 2030,
     label: '2030 · 毕宿窗口（假设）',

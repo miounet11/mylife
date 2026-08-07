@@ -23,6 +23,8 @@ export type ProductEventName =
   | 'mass_prediction_seed_shown'
   | 'mass_prediction_outcome'
   | 'mass_prediction_to_event'
+  | 'era_hypothesis_scored'
+  | 'era_hypothesis_score_cleared'
   | 'mass_need_map_click'
   | 'mass_action_bar_viewed'
   | 'mass_learn_path_click'
@@ -71,6 +73,7 @@ function cleanDetail(detail: ProductEventDetail = {}): Record<string, string> {
 function surfaceOf(event: ProductEventName): ProductSurface {
   if (event.startsWith('mass_')) return 'mass';
   if (event.startsWith('expert_')) return 'expert';
+  if (event.startsWith('era_')) return 'loop';
   if (
     event.startsWith('hehun_') ||
     event.startsWith('events_') ||

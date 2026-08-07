@@ -8,7 +8,6 @@ import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/component
 import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 import {
   ERA_FOUR_PHASES,
-  ERA_HYPOTHESES,
   ERA_THREE_LAYERS,
   WORLD_YI_ERA_METHOD_BLURB,
   WORLD_YI_ERA_METHOD_BLURB_EN,
@@ -17,6 +16,8 @@ import {
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import JsonLd from '@/components/seo/json-ld';
 import { buildBreadcrumbJsonLd, buildItemListJsonLd } from '@/lib/seo';
+import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
+import EraHypothesisRevisit from '@/components/world-yi/era-hypothesis-revisit';
 
 export const dynamic = 'force-dynamic';
 
@@ -108,6 +109,8 @@ export default async function WorldYiEraTimingPage({
               : '时代天时讲天气；结构报告锁定日主与个人大运，对照才是你自己的。'
           }
         />
+
+        <ReportEraEnvironmentBlock year={new Date().getFullYear()} locale={locale} />
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
           <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">
@@ -221,42 +224,7 @@ export default async function WorldYiEraTimingPage({
           </ol>
         </section>
 
-        <section>
-          <h2 className="mb-2 text-[14px] font-bold text-[color:var(--ink-1)]">
-            {en ? 'Open hypotheses (score later)' : '开放假设（事后打分）'}
-          </h2>
-          <p className="mb-3 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-            {en
-              ? 'Inspired by popular Uranus×mansion tech narratives. Treated as calibratable claims — not scientific proof or investment advice.'
-              : '受「天王星×星宿×技术阶段」类叙事启发。按可校准主张处理——不是科学定论，也不是投资建议。'}
-          </p>
-          <ul className="space-y-3">
-            {ERA_HYPOTHESES.map((h) => (
-              <li
-                key={h.id}
-                className="rounded-xl border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-[14px] font-bold text-[color:var(--ink-1)]">
-                    {en ? h.labelEn : h.label}
-                  </h3>
-                  <span className="rounded-full border border-[color:var(--hairline)] px-2 py-0.5 text-[10px] text-[color:var(--ink-4)]">
-                    {h.status === 'open' ? (en ? 'Open' : '开放') : en ? 'Watching' : '观察中'} ·{' '}
-                    {en ? `by ${h.observeByEn}` : `回访截止 ${h.observeBy}`}
-                  </span>
-                </div>
-                <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--ink-3)]">
-                  {en ? h.claimEn : h.claim}
-                </p>
-                <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--ink-5)]">
-                  <strong className="text-[color:var(--ink-4)]">{en ? 'Falsify if' : '证伪条件'}</strong>
-                  {' — '}
-                  {en ? h.falsifyIfEn : h.falsifyIf}
-                </p>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <EraHypothesisRevisit locale={locale} source="world_yi_era_timing" />
 
         <section>
           <h2 className="mb-2 text-[14px] font-bold text-[color:var(--ink-1)]">
