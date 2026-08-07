@@ -3,13 +3,23 @@
 import type { AlmanacLuck, PersonalDayStance } from '@/lib/almanac/types';
 import type { SignKey } from '@/lib/astro/types';
 
-export type AstroDailyKind = 'sign' | 'zone' | 'rising' | 'birth';
+export type AstroDailyKind =
+  | 'sign'
+  | 'zone'
+  | 'rising'
+  | 'birth'
+  | 'element'
+  | 'modality'
+  | 'shengxiao';
 
 export type AstroDailyIdentity =
   | { kind: 'sign'; key: SignKey }
   | { kind: 'zone'; id: string }
   | { kind: 'rising'; key: SignKey }
-  | { kind: 'birth'; birthDate: string; birthHour?: number };
+  | { kind: 'birth'; birthDate: string; birthHour?: number }
+  | { kind: 'element'; slug: string }
+  | { kind: 'modality'; slug: string }
+  | { kind: 'shengxiao'; slug: string };
 
 export type AstroEvidence = {
   code: string;

@@ -41,7 +41,13 @@ export default function AstroDailyMatchView({
         ? { kind: 'zone', id: pack.identity.zoneId || pack.identity.key }
         : pack.identity.kind === 'rising'
           ? { kind: 'rising', key: pack.identity.signKey! }
-          : { kind: 'birth', birthDate: pack.identity.key };
+          : pack.identity.kind === 'element'
+            ? { kind: 'element', slug: pack.identity.key }
+            : pack.identity.kind === 'modality'
+              ? { kind: 'modality', slug: pack.identity.key }
+              : pack.identity.kind === 'shengxiao'
+                ? { kind: 'shengxiao', slug: pack.identity.key }
+                : { kind: 'birth', birthDate: pack.identity.key };
 
   const prevHref = pathForIdentity(identityForPath, pack.bridges.siblingDays.prev);
   const nextHref = pathForIdentity(identityForPath, pack.bridges.siblingDays.next);

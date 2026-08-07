@@ -37,70 +37,94 @@ export default function AstroHubPage() {
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="星座板块 · 覆盖扩展"
-          title="十二星座 · 48星区 · 上升"
-          description="参考星座站内容广度：太阳定内核，48星区细分出生段落，上升写第一印象。与世界易结构语言、黄历日节奏、八字报告交叉使用——扩展覆盖，不作恐吓定命。"
+          title="星座引擎百科"
+          description="十二星座 · 48星区 · 上升 · 四象 · 生肖 · 配对 · 日运对比 · 月历——全部与万年历通书同一匹配引擎，证据链可读，无空壳运势文。"
           actions={
             <>
-              <Link
-                href="/astro/signs"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
+              <Link href="/astro/signs" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 十二星座
               </Link>
-              <Link
-                href="/astro/zones"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
+              <Link href="/astro/zones" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 48星区
               </Link>
-              <Link
-                href="/astro/rising"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
-                上升星座
+              <Link href="/astro/shengxiao" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                生肖日运
               </Link>
-              <Link
-                href="/world-yi"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
-                世界易
+              <Link href="/astro/pair" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                配对矩阵
               </Link>
-              <Link
-                href="/almanac"
-                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-              >
+              <Link href="/almanac" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 万年历
+              </Link>
+              <Link href="/world-yi" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                世界易
               </Link>
             </>
           }
           footer={
             <span>
-              {ASTRO_SIGNS.length} 星座 · {ASTRO_ZONES_48.length} 星区 · {RISING_PROFILES.length} 上升
+              {ASTRO_SIGNS.length} 星座 · {ASTRO_ZONES_48.length} 星区 · {RISING_PROFILES.length} 上升 · 引擎日运
             </span>
           }
         />
 
         <AstroLookup source="astro_hub" />
 
-        <section className="grid gap-3 sm:grid-cols-3">
+        <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               href: '/astro/signs',
               title: '十二星座',
-              desc: '元素、模式、事业关系与世界易桥接',
-              n: `${ASTRO_SIGNS.length} 篇`,
+              desc: '详解 + 日运 + 月历评分',
+              n: `${ASTRO_SIGNS.length} 座`,
             },
             {
               href: '/astro/zones',
               title: '48 星区',
-              desc: '每座四区，交界气质与行动提示',
+              desc: '每座四区 × 流日引擎',
               n: `${ASTRO_ZONES_48.length} 区`,
             },
             {
               href: '/astro/rising',
               title: '上升星座',
-              desc: '第一印象、社交面具与角色呈现',
+              desc: '第一印象 × 对外时辰',
               n: `${RISING_PROFILES.length} 型`,
+            },
+            {
+              href: '/astro/elements',
+              title: '四象元素',
+              desc: '火土风水群组日运',
+              n: '4 象',
+            },
+            {
+              href: '/astro/shengxiao',
+              title: '十二生肖',
+              desc: '地支冲合 × 通书',
+              n: '12 肖',
+            },
+            {
+              href: '/astro/pair',
+              title: '配对矩阵',
+              desc: '元素生克 · 协作边界',
+              n: '78 组',
+            },
+            {
+              href: '/astro/modality',
+              title: '三模式',
+              desc: '基本 / 固定 / 变动',
+              n: '3 宫',
+            },
+            {
+              href: `/astro/day/${new Date().toISOString().slice(0, 10)}/compare`,
+              title: '今日十二座对比',
+              desc: '同一引擎排名，可点进证据页',
+              n: '日榜',
+            },
+            {
+              href: `/astro/day/${new Date().toISOString().slice(0, 10)}`,
+              title: '当日星座入口',
+              desc: '黄历日 × 全站星座链接',
+              n: '入口',
             },
           ].map((c) => (
             <Link

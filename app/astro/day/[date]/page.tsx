@@ -59,6 +59,18 @@ export default async function AstroDayHubPage({ params }: Props) {
             <Link href={`/almanac/${date}`} className="text-[color:var(--brand)] underline-offset-2 hover:underline">
               万年历通书
             </Link>
+            <Link
+              href={`/astro/day/${date}/compare`}
+              className="font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              十二星座对比排名
+            </Link>
+            <Link href="/astro/shengxiao" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
+              生肖日运
+            </Link>
+            <Link href="/astro/elements" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
+              四象
+            </Link>
             <Link href="/astro" className="text-[color:var(--brand)] underline-offset-2 hover:underline">
               生日查询
             </Link>

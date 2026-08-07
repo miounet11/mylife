@@ -168,12 +168,26 @@ export default async function AstroSignPage({ params }: Props) {
           <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">
             将本座与万年历通书叠加，生成结构化匹配页（证据链 + 时辰 + 宜忌）。
           </p>
-          <Link
-            href={`/astro/signs/${s.key}/day/${new Date().toISOString().slice(0, 10)}`}
-            className="mt-2 inline-block text-[13px] font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
-          >
-            查看今日{s.zh}运势 →
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-3 text-[13px] font-semibold">
+            <Link
+              href={`/astro/signs/${s.key}/day/${new Date().toISOString().slice(0, 10)}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              今日{s.zh}运势 →
+            </Link>
+            <Link
+              href={`/astro/signs/${s.key}/month/${new Date().toISOString().slice(0, 7)}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              本月运势月历 →
+            </Link>
+            <Link
+              href="/astro/pair"
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              配对矩阵 →
+            </Link>
+          </div>
         </section>
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">

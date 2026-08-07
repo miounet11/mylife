@@ -22,11 +22,14 @@ import type {
   AstroEvidence,
   AstroHourNote,
 } from '@/lib/astro/daily-match-types';
+import { getElementBySlug, getModalityBySlug, signsForElement, signsForModality } from '@/lib/astro/elements-catalog';
 import { getRisingByKey } from '@/lib/astro/rising-data';
 import { relatedWorldYiLinks, resolveSunSignFromDate } from '@/lib/astro/resolve';
+import { getShengxiaoBySlug, shengxiaoFlowRelation } from '@/lib/astro/shengxiao-catalog';
 import { getSignByKey } from '@/lib/astro/signs-data';
 import type { SignKey, ZonePhase } from '@/lib/astro/types';
 import { getZoneById, getZonesBySign, resolveZoneFromDate } from '@/lib/astro/zones-48';
+import { ganZhiParts } from '@/lib/almanac/elements';
 import { getChineseZodiac } from '@/lib/life-foundation/zodiac';
 
 function clamp(n: number, min: number, max: number) {
@@ -450,6 +453,151 @@ export function buildAstroDailyMatchPack(
       chineseZodiac: cz?.animal,
     };
     compositeWeight = { s: 0.7, e: 0.3 };
+  } else if (identity.kind === 'element') {
+    const el = getElementBySlug(identity.slug);
+    if (!el) return null;
+    key = el.slug;
+    title = `${el.zh}象星座`;
+    subtitle = `${el.en} · ${el.blurb}`;
+    worldYiBridge = el.worldYi;
+    const memberKeys = signsForElement(el.zh);
+    sign = getSignByKey(memberKeys[0]);
+    signKey = sign?.key;
+    const cohort = buildCohortScore({
+      pack,
+      element: el.zh,
+      modality: '基本',
+      identityLabel: title,
+    });
+    structureScore = cohort.structure;
+    expressionScore = cohort.expression;
+    stance = cohort.stance;
+    stars = cohort.stars;
+    favors = [
+      ...cohort.favors,
+      `同象成员：${memberKeys.map((k) => getSignByKey(k)?.zh).filter(Boolean).join('、')}`,
+    ].slice(0, 5);
+    watchouts = cohort.watchouts;
+    topHours = cohort.topHours;
+    avoidHours = cohort.avoidHours;
+    evidence = [
+      ...cohort.evidence,
+      { code: 'ELEMENT_GROUP', label: `${el.zh}象队列（${memberKeys.length} 座）`, weight: 2 },
+    ];
+    moodLine = cohort.moodLine;
+    headline = cohort.headline;
+    exprNote = `${el.blurb}${el.worldYi}`;
+    natal = {
+      dayMaster: '—',
+      dayPillar: '—',
+      dayBranch: '—',
+      yongShen: [],
+      source: 'cohort',
+      sun: sign ? { zh: sign.zh, key: sign.key } : undefined,
+    };
+    compositeWeight = { s: 0.55, e: 0.45 };
+  } else if (identity.kind === 'modality') {
+    const mod = getModalityBySlug(identity.slug);
+    if (!mod) return null;
+    key = mod.slug;
+    title = `${mod.zh}宫星座`;
+    subtitle = `${mod.en} · ${mod.blurb}`;
+    const memberKeys = signsForModality(mod.zh);
+    sign = getSignByKey(memberKeys[0]);
+    signKey = sign?.key;
+    worldYiBridge = '模式（基本/固定/变动）决定启动、持守与调节；世界易强调阶段窗口与动作密度。';
+    const cohort = buildCohortScore({
+      pack,
+      element: sign?.element || '火',
+      modality: mod.zh,
+      identityLabel: title,
+    });
+    structureScore = cohort.structure;
+    expressionScore = cohort.expression;
+    stance = cohort.stance;
+    stars = cohort.stars;
+    favors = [
+      ...cohort.favors,
+      `同模式：${memberKeys.map((k) => getSignByKey(k)?.zh).filter(Boolean).join('、')}`,
+    ].slice(0, 5);
+    watchouts = cohort.watchouts;
+    topHours = cohort.topHours;
+    avoidHours = cohort.avoidHours;
+    evidence = [
+      ...cohort.evidence,
+      { code: 'MODALITY_GROUP', label: `${mod.zh}宫队列`, weight: 2 },
+    ];
+    moodLine = cohort.moodLine;
+    headline = cohort.headline;
+    exprNote = mod.blurb;
+    natal = {
+      dayMaster: '—',
+      dayPillar: '—',
+      dayBranch: '—',
+      yongShen: [],
+      source: 'cohort',
+    };
+    compositeWeight = { s: 0.5, e: 0.5 };
+  } else if (identity.kind === 'shengxiao') {
+    const sx = getShengxiaoBySlug(identity.slug);
+    if (!sx) return null;
+    key = sx.slug;
+    title = `属${sx.zh}`;
+    subtitle = `${sx.en} · 地支${sx.branch} · ${sx.keywords.join('、')}`;
+    worldYiBridge = '生肖层用流日地支冲合做节奏提示；完整阶段判断仍以八字日主与大运为准。';
+    const { branch: flowBranch } = ganZhiParts(pack.lunar.dayGanZhi);
+    const rel = shengxiaoFlowRelation(sx.branch, flowBranch);
+    // Map animal keywords loosely to elements via branch
+    const branchElMap: Record<string, '火' | '土' | '风' | '水'> = {
+      子: '水',
+      亥: '水',
+      寅: '火',
+      卯: '火',
+      巳: '火',
+      午: '火',
+      申: '风',
+      酉: '风',
+      辰: '土',
+      戌: '土',
+      丑: '土',
+      未: '土',
+    };
+    const cohort = buildCohortScore({
+      pack,
+      element: branchElMap[sx.branch] || '土',
+      modality: '固定',
+      identityLabel: title,
+    });
+    structureScore = clamp(cohort.structure + rel.scoreDelta, 0, 100);
+    expressionScore = cohort.expression;
+    stance =
+      structureScore >= 62 ? 'push' : structureScore <= 42 ? 'conserve' : 'steady';
+    stars = clamp(Math.round(structureScore / 20), 1, 5);
+    favors = [...cohort.favors];
+    watchouts = [...cohort.watchouts];
+    if (rel.kind === 'he') favors.unshift(`生肖层：${rel.label}，协作与人情窗口略宽。`);
+    if (rel.kind === 'chong') watchouts.unshift(`生肖层：${rel.label}，重大决定宜放缓复核。`);
+    if (rel.kind === 'same') watchouts.unshift(`生肖层：${rel.label}，宜稳健忌冲动大变。`);
+    topHours = cohort.topHours;
+    avoidHours = cohort.avoidHours;
+    evidence = [
+      { code: 'SX_BRANCH', label: `生肖地支${sx.branch}`, weight: 6 },
+      { code: 'SX_FLOW', label: rel.label, weight: rel.scoreDelta },
+      ...cohort.evidence.slice(0, 5),
+    ];
+    const sm = stanceMood(stance);
+    moodLine = sm.mood;
+    headline = `${title} · ${sm.line} · 日柱 ${pack.lunar.dayGanZhi}`;
+    exprNote = `${sx.blurb}关键词：${sx.keywords.join('、')}。${rel.label}。`;
+    natal = {
+      dayMaster: '—',
+      dayPillar: '—',
+      dayBranch: sx.branch,
+      yongShen: [],
+      source: 'cohort',
+      chineseZodiac: sx.zh,
+    };
+    compositeWeight = { s: 0.65, e: 0.35 };
   } else {
     return null;
   }
@@ -591,5 +739,8 @@ export function pathForIdentity(identity: AstroDailyIdentity, date: string): str
   if (identity.kind === 'sign') return `/astro/signs/${identity.key}/day/${date}`;
   if (identity.kind === 'zone') return `/astro/zones/${identity.id}/day/${date}`;
   if (identity.kind === 'rising') return `/astro/rising/${identity.key}/day/${date}`;
+  if (identity.kind === 'element') return `/astro/elements/${identity.slug}/day/${date}`;
+  if (identity.kind === 'modality') return `/astro/modality/${identity.slug}/day/${date}`;
+  if (identity.kind === 'shengxiao') return `/astro/shengxiao/${identity.slug}/day/${date}`;
   return `/astro/birth/${identity.birthDate}/day/${date}`;
 }

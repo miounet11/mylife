@@ -23,11 +23,20 @@ export async function GET(req: NextRequest) {
       birthDate: `${sp.get('birth') || sp.get('birthDate') || ''}`,
       birthHour: sp.get('hour') != null ? Number(sp.get('hour')) : 12,
     };
+  } else if (kind === 'element') {
+    identity = { kind: 'element', slug: `${sp.get('slug') || sp.get('key') || ''}` };
+  } else if (kind === 'modality') {
+    identity = { kind: 'modality', slug: `${sp.get('slug') || sp.get('key') || ''}` };
+  } else if (kind === 'shengxiao') {
+    identity = { kind: 'shengxiao', slug: `${sp.get('slug') || sp.get('key') || ''}` };
   }
 
   if (!date || !identity) {
     return NextResponse.json(
-      { success: false, error: 'Need date + kind=sign|zone|rising|birth (+ key/id/birth)' },
+      {
+        success: false,
+        error: 'Need date + kind=sign|zone|rising|birth|element|modality|shengxiao',
+      },
       { status: 400 },
     );
   }

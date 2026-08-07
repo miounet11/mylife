@@ -8,8 +8,12 @@ import {
 import { DIMENSIONS } from '@/lib/dimensions/config';
 import { LEARNING_TRACKS } from '@/lib/learning-tracks';
 import { rollingIsoDates } from '@/lib/astro/daily-window';
+import { ELEMENT_CATALOG, MODALITY_CATALOG } from '@/lib/astro/elements-catalog';
+import { currentYearMonth, shiftYearMonth } from '@/lib/astro/month-engine';
+import { allPairKeyCombos } from '@/lib/astro/pair-engine';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
 import { RISING_PROFILES } from '@/lib/astro/rising-data';
+import { SHENGXIAO_CATALOG } from '@/lib/astro/shengxiao-catalog';
 import { ASTRO_ZONES_48 } from '@/lib/astro/zones-48';
 import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
@@ -230,6 +234,53 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.72,
     changeFrequency: 'daily' as const,
   }));
+  const astroDayCompareRoutes = rollingIsoDates(14, 14).map((date) => ({
+    path: `/astro/day/${date}/compare`,
+    priority: 0.74,
+    changeFrequency: 'daily' as const,
+  }));
+  const shortWindow = rollingIsoDates(14, 14);
+  const astroElementDayRoutes = ELEMENT_CATALOG.flatMap((e) =>
+    shortWindow.map((date) => ({
+      path: `/astro/elements/${e.slug}/day/${date}`,
+      priority: 0.66,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const astroModalityDayRoutes = MODALITY_CATALOG.flatMap((m) =>
+    shortWindow.map((date) => ({
+      path: `/astro/modality/${m.slug}/day/${date}`,
+      priority: 0.65,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const astroShengxiaoDayRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
+    shortWindow.map((date) => ({
+      path: `/astro/shengxiao/${s.slug}/day/${date}`,
+      priority: 0.66,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const ymNow = currentYearMonth();
+  const ymList = [shiftYearMonth(ymNow, -1), ymNow, shiftYearMonth(ymNow, 1)];
+  const astroSignMonthRoutes = ASTRO_SIGNS.flatMap((s) =>
+    ymList.map((ym) => ({
+      path: `/astro/signs/${s.key}/month/${ym}`,
+      priority: 0.7,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroPairRoutes = allPairKeyCombos().map(({ a, b }) => ({
+    path: `/astro/pair/${a}/${b}`,
+    priority: 0.64,
+    changeFrequency: 'monthly' as const,
+  }));
+  const astroExtraHubs = [
+    { path: '/astro/elements', priority: 0.86, changeFrequency: 'weekly' as const },
+    { path: '/astro/modality', priority: 0.84, changeFrequency: 'weekly' as const },
+    { path: '/astro/shengxiao', priority: 0.88, changeFrequency: 'weekly' as const },
+    { path: '/astro/pair', priority: 0.86, changeFrequency: 'weekly' as const },
+  ];
 
   const dimensionRoutes = DIMENSIONS.map((item) => ({
     path: `/dimensions/${item.slug}`,
@@ -288,9 +339,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...astroZoneRoutes,
     ...astroRisingRoutes,
     ...astroDayHubRoutes,
+    ...astroDayCompareRoutes,
     ...astroSignDayRoutes,
     ...astroZoneDayRoutes,
     ...astroRisingDayRoutes,
+    ...astroElementDayRoutes,
+    ...astroModalityDayRoutes,
+    ...astroShengxiaoDayRoutes,
+    ...astroSignMonthRoutes,
+    ...astroPairRoutes,
+    ...astroExtraHubs,
     ...dimensionRoutes,
     ...toolCategoryRoutes,
     ...toolDetailRoutes,

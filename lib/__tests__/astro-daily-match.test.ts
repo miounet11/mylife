@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildAstroDailyMatchPack } from '@/lib/astro/daily-match-engine';
+import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
+import { buildAstroMonthPack } from '@/lib/astro/month-engine';
+import { buildAstroPairPack } from '@/lib/astro/pair-engine';
 
 describe('astro daily match engine', () => {
   const day = '2026-08-07';
@@ -45,5 +48,40 @@ describe('astro daily match engine', () => {
     assert.ok(pack);
     assert.ok(pack!.identity.title.includes('上升'));
     assert.ok(pack!.evidence.length >= 3);
+  });
+
+  it('element and shengxiao packs build', () => {
+    const el = buildAstroDailyMatchPack(day, { kind: 'element', slug: 'fire' });
+    const sx = buildAstroDailyMatchPack(day, { kind: 'shengxiao', slug: 'horse' });
+    assert.ok(el && el.evidence.length >= 3);
+    assert.ok(sx && sx.identity.title.includes('马'));
+  });
+});
+
+describe('astro expand engines', () => {
+  it('day compare ranks 12 signs', () => {
+    const pack = buildDayComparePack('2026-08-07');
+    assert.ok(pack);
+    assert.equal(pack!.signs.length, 12);
+    assert.ok(pack!.topSigns.length === 3);
+  });
+
+  it('pair pack aries-leo', () => {
+    const pack = buildAstroPairPack('aries', 'leo');
+    assert.ok(pack);
+    assert.ok(pack!.score >= 20 && pack!.score <= 90);
+  });
+
+  it('month pack has days', () => {
+    const pack = buildAstroMonthPack(
+      2026,
+      8,
+      { kind: 'sign', key: 'leo' },
+      '狮子座',
+      (d) => `/astro/signs/leo/day/${d}`,
+    );
+    assert.ok(pack);
+    assert.ok(pack!.cells.length >= 28);
+    assert.ok(pack!.best);
   });
 });
