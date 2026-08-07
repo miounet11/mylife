@@ -3,11 +3,13 @@
 import Link from 'next/link';
 import { useMemo, useState } from 'react';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { lookupAstro } from '@/lib/astro/resolve';
 
 export default function AstroLookup({ source = 'astro_hub' }: { source?: string }) {
   const [date, setDate] = useState('');
   const [hour, setHour] = useState<string>('');
+  const [targetDay, setTargetDay] = useState(todayIsoLocal());
   const [submitted, setSubmitted] = useState(false);
 
   const result = useMemo(() => {
@@ -40,15 +42,15 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
             快速查
           </p>
           <h2 className="mt-1 text-[17px] font-bold text-[color:var(--ink-1)]">
-            生日 → 太阳星座 · 48星区 · 上升（粗算）
+            生日 × 流日 → 引擎日运
           </h2>
           <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-            参考星座站查询体验：先定位太阳与细分星区，有出生时刻再看上升第一印象。精确上升需地点与真太阳时。
+            定位太阳/48星区/上升，并生成「出生日期 × 目标日」结构匹配页（通书 + 日主，非空泛运势文）。
           </p>
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-[1.2fr_0.8fr_auto]">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="block">
           <span className="text-[12px] text-[color:var(--ink-4)]">出生日期（公历）</span>
           <input
@@ -62,7 +64,19 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
           />
         </label>
         <label className="block">
-          <span className="text-[12px] text-[color:var(--ink-4)]">出生时刻（可选，整点）</span>
+          <span className="text-[12px] text-[color:var(--ink-4)]">看哪一天的运势</span>
+          <input
+            type="date"
+            value={targetDay}
+            onChange={(e) => {
+              setTargetDay(e.target.value);
+              setSubmitted(false);
+            }}
+            className="mt-1 w-full rounded-lg border border-[color:var(--hairline)] px-3 py-2.5 text-[14px] outline-none focus:border-[color:var(--ink-3)]"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[12px] text-[color:var(--ink-4)]">出生时刻（可选）</span>
           <select
             value={hour}
             onChange={(e) => {
@@ -83,9 +97,9 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
           <button
             type="button"
             onClick={onQuery}
-            className="h-[42px] w-full rounded-lg bg-[color:var(--brand)] px-4 text-[13px] font-semibold text-white sm:w-auto"
+            className="h-[42px] w-full rounded-lg bg-[color:var(--brand)] px-4 text-[13px] font-semibold text-white"
           >
-            查询
+            查询并匹配
           </button>
         </div>
       </div>
@@ -147,6 +161,47 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
             <p className="text-[13px] text-amber-800">日期无法解析，请用 YYYY-MM-DD。</p>
           )}
           <p className="text-[11px] leading-relaxed text-[color:var(--ink-5)]">{result.disclaimer}</p>
+
+          {date && targetDay && result.sun ? (
+            <div className="rounded-xl border border-[color:var(--brand)]/25 bg-[color:var(--brand-soft)]/30 p-3">
+              <div className="text-[12px] font-bold text-[color:var(--brand-strong)]">引擎日运（结构化）</div>
+              <div className="mt-2 flex flex-wrap gap-2 text-[12px]">
+                <Link
+                  href={`/astro/birth/${date}/day/${targetDay}`}
+                  className="rounded-full bg-[color:var(--brand)] px-3 py-1.5 font-semibold text-white no-underline"
+                >
+                  出生×流日 完整匹配
+                </Link>
+                <Link
+                  href={`/astro/signs/${result.sun.key}/day/${targetDay}`}
+                  className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
+                >
+                  {result.sun.zh}·当日
+                </Link>
+                {result.zone ? (
+                  <Link
+                    href={`/astro/zones/${result.zone.id}/day/${targetDay}`}
+                    className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
+                  >
+                    {result.zone.title}·当日
+                  </Link>
+                ) : null}
+                <Link
+                  href={`/astro/day/${targetDay}`}
+                  className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
+                >
+                  全日入口
+                </Link>
+                <Link
+                  href={`/almanac/${targetDay}`}
+                  className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
+                >
+                  当日黄历
+                </Link>
+              </div>
+            </div>
+          ) : null}
+
           <div className="flex flex-wrap gap-3 text-[12px]">
             <Link
               href="/tools/zodiac"

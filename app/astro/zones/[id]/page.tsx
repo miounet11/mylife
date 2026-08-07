@@ -121,6 +121,12 @@ export default async function AstroZonePage({ params }: Props) {
         <section className="rounded-xl border border-[color:var(--brand)]/20 bg-[color:var(--brand-soft)]/25 p-4">
           <h2 className="text-[13px] font-bold text-[color:var(--brand-strong)]">行动提示</h2>
           <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--ink-2)]">{z.actionTip}</p>
+          <Link
+            href={`/astro/zones/${z.id}/day/${new Date().toISOString().slice(0, 10)}`}
+            className="mt-3 inline-block text-[13px] font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
+          >
+            查看今日「{z.title}」引擎运势 →
+          </Link>
         </section>
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 text-[13px] leading-relaxed text-[color:var(--ink-3)]">

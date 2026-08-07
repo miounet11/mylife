@@ -7,6 +7,7 @@ import {
 } from '@/lib/content-store';
 import { DIMENSIONS } from '@/lib/dimensions/config';
 import { LEARNING_TRACKS } from '@/lib/learning-tracks';
+import { rollingIsoDates } from '@/lib/astro/daily-window';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
 import { RISING_PROFILES } from '@/lib/astro/rising-data';
 import { ASTRO_ZONES_48 } from '@/lib/astro/zones-48';
@@ -201,6 +202,35 @@ export default function sitemap(): MetadataRoute.Sitemap {
     multiLanguage: true,
   }));
 
+  // Engine daily pages: sign/zone/rising × rolling ±30d (bounded; no birth×day flood)
+  const astroDailyWindow = rollingIsoDates(30, 30);
+  const astroSignDayRoutes = ASTRO_SIGNS.flatMap((s) =>
+    astroDailyWindow.map((date) => ({
+      path: `/astro/signs/${s.key}/day/${date}`,
+      priority: 0.7,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const astroZoneDayRoutes = ASTRO_ZONES_48.flatMap((z) =>
+    astroDailyWindow.map((date) => ({
+      path: `/astro/zones/${z.id}/day/${date}`,
+      priority: 0.68,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const astroRisingDayRoutes = RISING_PROFILES.flatMap((r) =>
+    astroDailyWindow.map((date) => ({
+      path: `/astro/rising/${r.key}/day/${date}`,
+      priority: 0.68,
+      changeFrequency: 'daily' as const,
+    })),
+  );
+  const astroDayHubRoutes = astroDailyWindow.map((date) => ({
+    path: `/astro/day/${date}`,
+    priority: 0.72,
+    changeFrequency: 'daily' as const,
+  }));
+
   const dimensionRoutes = DIMENSIONS.map((item) => ({
     path: `/dimensions/${item.slug}`,
     priority: item.priority === 'p0' ? 0.92 : 0.84,
@@ -257,6 +287,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...astroSignRoutes,
     ...astroZoneRoutes,
     ...astroRisingRoutes,
+    ...astroDayHubRoutes,
+    ...astroSignDayRoutes,
+    ...astroZoneDayRoutes,
+    ...astroRisingDayRoutes,
     ...dimensionRoutes,
     ...toolCategoryRoutes,
     ...toolDetailRoutes,

@@ -310,6 +310,10 @@ export default function AlmanacTearSheet({
         className={`border-t ${paper.line} bg-[#f3efe3] px-3 py-2 text-[10px] leading-relaxed sm:px-4 ${paper.muted}`}
       >
         通书宜忌与十二时辰为公共层；个人日运来自日主用神结构匹配，作节奏参考，非医疗投资建议。潮汐、地方彩票等未收录。
+        {' · '}
+        <a href={`/astro/day/${pack.date}`} className={`font-semibold underline-offset-2 hover:underline ${paper.red}`}>
+          按星座/星区看今日
+        </a>
       </footer>
     </article>
   );

@@ -163,6 +163,19 @@ export default async function AstroSignPage({ params }: Props) {
           </ul>
         </section>
 
+        <section className="rounded-xl border border-[color:var(--brand)]/20 bg-[color:var(--brand-soft)]/25 p-4">
+          <h2 className="text-[13px] font-bold text-[color:var(--brand-strong)]">引擎日运</h2>
+          <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">
+            将本座与万年历通书叠加，生成结构化匹配页（证据链 + 时辰 + 宜忌）。
+          </p>
+          <Link
+            href={`/astro/signs/${s.key}/day/${new Date().toISOString().slice(0, 10)}`}
+            className="mt-2 inline-block text-[13px] font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
+          >
+            查看今日{s.zh}运势 →
+          </Link>
+        </section>
+
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
           <h2 className="text-[13px] font-bold">上升同名 · 对照</h2>
           <p className="mt-2 text-[12px] text-[color:var(--ink-4)]">
