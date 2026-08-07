@@ -94,6 +94,8 @@ export const LK_PORTAL_ROUTES = [
   '/astro/signs/[key]/month/[ym]',
   '/astro/pair',
   '/astro/pair/[a]/[b]',
+  '/astro/pair/[a]/[b]/day/[date]',
+  '/astro/signs/[key]/week/[weekId]',
   '/knowledge',
   '/knowledge/[slug]',
   '/cases',

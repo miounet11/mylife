@@ -3,7 +3,10 @@ import { describe, it } from 'node:test';
 import { buildAstroDailyMatchPack } from '@/lib/astro/daily-match-engine';
 import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 import { buildAstroMonthPack } from '@/lib/astro/month-engine';
+import { buildAstroPairDayPack } from '@/lib/astro/pair-day-engine';
 import { buildAstroPairPack } from '@/lib/astro/pair-engine';
+import { buildAstroWeekPack, currentIsoWeekId } from '@/lib/astro/week-engine';
+import { buildAstroDailyEmail } from '@/lib/email/astro-daily-email';
 
 describe('astro daily match engine', () => {
   const day = '2026-08-07';
@@ -83,5 +86,32 @@ describe('astro expand engines', () => {
     assert.ok(pack);
     assert.ok(pack!.cells.length >= 28);
     assert.ok(pack!.best);
+  });
+
+  it('week pack aggregates 7 days', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const pack = buildAstroWeekPack(
+      weekId,
+      { kind: 'sign', key: 'leo' },
+      '狮子座',
+      (d) => `/astro/signs/leo/day/${d}`,
+    );
+    assert.ok(pack);
+    assert.ok(pack!.days.length >= 5);
+    assert.ok(pack!.avg >= 0);
+  });
+
+  it('pair day combines two dailies', () => {
+    const pack = buildAstroPairDayPack('2026-08-07', 'aries', 'leo');
+    assert.ok(pack);
+    assert.ok(pack!.combined.evidence.length >= 3);
+    assert.ok(pack!.combined.score >= 0);
+  });
+
+  it('astro daily email builds', () => {
+    const mail = buildAstroDailyEmail({ date: '2026-08-07' });
+    assert.equal(mail.ok, true);
+    assert.ok(mail.html.length > 100);
+    assert.ok(mail.subject.includes('2026') || mail.subject.includes('星座'));
   });
 });

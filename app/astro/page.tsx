@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import AstroDailySubscribe from '@/components/astro/astro-daily-subscribe';
 import AstroLookup from '@/components/astro/astro-lookup';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
 import { AppPage } from '@/components/layout/app-page';
@@ -8,6 +9,7 @@ import { FocusHero } from '@/components/layout/focus-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
 import { RISING_PROFILES } from '@/lib/astro/rising-data';
+import { currentIsoWeekId } from '@/lib/astro/week-engine';
 import { ASTRO_ZONES_48 } from '@/lib/astro/zones-48';
 import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 import { buildPageMetadata } from '@/lib/seo';
@@ -69,13 +71,14 @@ export default function AstroHubPage() {
         />
 
         <AstroLookup source="astro_hub" />
+        <AstroDailySubscribe />
 
         <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {[
             {
               href: '/astro/signs',
               title: '十二星座',
-              desc: '详解 + 日运 + 月历评分',
+              desc: '详解 + 日运 + 周运 + 月历',
               n: `${ASTRO_SIGNS.length} 座`,
             },
             {
@@ -104,8 +107,8 @@ export default function AstroHubPage() {
             },
             {
               href: '/astro/pair',
-              title: '配对矩阵',
-              desc: '元素生克 · 协作边界',
+              title: '配对 · 合盘日运',
+              desc: '结构配对 + 双方当日引擎分',
               n: '78 组',
             },
             {
@@ -119,6 +122,12 @@ export default function AstroHubPage() {
               title: '今日十二座对比',
               desc: '同一引擎排名，可点进证据页',
               n: '日榜',
+            },
+            {
+              href: `/astro/signs/leo/week/${currentIsoWeekId()}`,
+              title: '周运示例（狮子）',
+              desc: '7 日引擎聚合 · 各座同理',
+              n: '周报',
             },
             {
               href: `/astro/day/${new Date().toISOString().slice(0, 10)}`,

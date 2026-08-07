@@ -14,6 +14,7 @@ import { allPairKeyCombos } from '@/lib/astro/pair-engine';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
 import { RISING_PROFILES } from '@/lib/astro/rising-data';
 import { SHENGXIAO_CATALOG } from '@/lib/astro/shengxiao-catalog';
+import { currentIsoWeekId, shiftIsoWeek } from '@/lib/astro/week-engine';
 import { ASTRO_ZONES_48 } from '@/lib/astro/zones-48';
 import { TOOL_CONTENT } from '@/lib/portal-nav';
 import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
@@ -270,11 +271,31 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
     })),
   );
+  const weekNow = currentIsoWeekId();
+  const weekList = [shiftIsoWeek(weekNow, -1), weekNow, shiftIsoWeek(weekNow, 1)];
+  const astroSignWeekRoutes = ASTRO_SIGNS.flatMap((s) =>
+    weekList.map((weekId) => ({
+      path: `/astro/signs/${s.key}/week/${weekId}`,
+      priority: 0.72,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
   const astroPairRoutes = allPairKeyCombos().map(({ a, b }) => ({
     path: `/astro/pair/${a}/${b}`,
     priority: 0.64,
     changeFrequency: 'monthly' as const,
   }));
+  const pairDayWindow = rollingIsoDates(7, 7);
+  const astroPairDayRoutes = allPairKeyCombos()
+    .filter(({ a, b }) => a !== b)
+    .slice(0, 36)
+    .flatMap(({ a, b }) =>
+      pairDayWindow.map((date) => ({
+        path: `/astro/pair/${a}/${b}/day/${date}`,
+        priority: 0.62,
+        changeFrequency: 'daily' as const,
+      })),
+    );
   const astroExtraHubs = [
     { path: '/astro/elements', priority: 0.86, changeFrequency: 'weekly' as const },
     { path: '/astro/modality', priority: 0.84, changeFrequency: 'weekly' as const },
@@ -347,7 +368,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...astroModalityDayRoutes,
     ...astroShengxiaoDayRoutes,
     ...astroSignMonthRoutes,
+    ...astroSignWeekRoutes,
     ...astroPairRoutes,
+    ...astroPairDayRoutes,
     ...astroExtraHubs,
     ...dimensionRoutes,
     ...toolCategoryRoutes,

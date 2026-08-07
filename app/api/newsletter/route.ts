@@ -155,7 +155,12 @@ export async function POST(request: NextRequest) {
     }
 
     const existing = emailSubscriptionOperations.getByEmail(email);
-    const mergedTags = mergeSubscriptionTags(existing?.tags || [], tags);
+    // appendTags: keep prior preference tags and union new ones (e.g. astro:daily opt-in)
+    const nextTags =
+      body.appendTags === true && Array.isArray(existing?.tags)
+        ? normalizeEnabledTags([...(existing.tags || []), ...tags])
+        : tags;
+    const mergedTags = mergeSubscriptionTags(existing?.tags || [], nextTags);
 
     const metaPatch: EmailSubscriptionMeta = {};
     if (reportId) {

@@ -71,6 +71,12 @@ export const EMAIL_SUBSCRIPTION_PREFERENCE_GROUPS: EmailSubscriptionPreferenceGr
         defaultEnabled: true,
       },
       {
+        tag: 'astro:daily',
+        label: '星座日运简报',
+        description: '每日十二星座引擎排名 + 通书宜忌摘要，可点进证据页与黄历（不含个人命盘）。',
+        defaultEnabled: false,
+      },
+      {
         tag: 'timing:monthly',
         label: '月度窗口汇总',
         description: '每月初发送本月值得留意的时点列表。',

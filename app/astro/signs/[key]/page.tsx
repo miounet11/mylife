@@ -182,6 +182,20 @@ export default async function AstroSignPage({ params }: Props) {
               本月运势月历 →
             </Link>
             <Link
+              href={`/astro/signs/${s.key}/week/${(() => {
+                const d = new Date();
+                const dayNum = d.getDay() || 7;
+                const thu = new Date(d);
+                thu.setDate(d.getDate() + 4 - dayNum);
+                const ys = new Date(thu.getFullYear(), 0, 1);
+                const w = Math.ceil(((thu.getTime() - ys.getTime()) / 86400000 + 1) / 7);
+                return `${thu.getFullYear()}-W${String(w).padStart(2, '0')}`;
+              })()}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              本周周运 →
+            </Link>
+            <Link
               href="/astro/pair"
               className="text-[color:var(--brand)] underline-offset-2 hover:underline"
             >

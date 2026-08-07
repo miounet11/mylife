@@ -120,6 +120,19 @@ export default async function PairPage({ params }: Props) {
           <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--ink-2)]">{pack.worldYi}</p>
         </section>
 
+        <section className="rounded-xl border border-violet-100 bg-violet-50/40 p-4">
+          <h2 className="text-[13px] font-bold text-violet-900">合盘日运</h2>
+          <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">
+            把配对结构叠到流日：双方当日引擎分 + 合成节奏。
+          </p>
+          <Link
+            href={`/astro/pair/${keys[0]}/${keys[1]}/day/${new Date().toISOString().slice(0, 10)}`}
+            className="mt-2 inline-block text-[13px] font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
+          >
+            查看今日合盘日运 →
+          </Link>
+        </section>
+
         <div className="flex flex-wrap gap-2">
           {pack.bridges.map((l) => (
             <Link
