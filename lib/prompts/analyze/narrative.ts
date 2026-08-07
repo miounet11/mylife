@@ -79,6 +79,18 @@ const ANTI_PATTERN_LIST = [
 ];
 
 function buildInput(input: AnalyzeNarrativeInput): string {
+  let eraBlock = '';
+  try {
+    // Lazy import keeps analyze path light if snapshot module changes.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { buildEraEnvironmentPromptModuleContent } = require('@/lib/world-yi-era-snapshot') as {
+      buildEraEnvironmentPromptModuleContent: (year?: number) => string;
+    };
+    eraBlock = buildEraEnvironmentPromptModuleContent(new Date().getFullYear());
+  } catch {
+    eraBlock = '';
+  }
+
   return [
     '[用户排盘数据]',
     JSON.stringify(input.compactBaziData),
@@ -86,6 +98,14 @@ function buildInput(input: AnalyzeNarrativeInput): string {
     '[当前结构草案]',
     JSON.stringify(input.compactDraft),
     '',
+    ...(eraBlock
+      ? [
+          '[CONTEXT_ERA_ENVIRONMENT · 时代环境层 · 仅作宏观天气]',
+          eraBlock,
+          '时代环境不得改写日主/用神；advice.timing 可与四象阶段/摩擦窗口对齐，但须落到可验证动作。',
+          '',
+        ]
+      : []),
     '[补强要求]',
     '只输出补丁字段，不要重复结构草案的内容。不要重写 pattern/fortune/basic。',
     '若输入含 worldStateSnapshot，analysis.summary 必须把"当前世界状态下更该顺势/守势/试探/收缩"写进主判断。',

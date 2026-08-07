@@ -4,6 +4,7 @@
 import type { StructuredAgenticContext } from './types';
 import { ENGINE_HARD_CONTRACT } from '@/lib/ground-truth/hard-contract';
 import { buildLockedFacts, type LockedEngineFacts } from '@/lib/ground-truth/pack';
+import { buildEraEnvironmentPromptModuleContent } from '@/lib/world-yi-era-snapshot';
 
 export interface PromptModule {
   label: string;
@@ -144,6 +145,19 @@ export function buildPromptModules(ctx: StructuredAgenticContext): PromptModule[
     },
     { label: 'LOCKED_ENGINE_FACTS', content: buildLockedFactsModule(engine) },
     { label: 'CONTEXT_TEMPORAL', content: safe(context?.temporal, '{}') },
+    {
+      label: 'CONTEXT_ERA_ENVIRONMENT',
+      content: (() => {
+        try {
+          const year =
+            Number((context as { temporal?: { currentYear?: number } })?.temporal?.currentYear) ||
+            new Date().getFullYear();
+          return buildEraEnvironmentPromptModuleContent(year);
+        } catch {
+          return buildEraEnvironmentPromptModuleContent();
+        }
+      })(),
+    },
     { label: 'CONTEXT_MACRO', content: safe(context?.macroCycles, '{}') },
     { label: 'CONTEXT_GEO_CLIMATE', content: safe(context?.geoClimate, '{}') },
     { label: 'CONTEXT_SPATIAL', content: safe(context?.spatialFactors, '{}') },

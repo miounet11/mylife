@@ -27,6 +27,7 @@ const PERSONA = [
   'T1. temporalSignal 必须显式引用 [CONTEXT_TEMPORAL].currentSolarTerm 和 currentLiuNian 中至少一个。',
   'T2. spatialSignal 必须显式引用 [CONTEXT_GEO_CLIMATE].currentPlace 或 [CONTEXT_SPATIAL].favorableDirections 中至少一个。',
   'T3. macroSignal 必须显式引用 [CONTEXT_MACRO].industryCycle 中的某个 industry 或国运信号。',
+  'T3b. 若存在 [CONTEXT_ERA_ENVIRONMENT]，可将其作「时代天气」补充（四象阶段 / 社会压力 / 摩擦窗口），但不得改写日主用神，不得单独据此断吉凶。',
   'T4. summary 必须把上述三段压成一句"现在 / 在哪里 / 顺哪股势"的复合判断。',
   '',
   STYLE_CALIBRATION,
@@ -43,6 +44,7 @@ export const TEMPORAL_SPATIAL_ADVISOR_SPEC: PromptSpec<StructuredAgenticContext>
     buildAgentUserPrompt(ctx, {
       readingOrder: [
         'CONTEXT_TEMPORAL',
+        'CONTEXT_ERA_ENVIRONMENT',
         'CONTEXT_GEO_CLIMATE',
         'CONTEXT_SPATIAL',
         'CONTEXT_MACRO',
@@ -54,6 +56,7 @@ export const TEMPORAL_SPATIAL_ADVISOR_SPEC: PromptSpec<StructuredAgenticContext>
         'temporalSignal 必须含节气或流年',
         'spatialSignal 必须含 currentPlace 或 favorableDirections',
         'macroSignal 必须含一个具体行业或国运信号',
+        'CONTEXT_ERA_ENVIRONMENT 是时代环境层（四象阶段/压力/摩擦），仅作宏观天气，不可替代个人大运',
         'structure-timing / environment-fit 判断必须引用 doctrine primitives 中的 structure-timing / diaspora-variable（v2 报告集成必做）',
       ],
     }),

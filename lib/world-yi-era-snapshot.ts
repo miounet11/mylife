@@ -98,3 +98,29 @@ export function buildEraEnvironmentSnapshot(year = new Date().getFullYear()): Er
     hubHref: '/world-yi/era-timing',
   };
 }
+
+/**
+ * Compact JSON blob for LLM prompt injection (CONTEXT_ERA_ENVIRONMENT).
+ * Keep short — agents must treat as macro weather, not destiny switch.
+ */
+export function buildEraEnvironmentPromptPayload(year = new Date().getFullYear()) {
+  const snap = buildEraEnvironmentSnapshot(year);
+  return {
+    year: snap.year,
+    phaseId: snap.phase.id,
+    phaseTitle: snap.phase.title,
+    phaseNote: snap.phaseNote,
+    outer: snap.outer,
+    social: snap.social,
+    friction: snap.friction,
+    personalAsk: snap.personalAsk,
+    actions: snap.actions.slice(0, 3),
+    stance:
+      '时代环境=宏观透镜；不得改写日主/用神；不得单独据此断吉凶或投资；须与个人大运流年对齐后给动作。',
+    hub: snap.hubHref,
+  };
+}
+
+export function buildEraEnvironmentPromptModuleContent(year = new Date().getFullYear()): string {
+  return JSON.stringify(buildEraEnvironmentPromptPayload(year), null, 2);
+}

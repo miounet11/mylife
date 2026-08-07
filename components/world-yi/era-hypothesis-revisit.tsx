@@ -4,7 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import {
   clearEraHypothesisScore,
+  hydrateEraHypothesisScoresFromServer,
   listEraHypothesesWithScores,
+  listEraHypothesisScores,
   saveEraHypothesisScore,
   summarizeEraHypothesisScores,
   type EraHypothesisOutcome,
@@ -26,10 +28,12 @@ export default function EraHypothesisRevisit({
   locale = 'zh-CN',
   compact = false,
   source = 'era_timing',
+  onUpdated,
 }: {
   locale?: string | null;
   compact?: boolean;
   source?: string;
+  onUpdated?: () => void;
 }) {
   const en = `${locale || ''}`.toLowerCase().startsWith('en');
   const [rows, setRows] = useState<EraHypothesisWithScore[]>([]);
@@ -37,7 +41,7 @@ export default function EraHypothesisRevisit({
   const [savingId, setSavingId] = useState<string | null>(null);
 
   const refresh = useCallback(() => {
-    const list = listEraHypothesesWithScores();
+    const list = listEraHypothesesWithScores(listEraHypothesisScores());
     setRows(list);
     setNotes((prev) => {
       const next = { ...prev };
@@ -51,7 +55,14 @@ export default function EraHypothesisRevisit({
   }, []);
 
   useEffect(() => {
-    refresh();
+    let cancelled = false;
+    void (async () => {
+      await hydrateEraHypothesisScoresFromServer();
+      if (!cancelled) refresh();
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [refresh]);
 
   const summary = useMemo(() => {
@@ -75,6 +86,7 @@ export default function EraHypothesisRevisit({
       source,
     });
     refresh();
+    onUpdated?.();
     setSavingId(null);
   };
 
@@ -82,6 +94,7 @@ export default function EraHypothesisRevisit({
     clearEraHypothesisScore(id);
     trackProductEvent('era_hypothesis_score_cleared', { hypothesisId: id, source });
     refresh();
+    onUpdated?.();
   };
 
   return (
@@ -101,8 +114,8 @@ export default function EraHypothesisRevisit({
           </h3>
           <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
             {en
-              ? 'Hit / partial / miss — stored on this device. Not investment advice.'
-              : '命中 / 部分 / 落空 — 保存在本机。不构成投资建议。'}
+              ? 'Hit / partial / miss — local cache + server sync when signed in. Not investment advice.'
+              : '命中 / 部分 / 落空 — 本机缓存，登录后同步服务端跨设备。不构成投资建议。'}
           </p>
         </div>
         <div className="text-[11px] text-[color:var(--ink-5)]">

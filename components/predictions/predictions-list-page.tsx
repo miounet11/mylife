@@ -13,6 +13,12 @@ import {
   hydratePredictionsFromServer,
 } from '@/lib/predictions/store';
 import {
+  hydrateEraHypothesisScoresFromServer,
+  listEraHypothesisScores,
+} from '@/lib/era-hypothesis-store';
+import { buildCombinedRevisitStats } from '@/lib/revisit-combined-stats';
+import CombinedRevisitSummary from '@/components/world-yi/combined-revisit-summary';
+import {
   dimensionLabel,
   filterPredictionsByDimension,
   groupPredictionStatsByDimension,
@@ -104,12 +110,21 @@ export default function PredictionsListPage({
 
   useEffect(() => {
     const load = async () => {
-      await hydratePredictionsFromServer();
+      await Promise.all([hydratePredictionsFromServer(), hydrateEraHypothesisScoresFromServer()]);
       refresh();
       setLoading(false);
     };
     void load();
   }, [refresh]);
+
+  const combinedStats = useMemo(
+    () =>
+      buildCombinedRevisitStats({
+        predictions: all,
+        eraScores: listEraHypothesisScores(),
+      }),
+    [all],
+  );
 
   const dimensionStats = useMemo(() => groupPredictionStatsByDimension(all), [all]);
   const dimensionOptions = useMemo(() => {
@@ -169,6 +184,8 @@ export default function PredictionsListPage({
 
   return (
     <div className="space-y-4">
+      <CombinedRevisitSummary stats={combinedStats} locale={locale} />
+
       {/* Linear-clean：带报告回聊 / 顾问开场 */}
       <section className="border-y border-[color:var(--hairline)] py-3.5">
         <div className="flex flex-wrap items-start justify-between gap-3">

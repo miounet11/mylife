@@ -5,8 +5,13 @@ import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
 import AnnualReviewCard from '@/components/annual-review/annual-review-card';
 import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
+import CombinedRevisitSummary from '@/components/world-yi/combined-revisit-summary';
 import EraHypothesisRevisit from '@/components/world-yi/era-hypothesis-revisit';
 import { buildAnnualReview } from '@/lib/annual-review/build-review';
+import {
+  hydrateEraHypothesisScoresFromServer,
+  listEraHypothesisScores,
+} from '@/lib/era-hypothesis-store';
 import { annualReviewBodyCopy } from '@/lib/i18n/annual-review-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { shouldShowAnnualReviewEmailGate } from '@/lib/life-profile/calibration-status';
@@ -14,6 +19,7 @@ import { getOrCreateProfile, hydrateLifeProfilesFromServer } from '@/lib/life-pr
 import { getAllPredictions, hydratePredictionsFromServer } from '@/lib/predictions/store';
 import { buildBirthSignature } from '@/lib/profile-birth-signature';
 import type { ProfileSettingsResponse } from '@/lib/profile-settings-types';
+import { buildCombinedRevisitStats } from '@/lib/revisit-combined-stats';
 import { fetchJsonWithTimeout } from '@/lib/utils';
 import type { Prediction } from '@/lib/predictions/types';
 
@@ -28,6 +34,7 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
   const [accountEmail, setAccountEmail] = useState<string | null>(null);
   const [profileVersion, setProfileVersion] = useState(0);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [eraTick, setEraTick] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -48,8 +55,13 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
         }
 
         setAccountEmail(data.account?.email || null);
-        await Promise.all([hydrateLifeProfilesFromServer(), hydratePredictionsFromServer()]);
+        await Promise.all([
+          hydrateLifeProfilesFromServer(),
+          hydratePredictionsFromServer(),
+          hydrateEraHypothesisScoresFromServer(),
+        ]);
         setPredictions(getAllPredictions());
+        setEraTick((v) => v + 1);
         setProfileVersion((value) => value + 1);
         setBirthSignature(
           buildBirthSignature({
@@ -76,6 +88,15 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
     const profile = getOrCreateProfile(birthSignature);
     return buildAnnualReview(profile, year, { predictions });
   }, [birthSignature, year, profileVersion, predictions]);
+
+  const combinedStats = useMemo(
+    () =>
+      buildCombinedRevisitStats({
+        predictions,
+        eraScores: listEraHypothesisScores(),
+      }),
+    [predictions, eraTick],
+  );
 
   if (loading) {
     return (
@@ -157,7 +178,13 @@ export default function AnnualReviewPageBody({ locale = 'zh-CN' }: { locale?: Si
 
       <ReportEraEnvironmentBlock year={year} locale={locale} />
 
-      <EraHypothesisRevisit locale={locale} source="annual_review" />
+      <CombinedRevisitSummary stats={combinedStats} locale={locale} />
+
+      <EraHypothesisRevisit
+        locale={locale}
+        source="annual_review"
+        onUpdated={() => setEraTick((v) => v + 1)}
+      />
 
       {hasData ? (
         <AnnualReviewCard review={review} locale={locale} />
