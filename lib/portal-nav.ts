@@ -103,6 +103,12 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '开始模拟',
   },
   {
+    href: '/almanac',
+    title: '今日黄历 · 万年历',
+    description: '通书宜忌、十二时辰、个人日运匹配；撕页/全球对照多形态，每日独立 URL。',
+    cta: '看今天',
+  },
+  {
     href: '/tools/daily-sign',
     title: '今日一签',
     description: '快速获得今日节律提示，适合作为日常复访入口。',

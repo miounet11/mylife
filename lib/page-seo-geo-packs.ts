@@ -84,6 +84,7 @@ const HOME: PageSeoGeoPack = {
   ],
   related: [
     { href: '/analyze', label: '完整测算工作台', description: '同一引擎的专注测算入口' },
+    { href: '/almanac', label: '今日黄历', description: '通书宜忌·时辰·个人日运' },
     { href: '/tools', label: '工具中心', description: '合婚、流年、维度下钻' },
     { href: '/reports', label: '公开案例流', description: '匿名测算与工具结果' },
     { href: '/dimensions', label: '十维度研判', description: '事业婚姻财运等专题' },

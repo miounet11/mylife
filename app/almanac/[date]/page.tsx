@@ -62,7 +62,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const path = `/almanac/${date}`;
   const uiLocale = locale === 'en' ? 'en' : locale === 'zh-Hant' ? 'zh-Hant' : 'zh-CN';
 
-  return buildPageMetadata({
+  const base = buildPageMetadata({
     title: seo.title,
     description: (seo.description || pack.longSummary).slice(0, 160),
     path: withLocalePrefix(path, uiLocale),
@@ -72,6 +72,19 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     multiLanguage: true,
     languages: buildProductLanguageAlternates(path),
   });
+  // Prefer file-based opengraph-image route; keep absolute fallback for scrapers
+  const ogPath = `/almanac/${date}/opengraph-image`;
+  return {
+    ...base,
+    openGraph: {
+      ...base.openGraph,
+      images: [{ url: absoluteUrl(ogPath), width: 1200, height: 630, alt: seo.title }],
+    },
+    twitter: {
+      ...base.twitter,
+      images: [absoluteUrl(ogPath)],
+    },
+  };
 }
 
 export default async function AlmanacDatePage({ params, searchParams }: PageProps) {

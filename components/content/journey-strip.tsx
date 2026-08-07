@@ -27,6 +27,13 @@ const STEPS_BASE = [
     activeKey: 'predictions' as const,
   },
   {
+    href: '/almanac?source=journey_strip',
+    match: '/almanac',
+    labelZh: '今日黄历',
+    labelEn: 'Almanac',
+    activeKey: 'tools' as const,
+  },
+  {
     href: '/tools?source=journey_strip',
     match: '/tools',
     labelZh: '工具',

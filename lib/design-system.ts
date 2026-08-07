@@ -70,6 +70,8 @@ export const LK_PORTAL_ROUTES = [
   '/community',
   '/community/search',
   '/world-yi',
+  '/almanac',
+  '/almanac/[date]',
   '/knowledge',
   '/knowledge/[slug]',
   '/cases',

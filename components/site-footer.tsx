@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Github, Send } from 'lucide-react';
+import { Code2, Send } from 'lucide-react';
 import SystemCapabilityFooterSignalsClient from '@/components/system-capability-footer-signals-client';
 import { useLocale } from '@/components/i18n/locale-provider';
 import LocaleSwitcher from '@/components/i18n/locale-switcher';
@@ -13,6 +13,7 @@ import {
 } from '@/lib/site-social';
 
 const footerLinks: Array<{ href: string; labelKey: string }> = [
+  { href: '/almanac', labelKey: 'navAlmanac' },
   { href: '/world-yi', labelKey: 'navWorldYi' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
   { href: '/cases', labelKey: 'navCases' },
@@ -84,7 +85,7 @@ export default function SiteFooter() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                <Github className="h-3.5 w-3.5" strokeWidth={2} />
+                <Code2 className="h-3.5 w-3.5" strokeWidth={2} />
                 <span>{OFFICIAL_GITHUB_LABEL}</span>
               </a>
             </div>

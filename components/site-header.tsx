@@ -26,6 +26,7 @@ const primaryNavItems: NavItem[] = [
 ];
 
 const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
+  { href: '/almanac', labelKey: 'navAlmanac' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/events', labelKey: 'navEvents' },
   { href: '/annual-review', labelKey: 'navAnnual' },

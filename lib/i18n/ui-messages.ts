@@ -20,6 +20,7 @@ const MESSAGES: Record<string, { 'zh-CN': string; 'zh-Hant'?: string; en: string
   navCases: { 'zh-CN': '案例', en: 'Cases' },
   navEvents: { 'zh-CN': '事件', en: 'Events' },
   navAnnual: { 'zh-CN': '年度复盘', 'zh-Hant': '年度複盤', en: 'Annual review' },
+  navAlmanac: { 'zh-CN': '今日黄历', 'zh-Hant': '今日黃曆', en: 'Almanac' },
   navDocs: { 'zh-CN': '文档', 'zh-Hant': '文檔', en: 'Docs' },
   navWorldYi: { 'zh-CN': '世界易学说', 'zh-Hant': '世界易學說', en: 'World Yi' },
   navLearn: { 'zh-CN': '学习地图', 'zh-Hant': '學習地圖', en: 'Learn' },
