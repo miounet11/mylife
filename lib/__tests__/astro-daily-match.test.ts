@@ -5,9 +5,11 @@ import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 import { buildAstroMonthPack } from '@/lib/astro/month-engine';
 import { buildAstroPairDayPack } from '@/lib/astro/pair-day-engine';
 import { buildAstroPairPack } from '@/lib/astro/pair-engine';
+import { buildAstroPairWeekPack } from '@/lib/astro/pair-week-engine';
 import { buildWeekComparePack } from '@/lib/astro/week-compare-engine';
 import { buildAstroWeekPack, currentIsoWeekId } from '@/lib/astro/week-engine';
 import { buildAstroDailyEmail } from '@/lib/email/astro-daily-email';
+import { buildAstroWeeklyEmail } from '@/lib/email/astro-weekly-email';
 
 describe('astro daily match engine', () => {
   const day = '2026-08-07';
@@ -122,5 +124,66 @@ describe('astro expand engines', () => {
     assert.ok(pack);
     assert.equal(pack!.signs.length, 12);
     assert.ok(pack!.top.length === 3);
+  });
+
+  it('pair week and weekly email', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const pairWeek = buildAstroPairWeekPack(weekId, 'aries', 'leo');
+    assert.ok(pairWeek);
+    assert.ok(pairWeek!.days.length >= 5);
+    const mail = buildAstroWeeklyEmail({ weekId });
+    assert.equal(mail.ok, true);
+    assert.ok(mail.html.length > 80);
+  });
+
+  it('element week pack', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const pack = buildAstroWeekPack(
+      weekId,
+      { kind: 'element', slug: 'fire' },
+      '火象',
+      (d) => `/astro/elements/fire/day/${d}`,
+    );
+    assert.ok(pack);
+    assert.ok(pack!.days.length >= 5);
+  });
+
+  it('birth week pack aggregates personal days', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const pack = buildAstroWeekPack(
+      weekId,
+      { kind: 'birth', birthDate: '1991-03-28' },
+      '生日 1991-03-28',
+      (d) => `/astro/birth/1991-03-28/day/${d}`,
+    );
+    assert.ok(pack);
+    assert.ok(pack!.days.length >= 5);
+    assert.ok(pack!.avg >= 0 && pack!.avg <= 100);
+  });
+
+  it('rising week and element month', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const rising = buildAstroWeekPack(
+      weekId,
+      { kind: 'rising', key: 'virgo' },
+      '上升处女',
+      (d) => `/astro/rising/virgo/day/${d}`,
+    );
+    assert.ok(rising && rising.days.length >= 5);
+    const month = buildAstroMonthPack(
+      2026,
+      8,
+      { kind: 'element', slug: 'fire' },
+      '火象',
+      (d) => `/astro/elements/fire/day/${d}`,
+    );
+    assert.ok(month && month.cells.length >= 28);
+  });
+
+  it('weekly email includes element ranking line', () => {
+    const weekId = currentIsoWeekId(new Date('2026-08-07'));
+    const mail = buildAstroWeeklyEmail({ weekId });
+    assert.equal(mail.ok, true);
+    assert.ok(mail.html.includes('四象') || mail.html.includes('element') || mail.html.includes('象'));
   });
 });

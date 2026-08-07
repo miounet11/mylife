@@ -121,16 +121,32 @@ export default async function PairPage({ params }: Props) {
         </section>
 
         <section className="rounded-xl border border-violet-100 bg-violet-50/40 p-4">
-          <h2 className="text-[13px] font-bold text-violet-900">合盘日运</h2>
+          <h2 className="text-[13px] font-bold text-violet-900">合盘日运 / 周运</h2>
           <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">
-            把配对结构叠到流日：双方当日引擎分 + 合成节奏。
+            配对结构叠流日：双方引擎分 + 合成节奏；周运看 7 日合盘均分。
           </p>
-          <Link
-            href={`/astro/pair/${keys[0]}/${keys[1]}/day/${new Date().toISOString().slice(0, 10)}`}
-            className="mt-2 inline-block text-[13px] font-semibold text-[color:var(--brand)] underline-offset-2 hover:underline"
-          >
-            查看今日合盘日运 →
-          </Link>
+          <div className="mt-2 flex flex-wrap gap-3 text-[13px] font-semibold">
+            <Link
+              href={`/astro/pair/${keys[0]}/${keys[1]}/day/${new Date().toISOString().slice(0, 10)}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              今日合盘 →
+            </Link>
+            <Link
+              href={`/astro/pair/${keys[0]}/${keys[1]}/week/${(() => {
+                const d = new Date();
+                const dayNum = d.getDay() || 7;
+                const thu = new Date(d);
+                thu.setDate(d.getDate() + 4 - dayNum);
+                const ys = new Date(thu.getFullYear(), 0, 1);
+                const w = Math.ceil(((thu.getTime() - ys.getTime()) / 86400000 + 1) / 7);
+                return `${thu.getFullYear()}-W${String(w).padStart(2, '0')}`;
+              })()}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              本周合盘 →
+            </Link>
+          </div>
         </section>
 
         <div className="flex flex-wrap gap-2">

@@ -1,6 +1,6 @@
 import Link from 'next/link';
-import type { AstroWeekPack } from '@/lib/astro/week-engine';
-import { shiftIsoWeek } from '@/lib/astro/week-engine';
+import { shiftIsoWeek } from '@/lib/astro/iso-week';
+import type { AstroWeekPack } from '@/lib/astro/week-types';
 
 function stanceColor(stance: string, score: number) {
   if (stance === 'push' || score >= 62) return 'border-emerald-200 bg-emerald-50/70';

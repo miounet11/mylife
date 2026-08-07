@@ -315,6 +315,58 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
     })),
   );
+  const astroElementWeekRoutes = ELEMENT_CATALOG.flatMap((e) =>
+    weekList.map((weekId) => ({
+      path: `/astro/elements/${e.slug}/week/${weekId}`,
+      priority: 0.7,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroModalityWeekRoutes = MODALITY_CATALOG.flatMap((m) =>
+    weekList.map((weekId) => ({
+      path: `/astro/modality/${m.slug}/week/${weekId}`,
+      priority: 0.68,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroPairWeekRoutes = allPairKeyCombos()
+    .filter(({ a, b }) => a !== b)
+    .slice(0, 24)
+    .flatMap(({ a, b }) =>
+      weekList.map((weekId) => ({
+        path: `/astro/pair/${a}/${b}/week/${weekId}`,
+        priority: 0.62,
+        changeFrequency: 'weekly' as const,
+      })),
+    );
+  const astroRisingWeekRoutes = RISING_PROFILES.flatMap((r) =>
+    weekList.map((weekId) => ({
+      path: `/astro/rising/${r.key}/week/${weekId}`,
+      priority: 0.68,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroElementMonthRoutes = ELEMENT_CATALOG.flatMap((e) =>
+    ymList.map((ym) => ({
+      path: `/astro/elements/${e.slug}/month/${ym}`,
+      priority: 0.68,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroModalityMonthRoutes = MODALITY_CATALOG.flatMap((m) =>
+    ymList.map((ym) => ({
+      path: `/astro/modality/${m.slug}/month/${ym}`,
+      priority: 0.66,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
+  const astroShengxiaoMonthRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
+    ymList.map((ym) => ({
+      path: `/astro/shengxiao/${s.slug}/month/${ym}`,
+      priority: 0.66,
+      changeFrequency: 'weekly' as const,
+    })),
+  );
   const astroExtraHubs = [
     { path: '/astro/elements', priority: 0.86, changeFrequency: 'weekly' as const },
     { path: '/astro/modality', priority: 0.84, changeFrequency: 'weekly' as const },
@@ -391,6 +443,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
     ...astroWeekHubRoutes,
     ...astroZoneWeekRoutes,
     ...astroShengxiaoWeekRoutes,
+    ...astroElementWeekRoutes,
+    ...astroModalityWeekRoutes,
+    ...astroPairWeekRoutes,
+    ...astroRisingWeekRoutes,
+    ...astroElementMonthRoutes,
+    ...astroModalityMonthRoutes,
+    ...astroShengxiaoMonthRoutes,
     ...astroPairRoutes,
     ...astroPairDayRoutes,
     ...astroExtraHubs,

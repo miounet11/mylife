@@ -136,6 +136,18 @@ export default function AstroHubPage() {
               n: '周报',
             },
             {
+              href: `/astro/elements/fire/month/${new Date().toISOString().slice(0, 7)}`,
+              title: '四象月历（火）',
+              desc: '群组月网格 · 土风水同理',
+              n: '月历',
+            },
+            {
+              href: `/astro/rising/virgo/week/${currentIsoWeekId()}`,
+              title: '上升周运示例',
+              desc: '对外呈现节奏 · 12 型同理',
+              n: '上升',
+            },
+            {
               href: `/astro/day/${new Date().toISOString().slice(0, 10)}`,
               title: '当日星座入口',
               desc: '黄历日 × 全站星座链接',

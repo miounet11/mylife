@@ -5,6 +5,7 @@ import { useMemo, useState } from 'react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { lookupAstro } from '@/lib/astro/resolve';
+import { currentIsoWeekId, isoWeekIdFromDate } from '@/lib/astro/iso-week';
 
 export default function AstroLookup({ source = 'astro_hub' }: { source?: string }) {
   const [date, setDate] = useState('');
@@ -164,7 +165,7 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
 
           {date && targetDay && result.sun ? (
             <div className="rounded-xl border border-[color:var(--brand)]/25 bg-[color:var(--brand-soft)]/30 p-3">
-              <div className="text-[12px] font-bold text-[color:var(--brand-strong)]">引擎日运（结构化）</div>
+              <div className="text-[12px] font-bold text-[color:var(--brand-strong)]">引擎日运 / 周运（结构化）</div>
               <div className="mt-2 flex flex-wrap gap-2 text-[12px]">
                 <Link
                   href={`/astro/birth/${date}/day/${targetDay}`}
@@ -173,10 +174,22 @@ export default function AstroLookup({ source = 'astro_hub' }: { source?: string 
                   出生×流日 完整匹配
                 </Link>
                 <Link
+                  href={`/astro/birth/${date}/week/${isoWeekIdFromDate(targetDay) || currentIsoWeekId()}`}
+                  className="rounded-full bg-[color:var(--brand)]/90 px-3 py-1.5 font-semibold text-white no-underline"
+                >
+                  个人周运（7日）
+                </Link>
+                <Link
                   href={`/astro/signs/${result.sun.key}/day/${targetDay}`}
                   className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
                 >
                   {result.sun.zh}·当日
+                </Link>
+                <Link
+                  href={`/astro/signs/${result.sun.key}/week/${isoWeekIdFromDate(targetDay) || currentIsoWeekId()}`}
+                  className="rounded-full border border-[color:var(--hairline)] bg-white px-3 py-1.5 font-semibold text-[color:var(--ink-2)] no-underline"
+                >
+                  {result.sun.zh}·本周
                 </Link>
                 {result.zone ? (
                   <Link

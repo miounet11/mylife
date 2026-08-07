@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 import { resolveSunSignFromDate } from '@/lib/astro/resolve';
 import { resolveZoneFromDate } from '@/lib/astro/zones-48';
-import { isoWeekIdFromDate } from '@/lib/astro/week-engine';
+import { isoWeekIdFromDate } from '@/lib/astro/iso-week';
 
 /**
  * Almanac day → astro engine entry strip (server component).

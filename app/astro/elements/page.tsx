@@ -5,6 +5,8 @@ import { FocusHero } from '@/components/layout/focus-hero';
 import { ELEMENT_CATALOG, signsForElement } from '@/lib/astro/elements-catalog';
 import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { getSignByKey } from '@/lib/astro/signs-data';
+import { currentYearMonth } from '@/lib/astro/month-engine';
+import { currentIsoWeekId } from '@/lib/astro/week-engine';
 import { buildPageMetadata } from '@/lib/seo';
 
 export const metadata: Metadata = buildPageMetadata({
@@ -15,17 +17,24 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ElementsIndexPage() {
   const today = todayIsoLocal();
+  const weekId = currentIsoWeekId();
+  const ym = currentYearMonth();
   return (
     <AppPage header={{ ctaHref: '/astro', ctaLabel: '星座首页', compact: true }}>
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="Astro · Elements"
           title="四象元素"
-          description="火土风水四象把十二星座收成群组节奏；每日分数来自通书×元素队列引擎。"
+          description="火土风水四象把十二星座收成群组节奏；每日/每周分数来自通书×元素队列引擎。"
           actions={
-            <Link href={`/astro/day/${today}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-              今日总入口
-            </Link>
+            <>
+              <Link href={`/astro/day/${today}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                今日总入口
+              </Link>
+              <Link href={`/astro/week/${weekId}`} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                本周总榜
+              </Link>
+            </>
           }
         />
         <ul className="grid gap-3 sm:grid-cols-2">
@@ -35,17 +44,33 @@ export default function ElementsIndexPage() {
               .filter(Boolean);
             return (
               <li key={e.slug}>
-                <Link
-                  href={`/astro/elements/${e.slug}/day/${today}`}
-                  className="block rounded-2xl border border-[color:var(--hairline)] bg-white p-4 no-underline shadow-sm hover:border-[color:var(--brand)]/40"
-                >
+                <div className="rounded-2xl border border-[color:var(--hairline)] bg-white p-4 shadow-sm">
                   <div className="text-[18px] font-black text-[color:var(--ink-1)]">
                     {e.zh}象 · {e.en}
                   </div>
                   <p className="mt-2 text-[13px] text-[color:var(--ink-3)]">{e.blurb}</p>
                   <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">{members.join('、')}</p>
-                  <p className="mt-2 text-[12px] font-semibold text-[color:var(--brand)]">查看今日群组运势 →</p>
-                </Link>
+                  <div className="mt-3 flex flex-wrap gap-3 text-[12px] font-semibold">
+                    <Link
+                      href={`/astro/elements/${e.slug}/day/${today}`}
+                      className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+                    >
+                      今日 →
+                    </Link>
+                    <Link
+                      href={`/astro/elements/${e.slug}/week/${weekId}`}
+                      className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+                    >
+                      本周 →
+                    </Link>
+                    <Link
+                      href={`/astro/elements/${e.slug}/month/${ym}`}
+                      className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
+                    >
+                      月历 →
+                    </Link>
+                  </div>
+                </div>
               </li>
             );
           })}

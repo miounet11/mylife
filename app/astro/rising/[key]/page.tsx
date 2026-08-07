@@ -5,8 +5,10 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
 import { AppPage } from '@/components/layout/app-page';
 import JsonLd from '@/components/seo/json-ld';
+import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { getRisingByKey, RISING_PROFILES } from '@/lib/astro/rising-data';
 import { getSignByKey } from '@/lib/astro/signs-data';
+import { currentIsoWeekId } from '@/lib/astro/week-engine';
 import {
   buildArticleJsonLd,
   buildBreadcrumbJsonLd,
@@ -38,6 +40,8 @@ export default async function AstroRisingPage({ params }: Props) {
   if (!r) notFound();
   const sign = getSignByKey(r.key);
   const path = `/astro/rising/${r.key}`;
+  const today = todayIsoLocal();
+  const weekId = currentIsoWeekId();
 
   return (
     <AppPage header={{ ctaHref: '/astro', ctaLabel: '星座首页', compact: true }}>
@@ -84,6 +88,20 @@ export default async function AstroRisingPage({ params }: Props) {
             {sign?.symbol} 上升{r.zh}
           </h1>
           <p className="mt-3 text-[15px] leading-relaxed text-[color:var(--ink-2)]">{r.firstImpression}</p>
+          <div className="mt-4 flex flex-wrap gap-3 text-[13px] font-semibold">
+            <Link
+              href={`/astro/rising/${r.key}/day/${today}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              今日呈现 →
+            </Link>
+            <Link
+              href={`/astro/rising/${r.key}/week/${weekId}`}
+              className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              本周呈现 →
+            </Link>
+          </div>
         </header>
 
         <div className="grid gap-3 sm:grid-cols-2">
