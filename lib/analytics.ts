@@ -138,6 +138,8 @@ export type AnalyticsEventName =
   | 'almanac_day_selected'
   | 'almanac_day_viewed'
   | 'almanac_lens_run'
+  | 'almanac_skin_changed'
+  | 'almanac_region_changed'
 
 interface TrackEventInput {
   userId?: string | null;

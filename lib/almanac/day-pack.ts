@@ -9,6 +9,24 @@ import { isHuangDaoShen } from '@/lib/almanac/elements';
 import type { AlmanacDayPack, AlmanacHourSlot, AlmanacLuck, AlmanacMonthCell } from '@/lib/almanac/types';
 
 const WEEKDAYS = ['日', '一', '二', '三', '四', '五', '六'];
+const WEEKDAYS_EN = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** Civil sun-sign (approx boundaries) for global layer */
+function westernSignForMd(month: number, day: number): { zh: string; en: string } {
+  const md = month * 100 + day;
+  if (md >= 1222 || md <= 119) return { zh: '摩羯座', en: 'Capricorn' };
+  if (md <= 218) return { zh: '水瓶座', en: 'Aquarius' };
+  if (md <= 320) return { zh: '双鱼座', en: 'Pisces' };
+  if (md <= 419) return { zh: '白羊座', en: 'Aries' };
+  if (md <= 520) return { zh: '金牛座', en: 'Taurus' };
+  if (md <= 621) return { zh: '双子座', en: 'Gemini' };
+  if (md <= 722) return { zh: '巨蟹座', en: 'Cancer' };
+  if (md <= 822) return { zh: '狮子座', en: 'Leo' };
+  if (md <= 922) return { zh: '处女座', en: 'Virgo' };
+  if (md <= 1023) return { zh: '天秤座', en: 'Libra' };
+  if (md <= 1122) return { zh: '天蝎座', en: 'Scorpio' };
+  return { zh: '射手座', en: 'Sagittarius' };
+}
 
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
@@ -92,9 +110,30 @@ export function buildAlmanacDayPack(date: string | Date = new Date()): AlmanacDa
     const dayGanZhi = `${lunar.getDayInGanZhi?.() || ''}`.trim();
     const hours = buildHours(lunar);
 
+    const monthCn = `${lunar.getMonthInChinese?.() || ''}`.trim();
+    const dayCn = `${lunar.getDayInChinese?.() || ''}`.trim();
+    const liuYao = `${lunar.getLiuYao?.() || ''}`.trim();
+    const nineStar = (() => {
+      try {
+        const ns = lunar.getDayNineStar?.();
+        return ns ? `${ns}` : '';
+      } catch {
+        return '';
+      }
+    })();
+    const west = westernSignForMd(m, d);
+    const daysInLunarMonth = (() => {
+      try {
+        return Number(lunar.getDayCount?.() || 0);
+      } catch {
+        return 0;
+      }
+    })();
+
     const summaryParts = [
-      `${dateStr} · 农历${lunar.getMonthInChinese?.() || ''}${lunar.getDayInChinese?.() || ''}`,
+      `${dateStr} · 农历${monthCn}${dayCn}`,
       dayGanZhi ? `日柱 ${dayGanZhi}` : '',
+      liuYao ? `六曜 ${liuYao}` : '',
       yi.length ? `宜 ${yi.slice(0, 4).join('、')}` : '',
       ji.length ? `忌 ${ji.slice(0, 3).join('、')}` : '',
     ].filter(Boolean);
@@ -106,20 +145,26 @@ export function buildAlmanacDayPack(date: string | Date = new Date()): AlmanacDa
       day: d,
       weekday,
       weekdayLabel: `星期${WEEKDAYS[weekday] || ''}`,
+      weekdayEn: WEEKDAYS_EN[weekday] || '',
       lunar: {
         yearGanZhi: `${lunar.getYearInGanZhi?.() || ''}`.trim(),
         monthGanZhi: `${lunar.getMonthInGanZhi?.() || ''}`.trim(),
         dayGanZhi,
         yearShengXiao: `${lunar.getYearShengXiao?.() || ''}`.trim(),
-        monthChinese: `${lunar.getMonthInChinese?.() || ''}`.trim(),
-        dayChinese: `${lunar.getDayInChinese?.() || ''}`.trim(),
-        lunarText: `${lunar.getMonthInChinese?.() || ''}${lunar.getDayInChinese?.() || ''}`,
+        dayShengXiao: `${lunar.getDayShengXiao?.() || ''}`.trim(),
+        monthChinese: monthCn,
+        dayChinese: dayCn,
+        lunarText: `${monthCn}${dayCn}`,
+        monthSizeLabel: daysInLunarMonth >= 30 ? '大' : daysInLunarMonth > 0 ? '小' : '',
       },
       jieQi,
+      prevJieQi: `${lunar.getPrevJieQi?.()?.getName?.() || lunar.getPrevJieQi?.() || ''}`.trim() || null,
+      nextJieQi: `${lunar.getNextJieQi?.()?.getName?.() || lunar.getNextJieQi?.() || ''}`.trim() || null,
       festivals,
       yi,
       ji,
       chong: `${lunar.getDayChongDesc?.() || ''}`.trim(),
+      chongShengXiao: `${lunar.getDayChongShengXiao?.() || ''}`.trim(),
       sha: `${lunar.getDaySha?.() || ''}`.trim(),
       jiShen: asStringArray(lunar.getDayJiShen?.()),
       xiongSha: asStringArray(lunar.getDayXiongSha?.()),
@@ -128,16 +173,26 @@ export function buildAlmanacDayPack(date: string | Date = new Date()): AlmanacDa
         fu: `${lunar.getDayPositionFuDesc?.() || ''}`.trim(),
         cai: `${lunar.getDayPositionCaiDesc?.() || ''}`.trim(),
         yangGui: `${lunar.getDayPositionYangGuiDesc?.() || ''}`.trim() || undefined,
+        yinGui: `${lunar.getDayPositionYinGuiDesc?.() || ''}`.trim() || undefined,
+        tai: `${lunar.getDayPositionTai?.() || ''}`.trim(),
       },
+      tianShen: `${lunar.getDayTianShen?.() || ''}`.trim(),
+      tianShenType: `${lunar.getDayTianShenType?.() || ''}`.trim(),
       zhiXing: `${lunar.getZhiXing?.() || ''}`.trim(),
       xiu: `${lunar.getXiu?.() || ''}`.trim(),
       xiuLuck: `${lunar.getXiuLuck?.() || ''}`.trim(),
+      xiuSong: `${lunar.getXiuSong?.() || ''}`.trim(),
       pengZu: [
         `${lunar.getPengZuGan?.() || ''}`.trim(),
         `${lunar.getPengZuZhi?.() || ''}`.trim(),
       ].filter(Boolean),
       nayin: `${lunar.getDayNaYin?.() || ''}`.trim(),
+      liuYao,
+      nineStar,
+      dayLu: `${lunar.getDayLu?.() || ''}`.trim(),
       hours,
+      westernSign: west.zh,
+      westernSignEn: west.en,
       summary: summaryParts.join(' · '),
     };
   } catch (error) {

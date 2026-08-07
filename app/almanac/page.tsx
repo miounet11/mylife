@@ -20,14 +20,25 @@ export const metadata: Metadata = metadataFromPagePack('/almanac', {
 export default async function AlmanacPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ date?: string; year?: string; month?: string; stay?: string }>;
+  searchParams?: Promise<{
+    date?: string;
+    year?: string;
+    month?: string;
+    stay?: string;
+    skin?: string;
+    region?: string;
+  }>;
 }) {
   const sp = searchParams ? await searchParams : {};
   const today = todayDateString();
 
   // ?date=YYYY-MM-DD → canonical day URL
   if (sp.date && /^\d{4}-\d{2}-\d{2}$/.test(sp.date) && sp.stay !== '1') {
-    redirect(`/almanac/${sp.date}`);
+    const q = new URLSearchParams();
+    if (sp.skin) q.set('skin', sp.skin);
+    if (sp.region) q.set('region', sp.region);
+    const qs = q.toString();
+    redirect(`/almanac/${sp.date}${qs ? `?${qs}` : ''}`);
   }
 
   const date = today;
@@ -46,28 +57,28 @@ export default async function AlmanacPage({
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
-          eyebrow="每日个人黄历"
+          eyebrow="全球黄历落地页"
           title="今天，对你意味着什么？"
-          description="像看星座日运一样打开今天：公共通书（宜忌·时辰）+ 你的日主结构匹配 + 固定 AI 镜头。每一天都有独立地址，方便收藏与回看。"
+          description="通书撕页 · 现代卡片 · 个人日运 · 时辰宫格 · 全球对照——多种展示一键切换。支持中国/台湾/香港/新加坡/日本六曜/韩国/越南/北美等文化侧重；绑定生辰后看专属匹配。"
           actions={
             <>
               <Link
-                href={`/almanac/${today}`}
+                href={`/almanac/${today}?skin=tear`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                今日专页
+                撕页通书
               </Link>
               <Link
-                href="/dimensions/timing-selection"
+                href={`/almanac/${today}?skin=personal`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                择时办事
+                个人日运
               </Link>
               <Link
-                href="/world-yi/era-timing"
+                href={`/almanac/${today}?region=global&skin=global`}
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
-                时代天时
+                全球对照
               </Link>
               <Link
                 href="/analyze?source=almanac"
@@ -83,7 +94,14 @@ export default async function AlmanacPage({
             </span>
           }
         />
-        <AlmanacApp initialYear={year} initialMonth={month} initialDate={date} navigateOnSelect />
+        <AlmanacApp
+          initialYear={year}
+          initialMonth={month}
+          initialDate={date}
+          navigateOnSelect
+          initialSkin={sp.skin}
+          initialRegion={sp.region}
+        />
         <PageSeoGeoSection pathOrSlug="/almanac" />
       </div>
     </AppPage>

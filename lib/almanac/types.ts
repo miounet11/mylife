@@ -24,21 +24,27 @@ export type AlmanacDayPack = {
   day: number;
   weekday: number;
   weekdayLabel: string;
+  weekdayEn: string;
   lunar: {
     yearGanZhi: string;
     monthGanZhi: string;
     dayGanZhi: string;
     yearShengXiao: string;
+    dayShengXiao: string;
     monthChinese: string;
     dayChinese: string;
     /** 农历展示 e.g. 六月廿五 */
     lunarText: string;
+    monthSizeLabel: string;
   };
   jieQi: string | null;
+  prevJieQi: string | null;
+  nextJieQi: string | null;
   festivals: string[];
   yi: string[];
   ji: string[];
   chong: string;
+  chongShengXiao: string;
   sha: string;
   jiShen: string[];
   xiongSha: string[];
@@ -47,13 +53,28 @@ export type AlmanacDayPack = {
     fu: string;
     cai: string;
     yangGui?: string;
+    yinGui?: string;
+    tai: string;
   };
+  /** 黄道/黑道 + 当日天神 */
+  tianShen: string;
+  tianShenType: string;
   zhiXing: string;
   xiu: string;
   xiuLuck: string;
+  xiuSong: string;
   pengZu: string[];
   nayin: string;
+  /** 六曜（日本等） */
+  liuYao: string;
+  /** 九星 */
+  nineStar: string;
+  /** 日禄等 */
+  dayLu: string;
   hours: AlmanacHourSlot[];
+  /** 太阳星座（公历）— 全球层 */
+  westernSign: string;
+  westernSignEn: string;
   /** Short public summary for cards */
   summary: string;
 };

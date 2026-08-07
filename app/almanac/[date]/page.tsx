@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AlmanacApp from '@/components/almanac/almanac-app';
 import AlmanacDayPanel from '@/components/almanac/almanac-day-panel';
-import AlmanacLensPanel from '@/components/almanac/almanac-lens-panel';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { AppPage } from '@/components/layout/app-page';
@@ -24,6 +23,7 @@ export const dynamic = 'force-dynamic';
 
 interface PageProps {
   params: Promise<{ date: string }>;
+  searchParams?: Promise<{ skin?: string; region?: string }>;
 }
 
 function isValidDate(date: string): boolean {
@@ -69,8 +69,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   });
 }
 
-export default async function AlmanacDatePage({ params }: PageProps) {
+export default async function AlmanacDatePage({ params, searchParams }: PageProps) {
   const { date } = await params;
+  const sp = searchParams ? await searchParams : {};
   if (date === 'today') {
     redirect(`/almanac/${todayDateString()}`);
   }
@@ -139,29 +140,36 @@ export default async function AlmanacDatePage({ params }: PageProps) {
           <span className="text-[color:var(--ink-3)]">{date}</span>
         </div>
 
-        {/* SSR first paint for SEO crawlers */}
-        <AlmanacDayPanel pack={pack} personal={personal} showCanonical={false} />
-
+        {/* Interactive hub: skins + regions + day (includes SSR-friendly content in client after load) */}
         {!personal ? (
           <LightBirthBridge
             source="almanac_day"
             page={`/almanac/${date}`}
             title="绑定生辰，生成你的个人黄历"
-            description="引擎排盘取日主与用神，与当日流日通书匹配；可配合下方 AI 固定镜头每日回看。"
+            description="引擎排盘取日主与用神，与当日流日通书匹配；撕页/个人日运/全球对照等视图均可显示匹配分。"
           />
         ) : null}
 
-        <AlmanacLensPanel date={date} hasChart={Boolean(personal)} />
+        {/* SSR dense summary for crawlers */}
+        <div className="sr-only" aria-hidden={false}>
+          <h1>
+            {date}黄历 {pack.lunar.dayGanZhi}
+          </h1>
+          <p>
+            宜{pack.yi.join('、')} 忌{pack.ji.join('、')} 冲{pack.chong} 六曜{pack.liuYao}{' '}
+            {pack.westernSign}
+          </p>
+          <AlmanacDayPanel pack={pack} personal={personal} showCanonical={false} />
+        </div>
 
-        <section>
-          <h2 className="mb-2 text-[14px] font-bold text-[color:var(--ink-1)]">切换日期</h2>
-          <AlmanacApp
-            initialYear={year}
-            initialMonth={month}
-            initialDate={date}
-            navigateOnSelect
-          />
-        </section>
+        <AlmanacApp
+          initialYear={year}
+          initialMonth={month}
+          initialDate={date}
+          navigateOnSelect
+          initialSkin={sp.skin}
+          initialRegion={sp.region}
+        />
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
           <h2 className="text-[14px] font-bold text-[color:var(--ink-1)]">常见问题</h2>

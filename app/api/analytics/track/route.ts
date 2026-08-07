@@ -72,6 +72,8 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'almanac_day_selected',
   'almanac_day_viewed',
   'almanac_lens_run',
+  'almanac_skin_changed',
+  'almanac_region_changed',
   'mass_need_map_click',
   'hehun_page_viewed',
   'hehun_run',
