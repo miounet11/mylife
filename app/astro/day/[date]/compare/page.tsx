@@ -2,6 +2,11 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import {
+  AlmanacDayStripFrame,
+  AstroRankingFrame,
+  AstroStanceIcon,
+} from '@/components/astro/astro-data-frames';
 import { AppPage } from '@/components/layout/app-page';
 import JsonLd from '@/components/seo/json-ld';
 import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
@@ -72,12 +77,32 @@ export default async function DayComparePage({ params }: Props) {
           </div>
         </header>
 
+        <AlmanacDayStripFrame
+          title={`${zh} 通书条`}
+          dayGanZhi={pack.dayGanZhi}
+          lunarText={pack.lunarText}
+          yi={pack.yi}
+          ji={pack.ji}
+        />
+        <AstroRankingFrame
+          title="十二星座引擎排名"
+          eyebrow="DAY RANK"
+          subtitle={`${date} · 同分可并列 · 点表进入证据页`}
+          rows={pack.signs.map((r) => ({
+            key: r.key,
+            title: r.title,
+            score: r.composite,
+            stance: r.stance,
+          }))}
+        />
+
         <section className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
             <h2 className="text-[13px] font-bold text-emerald-900">今日相对较顺（前三）</h2>
             <ul className="mt-2 space-y-1 text-[13px]">
               {pack.topSigns.map((r) => (
-                <li key={r.key}>
+                <li key={r.key} className="flex items-center gap-2">
+                  <AstroStanceIcon stance={r.stance} />
                   <Link href={r.href} className="font-semibold text-emerald-950 underline-offset-2 hover:underline">
                     {r.title} · {r.composite} · {stanceZh(r.stance)}
                   </Link>
@@ -89,7 +114,8 @@ export default async function DayComparePage({ params }: Props) {
             <h2 className="text-[13px] font-bold text-amber-950">今日宜谨慎（后三）</h2>
             <ul className="mt-2 space-y-1 text-[13px]">
               {pack.lowSigns.map((r) => (
-                <li key={r.key}>
+                <li key={r.key} className="flex items-center gap-2">
+                  <AstroStanceIcon stance={r.stance} />
                   <Link href={r.href} className="font-semibold text-amber-950 underline-offset-2 hover:underline">
                     {r.title} · {r.composite} · {stanceZh(r.stance)}
                   </Link>

@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { AstroRankingFrame, AstroStanceIcon } from '@/components/astro/astro-data-frames';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import JsonLd from '@/components/seo/json-ld';
@@ -53,7 +54,7 @@ export default async function WeekHubPage({ params }: Props) {
         ])}
       />
       <div className="page-content space-y-5 py-6 pb-16 md:py-8">
-        <PageIllustrationStrip surface="astro/week" title="周运图解" compact limit={1} />
+        <PageIllustrationStrip surface="astro/week" title="周运概念图" compact limit={1} />
         <header>
           <p className="text-[11px] font-bold text-[color:var(--brand)]">WEEK COMPARE · ENGINE</p>
           <h1 className="mt-1 text-[24px] font-black text-[color:var(--ink-1)]">
@@ -87,12 +88,26 @@ export default async function WeekHubPage({ params }: Props) {
           </div>
         </header>
 
+        <AstroRankingFrame
+          title="十二星座周均排名"
+          eyebrow="WEEK RANK"
+          subtitle={`${pack.label} · 周中日柱 ${pack.midDayGanZhi}`}
+          rows={pack.signs.map((r) => ({
+            key: r.key,
+            title: r.title,
+            score: r.avg,
+            stance: r.dominantStance,
+          }))}
+          scoreLabel=""
+        />
+
         <section className="grid gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-100 bg-emerald-50/50 p-4">
             <h2 className="text-[13px] font-bold text-emerald-900">本周均分较高</h2>
             <ul className="mt-2 space-y-1 text-[13px]">
               {pack.top.map((r) => (
-                <li key={r.key}>
+                <li key={r.key} className="flex items-center gap-2">
+                  <AstroStanceIcon stance={r.dominantStance} />
                   <Link href={r.href} className="font-semibold text-emerald-950 underline-offset-2 hover:underline">
                     {r.title} · 周均 {r.avg} · {stanceZh(r.dominantStance)}
                   </Link>
@@ -104,7 +119,8 @@ export default async function WeekHubPage({ params }: Props) {
             <h2 className="text-[13px] font-bold text-amber-950">本周宜更稳</h2>
             <ul className="mt-2 space-y-1 text-[13px]">
               {pack.low.map((r) => (
-                <li key={r.key}>
+                <li key={r.key} className="flex items-center gap-2">
+                  <AstroStanceIcon stance={r.dominantStance} />
                   <Link href={r.href} className="font-semibold text-amber-950 underline-offset-2 hover:underline">
                     {r.title} · 周均 {r.avg} · {stanceZh(r.dominantStance)}
                   </Link>
