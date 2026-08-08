@@ -232,11 +232,11 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   if (verify?.verdict === 'PASS') {
     strengths.push('一致性校验通过，时序、行业、地理与 K 线信号对齐较好。');
   } else if (verify?.verdict === 'WARN') {
-    concerns.push('一致性校验需要留意，适合重点复核短期窗口和策略建议。');
-    recommendedActions.push('阅读时优先区分稳定结论与短期时机判断，避免把时机建议当成绝对结论。');
+    concerns.push('部分上下文对齐仍可加强（节气/地域/行业等），短期窗口请结合现实复核。');
+    recommendedActions.push('阅读时优先区分稳定结构与短期时机，把建议当节奏参考而非硬期限。');
   } else if (verify?.verdict === 'FAIL') {
-    concerns.push('一致性校验未通过，这份报告更适合作为参考草稿而不是最终版本。');
-    recommendedActions.push('建议核对出生时间与出生地后重新测算，并稍后升级重算。');
+    concerns.push('一致性校验发现硬冲突，关键结论请先核对出生信息后再作大决定。');
+    recommendedActions.push('建议核对出生时间与出生地后重新测算；当前版本可先看结构，少押注单点时机。');
   }
 
   if (completenessScore < 80) {
@@ -486,6 +486,8 @@ function deriveAuditStatus(params: {
   agentSuccessRate: number;
   narrativeSignals?: NarrativeQualitySignals;
 }): ReportQualityAuditStatus {
+  // v6-Q1: soft-context WARN no longer forces whole report into "retry/draft"
+  // Only hard FAIL + thin LLM / severe defects block as retry.
   if (
     params.verifyVerdict === 'FAIL'
     || (!params.llmUsed && !params.providerHealthDeferred)
@@ -534,7 +536,7 @@ function buildSummary(
     return '本次报告已生成可读结果，但正文还不够完整，建议稍后升级重算以获取更完整版本。';
   }
   if (verifyVerdict === 'FAIL') {
-    return '本次报告的一致性校验未通过，更适合作为参考草稿，建议核对出生信息后重新测算。';
+    return '本次报告存在硬性一致性冲突，请先核对出生信息；结构部分仍可读，短期时机请保守处理。';
   }
   return '本次报告存在明显降级或完整性不足，建议稍后升级重算。';
 }

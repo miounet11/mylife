@@ -804,6 +804,7 @@ export function buildDeterministicFallbackNarrative(
     coreSummary?: string;
     strategySummary?: string;
     temporalSummary?: string;
+    intent?: string;
   }
 ): FallbackNarrative {
   const favored = uniqueList([
@@ -853,13 +854,14 @@ export function buildDeterministicFallbackNarrative(
       || (favored.length > 0 ? `优先顺着${favored.join('、')}对应的动作去取舍。` : '')
       || result.pattern?.description
   );
+  // v6-Q1: de-template past validation — avoid absolute "过去出现过" without evidence
   const pastValidationLine = cleanNarrativeText(
     [
       evidenceHighlights
-        ? `这类结构过去往往会先在现实里反复出现相似信号，当前已经能看到的印证是：${evidenceHighlights}`
+        ? `与当前结构较吻合的现实线索包括：${evidenceHighlights}`
         : '',
       result.pattern?.description
-        ? `命局底色早就存在，过去容易反复出现的不是偶然事件，而是${result.pattern.description}`
+        ? `命局主轴可概括为：${result.pattern.description}`
         : '',
     ].filter(Boolean).join('；')
   );
@@ -902,19 +904,75 @@ export function buildDeterministicFallbackNarrative(
       : openingCandidate
   );
 
+  // v6-Q1: intent-aware 7-day actions (user satisfaction = executable, not essay)
+  const intentKey = `${
+    extras?.intent ||
+    (result.analysis as { intent?: string } | undefined)?.intent ||
+    ''
+  }`.toLowerCase();
+  const threeActions = buildIntentThreeActions({
+    intent: intentKey,
+    actionLine,
+    timingFocus: timingFocus || '',
+    avoidFocus: avoidFocus || '',
+    favored,
+  });
+
+  const summaryWithActions = cleanNarrativeText(
+    [summaryLine, threeActions.length ? `近 7 天可执行：${threeActions.join('；')}` : '']
+      .filter(Boolean)
+      .join(' ')
+  );
+
   return {
     opening: openingLine,
-    summary: summaryLine,
+    summary: summaryWithActions,
     explanation: [
-      `世界易判断：先看结构，再看阶段，再看环境，最后决定动作。这种判断包含可言传的规则，也包含长期经验积累出来的默会知识。`,
-      `已发生的印证：${pastValidationLine || '这类命局不是突然如此，而是过去已经在一些关键节点反复表现出同一条主线。'}。`,
       `主判断：${patternLine}`,
-      `判断依据：${evidenceLine || '当前先以命局结构、行运位置和用神取舍作为主依据。'}。`,
-      `接下来会怎么走：${futureLine || '后面最值得关注的，不是再听更多说法，而是看窗口变化后你的主线是否开始加速显形。'}。`,
-      `现在先做：${actionLine || '先推进一个低成本、可验证的小动作，再根据反馈继续收口。'}。`,
-      `风险提醒：${riskLine || '不要在时机没有坐实前同时推进多个高成本动作。'}。`,
-    ].map((line) => cleanNarrativeText(sanitizeNarrativeForUser(line))).join('\n\n'),
+      `判断依据：${evidenceLine || '以命局结构、大运流年位置与用神取舍为主。'}`,
+      pastValidationLine ? `结构线索：${pastValidationLine}` : '',
+      `阶段节奏：${futureLine || '先看当前窗口是否允许推进，再决定扩张或收口。'}`,
+      `近 7 天可执行：${threeActions.join('；') || actionLine || '选一件低成本、可回看结果的动作推进，并记下反馈。'}`,
+      `风险边界：${riskLine || '避免同时押注多个高成本动作；时辰不确定时少作绝对期限判断。'}`,
+    ]
+      .filter(Boolean)
+      .map((line) => cleanNarrativeText(sanitizeNarrativeForUser(line)))
+      .join('\n\n'),
   };
+}
+
+function buildIntentThreeActions(input: {
+  intent: string;
+  actionLine: string;
+  timingFocus: string;
+  avoidFocus: string;
+  favored: string[];
+}): string[] {
+  const actions: string[] = [];
+  const intent = input.intent;
+  if (intent.includes('wealth') || intent.includes('财')) {
+    actions.push('梳理一笔可压缩的固定支出或回款节点，本周内完成记录');
+    actions.push('只推进一项与现金流相关的低风险动作，并设定回看日');
+    actions.push(input.avoidFocus ? `本周刻意避免：${stripDecisionCue(input.avoidFocus, 'risk').slice(0, 28)}` : '避免无上限的大额投入');
+  } else if (intent.includes('relation') || intent.includes('婚') || intent.includes('marriage')) {
+    actions.push('选一次关键沟通，先对齐边界与期望，再谈进展');
+    actions.push('减少情绪化即时回复，重要决定隔夜再确认');
+    actions.push(input.timingFocus ? `关系节奏参考：${formatTimingReference(input.timingFocus).slice(0, 28)}` : '本周优先修复一处摩擦点');
+  } else if (intent.includes('year') || intent.includes('年')) {
+    actions.push('写下今年最重要的一件主线目标，并拆成 30 天可验证指标');
+    actions.push('砍掉一项不在主线上的高耗时事务');
+    actions.push(input.actionLine ? `本周先做：${stripDecisionCue(input.actionLine, 'action').slice(0, 28)}` : '完成本周最小闭环一次');
+  } else {
+    // career / default
+    actions.push('明确本周唯一事业主线，并完成一次可展示的小交付');
+    actions.push(input.actionLine ? `优先动作：${stripDecisionCue(input.actionLine, 'action').slice(0, 32)}` : '约一次关键沟通或复盘，留下书面结论');
+    actions.push(
+      input.favored.length
+        ? `顺着 ${input.favored.slice(0, 2).join('、')} 相关方向试探，不做全仓押注`
+        : '控制并行项目数量，避免同时开三条线',
+    );
+  }
+  return uniqueList(actions.map((a) => cleanNarrativeText(a)).filter(Boolean)).slice(0, 3);
 }
 
 function buildNarrativeJudgmentBlocks(
@@ -1035,27 +1093,44 @@ function buildPastEventTemplates(
     ])
   );
 
+  // v6-Q1: birth accuracy gates absolute past claims
+  const accuracy = `${(result.analysis as { birthAccuracy?: string } | undefined)?.birthAccuracy || ''}`.toLowerCase();
+  const uncertainBirth =
+    accuracy === 'unknown' ||
+    accuracy === 'range' ||
+    accuracy.includes('uncertain') ||
+    accuracy.includes('大概');
+  const soft = uncertainBirth;
+  const confHigh = soft ? 'low' : 'medium';
+  const confMed = soft ? 'low' : 'low';
+
   const candidates: PastEventTemplate[] = [
     {
       key: 'career_shift',
-      title: '过去出现过一次事业方向重排或岗位切换',
+      title: soft
+        ? '事业方向重排窗口（结构倾向，待你校准）'
+        : '事业方向重排或岗位切换的可能窗口',
       type: 'career',
-      description: `你过去大概率经历过一次“继续硬撑不对、换方向才对”的阶段，常见表现是岗位调整、项目重排、离开原团队，或者突然意识到原路径不能再按老办法走。`,
+      description: soft
+        ? '在类似结构下，有人会经历岗位调整、项目重排或路径反思——这是结构倾向，不是对你个人经历的断言。若你从未经历，可直接标记「未发生」。'
+        : '类似结构下较常见的表现是岗位调整、项目重排、离开原团队，或意识到原路径需改方法。请用真实经历校准，勿当作已发生事实。',
       reason: cleanNarrativeText(
         [
-          result.pattern?.type ? `${result.pattern.type} 在现实里常先表现为事业主线重排。 ` : '',
-          normalizedCurrentDaYun ? `当前判断主轴落在 ${normalizedCurrentDaYun}，说明这种切换并不随机。 ` : '',
+          result.pattern?.type ? `${result.pattern.type} 在现实里可能表现为事业主线调整。 ` : '',
+          normalizedCurrentDaYun ? `当前阶段参考：${normalizedCurrentDaYun}。 ` : '',
           strategyAction || extras?.coreSummary || '',
         ].join('')
       ),
-      confidenceLabel: 'high',
+      confidenceLabel: confHigh,
       occurrenceWindow: windowHint,
     },
     {
       key: 'relationship_tension',
-      title: '过去出现过一次关系压力上升或沟通明显失衡',
+      title: soft ? '关系压力上升窗口（待校准）' : '关系压力或沟通失衡的可能窗口',
       type: 'marriage',
-      description: '你过去大概率经历过一段关系摩擦明显放大的时期，常见表现是冷战、反复争执、推进受阻，或者需要重新定义边界。',
+      description: soft
+        ? '结构上可能对应边界与沟通成本上升，是否发生以你的记忆为准。'
+        : '较常见表现是冷战、反复争执、推进受阻，或需要重新定义边界——请标记是否发生过。',
       reason: cleanNarrativeText(
         [
           result.advice?.marriage?.general || '',
@@ -1063,14 +1138,16 @@ function buildPastEventTemplates(
           result.pattern?.description || '',
         ].join('；')
       ),
-      confidenceLabel: 'medium',
+      confidenceLabel: confMed,
       occurrenceWindow: windowHint,
     },
     {
       key: 'health_overdraw',
-      title: '过去出现过一次明显透支或恢复周期变长',
+      title: soft ? '透支与恢复变慢窗口（待校准）' : '明显透支或恢复周期变长的可能窗口',
       type: 'health',
-      description: '你过去很可能有过一段身体和情绪一起下滑的阶段，常见表现是睡眠紊乱、疲惫堆积、效率下降，或者必须靠休整才能拉回来。',
+      description: soft
+        ? '高压阶段可能伴随睡眠、疲惫或效率波动；未发生请直接校准。'
+        : '较常见表现是睡眠紊乱、疲惫堆积、效率下降，或需休整才能恢复——仅作对照，不作确诊。',
       reason: cleanNarrativeText(
         [
           result.advice?.health?.general || '',
@@ -1078,14 +1155,16 @@ function buildPastEventTemplates(
           interactionRisk,
         ].filter(Boolean).join('；')
       ),
-      confidenceLabel: 'high',
+      confidenceLabel: confMed,
       occurrenceWindow: '高压阶段前后',
     },
     {
       key: 'money_rebalance',
-      title: '过去出现过一次钱财分配失衡或现金流收缩',
+      title: soft ? '现金流收紧窗口（待校准）' : '钱财分配或现金流收缩的可能窗口',
       type: 'wealth',
-      description: '你过去大概率有过一次明显的财务收缩或资源错配，常见表现是支出压力突然变大、投入回报不成正比，或者不得不重新安排现金流。',
+      description: soft
+        ? '结构上可能对应支出压力或投入回报错配；是否属实由你校准。'
+        : '较常见表现是支出压力变大、投入回报不成正比，或需重排现金流——请对照真实账本。',
       reason: cleanNarrativeText(
         [
           result.advice?.wealth?.general || '',
@@ -1093,7 +1172,7 @@ function buildPastEventTemplates(
           temporalAction,
         ].filter(Boolean).join('；')
       ),
-      confidenceLabel: 'medium',
+      confidenceLabel: confMed,
       occurrenceWindow: windowHint,
     },
   ];
@@ -1107,7 +1186,8 @@ function buildPastEventTemplates(
       occurrenceWindow: cleanNarrativeText(item.occurrenceWindow || ''),
     }))
     .filter((item) => item.title && item.description && item.reason)
-    .slice(0, 4);
+    // Prefer 2 high-signal items when birth uncertain — less false past claims
+    .slice(0, soft ? 2 : 3);
 }
 
 function readAgentSummary(agentResults: Record<string, unknown>, key: string) {

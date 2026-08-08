@@ -185,7 +185,7 @@ function buildWorldState(params: {
     risingIndustry ? `${risingIndustry.industry}更接近顺势方向，可优先观察。` : '',
     pressedIndustry ? `${pressedIndustry.industry}承压明显，宜保守处理。` : '',
     params.lifeStage === 'rising' || params.lifeStage === 'prime'
-      ? '当前更重要的是建立可复利的结构，而不是只求短期结果。'
+      ? '当前更重要的是做能留下复利的小闭环，而不是只求短期热闹。'
       : '当前更重要的是减少错误成本，保护长期秩序。',
   ].filter(Boolean).join(' ');
 

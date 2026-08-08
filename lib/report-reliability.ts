@@ -39,10 +39,11 @@ export function assessReportReliability(result: FortuneAnalysisResult): ReportRe
 
   if (verifyVerdict === 'FAIL') {
     score -= VERIFY_FAIL_SCORE;
-    reasons.push('一致性校验失败，短期时机与结论存在明显漂移风险。');
+    reasons.push('一致性校验发现硬冲突，短期时机与结论存在漂移风险。');
   } else if (verifyVerdict === 'WARN') {
-    score -= VERIFY_WARN_SCORE;
-    reasons.push('一致性校验处于观察级，短期窗口建议需要保守处理。');
+    // v6-Q1: WARN is soft context omission — lighter penalty so enhanced delivery stays usable
+    score -= Math.min(VERIFY_WARN_SCORE, 12);
+    reasons.push('部分上下文对齐仍可加强，短期窗口建议按节奏参考处理。');
   }
 
   if (!anyLlmUsed && !providerHealthDeferred) {
@@ -57,7 +58,10 @@ export function assessReportReliability(result: FortuneAnalysisResult): ReportRe
 
   if (qualityStatus === 'retry') {
     score -= LOW_QUALITY_SCORE;
-    reasons.push('质量审计建议重算，当前不适合直接按高置信版本交付。');
+    reasons.push('质量审计建议补强后重算，当前宜先看结构、少押单点时机。');
+  } else if (qualityStatus === 'watch') {
+    score -= 6;
+    reasons.push('质量审计处于观察态，短期建议结合现实反馈使用。');
   }
 
   if (deliveryTier === 'basic' && verifyVerdict !== 'PASS') {

@@ -5,18 +5,20 @@ export interface VerifyResult {
   consistencyScore: number;
   verdict: 'PASS' | 'WARN' | 'FAIL';
   failedRules: string[];
+  /** Soft context omission only — never alone force FAIL */
+  softFailedRules?: string[];
+  hardFailedRules?: string[];
 }
 
 // v5-A6 (2026-05-09): bestWindow / liuNian 改成宽松匹配
-// 之前用算法生成的 "2016-2020阶段" 严格 includes 验 LLM 自然语言，30 天 78% 报告必 fail
-// 现在按 (1) 4位年份 (2) 天干地支字面 (3) 阶段关键词 任一命中即算对齐
+// v6-Q1 (2026-08-09): soft vs hard rules — omission of geo/season/industry is WARN not FAIL
+// 之前 soft 规则 100% FAIL，用户看到「草稿」却仍标增强版，信任崩塌
+
 function extractWindowKeywords(label: string): string[] {
   if (!label) return [];
   const keywords: string[] = [label];
-  // 抽取 4 位年份范围 "2016-2020阶段" → ["2016", "2020"]
   const years = label.match(/\d{4}/g) || [];
   keywords.push(...years);
-  // 部分阶段关键词
   if (years.length >= 2) {
     keywords.push(`${years[0]}-${years[1]}`);
     keywords.push(`${years[0]}~${years[1]}`);
@@ -28,26 +30,54 @@ function extractWindowKeywords(label: string): string[] {
 function extractLiuNianKeywords(liuNian: string): string[] {
   if (!liuNian) return [];
   const keywords: string[] = [liuNian];
-  // 天干地支 "丙午" → ["丙", "午", "丙午"]
-  const stems = ['甲','乙','丙','丁','戊','己','庚','辛','壬','癸'];
-  const branches = ['子','丑','寅','卯','辰','巳','午','未','申','酉','戌','亥'];
+  const stems = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
+  const branches = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'];
   for (const s of stems) if (liuNian.includes(s)) keywords.push(s);
   for (const b of branches) if (liuNian.includes(b)) keywords.push(b);
   return keywords;
 }
 
-export function runVerify(context: StructuredAgenticContext, agentResults: Record<string, unknown>) : VerifyResult {
-  const failedRules: string[] = [];
+/** Soft rules: context present but agents omitted keywords (not contradiction). */
+const SOFT_RULES = new Set([
+  'temporal_context_consistency',
+  'macro_cycle_alignment',
+  'geo_place_alignment',
+  'industry_signal_alignment',
+  'liunian_alignment',
+  'best_window_alignment',
+  'geo_climate_consistency',
+  'anchor_trend_consistency',
+]);
+
+export function runVerify(
+  context: StructuredAgenticContext,
+  agentResults: Record<string, unknown>,
+): VerifyResult {
+  const hardFailedRules: string[] = [];
+  const softFailedRules: string[] = [];
+  const pushSoft = (rule: string) => {
+    if (!softFailedRules.includes(rule)) softFailedRules.push(rule);
+  };
+  const pushHard = (rule: string) => {
+    if (!hardFailedRules.includes(rule)) hardFailedRules.push(rule);
+  };
+
   const temporalSpatial = asAgentResult(agentResults.temporal_spatial_advisor);
   const klineNarrative = asAgentResult(agentResults.kline_narrative);
   const strategyAdvisor = asAgentResult(agentResults.strategy_advisor);
   const careerWealth = asAgentResult(agentResults.career_wealth);
   const bestWindow = context.engine.kline.windows[0]?.label || '';
   const leadIndustry = context.context.macroCycles.industryCycle?.[0]?.industry || '';
-  const currentPlace = context.context.geoClimate.currentPlace || context.context.geoClimate.birthPlace || '';
+  const currentPlace =
+    context.context.geoClimate.currentPlace || context.context.geoClimate.birthPlace || '';
 
-  // KlinePointV6 has career/wealth/marriage/health — not a single `score` field
-  const pointAvg = (item: { career?: number; wealth?: number; marriage?: number; health?: number; score?: number }) => {
+  const pointAvg = (item: {
+    career?: number;
+    wealth?: number;
+    marriage?: number;
+    health?: number;
+    score?: number;
+  }) => {
     if (typeof item.score === 'number' && Number.isFinite(item.score)) return item.score;
     return (
       (Number(item.career) || 0) +
@@ -57,39 +87,49 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
     ) / 4;
   };
   const points = context.engine.kline.points || [];
-  if (points.length > 0 && !points.every((item) => {
-    const s = pointAvg(item as any);
-    return s >= 20 && s <= 95;
-  })) {
-    failedRules.push('score_bounds');
+  if (
+    points.length > 0 &&
+    !points.every((item) => {
+      const s = pointAvg(item as any);
+      return s >= 20 && s <= 95;
+    })
+  ) {
+    pushHard('score_bounds');
   }
 
   const coreConstitution = asAgentResult(agentResults.core_constitution);
   if (
     !context.engine.kline.anchorPoints.length ||
     (klineNarrative.summary &&
-      !context.engine.kline.anchorPoints.some((item) => klineNarrative.summary.includes(String(item.year))))
+      !context.engine.kline.anchorPoints.some((item) =>
+        klineNarrative.summary.includes(String(item.year)),
+      ))
   ) {
-    // Only fail when narrative claims years but none match anchors
     if (klineNarrative.summary && /\d{4}/.test(klineNarrative.summary)) {
-      failedRules.push('anchor_trend_consistency');
+      pushSoft('anchor_trend_consistency');
     }
   }
 
   if (!context.context.geoClimate.climateBias?.length) {
-    failedRules.push('geo_climate_consistency');
+    // Missing climate data in context is soft (not agent fault)
+    pushSoft('geo_climate_consistency');
   }
 
   if (!Object.keys(agentResults).length) {
-    failedRules.push('pipeline_consistency');
+    pushHard('pipeline_consistency');
   }
 
+  // ── Soft context alignment (omission → soft only) ──
   if (
     context.context.temporal.currentSolarTerm &&
     temporalSpatial.summary &&
-    !containsAny(temporalSpatial.summary, [String(context.context.temporal.currentSolarTerm), '立春', '节气'])
+    !containsAny(temporalSpatial.summary, [
+      String(context.context.temporal.currentSolarTerm),
+      '立春',
+      '节气',
+    ])
   ) {
-    failedRules.push('temporal_context_consistency');
+    pushSoft('temporal_context_consistency');
   }
 
   if (
@@ -97,13 +137,12 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
     `${strategyAdvisor.summary}${careerWealth.summary}` &&
     !containsAny(
       `${strategyAdvisor.summary}${careerWealth.summary}`,
-      context.context.macroCycles.industryCycle.map((item) => item.industry)
+      context.context.macroCycles.industryCycle.map((item) => item.industry),
     )
   ) {
-    failedRules.push('macro_cycle_alignment');
+    pushSoft('macro_cycle_alignment');
   }
 
-  // v5-A6 (2026-05-09): 拼接所有 agent summary 作为大检查池，避免单 agent 漏关键词就 fail
   const allAgentText = [
     klineNarrative.summary,
     strategyAdvisor.summary,
@@ -114,30 +153,34 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
     temporalSpatial.summary,
   ].join(' ');
 
-  // v5-A6: 宽松匹配 — 提取年份/范围作为关键词集合
   if (bestWindow && !containsAny(allAgentText, extractWindowKeywords(bestWindow))) {
-    failedRules.push('best_window_alignment');
+    pushSoft('best_window_alignment');
   }
 
-  // v5-A6: 流年宽松匹配 — 干支或字面或对应年份任一命中即算
   if (context.context.temporal.currentLiuNian) {
     const liuNian = String(context.context.temporal.currentLiuNian);
     const currentYear = new Date().getFullYear();
-    const keywords = [...extractLiuNianKeywords(liuNian), String(currentYear), String(currentYear + 1)];
+    const keywords = [
+      ...extractLiuNianKeywords(liuNian),
+      String(currentYear),
+      String(currentYear + 1),
+      '流年',
+    ];
     if (!containsAny(allAgentText, keywords)) {
-      failedRules.push('liunian_alignment');
+      pushSoft('liunian_alignment');
     }
   }
 
   if (currentPlace && temporalSpatial.summary && !containsAny(temporalSpatial.summary, [currentPlace])) {
-    failedRules.push('geo_place_alignment');
+    // Place name omitted — soft (agents often use province/region synonyms)
+    pushSoft('geo_place_alignment');
   }
 
   if (leadIndustry && !containsAny(`${strategyAdvisor.summary}${careerWealth.summary}`, [leadIndustry])) {
-    failedRules.push('industry_signal_alignment');
+    pushSoft('industry_signal_alignment');
   }
 
-  // ── Engine fact locks (yongShen / dayMaster / dayun) ──
+  // ── Hard engine fact locks ──
   const constitution = context.engine.constitution;
   const dayMaster = constitution?.dayMaster || '';
   const yongShen = constitution?.yongShen || [];
@@ -145,15 +188,14 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
   const coreText = coreConstitution.summary;
 
   if (dayMaster && coreText && !coreText.includes(dayMaster)) {
-    failedRules.push('day_master_alignment');
+    pushHard('day_master_alignment');
   }
 
   if (yongShen.length && coreText) {
     const yongHit = yongShen.some((el) => el && coreText.includes(el));
-    if (!yongHit) failedRules.push('yong_shen_alignment');
+    if (!yongHit) pushHard('yong_shen_alignment');
   }
 
-  // 忌神不得被核心结构说成主用方向
   if (jiShen.length && yongShen.length && coreText) {
     const mentionsJiAsYong = jiShen.some(
       (ji) =>
@@ -162,7 +204,7 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
           coreText.includes(`用神为${ji}`) ||
           coreText.includes(`用神是${ji}`)),
     );
-    if (mentionsJiAsYong) failedRules.push('ji_shen_as_yong_conflict');
+    if (mentionsJiAsYong) pushHard('ji_shen_as_yong_conflict');
   }
 
   const knownDayun = new Set(
@@ -170,26 +212,43 @@ export function runVerify(context: StructuredAgenticContext, agentResults: Recor
   );
   if (knownDayun.size > 0) {
     const dayunText = `${careerWealth.summary}${strategyAdvisor.summary}`;
-    // Extract 干支 pairs from agent text and flag invented ones that look like 大运 claims
-    const claimed = dayunText.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) || [];
-    const invented = claimed.filter((gz) => !knownDayun.has(gz) && !context.engine.pillars.some((p) => p.ganZhi === gz));
-    // Only fail when agents invent multiple unknown stems that aren't pillars either
+    const claimed =
+      dayunText.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) || [];
+    const invented = claimed.filter(
+      (gz) => !knownDayun.has(gz) && !context.engine.pillars.some((p) => p.ganZhi === gz),
+    );
     if (invented.length >= 2) {
-      failedRules.push('dayun_invention');
+      pushHard('dayun_invention');
     }
   }
 
-  const consistencyScore = Math.max(50, 100 - failedRules.length * 12);
-  const verdict = failedRules.length === 0
-    ? 'PASS'
-    : consistencyScore >= REVIEW_SCORE_THRESHOLD
-      ? 'WARN'
-      : 'FAIL';
+  // Soft-only must not tank score to hard FAIL (was max(50, 100-n*12) → 5 soft = 50 FAIL forever)
+  const consistencyScore = Math.max(
+    58,
+    Math.min(100, 100 - hardFailedRules.length * 14 - softFailedRules.length * 4),
+  );
+
+  let verdict: VerifyResult['verdict'];
+  if (hardFailedRules.length === 0 && softFailedRules.length === 0) {
+    verdict = 'PASS';
+  } else if (hardFailedRules.length === 0) {
+    // Omission-only → PASS if few soft, else WARN (never FAIL)
+    verdict = softFailedRules.length <= 2 && consistencyScore >= 88 ? 'PASS' : 'WARN';
+  } else if (consistencyScore >= REVIEW_SCORE_THRESHOLD) {
+    verdict = 'WARN';
+  } else {
+    verdict = 'FAIL';
+  }
+
+  // Expose all for UI transparency; soft rules still listed
+  const failedRules = [...hardFailedRules, ...softFailedRules];
 
   return {
     consistencyScore,
     verdict,
     failedRules,
+    softFailedRules,
+    hardFailedRules,
   };
 }
 
