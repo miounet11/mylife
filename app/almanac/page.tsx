@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import AlmanacApp from '@/components/almanac/almanac-app';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
@@ -118,6 +119,13 @@ export default async function AlmanacPage({
             </>
           }
           footer={<span className="text-[12px] text-[color:var(--ink-5)]">{copy.todayUrl(today)}</span>}
+        />
+        <PageIllustrationStrip
+          surface="almanac/hub"
+          title="通书 × 日运"
+          compact
+          limit={1}
+          priority
         />
         <AlmanacApp
           initialYear={year}

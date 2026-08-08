@@ -4,6 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import AstroDailySubscribe from '@/components/astro/astro-daily-subscribe';
 import AstroLookup from '@/components/astro/astro-lookup';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
@@ -68,6 +69,14 @@ export default function AstroHubPage() {
               {ASTRO_SIGNS.length} 星座 · {ASTRO_ZONES_48.length} 星区 · {RISING_PROFILES.length} 上升 · 引擎日运
             </span>
           }
+        />
+
+        <PageIllustrationStrip
+          surface="astro/hub"
+          title="板块图解"
+          compact
+          limit={2}
+          priority
         />
 
         <AstroLookup source="astro_hub" />

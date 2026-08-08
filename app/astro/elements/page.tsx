@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { ELEMENT_CATALOG, signsForElement } from '@/lib/astro/elements-catalog';
@@ -37,6 +38,7 @@ export default function ElementsIndexPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="astro/elements" title="四象图解" compact limit={1} />
         <ul className="grid gap-3 sm:grid-cols-2">
           {ELEMENT_CATALOG.map((e) => {
             const members = signsForElement(e.zh)

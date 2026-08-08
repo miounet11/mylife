@@ -1,7 +1,7 @@
 {
-  "generatedAt": "2026-07-18T15:22:59Z",
-  "backend": "ttqq geo wave2",
-  "count": 119,
+  "generatedAt": "2026-08-08T10:13:08Z",
+  "backend": "ttqq geo wave2 + grok-imagine-wave-e",
+  "count": 127,
   "items": [
     {
       "src": "/images/page-illustrations/annual-review-loop.jpg",
@@ -597,6 +597,46 @@
       "src": "/images/page-illustrations/world-yi-global-path.zh-hant.jpg",
       "file": "world-yi-global-path.zh-hant.jpg",
       "bytes": 419684
+    },
+    {
+      "src": "/images/page-illustrations/almanac-tongshu-day-match.jpg",
+      "file": "almanac-tongshu-day-match.jpg",
+      "bytes": 103043
+    },
+    {
+      "src": "/images/page-illustrations/astro-hub-map.jpg",
+      "file": "astro-hub-map.jpg",
+      "bytes": 111312
+    },
+    {
+      "src": "/images/page-illustrations/astro-engine-birth-day.jpg",
+      "file": "astro-engine-birth-day.jpg",
+      "bytes": 157616
+    },
+    {
+      "src": "/images/page-illustrations/astro-week-ranking.jpg",
+      "file": "astro-week-ranking.jpg",
+      "bytes": 98945
+    },
+    {
+      "src": "/images/page-illustrations/astro-pair-day.jpg",
+      "file": "astro-pair-day.jpg",
+      "bytes": 103816
+    },
+    {
+      "src": "/images/page-illustrations/astro-four-elements.jpg",
+      "file": "astro-four-elements.jpg",
+      "bytes": 100174
+    },
+    {
+      "src": "/images/page-illustrations/astro-48-zones.jpg",
+      "file": "astro-48-zones.jpg",
+      "bytes": 119110
+    },
+    {
+      "src": "/images/page-illustrations/astro-worldyi-bridge.jpg",
+      "file": "astro-worldyi-bridge.jpg",
+      "bytes": 140859
     }
   ]
 }

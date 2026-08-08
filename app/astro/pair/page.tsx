@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
@@ -30,6 +31,7 @@ export default function PairIndexPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="astro/pair" title="配对图解" compact limit={1} />
         <p className="text-[13px] text-[color:var(--ink-4)]">先点左侧星座，再点右侧，或从下表快速进入（已规范化顺序）。</p>
         <div className="overflow-x-auto rounded-2xl border border-[color:var(--hairline)] bg-white p-3">
           <table className="w-full min-w-[640px] text-center text-[11px]">

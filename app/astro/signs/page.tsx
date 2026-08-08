@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
@@ -37,6 +38,7 @@ export default function AstroSignsIndexPage() {
             </>
           }
         />
+        <PageIllustrationStrip surface="astro/signs" title="星座图解" compact limit={1} />
         <ul className="grid gap-3 sm:grid-cols-2">
           {ASTRO_SIGNS.map((s) => (
             <li key={s.key}>

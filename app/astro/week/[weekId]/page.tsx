@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import JsonLd from '@/components/seo/json-ld';
 import { buildWeekComparePack } from '@/lib/astro/week-compare-engine';
@@ -52,6 +53,7 @@ export default async function WeekHubPage({ params }: Props) {
         ])}
       />
       <div className="page-content space-y-5 py-6 pb-16 md:py-8">
+        <PageIllustrationStrip surface="astro/week" title="周运图解" compact limit={1} />
         <header>
           <p className="text-[11px] font-bold text-[color:var(--brand)]">WEEK COMPARE · ENGINE</p>
           <h1 className="mt-1 text-[24px] font-black text-[color:var(--ink-1)]">

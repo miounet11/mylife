@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
+import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
@@ -43,6 +44,7 @@ export default function AstroZonesIndexPage() {
           }
           footer={<span>共 {ASTRO_ZONES_48.length} 区</span>}
         />
+        <PageIllustrationStrip surface="astro/zones" title="星区图解" compact limit={1} />
 
         {ASTRO_SIGNS.map((s) => {
           const zones = getZonesBySign(s.key);
