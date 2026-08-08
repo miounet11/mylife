@@ -58,6 +58,24 @@ export function buildAgentPrompt(agentKey: CoreAgentKey, context: StructuredAgen
   system = prependHardContract(injectPromptModules(system, modules));
   user = injectPromptModules(user, modules);
 
+  // v6-Q2: force-visible anchors for soft verify alignment
+  const temporal = context.context?.temporal as { currentSolarTerm?: string; currentLiuNian?: string; liuNian?: string } | undefined;
+  const geo = context.context?.geoClimate as { currentPlace?: string; birthPlace?: string } | undefined;
+  const industry = context.context?.macroCycles?.industryCycle?.[0]?.industry;
+  const anchorLines = [
+    temporal?.currentSolarTerm ? `必须点名当前节气：${temporal.currentSolarTerm}` : '',
+    (temporal?.currentLiuNian || temporal?.liuNian)
+      ? `必须点名当前流年：${temporal.currentLiuNian || temporal.liuNian}`
+      : '',
+    (geo?.currentPlace || geo?.birthPlace)
+      ? `必须点名地理参考：${geo.currentPlace || geo.birthPlace}`
+      : '',
+    industry ? `若讨论事业财富，必须点名行业周期：${industry}` : '',
+  ].filter(Boolean);
+  if (anchorLines.length) {
+    user = `${user}\n\n【必须写入正文的上下文锚点】\n${anchorLines.join('\n')}\n（可改写表述，但关键词/地名/干支须出现）`;
+  }
+
   return {
     system,
     user,

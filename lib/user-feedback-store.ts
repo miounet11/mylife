@@ -123,6 +123,27 @@ export function createSiteFeedback(input: {
       timestamp,
     );
 
+  // v6-Q2: best-effort write-back onto report past-event templates
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { applyPastEventCalibrationFromFeedback } = require('@/lib/report-calibration-from-feedback') as {
+      applyPastEventCalibrationFromFeedback: (i: {
+        category?: string;
+        message: string;
+        pageUrl?: string | null;
+        userId?: string | null;
+      }) => { applied: boolean };
+    };
+    applyPastEventCalibrationFromFeedback({
+      category: input.category,
+      message,
+      pageUrl,
+      userId: input.userId,
+    });
+  } catch {
+    // non-fatal
+  }
+
   return {
     id,
     category: input.category,

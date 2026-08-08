@@ -1,4 +1,5 @@
 import { CORE_AGENT_KEYS, type CoreAgentKey } from '@/lib/agentic-report/agent-definitions';
+import { enrichAgentResultsWithContextAnchors } from '@/lib/agentic-report/enrich-agent-results-with-anchors';
 import { buildFallbackAgentResults } from '@/lib/agentic-report/build-fallback-agent-results';
 import { createAgenticContext } from '@/lib/agentic-report/create-agentic-context';
 import { callJsonLLM } from '@/lib/agentic-report/llm-client';
@@ -160,7 +161,9 @@ export async function runAgenticPipeline(params: {
   ) as Record<string, 'llm' | 'fallback'>;
   const review = runReview(context, hydratedResults);
   const repair = runRepair(hydratedResults, review, context);
-  const verify = runVerify(context, repair.repairedResults);
+  // v6-Q2: inject context anchors before verify so soft rules can PASS
+  const anchoredResults = enrichAgentResultsWithContextAnchors(context, repair.repairedResults);
+  const verify = runVerify(context, anchoredResults);
   const durationMs = Date.now() - startedAt;
   const used = merged.successRate > 0;
 
@@ -168,7 +171,7 @@ export async function runAgenticPipeline(params: {
     enabled: true,
     used,
     context,
-    agentResults: repair.repairedResults,
+    agentResults: anchoredResults,
     review,
     repair,
     verify,
@@ -196,13 +199,14 @@ function buildDeterministicFallbackPipelineResult(params: {
   const fallbackResults = buildFallbackAgentResults(params.context, [...params.keys]);
   const review = runReview(params.context, fallbackResults);
   const repair = runRepair(fallbackResults, review, params.context);
-  const verify = runVerify(params.context, repair.repairedResults);
+  const anchoredResults = enrichAgentResultsWithContextAnchors(params.context, repair.repairedResults);
+  const verify = runVerify(params.context, anchoredResults);
 
   return {
     enabled: params.enabled,
     used: false,
     context: params.context,
-    agentResults: repair.repairedResults,
+    agentResults: anchoredResults,
     review,
     repair,
     verify,

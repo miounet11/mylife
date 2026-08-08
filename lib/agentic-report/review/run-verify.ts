@@ -210,13 +210,18 @@ export function runVerify(
   const knownDayun = new Set(
     (context.engine.dayun?.windows || []).map((w) => w.ganZhi).filter(Boolean),
   );
+  // 流年 / 四柱 干支不算「编造大运」
+  const allowedStemBranch = new Set<string>([
+    ...knownDayun,
+    ...context.engine.pillars.map((p) => p.ganZhi).filter(Boolean),
+    String(context.context.temporal.currentLiuNian || ''),
+  ].filter(Boolean));
   if (knownDayun.size > 0) {
     const dayunText = `${careerWealth.summary}${strategyAdvisor.summary}`;
     const claimed =
       dayunText.match(/[甲乙丙丁戊己庚辛壬癸][子丑寅卯辰巳午未申酉戌亥]/g) || [];
-    const invented = claimed.filter(
-      (gz) => !knownDayun.has(gz) && !context.engine.pillars.some((p) => p.ganZhi === gz),
-    );
+    const invented = claimed.filter((gz) => !allowedStemBranch.has(gz));
+    // 仅当出现多个未知干支且像大运叙事时才 hard fail（避免流年注入误杀）
     if (invented.length >= 2) {
       pushHard('dayun_invention');
     }

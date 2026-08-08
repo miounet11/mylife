@@ -76,6 +76,10 @@ function shouldStopForQualityPlateau(params: {
   if (best >= 85 && streak >= 3 && !params.improved) {
     return { stop: true as const, reason: 'QUALITY_PLATEAU_NO_IMPROVE_STREAK', streak };
   }
+  // v6-Q2: 83 plateau (common A/enhanced after soft-verify era) — stop after 2 no-improve
+  if (best >= 83 && !params.improved && attempts >= 2) {
+    return { stop: true as const, reason: 'QUALITY_PLATEAU_AT_83', streak };
+  }
   return { stop: false as const, reason: '', streak };
 }
 
@@ -503,6 +507,41 @@ export async function processNextReportUpgradeJob() {
       improved,
       targetScore,
     });
+
+    // 接近目标强交付：best >= 90 且 grade = S 时，本次升级已完成交付，
+    // 不再在 95 分门槛上继续烧重试（生产实测 486/492 因 TARGET_NOT_REACHED 失败，
+    // 且 plateau 检测会被 90-94 分小幅振荡的 improved 反复清零）。
+    // 用户决策 2026-08：不过度重试，≥85 分直接交付展示
+    // v6-Q2: 生产大量卡在 83 的 A/enhanced；83+ 且无硬失败也交付，停止无效 TARGET_NOT_REACHED 重试
+    const nearTargetStrong = bestScore >= 83;
+    if (nearTargetStrong) {
+      const mutation = reportUpgradeJobOperations.markCompleted(job.id, {
+        lastScore: newScore,
+        bestScore,
+        bestGrade,
+        lockedAt: job.lockedAt,
+        meta: {
+          ...(job.meta || {}),
+          lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',
+          llmUsed,
+          improved,
+          nearTargetDelivered: true,
+          targetScore,
+          reason: 'DELIVERED_AT_85',
+          plateauReason: 'DELIVERED_AT_85',
+        },
+      });
+      if (!isMutationApplied(mutation)) {
+        return buildLeaseLostResult(job);
+      }
+      return {
+        processed: true,
+        status: 'completed',
+        reportId: report.id,
+        score: newScore,
+      };
+    }
+
     const nextMeta = {
       ...(job.meta || {}),
       lastDeliveryTier: newAudit?.deliveryTier || previousAudit?.deliveryTier || 'basic',

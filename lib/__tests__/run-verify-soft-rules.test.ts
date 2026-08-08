@@ -89,4 +89,28 @@ describe('runVerify soft vs hard rules (v6-Q1)', () => {
     assert.equal(res.verdict, 'PASS');
     assert.equal(res.failedRules.length, 0);
   });
+
+  it('context anchor enrich lifts soft-only omissions toward PASS/WARN without hard fails', async () => {
+    const { enrichAgentResultsWithContextAnchors } = await import(
+      '@/lib/agentic-report/enrich-agent-results-with-anchors'
+    );
+    const ctx = minimalContext();
+    const agents = {
+      core_constitution: { summary: '结构中和' },
+      kline_narrative: { summary: '趋势稳健' },
+      strategy_advisor: { summary: '先稳住' },
+      career_wealth: { summary: '收口' },
+      temporal_spatial_advisor: { summary: '观察' },
+    };
+    const before = runVerify(ctx, agents);
+    const enriched = enrichAgentResultsWithContextAnchors(ctx, agents);
+    const after = runVerify(ctx, enriched);
+    // core summary lacked dayMaster → hard fails before enrich
+    assert.ok((before.hardFailedRules || []).length >= 1);
+    // enrich injects 日主/用神 + anchors → hard should clear
+    assert.equal((after.hardFailedRules || []).length, 0);
+    assert.ok(after.consistencyScore >= before.consistencyScore);
+    assert.ok(after.verdict === 'PASS' || after.verdict === 'WARN');
+    assert.notEqual(after.verdict, 'FAIL');
+  });
 });
