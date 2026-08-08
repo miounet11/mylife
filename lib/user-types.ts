@@ -553,14 +553,21 @@ export interface FortuneAnalysisResult {
         evidence?: string[];
       };
     };
+    /** v6-Q1/Q3: intent-aware executable actions for the next 7 days */
+    sevenDayActions?: string[];
     pastEventTemplates?: Array<{
       key: string;
       title: string;
       type: 'career' | 'wealth' | 'marriage' | 'health' | 'family' | 'other';
       description: string;
       reason: string;
-      confidenceLabel?: 'high' | 'medium';
+      confidenceLabel?: 'high' | 'medium' | 'low' | 'denied';
       occurrenceWindow?: string;
+      userCalibration?: {
+        status?: 'confirmed' | 'partial' | 'denied' | string;
+        note?: string;
+        updatedAt?: string;
+      };
     }>;
     versionLineage?: Array<{
       version: string;

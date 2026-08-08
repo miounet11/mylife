@@ -98,6 +98,54 @@ describe('buildUserFacingReportStatus', () => {
     assert.match(status.progress.detail || '', /保留|可读/);
   });
 
+  it('completed DELIVERED_AT_85 uses usable-tier copy and no upgrade CTA', () => {
+    const status = buildUserFacingReportStatus({
+      llmUsed: true,
+      verifyVerdict: 'WARN',
+      qualityAudit: {
+        overallScore: 83,
+        status: 'watch',
+        deliveryTier: 'enhanced',
+        targetAchieved: false,
+        dimensions: [
+          { key: 'engine', score: 95 },
+          { key: 'llm', score: 90 },
+          { key: 'agentic', score: 72 },
+          { key: 'consistency', score: 70 },
+          { key: 'completeness', score: 88 },
+        ],
+      },
+      upgradeJob: {
+        status: 'completed',
+        meta: { reason: 'DELIVERED_AT_85', nearTargetDelivered: true },
+      },
+      canManage: true,
+    });
+    assert.equal(status.readiness, 'usable');
+    assert.equal(status.progress.state, 'done');
+    assert.match(status.progress.detail || '', /可用深度|≥83|83/);
+    assert.equal(status.primaryAction.kind, 'none');
+  });
+
+  it('cancelled QUALITY_PLATEAU_AT_83 surfaces usable-tier pause detail', () => {
+    const status = buildUserFacingReportStatus({
+      llmUsed: true,
+      qualityAudit: {
+        overallScore: 83,
+        deliveryTier: 'enhanced',
+        dimensions: [{ key: 'engine', score: 95 }, { key: 'llm', score: 88 }],
+      },
+      upgradeJob: {
+        status: 'cancelled',
+        lastError: 'QUALITY_PLATEAU_AT_83',
+      },
+      canManage: true,
+    });
+    assert.equal(status.progress.state, 'paused');
+    assert.match(status.progress.detail || '', /可用深度|≥83|停止/);
+    assert.equal(status.primaryAction.kind, 'none');
+  });
+
   it('locale en → badge/title/summary/trust without CJK', () => {
     const cjk = /[\u4e00-\u9fff]/
     const status = buildUserFacingReportStatus({

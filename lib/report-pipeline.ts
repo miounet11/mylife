@@ -126,6 +126,8 @@ type FallbackNarrative = {
   opening: string;
   summary: string;
   explanation: string;
+  /** Structured 7-day actions for UI card */
+  sevenDayActions?: string[];
 };
 
 type NarrativeJudgmentBlock = {
@@ -452,6 +454,7 @@ export function finalizeReportForDelivery(result: FortuneAnalysisResult): Fortun
     opening: repairedNarrative.opening,
     summary: repairedNarrative.summary,
     explanation: repairedNarrative.explanation,
+    sevenDayActions: repairedNarrative.sevenDayActions || [],
     judgmentBlocks: buildNarrativeJudgmentBlocks(draft),
     pastEventTemplates: buildPastEventTemplates(draft),
   };
@@ -749,15 +752,20 @@ function mergeLLMResult(
   merged.analysis.opening = focusedNarrative.opening;
   merged.analysis.summary = focusedNarrative.summary;
   merged.analysis.explanation = dedupeAdjacentNarrativeParagraphs(focusedNarrative.explanation);
+  merged.analysis.sevenDayActions = focusedNarrative.sevenDayActions || [];
   merged.analysis.judgmentBlocks = buildNarrativeJudgmentBlocks(merged as FortuneAnalysisResult, {
     coreSummary,
     strategySummary,
     temporalSummary,
   });
+  // Preserve user-denied past-event calibrations across rebuilds
+  const previousTemplates = (baseResult.analysis as { pastEventTemplates?: PastEventTemplate[] } | undefined)
+    ?.pastEventTemplates;
   merged.analysis.pastEventTemplates = buildPastEventTemplates(merged as FortuneAnalysisResult, {
     coreSummary,
     strategySummary,
     temporalSummary,
+    previousTemplates,
   });
   merged.analysis.qualityAudit = buildReportQualityAudit(merged as FortuneAnalysisResult);
 
@@ -927,6 +935,7 @@ export function buildDeterministicFallbackNarrative(
   return {
     opening: openingLine,
     summary: summaryWithActions,
+    sevenDayActions: threeActions,
     explanation: [
       `主判断：${patternLine}`,
       `判断依据：${evidenceLine || '以命局结构、大运流年位置与用神取舍为主。'}`,
@@ -1075,6 +1084,7 @@ function buildPastEventTemplates(
     coreSummary?: string;
     strategySummary?: string;
     temporalSummary?: string;
+    previousTemplates?: PastEventTemplate[];
   }
 ): PastEventTemplate[] {
   const interactionRisk = summarizeActionOrRisk(result.fortune?.interaction || '', 'risk');
@@ -1103,6 +1113,16 @@ function buildPastEventTemplates(
   const soft = uncertainBirth;
   const confHigh = soft ? 'low' : 'medium';
   const confMed = soft ? 'low' : 'low';
+
+  // v6-Q3: respect prior user calibrations (denied templates stay out / stay low)
+  const prev = extras?.previousTemplates || result.analysis?.pastEventTemplates || [];
+  const deniedKeys = new Set(
+    prev
+      .filter((t: any) => t?.userCalibration?.status === 'denied' || t?.confidenceLabel === 'denied')
+      .map((t: any) => `${t.key || ''}`)
+      .filter(Boolean),
+  );
+  const prevByKey = new Map(prev.map((t: any) => [`${t.key || ''}`, t]));
 
   const candidates: PastEventTemplate[] = [
     {
@@ -1178,13 +1198,23 @@ function buildPastEventTemplates(
   ];
 
   return candidates
-    .map((item) => ({
-      ...item,
-      title: cleanNarrativeText(item.title),
-      description: cleanNarrativeText(item.description),
-      reason: cleanNarrativeText(item.reason),
-      occurrenceWindow: cleanNarrativeText(item.occurrenceWindow || ''),
-    }))
+    .filter((item) => !deniedKeys.has(item.key))
+    .map((item) => {
+      const prior = prevByKey.get(item.key) as any;
+      const preservedCal = prior?.userCalibration;
+      return {
+        ...item,
+        title: cleanNarrativeText(item.title),
+        description: cleanNarrativeText(item.description),
+        reason: cleanNarrativeText(item.reason),
+        occurrenceWindow: cleanNarrativeText(item.occurrenceWindow || ''),
+        confidenceLabel:
+          preservedCal?.status === 'partial' || preservedCal?.status === 'denied'
+            ? 'low'
+            : item.confidenceLabel,
+        ...(preservedCal ? { userCalibration: preservedCal } : {}),
+      };
+    })
     .filter((item) => item.title && item.description && item.reason)
     // Prefer 2 high-signal items when birth uncertain — less false past claims
     .slice(0, soft ? 2 : 3);

@@ -71,6 +71,7 @@ import ReportCurrentState from '@/components/report/report-current-state';
 import ReportRhythmTimeline from '@/components/report/report-rhythm-timeline';
 import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
+import ReportSevenDayActions from '@/components/report/report-seven-day-actions';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
 import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
@@ -1078,6 +1079,16 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   {pageCopy.actionSubtitle}
                 </p>
                 <div id="action-validation" className="mt-3 space-y-3 scroll-mt-header">
+                  <ReportSevenDayActions
+                    reportId={id}
+                    actions={result.analysis?.sevenDayActions}
+                    summaryText={
+                      [result.analysis?.summary, result.analysis?.explanation]
+                        .filter(Boolean)
+                        .join('\n') || null
+                    }
+                    locale={uiLocale}
+                  />
                   <ReportActionBoard
                     section={reportV4Sections.actionBoard}
                     locale={uiLocale}

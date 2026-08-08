@@ -31,12 +31,25 @@ export default function ReportStageProgress({
   upgradeStatus,
   upgradeStatusLabel,
 }: ReportStageProgressProps) {
+  const score =
+    typeof qualityAudit?.overallScore === 'number' ? qualityAudit.overallScore : null;
+  // v6-Q3: ≥83 is the product "usable deep" bar — stop implying content is incomplete
+  const usableDeep =
+    !qualityAudit?.targetAchieved &&
+    score != null &&
+    score >= 83 &&
+    !isEnhancementPending &&
+    (upgradeStatus === 'completed' ||
+      upgradeStatus === 'cancelled' ||
+      upgradeStatus === 'failed' ||
+      !upgradeStatus);
+
   return (
     <div
       className={`mt-5 rounded-[var(--radius)] border px-4 py-4 ${
         isEnhancementPending
           ? 'border-[color:var(--signal)] bg-[color:var(--signal-soft)]/80'
-          : llmUsed
+          : llmUsed || usableDeep
             ? 'border-[rgba(47,125,82,0.20)] bg-[rgba(47,125,82,0.08)]/70'
             : 'border-[color:var(--line)] bg-[color:var(--paper)]'
       }`}
@@ -46,7 +59,7 @@ export default function ReportStageProgress({
           className={`rounded-full px-3 py-1 text-xs font-semibold ${
             isEnhancementPending
               ? 'bg-[color:var(--paper)] text-[color:var(--signal-strong)]'
-              : llmUsed
+              : llmUsed || usableDeep
                 ? 'bg-[color:var(--paper)] text-[color:var(--data-up)]'
                 : 'bg-[color:var(--bg-sunken)] text-[color:var(--muted)]'
           }`}
@@ -66,8 +79,12 @@ export default function ReportStageProgress({
           <span className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
             内容已达到完整标准
           </span>
+        ) : usableDeep ? (
+          <span className="rounded-full bg-[rgba(47,125,82,0.08)] px-3 py-1 text-xs font-semibold text-[color:var(--data-up)]">
+            可用深度版 · 可直接阅读
+          </span>
         ) : null}
-        {upgradeStatusLabel ? (
+        {upgradeStatusLabel && !usableDeep ? (
           <span className="rounded-full bg-[color:var(--paper)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
             {upgradeStatusLabel}
           </span>
@@ -132,7 +149,13 @@ export default function ReportStageProgress({
           </div>
         ) : null}
       </div>
-      {upgradeStatus && upgradeStatusLabel ? (
+      {usableDeep ? (
+        <div className="mt-3 text-xs leading-6 text-[color:var(--muted)]">
+          当前可信度已达可用深度档（≥83）。自动完善已收敛，可直接按主结论行动；若仍要抠细节，可在侧栏手动继续完善。
+        </div>
+      ) : upgradeStatus &&
+        upgradeStatusLabel &&
+        ['pending', 'running', 'retry'].includes(upgradeStatus) ? (
         <div className="mt-3 text-xs text-[color:var(--muted)]">
           {upgradeStatusLabel}，系统会在内容可用后自动更新到这份报告。
         </div>

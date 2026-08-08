@@ -161,11 +161,15 @@ function statusCopy(lang: StatusLang) {
       progressQueuedDetail: 'It will continue automatically when its turn comes—no need to resubmit.',
       progressDone: 'Automatic improvement finished',
       progressDoneDetail: 'This is the version after the improvement flow ended.',
+      progressDoneUsable:
+        'Delivered as a usable deep edition (score ≥83). Main conclusions are ready to read; further polish is optional.',
       progressPaused: 'Automatic improvement paused',
       pauseLlmUnavailable:
         'Enhancement service is temporarily unavailable; the current readable content is kept. Try “Continue improving” later.',
       pauseTargetNotReached:
         'Multiple deepen attempts still fell short of a higher delivery bar; the readable version is kept. Main structure remains readable.',
+      pauseUsableTier:
+        'Already at a usable deep tier (≥83). Auto-improvement stopped to avoid thrashing; main conclusions remain readable.',
       pauseDefault:
         'Current readable content is kept. If the main conclusions are enough, read them; otherwise tap “Continue improving” later.',
 
@@ -177,6 +181,7 @@ function statusCopy(lang: StatusLang) {
 
       editionExpert: 'Full',
       editionEnhanced: 'Deep',
+      editionUsableDeep: 'Usable deep',
       editionStandard: 'Standard',
       editionBasic: 'Basic',
 
@@ -246,9 +251,13 @@ function statusCopy(lang: StatusLang) {
     progressQueuedDetail: '轮到时会自动继续，无需反复提交。',
     progressDone: '自动完善已结束',
     progressDoneDetail: '当前为完善流程结束后的版本。',
+    progressDoneUsable:
+      '已按「可用深度版」交付（可信度 ≥83）。主结论可直接阅读；如需再抠细节可手动继续完善。',
     progressPaused: '自动完善已暂停',
     pauseLlmUnavailable: '增强服务暂时不可用，已保留当前可读内容。可稍后再试「继续完善」。',
     pauseTargetNotReached: '已多次尝试深化，仍未达到更高交付标准；当前可读版本已保留。主结构仍可阅读。',
+    pauseUsableTier:
+      '已达到可用深度档（≥83），系统已停止无效重试以免反复烧资源。主结论仍可正常阅读。',
     pauseDefault: '已保留当前可读内容。若主结论已够用，可直接阅读；需要时再点「继续完善」。',
 
     actionReadMain: '回到报告正文',
@@ -259,6 +268,7 @@ function statusCopy(lang: StatusLang) {
 
     editionExpert: '完整版',
     editionEnhanced: '深度版',
+    editionUsableDeep: '可用深度版',
     editionStandard: '标准版',
     editionBasic: '基础版',
 
@@ -359,13 +369,16 @@ export function buildUserFacingReportStatus(input: {
     concerns: audit.concerns,
   });
 
-  const progress = buildProgress(c, input.upgradeJob);
+  const progress = buildProgress(c, input.upgradeJob, overallScore);
   const primaryAction = buildPrimaryAction(c, {
     readiness,
     canManage: !!input.canManage,
     multiAgentEmpty,
     verdict,
     upgradeStatus: input.upgradeJob?.status,
+    overallScore,
+    upgradeMeta: input.upgradeJob?.meta,
+    lastError: input.upgradeJob?.lastError,
   });
 
   const details: Array<{ label: string; value: string }> = [];
@@ -599,9 +612,27 @@ function rewriteConcern(c: StatusCopy, raw: string): string | null {
   return text.length > 48 ? `${text.slice(0, 46)}…` : text;
 }
 
+function isUsableTierDelivery(job?: UpgradeJobLike | null, overallScore?: number | null): boolean {
+  const meta = job?.meta || {};
+  const reason = `${meta.reason || meta.plateauReason || job?.lastError || ''}`;
+  if (
+    /DELIVERED_AT_85|QUALITY_PLATEAU_AT_83|QUALITY_PLATEAU_NEAR_TARGET|QUALITY_PLATEAU_SOFT_CEILING|QUALITY_PLATEAU_NO_IMPROVE/.test(
+      reason
+    )
+  ) {
+    return true;
+  }
+  if (meta.nearTargetDelivered === true) return true;
+  if (typeof overallScore === 'number' && overallScore >= 83 && job?.status === 'completed') {
+    return true;
+  }
+  return false;
+}
+
 function buildProgress(
   c: StatusCopy,
-  job?: UpgradeJobLike | null
+  job?: UpgradeJobLike | null,
+  overallScore?: number | null
 ): UserFacingReportStatus['progress'] {
   if (!job?.status) {
     return { state: 'none', label: '' };
@@ -625,23 +656,39 @@ function buildProgress(
       return {
         state: 'done',
         label: c.progressDone,
-        detail: c.progressDoneDetail,
+        detail: isUsableTierDelivery(job, overallScore)
+          ? c.progressDoneUsable
+          : c.progressDoneDetail,
       };
     case 'failed':
     case 'cancelled':
       return {
         state: 'paused',
         label: c.progressPaused,
-        detail: formatUpgradePauseReason(c, job.lastError),
+        detail: formatUpgradePauseReason(c, job.lastError, job.meta),
       };
     default:
       return { state: 'none', label: '' };
   }
 }
 
-function formatUpgradePauseReason(c: StatusCopy, lastError?: string): string {
+function formatUpgradePauseReason(
+  c: StatusCopy,
+  lastError?: string,
+  meta?: UpgradeJobLike['meta']
+): string {
   if (lastError === 'LLM_UNAVAILABLE' || lastError === 'PROVIDER_UNHEALTHY') {
     return c.pauseLlmUnavailable;
+  }
+  const plateauHint = `${lastError || meta?.reason || meta?.plateauReason || ''}`;
+  if (
+    /DELIVERED_AT_85|QUALITY_PLATEAU|TARGET_NOT_REACHED/.test(plateauHint) ||
+    meta?.nearTargetDelivered === true
+  ) {
+    if (/QUALITY_PLATEAU|DELIVERED_AT_85/.test(plateauHint) || meta?.nearTargetDelivered === true) {
+      return c.pauseUsableTier;
+    }
+    return c.pauseTargetNotReached;
   }
   if (lastError === 'TARGET_NOT_REACHED') {
     return c.pauseTargetNotReached;
@@ -657,6 +704,9 @@ function buildPrimaryAction(
     multiAgentEmpty: boolean;
     verdict?: VerifyVerdict;
     upgradeStatus?: UpgradeJobLike['status'];
+    overallScore?: number | null;
+    upgradeMeta?: UpgradeJobLike['meta'];
+    lastError?: string;
   }
 ): UserFacingReportStatus['primaryAction'] {
   if (!params.canManage) {
@@ -673,6 +723,18 @@ function buildPrimaryAction(
   }
 
   if (params.readiness === 'ready') {
+    return { kind: 'none', label: c.actionNone };
+  }
+
+  // v6-Q3: only suppress CTA for explicit usable-tier stop signals
+  // (not every failed job that happens to score ≥83 / TARGET_NOT_REACHED)
+  const stopHint = `${params.lastError || params.upgradeMeta?.reason || params.upgradeMeta?.plateauReason || ''}`;
+  const usableDelivered =
+    params.upgradeMeta?.nearTargetDelivered === true ||
+    /DELIVERED_AT_85|QUALITY_PLATEAU_AT_83|QUALITY_PLATEAU_NEAR_TARGET|QUALITY_PLATEAU_SOFT_CEILING|QUALITY_PLATEAU_NO_IMPROVE/.test(
+      stopHint
+    );
+  if (usableDelivered && params.readiness === 'usable') {
     return { kind: 'none', label: c.actionNone };
   }
 
