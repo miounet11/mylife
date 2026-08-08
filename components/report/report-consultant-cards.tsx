@@ -6,6 +6,7 @@ import {
   resolveReportChromeLocale,
 } from '@/lib/i18n/report-chrome-copy';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
+import { ReportDecisionLoopFrame, ReportWindowsFrame } from '@/components/report/report-data-frames';
 
 const CONSULTANT_IDS: TeacherId[] = ['career', 'timing', 'wealth'];
 
@@ -53,13 +54,15 @@ export default function ReportConsultantCards({
         </Link>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-3 space-y-3">
         <PageIllustrationStrip
           surface="report/decision"
           title={copy.illustTitle}
           compact
           limit={1}
         />
+        <ReportDecisionLoopFrame />
+        {best || risk ? <ReportWindowsFrame best={best} risk={risk} /> : null}
       </div>
 
       <ul className="mt-3 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">

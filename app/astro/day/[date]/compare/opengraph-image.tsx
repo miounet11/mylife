@@ -1,24 +1,24 @@
 import { ImageResponse } from 'next/og';
-import { buildWeekComparePack } from '@/lib/astro/week-compare-engine';
+import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 
-/** Node + Latin + display:flex. Live weekly engine averages. */
+/** Node + Latin + display:flex (Satori-safe). Live engine ranks. */
 export const runtime = 'nodejs';
-export const alt = 'Life K-Line · Zodiac week ranking';
+export const alt = 'Life K-Line · Zodiac day ranking';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 export default async function Image({
   params,
 }: {
-  params: Promise<{ weekId: string }>;
+  params: Promise<{ date: string }>;
 }) {
-  const { weekId } = await params;
-  const ok = /^\d{4}-W\d{2}$/i.test(weekId);
-  const pack = ok ? buildWeekComparePack(weekId) : null;
-  const top = (pack?.top || []).slice(0, 5);
-  const low = (pack?.low || []).slice(0, 3);
-  const range = pack ? `${pack.startDate} ~ ${pack.endDate}` : '';
-  const max = Math.max(100, ...top.map((r) => r.avg), 1);
+  const { date } = await params;
+  const ok = /^\d{4}-\d{2}-\d{2}$/.test(date);
+  const pack = ok ? buildDayComparePack(date) : null;
+  const top = (pack?.topSigns || []).slice(0, 5);
+  const low = (pack?.lowSigns || []).slice(0, 3);
+  const dayGan = pack?.dayGanZhi || '—';
+  const max = Math.max(100, ...top.map((r) => r.composite), 1);
 
   return new ImageResponse(
     (
@@ -28,24 +28,31 @@ export default async function Image({
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: 'linear-gradient(145deg, #312e81 0%, #4c1d95 42%, #f5f3ff 42%)',
+          background: 'linear-gradient(145deg, #0f172a 0%, #1e3a5f 42%, #f8fafc 42%)',
           padding: 48,
           fontFamily: 'ui-sans-serif, system-ui, sans-serif',
         }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', color: '#ede9fe' }}>
-          <div style={{ display: 'flex', fontSize: 22, letterSpacing: 3, fontWeight: 700, opacity: 0.92 }}>
-            LIFE K-LINE · WEEK RANK
+        <div style={{ display: 'flex', flexDirection: 'column', color: '#e2e8f0' }}>
+          <div style={{ display: 'flex', fontSize: 22, letterSpacing: 3, fontWeight: 700, opacity: 0.9 }}>
+            LIFE K-LINE · DAY RANK
           </div>
-          <div style={{ display: 'flex', fontSize: 44, fontWeight: 800, marginTop: 12 }}>
-            {ok ? weekId.toUpperCase() : 'WEEK'}
+          <div style={{ display: 'flex', fontSize: 40, fontWeight: 800, marginTop: 12 }}>
+            {ok ? date : 'Day'} · Day-stem {dayGan}
           </div>
-          <div style={{ display: 'flex', fontSize: 22, marginTop: 8, opacity: 0.9 }}>
-            {range || 'ISO week · 12-sign engine averages'}
+          <div style={{ display: 'flex', fontSize: 22, marginTop: 8, opacity: 0.85 }}>
+            Engine ranking · same tong-shu layer as almanac
           </div>
         </div>
 
-        <div style={{ display: 'flex', flex: 1, marginTop: 28, gap: 24 }}>
+        <div
+          style={{
+            display: 'flex',
+            flex: 1,
+            marginTop: 28,
+            gap: 24,
+          }}
+        >
           <div
             style={{
               display: 'flex',
@@ -57,15 +64,20 @@ export default async function Image({
             }}
           >
             <div style={{ display: 'flex', fontSize: 18, fontWeight: 700, color: '#047857', marginBottom: 12 }}>
-              Higher week avg
+              Top match
             </div>
             {top.length ? (
               top.map((r, i) => {
-                const w = Math.max(12, Math.round((r.avg / max) * 320));
+                const w = Math.max(12, Math.round((r.composite / max) * 320));
                 return (
                   <div
                     key={r.key}
-                    style={{ display: 'flex', alignItems: 'center', marginBottom: 10, gap: 12 }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginBottom: 10,
+                      gap: 12,
+                    }}
                   >
                     <div style={{ display: 'flex', width: 28, fontSize: 16, fontWeight: 700, color: '#64748b' }}>
                       {i + 1}
@@ -79,11 +91,11 @@ export default async function Image({
                         width: w,
                         height: 14,
                         borderRadius: 8,
-                        background: r.avg >= 62 ? '#047857' : '#4c1d95',
+                        background: r.composite >= 62 ? '#047857' : '#3b5998',
                       }}
                     />
-                    <div style={{ display: 'flex', fontSize: 20, fontWeight: 800, color: '#4c1d95' }}>
-                      {r.avg}
+                    <div style={{ display: 'flex', fontSize: 20, fontWeight: 800, color: '#3b5998' }}>
+                      {r.composite}
                     </div>
                   </div>
                 );
@@ -104,7 +116,7 @@ export default async function Image({
             }}
           >
             <div style={{ display: 'flex', fontSize: 18, fontWeight: 700, color: '#b45309', marginBottom: 12 }}>
-              More steady
+              Steady / caution
             </div>
             {low.map((r) => (
               <div
@@ -114,16 +126,16 @@ export default async function Image({
                   justifyContent: 'space-between',
                   marginBottom: 12,
                   fontSize: 18,
-                  fontWeight: 600,
                   color: '#1c1e21',
+                  fontWeight: 600,
                 }}
               >
                 <span style={{ display: 'flex' }}>{r.title.slice(0, 8)}</span>
-                <span style={{ display: 'flex', color: '#b45309', fontWeight: 800 }}>{r.avg}</span>
+                <span style={{ display: 'flex', color: '#b45309', fontWeight: 800 }}>{r.composite}</span>
               </div>
             ))}
             <div style={{ display: 'flex', marginTop: 'auto', fontSize: 14, color: '#64748b' }}>
-              www.life-kline.com/astro/week/{ok ? weekId : ''}
+              www.life-kline.com/astro/day/{ok ? date : ''}/compare
             </div>
           </div>
         </div>

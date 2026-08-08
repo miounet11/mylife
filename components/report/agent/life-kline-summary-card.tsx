@@ -1,5 +1,6 @@
 'use client';
 
+import { ReportScoreSparkFrame } from '@/components/report/report-data-frames';
 import type { EngineGroundTruth } from '@/lib/agentic-report/types';
 
 export default function LifeKLineSummaryCard({ kline }: { kline: EngineGroundTruth['kline'] }) {
@@ -8,6 +9,10 @@ export default function LifeKLineSummaryCard({ kline }: { kline: EngineGroundTru
 
   const maxScore = Math.max(...points.map((p) => p.score || 0), 1);
   const recent = points.slice(-24);
+  const sparkPoints = recent.map((p) => ({
+    label: String(p.year ?? ''),
+    score: Number(p.score) || 0,
+  }));
 
   return (
     <section className="fb-card overflow-hidden p-0">
@@ -17,6 +22,10 @@ export default function LifeKLineSummaryCard({ kline }: { kline: EngineGroundTru
       <div className="theme-ming p-4 md:p-5">
         <div className="text-xs font-bold uppercase tracking-wider text-subtle">人生 K 线</div>
         <h3 className="mt-1 text-base font-bold text-gold">阶段趋势概览</h3>
+
+        <div className="mt-3 rounded-[var(--radius-sm)] bg-[color:var(--paper)] p-1">
+          <ReportScoreSparkFrame title="阶段分柱" points={sparkPoints} />
+        </div>
 
         <div className="mt-4 flex h-28 items-end gap-0.5">
           {recent.map((point, index) => {

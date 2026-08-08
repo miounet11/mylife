@@ -2,12 +2,15 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AstroDailySubscribe from '@/components/astro/astro-daily-subscribe';
+import { AstroMiniRankStrip } from '@/components/astro/astro-data-frames';
 import AstroLookup from '@/components/astro/astro-lookup';
 import AstroRelatedLinks from '@/components/astro/astro-related-links';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
+import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
+import { todayIsoLocal } from '@/lib/astro/daily-window';
 import { ASTRO_SIGNS } from '@/lib/astro/signs-data';
 import { RISING_PROFILES } from '@/lib/astro/rising-data';
 import { currentIsoWeekId } from '@/lib/astro/week-engine';
@@ -28,6 +31,9 @@ export const metadata: Metadata = (() => {
 
 export default function AstroHubPage() {
   const seoPack = getPageSeoGeoPack('/astro');
+  const today = todayIsoLocal();
+  const dayCompare = buildDayComparePack(today);
+  const weekId = currentIsoWeekId();
 
   return (
     <AppPage header={{ ctaHref: '/analyze?source=astro', ctaLabel: '结构报告', compact: true }}>
@@ -78,6 +84,45 @@ export default function AstroHubPage() {
           limit={2}
           priority
         />
+
+        {dayCompare ? (
+          <section className="space-y-2">
+            <div className="flex flex-wrap items-end justify-between gap-2">
+              <p className="text-[12px] text-[color:var(--ink-4)]">
+                今日引擎快照 · 日柱 {dayCompare.dayGanZhi}
+              </p>
+              <div className="flex flex-wrap gap-3 text-[12px] font-semibold">
+                <Link
+                  href={`/astro/day/${today}/compare`}
+                  className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+                >
+                  完整日排名 →
+                </Link>
+                <Link
+                  href={`/astro/week/${weekId}`}
+                  className="text-[color:var(--brand)] underline-offset-2 hover:underline"
+                >
+                  本周对比 →
+                </Link>
+              </div>
+            </div>
+            <AstroMiniRankStrip
+              title={`${today} · 十二座引擎快照`}
+              top={dayCompare.topSigns.map((r) => ({
+                key: r.key,
+                title: r.title,
+                score: r.composite,
+                stance: r.stance,
+              }))}
+              low={dayCompare.lowSigns.map((r) => ({
+                key: r.key,
+                title: r.title,
+                score: r.composite,
+                stance: r.stance,
+              }))}
+            />
+          </section>
+        ) : null}
 
         <AstroLookup source="astro_hub" />
         <AstroDailySubscribe />
