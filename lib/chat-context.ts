@@ -317,6 +317,24 @@ export function buildChatExperienceContext(params: {
       confirmedPastEvents.length > 0
         ? `用户已经亲自确认过 ${confirmedPastEvents.length} 条过去印证：${confirmedPastEvents.slice(0, 3).map((item) => item.title).join('；')}。回答时要把这些已验证的人生轨迹当成硬证据，而不是当成普通猜测。`
         : '',
+      // v6-Q3 / Experience Kernel: denied past-event calibrations must not be reasserted
+      (() => {
+        const templates = Array.isArray(report.analysis?.pastEventTemplates)
+          ? report.analysis!.pastEventTemplates!
+          : [];
+        const denied = templates.filter(
+          (t: any) =>
+            t?.userCalibration?.status === 'denied' || t?.confidenceLabel === 'denied',
+        );
+        if (!denied.length) return '';
+        return `用户已标记「未发生」的结构印证（禁止再当作已发生事实）：${denied
+          .slice(0, 4)
+          .map((t: any) => t.title || t.key)
+          .join('；')}。`;
+      })(),
+      Array.isArray(report.analysis?.sevenDayActions) && report.analysis!.sevenDayActions!.length
+        ? `报告近7天可执行：${report.analysis!.sevenDayActions!.slice(0, 3).join('；')}。对话优先对齐这些动作，勿另起空泛清单。`
+        : '',
       toolMemory ? `最近工具记录：${toolMemory.summary}` : '',
       mappedFocusedEvent
         ? `本次重点纠偏事件：${mappedFocusedEvent.title}。其当前状态为${mapValidationSummaryLabel(mappedFocusedEvent.validationStatus)}。`

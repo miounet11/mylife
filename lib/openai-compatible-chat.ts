@@ -112,3 +112,32 @@ export async function createOpenAiCompatibleChatCompletion(
     requestOptions
   );
 }
+
+/**
+ * Streaming completion for Experience Kernel chat (TTFT).
+ * Yields text deltas; does not include tool-call assembly.
+ */
+export async function* streamOpenAiCompatibleChatCompletion(
+  openai: OpenAI,
+  params: {
+    model: string;
+    messages: ChatCompletionMessage[];
+    maxTokens?: number;
+    temperature?: number;
+    reasoningEffort?: OpenAiCompatibleReasoningEffort;
+  },
+  requestOptions?: OpenAI.RequestOptions
+): AsyncGenerator<string, void, unknown> {
+  const body = {
+    ...buildOpenAiCompatibleChatCompletionBody(params),
+    stream: true,
+  };
+  const stream = await openai.chat.completions.create(body as never, requestOptions);
+  // OpenAI SDK returns AsyncIterable when stream:true
+  for await (const chunk of stream as AsyncIterable<{
+    choices?: Array<{ delta?: { content?: string | null } }>;
+  }>) {
+    const delta = chunk?.choices?.[0]?.delta?.content;
+    if (delta) yield delta;
+  }
+}

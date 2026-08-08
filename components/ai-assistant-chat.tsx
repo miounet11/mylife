@@ -11,7 +11,12 @@ import {
 } from '@/lib/chat-context';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { trackGoogleAnalyticsEvent } from '@/lib/analytics-client'; // Stub for now; check prod sync for full implementation
-// TacitKnowledgeComposer, ContextCard, MaterialEvidenceComposer, useChatMaterials, useChatEvents, useChatTacit may have been refactored or moved - see components/ai-assistant-chat/ for current files
+import { ContextCard } from '@/components/ai-assistant-chat/context-card';
+import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
+import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
+import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
+import { useChatTacit } from '@/components/ai-assistant-chat/use-chat-tacit';
+import TacitKnowledgeComposer from '@/components/ai-assistant-chat/tacit-knowledge-composer';
 import {
   areTacitKnowledgeInputsEqual,
   buildTacitKnowledgeSummary,
@@ -503,26 +508,122 @@ export default function AIAssistantChat({
       });
     }
 
+    const streamAssistantId = `${Date.now()}_assistant_stream`;
+    let usedStream = false;
+
     try {
-      const { response, data } = await fetchJsonWithTimeout<any>('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          question,
-          tacitContext,
-          materials: toMaterialPayload(materialSnapshot),
-          ...scopePayload,
-        }),
-        timeoutMs: CHAT_REPLY_TIMEOUT_MS,
-        timeoutReason: 'chat-reply-timeout',
-        controllerRef: replyControllerRef,
-        supersedeReason: 'chat-reply-superseded',
-      });
-      if (!response.ok || !data.success) {
-        setMessages((current) => current.filter((item) => item.id !== userMessage.id));
-        setMaterials(materialSnapshot);
-        setError(data.error || t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'));
-        return;
+      // Experience Kernel: prefer NDJSON stream for TTFT; fall back to JSON.
+      if (replyControllerRef.current) {
+        try {
+          replyControllerRef.current.abort('chat-reply-superseded');
+        } catch {
+          // ignore
+        }
+      }
+      const controller = new AbortController();
+      replyControllerRef.current = controller;
+      const timeoutId = window.setTimeout(() => controller.abort('chat-reply-timeout'), CHAT_REPLY_TIMEOUT_MS);
+
+      let data: any = null;
+      try {
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-chat-stream': '1',
+            Accept: 'application/x-ndjson',
+          },
+          body: JSON.stringify({
+            question,
+            tacitContext,
+            materials: toMaterialPayload(materialSnapshot),
+            ...scopePayload,
+          }),
+          signal: controller.signal,
+        });
+
+        const contentType = `${response.headers.get('content-type') || ''}`;
+        if (!response.ok) {
+          const errBody = await response.json().catch(() => ({}));
+          throw new Error(
+            (errBody as { error?: string }).error ||
+              t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'),
+          );
+        }
+
+        if (contentType.includes('ndjson') || contentType.includes('stream')) {
+          usedStream = true;
+          setMessages((current) => [
+            ...current,
+            {
+              id: streamAssistantId,
+              role: 'assistant' as const,
+              content: '',
+              timestamp: null,
+            },
+          ]);
+          setIsTyping(false);
+
+          const reader = response.body?.getReader();
+          if (!reader) throw new Error('stream-unavailable');
+          const decoder = new TextDecoder();
+          let buffer = '';
+          let assembled = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              let event: { type?: string; text?: string; answer?: string; error?: string; llmUsed?: boolean; success?: boolean };
+              try {
+                event = JSON.parse(trimmed);
+              } catch {
+                continue;
+              }
+              if (event.type === 'delta' && event.text) {
+                assembled += event.text;
+                const snapshot = assembled;
+                setMessages((current) =>
+                  current.map((m) =>
+                    m.id === streamAssistantId ? { ...m, content: snapshot } : m,
+                  ),
+                );
+              } else if (event.type === 'final') {
+                data = event;
+                if (event.answer) {
+                  assembled = event.answer;
+                  const finalText = event.answer;
+                  setMessages((current) =>
+                    current.map((m) =>
+                      m.id === streamAssistantId ? { ...m, content: finalText } : m,
+                    ),
+                  );
+                }
+              } else if (event.type === 'error') {
+                throw new Error(event.error || t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'));
+              }
+            }
+          }
+          if (!data?.success && !assembled) {
+            throw new Error(t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'));
+          }
+          if (!data) {
+            data = { success: true, answer: assembled, llmUsed: true };
+          }
+        } else {
+          // JSON fallback (proxy stripped stream)
+          data = await response.json().catch(() => ({}));
+          if (!data.success) {
+            throw new Error(data.error || t('AI 回复失败，请稍后重试', 'Reply failed — try again shortly'));
+          }
+        }
+      } finally {
+        window.clearTimeout(timeoutId);
       }
 
       await fetchHistory(false);
@@ -533,8 +634,9 @@ export default function AIAssistantChat({
         report_id: activeReportId,
         event_id: eventId || context?.focusedEvent?.id || '',
         intent: intent || 'default',
-        llm_used: !!data.llmUsed,
+        llm_used: !!data?.llmUsed,
         material_count: materialSnapshot.length,
+        stream: usedStream ? 1 : 0,
       });
 
       if (activeReportId && source.startsWith('result_')) {
@@ -548,13 +650,14 @@ export default function AIAssistantChat({
             source,
             ctaStrategyKey: ctaStrategyKey || null,
             sourceFamily: sourceFamily || null,
-            llmUsed: !!data.llmUsed,
+            llmUsed: !!data?.llmUsed,
             materialCount: materialSnapshot.length,
+            stream: usedStream,
           },
         });
       }
 
-      if (!data.llmUsed) {
+      if (data && !data.llmUsed) {
         setError(
           t(
             '当前为简化回答版本，你可以稍后重试，或把问题问得更具体一些。',
@@ -563,7 +666,9 @@ export default function AIAssistantChat({
         );
       }
     } catch (replyError) {
-      setMessages((current) => current.filter((item) => item.id !== userMessage.id));
+      setMessages((current) =>
+        current.filter((item) => item.id !== userMessage.id && item.id !== streamAssistantId),
+      );
       setMaterials(materialSnapshot);
       if (!mountedRef.current || isSilentChatAbort(replyError)) {
         return;

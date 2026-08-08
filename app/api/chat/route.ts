@@ -12,7 +12,15 @@ import { buildChatExperienceContext, type ChatExperienceContext } from '@/lib/ch
 import { summarizePredictionRevisits } from '@/lib/predictions/revisit-stats';
 import { getChatIntentSummaryHint, getChatIntentSystemPrompt, normalizeChatIntent, type ChatIntent } from '@/lib/chat-intent';
 import { buildTacitKnowledgeSummary, sanitizeTacitKnowledgeInput } from '@/lib/tacit-knowledge';
-import { createOpenAiCompatibleChatCompletion } from '@/lib/openai-compatible-chat';
+import {
+  createOpenAiCompatibleChatCompletion,
+  streamOpenAiCompatibleChatCompletion,
+} from '@/lib/openai-compatible-chat';
+import { resolveExperienceSkill, formatSkillSystemAddon } from '@/lib/skills/registry';
+import {
+  buildTruthAnchor,
+  formatTruthAnchorContract,
+} from '@/lib/experience-kernel';
 import { recordModelAttempt } from '@/lib/llm-provider-health';
 import { buildPrompt, getPrompt } from '@/lib/prompts';
 import '@/lib/prompts/chat/main';
@@ -349,6 +357,9 @@ async function generateAIResponse(
     teacherId?: string | null;
     city?: string | null;
     profileLines?: string[] | null;
+    /** Experience Kernel: stream tokens for TTFT */
+    streamMode?: boolean;
+    onDelta?: (chunk: string) => void;
   }
 ): Promise<{
   answer: string;
@@ -448,6 +459,29 @@ async function generateAIResponse(
   // Top-product: force 结论/依据/三时窗/验证点 for event loop
   systemContent = appendAnswerStructureContract(systemContent);
 
+  // Experience Kernel: skill + truth anchor contracts
+  try {
+    const skill = resolveExperienceSkill({
+      teacherId: options?.teacherId,
+      intent: options?.intent,
+    });
+    systemContent = `${systemContent}\n\n${formatSkillSystemAddon(skill)}`;
+    const anchor = buildTruthAnchor(
+      options?.context?.report
+        ? {
+            id: options.context.report.id,
+            dayMaster: options.context.report.dayMaster,
+            yongShen: options.context.report.yongShen,
+            currentDaYun: options.context.report.currentDaYun,
+          }
+        : null,
+      options?.context?.report?.id,
+    );
+    systemContent = `${systemContent}\n\n${formatTruthAnchorContract(anchor)}`;
+  } catch {
+    // never block chat on kernel helpers
+  }
+
 const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
     {
       role: 'system',
@@ -464,20 +498,55 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
   const startedAt = Date.now();
 
   try {
-    console.log(`[LLM Chat] single model ${model}; timeout=${chatTimeoutMs}ms; retries=0`);
-    const completion = await createOpenAiCompatibleChatCompletion(openai, {
-      model,
-      messages: baseMessages,
-      temperature: 0.7,
-      maxTokens: 1200,
-      reasoningEffort: 'low',
-    }, {
-      signal: controller.signal,
-      timeout: chatTimeoutMs,
-      maxRetries: 0,
-    });
+    console.log(
+      `[LLM Chat] single model ${model}; timeout=${chatTimeoutMs}ms; retries=0; stream=${options?.streamMode ? 1 : 0}`,
+    );
 
-    const content = completion.choices?.[0]?.message?.content?.trim();
+    let content = '';
+    if (options?.streamMode && options?.onDelta) {
+      // Experience Kernel: stream tokens for TTFT; repair runs after full text if needed
+      for await (const delta of streamOpenAiCompatibleChatCompletion(
+        openai,
+        {
+          model,
+          messages: baseMessages,
+          temperature: 0.7,
+          maxTokens: 1200,
+          reasoningEffort: 'low',
+        },
+        {
+          signal: controller.signal,
+          timeout: chatTimeoutMs,
+          maxRetries: 0,
+        },
+      )) {
+        content += delta;
+        try {
+          options.onDelta(delta);
+        } catch {
+          // ignore client consumer errors mid-stream
+        }
+      }
+      content = content.trim();
+    } else {
+      const completion = await createOpenAiCompatibleChatCompletion(
+        openai,
+        {
+          model,
+          messages: baseMessages,
+          temperature: 0.7,
+          maxTokens: 1200,
+          reasoningEffort: 'low',
+        },
+        {
+          signal: controller.signal,
+          timeout: chatTimeoutMs,
+          maxRetries: 0,
+        },
+      );
+      content = completion.choices?.[0]?.message?.content?.trim() || '';
+    }
+
     if (!content) {
       console.error(`[LLM Chat] Model ${model} returned empty content`);
       recordModelAttempt({
@@ -1216,6 +1285,178 @@ export async function POST(request: NextRequest) {
     } catch (e) {
       console.warn('[chat] profile lines load failed', e);
     }
+
+    const wantsStream = request.headers.get('x-chat-stream') === '1';
+    const genOpts = {
+      intent: requestedIntent,
+      context,
+      materials,
+      materialSummary,
+      teacherId: requestedTeacherId || null,
+      city: requestedCity || null,
+      profileLines: profileLinesForTeacher || [],
+    };
+
+    // ── Experience Kernel streaming path (NDJSON) ──────────────────────────
+    if (wantsStream) {
+      const encoder = new TextEncoder();
+      let closed = false;
+      const stream = new ReadableStream<Uint8Array>({
+        start: async (controller) => {
+          const send = (event: Record<string, unknown>) => {
+            if (closed) return;
+            try {
+              controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+            } catch {
+              closed = true;
+            }
+          };
+          const close = () => {
+            if (closed) return;
+            closed = true;
+            try {
+              controller.close();
+            } catch {
+              closed = true;
+            }
+          };
+          try {
+            send({
+              type: 'start',
+              reportBound,
+              skillId: resolveExperienceSkill({
+                teacherId: requestedTeacherId || null,
+                intent: requestedIntent,
+              }).id,
+              ttftHint: true,
+            });
+            const result = await generateAIResponse(question, userHistory, contextSummary, {
+              ...genOpts,
+              streamMode: true,
+              onDelta: (chunk) => send({ type: 'delta', text: chunk }),
+            });
+            const turnId = generateId();
+            const userMessageId = generateId();
+            const assistantMessageId = generateId();
+
+            questionOperations.create({
+              id: userMessageId,
+              userId,
+              question,
+              category: 'chat_user',
+              analysis: {
+                source: 'chat_api',
+                reportId: context.report?.id || requestedReportId || null,
+                eventId: context.focusedEvent?.id || null,
+                focusAreas: context.focusAreas,
+                turnId,
+                intent: requestedIntent || null,
+                tacitContext: tacitContext || null,
+                tacitSummary: tacitSummary || null,
+                materials: safeMaterials,
+                materialSummary: materialSummary || null,
+              },
+            });
+            questionOperations.create({
+              id: assistantMessageId,
+              userId,
+              question: result.answer,
+              category: 'chat_assistant',
+              analysis: {
+                source: result.llmUsed ? 'llm' : 'fallback',
+                answer: result.answer,
+                llmUsed: result.llmUsed,
+                fallbackReason: result.fallbackReason || null,
+                efcOk: result.efcOk !== false,
+                efcIssues: result.efcIssues || [],
+                structureFilled: result.structureFilled ?? null,
+                structureRich: result.structureRich ?? null,
+                structureThin: result.structureThin ?? null,
+                structureRepaired: result.structureRepaired ? true : false,
+                stream: true,
+                reportId: context.report?.id || requestedReportId || null,
+                eventId: context.focusedEvent?.id || null,
+                turnId,
+                responseToQuestionId: userMessageId,
+                intent: requestedIntent || null,
+              },
+            });
+
+            trackServerEvent({
+              userId,
+              sessionId,
+              userAgent,
+              eventName: 'chat_message_sent',
+              page: '/chat',
+              meta: {
+                llmUsed: result.llmUsed,
+                durationMs: Date.now() - requestStartedAt,
+                stream: true,
+                fallbackReason: result.fallbackReason || null,
+                questionLength: question.length,
+                reportId: context.report?.id || requestedReportId || null,
+                intent: requestedIntent || null,
+                source: requestedSource || null,
+              },
+            });
+            trackChatCompleted({
+              userId,
+              sessionId,
+              userAgent,
+              action: 'ask',
+              reportId: context.report?.id || requestedReportId || null,
+              eventId: context.focusedEvent?.id || null,
+              intent: requestedIntent || null,
+              source: requestedSource || null,
+              ctaStrategyKey: requestedCtaStrategyKey || null,
+              sourceFamily: requestedSourceFamily || null,
+              llmUsed: result.llmUsed,
+              durationMs: Date.now() - requestStartedAt,
+              fallbackReason: result.fallbackReason,
+              historyCount: previousRows.length,
+              questionLength: question.length,
+              materialCount: materials.length,
+            });
+
+            send({
+              type: 'final',
+              success: true,
+              answer: result.answer,
+              llmUsed: result.llmUsed,
+              efcOk: result.efcOk !== false,
+              efcIssues: result.efcIssues || [],
+              structure: {
+                filled: result.structureFilled ?? null,
+                isRich: result.structureRich ?? null,
+                isThin: result.structureThin ?? null,
+              },
+              context,
+              intent: requestedIntent || null,
+              timestamp: new Date().toISOString(),
+            });
+            close();
+          } catch (err) {
+            console.error('[API] AI聊天流式失败:', err);
+            send({ type: 'error', error: '聊天失败，请稍后重试' });
+            close();
+          }
+        },
+        cancel() {
+          closed = true;
+        },
+      });
+
+      return new Response(stream, {
+        headers: {
+          'Content-Type': 'application/x-ndjson; charset=utf-8',
+          'Cache-Control': 'no-cache, no-transform',
+          Connection: 'keep-alive',
+          'X-Accel-Buffering': 'no',
+        },
+      });
+    }
+
+    // ── Classic JSON path ──────────────────────────────────────────────────
     const {
       answer,
       llmUsed,
@@ -1226,15 +1467,7 @@ export async function POST(request: NextRequest) {
       structureRich,
       structureThin,
       structureRepaired,
-    } = await generateAIResponse(question, userHistory, contextSummary, {
-      intent: requestedIntent,
-      context,
-      materials,
-      materialSummary,
-      teacherId: requestedTeacherId || null,
-      city: requestedCity || null,
-      profileLines: profileLinesForTeacher || [],
-    });
+    } = await generateAIResponse(question, userHistory, contextSummary, genOpts);
     const turnId = generateId();
     const userMessageId = generateId();
     const assistantMessageId = generateId();

@@ -98,6 +98,11 @@ export default function AnalyzeWorkspace({
   const [email, setEmail] = useState('');
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [streamProgress, setStreamProgress] = useState<{
+    progress: number;
+    label: string;
+    detail?: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [entryBanner, setEntryBanner] = useState<string | null>(null);
   const [timeTouched, setTimeTouched] = useState(false);
@@ -260,53 +265,104 @@ export default function AnalyzeWorkspace({
       birthPlace: resolvedPlace,
     });
 
-    /** Deploy/restart may return 502/503/504 once — retry once after short wait. */
-    async function postAnalyze(attempt: number): Promise<Response> {
+    /** Progressive NDJSON analyze (Experience Kernel T0→T1 feel). Fallback to JSON if stream unsupported. */
+    async function postAnalyzeStream(attempt: number): Promise<string> {
       try {
         const res = await fetch('/api/analyze', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-analyze-stream': '1',
+            Accept: 'application/x-ndjson',
+          },
           body: JSON.stringify(payload),
         });
         if ([502, 503, 504].includes(res.status) && attempt < 1) {
           await new Promise((r) => setTimeout(r, 1600));
-          return postAnalyze(attempt + 1);
+          return postAnalyzeStream(attempt + 1);
         }
-        return res;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          const msg =
+            (data as { error?: string; message?: string }).error ||
+            (data as { message?: string }).message ||
+            (res.status === 502 || res.status === 503
+              ? '服务刚在更新，请再点一次生成'
+              : copy.errors.generateFailed);
+          throw new Error(msg);
+        }
+
+        const contentType = `${res.headers.get('content-type') || ''}`;
+        // Non-stream fallback (proxy stripped NDJSON)
+        if (!contentType.includes('ndjson') && !contentType.includes('stream')) {
+          const data = await res.json().catch(() => ({}));
+          const reportId = (data as { reportId?: string })?.reportId;
+          if (reportId) return reportId;
+          throw new Error(copy.errors.missingId);
+        }
+
+        const reader = res.body?.getReader();
+        if (!reader) throw new Error(copy.errors.generateFailed);
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let reportId = '';
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            let event: {
+              type?: string;
+              progress?: number;
+              label?: string;
+              detail?: string;
+              reportId?: string;
+              error?: string;
+            };
+            try {
+              event = JSON.parse(trimmed);
+            } catch {
+              continue;
+            }
+            if (event.type === 'stage') {
+              setStreamProgress({
+                progress: typeof event.progress === 'number' ? event.progress : 0,
+                label: event.label || '分析进行中',
+                detail: event.detail,
+              });
+            } else if (event.type === 'complete' && event.reportId) {
+              reportId = event.reportId;
+            } else if (event.type === 'error') {
+              throw new Error(event.error || copy.errors.generateFailed);
+            }
+          }
+        }
+        if (!reportId) throw new Error(copy.errors.missingId);
+        return reportId;
       } catch (networkErr) {
-        if (attempt < 1) {
+        if (attempt < 1 && networkErr instanceof TypeError) {
           await new Promise((r) => setTimeout(r, 1600));
-          return postAnalyze(attempt + 1);
+          return postAnalyzeStream(attempt + 1);
         }
         throw networkErr;
       }
     }
 
     try {
-      // Primary funnel: full engine + LLM + quality audit (not the thin /api/report agentic-only path).
-      const res = await postAnalyze(0);
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        const msg =
-          data.error ||
-          data.message ||
-          (res.status === 502 || res.status === 503
-            ? '服务刚在更新，请再点一次生成'
-            : copy.errors.generateFailed);
-        throw new Error(msg);
-      }
-
-      const reportId = data?.reportId || data?.meta?.reportId;
-      if (reportId) {
-        window.location.href = `/result/${reportId}?source=${encodeURIComponent(resolvedSource)}&intent=${encodeURIComponent(intent)}&lang=${encodeURIComponent(locale)}`;
-        return;
-      }
-
-      throw new Error(copy.errors.missingId);
+      setStreamProgress({ progress: 2, label: '正在提交测算…' });
+      const reportId = await postAnalyzeStream(0);
+      window.location.href = `/result/${reportId}?source=${encodeURIComponent(resolvedSource)}&intent=${encodeURIComponent(intent)}&lang=${encodeURIComponent(locale)}`;
+      return;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : copy.errors.retry);
     } finally {
       setLoading(false);
+      setStreamProgress(null);
     }
   }
 
@@ -597,6 +653,34 @@ export default function AnalyzeWorkspace({
 
               {error ? (
                 <AlertBanner className="mt-4 text-[13px] font-medium">{error}</AlertBanner>
+              ) : null}
+
+              {loading && streamProgress ? (
+                <div className="mt-4 rounded-[var(--radius-md)] border border-[color:var(--signal)] bg-[color:var(--signal-soft)]/70 px-3 py-3">
+                  <div className="flex items-center justify-between gap-2 text-[12px] font-semibold text-[color:var(--signal-strong)]">
+                    <span>{streamProgress.label}</span>
+                    <span className="font-mono tabular-nums">
+                      {Math.min(99, Math.max(0, streamProgress.progress))}%
+                    </span>
+                  </div>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[color:var(--paper)]">
+                    <div
+                      className="h-full rounded-full bg-[color:var(--signal)] transition-all duration-300"
+                      style={{
+                        width: `${Math.min(99, Math.max(4, streamProgress.progress))}%`,
+                      }}
+                    />
+                  </div>
+                  {streamProgress.detail ? (
+                    <p className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-4)]">
+                      {streamProgress.detail}
+                    </p>
+                  ) : (
+                    <p className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-4)]">
+                      先锁定命盘结构，再完善正文与行动清单——无需等待全部完成再离开。
+                    </p>
+                  )}
+                </div>
               ) : null}
 
               <div className="lk-sticky-cta">

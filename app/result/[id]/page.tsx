@@ -72,7 +72,9 @@ import ReportRhythmTimeline from '@/components/report/report-rhythm-timeline';
 import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
 import ReportSevenDayActions from '@/components/report/report-seven-day-actions';
+import ReportQualityReceipt from '@/components/report/report-quality-receipt';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
+import { buildExperienceQualityReceipt } from '@/lib/experience-kernel';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
 import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
 import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
@@ -527,6 +529,23 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   ];
   const qualityAudit = result.qualityAudit;
   const upgradeJob = result.upgradeJob;
+  const qualityReceipt = buildExperienceQualityReceipt({
+    llmUsed: result.llmUsed,
+    agenticUsed: result.agenticUsed,
+    consistencyScore:
+      typeof result.verify?.score === 'number'
+        ? result.verify.score
+        : typeof (result.verify as { consistencyScore?: number } | undefined)?.consistencyScore ===
+            'number'
+          ? (result.verify as { consistencyScore?: number }).consistencyScore
+          : undefined,
+    verifyVerdict: result.verify?.verdict as 'PASS' | 'WARN' | 'FAIL' | undefined,
+    qualityAudit,
+    upgradeJob,
+    sevenDayActions: result.analysis?.sevenDayActions,
+    canManage,
+    locale: uiLocale,
+  });
   const reportStageLadder = buildReportStageLadder(qualityAudit?.deliveryTier);
   const currentStageLadderItem = reportStageLadder.find((item) => item.status === 'current') || reportStageLadder[0];
   const nextStageLadderItem = reportStageLadder.find((item) => item.status === 'locked') || null;
@@ -1105,7 +1124,8 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     future={futureGuidanceBlock}
                   />
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 space-y-3">
+                  <ReportQualityReceipt receipt={qualityReceipt} locale={uiLocale} />
                   <ReportStageProgress
                     ladder={reportStageLadder}
                     current={currentStageLadderItem}
