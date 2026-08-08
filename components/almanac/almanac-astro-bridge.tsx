@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AstroMiniRankStrip } from '@/components/astro/astro-data-frames';
 import { buildDayComparePack } from '@/lib/astro/day-compare-engine';
 import { resolveSunSignFromDate } from '@/lib/astro/resolve';
 import { resolveZoneFromDate } from '@/lib/astro/zones-48';
@@ -35,6 +36,14 @@ export default function AlmanacAstroBridge({ date }: { date: string }) {
         >
           完整排名 →
         </Link>
+      </div>
+
+      <div className="mt-3">
+        <AstroMiniRankStrip
+          title={`${date} · 星座引擎快照`}
+          top={compare.topSigns.map((r) => ({ key: r.key, title: r.title, score: r.composite, stance: r.stance }))}
+          low={compare.lowSigns.map((r) => ({ key: r.key, title: r.title, score: r.composite, stance: r.stance }))}
+        />
       </div>
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3">

@@ -187,3 +187,14 @@ describe('astro expand engines', () => {
     assert.ok(mail.html.includes('四象') || mail.html.includes('element') || mail.html.includes('象'));
   });
 });
+
+describe('astro data frames pure inputs', () => {
+  it('day compare rows sortable for ranking frame', () => {
+    const pack = buildDayComparePack('2026-08-07');
+    assert.ok(pack);
+    const rows = pack!.signs.map((r) => ({ key: r.key, title: r.title, score: r.composite }));
+    rows.sort((a, b) => b.score - a.score);
+    assert.equal(rows.length, 12);
+    assert.ok(rows[0].score >= rows[11].score);
+  });
+});

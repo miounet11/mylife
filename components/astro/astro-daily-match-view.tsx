@@ -1,4 +1,10 @@
 import Link from 'next/link';
+import {
+  AlmanacDayStripFrame,
+  AstroEvidenceBarsFrame,
+  AstroHourSparkFrame,
+  AstroScoreRingFrame,
+} from '@/components/astro/astro-data-frames';
 import type { AstroDailyMatchPack } from '@/lib/astro/daily-match-types';
 import { formatZhDate } from '@/lib/astro/daily-window';
 import { pathForIdentity } from '@/lib/astro/daily-match-engine';
@@ -130,6 +136,57 @@ export default function AstroDailyMatchView({
           </span>
         </div>
       </header>
+
+      <AstroScoreRingFrame
+        title={`${pack.identity.title} · ${zhDay}`}
+        eyebrow="MATCH · ENGINE"
+        subtitle={pack.narrative.moodLine.slice(0, 48)}
+        score={pack.scores.composite}
+        leftLabel="结构分"
+        leftValue={pack.scores.structure}
+        rightLabel="表达分"
+        rightValue={pack.scores.expression}
+        stance={pack.scores.stance}
+      />
+      <AlmanacDayStripFrame
+        title="通书公共层"
+        dayGanZhi={pack.almanac.dayGanZhi}
+        lunarText={pack.almanac.lunarText}
+        yi={pack.almanac.yi}
+        ji={pack.almanac.ji}
+      />
+      {pack.evidence.length ? (
+        <AstroEvidenceBarsFrame
+          title="证据权重"
+          subtitle="正贡献偏绿 · 负贡献偏琥珀"
+          items={pack.evidence.map((e) => ({ code: e.code, label: e.label, weight: e.weight }))}
+        />
+      ) : null}
+      {(() => {
+        const hours = [
+          ...pack.narrative.topHours.map((h) => ({
+            label: h.timeLabel || h.ganZhi,
+            ganZhi: h.ganZhi,
+            score: h.score,
+          })),
+          ...pack.narrative.avoidHours.map((h) => ({
+            label: h.timeLabel || h.ganZhi,
+            ganZhi: h.ganZhi,
+            score: h.score,
+          })),
+        ];
+        // de-dup by label keeping first
+        const seen = new Set<string>();
+        const uniq = hours.filter((h) => {
+          const k = h.label + h.ganZhi;
+          if (seen.has(k)) return false;
+          seen.add(k);
+          return true;
+        });
+        return uniq.length ? (
+          <AstroHourSparkFrame title="时辰峰谷" subtitle="来自引擎时辰排序" hours={uniq} />
+        ) : null;
+      })()}
 
       {/* Evidence */}
       <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">

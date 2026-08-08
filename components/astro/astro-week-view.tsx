@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AstroStanceIcon, AstroWeekStripFrame } from '@/components/astro/astro-data-frames';
 import { shiftIsoWeek } from '@/lib/astro/iso-week';
 import type { AstroWeekPack } from '@/lib/astro/week-types';
 
@@ -32,6 +33,18 @@ export default function AstroWeekView({
         </Link>
       </div>
       <p className="text-[13px] leading-relaxed text-[color:var(--ink-3)]">{pack.summary}</p>
+      <AstroWeekStripFrame
+        title={`${pack.identityLabel} · ${pack.weekId}`}
+        subtitle={pack.summary.slice(0, 72)}
+        avg={pack.avg}
+        days={pack.days.map((d) => ({
+          date: d.date,
+          weekday: d.weekday,
+          score: d.composite,
+          stance: d.stance,
+          dayGanZhi: d.dayGanZhi,
+        }))}
+      />
       <div className="grid gap-2 sm:grid-cols-3">
         <div className="rounded-xl border border-[color:var(--hairline)] bg-white p-3 text-center">
           <div className="text-[11px] text-[color:var(--ink-5)]">周均</div>
@@ -65,12 +78,15 @@ export default function AstroWeekView({
               href={d.href}
               className={`flex flex-wrap items-center justify-between gap-2 rounded-xl border px-3 py-2.5 no-underline ${stanceColor(d.stance, d.composite)}`}
             >
-              <div>
-                <span className="font-bold text-[color:var(--ink-1)]">
-                  {d.weekday} · {d.date}
-                </span>
-                <span className="ml-2 text-[11px] text-[color:var(--ink-5)]">{d.dayGanZhi}</span>
-                <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">{d.headline}</p>
+              <div className="flex items-start gap-2">
+                <AstroStanceIcon stance={d.stance} className="mt-0.5 h-5 w-5 shrink-0" />
+                <div>
+                  <span className="font-bold text-[color:var(--ink-1)]">
+                    {d.weekday} · {d.date}
+                  </span>
+                  <span className="ml-2 text-[11px] text-[color:var(--ink-5)]">{d.dayGanZhi}</span>
+                  <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">{d.headline}</p>
+                </div>
               </div>
               <div className="text-[20px] font-black tabular-nums text-[color:var(--brand)]">{d.composite}</div>
             </Link>

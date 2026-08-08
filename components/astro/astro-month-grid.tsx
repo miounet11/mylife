@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { AstroMonthHeatFrame } from '@/components/astro/astro-data-frames';
 import type { AstroMonthPack } from '@/lib/astro/month-engine';
 import { shiftYearMonth } from '@/lib/astro/month-engine';
 
@@ -64,6 +65,21 @@ export default function AstroMonthGrid({
       <p className="text-[12px] text-[color:var(--ink-4)]">
         可推进 {pack.pushDays} 天 · 宜守成 {pack.conserveDays} 天 · 点击日期打开引擎证据页
       </p>
+
+      <AstroMonthHeatFrame
+        title={`${pack.identityLabel} · ${pack.label}`}
+        subtitle={`可推进 ${pack.pushDays} 天 · 守成 ${pack.conserveDays} 天`}
+        year={pack.year}
+        month={pack.month}
+        avg={pack.avg}
+        cells={pack.cells.map((c) => ({
+          date: c.date,
+          day: c.day,
+          score: c.composite,
+          stance: c.stance,
+          dayGanZhi: c.dayGanZhi,
+        }))}
+      />
 
       <div className="grid grid-cols-7 gap-1.5">
         {pack.cells.map((c) => (

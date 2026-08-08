@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import AnalyticsPageView from '@/components/analytics-page-view';
+import { AstroPairDualFrame } from '@/components/astro/astro-data-frames';
 import { AppPage } from '@/components/layout/app-page';
 import JsonLd from '@/components/seo/json-ld';
 import { formatZhDate, isValidIsoDate, rollingIsoDates, shiftIsoDate } from '@/lib/astro/daily-window';
@@ -106,6 +107,20 @@ export default async function PairDayPage({ params }: Props) {
             </div>
           </div>
         </header>
+
+        <AstroPairDualFrame
+          title={`${sa.zh} × ${sb.zh} · ${zh}`}
+          subtitle={pack.combined.headline.slice(0, 56)}
+          aTitle={`${sa.symbol} ${sa.zh}`}
+          aScore={pack.aDaily.composite}
+          aStance={pack.aDaily.stance}
+          bTitle={`${sb.symbol} ${sb.zh}`}
+          bScore={pack.bDaily.composite}
+          bStance={pack.bDaily.stance}
+          combinedScore={pack.combined.score}
+          combinedStance={pack.combined.stance}
+          pairBase={pack.pairScore}
+        />
 
         <div className="grid gap-3 md:grid-cols-2">
           <Link
