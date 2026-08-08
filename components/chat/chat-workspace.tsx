@@ -107,12 +107,18 @@ export default function ChatWorkspace() {
       }),
     }).catch(() => {});
 
+    const streamId = msgId();
     try {
       let answer = '';
       try {
+        // Experience Kernel: stream first for TTFT; fall back to JSON / local anchor
         const res = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'x-chat-stream': '1',
+            Accept: 'application/x-ndjson',
+          },
           body: JSON.stringify({
             reportId: reportId || undefined,
             question: text,
@@ -124,17 +130,77 @@ export default function ChatWorkspace() {
           }),
         });
         if (res.ok) {
-          const data = await res.json();
-          answer =
-            data.answer ||
-            data.reply ||
-            data.message ||
-            data.content ||
-            (typeof data.data === 'string' ? data.data : '') ||
-            '';
+          const contentType = `${res.headers.get('content-type') || ''}`;
+          if (contentType.includes('ndjson') || contentType.includes('stream')) {
+            const placeholder: ChatMessage = {
+              id: streamId,
+              role: 'assistant',
+              content: '',
+              at: Date.now(),
+            };
+            const withPlaceholder = [...messagesRef.current, placeholder];
+            messagesRef.current = withPlaceholder;
+            setMessages(withPlaceholder);
+            setLoading(false);
+
+            const reader = res.body?.getReader();
+            if (reader) {
+              const decoder = new TextDecoder();
+              let buffer = '';
+              let assembled = '';
+              while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+                for (const line of lines) {
+                  const trimmed = line.trim();
+                  if (!trimmed) continue;
+                  let event: { type?: string; text?: string; answer?: string; error?: string };
+                  try {
+                    event = JSON.parse(trimmed);
+                  } catch {
+                    continue;
+                  }
+                  if (event.type === 'delta' && event.text) {
+                    assembled += event.text;
+                    const snap = assembled;
+                    setMessages((cur) =>
+                      cur.map((m) => (m.id === streamId ? { ...m, content: snap } : m)),
+                    );
+                    messagesRef.current = messagesRef.current.map((m) =>
+                      m.id === streamId ? { ...m, content: snap } : m,
+                    );
+                  } else if (event.type === 'final' && event.answer) {
+                    assembled = event.answer;
+                    answer = event.answer;
+                    setMessages((cur) =>
+                      cur.map((m) => (m.id === streamId ? { ...m, content: event.answer || '' } : m)),
+                    );
+                    messagesRef.current = messagesRef.current.map((m) =>
+                      m.id === streamId ? { ...m, content: event.answer || '' } : m,
+                    );
+                  } else if (event.type === 'error') {
+                    throw new Error(event.error || 'stream error');
+                  }
+                }
+              }
+              if (!answer && assembled) answer = assembled;
+            }
+          } else {
+            const data = await res.json();
+            answer =
+              data.answer ||
+              data.reply ||
+              data.message ||
+              data.content ||
+              (typeof data.data === 'string' ? data.data : '') ||
+              '';
+          }
         }
       } catch {
-        // no chat API
+        // no chat API / stream failed
       }
 
       if (!answer) {
@@ -147,14 +213,30 @@ export default function ChatWorkspace() {
         );
         // 本地兜底：以老师身份收束，不暴露内部体系
         answer = `【${teacher.name}】\n${base}`;
+        const existing = messagesRef.current.find((m) => m.id === streamId);
+        if (existing) {
+          setMessages((cur) =>
+            cur.map((m) => (m.id === streamId ? { ...m, content: answer } : m)),
+          );
+          messagesRef.current = messagesRef.current.map((m) =>
+            m.id === streamId ? { ...m, content: answer } : m,
+          );
+        } else {
+          const withAnswer: ChatMessage[] = [
+            ...messagesRef.current,
+            { id: streamId, role: 'assistant', content: answer, at: Date.now() },
+          ];
+          messagesRef.current = withAnswer;
+          setMessages(withAnswer);
+        }
+      } else if (!messagesRef.current.some((m) => m.id === streamId)) {
+        const withAnswer: ChatMessage[] = [
+          ...messagesRef.current,
+          { id: streamId, role: 'assistant', content: answer, at: Date.now() },
+        ];
+        messagesRef.current = withAnswer;
+        setMessages(withAnswer);
       }
-
-      const withAnswer: ChatMessage[] = [
-        ...messagesRef.current,
-        { id: msgId(), role: 'assistant', content: answer, at: Date.now() },
-      ];
-      messagesRef.current = withAnswer;
-      setMessages(withAnswer);
     } finally {
       loadingRef.current = false;
       setLoading(false);

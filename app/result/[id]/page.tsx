@@ -73,6 +73,7 @@ import ReportScenarioPanels from '@/components/report/report-scenario-panels';
 import ReportActionBoard from '@/components/report/report-action-board';
 import ReportSevenDayActions from '@/components/report/report-seven-day-actions';
 import ReportQualityReceipt from '@/components/report/report-quality-receipt';
+import ReportSectionRerun from '@/components/report/report-section-rerun';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import { buildExperienceQualityReceipt } from '@/lib/experience-kernel';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
@@ -1126,6 +1127,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </div>
                 <div className="mt-3 space-y-3">
                   <ReportQualityReceipt receipt={qualityReceipt} locale={uiLocale} />
+                  <ReportSectionRerun reportId={id} canManage={canManage} />
                   <ReportStageProgress
                     ladder={reportStageLadder}
                     current={currentStageLadderItem}

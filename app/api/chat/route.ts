@@ -18,6 +18,8 @@ import {
 } from '@/lib/openai-compatible-chat';
 import { resolveExperienceSkill, formatSkillSystemAddon } from '@/lib/skills/registry';
 import {
+  appendLedgerTurn,
+  buildSessionLedgerKey,
   buildTruthAnchor,
   formatTruthAnchorContract,
 } from '@/lib/experience-kernel';
@@ -1382,6 +1384,32 @@ export async function POST(request: NextRequest) {
               },
             });
 
+            try {
+              const ledgerKey = buildSessionLedgerKey({
+                userId,
+                reportId: context.report?.id || requestedReportId,
+                clientKey: sessionId,
+              });
+              appendLedgerTurn(ledgerKey, {
+                role: 'user',
+                content: question,
+                reportId: context.report?.id || requestedReportId,
+                teacherId: requestedTeacherId || null,
+                stream: true,
+              });
+              appendLedgerTurn(ledgerKey, {
+                role: 'assistant',
+                content: result.answer,
+                reportId: context.report?.id || requestedReportId,
+                teacherId: requestedTeacherId || null,
+                efcOk: result.efcOk !== false,
+                stream: true,
+                meta: { llmUsed: result.llmUsed },
+              });
+            } catch {
+              // ledger is best-effort
+            }
+
             trackServerEvent({
               userId,
               sessionId,
@@ -1514,6 +1542,30 @@ export async function POST(request: NextRequest) {
         intent: requestedIntent || null,
       },
     });
+
+    try {
+      const ledgerKey = buildSessionLedgerKey({
+        userId,
+        reportId: context.report?.id || requestedReportId,
+        clientKey: sessionId,
+      });
+      appendLedgerTurn(ledgerKey, {
+        role: 'user',
+        content: question,
+        reportId: context.report?.id || requestedReportId,
+        teacherId: requestedTeacherId || null,
+      });
+      appendLedgerTurn(ledgerKey, {
+        role: 'assistant',
+        content: answer,
+        reportId: context.report?.id || requestedReportId,
+        teacherId: requestedTeacherId || null,
+        efcOk: efcOk !== false,
+        meta: { llmUsed },
+      });
+    } catch {
+      // ledger is best-effort
+    }
 
     const palmPhotoCount = materials.filter((item) => item.kind === 'palm_photo').length;
     const imageMaterialCount = materials.filter((item) => item.imageIncluded).length;
