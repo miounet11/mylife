@@ -168,16 +168,16 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/astro/zones', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/astro/rising', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
     // 12 signs + 12 rising + 48 zones expanded below
-    // Rolling window of day URLs for personal almanac SEO (today ± 45 days)
-    ...Array.from({ length: 91 }, (_, i) => {
+    // Almanac day URLs: today ±7 (was ±45) to protect crawl budget
+    ...Array.from({ length: 15 }, (_, i) => {
       const d = new Date();
-      d.setDate(d.getDate() - 45 + i);
+      d.setDate(d.getDate() - 7 + i);
       const y = d.getFullYear();
       const m = String(d.getMonth() + 1).padStart(2, '0');
       const day = String(d.getDate()).padStart(2, '0');
       return {
         path: `/almanac/${y}-${m}-${day}`,
-        priority: i === 45 ? 0.94 : Math.abs(i - 45) < 7 ? 0.88 : 0.72,
+        priority: i === 7 ? 0.94 : Math.abs(i - 7) < 3 ? 0.88 : 0.72,
         changeFrequency: 'daily' as const,
         multiLanguage: true,
       };
@@ -216,61 +216,85 @@ export default function sitemap(): MetadataRoute.Sitemap {
     multiLanguage: true,
   }));
 
-  // Engine daily pages: sign/zone/rising × rolling ±30d (bounded; no birth×day flood)
-  const astroDailyWindow = rollingIsoDates(30, 30);
-  const astroSignDayRoutes = ASTRO_SIGNS.flatMap((s) =>
-    astroDailyWindow.map((date) => ({
-      path: `/astro/signs/${s.key}/day/${date}`,
-      priority: 0.7,
-      changeFrequency: 'daily' as const,
-    })),
+  /**
+   * Crawl-budget recovery (2026-08):
+   * Full combinatorial calendars (sign×day, zone×day, pair×day…) were ~6k URLs and
+   * diluted Google indexing of real money pages (knowledge/cases/topics/tools).
+   * Default = evergreen hubs + short current window only.
+   * Set SITEMAP_INCLUDE_ASTRO_CALENDAR=1 to restore the dense calendar farm.
+   */
+  const includeAstroCalendar = ['1', 'true', 'yes', 'on'].includes(
+    `${process.env.SITEMAP_INCLUDE_ASTRO_CALENDAR || ''}`.trim().toLowerCase(),
   );
-  const astroZoneDayRoutes = ASTRO_ZONES_48.flatMap((z) =>
-    astroDailyWindow.map((date) => ({
-      path: `/astro/zones/${z.id}/day/${date}`,
-      priority: 0.68,
-      changeFrequency: 'daily' as const,
-    })),
-  );
-  const astroRisingDayRoutes = RISING_PROFILES.flatMap((r) =>
-    astroDailyWindow.map((date) => ({
-      path: `/astro/rising/${r.key}/day/${date}`,
-      priority: 0.68,
-      changeFrequency: 'daily' as const,
-    })),
-  );
-  const astroDayHubRoutes = astroDailyWindow.map((date) => ({
+  // Slim window: today ±3d (not ±30d) when calendar farm is enabled
+  const astroDailyWindow = includeAstroCalendar ? rollingIsoDates(3, 3) : rollingIsoDates(1, 1);
+  const astroSignDayRoutes = includeAstroCalendar
+    ? ASTRO_SIGNS.flatMap((s) =>
+        astroDailyWindow.map((date) => ({
+          path: `/astro/signs/${s.key}/day/${date}`,
+          priority: 0.7,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
+  // Zone×day and rising×day were the largest thin-URL factories — off by default
+  const astroZoneDayRoutes = includeAstroCalendar
+    ? ASTRO_ZONES_48.slice(0, 12).flatMap((z) =>
+        astroDailyWindow.map((date) => ({
+          path: `/astro/zones/${z.id}/day/${date}`,
+          priority: 0.68,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
+  const astroRisingDayRoutes = includeAstroCalendar
+    ? RISING_PROFILES.flatMap((r) =>
+        astroDailyWindow.map((date) => ({
+          path: `/astro/rising/${r.key}/day/${date}`,
+          priority: 0.68,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
+  // Always keep a short day hub strip (today ±3) for freshness signals
+  const astroDayHubRoutes = rollingIsoDates(3, 3).map((date) => ({
     path: `/astro/day/${date}`,
     priority: 0.72,
     changeFrequency: 'daily' as const,
   }));
-  const astroDayCompareRoutes = rollingIsoDates(14, 14).map((date) => ({
+  const astroDayCompareRoutes = rollingIsoDates(1, 1).map((date) => ({
     path: `/astro/day/${date}/compare`,
     priority: 0.74,
     changeFrequency: 'daily' as const,
   }));
-  const shortWindow = rollingIsoDates(14, 14);
-  const astroElementDayRoutes = ELEMENT_CATALOG.flatMap((e) =>
-    shortWindow.map((date) => ({
-      path: `/astro/elements/${e.slug}/day/${date}`,
-      priority: 0.66,
-      changeFrequency: 'daily' as const,
-    })),
-  );
-  const astroModalityDayRoutes = MODALITY_CATALOG.flatMap((m) =>
-    shortWindow.map((date) => ({
-      path: `/astro/modality/${m.slug}/day/${date}`,
-      priority: 0.65,
-      changeFrequency: 'daily' as const,
-    })),
-  );
-  const astroShengxiaoDayRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
-    shortWindow.map((date) => ({
-      path: `/astro/shengxiao/${s.slug}/day/${date}`,
-      priority: 0.66,
-      changeFrequency: 'daily' as const,
-    })),
-  );
+  const shortWindow = includeAstroCalendar ? rollingIsoDates(3, 3) : [];
+  const astroElementDayRoutes = includeAstroCalendar
+    ? ELEMENT_CATALOG.flatMap((e) =>
+        shortWindow.map((date) => ({
+          path: `/astro/elements/${e.slug}/day/${date}`,
+          priority: 0.66,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
+  const astroModalityDayRoutes = includeAstroCalendar
+    ? MODALITY_CATALOG.flatMap((m) =>
+        shortWindow.map((date) => ({
+          path: `/astro/modality/${m.slug}/day/${date}`,
+          priority: 0.65,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
+  const astroShengxiaoDayRoutes = includeAstroCalendar
+    ? SHENGXIAO_CATALOG.flatMap((s) =>
+        shortWindow.map((date) => ({
+          path: `/astro/shengxiao/${s.slug}/day/${date}`,
+          priority: 0.66,
+          changeFrequency: 'daily' as const,
+        })),
+      )
+    : [];
   const ymNow = currentYearMonth();
   const ymList = [shiftYearMonth(ymNow, -1), ymNow, shiftYearMonth(ymNow, 1)];
   const astroSignMonthRoutes = ASTRO_SIGNS.flatMap((s) =>
@@ -294,17 +318,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.64,
     changeFrequency: 'monthly' as const,
   }));
-  const pairDayWindow = rollingIsoDates(7, 7);
-  const astroPairDayRoutes = allPairKeyCombos()
-    .filter(({ a, b }) => a !== b)
-    .slice(0, 36)
-    .flatMap(({ a, b }) =>
-      pairDayWindow.map((date) => ({
-        path: `/astro/pair/${a}/${b}/day/${date}`,
-        priority: 0.62,
-        changeFrequency: 'daily' as const,
-      })),
-    );
+  const pairDayWindow = includeAstroCalendar ? rollingIsoDates(2, 2) : [];
+  const astroPairDayRoutes = includeAstroCalendar
+    ? allPairKeyCombos()
+        .filter(({ a, b }) => a !== b)
+        .slice(0, 12)
+        .flatMap(({ a, b }) =>
+          pairDayWindow.map((date) => ({
+            path: `/astro/pair/${a}/${b}/day/${date}`,
+            priority: 0.62,
+            changeFrequency: 'daily' as const,
+          })),
+        )
+    : [];
   const astroWeekHubRoutes = weekList.map((weekId) => ({
     path: `/astro/week/${weekId}`,
     priority: 0.8,
