@@ -182,12 +182,17 @@ export function resolveUserFortune(
   const list = listUserFortunes(userId);
   if (!list.length) return null;
 
-  // Stable ranking
+  // Stable ranking:
+  // When a preferIntent is given and any report matches, intent beats primary
+  // (wealth teacher must not silently bind a relationship primary).
+  const hasIntentMatch =
+    Boolean(preferIntent) && list.some((f) => intentMatches(f, preferIntent!));
   const scored = list.map((f) => {
     let score = 0;
-    if (isPrimaryFlag(f)) score += 1_000_000;
+    if (preferIntent && intentMatches(f, preferIntent)) score += 2_000_000;
+    if (isPrimaryFlag(f) && !hasIntentMatch) score += 1_000_000;
+    if (isPrimaryFlag(f) && hasIntentMatch) score += 10_000; // tie-break only
     if (preferSelf && isSelf(f)) score += 100_000;
-    if (preferIntent && intentMatches(f, preferIntent)) score += 50_000;
     // recency
     score += Math.min(createdMs(f) / 1000, 9_999_999);
     return { f, score };
