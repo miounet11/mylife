@@ -317,8 +317,12 @@ export function buildChatExperienceContext(params: {
       confirmedPastEvents.length > 0
         ? `用户已经亲自确认过 ${confirmedPastEvents.length} 条过去印证：${confirmedPastEvents.slice(0, 3).map((item) => item.title).join('；')}。回答时要把这些已验证的人生轨迹当成硬证据，而不是当成普通猜测。`
         : '',
-      // v6-Q3 / Experience Kernel: denied past-event calibrations must not be reasserted
+      // Closed-loop calibration: score + denied keys for chat grounding
       (() => {
+        const cal = (report.analysis as { calibrationSummary?: {
+          score?: number;
+          deniedKeys?: string[];
+        } } | undefined)?.calibrationSummary;
         const templates = Array.isArray(report.analysis?.pastEventTemplates)
           ? report.analysis!.pastEventTemplates!
           : [];
@@ -326,11 +330,19 @@ export function buildChatExperienceContext(params: {
           (t: any) =>
             t?.userCalibration?.status === 'denied' || t?.confidenceLabel === 'denied',
         );
-        if (!denied.length) return '';
-        return `用户已标记「未发生」的结构印证（禁止再当作已发生事实）：${denied
-          .slice(0, 4)
-          .map((t: any) => t.title || t.key)
-          .join('；')}。`;
+        const parts: string[] = [];
+        if (typeof cal?.score === 'number') {
+          parts.push(`用户校准分 ${cal.score}/100（越低表示越多「未发生」标记）。`);
+        }
+        if (denied.length) {
+          parts.push(
+            `用户已标记「未发生」的结构印证（禁止再当作已发生事实）：${denied
+              .slice(0, 4)
+              .map((t: any) => t.title || t.key)
+              .join('；')}。`,
+          );
+        }
+        return parts.join(' ');
       })(),
       Array.isArray(report.analysis?.sevenDayActions) && report.analysis!.sevenDayActions!.length
         ? `报告近7天可执行：${report.analysis!.sevenDayActions!.slice(0, 3).join('；')}。对话优先对齐这些动作，勿另起空泛清单。`

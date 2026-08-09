@@ -1328,95 +1328,79 @@ export const generateLifeKlineData = (
   yongShen: ReturnType<typeof determineYongShen>,
   dayunResult?: DayunResult
 ): NonNullable<FortuneAnalysisResult['klineData']> => {
-  // 优先 V6：出生起 80 年年线（大运/流年/用神加权，无 sin 周期）
-  try {
-    const v6 = generateLifeKlineV6(birthDate, gender, pillars, yongShen as any, dayunResult, {
+  // Single exit: V6 only (大运/流年/用神加权). No Math.sin synthetic yearly path.
+  // Short series still preferred over legacy sin; empty only if birth invalid.
+  const runV6 = (lifeYears: number) =>
+    generateLifeKlineV6(birthDate, gender, pillars, yongShen as any, dayunResult, {
       fromBirth: true,
-      lifeYears: 80,
+      lifeYears,
     });
-    if (Array.isArray(v6) && v6.length >= 20) {
-      return v6 as NonNullable<FortuneAnalysisResult['klineData']>;
+
+  try {
+    let v6 = runV6(80);
+    if (!Array.isArray(v6) || v6.length < 20) {
+      v6 = runV6(90);
     }
-  } catch {
-    // fall through to legacy path
+    if (Array.isArray(v6) && v6.length > 0) {
+      // Tag source for audit / UI (non-breaking extra field on first point evidence)
+      const tagged = v6.map((pt, index) => {
+        if (index !== 0) return pt;
+        const evidence = {
+          ...(pt.evidence || {}),
+          drivers: [
+            ...((pt.evidence?.drivers as string[]) || []),
+            'klineSource=v6',
+          ].slice(0, 8),
+        };
+        return { ...pt, evidence };
+      });
+      return tagged as NonNullable<FortuneAnalysisResult['klineData']>;
+    }
+  } catch (err) {
+    console.warn(
+      '[fortune-engine] generateLifeKlineV6 failed; refusing sin-legacy fallback',
+      err instanceof Error ? err.message : err,
+    );
   }
 
-  const currentYear = new Date().getFullYear();
+  // Deterministic bare skeleton (no sin): natal baselines + age slope only.
+  // Used only when V6 throws; scores are conservative mid-band so UI never blank.
   const birthYear = birthDate.getFullYear();
-  const dayunStartAge = dayunResult?.startAge ?? 8;
-  const klineData: NonNullable<FortuneAnalysisResult['klineData']> = [];
-  // legacy 兜底也尽量覆盖人生主段
-  const startYear = birthYear;
+  const currentYear = new Date().getFullYear();
   const endYear = Math.max(currentYear + 5, birthYear + 79);
-  const dayMasterElement = GAN_TO_WUXING[pillars[2]?.celestialStem] || '';
   const baseElementDrivers = buildNatalKlineDrivers(pillars, yongShen);
+  const klineData: NonNullable<FortuneAnalysisResult['klineData']> = [];
+  const clamp = (val: number) => Math.max(40, Math.min(100, Math.round(val)));
 
-  for (let year = startYear; year <= endYear; year++) {
+  for (let year = birthYear; year <= endYear; year++) {
     const yearAge = year - birthYear;
-    const dayunIndex = Math.floor((yearAge - dayunStartAge) / 10);
+    const ageHealth = yearAge > 30 ? -(yearAge - 30) * 0.2 : 0;
     const liuNianGanZhi = getLiuNianGanZhi(year);
-    const liuNianGan = liuNianGanZhi[0];
-    const liuNianZhi = liuNianGanZhi[1];
-    const liuNianElement = GAN_TO_WUXING[liuNianGan];
-    const activeDayun = dayunResult?.dayuns.find(d => year >= d.startYear && year <= d.endYear) || null;
-    const relation = getZhiRelations(liuNianZhi, pillars);
-    const dayunImpact = resolveKlineElementImpact(activeDayun?.ganWuxing, activeDayun?.zhiWuxing, yongShen);
-    const liunianImpact = resolveKlineElementImpact(liuNianElement, undefined, yongShen);
-    const relationImpact = (relation.he ? 5 : 0) - (relation.chong ? 8 : 0) - (relation.xing ? 4 : 0) - (relation.hai ? 3 : 0);
-    const dayStemCode = pillars[2].celestialStem.charCodeAt(0);
-    const deterministicFactor = (seed: number) => {
-      const x = Math.sin(seed) * 10000;
-      return (x - Math.floor(x) - 0.5) * 3;
-    };
-
-    const natalCareer = baseElementDrivers.career;
-    const natalWealth = baseElementDrivers.wealth;
-    const natalMarriage = baseElementDrivers.marriage;
-    const natalHealth = baseElementDrivers.health;
-    const dayunFallback = dayunResult ? 0 : Math.sin(dayunIndex * 0.5) * 6;
-    const ageHealth = -(yearAge - 30) * 0.25;
-
-    const careerScore = 60 + natalCareer + dayunImpact * 0.9 + liunianImpact * 0.75 + (activeDayun?.quality === 'excellent' ? 4 : activeDayun?.quality === 'poor' ? -5 : 0) + dayunFallback + deterministicFactor(year * 4 + dayStemCode);
-    const wealthScore = 60 + natalWealth + dayunImpact * 0.8 + liunianImpact * 0.85 + (relation.he ? 2 : 0) + dayunFallback * 0.8 + deterministicFactor(year * 4 + dayStemCode + 1);
-    const marriageScore = 60 + natalMarriage + dayunImpact * 0.35 + liunianImpact * 0.45 + relationImpact + deterministicFactor(year * 4 + dayStemCode + 2);
-    const healthScore = 60 + natalHealth + dayunImpact * 0.3 + liunianImpact * 0.35 + Math.min(0, relationImpact) + ageHealth + deterministicFactor(year * 4 + dayStemCode + 3);
-    const clamp = (val: number) => Math.max(40, Math.min(100, Math.round(val)));
-    const dayunLabel = activeDayun ? `${activeDayun.ganZhi}大运${activeDayun.yongShenMatch}` : '无精确大运';
-    const relationLabels = [relation.he ? '合' : '', relation.chong ? '冲' : '', relation.xing ? '刑' : '', relation.hai ? '害' : ''].filter(Boolean);
-    const liuNianShiShen = calculateShiShen(pillars[2]?.celestialStem, liuNianGan);
-
     klineData.push({
       year,
-      career: clamp(careerScore),
-      wealth: clamp(wealthScore),
-      marriage: clamp(marriageScore),
-      health: clamp(healthScore),
+      career: clamp(60 + baseElementDrivers.career),
+      wealth: clamp(60 + baseElementDrivers.wealth),
+      marriage: clamp(60 + baseElementDrivers.marriage),
+      health: clamp(60 + baseElementDrivers.health + ageHealth),
       evidence: {
         natal: [
-          { driver: `原局日主${dayMasterElement || '未知'}与用忌基线`, impact: roundKlineImpact((natalCareer + natalWealth + natalMarriage + natalHealth) / 4) },
-          { driver: `原局关系${baseElementDrivers.relationBase}`, impact: roundKlineImpact(baseElementDrivers.relationshipStability) },
+          {
+            driver: 'V6 不可用时的原局基线（无人造周期）',
+            impact: roundKlineImpact(
+              (baseElementDrivers.career +
+                baseElementDrivers.wealth +
+                baseElementDrivers.marriage +
+                baseElementDrivers.health) /
+                4,
+            ),
+          },
         ],
-        dayun: [
-          { driver: dayunLabel, impact: roundKlineImpact(dayunImpact + dayunFallback) },
-          activeDayun ? { driver: `大运天干${activeDayun.ganWuxing}、地支${activeDayun.zhiWuxing}`, impact: roundKlineImpact(dayunImpact) } : { driver: '未传入精确大运，使用确定性周期兜底', impact: roundKlineImpact(dayunFallback) },
-        ],
-        liunian: [
-          { driver: `${liuNianGanZhi}流年${liuNianElement || ''}${liuNianShiShen ? `/${liuNianShiShen}` : ''}`, impact: roundKlineImpact(liunianImpact) },
-          { driver: relationLabels.length ? `流年地支触发${relationLabels.join('、')}` : '流年地支未触发明显合冲刑害', impact: relationImpact },
-        ],
-        drivers: [
-          yongShen?.yongShen?.length ? `用神${yongShen.yongShen.join('、')}匹配年份加分` : '无用神数据，使用原局基线',
-          activeDayun ? `${activeDayun.ganZhi}大运纳入十年背景` : '大运兜底周期纳入背景',
-          `${liuNianGanZhi}流年纳入年度触发`,
-        ],
-        risks: [
-          yongShen?.jiShen?.includes(liuNianElement) ? `流年${liuNianElement}落忌神` : '',
-          activeDayun?.yongShenMatch === 'bad' ? `大运${activeDayun.ganZhi}与用神相逆` : '',
-          relation.chong ? `流年${liuNianZhi}冲原局地支` : '',
-          relation.xing || relation.hai ? `流年${liuNianZhi}触发刑害` : '',
-        ].filter(Boolean),
+        dayun: [{ driver: 'klineSource=skeleton', impact: 0 }],
+        liunian: [{ driver: `${liuNianGanZhi}流年（骨架）`, impact: 0 }],
+        drivers: ['klineSource=skeleton', '禁止 Math.sin 伪周期'],
+        risks: ['K 线为骨架降级，请以大运/用神结构结论为准'],
         ganZhi: liuNianGanZhi,
-        dayunGanZhi: activeDayun?.ganZhi || null,
+        dayunGanZhi: null,
       },
     });
   }

@@ -544,6 +544,14 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     qualityAudit,
     upgradeJob,
     sevenDayActions: result.analysis?.sevenDayActions,
+    calibrationScore:
+      typeof (result.analysis as { calibrationScore?: number } | undefined)?.calibrationScore ===
+      'number'
+        ? (result.analysis as { calibrationScore: number }).calibrationScore
+        : typeof (result.analysis as { calibrationSummary?: { score?: number } } | undefined)
+              ?.calibrationSummary?.score === 'number'
+          ? (result.analysis as { calibrationSummary: { score: number } }).calibrationSummary.score
+          : null,
     canManage,
     locale: uiLocale,
   });

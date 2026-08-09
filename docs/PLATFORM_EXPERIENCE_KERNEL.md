@@ -7,6 +7,9 @@ Benchmarked against [xai-org/grok-build](https://github.com/xai-org/grok-build):
 1. **FAST PATH never waits for PERFECT PATH** — T0 engine shell &lt;1s, T1 readable 3–12s, T2 depth async.
 2. **NARRATIVE never overwrites ENGINE FACTS** — pillars / 用神 / 大运 locked as ground truth.
 3. **DIALOGUE always anchors to REPORT STATE** — or explicitly says no chart is bound.
+4. **ONE CHAT CLIENT** — `/chat` → `ChatPageClient` → `AIAssistantChat` only (`chat-workspace` is redirect stub).
+5. **ONE K-LINE EXIT** — `generateLifeKlineV6` only; no Math.sin synthetic yearly legacy.
+6. **PRODUCT BAR = usable deep ≥83** — expert S/95 is aspirational; delivery/stop uses ≥83.
 
 ## Runtime map
 

@@ -5,7 +5,7 @@
 
 export type DeliveryTierCode = 'T0' | 'T1' | 'T2' | 'T3';
 
-/** Usable-deep product bar (matches report-upgrade-jobs DELIVERED_AT_85 / plateau ≥83) */
+/** Usable-deep product bar — re-export canonical score from report-quality when available */
 export const USABLE_DEEP_SCORE = 83;
 
 export type KernelReadiness = 'ready' | 'usable' | 'draft' | 'streaming';

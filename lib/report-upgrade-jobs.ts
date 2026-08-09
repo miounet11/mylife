@@ -15,7 +15,10 @@ import {
   type ModelHealthSnapshot,
   shouldConservativelyDeferForSnapshots,
 } from '@/lib/llm-provider-health';
-import { REPORT_EXPERT_TARGET_SCORE } from '@/lib/report-quality';
+import {
+  REPORT_EXPERT_TARGET_SCORE,
+  REPORT_USABLE_DEEP_SCORE,
+} from '@/lib/report-quality';
 import { CURRENT_REPORT_VERSION, regenerateReportFromRecord, repairStoredReportNarrative } from '@/lib/report-pipeline';
 import { isLikelyTestReportName } from '@/lib/report-sample-classifier';
 import { withReportVersionLineage } from '@/lib/report-version-lineage';
@@ -76,8 +79,8 @@ function shouldStopForQualityPlateau(params: {
   if (best >= 85 && streak >= 3 && !params.improved) {
     return { stop: true as const, reason: 'QUALITY_PLATEAU_NO_IMPROVE_STREAK', streak };
   }
-  // v6-Q2: 83 plateau (common A/enhanced after soft-verify era) — stop after 2 no-improve
-  if (best >= 83 && !params.improved && attempts >= 2) {
+  // Product bar: usable deep — stop after 2 no-improve once ≥ USABLE_DEEP
+  if (best >= REPORT_USABLE_DEEP_SCORE && !params.improved && attempts >= 2) {
     return { stop: true as const, reason: 'QUALITY_PLATEAU_AT_83', streak };
   }
   return { stop: false as const, reason: '', streak };
@@ -508,12 +511,9 @@ export async function processNextReportUpgradeJob() {
       targetScore,
     });
 
-    // 接近目标强交付：best >= 90 且 grade = S 时，本次升级已完成交付，
-    // 不再在 95 分门槛上继续烧重试（生产实测 486/492 因 TARGET_NOT_REACHED 失败，
-    // 且 plateau 检测会被 90-94 分小幅振荡的 improved 反复清零）。
-    // 用户决策 2026-08：不过度重试，≥85 分直接交付展示
-    // v6-Q2: 生产大量卡在 83 的 A/enhanced；83+ 且无硬失败也交付，停止无效 TARGET_NOT_REACHED 重试
-    const nearTargetStrong = bestScore >= 83;
+    // Product delivery: score ≥ usable-deep bar → complete (stop TARGET_NOT_REACHED thrash).
+    // Expert S/95 remains aspirational targetScore on the job; not a hard gate for stop.
+    const nearTargetStrong = bestScore >= REPORT_USABLE_DEEP_SCORE;
     if (nearTargetStrong) {
       const mutation = reportUpgradeJobOperations.markCompleted(job.id, {
         lastScore: newScore,
@@ -526,6 +526,7 @@ export async function processNextReportUpgradeJob() {
           llmUsed,
           improved,
           nearTargetDelivered: true,
+          productBar: REPORT_USABLE_DEEP_SCORE,
           targetScore,
           reason: 'DELIVERED_AT_85',
           plateauReason: 'DELIVERED_AT_85',

@@ -267,11 +267,12 @@ function healthDecayByElement(age: number, dayMaster: string, yongShen: YongShen
       return -((age - 30) * 0.06 + jiPenalty);
     }
     case 'fire': {
-      // 心火系统：40 岁后波动加剧
+      // 心火系统：40 岁后波动加剧（确定性分段，禁止 sin 人造周期）
       if (age <= 40) return age > 32 ? -((age - 32) * 0.02) : 0;
       const base = -((age - 40) * 0.05);
-      const volatility = Math.sin((age - 40) / 3) * 0.4;
-      return base + volatility - jiPenalty;
+      // 每 3 年一个可解释的轻波动：偶数年略强、奇数年略弱（可审计，非伪随机）
+      const phase = Math.floor((age - 40) / 3) % 2 === 0 ? 0.25 : -0.25;
+      return base + phase - jiPenalty;
     }
     case 'wood': {
       // 肝木系统：35 岁后压力敏感

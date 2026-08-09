@@ -35,6 +35,8 @@ export function buildExperienceQualityReceipt(input: {
   qualityAudit?: AuditLike | null;
   upgradeJob?: UpgradeJobLike | null;
   sevenDayActions?: string[] | null;
+  /** Closed-loop calibration score 40–100 */
+  calibrationScore?: number | null;
   canManage?: boolean;
   locale?: string | null;
   streaming?: boolean;
@@ -69,6 +71,9 @@ export function buildExperienceQualityReceipt(input: {
   let readiness: KernelReadiness = status.readiness;
   if (input.streaming) readiness = 'streaming';
 
+  const calibrationScore =
+    typeof input.calibrationScore === 'number' ? input.calibrationScore : null;
+
   return {
     readiness,
     badge: usableDeep && status.readiness === 'usable' ? (status.badge || '可用深度版') : status.badge,
@@ -93,8 +98,11 @@ export function buildExperienceQualityReceipt(input: {
       },
       {
         label: '交付档',
-        value: usableDeep ? '可用深度 (≥83)' : status.editionLabel,
+        value: usableDeep ? `可用深度 (≥${USABLE_DEEP_SCORE})` : status.editionLabel,
       },
+      ...(calibrationScore != null
+        ? [{ label: '用户校准分', value: `${calibrationScore}` }]
+        : []),
     ],
   };
 }

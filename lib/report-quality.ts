@@ -14,8 +14,17 @@ export type ReportDeliveryTier = 'basic' | 'enhanced' | 'expert';
 export type UserFacingReportStageKey = 'simple' | 'deep' | 'detailed';
 export type UserFacingReportStageStatus = 'completed' | 'current' | 'locked';
 
+/** Aspirational S-tier bar (rarely fully hit in production). */
 export const REPORT_EXPERT_TARGET_SCORE = 95;
 export const REPORT_EXPERT_TARGET_GRADE: ReportQualityAuditGrade = 'S';
+/**
+ * Product delivery bar — usable deep edition.
+ * Aligns with upgrade plateau / DELIVERED_AT_85 / experience-kernel USABLE_DEEP_SCORE.
+ * User-facing "可交付" should use this, not 95.
+ */
+export const REPORT_USABLE_DEEP_SCORE = 83;
+export const REPORT_PRODUCT_DELIVERY_SCORE = REPORT_USABLE_DEEP_SCORE;
+
 const REPORT_EXPERT_DIMENSION_FLOORS: Record<ReportQualityDimensionKey, number> = {
   engine: 90,
   llm: 90,
@@ -284,6 +293,7 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     grade,
     dimensions,
   });
+  const usableDeep = isReportUsableDeep({ overallScore, llmUsed });
   const deliveryTier = getReportDeliveryTier({
     llmUsed,
     providerHealthDeferred,
@@ -294,11 +304,26 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
   });
   const nextActionLabel = targetAchieved
     ? '已达到细致版'
+    : usableDeep
+    ? '可用深度版 · 可直接阅读行动'
     : narrativeSignals.severeUserVisibleDefect
     ? '修正文案后重算'
     : verify?.verdict === 'FAIL'
     ? '核对信息后重新测算'
-    : '继续补全到细致版';
+    : '继续补全到可用深度版';
+
+  const summaryBase = buildSummary(
+    status,
+    llmUsed,
+    providerHealthDeferred,
+    verify?.verdict,
+    targetAchieved,
+    narrativeSignals,
+  );
+  const summary =
+    usableDeep && !targetAchieved
+      ? `${summaryBase} 当前可信度 ${overallScore} 已达可用深度档（≥${REPORT_USABLE_DEEP_SCORE}），可直接按主结论行动。`
+      : summaryBase;
 
   return {
     overallScore,
@@ -308,9 +333,13 @@ export function buildReportQualityAudit(result: FortuneAnalysisResult): ReportQu
     targetScore: REPORT_EXPERT_TARGET_SCORE,
     targetGrade: REPORT_EXPERT_TARGET_GRADE,
     targetAchieved,
-    summary: buildSummary(status, llmUsed, providerHealthDeferred, verify?.verdict, targetAchieved, narrativeSignals),
+    summary,
     dimensions,
-    strengths: uniqueList(strengths),
+    strengths: uniqueList(
+      usableDeep && !strengths.some((s) => /可用深度|可直接/.test(s))
+        ? [...strengths, `已达可用深度档（≥${REPORT_USABLE_DEEP_SCORE}）`]
+        : strengths,
+    ),
     concerns: uniqueList(concerns),
     blockingIssues,
     recommendedActions: uniqueList(recommendedActions),
@@ -601,6 +630,15 @@ export function isReportExpertGrade(input: {
     return false;
   }
   return input.dimensions.every((dimension) => dimension.score >= REPORT_EXPERT_DIMENSION_FLOORS[dimension.key]);
+}
+
+/** Product-ready: usable deep (≥83). Prefer this for "can user act on it". */
+export function isReportUsableDeep(input: {
+  overallScore?: number | null;
+  llmUsed?: boolean;
+}) {
+  const score = typeof input.overallScore === 'number' ? input.overallScore : 0;
+  return score >= REPORT_USABLE_DEEP_SCORE && (input.llmUsed !== false || score >= 90);
 }
 
 function getReportDeliveryTier(params: {

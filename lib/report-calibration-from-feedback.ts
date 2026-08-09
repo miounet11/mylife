@@ -89,6 +89,43 @@ export function applyPastEventCalibrationFromFeedback(input: {
   analysis.pastEventTemplates = templates;
   analysis.calibrationUpdatedAt = new Date().toISOString();
 
+  // Closed-loop calibration signal for chat / upgrade / quality receipt
+  const deniedKeys = templates
+    .filter(
+      (t: any) =>
+        t?.userCalibration?.status === 'denied' || t?.confidenceLabel === 'denied',
+    )
+    .map((t: any) => `${t.key || ''}`)
+    .filter(Boolean);
+  const partialKeys = templates
+    .filter((t: any) => t?.userCalibration?.status === 'partial')
+    .map((t: any) => `${t.key || ''}`)
+    .filter(Boolean);
+  const total = Math.max(templates.length, 1);
+  // 100 = no denials; each denied cuts 18, each partial cuts 8 (floor 40)
+  const calibrationScore = Math.max(
+    40,
+    Math.min(100, 100 - deniedKeys.length * 18 - partialKeys.length * 8),
+  );
+  analysis.calibrationScore = calibrationScore;
+  analysis.calibrationSummary = {
+    score: calibrationScore,
+    deniedKeys,
+    partialKeys,
+    templateCount: total,
+    updatedAt: analysis.calibrationUpdatedAt,
+  };
+  const signals = {
+    ...((analysis.contextSignals as Record<string, unknown>) || {}),
+    calibration: {
+      score: calibrationScore,
+      deniedKeys,
+      partialKeys,
+      note: message.slice(0, 200),
+    },
+  };
+  analysis.contextSignals = signals;
+
   try {
     update(reportId, { analysis });
   } catch (e) {
