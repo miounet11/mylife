@@ -52,18 +52,37 @@ function isEnglish(locale: string) {
 
 function systemPrompt(slot: DestinyMatrixSlot) {
   const english = isEnglish(slot.locale);
+  const traditional = slot.locale === 'zh-TW' || slot.locale === 'zh-HK';
   if (english) {
     return `You are a senior editor for Life K-Line / World Yi — a destiny-structure product (Bazi, dayun, life rhythm), NOT superstition theater.
 
 Write publication-ready content for locale=${slot.locale}, market=${slot.market}.
 
 Hard rules:
-1. Structure → timing → environment → action → risk. No fear marketing, no guaranteed outcomes.
-2. First give a direct answer a search/AI engine can quote; then evidence; then bounds; then CTA.
-3. Never invent medical/legal/investment advice. Entertainment + decision framework disclaimer.
-4. Dense, scannable sections (H2 style titles). Each paragraph ≥ 2 sentences when possible.
-5. Internal product truth: free chart → dimension tools → email save → prediction revisit → membership.
-6. Return ONLY valid JSON matching the schema requested by the user.`;
+1. NATIVE ENGLISH ONLY — zero Chinese characters in title, excerpt, sections, or FAQ.
+2. Structure → timing → environment → action → risk. No fear marketing, no guaranteed outcomes.
+3. First give a direct answer a search/AI engine can quote; then evidence; then bounds; then CTA.
+4. Never invent medical/legal/investment advice.
+5. Dense paragraphs (each ≥ 90 characters). Min 7 sections, min 12 paragraphs.
+6. Include FAQ (2–3 real questions) and weekly actions + 30/90-day revisit.
+7. Product path: free chart → dimension tools → email save → prediction revisit.
+8. Entity name must appear ≥ 3 times. No SEO/ops jargon.
+9. Return ONLY valid JSON.`;
+  }
+
+  if (traditional) {
+    return `你是「人生K線 / 世界易」的資深內容主編。產品中心是人生命運結構判斷，不是恐嚇式運勢站。
+
+目標語言 locale=${slot.locale}（繁體），市場=${slot.market}。
+
+硬規則：
+1. 全文繁體中文（台灣/香港語感），勿用簡體用詞主導。
+2. 結構→時位→環境→動作→風險；禁止恐嚇、包賺。
+3. 先給可被搜尋/AI 引用的直接答案，再依據、邊界、下一步。
+4. 每段 ≥ 90 字；至少 7 節、12 段；含 FAQ 與 30/90 天回訪。
+5. 自然導向：免費排盤 → 十維度 → 信箱保存 → 預測回訪。
+6. 實體名稱至少出現 3 次；禁止 SEO/運營黑話。
+7. 只返回合法 JSON。`;
   }
 
   return `你是「人生K线 / 世界易」的资深内容主编。产品中心是人生命运结构判断（八字、大运、人生K线），不是恐吓式运势站。
@@ -74,9 +93,10 @@ Hard rules:
 1. 始终按 结构→时位→环境→动作→风险 写；禁止恐吓、包赚、算命保证。
 2. 先给可被搜索/AI 引用的直接答案，再依据、边界、下一步。
 3. 不构成医疗/法律/投资建议；文末可隐含合规边界。
-4. 小节清晰、可扫读；每段尽量 ≥ 2 句，信息密度高。
+4. 每段 ≥ 90 字；至少 7 节、12 段；含 FAQ（2–3 问）与本周清单 + 30/90 天回访。
 5. 自然导向：免费排盘 → 十维度 → 邮箱保存 → 预测回访 → 会员。
-6. 只返回用户要求的合法 JSON，不要 markdown 围栏外的废话。`;
+6. 实体名称至少出现 3 次；禁止 SEO/转化/内容库等内部词。
+7. 只返回用户要求的合法 JSON，不要 markdown 围栏外的废话。`;
 }
 
 function userPrompt(slot: DestinyMatrixSlot) {
@@ -134,16 +154,20 @@ function userPrompt(slot: DestinyMatrixSlot) {
                   '常见问题',
                   '边界说明',
                 ],
-      minSections: 7,
-      minParagraphsTotal: 12,
-      minExcerptChars: 90,
-      minSeoDescriptionChars: 120,
-      minAnswerSummaryChars: 60,
-      minParagraphChars: 80,
+      minSections: 8,
+      minParagraphsTotal: 14,
+      minExcerptChars: 100,
+      minSeoDescriptionChars: 130,
+      minAnswerSummaryChars: 70,
+      minParagraphChars: 90,
       styleNotes: [
         'Never mention SEO, GEO, conversion, content ops, or internal platform strategy.',
         'Write for the end reader facing a real life decision.',
         'excerpt / seoDescription / answerSummary must be full public prose, not internal angles.',
+        isEnglish(slot.locale)
+          ? 'English-only body; translate any Chinese entity labels into English decision language.'
+          : 'Keep native language for the locale; traditional Chinese for zh-TW/zh-HK.',
+        'LDPlayer-parity density: entity hub depth, FAQ, related next steps, clear CTA.',
       ],
     },
     null,
@@ -446,7 +470,15 @@ export async function generateBatchFromSlots(
   return results.filter(Boolean);
 }
 
-export function articleToManagedInput(article: ContentOsGeneratedArticle) {
+export function articleToManagedInput(
+  article: ContentOsGeneratedArticle,
+  options?: {
+    status?: 'draft' | 'published';
+    multiQuality?: unknown;
+    repairRounds?: number;
+  },
+) {
+  const status = options?.status || article.status || 'draft';
   return {
     contentType: article.contentType as ManagedContentType,
     subtype: article.subtype,
@@ -461,7 +493,7 @@ export function articleToManagedInput(article: ContentOsGeneratedArticle) {
     seoTitle: article.seoTitle,
     seoDescription: article.seoDescription,
     sections: article.sections,
-    status: 'draft' as const,
+    status,
     source: 'content-os',
     locale: article.locale,
     market: article.market,
@@ -476,9 +508,13 @@ export function articleToManagedInput(article: ContentOsGeneratedArticle) {
       entityKeywords: article.entityKeywords,
       answerSummary: article.answerSummary,
       quality: article.quality,
+      multiQuality: options?.multiQuality,
+      repairRounds: options?.repairRounds ?? 0,
       model: article.model,
       generatedAt: article.generatedAt,
       coverImagePrompt: article.coverImagePrompt,
+      autoPublished: status === 'published',
+      publishedAt: status === 'published' ? new Date().toISOString() : undefined,
       geoOptimization: {
         geoReady: true,
         answerSummary: article.answerSummary,
@@ -487,7 +523,7 @@ export function articleToManagedInput(article: ContentOsGeneratedArticle) {
         entityKeywords: article.entityKeywords,
         audienceQuestions: article.searchIntents,
         audience: article.market,
-        version: 'content-os-v1',
+        version: 'content-os-v2',
         canonicalTopic: article.title,
       },
     },

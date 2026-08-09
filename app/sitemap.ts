@@ -146,6 +146,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/knowledge/topics', priority: 0.82, changeFrequency: 'weekly', multiLanguage: true },
     // Content OS destiny entity hubs (LDPlayer-style entity SEO)
     { path: '/topics', priority: 0.9, changeFrequency: 'daily', multiLanguage: true },
+    { path: '/hotlist', priority: 0.88, changeFrequency: 'daily', multiLanguage: true },
     ...listDestinyEntityHubs().map((hub) => ({
       path: hub.href,
       priority: 0.84,

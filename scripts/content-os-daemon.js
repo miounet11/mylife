@@ -47,6 +47,7 @@ function log(...args) {
 function runCliTick() {
   return new Promise((resolve, reject) => {
     const script = path.join(ROOT, 'scripts/content-os-run.ts');
+    const repairRounds = String(process.env.CONTENT_OS_REPAIR_ROUNDS || '2');
     const args = [
       'tsx',
       script,
@@ -56,8 +57,14 @@ function runCliTick() {
       LOCALES.join(','),
       '--concurrency',
       '1',
+      '--repair-rounds',
+      repairRounds,
     ];
     if (WITH_IMAGE) args.push('--with-image');
+    // Default auto-publish when multi-dimension quality passes (no human review)
+    if (['0', 'false', 'no'].includes(String(process.env.CONTENT_OS_AUTO_PUBLISH || '1').toLowerCase())) {
+      args.push('--no-publish');
+    }
 
     const child = spawn('npx', args, {
       cwd: ROOT,

@@ -20,6 +20,7 @@ const PUBLIC_CONTENT_ALLOW = [
   '/cases/',
   '/topics',
   '/topics/',
+  '/hotlist',
   '/tools/',
   '/dimensions/',
   '/teachers/',

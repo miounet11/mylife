@@ -41,3 +41,23 @@ export {
   type ContentOsRunResult,
   type ContentOsCoverageRow,
 } from '@/lib/content-os/scheduler';
+
+export {
+  scoreContentOsDimensions,
+  buildRepairBrief,
+  type MultiDimensionQuality,
+  type QualityDimensionKey,
+} from '@/lib/content-os/quality-dimensions';
+
+export {
+  repairContentOsArticle,
+  repairBatch,
+  type RepairedArticle,
+} from '@/lib/content-os/repair';
+
+export {
+  listPublishedContentOsEntries,
+  listContentForEntity,
+  buildHotlist,
+  type EntityContentCard,
+} from '@/lib/content-os/entity-content';

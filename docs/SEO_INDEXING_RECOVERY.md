@@ -52,14 +52,16 @@
 
 ---
 
-## 3. 已落地的技术修复（本轮）
+## 3. 已落地的技术修复
 
 | 改动 | 目的 |
 |------|------|
 | `app/sitemap.ts` 默认关闭 astro 日历农场 | Sitemap 从 ~7.7k 压到 evergreen + 短窗口 |
 | 黄历日 URL `±45` → `±7` | 减少低价值日页 |
-| `app/robots.ts` 显式 allow `/topics` `/astro` `/hehun` `/movement` | 主题库与核心表面可发现 |
-| Content OS 质量门 + draft 再发布 | 避免薄文直接上索引 |
+| `app/robots.ts` 显式 allow `/topics` `/astro` `/hehun` `/hotlist` | 主题库与热榜可发现 |
+| Content OS **十维质量评分 + LLM 修复轮** | 无人审：depth/locale/FAQ/产品桥/反spam… |
+| 达标自动 `published` | `publishReady` 直接入库可索引 |
+| `/hotlist` 热榜 + 页脚热门关注 | 对标雷电热门榜与内链密度 |
 
 环境开关：
 

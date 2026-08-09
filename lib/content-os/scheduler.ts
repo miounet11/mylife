@@ -19,6 +19,8 @@ import {
   generateBatchFromSlots,
   type ContentOsGeneratedArticle,
 } from '@/lib/content-os/generator';
+import { repairContentOsArticle, type RepairedArticle } from '@/lib/content-os/repair';
+import { scoreContentOsDimensions } from '@/lib/content-os/quality-dimensions';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -51,7 +53,15 @@ export type ContentOsRunResult = {
   plan: ContentOsRunPlan;
   articles: ContentOsGeneratedArticle[];
   savedIds: string[];
+  publishedIds: string[];
   draftDir: string;
+  qualitySummary: Array<{
+    slug: string;
+    overall: number;
+    publishReady: boolean;
+    repairRounds: number;
+    status: 'published' | 'draft';
+  }>;
 };
 
 const STATE_DIR = path.join(process.cwd(), 'content', 'os-state');
@@ -186,9 +196,13 @@ async function ensureDirs() {
   await mkdir(DRAFT_DIR, { recursive: true });
 }
 
-export async function persistContentOsArticles(articles: ContentOsGeneratedArticle[]) {
+export async function persistContentOsArticles(
+  articles: Array<ContentOsGeneratedArticle | RepairedArticle>,
+  options?: { autoPublish?: boolean },
+) {
   await ensureDirs();
   const savedIds: string[] = [];
+  const publishedIds: string[] = [];
   const day = new Date().toISOString().slice(0, 10);
   const batchDir = path.join(DRAFT_DIR, day);
   await mkdir(batchDir, { recursive: true });
@@ -197,13 +211,26 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
     listManagedContentEntries().map((entry) => `${entry.slug || ''}`.trim()).filter(Boolean),
   );
 
+  const autoPublish = options?.autoPublish !== false;
+
   for (const article of articles) {
-    const input = articleToManagedInput(article);
-    // Avoid SQLITE_CONSTRAINT_UNIQUE on slug when re-running matrix slots
+    const repaired = article as RepairedArticle;
+    const multi = repaired.multiQuality || scoreContentOsDimensions(article);
+    const shouldPublish = autoPublish && (repaired.publishedReady || multi.publishReady);
+
+    const input = articleToManagedInput(article, {
+      status: shouldPublish ? 'published' : 'draft',
+      multiQuality: multi,
+      repairRounds: repaired.repairRounds ?? 0,
+    });
+
+    // Prefer updating same matrixKey slug; else unique suffix
     let slug = input.slug;
     let n = 2;
     while (existingSlugs.has(slug)) {
-      slug = `${input.slug}-${n}`;
+      // If same matrix already published with this base slug, allow overwrite via save with new id path —
+      // keep unique slugs for safety.
+      slug = `${input.slug}-r${n}`;
       n += 1;
     }
     input.slug = slug;
@@ -214,7 +241,6 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
     try {
       saved = saveManagedContentEntry(input, 'content-os');
     } catch (error) {
-      // Production CMS may enforce unique slug/id — retry once with entropy suffix
       const suffix = Date.now().toString(36);
       input.slug = `${input.slug}-${suffix}`.slice(0, 80);
       article.slug = input.slug;
@@ -223,6 +249,7 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
       console.warn('[content-os] save retry after error', error instanceof Error ? error.message : error);
     }
     savedIds.push(saved.id);
+    if (saved.status === 'published') publishedIds.push(saved.id);
 
     const filePath = path.join(batchDir, `${article.slug}.json`);
     await writeFile(
@@ -230,10 +257,12 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
       JSON.stringify(
         {
           ...article,
+          multiQuality: multi,
           coverImageB64: article.coverImageB64
             ? `[omitted ${article.coverImageB64.length} chars]`
             : undefined,
           managedId: saved.id,
+          finalStatus: saved.status,
         },
         null,
         2,
@@ -254,8 +283,10 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
       {
         at: new Date().toISOString(),
         count: articles.length,
+        published: publishedIds.length,
         slugs: articles.map((a) => a.slug),
         savedIds,
+        publishedIds,
         draftDir: batchDir,
       },
       null,
@@ -264,7 +295,7 @@ export async function persistContentOsArticles(articles: ContentOsGeneratedArtic
     'utf8',
   );
 
-  return { savedIds, draftDir: batchDir };
+  return { savedIds, publishedIds, draftDir: batchDir };
 }
 
 export async function runContentOsCycle(params?: {
@@ -273,6 +304,8 @@ export async function runContentOsCycle(params?: {
   withImage?: boolean;
   concurrency?: number;
   dryRun?: boolean;
+  autoPublish?: boolean;
+  repairRounds?: number;
 }): Promise<ContentOsRunResult> {
   const plan = buildContentOsRunPlan({
     locales: params?.locales,
@@ -284,22 +317,55 @@ export async function runContentOsCycle(params?: {
       plan,
       articles: [],
       savedIds: [],
+      publishedIds: [],
       draftDir: DRAFT_DIR,
+      qualitySummary: [],
     };
   }
 
-  const articles = await generateBatchFromSlots(plan.queue, {
+  const rawArticles = await generateBatchFromSlots(plan.queue, {
     withImage: params?.withImage,
-    concurrency: params?.concurrency || 2,
+    concurrency: params?.concurrency || 1,
   });
 
-  const { savedIds, draftDir } = await persistContentOsArticles(articles);
+  // Multi-pass repair: score dimensions → LLM rewrite weak spots → re-score
+  const repaired: RepairedArticle[] = [];
+  for (let i = 0; i < rawArticles.length; i += 1) {
+    const article = rawArticles[i];
+    const slot = plan.queue[i];
+    if (!slot) {
+      const multi = scoreContentOsDimensions(article);
+      repaired.push({
+        ...article,
+        multiQuality: multi,
+        repairRounds: 0,
+        publishedReady: multi.publishReady,
+      });
+      continue;
+    }
+    const fixed = await repairContentOsArticle(article, slot, {
+      maxRounds: params?.repairRounds ?? 2,
+    });
+    repaired.push(fixed);
+  }
+
+  const { savedIds, publishedIds, draftDir } = await persistContentOsArticles(repaired, {
+    autoPublish: params?.autoPublish !== false,
+  });
 
   return {
     plan,
-    articles,
+    articles: repaired,
     savedIds,
+    publishedIds,
     draftDir,
+    qualitySummary: repaired.map((a) => ({
+      slug: a.slug,
+      overall: a.multiQuality?.overall ?? a.quality.score,
+      publishReady: Boolean(a.publishedReady || a.multiQuality?.publishReady),
+      repairRounds: a.repairRounds ?? 0,
+      status: a.publishedReady || a.multiQuality?.publishReady ? 'published' : 'draft',
+    })),
   };
 }
 

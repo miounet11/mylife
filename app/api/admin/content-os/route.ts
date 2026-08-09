@@ -91,6 +91,8 @@ export async function POST(request: NextRequest) {
     withImage?: boolean;
     dryRun?: boolean;
     concurrency?: number;
+    autoPublish?: boolean;
+    repairRounds?: number;
   };
 
   const result = await runContentOsCycle({
@@ -98,7 +100,9 @@ export async function POST(request: NextRequest) {
     limit: body.limit ?? 4,
     withImage: Boolean(body.withImage),
     dryRun: Boolean(body.dryRun),
-    concurrency: body.concurrency ?? 2,
+    concurrency: body.concurrency ?? 1,
+    autoPublish: body.autoPublish !== false,
+    repairRounds: body.repairRounds ?? 2,
   });
 
   return NextResponse.json({
@@ -114,7 +118,9 @@ export async function POST(request: NextRequest) {
       llmUsed: a.llmUsed,
       model: a.model,
     })),
+    qualitySummary: result.qualitySummary,
     savedIds: result.savedIds,
+    publishedIds: result.publishedIds,
     draftDir: result.draftDir,
     reasons: result.plan.reasons,
   });

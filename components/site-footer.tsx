@@ -12,11 +12,13 @@ import {
   OFFICIAL_TELEGRAM_URL,
 } from '@/lib/site-social';
 
-const footerLinks: Array<{ href: string; labelKey: string }> = [
+const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: string }> = [
   { href: '/almanac', labelKey: 'navAlmanac' },
   { href: '/astro', labelKey: 'navAstro' },
   { href: '/world-yi', labelKey: 'navWorldYi' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
+  { href: '/topics', labelKey: 'navTopics', labelFallback: '主题库' },
+  { href: '/hotlist', labelKey: 'navHotlist', labelFallback: '热门榜' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/learn', labelKey: 'navLearn' },
   { href: '/docs', labelKey: 'navDocs' },
@@ -57,16 +59,46 @@ export default function SiteFooter() {
               {t('footerTagline')}
             </p>
             <nav className="mt-5 flex flex-wrap gap-x-5 gap-y-2.5" aria-label="footer">
-              {footerLinks.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="text-[14px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
-                >
-                  {t(item.labelKey)}
-                </Link>
-              ))}
+              {footerLinks.map((item) => {
+                const label = t(item.labelKey);
+                const text =
+                  !label || label === item.labelKey
+                    ? item.labelFallback || item.labelKey
+                    : label;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="text-[14px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)] hover:no-underline"
+                  >
+                    {text}
+                  </Link>
+                );
+              })}
             </nav>
+
+            {/* LDPlayer-style dense SEO strip: destiny entities + tools */}
+            <div className="mt-6 max-w-xl text-[12px] leading-[1.7] text-[color:var(--ink-4)]">
+              <span className="font-medium text-[color:var(--ink-3)]">热门关注：</span>
+              {[
+                { href: '/topics/q-should-i-change-job', label: '该不该换工作' },
+                { href: '/topics/q-when-to-marry', label: '谈婚论嫁' },
+                { href: '/topics/q-move-city', label: '迁城择居' },
+                { href: '/topics/dimension-fortune-rhythm', label: '运势节奏' },
+                { href: '/topics/dimension-career-industry', label: '工作行业' },
+                { href: '/topics/tool-bazi-chart', label: '八字排盘' },
+                { href: '/hehun', label: '合婚' },
+                { href: '/tools/naming', label: '起名' },
+                { href: '/hotlist', label: '更新榜' },
+              ].map((item, i) => (
+                <span key={item.href}>
+                  {i > 0 ? ' · ' : ''}
+                  <Link href={item.href} className="hover:text-[color:var(--ink-2)] hover:underline">
+                    {item.label}
+                  </Link>
+                </span>
+              ))}
+            </div>
 
             <div className="mt-5 flex flex-wrap gap-x-4 gap-y-1.5 text-[14px]">
               <a

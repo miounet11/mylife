@@ -24,12 +24,14 @@ function parseArgs(argv: string[]) {
   return {
     dryRun: argv.includes('--dry-run'),
     withImage: argv.includes('--with-image'),
+    noPublish: argv.includes('--no-publish'),
     limit: Number(get('--limit', '4')) || 4,
     locales: get('--locales', 'zh-CN,en-US')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean) as ContentOsLocale[],
-    concurrency: Number(get('--concurrency', '2')) || 2,
+    concurrency: Number(get('--concurrency', '1')) || 1,
+    repairRounds: Number(get('--repair-rounds', '2')) || 2,
   };
 }
 
@@ -99,6 +101,8 @@ async function main() {
     limit: args.limit,
     withImage: args.withImage,
     concurrency: args.concurrency,
+    autoPublish: !args.noPublish,
+    repairRounds: args.repairRounds,
   });
 
   console.log(
@@ -108,6 +112,8 @@ async function main() {
         coverage: result.plan.coverage,
         draftDir: result.draftDir,
         savedIds: result.savedIds,
+        publishedIds: result.publishedIds,
+        qualitySummary: result.qualitySummary,
         articles: result.articles.map((a) => ({
           slug: a.slug,
           title: a.title,
@@ -115,6 +121,9 @@ async function main() {
           llmUsed: a.llmUsed,
           model: a.model,
           quality: a.quality,
+          multiQuality: (a as { multiQuality?: { overall?: number; publishReady?: boolean } })
+            .multiQuality,
+          repairRounds: (a as { repairRounds?: number }).repairRounds,
         })),
       },
       null,

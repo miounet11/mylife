@@ -9,6 +9,7 @@ import JsonLd from '@/components/seo/json-ld';
 import {
   getDestinyEntityHub,
   listDestinyEntityHubs,
+  listContentForEntity,
   slotsForEntity,
   type DestinyEntityKind,
 } from '@/lib/content-os';
@@ -94,6 +95,12 @@ export default async function TopicEntityPage({ params }: PageProps) {
     'zh-TW',
     'en-US',
   ]).slice(0, 12);
+
+  const publishedArticles = listContentForEntity({
+    entityKind: parsed.kind,
+    entitySlug: parsed.entitySlug,
+    limit: 10,
+  });
 
   const sibling = listDestinyEntityHubs()
     .filter((h) => h.kind === hub.kind && h.slug !== hub.slug)
@@ -193,6 +200,32 @@ export default async function TopicEntityPage({ params }: PageProps) {
           en-SG。英文与繁体为原生改写标准，不是整站机翻。
         </p>
       </section>
+
+      {publishedArticles.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-6">
+          <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">已发布相关内容</h2>
+          <p className="mt-1 text-sm text-[color:var(--ink-4)]">
+            LLM 自动生成并经多维质量修复后发布（对标实体页深度内容）。
+          </p>
+          <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+            {publishedArticles.map((item) => (
+              <li key={item.id}>
+                <Link
+                  href={item.href}
+                  className="block rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 hover:border-[color:var(--brand)]"
+                >
+                  <div className="text-xs text-[color:var(--ink-4)]">
+                    {item.contentType}
+                    {item.locale ? ` · ${item.locale}` : ''}
+                  </div>
+                  <div className="mt-1 font-medium text-[color:var(--ink-1)]">{item.title}</div>
+                  <p className="mt-1 line-clamp-2 text-sm text-[color:var(--ink-3)]">{item.excerpt}</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {relatedSlots.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-6">
