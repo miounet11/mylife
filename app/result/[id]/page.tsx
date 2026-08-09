@@ -74,8 +74,10 @@ import ReportActionBoard from '@/components/report/report-action-board';
 import ReportSevenDayActions from '@/components/report/report-seven-day-actions';
 import ReportQualityReceipt from '@/components/report/report-quality-receipt';
 import ReportSectionRerun from '@/components/report/report-section-rerun';
+import ReportActionRail from '@/components/report/report-action-rail';
 import ReportValidationPanel from '@/components/report/report-validation-panel';
 import { buildExperienceQualityReceipt } from '@/lib/experience-kernel';
+import { REPORT_USABLE_DEEP_SCORE } from '@/lib/report-quality';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
 import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
 import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
@@ -1433,6 +1435,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
           </div>
         </ReportSurface>
       </main>
+
+      <ReportActionRail
+        reportId={id}
+        chatHref={reportChatHref}
+        sevenDayActions={result.analysis?.sevenDayActions}
+        usableDeep={
+          qualityReceipt.usableDeep ||
+          (typeof qualityAudit?.overallScore === 'number' &&
+            qualityAudit.overallScore >= REPORT_USABLE_DEEP_SCORE)
+        }
+        qualityScore={
+          typeof qualityAudit?.overallScore === 'number' ? qualityAudit.overallScore : null
+        }
+        canManage={canManage}
+      />
 
       <SiteFooter />
     </div>

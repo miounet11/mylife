@@ -88,6 +88,11 @@ export interface ChatExperienceContext {
   confirmedPastEventCount?: number;
   focusedEvent?: ChatContextEvent;
   report?: ChatReportContext;
+  /** Structured seven-day actions for memory budget (not only in summary text) */
+  sevenDayActions?: string[];
+  /** Closed-loop calibration 40–100 */
+  calibrationScore?: number | null;
+  calibrationDeniedTitles?: string[];
   /**
    * Real prediction revisit stats from predictions store (server).
    * Prefer over event validation when present for memory narrative.
@@ -374,6 +379,30 @@ export function buildChatExperienceContext(params: {
     validationSummary,
     confirmedPastEventCount: confirmedPastEvents.length,
     focusedEvent: mappedFocusedEvent,
+    sevenDayActions: Array.isArray(report.analysis?.sevenDayActions)
+      ? report.analysis!.sevenDayActions!.slice(0, 5)
+      : [],
+    calibrationScore:
+      typeof (report.analysis as { calibrationScore?: number } | undefined)?.calibrationScore ===
+      'number'
+        ? (report.analysis as { calibrationScore: number }).calibrationScore
+        : typeof (report.analysis as { calibrationSummary?: { score?: number } } | undefined)
+              ?.calibrationSummary?.score === 'number'
+          ? (report.analysis as { calibrationSummary: { score: number } }).calibrationSummary.score
+          : null,
+    calibrationDeniedTitles: (() => {
+      const templates = Array.isArray(report.analysis?.pastEventTemplates)
+        ? report.analysis!.pastEventTemplates!
+        : [];
+      return templates
+        .filter(
+          (t: any) =>
+            t?.userCalibration?.status === 'denied' || t?.confidenceLabel === 'denied',
+        )
+        .map((t: any) => t.title || t.key || '')
+        .filter(Boolean)
+        .slice(0, 6);
+    })(),
     report: {
       id: report.id,
       name: report.name,

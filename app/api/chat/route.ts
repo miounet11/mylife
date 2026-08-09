@@ -23,6 +23,8 @@ import {
   buildTruthAnchor,
   formatTruthAnchorContract,
 } from '@/lib/experience-kernel';
+import { allocateFromChatExperience } from '@/lib/experience-kernel/chat-memory-from-context';
+import { appendTurnQuality } from '@/lib/experience-kernel/turn-quality-ledger';
 import { recordModelAttempt } from '@/lib/llm-provider-health';
 import { buildPrompt, getPrompt } from '@/lib/prompts';
 import '@/lib/prompts/chat/main';
@@ -373,6 +375,13 @@ async function generateAIResponse(
   structureRich?: boolean;
   structureThin?: boolean;
   structureRepaired?: boolean;
+  ttftMs?: number | null;
+  latencyMs?: number | null;
+  memoryBudget?: {
+    usedChars?: number;
+    layersKept?: string[];
+    historyTurnsKept?: number;
+  } | null;
 }> {
   const apiKey = getApiKey();
   const fallbackAnswer = buildFallbackChatAnswer(question, options?.context, options?.intent);
@@ -397,6 +406,18 @@ async function generateAIResponse(
   const materialSummary = options?.materialSummary || buildMaterialSummary(options?.materials || []);
   const userContent = buildUserContentWithMaterials(question, materialSummary, options?.materials || []);
 
+  // X-Tavern-style memory budget: structured layers under char budget (not full report dump)
+  const memory = allocateFromChatExperience({
+    context: options?.context,
+    contextSummary,
+    materialSummary,
+    intentSummaryHint,
+    history: userHistory,
+    budgetChars: Number(process.env.CHAT_MEMORY_BUDGET_CHARS || 10_000) || 10_000,
+  });
+  const budgetedContext = memory.systemContext || contextSummary;
+  const budgetedHistory = memory.history.length ? memory.history : userHistory.slice(-8);
+
   // v2 chat.main spec：把 contextSummary / intentPrompt / materialSummary / 多模态边界拼成结构化 system。
   // 多模态分支按需触发 —— 没有对应附件就不污染 prompt。
   const intentNormalized = normalizeChatIntent(options?.intent);
@@ -410,7 +431,7 @@ async function generateAIResponse(
   let systemContent: string;
   if (getPrompt('chat.main')) {
     const built = buildPrompt('chat.main', {
-      contextSummary,
+      contextSummary: budgetedContext,
       intentPrompt,
       intentSummaryHint,
       materialSummary,
@@ -432,7 +453,7 @@ async function generateAIResponse(
       '涉及手相照片时，只做可见掌纹、掌丘、手型和照片质量的相学文化观察；不得判断疾病、寿命、身份、人格定论、财富必然、婚姻必然或命运定数。',
       '涉及户型图时，只分析可见平面结构、动线、采光通风、厨卫干扰、卧室安稳、收纳与形势问题；方向和外局缺失时必须说明边界，不编造外部环境。',
       intentPrompt,
-      contextSummary,
+      budgetedContext,
       materialSummary,
       intentSummaryHint,
     ].join('\n');
@@ -489,7 +510,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       role: 'system',
       content: systemContent,
     },
-    ...userHistory.map((item) => ({ role: item.role, content: item.content })),
+    ...budgetedHistory.map((item) => ({ role: item.role, content: item.content })),
     { role: 'user', content: userContent },
   ];
 
@@ -498,10 +519,11 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), chatTimeoutMs);
   const startedAt = Date.now();
+  let ttftMs: number | null = null;
 
   try {
     console.log(
-      `[LLM Chat] single model ${model}; timeout=${chatTimeoutMs}ms; retries=0; stream=${options?.streamMode ? 1 : 0}`,
+      `[LLM Chat] single model ${model}; timeout=${chatTimeoutMs}ms; retries=0; stream=${options?.streamMode ? 1 : 0}; memLayers=${memory.stats.layersKept.join('+') || 'none'}`,
     );
 
     let content = '';
@@ -522,6 +544,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
           maxRetries: 0,
         },
       )) {
+        if (ttftMs == null && delta) ttftMs = Date.now() - startedAt;
         content += delta;
         try {
           options.onDelta(delta);
@@ -547,6 +570,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
         },
       );
       content = completion.choices?.[0]?.message?.content?.trim() || '';
+      ttftMs = Date.now() - startedAt;
     }
 
     if (!content) {
@@ -621,7 +645,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
             model,
             messages: [
               { role: 'system', content: systemContent },
-              ...userHistory.map((item) => ({
+              ...budgetedHistory.map((item) => ({
                 role: item.role as 'user' | 'assistant',
                 content: item.content,
               })),
@@ -718,6 +742,13 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       structureRich: structure.isRich,
       structureThin: structure.isThin,
       structureRepaired,
+      ttftMs,
+      latencyMs: Date.now() - startedAt,
+      memoryBudget: {
+        usedChars: memory.stats.usedChars,
+        layersKept: memory.stats.layersKept,
+        historyTurnsKept: memory.stats.historyTurnsKept,
+      },
     };
   } catch (error) {
     recordModelAttempt({
@@ -1406,6 +1437,27 @@ export async function POST(request: NextRequest) {
                 stream: true,
                 meta: { llmUsed: result.llmUsed },
               });
+              appendTurnQuality({
+                sessionKey: ledgerKey,
+                userId,
+                reportId: context.report?.id || requestedReportId,
+                teacherId: requestedTeacherId || null,
+                intent: requestedIntent || null,
+                stream: true,
+                llmUsed: result.llmUsed,
+                efcOk: result.efcOk !== false,
+                efcIssues: result.efcIssues,
+                structureFilled: result.structureFilled ?? null,
+                structureRich: result.structureRich ?? null,
+                structureThin: result.structureThin ?? null,
+                structureRepaired: result.structureRepaired ?? null,
+                latencyMs: result.latencyMs ?? Date.now() - requestStartedAt,
+                ttftMs: result.ttftMs ?? null,
+                answerChars: result.answer?.length ?? null,
+                questionChars: question.length,
+                memoryBudget: result.memoryBudget || null,
+                fallbackReason: result.fallbackReason || null,
+              });
             } catch {
               // ledger is best-effort
             }
@@ -1420,6 +1472,8 @@ export async function POST(request: NextRequest) {
                 llmUsed: result.llmUsed,
                 durationMs: Date.now() - requestStartedAt,
                 stream: true,
+                ttftMs: result.ttftMs ?? null,
+                memLayers: result.memoryBudget?.layersKept || null,
                 fallbackReason: result.fallbackReason || null,
                 questionLength: question.length,
                 reportId: context.report?.id || requestedReportId || null,
@@ -1495,6 +1549,9 @@ export async function POST(request: NextRequest) {
       structureRich,
       structureThin,
       structureRepaired,
+      ttftMs,
+      latencyMs,
+      memoryBudget,
     } = await generateAIResponse(question, userHistory, contextSummary, genOpts);
     const turnId = generateId();
     const userMessageId = generateId();
@@ -1562,6 +1619,27 @@ export async function POST(request: NextRequest) {
         teacherId: requestedTeacherId || null,
         efcOk: efcOk !== false,
         meta: { llmUsed },
+      });
+      appendTurnQuality({
+        sessionKey: ledgerKey,
+        userId,
+        reportId: context.report?.id || requestedReportId,
+        teacherId: requestedTeacherId || null,
+        intent: requestedIntent || null,
+        stream: false,
+        llmUsed,
+        efcOk: efcOk !== false,
+        efcIssues: efcIssues || [],
+        structureFilled: structureFilled ?? null,
+        structureRich: structureRich ?? null,
+        structureThin: structureThin ?? null,
+        structureRepaired: structureRepaired ?? null,
+        latencyMs: latencyMs ?? Date.now() - requestStartedAt,
+        ttftMs: ttftMs ?? null,
+        answerChars: answer?.length ?? null,
+        questionChars: question.length,
+        memoryBudget: memoryBudget || null,
+        fallbackReason: fallbackReason || null,
       });
     } catch {
       // ledger is best-effort
@@ -2213,6 +2291,7 @@ export async function GET(request: NextRequest) {
   try {
     sessionId = getClientKey(request);
     const isCrawler = shouldSkipChatContextAnalytics(userAgent);
+    // X-Tavern-style guest hygiene: crawlers get empty history/context payload, no DB noise
     // Crawlers must not mint guest_* users (was inflating DAU / users table).
     if (isCrawler) {
       const existing = await getCurrentUserId().catch(() => null);
@@ -2226,9 +2305,19 @@ export async function GET(request: NextRequest) {
     requestedSource = resolveRequestedSource(request);
     requestedCtaStrategyKey = resolveRequestedCtaStrategyKey(request);
     requestedSourceFamily = resolveRequestedSourceFamily(request);
-    const rows = isCrawler
-      ? []
-      : getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
+    // Crawlers: empty payload — no history fetch, no guest mint, no full context build
+    if (isCrawler) {
+      return NextResponse.json({
+        success: true,
+        history: [],
+        context: { summary: '', focusAreas: [], suggestedPrompts: [], correctionPrompts: [], recentEvents: [] },
+        intent: requestedIntent || null,
+        crawler: true,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
     const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
     const history = toHistoryPayload(rows);
 

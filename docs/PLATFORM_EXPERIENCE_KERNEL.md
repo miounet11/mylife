@@ -10,6 +10,9 @@ Benchmarked against [xai-org/grok-build](https://github.com/xai-org/grok-build):
 4. **ONE CHAT CLIENT** — `/chat` → `ChatPageClient` → `AIAssistantChat` only (`chat-workspace` is redirect stub).
 5. **ONE K-LINE EXIT** — `generateLifeKlineV6` only; no Math.sin synthetic yearly legacy.
 6. **PRODUCT BAR = usable deep ≥83** — expert S/95 is aspirational; delivery/stop uses ≥83.
+7. **MEMORY BUDGET** — chat context assembled by priority layers (EFC → calibration → 7d → spine → history), not full report dump.
+8. **TURN QUALITY LEDGER** — each chat turn records TTFT / structure / EFC to `data/chat-quality/`.
+9. **CRAWLER HYGIENE** — GET /api/chat returns empty payload for bots; no guest mint.
 
 ## Runtime map
 
