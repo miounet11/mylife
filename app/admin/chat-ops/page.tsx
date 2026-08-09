@@ -115,6 +115,48 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
         />
       </div>
 
+      <div className="mb-4 rounded-[12px] border border-[#e2e8f0] bg-white p-4">
+        <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#6d28d9]">
+          Turn quality ledger · {snap.turnQuality.day}
+        </div>
+        <p className="mt-1 text-[12px] text-[#64748b]">
+          文件账本 TTFT / 结构 / EFC（data/chat-ledgers/quality）— 与埋点互补
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <Stat label="今日回合" value={snap.turnQuality.count} />
+          <Stat
+            label="平均 TTFT"
+            value={snap.turnQuality.avgTtftMs ?? '—'}
+            suffix={snap.turnQuality.avgTtftMs != null ? 'ms' : undefined}
+            helper={
+              snap.turnQuality.avgLatencyMs != null
+                ? `全程均 ${snap.turnQuality.avgLatencyMs}ms`
+                : '尚无流式样本'
+            }
+          />
+          <Stat
+            label="LLM 成功率"
+            value={snap.turnQuality.llmRate ?? '—'}
+            suffix={snap.turnQuality.llmRate != null ? '%' : undefined}
+          />
+          <Stat
+            label="EFC 通过率"
+            value={snap.turnQuality.efcOkRate ?? '—'}
+            suffix={snap.turnQuality.efcOkRate != null ? '%' : undefined}
+          />
+          <Stat
+            label="结构偏薄率"
+            value={snap.turnQuality.structureThinRate ?? '—'}
+            suffix={snap.turnQuality.structureThinRate != null ? '%' : undefined}
+            helper={
+              snap.turnQuality.recentDays.length
+                ? `有账本日：${snap.turnQuality.recentDays.slice(0, 3).join(' · ')}`
+                : '尚无 quality 文件'
+            }
+          />
+        </div>
+      </div>
+
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <Stat
           label="PV 噪声率"

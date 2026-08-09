@@ -63,6 +63,8 @@ export function buildChatMemoryLayers(input: {
   unboundNote?: string | null;
   /** Full legacy summary — only soft extras extracted if structured fields empty */
   rawSummary?: string | null;
+  /** Working memory from last assistant (open loops / verify points) */
+  workingMemory?: string | null;
 }): MemoryBudgetLayer[] {
   const layers: MemoryBudgetLayer[] = [];
 
@@ -108,6 +110,16 @@ export function buildChatMemoryLayers(input: {
       priority: 2,
       text: `【近7天可执行】${actions.slice(0, 3).join('；')}`,
       minChars: 30,
+    });
+  }
+
+  const wm = `${input.workingMemory || ''}`.trim();
+  if (wm) {
+    layers.push({
+      key: 'working_memory',
+      priority: 2,
+      text: `【会话工作记忆 · 承接上一轮】${trimLayer(wm, 600)}`,
+      minChars: 24,
     });
   }
 

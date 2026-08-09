@@ -4,6 +4,10 @@
  */
 
 import { db } from '@/lib/database';
+import {
+  listTurnQualityDays,
+  summarizeTurnQualityDay,
+} from '@/lib/experience-kernel/turn-quality-ledger';
 
 export type ChatOpsSnapshot = {
   windowHours: number;
@@ -55,6 +59,17 @@ export type ChatOpsSnapshot = {
   topOpeningSources: Array<{ source: string; count: number }>;
   /** Top sources on chat_starter_clicked */
   topStarterSources: Array<{ source: string; count: number }>;
+  /** File-ledger turn quality (TTFT / efc / thin) — X-Tavern quality engine */
+  turnQuality: {
+    day: string;
+    count: number;
+    llmRate: number | null;
+    efcOkRate: number | null;
+    structureThinRate: number | null;
+    avgLatencyMs: number | null;
+    avgTtftMs: number | null;
+    recentDays: string[];
+  };
 };
 
 /**
@@ -297,5 +312,18 @@ export function getChatOpsSnapshot(windowHours = 24): ChatOpsSnapshot {
     },
     topOpeningSources: topMetaSource('chat_opening_shown', since),
     topStarterSources: topMetaSource('chat_starter_clicked', since),
+    turnQuality: (() => {
+      const tq = summarizeTurnQualityDay();
+      return {
+        day: tq.day,
+        count: tq.count,
+        llmRate: tq.count ? Math.round(tq.llmRate * 1000) / 10 : null,
+        efcOkRate: tq.count ? Math.round(tq.efcOkRate * 1000) / 10 : null,
+        structureThinRate: tq.count ? Math.round(tq.structureThinRate * 1000) / 10 : null,
+        avgLatencyMs: tq.avgLatencyMs,
+        avgTtftMs: tq.avgTtftMs,
+        recentDays: listTurnQualityDays(5),
+      };
+    })(),
   };
 }

@@ -36,7 +36,28 @@ export type TurnQualityRecord = {
 };
 
 function qualityRoot(): string {
-  return process.env.CHAT_QUALITY_DIR || path.join(process.cwd(), 'data', 'chat-quality');
+  // Prefer sibling of chat-ledgers so ops finds both under data/
+  return (
+    process.env.CHAT_QUALITY_DIR ||
+    path.join(process.cwd(), 'data', 'chat-ledgers', 'quality')
+  );
+}
+
+/** List recent day keys (newest first) */
+export function listTurnQualityDays(limit = 7): string[] {
+  try {
+    const dir = qualityRoot();
+    if (!fs.existsSync(dir)) return [];
+    return fs
+      .readdirSync(dir)
+      .filter((f) => /^\d{4}-\d{2}-\d{2}\.jsonl$/.test(f))
+      .map((f) => f.replace(/\.jsonl$/, ''))
+      .sort()
+      .reverse()
+      .slice(0, limit);
+  } catch {
+    return [];
+  }
 }
 
 function dayKey(d = new Date()): string {

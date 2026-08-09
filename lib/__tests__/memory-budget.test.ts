@@ -4,6 +4,7 @@ import {
   allocateChatMemoryBudget,
   buildChatMemoryLayers,
 } from '@/lib/experience-kernel/memory-budget';
+import { extractWorkingMemoryFromHistory } from '@/lib/experience-kernel/chat-memory-from-context';
 
 describe('chat memory budget', () => {
   it('keeps engine + calibration + seven-day over soft extras', () => {
@@ -51,5 +52,25 @@ describe('chat memory budget', () => {
     assert.ok(result.stats.layersKept.includes('engine_efc'));
     // systemContext alone stays within budget (+ small join overhead allowance)
     assert.ok(result.systemContext.length <= budget + 50);
+  });
+
+  it('extracts working memory from structured assistant reply', () => {
+    const wm = extractWorkingMemoryFromHistory([
+      {
+        role: 'assistant',
+        content: [
+          '**当前结论**',
+          '可行，且方向正确。',
+          '**阶段动作**',
+          '- 今天：盘点数据化经验',
+          '- 7 天内：找 IT 领导非正式沟通',
+          '**风险提醒**',
+          '勿急于跳船。',
+          '**验证点**',
+          '对方是否关注数据逻辑。',
+        ].join('\n'),
+      },
+    ]);
+    assert.match(wm, /验证|7天|今日|风险|结论/);
   });
 });
