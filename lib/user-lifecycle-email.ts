@@ -271,7 +271,13 @@ function getLatestUnrunToolInterest(userId: string) {
 }
 
 function hasFirstReport(userId: string) {
-  return fortuneOperations.getByUserId(userId)[0] || null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveUserFortune } = require('@/lib/resolve-user-fortune') as typeof import('@/lib/resolve-user-fortune');
+    return (resolveUserFortune(userId, { ensurePrimary: false }) as any) || null;
+  } catch {
+    return fortuneOperations.getByUserId(userId)[0] || null;
+  }
 }
 
 function buildSignupNoReportCandidate(params: {

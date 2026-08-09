@@ -301,6 +301,8 @@ export default function AIAssistantChat({
       if (reportId) queryParams.set('reportId', reportId);
       if (eventId) queryParams.set('eventId', eventId);
       if (intent) queryParams.set('intent', intent);
+      // Teacher id helps server prefer intent-matched report when reportId missing
+      if (urlTeacher) queryParams.set('teacher', urlTeacher);
       if (source) queryParams.set('source', source);
       if (ctaStrategyKey) queryParams.set('ctaStrategyKey', ctaStrategyKey);
       if (sourceFamily) queryParams.set('sourceFamily', sourceFamily);
@@ -360,6 +362,7 @@ export default function AIAssistantChat({
       setContext(data.context || null);
       const boundId = `${data.boundReportId || data.context?.report?.id || ''}`.trim();
       if (boundId) {
+        // Server auto-bound primary/intent/latest — always persist so tools/chat stay linked
         rememberReportId(boundId);
         setRememberedReportId(boundId);
         setBindError('');
@@ -375,13 +378,16 @@ export default function AIAssistantChat({
                 'No structure report linked. Chart-level questions need day master / favorable-element truth. Open from a report or create a chart first.',
               ),
         );
-      } else if (!reportId) {
+      } else if (!reportId && !data.contextBound) {
+        // Only warn when server also has no fortune for this session (guest / empty account)
         setBindError(
           t(
-            '尚未绑定结构报告。请从报告页进入追问，避免空谈用神。',
-            'No structure report linked. Open follow-ups from a report so we do not invent favorable elements.',
+            '当前账号下还没有可读取的报告。请先完成排盘，或登录已有报告的账号。',
+            'No report on this account yet. Create a chart first, or sign in to the account that has your reports.',
           ),
         );
+      } else {
+        setBindError('');
       }
       setRestoredTacitContext(latestTacitContext);
       setTacitContext(cloneTacitKnowledgeInput(latestTacitContext));

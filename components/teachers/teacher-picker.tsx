@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   buildTeacherChatHref,
   listReportTeachers,
@@ -15,6 +16,17 @@ import {
 } from '@/lib/i18n/teacher-copy';
 
 type Variant = 'report' | 'gallery' | 'compact';
+
+const LAST_REPORT_KEY = 'lk_last_report_id';
+
+function readLastReportId(): string {
+  if (typeof window === 'undefined') return '';
+  try {
+    return `${window.localStorage.getItem(LAST_REPORT_KEY) || ''}`.trim();
+  } catch {
+    return '';
+  }
+}
 
 /** 老师选择：纯文字链接列表，无彩色图标 */
 export default function TeacherPicker({
@@ -38,6 +50,13 @@ export default function TeacherPicker({
   const { locale: ctxLocale } = useLocale();
   const effectiveLocale = localeProp ?? ctxLocale;
   const en = isEnglishUiLocale(effectiveLocale);
+  /** Gallery often has no reportId prop — fall back to last bound report so chat can read data */
+  const [rememberedReportId, setRememberedReportId] = useState('');
+  useEffect(() => {
+    if (reportId) return;
+    setRememberedReportId(readLastReportId());
+  }, [reportId]);
+  const effectiveReportId = reportId || rememberedReportId || undefined;
 
   const teachers: TeacherDefinition[] =
     variant === 'gallery' ? listTeachers({ galleryOnly: true }) : listReportTeachers();
@@ -86,10 +105,14 @@ export default function TeacherPicker({
           const presentation = resolveTeacherPresentation(t, effectiveLocale);
           const href = buildTeacherChatHref({
             teacherId: t.id,
-            reportId,
+            reportId: effectiveReportId,
             city,
             // Opening mode: teacher first_mes + starters (no auto prefill)
-            source: source || (reportId ? `report:${reportId}:teacher_picker` : 'teacher_picker'),
+            source:
+              source ||
+              (effectiveReportId
+                ? `report:${effectiveReportId}:teacher_picker`
+                : 'teacher_picker'),
           });
           if (variant === 'compact') {
             return (
@@ -99,7 +122,7 @@ export default function TeacherPicker({
                   onClick={() =>
                     trackProductEvent('mass_teacher_open', {
                       teacherId: t.id,
-                      reportId: reportId || '',
+                      reportId: effectiveReportId || '',
                       surface: variant,
                     })
                   }
@@ -117,7 +140,7 @@ export default function TeacherPicker({
                 onClick={() =>
                   trackProductEvent('mass_teacher_open', {
                     teacherId: t.id,
-                    reportId: reportId || '',
+                    reportId: effectiveReportId || '',
                     surface: variant,
                   })
                 }

@@ -394,9 +394,24 @@ export async function runToolWorkflow(input: ToolRunInput): Promise<ToolRunExecu
     detail: '正在加载用户报告上下文。',
     meta: { reportId: input.reportId || null, hasBirth: Boolean(input.birth) },
   });
-  let report: FortuneRecord | null = input.reportId
-    ? fortuneOperations.getById(input.reportId)
-    : fortuneOperations.getByUserId(userId)[0] || null;
+  let report: FortuneRecord | null = null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveUserFortune } = require('@/lib/resolve-user-fortune') as typeof import('@/lib/resolve-user-fortune');
+    const toolIntent =
+      (input as { intent?: string }).intent ||
+      (input as { toolSlug?: string }).toolSlug ||
+      null;
+    report = resolveUserFortune(userId, {
+      reportId: input.reportId || null,
+      preferIntent: toolIntent,
+      ensurePrimary: true,
+    }) as FortuneRecord | null;
+  } catch {
+    report = input.reportId
+      ? fortuneOperations.getById(input.reportId)
+      : fortuneOperations.getByUserId(userId)[0] || null;
+  }
   let birthPack: ReturnType<typeof buildEphemeralReportFromBirth>['pack'] | undefined;
   let birthOnly = false;
 

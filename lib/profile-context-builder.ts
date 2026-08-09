@@ -43,6 +43,14 @@ export interface ProfileContextPack {
 }
 
 function pickPrimaryFortune(userId: string) {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveUserFortune } = require('@/lib/resolve-user-fortune') as typeof import('@/lib/resolve-user-fortune');
+    const resolved = resolveUserFortune(userId, { ensurePrimary: true });
+    if (resolved) return resolved;
+  } catch {
+    // fall through
+  }
   const fortunes = fortuneOperations.getByUserId(userId) ?? [];
   if (!Array.isArray(fortunes) || !fortunes.length) return null;
   return fortunes.find((item: any) => item.isPrimary)

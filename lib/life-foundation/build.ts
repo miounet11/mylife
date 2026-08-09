@@ -86,6 +86,26 @@ function pickActiveFortune(rows: FortuneRow[], fortuneId?: string | null): Fortu
     const hit = live.find((r) => r.id === fortuneId);
     if (hit) return hit;
   }
+  // Prefer shared ranking when list is already loaded (no extra DB if primary missing)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveUserFortune } = require('@/lib/resolve-user-fortune') as {
+      resolveUserFortune: (
+        id: string,
+        o?: { reportId?: string; ensurePrimary?: boolean },
+      ) => FortuneRow | null;
+    };
+    const uid = `${live[0]?.userId || live[0]?.user_id || ''}`.trim();
+    if (uid) {
+      const resolved = resolveUserFortune(uid, { ensurePrimary: true });
+      if (resolved?.id) {
+        const hit = live.find((r) => r.id === resolved.id);
+        if (hit) return hit;
+      }
+    }
+  } catch {
+    // fall through
+  }
   return (
     live.find((r) => r.isPrimary === true || r.isPrimary === 1) ||
     live.find((r) => r.relation === 'self') ||

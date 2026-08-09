@@ -2737,10 +2737,12 @@ export const fortuneOperations = {
   },
 
   getByUserId: (userId: string) => {
-    // v5-D39 多档案排序：self 永远第一（NULL 也视作 self），其它按 created_at desc
+    // v5-D39 + v6-link: primary first, then self, then newest; hide soft-deleted
     const stmt = db.prepare(
       `SELECT * FROM fortunes WHERE user_id = ?
-       ORDER BY (CASE WHEN relation IS NULL OR relation = '' OR relation = 'self' THEN 0 ELSE 1 END),
+         AND (deleted_at IS NULL OR deleted_at =  OR deleted_at = null)
+       ORDER BY (CASE WHEN is_primary = 1 THEN 0 ELSE 1 END),
+                (CASE WHEN relation IS NULL OR relation =  OR relation = self THEN 0 ELSE 1 END),
                 datetime(created_at) DESC`
     );
     const rows = stmt.all(userId) as RawFortuneRow[];

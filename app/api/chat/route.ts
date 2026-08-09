@@ -1111,37 +1111,47 @@ function resolveRequestedSourceFamily(request: NextRequest, bodySourceFamily?: s
   return sourceFamily || undefined;
 }
 
-function getChatReport(userId: string, requestedReportId?: string) {
+function getChatReport(
+  userId: string,
+  requestedReportId?: string,
+  preferIntent?: string | null,
+) {
+  // Unified resolver: primary → intent → self → newest; auto-seed is_primary
+  // (feedback: 读取不了我的信息 from teachers_gallery without reportId).
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveUserFortune } = require('@/lib/resolve-user-fortune') as typeof import('@/lib/resolve-user-fortune');
+    const resolved = resolveUserFortune(userId, {
+      reportId: requestedReportId,
+      preferIntent: preferIntent || null,
+      ensurePrimary: true,
+    });
+    if (resolved) {
+      // Public deep-link: non-owner only if explicit reportId + public
+      if (
+        requestedReportId &&
+        resolved.userId &&
+        resolved.userId !== userId &&
+        (resolved as { isPublic?: boolean }).isPublic === false
+      ) {
+        return null;
+      }
+      return resolved as any;
+    }
+  } catch (e) {
+    console.warn('[chat] resolveUserFortune failed, fallback', e);
+  }
+
   if (requestedReportId) {
     const report = fortuneOperations.getById(requestedReportId);
     if (report) {
-      // Owner always OK
-      if (report.userId === userId) {
-        return report;
-      }
-      // Explicit deep-link / cookie 切换：公开报告允许只读锚定（不写回 ownership）
-      // DB 默认 is_public=1；私有报告 (isPublic===false) 仍拒绝跨 guest 读取
-      if (report.isPublic !== false) {
-        return report;
-      }
+      if (report.userId === userId) return report;
+      if (report.isPublic !== false) return report;
     }
   }
-
-  // Prefer primary/most recent report so teachers_gallery chat can "read" user data
-  // (feedback: 读取不了我的信息 when opening chat without reportId).
   const list = fortuneOperations.getByUserId(userId) || [];
   if (!Array.isArray(list) || list.length === 0) return null;
-  const primary =
-    list.find((r: any) => r?.isPrimary === true || r?.is_primary === 1 || r?.is_primary === true) ||
-    null;
-  if (primary) return primary;
-  // newest first if createdAt present
-  const sorted = [...list].sort((a: any, b: any) => {
-    const ta = Date.parse(a?.createdAt || a?.created_at || 0) || 0;
-    const tb = Date.parse(b?.createdAt || b?.created_at || 0) || 0;
-    return tb - ta;
-  });
-  return sorted[0] || null;
+  return list[0] || null;
 }
 
 /**
@@ -1180,9 +1190,14 @@ function buildChatPayload(
   userId: string,
   requestedReportId?: string,
   requestedEventId?: string,
-  requestedIntent?: ChatIntent
+  requestedIntent?: ChatIntent,
+  preferIntentHint?: string | null,
 ) {
-  const report = getChatReport(userId, requestedReportId);
+  const report = getChatReport(
+    userId,
+    requestedReportId,
+    preferIntentHint || requestedIntent || null,
+  );
   const events = eventOperations.getByUserId(userId).slice(0, 8);
   const toolSessions = toolSessionOperations.listByUser(userId, 8);
 
@@ -1286,7 +1301,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
+    const context = buildChatPayload(
+      userId,
+      requestedReportId,
+      requestedEventId,
+      requestedIntent,
+      requestedTeacherId || requestedIntent || null,
+    );
     const scopeReportId = context.report?.id || requestedReportId;
     const scopeEventId = context.focusedEvent?.id || requestedEventId;
     const previousRows = getScopedChatRows(userId, scopeReportId, scopeEventId, requestedIntent, 60);
@@ -1809,7 +1830,19 @@ export async function PATCH(request: NextRequest) {
     }
 
     const target = rows[targetIndex];
-    const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
+    const patchTeacher =
+      typeof data?.teacher === 'string'
+        ? data.teacher.trim()
+        : typeof data?.teacherId === 'string'
+          ? data.teacherId.trim()
+          : '';
+    const context = buildChatPayload(
+      userId,
+      requestedReportId,
+      requestedEventId,
+      requestedIntent,
+      patchTeacher || requestedIntent || null,
+    );
 
     // User rating on assistant reply — stores into analysis.userFeedback for optimization.
     if (action === 'feedback') {
@@ -2212,7 +2245,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const target = rows[targetIndex];
-    const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
+    const context = buildChatPayload(
+      userId,
+      requestedReportId,
+      requestedEventId,
+      requestedIntent,
+      requestedIntent || null,
+    );
     let deleteUntilIndex = targetIndex;
 
     if (target.role === 'user') {
@@ -2332,7 +2371,20 @@ export async function GET(request: NextRequest) {
     }
 
     const rows = getScopedChatRows(userId, requestedReportId, requestedEventId, requestedIntent, 100);
-    const context = buildChatPayload(userId, requestedReportId, requestedEventId, requestedIntent);
+    const urlTeacher = (() => {
+      try {
+        return new URL(request.url).searchParams.get('teacher') || '';
+      } catch {
+        return '';
+      }
+    })();
+    const context = buildChatPayload(
+      userId,
+      requestedReportId,
+      requestedEventId,
+      requestedIntent,
+      urlTeacher || requestedIntent || null,
+    );
     const history = toHistoryPayload(rows);
 
     // v5-D84 (2026-05-24): chat_context_loaded 抑制噪音 — 同 session 10 分钟内只记一次。
