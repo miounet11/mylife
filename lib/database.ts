@@ -2740,9 +2740,9 @@ export const fortuneOperations = {
     // v5-D39 + v6-link: primary first, then self, then newest; hide soft-deleted
     const stmt = db.prepare(
       `SELECT * FROM fortunes WHERE user_id = ?
-         AND (deleted_at IS NULL OR deleted_at =  OR deleted_at = null)
+         AND deleted_at IS NULL
        ORDER BY (CASE WHEN is_primary = 1 THEN 0 ELSE 1 END),
-                (CASE WHEN relation IS NULL OR relation =  OR relation = self THEN 0 ELSE 1 END),
+                (CASE WHEN relation IS NULL OR relation = '' OR relation = 'self' THEN 0 ELSE 1 END),
                 datetime(created_at) DESC`
     );
     const rows = stmt.all(userId) as RawFortuneRow[];
