@@ -40,6 +40,7 @@ export type AnalyticsEventName =
   | 'report_feedback_synced'
   | 'report_monthly_digest_sent'
   | 'report_viewed'
+  | 'report_section_rerun'
   | 'report_upgrade_requested'
   | 'result_cta_clicked'
   | 'result_chat_started'

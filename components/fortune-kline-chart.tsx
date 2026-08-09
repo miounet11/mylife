@@ -273,8 +273,9 @@ export default function FortuneKLineChart(props: {
         </div>
       </div>
 
-      <div className="mt-3 w-full" style={{ height }}>
-        <ResponsiveContainer width="100%" height="100%">
+      <div className="mt-3 w-full min-w-0" style={{ height: Math.max(height, 200), minHeight: 200 }}>
+        {/* minWidth/minHeight avoid Recharts "width(-1) height(-1)" when parent is still 0 during layout */}
+        <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
           <LineChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.08)" />
             <XAxis

@@ -26,6 +26,7 @@ async function fetchWithTimeout(url, options) {
 }
 
 function isTransientStartupError(message) {
+  const text = `${message || ''}`;
   return [
     'fetch failed',
     'ECONNREFUSED',
@@ -34,7 +35,15 @@ function isTransientStartupError(message) {
     'socket hang up',
     'network timeout',
     'This operation was aborted',
-  ].some((pattern) => message.includes(pattern));
+    'Bad Gateway',
+    'Gateway Timeout',
+    'Service Unavailable',
+    'ECONNRESET',
+    'ETIMEDOUT',
+    '502',
+    '503',
+    '504',
+  ].some((pattern) => text.includes(pattern));
 }
 
 async function runCycle() {
@@ -53,7 +62,18 @@ async function runCycle() {
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok || !data.success) {
-      console.error('[report-upgrade-daemon] run failed:', data.error || response.statusText);
+      const errText = data.error || response.statusText || `HTTP ${response.status}`;
+      // Nginx 502/503 while Next restarts — treat as transient, not fatal noise
+      if (
+        response.status === 502 ||
+        response.status === 503 ||
+        response.status === 504 ||
+        isTransientStartupError(errText)
+      ) {
+        console.warn('[report-upgrade-daemon] upstream not ready yet, will retry:', errText);
+      } else {
+        console.error('[report-upgrade-daemon] run failed:', errText);
+      }
       return false;
     }
 

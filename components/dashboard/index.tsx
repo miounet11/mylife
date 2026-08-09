@@ -130,9 +130,10 @@ export function ElementRadar({ elements }: { elements: DashboardData['elements']
   }));
 
   return (
-    <div className="premium-card">
+    <div className="premium-card min-w-0">
       <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-2">五行力量雷达</h3>
-      <ResponsiveContainer width="100%" height={280}>
+      <div className="w-full min-w-0" style={{ height: 280, minHeight: 200 }}>
+      <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
         <ReRadarChart data={labels}>
           <PolarGrid stroke="var(--color-ming-border)" />
           <PolarAngleAxis
@@ -174,6 +175,7 @@ export function ElementRadar({ elements }: { elements: DashboardData['elements']
           />
         </ReRadarChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }

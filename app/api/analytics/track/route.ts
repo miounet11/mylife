@@ -94,14 +94,27 @@ const ALLOWED_EVENTS = new Set<AnalyticsEventName>([
   'predictions_page_viewed',
   'hehun_workspace_viewed',
   'expert_crm_page_viewed',
+  'report_section_rerun',
 ]);
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    // Beacons / aborted navigations often send empty body → JSON parse throws
+    let body: Record<string, unknown> = {};
+    try {
+      const raw = await request.text();
+      if (raw && raw.trim()) {
+        body = JSON.parse(raw) as Record<string, unknown>;
+      }
+    } catch {
+      return NextResponse.json(
+        { success: false, error: '无效的埋点载荷' },
+        { status: 400 },
+      );
+    }
     const eventName = body?.eventName as AnalyticsEventName | undefined;
     const page = typeof body?.page === 'string' ? body.page : undefined;
-    const meta = body?.meta && typeof body.meta === 'object' ? body.meta : {};
+    const meta = body?.meta && typeof body.meta === 'object' ? (body.meta as Record<string, unknown>) : {};
 
     if (!eventName || !ALLOWED_EVENTS.has(eventName)) {
       return NextResponse.json(

@@ -107,7 +107,7 @@ export async function POST(
       trackServerEvent({
         userId: userId || undefined,
         sessionId: clientKey,
-        eventName: 'report_section_rerun' as any,
+        eventName: 'report_section_rerun',
         page: `/result/${reportId}`,
         meta: {
           reportId,
